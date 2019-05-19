@@ -25,13 +25,14 @@
 # 
 # Version Change Log 
 #
-# 2019_MM_DD New: v1.0 Initial Version
+# 2016_05_18 New: v1.0 Initial Version
+#@2019_05_19 Refactoring: v2.0 Major revamp, include getopt option, new debug variable.
 # 
 # --------------------------------------------------------------------------------------------------
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os,time,sys,pdb,socket,datetime,glob,fnmatch             # Import Std Python3 Modules
+    import os,time,sys,getopt,pdb,socket,datetime,glob,fnmatch      # Import Std Python3 Modules
 except ImportError as e:                                            # Trap Import Error
     print ("Import Error : %s " % e)                                # Print Import Error Message
     sys.exit(1)                                                     # Back to O/S With Error Code 1
@@ -44,38 +45,58 @@ except ImportError as e:                                            # Trap Impor
 #===================================================================================================
 conn                = ""                                                # Database Connector
 cur                 = ""                                                # Database Cursor
-debug               = 0                                                 # Debug verbosity (0-9)
 #
 
-#===================================================================================================
+
+
+# --------------------------------------------------------------------------------------------------
+#  Show command line options to user.
+# --------------------------------------------------------------------------------------------------
+def show_usage():
+    print ("\nUsage :",os.path.basename(sys.argv[0]))
+    print ("\t-d --debug  <level>         (Debug Level [0-9])")
+    print ("\t-h --help                   (Display this help message)")
+    print ("\t-v --version                (Show Script Version Info)")
+    print ("\n")
+
+
+
+# --------------------------------------------------------------------------------------------------
 # Setup SADMIN Global Variables and Load SADMIN Python Library
-#===================================================================================================
+# --------------------------------------------------------------------------------------------------
 def setup_sadmin():
 
-    # Load SADMIN Standard Python Library
+    # Load SADMIN Standard Python Library Module ($SADMIN/lib/sadmlib_std.py).
     try :
-        SADM = os.environ.get('SADMIN')                     # Getting SADMIN Root Dir.
-        sys.path.insert(0,os.path.join(SADM,'lib'))         # Add SADMIN to sys.path
-        import sadmlib_std as sadm                          # Import SADMIN Python Libr.
-    except ImportError as e:                                # If Error importing SADMIN 
-        print ("Error Importing SADMIN Module: %s " % e)    # Advise USer of Error
-        sys.exit(1)                                         # Go Back to O/S with Error
+        SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir.
+        sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
+        import sadmlib_std as sadm                                      # Import SADMIN Python Libr.
+    except ImportError as e:                                            # If Error importing SADMIN 
+        print ("Error Importing SADMIN Module: %s " % e)                # Advise User of Error
+        sys.exit(1)                                                     # Go Back to O/S with Error
     
     # Create Instance of SADMIN Tool
-    st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
+    st = sadm.sadmtools()                       # Create [S]ADMIN [T]ools instance (Setup Dir.,Var.)
 
-    # Change these values to your script needs.
-    st.ver              = "1.0"                 # Current Script Version
-    st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
-    st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
-    st.log_append       = False                 # Append Existing Log or Create New One
-    st.use_rch          = True                  # Generate entry in Result Code History (.rch) 
+    # You can use variable below BUT DON'T CHANGE THEM - They are used by SADMIN Standard Library.
+    st.pn               = os.path.basename(sys.argv[0])                 # Script name with extension
+    st.inst             = os.path.basename(sys.argv[0]).split('.')[0]   # Script name without Ext
+    st.tpid             = str(os.getpid())                              # Get Current Process ID.
+    st.exit_code        = 0                                             # Script Exit Code (Use it)
+    st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
+    st.ver              = "2.0"                 # Current Script Version
+    st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
+    st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
     st.log_header       = True                  # Show/Generate Header in script log (.log)
     st.log_footer       = True                  # Show/Generate Footer in script log (.log)
-    st.usedb            = True                  # True=Open/Use Database,False=Don't Need to Open DB 
-    st.dbsilent         = False                 # Return Error Code & False=ShowErrMsg True=NoErrMsg
-    st.exit_code        = 0                     # Script Exit Code for you to use
+    st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
+    st.use_rch          = True                  # Generate entry in Result Code History (.rch) 
     st.debug            = 0                     # Increase Verbose from 0 to 9 
+    st.usedb            = True                  # Open/Use Database(True) or Don't Need DB(False)
+    st.dbsilent         = False                 # When DB Error, False=ShowErrMsg and True=NoErrMsg 
+                                                # But Error Code always returned (0=ok else error)
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
     #st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
@@ -87,8 +108,8 @@ def setup_sadmin():
     #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server 
 
     # Start SADMIN Tools - Initialize 
-    st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
-    return(st)                                  # Return Instance Obj. To Caller
+    st.start()                                  # Init. SADMIN Env. (Create dir.,Log,RCH, Open DB..)
+    return(st)                                  # Return Instance Object To Caller
 
 
 
@@ -132,7 +153,7 @@ def process_servers(wconn,wcur,st):
         st.writelog ("Processing (%d) %-15s - %s %s" % (lineno,wfqdn,wos,wosversion)) # Server Info
 
         # If Debug is activated - Display Monitoring & Sporadic Status of Server.
-        if debug > 4 :                                                  # If Debug Level > 4 
+        if sadm_debug > 4 :                                             # If Debug Level > 4 
             if wmonitor :                                               # Monitor Collumn is at True
                 st.writelog ("Monitoring is ON for %s" % (wfqdn))       # Show That Monitoring is ON
             else :
@@ -195,26 +216,50 @@ def main_process(st):
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
-def main():
-    # Import SADMIN Module, Create SADMIN Tool Instance, Initialize Log and rch file.  
-    st = setup_sadmin()                                                 # Setup Var. & Load SADM Lib
+def main(argv):
+    
+    # Import SADMIN Module, Create [S]ADMIN [T]ool Instance and call the start() function.
+    st = setup_sadmin()                                                 # Sadm Tools class instance
     
     # Insure that this script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
-       st.writelog ("This script must be run by the 'root' user")       # Advise User Message / Log
-       st_writelog ("Try sudo %s" % (os.path.basename(sys.argv[0])))    # Suggest to use 'sudo'
-       st.writelog ("Process aborted")                                  # Process Aborted Msg
-       st.stop (1)                                                      # Close and Trim Log/Email
-       sys.exit(1)                                                      # Exit with Error Code
+        st.writelog ("This script must be run by the 'root' user.")     # Advise User Message / Log
+        st.writelog ("Try 'sudo %s'." % (os.path.basename(sys.argv[0])))# Suggest to use 'sudo'
+        st.writelog ("Process aborted.")                                # Process Aborted Msg
+        st.stop (1)                                                     # Close and Trim Log/Email
+        sys.exit(1)                                                     # Exit with Error Code
     
-# (Optional Section) - Test if script is running on the SADMIN Server, If not abort script 
-#    if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
-#        st.writelog("This script can only be run on SADMIN server (%s)" % (st.cfg_server))
-#        st.writelog("Process aborted")                                  # Abort advise message
-#        st.stop(1)                                                      # Close and Trim Log
-#        sys.exit(1)                                                     # Exit To O/S
-        
-    # If on SADMIN server & use Database (st.usedb=True), open connection to Server Database
+    # (Optional if) - Test if script is running on the SADMIN Server, If not abort script 
+    if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
+        st.writelog("This script can only be run on SADMIN server (%s)" % (st.cfg_server))
+        st.writelog("Process aborted")                                  # Abort advise message
+        st.stop(1)                                                      # Close and Trim Log
+        sys.exit(1)                                                     # Exit To O/S
+
+    # Evaluate Command Line Switch Options Upfront
+    # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level     
+    try:
+        opts, args = getopt.getopt(argv,"hvd:",["debug=","help","version"])
+    except getopt.GetoptError as err:                                   # If Invalid Option or Error
+        print (str(err))                                                # Show option not recognized     
+        show_usage()                                                    # Show Command line Usage
+        st.stop (2)                                                     # Close log,db,...,Trim Log
+        sys.exit(2)                                                     # Exit with Error Code 2
+    for opt, arg in opts:
+        if opt in ("-h","--help"):                                      # 'help' Command line option
+            show_usage()                                                # Show Command Line Usage
+            st.stop (0)                                                 # Close log,db,...,Trim Log
+            sys.exit(0)                                                 # Exit Script with no Error
+        elif opt in ("-d","--debug"):                                   # 'debug' Cmd. line option
+            st.debug = int(arg)                                         # Save Debug Level chosen
+        elif opt in ("-v","--version"):                                 # 'version' Cmd. line option
+            st.show_version()                                           # Show Script,Lib,Kernel Ver
+            st.stop (0)                                                 # Close log,db,...,Trim Log
+            sys.exit(0)                                                 # Exit Script with no Error
+    if st.debug > 0 : st.writelog("Debug Level %d activated" % (st.debug)) # Debug: Show debug level
+
+
+    # If on SADMIN server & use Database (st.usedb=True), open connection to Database.
     if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
 
@@ -225,9 +270,9 @@ def main():
  
     # If on SADMIN server & use Database (st.usedb=True), close connection to Server Database
     if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
-        st.dbclose()                                                    # Close the Database
+        st.dbclose()                                                    # Close Database Connection
     st.stop(st.exit_code)                                               # Close SADM Environment
     sys.exit(st.exit_code)                                              # Exit To O/S
 
 # This idiom means the below code only runs when executed from command line
-if __name__ == '__main__':  main()
+if __name__ == "__main__": main(sys.argv[1:])
