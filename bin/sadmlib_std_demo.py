@@ -39,10 +39,11 @@
 #@2019_03_18 Added: v3.3 Add demo call to function get_packagetype()
 #@2019_04_07 Update: v3.4 Don't show Database user name if run on client.
 #@2019_04_25 Update: v3.5 Add Alert_Repeat, Textbelt API Key and URL Variable in Output
+#@2019_05_17 Update: v3.6 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
 #===================================================================================================
 #
 try :
-    import os,time,sys,pdb,socket,datetime,glob,fnmatch             # Import Std Python3 Modules
+    import os,time,sys,pdb,socket,datetime,glob,getopt,fnmatch      # Import Std Python3 Modules
 except ImportError as e:                                            
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -56,47 +57,75 @@ conn                = ""                                                # Databa
 cur                 = ""                                                # Database Cursor
 lcount              = 0                                                 # Print Line Counter
 #
+show_password       = "N"                                               # Don't show DB Password
+show_storix         = "N"                                               # Don't show Storix Info
+show_textbelt       = "N"                                               # Don't show TextBelt Key
 
-#===================================================================================================
+# --------------------------------------------------------------------------------------------------
 # Setup SADMIN Global Variables and Load SADMIN Python Library
-#===================================================================================================
+# --------------------------------------------------------------------------------------------------
 def setup_sadmin():
 
-    # Load SADMIN Standard Python Library
+    # Load SADMIN Standard Python Library Module ($SADMIN/lib/sadmlib_std.py).
     try :
-        SADM = os.environ.get('SADMIN')         # Getting SADMIN Root Dir.
-        sys.path.insert(0,os.path.join(SADM,'lib'))         # Add SADMIN to sys.path
-        import sadmlib_std as sadm              # Import SADMIN Python Libr.
-    except ImportError as e:                    # If Error importing SADMIN 
-        print ("Error Importing SADMIN Module: %s " % e)    # Advise USer of Error
-        sys.exit(1)                             # Go Back to O/S with Error
+        SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir.
+        sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
+        import sadmlib_std as sadm                                      # Import SADMIN Python Libr.
+    except ImportError as e:                                            # If Error importing SADMIN 
+        print ("Error Importing SADMIN Module: %s " % e)                # Advise User of Error
+        sys.exit(1)                                                     # Go Back to O/S with Error
     
     # Create Instance of SADMIN Tool
-    st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
+    st = sadm.sadmtools()                       # Create [S]ADMIN [T]ools instance (Setup Dir.,Var.)
 
-    # Change these values to your script needs.
-    st.ver              = "3.5"                 # Current Script Version
-    st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
-    st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
-    st.log_append       = True                  # Append Existing Log or Create New One
-    st.use_rch          = False                 # Generate entry in Return Code History (.rch) 
+    # You can use variable below BUT DON'T CHANGE THEM - They are used by SADMIN Standard Library.
+    st.pn               = os.path.basename(sys.argv[0])                 # Script name with extension
+    st.inst             = os.path.basename(sys.argv[0]).split('.')[0]   # Script name without Ext
+    st.tpid             = str(os.getpid())                              # Get Current Process ID.
+    st.exit_code        = 0                                             # Script Exit Code (Use it)
+    st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
+    st.ver              = "3.6"                 # Current Script Version
+    st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
+    st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
     st.log_header       = False                 # Show/Generate Header in script log (.log)
     st.log_footer       = False                 # Show/Generate Footer in script log (.log)
-    st.usedb            = True                  # True=Open/Use Database,False=Don't Need to Open DB 
-    st.dbsilent         = False                 # Return Error Code & False=ShowErrMsg True=NoErrMsg
-    st.exit_code        = 0                     # Script Exit Code for you to use
+    st.multiple_exec    = "Y"                   # Allow running multiple copy at same time ?
+    st.use_rch          = False                 # Generate entry in Result Code History (.rch) 
+    st.debug            = 0                     # Increase Verbose from 0 to 9 
+    st.usedb            = True                  # Open/Use Database(True) or Don't Need DB(False)
+    st.dbsilent         = False                 # When DB Error, False=ShowErrMsg and True=NoErrMsg 
+                                                # But Error Code always returned (0=ok else error)
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
-    #st.cfg_alert_type    = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    #st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSuccess 3=Allways
+    #st.cfg_alert_group  = "default"            # Valid Alert Group are defined in alert_group.cfg
     #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
-    #st.cfg_max_logline  = 5000                 # When Script End Trim log file to 5000 Lines
-    #st.cfg_max_rchline  = 100                  # When Script End Trim rch file to 100 Lines
+    #st.cfg_max_logline  = 1000                 # When Script End Trim log file to 1000 Lines
+    #st.cfg_max_rchline  = 125                  # When Script End Trim rch file to 125 Lines
     #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server 
 
     # Start SADMIN Tools - Initialize 
-    st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
-    return(st)                                  # Return Instance Obj. To Caller
+    st.start()                                  # Init. SADMIN Env. (Create dir.,Log,RCH, Open DB..)
+    return(st)                                  # Return Instance Object To Caller
+
+
+
+# --------------------------------------------------------------------------------------------------
+#  Show command line options to user.
+# --------------------------------------------------------------------------------------------------
+def show_usage():
+    print ("\nUsage :",os.path.basename(sys.argv[0]))
+    print ("\t-p --password             (Show database password on output)")
+    print ("\t-s --storix               (Show Storix Backup information)")
+    print ("\t-t --textbelt             (Show TextBelt Key)")        
+    print ("\t-d --debug  <level>       (Debug Level [0-9])")
+    print ("\t-h --help                 (Show this help message)")
+    print ("\t-v --version              (Show Script Version Info)")
+    print ("\n")
+
 
 
 #===================================================================================================
@@ -605,6 +634,7 @@ def print_file_variable(st):
 # Print sadmin.cfg Variables available to users
 #===================================================================================================
 def print_sadmin_cfg(st):
+    global show_password, show_storix, show_textbelt                    # Command line options
 
     printheader (st,"SADMIN CONFIG FILE VARIABLES","Description","  This System Result")
 
@@ -640,7 +670,8 @@ def print_sadmin_cfg(st):
 
     pexample="st.cfg_textbelt_key"                                      # Variable Name
     pdesc="TextBelt.com API Key"                                        # Function Description
-    presult=st.cfg_textbelt_key                                         # Return Value(s)
+    presult=""                                                          # Default Don't show Key
+    if show_textbelt == "Y" : presult=st.cfg_textbelt_key               # Selected show TextBelt Key
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     pexample="st.cfg_textbelt_url"                                      # Variable Name
@@ -701,7 +732,8 @@ def print_sadmin_cfg(st):
 
         pexample="st.cfg_rw_dbpwd"                                      # Variable Name
         pdesc="SADMIN Database Read/Write User Pwd"                     # Function Description
-        presult=st.cfg_rw_dbpwd                                         # Return Value(s)
+        presult=""                                                      # Default don't show passwd
+        if show_password == "Y" : presult=st.cfg_rw_dbpwd               # Selected to Show DB Passwd
         printline (st,pexample,pdesc,presult)                           # Print Example Line
 
         pexample="st.cfg_ro_dbuser"                                     # Variable Name
@@ -711,7 +743,8 @@ def print_sadmin_cfg(st):
 
         pexample="st.cfg_ro_dbpwd"                                      # Variable Name
         pdesc="SADMIN Database Read Only User Pwd"                      # Function Description
-        presult=st.cfg_ro_dbpwd                                         # Return Value(s)
+        presult=""                                                      # Default don't show passwd
+        if show_password == "Y" : presult=st.cfg_ro_dbpwd               # Selected to Show DB Passwd
         printline (st,pexample,pdesc,presult)                           # Print Example Line
 
     pexample="st.cfg_rrdtool"                                           # Variable Name
@@ -854,20 +887,21 @@ def print_sadmin_cfg(st):
     presult=st.cfg_yearly_backup_date                                   # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_storix_nfs_server"                                 # Variable Name
-    pdesc="Storix NFS Server IP or Name"                                # Function Description
-    presult=st.cfg_storix_nfs_server                                    # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    if show_storix == "Y" :                                             # Selected Show Storix Info
+        pexample="st.cfg_storix_nfs_server"                             # Variable Name
+        pdesc="Storix NFS Server IP or Name"                            # Function Description
+        presult=st.cfg_storix_nfs_server                                # Return Value(s)
+        printline (st,pexample,pdesc,presult)                           # Print Example Line
 
-    pexample="st.cfg_storix_mount_point"                            # Variable Name
-    pdesc="Storix NFS Mount Point"                                      # Function Description
-    presult=st.cfg_storix_mount_point                               # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        pexample="st.cfg_storix_mount_point"                            # Variable Name
+        pdesc="Storix NFS Mount Point"                                  # Function Description
+        presult=st.cfg_storix_mount_point                               # Return Value(s)
+        printline (st,pexample,pdesc,presult)                           # Print Example Line
 
-    pexample="st.cfg_storix_backup_to_keep"                             # Variable Name
-    pdesc="Storix NFS Backup - Nb. to Keep"                             # Function Description
-    presult=st.cfg_storix_backup_to_keep                                # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        pexample="st.cfg_storix_backup_to_keep"                         # Variable Name
+        pdesc="Storix NFS Backup - Nb. to Keep"                         # Function Description
+        presult=st.cfg_storix_backup_to_keep                            # Return Value(s)
+        printline (st,pexample,pdesc,presult)                           # Print Example Line
 
 
 #===================================================================================================
@@ -1040,7 +1074,8 @@ def print_db_variables(st):
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
-def main():
+def main(argv):
+    global show_password, show_storix, show_textbelt                    # Command line options
     
     # Script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not root
@@ -1050,7 +1085,38 @@ def main():
        sys.exit(1)                                                      # Exit with Error Code
 
     st = setup_sadmin()                                                 # Setup SADMIN Tool Instance
-    
+
+    # Evaluate Command Line Switch Options Upfront
+    # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level     
+
+    try:
+        opts, args = getopt.getopt(argv,"hptsvd:",["debug=","help","version","storix","textbelt","password"])
+    except getopt.GetoptError as err:                                   # If Invalid Option or Error
+        print (str(err))                                                # Show option not recognized     
+        show_usage()                                                    # Show Command line Usage
+        st.stop (2)                                                     # Close log,db,...,Trim Log
+        sys.exit(2)                                                     # Exit with Error Code 2
+    for opt, arg in opts:
+        if opt in ("-h","--help"):                                      # 'help' Command line option
+            show_usage()                                                # Show Command Line Usage
+            st.stop (0)                                                 # Close log,db,...,Trim Log
+            sys.exit(0)                                                 # Exit Script with no Error
+        elif opt in ("-d","--debug"):                                   # 'debug' Cmd. line option
+            st.debug = int(arg)                                         # Save Debug Level chosen
+        elif opt in ("-p","--password"):                                # 'password' Cmdline option
+            show_password = "Y"                                         # Show Database Password
+        elif opt in ("-t","--textbelt"):                                # 'textbelt' Cmdline option
+            show_textbelt="Y"                                           # Show TextBelt API Key
+            print ("textbelt selected")
+        elif opt in ("-s","--storix"):                                  # 'storix' Cmdline option
+            show_storix="Y"                                             # Show Storix NFS Backup 
+        elif opt in ("-v","--version"):                                 # 'version' Cmd. line option
+            st.show_version()                                           # Show Script,Lib,Kernel Ver
+            st.stop (0)                                                 # Close log,db,...,Trim Log
+            sys.exit(0)                                                 # Exit Script with no Error
+    if st.debug > 0 : st.writelog("Debug Level %d activated" % (st.debug)) # Debug: Show debug level
+
+
     # Print All Demo Informations
     print_user_variables(st)                                            # Show User Avail. Variables
     print_functions(st)                                                 # Display Env. Variables
@@ -1068,6 +1134,6 @@ def main():
     sys.exit(st.exit_code)                                              # Exit To O/S
 
 # This idiom means the below code only runs when executed from command line
-if __name__ == '__main__':  main()
+if __name__ == "__main__": main(sys.argv[1:])
 
 
