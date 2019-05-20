@@ -54,9 +54,9 @@ cur                 = ""                                                # Databa
 # --------------------------------------------------------------------------------------------------
 def show_usage():
     print ("\nUsage :",os.path.basename(sys.argv[0]))
-    print ("\t-d --debug  <level>         (Debug Level [0-9])")
-    print ("\t-h --help                   (Display this help message)")
-    print ("\t-v --version                (Show Script Version Info)")
+    print ("\t-d --debug  <level>       (Debug Level [0-9])")
+    print ("\t-h --help                 (Show this help message)")
+    print ("\t-v --version              (Show Script Version Info)")
     print ("\n")
 
 
@@ -99,7 +99,7 @@ def setup_sadmin():
                                                 # But Error Code always returned (0=ok else error)
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
-    #st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    #st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSuccess 3=Allways
     #st.cfg_alert_group  = "default"            # Valid Alert Group are defined in alert_group.cfg
     #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
