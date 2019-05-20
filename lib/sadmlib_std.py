@@ -42,6 +42,7 @@
 #@2019_05_16 Update: v3.00 Only one summary line is now added to RCH file when scripts are executed.
 #@2019_05_16 Update: v3.01 New 'st.show_version()' function, libr. debug variable (st.lib_debug), 
 #                    script alert not send by script anymore but by SADMIN master.
+#@2019_05_20 Fix: v3.02 Was not loading Storix mount point directory info.
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -113,7 +114,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.01"                                # This Library Version
+        self.libver             = "3.02"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -461,7 +462,7 @@ class sadmtools():
             if "SADM_REAR_BACKUP_TO_KEEP"    in CFG_NAME: self.cfg_rear_backup_to_keep   = int(CFG_VALUE)
             #
             if "SADM_STORIX_NFS_SERVER"      in CFG_NAME: self.cfg_storix_nfs_server     = CFG_VALUE
-            if "SADM_STORIX_NFS_MOUNT_POINT" in CFG_NAME: self.cfg_storix_nfs_mount_point= CFG_VALUE
+            if "SADM_STORIX_NFS_MOUNT_POINT" in CFG_NAME: self.cfg_storix_mount_point    = CFG_VALUE
             if "SADM_STORIX_BACKUP_TO_KEEP"  in CFG_NAME: self.cfg_storix_backup_to_keep = int(CFG_VALUE)
             #
             if "SADM_MKSYSB_NFS_SERVER"      in CFG_NAME: self.cfg_mksysb_nfs_server     = CFG_VALUE
