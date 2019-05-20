@@ -337,6 +337,9 @@ if [ -z $TERM ] || [ "$TERM" = "dumb" ]
          export SADM_BWHITE=$(tput setab 7)     2>/dev/null             # White color
 fi
 
+
+
+
 # --------------------------------------------------------------------------------------------------
 #                     THIS FUNCTION RETURN THE STRING RECEIVED TO UPPERCASE
 # --------------------------------------------------------------------------------------------------
@@ -344,12 +347,16 @@ sadm_toupper() {
     echo $1 | tr  "[:lower:]" "[:upper:]"
 }
 
+
+
 # --------------------------------------------------------------------------------------------------
 #                       THIS FUNCTION RETURN THE STRING RECEIVED TO LOWERCASE
 # --------------------------------------------------------------------------------------------------
 sadm_tolower() {
     echo $1 | tr  "[:upper:]" "[:lower:]"
 }
+
+
 
 # --------------------------------------------------------------------------------------------------
 # Check if variable is an integer - Return 1, if not an intener - Return 0 if it is an integer
