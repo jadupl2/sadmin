@@ -97,6 +97,7 @@
 #@2019_05_14 Update: v2.79 Alert via mail while now have the script log attach to the email.
 #@2019_05_16 Update: v3.00 Only one summary line is now added to RCH file when scripts are executed.
 #@2019_05_19 Update: v3.01 SADM_DEBUG_LEVEL change to SADM_DEBUG for consistency with Python Libr.
+#@2019_05_20 Update: v3.02 Eliminate `tput` warning when TERM variable was set to 'dumb'.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -106,7 +107,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.01"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.02"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -264,41 +265,77 @@ SADM_MKSYSB_NFS_TO_KEEP=2                   ; export SADM_MKSYSB_NFS_TO_KEEP    
 LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"    ; export LOCAL_TMP          # Local Temp File
 
 # Screen related variables
-SADM_CLREOL=$(tput el)        2>/dev/null || SADM_CLREOL=""   ; export SADM_EOL      # Clr EndOfLine 
-SADM_CLREOS=$(tput ed)        2>/dev/null || SADM_CLREOS=""   ; export SADM_CLREOS   # Clr EndOfScr
-SADM_BOLD=$(tput bold)        2>/dev/null || SADM_BOLD=""     ; export SADM_BOLD     # Bold Attr.
-SADM_BELL=$(tput bel)         2>/dev/null || SADM_BELL=""     ; export SADM_BELL     # Ring the Bell
-SADM_RVS=$(tput rev)          2>/dev/null || SADM_RVS=""      ; export SADM_RVS      # Reverse Video 
-SADM_UND=$(tput sgr 0 1)      2>/dev/null || SADM_UND=""      ; export SADM_UND      # UnderLine
-SADM_HOMECUR=$(tput home)     2>/dev/null || SADM_HOMECUR=""  ; export SADM_HOMECUR  # Home Cursor
-SADM_UP=$(tput cuu1)          2>/dev/null || SADM_UP=""       ; export SADM_UP       # Cursor up
-SADM_DOWN=$(tput cud1)        2>/dev/null || SADM_DOWN=""     ; export SADM_DOWN     # Cursor down
-SADM_RIGHT=$(tput cub1)       2>/dev/null || SADM_RIGHT=""    ; export SADM_RIGHT    # Cursor right
-SADM_LEFT=$(tput cuf1)        2>/dev/null || SADM_LEFT=""     ; export SADM_LEFT     # Cursor left
-SADM_CLR=$(tput clear)        2>/dev/null || SADM_CLR=""      ; export SADM_CLR      # Clear Screen
-SADM_BLINK=$(tput blink)      2>/dev/null || SADM_BLINK=""    ; export SADM_BLINK    # Blinking on
-SADM_RESET=$(tput sgr0)       2>/dev/null || SADM_RESET=""    ; export SADM_RESET    # Reset Screen
+if [ -z $TERM ] || [ "$TERM" = "dumb" ]
+    then export SADM_CLREOL=""                                          # Clear to End of Line
+         export SADM_CLREOS=""                                          # Clear to End of Screen
+         export SADM_BOLD=""                                            # Set Bold Attribute
+         export SADM_BELL=""                                            # Ring the Bell
+         export SADM_RVS=""                                             # Reverse Video On
+         export SADM_UND=""                                             # Set UnderLine On
+         export SADM_HOMECUR=""                                         # Home Cursor
+         export SADM_UP=""                                              # Cursor up
+         export SADM_DOWN=""                                            # Cursor down
+         export SADM_RIGHT=""                                           # Cursor right
+         export SADM_LEFT=""                                            # Cursor left
+         export SADM_CLR=""                                             # Clear Screen
+         export SADM_BLINK=""                                           # Blinking on
+         export SADM_RESET=""                                           # Reset Screen Attribute
+    else export SADM_CLREOL=$(tput el)          2>/dev/null             # Clear to End of Line
+         export SADM_CLREOS=$(tput ed)          2>/dev/null             # Clear to End of Screen
+         export SADM_BOLD=$(tput bold)          2>/dev/null             # Set Bold Attribute On
+         export SADM_BELL=$(tput bel)           2>/dev/null             # Ring the Bell
+         export SADM_RVS=$(tput rev)            2>/dev/null             # Reverse Video 
+         export SADM_UND=$(tput sgr 0 1)        2>/dev/null             # UnderLine
+         export SADM_HOMECUR=$(tput home)       2>/dev/null             # Home Cursor
+         export SADM_UP=$(tput cuu1)            2>/dev/null             # Cursor up
+         export SADM_DOWN=$(tput cud1)          2>/dev/null             # Cursor down
+         export SADM_RIGHT=$(tput cub1)         2>/dev/null             # Cursor right
+         export SADM_LEFT=$(tput cuf1)          2>/dev/null             # Cursor left
+         export SADM_CLR=$(tput clear)          2>/dev/null             # Clear Screen
+         export SADM_BLINK=$(tput blink)        2>/dev/null             # Blinking on
+         export SADM_RESET=$(tput sgr0)         2>/dev/null             # Reset Screen
+fi    
 
 # Foreground Color
-SADM_BLACK=$(tput setaf 0)    2>/dev/null || SADM_BLACK=""    ; export SADM_BLACK    # Black color
-SADM_RED=$(tput setaf 1)      2>/dev/null || SADM_RED=""      ; export SADM_RED      # Red color
-SADM_GREEN=$(tput setaf 2)    2>/dev/null || SADM_GREEN=""    ; export SADM_GREEN    # Green color
-SADM_YELLOW=$(tput setaf 3)   2>/dev/null || SADM_YELLOW=""   ; export SADM_YELLOW   # Yellow color
-SADM_BLUE=$(tput setaf 4)     2>/dev/null || SADM_BLACK=""    ; export SADM_BLUE     # Blue color
-SADM_MAGENTA=$(tput setaf 5)  2>/dev/null || SADM_MAGENTA=""  ; export SADM_MAGENTA  # Magenta color
-SADM_CYAN=$(tput setaf 6)     2>/dev/null || SADM_CYAN=""     ; export SADM_CYAN     # Cyan color
-SADM_WHITE=$(tput setaf 7)    2>/dev/null || SADM_WHITE=""    ; export SADM_WHITE    # White color
+if [ -z $TERM ] || [ "$TERM" = "dumb" ]
+    then export SADM_BLACK=""                                           # Black color
+         export SADM_MAGENTA=""                                         # Magenta color
+         export SADM_RED=""                     2>/dev/null             # Red color
+         export SADM_GREEN=""                   2>/dev/null             # Green color
+         export SADM_YELLOW=""                  2>/dev/null             # Yellow color
+         export SADM_BLUE=""                    2>/dev/null             # Blue color
+         export SADM_CYAN=""                    2>/dev/null             # Cyan color
+         export SADM_WHITE=""                   2>/dev/null             # White color
+    else export SADM_BLACK=$(tput setaf 0)      2>/dev/null             # Black color
+         export SADM_RED=$(tput setaf 1)        2>/dev/null             # Red color
+         export SADM_GREEN=$(tput setaf 2)      2>/dev/null             # Green color
+         export SADM_YELLOW=$(tput setaf 3)     2>/dev/null             # Yellow color
+         export SADM_BLUE=$(tput setaf 4)       2>/dev/null             # Blue color
+         export SADM_MAGENTA=$(tput setaf 5)    2>/dev/null             # Magenta color
+         export SADM_CYAN=$(tput setaf 6)       2>/dev/null             # Cyan color
+         export SADM_WHITE=$(tput setaf 7)      2>/dev/null             # White color
+fi 
 
 # Background Color
-SADM_BBLACK=$(tput setab 0)   2>/dev/null || SADM_BBLACK=""   ; export SADM_BBLACK   # Black color
-SADM_BRED=$(tput setab 1)     2>/dev/null || SADM_BRED=""     ; export SADM_BRED     # Red color
-SADM_BGREEN=$(tput setab 2)   2>/dev/null || SADM_BGREEN=""   ; export SADM_BGREEN   # Green color
-SADM_BYELLOW=$(tput setab 3)  2>/dev/null || SADM_BYELLOW=""  ; export SADM_BYELLOW  # Yellow color
-SADM_BBLUE=$(tput setab 4)    2>/dev/null || SADM_BBLUE=""    ; export SADM_BBLUE    # Blue color
-SADM_BMAGENTA=$(tput setab 5) 2>/dev/null || SADM_BMAGENTA="" ; export SADM_BMAGENTA # Magenta color
-SADM_BCYAN=$(tput setab 6)    2>/dev/null || SADM_BCYAN=""    ; export SADM_BCYAN    # Cyan color
-SADM_BWHITE=$(tput setab 7)   2>/dev/null || SADM_BWHITE=""   ; export SADM_BWHITE   # White color
-
+if [ -z $TERM ] || [ "$TERM" = "dumb" ]
+    then export SADM_BBLACK=""                                          # Black color
+         export SADM_BRED=""                                            # Red color
+         export SADM_BGREEN=""                                          # Green color
+         export SADM_BYELLOW=""                                         # Yellow color
+         export SADM_BBLUE=""                                           # Blue color
+         export SADM_BMAGENTA=""                                        # Magenta color
+         export SADM_BCYAN=""                                           # Cyan color
+         export SADM_BWHITE=""                                          # White color
+    else
+         export SADM_BBLACK=$(tput setab 0)     2>/dev/null             # Black color
+         export SADM_BRED=$(tput setab 1)       2>/dev/null             # Red color
+         export SADM_BGREEN=$(tput setab 2)     2>/dev/null             # Green color
+         export SADM_BYELLOW=$(tput setab 3)    2>/dev/null             # Yellow color
+         export SADM_BBLUE=$(tput setab 4)      2>/dev/null             # Blue color
+         export SADM_BMAGENTA=$(tput setab 5)   2>/dev/null             # Magenta color
+         export SADM_BCYAN=$(tput setab 6)      2>/dev/null             # Cyan color
+         export SADM_BWHITE=$(tput setab 7)     2>/dev/null             # White color
+fi
 
 # --------------------------------------------------------------------------------------------------
 #                     THIS FUNCTION RETURN THE STRING RECEIVED TO UPPERCASE
@@ -342,6 +379,7 @@ sadm_writelog() {
              ;;
     esac
 }
+
 
 # --------------------------------------------------------------------------------------------------
 # Show Script Name, version, Library Version, O/S Name/Version and Kernel version.
