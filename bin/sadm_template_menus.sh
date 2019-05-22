@@ -30,6 +30,7 @@
 # Version Change Log 
 # 2016_10_01    v1.0 Initial Version
 # 2018_06_06    v1.1 Restructure and Add code examples
+#@2019_05_22 Updated: v1.2 Comment code for documentation
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -50,7 +51,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.1'                               # Current Script Version
+    export SADM_VER='1.2'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Header in script log (.log)
@@ -128,12 +129,12 @@ main_process()
     # Display Main Menu     
     while :
         do
-        sadm_display_heading "Your Menu Heading Here"
-        menu_array=("Your Menu Item 1" "Your Menu Item 2" \
-                    "Your Menu Item 3" "Your Menu Item 4" )
-        sadm_display_menu "${menu_array[@]}"
-        sadm_choice=$?
-        case $sadm_choice in
+        sadm_display_heading "Your Menu Heading Here"                   # Std SADMIN Menu Heading
+        menu_array=("Your Menu Item 1" "Your Menu Item 2" \             # Put your menu Item in this
+                    "Your Menu Item 3" "Your Menu Item 4" )             # Array
+        sadm_display_menu "${menu_array[@]}"                            # Display menu Array
+        sadm_choice=$?                                                  # Choice is returned in $?
+        case $sadm_choice                                               
             1) # Option 1 - 
                sadm_mess "You press choice number 1"
                ;;
@@ -146,12 +147,12 @@ main_process()
             4) # Option 4 - 
                sadm_mess "You press choice number 4"
                ;;
-           99) # Option Quit -
-               sadm_mess "You press choice number 99"
-               break 
+           99) # Option Quit -                                          # 99 = [Q],[q] was pressed
+               sadm_mess "You press choice number 99"                   # This means quit the menu
+               break                                                    # Break out of the loop
                ;;
-            *) # Invalid Option #
-               sadm_mess "Invalid option"
+            *) # Invalid Option #                                       # If an invalid key press
+               sadm_mess "Invalid option"                               # Message to user
                ;;
         esac
         done
