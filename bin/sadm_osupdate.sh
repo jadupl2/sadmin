@@ -27,7 +27,9 @@
 # 2018_07_11    v3.8 Code cleanup
 # 2018_09_19    v3.9 Include Alert Group 
 # 2018_10_24    v3.10 Command line option -d -r -h -v added.
-#@2019_01_16 Improvement: sadm_os_update.sh v3.11 Add 'apt-get autoremove' when 'deb' package is use.
+# 2019_01_16 Improvement: v3.11 Add 'apt-get autoremove' when 'deb' package is use.
+#@2019_05_23  Update: v3.12 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
+
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -51,7 +53,7 @@
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.11'                              # Current Script Version
+    export SADM_VER='3.12'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -64,6 +66,8 @@
     export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
     export SADM_TPID="$$"                               # Current Script PID
     export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
+
     . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
 #
 #---------------------------------------------------------------------------------------------------
@@ -83,15 +87,16 @@
 
 
 # --------------------------------------------------------------------------------------------------
-#                               Script Variables definition
+#                                   Script Variables definition
 # --------------------------------------------------------------------------------------------------
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 # Command to issue the shutdown / Reboot after the update if requested
 REBOOT_CMD="/sbin/shutdown -r now"          ; export REBOOT_CMD         # Reboot Command
 
 # Default to no reboot after an update
 WREBOOT="N"                                 ; export WREBOOT            # Def. NoReboot after update
+
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -337,7 +342,7 @@ run_apt_get()
     WREBOOT="N"                                                         # No Reboot by Default
     while getopts "hvnrd:" opt ; do                                      # Loop to process Switch
         case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+            d) SADM_DEBUG=$OPTARG                                      # Get Debug Level Specified
                ;;                                                       # No stop after each page
             r) WREBOOT="Y"                                              # Reboot after Upd. if allow
                sadm_writelog "Reboot requested after successfull update"                
@@ -354,8 +359,8 @@ run_apt_get()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
-        then printf "\nDebug activated, Level ${DEBUG_LEVEL}"           # Display Debug Level
+    if [ $SADM_DEBUG -gt 0 ]                                           # If Debug is Activated
+        then printf "\nDebug activated, Level ${SADM_DEBUG}"           # Display Debug Level
              printf "\nBackup compression is $COMPRESS"                 # Show Status of compression
     fi
 
