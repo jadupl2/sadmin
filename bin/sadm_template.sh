@@ -31,8 +31,9 @@
 #
 # 2019_MM_DD New: v1.0 Initial Version
 #@2019_05_19 Update: v2.0 New debug variable, and sadm_show_version function.
+#@2019_05_23 Update: v2.1 Minor Comment Update
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
+trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
      
 
@@ -59,7 +60,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.0'                               # Your Current Script Version
+    export SADM_VER='2.1'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -72,7 +73,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
 #---------------------------------------------------------------------------------------------------
 # Value for these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
 # But they can be overridden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # AlertGroup Used for Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=1000                       # At end of script Trim log to 1000 Lines
@@ -210,7 +211,7 @@ main_process()
     sadm_writelog "Starting Main Process ... "                          # Inform User Starting Main
 
     # PROCESSING CAN BE PUT HERE
-    # If Error occured, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default).
+    # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default).
     # ........
     # ........
     
