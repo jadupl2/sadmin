@@ -43,7 +43,8 @@
 # 2018_06_11 v2.2 Backtrack change v2.1
 # 2018_06_19 v2.3 Change Backup DB Command line (Default compress)
 # 2018_09_14 v2.4 Was reporting Error, even when all scripts ran ok.
-#@2019_05_01 v2.5 Log name is now showed to help user diagnostic the problem when an error occurs.
+#@2019_05_01 Update: v2.5 Log name now showed to help user diagnostic problem when an error occurs.
+#@2019_05_23  Update: v2.6 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -65,7 +66,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.5'                               # Current Script Version
+    export SADM_VER='2.6'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -78,6 +79,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
     export SADM_TPID="$$"                               # Current Script PID
     export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
 
     # Load SADMIN Standard Shell Library 
     . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
@@ -97,7 +99,6 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 
 
@@ -113,14 +114,7 @@ show_usage()
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\n" 
 }
-show_version()
-{
-    printf "\n${SADM_PN} - Version $SADM_VER"
-    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
-    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
-    printf " - Kernel Version $(sadm_get_kernel_version)"
-    printf "\n\n" 
-}
+
 
 
 #===================================================================================================
@@ -240,8 +234,8 @@ main_process()
 # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
     while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
+            d) SADM_DEBUG=$OPTARG                                      # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
@@ -251,7 +245,7 @@ main_process()
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
-            v) show_version                                             # Show Script Version Info
+            v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
            \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
@@ -260,7 +254,7 @@ main_process()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+    if [ $SADM_DEBUG -gt 0 ] ; then printf "\nDebug activated, Level ${SADM_DEBUG}\n" ; fi
 
 # Call SADMIN Initialization Procedure
     sadm_start                                                          # Init Env Dir & RC/Log File
