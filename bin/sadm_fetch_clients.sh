@@ -64,7 +64,7 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 #
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
 
 
