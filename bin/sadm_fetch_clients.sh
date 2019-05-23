@@ -47,6 +47,7 @@
 #@2019_04_12  Fix: v2.33 Create Web rch directory, if not exist when script run for the first time.
 #@2019_04_17  Update: v2.34 Show Processing message only when active servers are found.
 #@2019_05_07  Update: v2.35 Change Send Alert parameters for Library 
+#@2019_05_23  Update: v2.36 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -83,7 +84,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.35'                              # Current Script Version
+    export SADM_VER='2.36'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -96,13 +97,14 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
     export SADM_TPID="$$"                               # Current Script PID
     export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
-
+    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
+    
     # Load SADMIN Standard Shell Library 
     . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
 
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    # But some can overridden here on a per script basis.
+    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="sprod"                     # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
@@ -116,14 +118,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
-OS_SCRIPT="${SADM_BIN_DIR}/sadm_osupdate_farm.sh"; export OS_SCRIPT     # OSUpdate Script in crontab
-BA_SCRIPT="${SADM_BIN_DIR}/sadm_backup.sh"      ; export BA_SCRIPT      # Backup Script in crontab
-REBOOT_SEC=900                                  ; export REBOOT_SEC     # O/S Upd Reboot Nb Sec.wait
+OS_SCRIPT="${SADM_BIN_DIR}/sadm_osupdate_farm.sh" ; export OS_SCRIPT    # OSUpdate Script in crontab
+BA_SCRIPT="${SADM_BIN_DIR}/sadm_backup.sh"        ; export BA_SCRIPT    # Backup Script in crontab
+REBOOT_SEC=900                                    ; export REBOOT_SEC   # O/S Upd Reboot Nb Sec.wait
 
 
 # --------------------------------------------------------------------------------------------------
-#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# H E L P      U S A G E   D I S P L A Y    F U N C T I O N
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
@@ -133,14 +134,7 @@ show_usage()
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\n" 
 }
-show_version()
-{
-    printf "\n${SADM_PN} - Version $SADM_VER"
-    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
-    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
-    printf " - Kernel Version $(sadm_get_kernel_version)"
-    printf "\n\n" 
-}
+
 
 
 # ==================================================================================================
@@ -176,7 +170,7 @@ update_osupdate_crontab ()
     cdow=$7                                                             # Crontab DOW (YNNNN) Format
 
     # To Display Parameters received - Used for Debugging Purpose ----------------------------------
-    if [ $DEBUG_LEVEL -gt 5 ] 
+    if [ $SADM_DEBUG -gt 5 ] 
         then sadm_writelog "I'm in update crontab"
              sadm_writelog "cserver  = $cserver"                        # Server to run script
              sadm_writelog "cscript  = $cscript"                        # Script to execute
@@ -190,7 +184,7 @@ update_osupdate_crontab ()
     
     # Begin constructing our crontab line ($cline) - Based on Hour and Min. Received ---------------
     cline=`printf "%02d %02d" "$cmin" "$chour"`                         # Hour & Min. of Execution
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
 
     # Construct DATE of the month (1-31) to run and add it to crontab line ($cline) ----------------
@@ -201,7 +195,7 @@ update_osupdate_crontab ()
              for i in $(seq 2 32)
                 do    
                 wchar=`expr substr $cdom $i 1`
-                if [ $DEBUG_LEVEL -gt 5 ] ; then echo "cdom[$i] = $wchar" ; fi
+                if [ $SADM_DEBUG -gt 5 ] ; then echo "cdom[$i] = $wchar" ; fi
                 xmth=`expr $i - 1`                                      # Date = Index -1 ,Cron Mth
                 if [ "$wchar" = "Y" ]                                   # If Date Set to Yes 
                     then if [ $flag_dom -eq 0 ]                         # If First Date to Run 
@@ -214,7 +208,7 @@ update_osupdate_crontab ()
                 done                                                    # End of For Loop
              cline="$cline $fdom"                                       # Add DOM in Crontab Line
     fi
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
 
     # Construct the month(s) (1-12) to run the script and add it to crontab line ($cline) ----------
@@ -237,7 +231,7 @@ update_osupdate_crontab ()
                 done                                                    # End of For Loop
              cline="$cline $fmth"                                       # Add Month in Crontab Line
     fi
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
 
     # Construct the day of the week (0-6) to run the script and add it to crontab line ($cline) ----
@@ -248,10 +242,10 @@ update_osupdate_crontab ()
              for i in $(seq 2 8)                                        # Check Each Day 2-8 = 0-6
                 do                                                      # Day of the week (dow)
                 wchar=`expr substr "$cdow" $i 1`                        # Get Char of loop
-                if [ $DEBUG_LEVEL -gt 5 ] ; then echo "cdow[$i] = $wchar" ; fi
+                if [ $SADM_DEBUG -gt 5 ] ; then echo "cdow[$i] = $wchar" ; fi
                 if [ "$wchar" = "Y" ]                                   # If Day is Yes 
                     then xday=`expr $i - 2`                             # Adjust Indx to Crontab Day
-                         if [ $DEBUG_LEVEL -gt 5 ] ; then echo "xday = $xday" ; fi
+                         if [ $SADM_DEBUG -gt 5 ] ; then echo "xday = $xday" ; fi
                          if [ $flag_dow -eq 0 ]                         # If First Day to Insert
                             then fdow=`printf "%02d" "$xday"`           # Add day to Final Day
                                  flag_dow=1                             # No Longer the first Insert
@@ -262,7 +256,7 @@ update_osupdate_crontab ()
                 done                                                    # End of For Loop
              cline="$cline $fdow"                                       # Add DOW in Crontab Line
     fi
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
     
     
     # Add User, script name and script parameter to crontab line -----------------------------------
@@ -271,7 +265,7 @@ update_osupdate_crontab ()
     #cline="$cline root $cscript -s $cserver >/dev/null 2>&1";   
     cline="$cline $SADM_USER sudo $cscript -s $cserver >/dev/null 2>&1";   
     #cline="$cline root $cscript -s $cserver > ${SADM_TMP_DIR}/sadm_osupdate_${cserver}.log 2>&1";   
-    if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
     echo "$cline" >> $SADM_CRON_FILE                                    # Output Line to Crontab cfg
 }
@@ -310,7 +304,7 @@ update_backup_crontab ()
     cdow=$7                                                             # Crontab DOW (YNNNN) Format
 
     # To Display Parameters received - Used for Debugging Purpose ----------------------------------
-    if [ $DEBUG_LEVEL -gt 5 ] 
+    if [ $SADM_DEBUG -gt 5 ] 
         then sadm_writelog "I'm in update crontab"
              sadm_writelog "cserver  = $cserver"                        # Server to run script
              sadm_writelog "cscript  = $cscript"                        # Script to execute
@@ -324,7 +318,7 @@ update_backup_crontab ()
     
     # Begin constructing our crontab line ($cline) - Based on Hour and Min. Received ---------------
     cline=`printf "%02d %02d" "$cmin" "$chour"`                         # Hour & Min. of Execution
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
 
     # Construct DATE of the month (1-31) to run and add it to crontab line ($cline) ----------------
@@ -335,7 +329,7 @@ update_backup_crontab ()
              for i in $(seq 2 32)
                 do    
                 wchar=`expr substr $cdom $i 1`
-                if [ $DEBUG_LEVEL -gt 5 ] ; then echo "cdom[$i] = $wchar" ; fi
+                if [ $SADM_DEBUG -gt 5 ] ; then echo "cdom[$i] = $wchar" ; fi
                 xmth=`expr $i - 1`                                      # Date = Index -1 ,Cron Mth
                 if [ "$wchar" = "Y" ]                                   # If Date Set to Yes 
                     then if [ $flag_dom -eq 0 ]                         # If First Date to Run 
@@ -348,7 +342,7 @@ update_backup_crontab ()
                 done                                                    # End of For Loop
              cline="$cline $fdom"                                       # Add DOM in Crontab Line
     fi
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
 
     # Construct the month(s) (1-12) to run the script and add it to crontab line ($cline) ----------
@@ -371,7 +365,7 @@ update_backup_crontab ()
                 done                                                    # End of For Loop
              cline="$cline $fmth"                                       # Add Month in Crontab Line
     fi
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
 
     # Construct the day of the week (0-6) to run the script and add it to crontab line ($cline) ----
@@ -382,10 +376,10 @@ update_backup_crontab ()
              for i in $(seq 2 8)                                        # Check Each Day 2-8 = 0-6
                 do                                                      # Day of the week (dow)
                 wchar=`expr substr "$cdow" $i 1`                        # Get Char of loop
-                if [ $DEBUG_LEVEL -gt 5 ] ; then echo "cdow[$i] = $wchar" ; fi
+                if [ $SADM_DEBUG -gt 5 ] ; then echo "cdow[$i] = $wchar" ; fi
                 if [ "$wchar" = "Y" ]                                   # If Day is Yes 
                     then xday=`expr $i - 2`                             # Adjust Indx to Crontab Day
-                         if [ $DEBUG_LEVEL -gt 5 ] ; then echo "xday = $xday" ; fi
+                         if [ $SADM_DEBUG -gt 5 ] ; then echo "xday = $xday" ; fi
                          if [ $flag_dow -eq 0 ]                         # If First Day to Insert
                             then fdow=`printf "%02d" "$xday"`           # Add day to Final Day
                                  flag_dow=1                             # No Longer the first Insert
@@ -396,14 +390,14 @@ update_backup_crontab ()
                 done                                                    # End of For Loop
              cline="$cline $fdow"                                       # Add DOW in Crontab Line
     fi
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
     
     
     # Add User, script name and script parameter to crontab line -----------------------------------
     # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN 
     # $SADM_TMP_DIR
     cline="$cline $SADM_USER sudo $SADM_SSH_CMD $cserver \"$cscript\" >/dev/null 2>&1";   
-    if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
     echo "$cline" >> $SADM_BACKUP_NEWCRON                               # Output Line to Crontab cfg
 }
@@ -476,7 +470,7 @@ process_servers()
     WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/,/'" # Build CmdLine
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
 
     # Test Database Connection
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST -e "show databases;" > /dev/null 2>&1
@@ -549,7 +543,7 @@ process_servers()
         sadm_writelog "Processing [$xcount] ${fqdn_server}"             # Print Counter/Server Name
 
         # To Display Database Column we will used, for debugging
-        if [ $DEBUG_LEVEL -gt 7 ] 
+        if [ $SADM_DEBUG -gt 7 ] 
             then sadm_writelog "Column Name and Value before processing them."
                  sadm_writelog "server_name   = $server_name"           # Server Name to run script
                  sadm_writelog "backup_auto   = $backup_auto"           # Run Backup ? 1=Yes 0=No 
@@ -590,7 +584,7 @@ process_servers()
             then rch_epoch=`stat --printf='%Y\n' $rch_osupd_name`
                  cur_epoch=$(sadm_get_epoch_time)
                  upd_elapse=`echo $cur_epoch - $rch_epoch | $SADM_BC`
-                  if [ $DEBUG_LEVEL -gt 0 ] 
+                  if [ $SADM_DEBUG -gt 0 ] 
                         then sadm_writelog "Last O/S Update done $upd_elapse sec. ago ($rch_osupd_name)." 
                   fi
         fi
@@ -746,7 +740,7 @@ check_for_alert()
     if [ -s "$SADM_TMP_FILE1" ]                                         # If File Not Zero in Size
         then cat $SADM_TMP_FILE1 | while read line                      # Read Each Line of file
                 do
-                if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
+                if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
                 ehost=`echo $line | awk -F\; '{ print $2 }'`            # Get Hostname for Event
                 emess=`echo $line | awk -F\; '{ print $7 }'`            # Get Event Error Message
                 wdate=`echo $line | awk -F\; '{ print $3 }'`            # Get Event Date
@@ -767,7 +761,7 @@ check_for_alert()
                          egroup=`echo $line | awk -F\; '{ print $9 }'`  # Get Error Alert Group
                          esubject="$emess"                              # Specify it is a Error
                 fi
-                if [ $DEBUG_LEVEL -gt 0 ] 
+                if [ $SADM_DEBUG -gt 0 ] 
                     then sadm_writelog "sadm_send_alert $etype $etime $ehost $egroup $esubject $emess" 
                 fi
                 sadm_send_alert "$etype" "$etime" "$ehost" "$egroup" "$esubject" "$emess" ""  
@@ -791,7 +785,7 @@ check_for_alert()
     if [ -s "$SADM_TMP_FILE2" ]                                         # If File Not Zero in Size
         then cat $SADM_TMP_FILE2 | while read line                      # Read Each Line of file
                 do                
-                if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
+                if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
                 etype="S"                                               # Set Script Event Type 
                 ehost=`echo $line   | awk '{ print $1 }'`               # Get Hostname for Event
                 wdate=`echo $line   | awk '{ print $4 }'`               # Get Script Ending Date 
@@ -802,7 +796,7 @@ check_for_alert()
                 egroup=`echo $line  | awk '{ print $8 }'`               # Get Script Alert Group
                 esubject="$escript reported an error on $ehost"         # Alert Subject
                 emess="Script '$escript' failed on '$ehost'"            # Create Script Error Mess.
-                if [ $DEBUG_LEVEL -gt 0 ] 
+                if [ $SADM_DEBUG -gt 0 ] 
                     then sadm_writelog "sadm_send_alert '$etype' '$etime' '$ehost' '$egroup' '$esubject' '$emess'" 
                 fi
                 sadm_send_alert "$etype" "$etime" "$ehost" "$egroup" "$esubject" "$emess" ""
@@ -824,8 +818,8 @@ check_for_alert()
 # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
     while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
+            d) SADM_DEBUG=$OPTARG                                      # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
@@ -835,7 +829,7 @@ check_for_alert()
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
-            v) show_version                                             # Show Script Version Info
+            v) sadm_show_version                                             # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
            \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
@@ -844,7 +838,7 @@ check_for_alert()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+    if [ $SADM_DEBUG -gt 0 ] ; then printf "\nDebug activated, Level ${SADM_DEBUG}\n" ; fi
 
     # Call SADMIN Initialization Procedure
     sadm_start                                                          # Init Env Dir & RC/Log File
