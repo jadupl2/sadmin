@@ -27,7 +27,7 @@
 # 2018_06_09    v2.1 Add Help and version function, change script name & Change startup order
 # 2018_08_28    v2.2 Delete rch and log older than the number of days specified in sadmin.cfg
 # 2018_11_29    v2.3 Restructure for performance and don't delete rch/log files anymore.
-#@2019_05_19    v2.4 Add server crontab file to housekeeping
+#@2019_05_19 Update: v2.4 Add server crontab file to housekeeping
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
