@@ -85,7 +85,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #---------------------------------------------------------------------------------------------------
 # Value for these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
 # But they can be overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # AlertGroup Used for Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=1000                       # At end of script Trim log to 1000 Lines
