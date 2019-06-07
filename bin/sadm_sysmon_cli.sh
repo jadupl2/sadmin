@@ -27,7 +27,9 @@
 # 2018_01_12    V1.9 Update SADM Library Section - Small Corrections
 # 2018_07_11    v2.0 Now showing running process after scanning the server rch files
 # 2018_07_18    v2.1 Fix problem reporting System Monitor Result (rpt filename)
-#@2018_08_20    v2.2 Don't use rch file & don't send email if failing (It is an interactive script)
+# 2018_08_20    v2.2 Don't use rch file & don't send email if failing (It is an interactive script)
+#@2019_06_07    v2.3 Change to include new field (alarm type) in RCH file.
+#
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -51,7 +53,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.2'                               # Current Script Version
+    export SADM_VER='2.3'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -157,7 +159,7 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
     find $SADM_RCH_DIR -type f -name '*.rch' -exec tail -1 {} \; > $SADM_TMP_FILE2
 
     # RETAIN LINES THAT TERMINATE BY A 1(ERROR) OR A 2(RUNNING) FROM TMP2 WORK FILE INTO TMP3 FILE
-    awk 'match($9,/[1-2]/) { print }' $SADM_TMP_FILE2 | grep -v ' smon 2' > $SADM_TMP_FILE3 
+    awk 'match($10,/[1-2]/) { print }' $SADM_TMP_FILE2 | grep -v ' smon 2' > $SADM_TMP_FILE3 
 
     # Run the System Monitor
     $SADM_BIN_DIR/sadm_sysmon.pl
