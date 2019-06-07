@@ -32,6 +32,8 @@
 # 2018_09_16 v2.4 Add Alert Group in RCH Array
 # 2018_09_22 v2.5 Failed Script counter was wrong
 #@2019_01_05 Improvement: v2.6 Add SideBar link to view all servers CPU performance on one page.
+#@2019_06_07 Update: v2.7 Deal with new alert type included in the RCH File.
+#
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -44,7 +46,7 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.6" ;                                                        # Current version number
+$SVER  = "2.7" ;                                                        # Current version number
 $URL_SERVER   = '/view/srv/sadm_view_servers.php';                      # Show Servers List URL
 $URL_OSUPDATE = "/view/sys/sadm_view_schedule.php";                     # View O/S Update URL 
 $URL_MONITOR  = "/view/sys/sadm_view_sysmon.php";                       # View System Monitor URL 
@@ -57,78 +59,81 @@ $URL_NETWORK  = '/view/net/sadm_view_subnet.php';                       # Networ
 $URL_PERF     = '/view/perf/sadm_server_perf_menu.php';                 # Performance Graph Menu URL
 $URL_PERF_DAY = '/view/perf/sadm_server_perf_adhoc_all.php';            # Yesterday Servers CPU Perf
 
+
+
 // ================================================================================================
 //                   Build Array Used by SideBar for Scripts Status 
 // ================================================================================================
 function build_sidebar_scripts_info() {
     
-        $DEBUG = FALSE;                                                 # Activate/Deactivate Debug
+    $DEBUG = FALSE;                                                     # Activate/Deactivate Debug
     
-        # Reset All Counters
-        $count=0;                                                       # Working Counter
-        $script_array = array() ;
+    # Reset All Counters
+    $count=0;                                                           # Working Counter
+    $script_array = array() ;
     
-        # Form the base directory name where all the servers 'rch' files are located
-        $RCH_ROOT = $_SERVER['DOCUMENT_ROOT'] . "/dat/";                # $SADMIN/www/dat
-        if ($DEBUG) { echo "<br>Opening $RCH_ROOT directory "; }        # Debug Display RCH Root Dir
+    # Form the base directory name where all the servers 'rch' files are located
+    $RCH_ROOT = $_SERVER['DOCUMENT_ROOT'] . "/dat/";                    # $SADMIN/www/dat
+    if ($DEBUG) { echo "<br>Opening $RCH_ROOT directory "; }            # Debug Display RCH Root Dir
     
-        # Make sure that the DATA Root directory is a directory
-        if (! is_dir($RCH_ROOT)) {
-            $msg="The $RCH_ROOT directory doesn't exist !\nCorrect the situation and retry operation";
-            alert ("$msg");
-            ?><script type="text/javascript">history.go(-1);</script><?php
-            exit;
-        }
+    # Make sure that the DATA Root directory is a directory
+    if (! is_dir($RCH_ROOT)) {
+        $msg="The $RCH_ROOT directory doesn't exist !\nCorrect the situation and retry operation";
+        alert ("$msg");
+        ?><script type="text/javascript">history.go(-1);</script><?php
+        exit;
+    }
     
-        # Create unique filename that will contains all servers *.rch filename
-        $tmprch = tempnam ('tmp/', 'ref_rch_file-');                        # Create unique file name
-        if ($DEBUG) { echo "<br>Temp file of rch filename : " . $tmprch;}   # Show unique filename
-        $CMD="find $RCH_ROOT -name '*.rch'  > $tmprch";                     # Construct find command
-        if ($DEBUG) { echo "<br>Command executed is : " . $CMD ; }          # Show command constructed
-        $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute find command
-        if ($DEBUG) { echo "<br>Return code of command is : " . $RCODE ; }  # Display Return Code
+    # Create unique filename that will contains all servers *.rch filename
+    $tmprch = tempnam ('tmp/', 'ref_rch_file-');                        # Create unique file name
+    if ($DEBUG) { echo "<br>Temp file of rch filename : " . $tmprch;}   # Show unique filename
+    $CMD="find $RCH_ROOT -name '*.rch'  > $tmprch";                     # Construct find command
+    if ($DEBUG) { echo "<br>Command executed is : " . $CMD ; }          # Show command constructed
+    $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute find command
+    if ($DEBUG) { echo "<br>Return code of command is : " . $RCODE ; }  # Display Return Code
     
-        # Open input file containing the name of all rch filenames
-        $input_fh  = fopen("$tmprch","r") or die ("can't open ref-rch file - " . $tmprch);
+    # Open input file containing the name of all rch filenames
+    $input_fh  = fopen("$tmprch","r") or die ("can't open ref-rch file - " . $tmprch);
     
-        # Loop through filename list in the file
-        while(! feof($input_fh)) {
-            $wfile = trim(fgets($input_fh));                                # Read rch filename line
-            if ($DEBUG) { echo "<br>Processing file :<br>" . $wfile; }      # Debug Show rch filename
-            if ($wfile != "") {                                             # If filename not blank
-                $line_array = file($wfile);                                 # Reads entire file in array
-                $last_index = count($line_array) - 1;                       # Get Index of Last line
-                if ($last_index > 0) {                                      # If last Element Exist
-                    if ($line_array[$last_index] != "") {                   # If None Blank Last Line
-                        $tag = explode(" ",$line_array[$last_index]);
-                        $num_tags = count($tag);
-#                        echo "<br>Line Skipped : $line_array[$last_index]\n<br>Only $num_tags elements.<br>";
-                        if ($num_tags == 9) {
-                            list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ccode) = explode(" ",$line_array[$last_index], 9);
-                            $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". $calert .",". trim($ccode) .",". basename($wfile) ."\n";
-                            if ($DEBUG) {                                       # In Debug Show Output Line
-                                echo "<br>Output line is " . $outline ;         # Print Output Line
-                            }
-                            $count+=1;
-                            # Key is "StartDate + StartTime + FileName"
-                            $akey = $cdate1 ."_". $ctime1 ."_". basename($wfile);
-                            if ($DEBUG) {  echo "<br>AKey is " . $akey ;  }      # Print Array Key
-                            if (array_key_exists("$akey",$script_array)) {
-                                $script_array[$akey] = $outline . "_" . $count ;
-                            }else{
-                                $script_array[$akey] = $outline ;
-                            }
+    # Loop through filename list in the file
+    while(! feof($input_fh)) {
+        $wfile = trim(fgets($input_fh));                                # Read rch filename line
+        if ($DEBUG) { echo "<br>Processing file :<br>" . $wfile; }      # Debug Show rch filename
+        if ($wfile != "") {                                             # If filename not blank
+            $line_array = file($wfile);                                 # Reads entire file in array
+            $last_index = count($line_array) - 1;                       # Get Index of Last line
+            if ($last_index > 0) {                                      # If last Element Exist
+                if ($line_array[$last_index] != "") {                   # If None Blank Last Line
+                    $tag = explode(" ",$line_array[$last_index]);       # Split Line space delimited
+                    $num_tags = count($tag);                            # Nb Elements on lines
+#                    echo "<br>Line Skipped : $line_array[$last_index]\n<br>Only $num_tags elements.<br>";
+                    if ($num_tags == 10) {
+                        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode) = explode(" ",$line_array[$last_index], 10);
+                        $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". $calert .",". $ctype . "," . trim($ccode) .",". basename($wfile) ."\n";
+                        if ($DEBUG) {                                       # In Debug Show Output Line
+                            echo "<br>Output line is " . $outline ;         # Print Output Line
+                        }
+                        $count+=1;
+                        # Key is "StartDate + StartTime + FileName"
+                        $akey = $cdate1 ."_". $ctime1 ."_". basename($wfile);
+                        if ($DEBUG) {  echo "<br>AKey is " . $akey ;  }      # Print Array Key
+                        if (array_key_exists("$akey",$script_array)) {
+                            $script_array[$akey] = $outline . "_" . $count ;
+                        }else{
+                            $script_array[$akey] = $outline ;
                         }
                     }
                 }
             }
         }
-        fclose($input_fh);                                                  # Close Input Filename List
-        krsort($script_array);                                              # Reverse Sort Array on Keys
-        unlink($tmprch);                                                    # Delete Temp File
-        # Under Debug - Display The Array Used to build the SideBar
-        if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key is $key and value is $value";}}
-        return $script_array;
+    }
+
+    fclose($input_fh);                                                  # Close Input Filename List
+    krsort($script_array);                                              # Reverse Sort Array on Keys
+    unlink($tmprch);                                                    # Delete Temp File
+    # Under Debug - Display The Array Used to build the SideBar
+    if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key is $key and value is $value";}}
+    return $script_array;
     }
 
 
@@ -382,7 +387,7 @@ function SideBar_OS_Summary() {
 
     # Loop through Script Array to count Different Return Code
     foreach($script_array as $key=>$value) {
-        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ccode,$cfile) = explode(",", $value);
+        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode,$cfile) = explode(",", $value);
         if ($ccode == 0) { $TOTAL_SUCCESS += 1; }
         if ($ccode == 1) { $TOTAL_FAILED  += 1; }
         if ($ccode == 2) { $TOTAL_RUNNING += 1; }
