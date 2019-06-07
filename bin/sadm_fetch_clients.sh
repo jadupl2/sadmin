@@ -44,10 +44,11 @@
 # 2019_01_18  Fix: sadm_fetch_client.sh v2.30 - Fix O/S Update crontab generation.
 # 2019_01_26  Added: v2.31 Add to test if crontab file exist, when run for first time.
 # 2019_02_19  Added: v2.32 Copy script rch file in global dir after each run.
-#@2019_04_12  Fix: v2.33 Create Web rch directory, if not exist when script run for the first time.
-#@2019_04_17  Update: v2.34 Show Processing message only when active servers are found.
-#@2019_05_07  Update: v2.35 Change Send Alert parameters for Library 
-#@2019_05_23  Update: v2.36 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
+# 2019_04_12  Fix: v2.33 Create Web rch directory, if not exist when script run for the first time.
+# 2019_04_17  Update: v2.34 Show Processing message only when active servers are found.
+# 2019_05_07  Update: v2.35 Change Send Alert parameters for Library 
+# 2019_05_23  Update: v2.36 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
+#@2019_06_06  Fix: v2.37 Fix problem sending alert type was 2 and 3, now have alert stat at the end.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -84,7 +85,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.36'                              # Current Script Version
+    export SADM_VER='2.37'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -121,6 +122,9 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 OS_SCRIPT="${SADM_BIN_DIR}/sadm_osupdate_farm.sh" ; export OS_SCRIPT    # OSUpdate Script in crontab
 BA_SCRIPT="${SADM_BIN_DIR}/sadm_backup.sh"        ; export BA_SCRIPT    # Backup Script in crontab
 REBOOT_SEC=900                                    ; export REBOOT_SEC   # O/S Upd Reboot Nb Sec.wait
+#
+# Reset Totals Counters
+export total_alert=0 ; export total_duplicate=0 ; export total_ok=0 ; export total_error=0      
 
 
 # --------------------------------------------------------------------------------------------------
@@ -748,23 +752,23 @@ check_for_alert()
                 etime="${wdate} ${wtime}"                               # Combine Event Date & Time
                 if [ ${line:0:1} = "W" ] || [ ${line:0:1} = "w" ]       # If it is a Warning
                     then etype="W"                                      # Set Event Type to Warning
-                         egroup=`echo $line | awk -F\; '{ print $8 }'`  # Get Warning Alert Group
-                         esubject="$emess"                              # Specify it is a Warning
+                         egname=`echo $line | awk -F\; '{ print $8 }'`  # Get Warning Alert Group
+                         esub="$emess"                              # Specify it is a Warning
                 fi
                 if [ ${line:0:1} = "I" ] || [ ${line:0:1} = "i" ]       # If it is an Info
                     then etype="I"                                      # Set Event Type to Info
-                         egroup=`echo $line | awk -F\; '{ print $8 }'`  # Get Info Alert Group
-                         esubject="$emess"                              # Specify it is an Info
+                         egname=`echo $line | awk -F\; '{ print $8 }'`  # Get Info Alert Group
+                         esub="$emess"                              # Specify it is an Info
                 fi
                 if [ ${line:0:1} = "E" ] || [ ${line:0:1} = "e" ]       # If it is an Info
                     then etype="E"                                      # Set Event Type to Error
-                         egroup=`echo $line | awk -F\; '{ print $9 }'`  # Get Error Alert Group
-                         esubject="$emess"                              # Specify it is a Error
+                         egname=`echo $line | awk -F\; '{ print $9 }'`  # Get Error Alert Group
+                         esub="$emess"                              # Specify it is a Error
                 fi
                 if [ $SADM_DEBUG -gt 0 ] 
-                    then sadm_writelog "sadm_send_alert $etype $etime $ehost $egroup $esubject $emess" 
+                    then sadm_writelog "sadm_send_alert $etype $etime $ehost $egname $esub $emess" 
                 fi
-                sadm_send_alert "$etype" "$etime" "$ehost" "$egroup" "$esubject" "$emess" ""  
+                sadm_send_alert "$etype" "$etime" "$ehost" "$egname" "$esub" "$emess" ""  
                 done 
         else sadm_writelog  "No error reported by SysMon report files (*.rpt)" 
     fi
@@ -772,40 +776,79 @@ check_for_alert()
 
 
     # ----------
-    # Process All Error encountered in scripts (last Line of rch that end with a 1)
+    # Process All Lines tht doesn't finish with a code 2(Running).
+    # Only lines terminated by a code 1(Error) or 0(Success) will be processed.
     # Example of line in rch file
-    #   holmes 2018.09.18 11:48:53 2018.09.18 11:48:53 00:00:00 sadm_template default 1
-    #   raspi2 2019.05.07 01:31:00 2019.05.07 01:34:25 00:03:25 sadm_osupdate default 1
+    #   holmes 2018.09.18 11:48:53 2018.09.18 11:48:53 00:00:00 sadm_template default 0 1
+    #   raspi2 2019.05.07 01:31:00 2019.05.07 01:34:25 00:03:25 sadm_osupdate default 1 1
     # ----------
-    # Gather all last line of all *rch files that end with a 1 (Error)
+    # Gather all last line of all *rch files that end with a 0 (Success) or 1 (Error)
     sadm_writelog " "
-    sadm_writelog "Check All Servers [R]esult [C]ode [H]istory Scripts Files for Errors"
-    find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($9,/1/) { print }' 
-    find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($9,/1/) { print }' > $SADM_TMP_FILE2 2>&1
-    if [ -s "$SADM_TMP_FILE2" ]                                         # If File Not Zero in Size
-        then cat $SADM_TMP_FILE2 | while read line                      # Read Each Line of file
-                do                
-                if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
-                etype="S"                                               # Set Script Event Type 
-                ehost=`echo $line   | awk '{ print $1 }'`               # Get Hostname for Event
-                wdate=`echo $line   | awk '{ print $4 }'`               # Get Script Ending Date 
-                wtime=`echo $line   | awk '{ print $5 }' `              # Get Script Ending Time 
-                wtime=`echo ${wtime:0:5}`                               # Eliminate the Seconds
-                etime="${wdate} ${wtime}"                               # Combine Event Date & Time 
-                escript=`echo $line | awk '{ print $7 }'`               # Get Script Name 
-                egroup=`echo $line  | awk '{ print $8 }'`               # Get Script Alert Group
-                esubject="$escript reported an error on $ehost"         # Alert Subject
-                emess="Script '$escript' failed on '$ehost'"            # Create Script Error Mess.
-                if [ $SADM_DEBUG -gt 0 ] 
-                    then sadm_writelog "sadm_send_alert '$etype' '$etime' '$ehost' '$egroup' '$esubject' '$emess'" 
-                fi
-                sadm_send_alert "$etype" "$etime" "$ehost" "$egroup" "$esubject" "$emess" ""
-                done 
-        else sadm_writelog  "No error reported by any scripts files (*.rch)" 
-    fi
-    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
-    sadm_writelog " "                                                   # Separation Blank Line
+    sadm_writelog "Check All Servers [R]esult [C]ode [H]istory Scripts Files."
+#    find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($NF,/1/) { print }' 
+#    find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($NF,/1/) { print }' > $SADM_TMP_FILE2 2>&1
+    #find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($NF,/[0-1]/) { print }' 
+    find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($NF,/[0-1]/) { print }' > $SADM_TMP_FILE2 2>&1
 
+    # If No file to process
+    if [ ! -s "$SADM_TMP_FILE2" ]                                       # If File Zero in Size
+        then sadm_writelog  "No error reported by any scripts files (*.rch)" 
+             sadm_writelog "${SADM_TEN_DASH}"                           # Print 10 Dash lineHistory
+             sadm_writelog " "                                          # Separation Blank Line
+             return 0                                                   # Return to Caller
+    fi
+
+    #total_alert=0 ; total_duplicate=0 ; total_ok=0 ; total_error=0      # Reset Totals Counters
+    cat $SADM_TMP_FILE2 | { while read line                               # Read Each Line of file
+        do                
+        if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "Processing Line=$line" ; fi
+        etype="S"                                                       # Event Type = S for Script
+        ehost=`echo $line   | awk '{ print $1 }'`                       # Hostname of Event
+        wdate=`echo $line   | awk '{ print $4 }'`                       # Get Script Ending Date 
+        wtime=`echo $line   | awk '{ print $5 }' `                      # Get Script Ending Time 
+        wtime=`echo ${wtime:0:5}`                                       # Eliminate the Seconds
+        etime="${wdate} ${wtime}"                                       # Event Date & Time Combined
+        escript=`echo $line | awk '{ print $7 }'`                       # Script Name 
+        egname=`echo $line  | awk '{ print $8 }'`                       # Alert Group Name
+        egtype=`echo $line  | awk '{ print $9 }'`                       # Alert Group Type [0,1,2,3]
+        ecode=`echo $line   | awk '{ print $10 }'`                      # Return Code (0,1)
+        if [ "$ecode" = "1" ]                                           # Script Ended with Error
+           then esub="$escript ended with error on $ehost"              # Alert Subject
+                emess="Script '$escript' failed on '$ehost'"            # Alert Message
+           else esub="$escript ran with success on $ehost"              # Alert Subject
+                emess="Script '$escript' ran with success on '$ehost'"  # Alert Message
+        fi
+        elogfile="${ehost}_${escript}.log"                              # Build Log File Name
+        elogname="${SADM_WWW_DAT_DIR}/${ehost}/log/${elogfile}"         # Build Log Full Path File
+        if [ -e "$elogname" ]                                           # If Log file exist
+           then eattach="$elogname"                                     # Set Attachment to LogName
+           else eattach=""                                              # Clear Attachment LogName
+        fi
+                
+        # if [ "1" = "" -a "1" = "1" ] ; then echo A; else echo B; fi 
+        if [ "$egtype" = "1" -a "$ecode" = "1" ] || 
+           [ "$egtype" = "2" -a "$ecode" = "0" ] || [ "$egtype" = "3" ]  
+           then total_alert=`expr $total_alert + 1`                     # Incr. Alert counter
+                sadm_send_alert "$etype" "$etime" "$ehost" "$egname" "$esub" "$emess" "$eattach"
+                RC=$?
+                if [ "$RC" = "0" ] ; then total_ok=`expr $total_ok + 1` ; fi
+                if [ "$RC" = "1" ] ; then total_error=`expr $total_error + 1` ; fi
+                if [ "$RC" = "2" ] ; then total_duplicate=`expr $total_duplicate + 1` ; fi
+                if [ $SADM_DEBUG -gt 0 ]                                # Under Debug Show Parameter
+                   then dmess="'$etype' '$etime' '$ehost' '$egname'"    # Build Mess to see Param.
+                        dmess="$dmess '$esub' '$emess' '$eattach'"      # Build Mess to see Param.
+                        sadm_writelog "sadm_send_alert $dmess RC=$RC"   # Show User Paramaters sent
+                fi
+        fi
+        done 
+        sadm_writelog " "                                               # Separation Blank Line
+        sadm_writelog "Alert submitted             : $total_alert"
+        sadm_writelog "New alert sent successfully : $total_ok"
+        sadm_writelog "Alert error trying to send  : $total_error"
+        sadm_writelog "Alert already sent          : $total_duplicate"
+        sadm_writelog " "                                               # Separation Blank Line
+        sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
+        }                                                               # make Total Avail out of loop
 }
 
 
@@ -861,7 +904,7 @@ check_for_alert()
     fi
 
     # Process All Active Linux/Aix servers
-    LINUX_ERROR=0; AIX_ERROR=0                                          # Init. Error count to 0
+    LINUX_ERROR=0; AIX_ERROR=0 ; MAC_ERROR=0                             # Init. Error count to 0
     process_servers "linux"                                             # Process Active Linux
     LINUX_ERROR=$?                                                      # Save Nb. Errors in process
     process_servers "aix"                                               # Process Active Aix
