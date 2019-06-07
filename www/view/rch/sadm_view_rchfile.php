@@ -28,6 +28,8 @@
 #       V2.1 Correct Bug - Not showing last line of RCH when it was a running state (dot Date/Time)
 # 2018_07_21  v2.2 Make screen more compact
 #@2018_09_16  v2.3 Added Alert Group Display on Page
+#@2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
+#
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -56,7 +58,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.3" ;                                                        # Current version number
+$SVER  = "2.4" ;                                                        # Current version number
 
 
 # ==================================================================================================
@@ -78,6 +80,7 @@ function setup_table() {
     echo "\n<th>End Time</th>";
     echo "\n<th>Elapse Time</th>";
     echo "\n<th>Alert Group</th>";
+    echo "\n<th>Alert Type</th>";
     echo "\n<th>Status</th>";
     echo "\n</tr>";
     echo "\n</thead>\n";
@@ -92,6 +95,7 @@ function setup_table() {
     echo "\n<th>End Time</th>";
     echo "\n<th>Elapse Time</th>";
     echo "\n<th>Alert Group</th>";
+    echo "\n<th>Alert Type</th>";
     echo "\n<th>Status</th>";
     echo "\n</tr>";
     echo "\n</tfoot>\n\n";
@@ -110,7 +114,7 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
 
     $fh = fopen($WFILE, "r") or exit("Unable to open file" . $WFILE);   # Open RCH  Requested file
     while (($wline = fgets($fh)) !== false) {                           # If Still Line to read
-        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapse,$cname,$calert,$ccode) = explode(" ",$wline);
+        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapse,$cname,$calert,$ctype,$ccode) = explode(" ",$wline);
         if ($cserver == $WHOST) {
             $count+=1;
             echo "\n<tr>";
@@ -122,7 +126,29 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
             echo "\n<td class='dt-center'>" . $cdate2  . "</td>";
             echo "\n<td class='dt-center'>" . $ctime2  . "</td>";
             echo "\n<td class='dt-center'>" . $celapse . "</td>";
-            echo "\n<td class='dt-center'>" . $calert . "</td>";
+            echo "\n<td class='dt-center'>" . $calert  . "</td>";
+
+            # DISPLAY THE ALERT GROUP TYPE (0=None 1=AlertOnErr 2=AlertOnOK 3=Always)
+             echo "\n<td class='dt-center'>";
+             switch ($ctype) {
+                 case 0:  
+                     echo "0 (No alert)</td>";
+                     break;
+                 case 1:  
+                     echo "1 (Alert on error)</td>";
+                     break;
+                 case 2:  
+                     echo "2 (Alert on Success)</td>";
+                     break;
+                 case 3:  
+                     echo "3 (Always alert)</td>";
+                     break;
+                 default: 
+                     echo "<font color='red'>Wront type " .$ctype. "</font></td>";
+                     break;;
+             }           
+
+            # DISPLAY THE RESULT CODE 
             switch ($ccode) {
                 case 0:     echo "\n<td class='dt-center'>Success</td>";
                             break;
