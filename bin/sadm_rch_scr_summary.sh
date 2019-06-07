@@ -29,6 +29,7 @@
 # 2018_11_21 v1.10 Add Change some Email header Titles.
 #@2019_04_02 Fix: v1.11 Doesn't report an error anymore when last line is blank.
 #@2019_05_07 Update: v1.12 Change send_alert calling parameters
+#@2019_06_07 Update: v1.13 Change made to adapt to new field (alarm type) in RCH file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -53,7 +54,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.12'                               # Current Script Version
+    export SADM_VER='1.13'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -71,7 +72,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #---------------------------------------------------------------------------------------------------
 #
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But they can be overriden here on a per script basis.
+    # But they can be overridden here on a per script basis.
     #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
     #export SADM_ALERT_GROUP="default"                   # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
@@ -87,7 +88,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
 #
-FIELD_IN_RCH=9                                  ; export FIELD_IN_RCH   # Nb of field in a RCH File
+FIELD_IN_RCH=10                                 ; export FIELD_IN_RCH   # Nb of field in a RCH File
 line_per_page=20                                ; export line_per_page  # Nb of line per scr page
 xcount=0                                        ; export xcount         # Index for our array
 xline_count=0                                   ; export xline_count    # Line display counter
@@ -131,13 +132,14 @@ display_heading()
 {
     if [ "$PAGER" = "ON" ] || ( [ "$PAGER" = "OFF" ]  &&  [ "$WATCH" = "ON" ] )
         then tput clear ; 
-             echo -e "${bblue}${white}\c"
-             echo -e "`date +%Y/%m/%d`                           Server Farm Scripts Summary Report \c"
-             echo -e "                            `date +%H:%M:%S`"  
-             echo -e "Count    Status  Server       Script   \c"
-             echo -e "                         Date     Start      End    Elapse  Alert Grp"
-             echo -e "==================================================\c"
-             echo -e "==========================================================${reset}"
+             #echo -e "`date +%Y/%m/%d`                           Server Farm Scripts Summary Report \c"
+             #echo -e "                            `date +%H:%M:%S`"  
+             printf "%-32s %-65s " "`date +%Y/%m/%d`" "Server Farm Scripts Summary Report" 
+             printf "%8s\n" "`date +%H:%M:%S`"
+             printf "%67s     %-8s %-7s %-9s %-5s\n" "Start" "Start" "End" "Elapse" "Alert"
+             printf "%-6s %-7s %-12s %-32s" "Count" "Status" "Server" "Script"
+             printf "%6s %9s %8s %8s   %s\n" "Date" "Time" "Time" "Time" "Group/Type"
+             printf "%108s\n" |tr " " "="
     fi
 }
 
@@ -156,9 +158,10 @@ display_detail_line()
     WTIME2=`  echo $DLINE | awk '{ print $5 }'`                         # Extract Time Ended
     WELAPSE=` echo $DLINE | awk '{ print $6 }'`                         # Extract Time Ended
     WSCRIPT=` echo $DLINE | awk '{ print $7 }'`                         # Extract Script Name
-    WALERT=`  echo $DLINE | awk '{ print $8 }'`                         # Extract Alert Code
-    WRCODE=`  echo $DLINE | awk '{ print $9 }'`                         # Extract Return Code 
-    case "$WRCODE" in                                                   # Case on Return Code
+    WALERT=`  echo $DLINE | awk '{ print $8 }'`                         # Extract Alert Group Name
+    WTYPE=`   echo $DLINE | awk '{ print $9 }'`                         # Extract Alert Group Type
+    WRCODE=`  echo $DLINE | awk '{ print $10 }'`                        # Extract Last Field RCHCode
+    case "$WRCODE" in                                                   # Case on RCH Return Code
         0 ) WRDESC="✔ Success"                                          # Code 0 = Success
             ;; 
         1 ) WRDESC="✖ Error  "                                          # Code 1 = Error
@@ -168,8 +171,8 @@ display_detail_line()
         * ) WRDESC="CODE $WRCODE"                                       # Illegal Code  Desc
             ;;                                                          
     esac
-    RLINE1=`printf "[%04d] %10s %-12s %-30s " "$xcount" "$WRDESC" "${WSERVER}" "${WSCRIPT}"  `
-    RLINE2=`printf "%s %s %s %s %s"  "${WDATE1}" "${WTIME1}" "${WTIME2}" "${WELAPSE}" "${WALERT}"`
+    RLINE1=`printf "%04d %10s %-12s %-30s " "$xcount" "$WRDESC" "${WSERVER}" "${WSCRIPT}"  `
+    RLINE2=`printf "%s %s %s %s %s/%s"  "${WDATE1}" "${WTIME1}" "${WTIME2}" "${WELAPSE}" "${WALERT}" "${WTYPE}"`
     RLINE="${RLINE1}${RLINE2}"                                          # Wrap 2 lines together
     if [ "$MAIL_ONLY" = "OFF" ]                                         # No Mail include color
         then if [ $WRCODE -eq 0 ] ; then echo -e "${white}\c" ;fi       # white For Good Finish Job
@@ -198,7 +201,8 @@ load_array()
     # A Temp file that containing the LAST line of each *.rch file present in ${SADMIN}/www/dat dir.
     # ----------------------------------------------------------------------------------------------
     find $SADM_WWW_DAT_DIR -type f -name "*.rch" -exec tail -1 {} \; > $SADM_TMP_FILE2
-    sort -t' ' -rk9,9 -k2,3 -k7,7 $SADM_TMP_FILE2 > $SADM_TMP_FILE1     # Sort by Return Code & date
+    #sort -t' ' -rk9,9 -k2,3 -k7,7 $SADM_TMP_FILE2 > $SADM_TMP_FILE1     # Sort by Return Code & date
+    sort -t' ' -rk10,10 -k2,3 -k7,7 $SADM_TMP_FILE2 > $SADM_TMP_FILE1     # Sort by Return Code & date
 
     # If Option -s was used on the command line to get the report for only the one specified.
     if [ "$SERVER_NAME" != "" ]                                         # CmdLine -s 1 server Report
@@ -290,8 +294,9 @@ rch2html()
         WTIME2=` echo -e $wline | awk '{ print $5 }'`                   # Extract Time Ended
         WELAPSE=`echo -e $wline | awk '{ print $6 }'`                   # Extract Time Ended
         WSCRIPT=`echo -e $wline | awk '{ print $7 }'`                   # Extract Script Name
-        WALERT=` echo -e $wline | awk '{ print $8 }'`                   # Extract Alert Group 
-        WRCODE=` echo -e $wline | awk '{ print $9 }'`                   # Extract Return Code 
+        WALERT=` echo -e $wline | awk '{ print $8 }'`                   # Extract Alert Group Name
+        WTYPE=`  echo -e $wline | awk '{ print $9 }'`                   # Extract Alert Group Type
+        WRCODE=` echo -e $wline | awk '{ print $10 }'`                  # Extract Return Code 
         WRDESC="CODE $WRCODE"                                           # Illegal Code  Desc
         if [ "$WRCODE" = "0" ] ; then WRDESC="✔ Success" ; fi           # Code 0 = Success
         if [ "$WRCODE" = "1" ] ; then WRDESC="✖ Error  " ; fi           # Code 1 = Error
@@ -573,15 +578,15 @@ main_process()
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
 
     # Record in rch file that didn't have 9 fields (Wrong format) were written to $SADM_TMP_FILE3
-    if [ -s "$SADM_TMP_FILE3" ]                                         # If File size > than 0
-        then wsubject="Invalid formatted line(s) in RCH file(s)"        # Mail Message
-             echo "$wsubject"                                           # Display Msg to user
-             nl $SADM_TMP_FILE3                                         # Display file content
-             wmsg="See attachment for the list of lines without $FIELD_IN_RCH fields."
-             wmess="Script name: $SADM_PN\nEvent Date: `date`\n${wmsg}\n"
-             wtime=`date "+%Y.%m.%d %H:%M"`
-             sadm_send_alert "W" "$wtime" "$SADM_HOSTNAME" "default" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
-    fi
+   if [ -s "$SADM_TMP_FILE3" ]                                         # If File size > than 0
+       then wsubject="Invalid formatted line(s) in RCH file(s)"        # Mail Message
+            echo "$wsubject"                                           # Display Msg to user
+            nl $SADM_TMP_FILE3                                         # Display file content
+            wmsg="See attachment for the list of lines without $FIELD_IN_RCH fields."
+            wmess="Script name: $SADM_PN\nEvent Date: `date`\n${wmsg}\n"
+            wtime=`date "+%Y.%m.%d %H:%M"`
+            sadm_send_alert "W" "$wtime" "$SADM_HOSTNAME" "default" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
+   fi
 
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
