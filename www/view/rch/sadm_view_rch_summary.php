@@ -29,6 +29,7 @@
 #       2.1 Change to use sadm_view_file instead of sadm_view_log 
 # 2018_07_21  v2.2 Screen disposition adjustments
 #@2018_09_16  v2.3 Added Alert group Display 
+#@2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -58,11 +59,13 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.3" ;                                                        # Current version number
+$SVER  = "2.4" ;                                                        # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View RCH File Content URL
 $URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
+
+
 
 # ==================================================================================================
 # SETUP TABLE HEADER AND FOOTER
@@ -83,7 +86,8 @@ function setup_table() {
     echo "<th class='dt-center'>Start Time</th>\n";
     echo "<th class='dt-head-center'>End Time</th>\n";
     echo "<th class='dt-head-left'>Elapse</th>\n";
-    echo "<th class='dt-head-center'>Alert Grp</th>\n";
+    echo "<th class='dt-head-center'>Alert Group</th>\n";
+    echo "<th class='dt-head-center'>Alert Type</th>\n";
     echo "<th class='dt-head-left'>Status</th>\n"; 
     echo "<th class='dt-head-left'>History</th>\n"; 
     echo "<th class='dt-head-left'>Log</th>\n"; 
@@ -99,7 +103,8 @@ function setup_table() {
     echo "<th class='dt-center'>Start Time</th>\n";
     echo "<th class='dt-head-center'>End Time</th>\n";
     echo "<th class='dt-head-left'>Elapse</th>\n";
-    echo "<th class='dt-head-center'>Alert Grp</th>\n";
+    echo "<th class='dt-head-center'>Alert Group</th>\n";
+    echo "<th class='dt-head-center'>Alert Type</th>\n";
     echo "<th class='dt-head-left'>Status</th>\n"; 
     echo "<th class='dt-head-left'>History</th>\n"; 
     echo "<th class='dt-head-left'>Log</th>\n"; 
@@ -120,7 +125,7 @@ function display_script_array($con,$wpage_type,$script_array) {
     
     # LOOP THROUGH THE SCRIPT ARRAY ----------------------------------------------------------------
     foreach($script_array as $key=>$value) { 
-        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ccode,$cfile) = 
+        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode,$cfile) = 
             explode(",", $value);                                       # Split Script RCH Data Line
             
         # IF PAGE TYPE SELECTED MATCH THE RETURN CODE OF RCH FILE OR ALL SCRIPT SELECTED, DISPLAY IT
@@ -153,8 +158,29 @@ function display_script_array($con,$wpage_type,$script_array) {
                 echo "\n<td class='dt-left'>"   . $celapsed . "</td>";  # Script Elapse Time
             }
 
-            echo "\n<td class='dt-center'>" . $calert  . "</td>";       # Alert Group
-
+            echo "\n<td class='dt-center'>" . $calert  . "</td>";       # Alert Group Name & Type
+            #echo "\n<td class='dt-center'>" . $calert  . "/" . $ctype . "</td>";       # Alert Group Name & Type
+          
+            # DISPLAY THE ALERT GROUP TYPE (0=None 1=AlertOnErr 2=AlertOnOK 3=Always)
+            echo "\n<td class='dt-center'>";
+            switch ($ctype) {
+                case 0:  
+                    echo "0 (No alert)</td>";
+                    break;
+                case 1:  
+                    echo "1 (Alert on error)</td>";
+                    break;
+                case 2:  
+                    echo "2 (Alert on Success)</td>";
+                    break;
+                case 3:  
+                    echo "3 (Always alert)</td>";
+                    break;
+                default: 
+                    echo "<font color='red'>Wront type " .$ctype. "</font></td>";
+                    break;;
+            }
+          
             # DISPLAY THE SCRIPT STATUS BASED ON RETURN CODE ---------------------------------------
             echo "\n<td class='dt-left'><strong>";
             switch ($ccode) {
