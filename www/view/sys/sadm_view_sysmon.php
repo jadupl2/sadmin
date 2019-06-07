@@ -32,6 +32,8 @@
 #       2.2 Use Standard view file web page instead of custom vie log page
 # 2018_08_14 v2.3 Added Alert Group associated with event
 #@2018_09_30 v2.4 Enhance Performance, New Page Layout and Fix issue with rch new format.
+#@2019_06_07 Update: v2.5 Add Alarm type to page (Deal with new format).
+#
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -39,7 +41,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load P
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
-# DataTable Initialisation Function
+# DataTable Initialization Function
 ?>
 <script>
     $(document).ready(function() {
@@ -64,7 +66,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.4" ;                                                        # Current version number
+$SVER  = "2.5" ;                                                        # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -110,7 +112,7 @@ function load_sysmon_array() {
 
     # GET THE LAST LINE OF EVERY RCH FILE INTO THE TMP2 WORK FILE
     #$CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \; > $tmp_file2";
-    $CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \; | awk 'match($9,/[1-2]/) { print }' > $tmp_file2";
+    $CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \; | awk 'match($10,/[1-2]/) { print }' > $tmp_file2";
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }
     $a = exec ( $CMD , $FILE_LIST, $RCODE);
     if ($DEBUG) { 
@@ -142,8 +144,8 @@ function load_sysmon_array() {
 
 
     # CONVERT THESE RCH KIND OF LINES
-    # raspi2 2018.09.29 23:25:00 2018.09.29 23:25:17 00:00:17 sadm_client_housekeeping default 1
-    #   1        2         3         4        5        6               7                  8    9
+    # raspi2 2018.09.29 23:25:00 2018.09.29 23:25:17 00:00:17 sadm_client_housekeeping default 1 1
+    #   1        2         3         4        5        6               7                  8    9 10
     # TO THIS TYPE OF LINE (RPT)
     # Error;nano;2017.02.08;17:00;SERVICE;PROCESS;Service syslogd not running !;sadm;sadm;
     #   1    2       3        4      5       6             7                     8     9
@@ -158,7 +160,7 @@ function load_sysmon_array() {
         echo '</pre>';
         echo '</code>';                   
         }
-        list($whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$walert,$wcode) = explode(" ",$line);
+        list($whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$walert,$gtype,$wcode) = explode(" ",$line);
         $rdate = trim($wdate2);
         $rtime = substr(trim($wtime2),0,-3);
         switch (trim($wcode)) {
@@ -176,7 +178,7 @@ function load_sysmon_array() {
         $rhost      = trim($whost);
         $rmod       = "SADM";
         $rsubmod    = "SCRIPT";
-        $ralert      = "$walert";
+        $ralert      = "${walert}/${gtype}";
         $rdesc      = "Script " . $wscript;
         $LINE="${rtype};${rhost};${rdate};${rtime};${rmod};${rsubmod};${rdesc};${ralert};${ralert}\n";
         if ($DEBUG) { 
@@ -227,7 +229,7 @@ function sysmon_page_heading() {
     echo "\n<th class='dt-center'>Cat.</th>";
     echo "\n<th class='dt-head-left'>Server Description</th>";
     #echo "\n<th class='dt-center'>Module</th>";
-    echo "\n<th class='dt-center'>Alert Group</th>";
+    echo "\n<th class='dt-center'>Alert Group/Type</th>";
     echo "\n</tr>";
     echo "\n</thead>\n";
 
@@ -241,7 +243,7 @@ function sysmon_page_heading() {
     echo "\n<th class='dt-center'>Cat.</th>";
     echo "\n<th class='dt-head-left'>Server Description</th>";
     #echo "\n<th class='dt-center'>Module</th>";
-    echo "\n<th class='dt-center'>Alert Group</th>";
+    echo "\n<th class='dt-center'>Alert Group/Type</th>";
     echo "\n</tr>";
     echo "\n</tfoot>\n";
 }
