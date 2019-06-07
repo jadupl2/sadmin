@@ -98,6 +98,7 @@
 #@2019_05_16 Update: v3.00 Only one summary line is now added to RCH file when scripts are executed.
 #@2019_05_19 Update: v3.01 SADM_DEBUG_LEVEL change to SADM_DEBUG for consistency with Python Libr.
 #@2019_05_20 Update: v3.02 Eliminate `tput` warning when TERM variable was set to 'dumb'.
+#@2019_06_07 Update: v3.03 Create/Update the rch file using the new format & fix alerting bug.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -107,7 +108,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.02"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.03"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -1856,14 +1857,17 @@ sadm_start() {
             fi
     fi
 
-    # Feed the Return Code History File stating the script is Running
+    # Feed the (RCH) Return Code History File stating the script is Running (Code 2)
     #SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Statup Time of Script
     if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
         then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
              [ $(id -u) -eq 0 ] && chmod 664 $SADM_RCHLOG               # Change protection on RCH
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}
              WDOT=".......... ........ ........"                        # End Time & Elapse = Dot
-             echo "${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST $SADM_ALERT_GROUP 2" >>$SADM_RCHLOG
+             RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST"    # Format Part1 of RCH File
+             RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE 2"    # Format Part2 of RCH File
+             echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
+#             echo "${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST $SADM_ALERT_GROUP $SADM_ALERT_TYPE 2" >>$SADM_RCHLOG
     fi
 
     # If PID File exist and User want to run only 1 copy of the script - Abort Script
@@ -1923,7 +1927,7 @@ sadm_stop() {
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
     if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
-        then XCODE=`tail -1 ${SADM_RCHLOG}| awk '{ print $9 }'`         # Get RCH Code of last line
+        then XCODE=`tail -1 ${SADM_RCHLOG}| awk '{ print $NF }'`        # Get RCH Code of last line
              if [ "$XCODE" -eq 2 ]                                      # If last Line was code 2
                 then XLINE=`wc -l ${SADM_RCHLOG} | awk '{print $1}'`    # Actual Nb Line in RCH File
                      XCOUNT=`expr $XLINE - 1`                           # Count without last line
@@ -1933,7 +1937,8 @@ sadm_stop() {
              fi                     
              RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
              RCHLINE="$RCHLINE $sadm_elapse $SADM_INST"                 # Format Part2 of RCH File
-             RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_EXIT_CODE"       # Format Part3 of RCH File
+             RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE"      # Format Part3 of RCH File
+             RCHLINE="$RCHLINE $SADM_EXIT_CODE"                         # Format Part4 of RCH File
              echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
              if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]
                 then sadm_writelog "Trim History $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines"
@@ -2129,42 +2134,48 @@ sadm_send_alert() {
              sadm_writelog "----------"
     fi
 
-
     # To prevent duplicate alert, search History for the 'Alert ID' 
     alertid=`printf "%s;%s;%s;%s" "$atype" "$aserver" "$agroup" "$asubject"`
+    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Search History for \"$alertid\"" ; fi
     grep "$alertid" $SADM_ALERT_HIST  >>/dev/null 2>&1                  # Grep Message in History
     if [ $? -ne 0 ]                                                     # Same Alert was not found
-        then if [ "$LIB_DEBUG" -gt 4 ]                                  # Under Debug Mode > than 4
-                 then sadm_writelog "Search History for \"$alertid\""   # Search alert ID in History
-                      sadm_writelog "Same alert wasn't found"           # Show search result
-             fi                                                         # New Alert Proceed Normally
-        else if [ "$LIB_DEBUG" -gt 4 ]                                  # Under Debug Mode > than 4
-                 then sadm_writelog "Search History for \"$alertid\""   # Search alert ID in History
-                      sadm_writelog "Same alert was found"              # Show search result
-             fi                                                         # Same kind of alert found
-             alert_epoch=`grep "$alertid" $SADM_ALERT_HIST | tail -1 | awk -F\; '{print $1}'`
-             current_epoch=`date +%s`                                   # Get Current Epoch Time
-             ediff=`expr $current_epoch - $alert_epoch`                 # Nb Sec. Since Same Alert
-             sadm_writelog "EPOCH - Alert: $alert_epoch  Cur.:$current_epoch  Diff=$ediff"
-             if [ $ediff -gt 86400 ]                                    # Same Alert more than 24hr ago
-                then sadm_writelog "EPOCH - Alert: $alert_epoch  Cur.:$current_epoch  Diff=$ediff"
-                     sadm_writelog "Same alert more than 24 hours ago, consider as a new alert."
-                else if [ $SADM_ALERT_REPEAT -eq 0 ]                    # User want norepeat sameday
-                        then wmsg="Don't repeat alert on the same day"  # No repeat - Advise user
-                             sadm_writelog "$wmsg (SADM_ALERT_REPEAT set to $SADM_ALERT_REPEATS)."
-                             return 0                                   # Return to Caller 
-                        else if [ $ediff -le $SADM_ALERT_REPEAT ]       # Diff less than Repeat Time
-                                then msg="Same alert was sent $ediff seconds ago," 
-                                     msg="$msg which is less than $SADM_ALERT_REPEAT set in sadmin.cfg"
-                                     sadm_writelog "$msg"               # Show User Wait Time Sec.
-                                     return 0                           # Return 2 = Duplicate Alert
-                                else sadm_writelog "Repeating alert $alert_epoch - ($alertid)"
-                                     amessage="Repeat alert for : $amessage" 
-                             fi                                         
-                     fi                                                 
-             fi 
-    fi
+        then if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Same alert wasn't found" ; fi
+        else if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Same alert was found"    ; fi
 
+             # Get the Epoch Time of the last same alert, get current Epoch & calculate difference
+             aepoch=`grep "$alertid" $SADM_ALERT_HIST | tail -1 | awk -F\; '{print $1}'`
+             cepoch=`date +%s`                                          # Get Current Epoch Time
+             ediff=`expr $cepoch - $aepoch`                             # Nb Sec. Since Same Alert
+             if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "Alert:$aepoch Cur:$cepoch Dif=$ediff";fi
+  
+             # If last same alert time versus current, if greater than 24 hours, consider new alert.
+             if [ $ediff -gt 86400 ]                                    # If Time Diff > 24hr 
+                then if [ "$LIB_DEBUG" -gt 4 ] 
+                        then sadm_writelog "Consider a new alert, last alert older than 24hrs." 
+                     fi
+                     return 2 
+                else # We have same alert in the last 24 Hrs and user don't want any alert repeat.
+                     if [ $SADM_ALERT_REPEAT -eq 0 ]                    # User want norepeat sameday
+                        then wmsg="Don't repeat alert on the same day"  # No repeat - Advise user
+                             if [ "$LIB_DEBUG" -gt 4 ] 
+                                then sadm_writelog "$wmsg (SADM_ALERT_REPEAT set to $SADM_ALERT_REPEAT)."
+                             fi
+                             return 2                                   # Return to Caller 
+                     fi
+                     # Have same alert in the last 24 Hrs and User want Alert repeat every xxxx Sec.
+                     if [ $ediff -le $SADM_ALERT_REPEAT ]               # Diff less than Repeat Time
+                        then msg="Same alert was sent $ediff seconds ago," # Didn't wait enough 
+                             msg="$msg which is less than $SADM_ALERT_REPEAT set in sadmin.cfg"
+                             if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "$msg" ;fi 
+                             return 2                                   # Return to Caller
+                     fi
+                     # Have same alert in the last 24 Hrs and Alert repeat time is reach, continue..
+                     if [ "$LIB_DEBUG" -gt 4 ] 
+                        then sadm_writelog "Repeating alert $aepoch, ($alertid)"
+                     fi
+                     amessage="Repeat alert for : $amessage"            # Add 'Repeat' to Message
+             fi
+    fi  
 
     # Determine if a [M]ail, [S]lack, [T]exto [C]ellular  Message need to be issued
     agroup_type=`grep -i "^$agroup " $SADM_ALERT_FILE |awk '{ print $2 }'` # [S/M/T/C] Group
@@ -2187,13 +2198,7 @@ sadm_send_alert() {
 
     # Send the Alert Message using the type of alert requested
     case "$agroup_type" in
-        M)  # If Script Error include URL to view script log in message
-            if [ "$atype" = "S" ]                                       # If Mail concerning Script
-                then SNAME=`echo ${asubject} |awk '{ print $1 }'`       # Get Script Name
-                     LOGFILE="${aserver}_${SNAME}.log"                  # Build Log Script Name
-                     aattach="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}" # Whereis Log File
-            fi
-            send_email_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
+        M)  send_email_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
             RC=$?                                                       # Save Return Code 
             ;;
         C)  send_cellular_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
