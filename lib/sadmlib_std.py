@@ -43,6 +43,8 @@
 #@2019_05_16 Update: v3.01 New 'st.show_version()' function, libr. debug variable (st.lib_debug), 
 #                    script alert not send by script anymore but by SADMIN master.
 #@2019_05_20 Fix: v3.02 Was not loading Storix mount point directory info.
+#@2019_06_07 Update: v3.03 Create/Update the rch file using the new format (with alarm type).
+#
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -114,7 +116,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.02"                                # This Library Version
+        self.libver             = "3.03"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -1204,7 +1206,7 @@ class sadmtools():
                 print ("Error Number : {0}\r\n.format(e.errno)")        # Print Error Number
                 print ("Error Text   : {0}\r\n.format(e.strerror)")     # Print Error Message
                 sys.exit(1)
-            rch_line="%s %s %s %s %s %s" % (self.hostname,start_time,".......... ........ ........",self.inst,self.cfg_alert_group,"2")
+            rch_line="%s %s %s %s %s %s %s" % (self.hostname,start_time,".......... ........ ........",self.inst,self.cfg_alert_group,self.cfg_alert_type,"2")
             FH_RCH_FILE.write ("%s\n" % (rch_line))                     # Write Line to RCH Log
             FH_RCH_FILE.close()                                         # Close RCH File
         return 0
@@ -1247,7 +1249,7 @@ class sadmtools():
             if rch_exists :                                             # If we do, del code2 line?
                 with open(self.rch_file) as xrch:                       # Open rch file
                     lastLine = (list(xrch)[-1])                         # Get Last Line of rch file
-                    rch_code = lastLine.split(' ')[8].strip()           # Get Last Line return Code
+                    rch_code = lastLine.split(' ')[9].strip()           # Get Last Line return Code
                     if rch_code == "2" :                                # If Code 2 - want to del it
                         rch_file = open(self.rch_file,'r')              # Open RCH File for reading
                         lines = rch_file.readlines()                    # Read all Lines in Memory
@@ -1259,7 +1261,7 @@ class sadmtools():
             i = datetime.datetime.now()                                 # Get Current Stop Time
             stop_time=i.strftime('%Y.%m.%d %H:%M:%S')                   # Format Stop Date & Time
             FH_RCH_FILE=open(self.rch_file,'a')                         # Open RCH Log - append mode
-            rch_line="%s %s %s %s %s %s %s" % (self.hostname,start_time,stop_time,elapse_time,self.inst,self.cfg_alert_group,self.exit_code)
+            rch_line="%s %s %s %s %s %s %s %s" % (self.hostname,start_time,stop_time,elapse_time,self.inst,self.cfg_alert_group,self.cfg_alert_type,self.exit_code)
             FH_RCH_FILE.write ("%s\n" % (rch_line))                     # Write Line to RCH Log
             FH_RCH_FILE.close()                                         # Close RCH File
             if (self.log_footer) :                                      # Want to Produce log Footer
