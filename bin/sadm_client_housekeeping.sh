@@ -39,6 +39,7 @@
 # 2019_03_03 Change: v1.27 Make sure .gitkeep files exist in important directories
 # 2019_04_17 Update: v1.28 Make 'sadmin' account & password never expire (Solve Acc. & sudo Lock)
 #@2019_05_19 Update: v1.29 Change for lowercase readme.md,license,changelog.md files and bug fixes.
+#@2019_06_03 Update: v1.30 Include RCH format conversion, will do conversion only once.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -62,13 +63,14 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.29'                              # Current Script Version
+    export SADM_VER='1.30'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
     export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
     export SADM_PN=${0##*/}                             # Current Script name
@@ -99,7 +101,6 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 ERROR_COUNT=0                               ; export ERROR_COUNT        # Error Counter
 LIMIT_DAYS=14                               ; export LIMIT_DAYS         # RCH+LOG Delete after
 DIR_ERROR=0                                 ; export DIR_ERROR          # ReturnCode = Nb. of Errors
@@ -193,6 +194,92 @@ check_sadmin_account()
     return $lock_error
 }
 
+
+
+# --------------------------------------------------------------------------------------------------
+# If the RCH files have lines that contains 9 fields the lines are converted to 10 fields.
+# The Extra field added (just before the last one) indicate the alert type (1 will be inserted).
+# 0=No Alert,  1=Alert On Error, 2=Alert On Success, 3=Always Alert.
+#
+# Line Before (9 fields):
+# raspi6 2019.06.02 01:00:07 2019.06.02 01:00:46 00:00:39 sadm_osupdate default 0       
+#
+# Line After (10 fields): 
+# raspi6 2019.06.03 01:00:06 2019.06.03 01:00:49 00:00:43 sadm_osupdate default 1 0     
+#
+# --------------------------------------------------------------------------------------------------
+rch_conversion()
+{
+
+    sadm_writelog " "
+    if [ ! -e "${SADM_CFG_DIR}/.rch_conversion_done" ]
+        then echo "Conversion of RCH files need to be done, please wait ..." 
+        else return 0 
+    fi 
+
+    sadm_writelog "Creating a list of all *.rch files in $SADM_RCH_DIR."
+    find $SADM_RCH_DIR -type f -name '*.rch' >$SADM_TMP_FILE1 2>&1      # Build list all RCH Files
+
+    if [ -s "$SADM_TMP_FILE1" ]                                         # If File Not Zero in Size
+        then cat $SADM_TMP_FILE1 | while read filename                  # Read Each RCH Filename
+                do                
+                if [ $SADM_DEBUG -gt 5 ]                                # Under Debug
+                    then sadm_writelog " "                              # Space Line 
+                         sadm_writelog "Processing file: $filename"     # Print Filename in progress
+                fi
+                if [ -e "$SADM_TMP_FILE2" ]                             # If Temp file exist ?
+                    then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1          # Delete it if exist 
+                fi
+                
+                cat $filename | while read rchline                      # Read each line in RCH file
+                    do
+                    nbfield=`echo $rchline | awk '{ print NF }'`        # Get Nb of fields on line
+                    if [ "$nbfield" -ne 9 ]                             # Line don't have 9 fields
+                        then echo "$rchline"  >> $SADM_TMP_FILE2        # Add Actual line to TMP file
+                             continue                                   # Continue with next line
+                    fi       
+                    if [ $SADM_DEBUG -gt 0 ]                            # Under Debug Print Line
+                        then sadm_writelog "Line Before : $rchline ($nbfield)" 
+                    fi
+
+                    # Extract each field on the RCH Line
+                    ehost=`   echo $rchline   | awk '{ print $1 }'`     # Get Hostname for Event
+                    sdate=`   echo $rchline   | awk '{ print $2 }'`     # Get Starting Date 
+                    stime=`   echo $rchline   | awk '{ print $3 }' `    # Get Starting Time 
+                    edate=`   echo $rchline   | awk '{ print $4 }'`     # Get Script Ending Date 
+                    etime=`   echo $rchline   | awk '{ print $5 }' `    # Get Script Ending Time 
+                    elapse=`  echo $rchline   | awk '{ print $6 }' `    # Get Elapse Time 
+                    escript=` echo $rchline   | awk '{ print $7 }'`     # Get Script Name 
+                    egname=`  echo $rchline   | awk '{ print $8 }'`     # Get Alert Group Name
+                    ecode=`   echo $rchline   | awk '{ print $9 }'`     # Get Result Code (0,1,2) 
+                    egtype="1"                                          # Set Alert Group Type
+                    
+                    # Reformat RCH line and output to TMP file
+                    cline="$ehost $sdate $stime $edate $etime" 
+                    cline="$cline $elapse $escript $egname $egtype $ecode"
+                    echo $cline >> $SADM_TMP_FILE2                      # Write converted line
+                    nbf=`echo $cline | awk '{ print NF }'`              # Nb of fields on New line
+                    if [ $SADM_DEBUG -gt 0 ]                            # Under Debug Print Line
+                        then sadm_writelog "Line After  : $cline ($nbf)"
+                    fi
+                    done
+
+                # Replace Actual RCH File with new TMP Converted file.
+                rm -f $filename >/dev/null 2>&1                         # Del original rch file
+                if [ $? -ne 0 ] ; then sadm_writelog "Error deleting $filename" ; fi
+                cp $SADM_TMP_FILE2 $filename                            # Tmp become new rch file
+                if [ $? -ne 0 ] ; then sadm_writelog "Error copying $SADM_TMP_FILE2 $filename" ; fi
+                done 
+
+        else sadm_writelog  "No error rch files were found." 
+    fi
+
+    sadm_writelog "Conversion of RCH file is now done."
+    sadm_writelog " "                                                   # Separation Blank Line
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
+    sadm_writelog " "                                                   # Separation Blank Line
+    echo "done" > ${SADM_CFG_DIR}/.rch_conversion_done                  # State that conversion done
+}
 
 
 
@@ -823,7 +910,7 @@ file_housekeeping()
 # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level
     while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+            d) SADM_DEBUG=$OPTARG                                      # Get Debug Level Specified
                ;;                                                       # No stop after each page
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -837,7 +924,7 @@ file_housekeeping()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+    if [ $SADM_DEBUG -gt 0 ] ; then printf "\nDebug activated, Level ${SADM_DEBUG}\n" ; fi
 
     sadm_start                                                          # Init Env Dir & RC/Log File
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem
@@ -881,6 +968,9 @@ file_housekeeping()
                      #fi
              fi
     fi
+
+    # Convert all local RCH file from 9 fields to 10 fields (New format), if not already done
+    rch_conversion                                                      # Convert RCH Format to new
 
     #sadm_writelog "FQDN = $(sadm_get_fqdn) - SADM_SERVER = $SADM_SERVER"
     dir_housekeeping                                                    # Do Dir HouseKeeping
