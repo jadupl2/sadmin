@@ -48,7 +48,8 @@
 # 2019_04_17  Update: v2.34 Show Processing message only when active servers are found.
 # 2019_05_07  Update: v2.35 Change Send Alert parameters for Library 
 # 2019_05_23  Update: v2.36 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
-#@2019_06_06  Fix: v2.37 Fix problem sending alert type was 2 and 3, now have alert stat at the end.
+#@2019_06_06  Fix: v2.37 Fix problem sending when SADM_ALERT_TYPE was set 2 or 3.
+#@2019_06_07  New: v2.38 We now have et the end a alert status summary of all systems.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -85,7 +86,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.37'                              # Current Script Version
+    export SADM_VER='2.38'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -122,6 +123,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 OS_SCRIPT="${SADM_BIN_DIR}/sadm_osupdate_farm.sh" ; export OS_SCRIPT    # OSUpdate Script in crontab
 BA_SCRIPT="${SADM_BIN_DIR}/sadm_backup.sh"        ; export BA_SCRIPT    # Backup Script in crontab
 REBOOT_SEC=900                                    ; export REBOOT_SEC   # O/S Upd Reboot Nb Sec.wait
+RCH_FIELD=10                                      ; export RCH_FIELD    # Nb. of field on rch file.
 #
 # Reset Totals Counters
 export total_alert=0 ; export total_duplicate=0 ; export total_ok=0 ; export total_error=0      
@@ -785,9 +787,6 @@ check_for_alert()
     # Gather all last line of all *rch files that end with a 0 (Success) or 1 (Error)
     sadm_writelog " "
     sadm_writelog "Check All Servers [R]esult [C]ode [H]istory Scripts Files."
-#    find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($NF,/1/) { print }' 
-#    find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($NF,/1/) { print }' > $SADM_TMP_FILE2 2>&1
-    #find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($NF,/[0-1]/) { print }' 
     find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($NF,/[0-1]/) { print }' > $SADM_TMP_FILE2 2>&1
 
     # If No file to process
@@ -801,7 +800,15 @@ check_for_alert()
     #total_alert=0 ; total_duplicate=0 ; total_ok=0 ; total_error=0      # Reset Totals Counters
     cat $SADM_TMP_FILE2 | { while read line                               # Read Each Line of file
         do                
-        if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "Processing Line=$line" ; fi
+        NBFIELD=`echo $line | awk '{ print NF }'`                       # How many fields on line ?
+        if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "Nb.field: $NBFIELD - Processing Line=$line" ; fi
+        if [ "${NBFIELD}" != "${RCH_FIELD}" ]                           # If abnormal nb. of field
+           then sadm_writelog "Line below have ${NBFIELD} but it should have ${RCH_FIELD}."
+                sadm_writelog "This line is skipped: $line"
+                sadm_writelog " "
+                continue 
+        fi
+
         etype="S"                                                       # Event Type = S for Script
         ehost=`echo $line   | awk '{ print $1 }'`                       # Hostname of Event
         wdate=`echo $line   | awk '{ print $4 }'`                       # Get Script Ending Date 
@@ -829,19 +836,19 @@ check_for_alert()
         if [ "$egtype" = "1" -a "$ecode" = "1" ] || 
            [ "$egtype" = "2" -a "$ecode" = "0" ] || [ "$egtype" = "3" ]  
            then total_alert=`expr $total_alert + 1`                     # Incr. Alert counter
-                sadm_send_alert "$etype" "$etime" "$ehost" "$egname" "$esub" "$emess" "$eattach"
-                RC=$?
-                if [ "$RC" = "0" ] ; then total_ok=`expr $total_ok + 1` ; fi
-                if [ "$RC" = "1" ] ; then total_error=`expr $total_error + 1` ; fi
-                if [ "$RC" = "2" ] ; then total_duplicate=`expr $total_duplicate + 1` ; fi
                 if [ $SADM_DEBUG -gt 0 ]                                # Under Debug Show Parameter
                    then dmess="'$etype' '$etime' '$ehost' '$egname'"    # Build Mess to see Param.
                         dmess="$dmess '$esub' '$emess' '$eattach'"      # Build Mess to see Param.
                         sadm_writelog "sadm_send_alert $dmess RC=$RC"   # Show User Paramaters sent
                 fi
+                sadm_send_alert "$etype" "$etime" "$ehost" "$escript" "$egname" "$esub" "$emess" "$eattach"
+                RC=$?
+                if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "RC=$RC" ;fi # Debug Show ReturnCode
+                if [ "$RC" = "0" ] ; then total_ok=`expr $total_ok + 1` ; fi
+                if [ "$RC" = "1" ] ; then total_error=`expr $total_error + 1` ; fi
+                if [ "$RC" = "2" ] ; then total_duplicate=`expr $total_duplicate + 1` ; fi
         fi
         done 
-        sadm_writelog " "                                               # Separation Blank Line
         sadm_writelog "Alert submitted             : $total_alert"
         sadm_writelog "New alert sent successfully : $total_ok"
         sadm_writelog "Alert error trying to send  : $total_error"
@@ -866,17 +873,22 @@ check_for_alert()
                if [ "$num" = "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
+
                        exit 0
                fi
-               ;;                                                       # No stop after each page
+               ;;                                                       # No stop after each
+
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
-            v) sadm_show_version                                             # Show Script Version Info
+            v) sadm_show_version                                             # Show Script V
+
                exit 0                                                   # Back to shell
                ;;
-           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Mes
+
                show_usage                                               # Display Help Usage
+
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
