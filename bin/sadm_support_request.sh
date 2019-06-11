@@ -32,9 +32,11 @@
 # 2018_08_10 v1.3 Remove O/S Version Restriction and added /etc/environment printing.
 # 2018_11_16 v1.4 Restructure for performance and flexibility.
 # 2018_11_21 v1.5 Output file include content of log directory.
-#@2018_12_11 v1.6 Include Shell and Python Library Demo output in log and SADM_USER info.
-#@2018_12_31 Added: sadm_support_request.sh v1.7 - Include system information files from dat/dr dir.
-#@2018_12_31 Added: sadm_support_request.sh v1.8 - Remove blank line & Comment Line (#) from output.
+# 2018_12_11 v1.6 Include Shell and Python Library Demo output in log and SADM_USER info.
+# 2018_12_31 Added: sadm_support_request.sh v1.7 - Include system information files from dat/dr dir.
+# 2018_12_31 Added: sadm_support_request.sh v1.8 - Remove blank line & Comment Line (#) from output.
+#@2019_06_10 Updated: v1.9 Print out of /etc/postfix/main.cf to support request output.
+#@2019_06_11 Updated: V2.0 Code Revision and performance improvement.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
@@ -63,13 +65,14 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.8'                               # Your Current Script Version
+    export SADM_VER='2.0'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+    export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
+    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
 
     . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
 #---------------------------------------------------------------------------------------------------
@@ -78,7 +81,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
     #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
     #export SADM_ALERT_GROUP="default"                  # AlertGroup Used for Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # At end of script Trim log to 1000 Lines
+    export SADM_MAX_LOGLINE=5000                       # At end of script Trim log to 1000 Lines
     #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
@@ -89,7 +92,6 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 
 
@@ -105,14 +107,7 @@ show_usage()
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\n" 
 }
-show_version()
-{
-    printf "\n${SADM_PN} - Version $SADM_VER"
-    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
-    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
-    printf " - Kernel Version $(sadm_get_kernel_version)"
-    printf "\n\n" 
-}
+
 
 
 
@@ -137,7 +132,7 @@ print_file()
             return 0                                                    # Return No Error to Caller
        else echo " "                    >> $SADM_LOG                    # Insert Blank Line
             echo "$SADM_FIFTY_DASH"     >> $SADM_LOG
-            echo "File Not Found : $wfile" >> $SADM_LOG
+            echo "Could not print, file not found : $wfile" >> $SADM_LOG
             echo "$SADM_FIFTY_DASH"     >> $SADM_LOG
             echo " "                    >> $SADM_LOG                    # Insert Blank Line
     fi
@@ -187,6 +182,7 @@ main_process()
     print_file "/etc/cron.d/sadm_client"
     print_file "/etc/cron.d/sadm_osupdate"
     print_file "/etc/selinux/config"
+    print_file "/etc/postfix/main.cf"
     print_file "/etc/hosts"
     print_file "${SADM_DR_DIR}/${SADM_HOSTNAME}_system.txt"
     print_file "${SADM_DR_DIR}/${SADM_HOSTNAME}_sysinfo.txt"
@@ -227,12 +223,16 @@ main_process()
 #                                       Script Start HERE
 #===================================================================================================
 
-# Evaluate Command Line Switch Options Upfront
-# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+    # Call SADMIN Initialization Procedure
+    sadm_start                                                          # Init Env Dir & RC/Log File
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+
+    # Evaluate Command Line Switch Options Upfront
+    # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
     while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
+            d) SADM_DEBUG=$OPTARG                                      # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
@@ -242,7 +242,7 @@ main_process()
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
-            v) show_version                                             # Show Script Version Info
+            v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
            \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
@@ -251,11 +251,8 @@ main_process()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+    if [ $SADM_DEBUG -gt 0 ] ; then printf "\nDebug activated, Level ${SADM_DEBUG}\n" ; fi
 
-    # Call SADMIN Initialization Procedure
-    sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
     # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
@@ -275,7 +272,7 @@ main_process()
     BACDIR=`pwd`
     SRQ_FILE="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${SADM_INST}.tgz"
     cd $SADM_BASE_DIR
-    if [ $DEBUG_LEVEL -gt 0 ] 
+    if [ $SADM_DEBUG -gt 0 ] 
         then echo "tar -cvzf ${SADM_TMP_DIR}/${SADM_INST}.tgz ${SADM_LOG}"
     fi
     tar -cvzf $SRQ_FILE log 2>1 >/dev/null
