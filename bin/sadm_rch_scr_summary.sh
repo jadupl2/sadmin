@@ -30,6 +30,7 @@
 #@2019_04_02 Fix: v1.11 Doesn't report an error anymore when last line is blank.
 #@2019_05_07 Update: v1.12 Change send_alert calling parameters
 #@2019_06_07 Update: v1.13 Change made to adapt to new field (alarm type) in RCH file.
+#@2019_06_11 Update: v1.14 Change output message and email when encounter incorrect rch format.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -54,7 +55,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.13'                               # Current Script Version
+    export SADM_VER='1.14'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -579,13 +580,15 @@ main_process()
 
     # Record in rch file that didn't have 9 fields (Wrong format) were written to $SADM_TMP_FILE3
    if [ -s "$SADM_TMP_FILE3" ]                                         # If File size > than 0
-       then wsubject="Invalid formatted line(s) in RCH file(s)"        # Mail Message
-            echo "$wsubject"                                           # Display Msg to user
+       then wsubject="$SADM_INST - Invalid formatted line(s) in RCH file(s)"        # Mail Message
+            printf "\n-----\n$wsubject\n"                              # Display Msg to user
             nl $SADM_TMP_FILE3                                         # Display file content
-            wmsg="See attachment for the list of lines without $FIELD_IN_RCH fields."
-            wmess="Script name: $SADM_PN\nEvent Date: `date`\n${wmsg}\n"
+            wmess="See attachment for the list of lines without $FIELD_IN_RCH fields."
             wtime=`date "+%Y.%m.%d %H:%M"`
-            sadm_send_alert "W" "$wtime" "$SADM_HOSTNAME" "default" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
+            if [ $DEBUG_LEVEL -gt 0 ] ; then 
+               sadm_writelog "sadm_send_alert 'S' '$wtime' '$SADM_HOSTNAME' '$SADM_PN' 'default' '$wsubject' '$wmess' '$SADM_TMP_FILE3'"
+            fi
+            sadm_send_alert "S" "$wtime" "$SADM_HOSTNAME" "$SADM_PN" "default" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
    fi
 
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
