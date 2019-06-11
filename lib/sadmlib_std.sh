@@ -99,6 +99,7 @@
 #@2019_05_19 Update: v3.01 SADM_DEBUG_LEVEL change to SADM_DEBUG for consistency with Python Libr.
 #@2019_05_20 Update: v3.02 Eliminate `tput` warning when TERM variable was set to 'dumb'.
 #@2019_06_07 Update: v3.03 Create/Update the rch file using the new format & fix alerting bug.
+#@2019_06_11 Update: v3.04 Send Alert functions parameters change to add script name as parameter.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -108,7 +109,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.03"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.04"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2053,41 +2054,44 @@ sadm_stop() {
 #
 # 2nd Parameter    : Event date and time (YYYY/MM/DD HH:MM)
 # 3th Parameter    : Server Name Where Alert come from
-# 4th Parameter    : Alert Group Name to send Message
-# 5th Parameter    : Subject/Title
-# 6th Parameter    : Alert Message
-# 7th Parameter    : Full Path Name of the attachment (If used, else blank)
+# 4th Parameter    : Script Name (or "" if not applicable)
+# 5th Parameter    : Alert Group Name to send Message
+# 6th Parameter    : Subject/Title
+# 7th Parameter    : Alert Message
+# 8th Parameter    : Full Path Name of the attachment (If used, else blank)
 #
-# Example: 
-#  sadm_send_alert 'E,W,I,S' EVENT_DATE_TIME SERVER_NAME ALERT_GROUP SUBJECT MESSAGE ATTACHMENT_PATH
+# Example of parameters: 
+# 'E,W,I,S' EVENT_DATE_TIME HOST_NAME SCRIPT_NAME ALERT_GROUP SUBJECT MESSAGE ATTACHMENT_PATH
 # --------------------------------------------------------------------------------------------------
 #
 sadm_send_alert() {
     #LIB_DEBUG=6                                                        # If Debugging the Library
 
     # Validate the Number of parameter received.
-    if [ $# -ne 7 ]                                                     # Invalid No. of Parameter
+    if [ $# -ne 8 ]                                                     # Invalid No. of Parameter
         then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}"
-             sadm_writelog "Should be 7 we received $# : $*"            # Show what received
+             sadm_writelog "Should be 8 we received $# : $*"            # Show what received
              return 1                                                   # Return Error to caller
     fi
 
     # Save Parameters Received (After Removing leading and trailing Spaces.
     atype=`echo "$1"   | awk '{$1=$1;print}'`                           # [S]cript [E]rr [W]arn [I]nfo
     atype=`echo $atype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
-    atime=`echo "$2" | awk '{$1=$1;print}'`                             # Alert Event Date AND Time
-    adate=`echo "$2" | awk '{ print $1 }'`                              # Alert Date without time
+    atime=`echo "$2"   | awk '{$1=$1;print}'`                           # Alert Event Date AND Time
+    adate=`echo "$2"   | awk '{ print $1 }'`                            # Alert Date without time
     aserver=`echo "$3" | awk '{$1=$1;print}'`                           # Server where alert Come
-    agroup=`echo "$4"  | awk '{$1=$1;print}'`                           # SADM AlertGroup to Advise
-    asubject="$5"                                                       # Save Alert Subject
-    amessage="$6"                                                       # Save Alert Message
-    aattach="$7"                                                        # Save Attachment FileName
+    ascript=`echo "$4" | awk '{$1=$1;print}'`                           # Script Name 
+    agroup=`echo "$5"  | awk '{$1=$1;print}'`                           # SADM AlertGroup to Advise
+    asubject="$6"                                                       # Save Alert Subject
+    amessage="$7"                                                       # Save Alert Message
+    aattach="$8"                                                        # Save Attachment FileName
     if [ "$LIB_DEBUG" -gt 4 ]                                           # Debug Info List what Recv.
        then sadm_writelog " "
             sadm_writelog "Function '${FUNCNAME}' parameters received :"
             debmes="atype=$atype "                                      # Show Alert Type
             debmes="$debmes atime=$atime "                              # Show Event Date & Time
-            debmes="$debmes aserver=$aserver "                          # Show Server NAme
+            debmes="$debmes aserver=$aserver "                          # Show Server Name
+            debmes="$debmes ascript=$ascript "                          # Show Script Name
             debmes="$debmes agroup=$agroup "                            # Show Alert Group
             sadm_writelog "$debmes"                                     # Show Debug LIne
             debmes="asubject=\"$asubject\""                             # Show Alert Subject/Title
@@ -2099,13 +2103,13 @@ sadm_send_alert() {
             sadm_writelog " "
     fi
 
-    # Is there is an attachment and is the File Readable ?
+    # Is there is an attachment and is the file is not readable ?
     if [ "$aattach" != "" ] && [ ! -r "$aattach" ]                      # Can't read Attachment File
        then sadm_writelog "Error in ${FUNCNAME} - Can't read attachment file '$aattach'"
             return 1                                                    # Return Error to caller
     fi
 
-    # Is the AlertGroup File Readable ?
+    # Is the AlertGroup file readable ?
     if [ ! -r "$SADM_ALERT_FILE" ]                                      # If Can't read AlertGroup
        then sadm_writelog "Alert Group File '$SADM_ALERT_FILE' missing" # Advise User
             return 1                                                    # Return Error to caller
@@ -2124,6 +2128,7 @@ sadm_send_alert() {
              sadm_writelog "----------"
              sadm_writelog "Alert Group '$agroup' missing in $SADM_ALERT_FILE"
              sadm_writelog "  - Alert Date/Time    : $atime"            # Show Event Date & Time
+             sadm_writelog "  - Script Name        : $ascript"          # Show Script Name
              sadm_writelog "  - Alert server       : $aserver"          # Show Alert Server Name
              sadm_writelog "  - Alert Type         : $atype"            # Show Alert Type S/E/W/I
              sadm_writelog "  - Alert Subject/Title: $asubject"         # Show Alert Message
@@ -2151,9 +2156,9 @@ sadm_send_alert() {
              # If last same alert time versus current, if greater than 24 hours, consider new alert.
              if [ $ediff -gt 86400 ]                                    # If Time Diff > 24hr 
                 then if [ "$LIB_DEBUG" -gt 4 ] 
-                        then sadm_writelog "Consider a new alert, last alert older than 24hrs." 
+                        then NbDaysOld=`echo "274855 / 86400" | bc` 
+                             sadm_writelog "New alert... Last one is more than $NbDaysOld days ago." 
                      fi
-                     return 2 
                 else # We have same alert in the last 24 Hrs and user don't want any alert repeat.
                      if [ $SADM_ALERT_REPEAT -eq 0 ]                    # User want norepeat sameday
                         then wmsg="Don't repeat alert on the same day"  # No repeat - Advise user
@@ -2198,16 +2203,16 @@ sadm_send_alert() {
 
     # Send the Alert Message using the type of alert requested
     case "$agroup_type" in
-        M)  send_email_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
+        M)  send_email_alert "$atype" "$atime" "$aserver" "$ascript" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
             RC=$?                                                       # Save Return Code 
             ;;
-        C)  send_cellular_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
+        C)  send_cellular_alert "$atype" "$atime" "$aserver" "$ascript" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
             RC=$?                                                       # Save Return Code 
             ;;
-        S)  send_slack_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
+        S)  send_slack_alert "$atype" "$atime" "$aserver" "$ascript" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
             RC=$?                                                       # Save Return Code 
             ;;
-        T)  send_sms_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
+        T)  send_sms_alert "$atype" "$atime" "$aserver" "$ascript" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
             RC=$?                                                       # Save Return Code 
             ;;
         *)  sadm_writelog "Error in ${FUNCNAME} - Alert Group Type '$agroup_type' not supported"
@@ -2232,14 +2237,14 @@ sadm_send_alert() {
 # 8th Parameter    : Reference No. (No reference numberwhen equal to "000000" 
 #
 # Example : 
-#   send_slack_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amess" "$afile" "$arefno"
+#   send_slack_alert "$atype" "$atime" "$aserver" "$ascript" "$agroup" "$asubject" "$amess" "$afile" "$arefno"
 # --------------------------------------------------------------------------------------------------
 send_slack_alert() {
 
     # Validate the Number of parameter received.
-    if [ $# -ne 8 ]                                                     # Invalid No. of Parameter
+    if [ $# -ne 9 ]                                                     # Invalid No. of Parameter
         then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}"
-             sadm_writelog "Should be 8, we received $# : $*"           # Show what received
+             sadm_writelog "Should be 9, we received $# : $*"           # Show what received
              return 1                                                   # Return Error to caller
     fi
 
@@ -2248,11 +2253,12 @@ send_slack_alert() {
     atype=`echo $atype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
     atime=`echo "$2" | awk '{$1=$1;print}'`                             # Save Event Date/Time
     aserver=`echo "$3" | awk '{$1=$1;print}'`                           # Alert come from this Srv
-    agroup=`echo "$4"  | awk '{$1=$1;print}'`                           # Alert Group to Advise
-    asubject="$5"                                                       # Save Alert Subject
-    amessage="$6"                                                       # Save Alert Message
-    aattach="$7"                                                        # Save Attachment FileName
-    arefno="$8"                                                         # Save Reference Number
+    ascript=`echo "$4" | awk '{$1=$1;print}'`                           # Script Name
+    agroup=`echo "$5"  | awk '{$1=$1;print}'`                           # Alert Group to Advise
+    asubject="$6"                                                       # Save Alert Subject
+    amessage="$7"                                                       # Save Alert Message
+    aattach="$8"                                                        # Save Attachment FileName
+    arefno="$9"                                                         # Save Reference Number
 
     # Get the Slack Channel of the Alert Group 
     aslack_channel=`grep -i "^$agroup " $SADM_ALERT_FILE | awk '{ print $3 }'` # Grep Grp get Field3
@@ -2304,9 +2310,10 @@ send_slack_alert() {
     vm3=`printf "Event Ref. No.  : %s" "$arefno"`                       # Ref. No assign to alert
     vm4=`printf "Event Message   : %s" "$amessage"`                     # Body of the message
     vm5=`printf "Event on system : %s" "$aserver"`                      # Server where alert occured
+    vm6=`printf "Script Name     : %s" "$ascript"`                      # Script Name
     if [ $arefno != "000000" ]                                          # If ref .no = 000000 = None
-        then vm=`printf "%s\n%s\n%s\n%s\n%s\n%s" "$vm0" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5"` 
-        else vm=`printf "%s\n%s\n%s\n%s\n%s"     "$vm0" "$vm1" "$vm2" "$vm4" "$vm5"` 
+        then vm=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$vm0" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5" "$vm6"` 
+        else vm=`printf "%s\n%s\n%s\n%s\n%s\n%s"     "$vm0" "$vm1" "$vm2" "$vm4" "$vm5" "$vm6"` 
     fi
 
     # Included last 50 lines of attachment file (if specified)
@@ -2315,7 +2322,7 @@ send_slack_alert() {
              vm="${wm}\n\n*-----Attachment-----*\n${logtail}"
     fi
 
-    # If Script Error include URL to view script log in message
+    # If Script Error include URL Link to view script log in message
     if [ "$atype" = "S" ]                                               # If SMS concerning Script
         then SNAME=`echo ${asubject} |awk '{ print $1 }'`               # Get Script Name
              LOGFILE="${aserver}_${SNAME}.log"                          # Assemble log Script Name
@@ -2367,15 +2374,14 @@ send_slack_alert() {
 # 8th Parameter    : Reference No. (No reference numberwhen equal to "000000" 
 #
 # Example : 
-#   send_email_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amess" "$afile" "$arefno"
-#   send_email_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
+#   send_email_alert "$atype" "$atime" "$aserver" "$ascript" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
 # --------------------------------------------------------------------------------------------------
 send_email_alert() {
-
+    #LIB_DEBUG=5
     # Validate the Number of parameter received.
-    if [ $# -ne 8 ]                                                     # Invalid No. of Parameter
+    if [ $# -ne 9 ]                                                     # Invalid No. of Parameter
         then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}"
-             sadm_writelog "Should be 8, we received $# : $*"           # Show what received
+             sadm_writelog "Should be 9, we received $# : $*"           # Show what received
              return 1                                                   # Return Error to caller
     fi
 
@@ -2384,11 +2390,12 @@ send_email_alert() {
     atype=`echo $atype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
     atime=`echo "$2" | awk '{$1=$1;print}'`                             # Save Event Date/Time
     aserver=`echo "$3" | awk '{$1=$1;print}'`                           # Alert come from this Srv
-    agroup=`echo "$4"  | awk '{$1=$1;print}'`                           # Alert Group to Advise
-    asubject="$5"                                                       # Save Alert Subject
-    amessage="$6"                                                       # Save Alert Message
-    aattach="$7"                                                        # Save Attachment FileName
-    arefno="$8"                                                         # Save Reference Number
+    ascript=`echo "$4" | awk '{$1=$1;print}'`                           # Script Name
+    agroup=`echo "$5"  | awk '{$1=$1;print}'`                           # Alert Group to Advise
+    asubject="$6"                                                       # Save Alert Subject
+    amessage="$7"                                                       # Save Alert Message
+    aattach="$8"                                                        # Save Attachment FileName
+    arefno="$9"                                                         # Save Reference Number
 
     # Get the Member of the Alert Group (Email(s))
     aemail=`grep -i "^$agroup " $SADM_ALERT_FILE | awk '{ print $3 }'`  # Get Group Members (Email)
@@ -2426,14 +2433,15 @@ send_email_alert() {
 
     # Construct Body of the Email to send.
     mdate=`date "+%Y.%m.%d %H:%M"`                                      # Mail Date & Time
-    vm1=`printf "Email Date/Time : %s" "$mdate"`                        # Date the Email was Sent
-    vm2=`printf "Event Date/Time : %s" "$atime"`                        # Date The event occured
-    vm3=`printf "Event Ref. No.  : %s" "$arefno"`                       # Ref. No assign to alert
-    vm4=`printf "Event Message   : %s" "$amessage"`                     # Body of the message
-    vm5=`printf "Event on system : %s" "$aserver"`                      # Server where alert occured
+    vm1=`printf "%-15s : %s" "Email Date/Time" "$mdate"`                # Date the Email was Sent
+    vm2=`printf "%-15s : %s" "Event Date/Time" "$atime"`                # Date The event occured
+    vm3=`printf "%-15s : %s" "Event Ref. No."  "$arefno"`               # Ref. No assign to alert
+    vm4=`printf "%-15s : %s" "Event Message"   "$amessage"`             # Body of the message
+    vm5=`printf "%-15s : %s" "Event on system" "$aserver"`              # Server where alert occured
+    vm6=`printf "%-18s : %s" "Script Name    " "$ascript"`              # Script Name
     if [ $arefno != "000000" ]                                          # If ref .no = 000000 = None
-        then wm=`printf "%s\n%s\n%s\n%s\n%s" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5"` 
-        else wm=`printf "%s\n%s\n%s\n%s"     "$vm1" "$vm2" "$vm4" "$vm5"` 
+        then wm=`printf "%s\n%s\n%s\n%s\n%s\n%s" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5" "$vm6"` 
+        else wm=`printf "%s\n%s\n%s\n%s\n%s"     "$vm1" "$vm2" "$vm4" "$vm5" "$vm6"` 
     fi
 
 
@@ -2449,8 +2457,8 @@ send_email_alert() {
     if [ $RC -eq 0 ]                                                    # If Error Sending Email
         then wstatus="Email sent to $aemail" 
         else wstatus="Error sending email to $aemail"
-             sadm_writelog "$wstatus"                                   # Advise USer
     fi
+    sadm_writelog "$wstatus"                                            # Advise USer
     write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$arefno" "$wstatus"
     return $RC                                                          # Return Exit Code to Caller
 }   
@@ -2471,27 +2479,28 @@ send_email_alert() {
 # 8th Parameter    : Reference No. (No reference numberwhen equal to "000000" 
 #
 # Example : 
-#   send_sms_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amess" "$afile" "$arefno"
+#   send_sms_alert "$atype" "$atime" "$aserver" "$ascript" "$agroup" "$asubject" "$amess" "$afile" "$arefno"
 # --------------------------------------------------------------------------------------------------
 send_sms_alert() {
 
     # Validate the Number of parameter received.
-    if [ $# -ne 8 ]                                                     # Invalid No. of Parameter
+    if [ $# -ne 9 ]                                                     # Invalid No. of Parameter
         then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}"
-             sadm_writelog "Should be 8, we received $# : $*"           # Show what received
+             sadm_writelog "Should be 9, we received $# : $*"           # Show what received
              return 1                                                   # Return Error to caller
     fi
 
     # Save Parameters Received (After Removing leading and trailing Spaces.
     atype=`echo "$1"   | awk '{$1=$1;print}'`                           # [S]cr [E]rr [W]arn [I]nfo
     atype=`echo $atype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
-    atime=`echo "$2" | awk '{$1=$1;print}'`                             # Save Event Date/Time
+    atime=`echo "$2"   | awk '{$1=$1;print}'`                           # Save Event Date/Time
     aserver=`echo "$3" | awk '{$1=$1;print}'`                           # Alert come from this Srv
-    agroup=`echo "$4"  | awk '{$1=$1;print}'`                           # Alert Group to Advise
-    asubject="$5"                                                       # Save Alert Subject
-    amessage="$6"                                                       # Save Alert Message
-    aattach="$7"                                                        # Save Attachment FileName
-    arefno="$8"                                                         # Save Reference Number
+    ascript=`echo "$4" | awk '{$1=$1;print}'`                           # Script Name
+    agroup=`echo "$5"  | awk '{$1=$1;print}'`                           # Alert Group to Advise
+    asubject="$6"                                                       # Save Alert Subject
+    amessage="$7"                                                       # Save Alert Message
+    aattach="$8"                                                        # Save Attachment FileName
+    arefno="$9"                                                         # Save Reference Number
 
     # Get the Group Member of the Alert Group (Cellular No.)
     amember=`grep -i "^$agroup " $SADM_ALERT_FILE | awk '{ print $3 }'` # Get Group Members (Cell#)
@@ -2533,9 +2542,10 @@ send_sms_alert() {
     vm3=`printf "Event Ref. No.  : %s" "$arefno"`                       # Ref. No assign to alert
     vm4=`printf "Event Message   : %s" "$amessage"`                     # Body of the message
     vm5=`printf "Event on system : %s" "$aserver"`                      # Server where alert occured
+    vm6=`printf "Script Name     : %s" "$ascript"`                      # Script Name
     if [ $arefno != "000000" ]                                          # If ref .no = 000000 = None
-        then vm=`printf "%s\n%s\n%s\n%s\n%s\n%s" "$vm0" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5"` 
-        else vm=`printf "%s\n%s\n%s\n%s\n%s"     "$vm0" "$vm1" "$vm2" "$vm4" "$vm5"` 
+        then vm=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$vm0" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5" "$vm6"` 
+        else vm=`printf "%s\n%s\n%s\n%s\n%s\n%s"     "$vm0" "$vm1" "$vm2" "$vm4" "$vm5" "$vm6"` 
     fi
 
 
@@ -2599,14 +2609,14 @@ send_sms_alert() {
 # 8th Parameter    : Reference No. (No reference numberwhen equal to "000000" 
 #
 # Example : 
-#   send_cellular_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amess" "$afile" "$arefno"
+#   send_cellular_alert "$atype" "$atime" "$aserver" "$ascript" "$agroup" "$asubject" "$amess" "$afile" "$arefno"
 # --------------------------------------------------------------------------------------------------
 send_cellular_alert() {
 
     # Validate the Number of parameter received.
-    if [ $# -ne 8 ]                                                     # Invalid No. of Parameter
+    if [ $# -ne 9 ]                                                     # Invalid No. of Parameter
         then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}"
-             sadm_writelog "Should be 8, we received $# : $*"           # Show what received
+             sadm_writelog "Should be 9, we received $# : $*"           # Show what received
              return 1                                                   # Return Error to caller
     fi
 
@@ -2615,11 +2625,12 @@ send_cellular_alert() {
     atype=`echo $atype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
     atime=`echo "$2" | awk '{$1=$1;print}'`                             # Save Event Date/Time
     aserver=`echo "$3" | awk '{$1=$1;print}'`                           # Alert come from this Srv
-    agroup=`echo "$4"  | awk '{$1=$1;print}'`                           # Alert Group to Advise
-    asubject="$5"                                                       # Save Alert Subject
-    amessage="$6"                                                       # Save Alert Message
-    aattach="$7"                                                        # Save Attachment FileName
-    arefno="$8"                                                         # Save Reference Number
+    ascript=`echo "$4" | awk '{$1=$1;print}'`                           # Script Name
+    agroup=`echo "$5"  | awk '{$1=$1;print}'`                           # Alert Group to Advise
+    asubject="$6"                                                       # Save Alert Subject
+    amessage="$7"                                                       # Save Alert Message
+    aattach="$8"                                                        # Save Attachment FileName
+    arefno="$9"                                                         # Save Reference Number
 
     # Get the Telephone number of the Alert Group (Cellular No.)
     acell=`grep -i "^$agroup " $SADM_ALERT_FILE | awk '{ print $3 }'`   # Get Group Members (Cell#)
@@ -2661,9 +2672,10 @@ send_cellular_alert() {
     vm3=`printf "Event Ref. No.  : %s" "$arefno"`                       # Ref. No assign to alert
     vm4=`printf "Event Message   : %s" "$amessage"`                     # Body of the message
     vm5=`printf "Event on system : %s" "$aserver"`                      # Server where alert occured
+    vm6=`printf "Script Name     : %s" "$ascript"`                      # Script Name
     if [ $arefno != "000000" ]                                          # If ref .no = 000000 = None
-        then vm=`printf "%s\n%s\n%s\n%s\n%s\n%s" "$vm0" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5"` 
-        else vm=`printf "%s\n%s\n%s\n%s\n%s"     "$vm0" "$vm1" "$vm2" "$vm4" "$vm5"` 
+        then vm=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$vm0" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5" "$vm6"` 
+        else vm=`printf "%s\n%s\n%s\n%s\n%s\n%s"     "$vm0" "$vm1" "$vm2" "$vm4" "$vm5" "$vm6"` 
     fi
 
     # Send the SMS unsing TextBelt Now 
