@@ -48,8 +48,8 @@
 # 2019_04_17  Update: v2.34 Show Processing message only when active servers are found.
 # 2019_05_07  Update: v2.35 Change Send Alert parameters for Library 
 # 2019_05_23  Update: v2.36 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
-#@2019_06_06  Fix: v2.37 Fix problem sending when SADM_ALERT_TYPE was set 2 or 3.
-#@2019_06_07  New: v2.38 We now have et the end a alert status summary of all systems.
+#@2019_06_06  Fix: v2.37 Fix problem sending alert when SADM_ALERT_TYPE was set 2 or 3.
+#@2019_06_07  New: v2.38 We now have at the end a alert status summary of all systems.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
