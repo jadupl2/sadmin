@@ -100,6 +100,7 @@
 #@2019_05_20 Update: v3.02 Eliminate `tput` warning when TERM variable was set to 'dumb'.
 #@2019_06_07 Update: v3.03 Create/Update the rch file using the new format & fix alerting bug.
 #@2019_06_11 Update: v3.04 Send Alert functions parameters change to add script name as parameter.
+#@2019_06_19 Update: v3.05 Fix: Fix problem with repeating alert.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -109,7 +110,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.04"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.05"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2085,7 +2086,8 @@ sadm_send_alert() {
     asubject="$6"                                                       # Save Alert Subject
     amessage="$7"                                                       # Save Alert Message
     aattach="$8"                                                        # Save Attachment FileName
-    if [ "$LIB_DEBUG" -gt 4 ]                                           # Debug Info List what Recv.
+    arefno="000001"                                                     # Default alert Counter
+    if [ "$LIB_DEBUG" -gt 6 ]                                           # Debug Info List what Recv.
        then sadm_writelog " "
             sadm_writelog "Function '${FUNCNAME}' parameters received :"
             debmes="atype=$atype "                                      # Show Alert Type
@@ -2134,53 +2136,87 @@ sadm_send_alert() {
              sadm_writelog "  - Alert Subject/Title: $asubject"         # Show Alert Message
              sadm_writelog "  - Alert Message      : $amessage"         # Show Alert Message
              sadm_writelog "  - Alert Attachment   : $aattachment"      # Show Attachment File
+             sadm_writelog "  - Alert Counter      : $arefno"           # Show Alert Counter
              sadm_writelog "Changing alert group from '$agroup' to 'default'"
              agroup='default'                                           # Change Alert Group
              sadm_writelog "----------"
     fi
 
-    # To prevent duplicate alert, search History for the 'Alert ID' 
-    alertid=`printf "%s;%s;%s;%s" "$atype" "$aserver" "$agroup" "$asubject"`
-    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Search History for \"$alertid\"" ; fi
-    grep "$alertid" $SADM_ALERT_HIST  >>/dev/null 2>&1                  # Grep Message in History
-    if [ $? -ne 0 ]                                                     # Same Alert was not found
-        then if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Same alert wasn't found" ; fi
-        else if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Same alert was found"    ; fi
+    # To prevent alerting for the same, see if current alert is in the history file.
+    alertid=`printf "%s;%s;%s;%s;%s" "$atime" "$atype" "$aserver" "$agroup" "$asubject"`
+    if [ "$LIB_DEBUG" -gt 4 ] 
+        then sadm_writelog " " 
+             sadm_writelog "Search History for \"$alertid\"" 
+    fi
+    grep "$alertid" $SADM_ALERT_HIST  >>/dev/null 2>&1                  # Grep Alert ID in History
+    RC=$?                                                               # Save Return Code
+    if [ "$LIB_DEBUG" -gt 4 ]                                           # If Libr Debug is activated
+        then if [ "$RC" -ne 0 ]                                         # If Cur. Alert wasn't found
+                then sadm_writelog "Same alert wasn't found"            # Show Result to user
+                else sadm_writelog "Same alert was found"               # Show Result to user
+             fi 
+    fi 
 
-             # Get the Epoch Time of the last same alert, get current Epoch & calculate difference
-             aepoch=`grep "$alertid" $SADM_ALERT_HIST | tail -1 | awk -F\; '{print $1}'`
+    # If Alert wasn't found in Alert Hitsory file, check the age of the alert if > 24Hrs forget it.
+    if [ "$RC" -ne 0 ]                                                  # If Cur. Alert wasn't found
+        then aepoch=$(sadm_date_to_epoch "$atime")                      # Convert EventTime to Epoch
              cepoch=`date +%s`                                          # Get Current Epoch Time
-             ediff=`expr $cepoch - $aepoch`                             # Nb Sec. Since Same Alert
-             if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "Alert:$aepoch Cur:$cepoch Dif=$ediff";fi
-  
-             # If last same alert time versus current, if greater than 24 hours, consider new alert.
-             if [ $ediff -gt 86400 ]                                    # If Time Diff > 24hr 
-                then if [ "$LIB_DEBUG" -gt 4 ] 
-                        then NbDaysOld=`echo "274855 / 86400" | bc` 
-                             sadm_writelog "New alert... Last one is more than $NbDaysOld days ago." 
-                     fi
-                else # We have same alert in the last 24 Hrs and user don't want any alert repeat.
-                     if [ $SADM_ALERT_REPEAT -eq 0 ]                    # User want norepeat sameday
-                        then wmsg="Don't repeat alert on the same day"  # No repeat - Advise user
-                             if [ "$LIB_DEBUG" -gt 4 ] 
-                                then sadm_writelog "$wmsg (SADM_ALERT_REPEAT set to $SADM_ALERT_REPEAT)."
-                             fi
-                             return 2                                   # Return to Caller 
-                     fi
-                     # Have same alert in the last 24 Hrs and User want Alert repeat every xxxx Sec.
-                     if [ $ediff -le $SADM_ALERT_REPEAT ]               # Diff less than Repeat Time
-                        then msg="Same alert was sent $ediff seconds ago," # Didn't wait enough 
-                             msg="$msg which is less than $SADM_ALERT_REPEAT set in sadmin.cfg"
-                             if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "$msg" ;fi 
-                             return 2                                   # Return to Caller
-                     fi
-                     # Have same alert in the last 24 Hrs and Alert repeat time is reach, continue..
-                     if [ "$LIB_DEBUG" -gt 4 ] 
-                        then sadm_writelog "Repeating alert $aepoch, ($alertid)"
-                     fi
-                     amessage="Repeat alert for : $amessage"            # Add 'Repeat' to Message
+             ediff=`expr $cepoch - $aepoch`                             # Elapse Sec. of Last Alert
+             if [ "$LIB_DEBUG" -gt 4 ]                                  # Under Debug Level 5 and up
+                then sadm_writelog "Epoch Alert:$aepoch  Cur.Epoch:$cepoch  Difference=$ediff"
              fi
+             if [ $ediff -gt 86400 ]                                    # If Alert older than 24Hrs
+                then if [ "$LIB_DEBUG" -gt 4 ]                          # If Under Debug
+                        then sadm_writelog "Alert older than 24 Hrs won't send." 
+                     fi
+                     return 3                                           # Return 3 = Old ALert 
+             fi
+    fi
+
+    # If Current Alert was FOUND in the History 
+    if [ $RC -eq 0 ]                                                    # Same Alert was found
+        then if [ $SADM_ALERT_REPEAT -eq 0 ]                            # User want no alert repeat
+                then wmsg="Same alert found, don't repeat alert."       # No repeat - Advise user
+                     if [ "$LIB_DEBUG" -gt 4 ]                          # Under Debug          
+                        then sadm_writelog "$wmsg (SADM_ALERT_REPEAT set to $SADM_ALERT_REPEAT)."
+                     fi
+                     return 2                                           # Return 2 = Duplicate Alert
+             fi             
+            
+             # Get Epoch Time of the last same alert, get current Epoch & calculate Time difference
+             aepoch=`grep "$alertid" $SADM_ALERT_HIST |tail -1 |awk -F\; '{print $1}'` # Alert Epoch
+             arefno=`grep "$alertid" $SADM_ALERT_HIST |tail -1 |awk -F\; '{print $2}'` # Alert Countr
+             cepoch=`date +%s`                                          # Get Current Epoch Time
+             ediff=`expr $cepoch - $aepoch`                             # Elapse Sec. of Last Alert
+             if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "Alert:$aepoch Cur:$cepoch Dif=$ediff" ;fi
+
+             # If Time of last same alert is greater than 24 hours, 
+             if [ $ediff -gt 86400 ]                                    # LastAlert older than 24Hrs
+                 then if [ "$LIB_DEBUG" -gt 4 ]                         # If Under Debug
+                         then NbDaysOld=`echo "274855 / 86400" | bc`    # Calc. Age of Alert in Days
+                              sadm_writelog "Alert older than 24 Hrs ($NbDaysOld days), won't send." 
+                      fi
+                      return 3                                          # Return 3 Old Alert
+             fi
+
+            # See if time of repeating Alert.
+            MaxRepeat=`echo "86400 / $SADM_ALERT_REPEAT" | bc`          # Calc. Usr Nb Alert Per Day
+            WaitSec=`echo "$arefno * $SADM_ALERT_REPEAT" | bc`         # Wait Time before nxt Alert
+            if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "MaxRepeat=$MaxRepeat WaitSec=$WaitSec";fi
+
+            # Have same alert in the last 24 Hrs and User want Alert repeat every xxxx Sec.
+            if [ $ediff -le $WaitSec ]                                  # Repeat Time not reached
+               then msg="Same alert was sent $ediff seconds ago,"       # Didn't wait enough 
+                    msg="$msg which is less than Wait Time seconds ($WaitTime)."
+                    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "$msg" ;fi 
+                    return 2                                            # Return 2 = Duplicate Alert
+            fi
+
+            # Ok Time to Repeat alert, increase the Alert Counter & include 'Repeating' in message.
+            if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Repeating alert $aepoch, ($alertid)" ;fi
+            amessage="Repeat alert for : $amessage"                     # Add 'Repeat' to Message
     fi  
+
 
     # Determine if a [M]ail, [S]lack, [T]exto [C]ellular  Message need to be issued
     agroup_type=`grep -i "^$agroup " $SADM_ALERT_FILE |awk '{ print $2 }'` # [S/M/T/C] Group
@@ -2193,7 +2229,7 @@ sadm_send_alert() {
     fi
 
     # If we are on the SADMIN Server assign a Reference No. else set it to "000000"
-    arefno="000000"                                                      # Default Ref# is 000000
+    #arefno="000000"                                                      # Default alert Counter
     #if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] && [ "$atype" = "E" ]    # Get Ref# Only for Error
     #    then href=`cat $SADM_ALERT_SEQ`                                 # Get Last Alert Ref. No.
     #         href=$(($href+1))                                          # Increment Alert Ref. No.
@@ -2364,7 +2400,7 @@ send_slack_alert() {
 # --------------------------------------------------------------------------------------------------
 # Send Email Alert Function
 #
-# 1st Paramater    : [S]cript Alert [E]rror [W]arning [I]nfo
+# 1st Paramater    : [S]cript [E]rror [W]arning [I]nfo
 # 2nd Parameter    : Alert/Event Date and Time (YYYY/MM/DD HH:MM)
 # 3th Parameter    : Server Name Where Alert come from
 # 4th Parameter    : Alert Group Name to send Message
@@ -2433,18 +2469,14 @@ send_email_alert() {
 
     # Construct Body of the Email to send.
     mdate=`date "+%Y.%m.%d %H:%M"`                                      # Mail Date & Time
-    vm1=`printf "%-15s : %s" "Email Date/Time" "$mdate"`                # Date the Email was Sent
-    vm2=`printf "%-15s : %s" "Event Date/Time" "$atime"`                # Date The event occured
-    vm3=`printf "%-15s : %s" "Event Ref. No."  "$arefno"`               # Ref. No assign to alert
-    vm4=`printf "%-15s : %s" "Event Message"   "$amessage"`             # Body of the message
-    vm5=`printf "%-15s : %s" "Event on system" "$aserver"`              # Server where alert occured
-    vm6=`printf "%-18s : %s" "Script Name    " "$ascript"`              # Script Name
-    if [ $arefno != "000000" ]                                          # If ref .no = 000000 = None
-        then wm=`printf "%s\n%s\n%s\n%s\n%s\n%s" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5" "$vm6"` 
-        else wm=`printf "%s\n%s\n%s\n%s\n%s"     "$vm1" "$vm2" "$vm4" "$vm5" "$vm6"` 
-    fi
-
-
+    hepoch=$(sadm_date_to_epoch "$mdate")                               # Convert EventTime to Epoch
+    vm1=`printf "%-17s : %s" "Email Date/Time" "$mdate"`                # Date the Email was Sent
+    vm2=`printf "%-17s : %s" "Event Date/Time" "$atime"`                # Date The event occured
+    vm3=`printf "%-17s : %s" "Alert Counter"   "$arefno"`               # Alert Send Counter
+    vm4=`printf "%-17s : %s" "Event Message"   "$amessage"`             # Body of the message
+    vm5=`printf "%-17s : %s" "Event on system" "$aserver"`              # Server where alert occured
+    vm6=`printf "%-17s : %s" "Script Name    " "$ascript"`              # Script Name
+    wm=`printf "%s\n%s\n%s\n%s\n%s\n%s" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5" "$vm6"` 
 
     # Send the Email Now using 'mutt'.
     if [ "$aattach" != "" ]                                             # If Attachment Specified
@@ -2457,8 +2489,8 @@ send_email_alert() {
     if [ $RC -eq 0 ]                                                    # If Error Sending Email
         then wstatus="Email sent to $aemail" 
         else wstatus="Error sending email to $aemail"
+             sadm_writelog "$wstatus"                                   # Advise USer
     fi
-    sadm_writelog "$wstatus"                                            # Advise USer
     write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$arefno" "$wstatus"
     return $RC                                                          # Return Exit Code to Caller
 }   
@@ -2736,8 +2768,8 @@ write_alert_history() {
     hsub="$5"                                                           # Save Alert Subject
     href="$6"                                                           # Save Alert Reference No.
     hstat="$7"                                                          # Save Alert Send Status
-    #hepoch=$(sadm_date_to_epoch "$hdatetime")                           # Convert Event Time to Epoch
-    hepoch=`date +%s`                                                   # Get Current Epoch Time
+    hepoch=$(sadm_date_to_epoch "$hdatetime")                           # Convert Event Time to Epoch
+    #hepoch=`date +%s`                                                   # Get Current Epoch Time
     #
     hline=`printf "%s;%s"    "$hepoch" "$href" `                        # Epoch, Reference No.
     hline=`printf "%s;%s;%s" "$hline" "$hdatetime" "$htype"`            # Alert time,date,type
