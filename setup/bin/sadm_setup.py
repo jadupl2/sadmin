@@ -1009,7 +1009,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     update_sadmin_cfg(sroot,"SADM_DBHOST","localhost",False)            # Update Value in sadmin.cfg
        
 
-    # Accept 'root' Database user password ---------------------------------------------------------
+    # Accept 'root' Database user password (And validate access) -----------------------------------
     sdefault = ""                                                       # No Default Password 
     sprompt  = "Enter MariaDB Database 'root' user password"            # Prompt for Answer
     dbroot_pwd = accept_field(sroot,"SADM_DBROOT",sdefault,sprompt,"P") # Accept Mysql root pwd
@@ -1068,54 +1068,61 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
             writelog (' Done ')                                         # Advise User ok to proceed
         time.sleep(1)                                                   # Sleep for user to see
 
-
+    # LOOP TILL CREATE USER WORK *************** COCO ******
     # Check if 'sadmin' user exist in Database, if not create User and Grant permission ------------
-    uname     = "sadmin"                                                # User to check in DB
-    sdefault  = "Nimdas2018"                                            # Default sadmin Password 
-    sprompt   = "Enter Read/Write 'sadmin' database user password"      # Prompt for Answer
-    rw_passwd = ""                                                      # Clear dbpass sadmin Pwd
-    writelog(' ')                                                       # Blank Line
-    writelog('----------')                                              # Separation Line
-    if user_exist(uname,dbroot_pwd) :                                   # User Exist in Database ?
-        writelog ("User '%s' exist in Database ..." % (uname))          # Show user was found
-        wcfg_rw_dbpwd = user_can_connect(uname,sroot)                   # Can connect? Return Pwd
-        if (wcfg_rw_dbpwd != "" ) :                                     # No blank Pwd, connect ok
-            writelog ("User '%s' able to connect to Database using password file ..." % (uname))
-        else:                                                           # sadmin password is wrong
-            writelog ("Not able to connect to Database using '%s' .dbpass password ..." % (uname))
-            wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Enter Usr pwd
-            writelog ("Updating 'sadmin' user password and grant ... ",'nonl')
-            sql = " SET PASSWORD FOR '%s'@'localhost' = PASSWORD('%s');" % (uname,wcfg_rw_dbpwd)
-            sql += " revoke all privileges on *.* from '%s'@'localhost';" % (uname)
+    password_ok = False
+    while password_ok = False :
+        uname     = "sadmin"                                            # User to check in DB
+        sdefault  = "Nimdas2018"                                        # Default 'sadmin' Password 
+        sprompt   = "Enter Read/Write 'sadmin' database user password"  # Prompt for Answer
+        rw_passwd = ""                                                  # Clear dbpass sadmin Pwd
+        writelog(' ')                                                   # Blank Line
+        writelog('----------')                                          # Separation Line
+        if user_exist(uname,dbroot_pwd) :                               # User Exist in Database ?
+            writelog ("User '%s' exist in Database ..." % (uname))      # Show user was found
+            wcfg_rw_dbpwd = user_can_connect(uname,sroot)               # Can connect? Return Pwd
+            if (wcfg_rw_dbpwd != "" ) :                                 # No blank Pwd, connect ok
+                writelog ("User '%s' able to connect to Database using password file ..." % (uname))
+                password_ok = True                                      # Ok Exit the loop
+            else:                                                       # sadmin password is wrong
+                writelog ("Not able to connect to Database using '%s' .dbpass password." % (uname))
+                wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Enter Usr pwd
+                writelog ("Updating 'sadmin' user password and grant ... ",'nonl')
+                sql = " SET PASSWORD FOR '%s'@'localhost' = PASSWORD('%s');" % (uname,wcfg_rw_dbpwd)
+                sql += " revoke all privileges on *.* from '%s'@'localhost';" % (uname)
+                sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
+                sql += " flush privileges;"                             # Flush Buffer
+                cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql) # Build Create User SQL
+                if (DEBUG):       
+                    writelog ("SQL executing : \n%s\n" % (cmd))
+                ccode,cstdout,cstderr = oscommand(cmd)                  # Execute MySQL Command 
+                if (ccode != 0):                                        # If problem creating user
+                    writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
+                    writelog ("Standard out is %s" % (cstdout))         # Print command stdout
+                    writelog ("Standard error is %s" % (cstderr))       # Print command stderr
+                else:
+                    password_ok = True                                      # Ok Exit the loop
+        else:                                                           # Database user don't exist
+            writelog ("User '%s' don't exist in Database." % (uname))   # Show user was found
+            wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
+            writelog ("Creating 'sadmin' user ... ",'nonl')             # Show User Creating DB Usr
+            sql =  "drop user 'sadmin'@'localhost'; flush privileges; " # Drop Usr,ByPass Bug Debian
+            cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)     # Build Create User SQL
+            ccode,cstdout,cstderr = oscommand(cmd)                      # Execute MySQL Command 
+            sql  = " CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_rw_dbpwd)
             sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
             sql += " flush privileges;"                                 # Flush Buffer
             cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)     # Build Create User SQL
-            if (DEBUG):       
-                writelog ("SQL executing : \n%s\n" % (cmd))
             ccode,cstdout,cstderr = oscommand(cmd)                      # Execute MySQL Command 
             if (ccode != 0):                                            # If problem creating user
-                writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
+                writelog ("Error code returned is %d \n%s" % (ccode,cmd)) # Show Return Code No
                 writelog ("Standard out is %s" % (cstdout))             # Print command stdout
                 writelog ("Standard error is %s" % (cstderr))           # Print command stderr
-    else:                                                               # Database user don't exist
-        writelog ("User '%s' don't exist in Database ..." % (uname))    # Show user was found
-        wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
-        writelog ("Creating 'sadmin' user ... ",'nonl')                 # Show User Creating DB Usr
-        sql =  "drop user 'sadmin'@'localhost'; flush privileges; "     # Drop User - ByPass Bug Deb
-        cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)         # Build Create User SQL
-        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Command 
-        sql  = " CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_rw_dbpwd)
-        sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
-        sql += " flush privileges;"                                     # Flush Buffer
-        cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)         # Build Create User SQL
-        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Command 
-        if (ccode != 0):                                                # If problem creating user
-            writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
-            writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
-            writelog ("Standard error is %s" % (cstderr))               # Print command stderr
-    rw_passwd = wcfg_rw_dbpwd                                           # DBpwd R/W sadmin Password
-    writelog (" Done ")                                                 # Advise User ok to proceed
-
+            else:
+                password_ok = True                                      # Ok Exit the loop
+    else:
+        rw_passwd = wcfg_rw_dbpwd                               # DBpwd R/W sadmin Password
+        writelog (" Done ")                                     # Advise User ok to proceed
 
 
     # Check if 'squery' user exist in Database, if not create User and Grant permission ------------
