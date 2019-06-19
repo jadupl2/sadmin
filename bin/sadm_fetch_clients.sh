@@ -50,6 +50,7 @@
 # 2019_05_23  Update: v2.36 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
 #@2019_06_06  Fix: v2.37 Fix problem sending alert when SADM_ALERT_TYPE was set 2 or 3.
 #@2019_06_07  New: v2.38 We now have at the end a alert status summary of all systems.
+#@2019_06_19  Update: v2.39 Update total alerts summary, Subject changed depending upon script result.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -86,7 +87,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.38'                              # Current Script Version
+    export SADM_VER='2.39'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -126,8 +127,8 @@ REBOOT_SEC=900                                    ; export REBOOT_SEC   # O/S Up
 RCH_FIELD=10                                      ; export RCH_FIELD    # Nb. of field on rch file.
 #
 # Reset Totals Counters
-export total_alert=0 ; export total_duplicate=0 ; export total_ok=0 ; export total_error=0      
-
+export total_alert=0  ; export total_duplicate=0 ; export total_ok=0 ; export total_error=0      
+export total_oldies=0
 
 # --------------------------------------------------------------------------------------------------
 # H E L P      U S A G E   D I S P L A Y    F U N C T I O N
@@ -797,7 +798,6 @@ check_for_alert()
              return 0                                                   # Return to Caller
     fi
 
-    #total_alert=0 ; total_duplicate=0 ; total_ok=0 ; total_error=0      # Reset Totals Counters
     cat $SADM_TMP_FILE2 | { while read line                               # Read Each Line of file
         do                
         NBFIELD=`echo $line | awk '{ print NF }'`                       # How many fields on line ?
@@ -809,7 +809,7 @@ check_for_alert()
                 continue 
         fi
 
-        etype="S"                                                       # Event Type = S for Script
+        #etype="S"                                                       # Event Type = S for Script
         ehost=`echo $line   | awk '{ print $1 }'`                       # Hostname of Event
         wdate=`echo $line   | awk '{ print $4 }'`                       # Get Script Ending Date 
         wtime=`echo $line   | awk '{ print $5 }' `                      # Get Script Ending Time 
@@ -820,10 +820,12 @@ check_for_alert()
         egtype=`echo $line  | awk '{ print $9 }'`                       # Alert Group Type [0,1,2,3]
         ecode=`echo $line   | awk '{ print $10 }'`                      # Return Code (0,1)
         if [ "$ecode" = "1" ]                                           # Script Ended with Error
-           then esub="$escript ended with error on $ehost"              # Alert Subject
-                emess="Script '$escript' failed on '$ehost'"            # Alert Message
-           else esub="$escript ran with success on $ehost"              # Alert Subject
-                emess="Script '$escript' ran with success on '$ehost'"  # Alert Message
+           then esub="Script $escript ended with error"                 # Alert Subject
+                emess="Script '$escript' failed"                        # Alert Message
+                etype="E"                                               # Event Type = E for Error
+           else esub="Script $escript ran with success"                 # Alert Subject
+                emess="Script '$escript' ran with success"              # Alert Message
+                etype="I"                                               # Event Type = I for Info
         fi
         elogfile="${ehost}_${escript}.log"                              # Build Log File Name
         elogname="${SADM_WWW_DAT_DIR}/${ehost}/log/${elogfile}"         # Build Log Full Path File
@@ -847,11 +849,16 @@ check_for_alert()
                 if [ "$RC" = "0" ] ; then total_ok=`expr $total_ok + 1` ; fi
                 if [ "$RC" = "1" ] ; then total_error=`expr $total_error + 1` ; fi
                 if [ "$RC" = "2" ] ; then total_duplicate=`expr $total_duplicate + 1` ; fi
+                if [ "$RC" = "3" ] ; then total_oldies=`expr $total_oldies + 1` ; fi
         fi
         done 
+        sadm_writelog " "                                               # Separation Blank Line
+        sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
         sadm_writelog "Alert submitted             : $total_alert"
+        sadm_writelog " "
         sadm_writelog "New alert sent successfully : $total_ok"
         sadm_writelog "Alert error trying to send  : $total_error"
+        sadm_writelog "Alert older than 24 Hrs     : $total_oldies"
         sadm_writelog "Alert already sent          : $total_duplicate"
         sadm_writelog " "                                               # Separation Blank Line
         sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
