@@ -37,13 +37,14 @@
 # 2019_01_19 v2.24 Added: Added Backup List & Exclude List Var. in Class & curl,mutt cmd. path.
 # 2019_01_28 v2.25 Fix: DB Password file on read on SADMIN Server.
 # 2019_03_08 Change: v2.26 'lsb_release -si' return new string in RHEL/CentOS 8, Change get_osname()
-#@2019_03_18 New: v2.27 Function 'get_packagetype()' that return package type (rpm,dev,aix,dmg).
-#@2019_04_25 Update: v2.28 Read and Load 3 news sadmin.cfg variable Alert_Repeat, Textbelt Key & URL
-#@2019_05_16 Update: v3.00 Only one summary line is now added to RCH file when scripts are executed.
-#@2019_05_16 Update: v3.01 New 'st.show_version()' function, libr. debug variable (st.lib_debug), 
+# 2019_03_18 New: v2.27 Function 'get_packagetype()' that return package type (rpm,dev,aix,dmg).
+# 2019_04_25 Update: v2.28 Read and Load 3 news sadmin.cfg variable Alert_Repeat, Textbelt Key & URL
+# 2019_05_16 Update: v3.00 Only one summary line is now added to RCH file when scripts are executed.
+# 2019_05_16 Update: v3.01 New 'st.show_version()' function, libr. debug variable (st.lib_debug), 
 #                    script alert not send by script anymore but by SADMIN master.
 #@2019_05_20 Fix: v3.02 Was not loading Storix mount point directory info.
 #@2019_06_07 Update: v3.03 Create/Update the rch file using the new format (with alarm type).
+#@2019_06_19 Update: v3.04 Trap and show error when can't connect to Database, instead of crashing.
 #
 #==================================================================================================
 try :
@@ -116,7 +117,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.03"                                # This Library Version
+        self.libver             = "3.04"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -319,7 +320,11 @@ class sadmtools():
         try :
             #self.conn = pymysql.connect(conn_string)
             self.conn=pymysql.connect(self.cfg_dbhost,self.cfg_rw_dbuser,self.cfg_rw_dbpwd,self.cfg_dbname)
-
+        except pymysql.err.InternalError as error :
+            self.enum, self.emsg = error.args                           # Get Error No. & Message
+            print ("Error connecting to Database '%s'" % (self.cfg_dbname))
+            print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
+            sys.exit(1)                                                 # Exit Pgm with Error Code 1
         except pymysql.err.OperationalError as error :
             self.enum, self.emsg = error.args                           # Get Error No. & Message
             print ("Error connecting to Database '%s'" % (self.cfg_dbname))
