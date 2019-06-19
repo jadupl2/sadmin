@@ -39,6 +39,7 @@
 #@2019_04_19 Update: v2.5 Will now install python 3.6 on CentOS/RedHat 7 instead of 3.4
 #@2019_04_19 Fix: v2.6 Solve problem with installing 'pymysql' module.
 #@2019_04_19 Fix: v2.7 Solve problem with pip3 on Ubuntu.
+#@2019_06_19 Update: v2.8 Update procedure to install CentOS/RHEL repository for version 5,6,7,8
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -47,7 +48,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='2.7'                              ; export SADM_VER           # Your Script Version
+SADM_VER='2.8'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -83,18 +84,41 @@ add_epel_repo()
 {
 
 
-    # Add EPEL Repository on Redhat / CentOS 6 (but do not enable it)
-    if [ "$SADM_OSVERSION" -eq 6 ] 
-        then echo "Adding CentOS/Redhat V6 EPEL repository (Disable by default) ..." |tee -a $SLOG
-             yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm >>$SLOG 2>&1
-             if [ $? -ne 0 ]
-                then echo "${yellow}Couldn't add EPEL repository for version $SADM_OSVERSION${reset}" | tee -a $SLOG
-                     return 1
+    # Add EPEL Repository on Redhat / CentOS 5 (but do not enable it)
+    if [ "$SADM_OSVERSION" -eq 5 ] 
+        then if [ ! -r /etc/yum.repos.d/epel.repo ] 
+                then echo "Adding CentOS/Redhat V5 EPEL repository ..." |tee -a $SLOG
+                     EPEL="https://archives.fedoraproject.org/pub/archive/epel/epel-release-latest-5.noarch.rpm"
+                     yum install -y $EPEL >>$SLOG 2>&1
+                     if [ $? -ne 0 ]
+                        then echo "[Error] Adding EPEL repository." |tee -a $SLOG
+                             return 1
+                     fi
              fi 
-             echo "${yellow}Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
+             echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
              yum-config-manager --disable epel >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then echo "${yellow}Couldn't disable EPEL for version $SADM_OSVERSION${reset}" | tee -a $SLOG
+                then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
+                     return 1
+             fi 
+             return 0
+    fi
+
+    # Add EPEL Repository on Redhat / CentOS 6 (but do not enable it)
+    if [ "$SADM_OSVERSION" -eq 6 ] 
+        then if [ ! -r /etc/yum.repos.d/epel.repo ] 
+                then echo "Adding CentOS/Redhat V6 EPEL repository ..." |tee -a $SLOG
+                     EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm"
+                     yum install -y $EPEL >>$SLOG 2>&1
+                     if [ $? -ne 0 ]
+                        then echo "[Error] Adding EPEL repository." |tee -a $SLOG
+                             return 1
+                     fi
+             fi 
+             echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
+             yum-config-manager --disable epel >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
                      return 1
              fi 
              return 0
@@ -102,16 +126,19 @@ add_epel_repo()
 
     # Add EPEL Repository on Redhat / CentOS 7 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 7 ] 
-        then echo "Adding CentOS/Redhat V7 EPEL repository (Disable by default) ..." |tee -a $SLOG
-             yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm >>$SLOG 2>&1
-             if [ $? -ne 0 ]
-                then echo "${yellow}[Error] Adding EPEL repository for version $SADM_OSVERSION${reset}" | tee -a $SLOG
-                     return 1
+        then if [ ! -r /etc/yum.repos.d/epel.repo ] 
+                then echo "Adding CentOS/Redhat V7 EPEL repository ..." |tee -a $SLOG
+                     EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+                     yum install -y $EPEL >>$SLOG 2>&1
+                     if [ $? -ne 0 ]
+                        then echo "[Error] Adding EPEL repository." |tee -a $SLOG
+                             return 1
+                     fi
              fi 
              echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
              yum-config-manager --disable epel >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then echo "${yellow}Couldn't disable EPEL for version $SADM_OSVERSION${reset}" | tee -a $SLOG
+                then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
                      return 1
              fi 
              return 0
@@ -120,13 +147,14 @@ add_epel_repo()
     # Add EPEL Repository on Redhat / CentOS 8 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 8 ] 
         then echo "Adding CentOS/Redhat V8 EPEL repository (Disable by default) ..." |tee -a $SLOG
-             yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm >>$SLOG 2>&1
+             EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
+             yum install -y $EPEL >>$SLOG 2>&1
              if [ $? -ne 0 ]
-                then echo "${yellow}[Error] Adding EPEL repository for version $SADM_OSVERSION${reset}" | tee -a $SLOG
+                then echo "[Error] Adding EPEL repository." |tee -a $SLOG
                      return 1
-             fi 
+             fi
              #
-             rpm -qi dnf-utils >/dev/null 2>&1                          # Check if dns-utils is install
+             rpm -qi dnf-utils >/dev/null 2>&1                          # Check dns-utils is install
              if [ $? -ne 0 ] 
                 then echo "Installing dnf-utils" | tee -a $LOG
                      dnf install -y dnf-utils >>$SLOG 2>&1
@@ -135,10 +163,11 @@ add_epel_repo()
              echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
              dnf config-manager --set-disabled epel >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then echo "${yellow}Couldn't disable EPEL for version $SADM_OSVERSION${reset}" | tee -a $SLOG
+                then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
                      return 1
              fi 
     fi
+
     return 0 
 }
 
@@ -356,5 +385,5 @@ EOF
     echo "We will now proceed with main setup program ($SCRIPT)" >> $SLOG 
     echo "All Verifications Pass ..."
     echo -e "\n" | tee -a $SLOG                                         # Blank Lines
-    $SCRIPT 
+    #$SCRIPT 
 
