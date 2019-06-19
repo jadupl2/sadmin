@@ -60,6 +60,7 @@
 #@2019_04_15 Fix: v3.23 Fix 'squery' database user password typo error.
 #@2019_04_18 Update: v3.24 Release 0.97 Re-tested with Ubuntu version.
 #@2019_04_18 Fix: v3.25 Release 0.97 Re-tested with CentOS/RedHat version.
+#@2019_06_19 Update: v3.26 Ask for sadmin Database password until it's valid.
 # 
 # ==================================================================================================
 #
@@ -77,7 +78,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.25"                                            # Setup Version Number
+sver                = "3.26"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1071,7 +1072,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     # LOOP TILL CREATE USER WORK *************** COCO ******
     # Check if 'sadmin' user exist in Database, if not create User and Grant permission ------------
     password_ok = False
-    while password_ok = False :
+    while password_ok == False :
         uname     = "sadmin"                                            # User to check in DB
         sdefault  = "Nimdas2018"                                        # Default 'sadmin' Password 
         sprompt   = "Enter Read/Write 'sadmin' database user password"  # Prompt for Answer
