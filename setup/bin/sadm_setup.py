@@ -61,7 +61,7 @@
 #@2019_04_18 Update: v3.24 Release 0.97 Re-tested with Ubuntu version.
 #@2019_04_18 Fix: v3.25 Release 0.97 Re-tested with CentOS/RedHat version.
 #@2019_06_19 Update: v3.26 Ask for sadmin Database password until it's valid.
-# 
+#@2019_06_21 Update: v3.27 Ask for 'sadmin' & 'squery' Database password until it's valid.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -78,7 +78,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.26"                                            # Setup Version Number
+sver                = "3.27"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1071,8 +1071,8 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
 
     # LOOP TILL CREATE USER WORK *************** COCO ******
     # Check if 'sadmin' user exist in Database, if not create User and Grant permission ------------
-    password_ok = False
-    while password_ok == False :
+    password_ok = False                                                 # Default Password not valid
+    while password_ok == False :                                        # Loop until valid password
         uname     = "sadmin"                                            # User to check in DB
         sdefault  = "Nimdas2018"                                        # Default 'sadmin' Password 
         sprompt   = "Enter Read/Write 'sadmin' database user password"  # Prompt for Answer
@@ -1102,7 +1102,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
                     writelog ("Standard out is %s" % (cstdout))         # Print command stdout
                     writelog ("Standard error is %s" % (cstderr))       # Print command stderr
                 else:
-                    password_ok = True                                      # Ok Exit the loop
+                    password_ok = True                                  # Ok Exit the loop
         else:                                                           # Database user don't exist
             writelog ("User '%s' don't exist in Database." % (uname))   # Show user was found
             wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
@@ -1119,57 +1119,65 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
                 writelog ("Error code returned is %d \n%s" % (ccode,cmd)) # Show Return Code No
                 writelog ("Standard out is %s" % (cstdout))             # Print command stdout
                 writelog ("Standard error is %s" % (cstderr))           # Print command stderr
-            else:
+            else:                                                       # User Created with Success
                 password_ok = True                                      # Ok Exit the loop
-    else:
-        rw_passwd = wcfg_rw_dbpwd                               # DBpwd R/W sadmin Password
-        writelog (" Done ")                                     # Advise User ok to proceed
+    #
+    rw_passwd = wcfg_rw_dbpwd                                           # DBpwd R/W sadmin Password
+    writelog (" Done ")                                                 # Advise User ok to proceed
 
 
     # Check if 'squery' user exist in Database, if not create User and Grant permission ------------
-    uname     = "squery"                                                # Default Query DB UserName
-    sdefault  = "Squery18"                                              # Default Password 
-    sprompt   = "Enter 'squery' database user password"                 # Prompt for Answer
-    ro_passwd = ""                                                      # Clear dbpass squery Pwd
-    writelog(' ')                                                       # Blank Line
-    writelog('----------')                                              # Separation Line
-    if user_exist(uname,dbroot_pwd) :                                   # User Exist in Database ?
-        writelog ("User '%s' exist in Database ..." % (uname))          # Show user was found
-        wcfg_ro_dbpwd = user_can_connect(uname,sroot)                   # Can connect? Return Pwd
-        if (wcfg_ro_dbpwd != "" ) :                                     # No blank Pwd, connect ok
-            writelog ("User '%s' able to connect to Database using password file ..." % (uname))
-        else:                                                           # sadmin password is wrong
-            writelog ("Not able to connect to Database using '%s' .dbpass password ..." % (uname))
-            wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Enter Usr pwd
-            writelog ("Updating 'squery' user password and grant ... ",'nonl')
-            sql = " SET PASSWORD FOR '%s'@'localhost' = PASSWORD('%s');" % (uname,wcfg_ro_dbpwd)
-            sql += " revoke all privileges on *.* from 'squery'@'localhost';"
-            sql += " grant select, show view on sadmin.* to 'squery'@'localhost';"
+    password_ok = False                                                 # Default Password not valid
+    while password_ok == False :                                        # Loop until valid password
+        uname     = "squery"                                            # Default Query DB UserName
+        sdefault  = "Squery18"                                          # Default Password 
+        sprompt   = "Enter 'squery' database user password"             # Prompt for Answer
+        ro_passwd = ""                                                  # Clear dbpass squery Pwd
+        writelog(' ')                                                   # Blank Line
+        writelog('----------')                                          # Separation Line
+        if user_exist(uname,dbroot_pwd) :                               # User Exist in Database ?
+            writelog ("User '%s' exist in Database ..." % (uname))      # Show user was found
+            wcfg_ro_dbpwd = user_can_connect(uname,sroot)               # Can connect? Return Pwd
+            if (wcfg_ro_dbpwd != "" ) :                                 # No blank Pwd, connect ok
+                writelog ("User '%s' able to connect to Database using password file ..." % (uname))
+                password_ok = True                                      # Ok Exit the loop
+            else:                                                       # sadmin password is wrong
+                writelog ("Not able to connect to Database using '%s' .dbpass password ..." % (uname))
+                wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Enter Usr pwd
+                writelog ("Updating 'squery' user password and grant ... ",'nonl')
+                sql = " SET PASSWORD FOR '%s'@'localhost' = PASSWORD('%s');" % (uname,wcfg_ro_dbpwd)
+                sql += " revoke all privileges on *.* from 'squery'@'localhost';"
+                sql += " grant select, show view on sadmin.* to 'squery'@'localhost';"
+                sql += " flush privileges;"                             # Flush Buffer
+                cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql) # Build Create User SQL
+                if (DEBUG):       
+                    writelog ("SQL executing : \n%s\n" % (cmd))
+                ccode,cstdout,cstderr = oscommand(cmd)                  # Execute MySQL Command 
+                if (ccode != 0):                                        # If problem creating user
+                    writelog ("Error code returned is %d \n%s" % (ccode,cmd)) # Show Return Code No
+                    writelog ("Standard out is %s" % (cstdout))         # Print command stdout
+                    writelog ("Standard error is %s" % (cstderr))       # Print command stderr
+                else:
+                    password_ok = True                                  # Ok Exit the loop
+        else:                                                           # Database user don't exist
+            writelog ("User '%s' don't exist in Database." % (uname))   # Show user was found
+            wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Accept user pwd
+            writelog ("Creating '%s' user ... " % (uname),'nonl')       # Show User Creating DB Usr
+            sql =  "drop user 'squery'@'localhost'; flush privileges; " # Drop User - ByPass Bug Deb
+            cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)     # Build Create User SQL
+            ccode,cstdout,cstderr = oscommand(cmd)                      # Execute MySQL Command 
+            sql  = " CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_ro_dbpwd)
+            sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
             sql += " flush privileges;"                                 # Flush Buffer
             cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)     # Build Create User SQL
-            if (DEBUG):       
-                writelog ("SQL executing : \n%s\n" % (cmd))
             ccode,cstdout,cstderr = oscommand(cmd)                      # Execute MySQL Command 
             if (ccode != 0):                                            # If problem creating user
-                writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
+                writelog ("Error code returned is %d \n%s" % (ccode,cmd)) # Show Return Code No
                 writelog ("Standard out is %s" % (cstdout))             # Print command stdout
                 writelog ("Standard error is %s" % (cstderr))           # Print command stderr
-    else:                                                               # Database user don't exist
-        writelog ("User '%s' don't exist in Database ..." % (uname))    # Show user was found
-        wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Accept user pwd
-        writelog ("Creating '%s' user ... " % (uname),'nonl')           # Show User Creating DB Usr
-        sql =  "drop user 'squery'@'localhost'; flush privileges; "     # Drop User - ByPass Bug Deb
-        cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)         # Build Create User SQL
-        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Command 
-        sql  = " CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_ro_dbpwd)
-        sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
-        sql += " flush privileges;"                                     # Flush Buffer
-        cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)         # Build Create User SQL
-        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Command 
-        if (ccode != 0):                                                # If problem creating user
-            writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
-            writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
-            writelog ("Standard error is %s" % (cstderr))               # Print command stderr
+            else:                                                       # User Created with Success
+                password_ok = True                                      # Ok Exit the loop
+    #
     ro_passwd = wcfg_ro_dbpwd                                           # DBpwd R/W sadmin Password
     writelog (" Done ")                                                 # Advise User ok to proceed
 
