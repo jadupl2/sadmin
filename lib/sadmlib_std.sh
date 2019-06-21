@@ -2242,7 +2242,7 @@ sadm_send_alert() {
             # Ok Time to Repeat alert, increase the Alert Counter & include 'Repeating' in message.
             acounter=`expr $acounter + 1`
             acounter=`printf "%02d" "$acounter"`                        # Make counter two digits
-            acounter="$acounter of $MaxRepeat"
+            #acounter="$acounter of $MaxRepeat"
             if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "Repeat alert ($aepoch)-($acounter)-($alertid)" ;fi
             amessage="(Repeat) $amessage"                               # Add 'Repeat' to Message
     fi  
