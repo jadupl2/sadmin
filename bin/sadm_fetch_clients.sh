@@ -89,7 +89,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
     export SADM_VER='2.39'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
     export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
@@ -854,13 +854,11 @@ check_for_alert()
         done 
         sadm_writelog " "                                               # Separation Blank Line
         sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
-        sadm_writelog "Alert submitted             : $total_alert"
-        sadm_writelog " "
-        sadm_writelog "New alert sent successfully : $total_ok"
-        sadm_writelog "Alert error trying to send  : $total_error"
-        sadm_writelog "Alert older than 24 Hrs     : $total_oldies"
-        sadm_writelog "Alert already sent          : $total_duplicate"
-        sadm_writelog " "                                               # Separation Blank Line
+        sadm_writelog "$total_alert Alert(s) submitted"
+        sadm_writelog "   - New alert sent successfully : $total_ok"
+        sadm_writelog "   - Alert error trying to send  : $total_error"
+        sadm_writelog "   - Alert older than 24 Hrs     : $total_oldies"
+        sadm_writelog "   - Alert already sent          : $total_duplicate"
         sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
         }                                                               # make Total Avail out of loop
 }
