@@ -102,6 +102,7 @@
 #@2019_06_11 Update: v3.04 Send Alert functions parameters change to add script name as parameter.
 #@2019_06_19 Update: v3.05 Fix: Fix problem with repeating alert.
 #@2019_06_23 Update: v3.06 Update: Reduce Library by 300 lines and Fix some alerting bug.
+#@2019_06_23 Update: v3.06a Update: Correct Typo error, in email alert.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -111,7 +112,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.06"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.06a"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2269,9 +2270,9 @@ sadm_send_alert() {
             hepoch=$(sadm_date_to_epoch "$mdate")                       # Convert EventTime to Epoch
             vm1=`printf "%-15s: %s" "Email Date/Time" "$mdate"`         # Date the Email was Sent
             vm2=`printf "%-15s: %s" "Event Date/Time" "$atime"`         # Date The event occured
-            vm3=`printf "%-15s: %02d of %02d" "Alert counter" "$acounter" "$MaxRepeat"` # AlertSent Counter
+            vm3=`printf "%-15s: %02d of %02d" "Alert counter" "$acounter" "$MaxRepeat"` # AlertSent 
             if [ $SADM_ALERT_REPEAT -ne 0 ] && [ $acounter -ne $MaxRepeat ]     # Not Last Alert 
-                then vm3=`printf "%s, next around %s" "vm3" "$next_alert_time"` # Show Time Nxt Alert
+                then vm3=`printf "%s, next alert around %s" "$vm3" "$next_alert_time"` # TimeNxtAlert
             fi
             vm4=`printf "%-15s: %s" "Event Message"   "$amessage"`      # Body of the message
             vm5=`printf "%-15s: %s" "Event on system" "$aserver"`       # Server where alert occured
