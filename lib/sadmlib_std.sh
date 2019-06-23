@@ -103,6 +103,7 @@
 #@2019_06_19 Update: v3.05 Fix: Fix problem with repeating alert.
 #@2019_06_23 Update: v3.06 Update: Reduce Library by 300 lines and Fix some alerting bug.
 #@2019_06_23 Update: v3.06a Update: Correct Typo error, in email alert.
+#@2019_06_23 Update: v3.06b Update: Correct Typo error, in email alert.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -112,7 +113,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.06a"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.06b"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2227,11 +2228,11 @@ sadm_send_alert() {
                      sadm_writelog "$msg"
             fi
 
-            xcount=`expr $WaitSec - $aage` 
-            next_alert_epoch=`expr $cepoch + $xcount` 
-            next_alert_time=$(sadm_epoch_to_date "$next_alert_epoch")
             if [ $aage -le $WaitSec ]                                  # Repeat Time not reached
-                then msg="Waiting - Next alert will be send in $xcount seconds around ${next_alert_time}."
+                then xcount=`expr $WaitSec - $aage` 
+                     next_alert_epoch=`expr $cepoch + $xcount` 
+                     next_alert_time=$(sadm_epoch_to_date "$next_alert_epoch")
+                     msg="Waiting - Next alert will be send in $xcount seconds around ${next_alert_time}."
                      if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "$msg" ;fi 
                      return 2                                            # Return 2 = Duplicate Alert
             fi 
@@ -2242,7 +2243,9 @@ sadm_send_alert() {
     if [ $acounter -gt 1 ] ; then amessage="(Repeat) $amessage" ;fi     # Insert Repeat if Count>1
     acounter=`printf "%02d" "$acounter"`                                # Make counter two digits
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "Repeat alert ($aepoch)-($acounter)-($alertid)" ;fi
-
+    NxtInterval=`echo "$acounter * $SADM_ALERT_REPEAT" | $SADM_BC`      # Next Alert Elapse Seconds                                 # Alert Interval * Counter
+    NxtEpoch=`expr $NxtInterval + $aepoch`                              # Next Alarm Epoch Time
+    NxtAlarmTime=$(sadm_epoch_to_date "$NxtEpoch")                      # Next Alarm Date/Time
 
     # Send the Alert Message using the type of alert requested
     case "$agroup_type" in
@@ -2272,7 +2275,7 @@ sadm_send_alert() {
             vm2=`printf "%-15s: %s" "Event Date/Time" "$atime"`         # Date The event occured
             vm3=`printf "%-15s: %02d of %02d" "Alert counter" "$acounter" "$MaxRepeat"` # AlertSent 
             if [ $SADM_ALERT_REPEAT -ne 0 ] && [ $acounter -ne $MaxRepeat ]     # Not Last Alert 
-                then vm3=`printf "%s, next alert around %s" "$vm3" "$next_alert_time"` # TimeNxtAlert
+                then vm3=`printf "%s, next alert around %s" "$vm3" "$NxtAlarmTime"` # TimeNxtAlert
             fi
             vm4=`printf "%-15s: %s" "Event Message"   "$amessage"`      # Body of the message
             vm5=`printf "%-15s: %s" "Event on system" "$aserver"`       # Server where alert occured
