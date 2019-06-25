@@ -32,17 +32,19 @@
 # 2019_03_23 New: v1.0 Beta - Test Initial version.
 # 2019_03_26 New: v1.1 Beta - Ready to Test 
 # 2019_04_06 New: v1.2 Version after testing client removal.
-#@2019_04_07 New: v1.3 Uninstall script production release.
-#@2019_04_08 Update: v1.4 Remove 'sadmin' line in /etc/hosts, only when uninstalling SADMIN server.
-#@2019_04_11 Update: v1.5 Show if we are uninstalling a 'client' or a 'server' on confirmation msg.
-#@2019_04_14 Fix: v1.6 Don't show password when entering it, correct problem dropping database.
-#@2019_04_14 Fix: v1.7 Remove user before dropping database
-#@2019_04_17 Update: v1.8 When quitting script, remove pid file and print abort message.
+# 2019_04_07 New: v1.3 Uninstall script production release.
+# 2019_04_08 Update: v1.4 Remove 'sadmin' line in /etc/hosts, only when uninstalling SADMIN server.
+# 2019_04_11 Update: v1.5 Show if we are uninstalling a 'client' or a 'server' on confirmation msg.
+# 2019_04_14 Fix: v1.6 Don't show password when entering it, correct problem dropping database.
+# 2019_04_14 Fix: v1.7 Remove user before dropping database
+# 2019_04_17 Update: v1.8 When quitting script, remove pid file and print abort message.
+#@2019_06_25 Update: v1.9 Minor update to code.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
 #set -x
      
+
 
 
 #===================================================================================================
@@ -67,19 +69,20 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.8'                               # Your Current Script Version
+    export SADM_VER='1.9'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
 
     . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
 #---------------------------------------------------------------------------------------------------
 # Value for these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
 # But they can be overridden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # AlertGroup Used for Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=1000                       # At end of script Trim log to 1000 Lines
@@ -87,13 +90,12 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
 
-
   
 
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+SADM_DEBUG=0                               ; export SADM_DEBUG        # 0=NoDebug Higher=+Verbose
 DRYRUN=1                                    ; export DRYRUN             # default Dryrun activated  
 TMP_FILE1="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE1  # Temp File 1
 TMP_FILE2="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE2  # Temp File 2
@@ -118,14 +120,6 @@ show_usage()
     printf "\n\n" 
 }
 
-show_version()
-{
-    printf "\n${SADM_PN} - Version $SADM_VER"
-    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
-    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
-    printf " - Kernel Version $(sadm_get_kernel_version)"
-    printf "\n\n" 
-}
 
 
 #---------------------------------------------------------------------------------------------------
@@ -175,7 +169,7 @@ validate_root_access()
         SQL="show databases;"
         CMDLINE="$SADM_MYSQL -uroot -p$ROOTPWD -h $SADM_DBHOST"
         printf "\nVerifying access to Database ... "
-        if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\n$CMDLINE -Ne 'show databases ;'\n" ; fi
+        if [ $SADM_DEBUG -gt 0 ] ; then printf "\n$CMDLINE -Ne 'show databases ;'\n" ; fi
         $CMDLINE -Ne 'show databases ;' >/dev/null 2>&1                 # Try SQL see if access work
         if [ $? -ne 0 ]
             then printf "\nAccess to database with the password given, don't work."
@@ -274,23 +268,23 @@ main_process()
              if [ $RC -eq 0 ] 
                 then printf "\nRemoving database user '$SADM_RO_DBUSER' ..."
                      SQL="delete from mysql.user where user = '$SADM_RO_DBUSER';" 
-                     if [ $DEBUG_LEVEL -gt 0 ] 
+                     if [ $SADM_DEBUG -gt 0 ] 
                         then printf "\n$CMDLINE $SADM_DBNAME -Ne $SQL"
                      fi
                      if [ "$DRYRUN" -ne 1 ] ;then $CMDLINE $SADM_DBNAME -Ne "$SQL" ;fi
                      
                      printf "\nRemoving database user '$SADM_RW_DBUSER' ..."
                      SQL="delete from mysql.user where user = '$SADM_RW_DBUSER';" 
-                     if [ $DEBUG_LEVEL -gt 0 ] 
+                     if [ $SADM_DEBUG -gt 0 ] 
                         then printf "\n$CMDLINE $SADM_DBNAME -Ne $SQL"
                      fi
                      if [ "$DRYRUN" -ne 1 ] ;then $CMDLINE $SADM_DBNAME -Ne "$SQL" ;fi
                      
                      SQL="drop database sadmin;" 
                      CMDLINE="$SADM_MYSQL -u root  -p$ROOTPWD -h $SADM_DBHOST "
-                     if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi  
+                     if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi  
                      printf "\nDropping 'sadmin' database ..." 
-                     if [ $DEBUG_LEVEL -gt 0 ] 
+                     if [ $SADM_DEBUG -gt 0 ] 
                         then printf "\n$CMDLINE -Ne $SQL"
                      fi
                      if [ "$DRYRUN" -ne 1 ] ; then $CMDLINE -Ne "$SQL" ; fi
@@ -340,8 +334,8 @@ main_process()
 # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
     while getopts "hvyd:" opt ; do                                      # Loop to process Switch
         case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
+            d) SADM_DEBUG=$OPTARG                                      # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
@@ -353,7 +347,7 @@ main_process()
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
-            v) show_version                                             # Show Script Version Info
+            v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
            \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
@@ -362,7 +356,7 @@ main_process()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ]   ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+    if [ $SADM_DEBUG -gt 0 ]   ; then printf "\nDebug activated, Level ${SADM_DEBUG}\n" ; fi
 
 
     # Call SADMIN Initialization Procedure
