@@ -2171,7 +2171,7 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("SADMIN TOOLS - VERSION %s - Successfully Installed" % (sversion),'bold')
     writelog ("===========================================================================")
     writelog ("You need to logout/login before using SADMIN Tools or type the command ")
-    writelog ("'. /etc/profile.d/sadmin.sh, this define 'SADMIN' environment variable.")
+    writelog ("'. /etc/profile.d/sadmin.sh', this define 'SADMIN' environment variable.")
     writelog (" ")
     if (stype == "S") :
         writelog ("USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
