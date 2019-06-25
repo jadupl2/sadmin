@@ -104,6 +104,7 @@
 #@2019_06_23 Update: v3.06 Update: Reduce Library by 300 lines and Fix some alerting bug.
 #@2019_06_23 Update: v3.06a Update: Correct Typo error, in email alert.
 #@2019_06_23 Update: v3.06b Update: Correct Typo error, in email alert.
+#@2019_06_25 Update: v3.07 Update: Optimize send-alert function.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -113,7 +114,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.06b"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.07"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2130,7 +2131,7 @@ sadm_send_alert() {
     grep -i "^$agroup " $SADM_ALERT_FILE >/dev/null 2>&1                # Search Group in front line
     if [ $? -ne 0 ]                                                     # Group Missing in GrpFile
         then sadm_writelog " "                                          # White line Before
-             sadm_writelog "Alert Group '$agroup' missing in $SADM_ALERT_FILE"
+             sadm_writelog "Alert Group '$agroup' missing from $SADM_ALERT_FILE"
              sadm_writelog "  - Alert Date/Time    : $atime"            # Show Event Date & Time
              sadm_writelog "Changing alert group from '$agroup' to 'default'"
              agroup='default'                                           # Change Alert Group
@@ -2238,93 +2239,85 @@ sadm_send_alert() {
             fi 
     fi  
 
+
     # Final Setup before sending alert
     acounter=`expr $acounter + 1`                                       # Increase alert counter
     if [ $acounter -gt 1 ] ; then amessage="(Repeat) $amessage" ;fi     # Insert Repeat if Count>1
     acounter=`printf "%02d" "$acounter"`                                # Make counter two digits
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "Repeat alert ($aepoch)-($acounter)-($alertid)" ;fi
-    NxtInterval=`echo "$acounter * $SADM_ALERT_REPEAT" | $SADM_BC`      # Next Alert Elapse Seconds                                 # Alert Interval * Counter
+    NxtInterval=`echo "$acounter * $SADM_ALERT_REPEAT" | $SADM_BC`      # Next Alert Elapse Seconds 
     NxtEpoch=`expr $NxtInterval + $aepoch`                              # Next Alarm Epoch Time
     NxtAlarmTime=$(sadm_epoch_to_date "$NxtEpoch")                      # Next Alarm Date/Time
+
+    # Construct Email Subject 
+    case "$atype" in                                                    # Depending on Alert Type
+        e|E) ws="SADM ERROR: ${asubject}"                               # Construct Mess. Subject
+             ;;
+        w|W) ws="SADM WARNING: ${asubject}"                             # Build Warning Subject
+             ;;
+        i|I) ws="SADM INFO: ${asubject}"                                # Build Info Mess Subject
+             ;;
+        s|S) ws="SADM SCRIPT: ${asubject}"                               # Build Script Msg Subject
+             ;;
+        e|E) ws="SADM ERROR: ${asubject}"                               # Construct Mess. Subject
+             ;;
+        *)   ws="Invalid Alert Type ($atype): ${asubject}"              # Invalid Alert type Message
+             ;;
+    esac
+
+    # Construct Body of the Email.
+    mdate=`date "+%Y.%m.%d %H:%M"`                                      # Date & Time of Email
+    hepoch=$(sadm_date_to_epoch "$mdate")                               # Date/Time of mail to Epoch
+    body0="SADM Sysmon Alert"                                           # Message Provenance Heading
+    case "$agroup_type" in
+        m|M)    body1=`printf "%-15s: %s" "Email date/time" "$mdate"`   # Date/Time of email 
+                ;;
+        c|C)    body1=`printf "%-15s: %s" "SMS date/time" "$mdate"`     # Date the SMS was Sent
+                ;;
+        s|S)    body1=`printf "%-15s: %s" "Slack sent date/time" "$mdate"` # Date/Time of email 
+                ;;
+        t|T)    body1=`printf "%-15s: %s" "SMS date/time" "$mdate"`     # Date the SMS was Sent
+                ;;
+    esac             
+    body2=`printf "%-15s: %s" "Event Date/Time" "$atime"`               # Date/Time event occured
+    body3=`printf "%-15s: %02d of %02d" "Alert counter" "$acounter" "$MaxRepeat"` # AlertCountr
+    if [ $SADM_ALERT_REPEAT -ne 0 ] && [ $acounter -ne $MaxRepeat ]     # If Repeat or Not Last
+       then body3=`printf "%s, next alert around %s" "$body3" "$NxtAlarmTime"`    # Time NextAlert
+    fi
+    if [ $SADM_ALERT_REPEAT -eq 0 ] || [ $acounter -eq $MaxRepeat ]     # Final Alert Message
+       then body3=`printf "%s, final notice." "$body3"`                 # Insert Final Notice
+    fi
+    body4=`printf "%-15s: %s" "Event Message"   "$amessage"`            # Body of the message
+    body5=`printf "%-15s: %s" "Event on system" "$aserver"`             # Server where alert occured
+    body6=`printf "%-15s: %s" "Script Name    " "$ascript"`             # Script Name
+    body=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$body0" "$body1" "$body2" "$body3" "$body4" "$body5" "$body6"`
+
+
 
     # Send the Alert Message using the type of alert requested
     case "$agroup_type" in
 
         # SEND EMAIL ALERT -------------------------------------------------------------------------
-        M)  aemail=`grep -i "^$agroup " $SADM_ALERT_FILE | awk '{ print $3 }'`  # EmailGroupMembers 
-            aemail=`echo $aemail | awk '{$1=$1;print}'`                 # Del Leading/Trailing Space
-            # Construct Email Subject 
-            case "$atype" in                                            # Depending on Alert Type
-                e|E) ws="SADM ERROR: ${asubject}"                       # Construct Mess. Subject
-                     ;;
-                w|W) ws="SADM WARNING: ${asubject}"                     # Build Warning Subject
-                     ;;
-                i|I) ws="SADM INFO: ${asubject}"                        # Build Info Mess Subject
-                     ;;
-                S|S) ws="SADM SCRIPT: ${asubject}"                      # Build Script Msg Subject
-                     ;;
-                e|E) ws="SADM ERROR: ${asubject}"                       # Construct Mess. Subject
-                     ;;
-                *)   ws="Invalid Alert Type ($atype): ${asubject}"      # Invalid Alert type Message
-                     ;;
-            esac
-            # Construct Body of the Email.
-            mdate=`date "+%Y.%m.%d %H:%M"`                              # Mail Date & Time
-            hepoch=$(sadm_date_to_epoch "$mdate")                       # Convert EventTime to Epoch
-            vm1=`printf "%-15s: %s" "Email Date/Time" "$mdate"`         # Date the Email was Sent
-            vm2=`printf "%-15s: %s" "Event Date/Time" "$atime"`         # Date The event occured
-            vm3=`printf "%-15s: %02d of %02d" "Alert counter" "$acounter" "$MaxRepeat"` # AlertSent 
-            if [ $SADM_ALERT_REPEAT -ne 0 ] && [ $acounter -ne $MaxRepeat ]     # Not Last Alert 
-                then vm3=`printf "%s, next alert around %s" "$vm3" "$NxtAlarmTime"` # TimeNxtAlert
-            fi
-            vm4=`printf "%-15s: %s" "Event Message"   "$amessage"`      # Body of the message
-            vm5=`printf "%-15s: %s" "Event on system" "$aserver"`       # Server where alert occured
-            vm6=`printf "%-15s: %s" "Script Name    " "$ascript"`       # Script Name
-            wm=`printf "%s\n%s\n%s\n%s\n%s\n%s" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5" "$vm6"` 
-            # Send the Email using 'mutt'.
-            if [ "$aattach" != "" ]                                     # If Attachment Specified
-                then printf "%s\n" "$wm" | $SADM_MUTT -s "$ws" "$aemail" -a "$aattach"  >>$SADM_LOG 2>&1 
-                else printf "%s\n" "$wm" | $SADM_MUTT -s "$ws" "$aemail"  >>$SADM_LOG 2>&1 
-            fi
-            RC=$?                                                       # Save Error Number
-            if [ $RC -eq 0 ]                                            # If Error Sending Email
-                then wstatus="Email sent to $aemail" 
-                else wstatus="Error sending email to $aemail"
-                    csadm_writelog "$wstatus"                           # Advise USer
-            fi
-            write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$acounter" "$wstatus"
-            ;;
+        m|M )   aemail=`grep -i "^$agroup " $SADM_ALERT_FILE |awk '{ print $3 }'` # Get Emails of Group
+                aemail=`echo $aemail | awk '{$1=$1;print}'`                 # Del Leading/Trailing Space
+                # Send the Email using 'mutt'.
+                if [ "$aattach" != "" ]                                     # If Attachment Specified
+                    then printf "%s\n" "$body" | $SADM_MUTT -s "$ws" "$aemail" -a "$aattach"  >>$SADM_LOG 2>&1 
+                    else printf "%s\n" "$body" | $SADM_MUTT -s "$ws" "$aemail"  >>$SADM_LOG 2>&1 
+                fi
+                RC=$?                                                       # Save Error Number
+                if [ $RC -eq 0 ]                                            # If Error Sending Email
+                    then wstatus="Email sent to $aemail" 
+                    else wstatus="Error sending email to $aemail"
+                         sadm_writelog "$wstatus"                           # Advise USer
+                fi
+                ;;
 
         # SEND ALERT TO CELLULAR NUMBER ------------------------------------------------------------
         C)  acell=`grep -i "^$agroup " $SADM_ALERT_FILE |awk '{ print $3 }'` # GetGroupMembers Cell#
             acell=`echo $acell | awk '{$1=$1;print}'`                   # Del Leading/Trailing Space
-            # Construct Cellular Subject Line
-            case "$atype" in                                            # Depending on Alert Type
-                e|E) ws="SADM ERROR: ${asubject}"                       # Construct Mess. Subject
-                     ;;
-                w|W) ws="SADM WARNING: ${asubject}"                     # Build Warning Subject
-                     ;;
-                i|I) ws="SADM INFO: ${asubject}"                        # Build Info Mess Subject
-                     ;;
-                S|S) ws="SADM SCRIPT: ${asubject}"                      # Build Script Msg Subject
-                     ;;
-                e|E) ws="SADM ERROR: ${asubject}"                       # Construct Mess. Subject
-                     ;;
-                *)   ws="Invalid Alert Type ($atype): ${asubject}"      # Invalid Alert type Message
-                     ;;
-            esac
-            # Construct SMS Message
-            mdate=`date "+%Y.%m.%d %H:%M"`                              # SMS Date & Time
-            vm0="SADM Sysmon Alert"                                     # SMS Heading
-            vm1=`printf "SMS Date/Time   : %s" "$mdate"`                # Date the SMS was Sent
-            vm2=`printf "Event Date/Time : %s" "$atime"`                # Date The event occured
-            vm3=`printf "Alert counter   : %s" "$acounter"`             # Ref. No assign to alert
-            vm4=`printf "Event Message   : %s" "$amessage"`             # Body of the message
-            vm5=`printf "Event on system : %s" "$aserver"`              # Server where alert occured
-            vm6=`printf "Script Name     : %s" "$ascript"`              # Script Name
-            vm=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$vm0" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5" "$vm6"` 
             # Send the SMS unsing TextBelt
-            reponse=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$acell -d "message=$vm" -d key=$SADM_TEXTBELT_KEY`
+            reponse=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$acell -d "message=$body" -d key=$SADM_TEXTBELT_KEY`
             # Test Cellular Return Code
             echo "$reponse" |grep -i "\"success\":true," >/dev/null 2>&1 # Success Response ?
             RC=$?                                                       # Save Error Number
@@ -2335,7 +2328,6 @@ sadm_send_alert() {
                      sadm_writelog "$reponse"                           # Error msg from Textbelt
                      RC=1                                               # When Error Return Code 1
             fi
-            write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$acounter" "$reponse"
             ;;
 
         # SEND SLACK ALERT -------------------------------------------------------------------------
@@ -2352,35 +2344,10 @@ sadm_send_alert() {
             if [ "$LIB_DEBUG" -gt 4 ]
                 then sadm_writelog "Slack Channel=$aslack_channel got Slack Webhook=$slack_hook_url"
             fi
-            # Construct Slack Subject Line
-            case "$atype" in                                            # Depending on Alert Type
-                e|E) ws="SADM ERROR: ${asubject}"                       # Construct Mess. Subject
-                     ;;
-                w|W) ws="SADM WARNING: ${asubject}"                     # Build Warning Subject
-                     ;;
-                i|I) ws="SADM INFO: ${asubject}"                        # Build Info Mess Subject
-                     ;;
-                s|S) ws="SADM SCRIPT: ${asubject}"                      # Build Script Msg Subject
-                     ;;
-                e|E) ws="SADM ERROR: ${asubject}"                       # Construct Mess. Subject
-                     ;;
-                *)   ws="Invalid Alert Type ($atype): ${asubject}"      # Invalid Alert type Message
-                     ;;
-            esac
-            # Construct Slack Message to send.
-            mdate=`date "+%Y.%m.%d %H:%M"`                              # SMS Date & Time
-            vm0="SADM Sysmon Alert"                                     # SMS Heading
-            vm1=`printf "SMS Date/Time   : %s" "$mdate"`                # Date the SMS was Sent
-            vm2=`printf "Event Date/Time : %s" "$atime"`                # Date The event occured
-            vm3=`printf "Alert counter   : %s" "$acounter"`             # Ref. No assign to alert
-            vm4=`printf "Event Message   : %s" "$amessage"`             # Body of the message
-            vm5=`printf "Event on system : %s" "$aserver"`              # Server where alert occured
-            vm6=`printf "Script Name     : %s" "$ascript"`              # Script Name
-            vm=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$vm0" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5" "$vm6"` 
             # Included last 50 lines of attachment file (if specified)
             if [ "$aattach" != "" ]                                     # If Attachment Specified
                 then logtail=`tail -50 ${aattach}`
-                     vm="${wm}\n\n*-----Attachment-----*\n${logtail}"
+                     body="${body}\n\n*-----Attachment-----*\n${logtail}"
             fi
             # If Script Error include URL Link to view script log in message
             if [ "$atype" = "S" ]                                       # If SMS concerning Script
@@ -2389,9 +2356,9 @@ sadm_send_alert() {
                      LOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}" # Add Dir. Path 
                      URL_VIEW_FILE='/view/log/sadm_view_file.php'            # View File Content URL
                      LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
-                     vm="${vm}\nEvent log link  :\n${LOGURL}"           # Insert Log URL In Mess
+                     body="${body}\nEvent log link  :\n${LOGURL}"           # Insert Log URL In Mess
             fi
-            slack_text="$vm"                                            # Set Alert Text
+            slack_text="$body"                                            # Set Alert Text
             escaped_msg=$(echo "${slack_text}" |sed 's/\"/\\"/g' |sed "s/'/\'/g" |sed 's/`/\`/g')
             slack_text="\"text\": \"${escaped_msg}\""                   # Set Final Text Message
             slack_icon="warning"
@@ -2412,37 +2379,11 @@ sadm_send_alert() {
                      sadm_writelog "$wstatus"                           # Advise User
                      RC=1                                               # When Error Return Code 1
             fi
-            write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$acounter" "$wstatus"
             ;;
 
         # SEND TEXTO/SMS ALERT ---------------------------------------------------------------------
         T)  amember=`grep -i "^$agroup " $SADM_ALERT_FILE | awk '{ print $3 }'` # Get Group Members 
             amember=`echo $amember | awk '{$1=$1;print}'`               # Del Leading/Trailing Space
-            # Construct SMS Subject Line
-            case "$atype" in                                            # Depending on Alert Type
-                e|E) ws="SADM ERROR: ${asubject}"                       # Construct Mess. Subject
-                     ;;
-                w|W) ws="SADM WARNING: ${asubject}"                     # Build Warning Subject
-                     ;;
-                i|I) ws="SADM INFO: ${asubject}"                        # Build Info Mess Subject
-                     ;;
-                s|S) ws="SADM SCRIPT: ${asubject}"                      # Build Script Msg Subject
-                     ;;
-                e|E) ws="SADM ERROR: ${asubject}"                       # Construct Mess. Subject
-                     ;;
-                  *) ws="Invalid Alert Type ($atype): ${asubject}"      # Invalid Alert type Message
-                     ;;
-            esac
-            # Construct SMS Message to send.
-            mdate=`date "+%Y.%m.%d %H:%M"`                              # SMS Date & Time
-            vm0="SADM Sysmon Alert"                                     # SMS Heading
-            vm1=`printf "SMS Date/Time   : %s" "$mdate"`                # Date the SMS was Sent
-            vm2=`printf "Event Date/Time : %s" "$atime"`                # Date The event occured
-            vm3=`printf "Alert counter   : %s" "$acounter"`             # Ref. No assign to alert
-            vm4=`printf "Event Message   : %s" "$amessage"`             # Body of the message
-            vm5=`printf "Event on system : %s" "$aserver"`              # Server where alert occured
-            vm6=`printf "Script Name     : %s" "$ascript"`              # Script Name
-            vm=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$vm0" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5" "$vm6"` 
             # Send SMS to Texto Group Member
             total_error=0                                               # Total Error Counter Reset
             RC=0                                                        # Function Return Code Def.
@@ -2465,7 +2406,7 @@ sadm_send_alert() {
                          continue
                 fi
                 # Send SMS to Cell Member ($acell)
-                reponse=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$acell -d "message=$vm" -d key=$SADM_TEXTBELT_KEY`
+                reponse=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$acell -d "message=$body" -d key=$SADM_TEXTBELT_KEY`
                 echo "$reponse" | grep -i "\"success\":true," >/dev/null 2>&1   # Success Response ?
                 RC=$?                                                   # Save Error Number
                 if [ $RC -eq 0 ]                                        # If Error Sending Email
@@ -2479,7 +2420,6 @@ sadm_send_alert() {
                 done
             # Test Cellular Return Code
             if [ $total_error -ne 0 ] ; then RC=1 ; else RC=0 ; fi      # If Error Sending SMS
-            write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$acounter" "$wstatus"
             ;;
 
         # INVALID ALERT TYPE -----------------------------------------------------------------------
@@ -2487,6 +2427,7 @@ sadm_send_alert() {
             RC=1                                                        # Something went wrong
             ;;
     esac
+    write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$acounter" "$wstatus"
     return $RC
 
 }
