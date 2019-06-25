@@ -62,6 +62,7 @@
 #@2019_04_18 Fix: v3.25 Release 0.97 Re-tested with CentOS/RedHat version.
 #@2019_06_19 Update: v3.26 Ask for sadmin Database password until it's valid.
 #@2019_06_21 Update: v3.27 Ask for 'sadmin' & 'squery' Database password until it's valid.
+#@2019_06_25 Update: v3.28 Minor change to text displayed at the end of installation.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -78,7 +79,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.27"                                            # Setup Version Number
+sver                = "3.28"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -2169,9 +2170,8 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("\n\n\n\n\n")
     writelog ("SADMIN TOOLS - VERSION %s - Successfully Installed" % (sversion),'bold')
     writelog ("===========================================================================")
-    writelog ("You need to logout/login before using SADMIN Tools or type the following command :")
-    writelog (". /etc/profile.d/sadmin.sh",'bold')
-    writelog ("This will define SADMIN environment variable.")
+    writelog ("You need to logout/login before using SADMIN Tools or type the command ")
+    writelog ("'. /etc/profile.d/sadmin.sh, this define 'SADMIN' environment variable.")
     writelog (" ")
     if (stype == "S") :
         writelog ("USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
