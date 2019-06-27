@@ -105,7 +105,7 @@
 #@2019_06_23 Update: v3.06a Update: Correct Typo error, in email alert.
 #@2019_06_23 Update: v3.06b Update: Correct Typo error, in email alert.
 #@2019_06_25 Update: v3.07 Update: Optimize send-alert function.
-#@2019_06_27 Nolog: v3.08 Text Modification (Alert for Notification)
+#@2019_06_27 Nolog: v3.08 Text Modification (Alert for Notification) & email 1 of 0 corrected
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -2152,7 +2152,10 @@ sadm_send_alert() {
     aepoch=$(sadm_date_to_epoch "$atime")                               # Convert AlertTime to Epoch
     cepoch=`date +%s`                                                   # Get Current Epoch Time
     aage=`expr $cepoch - $aepoch`                                       # Age of Alert in Seconds.
-    MaxRepeat=`echo "(86400 / $SADM_ALERT_REPEAT)" | $SADM_BC`          # Calc. Nb Alert Per Day
+    if [ $SADM_ALERT_REPEAT -ne 0 ]                                     # If Config = Alert Repeat
+        then MaxRepeat=`echo "(86400 / $SADM_ALERT_REPEAT)" | $SADM_BC` # Calc. Nb Alert Per Day
+        else MaxRepeat=1                                                # MaxRepeat=1 NoAlarm Repeat
+    fi
     NbDaysOld=0                                                         # Default Alert Age in Days
     if [ $aage -ge 86400 ] ;then NbDaysOld=`echo "$aage / 86400" |$SADM_BC` ;fi # Alert age 
 
