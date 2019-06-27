@@ -105,6 +105,7 @@
 #@2019_06_23 Update: v3.06a Update: Correct Typo error, in email alert.
 #@2019_06_23 Update: v3.06b Update: Correct Typo error, in email alert.
 #@2019_06_25 Update: v3.07 Update: Optimize send-alert function.
+#@2019_06_27 Nolog: v3.08 Text Modification (Alert for Notification)
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -114,7 +115,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.07"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.08"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2233,7 +2234,7 @@ sadm_send_alert() {
                 then xcount=`expr $WaitSec - $aage` 
                      next_alert_epoch=`expr $cepoch + $xcount` 
                      next_alert_time=$(sadm_epoch_to_date "$next_alert_epoch")
-                     msg="Waiting - Next alert will be send in $xcount seconds around ${next_alert_time}."
+                     msg="Waiting - Next notification will be send in $xcount seconds around ${next_alert_time}."
                      if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "$msg" ;fi 
                      return 2                                            # Return 2 = Duplicate Alert
             fi 
@@ -2282,7 +2283,7 @@ sadm_send_alert() {
     body2=`printf "%-15s: %s" "Event Date/Time" "$atime"`               # Date/Time event occured
     body3=`printf "%-15s: %02d of %02d" "Alert counter" "$acounter" "$MaxRepeat"` # AlertCountr
     if [ $SADM_ALERT_REPEAT -ne 0 ] && [ $acounter -ne $MaxRepeat ]     # If Repeat or Not Last
-       then body3=`printf "%s, next alert around %s" "$body3" "$NxtAlarmTime"`    # Time NextAlert
+       then body3=`printf "%s, next notification around %s" "$body3" "$NxtAlarmTime"`    # Time NextAlert
     fi
     if [ $SADM_ALERT_REPEAT -eq 0 ] || [ $acounter -eq $MaxRepeat ]     # Final Alert Message
        then body3=`printf "%s, final notice." "$body3"`                 # Insert Final Notice
@@ -2322,7 +2323,7 @@ sadm_send_alert() {
             echo "$reponse" |grep -i "\"success\":true," >/dev/null 2>&1 # Success Response ?
             RC=$?                                                       # Save Error Number
             if [ $RC -eq 0 ]                                            # If Error Sending Email
-                then wstatus="SMS message sent with success to $acell" 
+                then wstatus="SMS message to cellular $acell" 
                 else wstatus="Error sending SMS message to $acell"
                      sadm_writelog "$wstatus"                           # Advise User
                      sadm_writelog "$reponse"                           # Error msg from Textbelt
@@ -2410,7 +2411,7 @@ sadm_send_alert() {
                 echo "$reponse" | grep -i "\"success\":true," >/dev/null 2>&1   # Success Response ?
                 RC=$?                                                   # Save Error Number
                 if [ $RC -eq 0 ]                                        # If Error Sending Email
-                    then wstatus="SMS message sent with success to group $agroup ($acell)" 
+                    then wstatus="SMS message sent to group $agroup ($acell)" 
                     else wstatus="Error ($RC) sending SMS message to group $agroup ($acell)"
                          sadm_writelog "$wstatus"                       # Advise USer
                          sadm_writelog "$reponse"                       # Error msg from Textbelt
