@@ -38,7 +38,7 @@
 # 2018_08_21    V1.3 Use Alerting system on top of email for Error or Warning occur.
 # 2018_09_25    V1.4 Alerting can now send attachment with Subject
 # 2018_09_30    V1.5 Reformat error message for alerting system
-#@2019_06_11 Update: v1.6 Minor change for sending alert when file increase failed.
+#@2019_06_11 Update: v1.6 Alert message change when filesystem increase failed.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

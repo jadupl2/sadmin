@@ -27,10 +27,10 @@
 # 2018_09_27 v1.8 Add list of scripts ran today in HTML page send in (-m) Mail option 
 # 2018_10_07 v1.9 Add message when searching for a particular server (-s option)
 # 2018_11_21 v1.10 Add Change some Email header Titles.
-#@2019_04_02 Fix: v1.11 Doesn't report an error anymore when last line is blank.
-#@2019_05_07 Update: v1.12 Change send_alert calling parameters
-#@2019_06_07 Update: v1.13 Change made to adapt to new field (alarm type) in RCH file.
-#@2019_06_11 Update: v1.14 Change output message and email when encounter incorrect rch format.
+# 2019_04_02 Fix: v1.11 Doesn't report an error anymore when last line is blank.
+# 2019_05_07 Update: v1.12 Change send_alert calling parameters
+#@2019_06_07 Update: v1.13 Updated to adapt to the new field (alarm type) in RCH file.
+#@2019_06_11 Update: v1.14 Change screen & email message when an invalid '.rch' format is encountered.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

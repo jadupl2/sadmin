@@ -1,6 +1,40 @@
 # Changelog
 
 
+## Release v[0.99.0](https://github.com/jadupl2/sadmin/releases) (2019-06-28)
+- Fixes
+	- 2019_06_06 sadm_fetch_clients.sh (v2.37) - Fix problem sending alert when SADM_ALERT_TYPE was set 2 or 3.
+	- 2019_06_19 sadmlib_std.sh (v3.05) - Fix problem with repeating alert.
+- Improvement
+	- 2019_06_23 sadmlib_std.sh (v3.06) - Code reviewed and library optimization (300 lines were removed).
+- New
+	- 2019_06_07 sadm_fetch_clients.sh (v2.38) - An alert status summary of all systems is displayed at the end.
+- Update
+	- 2019_06_03 sadm_client_housekeeping.sh (v1.30) - Include logic to convert RCH file format to the new one, if not done.
+	- 2019_06_07 sadmlib_std.py (v3.03) - Create/Update the rch file using the new format (with alarm type).
+	- 2019_06_07 sadmlib_std.sh (v3.03) - Create/Update the RCH file using the new format (with alarm type).
+	- 2019_06_07 sadmPageSideBar.php (v2.7) - Updated to deal with the new format of the RCH file.
+	- 2019_06_07 sadm_rch_scr_summary.sh (v1.13) - Updated to adapt to the new field (alarm type) in RCH file.
+	- 2019_06_07 sadm_sysmon_cli.sh (v2.3) - Updated to adapt to the new format of the '.rch' file.
+	- 2019_06_07 sadm_view_rchfile.php (v2.4) - Add Alarm type to page (Deal with new format).
+	- 2019_06_07 sadm_view_rch_summary.php (v2.4) - Add Alarm type to page (Deal with new format).
+	- 2019_06_07 sadm_view_sysmon.php (v2.5) - Add Alarm type to page (Deal with new format).
+	- 2019_06_10 sadm_support_request.sh (v1.9) - Add /etc/postfix/main.cf to support request output.
+	- 2019_06_11 sadm_fs_incr.sh (v1.6) - Alert message change when filesystem increase failed.
+	- 2019_06_11 sadmlib_std.sh (v3.04) - Function send_alert change to add script name as a parameter.
+	- 2019_06_11 sadm_rch_scr_summary.sh (v1.14) - Change screen & email message when an invalid '.rch' format is encountered.
+	- 2019_06_11 sadm_support_request.sh (V2.0) - Code Revision and performance improvement.
+	- 2019_06_19 sadm_fetch_clients.sh (v2.39) - Cosmetic change to alerts summary and alert subject.
+	- 2019_06_19 sadmlib_std.py (v3.04) - Trap and show error when can't connect to Database, instead of crashing.
+	- 2019_06_19 sadm_setup.py (v3.26) - Ask for sadmin Database password until it's valid.
+	- 2019_06_19 setup.sh (v2.8) - Update procedure to install CentOS/RHEL repository for version 5,6,7,8
+	- 2019_06_21 sadm_setup.py (v3.27) - Ask user 'sadmin' & 'squery' database password until it's valid.
+	- 2019_06_25 sadmlib_std.sh (v3.07) - Optimize 'send_alert' function.
+	- 2019_06_25 sadm_setup.py (v3.28) - Modification of the text displayed at the end of installation.
+	- 2019_06_25 sadm_uninstall.sh (v1.9) - Minor code update (use SADM_DEBUG instead of DEBUG_LEVEL).
+
+
+
 ## Release v[0.98.0](https://github.com/jadupl2/sadmin/releases) (2019-05-30)
 
 - Features

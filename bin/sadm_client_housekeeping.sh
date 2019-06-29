@@ -39,7 +39,7 @@
 # 2019_03_03 Change: v1.27 Make sure .gitkeep files exist in important directories
 # 2019_04_17 Update: v1.28 Make 'sadmin' account & password never expire (Solve Acc. & sudo Lock)
 #@2019_05_19 Update: v1.29 Change for lowercase readme.md,license,changelog.md files and bug fixes.
-#@2019_06_03 Update: v1.30 Include RCH format conversion, will do conversion only once.
+#@2019_06_03 Update: v1.30 Include logic to convert RCH file format to the new one, if not done.
 #
 # --------------------------------------------------------------------------------------------------
 #

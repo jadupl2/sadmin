@@ -83,29 +83,29 @@
 # 2019_03_18 Change: v2.65 Improve: Optimize code to reduce load time (125 lines removed).
 # 2019_03_18 New: v2.66 Function 'sadm_get_packagetype' that return package type (rpm,dev,aix,dmg).  
 # 2019_03_31 Update: v2.67 Set log file owner ($SADM_USER) and permission (664) if executed by root.
-#@2019_04_07 Update: v2.68 Optimize execution time & screen color variable now available.
-#@2019_04_09 Update: v2.69 Fix tput error when running in batch mode and TERM not set.
-#@2019_04_25 Update: v2.70 Read and Load 2 news sadmin.cfg variable Alert_Repeat,Textbelt Key & URL
-#@2019_05_01 Update: v2.71 Correct problem while writing to alert history log.
-#@2019_05_07 Update: v2.72 Function 'sadm_alert_sadmin' is removed, now using 'sadm_send_alert'
-#@2019_05_08 Fix: v2.73 Bug fix - Eliminate sending duplicate alert.
-#@2019_05_09 Update: v2.74 Change Alert History file layout to facilitate search for duplicate alert
-#@2019_05_10 Update: v2.75 Change to duplicate alert management, more efficient.
-#@2019_05_11 Update: v2.76 Alert History epoch time (1st field) is always epoch the alert is sent.
-#@2019_05_12 Feature: v2.77 Alerting System with Mail, Slack and SMS now fullu working.
-#@2019_05_13 Update: v2.78 Minor adjustment of message format for history file and log.
-#@2019_05_14 Update: v2.79 Alert via mail while now have the script log attach to the email.
-#@2019_05_16 Update: v3.00 Only one summary line is now added to RCH file when scripts are executed.
-#@2019_05_19 Update: v3.01 SADM_DEBUG_LEVEL change to SADM_DEBUG for consistency with Python Libr.
-#@2019_05_20 Update: v3.02 Eliminate `tput` warning when TERM variable was set to 'dumb'.
-#@2019_06_07 Update: v3.03 Create/Update the rch file using the new format & fix alerting bug.
-#@2019_06_11 Update: v3.04 Send Alert functions parameters change to add script name as parameter.
-#@2019_06_19 Update: v3.05 Fix: Fix problem with repeating alert.
-#@2019_06_23 Update: v3.06 Update: Reduce Library by 300 lines and Fix some alerting bug.
-#@2019_06_23 Update: v3.06a Update: Correct Typo error, in email alert.
-#@2019_06_23 Update: v3.06b Update: Correct Typo error, in email alert.
-#@2019_06_25 Update: v3.07 Update: Optimize send-alert function.
-#@2019_06_27 Nolog: v3.08 Text Modification (Alert for Notification) & email 1 of 0 corrected
+# 2019_04_07 Update: v2.68 Optimize execution time & screen color variable now available.
+# 2019_04_09 Update: v2.69 Fix tput error when running in batch mode and TERM not set.
+# 2019_04_25 Update: v2.70 Read and Load 2 news sadmin.cfg variable Alert_Repeat,Textbelt Key & URL
+# 2019_05_01 Update: v2.71 Correct problem while writing to alert history log.
+# 2019_05_07 Update: v2.72 Function 'sadm_alert_sadmin' is removed, now using 'sadm_send_alert'
+# 2019_05_08 Fix: v2.73 Eliminate sending duplicate alert.
+# 2019_05_09 Update: v2.74 Change Alert History file layout to facilitate search for duplicate alert
+# 2019_05_10 Update: v2.75 Change to duplicate alert management, more efficient.
+# 2019_05_11 Update: v2.76 Alert History epoch time (1st field) is always epoch the alert is sent.
+# 2019_05_12 Feature: v2.77 Alerting System with Mail, Slack and SMS now fullu working.
+# 2019_05_13 Update: v2.78 Minor adjustment of message format for history file and log.
+# 2019_05_14 Update: v2.79 Alert via mail while now have the script log attach to the email.
+# 2019_05_16 Update: v3.00 Only one summary line is now added to RCH file when scripts are executed.
+# 2019_05_19 Update: v3.01 SADM_DEBUG_LEVEL change to SADM_DEBUG for consistency with Python Libr.
+# 2019_05_20 Update: v3.02 Eliminate `tput` warning when TERM variable was set to 'dumb'.
+#@2019_06_07 Update: v3.03 Create/Update the RCH file using the new format (with alarm type).
+#@2019_06_11 Update: v3.04 Function send_alert change to add script name as a parameter.
+#@2019_06_19 Fixes: v3.05 Fix problem with repeating alert.
+#@2019_06_23 Improve: v3.06 Code reviewed and library optimization (300 lines were removed).
+#@2019_06_23 nolog: v3.06a Correct Typo error, in email alert.
+#@2019_06_23 nolog: v3.06b Correct Typo error, in email alert.
+#@2019_06_25 Update: v3.07 Optimize 'send_alert' function.
+#@2019_06_27 Nolog: v3.08 Change 'Alert' for 'Notification' in source & email '1 of 0' corrected.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x

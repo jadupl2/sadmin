@@ -31,8 +31,8 @@
 # 2018_07_21 v2.3 If an RCH is malformed (Less than 8 fields) it is ignored 
 # 2018_09_16 v2.4 Add Alert Group in RCH Array
 # 2018_09_22 v2.5 Failed Script counter was wrong
-#@2019_01_05 Improvement: v2.6 Add SideBar link to view all servers CPU performance on one page.
-#@2019_06_07 Update: v2.7 Deal with new alert type included in the RCH File.
+# 2019_01_05 Improvement: v2.6 Add SideBar link to view all servers CPU performance on one page.
+#@2019_06_07 Update: v2.7 Updated to deal with the new format of the RCH file.
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.

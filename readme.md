@@ -1,18 +1,18 @@
 ![SADMIN Tools][1] 
-# SADMIN Tools v0.98.0             <!-- omit in toc -->
+# SADMIN Tools v0.99.0             <!-- omit in toc -->
 
 ### Table of content
-- [Brief description](#brief-description)
-- [Run on most popular Linux distributions](#run-on-most-popular-linux-distributions)
-- [Download](#download)
-- [Before you install](#before-you-install)
-- [Installing SADMIN Tools](#installing-sadmin-tools)
-  - [Method 1 : Cloning our git repository (Recommended)](#method-1--cloning-our-git-repository-recommended)
-  - [Method 2 : Using the downloaded 'tgz' file](#method-2--using-the-downloaded-tgz-file)
-  - [Running the setup script](#running-the-setup-script)
-- [SADMIN Support](#sadmin-support)
-- [Authors](#authors)
-- [Copyright and license](#copyright-and-license)
+- [Brief description](#Brief-description)
+- [Run on most popular Linux distributions](#Run-on-most-popular-Linux-distributions)
+- [Download](#Download)
+- [Before you install](#Before-you-install)
+- [Installing SADMIN Tools](#Installing-SADMIN-Tools)
+  - [Method 1 : Cloning our git repository (Recommended)](#Method-1--Cloning-our-git-repository-Recommended)
+  - [Method 2 : Using the downloaded 'tgz' file](#Method-2--Using-the-downloaded-tgz-file)
+  - [Running the setup script](#Running-the-setup-script)
+- [SADMIN Support](#SADMIN-Support)
+- [Authors](#Authors)
+- [Copyright and license](#Copyright-and-license)
   
 ---
 

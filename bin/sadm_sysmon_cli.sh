@@ -28,7 +28,7 @@
 # 2018_07_11    v2.0 Now showing running process after scanning the server rch files
 # 2018_07_18    v2.1 Fix problem reporting System Monitor Result (rpt filename)
 # 2018_08_20    v2.2 Don't use rch file & don't send email if failing (It is an interactive script)
-#@2019_06_07 Update: v2.3 Change to include new field (alarm type) in RCH file.
+#@2019_06_07 Update: v2.3 Updated to adapt to the new format of the '.rch' file.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C

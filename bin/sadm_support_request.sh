@@ -35,7 +35,7 @@
 # 2018_12_11 v1.6 Include Shell and Python Library Demo output in log and SADM_USER info.
 # 2018_12_31 Added: sadm_support_request.sh v1.7 - Include system information files from dat/dr dir.
 # 2018_12_31 Added: sadm_support_request.sh v1.8 - Remove blank line & Comment Line (#) from output.
-#@2019_06_10 Updated: v1.9 Print out of /etc/postfix/main.cf to support request output.
+#@2019_06_10 Updated: v1.9 Add /etc/postfix/main.cf to support request output.
 #@2019_06_11 Updated: V2.0 Code Revision and performance improvement.
 #
 # --------------------------------------------------------------------------------------------------

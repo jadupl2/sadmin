@@ -50,19 +50,19 @@
 # 2019_01_29 Added: v3.13 SADM_USER Home Directory is /home/SADM_USER no longer the install Dir.
 # 2019_02_25 Added: v3.14 Reduce output on initial execution of daily scripts.
 # 2019_03_08 Change: v3.15 Change related to RHEL/CentOS 8 and change some text messages.
-#@2019_03_17 Change: v3.16 Perl DateTime module no longer a requirement.
-#@2019_03_17 Change: v3.17 Default installation server group is 'Regular' instead of 'Service'.
-#@2019_03_17 Change: v3.18 If not already install 'curl' package will be intall by setup.
-#@2019_04_04 Fix: v3.19 Fix 'sadmin' user home directory and default password creation on Debian.
-#@2019_04_12 Update: v3.20 Check DD connection for user 'sadmin' & 'squery' & ask pwd if failed
-#@2019_04_14 Update: v3.21 Password for User sadmin and squery wasn't updating properly .dbpass file.
-#@2019_04_15 Fix: v3.22 File /etc/environment was not properly updated under certain condition.
-#@2019_04_15 Fix: v3.23 Fix 'squery' database user password typo error.
-#@2019_04_18 Update: v3.24 Release 0.97 Re-tested with Ubuntu version.
-#@2019_04_18 Fix: v3.25 Release 0.97 Re-tested with CentOS/RedHat version.
+# 2019_03_17 Change: v3.16 Perl DateTime module no longer a requirement.
+# 2019_03_17 Change: v3.17 Default installation server group is 'Regular' instead of 'Service'.
+# 2019_03_17 Change: v3.18 If not already install 'curl' package will be intall by setup.
+# 2019_04_04 Fix: v3.19 Fix 'sadmin' user home directory and default password creation on Debian.
+# 2019_04_12 Update: v3.20 Check DD connection for user 'sadmin' & 'squery' & ask pwd if failed
+# 2019_04_14 Update: v3.21 Password for User sadmin and squery wasn't updating properly .dbpass file.
+# 2019_04_15 Fix: v3.22 File /etc/environment was not properly updated under certain condition.
+# 2019_04_15 Fix: v3.23 Fix 'squery' database user password typo error.
+# 2019_04_18 Update: v3.24 Release 0.97 Re-tested with Ubuntu version.
+# 2019_04_18 Fix: v3.25 Release 0.97 Re-tested with CentOS/RedHat version.
 #@2019_06_19 Update: v3.26 Ask for sadmin Database password until it's valid.
-#@2019_06_21 Update: v3.27 Ask for 'sadmin' & 'squery' Database password until it's valid.
-#@2019_06_25 Update: v3.28 Minor change to text displayed at the end of installation.
+#@2019_06_21 Update: v3.27 Ask user 'sadmin' & 'squery' database password until it's valid.
+#@2019_06_25 Update: v3.28 Modification of the text displayed at the end of installation.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3

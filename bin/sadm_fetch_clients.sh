@@ -49,8 +49,8 @@
 # 2019_05_07  Update: v2.35 Change Send Alert parameters for Library 
 # 2019_05_23  Update: v2.36 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
 #@2019_06_06  Fix: v2.37 Fix problem sending alert when SADM_ALERT_TYPE was set 2 or 3.
-#@2019_06_07  New: v2.38 We now have at the end a alert status summary of all systems.
-#@2019_06_19  Update: v2.39 Update total alerts summary, Subject changed depending upon script result.
+#@2019_06_07  New: v2.38 An alert status summary of all systems is displayed at the end.
+#@2019_06_19  Update: v2.39 Cosmetic change to alerts summary and alert subject.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>

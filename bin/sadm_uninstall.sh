@@ -38,7 +38,7 @@
 # 2019_04_14 Fix: v1.6 Don't show password when entering it, correct problem dropping database.
 # 2019_04_14 Fix: v1.7 Remove user before dropping database
 # 2019_04_17 Update: v1.8 When quitting script, remove pid file and print abort message.
-#@2019_06_25 Update: v1.9 Minor update to code.
+#@2019_06_25 Update: v1.9 Minor code update (use SADM_DEBUG instead of DEBUG_LEVEL).
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
