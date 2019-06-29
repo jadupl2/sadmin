@@ -1,7 +1,7 @@
 # Changelog
 
 
-## Release v[0.99.0](https://github.com/jadupl2/sadmin/releases) (2019-06-28)
+## Release v[0.99.0](https://github.com/jadupl2/sadmin/releases) (2019-06-29)
 - Fixes
 	- 2019_06_06 sadm_fetch_clients.sh (v2.37) - Fix problem sending alert when SADM_ALERT_TYPE was set 2 or 3.
 	- 2019_06_19 sadmlib_std.sh (v3.05) - Fix problem with repeating alert.
