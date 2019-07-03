@@ -36,7 +36,8 @@
 # 2018_08_21 v1.3 Adapted to work on MacOS and Aix
 # 2018_09_03 v1.5 Option --total don't work on RHEL 5, Total Line Removed for now
 # 2018_09_24 v1.6 Corrected Total Display Problem under Linux
-#@2019_03_17 Update: v1.7 No background color change, using brighter color.
+# 2019_03_17 Update: v1.7 No background color change, using brighter color.
+#@2019_06_30 Update: v1.8 Remove tmpfs from output on Linux (useless)
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -45,7 +46,7 @@
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-export SADM_VER='1.7'                                       # Current Script Version
+export SADM_VER='1.8'                                       # Current Script Version
 SADM_DASH=`printf %100s |tr " " "="`                        # 100 equals sign line
 DEBUG_LEVEL=0                                               # 0=NoDebug Higher=+Verbose
 file="/tmp/sdf_tmp1.$$"                                     # File Contain Result of df
@@ -94,7 +95,7 @@ ostype=`uname -s | tr '[:lower:]' '[:upper:]'`              # OS Name (AIX/LINUX
     case "$ostype" in
         "DARWIN")   df -h > $file
                     ;;
-        "LINUX")    df --total -hP |awk '{printf "%-35s %-8s %-8s %-8s %-8s %-8s %-s\n",$1,$2,$3,$4,$5,$6,$7'}> $file
+        "LINUX")    df --total -hP | grep -v "^tmpfs"| awk '{printf "%-35s %-8s %-8s %-8s %-8s %-8s %-s\n",$1,$2,$3,$4,$5,$6,$7'}> $file
                     ;;
         "AIX")      df -g | awk '{ printf "%-30s %-8s %-8s %-8s %-8s %-8s %-28s\n", $1, $2, $3, $4, $5, $6, $7 }' > $file
                     ;;
