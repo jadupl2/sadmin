@@ -98,14 +98,15 @@
 # 2019_05_16 Update: v3.00 Only one summary line is now added to RCH file when scripts are executed.
 # 2019_05_19 Update: v3.01 SADM_DEBUG_LEVEL change to SADM_DEBUG for consistency with Python Libr.
 # 2019_05_20 Update: v3.02 Eliminate `tput` warning when TERM variable was set to 'dumb'.
-#@2019_06_07 Update: v3.03 Create/Update the RCH file using the new format (with alarm type).
-#@2019_06_11 Update: v3.04 Function send_alert change to add script name as a parameter.
-#@2019_06_19 Fixes: v3.05 Fix problem with repeating alert.
-#@2019_06_23 Improve: v3.06 Code reviewed and library optimization (300 lines were removed).
-#@2019_06_23 nolog: v3.06a Correct Typo error, in email alert.
-#@2019_06_23 nolog: v3.06b Correct Typo error, in email alert.
-#@2019_06_25 Update: v3.07 Optimize 'send_alert' function.
-#@2019_06_27 Nolog: v3.08 Change 'Alert' for 'Notification' in source & email '1 of 0' corrected.
+# 2019_06_07 Update: v3.03 Create/Update the RCH file using the new format (with alarm type).
+# 2019_06_11 Update: v3.04 Function send_alert change to add script name as a parameter.
+# 2019_06_19 Fixes: v3.05 Fix problem with repeating alert.
+# 2019_06_23 Improve: v3.06 Code reviewed and library optimization (300 lines were removed).
+# 2019_06_23 nolog: v3.06a Correct Typo error, in email alert.
+# 2019_06_23 nolog: v3.06b Correct Typo error, in email alert.
+# 2019_06_25 Update: v3.07 Optimize 'send_alert' function.
+# 2019_06_27 Nolog: v3.08 Change 'Alert' for 'Notification' in source & email '1 of 0' corrected.
+#@2019_07_14 Udate: v3.09 Change History file format , correct some alert issues.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -115,16 +116,16 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.08"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.09"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
-SADM_80_SPACES=`printf %80s  " "`           ; export SADM_80_SPACES      # 80 spaces 
+SADM_80_SPACES=`printf %80s  " "`           ; export SADM_80_SPACES     # 80 spaces 
 SADM_TEN_DASH=`printf %10s |tr " " "-"`     ; export SADM_TEN_DASH      # 10 dashes line
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG=0                                ; export SADM_DEBUG         # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-LIB_DEBUG=0                                 ; export LIB_DEBUG          # Library Debug Level
+LIB_DEBUG=0                                 ; export LIB_DEBUG          # This Library Debug Level
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1031,8 +1032,8 @@ sadm_server_model() {
                      then sadm_server_model="VM"
                      else grep -i '^revision' /proc/cpuinfo > /dev/null 2>&1
                           if [ $? -eq 0 ]
-                            then wrev=`grep -i '^revision' /proc/cpuinfo |cut -d ':' -f 2)`
-                                 wrev=`echo $wrev | sed -e 's/^[ \t]*//'` #Del Lead Space
+                            then wrev=`grep -i '^revision' /proc/cpuinfo |cut -d ':' -f 2`
+                                 wrev=`echo $wrev | sed -e 's/^[ \t]*//'`   # Del Lead Space
                                  sadm_server_model="Raspberry Rev.${wrev}"
                           fi
                  fi
@@ -2081,10 +2082,10 @@ sadm_send_alert() {
     fi
 
     # Save Parameters Received (After Removing leading and trailing Spaces.
-    atype=`echo "$1"   | awk '{$1=$1;print}'`                           # [S]cript [E]rr [W]arn [I]nfo
-    atype=`echo $atype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
-    atime=`echo "$2"   | awk '{$1=$1;print}'`                           # Alert Event Date AND Time
+    atype=`echo "$1" |awk '{$1=$1;print}' |tr "[:lower:]" "[:upper:]"`  # [S]cript [E]rr [W]arn [I]nfo
+    atime=`echo "$2" | awk '{$1=$1;print}'`                             # Alert Event Date AND Time
     adate=`echo "$2"   | awk '{ print $1 }'`                            # Alert Date without time
+    ahour=`echo "$2"   | awk '{ print $2 }'`                            # Alert Time without date
     aserver=`echo "$3" | awk '{$1=$1;print}'`                           # Server where alert Come
     ascript=`echo "$4" | awk '{$1=$1;print}'`                           # Script Name 
     agroup=`echo "$5"  | awk '{$1=$1;print}'`                           # SADM AlertGroup to Advise
@@ -2133,7 +2134,7 @@ sadm_send_alert() {
     if [ $? -ne 0 ]                                                     # Group Missing in GrpFile
         then sadm_writelog " "                                          # White line Before
              sadm_writelog "Alert Group '$agroup' missing from $SADM_ALERT_FILE"
-             sadm_writelog "  - Alert Date/Time    : $atime"            # Show Event Date & Time
+             sadm_writelog "  - Alert date/time    : $atime"            # Show Event Date & Time
              sadm_writelog "Changing alert group from '$agroup' to 'default'"
              agroup='default'                                           # Change Alert Group
     fi
@@ -2159,14 +2160,16 @@ sadm_send_alert() {
     NbDaysOld=0                                                         # Default Alert Age in Days
     if [ $aage -ge 86400 ] ;then NbDaysOld=`echo "$aage / 86400" |$SADM_BC` ;fi # Alert age 
 
+
     # GREP HISTORY FILE TO SEE IF IT ALREADY EXIST.
-    alertid=`printf "%s;%s;%s;%s;%s" "$atime" "$atype" "$aserver" "$agroup" "$asubject"`
+    alertid=`printf "%s;%s;%s;%s;%s" "$adate" "$atype" "$aserver" "$agroup" "$asubject"`
     if [ "$LIB_DEBUG" -gt 4 ] 
         then sadm_writelog " " ; 
              sadm_writelog "Search History for \"$alertid\"" 
     fi
     grep "$alertid" $SADM_ALERT_HIST  >>/dev/null 2>&1                  # Grep Alert ID in History
     RC=$?                                                               # Save Return Code
+
 
     # If Alert is older than 24 hours, 
     if [ $aage -gt 86400 ]                                              # Alert older than 24Hrs ?
@@ -2178,16 +2181,10 @@ sadm_send_alert() {
 
     # ALERT WASN'T FOUND IN HISTORY FILE - THIS IS A NEW ALERT IF NOT OLDER THAN 24 Hours.
     if [ "$RC" -ne 0 ]                                                  # Alert wasn't found in Hist
-        then if [ $aage -gt 86400 ]                                     # Alert older than 24Hrs ?
-                then if [ "$LIB_DEBUG" -gt 4 ]                          # If Under Debug
-                        then sadm_writelog "Alert older than 24 Hrs ($NbDaysOld days)" 
-                     fi
-                     return 3                                           # Return Already sent
-                else if [ "$LIB_DEBUG" -gt 4 ] 
-                        then sadm_writelog "New alert, not in history file " 
-                             sadm_writelog "AlertEpoch:$aepoch  Cur.Epoch:$cepoch - AlertAge:${aage} Sec."
-                     fi
-                     acounter=0                                         # Fisrt ALert Counter=0
+        then acounter=0                                                 # Fisrt ALert Counter=0
+             if [ "$LIB_DEBUG" -gt 4 ] 
+                then sadm_writelog "Alert not in history file" 
+                     sadm_writelog "AlertEpoch:$aepoch  Cur.Epoch:$cepoch - AlertAge:${aage} Sec."
              fi
     fi
 
@@ -2283,7 +2280,7 @@ sadm_send_alert() {
         t|T)    body1=`printf "%-15s: %s" "SMS date/time" "$mdate"`     # Date the SMS was Sent
                 ;;
     esac             
-    body2=`printf "%-15s: %s" "Event Date/Time" "$atime"`               # Date/Time event occured
+    body2=`printf "%-15s: %s" "Event date/time" "$atime"`               # Date/Time event occured
     body3=`printf "%-15s: %02d of %02d" "Alert counter" "$acounter" "$MaxRepeat"` # AlertCountr
     if [ $SADM_ALERT_REPEAT -ne 0 ] && [ $acounter -ne $MaxRepeat ]     # If Repeat or Not Last
        then body3=`printf "%s, next notification around %s" "$body3" "$NxtAlarmTime"`    # Time NextAlert
@@ -2476,7 +2473,7 @@ write_alert_history() {
     cdatetime=`date "+%C%y%m%d_%H%M"`                                   # Current Date & Time
     #
     hline=`printf "%s;%s" "$hepoch" "$hcount" `                         # Epoch and AlertSent Counter
-    hline=`printf "%s;%s;%s" "$hline" "$hdatetime" "$htype"`            # Alert time,date,type
+    hline=`printf "%s;%s;%s;%s" "$hline" "$htime" "$hdate" "$htype"`    # Alert time,date,type
     hline=`printf "%s;%s;%s;%s" "$hline" "$hserver" "$hgroup" "$hsub"`  # Alert Server,Group,Subject
     hline=`printf "%s;%s;%s" "$hline" "$hstat" "$cdatetime"`            # Alert Status,Cur Date/Time
     echo "$hline" >>$SADM_ALERT_HIST                                    # Write Alert History File
