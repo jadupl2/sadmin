@@ -28,59 +28,85 @@
 # 2018_09_19    v3.9 Include Alert Group 
 # 2018_10_24    v3.10 Command line option -d -r -h -v added.
 # 2019_01_16 Improvement: v3.11 Add 'apt-get autoremove' when 'deb' package is use.
-#@2019_05_23  Update: v3.12 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
-
+# 2019_05_23  Update: v3.12 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
+#@2019_07_12  Update: v3.13 O/S update script now update the date and status in sysinfo.txt. 
+#
 # --------------------------------------------------------------------------------------------------
 #set -x
 
 
 
 
+
 #===================================================================================================
-#               Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
-#
-    # Test if 'SADMIN' environment variable is defined
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
+# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
+#===================================================================================================
+
+    # Make sure the 'SADMIN' environment variable defined and pointing to the install directory.
+    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]
+        then # Check if the file /etc/environment exist, if not exit.
+             missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
+             if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
+             # Check if can use SADMIN definition line in /etc/environment to continue
+             missenv="Please set 'SADMIN' environment variable to the install directory."
+             grep "^SADMIN" /etc/environment >/dev/null 2>&1             # SADMIN line in /etc/env.? 
+             if [ $? -eq 0 ]                                             # Yes use SADMIN definition
+                 then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
+                      misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
+                      missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
+                      if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
+                      printf "\n${missenv}\n${misstmp}\n\n"
+                 else missvar="Add 'SADMIN=/InstallDir' in /etc/environment to remove this message."
+                      printf "\n${missenv}\n$missvar\n"                  # Advise user what to do   
+                      exit 1                                             # Back to shell with Error
+             fi
+    fi 
+        
+    # Check if SADMIN environment variable is properly defined, check if can locate Shell Library.
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                            # Shell Library not readable
+        then missenv="Please set 'SADMIN' environment variable to the install directory."
+             printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
+             exit 1                                                     # Exit to Shell with Error
     fi
 
-    # Test if 'SADMIN' Shell Library is readable 
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
+    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
+    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.12'                              # Current Script Version
+    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
+    export SADM_VER='3.13'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
+    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
+    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
+    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
-
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
     export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
+    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
+    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
+    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
+    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-#
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Ok now, load Standard Shell Library
+    export SADM_OS_NAME=$(sadm_get_osname)              # Uppercase, REDHAT,CENTOS,UBUNTU,AIX,DEBIAN
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number (ex: 7.6.5)
+    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
+
 #---------------------------------------------------------------------------------------------------
-#
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But they can be overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
+# Values of these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
+# They can be overridden here on a per script basis.
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
+    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
+    #export SADM_MAX_RCLINE=60                          # When script end Trim rch file to 60 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#
+#===================================================================================================
 #===================================================================================================
 
 
@@ -97,6 +123,9 @@ REBOOT_CMD="/sbin/shutdown -r now"          ; export REBOOT_CMD         # Reboot
 WREBOOT="N"                                 ; export WREBOOT            # Def. NoReboot after update
 
 
+# Sysinfo report file (Wil update last O/S Update date/time and status)
+HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"   ; export HPREFIX        # Output File Loc & Name
+HWD_FILE="${HPREFIX}_sysinfo.txt"               ; export HWD_FILE       # Hardware File Info
 
 
 # --------------------------------------------------------------------------------------------------
@@ -119,6 +148,39 @@ show_version()
     printf " - Kernel Version $(sadm_get_kernel_version)"
     printf "\n\n" 
 }
+
+
+
+#===================================================================================================
+#                  Run the script received if parameter (Return 0=Success 1= Error)
+#===================================================================================================
+run_command()
+{
+    SCRIPT=$1                                                           # Shell Script Name to Run
+    CMDLINE="$*"                                                        # Command with All Parameter
+    SCMD="${SADM_BIN_DIR}/${CMDLINE}"                                   # Full Path of the script
+
+    if [ ! -x "${SADM_BIN_DIR}/${SCRIPT}" ]                               # If SCript do not exist
+        then sadm_writelog "[ERROR] ${SADM_BIN_DIR}/${SCRIPT} Don't exist or can't execute" 
+             sadm_writelog " " 
+             return 1                                                   # Return Error to Caller
+    fi 
+
+    sadm_writelog "Running $SCMD ..."                                   # Show Command about to run
+    $SCMD >/dev/null 2>&1                                               # Run the Script
+    if [ $? -ne 0 ]                                                     # If Error was encounter
+        then sadm_writelog "[ERROR] $SCRIPT Terminate with Error"       # Signal Error in Log
+             sadm_writelog "Check Log for further detail about Error"   # Show user where to look
+             sadm_writelog "${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SCRIPT}.log" # Show Log Name    
+             sadm_writelog " " 
+             return 1                                                   # Return Error to Caller
+        else sadm_writelog "[SUCCESS] Script $SCRIPT terminated"        # Advise user it's OK
+             sadm_writelog " " 
+    fi
+    return 0                                                            # Return Success to Caller
+}
+
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -412,13 +474,26 @@ run_apt_get()
             fi
     fi
 
+    ### Update $SADMIN/dat/dr/`hostname -s`_sysinfo.txt (Update the O/S Update date & Status)
+    sadm_writelog "Updating last 'O/S Update' date and status in $HWD_FILE"
+    grep -vi "SADM_OSUPDATE_" $HWD_FILE > $SADM_TMP_FILE1               # Remove lines to update
+    if [ "$SADM_EXIT_CODE" -eq 0 ]                                      # O/S Update was a success
+        then echo "SADM_OSUPDATE_STATUS                  = S"  >> $SADM_TMP_FILE1   # Success
+        else echo "SADM_OSUPDATE_STATUS                  = F"  >> $SADM_TMP_FILE1   # Failed
+    fi
+    TODAY=`date "+%Y.%m.%d %H:%M:%S"`                                   # Get Current Date/Time
+    echo "SADM_OSUPDATE_DATE                    = $TODAY"  >> $SADM_TMP_FILE1 # Last OS Update Date
+    rm -f  $HWD_FILE                                                    # Remove sysinfo.txt file
+    cp $SADM_TMP_FILE1 $HWD_FILE                                        # Replace with updated one
+
+
     # If Reboot was requested and update was applied successfully, then reboot
-    SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'`         # Need a No FQDM of SADM Srv
+    SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'`         # Need a No FQDN of SADM Srv
     if [ "$WREBOOT" = "Y" ]                                             # If Reboot was requested
        then if [ $UPDATE_AVAILABLE -eq 0 ]                              # If Update was Applied
                then sadm_writelog "No reboot since no update was applied" 
                else if [ "$SADM_EXIT_CODE" -eq 0 ]                      # If Update was a success
-                       then sadm_writelog "Update successfull, server will reboot in 1 Minute"
+                       then sadm_writelog "Update successful, server will reboot in 1 Minute"
                             sadm_writelog "Running \"${REBOOT_CMD}\" in 1 Minute" 
                             echo "${REBOOT_CMD}" | at now + 1 Minute 
                        else sadm_writelog "Update failed, no reboot will be done"
