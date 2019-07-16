@@ -30,9 +30,10 @@
 # 2018_07_01    v2.3 Show Only Linux Server on this page (No Aix)
 # 2018_07_09    v2.4 Last Update time remove seconds & Change layout
 # 2018_07_09    v2.5 Change Layout of line (More Compact)
-#@2019_04_04 Update v2.6 Show Calculated Next O/S Update Date & update occurrence.
-#@2019_04_17 Update v2.7 Minor code cleanup and show "Manual, no schedule" when not in auto update.
+# 2019_04_04 Update v2.6 Show Calculated Next O/S Update Date & update occurrence.
+# 2019_04_17 Update v2.7 Minor code cleanup and show "Manual, no schedule" when not in auto update.
 # 2019_05_04 Update v2.8 Added link to view rch file content for each server.
+#@2019_07_12 Update v2.9 Don't show MacOS and Aix status (Not applicable).
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -61,7 +62,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.8" ;                                                # Current version number
+$WVER          = "2.9" ;                                                # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
@@ -133,7 +134,7 @@ function display_data($count, $row) {
     echo "' title='$WOS $WVER server, ip address is " .$row['srv_ip']. " ,Click to edit Schedule'>";
     echo $row['srv_name']  . "</a></td>\n";
     
-    # Category de Serveur
+    # Server Category
     #echo "<td class='dt-center'>" . nl2br( $row['srv_cat']) . "</td>\n";  
 
     # Last O/S Update Date 
@@ -227,17 +228,17 @@ function display_data($count, $row) {
     if ($DEBUG) { echo "<br>1st Parameter Received is " . $SELECTION; } # Under Debug Display Param.
 
     
-    # The 2nd Paramaters is sometime used to specify the type of server received as 1st parameter.
-    # Example: http://sadmin/sadmin/sadm_view_servers.php?selection=os&value=centos
+    # The 2nd Parameters is sometime used to specify the type of server received as 1st parameter.
+    # Example: http://sadmin/sadmin/sadm_view_servers.php?selection=host&value=gandalf
     if (isset($_GET['value']) && !empty($_GET['value'])) {              # If Second Value Specified
         $VALUE = $_GET['value'];                                        # Save 2nd Parameter Value
-        if ($DEBUG) { echo "<br>2nd Parameter Received is " . $VALUE; } # Under Debug Show 2nd Parm.
+        if ($DEBUG) { echo "<br>2nd Parameter received is " . $VALUE; } # Under Debug Show 2nd Parm.
     }
 
     # Validate the view option received, Set Page Heading and Retreive Selected Data from Database
     switch ($SELECTION) {
         case 'all_servers'  : 
-            $sql = "SELECT * FROM server where srv_ostype = 'linux' and srv_active = True order by srv_name;";
+            $sql = "SELECT * FROM server where srv_active = True and srv_ostype = 'linux' order by srv_name;";
             $TITLE = "O/S Update Schedule";
             break;
         case 'host'         : 
@@ -250,7 +251,7 @@ function display_data($count, $row) {
             exit ;
     }
     if ( ! $result=mysqli_query($con,$sql)) {                           # Execute SQL Select
-        $err_line = (__LINE__ -1) ;                                     # Error on preceeding line
+        $err_line = (__LINE__ -1) ;                                     # Error on preceding line
         $err_msg1 = "Server (" . $wkey . ") not found.\n";              # Row was not found Msg.
         $err_msg2 = strval(mysqli_errno($con)) . ") " ;                 # Insert Err No. in Message
         $err_msg3 = mysqli_error($con) . "\nAt line "  ;                # Insert Err Msg and Line No 
@@ -263,7 +264,7 @@ function display_data($count, $row) {
     display_std_heading($BACK_URL,$TITLE,"","",$WVER) ;
     setup_table();                                                      # Create Table & Heading
     
-    # Loop Through Retreived Data and Display each Row
+    # Loop Through Retrieved Data and Display each Row
     $count=0;   
     while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
         $count+=1;                                                      # Incr Line Counter
