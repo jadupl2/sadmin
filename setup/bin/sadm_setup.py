@@ -63,6 +63,7 @@
 #@2019_06_19 Update: v3.26 Ask for sadmin Database password until it's valid.
 #@2019_06_21 Update: v3.27 Ask user 'sadmin' & 'squery' database password until it's valid.
 #@2019_06_25 Update: v3.28 Modification of the text displayed at the end of installation.
+#@2019_07_04 Update: v3.29 Crontab client and Server definition revised for Aix and Linux.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -79,7 +80,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.28"                                            # Setup Version Number
+sver                = "3.29"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -360,7 +361,7 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
 
     # Populate SADMIN Client Crontab File
     hcron.write ("# SADMIN Client Crontab File \n")
-    hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
+    #hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
     hcron.write ("# \n")
     hcron.write ("PATH=%s\n" % (os.environ["PATH"]))
     hcron.write ("SADMIN=%s\n" % (sroot))
@@ -373,9 +374,17 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("# Housekeeping, Save Filesystem Info, Create SysInfo & Set Files/Dir. Owner\n")
     hcron.write ("23 23 * * *  %s sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1\n" % (wuser))
     hcron.write ("#\n")
-    hcron.write ("# Run SADMIN System Monitoring every 5 minutes (*/5 Don't work on Aix)\n")
+
+    # Insert line that run System monitor every 5 minutes.
     chostname = socket.gethostname().split('.')[0]
-    hcron.write ("2,7,12,17,22,27,32,37,42,47,52,57 * * * * %s sudo ${SADMIN}/bin/sadm_sysmon.pl >${SADMIN}/log/%s_sadm_sysmon.log 2>&1\n" % (wuser,chostname))
+    cscript="sudo ${SADMIN}/bin/sadm_sysmon.pl" 
+    clog=">${SADMIN}/log/%s_sadm_sysmon.log 2>&1" % (chostname)
+    if wostype == "AIX" : 
+        hcron.write ("# Run SADMIN System Monitoring every 5 minutes (*/5 Don't work on Aix)\n")
+        hcron.write ("2,7,12,17,22,27,32,37,42,47,52,57 * * * * %s %s %s\n" % (wuser,cscript,clog))
+    else:
+        hcron.write ("# Run SADMIN System Monitoring every 5 minutes\n")
+        hcron.write ("*/5 * * * * %s %s %s\n"  % (wuser,cscript,clog))
     hcron.write ("#\n")
     hcron.close()                                                       # Close SADMIN Crontab file
 
@@ -459,7 +468,7 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
 
     # Populate SADMIN Server Crontab File
     hcron.write ("# SADMIN Server Crontab File \n")
-    hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
+    #hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
     hcron.write ("# \n")
     hcron.write ("PATH=%s\n" % (os.environ["PATH"]))
     hcron.write ("SADMIN=%s\n" % (sroot))
@@ -468,9 +477,16 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
     hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
     hcron.write ("# \n")
-    hcron.write ("# Rsync all *.rch,*.log,*.rpt files from all actives clients (*/5 don't work on Aix).\n")
-    hcron.write ("4,9,14,19,24,29,34,39,44,49,54,59 * * * * %s sudo ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1\n" % (wuser))
+    #
+    hcron.write ("# Rsync all *.rch,*.log,*.rpt files from all actives clients.\n")
+    cscript="sudo ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1"
+    if wostype == "AIX" : 
+        hcron.write ("# */6 don't work on Aix.\n")
+        hcron.write ("4,10,16,22,28,34,40,46,52,58 * * * * %s %s\n" % (wuser,cscript))
+    else:
+        hcron.write ("*/6 * * * * %s %s\n" % (wuser,cscript))
     hcron.write ("#\n")
+    #
     hcron.write ("# Early morning daily run, Collect Perf data - Update Database, Housekeeping\n")
     hcron.write ("05 05 * * * %s sudo ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1\n" % (wuser))
     hcron.write ("#\n")
@@ -481,7 +497,7 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
 
     # Change Server Crontab file permission to 644
     cmd = "chmod 644 %s" % (ccron_file)                                 # chmod 644 on ccron_file
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chmod on ccron_file
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chmod on cron_file
     if (ccode == 0):                                                    # If chmod went ok
         writelog( "  - Server crontab permission changed successfully") # Show success
     else:                                                               # Did not went well
@@ -490,7 +506,7 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
 
     # Change Server Crontab file Owner and Group
     cmd = "chown %s.%s %s" % ('root','root',ccron_file)                 # chowner on ccron_file
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on ccron_file
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on cron_file
     if (ccode == 0):                                                    # If chown went ok
         writelog( "  - Ownership of server crontab changed successfully") # Show success to user
     else:                                                               # Did not went well
