@@ -32,10 +32,10 @@
 # 2019_03_09 Removed: v2.29 Remove DateTime Module (Not needed anymore)
 # 2019_03_20 nolog: v2.29 Mail message change
 # 2019_04_01 nolog: v2.30 Include color on status output.
-#@2019_04_17 Update: v2.31 Get SADMIN Root Directory from /etc/environment.
-#@2019_04_19 Update: v2.32 Produce customized Error Message, when running External Script.
-#@2019_05_13 Update: v2.33 Don't abort if can't create sysmon.lock file, happen during setup.
-
+# 2019_04_17 Update: v2.31 Get SADMIN Root Directory from /etc/environment.
+# 2019_04_19 Update: v2.32 Produce customized Error Message, when running External Script.
+# 2019_05_13 Update: v2.33 Don't abort if can't create sysmon.lock file, happen during setup.
+#@2019_07_07 Update: v2.34 Update Filesystem Increase Message & verification.
 #===================================================================================================
 #
 use English;
@@ -49,7 +49,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.33";                                       # Version Number
+my $VERSION_NUMBER      = "2.34";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -440,8 +440,8 @@ sub filesystem_increase {
 
     # If no script specified - Return to caller
     if ((length $SADM_RECORD->{SADM_SCRIPT} == 0 ) || ($SADM_RECORD->{SADM_SCRIPT} eq "-") || ($SADM_RECORD->{SADM_SCRIPT} eq " ")) {
-        print "\nNo Script specified for execution in hostname.smon";
-        print "\nNo Filesystem increase will happen";
+        print "\nAutomatic filesystem increase script 'sadm_fs_incr.sh' not specified in ${SYSMON_CFG_FILE}.";
+        print "\nTherefore filesystem increase will not be performed.";
         return 0 ;
     }
 
@@ -663,8 +663,8 @@ sub check_for_error {
 
          # If no script specified - Return to caller
          if ((length $SADM_RECORD->{SADM_SCRIPT} == 0 ) || ($SADM_RECORD->{SADM_SCRIPT} eq "-") || ($SADM_RECORD->{SADM_SCRIPT} eq " ")) {
-            print "\nNo Script specified for execution in hostname.smon";
-            print "\nNo Filesystem increase will happen";
+            print "\nAutomatic filesystem increase script 'sadm_fs_incr.sh' not specified in ${SYSMON_CFG_FILE}.";
+            print "\nTherefore filesystem increase will not be performed.";
             return 0 ;
          }
 
@@ -1138,29 +1138,28 @@ sub check_swap_space  {
 #---------------------------------------------------------------------------------------------------
 sub check_filesystems_usage  {
 
-    #----- Try to locate the filesystem in SYSMON Array
-    #print "\n";                                                         # Blank line before we begin
     foreach $key (keys %df_array) {                                     # Process each FS in Array
-        if ($key eq $SADM_RECORD->{SADM_ID}) {                          # If Cur FS = FS in Array
-            @dummy = split /_/, $key ;                                  # Split FS Key & FS Name
+        if ($key eq $SADM_RECORD->{SADM_ID}) {                          # Current FS = Array FS Key
+            @dummy = split /_/, $key ;                                  # Split Filesystem Key/Name
             $fname = substr ($key,2,length($key)-1);                    # Get FS Name from Key
-            $fpct  = $df_array{$key};                                   # Get % Used in DF Array
+            $fpct  = $df_array{$key};                                   # Get % Used from DF Array
 
             # Set Parameter of Current Evaluation, ready to be evaluated.
             $SADM_RECORD->{SADM_CURVAL} = sprintf "%d",$fpct;           # Save % Use in sysmon_array
-            $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                       # Current Usage Pct. Value
-            $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                       # Warning Threshold Value
-            $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                       # Error Threshold Value
+            $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                       # Save Current Usage Pct. 
+            $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                       # Save Warning Threshold
+            $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                       # Save Error Threshold
             $TEST = $SADM_RECORD->{SADM_TEST}   ;                       # Test Operator (=,<=,!=,..)
             $MOD  = "$OSNAME"                   ;                       # Module Category
             $SMOD = "FILESYSTEM"                ;                       # Sub-Module Category
             $STAT = $fname                      ;                       # Current Value Returned
+
+            # Set Status according to filesystem % usage and Print Filesystem status line
             $FSTAT = sprintf "%s%s[OK]%s", BOLD, GREEN, RESET;          # Default Status
-            #if ($CVAL >= $WVAL) { $FSTAT = "[WARNING]" ;}               # If % Used >= to Warning
-            #if ($CVAL >= $EVAL) { $FSTAT = "[ERROR]"   ;}               # If % Used >= to Error Val.
-            if ($CVAL >= $WVAL) { sprintf "%s%s[WARNING]%s", BOLD, YELLOW, RESET; ;} # % Used >= Warning
-            if ($CVAL >= $EVAL) { sprintf "%s%s[ERROR]%s", BOLD, RED, RESET;   ;} # % Used >= Error Val.
+            if ($CVAL >= $WVAL) { $FSTAT = sprintf "%s%s[WARNING]%s", BOLD, YELLOW, RESET; ;} 
+            if ($CVAL >= $EVAL) { $FSTAT = sprintf "%s%s[ERROR]%s", BOLD, RED, RESET;   ;} 
             print "\n$FSTAT Filesystem $fname at ${CVAL}% ... Warning: $WVAL - Error: $EVAL";
+
             check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);  # Go Evaluate Error/Alert
             last;
         }
@@ -1317,8 +1316,8 @@ sub check_for_new_filesystems  {
             $SADM_RECORD->{SADM_TIME}    = "0000";          # Last Time that the error Occured
             $SADM_RECORD->{SADM_ALERT_GRP_WARNING} = $SADM_ALERT_GROUP; # Warning Alert Group
             $SADM_RECORD->{SADM_ALERT_GRP_ERROR}   = $SADM_ALERT_GROUP; # Error Alert Group
-            $SADM_RECORD->{SADM_SCRIPT} = "sadm_fs_incr.sh"; # Script that execute to increase FS
-            #$SADM_RECORD->{SADM_SCRIPT}  = "-";             # No Script to auto increase fiesystem
+            #$SADM_RECORD->{SADM_SCRIPT} = "sadm_fs_incr.sh"; # Script that execute to increase FS
+            $SADM_RECORD->{SADM_SCRIPT}  = "-";             # No Script to auto increase fiesystem
             if ($SYSMON_DEBUG >= 5) { print "\n  - New filesystem Found - $fname";}
             $index=@sysmon_array;                           # Get Nb of Item in Array
             $sysmon_array[$index] = combine_fields() ;      # Combine field and insert in array
