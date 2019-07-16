@@ -33,7 +33,7 @@
 # 2018_09_22 v2.5 Failed Script counter was wrong
 # 2019_01_05 Improvement: v2.6 Add SideBar link to view all servers CPU performance on one page.
 #@2019_06_07 Update: v2.7 Updated to deal with the new format of the RCH file.
-#
+#@2019_07-15 Update: v2.8 Add 'Backup Status Page' & Fix RCH files with only one line not reported.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -41,14 +41,17 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');  # <hea
 #echo "\n<body>";
 echo "\n\n<div class='SideBar'>";
 
+
+
 #===================================================================================================
 #                                      GLOBAL Variables
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.7" ;                                                        # Current version number
+$SVER  = "2.8" ;                                                        # Current version number
 $URL_SERVER   = '/view/srv/sadm_view_servers.php';                      # Show Servers List URL
-$URL_OSUPDATE = "/view/sys/sadm_view_schedule.php";                     # View O/S Update URL 
+$URL_OSUPDATE = "/view/sys/sadm_view_schedule.php";                     # View O/S Update Status URL 
+$URL_BACKUP   = "/view/sys/sadm_view_backup.php";                       # View Backup Status URL 
 $URL_MONITOR  = "/view/sys/sadm_view_sysmon.php";                       # View System Monitor URL 
 $URL_EDIT_CAT = '/crud/cat/sadm_category_main.php';                     # Maintenance Cat. Page URL
 $URL_EDIT_GRP = '/crud/grp/sadm_group_main.php';                        # Maintenance Grp. Page URL
@@ -66,7 +69,7 @@ $URL_PERF_DAY = '/view/perf/sadm_server_perf_adhoc_all.php';            # Yester
 // ================================================================================================
 function build_sidebar_scripts_info() {
     
-    $DEBUG = FALSE;                                                     # Activate/Deactivate Debug
+    $DEBUG = False;                                                     # Activate/Deactivate Debug
     
     # Reset All Counters
     $count=0;                                                           # Working Counter
@@ -98,31 +101,28 @@ function build_sidebar_scripts_info() {
     # Loop through filename list in the file
     while(! feof($input_fh)) {
         $wfile = trim(fgets($input_fh));                                # Read rch filename line
-        if ($DEBUG) { echo "<br>Processing file :<br>" . $wfile; }      # Debug Show rch filename
+        if ($DEBUG) { echo "\n<br><br>Processing file : " . $wfile ;}   # Debug Show rch filename
         if ($wfile != "") {                                             # If filename not blank
             $line_array = file($wfile);                                 # Reads entire file in array
-            $last_index = count($line_array) - 1;                       # Get Index of Last line
-            if ($last_index > 0) {                                      # If last Element Exist
-                if ($line_array[$last_index] != "") {                   # If None Blank Last Line
-                    $tag = explode(" ",$line_array[$last_index]);       # Split Line space delimited
-                    $num_tags = count($tag);                            # Nb Elements on lines
-#                    echo "<br>Line Skipped : $line_array[$last_index]\n<br>Only $num_tags elements.<br>";
-                    if ($num_tags == 10) {
-                        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode) = explode(" ",$line_array[$last_index], 10);
-                        $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". $calert .",". $ctype . "," . trim($ccode) .",". basename($wfile) ."\n";
-                        if ($DEBUG) {                                       # In Debug Show Output Line
-                            echo "<br>Output line is " . $outline ;         # Print Output Line
-                        }
-                        $count+=1;
-                        # Key is "StartDate + StartTime + FileName"
-                        $akey = $cdate1 ."_". $ctime1 ."_". basename($wfile);
-                        if ($DEBUG) {  echo "<br>AKey is " . $akey ;  }      # Print Array Key
-                        if (array_key_exists("$akey",$script_array)) {
-                            $script_array[$akey] = $outline . "_" . $count ;
-                        }else{
-                            $script_array[$akey] = $outline ;
-                        }
-                    }
+            if ($DEBUG) { echo "\n>Number of line in $wfile is ". count($line_array);} 
+            $last_index = count($line_array) - 1;                       # Array Index of Last Line
+            if ($DEBUG) { echo "\n<br>line_array[last_index]=" . $line_array[$last_index];}
+            if ($line_array[$last_index] != "") {                   # If None Blank Last Line
+                $tag = explode(" ",$line_array[$last_index]);       # Split Line space delimited
+                $num_tags = count($tag);                            # Nb Elements on lines
+                if ($num_tags == 10) {
+                   list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode) = explode(" ",$line_array[$last_index], 10);
+                   $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". $calert .",". $ctype . "," . trim($ccode) .",". basename($wfile) ."\n";
+                   if ($DEBUG) { echo "<br>Output line is " . $outline ; } # Print Output Line
+                   $count+=1;
+                   # Key is "StartDate + StartTime + FileName"
+                   $akey = $cdate1 ."_". $ctime1 ."_". basename($wfile);
+                   if ($DEBUG) {  echo "<br>AKey is " . $akey ;  }      # Print Array Key
+                   if (array_key_exists("$akey",$script_array)) {
+                      $script_array[$akey] = $outline . "_" . $count ;
+                   }else{
+                      $script_array[$akey] = $outline ;
+                   }
                 }
             }
         }
@@ -329,10 +329,13 @@ function SideBar_OS_Summary() {
     echo "\n<div class='SideBarTitle'>Server Info</div>";               # SideBar Section Title
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_OSUPDATE . "'>OS Update Sched</a></div>";   # URL To View O/S Upd. Page
+    echo "<a href='" . $URL_OSUPDATE . "'>OS Update Status</a></div>";   # URL To View O/S Upd. Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_MONITOR . "'>SysMon Alerts</a></div>";      # URL to System Monitor Page
+    echo "<a href='" . $URL_BACKUP . "'>Backup Status</a></div>";   # URL To View O/S Upd. Page
+
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "<a href='" . $URL_MONITOR . "'>SysMon Status</a></div>";      # URL to System Monitor Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     #echo "\n\n<form action='/view/perf/sadm_server_perf_adhoc_all.php' method='POST'>";
