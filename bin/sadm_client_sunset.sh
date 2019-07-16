@@ -129,7 +129,7 @@ run_command()
     if [ ! -x "${SADM_BIN_DIR}/${SCRIPT}" ]                               # If SCript do not exist
         then sadm_writelog "[ERROR] ${SADM_BIN_DIR}/${SCRIPT} Don't exist or can't execute" 
              sadm_writelog " " 
-             return 1                                                   # Return Error to Callerr
+             return 1                                                   # Return Error to Caller
     fi 
 
     sadm_writelog "Running $SCMD ..."                                   # Show Command about to run
@@ -139,7 +139,7 @@ run_command()
              sadm_writelog "Check Log for further detail about Error"   # Show user where to look
              sadm_writelog "${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SCRIPT}.log" # Show Log Name    
              sadm_writelog " " 
-             return 1                                                   # Return Error to Callerr
+             return 1                                                   # Return Error to Caller
         else sadm_writelog "[SUCCESS] Script $SCRIPT terminated"        # Advise user it's OK
              sadm_writelog " " 
     fi
