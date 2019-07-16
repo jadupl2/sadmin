@@ -39,52 +39,86 @@
 # 2019_01_01    Added: sadm_create_sysinfo v3.9 - Use lsblk to list Disks Partitions and Filesystems.
 # 2019_01_01    Added: sadm_create_sysinfo v3.10 - Added lspci, lsscsi and create hardware html list.
 # 2019_01_28 Added: v3.11 Change Header of files produced by this script.
-#@2019_03_17 Change: v3.12 PCI hardware list moved to end of system report file.
+# 2019_03_17 Change: v3.12 PCI hardware list moved to end of system report file.
+#@2019_07_07 Fix: v3.13 O/S Update was indicating 'Failed' when it should have been 'Success'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
 
+
+
 #===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
-#
-    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to install directory."
-             exit 1                                     # Exit to Shell with Error
-    fi
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work
-             exit 1                                     # Exit to Shell with Error
+#===================================================================================================
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
+# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
+#===================================================================================================
+
+    # Make sure the 'SADMIN' environment variable defined and pointing to the install directory.
+    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]
+        then # Check if the file /etc/environment exist, if not exit.
+             missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
+             if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
+             # Check if can use SADMIN definition line in /etc/environment to continue
+             missenv="Please set 'SADMIN' environment variable to the install directory."
+             grep "^SADMIN" /etc/environment >/dev/null 2>&1             # SADMIN line in /etc/env.? 
+             if [ $? -eq 0 ]                                             # Yes use SADMIN definition
+                 then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
+                      misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
+                      missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
+                      if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
+                      printf "\n${missenv}\n${misstmp}\n\n"
+                 else missvar="Add 'SADMIN=/InstallDir' in /etc/environment to remove this message."
+                      printf "\n${missenv}\n$missvar\n"                  # Advise user what to do   
+                      exit 1                                             # Back to shell with Error
+             fi
+    fi 
+        
+    # Check if SADMIN environment variable is properly defined, check if can locate Shell Library.
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                            # Shell Library not readable
+        then missenv="Please set 'SADMIN' environment variable to the install directory."
+             printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
+             exit 1                                                     # Exit to Shell with Error
     fi
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.12'                              # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
-
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
     export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
+    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # Load SADMIN Standard Shell Library
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
+    export SADM_VER='3.13'                              # Your Current Script Version
+    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
+    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
+    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
+    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
+    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
+    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
+    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
-    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Ok now, load Standard Shell Library
+    export SADM_OS_NAME=$(sadm_get_osname)              # Uppercase, REDHAT,CENTOS,UBUNTU,AIX,DEBIAN
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number (ex: 7.6.5)
+    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
+
+#---------------------------------------------------------------------------------------------------
+# Values of these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
+# They can be overridden here on a per script basis.
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
+    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
+    #export SADM_MAX_RCLINE=60                          # When script end Trim rch file to 60 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
+#===================================================================================================
+
 
 
 
@@ -92,7 +126,6 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #===================================================================================================
 # Scripts Variables
 #===================================================================================================
-DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 DASH_LINE=`printf %79s |tr " " "-"`             ; export DASH_LINE      # 79 minus sign line
 
 # Name of all Output Files
@@ -161,14 +194,7 @@ show_usage()
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\n"
 }
-show_version()
-{
-    printf "\n${SADM_PN} - Version $SADM_VER"
-    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
-    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
-    printf " - Kernel Version $(sadm_get_kernel_version)"
-    printf "\n\n"
-}
+
 
 
 
@@ -201,9 +227,9 @@ command_available()
     fi
     export SADM_CPATH
 
-    # If DEBUG_LEVEL is activated then display Package Name and Full path to it
+    # If SADM_DEBUG is activated then display Package Name and Full path to it
     #-----------------------------------------------------------------------------------------------
-    if [ $DEBUG_LEVEL -gt 0 ]
+    if [ $SADM_DEBUG -gt 0 ]
         then if [ ! -z $SADM_CPATH ]
                 then SADM_MSG=`printf "%-10s %-15s : %-30s" "[OK]" "$SADM_PKG" "$SADM_CPATH"`
                 else SADM_MSG=`printf "%-10s %-15s : %-30s" "[NA]" "$SADM_PKG" "Not Found"`
@@ -239,7 +265,7 @@ pre_validation()
     #-----------------------------------------------------------------------------------------------
     command_available "facter"      ; FACTER=$SADM_CPATH                # Cmd Path,Blank if not fnd
 
-    if [ $(sadm_get_ostype) = "AIX" ]
+    if [ "$SADM_OS_TYPE"  = "AIX" ]
         then    command_available "lspv"        ; LSPV=$SADM_CPATH      # Cmd Path or Blank !found
                 command_available "lsvg"        ; LSVG=$SADM_CPATH      # Cmd Path or Blank !found
                 command_available "lsattr"      ; LSATTR=$SADM_CPATH    # Cmd Path or Blank !found
@@ -297,7 +323,7 @@ pre_validation()
 # ==================================================================================================
 write_file_header()
 {
-    SOSNAME=$(sadm_get_osname) ; SOSVER=$(sadm_get_osmajorversion)
+    SOSNAME="$SADM_OS_NAME" ; SOSVER="$SADM_OS_MAJORVER"
     WTITLE=$1
     WFILE=$2
     echo "# ${SADM_DASH}"       >$WFILE 2>&1
@@ -331,9 +357,11 @@ create_command_output()
 # ==================================================================================================
 #       This function get the last o/s update date and status from the rch file
 # ==================================================================================================
+# 
 # Example of content for input file :
-#   ubuntu1604 2018.06.08 12:27:20 .......... ........ ........ sadm_osupdate_client 2
-#   ubuntu1604 2018.06.08 12:27:20 2018.06.08 12:29:58 00:02:38 sadm_osupdate_client 0
+# yoda 2019.07.02 11:33:38 2019.07.02 11:34:29 00:00:51 sadm_osupdate default 1 0
+# yoda 2019.07.03 02:05:06 2019.07.03 02:05:34 00:00:28 sadm_osupdate default 1 0
+
 # ==================================================================================================
 set_last_osupdate_date()
 {
@@ -365,7 +393,7 @@ set_last_osupdate_date()
     fi
 
     # Get the Status of the last O/S update
-    RCH_CODE=`tail -1 ${RCHFILE} |awk '{printf "%s", $9}'`
+    RCH_CODE=`tail -1 ${RCHFILE} |awk '{printf "%s", $NF}'`
     if [ $? -ne 0 ]
         then sadm_writelog "Can't determine last O/S Update Status ..."
              return 1
@@ -467,7 +495,7 @@ create_linux_config_files()
              execute_command "$CMD" "$DISKS_FILE" 
     fi
 
-    if [ $(sadm_get_ostype) = "DARWIN" ]                                # If running in OSX
+    if [ "$SADM_OS_TYPE"  = "DARWIN" ]                                # If running in OSX
         then if [ "$DISKUTIL" != "" ]
                 then CMD="$DISKUTIL list"
                      execute_command "$CMD" "$DISKS_FILE" 
@@ -761,7 +789,7 @@ create_summary_file()
     echo "# This file will be use to update the SADMIN Database"                     >> $HWD_FILE
     echo "#                                                    "                     >> $HWD_FILE
 
-    if [ $(sadm_get_ostype) = "LINUX" ]                                 # O/S Upd RCH Only on Linux
+    if [ "$SADM_OS_TYPE"  = "LINUX" ]                                 # O/S Upd RCH Only on Linux
         then set_last_osupdate_date                                     # Get Last O/S Update Date
              if [ $? -ne 0 ] ; then SADM_EXIT_CODE=0 ; fi               # Exit Script with Error
         else OSUPDATE_DATE=""                                           # For Mac & Aix 
@@ -803,25 +831,7 @@ create_summary_file()
 #                                       Script Start HERE
 #===================================================================================================
 #
-    # Evaluate Command Line Switch Options Upfront
-    # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level
-    while getopts "hvd:" opt ; do                                       # Loop to process Switch
-        case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               ;;                                                       # No stop after each page
-            h) show_usage                                               # Show Help Usage
-               exit 0                                                   # Back to shell
-               ;;
-            v) show_version                                             # Show Script Version Info
-               exit 0                                                   # Back to shell
-               ;;
-           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
-               show_usage                                               # Display Help Usage
-               exit 1                                                   # Exit with Error
-               ;;
-        esac                                                            # End of case
-    done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+
 
     sadm_start                                                          # Init Env Dir & RC/Log File
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem
@@ -832,6 +842,37 @@ create_summary_file()
              exit 1                                                     # Exit To O/S with Error
     fi
 
+    # Evaluate Command Line Switch Options Upfront
+    # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level
+    while getopts "hvd:" opt ; do                                       # Loop to process Switch
+        case $opt in
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       sadm_stop 1                                      # Close/Trim Log & Del PID
+                       exit 1
+               fi
+               ;;                                                       
+            h) show_usage                                               # Show Help Usage
+               sadm_stop 0                                              # Close/Trim Log & Del PID
+               exit 0                                                   # Back to shell
+               ;;
+            v) sadm_show_version                                        # Show Script Version Info
+               sadm_stop 0                                              # Close/Trim Log & Del PID
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               sadm_stop 1                                              # Close/Trim Log & Del PID
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    if [ $SADM_DEBUG -gt 0 ] ; then printf "\nDebug activated, Level ${SADM_DEBUG}\n" ; fi
+
+
     # Set the PATH to each commands that may be used 
     pre_validation                                                      # Cmd present ?
     SADM_EXIT_CODE=$?                                                   # Save Function Return code
@@ -840,7 +881,7 @@ create_summary_file()
              exit 1
     fi
 
-    if [ $(sadm_get_ostype) = "AIX"   ]                                 # If running in AIX
+    if [ "$SADM_OS_TYPE"  = "AIX"   ]                                 # If running in AIX
         then create_aix_config_files                                    # Collect Aix Info
         else create_linux_config_files                                  # Collect Linux/OSX Info
     fi
