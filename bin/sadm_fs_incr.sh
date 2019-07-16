@@ -38,7 +38,8 @@
 # 2018_08_21    V1.3 Use Alerting system on top of email for Error or Warning occur.
 # 2018_09_25    V1.4 Alerting can now send attachment with Subject
 # 2018_09_30    V1.5 Reformat error message for alerting system
-#@2019_06_11 Update: v1.6 Alert message change when filesystem increase failed.
+# 2019_06_11 Update: v1.6 Alert message change when filesystem increase failed.
+#@2019_07_11 Update: v1.7 Change Email Body when filesystem in increase
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -46,49 +47,76 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 #===================================================================================================
-#               Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
-#
-    # Test if 'SADMIN' environment variable is defined
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
+# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
+#===================================================================================================
+
+    # Make sure the 'SADMIN' environment variable defined and pointing to the install directory.
+    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]
+        then # Check if the file /etc/environment exist, if not exit.
+             missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
+             if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
+             # Check if can use SADMIN definition line in /etc/environment to continue
+             missenv="Please set 'SADMIN' environment variable to the install directory."
+             grep "^SADMIN" /etc/environment >/dev/null 2>&1             # SADMIN line in /etc/env.? 
+             if [ $? -eq 0 ]                                             # Yes use SADMIN definition
+                 then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
+                      misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
+                      missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
+                      if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
+                      printf "\n${missenv}\n${misstmp}\n\n"
+                 else missvar="Add 'SADMIN=/InstallDir' in /etc/environment to remove this message."
+                      printf "\n${missenv}\n$missvar\n"                  # Advise user what to do   
+                      exit 1                                             # Back to shell with Error
+             fi
+    fi 
+        
+    # Check if SADMIN environment variable is properly defined, check if can locate Shell Library.
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                            # Shell Library not readable
+        then missenv="Please set 'SADMIN' environment variable to the install directory."
+             printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
+             exit 1                                                     # Exit to Shell with Error
     fi
 
-    # Test if 'SADMIN' Shell Library is readable 
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
+    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
+    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.6'                               # Current Script Version
+    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
+    export SADM_VER='1.7'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
+    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
+    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
+    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
+    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
+    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
+    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
+    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-#
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Ok now, load Standard Shell Library
+    export SADM_OS_NAME=$(sadm_get_osname)              # Uppercase, REDHAT,CENTOS,UBUNTU,AIX,DEBIAN
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number (ex: 7.6.5)
+    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
+
 #---------------------------------------------------------------------------------------------------
-#
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But they can be overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
+# Values of these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
+# They can be overridden here on a per script basis.
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
+    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
+    #export SADM_MAX_RCLINE=60                          # When script end Trim rch file to 60 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#
 #===================================================================================================
+#===================================================================================================
+
 
 
 # Load Filesystem Tool SADM Library
@@ -197,7 +225,7 @@ send_email()
     #df -hP ${FSNAME} >> $MAIL_BODY                                      # Print FileSystem Usage
 
     # Print 20 biggest directory of filesystem
-    echo -e "\n${DASH}"  >>$MAIL_BODY                                   # Print Dash Line
+    echo -e "${DASH}"  >>$MAIL_BODY                                     # Print Dash Line
     echo -e "Biggest directories of ${FSNAME}" >> $MAIL_BODY            # Title Biggest Dir. in FS
     du -kx $FSNAME | sort -rn | head -20 | nl >> $MAIL_BODY             # 20 Biggest Dir. in FS
 
@@ -310,7 +338,7 @@ main_process()
     sadm_writelog ""                                                    # Blank Line
     sadm_writelog "df -hP $FSNAME - Before increase"                    # Show FileSystem Usage
     echo -e "\n${DASH}" >>$MAIL_BODY                                    # Print Dash Line
-    echo -e "`date`\nFilesystem $FSNAME before increase.\n\n`df -hP $FSNAME` \n" >> $MAIL_BODY
+    echo -e "`date`Filesystem $FSNAME before increase.\n\n`df -hP $FSNAME` \n" >> $MAIL_BODY
     df -hP $FSNAME                                                      # Show FS Usage to User  
     sadm_writelog ""                                                    # Blank Line
     extend_fs                                                           # Go Extend Filesystem
@@ -321,7 +349,7 @@ main_process()
              echo -e "$WMESS \n" >> $MAIL_BODY                          # Add Err. Msg. to Mail Body
         else WMESS="Filesystem increased with success !"                # Build Status Message
              sadm_writelog "$WMESS"                                     # Show Success to User
-             echo -e "$WMESS \n" >> $MAIL_BODY                          # Add Success to Mail Body
+             echo -e "$WMESS " >> $MAIL_BODY                            # Add Success to Mail Body
     fi
     sadm_writelog ""                                                    # Blank Line
     sadm_writelog "df -hP $FSNAME - After increase"                     # Show FS Usage after Incr.
