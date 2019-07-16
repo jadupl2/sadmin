@@ -52,52 +52,83 @@
 # 2018_10_02  v3.11 Advise User & Trap Error when mounting NFS Mount point.
 # 2019_01_10 Changed: v3.12 Changed: Name of Backup List and Exclude file can be change.
 # 2019_01_11 Fixes: v3.13 Fix C/R problem after using the Web UI to change backup & exclude list.
-#@2019_02_01 Improve: v3.14 Reduce Output when no debug is activated.
+# 2019_02_01 Improve: v3.14 Reduce Output when no debug is activated.
+#@2019_07_18 Improve: v3.15 Modified to backup MacOS system onto a NFS drive.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
+
 #===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
-#
-    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory."
-             exit 1                                     # Exit to Shell with Error
-    fi
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work
-             exit 1                                     # Exit to Shell with Error
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
+# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
+#===================================================================================================
+
+    # Make sure the 'SADMIN' environment variable defined and pointing to the install directory.
+    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]
+        then # Check if the file /etc/environment exist, if not exit.
+             missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
+             if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
+             # Check if can use SADMIN definition line in /etc/environment to continue
+             missenv="Please set 'SADMIN' environment variable to the install directory."
+             grep "^SADMIN" /etc/environment >/dev/null 2>&1             # SADMIN line in /etc/env.? 
+             if [ $? -eq 0 ]                                             # Yes use SADMIN definition
+                 then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
+                      misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
+                      missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
+                      if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
+                      printf "\n${missenv}\n${misstmp}\n\n"
+                 else missvar="Add 'SADMIN=/InstallDir' in /etc/environment to remove this message."
+                      printf "\n${missenv}\n$missvar\n"                  # Advise user what to do   
+                      exit 1                                             # Back to shell with Error
+             fi
+    fi 
+        
+    # Check if SADMIN environment variable is properly defined, check if can locate Shell Library.
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                            # Shell Library not readable
+        then missenv="Please set 'SADMIN' environment variable to the install directory."
+             printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
+             exit 1                                                     # Exit to Shell with Error
     fi
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.14'                              # Current Script Version
+    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
+    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+
+    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
+    export SADM_VER='3.15'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer
+    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
+    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
+    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
+    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
+    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
+    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
+    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Ok now, load Standard Shell Library
+    export SADM_OS_NAME=$(sadm_get_osname)              # Uppercase, REDHAT,CENTOS,UBUNTU,AIX,DEBIAN
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number (ex: 7.6.5)
+    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
 
-    # Load SADMIN Standard Shell Library
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overridden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                   # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"       # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                        # When Script End Trim log to 1000 Lines
-    #export SADM_MAX_RCLINE=125                          # When Script End Trim rch to 125 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server
+#---------------------------------------------------------------------------------------------------
+# Values of these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
+# They can be overridden here on a per script basis.
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
+    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
+    #export SADM_MAX_RCLINE=60                          # When script end Trim rch file to 60 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#===================================================================================================
 #===================================================================================================
 
 
@@ -108,14 +139,16 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 #                               Script environment variables
 # --------------------------------------------------------------------------------------------------
-DEBUG_LEVEL=0                       ; export DEBUG_LEVEL                # 0=NoDebug Higher=+Verbose
 HOSTNAME=`hostname -s`              ; export HOSTNAME                   # Current Host name
 TOTAL_ERROR=0                       ; export TOTAL_ERROR                # Total Backup Error
 CUR_DAY_NUM=`date +"%u"`            ; export CUR_DAY_NUM                # Current Day in Week 1=Mon
 CUR_DATE_NUM=`date +"%d"`           ; export CUR_DATE_NUM               # Current Date Nb. in Month
 CUR_MTH_NUM=`date +"%m"`            ; export CUR_MTH_NUM                # Current Month Number
 CUR_DATE=`date "+%C%y_%m_%d"`       ; export CUR_DATE                   # Date Format 2018_05_27
-LOCAL_MOUNT="/mnt/backup"           ; export LOCAL_MOUNT                # Local NFS Mount Point
+if [ "$SADM_OS_TYPE" = "DARWIN" ]                                       # If on MacOS
+    then LOCAL_MOUNT="/preserve/nfs"  ; export LOCAL_MOUNT              # NFS Mount Point for OSX
+    else LOCAL_MOUNT="/mnt/backup"    ; export LOCAL_MOUNT              # NFS Mount Point for Linux
+fi    
 ARCHIVE_DIR=""                      ; export ARCHIVE_DIR                # Will be filled by Script
 BACKUP_DIR=""                       ; export BACKUP_DIR                 # Will be Final Backup Dir.
 
@@ -156,7 +189,7 @@ MONTHLY_DIR="${MDIR}/${HOSTNAME}"       ; export MONTHLY_DIR            # Dir. F
 YEARLY_DIR="${YDIR}/${HOSTNAME}"        ; export YEARLY_DIR             # Dir. For Yearly Backup
 LATEST_DIR="${LDIR}/${HOSTNAME}"        ; export LATEST_DIR             # Latest Backup Directory
 
-# Days and month name used to display infor to user before beginning the backup
+# Days and month name used to display inform to user before beginning the backup
 WEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
 MTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" "September"
         "October" "November" "December")
@@ -171,14 +204,6 @@ show_usage()
     printf "\n\t-d   (Debug Level [0-9])"
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-n   (Backup with NO compression)"
-    printf "\n\n"
-}
-show_version()
-{
-    printf "\n${SADM_PN} - Version $SADM_VER"
-    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
-    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
-    printf " - Kernel Version $(sadm_get_kernel_version)"
     printf "\n\n"
 }
 
@@ -419,7 +444,7 @@ backup_setup()
     sadm_writelog " - Keep $SADM_MONTHLY_BACKUP_TO_KEEP monthly backups"
     sadm_writelog " - Keep $SADM_YEARLY_BACKUP_TO_KEEP yearly backups"
     sadm_writelog " - Do the weekly backup on ${WEEKDAY[$SADM_WEEKLY_BACKUP_DAY]}"
-    sadm_writelog " - Do the monthy backup on the $SADM_MONTHLY_BACKUP_DATE of every month"
+    sadm_writelog " - Do the monthly backup on the $SADM_MONTHLY_BACKUP_DATE of every month"
     sadm_writelog " - Do the yearly backup on the $SADM_YEARLY_BACKUP_DATE of ${MTH_NAME[$SADM_YEARLY_BACKUP_MONTH]} every year"
     sadm_writelog " - Backup Directory is ${BACKUP_DIR}"
     sadm_writelog " - Using Backup list file $SADM_BACKUP_LIST"
@@ -452,11 +477,11 @@ create_backup()
         # Check if File or Directory to Backup and if they Exist
         sadm_writelog "${SADM_TEN_DASH}"                                # Line of 10 Dash in Log
         if [ -d "${backup_line}" ]                                      # Dir. To Backup Exist
-            then if [ $DEBUG_LEVEL -gt 0 ] 
+            then if [ $SADM_DEBUG -gt 0 ] 
                     then sadm_writelog "Directory to Backup : [${backup_line}]" # Processing Line
                  fi
             else if [ -f "$backup_line" ] && [ -r "$backup_line" ]      # If File to Backup Readable
-                    then if [ $DEBUG_LEVEL -gt 0 ] 
+                    then if [ $SADM_DEBUG -gt 0 ] 
                             then sadm_writelog "File to Backup : $backup_line"  # Print Current File
                          fi
                     else MESS="[SKIPPING] [$backup_line] doesn't exist on $(sadm_get_fqdn)"
@@ -496,8 +521,8 @@ create_backup()
                         then continue                                   # Blank or Comment = NxtLine
                     fi
                     echo "$excl_line" >> /tmp/exclude                   # Add Line to Exclude List
-                    done < $SADM_BACKUP_EXCLUDE                            # Read Backup Exclude File
-                if [ $DEBUG_LEVEL -gt 0 ]                               # If Debug Show Exclude List
+                    done < $SADM_BACKUP_EXCLUDE                         # Read Backup Exclude File
+                if [ $SADM_DEBUG -gt 0 ]                                # If Debug Show Exclude List
                     then sadm_writelog "Content of exclude file"        # Show User what's coming
                          cat /tmp/exclude| while read ln ;do sadm_writelog "$ln" ;done # Show Excl.
                 fi
@@ -519,7 +544,7 @@ create_backup()
 
         # Create link to backup in the server latest directory
         cd ${LATEST_DIR}
-        if [ $DEBUG_LEVEL -gt 0 ] 
+        if [ $SADM_DEBUG -gt 0 ] 
             then sadm_writelog "Current directory is : `pwd`"           # Print Current Dir.
                  sadm_writelog "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}" # Command we'll execute
         fi
@@ -572,6 +597,7 @@ clean_backup_dir()
     ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_writelog "$ln" ;done
     backup_count=`ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l` # Calc. Nb. Days of backup
     day2del=$(($backup_count-$SADM_DAILY_BACKUP_TO_KEEP))                 # Calc. Nb. Days to remove
+    sadm_writelog " " 
     sadm_writelog "Keep only the last $SADM_DAILY_BACKUP_TO_KEEP days of each backup."
     sadm_writelog "We now have $backup_count days of backup(s)."        # Show Nb. Backup Days
 
@@ -601,23 +627,27 @@ mount_nfs()
         then sadm_writelog "Create local mount point $LOCAL_MOUNT"      # Advise user we create Dir.
              mkdir ${LOCAL_MOUNT}                                       # Create if not exist
              if [ $? -ne 0 ]                                            # If Error trying to mount
-                then sadm_writelog "[ERROR] Creating local mount point - Proces Aborted"
+                then sadm_writelog "[ERROR] Creating local mount point - Process aborted"
                 return 1                                                # End Function with error
              fi
              chmod 775 ${LOCAL_MOUNT}                                   # Change Protection
     fi
 
-    # Mount the NFS Drive - Where the TGZ File will reside -----------------------------------------
+    # Mount the NFS Drive - Where the Backup file will reside -----------------------------------------
+    REM_MOUNT="${SADM_BACKUP_NFS_SERVER}:${SADM_BACKUP_NFS_MOUNT_POINT}"
     sadm_writelog "Mounting NFS Drive on $SADM_BACKUP_NFS_SERVER"       # Show NFS Server Name
     umount ${LOCAL_MOUNT} > /dev/null 2>&1                              # Make sure not mounted
-    sadm_writelog "mount ${SADM_BACKUP_NFS_SERVER}:${SADM_BACKUP_NFS_MOUNT_POINT} ${LOCAL_MOUNT}"
-    mount ${SADM_BACKUP_NFS_SERVER}:${SADM_BACKUP_NFS_MOUNT_POINT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
+    if [ "$SADM_OS_TYPE" = "DARWIN" ]                                   # If on MacOS
+        then sadm_writelog "mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT}"
+             mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
+        else sadm_writelog "mount ${REM_MOUNT} ${LOCAL_MOUNT}"          # If on Linux/Aix
+             mount ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1         # Mount NFS Drive
+    fi
     if [ $? -ne 0 ]                                                     # If Error trying to mount
-        then sadm_writelog "[ERROR] Mount NFS Failed - Proces Aborted"  # Error - Advise User
+        then sadm_writelog "[ERROR] Mount NFS Failed - Process Aborted" # Error - Advise User
              return 1                                                   # End Function with error
         else sadm_writelog "[SUCCESS] NFS Mount Succeeded"              # NFS Mount Succeeded Msg
     fi
-
     return 0
 }
 
@@ -632,9 +662,9 @@ umount_nfs()
     sadm_writelog "Unmounting NFS mount directory $LOCAL_MOUNT"         # Advise user we umount
     umount $LOCAL_MOUNT >> $SADM_LOG 2>&1                               # Umount Just to make sure
     if [ $? -ne 0 ]                                                     # If Error trying to mount
-        then sadm_writelog "[ERROR] Umounting NFS Dir. $LOCAL_MOUNT"    # Error - Advise User
+        then sadm_writelog "[ERROR] Unmounting NFS Dir. $LOCAL_MOUNT"   # Error - Advise User
              return 1                                                   # End Function with error
-        else sadm_writelog "[SUCCESS] Umounting NFS Dir. $LOCAL_MOUNT"  # Succeeded to Unmount NFS
+        else sadm_writelog "[SUCCESS] Unmounting NFS Dir. $LOCAL_MOUNT" # Succeeded to Demount NFS
     fi
     return 0
 }
@@ -643,25 +673,29 @@ umount_nfs()
 #                              S T A R T   O F   M A I N    P R O G R A M
 # ==================================================================================================
 #
-    # If you want this script to be run only by 'root'.
+    sadm_start                                                          # Start Using SADM Tools
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
+
+    # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root
-        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
-             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
-             printf "\nProcess aborted\n\n"                             # Abort advise message
-             exit 1                                                     # Exit To O/S with error
+        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
     fi
+
     # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9])
     COMPRESS="ON"                                                       # Backup Compression Default
     while getopts "hvnd:" opt ; do                                      # Loop to process Switch
         case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                ;;                                                       # No stop after each page
             n) COMPRESS="OFF"                                           # No Compress backup
                ;;
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
-            v) show_version                                             # Show Script Version Info
+            v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
            \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
@@ -670,22 +704,20 @@ umount_nfs()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
-        then printf "\nDebug activated, Level ${DEBUG_LEVEL}"           # Display Debug Level
+    if [ $SADM_DEBUG -gt 0 ]                                            # If Debug is Activated
+        then printf "\nDebug activated, Level ${SADM_DEBUG}"            # Display Debug Level
              printf "\nBackup compression is $COMPRESS"                 # Show Status of compression
     fi
 
-    sadm_start                                                          # Start Using SADM Tools
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
     mount_nfs                                                           # Mount NFS Dir.
     if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
     backup_setup                                                        # Create Necessary Dir.
     if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
-    create_backup                                                       # Create TGZ of Seleted Dir.
-    SADM_EXIT_CODE=$?                                                   # If Made so far not error
+    create_backup                                                       # Create TGZ of Selected Dir
+    SADM_EXIT_CODE=$?                                                   # Save Backup Result Code
     clean_backup_dir                                                    # Delete Old Backup
-    if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
+    if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Cleaning up
     umount_nfs                                                          # Umounting NFS Drive
 
-    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
+    sadm_stop $SADM_EXIT_CODE                                           # Close & Trim rch,log,pid
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
