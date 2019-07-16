@@ -48,9 +48,10 @@
 # 2019_04_17  Update: v2.34 Show Processing message only when active servers are found.
 # 2019_05_07  Update: v2.35 Change Send Alert parameters for Library 
 # 2019_05_23  Update: v2.36 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
-#@2019_06_06  Fix: v2.37 Fix problem sending alert when SADM_ALERT_TYPE was set 2 or 3.
-#@2019_06_07  New: v2.38 An alert status summary of all systems is displayed at the end.
-#@2019_06_19  Update: v2.39 Cosmetic change to alerts summary and alert subject.
+# 2019_06_06  Fix: v2.37 Fix problem sending alert when SADM_ALERT_TYPE was set 2 or 3.
+# 2019_06_07  New: v2.38 An alert status summary of all systems is displayed at the end.
+# 2019_06_19  Update: v2.39 Cosmetic change to alerts summary and alert subject.
+# 2019_07_12  Update: v3.00 Fix script path for backup and o/s update in respective crontab file.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -72,63 +73,94 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
+
 #===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
-#
-    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
+# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
+#===================================================================================================
+
+    # Make sure the 'SADMIN' environment variable defined and pointing to the install directory.
+    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]
+        then # Check if the file /etc/environment exist, if not exit.
+             missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
+             if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
+             # Check if can use SADMIN definition line in /etc/environment to continue
+             missenv="Please set 'SADMIN' environment variable to the install directory."
+             grep "^SADMIN" /etc/environment >/dev/null 2>&1             # SADMIN line in /etc/env.? 
+             if [ $? -eq 0 ]                                             # Yes use SADMIN definition
+                 then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
+                      misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
+                      missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
+                      if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
+                      printf "\n${missenv}\n${misstmp}\n\n"
+                 else missvar="Add 'SADMIN=/InstallDir' in /etc/environment to remove this message."
+                      printf "\n${missenv}\n$missvar\n"                  # Advise user what to do   
+                      exit 1                                             # Back to shell with Error
+             fi
+    fi 
+        
+    # Check if SADMIN environment variable is properly defined, check if can locate Shell Library.
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                            # Shell Library not readable
+        then missenv="Please set 'SADMIN' environment variable to the install directory."
+             printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
+             exit 1                                                     # Exit to Shell with Error
     fi
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.39'                              # Current Script Version
+    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
+    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+
+    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
+    export SADM_VER='3.00'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
+    export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
+    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
+    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
-
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
     export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
-    
-    # Load SADMIN Standard Shell Library 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
+    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
+    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
+    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overridden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
-    #export SADM_ALERT_GROUP="sprod"                     # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Ok now, load Standard Shell Library
+    export SADM_OS_NAME=$(sadm_get_osname)              # Uppercase, REDHAT,CENTOS,UBUNTU,AIX,DEBIAN
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number (ex: 7.6.5)
+    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
+
+#---------------------------------------------------------------------------------------------------
+# Values of these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
+# They can be overridden here on a per script basis.
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
+    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
+    #export SADM_MAX_RCLINE=60                          # When script end Trim rch file to 60 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#===================================================================================================
 #===================================================================================================
 
 
-  
+
 
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-OS_SCRIPT="${SADM_BIN_DIR}/sadm_osupdate_farm.sh" ; export OS_SCRIPT    # OSUpdate Script in crontab
-BA_SCRIPT="${SADM_BIN_DIR}/sadm_backup.sh"        ; export BA_SCRIPT    # Backup Script in crontab
+OS_SCRIPT="sadm_osupdate_farm.sh"                 ; export OS_SCRIPT    # OSUpdate Script in crontab
+BA_SCRIPT="sadm_backup.sh"                        ; export BA_SCRIPT    # Backup Script in crontab
 REBOOT_SEC=900                                    ; export REBOOT_SEC   # O/S Upd Reboot Nb Sec.wait
 RCH_FIELD=10                                      ; export RCH_FIELD    # Nb. of field on rch file.
 #
 # Reset Totals Counters
 export total_alert=0  ; export total_duplicate=0 ; export total_ok=0 ; export total_error=0      
 export total_oldies=0
+
+
 
 # --------------------------------------------------------------------------------------------------
 # H E L P      U S A G E   D I S P L A Y    F U N C T I O N
@@ -410,14 +442,16 @@ update_backup_crontab ()
 }
 
 #===================================================================================================
-#                Function use to rsync remote SADM client with local directories
+# Generic rsync function, use to collect client files (*.rpt,*.log,*.rch,) rsync remote SADM client with local directories
 #===================================================================================================
 rsync_function()
 {
     # Parameters received should always by two - If not write error to log and return to caller
     if [ $# -ne 2 ]
-        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters"
-             sadm_writelog "Function received $* and this isn't valid"
+        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters."
+             sadm_writelog "Function received $* and this isn't valid."
+             sadm_writelog "Should receive remote directory path and the local directory path." 
+             sadm_writelog "The two parameters must both end with a '/' (Important)." 
              return 1
     fi
 
@@ -432,7 +466,7 @@ rsync_function()
     RETRY=0                                                             # Set Retry counter to zero
     while [ $RETRY -lt 3 ]                                              # Retry rsync 3 times
         do
-        RETRY=`expr $RETRY + 1`                                        # Incr Retry counter.
+        RETRY=`expr $RETRY + 1`                                         # Incr Retry counter.
         rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR} >/dev/null 2>&1  # rsync selected directory
         RC=$?                                                           # save error number
 
@@ -449,8 +483,8 @@ rsync_function()
                 break
         fi
     done
-    #sadm_writelog "chmod 664 ${LOCAL_DIR}*" 
-    chmod 664 ${LOCAL_DIR}*
+    sadm_writelog "chmod 775 ${LOCAL_DIR}*" 
+    chmod 775 ${LOCAL_DIR}*
     return $RC
 }
 
@@ -474,6 +508,7 @@ process_servers()
     SQL="${SQL} where srv_ostype = '${WOSTYPE}' and srv_active = True "
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
 
+    # Setup connection parameters
     WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/,/'" # Build CmdLine
@@ -486,7 +521,7 @@ process_servers()
              return 1                                                   # Return Error to Caller
     fi 
 
-    # Execute SQL to Update Server O/S Data
+    # Execute SQL to list active servers of the right O/S Type
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
     
     # If File was not created or has a zero lenght then No Actives Servers were found
@@ -499,9 +534,10 @@ process_servers()
     sadm_writelog "Processing active '$WOSTYPE' server(s)"              # Display/Log O/S type
     sadm_writelog " "
 
-    # Create Crontab File Header 
+    # Create Update and Backup Crontab File Header.
     if [ "$WOSTYPE" = "linux" ] 
-        then # Header for O/S Update Crontab File
+        then #
+             # Header for O/S Update Crontab File
              echo "# "                                                        > $SADM_CRON_FILE 
              echo "# SADMIN - Operating System Update Schedule"              >> $SADM_CRON_FILE 
              echo "# Please don't edit manually, SADMIN generated."          >> $SADM_CRON_FILE 
@@ -511,6 +547,7 @@ process_servers()
              echo "# "                                                       >> $SADM_CRON_FILE 
              echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_CRON_FILE
              echo "# "                                                       >> $SADM_CRON_FILE
+             #
              # Header for Backup Crontab File
              echo "# "                                                        > $SADM_BACKUP_NEWCRON 
              echo "# SADMIN Client Backup Schedule"                          >> $SADM_BACKUP_NEWCRON 
@@ -522,6 +559,8 @@ process_servers()
              echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_BACKUP_NEWCRON
              echo "# "                                                       >> $SADM_BACKUP_NEWCRON
     fi
+
+
     xcount=0; ERROR_COUNT=0;
     while read wline                                                    # Data in File then read it
         do                                                              # Line by Line
@@ -574,14 +613,15 @@ process_servers()
                 continue                                                # skip this server
         fi
 
-        # On Linux & AutoUpdate is ON, Generate Crontab for server in O/S Update crontab work file
+        # On Linux & O/S AutoUpdate is ON, Generate Crontab entry in O/S Update crontab work file
         if [ "$WOSTYPE" = "linux" ] && [ "$db_updauto" -eq 1 ]          # If O/S Update Scheduled
-            then update_osupdate_crontab "$server_name" "$OS_SCRIPT" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
+            then update_osupdate_crontab "$server_name" "${SADM_BIN_DIR}/$OS_SCRIPT" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
         fi
 
         # Generate Crontab Entry for this server in Backup crontab work file
-        if [ "$WOSTYPE" = "linux" ] && [ $backup_auto -eq 1 ]          # If Backup set to Yes 
-            then update_backup_crontab "$server_name" "$BA_SCRIPT" "$backup_min" "$backup_hrs" "$backup_mth" "$backup_dom" "$backup_dow"
+        #if [ "$WOSTYPE" = "linux" ] && [ $backup_auto -eq 1 ]          # If Backup set to Yes 
+        if [ $backup_auto -eq 1 ]                                       # If Backup set to Yes 
+            then update_backup_crontab "$server_name" "${server_dir}/bin/$BA_SCRIPT" "$backup_min" "$backup_hrs" "$backup_mth" "$backup_dom" "$backup_dow"
         fi
                 
         # Test to prevent false Alert when the server is rebooting after a O/S Update.
@@ -640,21 +680,12 @@ process_servers()
                     done
         fi
 
-        # MAKE SURE RCH RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
-        LDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                   # Local Receiving Dir.
-        RDIR="${server_dir}/dat/rch"                                    # Remote RCH Directory
-        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
-            then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
-            else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
-        fi
-        if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
 
-        
-        # MAKE SURE CFG RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
+        # Set remote $SADMIN/cfg Dir. and local www/dat/${server_name}/cfg directory.
         LDIR="${SADM_WWW_DAT_DIR}/${server_name}/cfg"                   # cfg Local Receiving Dir.
         RDIR="${server_dir}/cfg"                                        # Remote cfg Directory
-        
-        # Check if server backup list was modified (if backup_list_tmp exist) and update actual.
+
+        # If client backup list was modified on master (if backup_list.tmp exist) then update client.
         if [ -r "$LDIR/backup_list.tmp" ]                               # If backup list was modify
            then if [ "$fqdn_server" != "$SADM_SERVER" ]                 # If Not on SADMIN Server
                    then rsync $LDIR/backup_list.tmp ${server_name}:$RDIR/backup_list.txt # Rem.Rsync
@@ -668,11 +699,11 @@ process_servers()
                 fi
         fi
 
-        # Check if backup exclude list was modified (if backup_list_tmp exist) & update actual
+        # If backup exclude list was modified on master (if backup_exclude.tmp exist), update client
         if [ -r "$LDIR/backup_exclude.tmp" ]                            # Backup Exclude list modify
            then if [ "$fqdn_server" != "$SADM_SERVER" ]                 # If Not on SADMIN Server
-                   then rsync $LDIR/backup_exclude.tmp ${server_name}:$RDIR/backup_exclude.txt # Rem.Rsync
-                   else rsync $LDIR/backup_exclude.tmp $SADM_CFG_DIR/backup_exclude.txt  # Local Rsync 
+                   then rsync $LDIR/backup_exclude.tmp ${server_name}:$RDIR/backup_exclude.txt 
+                   else rsync $LDIR/backup_exclude.tmp $SADM_CFG_DIR/backup_exclude.txt # LocalRsync 
                 fi
                 RC=$?                                                   # Save Command Return Code
                 if [ $RC -eq 0 ]                                        # If copy to client Worked
@@ -682,16 +713,16 @@ process_servers()
                 fi
         fi
 
-        # Rsync the $SADMIN/cfg Directory - Get Server cfg Dir. and update local cfg directory.
+        # Get remote $SADMIN/cfg Dir. and update local www/dat/${server_name}/cfg directory.
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
             then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
-        chown -R $SADM_WWW_USER:$SADM_WWW_GROUP ${SADM_WWW_DAT_DIR}/${server_name}                                   # Files in Dir. Modifiable
+        chown -R $SADM_WWW_USER:$SADM_WWW_GROUP ${SADM_WWW_DAT_DIR}/${server_name} # Change Owner
 
         
-        # MAKE SURE LOG RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
+        # Get remote $SADMIN/log Dir. and update local www/dat/${server_name}/log directory.
         LDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"                   # Local Receiving Dir.
         RDIR="${server_dir}/log"                                        # Remote log Directory
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
@@ -700,7 +731,18 @@ process_servers()
         fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
 
-        # MAKE SURE RPT RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
+
+       # Rsync remote rch dir. onto local web rch dir/ (${SADMIN}/www/dat/${server_name}/rch) 
+        LDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                   # Local Receiving Dir. Path
+        RDIR="${server_dir}/dat/rch"                                    # Remote RCH Directory Path
+        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
+            then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
+            else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
+        fi
+        if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
+
+
+        # Get remote $SADMIN/dat/rpt Dir. and update local www/dat/${server_name}/rpt directory.
         LDIR="$SADM_WWW_DAT_DIR/${server_name}/rpt"                     # Local www Receiving Dir.
         RDIR="${server_dir}/dat/rpt"                                    # Remote log Directory
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
@@ -709,17 +751,17 @@ process_servers()
         fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
 
-        # IF ERROR OCCURED DISPLAY NUMBER OF ERROR
+
+        # Advise the user if the total error counter is different than zero.
         if [ $ERROR_COUNT -ne 0 ]                                       # If at Least 1 Error
            then sadm_writelog " "                                       # Separation Blank Line
                 sadm_writelog "** Total ${WOSTYPE} error(s) is now $ERROR_COUNT" # Show Err. Count
         fi
 
-        done < $SADM_TMP_FILE1
+        done < $SADM_TMP_FILE1                                          # Read active server list
 
     sadm_writelog " "                                                   # Separation Blank Line
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
-    
     return $ERROR_COUNT                                                 # Return Total Error Count
 }
 
@@ -769,9 +811,10 @@ check_for_alert()
                          esub="$emess"                              # Specify it is a Error
                 fi
                 if [ $SADM_DEBUG -gt 0 ] 
-                    then sadm_writelog "sadm_send_alert $etype $etime $ehost $egname $esub $emess" 
+                    then sadm_writelog "sadm_send_alert $etype $etime $ehost sysmon $egname $esub $emess $eattach"
                 fi
-                sadm_send_alert "$etype" "$etime" "$ehost" "$egname" "$esub" "$emess" ""  
+                sadm_writelog "$etime alert ($etype) from 'SysMon' on ${ehost}: $emess"
+                sadm_send_alert "$etype" "$etime" "$ehost" "SysMon" "$egname" "$esub" "$emess" "$eattach"
                 done 
         else sadm_writelog  "No error reported by SysMon report files (*.rpt)" 
     fi
@@ -798,9 +841,12 @@ check_for_alert()
              return 0                                                   # Return to Caller
     fi
 
-    cat $SADM_TMP_FILE2 | { while read line                               # Read Each Line of file
+    alert_counter=0
+    cat $SADM_TMP_FILE2 | { while read line                             # Read Each Line of file
         do                
         NBFIELD=`echo $line | awk '{ print NF }'`                       # How many fields on line ?
+
+        # Each line MUST have the right number of field ($NBFIELD) to be process, else skip line.
         if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "Nb.field: $NBFIELD - Processing Line=$line" ; fi
         if [ "${NBFIELD}" != "${RCH_FIELD}" ]                           # If abnormal nb. of field
            then sadm_writelog "Line below have ${NBFIELD} but it should have ${RCH_FIELD}."
@@ -834,7 +880,6 @@ check_for_alert()
            else eattach=""                                              # Clear Attachment LogName
         fi
                 
-        # if [ "1" = "" -a "1" = "1" ] ; then echo A; else echo B; fi 
         if [ "$egtype" = "1" -a "$ecode" = "1" ] || 
            [ "$egtype" = "2" -a "$ecode" = "0" ] || [ "$egtype" = "3" ]  
            then total_alert=`expr $total_alert + 1`                     # Incr. Alert counter
@@ -843,13 +888,28 @@ check_for_alert()
                         dmess="$dmess '$esub' '$emess' '$eattach'"      # Build Mess to see Param.
                         sadm_writelog "sadm_send_alert $dmess RC=$RC"   # Show User Paramaters sent
                 fi
+                alert_counter=`expr $alert_counter + 1`                 # Increase Submit AlertCount
+                sadm_writelog " " 
+                sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: $emess"
                 sadm_send_alert "$etype" "$etime" "$ehost" "$escript" "$egname" "$esub" "$emess" "$eattach"
                 RC=$?
                 if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "RC=$RC" ;fi # Debug Show ReturnCode
-                if [ "$RC" = "0" ] ; then total_ok=`expr $total_ok + 1` ; fi
-                if [ "$RC" = "1" ] ; then total_error=`expr $total_error + 1` ; fi
-                if [ "$RC" = "2" ] ; then total_duplicate=`expr $total_duplicate + 1` ; fi
-                if [ "$RC" = "3" ] ; then total_oldies=`expr $total_oldies + 1` ; fi
+                case $RC in
+                    0)  total_ok=`expr $total_ok + 1`
+                        sadm_writelog "   - Alert was sent successfully." 
+                        ;;
+                    1)  total_error=`expr $total_error + 1`
+                        sadm_writelog "   - Error submitting the alert."
+                        ;;
+                    2)  total_duplicate=`expr $total_duplicate + 1`
+                        sadm_writelog "   - Alert already sent."
+                        ;;
+                    3)  total_oldies=`expr $total_oldies + 1`
+                        sadm_writelog "   - Alert is older than 24 hrs."
+                        ;;
+                    *)  sadm_writelog "   - ERROR: Unknown return code $RC"
+                        ;;
+                esac                                                    # End of case
         fi
         done 
         sadm_writelog " "                                               # Separation Blank Line
