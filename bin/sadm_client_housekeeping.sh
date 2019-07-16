@@ -38,9 +38,9 @@
 # 2019_01_28 Change: v1.26 Add readme.pdf and readme.html to housekeeping
 # 2019_03_03 Change: v1.27 Make sure .gitkeep files exist in important directories
 # 2019_04_17 Update: v1.28 Make 'sadmin' account & password never expire (Solve Acc. & sudo Lock)
-#@2019_05_19 Update: v1.29 Change for lowercase readme.md,license,changelog.md files and bug fixes.
-#@2019_06_03 Update: v1.30 Include logic to convert RCH file format to the new one, if not done.
-#
+# 2019_05_19 Update: v1.29 Change for lowercase readme.md,license,changelog.md files and bug fixes.
+# 2019_06_03 Update: v1.30 Include logic to convert RCH file format to the new one, if not done.
+#@2019_07_14 Update: v1.31 Add creation of Directory /preserve/mnt if it doesn't exist (Mac Only)
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -49,50 +49,75 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 #===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
-#
-    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory."
-             exit 1                                     # Exit to Shell with Error
-    fi
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work
-             exit 1                                     # Exit to Shell with Error
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
+# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
+#===================================================================================================
+
+    # Make sure the 'SADMIN' environment variable defined and pointing to the install directory.
+    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]
+        then # Check if the file /etc/environment exist, if not exit.
+             missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
+             if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
+             # Check if can use SADMIN definition line in /etc/environment to continue
+             missenv="Please set 'SADMIN' environment variable to the install directory."
+             grep "^SADMIN" /etc/environment >/dev/null 2>&1             # SADMIN line in /etc/env.? 
+             if [ $? -eq 0 ]                                             # Yes use SADMIN definition
+                 then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
+                      misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
+                      missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
+                      if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
+                      printf "\n${missenv}\n${misstmp}\n\n"
+                 else missvar="Add 'SADMIN=/InstallDir' in /etc/environment to remove this message."
+                      printf "\n${missenv}\n$missvar\n"                  # Advise user what to do   
+                      exit 1                                             # Back to shell with Error
+             fi
+    fi 
+        
+    # Check if SADMIN environment variable is properly defined, check if can locate Shell Library.
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                            # Shell Library not readable
+        then missenv="Please set 'SADMIN' environment variable to the install directory."
+             printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
+             exit 1                                                     # Exit to Shell with Error
     fi
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.30'                              # Current Script Version
+    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
+    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+
+    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
+    export SADM_VER='1.31'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer
+    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
+    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
+    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
     export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
+    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
+    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
+    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
+    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Ok now, load Standard Shell Library
+    export SADM_OS_NAME=$(sadm_get_osname)              # Uppercase, REDHAT,CENTOS,UBUNTU,AIX,DEBIAN
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number (ex: 7.6.5)
+    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
 
-    # Load SADMIN Standard Shell Library
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                   # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server
+#---------------------------------------------------------------------------------------------------
+# Values of these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
+# They can be overridden here on a per script basis.
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
+    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
+    #export SADM_MAX_RCLINE=60                          # When script end Trim rch file to 60 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
-
-
-
+#===================================================================================================
 
 
 
@@ -119,14 +144,7 @@ show_usage()
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\n"
 }
-show_version()
-{
-    printf "\n${SADM_PN} - Version $SADM_VER"
-    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
-    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
-    printf " - Kernel Version $(sadm_get_kernel_version)"
-    printf "\n\n"
-}
+
 
 
 
@@ -141,7 +159,7 @@ check_sadmin_account()
 
     # Make sure sadmin account is not asking for password change and block crontab sudo.
     # So we make sadmin account non-expirable and password non-expire
-    if [ $(sadm_get_ostype) = "LINUX" ]                                 # On Linux Operating System
+    if [ "$SADM_OS_TYPE"  = "LINUX" ]                                 # On Linux Operating System
         then sadm_writelog "Making sure account '$SADM_USER' doesn't expire." 
              usermod -e '' $SADM_USER >/dev/null 2>&1                   # Make Account non-expirable
              sadm_writelog "Making sure password for '$SADM_USER' doesn't expire."
@@ -150,7 +168,7 @@ check_sadmin_account()
     fi
 
     # Check if sadmin account is lock.
-    if [ $(sadm_get_ostype) = "LINUX" ]                                 # On Linux Operating System
+    if [ "$SADM_OS_TYPE"  = "LINUX" ]                                 # On Linux Operating System
         then passwd -S $SADM_USER | grep -i 'locked' > /dev/null 2>&1   # Check if Account is locked
              if [ $? -eq 0 ]                                            # If Account is Lock
                 then upass=`grep "^$SADM_USER" /etc/shadow | awk -F: '{ print $2 }'` # Get pwd hash
@@ -178,7 +196,7 @@ check_sadmin_account()
     fi
   
     # Check if sadmin Aix account is locked.
-    if [ $(sadm_get_ostype) = "AIX" ]
+    if [ "$SADM_OS_TYPE"  = "AIX" ]
         then lsuser -a account_locked $SADM_USER | grep -i 'true' >/dev/null 2>&1
              if [ $? -eq 0 ] 
                 then sadm_writelog "[ERROR] Account $SADM_USER is locked and need to be unlock ..."
@@ -300,14 +318,14 @@ set_dir()
              sadm_writelog "chmod $VAL_OCTAL $VAL_DIR"
              chmod $VAL_OCTAL $VAL_DIR  >>$SADM_LOG 2>&1
              if [ $? -ne 0 ]
-                then sadm_writelog "Error occured on 'chmod' operation for $VALDIR"
+                then sadm_writelog "Error occurred on 'chmod' operation for $VALDIR"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
              fi
              #sadm_writelog "Change chmod gou-s $VAL_DIR"
              #chmod gou-s $VAL_DIR
              #if [ $? -ne 0 ]
-             #   then sadm_writelog "Error occured on 'chmod' operation for $VALDIR"
+             #   then sadm_writelog "Error occurred on 'chmod' operation for $VALDIR"
              #        ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
              #        RETURN_CODE=1                                      # Error = Return Code to 1
              #fi
@@ -332,9 +350,14 @@ dir_housekeeping()
 {
     sadm_writelog " "
     sadm_writelog "$SADM_80_DASH"
-    sadm_writelog "CLIENT DIRECTORIES HOUSEKEEPING STARTING"
+    sadm_writelog "STARTING CLIENT DIRECTORIES HOUSEKEEPING ..."
     sadm_writelog " "
     ERROR_COUNT=0                                                       # Reset Error Count
+
+    # Path is needed to perform NFS Backup (It doesn't exist by default on Mac)
+    if [ "$SADM_OS_TYPE" = "DARWIN" ] && [ ! -d "/preserve/nfs" ]  # NFS Mount Point not exist
+        then mkdir -p /preserve/nfs && chmod 775 /preserve/nfs          # Create NFS mount point
+    fi
 
     set_dir "$SADM_BASE_DIR"      "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN Base Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
@@ -424,11 +447,11 @@ dir_housekeeping()
     # $SADM_BASE_DIR is a filesystem - Put back lost+found to root
     if [ -d "$SADM_BASE_DIR/lost+found" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             if [ "$(sadm_get_ostype)" = "AIX" ]
-                then sadm_writelog "chown root:system $SADM_BASE_DIR/lost+found"   # Special Privilege
-                     chown root:system $SADM_BASE_DIR/lost+found >/dev/null 2>&1 # Lost+Found Priv
-                else sadm_writelog "chown root:root $SADM_BASE_DIR/lost+found"     # Special Privilege
-                     chown root:root   $SADM_BASE_DIR/lost+found >/dev/null 2>&1 # Lost+Found Priv
+             if [ "$SADM_OS_TYPE" = "AIX" ]
+                then sadm_writelog "chown root:system $SADM_BASE_DIR/lost+found"    # Special Privilege
+                     chown root:system $SADM_BASE_DIR/lost+found >/dev/null 2>&1    # Lost+Found Priv
+                else sadm_writelog "chown root:root $SADM_BASE_DIR/lost+found"      # Special Privilege
+                     chown root:root   $SADM_BASE_DIR/lost+found >/dev/null 2>&1    # Lost+Found Priv
              fi
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -905,27 +928,6 @@ file_housekeeping()
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
-
-# Evaluate Command Line Switch Options Upfront
-# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level
-    while getopts "hvd:" opt ; do                                       # Loop to process Switch
-        case $opt in
-            d) SADM_DEBUG=$OPTARG                                      # Get Debug Level Specified
-               ;;                                                       # No stop after each page
-            h) show_usage                                               # Show Help Usage
-               exit 0                                                   # Back to shell
-               ;;
-            v) show_version                                             # Show Script Version Info
-               exit 0                                                   # Back to shell
-               ;;
-           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
-               show_usage                                               # Display Help Usage
-               exit 1                                                   # Exit with Error
-               ;;
-        esac                                                            # End of case
-    done                                                                # End of while
-    if [ $SADM_DEBUG -gt 0 ] ; then printf "\nDebug activated, Level ${SADM_DEBUG}\n" ; fi
-
     sadm_start                                                          # Init Env Dir & RC/Log File
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem
 
@@ -937,8 +939,29 @@ file_housekeeping()
              exit 1                                                     # Exit To O/S with Error
     fi
 
+    # Evaluate Command Line Switch Options Upfront
+    # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level
+    while getopts "hvd:" opt ; do                                       # Loop to process Switch
+        case $opt in
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               ;;                                                       # No stop after each page
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) sadm_show_version                                        # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    if [ $SADM_DEBUG -gt 0 ] ; then printf "\nDebug activated, Level ${SADM_DEBUG}\n" ; fi
+
+
     # Check if 'sadmin' group exist - If not create it.
-    if [ "$(sadm_get_ostype)" != "DARWIN" ]                             # If not on MacOS
+    if [ "$SADM_OS_TYPE" != "DARWIN" ]                                  # If not on MacOS
         then grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1         # $SADMIN Group Defined ?
              if [ $? -ne 0 ]                                            # SADM_GROUP not Defined
                 then sadm_writelog "Group ${SADM_GROUP} not present"    # Advise user will create
@@ -954,7 +977,7 @@ file_housekeeping()
     fi
 
     # Check is 'sadmin' user exist user - if not create it and make it part of 'sadmin' group.
-    if [ "$(sadm_get_ostype)" != "DARWIN" ]                             # If not on MacOS
+    if [ "$SADM_OS_TYPE" != "DARWIN" ]                                  # If not on MacOS
         then grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1          # $SADMIN User Defined ?
              if [ $? -ne 0 ]                                            # NO Not There
                 then sadm_writelog "User $SADM_USER not present"        # usr in sadmin.cfg not found
