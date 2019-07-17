@@ -30,6 +30,7 @@
 # 2019_01_16 Improvement: v3.11 Add 'apt-get autoremove' when 'deb' package is use.
 # 2019_05_23  Update: v3.12 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
 #@2019_07_12  Update: v3.13 O/S update script now update the date and status in sysinfo.txt. 
+#@2019_07_17  Update: v3.14 O/S update script now perform apt-get clean before update start on *.deb
 #
 # --------------------------------------------------------------------------------------------------
 #set -x
@@ -79,7 +80,7 @@
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.13'                              # Your Current Script Version
+    export SADM_VER='3.14'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -99,7 +100,7 @@
 
 #---------------------------------------------------------------------------------------------------
 # Values of these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# They can be overridden here on a per script basis.
+# They can be overridden here, on a per script basis.
     #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
@@ -138,14 +139,6 @@ show_usage()
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-r   (Reboot server after update, if needed and if allowed in Database)"
     printf "\n\t-n   (Backup with NO compression)"
-    printf "\n\n" 
-}
-show_version()
-{
-    printf "\n${SADM_PN} - Version $SADM_VER"
-    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
-    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
-    printf " - Kernel Version $(sadm_get_kernel_version)"
     printf "\n\n" 
 }
 
@@ -192,7 +185,7 @@ run_command()
 # --------------------------------------------------------------------------------------------------
 check_available_update()
 {
-    sadm_writelog "Verifying Update Availibility for $(sadm_get_osname) $(sadm_get_osmajorversion)"
+    sadm_writelog "Verifying update availability for $(sadm_get_osname) $(sadm_get_osmajorversion)"
     
     case "$(sadm_get_osname)" in
 
@@ -261,7 +254,11 @@ check_available_update()
     
     
         "UBUNTU"|"DEBIAN"|"RASPBIAN"|"LINUXMINT" ) 
-            sadm_writelog "Resynchronize index files with Internet Sources"
+            sadm_writelog "Resynchronize sources package list"
+            sadm_writelog "Running \"apt-get clean\""                   # Cleanup apt Source cache
+            apt-get clean >> $SADM_LOG 2>&1                             # Cleanup /var/cache/apt
+            rc=$?                                                       # Save Exit Code
+            if [ $rc -ne 0 ] ; then sadm_writelog "Error while cleaning apt cache" ; fi
             sadm_writelog "Running \"apt-get update\""                 # Msg Get package list 
             apt-get update  >> $SADM_LOG 2>&1                          # Get Package List From Repo
             rc=$?                                                      # Save Exit Code
@@ -354,7 +351,7 @@ run_apt_get()
     sadm_writelog "Starting $(sadm_get_osname) update process ..."
     
     sadm_writelog "${SADM_TEN_DASH}"
-        sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade"
+    sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade"
     apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade >>$SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
@@ -362,14 +359,14 @@ run_apt_get()
             return $RC
     fi
     
-    sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade"
-    apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade >>$SADM_LOG 2>&1
-    RC=$?
-    if [ "$RC" -ne 0 ]
-        then sadm_writelog "Return Code of \"apt-get -y dist-upgrade\" is $RC"
-             return $RC
-    fi
+    # sadm_writelog "${SADM_TEN_DASH}"
+    # sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade"
+    # apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade >>$SADM_LOG 2>&1
+    # RC=$?
+    # if [ "$RC" -ne 0 ]
+    #     then sadm_writelog "Return Code of \"apt-get -y dist-upgrade\" is $RC"
+    #          return $RC
+    # fi
     
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Running : apt-get autoremove"
@@ -402,9 +399,9 @@ run_apt_get()
 
     # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9])
     WREBOOT="N"                                                         # No Reboot by Default
-    while getopts "hvnrd:" opt ; do                                      # Loop to process Switch
+    while getopts "hvnrd:" opt ; do                                     # Loop to process Switch
         case $opt in
-            d) SADM_DEBUG=$OPTARG                                      # Get Debug Level Specified
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                ;;                                                       # No stop after each page
             r) WREBOOT="Y"                                              # Reboot after Upd. if allow
                sadm_writelog "Reboot requested after successfull update"                
@@ -412,7 +409,7 @@ run_apt_get()
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
-            v) show_version                                             # Show Script Version Info
+            v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
            \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
@@ -421,8 +418,8 @@ run_apt_get()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $SADM_DEBUG -gt 0 ]                                           # If Debug is Activated
-        then printf "\nDebug activated, Level ${SADM_DEBUG}"           # Display Debug Level
+    if [ $SADM_DEBUG -gt 0 ]                                            # If Debug is Activated
+        then printf "\nDebug activated, Level ${SADM_DEBUG}"            # Display Debug Level
              printf "\nBackup compression is $COMPRESS"                 # Show Status of compression
     fi
 
@@ -475,7 +472,7 @@ run_apt_get()
     fi
 
     ### Update $SADMIN/dat/dr/`hostname -s`_sysinfo.txt (Update the O/S Update date & Status)
-    sadm_writelog "Updating last 'O/S Update' date and status in $HWD_FILE"
+    sadm_writelog "Updating 'O/S Update' date in $HWD_FILE"
     grep -vi "SADM_OSUPDATE_" $HWD_FILE > $SADM_TMP_FILE1               # Remove lines to update
     if [ "$SADM_EXIT_CODE" -eq 0 ]                                      # O/S Update was a success
         then echo "SADM_OSUPDATE_STATUS                  = S"  >> $SADM_TMP_FILE1   # Success
