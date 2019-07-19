@@ -107,6 +107,7 @@
 # 2019_06_25 Update: v3.07 Optimize 'send_alert' function.
 # 2019_06_27 Nolog: v3.08 Change 'Alert' for 'Notification' in source & email '1 of 0' corrected.
 #@2019_07_14 Udate: v3.09 Change History file format , correct some alert issues.
+#@2019_07_18 Udate: v3.10 Repeat Alert if not solve at the same time the next day.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -116,7 +117,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.09"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.10"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -774,6 +775,7 @@ sadm_get_oscodename() {
                     if [ "$wver"  = "10.12" ] ; then woscodename="Sierra"           ;fi
                     if [ "$wver"  = "10.13" ] ; then woscodename="High Sierra"      ;fi
                     if [ "$wver"  = "10.14" ] ; then woscodename="Mojave"           ;fi
+                    if [ "$wver"  = "10.15" ] ; then woscodename="Catalina"         ;fi
                     ;;
         "LINUX")    woscodename=`$SADM_LSB_RELEASE -sc`
                     ;;
@@ -2139,7 +2141,7 @@ sadm_send_alert() {
              agroup='default'                                           # Change Alert Group
     fi
 
-    # Determine if a [M]ail, [S]lack, [T]exto [C]ellular  Message need to be issued
+    # Determine if a [M]ail, [S]lack, [T]exto or [C]ellular  message need to be issued
     agroup_type=`grep -i "^$agroup " $SADM_ALERT_FILE |awk '{ print $2 }'` # [S/M/T/C] Group
     agroup_type=`echo $agroup_type |awk '{$1=$1;print}' |tr  "[:lower:]" "[:upper:]"`
     if [ "$agroup_type" != "M" ] && [ "$agroup_type" != "S" ] &&
@@ -2152,6 +2154,7 @@ sadm_send_alert() {
     # Calculate some data that we will need later on 
     aepoch=$(sadm_date_to_epoch "$atime")                               # Convert AlertTime to Epoch
     cepoch=`date +%s`                                                   # Get Current Epoch Time
+    ydate=$(date --date="yesterday" +"%Y/%m/%d")                        # Date Day before the event
     aage=`expr $cepoch - $aepoch`                                       # Age of Alert in Seconds.
     if [ $SADM_ALERT_REPEAT -ne 0 ]                                     # If Config = Alert Repeat
         then MaxRepeat=`echo "(86400 / $SADM_ALERT_REPEAT)" | $SADM_BC` # Calc. Nb Alert Per Day
@@ -2169,6 +2172,33 @@ sadm_send_alert() {
     fi
     grep "$alertid" $SADM_ALERT_HIST  >>/dev/null 2>&1                  # Grep Alert ID in History
     RC=$?                                                               # Save Return Code
+
+    # If same alert wasn't found for today, check if there was the same alert yesterday
+    # If same alert is found for yesterday :
+    #   - If Age of alert is greater than 86400 Seconds (24Hrs) then Alert too old.
+    #   - If Age of alert is less then 85500 Seconds (23Hrs 45Min) then Already send.
+    #   - If Age of alert is greater than 85500 Seconds consider it as a new alert.
+    if [ "$RC" -ne 0 ]
+        then yalertid=`printf "%s;%s;%s;%s;%s" "$ydate" "$atype" "$aserver" "$agroup" "$asubject"`
+             grep "$yalertid" $SADM_ALERT_HIST  >>/dev/null 2>&1        # Search SameAlert Yesterday
+             YRC=$?                                                     # Save Yesterday Return Code
+             if [ "$YRC" -eq 0 ]                                        # Same Alert Yesterday Found
+                then yepoch=`grep "$yalertid" $SADM_ALERT_HIST |tail -1 |awk -F; '{ print $1 }'` 
+                     yage=`expr $cepoch - $yepoch`                      # Yesterday Alert Age in Sec
+                     if [ "$yage" -gt 86400 ]                           # Alert is 24Hrs Old ?
+                        then if [ "$LIB_DEBUG" -gt 4 ]                  # If Under Debug
+                                then sadm_writelog "Alert older than 24 Hrs ($NbDaysOld days)" 
+                             fi
+                             return 3                                   # Return 3 = Alert too Old
+                     fi
+                     if [ "$yage" -lt 85500 ]                           # Age Less tahn 23:45 Min 
+                        then if [ "$LIB_DEBUG" -gt 4 ]                  # If Under Debug
+                                then sadm_writelog "Same alert yesterday in history file ($yepoch)" 
+                             fi
+                             return 2                                   # Return 2 = Already Sent
+                     fi
+             fi
+    fi
 
 
     # If Alert is older than 24 hours, 
