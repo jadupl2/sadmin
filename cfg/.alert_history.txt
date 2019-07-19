@@ -1,4 +1,4 @@
-# SADMIN Alert History File v1.8
+# SADMIN Alert History File v2.0
 # --------------------------------------------------------------------------------------------------
 # This file record each alert that was sent either by mail,SMS & Slack
 #   Comment and blank line are ignored.
@@ -8,16 +8,18 @@
 # Field definition of the Alert History file
 #   1= Epoch Time when alert was sent 
 #   2= Alert Sent Counter, incremented each time the same alert is sent.
-#   3= Date and Time of Event/Alert (YYYY/MM/DD HH:MM)    
-#   4= S,E,W,I - Alert issue type          -----|
+#   3= Time of Event/Alert (HH:MM)    
+#   4= Date of Event/Alert (YYYY/MM/DD)    -----|
+#   5= S,E,W,I - Alert issue type               |
 #       [S]cript, [I]nfo [W]arning [E]rror      |-- Use to search
-#   5= Server where event happened              |   for duplicate
-#   6= Alert Group used to send alert           |
-#   7= Alert Subject/Title                  ----|
-#   8= History message, to whom the alert was sent.
-#   9= The Date & Time the message is sent.
-#       - When alert is sent more than once a day, it indicate The
+#   6= Server where event happened              |   for duplicate
+#   7= Alert Group used to send alert           |
+#   8= Alert Subject/Title                  ----|
+#   9= Indicate to whom the alert was sent.
+#  10= The Date & Time the message is sent.
+#       - When alert is sent more than once a day, it indicate the
 #         date and time the alert was resend (SADM_ALERT_REPEAT<>0 in sadmin.cfg).
 #      
 # --------------------------------------------------------------------------------------------------
 #
+
