@@ -41,6 +41,7 @@
 # 2019_05_19 Update: v1.29 Change for lowercase readme.md,license,changelog.md files and bug fixes.
 # 2019_06_03 Update: v1.30 Include logic to convert RCH file format to the new one, if not done.
 #@2019_07_14 Update: v1.31 Add creation of Directory /preserve/mnt if it doesn't exist (Mac Only)
+#@2019_07_23 Update: v1.32 Remove utilization of history sequence number file.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -89,7 +90,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='1.31'                              # Your Current Script Version
+    export SADM_VER='1.32'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -514,12 +515,6 @@ file_housekeeping()
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
             afile="$SADM_CFG_DIR/.dbpass"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            #
-            afile="$SADM_CFG_DIR/.alert_history.seq"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            #
-            afile="$SADM_CFG_DIR/alert_history.seq"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
             afile="$SADM_CFG_DIR/.alert_history.txt"
