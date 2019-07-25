@@ -36,6 +36,7 @@
 # 2019_04_19 Update: v2.32 Produce customized Error Message, when running External Script.
 # 2019_05_13 Update: v2.33 Don't abort if can't create sysmon.lock file, happen during setup.
 #@2019_07_07 Update: v2.34 Update Filesystem Increase Message & verification.
+#@2019_07_25 Update: v2.35 Now using a tmp rpt file and real rpt is replace at the end of execution.
 #===================================================================================================
 #
 use English;
@@ -49,7 +50,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.34";                                       # Version Number
+my $VERSION_NUMBER      = "2.35";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -108,7 +109,8 @@ my $SADM_TMP_FILE1      = "$SADM_TMP_DIR/${HOSTNAME}_sysmon.tmp1";      # SYSMON
 my $SADM_TMP_FILE2      = "$SADM_TMP_DIR/${HOSTNAME}_sysmon.tmp2";      # SYSMON Temp work file 2
 my $SYSMON_CFG_FILE     = "$SADM_CFG_DIR/$HOSTNAME.smon";               # SYSMON Configuration file
 my $SYSMON_STD_FILE     = "$SADM_CFG_DIR/.template.smon";               # SYSMON Template file
-my $SYSMON_RPT_FILE     = "$SADM_RPT_DIR/$HOSTNAME.rpt";                # SYSMON Host Report File
+my $SYSMON_RPT_FILE     = "$SADM_RPT_DIR/$HOSTNAME.rpt";                # SYSMON Report File
+my $SYSMON_RPT_FILE_TMP = "$SADM_RPT_DIR/$HOSTNAME.tmp";                # SYSMON TMP Report File
 my $SYSMON_LOCK_FILE    = "$SADM_BASE_DIR/sysmon.lock";                 # SYSMON Lock file
 my $ETC_ENVIRONMENT     = "/etc/environment";                           # O/S Environment file
 
@@ -1842,7 +1844,7 @@ sub end_of_sysmon {
     load_sadmin_cfg;                                # Load SADMIN Config file sadmin.cfg in Glob.Var
     load_smon_file;                                 # Load SysMon Config file hostname.smon in Array
     load_df_in_array;                               # Execute "df" command & store result in a array
-    open (SADMRPT," >$SYSMON_RPT_FILE")  or die "Can't open $SYSMON_RPT_FILE: $!\n";
+    open (SADMRPT," >$SYSMON_RPT_FILE_TMP")  or die "Can't open $SYSMON_RPT_FILE_TMP: $!\n";
 
     # Main Process
     check_for_new_filesystems;                      # Check for new filesystem first
@@ -1852,7 +1854,11 @@ sub end_of_sysmon {
     close SADMRPT;                                  # Close SysMon report file
     
     # Make SysMon Report File Readable by everyone (If current user is root).
-    if ($SADM_UID == 0) { system ("chmod 664 $SYSMON_RPT_FILE"); } 
-
+    if ($SADM_UID == 0) {                                               # Script MUST be run by root
+        @cmd = ("$CMD_CP $SYSMON_RPT_FILE_TMP $SYSMON_RPT_FILE");       # Copy new rpt over old one
+        $return_code = 0xffff & system @cmd ;                           # Perform Command cp
+        unlink $SYSMON_RPT_FILE_TMP ;                                   # Delete Temporary file                
+        system ("chmod 664 $SYSMON_RPT_FILE");                          # File readable by group
+    }
     unload_smon_file;                               # Unload Update Array to hostname.smon file
     end_of_sysmon;                                  # Delete lock file - Print Elapse time
