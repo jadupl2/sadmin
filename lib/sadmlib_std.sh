@@ -106,8 +106,8 @@
 # 2019_06_23 nolog: v3.06b Correct Typo error, in email alert.
 # 2019_06_25 Update: v3.07 Optimize 'send_alert' function.
 # 2019_06_27 Nolog: v3.08 Change 'Alert' for 'Notification' in source & email '1 of 0' corrected.
-#@2019_07_14 Udate: v3.09 Change History file format , correct some alert issues.
-#@2019_07_18 Udate: v3.10 Repeat Alert if not solve at the same time the next day.
+#@2019_07_14 Update: v3.09 Change History file format , correct some alert issues.
+#@2019_07_18 Update: v3.10 Repeat SysMon (not Script) Alert once a day if not solve the next day.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -175,7 +175,6 @@ SADM_SLACK_FILE="$SADM_CFG_DIR/alert_slack.cfg"             ; export SADM_SLACK_
 SADM_SLACK_INIT="$SADM_CFG_DIR/.alert_slack.cfg"            ; export SADM_SLACK_INIT # Slack Init WH
 SADM_ALERT_HIST="$SADM_CFG_DIR/alert_history.txt"           ; export SADM_ALERT_HIST # Alert History
 SADM_ALERT_HINI="$SADM_CFG_DIR/.alert_history.txt"          ; export SADM_ALERT_HINI # History Init
-SADM_ALERT_SEQ="$SADM_CFG_DIR/alert_history.seq"            ; export SADM_ALERT_SEQ  # History Seq#
 SADM_REL_FILE="$SADM_CFG_DIR/.release"                      ; export SADM_REL_FILE   # Release Ver.
 SADM_SYS_STARTUP="$SADM_SYS_DIR/sadm_startup.sh"            ; export SADM_SYS_STARTUP # Startup File
 SADM_SYS_START="$SADM_SYS_DIR/.sadm_startup.sh"             ; export SADM_SYS_START  # Startup Template
@@ -1860,11 +1859,6 @@ sadm_start() {
                      fi
                      chmod 666 $SADM_ALERT_HIST                         # Make sure it's writable
             fi
-            # Alert History Sequence Number File ($SADMIN/cfg/alert_history.seq) MUST be present.
-            if [ ! -r "$SADM_ALERT_SEQ" ]                               # If Alert Hist. Seq# Missing
-                then echo "0" > $SADM_ALERT_SEQ                         # Create Initial Hist. Seq.
-                     chmod 666 $SADM_ALERT_SEQ                          # Make it W/R File
-            fi
     fi
 
     # Feed the (RCH) Return Code History File stating the script is Running (Code 2)
@@ -2063,7 +2057,7 @@ sadm_stop() {
 #
 # 2nd Parameter    : Event date and time (YYYY/MM/DD HH:MM)
 # 3th Parameter    : Server Name Where Alert come from
-# 4th Parameter    : Script Name (or "" if not applicable)
+# 4th Parameter    : Script Name (or "" if not a script)
 # 5th Parameter    : Alert Group Name to send Message
 # 6th Parameter    : Subject/Title
 # 7th Parameter    : Alert Message
@@ -2119,18 +2113,6 @@ sadm_send_alert() {
             return 1                                                    # Return Error to caller
     fi
 
-    # Is the AlertGroup file readable ?
-    if [ ! -r "$SADM_ALERT_FILE" ]                                      # If Can't read AlertGroup
-       then sadm_writelog "Alert Group File '$SADM_ALERT_FILE' missing" # Advise User
-            return 1                                                    # Return Error to caller
-    fi
-
-    # Is the channel File present on Disk ?
-    if [ ! -r "$SADM_SLACK_FILE" ]                                      # Can't read SlackChannel
-       then sadm_writelog "Slack Channel File '$SADM_SLACK_FILE' missing" # Advise User
-            return 1                                                    # Return Error to caller
-    fi
-
     # Does the Alert Group exist in the Group in alert File ?
     grep -i "^$agroup " $SADM_ALERT_FILE >/dev/null 2>&1                # Search Group in front line
     if [ $? -ne 0 ]                                                     # Group Missing in GrpFile
@@ -2154,14 +2136,13 @@ sadm_send_alert() {
     # Calculate some data that we will need later on 
     aepoch=$(sadm_date_to_epoch "$atime")                               # Convert AlertTime to Epoch
     cepoch=`date +%s`                                                   # Get Current Epoch Time
-    ydate=$(date --date="yesterday" +"%Y/%m/%d")                        # Date Day before the event
     aage=`expr $cepoch - $aepoch`                                       # Age of Alert in Seconds.
     if [ $SADM_ALERT_REPEAT -ne 0 ]                                     # If Config = Alert Repeat
         then MaxRepeat=`echo "(86400 / $SADM_ALERT_REPEAT)" | $SADM_BC` # Calc. Nb Alert Per Day
         else MaxRepeat=1                                                # MaxRepeat=1 NoAlarm Repeat
     fi
     NbDaysOld=0                                                         # Default Alert Age in Days
-    if [ $aage -ge 86400 ] ;then NbDaysOld=`echo "$aage / 86400" |$SADM_BC` ;fi # Alert age 
+    if [ $aage -ge 86400 ] ;then NbDaysOld=`echo "$aage / 86400" |$SADM_BC` ;fi # Alert age in Days
 
 
     # GREP HISTORY FILE TO SEE IF IT ALREADY EXIST.
@@ -2173,29 +2154,29 @@ sadm_send_alert() {
     grep "$alertid" $SADM_ALERT_HIST  >>/dev/null 2>&1                  # Grep Alert ID in History
     RC=$?                                                               # Save Return Code
 
-    # If same alert wasn't found for today, check if there was the same alert yesterday
-    # If same alert is found for yesterday :
-    #   - If Age of alert is greater than 86400 Seconds (24Hrs) then Alert too old.
-    #   - If Age of alert is less then 85500 Seconds (23Hrs 45Min) then Already send.
-    #   - If Age of alert is greater than 85500 Seconds consider it as a new alert.
-    if [ "$RC" -ne 0 ]
-        then yalertid=`printf "%s;%s;%s;%s;%s" "$ydate" "$atype" "$aserver" "$agroup" "$asubject"`
+    # If same alert wasn't found for today and it's not a script alert (it's a SysMon Alert).
+    #  - Check if there was the same alert yesterday
+    #  - If same alert is found for yesterday :
+    #    - If Age of alert is greater than 86400 Seconds (24Hrs) then Alert too old.
+    #    - If Age of alert is less then 85500 Seconds (23Hrs 45Min) then alert already sent.
+    #    - If Age of alert is greater than 85500 Seconds consider it as a new alert.
+    if [ "$RC" -ne 0 ] && [ "$atype" != "S" ]
+        then ydate=$(date --date="yesterday" +"%Y.%m.%d")               # Date Day before the event
+             yalertid=`printf "%s;%s;%s;%s;%s" "$ydate" "$atype" "$aserver" "$agroup" "$asubject"`
              grep "$yalertid" $SADM_ALERT_HIST  >>/dev/null 2>&1        # Search SameAlert Yesterday
              YRC=$?                                                     # Save Yesterday Return Code
              if [ "$YRC" -eq 0 ]                                        # Same Alert Yesterday Found
-                then yepoch=`grep "$yalertid" $SADM_ALERT_HIST |tail -1 |awk -F; '{ print $1 }'` 
+                then yepoch=`grep "$yalertid" $SADM_ALERT_HIST |tail -1 |awk -F';' '{ print $1 }'` 
                      yage=`expr $cepoch - $yepoch`                      # Yesterday Alert Age in Sec
-                     if [ "$yage" -gt 86400 ]                           # Alert is 24Hrs Old ?
-                        then if [ "$LIB_DEBUG" -gt 4 ]                  # If Under Debug
-                                then sadm_writelog "Alert older than 24 Hrs ($NbDaysOld days)" 
-                             fi
-                             return 3                                   # Return 3 = Alert too Old
-                     fi
-                     if [ "$yage" -lt 85500 ]                           # Age Less tahn 23:45 Min 
+                     if [ "$yage" -lt 86400 ]                           # Yesterday alert age < 24hr
                         then if [ "$LIB_DEBUG" -gt 4 ]                  # If Under Debug
                                 then sadm_writelog "Same alert yesterday in history file ($yepoch)" 
                              fi
                              return 2                                   # Return 2 = Already Sent
+                        else if [ "$LIB_DEBUG" -gt 4 ]                  # If Under Debug
+                                then sadm_writelog "Sysmon alert older than 24Hrs ($NbDaysOld days)" 
+                                     sadm_writelog "Consider it as a new alert."
+                             fi
                      fi
              fi
     fi
@@ -2211,7 +2192,7 @@ sadm_send_alert() {
 
     # ALERT WASN'T FOUND IN HISTORY FILE - THIS IS A NEW ALERT IF NOT OLDER THAN 24 Hours.
     if [ "$RC" -ne 0 ]                                                  # Alert wasn't found in Hist
-        then acounter=0                                                 # Fisrt ALert Counter=0
+        then acounter=0                                                 # Init History Alert Counter
              if [ "$LIB_DEBUG" -gt 4 ] 
                 then sadm_writelog "Alert not in history file" 
                      sadm_writelog "AlertEpoch:$aepoch  Cur.Epoch:$cepoch - AlertAge:${aage} Sec."
