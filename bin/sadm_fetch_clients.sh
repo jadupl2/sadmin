@@ -51,7 +51,8 @@
 # 2019_06_06  Fix: v2.37 Fix problem sending alert when SADM_ALERT_TYPE was set 2 or 3.
 # 2019_06_07  New: v2.38 An alert status summary of all systems is displayed at the end.
 # 2019_06_19  Update: v2.39 Cosmetic change to alerts summary and alert subject.
-# 2019_07_12  Update: v3.00 Fix script path for backup and o/s update in respective crontab file.
+#@2019_07_12  Update: v3.00 Fix script path for backup and o/s update in respective crontab file.
+#@2019_07_24  Update: v3.1 Major revamp of code.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -74,33 +75,31 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
+
 #===================================================================================================
-#===================================================================================================
-# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 # To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
 
-    # Make sure the 'SADMIN' environment variable defined and pointing to the install directory.
-    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]
-        then # Check if the file /etc/environment exist, if not exit.
-             missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
+    # Is 'SADMIN' environment variable defined ?. If not try to use /etc/environment SADMIN value.
+    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]                             # If SADMIN EnvVar not right
+        then missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
              if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
-             # Check if can use SADMIN definition line in /etc/environment to continue
              missenv="Please set 'SADMIN' environment variable to the install directory."
-             grep "^SADMIN" /etc/environment >/dev/null 2>&1             # SADMIN line in /etc/env.? 
-             if [ $? -eq 0 ]                                             # Yes use SADMIN definition
+             grep "^SADMIN" /etc/environment >/dev/null 2>&1            # SADMIN line in /etc/env.? 
+             if [ $? -eq 0 ]                                            # Yes use SADMIN definition
                  then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
                       misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
                       missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
                       if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
                       printf "\n${missenv}\n${misstmp}\n\n"
                  else missvar="Add 'SADMIN=/InstallDir' in /etc/environment to remove this message."
-                      printf "\n${missenv}\n$missvar\n"                  # Advise user what to do   
-                      exit 1                                             # Back to shell with Error
+                      printf "\n${missenv}\n$missvar\n"                 # Recommendation to user    
+                      exit 1                                            # Back to shell with Error
              fi
     fi 
         
-    # Check if SADMIN environment variable is properly defined, check if can locate Shell Library.
+    # Check if the SADMIN Shell Library is accessible, if not advise user and exit with error.
     if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                            # Shell Library not readable
         then missenv="Please set 'SADMIN' environment variable to the install directory."
              printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
@@ -114,8 +113,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.00'                              # Your Current Script Version
+    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
+    export SADM_VER='3.1'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -134,16 +133,16 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
 
 #---------------------------------------------------------------------------------------------------
-# Values of these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# They can be overridden here on a per script basis.
+# Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
+# They can be overridden here, on a per script basis (if needed).
     #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
+    export SADM_MAX_LOGLINE=5000                        # When script end Trim log to 500 Lines
     #export SADM_MAX_RCLINE=60                          # When script end Trim rch file to 60 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
-#===================================================================================================
+
 
 
 
@@ -156,7 +155,7 @@ BA_SCRIPT="sadm_backup.sh"                        ; export BA_SCRIPT    # Backup
 REBOOT_SEC=900                                    ; export REBOOT_SEC   # O/S Upd Reboot Nb Sec.wait
 RCH_FIELD=10                                      ; export RCH_FIELD    # Nb. of field on rch file.
 #
-# Reset Totals Counters
+# Reset Alert Totals Counters
 export total_alert=0  ; export total_duplicate=0 ; export total_ok=0 ; export total_error=0      
 export total_oldies=0
 
@@ -442,7 +441,8 @@ update_backup_crontab ()
 }
 
 #===================================================================================================
-# Generic rsync function, use to collect client files (*.rpt,*.log,*.rch,) rsync remote SADM client with local directories
+# Generic rsync function, use to collect client files (*.rpt,*.log,*.rch,) 
+# rsync remote SADM client with local directories
 #===================================================================================================
 rsync_function()
 {
@@ -483,8 +483,10 @@ rsync_function()
                 break
         fi
     done
-    sadm_writelog "chmod 775 ${LOCAL_DIR}*" 
-    chmod 775 ${LOCAL_DIR}*
+    #sadm_writelog "chmod 775 ${LOCAL_DIR}" 
+    chmod 775 ${LOCAL_DIR}  >> $SADM_LOG 2>&1
+    #sadm_writelog "chmod 664 ${LOCAL_DIR}*" 
+    chmod 664 ${LOCAL_DIR}* >> $SADM_LOG 2>&1
     return $RC
 }
 
@@ -492,14 +494,13 @@ rsync_function()
 
 
 # --------------------------------------------------------------------------------------------------
-#                      Process servers O/S selected by parameter received (aix/linux)
+# Process Operating System received in parameter (aix/linux,darwin)
 # --------------------------------------------------------------------------------------------------
 process_servers()
 {
-    WOSTYPE=$1                                                          # Should be aix or linux
+    WOSTYPE=$1                                                          # Should be aix/linux/darwin
 
-    # Select From Database Active Servers with selected O/s & output result in $SADM_TMP_FILE1
-    # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/pdf/database directory
+    # Select from Database active systems with selected O/S & output result in $SADM_TMP_FILE1
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir," 
     SQL="${SQL} srv_update_minute,srv_update_hour,srv_update_dom,srv_update_month,srv_update_dow,"
     SQL="${SQL} srv_update_auto,srv_backup,srv_backup_month,srv_backup_dom,srv_backup_dow,"
@@ -524,9 +525,12 @@ process_servers()
     # Execute SQL to list active servers of the right O/S Type
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
     
-    # If File was not created or has a zero lenght then No Actives Servers were found
+    # If file was not created or has a zero lenght, then no actives systems were found
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
-        then sadm_writelog "No Active $WOSTYPE server were found."      # Not ACtive Server MSG
+        then sadm_writelog " "
+             sadm_writelog "${SADM_TEN_DASH}"                           # Print 10 Dash line
+             sadm_writelog "No Active '$WOSTYPE' system found."         # Not ACtive Server MSG
+             sadm_writelog "${SADM_TEN_DASH}"                           # Print 10 Dash line
              return 0                                                   # Return Error to Caller
     fi 
 
@@ -534,7 +538,7 @@ process_servers()
     sadm_writelog "Processing active '$WOSTYPE' server(s)"              # Display/Log O/S type
     sadm_writelog " "
 
-    # Create Update and Backup Crontab File Header.
+    # If on Linux, create the standard header for the O/S update and the backup crontab file.
     if [ "$WOSTYPE" = "linux" ] 
         then #
              # Header for O/S Update Crontab File
@@ -761,31 +765,28 @@ process_servers()
         done < $SADM_TMP_FILE1                                          # Read active server list
 
     sadm_writelog " "                                                   # Separation Blank Line
-    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
+    #sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
     return $ERROR_COUNT                                                 # Return Total Error Count
 }
 
-
-
 # --------------------------------------------------------------------------------------------------
-# Check SysMon report files (*.rpt) received for errors & for failed Script (Last line of all *.rch)
+# Combine all clients *.rpt files and issues alert(s) if needed.
+# ----------
+# Get all *.rpt files content and output it then a temp file ($SADM_TMP_FILE1).
+#  Example of rpt content : 
+#   Warning;nomad;2018.09.16;11:00;linux;FILESYSTEM;Filesystem /usr at 86% > 85%;mail;sadmin
+#   Error;nano;2018.09.16;11:00;SERVICE;DAEMON;Service crond|cron not running !;sadm;sadm
+#   Error;raspi0;2018.09.16;11:00;linux;CPU;CPU at 100 pct for more than 240 min;mail;sadmin
+#
 # --------------------------------------------------------------------------------------------------
-check_for_alert()
+check_all_rpt()
 {
-
-    # ----------
-    # Process All Error/Warning collected by SysMon 
-    # Get all *.rpt files content and output it then a temp file.
-    #  Example : 
-    #  find $SADM_WWW_DAT_DIR -type f -name *.rpt -exec cat {} \;
-    #   Warning;nomad;2018.09.16;11:00;linux;FILESYSTEM;Filesystem /usr at 86% > 85%;mail;sadmin
-    #   Error;nano;2018.09.16;11:00;SERVICE;DAEMON;Service crond|cron not running !;sadm;sadm
-    #   Error;holmes;2018.09.16;11:02;linux;FILESYSTEM;Filesystem /usr at 85% > 85%;sprod;sprod
-    #   Error;raspi0;2018.09.16;11:00;linux;CPU;CPU at 100 pct for more than 240 min;mail;sadmin
-    # ----------
-    sadm_writelog "Check All Servers SysMon Report Files for Warning and Errors"
-    find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; 
+    sadm_writelog "Verifying all systems 'Sysmon report file' (*.rpt) for Warning, Info and Errors."
+    sadm_writelog " "
+    #find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; 
     find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; > $SADM_TMP_FILE1
+
+    # Process the file containing all *.rpt content (if any).
     if [ -s "$SADM_TMP_FILE1" ]                                         # If File Not Zero in Size
         then cat $SADM_TMP_FILE1 | while read line                      # Read Each Line of file
                 do
@@ -798,17 +799,17 @@ check_for_alert()
                 if [ ${line:0:1} = "W" ] || [ ${line:0:1} = "w" ]       # If it is a Warning
                     then etype="W"                                      # Set Event Type to Warning
                          egname=`echo $line | awk -F\; '{ print $8 }'`  # Get Warning Alert Group
-                         esub="$emess"                              # Specify it is a Warning
+                         esub="$emess"                                  # Specify it is a Warning
                 fi
                 if [ ${line:0:1} = "I" ] || [ ${line:0:1} = "i" ]       # If it is an Info
                     then etype="I"                                      # Set Event Type to Info
                          egname=`echo $line | awk -F\; '{ print $8 }'`  # Get Info Alert Group
-                         esub="$emess"                              # Specify it is an Info
+                         esub="$emess"                                  # Specify it is an Info
                 fi
                 if [ ${line:0:1} = "E" ] || [ ${line:0:1} = "e" ]       # If it is an Info
                     then etype="E"                                      # Set Event Type to Error
                          egname=`echo $line | awk -F\; '{ print $9 }'`  # Get Error Alert Group
-                         esub="$emess"                              # Specify it is a Error
+                         esub="$emess"                                  # Specify it is a Error
                 fi
                 if [ $SADM_DEBUG -gt 0 ] 
                     then sadm_writelog "sadm_send_alert $etype $etime $ehost sysmon $egname $esub $emess $eattach"
@@ -820,34 +821,40 @@ check_for_alert()
     fi
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
 
+}
 
-    # ----------
-    # Process All Lines tht doesn't finish with a code 2(Running).
-    # Only lines terminated by a code 1(Error) or 0(Success) will be processed.
-    # Example of line in rch file
-    #   holmes 2018.09.18 11:48:53 2018.09.18 11:48:53 00:00:00 sadm_template default 0 1
-    #   raspi2 2019.05.07 01:31:00 2019.05.07 01:34:25 00:03:25 sadm_osupdate default 1 1
-    # ----------
-    # Gather all last line of all *rch files that end with a 0 (Success) or 1 (Error)
+# --------------------------------------------------------------------------------------------------
+# Check the last line of every *.rch file of all systems and submit alert if needed.
+#
+# Example of line in rch file :
+#   holmes 2018.09.18 11:48:53 2018.09.18 11:48:53 00:00:00 sadm_template default 0 1
+#   debian10 2018.09.18 11:48:53 2018.09.18 11:48:53 00:00:00 sadm_template default 1 1
+#   raspi2 2019.05.07 01:31:00 2019.05.07 01:34:25 00:03:25 sadm_osupdate default 2 0
+#   ubuntu1604 2019.07.25 01:10:01 2019.07.25 01:11:02 00:01:01 sadm_backup default 3 0
+# --------------------------------------------------------------------------------------------------
+check_all_rch()
+{
     sadm_writelog " "
-    sadm_writelog "Check All Servers [R]esult [C]ode [H]istory Scripts Files."
-    find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($NF,/[0-1]/) { print }' > $SADM_TMP_FILE2 2>&1
+    sadm_writelog "Verifying all systems [R]esult [C]ode [H]istory (*.rch) files."
+    find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \; > $SADM_TMP_FILE1 2>&1
+    awk 'match($NF,/[0-1]/) { print }' $SADM_TMP_FILE1 >$SADM_TMP_FILE2 # Keep line ending with 0or1
 
     # If No file to process
     if [ ! -s "$SADM_TMP_FILE2" ]                                       # If File Zero in Size
         then sadm_writelog  "No error reported by any scripts files (*.rch)" 
-             sadm_writelog "${SADM_TEN_DASH}"                           # Print 10 Dash lineHistory
+             sadm_writelog "${SADM_TEN_DASH}"                           # Print 10 Dash 
              sadm_writelog " "                                          # Separation Blank Line
              return 0                                                   # Return to Caller
     fi
 
-    alert_counter=0
+    # Loop through each line in the created file.
+    alert_counter=0                                                     # Init alert counter
     cat $SADM_TMP_FILE2 | { while read line                             # Read Each Line of file
         do                
         NBFIELD=`echo $line | awk '{ print NF }'`                       # How many fields on line ?
 
         # Each line MUST have the right number of field ($NBFIELD) to be process, else skip line.
-        if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "Nb.field: $NBFIELD - Processing Line=$line" ; fi
+        if [ $SADM_DEBUG -gt 5 ] ;then sadm_writelog "Processing Line: ${line} ($NBFIELD)" ;fi
         if [ "${NBFIELD}" != "${RCH_FIELD}" ]                           # If abnormal nb. of field
            then sadm_writelog "Line below have ${NBFIELD} but it should have ${RCH_FIELD}."
                 sadm_writelog "This line is skipped: $line"
@@ -855,23 +862,22 @@ check_for_alert()
                 continue 
         fi
 
-        #etype="S"                                                       # Event Type = S for Script
+        # Extract each field from the current line and prepare alert content.
         ehost=`echo $line   | awk '{ print $1 }'`                       # Hostname of Event
         wdate=`echo $line   | awk '{ print $4 }'`                       # Get Script Ending Date 
         wtime=`echo $line   | awk '{ print $5 }' `                      # Get Script Ending Time 
         wtime=`echo ${wtime:0:5}`                                       # Eliminate the Seconds
-        etime="${wdate} ${wtime}"                                       # Event Date & Time Combined
+        etime="${wdate} ${wtime}"                                       # Combine Event Date & Time
         escript=`echo $line | awk '{ print $7 }'`                       # Script Name 
         egname=`echo $line  | awk '{ print $8 }'`                       # Alert Group Name
         egtype=`echo $line  | awk '{ print $9 }'`                       # Alert Group Type [0,1,2,3]
         ecode=`echo $line   | awk '{ print $10 }'`                      # Return Code (0,1)
+        etype="S"                                                       # Event Type = S = Script 
         if [ "$ecode" = "1" ]                                           # Script Ended with Error
            then esub="Script $escript ended with error"                 # Alert Subject
                 emess="Script '$escript' failed"                        # Alert Message
-                etype="E"                                               # Event Type = E for Error
            else esub="Script $escript ran with success"                 # Alert Subject
                 emess="Script '$escript' ran with success"              # Alert Message
-                etype="I"                                               # Event Type = I for Info
         fi
         elogfile="${ehost}_${escript}.log"                              # Build Log File Name
         elogname="${SADM_WWW_DAT_DIR}/${ehost}/log/${elogfile}"         # Build Log Full Path File
@@ -879,7 +885,13 @@ check_for_alert()
            then eattach="$elogname"                                     # Set Attachment to LogName
            else eattach=""                                              # Clear Attachment LogName
         fi
-                
+
+        # Event Group Type ($egtype) = 0=None 1=AlertOnErr 2=AlertOnOK 3=Always 
+        # Event Return Code ($ecode) = 0=Success 1=Error
+        # So if user want to be alerted :
+        #  - If script terminate with error ($egtype=1 and $ecode=1)
+        #  - If script terminate with success  ($egtype=2 and $ecode=0)
+        #  - Each time the script is executed ($egtype=3)
         if [ "$egtype" = "1" -a "$ecode" = "1" ] || 
            [ "$egtype" = "2" -a "$ecode" = "0" ] || [ "$egtype" = "3" ]  
            then total_alert=`expr $total_alert + 1`                     # Incr. Alert counter
@@ -912,6 +924,8 @@ check_for_alert()
                 esac                                                    # End of case
         fi
         done 
+
+        # Print Alert submitted Summary
         sadm_writelog " "                                               # Separation Blank Line
         sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
         sadm_writelog "$total_alert Alert(s) submitted"
@@ -920,7 +934,95 @@ check_for_alert()
         sadm_writelog "   - Alert older than 24 Hrs     : $total_oldies"
         sadm_writelog "   - Alert already sent          : $total_duplicate"
         sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
-        }                                                               # make Total Avail out of loop
+    }                                                              
+}
+
+
+  
+
+# --------------------------------------------------------------------------------------------------
+# Get from all actives servers the new hostname.rpt file and all the new or updated *.rch files.
+# --------------------------------------------------------------------------------------------------
+main_process()
+{
+    # Process All Active Linux/Aix servers
+    LINUX_ERROR=0; AIX_ERROR=0 ; MAC_ERROR=0                            # Init. Error count to 0
+    process_servers "linux"                                             # Process Active Linux
+    LINUX_ERROR=$?                                                      # Save Nb. Errors in process
+    process_servers "aix"                                               # Process Active Aix
+    AIX_ERROR=$?                                                        # Save Nb. Errors in process
+    process_servers "darwin"                                            # Process Active MacOS
+    MAC_ERROR=$?                                                        # Save Nb. Errors in process
+
+    # Print Total Script Errors
+    #sadm_writelog " "                                                   # Separation Blank Line
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
+    sadm_writelog "System Sync Summary"                                 # Rsync Summary 
+    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR+$MAC_ERROR))              # ExitCode=AIX+Linux+Mac Err
+    sadm_writelog " - Total Linux error(s)  : ${LINUX_ERROR}"           # Display Total Linux Errors
+    sadm_writelog " - Total Aix error(s)    : ${AIX_ERROR}"             # Display Total Aix Errors
+    sadm_writelog " - Total Mac error(s)    : ${MAC_ERROR}"             # Display Total Mac Errors
+    sadm_writelog " - Script Total Error(s) : ${SADM_EXIT_CODE}"        # Display Total Script Error
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
+    sadm_writelog " "                                                   # Separation Blank Line
+
+    check_all_rpt                                                       # Check all *.rpt for Alert
+    check_all_rch                                                       # Check all *.rch for Alert
+
+    if [ $(sadm_get_ostype) = "LINUX" ] ; then crontab_update ; fi      # Update crontab if needed
+    
+    # Since this script is run regularely, copy the updated .rch file in dir. used by web interface
+    # Otherwise it shows as running most fo the times
+    if [ ! -d ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ]                # Web RCH repo Dir not exist
+        then mkdir -p ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch          # Create it
+    fi
+    cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch            # cp rch for instant Status
+
+    return $SADM_EXIT_CODE
+}
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Check checksum of current crontab versus the one created while processing each systems.
+# If checksum is different, update the crontab file (For sadm_osupdate file and sadm_vackup file).
+# --------------------------------------------------------------------------------------------------
+crontab_update()
+{
+
+    # Create New O/S Update crontab sha1sum
+    if [ -f ${SADM_CRON_FILE} ] ; then work_sha1=`sha1sum ${SADM_CRON_FILE} |awk '{print $1}'` ;fi 
+    # Create Actual O/S Update crontab sha1sum
+    if [ -f ${SADM_CRONTAB} ]   ; then real_sha1=`sha1sum ${SADM_CRONTAB}   |awk '{print $1}'` ;fi 
+
+    if [ "$work_sha1" != "$real_sha1" ]                                 # New Different than Actual?
+       then cp ${SADM_CRON_FILE} ${SADM_CRONTAB}                        # Put in place New Crontab
+            chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB}   # Set crontab Perm.
+            sadm_writelog "O/S Update crontab was updated ..."          # Advise user
+       else sadm_writelog "No need to update O/S Update crontab ..."    # CheckSum Equal no update
+    fi
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
+    sadm_writelog " "                                                   # Separation Blank Line
+
+    # Create New backup crontab sha1sum
+    if [ -f ${SADM_BACKUP_NEWCRON} ] 
+        then nsha1=`sha1sum ${SADM_BACKUP_NEWCRON} |awk '{print $1}'` 
+    fi 
+    
+    # Create Actual backup crontab sha1sum
+    if [ -f ${SADM_BACKUP_CRONTAB} ] 
+        then asha1=`sha1sum ${SADM_BACKUP_CRONTAB} |awk '{print $1}'` 
+    fi 
+
+    if [ "$nsha1" != "$asha1" ]                                         # New Different than Actual?
+       then cp ${SADM_BACKUP_NEWCRON} ${SADM_BACKUP_CRONTAB}            # Put in place New Crontab
+            chmod 644 $SADM_BACKUP_CRONTAB ; chown root:root ${SADM_BACKUP_CRONTAB}
+            sadm_writelog "Clients backup schedule crontab was updated" # Advise user
+       else sadm_writelog "No need to update Backup crontab ..."        # CheckSum Equal no update
+    fi
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
+    sadm_writelog " "                                                   # Separation Blank Line
+ 
 }
 
 
@@ -929,38 +1031,6 @@ check_for_alert()
 #                                       Script Start HERE
 # --------------------------------------------------------------------------------------------------
 
-# Evaluate Command Line Switch Options Upfront
-# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
-    while getopts "hvd:" opt ; do                                       # Loop to process Switch
-        case $opt in
-            d) SADM_DEBUG=$OPTARG                                      # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
-               if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
-                       show_usage                                       # Display Help Usage
-
-                       exit 0
-               fi
-               ;;                                                       # No stop after each
-
-            h) show_usage                                               # Show Help Usage
-               exit 0                                                   # Back to shell
-               ;;
-            v) sadm_show_version                                             # Show Script V
-
-               exit 0                                                   # Back to shell
-               ;;
-           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Mes
-
-               show_usage                                               # Display Help Usage
-
-               exit 1                                                   # Exit with Error
-               ;;
-        esac                                                            # End of case
-    done                                                                # End of while
-    if [ $SADM_DEBUG -gt 0 ] ; then printf "\nDebug activated, Level ${SADM_DEBUG}\n" ; fi
-
-    # Call SADMIN Initialization Procedure
     sadm_start                                                          # Init Env Dir & RC/Log File
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
@@ -980,74 +1050,33 @@ check_for_alert()
              exit 1                                                     # Exit To O/S with error
     fi
 
-    # Process All Active Linux/Aix servers
-    LINUX_ERROR=0; AIX_ERROR=0 ; MAC_ERROR=0                             # Init. Error count to 0
-    process_servers "linux"                                             # Process Active Linux
-    LINUX_ERROR=$?                                                      # Save Nb. Errors in process
-    process_servers "aix"                                               # Process Active Aix
-    AIX_ERROR=$?                                                        # Save Nb. Errors in process
-    process_servers "darwin"                                            # Process Active MacOS
-    MAC_ERROR=$?                                                        # Save Nb. Errors in process
+    # Evaluate Command Line Switch Options Upfront
+    # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+    while getopts "hvd:" opt ; do                                       # Loop to process Switch
+        case $opt in
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 0
+               fi
+               ;;                                                       # No stop after each
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) sadm_show_version                                        # Show Script Version
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Mes
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                         
+    if [ $SADM_DEBUG -gt 0 ] ; then printf "\nDebug activated, Level ${SADM_DEBUG}\n" ; fi
 
-    # Print Total Script Errors
-    sadm_writelog " "                                                   # Separation Blank Line
-    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
-    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR+$MAC_ERROR))              # ExitCode=AIX+Linux+Mac Err
-    sadm_writelog "Total Linux error(s)  : ${LINUX_ERROR}"              # Display Total Linux Errors
-    sadm_writelog "Total Aix error(s)    : ${AIX_ERROR}"                # Display Total Aix Errors
-    sadm_writelog "Total Mac error(s)    : ${MAC_ERROR}"                # Display Total Mac Errors
-    sadm_writelog "Script Total Error(s) : ${SADM_EXIT_CODE}"           # Display Total Script Error
-    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
-    sadm_writelog " "                                                   # Separation Blank Line
-
-    # Update O/S Update Crontab if we need too -  Linux ONLY - Can't while in web interface
-    if [ $(sadm_get_ostype) = "LINUX" ] 
-        then if [ -f ${SADM_CRON_FILE} ] 
-                then work_sha1=`sha1sum ${SADM_CRON_FILE} | awk '{ print $1 }'` # New crontab sha1sum
-                     if [ -f ${SADM_CRONTAB} ]                                  # Current Crontab exist ?
-                        then real_sha1=`sha1sum ${SADM_CRONTAB}   | awk '{ print $1 }'` # Actual crontab sha1sum
-                             if [ "$work_sha1" != "$real_sha1" ]                # New Different than Actual?
-                                then cp ${SADM_CRON_FILE} ${SADM_CRONTAB}       # Put in place New Crontab
-                                     chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB}  # Set contab Perm.
-                                     sadm_writelog "O/S Update crontab was updated ..." # Advise user
-                                else sadm_writelog "No changes made to O/S Update schedule ..."
-                                     sadm_writelog "No need to update O/S Update crontab ..."
-                             fi
-                             sadm_writelog "${SADM_TEN_DASH}"                   # Print 10 Dash lineHistory
-                             sadm_writelog " "                                  # Separation Blank Line
-                     fi
-             fi
-    fi 
-
-    # Update Client Backup Crontab, if we need too -  Linux ONLY - Can't while in web interface
-    if [ $(sadm_get_ostype) = "LINUX" ] 
-        then if [ -f ${SADM_BACKUP_NEWCRON} ] 
-                then work_sha1=`sha1sum ${SADM_BACKUP_NEWCRON} |awk '{ print $1 }'` # New crontab sha1sum
-                     if [ -f ${SADM_BACKUP_CRONTAB} ]
-                        then real_sha1=`sha1sum ${SADM_BACKUP_CRONTAB} |awk '{ print $1 }'` # Actual crontab sha1sum
-                             if [ "$work_sha1" != "$real_sha1" ]                # New Different than Actual?
-                                then cp ${SADM_BACKUP_NEWCRON} ${SADM_BACKUP_CRONTAB}   # Put in place New Crontab
-                                     chmod 644 $SADM_BACKUP_CRONTAB ; chown root:root ${SADM_BACKUP_CRONTAB}
-                                     sadm_writelog "Clients backup schedule crontab was updated ..." # Advise user
-                                else sadm_writelog "No changes made to Backup schedule ..."
-                                     sadm_writelog "No need to update Backup crontab ..."
-                             fi
-                             sadm_writelog "${SADM_TEN_DASH}"                   # Print 10 Dash line
-                             sadm_writelog " "                                  # Separation Blank Line
-                     fi
-             fi
-    fi 
-
-    # Check All *.rpt files (For Warning and Errors) and all *.rch (For Errors) & Issue Alerts
-    check_for_alert                                                     # Report Alert if Any
-
+    main_process                                                        # rsync from all clients
+    SADM_EXIT_CODE=$?                                                   # Save Function Result Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Upd. RCH
-
-    # Since fetch client in run regularely put a copy of the rch in dir. used for web interface
-    # Otherwise it shows as running most fo the times
-    if [ ! -d ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ]                # If Web Dir. not exist
-        then mkdir -p ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch          # Create it
-    fi
-    cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch            # cp rch for instant Status
-
     exit $SADM_EXIT_CODE                                                # Exit With Error code (0/1)
