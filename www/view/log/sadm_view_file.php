@@ -26,6 +26,7 @@
 # 2018_05_06 JDuplessis V1.1 Change the look of the web page (Simplify code)
 # 2019_01_20 Improvement v1.2 Web Page revamp - New Dark Look
 #@2019_01_20 Update v1.3 Customize file not found message 
+#@2019_07_25 Update: v1.4 File is displayed using monospace character.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -38,9 +39,11 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 <style>
 
 div.data_frame {
-    /* font-family     :   Geneva, sans-serif; */
-    font-family: 'Ubuntu Mono', 'Space Mono', Geneva, sans-serif, monospace;
+    /* font-family     :   Geneva, sans-serif; 
+    font-family: 'Ubuntu Mono', 'Space Mono', Geneva, sans-serif, monospace;*/
 
+    font-family:  Courier, Consolas,   Menlo, "Liberation Mono",  monospace;
+    
     /* font-family: 'Space Mono', monospace; */
 
 
@@ -56,15 +59,14 @@ div.data_frame {
     border-color    :   #6b6c6f;
     border-radius   :   10px;
 }
-code {
-    /* font-size:0.9em; */
+/* code {
     margin: 10px;
     background: #2f3743;
     text-align: left;
     color           : white;
-    font-family: Menlo, Consolas, "Liberation Mono",  Courier, monospace;
+    font-family: Menlo, Consolas, Courier,  "Liberation Mono",  monospace;
     font-size: 13px;
-}
+} */
 </style>
 <?php
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
@@ -75,7 +77,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.3" ;                                                         # Current version number
+$SVER  = "1.4" ;                                                        # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
@@ -87,7 +89,10 @@ function display_file ($WNAME)
 
     # Display Table Heading
     $TITRE = basename($WNAME);                                          # Build the Table Heading
+
     echo "\n\n<div class='data_frame'>                 <!-- Start of Server Data DIV -->";
+
+    # Show Name of the file centered
     echo "\n<center><h2><strong><i>" .$TITRE. "</i></strong></h2></center>";   # Print 1st Row Heading
 
     $count=0;                                                           # Set Line Counter to Zero
@@ -103,15 +108,16 @@ function display_file ($WNAME)
     } 
 
     echo "<code>";
+    echo "<pre>";
     while(!feof($fh)) {                                                 # Read till End Of File
         $wline = fgets($fh);                                            # Read Line By Line    
         if (strlen($wline) > 0) {                                       # Don't process empty Line
             $count+=1;                                                  # Increase Line Counter
-            $pline = sprintf("%06d - %s\n" , $count,trim($wline));      # Format Line
+            $pline = sprintf("%06d - %s" , $count,trim($wline));        # Format Line
             echo "<br>" . $pline  ;                                     # Print Log Line
         }
     }
-    echo "</br></code></div>";                                          # End Data Frame
+    echo "</br></code></pre></div>";                                    # End Data Frame
     fclose($fh);                                                        # Close Log
     return ;
 }
@@ -119,18 +125,23 @@ function display_file ($WNAME)
 
 
 # ==================================================================================================
-#*                                      PROGRAM START HERE
+#                                      PROGRAM START HERE
 # ==================================================================================================
-#
-    # Get the paramater (Name of file to view) -----------------------------------------------------
-    $FILENAME = $_GET['filename'];                                      # Get Content of filename
-    if ($DEBUG)  { echo "<br>FILENAME Received is $FILENAME "; }        # In Debug Display FileName
 
-    # Verify If the File exist, if not go back to previous page after adivising user.---------------
+    # Get the parameter (Name of file to view) -----------------------------------------------------
+    if (isset($_GET['filename']) ) {                                    # Get Parameter Expected
+        $FILENAME = $_GET['filename'];                                  # Get Content of filename
+        if ($DEBUG)  { echo "<br>FILENAME Received is $FILENAME "; }    # In Debug Display FileName
+    }else{
+        $err_msg = "No parameter received - Please advise administrator";
+        sadm_fatal_error($err_msg);                                     # Display Error & Go Back
+        exit ;
+    }
+
+    # Verify if the file exist, if not go back to previous page after advising user. ---------------
     if ($DEBUG)  { echo "<br>Name of the file is $FILE"; }              # In Debug display Full Name
     if (! file_exists($FILENAME))  {                                    # If Log does not exist
-        $msg = "The file " . $FILENAME . " does not exist.\n";          # Mess. to User
-        #$msg = $msg . "Correct the situation and retry request";        # Add to Previous Message
+        $msg = "The file " . $FILENAME . " doesn't exist.\n";          # Mess. to User
         sadm_fatal_error($msg);                                         # Display Error & Go Back
         exit();
     }
