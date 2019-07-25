@@ -33,6 +33,7 @@
 #@2019_05_19 Update: v2.0 New debug variable, and sadm_show_version function.
 #@2019_05_23 Update: v2.1 Minor Comment Update
 #@2019_07_15 Update: v2.2 If no SADMIN env. var. then use /etc/environment to get SADMIN location.
+#@2019_07_25 Update: v2.3 New variables available (SADM_OS_NAME, SADM_OS_VERSION, SADM_OS_MAJORVER).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -41,32 +42,29 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
 
 
 #===================================================================================================
-#===================================================================================================
-# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 # To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
 
-    # Make sure the 'SADMIN' environment variable defined and pointing to the install directory.
-    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]
-        then # Check if the file /etc/environment exist, if not exit.
-             missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
+    # Is 'SADMIN' environment variable defined ?. If not try to use /etc/environment SADMIN value.
+    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]                             # If SADMIN EnvVar not right
+        then missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
              if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
-             # Check if can use SADMIN definition line in /etc/environment to continue
              missenv="Please set 'SADMIN' environment variable to the install directory."
-             grep "^SADMIN" /etc/environment >/dev/null 2>&1             # SADMIN line in /etc/env.? 
-             if [ $? -eq 0 ]                                             # Yes use SADMIN definition
+             grep "^SADMIN" /etc/environment >/dev/null 2>&1            # SADMIN line in /etc/env.? 
+             if [ $? -eq 0 ]                                            # Yes use SADMIN definition
                  then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
                       misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
                       missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
                       if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
                       printf "\n${missenv}\n${misstmp}\n\n"
                  else missvar="Add 'SADMIN=/InstallDir' in /etc/environment to remove this message."
-                      printf "\n${missenv}\n$missvar\n"                  # Advise user what to do   
-                      exit 1                                             # Back to shell with Error
+                      printf "\n${missenv}\n$missvar\n"                 # Recommendation to user    
+                      exit 1                                            # Back to shell with Error
              fi
     fi 
         
-    # Check if SADMIN environment variable is properly defined, check if can locate Shell Library.
+    # Check if the SADMIN Shell Library is accessible, if not advise user and exit with error.
     if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                            # Shell Library not readable
         then missenv="Please set 'SADMIN' environment variable to the install directory."
              printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
@@ -80,8 +78,8 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='2.2'                               # Your Current Script Version
+    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
+    export SADM_VER='2.3'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -100,15 +98,14 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
 
 #---------------------------------------------------------------------------------------------------
-# Values of these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# They can be overridden here on a per script basis.
+# Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
+# They can be overridden here, on a per script basis (if needed).
     #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
     #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
     #export SADM_MAX_RCLINE=60                          # When script end Trim rch file to 60 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#===================================================================================================
 #===================================================================================================
 
 
