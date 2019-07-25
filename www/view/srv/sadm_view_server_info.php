@@ -36,8 +36,9 @@
 # 2019_01_11 Change: v2.7 CLicking in Server Information Button send you to update menu.
 # 2019_01_19 Fix: v2.8 Day,Date and time of Backup display according to schedule.
 # 2019_01_21 Change: v2.9 Dark Theme, new presentation, button , perf. graph ...
-#@2019_03_17 Change: v2.10 Volume Group Used & Free Size now show with GB unit.
-#@2019_04_04 Change: v2.11 Adapt for Schedule_text function change in library
+# 2019_03_17 Change: v2.10 Volume Group Used & Free Size now show with GB unit.
+# 2019_04_04 Change: v2.11 Adapt for Schedule_text function change in library
+#@2019_07_25 Update: v2.12 Minor code changes
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -71,7 +72,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.11" ;                                                       # Current version number
+$SVER  = "2.12" ;                                                       # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -563,27 +564,21 @@ function display_top_buttons ($wrow) {
         if ($DEBUG) { echo "\n<br>Select statement is $sql\n"; }        # Display SQL Query 
         
         $result = mysqli_query($con,$sql) ;                             # Execute SQL Select
-        if (!$result)   {                           # If Server not found
-            $err_msg = "<br>Server " . $HOSTNAME . " not found in DB";  # Construct msg to user
-            $err_msg = $err_msg . mysqli_error($con) ;                  # Add Postgresql Error Msg
-            exit;
+        if (!$result)   {                                               # If Server not found
+            $err_msg = "<br>Server " . $HOSTNAME . " not found in the database.";  
+            $err_msg = $err_msg . mysqli_error($con) ;                  # Add MySQL Error Msg
+            sadm_fatal_error($err_msg);                                 # Display Error & Go Back
+            exit();            
         }
         $NUMROW = mysqli_num_rows($result);                             # Get Nb of rows returned
-
-         if ((!$result) or ($NUMROW == 0))  {                           # If Server not found
-            $err_msg = "<br>Server " . $HOSTNAME . " not found in DB";  # Construct msg to user
-            $err_msg = $err_msg . mysqli_error($con) ;                  # Add Postgresql Error Msg
+        if ($NUMROW == 0)  {                                            # If Server not found
+            $err_msg = "<br>Server " . $HOSTNAME . " not found in Database"; # Construct msg to user
+            $err_msg = $err_msg . mysqli_error($con) ;                  # Add MySQL Error Msg
             if ($DEBUG) {                                               # In Debug Insert SQL in Msg
                 $err_msg = $err_msg . "<br>\nMaybe a problem with SQL Command ?\n" . $query ;
             }
-            echo $err_msg . "<br>" ;                                    # Print Error Message
-
-            # Give chance to user to see Error Message - Wait for user to press "Go Back" Button 
-            echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-            echo "<a href='javascript:history.go(-1)'>";            
-            echo "<button type='button' class='btn btn-sm btn-primary'>Go Back</button></a>";
-            echo "</form>";
-            exit;
+            sadm_fatal_error($err_msg);                                 # Display Error & Go Back
+            exit();            
          }else{
             if ($DEBUG) {                                               # Debug Print Nb Rows
                echo "<br>Number of row(s) returned is ..." . strval($NUMROW) . "... " ;
@@ -592,13 +587,9 @@ function display_top_buttons ($wrow) {
         }
      }else{
          $err_msg = "No Parameter Received - Please Advise Administrator" ;
-         # Give chance to user to see Error Message - Wait for user to press "Go Back" Button 
-         echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-         echo "<a href='javascript:history.go(-1)'>";            
-         echo "<button type='button' class='btn btn-sm btn-primary'>Go Back</button></a>";
-         echo "</form>";
-         exit ;
-     }
+         sadm_fatal_error($err_msg);                                    # Display Error & Go Back
+         exit();            
+  }
 
     display_std_heading("NotHome","Information about server " . $row['srv_name'],"","",$SVER);
     display_server_data ($row);                                         # Display Server Data
