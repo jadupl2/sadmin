@@ -2280,7 +2280,7 @@ sadm_send_alert() {
     # Construct Body of the Email.
     mdate=`date "+%Y.%m.%d %H:%M"`                                      # Date & Time of Email
     hepoch=$(sadm_date_to_epoch "$mdate")                               # Date/Time of mail to Epoch
-    body0="SADM Sysmon Alert"                                           # Message Provenance Heading
+    if [ "$atype" = "S" ] ; then body0="SADM Script Alert" ; else body0="SADM Sysmon Alert" ;fi 
     case "$agroup_type" in
         m|M)    body1=`printf "%-15s: %s" "Email date/time" "$mdate"`   # Date/Time of email 
                 ;;
@@ -2296,9 +2296,9 @@ sadm_send_alert() {
     if [ $SADM_ALERT_REPEAT -ne 0 ] && [ $acounter -ne $MaxRepeat ]     # If Repeat or Not Last
        then body3=`printf "%s, next notification around %s" "$body3" "$NxtAlarmTime"`    # Time NextAlert
     fi
-    if [ $SADM_ALERT_REPEAT -eq 0 ] || [ $acounter -eq $MaxRepeat ]     # Final Alert Message
-       then body3=`printf "%s, final notice." "$body3"`                 # Insert Final Notice
-    fi
+    #if [ $SADM_ALERT_REPEAT -eq 0 ] || [ $acounter -eq $MaxRepeat ]     # Final Alert Message
+    #   then body3=`printf "%s, final notice." "$body3"`                 # Insert Final Notice
+    #fi
     body4=`printf "%-15s: %s" "Event Message"   "$amessage"`            # Body of the message
     body5=`printf "%-15s: %s" "Event on system" "$aserver"`             # Server where alert occured
     body6=`printf "%-15s: %s" "Script Name    " "$ascript"`             # Script Name
