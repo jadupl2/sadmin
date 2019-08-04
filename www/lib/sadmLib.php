@@ -36,8 +36,9 @@
 # 2019_01_11 Add: v2.5 CLicking on logo bring you back to sadmin Home page.
 # 2019_01_21 v2.6 Add function from From Schedule to Text.
 # 2019_02_16 Change: v2.7 Convert schedule metadata to one text line (Easier to read in Sched. List)
-# 2019_04_04 Update: v2.8 Function SCHEDULE_TO_TEXT now return 2 values (Occurence & Date of update)
-#@2019_05_02 Update: v2.9 Function sadm_fatal_error - Insert back page link before showing alert.
+# 2019_04_04 Update: v2.8 Function SCHEDULE_TO_TEXT now return 2 values (Occurrence & Date of update)
+# 2019_05_02 Update: v2.9 Function sadm_fatal_error - Insert back page link before showing alert.
+#@2019_08_04 Update: v2.10 Added function 'sadm_show_logo' to show distribution logo in a table cell.
 # ==================================================================================================
 #
 
@@ -46,7 +47,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.9" ;   
+$LIBVER = "2.10" ;   
     
 
 #===================================================================================================
@@ -430,6 +431,93 @@ function mysql_date_2_DDMMYYYY( $mysql_date ) {
     $input_date = $wday . '/' . $wmonth . '/' . $wyear ;
     return $input_date ;
 }
+
+
+
+# ==================================================================================================
+# Show Distribution Logo as a celle in a table
+# ==================================================================================================
+function sadm_show_logo($WOS) {
+
+    switch (strtoupper($WOS)) {
+        case 'REDHAT' :
+            echo "<td class='dt-center'>";
+            echo "<a href='http://www.redhat.com' ";
+            echo "title='Server $whost is a RedHat server - Visit redhat.com'>";
+            echo "<img src='/images/logo_redhat.png' ";
+            echo "style='width:32px;height:32px;'></a></td>\n";
+            break;
+        case 'FEDORA' :
+            echo "<td class='dt-center'>";
+            echo "<a href='https://getfedora.org' ";
+            echo "title='Server $whost is a Fedora server - Visit getfedora.org'>";
+            echo "<img src='/images/logo_fedora.png' ";
+            echo "style='width:32px;height:32px;'></a></td>\n";
+            break;
+        case 'MACOSX' :
+            echo "<td class='dt-center'>";
+            echo "<a href='https://apple.com' ";
+            echo "title='Server $whost is an Apple System - Visit apple.com'>";
+            echo "<img src='/images/logo_apple.png' ";
+            echo "style='width:32px;height:32px;'></a></td>\n";
+            break;
+        case 'CENTOS' :
+            echo "<td class='dt-center'>";
+            echo "<a href='https://www.centos.org' ";
+            echo "title='Server $whost is a CentOS server - Visit centos.org'>";
+            echo "<img src='/images/logo_centos.png' ";
+            echo "style='width:32px;height:32px;'></a></td>\n";
+            break;
+        case 'UBUNTU' :
+            echo "<td class='dt-center'>";
+            echo "<a href='https://www.ubuntu.com/' ";
+            echo "title='Server $whost is a Ubuntu server - Visit ubuntu.com'>";
+            echo "<img src='/images/logo_ubuntu.png' ";
+            echo "style='width:32px;height:32px;'></a></td>\n";
+            break;
+        case 'LINUXMINT' :
+            echo "<td class='dt-center'>";
+            echo "<a href='https://linuxmint.com/' ";
+            echo "title='Server $whost is a LinuxMint server - Visit linuxmint.com'>";
+            echo "<img src='/images/logo_linuxmint.png' ";
+            echo "style='width:32px;height:32px;'></a></td>\n";
+            break;
+        case 'DEBIAN' :
+            echo "<td class='dt-center'>";
+            echo "<a href='https://www.debian.org/' ";
+            echo "title='Server $whost is a Debian server - Visit debian.org'>";
+            echo "<img src='/images/logo_debian.png' ";
+            echo "style='width:32px;height:32px;'></a<</td>\n";
+            break;
+        case 'RASPBIAN' :
+            echo "<td class='dt-center'>";
+            echo "<a href='https://www.raspbian.org/' ";
+            echo "title='Server $whost is a Raspbian server - Visit raspian.org'>";
+            echo "<img src='/images/logo_raspbian.png' ";
+            echo "style='width:32px;height:32px;'></a></td>\n";
+            break;
+        case 'SUSE' :
+            echo "<td class='dt-center'>";
+            echo "<a href='https://www.opensuse.org/' ";
+            echo "title='Server $whost is a OpenSUSE server - Visit opensuse.org'>";
+            echo "<img src='/images/logo_suse.png' ";
+            echo "style='width:32px;height:32px;'></a></td>\n";
+            break;
+        case 'AIX' :
+            echo "<td class='dt-center'>";
+            echo "<a href='http://www-03.ibm.com/systems/power/software/aix/' ";
+            echo "title='Server $whost is an AIX server - Visit Aix Home Page'>";
+            echo "<img src='/images/logo_aix.png' ";
+            echo "style='width:32px;height:32px;'></a></td>\n";
+            break;
+        default:
+            echo "<td class='dt-center'>";
+            echo "<img src='/images/logo_linux.png' style='width:32px;height:32px;'>";
+            echo "${WOS}</td>\n";
+            break;
+    }
+}
+
 
 
 
