@@ -31,8 +31,9 @@
 #   2018_05_06 JDuplessis
 #       2.2 Use Standard view file web page instead of custom vie log page
 # 2018_08_14 v2.3 Added Alert Group associated with event
-#@2018_09_30 v2.4 Enhance Performance, New Page Layout and Fix issue with rch new format.
-#@2019_06_07 Update: v2.5 Add Alarm type to page (Deal with new format).
+# 2018_09_30 v2.4 Enhance Performance, New Page Layout and Fix issue with rch new format.
+# 2019_06_07 Update: v2.5 Add Alarm type to page (Deal with new format).
+#@2019_08_04 Update: v2.6 Add Distribution Logo and modify status icons.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -66,7 +67,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.5" ;                                                        # Current version number
+$SVER  = "2.6" ;                                                        # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -223,11 +224,12 @@ function sysmon_page_heading() {
     echo "\n<thead>";
     echo "\n<tr>";
     echo "\n<th class='dt-center'>Status</th>";
-    echo "\n<th class='dt-center'>Date / Time</th>";
+    echo "\n<th class='dt-center'>Event Date/Time</th>";
     echo "\n<th class='dt-left'>Alert Description</th>";
     echo "\n<th class='dt-center'>Server</th>";
-    echo "\n<th class='dt-center'>Cat.</th>";
+    echo "\n<th class='dt-center'>Distribution</th>";
     echo "\n<th class='dt-head-left'>Server Description</th>";
+    echo "\n<th class='dt-center'>Cat.</th>";
     #echo "\n<th class='dt-center'>Module</th>";
     echo "\n<th class='dt-center'>Alert Group/Type</th>";
     echo "\n</tr>";
@@ -237,11 +239,12 @@ function sysmon_page_heading() {
     echo "\n<tfoot>";
     echo "\n<tr>";
     echo "\n<th class='dt-center'>Status</th>";
-    echo "\n<th class='dt-center'>Date / Time</th>";
+    echo "\n<th class='dt-center'>Event Date/Time</th>";
     echo "\n<th class='dt-left'>Alert Description</th>";
     echo "\n<th class='dt-center'>Server</th>";
-    echo "\n<th class='dt-center'>Cat.</th>";
+    echo "\n<th class='dt-center'>Distribution</th>";
     echo "\n<th class='dt-head-left'>Server Description</th>";
+    echo "\n<th class='dt-center'>Cat.</th>";
     #echo "\n<th class='dt-center'>Module</th>";
     echo "\n<th class='dt-center'>Alert Group/Type</th>";
     echo "\n</tr>";
@@ -273,29 +276,30 @@ function display_data($con,$alert_file) {
             case 'ERROR' :
                 echo "\n<td class='dt-justify'>";
                 echo "<span data-toggle='tooltip' title='Error Reported'>";
-                echo "<img src='/images/error.png' ";
-                echo "style='width:24px;height:24px;'></span> Error</td>";
+                echo "<img src='/images/sadm_error.png' ";
+                echo "style='width:96px;height:32px;'></span></td>";
                 $alert_group=$wwalert;
                 break;
             case 'WARNING' :
                 echo "\n<td class='dt-justify'>";
                 echo "<span data-toggle='tooltip' title='Warning Reported'>";
-                echo "<img src='/images/warning.png' ";
-                echo "style='width:24px;height:24px;'></span> Warning</td>";
+                echo "<img src='/images/sadm_warning.png' ";
+                echo "style='width:96px;height:32px;'></span></td>";
                 $alert_group=$wealert;
                 break;
             case 'RUNNING' :
                 echo "\n<td class='dt-justify'>";
                 echo "<span data-toggle='tooltip' title='Script currently running'>";
-                echo "<img src='/images/running.png' ";
-                echo "style='width:24px;height:24px;'></span> Running</td>";
+                echo "<img src='/images/sadm_running.png' ";
+#                echo "style='width:32px;height:32px;'></span> Running</td>";
+                echo "style='width:96px;height:32px;'></span></td>";
                 $alert_group=$wealert;
                 break;
             default:
                 echo "\n<td class='dt-center' vertical-align: center;>";
                 echo "<span data-toggle='tooltip' title='Unknown Status'>";
                 echo "<img src='/images/question_mark.jpg' ";
-                echo "style='width:24px;height:24px;'></span> Unknown</td>";
+                echo "style='width:32px;height:32px;'></span> Unknown</td>";
                 $alert_group="Unknown";
                 break;
         }
@@ -346,20 +350,24 @@ function display_data($con,$alert_file) {
         echo "<a href='" . $URL_HOST_INFO . "?host=" . nl2br($whost) ;
         echo "' title='$WOS $WVER server - ip address is " . $row['srv_ip'] . "'>" ;
         echo nl2br($whost) . "</a></td>\n";
-
-        # SERVER CATEGORY --------------------------------------------------------------------------
-        $WCAT  = sadm_clean_data($row['srv_cat']);
+        
+        # Display Operating System Logo
+        #$WOS   = $row['srv_osname'];
         $WOS   = sadm_clean_data($row['srv_osname']);
-        echo "<td class='dt-center'>" . $WCAT                . "</td>\n";
+        sadm_show_logo($WOS);                                               # Show Distribution Logo        
 
         # SERVER DESCRIPTION -----------------------------------------------------------------------
         echo "<td>" . $WDESC . "</td>\n";
-
+        
+        # SERVER CATEGORY --------------------------------------------------------------------------
+        $WCAT  = sadm_clean_data($row['srv_cat']);
+        echo "<td class='dt-center'>" . $WCAT                . "</td>\n";
+        
         # ALERT MODULE/SUB MODULE ------------------------------------------------------------------
         #echo "<td class='dt-center'>";
         #echo ucfirst(strtolower($wmod))    . " / " ;
         #echo ucfirst(strtolower($wsubmod)) . "</td>\n";
-
+        
         #echo "<td class='dt-center'>" . $wwalert . " / " . $wealert               . "</td>\n";
         echo "<td class='dt-center'>" . $alert_group               . "</td>\n";
     }
