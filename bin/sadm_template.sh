@@ -256,16 +256,14 @@ main_process()
 
     # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_writelog "You need to be root to perform this script." # Advise User Message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S with Error
     fi
 
     # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_writelog "This script can only be run on the SADMIN server (${SADM_SERVER})"
              sadm_stop 1                                                # Close/Trim Log & Del PID
              exit 1                                                     # Exit To O/S with error
     fi
