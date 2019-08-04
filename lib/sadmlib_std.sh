@@ -108,6 +108,7 @@
 # 2019_06_27 Nolog: v3.08 Change 'Alert' for 'Notification' in source & email '1 of 0' corrected.
 #@2019_07_14 Update: v3.09 Change History file format , correct some alert issues.
 #@2019_07_18 Update: v3.10 Repeat SysMon (not Script) Alert once a day if not solve the next day.
+#@2019_08_04 Update: v3.11 Minor change to alert message format
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -117,7 +118,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.10"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.11"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
