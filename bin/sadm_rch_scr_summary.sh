@@ -29,8 +29,9 @@
 # 2018_11_21 v1.10 Add Change some Email header Titles.
 # 2019_04_02 Fix: v1.11 Doesn't report an error anymore when last line is blank.
 # 2019_05_07 Update: v1.12 Change send_alert calling parameters
-#@2019_06_07 Update: v1.13 Updated to adapt to the new field (alarm type) in RCH file.
-#@2019_06_11 Update: v1.14 Change screen & email message when an invalid '.rch' format is encountered.
+# 2019_06_07 Update: v1.13 Updated to adapt to the new field (alarm type) in RCH file.
+# 2019_06_11 Update: v1.14 Change screen & email message when an invalid '.rch' format is encountered.
+#@2019_08_13 Update: v1.15 Fix bug when using -m option (Email report), Error not on top of report.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -55,7 +56,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.14'                               # Current Script Version
+    export SADM_VER='1.15'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -371,7 +372,7 @@ mail_report()
     rm -f $SADM_TMP_FILE1 >/dev/null 2>&1                               # Make Sure it doesn't exist
     for wline in "${array[@]}"                                          # Process till End of array
         do                                                                          
-        WRCODE=` echo $wline | awk '{ print $9 }'`                      # Extract Return Code 
+        WRCODE=` echo $wline | awk '{ print $10 }'`                      # Extract Return Code 
         if [ "$WRCODE" != "1" ] ; then continue ; fi                    # If Script Succeeded = Skip 
         echo "$wline" >> $SADM_TMP_FILE1                                # Write Event to Tmp File1
         done 
