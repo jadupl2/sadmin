@@ -39,7 +39,8 @@
 # 2019_04_04 Update: v2.8 Function SCHEDULE_TO_TEXT now return 2 values (Occurrence & Date of update)
 # 2019_05_02 Update: v2.9 Function sadm_fatal_error - Insert back page link before showing alert.
 #@2019_08_04 Update: v2.10 Added function 'sadm_show_logo' to show distribution logo in a table cell.
-#@2019_08_14 Update: v2.11 Fix bug - When creating one line schedule summary
+#@2019_08_13 Update: v2.11 Fix bug - When creating one line schedule summary
+#@2019_08_14 Update: v2.12 Add function for new page header look (display_lib_heading).
 # ==================================================================================================
 #
 
@@ -48,7 +49,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.11" ;   
+$LIBVER = "2.12" ;   
     
 
 #===================================================================================================
