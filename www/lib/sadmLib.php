@@ -39,6 +39,7 @@
 # 2019_04_04 Update: v2.8 Function SCHEDULE_TO_TEXT now return 2 values (Occurrence & Date of update)
 # 2019_05_02 Update: v2.9 Function sadm_fatal_error - Insert back page link before showing alert.
 #@2019_08_04 Update: v2.10 Added function 'sadm_show_logo' to show distribution logo in a table cell.
+#@2019_08_14 Update: v2.11 Fix bug - When creating one line schedule summary
 # ==================================================================================================
 #
 
@@ -47,8 +48,45 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.10" ;   
+$LIBVER = "2.11" ;   
     
+
+#===================================================================================================
+# DISPLAY HEADING LINES OF THE WEB PAGE 
+#===================================================================================================
+function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
+
+    $URL_HOME   = '/index.php';                                         # Site Home Page URL
+    
+    echo "\n\n<center><h2>${TITLE1} " ."- v${WVER}". "</h2></center>";  # Display Title 1 & Ver. No.
+    echo "\n\n<center><h2>${TITLE2}</h2></center>";                     # Display Title 2
+
+    // echo "\n<div style='float: right;'>" . date('l jS \of F Y, h:i:s A') . "</div>";  
+    // echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
+    
+    // # SECOND LINE - LEFT SIDE - DISPLAY LINK TO PREVIOUS PAGE OR TO HOME PAGE
+    // echo "\n<div style='float: left;'>";                                # Align Left Link Go Back
+    // if (strtoupper($BACK_URL) != "HOME") {                              # Parameter Recv. = home
+    //     echo "<a href='javascript:history.go(-1)'>Previous Page</a>";   # URL Go Back Previous Page
+    // }else{
+    //     echo "<a href='" . $URL_HOME . "'>Home Page</a>";               # URL to Go Back Home Page
+    // }
+    // echo "</div>"; 
+        
+    // # SECOND LINE - RIGHT SIDE - DISPLAY CREATE BUTTON AT THE FAR RIGHT, IF $CREATE_BUTTON IS TRUE
+    // if ($CREATE_BUTTON) {
+    //     echo "\n<div style='float: right;'>";                           # Div Position Create Button
+    //     echo "\n<a href='" . $CREATE_URL . "'>";                        # URL when Button Press
+    //     echo "\n<button type='button'>" .$CREATE_LABEL. "</button></a>";# Create Create Button
+    //     echo "\n</div>\n";                                              # End of Button Div
+    // }else{
+    //     echo "\n<div style='float: right;'>" . $RTITLE . "</div>";  
+    // }
+    // echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    // echo "\n<hr/>";                                                     # Print Horizontal Line
+}
+
+
 
 #===================================================================================================
 # DISPLAY HEADING LINES OF THE CONTENT PORTION OF THE WEB PAGE 
@@ -623,9 +661,9 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
     $curepoch = time();                                                 # Current Epoch Time
     $selday   = $curday; $selmth=$curmth ; $selyear=$curyear;           # Set Default Selection Date
 
-    # Date in the month the Schedule will run 
+    # Date in the month the Backup Schedule will run 
     # If any date part1 and sdate will be empty or sdate contains (Ex: 1,4,8) & part1 (1st,4th,8th)
-    $part1 = "";                                                        # Result Date to Run
+    $part1 = "";                                                        # Default no particular date 
     if (substr($wdom,0,1) != "Y") {                                     # If DOM don't begin with Y
         for ($i = 1; $i < 32; $i = $i + 1) {
             if ((substr($wdom,$i,1) == "Y") && ($i == 1)) {             # Is First Month is Yes
@@ -650,12 +688,12 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
         if ($part1 != "") { $part1 = $part1 . " of " ; }                # At least one date specify
     }
 
-    # Month that the Schedule will Run
-    #   part2 will contains the months names (Jab,Apr,Aug) or nothing if every month (if 1st Char=Y)
+
+    # Month(s) that the Schedule Backup will Run
+    #   part2 will contains the months names (Jan,Apr,Aug) or nothing if every month (if 1st Char=Y)
     #   smonth will contains the months selected (1,4,8) or nothing if every month is selected
-    $part2 = "";
-    $mth_name = array('every month, 
-                ','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
+    $part2 = "";                                                        # Default run every months
+    $mth_name = array('every month,','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
     if (substr($wmth,0,1) == "Y") {                                     # 1st Letter is Y=EveryMonth
         if ($part1 != "") { $part2 = $mth_name[0]; }                    # Any Mth ins. "every month"
     }else{                                                              # If Month No. is Specify
@@ -666,32 +704,34 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
             }
         }
     }
-    $part2 = rtrim($part2, ',') . " " ;                                 # Del part2 trailing Comma
+#    $part2 = rtrim($part2,',') . " " ;                                  # Del part2 trailing Comma
+    $part2 = rtrim($part2,',') ;                                  # Del part2 trailing Comma
     $smth  = rtrim($smth, ',') ;                                        # Del smth trailing Comma
     
-    # If Every Date of the month and Every month was selected then insert "Every" in part2.
-    # Finally, it's going to be Every Day of the week or a particular day of the week. 
-    if ((substr($wdom,0,1) == "Y") and (substr($wmth,0,1) == "Y")) { $part2 = "Every "; }
-
-
+   
+    #echo "wdom= " . substr($wdom,0,1) . " - wmth = " . substr($wmth,0,1) . " - wdow= " . substr($wdow,0,1) ;
+    #echo "Part1 = $part1 - Part2 = $part2 - Part3 = $part3" ;
+    
     # Days of the week the schedule will run
-    $part3 = "";                                                        # Result Day(s) Schedule run
-    if (substr($wdow,0,1) == "Y") {                                     # If DOW begin with Y=AllWeek
-        $part3 = "Every day";                                           # Schedule run every day
-        if ((substr($wdom,0,1) == "Y") and (substr($wmth,0,1) == "Y")) { $part2 = ""; }
-
-    }else{                                                              # If not Get Days it Run
-        if (substr($wdow,1,1) == "Y") { $part3 = $part3 . "Sunday,"    ;  $sday="1,"; }
-        if (substr($wdow,2,1) == "Y") { $part3 = $part3 . "Monday,"    ;  $sday = $sday . "2," ;}
-        if (substr($wdow,3,1) == "Y") { $part3 = $part3 . "Tuesday,"   ;  $sday = $sday . "3," ;}
-        if (substr($wdow,4,1) == "Y") { $part3 = $part3 . "Wednesday," ;  $sday = $sday . "4," ;}
-        if (substr($wdow,5,1) == "Y") { $part3 = $part3 . "Thursday,"  ;  $sday = $sday . "5," ;}
-        if (substr($wdow,6,1) == "Y") { $part3 = $part3 . "Friday,"    ;  $sday = $sday . "6," ;}
-        if (substr($wdow,7,1) == "Y") { $part3 = $part3 . "Saturday,"  ;  $sday = $sday . "7," ;}
+    if ((substr($wdom,0,1) == "Y") and (substr($wmth,0,1) == "Y")) { 
+        $part2 = "Every "; $part3 = ""; 
+        if (substr($wdow,0,1) == "Y") {                                 # If DOW begin with Y=AllWeek
+            $part3 = " day"; 
+        }else{                                                          # If not Get Days it Run
+            if (substr($wdow,1,1) == "Y") { $part3 = $part3 . "Sunday,"    ;  $sday="1,"; }
+            if (substr($wdow,2,1) == "Y") { $part3 = $part3 . "Monday,"    ;  $sday = $sday . "2," ;}
+            if (substr($wdow,3,1) == "Y") { $part3 = $part3 . "Tuesday,"   ;  $sday = $sday . "3," ;}
+            if (substr($wdow,4,1) == "Y") { $part3 = $part3 . "Wednesday," ;  $sday = $sday . "4," ;}
+            if (substr($wdow,5,1) == "Y") { $part3 = $part3 . "Thursday,"  ;  $sday = $sday . "5," ;}
+            if (substr($wdow,6,1) == "Y") { $part3 = $part3 . "Friday,"    ;  $sday = $sday . "6," ;}
+            if (substr($wdow,7,1) == "Y") { $part3 = $part3 . "Saturday,"  ;  $sday = $sday . "7," ;}
+        }
+    }else{
+        $part3=""; 
     }
     $part3 = rtrim($part3, ',') ." " ;                                  # Del part3 trailing Comma
     $sday  = rtrim($sday, ',');                                         # Del sday trailing Comma
-
+    
 
     # Part4 is the hours and minutes of the schedule, just format them and put them in part4.
     $part4a = sprintf("%02d", $whrs);
