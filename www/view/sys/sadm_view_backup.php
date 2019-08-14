@@ -21,7 +21,8 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 #
-#@2019_07_06 New: v1.0 Initial version of backup Status Page
+# 2019_07_06 New: v1.0 Initial version of backup Status Page
+#@2019_08_14 New: v1.1 Allow to return to this page when backup schedule is updated (Send BACKURL)
 #
 # ==================================================================================================
 #
@@ -31,7 +32,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load P
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
-# DataTable Initialisation Function
+# DataTable Initialization Function
 ?>
 <script>
     $(document).ready(function() {
