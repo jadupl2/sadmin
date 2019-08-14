@@ -50,21 +50,22 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
-$DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "1.0" ;                                                # Current version number
-$URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
-$URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
-$URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
-$URL_MAIN      = '/crud/srv/sadm_server_main.php';                      # Maintenance Main Page URL
-$URL_HOME      = '/index.php';                                          # Site Main Page
-$URL_SERVER    = '/view/srv/sadm_view_servers.php';                     # View Servers List
-$URL_OSUPDATE  = '/crud/srv/sadm_server_osupdate.php';                  # O/S Schedule Update URL
-$URL_BACKUP    = '/crud/srv/sadm_server_backup.php';                    # Backup Schedule Update URL
-$URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
-$URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
-$CREATE_BUTTON = False ;                                                # Yes Display Create Button
-$BACKUP_RCH    = 'sadm_backup.rch';                                     # Backup RCH Suffix name
-$BACKUP_LOG    = 'sadm_backup.log';                                     # Backup LOG Suffix name
+$DEBUG           = False ;                                              # Debug Activated True/False
+$WVER            = "1.1" ;                                              # Current version number
+$URL_CREATE      = '/crud/srv/sadm_server_create.php';                  # Create Page URL
+$URL_UPDATE      = '/crud/srv/sadm_server_update.php';                  # Update Page URL
+$URL_DELETE      = '/crud/srv/sadm_server_delete.php';                  # Delete Page URL
+$URL_MAIN        = '/crud/srv/sadm_server_main.php';                    # Maintenance Main Page URL
+$URL_HOME        = '/index.php';                                        # Site Main Page
+$URL_SERVER      = '/view/srv/sadm_view_servers.php';                   # View Servers List
+$URL_OSUPDATE    = '/crud/srv/sadm_server_osupdate.php';                # O/S Schedule Update URL
+$URL_BACKUP      = '/crud/srv/sadm_server_backup.php';                  # Backup Schedule Update URL
+$URL_VIEW_FILE   = '/view/log/sadm_view_file.php';                      # View File Content URL
+$URL_HOST_INFO   = '/view/srv/sadm_view_server_info.php';               # Display Host Info URL
+$URL_VIEW_BACKUP = "/view/sys/sadm_view_backup.php";                    # CRUD Server Menu URL
+$CREATE_BUTTON   = False ;                                              # Yes Display Create Button
+$BACKUP_RCH      = 'sadm_backup.rch';                                   # Backup RCH Suffix name
+$BACKUP_LOG      = 'sadm_backup.log';                                   # Backup LOG Suffix name
 
 
 #===================================================================================================
@@ -113,7 +114,7 @@ function setup_table() {
 #                     Display Main Page Data from the row received in parameter
 #===================================================================================================
 function display_data($count, $row) {
-    global $URL_HOST_INFO, $URL_VIEW_FILE, $URL_BACKUP, $BACKUP_RCH, $BACKUP_LOG; 
+    global $URL_HOST_INFO, $URL_VIEW_FILE, $URL_BACKUP, $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG; 
     
     echo "<tr>\n";  
     
@@ -121,7 +122,8 @@ function display_data($count, $row) {
     $WOS  = $row['srv_osname'];
     $WVER = $row['srv_osversion'];
     echo "<td class='dt-center'>";
-    echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] ;
+    echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP ;
+
     echo "' title='$WOS $WVER server, ip address is " .$row['srv_ip']. ", click to edit schedule'>";
     echo $row['srv_name']  . "</a></td>\n";
     
