@@ -26,7 +26,8 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
-#@2019_01_11 Added: v2.1 Add Model and Serial No. in bubble while on server name.
+# 2019_01_11 Added: v2.1 Add Model and Serial No. in bubble while on server name.
+#@2019_08_17 Update: v2.2 New page heading and Logo of distribution inserted.
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
@@ -59,7 +60,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG         = False ;                                                # Debug Activated True/False
-$SVER          = "2.1" ;                                                # Current version number
+$SVER          = "2.2" ;                                                # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_OSUPDATE  = '/crud/srv/sadm_server_osupdate.php';                  # Update Page URL
@@ -81,16 +82,15 @@ function setup_table() {
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                      # Width Given to Table
     #echo '<table id="sadmTable" class="display" cell-border compact row-border wrap width="95%">';   
-    #echo '<table  id="sadmTable" cell-border compact row-border wrap width="95%">';   
+    #echo '<table id="sadmTable" cell-border compact row-border wrap width="95%">';   
     echo '<table id="sadmTable" class="display" row-border wrap width="100%">';   
     
     # PAGE TABLE HEADING
     echo "\n<thead>";
     echo "\n<tr>";
-    #echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
-    echo "\n<th dt-center>Name</th>";                                # Left Align Header & Body
-    echo "\n<th>O/S</th>";                                 # Left Align Header & Body
-    echo "\n<th>Description</th>";                       # Center Header Only
+    echo "\n<th dt-center>Name</th>";                                   # Left Align Header & Body
+    echo "\n<th>O/S</th>";                                              # Left Align Header & Body
+    echo "\n<th>Description</th>";                                      # Center Header Only
     echo "\n<th dt-center>Cat</th>";                                    # Center Header & Body
     echo "\n<th>Group</th>";                                            # Identify Default Group
     echo "\n<th dt-center>Status</th>";                                 # Center Header & Body
@@ -104,9 +104,7 @@ function setup_table() {
     # PAGE TABLE FOOTER
     echo "\n<tfoot>";
     echo "\n<tr>";
-    #echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
-    echo "\n<th dt-center>Name</th>";                                # Left Align Header & Body
-    #echo "\n<th dt-head-left>Alert</th>";                              # Left Align Header & Body
+    echo "\n<th dt-center>Name</th>";                                   # Left Align Header & Body
     echo "\n<th dt-head-left>O/S</th>";                                 # Left Align Header & Body
     echo "\n<th dt-head-center>Description</th>";                       # Center Header Only
     echo "\n<th dt-center>Cat</th>";                                    # Center Header & Body
@@ -137,7 +135,11 @@ function display_data($con,$row) {
     echo "'>" .$row['srv_name']. "</a></td>";
 
     # Server O/S Name
-    echo "\n<td dt-nowrap>"  . $row['srv_osname'] . "</td>";            # Display O/S Name
+    #echo "\n<td dt-nowrap>"  . $row['srv_osname'] . "</td>";            # Display O/S Name
+
+    # Display Operating System Logo
+    $WOS   = sadm_clean_data($row['srv_osname']);
+    sadm_show_logo($WOS);                                               # Show Distribution Logo
     
     # Server Description
     echo "\n<td dt-nowrap>"  . $row['srv_desc']   . "</td>";            # Display Description
@@ -191,7 +193,20 @@ function display_data($con,$row) {
 #*                                      PROGRAM START HERE
 # ==================================================================================================
 #
-    display_std_heading("Home","Server Maintenance","","",$SVER,$CREATE_BUTTON,$URL_CREATE,"Create");
+   
+    # DISPLAY PAGE HEADING
+    $title1="System Maintenance";                                       # Heading 1 Line
+    $title2="[C]reate [R]ead [U]pdate [D]elete";                        # Heading 2 Line
+    display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
+
+    # DISPLAY THE CREATE BUTTON
+    echo "\n<div style='text-align: right ;width: 99%;'>";
+    echo "\n<a href='" . $URL_CREATE . "'>";
+    echo "\n<button type='button'>Create</button></a>";                 # Display Add Button
+    echo "\n</div>";
+
+
+    #display_std_heading("Home","Server Maintenance","","",$SVER,$CREATE_BUTTON,$URL_CREATE,"Create");
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
     
