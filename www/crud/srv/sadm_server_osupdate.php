@@ -33,7 +33,8 @@
 # 2019_01_21 Change: v2.4 Added Dark Theme
 # 2019_01_21 Change: v2.5 Show on one line next o/s update amd show server domain.
 # 2019_04_04 Update: v2.6 If a Date is used to schedule O/S Update then the day specify is not used.
-#@2019_05_04 Update: v2.7 When specific date(s) specified for update, day of week change to 'All'.
+# 2019_05_04 Update: v2.7 When specific date(s) specified for update, day of week change to 'All'.
+#@2019_08_17 Update: v2.8 Use new heading function, New parameter (URL) to get back to caller page.
 #
 # ==================================================================================================
 #
@@ -84,7 +85,13 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     border-style    :   solid;
     border-color    :   #000000;
 }
+
+.deux_boutons   { width : 70%;   margin: 1% auto;   } 
+.premier_bouton { width : 20%;  float : left;   margin-left : 25%;  text-align : right ; }
+.second_bouton  { width : 20%;  float : right;  margin-right: 25%;  text-align : left  ; }
+
 </style>
+
 <?php
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    #</Head><body>Heading/SideBar
 require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
@@ -96,7 +103,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.7" ;                                                        # Current version number
+$SVER  = "2.8" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -430,10 +437,11 @@ function display_osschedule($con,$wrow,$mode) {
         #}
 
         # Back to Server List Page
-        $redirect="/crud/srv/sadm_server_menu.php?sel=" . $_POST['scr_name'];
+        echo "<script>location.replace('" . $_POST['BACKURL'] . "');</script>";  # Backup to Caller URL
+        #$redirect="/crud/srv/sadm_server_menu.php?sel=" . $_POST['scr_name'];
         #header("Location: " . $redirect . " ");
         #exit();
-        ?> <script> location.replace("/view/sys/sadm_view_schedule.php"); </script><?php
+        #?> <script> location.replace("/view/sys/sadm_view_schedule.php"); </script><?php
         exit;
     }
 
@@ -470,20 +478,23 @@ function display_osschedule($con,$wrow,$mode) {
         exit ; 
     }
 
+    # 2nd parameters reference the URL where this page was called.
+    if ($DEBUG) { echo "<br>2nd Parameter Received is " . $back; }      # Under Debug Show 2nd Parm.
+    if ((isset($_GET['back'])) and ($_GET['back'] != ""))  {            # If Value Rcv and not Blank
+       $BACKURL = $_GET['back'] ."?sel=" . $wkey ;                      # Save 2nd Parameter Value
+    }else{
+       $BACKURL = "/crud/srv/sadm_server_main.php?sel=" .$wkey;         # Where to go back after 
+    }
 
-    # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
+
+    # DISPLAY PAGE HEADING
     $wserver = $row['srv_name'] . "." . $row['srv_domain'];
-    display_std_heading("NotHome","O/S Update Schedule","","",$SVER);   # Display Content Heading
-    #$title="Schedule for operating system update on '" . $wkey . "' system";
-    $title="Schedule for operating system update on '" . $wserver . "' system";
-    echo "<center><strong><h3><i>" . $title . "</i></h3></strong></center>";
+    $title1="O/S update schedule for '" .$wserver. "'";                 # Heading 1 Line
 
     # Take O/S Update Server Data and return next update to a one line text and date of next update.
-    list ($STR_SCHEDULE, $DATE_SCHED) = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
+    list ($title2, $DATE_SCHED) = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
             $row['srv_update_dow'], $row['srv_update_hour'], $row['srv_update_minute']);
-    
-    # Show one line text as part of heading indicating the next update date occurrence 
-    echo "<center><strong><h3><i>" . $STR_SCHEDULE . "</i></h3></strong></center>";
+    display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
 
     # Start of the Form - Show O/S Schedule Data for current server
     echo "\n\n<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
@@ -491,17 +502,18 @@ function display_osschedule($con,$wrow,$mode) {
     
     # Set the Submitted Flag On - We are done with the Form Data
     echo "\n<input type='hidden' value='1' name='submitted' />";        # hidden use On Nxt Page Exe
+    echo "\n<input type='hidden' value='".$BACKURL."' name='BACKURL'  />"; # Save Caller URL
     echo "\n<input type='hidden' value='".$row['srv_name']  ."' name='server_key' />"; # save srvkey
     echo "\n<input type='hidden' value='".$row['srv_ostype']."' name='server_os'  />"; # save O/S
     
-    # Display Buttons (Update/Cancel) at the bottom of the form
-    echo "\n\n<div class='two_buttons'>";
-    echo "\n<div class='first_button'><button type='submit'> Update </button></div>";
-    echo "\n<div class='second_button'><a href='" . $URL_MAIN . $row['srv_name'] . "'><button type='button'> Cancel ";
+    # DISPLAY BUTTONS (UPDATE/CANCEL) AT THE BOTTOM OF THE FORM
+    echo "\n\n<div class='deux_boutons'>";
+    echo "\n<div class='premier_bouton'><button type='submit'> Update </button></div>";
+    echo "\n<div class='second_bouton'><a href='" . $BACKURL . "'><button type='button'> Cancel ";
     echo "</button></a>\n</div>";
     echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
     echo "\n</div>\n\n";
-    
+
     echo "\n</form>";                                                   # End of Form  
     echo "\n<br>";                                                      # Blank Line After Button
     std_page_footer($con)                                               # Close MySQL & HTML Footer
