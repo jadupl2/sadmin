@@ -35,7 +35,7 @@
 #@ 2019_01_06 Feature: v2.3 Add link to see Performance Graph of yesterday.
 #@ 2019_01_14 Feature: v2.4 See Server Model and Serial No. when mouse over server name.
 #@ 2019_08_04 Update: v2.5 Added O/S distribution logo instead of name on page
-#
+#@ 2019_08_18 Update: v2.6 Change page heading and some text fields.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -64,15 +64,15 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG          = False ;                                               # Debug Activated True/False
-$WVER           = "2.5" ;                                               # Current version number
+$WVER           = "2.6" ;                                               # Current version number
 $URL_CREATE     = '/crud/srv/sadm_server_create.php';                   # Create Page URL
 $URL_UPDATE     = '/crud/srv/sadm_server_update.php';                   # Update Page URL
 $URL_DELETE     = '/crud/srv/sadm_server_delete.php';                   # Delete Page URL
 $URL_MAIN       = '/crud/srv/sadm_server_main.php';                     # Maintenance Main Page URL
 $URL_HOME       = '/index.php';                                         # Site Main Page
-$URL_SERVER     = '/view/srv/sadm_view_servers.php';                    # View Servers List
+$URL_SERVER     = '/view/srv/sadm_view_servers.php';                    # View Systems List
 $URL_HOST_INFO  = '/view/srv/sadm_view_server_info.php';                # Display Host Info URL
-$URL_PERF       = '/view/perf/sadm_server_perf.php';                    # Servers Perf Graph
+$URL_PERF       = '/view/perf/sadm_server_perf.php';                    # Systems Perf Graph
 $CREATE_BUTTON  = False ;                                               # Yes Display Create Button
 
 
@@ -86,7 +86,7 @@ function setup_table() {
     
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                      # Width Given to Table
-    echo '<table id="sadmTable" class="display" compact row-border no-wrap width="95%">';   
+    echo '<table id="sadmTable" class="display" compact row-border no-wrap width="90%">';   
     
     # PAGE TABLE HEADING
     echo "\n<thead>";
@@ -262,7 +262,7 @@ function display_data($count,$con,$row) {
     switch ($SELECTION) {
         case 'all_servers'  : 
             $sql = 'SELECT * FROM server order by srv_name;';
-            $TITLE = "List of all Servers";
+            $TITLE = "List of all Systems";
             break;
         case 'host'         : 
             $sql = "SELECT * FROM server where srv_name = '". $VALUE . "';";
@@ -282,7 +282,7 @@ function display_data($count,$con,$row) {
             }else{
                 $sql = "SELECT * FROM server where srv_osname = '". $VALUE . "' order by srv_name;";
             }
-            $TITLE = "List of " . ucwords($VALUE) . " Servers";
+            $TITLE = "List of " . ucwords($VALUE) . " Systems";
             break;
         case 'osv'           : 
             if ($VALUE == NULL) {
@@ -290,31 +290,31 @@ function display_data($count,$con,$row) {
             }else{
                 $sql = "SELECT * FROM server where srv_osversion = '". $VALUE . "' order by srv_name;";
             }
-            $TITLE = "List of " . ucwords($VALUE) . " Servers";
+            $TITLE = "List of " . ucwords($VALUE) . " Systems";
             break;
         case 'all_active'   : 
             $sql = 'SELECT * FROM server where srv_active = True order by srv_name;';
-            $TITLE = "List of Active Servers";
+            $TITLE = "List of Active Systems";
             break;
         case 'all_inactive' : 
             $sql = 'SELECT * FROM server where srv_active = False order by srv_name;';
-            $TITLE = "List of Inactive Servers";
+            $TITLE = "List of Inactive Systems";
             break;
         case 'all_vm'       : 
             $sql = 'SELECT * FROM server where srv_vm = True order by srv_name;';
-            $TITLE = "List of Virtual Servers";
+            $TITLE = "List of Virtual Systems";
             break;
         case 'all_physical' : 
             $sql = 'SELECT * FROM server where srv_vm = False order by srv_name;';
-            $TITLE = "List of Physical Servers";
+            $TITLE = "List of Physical Systems";
             break;
             case 'all_sporadic' : 
             $sql = 'SELECT * FROM server where srv_sporadic = True order by srv_name;';
-            $TITLE = "List of Sporadic Servers";
+            $TITLE = "List of Sporadic Systems";
             break;
         case 'all_non_sporadic' : 
             $sql = 'SELECT * FROM server where srv_sporadic = False order by srv_name;';
-            $TITLE = "List of Non Sporadic Servers";
+            $TITLE = "List of Non Sporadic Systems";
             break;
         default             : 
             echo "<br>The sort order received (" . $SELECTION . ") is invalid<br>";
@@ -334,7 +334,8 @@ function display_data($count,$con,$row) {
         exit;                                                           # Exit - Should not occurs
     }
 
-    display_std_heading($URL_HOME,$TITLE,"","",$WVER) ;
+    # SHOW PAGE HEADING    
+    display_lib_heading("NotHome","$TITLE"," ",$WVER);                  # Display Content Heading
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
 
