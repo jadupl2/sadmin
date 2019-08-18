@@ -28,8 +28,8 @@
 # ChangeLog
 # 2017_03_09 Documentation: sadm_server_delete.php v1.8 Comments code and enhance code performance.
 # 2017_11_15 Improve: sadm_server_delete.php v2.0 Restructure & modify web interface & MySQL DB.
-#@2019_01_15 New: sadm_server_delete.php v2.1 Option to create server data archive before delete.
-#
+# 2019_01_15 New: sadm_server_delete.php v2.1 Option to create server data archive before delete.
+#@2019_08_17 Update: v2.2 New parameter, the URL where to go back after update.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -42,7 +42,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #                                       Local Variables
 #===================================================================================================
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.1" ;                                                        # Current version number
+$SVER  = "2.2" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_DEL    = '/crud/srv/sadm_server_delete_action.php';                # Confirm Delete Server Page
 $URL_HOME   = '/index.php';                                             # Site Main Page
@@ -53,42 +53,55 @@ $CREATE_BUTTON = False ;                                                # Don't 
 # EXECUTION START HERE - DISPLAY FORM WITH CORRESPONDING ROW DATA
 #===================================================================================================
 
-    # CHECK IF THE KEY RECEIVED EXIST IN THE DATABASE AND RETRIEVE THE ROW DATA
-    if ($DEBUG) { echo "<br>Post isn't Submitted"; }                    # Display Debug Information    
-    if ((isset($_GET['sel'])) and ($_GET['sel'] != ""))  {              # If Key Rcv and not Blank   
+    # 1st parameter contains the server name 
+    if ($DEBUG) { echo "<br>1st Parameter Received is " . $SELECTION; } # Under Debug Display Param.
+    if ((isset($_GET['sel'])) and ($_GET['sel'] != ""))  {              # If Key Rcv and not Blank
         $wkey = $_GET['sel'];                                           # Save Key Rcv to Work Key
         if ($DEBUG) { echo "<br>Key received is '" . $wkey ."'"; }      # Under Debug Show Key Rcv.
-        $sql = "SELECT * FROM server WHERE srv_name = '" . $wkey . "'"; # SQL to Read Server Rcv Row
-        if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug Show SQL Command
-        $KeyExist=False;                                                # Assume Key not Found in DB
-        if ($result=mysqli_query($con,$sql)) {                          # Execute SQL Select
-            if($result->num_rows >= 1) {                                # Number of Row Match Key
-              $row = mysqli_fetch_assoc($result);                       # Read the Associated row
-              $KeyExist=True;                                           # Key Does Exist in Database
-            }
-        }
-        if (! $KeyExist) {                                              # If Key was not found
-            $err_line = (__LINE__ -1) ;                                 # Error on line No.
-            $err_msg1 = "Server '" . $wkey . "' not found.";            # Row was not found Msg.
-            $err_msg2 = "\nAt line " .$err_line. " in " .basename(__FILE__); # Insert Filename 
-            sadm_alert ($err_msg1 . $err_msg2);                         # Display Msg. Box for User
-            echo "<script>location.replace('" . $URL_MAIN . "');</script>"; # Backup to Server List
-        }
     }else{                                                              # If No Key Rcv or Blank
         $err_msg = "No Key Received - Please Advise" ;                  # Construct Error Msg.
         sadm_alert ($err_msg) ;                                         # Display Error Msg. Box
-        echo "<script>location.replace('" . $URL_MAIN . "');</script>"; # Backup to Server List.
+        exit ;
     }
 
-    # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
-    display_std_heading("NotHome","Delete Server","","",$SVER);         # Display Content Heading
-    
+    # 2nd parameters reference the URL where this page was called.
+    if ($DEBUG) { echo "<br>2nd Parameter Received is " . $back; }      # Under Debug Show 2nd Parm.
+    if ((isset($_GET['back'])) and ($_GET['back'] != ""))  {            # If Value Rcv and not Blank
+       $BACKURL = $_GET['back'] ."?sel=" . $wkey ;                      # Save 2nd Parameter Value
+    }else{
+       $BACKURL = $URL_MAIN  . $wkey;                                   # Where to go back after 
+    }
+
+    # CHECK IF THE SERVER KEY RECEIVED EXIST IN THE DATABASE AND RETRIEVE THE ROW DATA
+    $sql = "SELECT * FROM server WHERE srv_name = '" . $wkey . "'"; # SQL to Read Server Rcv Row
+    if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug Show SQL Command
+    $KeyExist=False;                                                # Assume Key not Found in DB
+    if ($result=mysqli_query($con,$sql)) {                          # Execute SQL Select
+        if($result->num_rows >= 1) {                                # Number of Row Match Key
+          $row = mysqli_fetch_assoc($result);                       # Read the Associated row
+          $KeyExist=True;                                           # Key Does Exist in Database
+        }
+    }
+    if (! $KeyExist) {                                              # If Key was not found
+        $err_line = (__LINE__ -1) ;                                 # Error on line No.
+        $err_msg1 = "Server '" . $wkey . "' not found.";            # Row was not found Msg.
+        $err_msg2 = "\nAt line " .$err_line. " in " .basename(__FILE__); # Insert Filename 
+        sadm_alert ($err_msg1 . $err_msg2);                         # Display Msg. Box for User
+        echo "<script>location.replace('" . $BACKURL . "');</script>";  # Backup to Caller URL           
+    }
+
+    # DISPLAY PAGE HEADING
+    $title1="Delete System";
+    $title2="Delete '" . $row['srv_name'] . "." . $row['srv_domain'] . "' system";
+    display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
+
     # Start of Form - Display row data and press 'Delete' or 'Cancel' Button
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_srv_form ($con,$row,"Display");                             # Display No Change Allowed
     
     # Set the Submitted Flag On - We are done with the Form Data
     echo "<input type='hidden' value='1' name='submitted' />";          # hidden use On Nxt Page Exe
+    echo "\n<input type='hidden' value='".$BACKURL."' name='BACKURL'  />"; # Save Caller URL
  
     # Display Buttons (Delete/Cancel) at the bottom of the form
     echo "\n\n<div class='two_buttons'>";
