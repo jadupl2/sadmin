@@ -214,7 +214,7 @@ function Write_BackupExclude($server_name, $oldFileHash) {
 
 
 // ================================================================================================
-//                      DISPLAY SERVER SCHEDULE FOR OS UPDATE MODIFICATION
+//                      DISPLAY SERVER SCHEDULE FOR BACKUP
 // con   = Connector Object to Database
 // wrow  = Array containing table row keys/values
 // mode  = "Display" Will Only show row content - Can't modify any information
@@ -245,7 +245,7 @@ function display_backup_schedule($con,$wrow,$mode) {
 
 
 // ================================================================================================
-//                      DISPLAY SERVER SCHEDULE FOR OS UPDATE MODIFICATION
+//                      DISPLAY LEFT SIDE SERVER SCHEDULE FOR BACKUP
 // con   = Connector Object to Database
 // wrow  = Array containing table row keys/values
 // mode  = "Display" Will Only show row content - Can't modify any information
@@ -493,7 +493,7 @@ function show_backup_policy() {
 
 
 // ================================================================================================
-//                      DISPLAY SERVER SCHEDULE FOR OS UPDATE MODIFICATION
+//                      DISPLAY RIGHT SIDE SERVER SCHEDULE FOR BACKUP
 // con   = Connector Object to Database
 // wrow  = Array containing table row keys/values
 // mode  = "Display" Will Only show row content - Can't modify any information
@@ -641,9 +641,10 @@ if (isset($_POST['submitted'])) {
     # 2nd parameters reference the URL where this page was called.
     if ($DEBUG) { echo "<br>2nd Parameter Received is " . $back; }      # Under Debug Show 2nd Parm.
     if ((isset($_GET['back'])) and ($_GET['back'] != ""))  {            # If Value Rcv and not Blank
-       $BACKURL = $_GET['back'];                                        # Save 2nd Parameter Value
+       $BACKURL = $_GET['back'] ."?sel=" . $wkey ;                      # Save 2nd Parameter Value
     }else{
-       $BACKURL = "/crud/srv/sadm_server_main.php";                     # Where to go back after 
+       $BACKURL = $URL_MAIN . $wkey;                                    # Where to go back after 
+
     }
 
     # CHECK IF THE SERVER KEY RECEIVED EXIST IN THE DATABASE AND RETRIEVE THE ROW DATA
