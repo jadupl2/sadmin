@@ -27,7 +27,8 @@
 #   2018_02_02 - Jacques Duplessis
 #       V2.1 Added Column to specify if performance graph are to be displayed (Sporadic Server...)
 # 2018_10_01 v2.2 Remove Alert Group Field
-#@2018_12_15 v2.3 Add 'Darwin' as a choice for Operating System Type.
+# 2018_12_15 v2.3 Add 'Darwin' as a choice for Operating System Type.
+#@2018_08_18 v2.4 Reduce screen size to 40 for the install directory field
 # ==================================================================================================
  
 
@@ -36,7 +37,7 @@
 #======================================================//===========================
 #
 $DEBUG = False ;                                       // Debug Activated True/False
-$SVER  = "2.3" ;                                       // Current version number
+$SVER  = "2.4" ;                                       // Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';      // Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -302,13 +303,13 @@ function display_srv_form ($con,$wrow,$mode) {
     echo "\n<div class='double_input'>";                                # Class for Column Input
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
        echo "\n<input type='text' name='scr_sadmin_dir' readonly ";     # Set Name and Read Only
-       echo " maxlength='45' size='47' ";                               # Set Max. Length
+       echo " maxlength='45' size='40' ";                               # Set Max. Length
        echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_sadmin_dir']). "'/>"; # Show Current Value
     }else{
        echo "\n<input type='text' name='scr_sadmin_dir' ";              # Set Name & Col. is require
        echo " placeholder='SADMIN Directory' ";                         # Set Default
-       echo " maxlength='45' size='47' ";                               # Set Max. Length
+       echo " maxlength='45' size='40' ";                               # Set Max. Length
        echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_sadmin_dir']). "'/>"; # Show Current Value
     }
