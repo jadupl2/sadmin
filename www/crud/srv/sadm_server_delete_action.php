@@ -28,6 +28,7 @@
 # ==================================================================================================
 # ChangeLog
 #@2019_01_15 New: sadm_server_delete.php v2.1 Create server data archive before deleting it.
+#@2019_08_17 Update: v1.1 New Heading and return to Maintenance Server List
 #
 # ==================================================================================================
 #
@@ -44,7 +45,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.0" ;                                                        # Current version number
+$SVER  = "1.1" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -134,8 +135,12 @@ $CREATE_BUTTON = False ;                                                # Don't 
         echo "<script>location.replace('" . $URL_MAIN . "');</script>"; # Backup to Server List.
     }
     
+    # DISPLAY PAGE HEADING
+    $title1="System Deletion";                                          # Heading 1 Line
+    $title2="Last confirmation before deleting '" . $row['srv_name'] . "." . $row['srv_domain'] ;
+    display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
+
     # Start of Form
-    display_std_heading("NotHome","Final Confirmation before Delete Server","","",$SVER); 
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
      
     # Set the Submitted Flag On - We are done with the Form Data
