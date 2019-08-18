@@ -28,6 +28,7 @@
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 # 2019_01_11 Added: v2.1 Add Model and Serial No. in bubble while on server name.
 #@2019_08_17 Update: v2.2 New page heading and Logo of distribution inserted.
+#@2019_08_17 Fix: v2.3 Return to caller URL wasn't set properly.
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
@@ -60,7 +61,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG         = False ;                                                # Debug Activated True/False
-$SVER          = "2.2" ;                                                # Current version number
+$SVER          = "2.3" ;                                                # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_OSUPDATE  = '/crud/srv/sadm_server_osupdate.php';                  # Update Page URL
@@ -129,7 +130,7 @@ function display_data($con,$row) {
     echo "\n<tr>";
     
     # Server Name with Link to Server information page
-    echo "\n<td dt-center><a href='" . $URL_INFO . "?host=" . $row['srv_name'];   # Display Server Name
+    echo "\n<td dt-center><a href='" . $URL_MENU . "?sel=" . $row['srv_name'];   # Display Server Name
     echo "' data-toggle='tooltip' title='" . $row['srv_desc'] . " - ";
     echo $row['srv_ip'] . " - " . $row['srv_model'] . " - " . $row['srv_serial'] ;
     echo "'>" .$row['srv_name']. "</a></td>";
