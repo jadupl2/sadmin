@@ -59,32 +59,26 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
 
     $URL_HOME   = '/index.php';                                         # Site Home Page URL
     
-    echo "\n\n<center><h2>${TITLE1} " ."- v${WVER}". "</h2></center>";  # Display Title 1 & Ver. No.
-    echo "\n\n<center><h2>${TITLE2}</h2></center>";                     # Display Title 2
+    # SHOW HEADING LINE 1
+    echo "\n<div style='";
+    echo "text-align: center ; color: #271c1c; ";
+    echo "font-size: 1.8em; font-family: Verdana, sans-serif; ";
+    echo "font-weight: bold; '>"; 
+    echo "\n${TITLE1} " ."- v${WVER}";
+    echo "\n</div>";
 
-    // echo "\n<div style='float: right;'>" . date('l jS \of F Y, h:i:s A') . "</div>";  
-    // echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
-    
-    // # SECOND LINE - LEFT SIDE - DISPLAY LINK TO PREVIOUS PAGE OR TO HOME PAGE
-    // echo "\n<div style='float: left;'>";                                # Align Left Link Go Back
-    // if (strtoupper($BACK_URL) != "HOME") {                              # Parameter Recv. = home
-    //     echo "<a href='javascript:history.go(-1)'>Previous Page</a>";   # URL Go Back Previous Page
-    // }else{
-    //     echo "<a href='" . $URL_HOME . "'>Home Page</a>";               # URL to Go Back Home Page
-    // }
-    // echo "</div>"; 
-        
-    // # SECOND LINE - RIGHT SIDE - DISPLAY CREATE BUTTON AT THE FAR RIGHT, IF $CREATE_BUTTON IS TRUE
-    // if ($CREATE_BUTTON) {
-    //     echo "\n<div style='float: right;'>";                           # Div Position Create Button
-    //     echo "\n<a href='" . $CREATE_URL . "'>";                        # URL when Button Press
-    //     echo "\n<button type='button'>" .$CREATE_LABEL. "</button></a>";# Create Create Button
-    //     echo "\n</div>\n";                                              # End of Button Div
-    // }else{
-    //     echo "\n<div style='float: right;'>" . $RTITLE . "</div>";  
-    // }
-    // echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
-    // echo "\n<hr/>";                                                     # Print Horizontal Line
+    # SHOW HEADING LINE 2
+    if ($TITLE2 != "") {
+        echo "\n<div style='";
+        echo "text-align: center ; color: #271c1c; ";
+        echo "font-size: 1.8em; font-family: Verdana, sans-serif; ";
+        echo "font-weight: bold; '>"; 
+        echo "${TITLE2}" ;   
+        echo "\n</div>";
+    }        
+
+    # Space line for separation purpose
+    echo "\n<hr/>";                                                     # Print Horizontal Line
 }
 
 
