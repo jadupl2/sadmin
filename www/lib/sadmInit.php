@@ -24,9 +24,12 @@
 # 2019_01_11  Added: v3.3 Definitions of Backup List & Backup Exclude file.
 # 2019_02_11  Added: v3.4 Add $SADMIN/www to PHP Path
 #@2019_07_16  Update: Remove repeating error message when not connecting to Database.
+#@2019_08_16  Update: v3.5 Correct Typo for number of rear backup to keep
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
+    # Set SADMIN PHP Library Version NUmber
+    define("SADM_PHP_LIBVER","3.5");
 
     # Setting the HOSTNAME Variable
     list($HOSTNAME) = explode ('.', gethostname());                     # HOSTNAME without domain
@@ -182,7 +185,7 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_STORIX_NFS_TO_KEEP")     { define("SADM_STORIX_NFS_TO_KEEP"     , trim($fvalue));}
           if (trim($fname) == "SADM_REAR_NFS_SERVER")        { define("SADM_REAR_NFS_SERVER"        , trim($fvalue));}
           if (trim($fname) == "SADM_REAR_NFS_MOUNT_POINT")   { define("SADM_REAR_NFS_MOUNT_POINT"   , trim($fvalue));}
-          if (trim($fname) == "SADM_REAR_NFS_TO_KEEP")       { define("SADM_REAR_NFS_TO_KEEP"       , trim($fvalue));}
+          if (trim($fname) == "SADM_REAR_BACKUP_TO_KEEP")    { define("SADM_REAR_BACKUP_TO_KEEP"    , trim($fvalue));}
     }
     fclose($handle);
 } else {
