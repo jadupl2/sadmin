@@ -28,6 +28,7 @@
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
 #   2018_02_03 - Jacques Duplessis
 #       V2.1 Added Server Graph Display Option
+#@2019_08_17 Update: v2.2 Use new heading function, return to caller screen when exiting.
 # ==================================================================================================
 #
 #
@@ -35,6 +36,15 @@
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript</Head>
+
+?>
+ <style media="screen" type="text/css">
+.deux_boutons   { width : 70%;   margin: 1% auto;   } 
+.premier_bouton { width : 20%;  float : left;   margin-left : 25%;  text-align : right ; }
+.second_bouton  { width : 20%;  float : right;  margin-right: 25%;  text-align : left  ; }
+</style>
+<?php
+
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 
@@ -45,8 +55,9 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.1" ;                                                        # Current version number
-$URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
+$SVER  = "2.2" ;                                                        # Current version number
+#$URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
+$URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
 
@@ -92,9 +103,9 @@ $CREATE_BUTTON = False ;                                                # Don't 
             #$err_msg = "Server '" . $_POST['scr_name'] . "' updated"; # Advise user of success Msg
             #sadm_alert ($err_msg) ;                                     # Msg. Error Box for User
         }
-        
-        # Back to Server List Page
-        ?> <script> location.replace("/crud/srv/sadm_server_main.php"); </script><?php
+                
+        # Back to Calling Page
+        echo "<script>location.replace('" . $_POST['BACKURL'] . "');</script>";  # Backup to Caller URL
         exit;
     }
 
@@ -125,22 +136,31 @@ $CREATE_BUTTON = False ;                                                # Don't 
     }else{                                                              # If No Key Rcv or Blank
         $err_msg = "No Key Received - Please Advise" ;                  # Construct Error Msg.
         sadm_alert ($err_msg) ;                                         # Display Error Msg. Box
-        ?>
-        <script>location.replace("/crud/srv/sadm_server_main.php");</script>
-        <?php                                                           # Back 2 List Page
-        #echo "<script>location.replace('" . URL_MAIN . "');</script>";
-        exit ; 
+        exit ;
     }
 
-    display_std_heading("NotHome","Update Server","","",$SVER);         # Display Content Heading
+    # 2nd parameters reference the URL where this page was called.
+    if ($DEBUG) { echo "<br>2nd Parameter Received is " . $back; }      # Under Debug Show 2nd Parm.
+    if ((isset($_GET['back'])) and ($_GET['back'] != ""))  {            # If Value Rcv and not Blank
+        $BACKURL = $_GET['back'] ."?sel=" . $wkey ;                     # Save 2nd Parameter Value
+    }else{
+        $BACKURL = $URL_MAIN . $wkey;                                   # Where to go back after 
+    }
+
+    # DISPLAY PAGE HEADING
+    $title1="System Maintenance";                                       # Heading 1 Line
+    $title2="Update '" . $row['srv_name'] . "." . $row['srv_domain'] . "' static information";
+    display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
+
     echo "\n\n<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_srv_form($con,$row,"Update");                               # Display Form Default Value
     echo "\n<input type='hidden' value='1' name='submitted' />";        # hidden use On Nxt Page Exe
+    echo "\n<input type='hidden' value='".$BACKURL."' name='BACKURL'  />"; # Save Caller URL
     
-    # Display Buttons (Update/Cancel) at the bottom of the form
-    echo "\n\n<div class='two_buttons'>";
-    echo "\n<div class='first_button'><button type='submit'> Update </button></div>";
-    echo "\n<div class='second_button'><a href='" . $URL_MAIN . "'><button type='button'> Cancel ";
+    # DISPLAY BUTTONS (UPDATE/CANCEL) AT THE BOTTOM OF THE FORM
+    echo "\n\n<div class='deux_boutons'>";
+    echo "\n<div class='premier_bouton'><button type='submit'> Update </button></div>";
+    echo "\n<div class='second_bouton'><a href='" . $BACKURL . "'><button type='button'> Cancel ";
     echo "</button></a>\n</div>";
     echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
     echo "\n</div>\n\n";
