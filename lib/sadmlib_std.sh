@@ -109,6 +109,7 @@
 #@2019_07_14 Update: v3.09 Change History file format , correct some alert issues.
 #@2019_07_18 Update: v3.10 Repeat SysMon (not Script) Alert once a day if not solve the next day.
 #@2019_08_04 Update: v3.11 Minor change to alert message format
+#@2019_08_19 Update: v3.12 Added SADM_REAR_EXCLUDE_INIT Global Var. as default Rear Exclude List 
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -118,7 +119,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.11"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.12"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -188,6 +189,7 @@ SADM_BACKUP_CRONTAB="/etc/cron.d/sadm_backup"               ; export SADM_BACKUP
 SADM_BACKUP_LIST="$SADM_CFG_DIR/backup_list.txt"            ; export SADM_BACKUP_LIST
 SADM_BACKUP_LIST_INIT="$SADM_CFG_DIR/.backup_list.txt"      ; export SADM_BACKUP_LIST_INIT
 SADM_BACKUP_EXCLUDE="$SADM_CFG_DIR/backup_exclude.txt"      ; export SADM_BACKUP_EXCLUDE
+SADM_REAR_EXCLUDE_INIT="$SADM_CFG_DIR/.rear_exclude.txt"    ; export SADM_REAR_EXCLUDE_INIT
 SADM_BACKUP_EXCLUDE_INIT="$SADM_CFG_DIR/.backup_exclude.txt" ;export SADM_BACKUP_EXCLUDE_INIT
 SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                 ; export SADM_CFG_HIDDEN # Cfg file name
 SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"          ; export SADM_TMP_FILE1  # Temp File 1
