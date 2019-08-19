@@ -23,7 +23,7 @@
 # ==================================================================================================
 # ChangeLog
 #@2019_08_18 New: v1.0 Initial Beta version - Allow to define ReaR Backup schedule.
-#
+#@2019_08_19 Update: v1.1 Initial working version.
 # ==================================================================================================
 #
 #
@@ -38,21 +38,21 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     color           :   #f9f4be;   
     font-family     :   Verdana, Geneva, sans-serif;
     font-size       :   0.9em;
-    width           :   90%;
+    width           :   98%;
     margin          :   0 auto;
     text-align      :   left;
     border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
     border-color    :   #000000;             border-radius: 10px;
     line-height     :   1.7;    
 }
-.rear_left_side   { width : 50%;  float : left;   margin : 10px 0px 10px 0px;    }
+.rear_left_side   { width : 45%;  float : left;   margin : 10px 0px 10px 0px;    }
 .left_label         { float : left; width : 50%;    text-align: right; font-weight : bold; }
 .left_input         { margin-bottom : 5px;  margin-left : 50%;  background-color : #393a3c;
                       width : 50%; border-width: 0px;  border-style : solid;  border-color : #000000;
                       padding-left: 6px;
 }
 
-.rear_right_side  { width : 50%;  float : right;  margin : 10px auto;     }
+.rear_right_side  { width : 55%;  float : right;  margin : 10px auto;     }
 .right_label        { float : left; width : 85%;    font-weight : bold; }
 .right_input        { margin-bottom : 4px;  margin-right : 10px;     background-color:    #454c5e;
                       float : left;  padding-left : 5px;  padding-right : 5px;  padding-top : 5px;
@@ -96,45 +96,13 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.0" ;                                                        # Current version number
+$SVER  = "1.1" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
-$BLHASH = "" ;                                                          # Sha1 of Loaded Backup List
 $BEHASH = "" ;                                                          # Sha1 of Loaded Backup Excl
 
 
-
-#===================================================================================================
-# Load and Show Backup List
-#===================================================================================================
-#
-function Read_BackupList($wrow) {
-    $SADM_BACKUP_CFG_DIR  = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] . "/cfg";
-    $SADM_BACKUP_LIST     = $SADM_BACKUP_CFG_DIR . "/backup_list.txt";  # Actual Backup List Name
-    $SADM_BACKUP_LIST_TMP = $SADM_BACKUP_CFG_DIR . "/backup_list.tmp";  # Modified Backup List Name
-    
-    # Make Sure the SADMIN cfg directory exist.
-    if (! is_dir($SADM_BACKUP_CFG_DIR)) { mkdir($SADM_BACKUP_CFG_DIR, 0777, true); }
-    
-    # If the Backup list doesn't exist - Create it by using the backup list template.
-    if (! file_exists($SADM_BACKUP_LIST)) {                             # If Backup List don't exist
-        if (! copy(SADM_BACKUP_LIST_INIT,$SADM_BACKUP_LIST)) {          # Create it using template
-            echo "Error copying " . SADM_BACKUP_LIST_INIT . " to " . $SADM_BACKUP_LIST ;
-            return 0;                                                   # Normally return file hash
-        }
-    }
-    
-    # If modified version already exist (backup_list.tmp) then use it.
-    if (file_exists($SADM_BACKUP_LIST_TMP)) {                           # If Modified version exist
-        echo file_get_contents($SADM_BACKUP_LIST_TMP);                  # Display Modified Version
-        $fileHash = sha1_file($SADM_BACKUP_LIST_TMP);                   # Calc. Sha1 check Sum
-    }else{                                                              # If No Modified version
-        echo file_get_contents($SADM_BACKUP_LIST);                      # Display Actual Backup List
-        $fileHash = sha1_file($SADM_BACKUP_LIST);                       # Calc. Sha1 check Sum
-    }
-    return $fileHash;                                                   # Return sha1 of loaded file
-}
 
 
 
@@ -142,68 +110,53 @@ function Read_BackupList($wrow) {
 # Load and Show Backup Exclude List in textarea on page
 #===================================================================================================
 #
-function Read_BackupExclude($wrow) {
+function Read_RearExclude($wrow) {
     
-    $SADM_BACKUP_CFG_DIR  = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] . "/cfg";
-    $SADM_BACKUP_EXCLUDE     = $SADM_BACKUP_CFG_DIR . "/backup_exclude.txt"; # Actual Backup List
-    $SADM_BACKUP_EXCLUDE_TMP = $SADM_BACKUP_CFG_DIR . "/backup_exclude.tmp"; # Template Backup List
+    $SADM_BACKUP_CFG_DIR   = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] . "/cfg";
+    $SADM_REAR_EXCLUDE     = $SADM_BACKUP_CFG_DIR . "/rear_exclude.txt"; # Actual Rear Exclude List
+    $SADM_REAR_EXCLUDE_TMP = $SADM_BACKUP_CFG_DIR . "/rear_exclude.tmp"; # Temp Rear Exclude List
     
     # Make Sure the SADMIN cfg directory exist.
     if (! is_dir($SADM_BACKUP_CFG_DIR)) { mkdir($SADM_BACKUP_CFG_DIR, 0777, true); }
     
-    # If the Backup list doesn't exist - Create it by using the backup list template.
-    if (! file_exists($SADM_BACKUP_EXCLUDE)) {
-        if (! copy(SADM_BACKUP_EXCLUDE_INIT,$SADM_BACKUP_EXCLUDE)) {
-            echo "Error copying " . SADM_BACKUP_EXCLUDE_INIT . " to " . $SADM_BACKUP_EXCLUDE ;
+    # If the ReaR Exclude list doesn't exist, create one by using the ReaR exclude list template.
+    if (! file_exists($SADM_REAR_EXCLUDE)) {
+        if (! copy(SADM_REAR_EXCLUDE_INIT,$SADM_REAR_EXCLUDE)) {
+            echo "Error copying " . SADM_REAR_EXCLUDE_INIT . " to " . $SADM_REAR_EXCLUDE ;
         }
     }
     
-    # If modified version already exist (backup_list.tmp) then use it.
-    if (file_exists($SADM_BACKUP_EXCLUDE_TMP)) {                        # If Modified version exist
-        echo file_get_contents($SADM_BACKUP_EXCLUDE_TMP);               # Display Modified Version
-        $fileHash = sha1_file($SADM_BACKUP_EXCLUDE_TMP);                # Calc. Sha1 check Sum
+    # If modified version already exist (rear_exclude.tmp) then show it & Calculate File sha1sum
+    if (file_exists($SADM_REAR_EXCLUDE_TMP)) {                          # If Modified version exist
+        echo file_get_contents($SADM_REAR_EXCLUDE_TMP);                 # Display Modified Version
+        $fileHash = sha1_file($SADM_REAR_EXCLUDE_TMP);                  # Calc. Sha1 check Sum
     }else{                                                              # If No Modified version
-        echo file_get_contents($SADM_BACKUP_EXCLUDE);                   # Display Actual Backup List
-        $fileHash = sha1_file($SADM_BACKUP_EXCLUDE);                    # Calc. Sha1 check Sum
+        echo file_get_contents($SADM_REAR_EXCLUDE);                     # Display Actual Backup List
+        $fileHash = sha1_file($SADM_REAR_EXCLUDE);                      # Calc. Sha1 check Sum
     }
     return $fileHash;                                                   # Return sha1 of loaded file
 }
 
 
 
-#===================================================================================================
-# Loaded file Hash Versus now - Write modified version in backup_list.tmp or delete it if untouch.
-#===================================================================================================
-function Write_BackupList($server_name, $oldFileHash) {
-    $SADM_BACKUP_LIST = SADM_WWW_DAT_DIR . "/" . $server_name . "/cfg/backup_list.tmp";
-    $newFileHash = sha1($_POST["backuplist"]);                          # Calc. Edited File Hash
-    if ($newFileHash != $oldFileHash) {                                 # Sha1 Before and After
-        $fp = fopen($SADM_BACKUP_LIST, "w");                            # File Modified 
-        $data = $_POST["backuplist"];                                   # Put TextArea in data
-        fwrite($fp, $data);                                             # Write Data
-        fclose($fp);                                                    # Close backup_list.tmp
-    }else{
-        if (file_exists($SADM_BACKUP_LIST)) {                           # If Modified version exist
-            unlink($SADM_BACKUP_LIST);                                  # Not Modifed then Delete it
-        }
-    }
-}
-
 
 #===================================================================================================
 # Loaded file Hash Versus now - Write modified version in backup_exclude.tmp or delete it if untouch
 #===================================================================================================
-function Write_BackupExclude($server_name, $oldFileHash) {
-    $SADM_BACKUP_EXCLUDE = SADM_WWW_DAT_DIR . "/" . $server_name . "/cfg/backup_exclude.tmp";
-    $newFileHash = sha1($_POST["backupexclude"]);                       # Calc. Edited File Hash
-    if ($newFileHash != $oldFileHash) {                                 # Sha1 Before and After
-        $fp = fopen($SADM_BACKUP_EXCLUDE, "w");                         # Create backup_exclude.tmp
-        $data = $_POST["backupexclude"];                                # Put TextArea in data
+function Write_RearExclude($server_name, $oldFileHash) {
+    
+    $SADM_REAR_EXCLUDE = SADM_WWW_DAT_DIR . "/" . $server_name . "/cfg/rear_exclude.tmp";
+    $newFileHash = sha1($_POST["rearexclude"]);                         # Calc. Edited File Hash
+
+    # Check new sha1 versus old one, if changed create the rear exclude list, if not remove file.
+    if ($newFileHash != $oldFileHash) {                                 # Sha1 Before & After Diff.
+        $fp = fopen($SADM_REAR_EXCLUDE, "w");                           # Create backup_exclude.tmp
+        $data = $_POST["rearexclude"];                                  # Put TextArea in data
         fwrite($fp, $data);                                             # Write data to disk
         fclose($fp);                                                    # Close backup_exclude.tmp
     }else{
-        if (file_exists($SADM_BACKUP_EXCLUDE)) {                        # If Modified version exist
-            unlink($SADM_BACKUP_EXCLUDE);                               # Not Modified = Delete it
+        if (file_exists($SADM_REAR_EXCLUDE)) {                          # If Modified version exist
+            unlink($SADM_REAR_EXCLUDE);                                 # Not Modified = Delete it
         }
     }
 }
@@ -217,8 +170,8 @@ function Write_BackupExclude($server_name, $oldFileHash) {
 //       = "Create"  Will display default values and user can modify all fields, except the row key
 //       = "Update"  Will display row content    and user can modify all fields, except the row key
 // ================================================================================================
-function display_backup_schedule($con,$wrow,$mode) {
-    global $BLHASH, $BEHASH ;
+function display_rear_schedule($con,$wrow,$mode) {
+    global $BEHASH ;
     
     # Server ReaR Schedule Page Info Div
     echo "\n\n<div class='rear_page'>\n                     <!-- Start rear_page Div -->";
@@ -448,17 +401,17 @@ function show_rear_policy() {
     
     # Script used to run the Rear backup
     echo "\n<br>&nbsp;&nbsp;&nbsp;  - ";
-    echo "The create a Rear backup, the script " . SADM_BIN_DIR . "/sadm_rear_backup.sh will be run.";
+    echo "To create a Rear backup, the script " . SADM_BIN_DIR . "/sadm_rear_backup.sh will be run.";
     echo "\n<br></div>                                          <!-- End of rear_retension Div -->";
 
     # End Of Backup Policy
     echo "\n<br></div>                                          <!-- End of rear_policy Div -->";
-}
+} 
 
 
 
 // ================================================================================================
-//                      DISPLAY SERVER SCHEDULE FOR OS UPDATE MODIFICATION
+//                      DISPLAY REAR SERVER SCHEDULE MODIFICATION
 // con   = Connector Object to Database
 // wrow  = Array containing table row keys/values
 // mode  = "Display" Will Only show row content - Can't modify any information
@@ -466,23 +419,15 @@ function show_rear_policy() {
 //       = "Update"  Will display row content    and user can modify all fields, except the row key
 // ================================================================================================
 function display_right_side($con,$wrow,$mode) {
-    global $BLHASH, $BEHASH ;
+    global $BEHASH ;
     
     $smode = strtoupper($mode);                                         # Make Sure Mode is Upcase
     
-    # Files and Directories to Backup
-    echo "\n\n<div class='right_label'>Backup List (Files & Dir. to Backup)</div>";
-    echo "\n<div class='right_input'>";
-    echo "  <textarea rows='12' cols='50' name='backuplist' form='backup'>";
-    $BLHASH = Read_BackupList($wrow);
-    echo "</textarea>";
-    echo "\n</div>";
-    
     # Files and Directories to Exclude from Backup
-    echo "\n\n<div class='right_label'>Backup Exclude List (Files & Dir.)</div>";
+    echo "\n\n<div class='right_label'>ReaR variables use to exclude data from backup</div>";
     echo "\n<div class='right_input'>";
-    echo "  <textarea rows='12' cols='50' name='backupexclude' form='backup'>";
-    $BEHASH = Read_BackupExclude($wrow);
+    echo "  <textarea rows='24' cols='70' name='rearexclude' form='backup'>";
+    $BEHASH = Read_RearExclude($wrow);
     echo "</textarea>";
     echo "\n</div>";
 }
@@ -577,11 +522,10 @@ if (isset($_POST['submitted'])) {
         }
         
         # Write Back the Backup List and Backup Exclude file.
-        Write_BackupList($_POST['server_key'],$_POST['blhash']);        # Write Back Backup List
-        Write_BackupExclude($_POST['server_key'],$_POST['behash']);     # Write Back Exclude List
+        Write_RearExclude($_POST['server_key'],$_POST['behash']);       # Write Back Exclude List
         
         # Back to Calling Page
-        echo "<script>location.replace('" . $_POST['BACKURL'] . "');</script>";  # Backup to Caller URL
+        echo "<script>location.replace('" .$_POST['BACKURL']. "');</script>"; 
         exit;
     }
     
@@ -589,7 +533,7 @@ if (isset($_POST['submitted'])) {
     
     
     # ==================================================================================================
-    # INITIAL PAGE EXECUTION - DISPLAY FORM WITH CORRESPONDING ROW DATA
+    #               INITIAL PAGE EXECUTION - DISPLAY FORM WITH CORRESPONDING ROW DATA
     # ==================================================================================================
     
     # 1st parameter contains the server name 
@@ -640,14 +584,13 @@ if (isset($_POST['submitted'])) {
     
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
     echo "\n\n<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' id='backup' method='POST'>";
-    display_backup_schedule($con,$row,"Update");                        # Display Form Default Value
+    display_rear_schedule($con,$row,"Update");                        # Display Form Default Value
         
     # Set the Submitted Flag On - We are done with the Form Data
     echo "\n<input type='hidden' value='1' name='submitted' />";        # hidden use On Nxt Page Exe
     echo "\n<input type='hidden' value='".$row['srv_name']  ."' name='server_key' />"; # save srvkey
     echo "\n<input type='hidden' value='".$row['srv_ostype']."' name='server_os'  />"; # save O/S
     echo "\n<input type='hidden' value='".$BACKURL."' name='BACKURL'  />"; # Save Caller URL
-    echo "\n<input type='hidden' value='".$BLHASH."' name='blhash' />"; # [B]ackup [L]ist Hash
     echo "\n<input type='hidden' value='".$BEHASH."' name='behash' />"; # ---[B]ackup [E]xclude Hash
     
     # DISPLAY BUTTONS (UPDATE/CANCEL) AT THE BOTTOM OF THE FORM
