@@ -110,6 +110,7 @@
 #@2019_07_18 Update: v3.10 Repeat SysMon (not Script) Alert once a day if not solve the next day.
 #@2019_08_04 Update: v3.11 Minor change to alert message format
 #@2019_08_19 Update: v3.12 Added SADM_REAR_EXCLUDE_INIT Global Var. as default Rear Exclude List 
+#@2019_08_19 Update: v3.13 Added Global Var. SADM_REAR_NEWCRON and SADM_REAR_CRONTAB file location
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -119,7 +120,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.12"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.13"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -186,6 +187,8 @@ SADM_CRON_FILE="$SADM_CFG_DIR/.sadm_osupdate"               ; export SADM_CRON_F
 SADM_CRONTAB="/etc/cron.d/sadm_osupdate"                    ; export SADM_CRONTAB    # Final crontab
 SADM_BACKUP_NEWCRON="$SADM_CFG_DIR/.sadm_backup"            ; export SADM_BACKUP_NEWCRON # Tmp Cron
 SADM_BACKUP_CRONTAB="/etc/cron.d/sadm_backup"               ; export SADM_BACKUP_CRONTAB # Act Cron
+SADM_REAR_NEWCRON="$SADM_CFG_DIR/.sadm_rear_backup"         ; export SADM_REAR_NEWCRON # Tmp Cron
+SADM_REAR_CRONTAB="/etc/cron.d/sadm_rear_backup"            ; export SADM_REAR_CRONTAB # Real Cron
 SADM_BACKUP_LIST="$SADM_CFG_DIR/backup_list.txt"            ; export SADM_BACKUP_LIST
 SADM_BACKUP_LIST_INIT="$SADM_CFG_DIR/.backup_list.txt"      ; export SADM_BACKUP_LIST_INIT
 SADM_BACKUP_EXCLUDE="$SADM_CFG_DIR/backup_exclude.txt"      ; export SADM_BACKUP_EXCLUDE
