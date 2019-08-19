@@ -27,7 +27,7 @@
 # 2019_01_18 Added: v1.3 Hash of Backup List & Exclude list to check if were modified.
 # 2019_01_22 Added: v1.4 Add Dark Theme
 #@2019_08_14 Update: v1.5 Redesign page,show one line schedule,show backup policies, fit Ipad screen.
-#
+#@2019_08_19 Update: v1.6 Some typo error and show 'Backup isn't activated' when no schedule define.
 # ==================================================================================================
 #
 #
@@ -150,7 +150,7 @@ function Read_BackupExclude($wrow) {
     
     $SADM_BACKUP_CFG_DIR  = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] . "/cfg";
     $SADM_BACKUP_EXCLUDE     = $SADM_BACKUP_CFG_DIR . "/backup_exclude.txt"; # Actual Backup List
-    $SADM_BACKUP_EXCLUDE_TMP = $SADM_BACKUP_CFG_DIR . "/backup_exclude.tmp"; # Template Backup List
+    $SADM_BACKUP_EXCLUDE_TMP = $SADM_BACKUP_CFG_DIR . "/backup_exclude.tmp"; # Temp. Backup List
     
     # Make Sure the SADMIN cfg directory exist.
     if (! is_dir($SADM_BACKUP_CFG_DIR)) { mkdir($SADM_BACKUP_CFG_DIR, 0777, true); }
@@ -256,7 +256,7 @@ function display_left_side($con,$wrow,$mode) {
     $smode = strtoupper($mode);                                         # Make Sure Mode is Upcase
     
     # WANT TO SCHEDULE A BACKUP REGULARLY (Yes/No) ?
-    echo "\n\n<div class='left_label'>Backup Schedule</div>";
+    echo "\n\n<div class='left_label'>Activate Backup</div>";
     echo "\n<div class='left_input'>";
     if ($mode == 'C') { $wrow['srv_backup'] = False ; }             # Default 
     switch ($mode) {
@@ -665,9 +665,13 @@ if (isset($_POST['submitted'])) {
     
     # DISPLAY SCREEN HEADING    
     $title1="Backup schedule of '" . $row['srv_name'] . "." . $row['srv_domain'] . "'";
-    list ($title2, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_backup_dom'], 
+    if ($wrow['srv_backup'] == True) {
+        list ($title2, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_backup_dom'], 
         $row['srv_backup_month'],$row['srv_backup_dow'], 
         $row['srv_backup_hour'], $row['srv_backup_minute']);
+    }else{
+        $title2="Backup isn't activated";
+    }
     display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
     
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
