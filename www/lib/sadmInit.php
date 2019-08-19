@@ -25,11 +25,12 @@
 # 2019_02_11  Added: v3.4 Add $SADMIN/www to PHP Path
 #@2019_07_16  Update: Remove repeating error message when not connecting to Database.
 #@2019_08_16  Update: v3.5 Correct Typo for number of rear backup to keep
+#@2019_08_19 Update: v3.6 Added Global Var. SADM_REAR_EXCLUDE_INIT for Rear Initial Options file.
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
     # Set SADMIN PHP Library Version NUmber
-    define("SADM_PHP_LIBVER","3.5");
+    define("SADM_PHP_LIBVER","3.6");
 
     # Setting the HOSTNAME Variable
     list($HOSTNAME) = explode ('.', gethostname());                     # HOSTNAME without domain
@@ -106,14 +107,13 @@ define("SADM_WWW_NET_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/net");    # Web ne
 
 # SADMIN FILES DEFINITION
 define("SADM_CFG_FILE"            , SADM_CFG_DIR     . "/sadmin.cfg");          # Config File
-#define("SADM_BACKUP_LIST"         , SADM_CFG_DIR     . "/backup_list.txt");     # BackupList File
 define("SADM_BACKUP_LIST_INIT"    , SADM_CFG_DIR     . "/.backup_list.txt");    # BackupList Init
-#define("SADM_BACKUP_EXCLUDE"      , SADM_CFG_DIR     . "/backup_exclude.txt");  # Backup Exclude File
 define("SADM_BACKUP_EXCLUDE_INIT" , SADM_CFG_DIR     . "/.backup_exclude.txt"); # Backup Exclude Init
+define("SADM_REAR_EXCLUDE_INIT"   , SADM_CFG_DIR     . "/.rear_exclude.txt");   # ReaR Exclude Init
 define("SADM_ALERT_FILE"          , SADM_CFG_DIR     . "/alert_group.cfg");     # Alert Grp File
 define("SADM_DBPASS_FILE"         , SADM_CFG_DIR     . "/.dbpass") ;            # Name Db Usr Pwd
 define("SADM_REL_FILE"            , SADM_CFG_DIR     . "/.release") ;           # Name Release File
-define("SADM_CRON_FILE"           , SADM_WWW_LIB_DIR . "/.crontab.txt");       # SADM Crontab File
+define("SADM_CRON_FILE"           , SADM_WWW_LIB_DIR . "/.crontab.txt");        # SADM Crontab File
 define("SADM_WWW_TMP_FILE1"       , SADM_WWW_TMP_DIR . "www_tmpfile1_" . getmypid() ); # SADM Temp File1
 define("SADM_WWW_TMP_FILE2"       , SADM_WWW_TMP_DIR . "www_tmpfile2_" . getmypid() ); # SADM Temp File1
 define("SADM_WWW_TMP_FILE3"       , SADM_WWW_TMP_DIR . "www_tmpfile3_" . getmypid() ); # SADM Temp File1
