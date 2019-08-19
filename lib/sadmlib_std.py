@@ -46,6 +46,7 @@
 #@2019_06_07 Update: v3.03 Create/Update the rch file using the new format (with alarm type).
 #@2019_06_19 Update: v3.04 Trap and show error when can't connect to Database, instead of crashing.
 #@2019_07_23 Update: v3.05 Remove utilization of history sequence number file.
+#@2018_08_19 Update: v3.06 Added rear_exclude_init Global Var. as default Rear Exclude List 
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -117,7 +118,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.05"                                # This Library Version
+        self.libver             = "3.06"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -191,6 +192,7 @@ class sadmtools():
         self.backup_list_init   = self.cfg_dir + '/.backup_list.txt'    # Initial File/Dir. 2 Backup
         self.backup_exclude     = self.cfg_dir + '/backup_exclude.txt'  # Exclude File/Dir 2 Exclude
         self.backup_exclude_init= self.cfg_dir + '/.backup_exclude.txt' # Initial File/Dir 2 Exclude
+        self.rear_exclude_init  = self.cfg_dir + '/.rear_exclude.txt'   # Rear Init exclude List
         self.rel_file           = self.cfg_dir + '/.release'            # SADMIN Release Version No.
         self.dbpass_file        = self.cfg_dir + '/.dbpass'             # SADMIN DB User/Pwd file
         self.pid_file           = "%s/%s.pid" % (self.tmp_dir, self.inst) # Process ID File
