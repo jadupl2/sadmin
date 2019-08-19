@@ -40,6 +40,7 @@
 #@2019_04_07 Update: v3.4 Don't show Database user name if run on client.
 #@2019_04_25 Update: v3.5 Add Alert_Repeat, Textbelt API Key and URL Variable in Output
 #@2019_05_17 Update: v3.6 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
+#@2019_08_19 update: v3.7 Remove printing of st.alert_seq (not used anymore)
 #===================================================================================================
 #
 try :
@@ -86,7 +87,7 @@ def setup_sadmin():
     st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
-    st.ver              = "3.6"                 # Current Script Version
+    st.ver              = "3.7"                 # Current Script Version
     st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
     st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
     st.log_header       = False                 # Show/Generate Header in script log (.log)
@@ -568,11 +569,6 @@ def print_file_variable(st):
     pexample="st.alert_hini"                                            # Name of Variable
     pdesc="Alert - History Initial File"                                # Variable Description
     presult=st.alert_hini                                               # Actual Content of Variable
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
-
-    pexample="st.alert_seq"                                             # Name of Variable
-    pdesc="Alert - Reference Counter"                                   # Variable Description
-    presult=st.alert_seq                                                # Actual Content of Variable
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     pexample="st.tmp_file1"                                             # Variable Name
