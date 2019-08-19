@@ -109,6 +109,7 @@ cfg/*
 !cfg/.versum
 !cfg/.backup_list.txt
 !cfg/.backup_exclude.txt
+!cfg/.rear_exclude.txt
 !cfg/.sadmin.service
 !cfg/.sadmin.rc
 
