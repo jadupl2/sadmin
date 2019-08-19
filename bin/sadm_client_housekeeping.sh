@@ -42,6 +42,7 @@
 # 2019_06_03 Update: v1.30 Include logic to convert RCH file format to the new one, if not done.
 #@2019_07_14 Update: v1.31 Add creation of Directory /preserve/mnt if it doesn't exist (Mac Only)
 #@2019_07_23 Update: v1.32 Remove utilization of history sequence number file.
+#@2019_08_19 Update: v1.33 Check /etc/cron.d/sadm_rear_backup permission & remove /etc/cron.d/rear
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -90,7 +91,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='1.32'                              # Your Current Script Version
+    export SADM_VER='1.33'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -575,6 +576,22 @@ file_housekeeping()
              lsline=`ls -l $afile`
              sadm_writelog "$lsline"
     fi
+
+    # Make sure crontab for Rear Backup have proper permission and owner
+    afile="/etc/cron.d/sadm_rear_backup"
+    if [ -f "$afile" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure crontab for ReaR backup have proper permission and owner"
+             sadm_writelog "chmod 0644 $afile"
+             chmod 0644 $afile
+             sadm_writelog "chown root:root $afile"
+             chown root:root $afile
+             lsline=`ls -l $afile`
+             sadm_writelog "$lsline"
+    fi
+
+    # Remove default crontab job - We want to run the ReaR Backup from the sadm_rear_backup crontab.
+    if [ -r /etc/cron.d/rear ] ; then rm -f /etc/cron.d/rear >/dev/null 2>&1; fi
 
     # Set Owner and Permission for readme.md file
     if [ -f ${SADM_BASE_DIR}/readme.md ]
