@@ -111,6 +111,7 @@
 #@2019_08_04 Update: v3.11 Minor change to alert message format
 #@2019_08_19 Update: v3.12 Added SADM_REAR_EXCLUDE_INIT Global Var. as default Rear Exclude List 
 #@2019_08_19 Update: v3.13 Added Global Var. SADM_REAR_NEWCRON and SADM_REAR_CRONTAB file location
+#@2019_08_23 Update: v3.14 Create all necessary dir. in ${SADMIN}/www for the git pull to work
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -120,7 +121,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.13"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.14"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -1780,54 +1781,55 @@ sadm_start() {
         then chmod 0774 $SADM_SYS_SHUTDOWN ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_SHUTDOWN
     fi
 
+    # ($SADMIN/dat/net) If Network/Subnet Info Directory doesn't exist, create it.
+    [ ! -d "$SADM_NET_DIR" ] && mkdir -p $SADM_NET_DIR
+    if [ $(id -u) -eq 0 ]
+        then chmod 0775 $SADM_NET_DIR
+             chown ${SADM_USER}:${SADM_GROUP} $SADM_NET_DIR
+    fi
+    # ($SADMIN/dat/dbb) If Database Backup Directory doesn't exist, create it.
+    [ ! -d "$SADM_DBB_DIR" ] && mkdir -p $SADM_DBB_DIR
+    if [ $(id -u) -eq 0 ]
+       then chmod 0775 $SADM_DBB_DIR
+            chown ${SADM_USER}:${SADM_GROUP} $SADM_DBB_DIR
+    fi
+    # $SADMIN/www Dir.
+    [ ! -d "$SADM_WWW_DIR" ] && mkdir -p $SADM_WWW_DIR
+    if [ $(id -u) -eq 0 ]
+       then chmod 0775 $SADM_WWW_DIR
+            chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR
+    fi
+    # $SADMIN/www/dat Dir.
+    [ ! -d "$SADM_WWW_DAT_DIR" ] && mkdir -p $SADM_WWW_DAT_DIR
+    if [ $(id -u) -eq 0 ]
+       then chmod 0775 $SADM_WWW_DAT_DIR
+            chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR
+    fi
+    # $SADMIN/www/lib Dir.
+    [ ! -d "$SADM_WWW_LIB_DIR" ] && mkdir -p $SADM_WWW_LIB_DIR
+    if [ $(id -u) -eq 0 ]
+       then chmod 0775 $SADM_WWW_LIB_DIR
+            chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
+    fi
+    # $SADMIN/www/images Dir.
+    [ ! -d "$SADM_WWW_IMG_DIR" ] && mkdir -p $SADM_WWW_IMG_DIR
+    if [ $(id -u) -eq 0 ]
+       then chmod 0775 $SADM_WWW_IMG_DIR
+            chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR
+    fi
+    # $SADMIN/www/tmp Dir.
+    [ ! -d "$SADM_WWW_TMP_DIR" ] && mkdir -p $SADM_WWW_TMP_DIR
+    if [ $(id -u) -eq 0 ]
+       then chmod 0775 $SADM_WWW_TMP_DIR
+            chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR
+    fi
 
-    # Check Directories that are present ONLY ON SADMIN SERVER
+
+    # Check Files that are present ONLY ON SADMIN SERVER
+    # Alert Group File ($SADMIN/cfg/alert_group.cfg) MUST be present.
+    # If it doesn't exist create it from initial file ($SADMIN/cfg/.alert_group.cfg)
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-        then # ($SADMIN/dat/net) If Network/Subnet Info Directory doesn't exist, create it.
-             [ ! -d "$SADM_NET_DIR" ] && mkdir -p $SADM_NET_DIR
-             if [ $(id -u) -eq 0 ]
-                then chmod 0775 $SADM_NET_DIR
-                     chown ${SADM_USER}:${SADM_GROUP} $SADM_NET_DIR
-             fi
-             # ($SADMIN/dat/dbb) If Database Backup Directory doesn't exist, create it.
-             [ ! -d "$SADM_DBB_DIR" ] && mkdir -p $SADM_DBB_DIR
-             if [ $(id -u) -eq 0 ]
-                then chmod 0775 $SADM_DBB_DIR
-                     chown ${SADM_USER}:${SADM_GROUP} $SADM_DBB_DIR
-             fi
-             # $SADMIN/www Dir.
-             [ ! -d "$SADM_WWW_DIR" ] && mkdir -p $SADM_WWW_DIR
-             if [ $(id -u) -eq 0 ]
-                then chmod 0775 $SADM_WWW_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR
-             fi
-             # $SADMIN/www/dat Dir.
-             [ ! -d "$SADM_WWW_DAT_DIR" ] && mkdir -p $SADM_WWW_DAT_DIR
-             if [ $(id -u) -eq 0 ]
-                then chmod 0775 $SADM_WWW_DAT_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR
-             fi
-             # $SADMIN/www/lib Dir.
-             [ ! -d "$SADM_WWW_LIB_DIR" ] && mkdir -p $SADM_WWW_LIB_DIR
-             if [ $(id -u) -eq 0 ]
-                then chmod 0775 $SADM_WWW_LIB_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
-             fi
-             # $SADMIN/www/images Dir.
-             [ ! -d "$SADM_WWW_IMG_DIR" ] && mkdir -p $SADM_WWW_IMG_DIR
-             if [ $(id -u) -eq 0 ]
-                then chmod 0775 $SADM_WWW_IMG_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR
-             fi
-             # $SADMIN/www/tmp Dir.
-             [ ! -d "$SADM_WWW_TMP_DIR" ] && mkdir -p $SADM_WWW_TMP_DIR
-             if [ $(id -u) -eq 0 ]
-                then chmod 0775 $SADM_WWW_TMP_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR
-             fi
-            # Alert Group File ($SADMIN/cfg/alert_group.cfg) MUST be present.
-            # If it doesn't exist create it from initial file ($SADMIN/cfg/.alert_group.cfg)
-            if [ ! -r "$SADM_ALERT_FILE" ]                              # If AlertGrp not Exist
+        then if [ ! -r "$SADM_ALERT_FILE" ]                              # If AlertGrp not Exist
                 then if [ ! -r "$SADM_ALERT_INIT" ]                     # If AlertInit File not Fnd
                        then sadm_writelog "********************************************************"
                             sadm_writelog "SADMIN Alert Group file not found - $SADM_ALERT_FILE "
