@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Jan 07, 2019 at 11:19 AM
+-- Generation Time: Aug 24, 2019 at 11:43 AM
 -- Server version: 5.5.60-MariaDB
 -- PHP Version: 5.4.16
 
@@ -87,13 +87,21 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_maint_date_end` datetime NOT NULL COMMENT 'End date/Time of Maintenance Mode',
   `srv_sadmin_dir` varchar(45) COLLATE utf8_unicode_ci NOT NULL DEFAULT '/opt/sadmin' COMMENT 'SADMIN Root Dir. on Client',
   `srv_ssh_port` int(2) NOT NULL DEFAULT '22' COMMENT 'SSH Port to access server',
-  `ssh_sudo_user` varchar(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'sadmin' COMMENT 'ssh sudo user to server'
-) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
+  `ssh_sudo_user` varchar(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'sadmin' COMMENT 'ssh sudo user to server',
+  `srv_img_backup` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Execute Image Backup 0=No 1+Yes',
+  `srv_img_month` varchar(13) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNN' COMMENT 'Image Backup Backup Month',
+  `srv_img_dom` varchar(32) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN' COMMENT 'Image Backup Day of the month',
+  `srv_img_dow` varchar(8) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNN' COMMENT 'Image Backup Day of the Week',
+  `srv_img_hour` smallint(6) NOT NULL DEFAULT '4' COMMENT 'Image Backup Start Hour',
+  `srv_img_minute` smallint(6) NOT NULL DEFAULT '0' COMMENT 'Image Backup Start Minute',
+  `srv_uptime` varchar(20) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Uptime'
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
 
 
 --
 -- Table structure for table `server_category`
 --
+
 DROP TABLE IF EXISTS `server_category`;
 CREATE TABLE IF NOT EXISTS `server_category` (
   `cat_id` int(11) NOT NULL COMMENT 'Category ID',
@@ -109,11 +117,11 @@ CREATE TABLE IF NOT EXISTS `server_category` (
 --
 
 INSERT INTO `server_category` (`cat_id`, `cat_code`, `cat_desc`, `cat_active`, `cat_date`, `cat_default`) VALUES
-(2, 'Legacy', 'Legacy Unsupported Server', 1, '2017-11-07 05:00:00', 0),
-(3, 'Dev', 'Development Environment', 1, '2017-11-07 05:00:00', 1),
-(5, 'Poc', 'Proof Of Concept env.', 1, '2017-11-07 05:00:00', 0),
+(2, 'Legacy', 'Legacy Unsupported Server', 1, '2019-01-21 16:36:23', 0),
+(3, 'Dev', 'Development Environment', 1, '2019-08-17 15:01:47', 1),
+(5, 'Poc', 'Proof Of Concept env.', 1, '2019-01-21 16:24:25', 0),
 (6, 'Prod', 'Production Environment', 1, '2017-11-07 05:00:00', 0),
-(11, 'Temp', 'Temporary Server', 1, '2017-12-06 16:23:26', 0);
+(11, 'Temporary', 'Temporary Server', 1, '2017-12-06 16:23:26', 0);
 
 -- --------------------------------------------------------
 
@@ -139,8 +147,8 @@ INSERT INTO `server_group` (`grp_id`, `grp_code`, `grp_desc`, `grp_active`, `grp
 (2, 'Cluster', 'Clustered Server', 1, '2017-11-22 16:55:50', 0),
 (3, 'Service', 'Infrastructure Service', 1, '2017-11-07 05:00:00', 0),
 (4, 'Retired', 'Server not in use', 1, '2017-11-07 05:00:00', 0),
-(5, 'Raspberry', 'Raspberry Pi', 1, '2017-11-07 05:00:00', 0),
-(6, 'Regular', 'Normal App. Server', 1, '2017-11-23 17:33:43', 1),
+(5, 'Raspberry', 'Raspberry Pi', 1, '2019-03-17 18:38:24', 0),
+(6, 'Regular', 'Normal App. Server', 1, '2019-01-21 16:36:43', 1),
 (7, 'Temporary', 'Temporaly in service', 1, '2017-11-07 05:00:00', 0),
 (8, 'Laptop', 'Linux Laptop', 1, '2017-11-07 05:00:00', 0);
 
@@ -161,6 +169,7 @@ CREATE TABLE IF NOT EXISTS `server_network` (
   `net_date_ping` datetime NOT NULL COMMENT 'Last Ping Respond Date',
   `net_date_update` datetime NOT NULL COMMENT 'Date Last Change'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 
 --
 -- Indexes for table `server`
@@ -198,7 +207,7 @@ ALTER TABLE `server_network`
 -- AUTO_INCREMENT for table `server`
 --
 ALTER TABLE `server`
-  MODIFY `srv_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server ID',AUTO_INCREMENT=38;
+  MODIFY `srv_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server ID',AUTO_INCREMENT=42;
 --
 -- AUTO_INCREMENT for table `server_category`
 --
@@ -209,6 +218,8 @@ ALTER TABLE `server_category`
 --
 ALTER TABLE `server_group`
   MODIFY `grp_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server Group ID',AUTO_INCREMENT=9;
+
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
