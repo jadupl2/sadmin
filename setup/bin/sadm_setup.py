@@ -64,6 +64,7 @@
 #@2019_06_21 Update: v3.27 Ask user 'sadmin' & 'squery' database password until it's valid.
 #@2019_06_25 Update: v3.28 Modification of the text displayed at the end of installation.
 #@2019_07_04 Update: v3.29 Crontab client and Server definition revised for Aix and Linux.
+#@2019_08_25 Update: v3.30 On Client setup Web USer and Group in sadmin.cfg to sadmin user & group.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -80,7 +81,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.29"                                            # Setup Version Number
+sver                = "3.30"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -2249,6 +2250,11 @@ def mainflow(sroot):
     # Go and Ask Setup Question to user 
     # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, sadmin User and Group).
     (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype) # Ask Config questions
+
+    # On Client Apache web server is not installed
+    # But we need to set the WebUser and the WebGroup to some default value (SADMIN user and Group)
+    update_sadmin_cfg(sroot,"SADM_WWW_USER",uuser,False)                # Update Value in sadmin.cfg
+    update_sadmin_cfg(sroot,"SADM_WWW_GROUP",ugroup,False)              # Update Value in sadmin.cfg
 
     # Check and if needed install missing packages require.
     satisfy_requirement('C',sroot,packtype,logfile,sosname,sosver,sosbits) # Chk/Install Client Req.
