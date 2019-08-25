@@ -32,7 +32,7 @@
 # 2019_06_07 Update: v1.13 Updated to adapt to the new field (alarm type) in RCH file.
 # 2019_06_11 Update: v1.14 Change screen & email message when an invalid '.rch' format is encountered.
 #@2019_08_13 Update: v1.15 Fix bug when using -m option (Email report), Error not on top of report.
-#@2019_08_25 Update: v1.16 Put running scripts and scripts with error on top of report.
+#@2019_08_25 Update: v1.16 Put running scripts and scripts with error on top of email report.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
