@@ -32,8 +32,9 @@
 # 2018_09_16 v2.4 Add Alert Group in RCH Array
 # 2018_09_22 v2.5 Failed Script counter was wrong
 # 2019_01_05 Improvement: v2.6 Add SideBar link to view all servers CPU performance on one page.
-#@2019_06_07 Update: v2.7 Updated to deal with the new format of the RCH file.
+# 2019_06_07 Update: v2.7 Updated to deal with the new format of the RCH file.
 #@2019_07-15 Update: v2.8 Add 'Backup Status Page' & Fix RCH files with only one line not reported.
+#@2019_08-26 New: v2.9 Add 'Rear Backup Status Page' 
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -48,20 +49,20 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.8" ;                                                        # Current version number
-$URL_SERVER   = '/view/srv/sadm_view_servers.php';                      # Show Servers List URL
-$URL_OSUPDATE = "/view/sys/sadm_view_schedule.php";                     # View O/S Update Status URL 
-$URL_BACKUP   = "/view/sys/sadm_view_backup.php";                       # View Backup Status URL 
-$URL_MONITOR  = "/view/sys/sadm_view_sysmon.php";                       # View System Monitor URL 
-$URL_EDIT_CAT = '/crud/cat/sadm_category_main.php';                     # Maintenance Cat. Page URL
-$URL_EDIT_GRP = '/crud/grp/sadm_group_main.php';                        # Maintenance Grp. Page URL
-$URL_EDIT_SRV = '/crud/srv/sadm_server_main.php';                       # Maintenance Srv. Page URL
-$URL_RCH_SUMM = '/view/rch/sadm_view_rch_summary.php';                  # Return Code History View
-#$URL_NETWORK  = '/view/sys/sadm_subnet.php';                            # Network Scan Result URL
-$URL_NETWORK  = '/view/net/sadm_view_subnet.php';                       # Network Scan Result URL
-$URL_PERF     = '/view/perf/sadm_server_perf_menu.php';                 # Performance Graph Menu URL
-$URL_PERF_DAY = '/view/perf/sadm_server_perf_adhoc_all.php';            # Yesterday Servers CPU Perf
-
+$SVER  = "2.9" ;                                                        # Current version number
+$URL_SERVER    = '/view/srv/sadm_view_servers.php';                     # Show Servers List URL
+$URL_OSUPDATE  = "/view/sys/sadm_view_schedule.php";                    # View O/S Update Status URL 
+$URL_BACKUP    = "/view/sys/sadm_view_backup.php";                      # View Backup Status URL 
+$URL_MONITOR   = "/view/sys/sadm_view_sysmon.php";                      # View System Monitor URL 
+$URL_EDIT_CAT  = '/crud/cat/sadm_category_main.php';                    # Maintenance Cat. Page URL
+$URL_EDIT_GRP  = '/crud/grp/sadm_group_main.php';                       # Maintenance Grp. Page URL
+$URL_EDIT_SRV  = '/crud/srv/sadm_server_main.php';                      # Maintenance Srv. Page URL
+$URL_RCH_SUMM  = '/view/rch/sadm_view_rch_summary.php';                 # Return Code History View
+#$URL_NETWORK  = '/view/sys/sadm_subnet.php';                           # Network Scan Result URL
+$URL_NETWORK   = '/view/net/sadm_view_subnet.php';                      # Network Scan Result URL
+$URL_PERF      = '/view/perf/sadm_server_perf_menu.php';                # Performance Graph Menu URL
+$URL_PERF_DAY  = '/view/perf/sadm_server_perf_adhoc_all.php';           # Yesterday Servers CPU Perf
+$URL_VIEW_REAR = "/view/sys/sadm_view_rear.php";                        # Rear Back Status Page
 
 
 // ================================================================================================
@@ -329,10 +330,13 @@ function SideBar_OS_Summary() {
     echo "\n<div class='SideBarTitle'>Server Info</div>";               # SideBar Section Title
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_OSUPDATE . "'>OS Update Status</a></div>";   # URL To View O/S Upd. Page
+    echo "<a href='" . $URL_OSUPDATE . "'>OS Update Status</a></div>";  # URL To View O/S Upd. Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_BACKUP . "'>Backup Status</a></div>";   # URL To View O/S Upd. Page
+    echo "<a href='" . $URL_BACKUP . "'>Backup Status</a></div>";       # View Backup Status Page
+
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "<a href='" . $URL_VIEW_REAR . "'>ReaR Status</a></div>";      # URL View Rear Backup Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_MONITOR . "'>SysMon Status</a></div>";      # URL to System Monitor Page
