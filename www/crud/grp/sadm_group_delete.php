@@ -136,8 +136,10 @@ $CREATE_BUTTON = False ;                                                # Don't 
     }
 
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
-    display_std_heading("NotHome","Delete Group","","",$SVER);          # Display Content Heading
-    
+    $title1="Server Group Maintenance";                                     
+    $title2="Delete '" . $wkey . "' Group";
+    display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
+   
     # Start of Form - Display row data and press 'Delete' or 'Cancel' Button
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_grp_form ($row,"Display");                                  # Display No Change Allowed
