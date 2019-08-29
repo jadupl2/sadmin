@@ -46,8 +46,14 @@ $CREATE_BUTTON = False ;                                                # Yes Di
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View RCH File Content URL
 
-#display_std_heading("NotHome","Performance","","",$SVER);           # Display Content Heading
-echo "<H2>Performance Graph for Unix servers</H2><br>\n" ; 
+
+
+#===================================================================================================
+#
+# DISPLAY SCREEN HEADING    
+    $title1="Performance Graph selection for Unix servers";
+    $title2="";
+    display_lib_heading("NotHome","$title1","$title2",$SVER); 
 ?>
 
 

@@ -256,8 +256,11 @@ function display_data($con,$row) {
         sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4);     # Display Msg. Box for User
         exit;                                                           # Exit - Should not occurs
     }
+    # DISPLAY PAGE HEADING
+    $title1="Heading 1";                                                # Heading 1 Line
+    $title2="Heading 2";                                                # Heading 2 Line
+    display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
 
-    display_std_heading("NotHome","Template","","",$SVER);              # Display Content Heading
     echo "\n<hr/>";                                                     # Print Horizontal Line
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body

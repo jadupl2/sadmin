@@ -591,7 +591,7 @@ function display_top_buttons ($wrow) {
          exit();            
   }
 
-    display_std_heading("NotHome","Information about server " . $row['srv_name'],"","",$SVER);
+    display_lib_heading("NotHome","System Information",$row['srv_name'].".".$row['srv_domain'],$SVER);           # Display Content Heading
     display_server_data ($row);                                         # Display Server Data
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer

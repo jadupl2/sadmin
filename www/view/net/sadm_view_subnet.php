@@ -80,7 +80,7 @@ function show_subnet($wsubnet,$woption,$con) {
     list($ipaddress,$cidr) = explode('/',$wsubnet);                     # Separate Network & Netmask
     $netmask = cidr2mask($cidr);                                        # Convert CIDR to Netmask
     list ($wnet, $wfirstip, $wlastip, $wbroadcast) = netinfo($ipaddress,$netmask);
-    echo "\n<h1><center>Information about subnet " . $wsubnet . "</h1></center>";
+    #echo "\n<h1><center>Information about subnet " . $wsubnet . "</h1></center>";
     echo "\n<center>Network:" . $wnet . " - Netmask:" . $netmask . " - First IP:" . $wfirstip ;
     echo " - Last IP:" . $wlastip . " - Broadcast:" . $wbroadcast . "</center><br>";
 
@@ -233,7 +233,9 @@ function show_heading() {
     }
        
     # DISPLAY STANDARD PAGE HEADING ----------------------------------------------------------------
-    display_std_heading("NotHome",ucfirst($iptype) . " Subnet ${SUBNET}","",""," - $SVER");
+    $title1="Information about " . ucfirst($iptype) . " Subnet ${SUBNET}";
+    $title2="";
+    display_lib_heading("NotHome","$title1","$title2",$SVER); 
 
     # SHOW LIST OF IP STATUS -----------------------------------------------------------------------
     show_subnet ($SUBNET,$OPTION,$con);                                 # Display Subnet Status Page

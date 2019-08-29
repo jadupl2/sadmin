@@ -254,12 +254,14 @@ function display_png ($WHOST,$WTYPE,$WTITLE)
     }
 
     # Display Standard Page Heading ----------------------------------------------------------------
-    display_std_heading("NotHome","Adhoc performance graph","","","v{$SVER}"); 
+    $title1="Adhoc performance graph for '$SERVER_NAME'";
+    $title2="";
+    display_lib_heading("NotHome","$title1","$title2",$SVER); 
 
-    # Display this page heading --------------------------------------------------------------------
-    echo "\n<center><H1>";                                              # Center Header 1 Heading
-    echo "Adhoc performance graph for '$SERVER_NAME'";                  # Display Page Heading
-    echo "</H1></center><br>";                                          # End of Center and Header 1
+    // # Display this page heading --------------------------------------------------------------------
+    // echo "\n<center><H1>";                                              # Center Header 1 Heading
+    // echo "Adhoc performance graph for '$SERVER_NAME'";                  # Display Page Heading
+    // echo "</H1></center><br>";                                          # End of Center and Header 1
 
     # Generate and Display Graph for server --------------------------------------------------------
     gen_png ($SERVER_NAME,$SERVER_OS,$SDATE,$STIME,$EDATE,$ETIME,SADM_RRDTOOL,$DEBUG); # Gen PNG

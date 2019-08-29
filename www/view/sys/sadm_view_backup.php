@@ -52,7 +52,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG           = False ;                                              # Debug Activated True/False
-$WVER            = "1.1" ;                                              # Current version number
+$WVER            = "2.1" ;                                              # Current version number
 $URL_CREATE      = '/crud/srv/sadm_server_create.php';                  # Create Page URL
 $URL_UPDATE      = '/crud/srv/sadm_server_update.php';                  # Update Page URL
 $URL_DELETE      = '/crud/srv/sadm_server_delete.php';                  # Delete Page URL
@@ -264,8 +264,11 @@ function display_data($count, $row) {
         exit();  
     }
     
-    # Display Page Heading
-    display_std_heading($BACK_URL,$TITLE,"","",$WVER) ;
+    # DISPLAY SCREEN HEADING    
+    $title1="Backup Schedule Status";
+    $title2="";
+    display_lib_heading("NotHome","$title1","$title2",$WVER);           # Display Content Heading
+
     setup_table();                                                      # Create Table & Heading
     
     # Loop Through Retrieved Data and Display each Row

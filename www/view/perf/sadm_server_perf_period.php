@@ -317,13 +317,10 @@ function display_png ($WHOST,$WTYPE,$WTITLE,$WPERIOD)
     }
 
     # Display Standard Page Heading ----------------------------------------------------------------
-    display_std_heading("NotHome","Server performance graph","","","v{$SVER}"); 
-
-    # Display this page heading --------------------------------------------------------------------
-    echo "\n<center><H1>";                                              # Center Header 1 Heading
-    echo "Performance graph of '$WSERVER' for $HPERIOD";                # Display Page Heading
-    echo "</H1></center><br>";                                          # End of Center and Header 1
-
+    $title1="Performance graph of '$WSERVER' for $HPERIOD";
+    $title2="";
+    display_lib_heading("NotHome","$title1","",$SVER); 
+    
     # Generate Graph for server --------------------------------------------------------------------
     gen_png ($WSERVER,$WOS,$WPERIOD,SADM_RRDTOOL,$DEBUG);               # Generate the Graph PNG
 

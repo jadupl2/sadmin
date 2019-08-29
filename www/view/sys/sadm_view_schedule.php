@@ -239,7 +239,7 @@ function display_data($count, $row) {
     switch ($SELECTION) {
         case 'all_servers'  : 
             $sql = "SELECT * FROM server where srv_active = True and srv_ostype = 'linux' order by srv_name;";
-            $TITLE = "O/S Update Schedule";
+            $TITLE = "O/S Update Schedule Status";
             break;
         case 'host'         : 
             $sql = "SELECT * FROM sadm.server where srv_name = '". $VALUE . "';";
@@ -260,8 +260,8 @@ function display_data($count, $row) {
         exit;                                                           # Exit - Should not occurs
     }
     
-    # Display Page Heading
-    display_std_heading($BACK_URL,$TITLE,"","",$WVER) ;
+    # DISPLAY SCREEN HEADING    
+    display_lib_heading("NotHome","$TITLE"," ",$WVER);                  # Display Content Heading
     setup_table();                                                      # Create Table & Heading
     
     # Loop Through Retrieved Data and Display each Row

@@ -251,13 +251,13 @@ function display_script_array($con,$wpage_type,$script_array) {
 
     # VALIDATE THE PAGE TYPE RECEIVED - IF NOT SUPPORTED, BACK TO PREV PAGE ------------------------
     switch ($SELECTION) {
-        case 'all'      :   $HDESC="All Scripts";                       # View All Scripts
+        case 'all'      :   $HDESC="Status of all Scripts";             # View All Scripts
                             break;                                       
-        case 'failed'   :   $HDESC="Failed Scripts";                    # View Only Failed Scripts
+        case 'failed'   :   $HDESC="List of script(s) that failed";     # View Only Failed Scripts
                             break;                                       
-        case 'running'  :   $HDESC="Running Scripts";                   # View Only Running Scripts
+        case 'running'  :   $HDESC="List of running script(s)";         # View Only Running Scripts
                             break;                                       
-        case 'success'  :   $HDESC="Success Scripts";                   # View Only Succeed Scripts
+        case 'success'  :   $HDESC="Scripts that ran successfully";     # View Only Succeed Scripts
                             break;                                       
         default         :   $msg="Invalid Page Type Received \n(" . $SELECTION . ")";
                             sadm_fatal_error ("$msg");                  # Advise user Invalid Type
@@ -275,12 +275,11 @@ function display_script_array($con,$wpage_type,$script_array) {
     }
 
     # DISPLAY HEADING AND EACH LINES REQUESTED FROM THE ARRAY JUST BUILT ---------------------------
-    display_std_heading("NotHome","$HDESC","","",$SVER);                # Display Content Heading
+    display_lib_heading("NotHome","$HDESC","",$SVER);                   # Display Standard Heading 
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
     display_script_array($con,$SELECTION,$script_array);                # Go Display Script Array
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     echo "\n</div> <!-- End of SimpleTable          -->" ;              # End Of SimpleTable Div
-
     std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>

@@ -324,16 +324,16 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
         sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4);     # Display Msg. Box for User
         exit;                                                            # Exit - Should not occurs
     }
-
-    # Display Standard Page Heading ----------------------------------------------------------------
-    $TITRE = "Graph for all servers v${SVER} - ${WTITLE}"; 
-    display_std_heading("NotHome","$TITRE","","",""); 
+    # DISPLAY SCREEN HEADING    
+    $title1="$WTITLE" ." performance graph of ". str_replace("_"," ",$WSERVERS) ." for ". ucfirst($WPERIOD) ;
+    $title2="";
+    display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
 
     # Display This page heading --------------------------------------------------------------------
-    echo "<center><H1>";
-    echo $WTITLE . " performance graph of " . str_replace("_"," ",$WSERVERS);
-    echo " for " . ucfirst($WPERIOD) ;
-    echo "</H1></center><br>";
+    // echo "<center><H1>";
+    // echo $WTITLE . " performance graph of " . str_replace("_"," ",$WSERVERS);
+    // echo " for " . ucfirst($WPERIOD) ;
+    // echo "</H1></center><br>";
 
     # Generate and Display Graph for all servers selected from the SQL Query -----------------------
     echo "\n<table style='width:70%' align=center border=0 cellspacing=0>";

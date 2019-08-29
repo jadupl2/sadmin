@@ -386,10 +386,14 @@ function display_data($con,$alert_file) {
 #                                      PROGRAM START HERE
 #===================================================================================================
 #
-    display_std_heading("NotHome","System Monitor","","Page will refresh every minute",$SVER);
+    # DISPLAY SCREEN HEADING    
+    $title1="System Monitor Status";
+    $title2="Page will refresh every minute";
+    display_lib_heading("NotHome","$title1"," ",$SVER);                 # Display Content Heading
     load_sysmon_array();                                                # Load RPT and RCH File
     sysmon_page_heading();                                              # Show Heading
     display_data($con,$alert_file);                                     # Display SysMOn Array
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
+    echo "\n<center>Page will refresh every minute</center><br>\n";
     std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>

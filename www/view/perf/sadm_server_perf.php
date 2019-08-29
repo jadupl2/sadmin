@@ -676,12 +676,14 @@ function display_graph ($WHOST,$WDESC,$WTYPE,$DEBUG)
 
     
     # Display Standard Page Heading ----------------------------------------------------------------
-    display_std_heading("NotHome","Server Summary Graph","","","{$SVER}"); 
+    $title1="Summary performance graph for server '$HOSTNAME'";
+    $title2="";
+    display_lib_heading("NotHome","$title1","",$SVER);     
 
     # Specific Page Heading for Server
-    echo "<center><strong><H2>";
-    echo "Summary performance graph for server '$HOSTNAME'";
-    echo "</strong></H2></center><br>";
+#    echo "<center><strong><H2>";
+#    echo "Summary performance graph for server '$HOSTNAME'";
+#    echo "</strong></H2></center><br>";
     
     create_standard_graphic ($HOSTNAME,$HOSTDESC,"cpu"          ,$HOST_OS,SADM_RRDTOOL,$DEBUG);
     create_standard_graphic ($HOSTNAME,$HOSTDESC,"runqueue"     ,$HOST_OS,SADM_RRDTOOL,$DEBUG);

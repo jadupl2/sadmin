@@ -39,14 +39,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 <style>
 
 div.data_frame {
-    /* font-family     :   Geneva, sans-serif; 
-    font-family: 'Ubuntu Mono', 'Space Mono', Geneva, sans-serif, monospace;*/
-
     font-family:  Courier, Consolas,   Menlo, "Liberation Mono",  monospace;
-    
-    /* font-family: 'Space Mono', monospace; */
-
-
     background-color:   #2d3139;
     color           :    white;
     margin-left     :   5px;
@@ -54,19 +47,11 @@ div.data_frame {
     border          :   1px solid #000000;
     text-align      :   left;
     padding         :   1%;
-    border-width    :   5px;
+    border-width    :   1px;
     border-style    :   solid;
     border-color    :   #6b6c6f;
     border-radius   :   10px;
 }
-/* code {
-    margin: 10px;
-    background: #2f3743;
-    text-align: left;
-    color           : white;
-    font-family: Menlo, Consolas, Courier,  "Liberation Mono",  monospace;
-    font-size: 13px;
-} */
 </style>
 <?php
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
@@ -86,15 +71,7 @@ $CREATE_BUTTON = False ;                                                # Yes Di
 # ==================================================================================================
 function display_file ($WNAME)
 {
-
-    # Display Table Heading
-    $TITRE = basename($WNAME);                                          # Build the Table Heading
-
     echo "\n\n<div class='data_frame'>                 <!-- Start of Server Data DIV -->";
-
-    # Show Name of the file centered
-    echo "\n<center><h2><strong><i>" .$TITRE. "</i></strong></h2></center>";   # Print 1st Row Heading
-
     $count=0;                                                           # Set Line Counter to Zero
     try
     {
@@ -107,8 +84,7 @@ function display_file ($WNAME)
         exit();
     } 
 
-    echo "<code>";
-    echo "<pre>";
+    echo "\n<code><pre>";
     while(!feof($fh)) {                                                 # Read till End Of File
         $wline = fgets($fh);                                            # Read Line By Line    
         if (strlen($wline) > 0) {                                       # Don't process empty Line
@@ -147,7 +123,7 @@ function display_file ($WNAME)
     }
     
     # Display Standard Page Heading and Display Log ------------------------------------------------
-    display_std_heading("NotHome","File Viewer ","","",$SVER);          # Display Content Heading
+    display_lib_heading("NotHome","File Viewer",$FILENAME,$SVER);  
     display_file ($FILENAME);                                           # Go Display File Content
     std_page_footer()                                                   # HTML Footer
     ?>

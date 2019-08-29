@@ -245,7 +245,7 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
     if ($DEBUG) { echo "<br><pre>cmd=$cmd lastline=$last_line retval=$retval</pre>"; }
     unlink($tmpfile);
 
-    display_std_heading("NotHome","File ".$RCV_FILENAME,"","",$SVER);   # Display Content Heading
+    display_lib_heading("NotHome","[R]esult [C]ode [H]istory file viewer",$RCHFILE,$SVER);      
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
     display_rch_file ($HOSTNAME, $HOSTDESC, $csv_sorted, $RCV_FILENAME);# Go Display RCH File
