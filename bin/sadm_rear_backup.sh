@@ -50,6 +50,7 @@
 #@2018_09_19 v2.3 Include Usage of Alert Group 
 #@2018_11_02_v2.4 Produce new log every time
 #@2019_08_19 Update: v2.5 Updated to align with new SADMIN definition section.
+#@2019_08_29 Fix: v2.6 Code restructure and was not reporting error properly.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -96,7 +97,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.5'                               # Your Current Script Version
+    export SADM_VER='2.6'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -117,7 +118,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #---------------------------------------------------------------------------------------------------
 # Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
 # They can be overridden here, on a per script basis (if needed).
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
+    export SADM_ALERT_TYPE=3                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
     #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
@@ -131,8 +132,16 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # Scripts Variables 
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-NFS_MOUNT="/mnt/nfs1"                       ; export NFS_MOUNT          # Local NFS Mount Point 
-REAR_CFGFILE="/etc/rear/site.conf"          ; export REAR_CFGFILE       # ReaR Configuration file
+REAR_CFGFILE="/etc/rear/site.conf"          ; export REAR_CFGFILE       # ReaR Site Config file
+#
+export NFS_MOUNT="/mnt/rear_$$"                                         # NFS Could be more than one
+export REAR_DIR="${NFS_MOUNT}/${SADM_HOSTNAME}"                         # Rear Host Backup Dir.
+export REAR_NAME="${REAR_DIR}/rear_${SADM_HOSTNAME}"                    # ISO & Backup Prefix Name
+export REAR_CUR_ISO="${REAR_NAME}.iso"                                  # Rear Host ISO File Name
+export REAR_NEW_ISO="${REAR_NAME}_$(date "+%C%y.%m.%d_%H:%M:%S").iso"   # Rear Backup ISO 
+export REAR_CUR_BAC="${REAR_NAME}.tar.gz"                               # Rear Host Backup File Name
+export PREV_NEW_BAC="${REAR_NAME}_$(date "+%C%y.%m.%d_%H:%M:%S").tar.gz" # Rear Previous Backup File  
+#
 
 
 
@@ -149,86 +158,29 @@ show_usage()
 }
 
 
+
+
+
 # --------------------------------------------------------------------------------------------------
-# Update 'BACKUP_URL' line in /etc/rear/site.conf file, to have same NFS Server and MOunt Point 
-# found in $SADMIN/cfg/sadmin.cfg file.
-#       $SADM_REAR_NFS_SERVER               # ReaR NFS Server where backup will be stored
-#       $SADM_REAR_NFS_MOUNT_POINT          # ReaR Mount Point exported on the NFS Server
+# Rear Backup preparation 
+# Make sure mount point exist, do a mount test and make sure backup directory exist
 # --------------------------------------------------------------------------------------------------
-update_site_conf()
+rear_preparation()
 {
-    sadm_writelog "Updating 'BACKUP_URL' line in ReaR Site file ($REAR_CFGFILE) ..."
-    grep -v 'BACKUP_URL' $REAR_CFGFILE > $SADM_TMP_FILE2
-    newline="BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}/${SADM_REAR_NFS_MOUNT_POINT}/\"" 
-    echo $newline >>$SADM_TMP_FILE2
-    cp $SADM_TMP_FILE2 $REAR_CFGFILE
-    chmod 644 $REAR_CFGFILE
-    chown root:root $REAR_CFGFILE
-}
+    sadm_writelog "***** Perform ReaR Preparation *****"                # Feed User and Log
 
-
-
-
-
-    
-# --------------------------------------------------------------------------------------------------
-#                     Create the Rescue ISO and a tar file of the server
-# --------------------------------------------------------------------------------------------------
-create_backup()
-{
-    # Create the bootable ISO on the NFS Server
-    sadm_writelog " "
-    sadm_writelog "$SADM_TEN_DASH"; 
-    sadm_writelog "***** CREATING THE 'ReaR' BOOTABLE ISO *****"
-    sadm_writelog " "
-    sadm_writelog "$REAR mkrescue -v "       
-    $REAR mkrescue -v | tee -a $SADM_LOG                                 # Produce Bootable ISO
-    if [ $? -ne 0 ]
-        then sadm_writelog "***** ISO creation completed with error - Aborting Script *****"
-             return 1 
-        else sadm_writelog "***** ISO created with Success *****"
-    fi
-    
-    # Create the Backup TGZ file on the NFS Server
-    sadm_writelog "" 
-    sadm_writelog "$SADM_TEN_DASH"; 
-    sadm_writelog "***** CREATING THE 'ReaR' BACKUP *****"
-    sadm_writelog " "
-    sadm_writelog "$REAR mkbackup -v "       
-    $REAR mkbackup -v | tee -a $SADM_LOG                                  # Produce Backup for DR
-    if [ $? -ne 0 ]
-        then sadm_writelog "***** Rear Backup completed with Error - Aborting Script *****"
-             return 1 
-        else sadm_writelog "***** Rear Backup completed with Success *****"
-    fi
-    
-    return 0                                                            # Return Default return code
-}
-
-
-
-# --------------------------------------------------------------------------------------------------
-# Mount the NFS Drive, check (change)) permission and make sure we have the correct number of copies
-# --------------------------------------------------------------------------------------------------
-rear_housekeeping()
-{
-    FNC_ERROR=0                                                       # Cleanup Error Default 0
-    sadm_writelog "***** Perform ReaR Housekeeping *****"
-
-    update_site_conf                                                  # Chck Backup URL in site.conf 
-
-    # Make sure Local mount point exist
+    # Make sure Local mount point exist.
     if [ ! -d ${NFS_MOUNT} ] ; then mkdir ${NFS_MOUNT} ; chmod 775 ${NFS_MOUNT} ; fi
 
     # Mount the NFS Mount point 
-    sadm_writelog "Mounting the NFS Drive on $SADM_REAR_NFS_SERVER"
-    umount ${NFS_MOUNT} > /dev/null 2>&1
+    sadm_writelog "Testing mount of the NFS Drive on $SADM_REAR_NFS_SERVER system."
+    umount ${NFS_MOUNT} > /dev/null 2>&1                                # Make sure not already mount
     sadm_writelog "mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT}"
     mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} >>$SADM_LOG 2>&1
     if [ $? -ne 0 ]
         then RC=1
-             sadm_writelog "Mount of $SADM_REAR_NFS_MOUNT_POINT on NFS server $SADM_REAR_NFS_SERVER Failed"
-             sadm_writelog "Proces Aborted"
+             sadm_writelog "Mount of $SADM_REAR_NFS_MOUNT_POINT on NFS system $SADM_REAR_NFS_SERVER failed."
+             sadm_writelog "Process Aborted"
              umount ${NFS_MOUNT} > /dev/null 2>&1
              return 1
     fi
@@ -240,56 +192,80 @@ rear_housekeeping()
     if [ ! -d  "${NFS_MOUNT}/${SADM_HOSTNAME}" ]
         then mkdir ${NFS_MOUNT}/${SADM_HOSTNAME}
              if [ $? -ne 0 ] 
-                then sadm_writelog "Error can't create directory ${NFS_MOUNT}/${SADM_HOSTNAME}" 
+                then sadm_writelog "Error creating directory ${NFS_MOUNT}/${SADM_HOSTNAME}" 
                      return 1 
              fi
     fi
-    sadm_writelog "chmod 775 ${NFS_MOUNT}/${SADM_HOSTNAME}"
-    chmod 775 ${NFS_MOUNT}/${SADM_HOSTNAME} >> $SADM_LOG 2>&1
-    if [ $? -ne 0 ] 
+    sadm_writelog "chmod 775 ${NFS_MOUNT}/${SADM_HOSTNAME}"             # Feed user and log.
+    chmod 775 ${NFS_MOUNT}/${SADM_HOSTNAME} >> $SADM_LOG 2>&1           # Make sure Dir. is writable
+    if [ $? -ne 0 ]                                                     # If error on chmod command
        then sadm_writelog "Error can't chmod directory ${NFS_MOUNT}/${SADM_HOSTNAME}" 
             return 1 
     fi
     
-    # Create Environnement Variable of all files we are about to deal with below
-    REAR_DIR="${NFS_MOUNT}/${SADM_HOSTNAME}"                            # Rear Host Backup Dir.
-    REAR_NAME="${REAR_DIR}/rear_${SADM_HOSTNAME}"                       # ISO & Backup Prefix Name
-    REAR_ISO="${REAR_NAME}.iso"                                         # Rear Host ISO File Name
-    PREV_ISO="${REAR_NAME}_$(date "+%C%y.%m.%d_%H:%M:%S").iso"          # Rear Backup ISO 
-    REAR_BAC="${REAR_NAME}.tar.gz"                                      # Rear Host Backup File Name
-    PREV_BAC="${REAR_NAME}_$(date "+%C%y.%m.%d_%H:%M:%S").tar.gz"       # Rear Previous Backup File  
+    sadm_writelog "Trying to write to NFS mount"                        # Feed user and log
+    TEST_FILE="${NFS_MOUNT}/${SADM_HOSTNAME}/rear_pid_$SADM_TPID.txt"   # Create test file name
+    touch ${TEST_FILE} >> $SADM_LOG 2>&1                                # Create empty test file
+    if [ $? -ne 0 ]                                                     # If error on chmod command
+       then sadm_writelog "Can't write test file ${TEST_FILE}."         # Advise for error encounter
+            return 1                                                    # Back to caller with error
+    fi
+    rm -f ${TEST_FILE} >> $SADM_LOG 2>&1                                # Delete the test file
 
-    # Make a copy of actual ISO before creating a new one   
-    if [ -r "$REAR_ISO" ]
+    sadm_writelog " "
+    sadm_writelog "[ OK ] ReaR preparation"
+    sadm_writelog " "
+    return 0
+}
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Mount the NFS Drive, check (change)) permission and make sure we have the correct number of copies
+# --------------------------------------------------------------------------------------------------
+rear_housekeeping()
+{
+    FNC_ERROR=0                                                       # Cleanup Error Default 0
+    sadm_writelog "***** Perform ReaR Housekeeping *****"
+
+    # Rename the Newly created ISO 
+    # Example: From 'rear_yoda.iso' to 'rear_yoda_2019.08.29_05:00:12.iso')
+    if [ -r "$REAR_CUR_ISO" ]
         then sadm_writelog " "
-             sadm_writelog "Rename actual ISO before creating a new one"
-             sadm_writelog "mv $REAR_ISO $PREV_ISO"
-             mv $REAR_ISO $PREV_ISO >> $SADM_LOG 2>&1
+             sadm_writelog "Rename new ISO ${REAR_CUR_ISO} to ${REAR_NEW_ISO}." 
+             sadm_writelog "mv $REAR_CUR_ISO $REAR_NEW_ISO"
+             mv $REAR_CUR_ISO $REAR_NEW_ISO >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
-                 then sadm_writelog "Error trying to move $REAR_ISO to $PREV_ISO"
+                 then sadm_writelog "Error trying to move $REAR_CUR_ISO to $REAR_NEW_ISO"
+                      sadm_writelog "***** Rear Backup Abort *****"
+                      return 1                                          # Back to caller with error
                  else sadm_writelog "The ISO rename was done successfully"
              fi
     fi
     
-    # Make a copy of actual Backup file before creating a new one   
-    if [ -r "$REAR_BAC" ]
-        then sadm_writelog "Rename actual Backup file before creating a new one"
-             sadm_writelog "mv $REAR_BAC $PREV_BAC"
-             mv $REAR_BAC $PREV_BAC >> $SADM_LOG 2>&1
+    # Rename the newly created ReaR backup.
+    # Example: From 'rear_yoda.tar.gz' to 'rear_yoda_2019.08.29_05:00:12.tar.gz'
+    if [ -r "$REAR_CUR_BAC" ]
+        then sadm_writelog "Rename new backup ${REAR_CUR_BAC} to ${REAR_NEW_BAC}."
+             sadm_writelog "mv ${REAR_CUR_BAC} ${REAR_NEW_BAC}"
+             mv ${REAR_CUR_BAC} ${REAR_NEW_BAC} >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
-                 then sadm_writelog "Error trying to move $REAR_BAC to $PREV_BAC"
+                 then sadm_writelog "Error trying to move ${REAR_CUR_BAC} to ${REAR_NEW_BAC}"
+                      sadm_writelog "***** Rear Backup Abort *****"
+                      return 1                                          # Back to caller with error
                  else sadm_writelog "The rename of the backup file was done successfully"
              fi
     fi
                     
     sadm_writelog " "
-    sadm_writelog "You choose to keep $SADM_REAR_BACKUP_TO_KEEP backup files on the NFS server"
+    sadm_writelog "You have chosen to keep $SADM_REAR_BACKUP_TO_KEEP backup files on the NFS server"
     sadm_writelog "Here is a list of ReaR backup and ISO on NFS Server for ${SADM_HOSTNAME}"
-    #sadm_writelog "ls -1t ${REAR_NAME}*.iso | sort -r"
-    ls -1t ${REAR_NAME}*.iso | sort -r | tee -a $SADM_LOG
-    ls -1t ${REAR_NAME}*.gz  | sort -r | tee -a $SADM_LOG
+    ls -ltr rear_* > /dev/null 2>&1
+    if [ $? -eq 0 ] ; then ls -ltr rear_* | nl | tee -a $SADM_LOG ; fi
 
-    COUNT_GZ=` ls -1t  ${REAR_NAME}*.gz  |sort -r |sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | wc -l`  # Nb of GZ  to Del.
+    # Delete backup that are over the number we want to keep.
+    COUNT_GZ=`ls -1t ${REAR_NAME}*.gz |sort -r |sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | wc -l` 
     if [ "$COUNT_GZ" -ne 0 ]
         then sadm_writelog " "
              sadm_writelog "Number of backup file(s) to delete is $COUNT_GZ"
@@ -304,7 +280,8 @@ rear_housekeeping()
              sadm_writelog "We don't need to delete any backup file"
     fi
         
-    COUNT_ISO=`ls -1t  ${REAR_NAME}*.iso |sort -r |sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | wc -l`  # Nb of ISO  to Del.
+    # Delete the ISO that are over the number we want to keep.
+    COUNT_ISO=`ls -1t  ${REAR_NAME}*.iso |sort -r |sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | wc -l`  
     if [ "$COUNT_ISO" -ne 0 ]
         then sadm_writelog " "
              sadm_writelog "Number of ISO file(s) to delete is $COUNT_ISO"
@@ -331,10 +308,70 @@ rear_housekeeping()
     umount ${NFS_MOUNT} >> $SADM_LOG 2>&1
     if [ $? -ne 0 ] ; then sadm_writelog "Error returned on previous command" ; FNC_ERROR=1; fi
 
+    # Remove NFS mount point.
+    # It is different every time you run the script (more than one backup can run simultaneously)
+    if [ -d "${NFS_MOUNT}" ] ; then rm -f ${NFS_MOUNT} >/dev/null 2>&1 ; fi
+
     sadm_writelog " "
     sadm_writelog "***** ReaR Backup Housekeeping is terminated *****"
     sadm_writelog " "
     return $FNC_ERROR
+}
+
+
+
+
+    
+# --------------------------------------------------------------------------------------------------
+#                     Create the Rescue ISO and a tar file of the server
+# --------------------------------------------------------------------------------------------------
+create_backup()
+{
+    # Feed user and log, the what we are about to do.
+    sadm_writelog " "
+    sadm_writelog "$SADM_TEN_DASH"; 
+    sadm_writelog "***** CREATING THE 'ReaR' BOOTABLE ISO *****"
+    sadm_writelog " "
+    sadm_writelog "$REAR mkrescue -v "       
+
+    # Create the bootable ISO for the restore.
+    $REAR mkrescue -v >> $SADM_LOG 2>&1                                 # Produce Bootable ISO
+    RC=$?                                                               # Save Command return code.
+    if [ $RC -ne 0 ]                                                    # If cmd returned an error
+        then sadm_writelog "The '$REAR mkrescue -v' ended with error code $RC."
+             sadm_writelog "See the error message in ${SADM_LOG}." 
+             sadm_writelog "***** ISO creation completed with error - Aborting Script *****"
+             return 1                                                   # Back to caller with error
+        else sadm_writelog "***** ISO created with Success *****"
+             sadm_writelog " "
+             sadm_writelog "List of system ISO on NFS server."
+             ls -ltr ${REAR_DIR}/*.iso | nl >> $SADM_LOG 2>&1
+             sadm_writelog " "
+    fi
+    
+    # Feed user and log, the what we are about to do.
+    sadm_writelog "" 
+    sadm_writelog "$SADM_TEN_DASH"; 
+    sadm_writelog "***** CREATING THE 'ReaR' BACKUP *****"
+    sadm_writelog " "
+    sadm_writelog "$REAR mkbackup -v "       
+
+    # Create the Backup TGZ file on the NFS Server
+    $REAR mkbackup -v >> $SADM_LOG 2>&1                                 # Produce Rear Backup for DR
+    RC=$?                                                               # Save Command return code.
+    if [ $RC -ne 0 ]
+        then sadm_writelog "The '$REAR mkbackup -v' ended with error code $RC."
+             sadm_writelog "See the error message in ${SADM_LOG}." 
+             sadm_writelog "***** Rear Backup completed with Error - Aborting Script *****"
+             return 1                                                   # Back to caller with error
+        else sadm_writelog "***** Rear Backup completed with Success *****"
+             sadm_writelog " "
+             sadm_writelog "List of Rear backup on NFS server."
+             ls -ltr ${REAR_DIR}/*.gz | nl >> $SADM_LOG 2>&1
+             sadm_writelog " "
+    fi
+    
+    return 0                                                            # Return Default return code
 }
 
 
@@ -348,7 +385,7 @@ rear_housekeeping()
 
     # Call SADMIN Initialization Procedure
     sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
 
     # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
@@ -398,15 +435,28 @@ rear_housekeeping()
              sadm_stop 1                                                # Upd. RCH File & Trim Log 
              exit 1                                                     # Exit With Global Err (0/1)
     fi
-    rear_housekeeping                                                   # Set Perm. & rm old version
-    if [ $? -eq 0 ]                                                     # If went OK do Clean up
-        then create_backup                                              # Set Perm. & rm old version
+
+    # Make sure ReaR NFS mount point exist and actually mount, create server dir. on NFS server.
+    rear_preparation                                                    # Mount Point Work ?  ...
+
+    # If Rear preparation worked OK, perform the ReaR Backup.
+    if [ $? -eq 0 ]                                                     # If preparation went OK 
+        then create_backup                                              # Do the ReaR ISO and Backup
              if [ $? -ne 0 ]                                            # If Error Making Backup
                 then SADM_EXIT_CODE=1                                   # If Error Exit code = 1
                 else SADM_EXIT_CODE=0                                   # No Error Exit code = 0
              fi             
-        else SADM_EXIT_CODE=1                                           # Error encounter exitcode=1
+        else SADM_EXIT_CODE=1                                           # When Error, make RC to 1
     fi
- 
+
+    # If Backup is OK, perform housekeeping (Del. backup according to backup policies & umount NFS)
+    if [ $SADM_EXIT_CODE -eq 0 ]                                        # Everything ok so far
+        then rear_housekeeping                                          # Remove old backup & umount
+             if [ $? -ne 0 ]                                            # If Error in housekeeping
+                then SADM_EXIT_CODE=1                                   # If Error Exit code = 1
+                else SADM_EXIT_CODE=0                                   # No Error Exit code = 0
+             fi  
+    fi 
+
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
