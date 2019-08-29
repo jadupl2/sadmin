@@ -26,7 +26,7 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
-#
+#@2019_08_29 Update: v2.1 Use new page heading function.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -57,7 +57,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $URL_CREATE = '/crud/cat/sadm_category_create.php';                     # Create Page URL
 $URL_UPDATE = '/crud/cat/sadm_category_update.php';                     # Update Page URL
 $URL_DELETE = '/crud/cat/sadm_category_delete.php';                     # Delete Page URL
@@ -168,7 +168,18 @@ function display_data($con,$row) {
 #*                                      PROGRAM START HERE
 # ==================================================================================================
 #
-    display_std_heading("Home","Category Maintenance","","",$SVER,$CREATE_BUTTON,$URL_CREATE,"Create");
+
+    # DISPLAY PAGE HEADING
+    $title1="Category Maintenance";                                     # Heading 1 Line
+    $title2="[C]reate [R]ead [U]pdate [D]elete";                        # Heading 2 Line
+    display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
+
+    # DISPLAY THE CREATE BUTTON
+    echo "\n<div style='text-align: right ;width: 99%;'>";
+    echo "\n<a href='" . $URL_CREATE . "'>";
+    echo "\n<button type='button'>Create</button></a>";                 # Display Add Button
+    echo "\n</div>";
+
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
     

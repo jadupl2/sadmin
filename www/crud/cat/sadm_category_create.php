@@ -26,6 +26,7 @@
 #       V1.9 Add lot of comments in code and enhance code performance 
 #   2017_11_15 - Jacques Duplessis
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
+#@2019_08_29 Update: v2.1 New page heading, using the library heading function.
 #
 # ==================================================================================================
 #
@@ -42,7 +43,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.2" ;                                                        # Current version number
 $URL_MAIN   = '/crud/cat/sadm_category_main.php';                       # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -90,8 +91,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
 #              THIS IS INITIAL PAGE EXECUTION - DISPLAY FORM WITH CORRESPONDING ROW DATA
 # ==================================================================================================
 
-    display_std_heading("NotHome","Create Category","","",$SVER);
-
+    display_lib_heading("NotHome","Create category page","",$SVER);     # Display Content Heading
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_cat_form ($row,"Create");                                   # Display Form Default Value
     echo "<input type='hidden' value='1' name='submitted' />";          # Set submitted var. to 1

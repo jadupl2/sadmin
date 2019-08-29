@@ -26,6 +26,7 @@
 #       V1.8 Add lot of comments in code and enhance code performance 
 #   2017_11_15 - Jacques Duplessis
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
+#@2019_08_17 Update: v2.2 Use new heading function, return to caller screen when exiting.
 #
 # ==================================================================================================
 #
@@ -42,7 +43,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.2" ;                                                        # Current version number
 $URL_MAIN   = '/crud/cat/sadm_category_main.php';                       # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -147,7 +148,9 @@ $CREATE_BUTTON = False ;                                                # Don't 
 
 
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
-    display_std_heading("NotHome","Update Category","","",$SVER);       # Display Content Heading
+    $title1="Server Category Maintenance";                                   
+    $title2="Update Category '" . $wkey . "'";
+    display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
     
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_cat_form($row,"Update");                                    # Display Form Default Value

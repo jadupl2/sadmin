@@ -43,7 +43,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $URL_MAIN   = '/crud/cat/sadm_category_main.php';                       # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -134,7 +134,10 @@ $CREATE_BUTTON = False ;                                                # Don't 
     }
 
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
-    display_std_heading("NotHome","Delete Category","","",$SVER);       # Display Content Heading
+    $title1="Server Category Maintenance";                                     
+    $title2="Delete '" . $wkey . "' Category";
+    display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
+
 
     # Start of Form - Display row data and press 'Delete' or 'Cancel' Button
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
