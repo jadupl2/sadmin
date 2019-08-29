@@ -79,43 +79,14 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
 
     # Space line for separation purpose
     echo "\n<hr/>";                                                     # Print Horizontal Line
-}
 
-
-
-#===================================================================================================
-# DISPLAY HEADING LINES OF THE CONTENT PORTION OF THE WEB PAGE 
-#===================================================================================================
-function display_std_heading($BACK_URL,$LTITLE,$CTITLE,$RTITLE,$WVER,$CREATE_BUTTON=False,
-                             $CREATE_URL="",$CREATE_LABEL="Create") {
-
-    $URL_HOME   = '/index.php';                                         # Site Main Page
-    
-    # FIRST LINE DISPLAY TITLE, VERSION NUMBER AND DATE/TIME
-    echo "\n\n<div style='float: left;'>${LTITLE} " ."- v${WVER}". "</div>"; # Display Title & Version No
-    echo "\n<div style='float: right;'>" . date('l jS \of F Y, h:i:s A') . "</div>";  
-    echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
-    
-    # SECOND LINE - LEFT SIDE - DISPLAY LINK TO PREVIOUS PAGE OR TO HOME PAGE
-    echo "\n<div style='float: left;'>";                                # Align Left Link Go Back
-    if (strtoupper($BACK_URL) != "HOME") {                              # Parameter Recv. = home
-        echo "<a href='javascript:history.go(-1)'>Previous Page</a>";   # URL Go Back Previous Page
-    }else{
-        echo "<a href='" . $URL_HOME . "'>Home Page</a>";               # URL to Go Back Home Page
-    }
-    echo "</div>"; 
-        
-    # SECOND LINE - RIGHT SIDE - DISPLAY CREATE BUTTON AT THE FAR RIGHT, IF $CREATE_BUTTON IS TRUE
-    if ($CREATE_BUTTON) {
-        echo "\n<div style='float: right;'>";                           # Div Position Create Button
-        echo "\n<a href='" . $CREATE_URL . "'>";                        # URL when Button Press
-        echo "\n<button type='button'>" .$CREATE_LABEL. "</button></a>";# Create Create Button
-        echo "\n</div>\n";                                              # End of Button Div
-    }else{
-        echo "\n<div style='float: right;'>" . $RTITLE . "</div>";  
-    }
-    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
-    echo "\n<hr/>";                                                     # Print Horizontal Line
+    // echo "\n<div style='float: left;'>";                                # Align Left Link Go Back
+    // if (strtoupper($BACK_URL) != "HOME") {                              # Parameter Recv. = home
+    //     echo "<a href='javascript:history.go(-1)'>Previous Page</a>";   # URL Go Back Previous Page
+    // }else{
+    //     echo "<a href='" . $URL_HOME . "'>Home Page</a>";               # URL to Go Back Home Page
+    // }
+    // echo "</div>";    
 }
 
 
