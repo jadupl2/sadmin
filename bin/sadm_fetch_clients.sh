@@ -54,6 +54,7 @@
 #@2019_07_12  Update: v3.00 Fix script path for backup and o/s update in respective crontab file.
 #@2019_07_24  Update: v3.1 Major revamp of code.
 #@2019_08_23  Update: v3.2 Remove Crontab work file (Cleanup)
+#@2019_08_29 Fix: v3.3 Correct problem with CR in site.conf 
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -115,7 +116,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.2'                               # Your Current Script Version
+    export SADM_VER='3.3'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -648,30 +649,28 @@ update_rear_site_conf()
     if [ ! -r "$REAR_USER_EXCLUDE" ] ; then return 0 ; fi
     
     # Start creating the header of ReaR site.conf file into a temp. file for now.
-    echo "# Create a bootable ISO9660 image on disk as rear-$(hostname).iso" > $REAR_TMP
-    echo "OUTPUT=ISO" >> $REAR_TMP
-    echo " " >> $REAR_TMP
-    echo "# Internal backup method used to create a simple backup (tar archive)." >> $REAR_TMP
-    echo "BACKUP=NETFS" >> $REAR_TMP
-    echo " " >> $REAR_TMP
-    echo "# Directory within mount point where iso and tgz will be stored" >> $REAR_TMP
-    echo "NETFS_PREFIX=\"\$HOSTNAME\"" >> $REAR_TMP
-    echo " " >> $REAR_TMP
-    echo "# To backup to NFS disk, use BACKUP_URL=nfs://nfs-server-name/share/path"  >> $REAR_TMP
-    echo "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}/${SADM_REAR_NFS_MOUNT_POINT}\"" >> $REAR_TMP
-    echo " " >> $REAR_TMP
-    echo "# Disable SELinux while the backup is running." >> $REAR_TMP
-    echo "BACKUP_SELINUX_DISABLE=1" >> $REAR_TMP
-    echo " " >> $REAR_TMP
-    echo "# Prefix name for ISO images without the .iso suffix (rear_HOSTNAME.iso)" >> $REAR_TMP
-    echo "ISO_PREFIX=\"rear_\$HOSTNAME\"" >> $REAR_TMP
-    echo " " >> $REAR_TMP
-    echo "# Name of Backup (tar.gz) File" >> $REAR_TMP
-    echo "BACKUP_PROG_ARCHIVE=\"rear_\${HOSTNAME}\"" >> $REAR_TMP
-    echo " " >> $REAR_TMP
-    echo " " >> $REAR_TMP
-
-    cat $REAR_TMP $REAR_USER_EXCLUDE > $REAR_CFG                         # Create Host new site.conf
+    echo  "# Create a bootable ISO9660 image on disk as rear-$(hostname).iso" > $REAR_TMP
+    echo  "OUTPUT=ISO" >> $REAR_TMP
+    echo  " " >> $REAR_TMP
+    echo  "# Internal backup method used to create a simple backup (tar archive)." >> $REAR_TMP
+    echo  "BACKUP=NETFS" >> $REAR_TMP
+    echo  " " >> $REAR_TMP
+    echo  "# Directory within mount point where iso and tgz will be stored" >> $REAR_TMP
+    echo  "NETFS_PREFIX=\"\$HOSTNAME\"" >> $REAR_TMP
+    echo  " " >> $REAR_TMP
+    echo  "# To backup to NFS disk, use BACKUP_URL=nfs://nfs-server-name/share/path"  >> $REAR_TMP
+    echo  "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}/${SADM_REAR_NFS_MOUNT_POINT}\"" >> $REAR_TMP
+    echo  " " >> $REAR_TMP
+    echo  "# Disable SELinux while the backup is running." >> $REAR_TMP
+    echo  "BACKUP_SELINUX_DISABLE=1" >> $REAR_TMP
+    echo  " " >> $REAR_TMP
+    echo  "# Prefix name for ISO images without the .iso suffix (rear_HOSTNAME.iso)" >> $REAR_TMP
+    echo  "ISO_PREFIX=\"rear_\$HOSTNAME\"" >> $REAR_TMP
+    echo  " " >> $REAR_TMP
+    echo  "# Name of Backup (tar.gz) File" >> $REAR_TMP
+    echo  "BACKUP_PROG_ARCHIVE=\"rear_\${HOSTNAME}\"" >> $REAR_TMP
+    echo  " " >> $REAR_TMP
+    cat $REAR_TMP $REAR_USER_EXCLUDE | tr -d '\r' > $REAR_CFG           # Concat & Remove CR in file
     #sadm_writelog "scp -P${SADM_SSH_PORT} $REAR_CFG ${WSERVER}:/etc/rear/site.conf" 
     #scp -P${SADM_SSH_PORT}  $REAR_CFG ${WSERVER}:/etc/rear/site.conf
     #if [ $? -eq 0 ] ; then sadm_writelog "[OK] /etc/rear/site.conf is updated on ${WSERVER}" ;fi
