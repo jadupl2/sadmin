@@ -28,6 +28,7 @@
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
 #   2018_02_03 - Jacques Duplessis
 #       V2.1 Added Server Graph Display Option
+#@2019_08_29 Update: v2.2 New page heading, using the library heading function.
 #
 # ==================================================================================================
 #
@@ -45,7 +46,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.1" ;                                                        # Current version number
+$SVER  = "2.2" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -102,9 +103,9 @@ $CREATE_BUTTON = False ;                                                # Don't 
 # ==================================================================================================
     
     # START OF FORM - DISPLAY FORM READY TO ACCEPT DATA
-    display_std_heading("NotHome","Create Server","","",$SVER);
+    display_lib_heading("NotHome","Create server page","",$SVER);       # Display Content Heading
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-    display_srv_form ($con,$row,"Create");                                   # Display Form Default Value
+    display_srv_form ($con,$row,"Create");                              # Display Form Default Value
     echo "<input type='hidden' value='1' name='submitted' />";          # Set submitted var. to 1
     
     # Display Buttons (Create/Cancel) at the bottom of the form

@@ -573,7 +573,7 @@ if (isset($_POST['submitted'])) {
     
     # DISPLAY SCREEN HEADING    
     $title1="ReaR backup schedule of '" . $row['srv_name'] . "." . $row['srv_domain'] . "'";
-    if ($wrow['srv_img_backup'] == True) {
+    if ($row['srv_img_backup'] == True) {
         list ($title2, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], 
             $row['srv_img_month'],$row['srv_img_dow'], 
             $row['srv_img_hour'], $row['srv_img_minute']);

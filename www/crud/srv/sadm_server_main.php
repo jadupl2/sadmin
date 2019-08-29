@@ -206,8 +206,6 @@ function display_data($con,$row) {
     echo "\n<button type='button'>Create</button></a>";                 # Display Add Button
     echo "\n</div>";
 
-
-    #display_std_heading("Home","Server Maintenance","","",$SVER,$CREATE_BUTTON,$URL_CREATE,"Create");
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
     
