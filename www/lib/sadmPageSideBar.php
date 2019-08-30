@@ -35,6 +35,7 @@
 # 2019_06_07 Update: v2.7 Updated to deal with the new format of the RCH file.
 #@2019_07-15 Update: v2.8 Add 'Backup Status Page' & Fix RCH files with only one line not reported.
 #@2019_08-26 New: v2.9 Add 'Rear Backup Status Page' 
+#@2019_08-30 New: v2.10 Side Bar re-arrange order.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -49,7 +50,7 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.9" ;                                                        # Current version number
+$SVER  = "2.10";                                                        # Current version number
 $URL_SERVER    = '/view/srv/sadm_view_servers.php';                     # Show Servers List URL
 $URL_OSUPDATE  = "/view/sys/sadm_view_schedule.php";                    # View O/S Update Status URL 
 $URL_BACKUP    = "/view/sys/sadm_view_backup.php";                      # View Backup Status URL 
@@ -281,50 +282,54 @@ function SideBar_OS_Summary() {
     echo "\n<hr/>";                                                     # Print Horizontal Line
     
 
-    # SERVER ATTRIBUTE HEADER
-    echo "\n<div class='SideBarTitle'>Server Attribute</div>";          # SideBar Section Title
+	# ---------------------------   SCRIPTS STATUS SIDEBAR      ------------------------------------
+    echo "\n<div class='SideBarTitle'>Scripts Status</div>";             # SideBar Section Title
+	$script_array = build_sidebar_scripts_info();                       # Build $script_array
+    $TOTAL_SCRIPTS=count($script_array);                                # Get Nb. Scripts in Array
+    $TOTAL_FAILED=0; $TOTAL_SUCCESS=0; $TOTAL_RUNNING=0;                # Initialize Total to Zero
 
-	# DISPLAY NUMBER OF ACTIVE SERVER
-    $kpart2 = $sadm_array["srv_active,"];                               # Array Key for Act. Server
-    if ( ${kpart2} != 0 ) {                                             # If Nb. Active server is 0
-        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
-        echo "<a href='" . $URL_SERVER . "?selection=all_active'>";     # View Active server URL
-        echo "${kpart2} Active(s)</a></div>";                           # Print Nb. of Active Server
+    # Loop through Script Array to count Different Return Code
+    foreach($script_array as $key=>$value) {
+        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode,$cfile) = explode(",", $value);
+        if ($ccode == 0) { $TOTAL_SUCCESS += 1; }
+        if ($ccode == 1) { $TOTAL_FAILED  += 1; }
+        if ($ccode == 2) { $TOTAL_RUNNING += 1; }
     }
 
-    # DISPLAY NUMBER OF INACTIVE SERVERS
-    $kpart2 = $sadm_array["srv_inactive,"];                             # Array Key for Inact. Srv.
-    if ( ${kpart2} != 0 ) {                                             # If no Inactive server
-        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
-        echo "<a href='" . $URL_SERVER . "?selection=all_inactive'>";   # View Inactive server URL
-        echo "${kpart2} Inactive(s)</a></div>";                         # Print Nb. Inactive Server
+    # Display Total number of Scripts
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "<a href='" . $URL_RCH_SUMM . "?sel=all'>";                    # URL To View O/S Upd. Page
+	echo "All (" . $TOTAL_SCRIPTS . ") Scripts</a></div>";              # Display Script Total Count
+
+    # Display Total Number of Succeeded Scripts
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "<a href='" . $URL_RCH_SUMM . "?sel=success'>";                # URL To View O/S Upd. Page
+    if ( $TOTAL_SUCCESS == 0 ) {                                        # If None Succeeded
+        echo "No Script Succeeded</a></div>";                           # Advise user
+    }else{                                                              # If Some Scripts succeeded
+        echo "$TOTAL_SUCCESS Success</a></div>";                        # Display Total Succeeded
     }
 
-    # DISPLAY NUMBER OF VIRTUAL SERVERS
-    $kpart2 = $sadm_array["srv_vm,"];                                   # Array Key for Virtual Srv.
-    if ( ${kpart2} != 0 ) {                                             # If no Virtual Server
-        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
-        echo "<a href='" . $URL_SERVER . "?selection=all_vm'>";         # View Virtual server URL
-        echo "${kpart2} Virtual(s)</a></div>";                          # Print Nb. of Virtual Srv. 
+    # Display Total Number of Failed Scripts
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "<a href='" . $URL_RCH_SUMM . "?sel=failed'>";                 # URL To View O/S Upd. Page
+    if ( $TOTAL_FAILED == 0 ) {                                         # If None Succeeded
+        echo "None Failed</a></div>";                                   # No Scripts Failed
+    }else{
+        echo "$TOTAL_FAILED Failed</a></div>";                          # Display Total Script Fail
     }
 
-    # DISPLAY NUMBER OF PHYSICAL SERVERS
-    $kpart2 = $sadm_array["srv_physical,"];                             # Array Key for Physical Srv
-    if ( ${kpart2} != 0 ) {                                             # If No Physical Server
-        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
-        echo "<a href='" . $URL_SERVER . "?selection=all_physical'>";   # View Physical server URL
-        echo "${kpart2} Physical(s)</a></div>";                         # Print Nb. of Physical Srv.
-    }
-
-    # DISPLAY NUMBER OF SPORADIC SERVERS
-    $kpart2 = $sadm_array["srv_sporadic,"];                             # Array Key for Sporadic Srv
-    if ( ${kpart2} != 0 ) {                                             # If no sporadic servers
-        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
-        echo "<a href='" . $URL_SERVER . "?selection=all_sporadic'>";   # View Sporadic server URL
-        echo "${kpart2} Sporadic(s)</a></div>";                         # Print Nb. of Sporadic Srv.
+    # Display Total Number of Running Scripts
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "<a href='" . $URL_RCH_SUMM . "?sel=running'>";                # URL To View O/S Upd. Page
+    if ( $TOTAL_RUNNING == 0 ) {                                        # If No Script is running
+        echo "None Running</a></div>";                                  # Display None Running
+    }else{
+        echo "$TOTAL_RUNNING Running</a></div>";                        # Display Total Running Scr.
     }
     echo "\n<hr/>";                                                     # Print Horizontal Line
     
+
 
 	# ---------------------------   SERVERS STATUS SIDEBAR      ------------------------------------
     echo "\n<div class='SideBarTitle'>Server Info</div>";               # SideBar Section Title
@@ -386,53 +391,7 @@ function SideBar_OS_Summary() {
     }
     echo "\n<hr/>";                                                     # Print Horizontal Line
 
-	# ---------------------------   SCRIPTS STATUS SIDEBAR      ------------------------------------
-    echo "\n<div class='SideBarTitle'>Scripts Status</div>";             # SideBar Section Title
-	$script_array = build_sidebar_scripts_info();                       # Build $script_array
-    $TOTAL_SCRIPTS=count($script_array);                                # Get Nb. Scripts in Array
-    $TOTAL_FAILED=0; $TOTAL_SUCCESS=0; $TOTAL_RUNNING=0;                # Initialize Total to Zero
 
-    # Loop through Script Array to count Different Return Code
-    foreach($script_array as $key=>$value) {
-        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode,$cfile) = explode(",", $value);
-        if ($ccode == 0) { $TOTAL_SUCCESS += 1; }
-        if ($ccode == 1) { $TOTAL_FAILED  += 1; }
-        if ($ccode == 2) { $TOTAL_RUNNING += 1; }
-    }
-
-    # Display Total number of Scripts
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_RCH_SUMM . "?sel=all'>";                    # URL To View O/S Upd. Page
-	echo "All (" . $TOTAL_SCRIPTS . ") Scripts</a></div>";              # Display Script Total Count
-
-    # Display Total Number of Succeeded Scripts
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_RCH_SUMM . "?sel=success'>";                # URL To View O/S Upd. Page
-    if ( $TOTAL_SUCCESS == 0 ) {                                        # If None Succeeded
-        echo "No Script Succeeded</a></div>";                           # Advise user
-    }else{                                                              # If Some Scripts succeeded
-        echo "$TOTAL_SUCCESS Success</a></div>";                        # Display Total Succeeded
-    }
-
-    # Display Total Number of Failed Scripts
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_RCH_SUMM . "?sel=failed'>";                 # URL To View O/S Upd. Page
-    if ( $TOTAL_FAILED == 0 ) {                                         # If None Succeeded
-        echo "None Failed</a></div>";                                   # No Scripts Failed
-    }else{
-        echo "$TOTAL_FAILED Failed</a></div>";                          # Display Total Script Fail
-    }
-
-    # Display Total Number of Running Scripts
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_RCH_SUMM . "?sel=running'>";                # URL To View O/S Upd. Page
-    if ( $TOTAL_RUNNING == 0 ) {                                        # If No Script is running
-        echo "None Running</a></div>";                                  # Display None Running
-    }else{
-        echo "$TOTAL_RUNNING Running</a></div>";                        # Display Total Running Scr.
-    }
-    echo "\n<hr/>";                                                     # Print Horizontal Line
-    
 
 	# ----------------------------------   EDIT SIDEBAR   ------------------------------------------
     echo "\n<div class='SideBarTitle'>CRUD Operations</div>";           # SideBar Section Title
@@ -442,6 +401,51 @@ function SideBar_OS_Summary() {
     echo "<a href='" . $URL_EDIT_CAT . "'>Category</a></div>";     # URL To Start Edit Cat.
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_EDIT_GRP . "'>Group</a></div>";        # URL To Start Edit Group
+    echo "\n<hr/>";                                                     # Print Horizontal Line
+    
+
+    # SERVER ATTRIBUTE HEADER
+    echo "\n<div class='SideBarTitle'>Server Attribute</div>";          # SideBar Section Title
+
+	# DISPLAY NUMBER OF ACTIVE SERVER
+    $kpart2 = $sadm_array["srv_active,"];                               # Array Key for Act. Server
+    if ( ${kpart2} != 0 ) {                                             # If Nb. Active server is 0
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_SERVER . "?selection=all_active'>";     # View Active server URL
+        echo "${kpart2} Active(s)</a></div>";                           # Print Nb. of Active Server
+    }
+
+    # DISPLAY NUMBER OF INACTIVE SERVERS
+    $kpart2 = $sadm_array["srv_inactive,"];                             # Array Key for Inact. Srv.
+    if ( ${kpart2} != 0 ) {                                             # If no Inactive server
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_SERVER . "?selection=all_inactive'>";   # View Inactive server URL
+        echo "${kpart2} Inactive(s)</a></div>";                         # Print Nb. Inactive Server
+    }
+
+    # DISPLAY NUMBER OF VIRTUAL SERVERS
+    $kpart2 = $sadm_array["srv_vm,"];                                   # Array Key for Virtual Srv.
+    if ( ${kpart2} != 0 ) {                                             # If no Virtual Server
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_SERVER . "?selection=all_vm'>";         # View Virtual server URL
+        echo "${kpart2} Virtual(s)</a></div>";                          # Print Nb. of Virtual Srv. 
+    }
+
+    # DISPLAY NUMBER OF PHYSICAL SERVERS
+    $kpart2 = $sadm_array["srv_physical,"];                             # Array Key for Physical Srv
+    if ( ${kpart2} != 0 ) {                                             # If No Physical Server
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_SERVER . "?selection=all_physical'>";   # View Physical server URL
+        echo "${kpart2} Physical(s)</a></div>";                         # Print Nb. of Physical Srv.
+    }
+
+    # DISPLAY NUMBER OF SPORADIC SERVERS
+    $kpart2 = $sadm_array["srv_sporadic,"];                             # Array Key for Sporadic Srv
+    if ( ${kpart2} != 0 ) {                                             # If no sporadic servers
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_SERVER . "?selection=all_sporadic'>";   # View Sporadic server URL
+        echo "${kpart2} Sporadic(s)</a></div>";                         # Print Nb. of Sporadic Srv.
+    }
     echo "\n<hr/>";                                                     # Print Horizontal Line
     
 
