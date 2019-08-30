@@ -41,7 +41,7 @@
 # --------------------------------------------------------------------------------------------------
 # Change Log
 #
-# 2016_12_14 v1.7 Add Check to see if Rear Configuration file isnt't present, abort Job (Exit 1)
+# 2016_12_14 v1.7 Add Check to see if Rear Configuration file isn't present, abort Job (Exit 1)
 # 2017_03_09 v1.8 Move test if rear is installed first, if not abort process up front.
 #                 Error Message more verbose and More Customization
 # 2017_04_20 v2.0 Return Code returned by Rear handle correctly, Script Messages more informative
@@ -51,6 +51,7 @@
 #@2018_11_02_v2.4 Produce new log every time
 #@2019_08_19 Update: v2.5 Updated to align with new SADMIN definition section.
 #@2019_08_29 Fix: v2.6 Code restructure and was not reporting error properly.
+#@2019_08_30 Fix: v2.7 Fix renaming backup problem at the end of the backup.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -97,7 +98,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.6'                               # Your Current Script Version
+    export SADM_VER='2.7'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -140,7 +141,7 @@ export REAR_NAME="${REAR_DIR}/rear_${SADM_HOSTNAME}"                    # ISO & 
 export REAR_CUR_ISO="${REAR_NAME}.iso"                                  # Rear Host ISO File Name
 export REAR_NEW_ISO="${REAR_NAME}_$(date "+%C%y.%m.%d_%H:%M:%S").iso"   # Rear Backup ISO 
 export REAR_CUR_BAC="${REAR_NAME}.tar.gz"                               # Rear Host Backup File Name
-export PREV_NEW_BAC="${REAR_NAME}_$(date "+%C%y.%m.%d_%H:%M:%S").tar.gz" # Rear Previous Backup File  
+export REAR_NEW_BAC="${REAR_NAME}_$(date "+%C%y.%m.%d_%H:%M:%S").tar.gz" # Rear Previous Backup File  
 #
 
 
@@ -167,13 +168,15 @@ show_usage()
 # --------------------------------------------------------------------------------------------------
 rear_preparation()
 {
-    sadm_writelog "***** Perform ReaR Preparation *****"                # Feed User and Log
+    sadm_writelog "$SADM_FIFTY_DASH"                                    # Write 50 dashes line
+    sadm_writelog "Perform ReaR preparation."                           # Feed User and Log
+    sadm_writelog " "                                                   # Write white line
 
     # Make sure Local mount point exist.
     if [ ! -d ${NFS_MOUNT} ] ; then mkdir ${NFS_MOUNT} ; chmod 775 ${NFS_MOUNT} ; fi
 
     # Mount the NFS Mount point 
-    sadm_writelog "Testing mount of the NFS Drive on $SADM_REAR_NFS_SERVER system."
+    sadm_writelog "Testing mount operation of the NFS Drive on $SADM_REAR_NFS_SERVER system."
     umount ${NFS_MOUNT} > /dev/null 2>&1                                # Make sure not already mount
     sadm_writelog "mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT}"
     mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} >>$SADM_LOG 2>&1
@@ -185,7 +188,7 @@ rear_preparation()
              return 1
     fi
     sadm_writelog "NFS mount succeeded ..."
-    df -h | grep ${NFS_MOUNT} | tee -a $SADM_LOG 2>&1
+    df -h | grep ${NFS_MOUNT} | while read wline ; do sadm_writelog "$wline"; done
 
     
     # Make sure the Directory of the host exist on NFS Server and have proper permission
@@ -203,17 +206,18 @@ rear_preparation()
             return 1 
     fi
     
-    sadm_writelog "Trying to write to NFS mount"                        # Feed user and log
+    sadm_writelog "Trying to write to NFS mount ..."                    # Feed user and log
     TEST_FILE="${NFS_MOUNT}/${SADM_HOSTNAME}/rear_pid_$SADM_TPID.txt"   # Create test file name
     touch ${TEST_FILE} >> $SADM_LOG 2>&1                                # Create empty test file
     if [ $? -ne 0 ]                                                     # If error on chmod command
        then sadm_writelog "Can't write test file ${TEST_FILE}."         # Advise for error encounter
             return 1                                                    # Back to caller with error
     fi
+    sadm_writelog "Wrote to NFS mount with no problem."                 # Feed user and log
     rm -f ${TEST_FILE} >> $SADM_LOG 2>&1                                # Delete the test file
 
-    sadm_writelog " "
-    sadm_writelog "[ OK ] ReaR preparation"
+    #sadm_writelog " "
+    sadm_writelog "ReaR preparation done with success."
     sadm_writelog " "
     return 0
 }
@@ -227,13 +231,14 @@ rear_preparation()
 rear_housekeeping()
 {
     FNC_ERROR=0                                                       # Cleanup Error Default 0
-    sadm_writelog "***** Perform ReaR Housekeeping *****"
-
+    sadm_writelog "$SADM_FIFTY_DASH"                                    # Write 50 dashes line
+    sadm_writelog "Perform ReaR housekeeping."
+    
     # Rename the Newly created ISO 
     # Example: From 'rear_yoda.iso' to 'rear_yoda_2019.08.29_05:00:12.iso')
     if [ -r "$REAR_CUR_ISO" ]
         then sadm_writelog " "
-             sadm_writelog "Rename new ISO ${REAR_CUR_ISO} to ${REAR_NEW_ISO}." 
+             sadm_writelog "Rename new ISO ..." 
              sadm_writelog "mv $REAR_CUR_ISO $REAR_NEW_ISO"
              mv $REAR_CUR_ISO $REAR_NEW_ISO >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
@@ -247,7 +252,8 @@ rear_housekeeping()
     # Rename the newly created ReaR backup.
     # Example: From 'rear_yoda.tar.gz' to 'rear_yoda_2019.08.29_05:00:12.tar.gz'
     if [ -r "$REAR_CUR_BAC" ]
-        then sadm_writelog "Rename new backup ${REAR_CUR_BAC} to ${REAR_NEW_BAC}."
+        then sadm_writelog " "
+             sadm_writelog "Rename new backup ..."
              sadm_writelog "mv ${REAR_CUR_BAC} ${REAR_NEW_BAC}"
              mv ${REAR_CUR_BAC} ${REAR_NEW_BAC} >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
@@ -259,10 +265,10 @@ rear_housekeeping()
     fi
                     
     sadm_writelog " "
-    sadm_writelog "You have chosen to keep $SADM_REAR_BACKUP_TO_KEEP backup files on the NFS server"
+    sadm_writelog "You have chosen to keep $SADM_REAR_BACKUP_TO_KEEP backup files on the NFS server."
     sadm_writelog "Here is a list of ReaR backup and ISO on NFS Server for ${SADM_HOSTNAME}"
     ls -ltr rear_* > /dev/null 2>&1
-    if [ $? -eq 0 ] ; then ls -ltr rear_* | nl | tee -a $SADM_LOG ; fi
+    if [ $? -eq 0 ] ; then ls -ltr rear_* | while read wline ; do sadm_writelog "$wline"; done ; fi
 
     # Delete backup that are over the number we want to keep.
     COUNT_GZ=`ls -1t ${REAR_NAME}*.gz |sort -r |sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | wc -l` 
@@ -270,14 +276,14 @@ rear_housekeeping()
         then sadm_writelog " "
              sadm_writelog "Number of backup file(s) to delete is $COUNT_GZ"
              sadm_writelog "List of backup file(s) that will be Deleted :"
-             ls -1t ${REAR_NAME}*.gz | sort -r| sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | tee -a $SADM_LOG
+             ls -1t ${REAR_NAME}*.gz | sort -r| sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | while read wline ; do sadm_writelog "$wline"; done
              ls -1t ${REAR_NAME}*.gz | sort -r| sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | xargs rm -f >> $SADM_LOG 2>&1
              RC=$?
              if [ $RC -ne 0 ] ;then sadm_writelog "Problem deleting backup file(s)" ;FNC_ERROR=1; fi
              if [ $RC -eq 0 ] ;then sadm_writelog "Backup was deleted with success" ;fi
         else RC=0
              sadm_writelog " "
-             sadm_writelog "We don't need to delete any backup file"
+             sadm_writelog "We don't need to delete any backup file."
     fi
         
     # Delete the ISO that are over the number we want to keep.
@@ -286,14 +292,13 @@ rear_housekeeping()
         then sadm_writelog " "
              sadm_writelog "Number of ISO file(s) to delete is $COUNT_ISO"
              sadm_writelog "List of ISO file(s) that will be Deleted :"
-             ls -1t ${REAR_NAME}*.iso | sort -r| sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | tee -a $SADM_LOG
+             ls -1t ${REAR_NAME}*.iso | sort -r| sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | while read wline ; do sadm_writelog "$wline"; done
              ls -1t ${REAR_NAME}*.iso | sort -r| sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | xargs rm -f >> $SADM_LOG 2>&1
              RC=$?
              if [ $RC -ne 0 ] ; then sadm_writelog "Problem deleting ISO file(s)"; FNC_ERROR=1; fi
              if [ $RC -eq 0 ] ; then sadm_writelog "ISO file(s) deleted with success" ; fi
         else RC=0
-             sadm_writelog " "
-             sadm_writelog "We don't need to delete any ISO file"
+             sadm_writelog "We don't need to delete any backup ISO file."
     fi
         
     # Make sure Host Directory permission and files below are ok
@@ -302,7 +307,14 @@ rear_housekeeping()
     sadm_writelog "chmod 664 ${REAR_NAME}*"
     chmod 664 ${REAR_NAME}* >> /dev/null 2>&1
         
+    # List Backup Directory to user after cleanup
+    sadm_writelog " "
+    sadm_writelog "This is the content of the ReaR backup directory of ${SADM_HOSTNAME}"
+    ls -ltr ${REAR_NAME}* | while read wline ; do sadm_writelog "$wline"; done
+
+
     # Ok Cleanup up is finish - Unmount the NFS
+    sadm_writelog " "
     sadm_writelog "Unmounting NFS mount directories"
     sadm_writelog "umount ${NFS_MOUNT}"
     umount ${NFS_MOUNT} >> $SADM_LOG 2>&1
@@ -313,7 +325,7 @@ rear_housekeeping()
     if [ -d "${NFS_MOUNT}" ] ; then rm -f ${NFS_MOUNT} >/dev/null 2>&1 ; fi
 
     sadm_writelog " "
-    sadm_writelog "***** ReaR Backup Housekeeping is terminated *****"
+    sadm_writelog "ReaR Backup Housekeeping done with success."
     sadm_writelog " "
     return $FNC_ERROR
 }
@@ -328,10 +340,9 @@ rear_housekeeping()
 create_backup()
 {
     # Feed user and log, the what we are about to do.
-    sadm_writelog " "
-    sadm_writelog "$SADM_TEN_DASH"; 
-    sadm_writelog "***** CREATING THE 'ReaR' BOOTABLE ISO *****"
-    sadm_writelog " "
+    sadm_writelog "$SADM_FIFTY_DASH"                                    # Write 50 dashes line
+    sadm_writelog "Creating 'ReaR' bootable iso."
+    sadm_writelog " "                                                   # Write white line
     sadm_writelog "$REAR mkrescue -v "       
 
     # Create the bootable ISO for the restore.
@@ -342,18 +353,17 @@ create_backup()
              sadm_writelog "See the error message in ${SADM_LOG}." 
              sadm_writelog "***** ISO creation completed with error - Aborting Script *****"
              return 1                                                   # Back to caller with error
-        else sadm_writelog "***** ISO created with Success *****"
+        else sadm_writelog "ISO created with Success."
              sadm_writelog " "
              sadm_writelog "List of system ISO on NFS server."
-             ls -ltr ${REAR_DIR}/*.iso | nl >> $SADM_LOG 2>&1
+             ls -ltr ${REAR_DIR}/*.iso | nl | while read wline ; do sadm_writelog "$wline"; done
              sadm_writelog " "
     fi
     
     # Feed user and log, the what we are about to do.
-    sadm_writelog "" 
-    sadm_writelog "$SADM_TEN_DASH"; 
-    sadm_writelog "***** CREATING THE 'ReaR' BACKUP *****"
-    sadm_writelog " "
+    sadm_writelog "$SADM_FIFTY_DASH"                                    # Write 50 dashes line
+    sadm_writelog "Creating the 'ReaR' backup." 
+    sadm_writelog " "                                                   # Write white line
     sadm_writelog "$REAR mkbackup -v "       
 
     # Create the Backup TGZ file on the NFS Server
@@ -367,7 +377,7 @@ create_backup()
         else sadm_writelog "***** Rear Backup completed with Success *****"
              sadm_writelog " "
              sadm_writelog "List of Rear backup on NFS server."
-             ls -ltr ${REAR_DIR}/*.gz | nl >> $SADM_LOG 2>&1
+             ls -ltr ${REAR_DIR}/*.gz | nl | while read wline ; do sadm_writelog "$wline"; done
              sadm_writelog " "
     fi
     
