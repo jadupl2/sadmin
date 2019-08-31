@@ -55,6 +55,7 @@
 #@2019_07_24  Update: v3.1 Major revamp of code.
 #@2019_08_23  Update: v3.2 Remove Crontab work file (Cleanup)
 #@2019_08_29 Fix: v3.3 Correct problem with CR in site.conf 
+#@2019_08_31 Update: v3.4 More consice of alert email subject.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -116,7 +117,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.3'                               # Your Current Script Version
+    export SADM_VER='3.4'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -1106,7 +1107,7 @@ check_all_rch()
         fi
 
         # Extract each field from the current line and prepare alert content.
-        ehost=`echo $line   | awk '{ print $1 }'`                       # Hostname of Event
+        ehost=`echo $line   | awk '{ print $1 }'`                       # Host Name of Event
         wdate=`echo $line   | awk '{ print $4 }'`                       # Get Script Ending Date 
         wtime=`echo $line   | awk '{ print $5 }' `                      # Get Script Ending Time 
         wtime=`echo ${wtime:0:5}`                                       # Eliminate the Seconds
@@ -1117,10 +1118,10 @@ check_all_rch()
         ecode=`echo $line   | awk '{ print $10 }'`                      # Return Code (0,1)
         etype="S"                                                       # Event Type = S = Script 
         if [ "$ecode" = "1" ]                                           # Script Ended with Error
-           then esub="Script $escript ended with error"                 # Alert Subject
-                emess="Script '$escript' failed"                        # Alert Message
-           else esub="Script $escript ran with success"                 # Alert Subject
-                emess="Script '$escript' ran with success"              # Alert Message
+           then esub="Error on $ehost while running ${escript}."        # Alert Subject
+                emess="Script '$escript' failed on ${ehost}."           # Alert Message
+           else esub="Successfully ran '$escript' on ${ehost}."         # Alert Subject
+                emess="Successfully ran '$escript' on ${ehost}."        # Alert Message
         fi
         elogfile="${ehost}_${escript}.log"                              # Build Log File Name
         elogname="${SADM_WWW_DAT_DIR}/${ehost}/log/${elogfile}"         # Build Log Full Path File
