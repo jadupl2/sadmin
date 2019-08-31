@@ -25,6 +25,8 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"    ;exit 1 ;fi
 
 
+
+
 #===================================================================================================
 #                               Script environment variables
 #===================================================================================================
@@ -39,12 +41,15 @@ FILENAME='/tmp/sysmon.tmp'                  ; export FILENAME           # FileNa
 SADM_UMON_DIR="${SADMIN}/usr/mon"           ; export SADM_UMON_DIR      # SysMon User Script Dir.
 
 
+
+
+
 #===================================================================================================
 #                             S c r i p t    M a i n     P r o c e s s
 #===================================================================================================
 main_process()
 {
-    # Show Script Name, Versrion and starting Date/Time.
+    # Show Script Name, Version and starting Date/Time.
     echo -e "\n\n${DASH}\nStarting script $PN on ${HOSTNAME} `date`"    # Print Script Header
 
     # Check if file exist
@@ -59,7 +64,7 @@ main_process()
     # You can Put a customize message when an error occur.
     # Putting the error on one line in the error text file (EFILE).
     EFILE="${SADM_UMON_DIR}/${INST}.txt"  ; export EFILE                # Script Error Mess File
-    if [ $RC != 0 ]                                                     # If Error occured
+    if [ $RC != 0 ]                                                     # If Error occurred
         then RC=1                                                       # Error Return Code is 1
              EMSG="File $FILENAME doesn't exist - Running $PN."         # Error Message file Test
              echo "$EMSG" > $EFILE                                      # Write to Error Msg File

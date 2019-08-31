@@ -1,18 +1,18 @@
 ![SADMIN Tools][1] 
-# SADMIN Tools v0.99.0             <!-- omit in toc -->
+# SADMIN Tools v1.0.0             <!-- omit in toc -->
 
 ### Table of content
-- [Brief description](#Brief-description)
-- [Run on most popular Linux distributions](#Run-on-most-popular-Linux-distributions)
-- [Download](#Download)
-- [Before you install](#Before-you-install)
-- [Installing SADMIN Tools](#Installing-SADMIN-Tools)
-  - [Method 1 : Cloning our git repository (Recommended)](#Method-1--Cloning-our-git-repository-Recommended)
-  - [Method 2 : Using the downloaded 'tgz' file](#Method-2--Using-the-downloaded-tgz-file)
-  - [Running the setup script](#Running-the-setup-script)
-- [SADMIN Support](#SADMIN-Support)
-- [Authors](#Authors)
-- [Copyright and license](#Copyright-and-license)
+- [Brief description](#brief-description)
+- [Run on most popular Linux distributions](#run-on-most-popular-linux-distributions)
+- [Download](#download)
+- [Before you install](#before-you-install)
+- [Installing SADMIN Tools](#installing-sadmin-tools)
+  - [Method 1 : Cloning our git repository (Recommended)](#method-1--cloning-our-git-repository-recommended)
+  - [Method 2 : Using the downloaded 'tgz' file](#method-2--using-the-downloaded-tgz-file)
+  - [Running the setup script](#running-the-setup-script)
+- [SADMIN Support](#sadmin-support)
+- [Authors](#authors)
+- [Copyright and license](#copyright-and-license)
   
 ---
 
@@ -39,7 +39,7 @@
   * The SADMIN server is the central place for monitoring scripts running on your systems.
   * View the [status of all your scripts](https://www.sadmin.ca/img/sadm_web_scripts_status.png) that run in your server farm.
   * Access script log from SADMIN server [Web interface](https://www.sadmin.ca/img/sadm_view_logs.png) or from the [command line](https://www.sadmin.ca/img/file_log_format.png).
-  * Choose to be alerted or note by ['Slack'](https://www.sadmin.ca/img/slack_warning.png) or by [email](https://www.sadmin.ca/img/mail_notification.png)  when a script failed or succeed,
+  * Choose to be alerted or not by ['SMS/Texto'](https://www.sadmin.ca/www/how-to_use_sms_alert.php), ['Slack'](https://www.sadmin.ca/img/slack_warning.png) or by [email](https://www.sadmin.ca/img/mail_notification.png)  when a script failed or succeed.
   * Use our [Shell](https://www.sadmin.ca/doc/man/man_sadm_template_sh.php) and/or [Python](https://www.sadmin.ca/doc/man/man_sadm_template_py.php) templates to create new scripts and benefit of SADMIN tools.
   * Use [SADMIN wrapper](https://www.sadmin.ca/doc/man/man_sadm_wrapper.php) and run your existing scripts using the SADMIN tools
     * $SADMIN/bin/sadm_wrapper.sh $SADMIN/usr/bin/yourscript.sh
