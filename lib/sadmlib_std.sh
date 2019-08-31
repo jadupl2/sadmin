@@ -112,6 +112,7 @@
 #@2019_08_19 Update: v3.12 Added SADM_REAR_EXCLUDE_INIT Global Var. as default Rear Exclude List 
 #@2019_08_19 Update: v3.13 Added Global Var. SADM_REAR_NEWCRON and SADM_REAR_CRONTAB file location
 #@2019_08_23 Update: v3.14 Create all necessary dir. in ${SADMIN}/www for the git pull to work
+#@2019_08_31 Update: v3.15 Change owner of web directories differently if on client or server.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -121,7 +122,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.14"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.15"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -1793,35 +1794,55 @@ sadm_start() {
        then chmod 0775 $SADM_DBB_DIR
             chown ${SADM_USER}:${SADM_GROUP} $SADM_DBB_DIR
     fi
+
     # $SADMIN/www Dir.
     [ ! -d "$SADM_WWW_DIR" ] && mkdir -p $SADM_WWW_DIR
     if [ $(id -u) -eq 0 ]
        then chmod 0775 $SADM_WWW_DIR
-            chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR
+            if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
+                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR
+                else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DIR
+            fi
     fi
+
     # $SADMIN/www/dat Dir.
     [ ! -d "$SADM_WWW_DAT_DIR" ] && mkdir -p $SADM_WWW_DAT_DIR
     if [ $(id -u) -eq 0 ]
        then chmod 0775 $SADM_WWW_DAT_DIR
-            chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR
+            if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
+                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR
+                else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR
+            fi
     fi
+
     # $SADMIN/www/lib Dir.
     [ ! -d "$SADM_WWW_LIB_DIR" ] && mkdir -p $SADM_WWW_LIB_DIR
     if [ $(id -u) -eq 0 ]
        then chmod 0775 $SADM_WWW_LIB_DIR
-            chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
+            if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
+                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
+                else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_LIB_DIR
+            fi
     fi
+
     # $SADMIN/www/images Dir.
     [ ! -d "$SADM_WWW_IMG_DIR" ] && mkdir -p $SADM_WWW_IMG_DIR
     if [ $(id -u) -eq 0 ]
        then chmod 0775 $SADM_WWW_IMG_DIR
-            chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR
+            if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
+                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR
+                else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_IMG_DIR
+            fi
     fi
+
     # $SADMIN/www/tmp Dir.
     [ ! -d "$SADM_WWW_TMP_DIR" ] && mkdir -p $SADM_WWW_TMP_DIR
     if [ $(id -u) -eq 0 ]
        then chmod 0775 $SADM_WWW_TMP_DIR
-            chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR
+            if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
+                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR
+                else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR
+            fi
     fi
 
 
