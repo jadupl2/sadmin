@@ -52,6 +52,7 @@
 #@2019_08_19 Update: v2.5 Updated to align with new SADMIN definition section.
 #@2019_08_29 Fix: v2.6 Code restructure and was not reporting error properly.
 #@2019_08_30 Fix: v2.7 Fix renaming backup problem at the end of the backup.
+#@2019_09_01 Update: v2.8 Remove separate creation of ISO (Already part of backup)
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -98,7 +99,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.7'                               # Your Current Script Version
+    export SADM_VER='2.8'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -339,26 +340,26 @@ rear_housekeeping()
 # --------------------------------------------------------------------------------------------------
 create_backup()
 {
-    # Feed user and log, the what we are about to do.
-    sadm_writelog "$SADM_FIFTY_DASH"                                    # Write 50 dashes line
-    sadm_writelog "Creating 'ReaR' bootable iso."
-    sadm_writelog " "                                                   # Write white line
-    sadm_writelog "$REAR mkrescue -v "       
+    # # Feed user and log, the what we are about to do.
+    # sadm_writelog "$SADM_FIFTY_DASH"                                    # Write 50 dashes line
+    # sadm_writelog "Creating 'ReaR' bootable iso."
+    # sadm_writelog " "                                                   # Write white line
+    # sadm_writelog "$REAR mkrescue -v "       
 
-    # Create the bootable ISO for the restore.
-    $REAR mkrescue -v >> $SADM_LOG 2>&1                                 # Produce Bootable ISO
-    RC=$?                                                               # Save Command return code.
-    if [ $RC -ne 0 ]                                                    # If cmd returned an error
-        then sadm_writelog "The '$REAR mkrescue -v' ended with error code $RC."
-             sadm_writelog "See the error message in ${SADM_LOG}." 
-             sadm_writelog "***** ISO creation completed with error - Aborting Script *****"
-             return 1                                                   # Back to caller with error
-        else sadm_writelog "ISO created with Success."
-             sadm_writelog " "
-             sadm_writelog "List of system ISO on NFS server."
-             ls -ltr ${REAR_DIR}/*.iso | nl | while read wline ; do sadm_writelog "$wline"; done
-             sadm_writelog " "
-    fi
+    # # Create the bootable ISO for the restore.
+    # $REAR mkrescue -v >> $SADM_LOG 2>&1                                 # Produce Bootable ISO
+    # RC=$?                                                               # Save Command return code.
+    # if [ $RC -ne 0 ]                                                    # If cmd returned an error
+    #     then sadm_writelog "The '$REAR mkrescue -v' ended with error code $RC."
+    #          sadm_writelog "See the error message in ${SADM_LOG}." 
+    #          sadm_writelog "***** ISO creation completed with error - Aborting Script *****"
+    #          return 1                                                   # Back to caller with error
+    #     else sadm_writelog "ISO created with Success."
+    #          sadm_writelog " "
+    #          sadm_writelog "List of system ISO on NFS server."
+    #          ls -ltr ${REAR_DIR}/*.iso | nl | while read wline ; do sadm_writelog "$wline"; done
+    #          sadm_writelog " "
+    # fi
     
     # Feed user and log, the what we are about to do.
     sadm_writelog "$SADM_FIFTY_DASH"                                    # Write 50 dashes line
@@ -377,7 +378,8 @@ create_backup()
         else sadm_writelog "***** Rear Backup completed with Success *****"
              sadm_writelog " "
              sadm_writelog "List of Rear backup on NFS server."
-             ls -ltr ${REAR_DIR}/*.gz | nl | while read wline ; do sadm_writelog "$wline"; done
+             #ls -ltr ${REAR_DIR}/*.gz | nl | while read wline ; do sadm_writelog "$wline"; done
+             ls -ltr ${REAR_NAME}* | while read wline ; do sadm_writelog "$wline"; done
              sadm_writelog " "
     fi
     
