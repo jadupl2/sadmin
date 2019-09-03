@@ -53,6 +53,7 @@
 #@2019_08_29 Fix: v2.6 Code restructure and was not reporting error properly.
 #@2019_08_30 Fix: v2.7 Fix renaming backup problem at the end of the backup.
 #@2019_09_01 Update: v2.8 Remove separate creation of ISO (Already part of backup)
+#@2019_09_02 Update: v2.9 Change syntax of error messages.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -99,7 +100,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.8'                               # Your Current Script Version
+    export SADM_VER='2.9'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -183,7 +184,7 @@ rear_preparation()
     mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} >>$SADM_LOG 2>&1
     if [ $? -ne 0 ]
         then RC=1
-             sadm_writelog "Mount of $SADM_REAR_NFS_MOUNT_POINT on NFS system $SADM_REAR_NFS_SERVER failed."
+             sadm_writelog "[ ERROR ] NFS Mount on system $SADM_REAR_NFS_SERVER failed."
              sadm_writelog "Process Aborted"
              umount ${NFS_MOUNT} > /dev/null 2>&1
              return 1
@@ -196,14 +197,15 @@ rear_preparation()
     if [ ! -d  "${NFS_MOUNT}/${SADM_HOSTNAME}" ]
         then mkdir ${NFS_MOUNT}/${SADM_HOSTNAME}
              if [ $? -ne 0 ] 
-                then sadm_writelog "Error creating directory ${NFS_MOUNT}/${SADM_HOSTNAME}" 
+                then sadm_writelog "[ ERROR ] Creating directory ${NFS_MOUNT}/${SADM_HOSTNAME}" 
                      return 1 
              fi
     fi
-    sadm_writelog "chmod 775 ${NFS_MOUNT}/${SADM_HOSTNAME}"             # Feed user and log.
+    
+    # sadm_writelog "chmod 775 ${NFS_MOUNT}/${SADM_HOSTNAME}"             # Feed user and log.
     chmod 775 ${NFS_MOUNT}/${SADM_HOSTNAME} >> $SADM_LOG 2>&1           # Make sure Dir. is writable
     if [ $? -ne 0 ]                                                     # If error on chmod command
-       then sadm_writelog "Error can't chmod directory ${NFS_MOUNT}/${SADM_HOSTNAME}" 
+       then sadm_writelog "[ ERROR ] Can't chmod directory ${NFS_MOUNT}/${SADM_HOSTNAME}" 
             return 1 
     fi
     
@@ -211,7 +213,7 @@ rear_preparation()
     TEST_FILE="${NFS_MOUNT}/${SADM_HOSTNAME}/rear_pid_$SADM_TPID.txt"   # Create test file name
     touch ${TEST_FILE} >> $SADM_LOG 2>&1                                # Create empty test file
     if [ $? -ne 0 ]                                                     # If error on chmod command
-       then sadm_writelog "Can't write test file ${TEST_FILE}."         # Advise for error encounter
+       then sadm_writelog "[ ERROR ] Can't write test file ${TEST_FILE}."        
             return 1                                                    # Back to caller with error
     fi
     sadm_writelog "Wrote to NFS mount with no problem."                 # Feed user and log
