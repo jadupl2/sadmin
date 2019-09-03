@@ -90,7 +90,8 @@ function build_sidebar_scripts_info() {
     }
     
     # Create unique filename that will contains all servers *.rch filename
-    $tmprch = tempnam ('tmp/', 'ref_rch_file-');                        # Create unique file name
+    #$tmprch = tempnam ('tmp/', 'ref_rch_file-');                        # Create unique file name
+    $tmprch = tempnam ($_SERVER['DOCUMENT_ROOT'] . "/dat/", 'ref_rch_file-');                        # Create unique file name
     if ($DEBUG) { echo "<br>Temp file of rch filename : " . $tmprch;}   # Show unique filename
     $CMD="find $RCH_ROOT -name '*.rch'  > $tmprch";                     # Construct find command
     if ($DEBUG) { echo "<br>Command executed is : " . $CMD ; }          # Show command constructed
@@ -341,7 +342,7 @@ function SideBar_OS_Summary() {
     echo "<a href='" . $URL_BACKUP . "'>Backup Status</a></div>";       # View Backup Status Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_VIEW_REAR . "'>ReaR Status</a></div>";      # URL View Rear Backup Page
+    echo "<a href='" . $URL_VIEW_REAR . "'>ReaR Backup Status</a></div>";      # URL View Rear Backup Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_MONITOR . "'>SysMon Status</a></div>";      # URL to System Monitor Page
