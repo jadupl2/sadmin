@@ -27,7 +27,8 @@
 #
 # 2016_05_18 New: v1.0 Initial Version
 #@2019_05_19 Refactoring: v2.0 Major revamp, include getopt option, new debug variable.
-# 
+#@2019_09_03 Update: v2.1 Change default value for max line in rch (35) and log (500) file.
+#
 # --------------------------------------------------------------------------------------------------
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -86,7 +87,7 @@ def setup_sadmin():
     st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
-    st.ver              = "2.0"                 # Current Script Version
+    st.ver              = "2.1"                 # Current Script Version
     st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
     st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
     st.log_header       = True                  # Show/Generate Header in script log (.log)
@@ -103,8 +104,8 @@ def setup_sadmin():
     #st.cfg_alert_group  = "default"            # Valid Alert Group are defined in alert_group.cfg
     #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
-    #st.cfg_max_logline  = 1000                 # When Script End Trim log file to 1000 Lines
-    #st.cfg_max_rchline  = 125                  # When Script End Trim rch file to 125 Lines
+    #st.cfg_max_logline  = 500                  # When Script End Trim log file to 500 Lines
+    #st.cfg_max_rchline  = 35                   # When Script End Trim rch file to 35 Lines
     #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server 
 
     # Start SADMIN Tools - Initialize 
