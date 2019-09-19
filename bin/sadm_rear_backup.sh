@@ -55,6 +55,7 @@
 #@2019_09_01 Update: v2.8 Remove separate creation of ISO (Already part of backup)
 #@2019_09_02 Update: v2.9 Change syntax of error messages.
 #@2019_09_14 Update: v2.10 Backup list before housekeeping was not showing.
+#@2019_09_18 Update: v2.11 Show Backup size in human redeable form.
 #
 #
 # --------------------------------------------------------------------------------------------------
@@ -102,7 +103,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.10'                              # Your Current Script Version
+    export SADM_VER='2.11'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -273,14 +274,13 @@ rear_housekeeping()
     sadm_writelog "You have chosen to keep $SADM_REAR_BACKUP_TO_KEEP backup files on the NFS server."
     sadm_writelog " "
     sadm_writelog "List of ReaR backup and ISO actually on NFS Server for ${SADM_HOSTNAME}"
-    ls -ltr ${REAR_NAME}* | while read wline ; do sadm_writelog "$wline"; done
+    ls -ltrh ${REAR_NAME}* | while read wline ; do sadm_writelog "$wline"; done
 
     # Delete backup that are over the number we want to keep.
     COUNT_GZ=`ls -1t ${REAR_NAME}*.gz |sort -r |sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | wc -l` 
     if [ "$COUNT_GZ" -ne 0 ]
         then sadm_writelog " "
              sadm_writelog "Number of backup file(s) to delete is $COUNT_GZ"
-             sadm_writelog " "
              sadm_writelog "Backup file(s) that will be Deleted :"
              ls -1t ${REAR_NAME}*.gz | sort -r| sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | while read wline ; do sadm_writelog "$wline"; done
              ls -1t ${REAR_NAME}*.gz | sort -r| sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | xargs rm -f >> $SADM_LOG 2>&1
@@ -310,13 +310,13 @@ rear_housekeeping()
     # Make sure Host Directory permission and files below are ok
     sadm_writelog " "
     sadm_writelog "Make sure backup are readable."
-    sadm_writelog "chmod 664 ${REAR_NAME}*"
-    chmod 664 ${REAR_NAME}* >> /dev/null 2>&1
+    sadm_writelog "chmod 644 ${REAR_NAME}*"
+    chmod 644 ${REAR_NAME}* >> /dev/null 2>&1
         
     # List Backup Directory to user after cleanup
     sadm_writelog " "
     sadm_writelog "Content of ${SADM_HOSTNAME} ReaR backup directory after housekeeping."
-    ls -ltr ${REAR_NAME}* | while read wline ; do sadm_writelog "$wline"; done
+    ls -ltrh ${REAR_NAME}* | while read wline ; do sadm_writelog "$wline"; done
 
 
     # Ok Cleanup up is finish - Unmount the NFS
