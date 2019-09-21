@@ -113,6 +113,7 @@
 #@2019_08_19 Update: v3.13 Added Global Var. SADM_REAR_NEWCRON and SADM_REAR_CRONTAB file location
 #@2019_08_23 Update: v3.14 Create all necessary dir. in ${SADMIN}/www for the git pull to work
 #@2019_08_31 Update: v3.15 Change owner of web directories differently if on client or server.
+#@2019_09_20 Update: v3.16 Foreground color definition, typo corrections.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -122,7 +123,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.15"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.16"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -317,12 +318,12 @@ fi
 if [ -z $TERM ] || [ "$TERM" = "dumb" ]
     then export SADM_BLACK=""                                           # Black color
          export SADM_MAGENTA=""                                         # Magenta color
-         export SADM_RED=""                     2>/dev/null             # Red color
-         export SADM_GREEN=""                   2>/dev/null             # Green color
-         export SADM_YELLOW=""                  2>/dev/null             # Yellow color
-         export SADM_BLUE=""                    2>/dev/null             # Blue color
-         export SADM_CYAN=""                    2>/dev/null             # Cyan color
-         export SADM_WHITE=""                   2>/dev/null             # White color
+         export SADM_RED=""                                             # Red color
+         export SADM_GREEN=""                  l                        # Green color
+         export SADM_YELLOW=""                                          # Yellow color
+         export SADM_BLUE=""                                            # Blue color
+         export SADM_CYAN=""                                            # Cyan color
+         export SADM_WHITE=""                                           # White color
     else export SADM_BLACK=$(tput setaf 0)      2>/dev/null             # Black color
          export SADM_RED=$(tput setaf 1)        2>/dev/null             # Red color
          export SADM_GREEN=$(tput setaf 2)      2>/dev/null             # Green color
