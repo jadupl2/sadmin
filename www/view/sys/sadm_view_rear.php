@@ -21,9 +21,9 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 #
-#@2019_08_26 New: v1.0 Initial version of ReaR backup Status Page
-#@2019_08_26 New: v1.1 First Release of Rear Backup Status Page.
-#
+# 2019_08_26 New: v1.0 Initial version of ReaR backup Status Page
+# 2019_08_26 New: v1.1 First Release of Rear Backup Status Page.
+#@2019_09_20 Update: v1.2 Show History (RCH) content using same uniform way.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -52,7 +52,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG           = False ;                                              # Debug Activated True/False
-$WVER            = "1.1" ;                                              # Current version number
+$WVER            = "1.2" ;                                              # Current version number
 $URL_CREATE      = '/crud/srv/sadm_server_create.php';                  # Create Page URL
 $URL_UPDATE      = '/crud/srv/sadm_server_update.php';                  # Update Page URL
 $URL_DELETE      = '/crud/srv/sadm_server_delete.php';                  # Delete Page URL
@@ -62,6 +62,7 @@ $URL_SERVER      = '/view/srv/sadm_view_servers.php';                   # View S
 $URL_OSUPDATE    = '/crud/srv/sadm_server_osupdate.php';                # O/S Schedule Update URL
 $URL_BACKUP      = '/crud/srv/sadm_server_rear_backup.php';             # Rear Schedule Update URL
 $URL_VIEW_FILE   = '/view/log/sadm_view_file.php';                      # View File Content URL
+$URL_VIEW_RCH    = '/view/rch/sadm_view_rchfile.php';                   # View RCH File Content URL
 $URL_HOST_INFO   = '/view/srv/sadm_view_server_info.php';               # Display Host Info URL
 $URL_VIEW_BACKUP = "/view/sys/sadm_view_rear.php";                      # Rear Back Status Page
 $CREATE_BUTTON   = False ;                                              # Yes Display Create Button
@@ -88,7 +89,7 @@ function setup_table() {
     echo "<th class='dt-head-left'>Rear Backup Occurrence</th>\n";
     echo "<th class='text-center'>Duration</th>\n";
     echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='text-center'>View log/rch</th>\n";
+    echo "<th class='text-center'>View Log / History</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
 
@@ -102,7 +103,7 @@ function setup_table() {
     echo "<th class='dt-head-left'>Rear Backup Occurrence</th>\n";
     echo "<th class='text-center'>Duration</th>\n";
     echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='text-center'>View log/rch</th>\n";
+    echo "<th class='text-center'>View Log / History</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
  
@@ -115,7 +116,8 @@ function setup_table() {
 #                     Display Main Page Data from the row received in parameter
 #===================================================================================================
 function display_data($count, $row) {
-    global $URL_HOST_INFO, $URL_VIEW_FILE, $URL_BACKUP, $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG; 
+    global  $URL_HOST_INFO, $URL_VIEW_FILE, $URL_BACKUP, $URL_VIEW_RCH, 
+            $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG; 
     
     echo "<tr>\n";  
     
@@ -204,19 +206,20 @@ function display_data($count, $row) {
     $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_" . $BACKUP_LOG;
     if (file_exists($log_name)) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
-        echo " title='View Backup Log'>log</a>&nbsp;&nbsp;&nbsp;";
+        echo " title='View Backup Log'>Log</a>&nbsp;&nbsp;&nbsp;";
     }else{
         echo " N/A ";
     }
+
     $rch_name = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/rch/" . $row['srv_name'] . "_" . $BACKUP_RCH;
+    $rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
     if (file_exists($rch_name)) {
-        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $rch_name . "'" ;
-        echo " title='View Backup rch file'>rch</a>";
+        echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
+        echo " title='View Backup History (rch) file'>History</a>";
     }else{
-        echo " N/A ";
+        echo "N/A";
     }
     echo "</td>\n";  
-
     echo "</tr>\n"; 
 }
 
