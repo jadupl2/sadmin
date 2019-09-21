@@ -33,7 +33,8 @@
 # 2019_04_04 Update v2.6 Show Calculated Next O/S Update Date & update occurrence.
 # 2019_04_17 Update v2.7 Minor code cleanup and show "Manual, no schedule" when not in auto update.
 # 2019_05_04 Update v2.8 Added link to view rch file content for each server.
-#@2019_07_12 Update v2.9 Don't show MacOS and Aix status (Not applicable).
+# 2019_07_12 Update v2.9 Don't show MacOS and Aix status (Not applicable).
+#@2019_09_20 Update v2.10 Show History (RCH) content using same uniform way.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -62,7 +63,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.9" ;                                                # Current version number
+$WVER          = "2.10" ;                                               # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
@@ -71,6 +72,7 @@ $URL_HOME      = '/index.php';                                          # Site M
 $URL_SERVER    = '/view/srv/sadm_view_servers.php';                     # View Servers List
 $URL_OSUPDATE  = '/crud/srv/sadm_server_osupdate.php';                  # Update Page URL
 $URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
+$URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View RCH File Content URL
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
@@ -93,7 +95,7 @@ function setup_table() {
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Next Update</th>\n";
     echo "<th class='text-center'>Update Occurrence</th>\n";
-    echo "<th class='text-center'>View log/rch</th>\n";
+    echo "<th class='text-center'>View Log / History</th>\n";
     echo "<th class='text-center'>Auto Update</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
     echo "</tr>\n"; 
@@ -107,7 +109,7 @@ function setup_table() {
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Next Update</th>\n";
     echo "<th class='text-center'>Update Occurrence</th>\n";
-    echo "<th class='text-center'>View log/rch</th>\n";
+    echo "<th class='text-center'>View Log / History</th>\n";
     echo "<th class='text-center'>Auto Update</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
     echo "</tr>\n"; 
@@ -122,7 +124,7 @@ function setup_table() {
 #                     Display Main Page Data from the row received in parameter
 #===================================================================================================
 function display_data($count, $row) {
-    global $URL_HOST_INFO, $URL_VIEW_FILE, $URL_OSUPDATE ; 
+    global $URL_HOST_INFO, $URL_VIEW_FILE, $URL_VIEW_RCH, $URL_OSUPDATE ; 
     
     echo "<tr>\n";  
     
@@ -167,7 +169,7 @@ function display_data($count, $row) {
     }
     echo "</td>\n";  
 
-    # Occurrence of the O/S Update
+    # O/S Update Occurrence
     echo "<td class='dt-center'>";
     if ($row['srv_update_auto']   == True ) { 
         list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
@@ -183,14 +185,15 @@ function display_data($count, $row) {
     $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate.log";
     if (file_exists($log_name)) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
-        echo " title='View Update Log'>log</a>&nbsp;&nbsp;&nbsp;";
+        echo " title='View Update Log'>Log</a>&nbsp;&nbsp;&nbsp;";
     }else{
-        echo "N/A";
+        echo "N/A&nbsp;&nbsp;&nbsp;";
     }
     $rch_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/rch/" . $row['srv_name'] . "_sadm_osupdate.rch";
+    $rch_www_name  = $row['srv_name'] . "_sadm_osupdate.rch";
     if (file_exists($rch_name)) {
-        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $rch_name . "'" ;
-        echo " title='View Update rch file'>rch</a>";
+        echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
+        echo " title='View Update rch file'>History</a>";
     }else{
         echo "N/A";
     }
