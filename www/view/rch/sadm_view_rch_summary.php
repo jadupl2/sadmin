@@ -30,6 +30,7 @@
 # 2018_07_21  v2.2 Screen disposition adjustments
 #@2018_09_16  v2.3 Added Alert group Display 
 #@2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
+#@2019_09_20 Update v2.5 Show History (RCH) content using same uniform way.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -59,7 +60,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.4" ;                                                        # Current version number
+$SVER  = "2.5" ;                                                        # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View RCH File Content URL
@@ -89,8 +90,7 @@ function setup_table() {
     echo "<th class='dt-head-center'>Alert Group</th>\n";
     echo "<th class='dt-head-center'>Alert Type</th>\n";
     echo "<th class='dt-head-left'>Status</th>\n"; 
-    echo "<th class='dt-head-left'>History</th>\n"; 
-    echo "<th class='dt-head-left'>Log</th>\n"; 
+    echo "<th class='text-center'>View Log / History</th>\n";
     echo "</tr>\n";
     echo "</thead>\n";
 
@@ -106,8 +106,7 @@ function setup_table() {
     echo "<th class='dt-head-center'>Alert Group</th>\n";
     echo "<th class='dt-head-center'>Alert Type</th>\n";
     echo "<th class='dt-head-left'>Status</th>\n"; 
-    echo "<th class='dt-head-left'>History</th>\n"; 
-    echo "<th class='dt-head-left'>Log</th>\n"; 
+    echo "<th class='text-center'>View Log / History</th>\n";
     echo "</tr>\n";
     echo "</tfoot>\n";
 
@@ -198,27 +197,26 @@ function display_script_array($con,$wpage_type,$script_array) {
                     break;;
             }
             
-            # DISPLAY LINKS TO ACCESS HISTORY FILE (RCH) -------------------------------------------
+            
+            # DISPLAY LINKS TO ACCESS THE LOG FILE -------------------------------------------------
+            echo "\n<td class='dt-center'>" ;
             list($fname,$fext) = explode ('.',$cfile);                  # Isolate Script Name
             $LOGFILE = $fname . ".log";                                 # Add .log to Script Name
-            echo "\n<td class='dt-center'>" ;
+            $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . trim($LOGFILE) ;
+            if (file_exists($log_name)) {
+                echo "<a href='" . $URL_VIEW_FILE . "?filename=" . 
+                $log_name .  "' data-toggle='tooltip' title='View script log file.'>Log</a>&nbsp;&nbsp;&nbsp";
+            }else{
+                echo "No Log";                                          # If No log exist for script
+            }
+ 
+            # DISPLAY LINKS TO ACCESS HISTORY FILE (RCH) -------------------------------------------
             $rch_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/rch/" . trim($cfile) ;
             if (file_exists($rch_name)) {
                 echo "<a href='" . $URL_VIEW_RCH . "?host=". $cserver ."&filename=". $cfile . 
-                   "' data-toggle='tooltip' title='View Result Code History File'>History</a>";
+                   "' data-toggle='tooltip' title='View History (rch) file.'>History</a>";
             }else{
                 echo "No File";                                         # If no RCH Exist
-            }
-            echo "</td>" ;
-
-            # DISPLAY LINKS TO ACCESS THE LOG FILE -------------------------------------------------
-            echo "\n<td class='dt-center'>" ;
-            $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . trim($LOGFILE) ;
-            if (file_exists($log_name)) {
-                 echo "<a href='" . $URL_VIEW_FILE . "?filename=" . 
-                 $log_name .  "' data-toggle='tooltip' title='View Script Log File'>Log</a>";
-            }else{
-                echo "No Log";                                          # If No log exist for script
             }
             echo "</td>" ;
             echo "\n</tr>\n";
