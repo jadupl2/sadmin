@@ -40,6 +40,13 @@
 #@2019_04_19 Fix: v2.6 Solve problem with installing 'pymysql' module.
 #@2019_04_19 Fix: v2.7 Solve problem with pip3 on Ubuntu.
 #@2019_06_19 Update: v2.8 Update procedure to install CentOS/RHEL repository for version 5,6,7,8
+#
+# RHEL/CentOS 8:
+# yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+# on RHEL 8 it is recommended to also enable the codeready-builder-for-rhel-8-*-rpms repository 
+# since EPEL packages may depend on packages from it:
+# subscription-manager repos --enable "codeready-builder-for-rhel-8-*-rpms"
+#
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
