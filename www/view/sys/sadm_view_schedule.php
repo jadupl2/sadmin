@@ -35,6 +35,7 @@
 # 2019_05_04 Update v2.8 Added link to view rch file content for each server.
 # 2019_07_12 Update v2.9 Don't show MacOS and Aix status (Not applicable).
 #@2019_09_20 Update v2.10 Show History (RCH) content using same uniform way.
+#@2019_09_23 Update v2.11 When initiating Schedule change from here, return to this page when done.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -63,7 +64,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.10" ;                                               # Current version number
+$WVER          = "2.11" ;                                               # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
@@ -74,6 +75,7 @@ $URL_OSUPDATE  = '/crud/srv/sadm_server_osupdate.php';                  # Update
 $URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
 $URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View RCH File Content URL
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
+$URL_VIEW_SCHED= '/view/sys/sadm_view_schedule.php';                    # View O/S Update Schedule
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
@@ -91,6 +93,8 @@ function setup_table() {
     echo "<thead>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
+    echo "<th class='dt-head-center'>O/S</th>\n";                       # Center Header Only
+    echo "<th class='dt-head-center'>Version</th>\n";                   # Center Header Only
     echo "<th class='text-center'>Last Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Next Update</th>\n";
@@ -105,7 +109,9 @@ function setup_table() {
     echo "<tfoot>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
-    echo "<th class='text-center'>Last Update</th>\n";
+    echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
+    echo "<th class='dt-head-center'>O/S</th>\n";                       # Center Header Only
+    echo "<th class='dt-head-center'>Version</th>\n";                   # Center Header Only
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Next Update</th>\n";
     echo "<th class='text-center'>Update Occurrence</th>\n";
@@ -124,7 +130,7 @@ function setup_table() {
 #                     Display Main Page Data from the row received in parameter
 #===================================================================================================
 function display_data($count, $row) {
-    global $URL_HOST_INFO, $URL_VIEW_FILE, $URL_VIEW_RCH, $URL_OSUPDATE ; 
+    global $URL_HOST_INFO, $URL_VIEW_FILE, $URL_VIEW_RCH, $URL_OSUPDATE, $URL_VIEW_SCHED; 
     
     echo "<tr>\n";  
     
@@ -132,10 +138,17 @@ function display_data($count, $row) {
     $WOS  = $row['srv_osname'];
     $WVER = $row['srv_osversion'];
     echo "<td class='dt-center'>";
-    echo "<a href='" . $URL_OSUPDATE . "?sel=" . $row['srv_name'] ;
+    echo "<a href='" . $URL_OSUPDATE . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_SCHED ;
     echo "' title='$WOS $WVER server, ip address is " .$row['srv_ip']. " ,Click to edit Schedule'>";
     echo $row['srv_name']  . "</a></td>\n";
+
+    # Display Operating System Logo
+    $WOS   = sadm_clean_data($row['srv_osname']);
+    sadm_show_logo($WOS);                                               # Show Distribution Logo
     
+    # Display O/S Version
+    echo "\n<td class='dt-center'>" . $row['srv_osversion'] . "</td>";
+
     # Server Category
     #echo "<td class='dt-center'>" . nl2br( $row['srv_cat']) . "</td>\n";  
 
