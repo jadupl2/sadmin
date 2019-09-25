@@ -33,7 +33,8 @@
 # 2018_08_14 v2.3 Added Alert Group associated with event
 # 2018_09_30 v2.4 Enhance Performance, New Page Layout and Fix issue with rch new format.
 # 2019_06_07 Update: v2.5 Add Alarm type to page (Deal with new format).
-#@2019_08_04 Update: v2.6 Add Distribution Logo and modify status icons.
+# 2019_08_04 Update: v2.6 Add Distribution Logo and modify status icons.
+#@2019_09_25 Update: v2.7 Page has become starting page and change page Title.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -67,7 +68,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.6" ;                                                        # Current version number
+$SVER  = "2.7" ;                                                        # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -271,7 +272,6 @@ function display_data($con,$alert_file) {
 
         # DISPLAY ICON STATUS
         echo "<tr>\n";
-        #echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";
         switch (strtoupper($wstatus)) {
             case 'ERROR' :
                 echo "\n<td class='dt-justify'>";
@@ -291,7 +291,6 @@ function display_data($con,$alert_file) {
                 echo "\n<td class='dt-justify'>";
                 echo "<span data-toggle='tooltip' title='Script currently running'>";
                 echo "<img src='/images/sadm_running.png' ";
-#                echo "style='width:32px;height:32px;'></span> Running</td>";
                 echo "style='width:96px;height:32px;'></span></td>";
                 $alert_group=$wealert;
                 break;
@@ -304,11 +303,12 @@ function display_data($con,$alert_file) {
                 break;
         }
         
-        # ALERT DATE AND TIME ----------------------------------------------------------------------
+
+        # ALERT DATE AND TIME 
         echo "<td class='dt-center'>" . $wdate . " " . $wtime . "</td>\n";
 
 
-        # READ SERVER TABLE TO GET THE DESCRIPTION -------------------------------------------------
+        # READ SERVER TABLE TO GET THE DESCRIPTION 
         $sql = "SELECT * FROM server where srv_name = '". $whost . "';";
         if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
             $WDESC = "Server not in Database";
@@ -329,7 +329,7 @@ function display_data($con,$alert_file) {
         }
 
                 
-        # ALERT DESCRIPTION ------------------------------------------------------------------------
+        # ALERT DESCRIPTION 
         list($wdummy,$wscript) = explode(" ",$wdesc);
         $wlog =  $whost . "_" . $wscript . ".log";
         echo "<td>";
@@ -345,7 +345,7 @@ function display_data($con,$alert_file) {
         echo "</td>\n";
 
 
-        # SERVER NAME ------------------------------------------------------------------------------
+        # SERVER NAME 
         echo "<td class='dt-center'>";
         echo "<a href='" . $URL_HOST_INFO . "?host=" . nl2br($whost) ;
         echo "' title='$WOS $WVER server - ip address is " . $row['srv_ip'] . "'>" ;
@@ -387,8 +387,8 @@ function display_data($con,$alert_file) {
 #===================================================================================================
 #
     # DISPLAY SCREEN HEADING    
-    $title1="System Monitor Status";
-    $title2="Page will refresh every minute";
+    $title1="Systems Monitor Status";
+    $title2="Page is refresh every minute.";
     display_lib_heading("NotHome","$title1"," ",$SVER);                 # Display Content Heading
     load_sysmon_array();                                                # Load RPT and RCH File
     sysmon_page_heading();                                              # Show Heading
