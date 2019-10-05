@@ -6,6 +6,7 @@
 #   Change Log
 #   2018_09_28   v2.5  Restucture for GitHub 
 #   2019_04_08   v2.6  Revise for user who want to update SADMIN with a pull request
+#   2019_10_04   v2.7  Add www/odt to exclude list 
 # --------------------------------------------------------------------------------------------------
 #
 # Ignored Compress Files Extensions, it's better to unpack these files and commit the raw source.
@@ -96,6 +97,7 @@ www/tmp/*
 www/rrd/*
 !www/rrd/.gitkeep
 www/test/*
+www/doc/odt/*
 
 # Template Configuration Files to be included
 cfg/*
