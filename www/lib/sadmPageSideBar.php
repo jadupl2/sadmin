@@ -346,7 +346,7 @@ function SideBar_OS_Summary() {
     echo "<a href='" . $URL_VIEW_REAR . "'>ReaR Backup Job</a></div>";  # URL View Rear Backup Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_MONITOR . "'>SysMon Status</a></div>";      # URL to System Monitor Page
+    echo "<a href='" . $URL_MONITOR . "'>System Monitor</a></div>";     # URL to System Monitor Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     #echo "\n\n<form action='/view/perf/sadm_server_perf_adhoc_all.php' method='POST'>";
