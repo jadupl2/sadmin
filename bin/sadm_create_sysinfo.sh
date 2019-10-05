@@ -786,7 +786,7 @@ create_summary_file()
 
     sadm_writelog "Creating $HWD_FILE ..."
     echo "# $SADM_CIE_NAME - SysInfo Report File - `date`"                           >  $HWD_FILE
-    echo "# This file will be use to update the SADMIN Database"                     >> $HWD_FILE
+    echo "# This file is use to update the SADMIN server inventory."                 >> $HWD_FILE
     echo "#                                                    "                     >> $HWD_FILE
 
     if [ "$SADM_OS_TYPE"  = "LINUX" ]                                 # O/S Upd RCH Only on Linux
