@@ -1816,6 +1816,16 @@ sadm_start() {
             fi
     fi
 
+    # $SADMIN/www/doc Dir.
+    [ ! -d "$SADM_WWW_DOC_DIR" ] && mkdir -p $SADM_WWW_DOC_DIR
+    if [ $(id -u) -eq 0 ]
+       then chmod 0775 $SADM_WWW_DOC_DIR
+            if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
+                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR
+                else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DOC_DIR
+            fi
+    fi
+
     # $SADMIN/www/lib Dir.
     [ ! -d "$SADM_WWW_LIB_DIR" ] && mkdir -p $SADM_WWW_LIB_DIR
     if [ $(id -u) -eq 0 ]

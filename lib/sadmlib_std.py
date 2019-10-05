@@ -1163,8 +1163,8 @@ class sadmtools():
             if not os.path.exists(self.www_dir)      : os.mkdir(self.www_dir,0o0775)     # WWW  Dir.
             os.chown(self.www_dir, wuid, wgid)                          # Change owner of log file
             #
-            #if not os.path.exists(self.www_doc_dir)  : os.mkdir(self.www_doc_dir,0o0775) # HTML Dir.
-            #os.chown(self.www_doc_dir, wuid, wgid)                      # Change owner of rch file
+            if not os.path.exists(self.www_doc_dir)  : os.mkdir(self.www_doc_dir,0o0775) # HTML Dir.
+            os.chown(self.www_doc_dir, wuid, wgid)                      # Change owner of rch file
             #
             if not os.path.exists(self.www_dat_dir)  : os.mkdir(self.www_dat_dir,0o0775) # DAT  Dir.
             os.chown(self.www_dat_dir, wuid, wgid)                      # Change owner of dat file
