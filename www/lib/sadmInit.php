@@ -84,6 +84,7 @@ define("SADM_BIN_DIR"      , SADM_BASE_DIR . "/bin");                   # Script
 define("SADM_TMP_DIR"      , SADM_BASE_DIR . "/tmp");                   # Script Temp  directory
 define("SADM_LIB_DIR"      , SADM_BASE_DIR . "/lib");                   # Script Lib directory
 define("SADM_LOG_DIR"      , SADM_BASE_DIR . "/log");                   # Script log directory
+define("SADM_DOC_DIR"      , SADM_BASE_DIR . "/doc");                   # Documentation Directory
 define("SADM_CFG_DIR"      , SADM_BASE_DIR . "/cfg");                   # Configuration Directory
 define("SADM_SYS_DIR"      , SADM_BASE_DIR . "/sys");                   # System related scripts
 define("SADM_DAT_DIR"      , SADM_BASE_DIR . "/dat");                   # Data directory
@@ -118,7 +119,6 @@ define("SADM_WWW_TMP_FILE1"       , SADM_WWW_TMP_DIR . "www_tmpfile1_" . getmypi
 define("SADM_WWW_TMP_FILE2"       , SADM_WWW_TMP_DIR . "www_tmpfile2_" . getmypid() ); # SADM Temp File1
 define("SADM_WWW_TMP_FILE3"       , SADM_WWW_TMP_DIR . "www_tmpfile3_" . getmypid() ); # SADM Temp File1
 define("SADM_WWW_NETDEV"   , "netdev.txt");                             # File Network Interface lst
-
 #
 define("SADM_UPDATE_SCRIPT", "sadm_osupdate_farm.sh -s ");              # O/S Update Script Name
 
