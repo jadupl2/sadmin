@@ -296,7 +296,7 @@ function display_data($con,$alert_file) {
       $wrch =  $whost . "_" . $wdesc . ".rch";                          # Construct Script rch Name
       $rch_name = SADM_WWW_DAT_DIR . "/" .$whost. "/rch/" .trim($wrch); # Full Path to Script rch  
       $wpdf =  $wdesc . ".pdf";                                         # Documentation pdf Name
-      $pdf_name = SADM_DOC_DIR . "/pdf/scripts/" . trim($wpdf);         # Full Path to Script pdf  
+      $pdf_name = SADM_WWW_DOC_DIR . "/pdf/scripts/" . trim($wpdf);     # Full Path to Script pdf  
       echo "<td>";                                                      # Start of Cell
       echo $wdesc ;                                                     # Desc. coming from rpt file
       if ($wsubmod == "SCRIPT") {                                       # Module is a Script ?
@@ -314,7 +314,8 @@ function display_data($con,$alert_file) {
             echo $wrch . "'>[rch]</a>";
         }
         if (file_exists($pdf_name)) {
-            echo str_repeat('&nbsp;', 2) . "\n<a href='" . $URL_DOC_DIR . $wpdf . "' title='View script documentation'>[doc]</a>";
+            echo str_repeat('&nbsp;', 2) ."\n<a href='/doc/pdf/scripts/";
+            echo $wpdf ."' title='View script documentation'>[doc]</a>";
         }
       }
       echo "</td>\n";
