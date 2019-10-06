@@ -82,6 +82,7 @@ usr/mon/*
 !usr/mon/stemplate.sh
 !usr/mon/swatch_nmon.sh
 !usr/mon/swatch_nmon.txt
+doc/odt/*
 #
 usr/cfg/*
 usr/pkg/*
