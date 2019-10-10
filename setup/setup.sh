@@ -47,6 +47,44 @@
 # since EPEL packages may depend on packages from it:
 # subscription-manager repos --enable "codeready-builder-for-rhel-8-*-rpms"
 #
+#[root@rhel8 ~]# subscription-manager repos --enable "codeready-builder-for-rhel-8-*-rpms"
+#Repository 'codeready-builder-for-rhel-8-x86_64-source-rpms' is enabled for this system.
+#Repository 'codeready-builder-for-rhel-8-x86_64-rpms' is enabled for this system.
+#Repository 'codeready-builder-for-rhel-8-x86_64-debug-rpms' is enabled for this system.
+#[root@rhel8 ~]# dnf update
+#Updating Subscription Management repositories.
+#Red Hat CodeReady Linux Builder for RHEL 8 x86_64 (Debug RPMs)                    632 kB/s | 1.5 MB     00:02
+#Red Hat CodeReady Linux Builder for RHEL 8 x86_64 (RPMs)                          853 kB/s | 2.2 MB     00:02
+#Red Hat CodeReady Linux Builder for RHEL 8 x86_64 (Source RPMs)                    85 kB/s | 196 kB     00:02
+#Red Hat Enterprise Linux 8 for x86_64 - AppStream (RPMs)                           17 kB/s | 4.5 kB     00:00
+#Red Hat Enterprise Linux 8 for x86_64 - BaseOS (RPMs)                              15 kB/s | 4.0 kB     00:00
+#Dependencies resolved.
+#Nothing to do.
+#Complete!
+#[root@rhel8 ~]#
+#
+#    RHEL/CentOS 8:
+#
+#   # yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+#
+#    on RHEL 8 it is recommended to also enable the codeready-builder-for-rhel-8-*-rpms repository since EPEL packages may depend on packages from it:
+#
+#   # subscription-manager repos --enable "codeready-builder-for-rhel-8-*-rpms"
+#
+#    on CentOS 8 it is recommended to also enable the PowerTools repository since EPEL packages may depend on packages from it:
+#
+#   # dnf config-manager --set-enabled PowerTools
+#
+#
+#NOTE for RHEL 8 users with certificate subscriptions
+#EPEL packages assume that the 'codeready-builder' repository is enabled. You can do this with: subscription-manager repos --enable "codeready-builder-for-rhel-8-*-rpms"
+#
+#NOTE for CentOS 8 users
+#EPEL packages assume that the 'PowerTools' repository is enabled. You can do this with: dnf config-manager --set-enabled PowerTools
+#
+#NOTE for CentOS users
+#You can install EPEL by running yum install epel-release. The package is included in the CentOS Extras repository, enabled by default.
+#
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -89,7 +127,6 @@ white=$(tput setaf 7)                           ; export white          # White 
 #===================================================================================================
 add_epel_repo()
 {
-
 
     # Add EPEL Repository on Redhat / CentOS 5 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 5 ] 
@@ -314,10 +351,10 @@ check_lsb_release()
 #
     # Only Supported on Linux for the moment
     SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`                 # OS(AIX/LINUX/DARWIN/SUNOS)
-    if [ "$SADM_OSTYPE" != LINUX ] 
-        then echo "SADMIN is only supported on Linux for the moment ($SADM_OSNAME)" | tee -a $SLOG
-             exit 1
-    fi
+    #if [ "$SADM_OSTYPE" != LINUX ] 
+    #    then echo "SADMIN is only supported on Linux for the moment ($SADM_OSNAME)" | tee -a $SLOG
+    #         exit 1
+    #fi
 
     # Script must be run by root
     if [ "$(whoami)" != "root" ]                                        # Is it root running script?

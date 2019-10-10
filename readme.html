@@ -2,7 +2,7 @@
     <html>
     <head>
         <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
-        <title>SADMIN Tools v1.0.0             <!-- omit in toc --></title>
+        <title>SADMIN Tools v1.1.0             <!-- omit in toc --></title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.2/dist/katex.min.css" integrity="sha384-yFRtMMDnQtDRO8rLpMIKrtPCD5jdktao2TV19YiZYWMDkUR5GQZR/NOVTdquEx1j" crossorigin="anonymous">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
@@ -22,7 +22,7 @@
     </head>
     <body>
         <p><img src="https://www.sadmin.ca/img/sadmin_small_logo.png" alt="SADMIN Tools"></p>
-<h1 id="sadmin-tools-v100-">SADMIN Tools v1.0.0             <!-- omit in toc --></h1>
+<h1 id="sadmin-tools-v110-">SADMIN Tools v1.1.0             <!-- omit in toc --></h1>
 <h3 id="table-of-content">Table of content</h3>
 <ul>
 <li><a href="#brief-description">Brief description</a></li>
@@ -44,6 +44,21 @@
 <h2 id="brief-description">Brief description</h2>
 <p><strong>The SADMIN tools is a series of Web and command line tools that allow you to :</strong></p>
 <ul>
+<li><strong>Scripts Framework and Monitoring Tools</strong>
+<ul>
+<li>The SADMIN server is the central place for monitoring scripts running on your systems.</li>
+<li>View the <a href="https://www.sadmin.ca/img/sadm_web_scripts_status.png">status of all your scripts</a> that run in your server farm.</li>
+<li>Access script log from SADMIN server <a href="https://www.sadmin.ca/img/sadm_view_logs.png">Web interface</a> or from the <a href="https://www.sadmin.ca/img/file_log_format.png">command line</a>.</li>
+<li>Choose to be alerted or not by <a href="https://www.sadmin.ca/www/how-to_use_sms_alert.php">'SMS/Texto'</a>, <a href="https://www.sadmin.ca/img/slack_warning.png">'Slack'</a> or by <a href="https://www.sadmin.ca/img/mail_notification.png">email</a>  when a script failed or succeed.</li>
+<li>Use our <a href="https://www.sadmin.ca/doc/man/man_sadm_template_sh.php">Shell</a> and/or <a href="https://www.sadmin.ca/doc/man/man_sadm_template_py.php">Python</a> templates to create new scripts and benefit of SADMIN tools.</li>
+<li>Use <a href="https://www.sadmin.ca/doc/man/man_sadm_wrapper.php">SADMIN wrapper</a> and run your existing scripts using the SADMIN tools
+<ul>
+<li>$SADMIN/bin/sadm_wrapper.sh $SADMIN/usr/bin/yourscript.sh</li>
+</ul>
+</li>
+<li>Each script starting and ending time along with the ending status are recorded in a <a href="https://www.sadmin.ca/img/file_rch_format.png">history file</a>.</li>
+</ul>
+</li>
 <li><strong>Create an inventory of your systems (Linux,Aix)</strong>.
 <ul>
 <li>Add, <a href="https://www.sadmin.ca/img/sadm_server_update.png">update</a> or delete system in your inventory.</li>
@@ -66,21 +81,6 @@
 <li>Choose how many backups you wish to keep for each type.</li>
 <li><a href="https://www.sadmin.ca/img/sadm_server_backup.png">Decide at what time you wish to perform the backup</a>.</li>
 <li>Backup are kept based upon the retention period you choose.</li>
-</ul>
-</li>
-<li><strong>Scripting tools</strong>
-<ul>
-<li>The SADMIN server is the central place for monitoring scripts running on your systems.</li>
-<li>View the <a href="https://www.sadmin.ca/img/sadm_web_scripts_status.png">status of all your scripts</a> that run in your server farm.</li>
-<li>Access script log from SADMIN server <a href="https://www.sadmin.ca/img/sadm_view_logs.png">Web interface</a> or from the <a href="https://www.sadmin.ca/img/file_log_format.png">command line</a>.</li>
-<li>Choose to be alerted or not by <a href="https://www.sadmin.ca/www/how-to_use_sms_alert.php">'SMS/Texto'</a>, <a href="https://www.sadmin.ca/img/slack_warning.png">'Slack'</a> or by <a href="https://www.sadmin.ca/img/mail_notification.png">email</a>  when a script failed or succeed.</li>
-<li>Use our <a href="https://www.sadmin.ca/doc/man/man_sadm_template_sh.php">Shell</a> and/or <a href="https://www.sadmin.ca/doc/man/man_sadm_template_py.php">Python</a> templates to create new scripts and benefit of SADMIN tools.</li>
-<li>Use <a href="https://www.sadmin.ca/doc/man/man_sadm_wrapper.php">SADMIN wrapper</a> and run your existing scripts using the SADMIN tools
-<ul>
-<li>$SADMIN/bin/sadm_wrapper.sh $SADMIN/usr/bin/yourscript.sh</li>
-</ul>
-</li>
-<li>Each script starting and ending time along with the ending status are recorded in a <a href="https://www.sadmin.ca/img/file_rch_format.png">history file</a>.</li>
 </ul>
 </li>
 <li><strong>Easy installation</strong>

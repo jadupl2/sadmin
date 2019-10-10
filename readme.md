@@ -1,6 +1,6 @@
 ![SADMIN Tools][1] 
-# SADMIN Tools v1.0.0             <!-- omit in toc -->
-
+# SADMIN Tools v1.1.0             <!-- omit in toc -->
+ 
 ### Table of content
 - [Brief description](#brief-description)
 - [Run on most popular Linux distributions](#run-on-most-popular-linux-distributions)
@@ -20,6 +20,15 @@
 
 **The SADMIN tools is a series of Web and command line tools that allow you to :**
 
+* **Scripts Framework and Monitoring Tools**
+  * The SADMIN server is the central place for monitoring scripts running on your systems.
+  * View the [status of all your scripts](https://www.sadmin.ca/img/sadm_web_scripts_status.png) that run in your server farm.
+  * Access script log from SADMIN server [Web interface](https://www.sadmin.ca/img/sadm_view_logs.png) or from the [command line](https://www.sadmin.ca/img/file_log_format.png).
+  * Choose to be alerted or not by ['SMS/Texto'](https://www.sadmin.ca/www/how-to_use_sms_alert.php), ['Slack'](https://www.sadmin.ca/img/slack_warning.png) or by [email](https://www.sadmin.ca/img/mail_notification.png)  when a script failed or succeed.
+  * Use our [Shell](https://www.sadmin.ca/doc/man/man_sadm_template_sh.php) and/or [Python](https://www.sadmin.ca/doc/man/man_sadm_template_py.php) templates to create new scripts and benefit of SADMIN tools.
+  * Use [SADMIN wrapper](https://www.sadmin.ca/doc/man/man_sadm_wrapper.php) and run your existing scripts using the SADMIN tools
+    * $SADMIN/bin/sadm_wrapper.sh $SADMIN/usr/bin/yourscript.sh
+  * Each script starting and ending time along with the ending status are recorded in a [history file](https://www.sadmin.ca/img/file_rch_format.png).
 * **Create an inventory of your systems (Linux,Aix)**.
   * Add, [update](https://www.sadmin.ca/img/sadm_server_update.png) or delete system in your inventory.
   * It collect [system configuration](https://www.sadmin.ca/img/sadmin_web_interface.png)and [performance data](https://www.sadmin.ca/img/sadm_nmon_rrd_update_cpu_graph.png) of your systems.
@@ -35,15 +44,6 @@
   * Choose how many backups you wish to keep for each type.
   * [Decide at what time you wish to perform the backup](https://www.sadmin.ca/img/sadm_server_backup.png).
   * Backup are kept based upon the retention period you choose.
-* **Scripting tools**
-  * The SADMIN server is the central place for monitoring scripts running on your systems.
-  * View the [status of all your scripts](https://www.sadmin.ca/img/sadm_web_scripts_status.png) that run in your server farm.
-  * Access script log from SADMIN server [Web interface](https://www.sadmin.ca/img/sadm_view_logs.png) or from the [command line](https://www.sadmin.ca/img/file_log_format.png).
-  * Choose to be alerted or not by ['SMS/Texto'](https://www.sadmin.ca/www/how-to_use_sms_alert.php), ['Slack'](https://www.sadmin.ca/img/slack_warning.png) or by [email](https://www.sadmin.ca/img/mail_notification.png)  when a script failed or succeed.
-  * Use our [Shell](https://www.sadmin.ca/doc/man/man_sadm_template_sh.php) and/or [Python](https://www.sadmin.ca/doc/man/man_sadm_template_py.php) templates to create new scripts and benefit of SADMIN tools.
-  * Use [SADMIN wrapper](https://www.sadmin.ca/doc/man/man_sadm_wrapper.php) and run your existing scripts using the SADMIN tools
-    * $SADMIN/bin/sadm_wrapper.sh $SADMIN/usr/bin/yourscript.sh
-  * Each script starting and ending time along with the ending status are recorded in a [history file](https://www.sadmin.ca/img/file_rch_format.png).
 * **Easy installation**
   * Untar the download file into the directory of your choice (We recommend /opt/sadmin).
   * Run the [setup.sh](https://www.sadmin.ca/www/install_guide.php#installation) script, answer a few questions and that's it.

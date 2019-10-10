@@ -1,5 +1,29 @@
 # Changelog
 
+
+## Release v[1.1.0](https://github.com/jadupl2/sadmin/releases) (2019-10-10)
+- Update
+	- 2019_09_01 sadm_rear_backup.sh (v2.8) - Remove separate creation of ISO (Already part of backup)
+	- 2019_09_02 sadm_rear_backup.sh (v2.9) - Change syntax of error messages.
+	- 2019_09_03 sadm_template.py (v2.1) - Change default value for max line in rch (35) and log (500) file.
+	- 2019_09_03 sadm_template.sh (v2.4) - Change default value for max line in rch (35) and log (500) file.
+	- 2019_09_14 sadm_rear_backup.sh (v2.10) - Backup list before housekeeping was not showing.
+	- 2019_09_18 sadm_rear_backup.sh (v2.11) - Show Backup size in human redeable form.
+	- 2019_09_20 sadmlib_std.sh (v3.16) - Foreground color definition, typo corrections.
+	- 2019_09_20 sadm_view_backup.php (v1.3) - Show History (RCH) content using same uniform way.
+	- 2019_09_20 sadm_view_rch_summary.php (v2.5) - Show History (RCH) content using same uniform way.
+	- 2019_09_20 sadm_view_rear.php (v1.2) - Show History (RCH) content using same uniform way.
+	- 2019_09_20 sadm_view_schedule.php (v2.10) - Show History (RCH) content using same uniform way.
+	- 2019_09_23 sadm_view_schedule.php (v2.11) - When initiating Schedule change from here, return to this page when done.
+	- 2019_09_25 sadm_view_sysmon.php (v2.7) - Page has become starting page and change page Title.
+	- 2019_10_01 sadm_view_sysmon.php (v2.8) - Page Added links to log, rch and script documentation.
+- V2.7
+	- 2019_10_08 .template.smon (-) - Turn off (Comment line) syslog service check.
+
+
+
+
+
 ## Release v[1.0.0](https://github.com/jadupl2/sadmin/releases) (2019-08-31)
 - Fixes
 	- 2019_07_07 sadm_create_sysinfo.sh (v3.13) - O/S Update was indicating 'Failed' when it should have been 'Success'.
