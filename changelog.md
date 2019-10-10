@@ -17,7 +17,6 @@
 	- 2019_09_23 sadm_view_schedule.php (v2.11) - When initiating Schedule change from here, return to this page when done.
 	- 2019_09_25 sadm_view_sysmon.php (v2.7) - Page has become starting page and change page Title.
 	- 2019_10_01 sadm_view_sysmon.php (v2.8) - Page Added links to log, rch and script documentation.
-- V2.7
 	- 2019_10_08 .template.smon (-) - Turn off (Comment line) syslog service check.
 
 
