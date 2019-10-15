@@ -462,7 +462,8 @@ div.server_left_data {
     /* color           : black;
     background-color: #f5f4f0; */
     color           : white;
-    background-color: #454c5e;
+    background-color: #4178be;
+/*    #454c5e; */
     border:1px solid  black;
     width           : 60%;
     padding-left    : 5px;
@@ -478,7 +479,7 @@ div.server_right_data {
     /* color           : black;
     background-color: #f5f4f0; */
     color           : white;
-    background-color: #454c5e;
+    background-color: #4178be;
     border          : 1px solid black;
     width           : 60%;
     /* font: 13px arial, sans-serif; */
