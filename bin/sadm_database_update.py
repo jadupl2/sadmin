@@ -31,13 +31,14 @@
 # 2018_06_11    v3.2 Change name for sadm_database_update.py
 # 2018_10_02    v3.3 Add Debug Variable and verbosity to script
 # 2018_11_09    v3.4 Database Connection Error Improve
-#@2018_12_19    v3.5 Fix update problem when O/S Update Date was blank.
-# 
+# 2018_12_19    v3.5 Fix update problem when O/S Update Date was blank.
+#@2019_10_13 Update: v3.6 Take Architecture in Sysinfo.txt and store it in server database table.
+#@2019_10_14 Update: v3.7 Check if Architecture column is present in server Table, if not add it.
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os,time,sys,pdb,socket,datetime,glob,fnmatch             # Import Std Python3 Modules
+    import os,time,sys,pdb,socket,datetime,glob,pymysql,fnmatch     # Import Std Python3 Modules
     SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir. Name
     sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
     import sadmlib_std as sadm                                      # Import SADMIN Python Library
@@ -75,7 +76,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.5"                 # Current Script Version
+    st.ver              = "3.7"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = False                 # Append Existing Log or Create New One
@@ -124,7 +125,7 @@ def update_row(st,wconn, wcur, wdict):
                 srv_thread_per_core='%d',   srv_ip='%s', \
                 srv_ips_info='%s',          srv_disks_info='%s', \
                 srv_date_osupdate='%s',     srv_update_status='%s', \
-                srv_sadmin_dir='%s',      \
+                srv_sadmin_dir='%s',        srv_arch='%s', \
                 srv_vgs_info='%s',          srv_date_update='%s' \
                 where srv_name='%s' " %  \
                 (wdict['srv_ostype'],           wdict['srv_osname'], \
@@ -139,7 +140,7 @@ def update_row(st,wconn, wcur, wdict):
                 wdict['srv_thread_per_core'],   wdict['srv_ip'], \
                 wdict['srv_ips_info'],          wdict['srv_disks_info'], \
                 wdict['srv_date_osupdate'],     wdict['srv_update_status'], \
-                wdict['srv_sadmin_dir'],        \
+                wdict['srv_sadmin_dir'],        wdict['srv_arch'],   \
                 wdict['srv_vgs_info'],          wdict['srv_date_update'], \
                 wdict['srv_name'])
     except (TypeError, ValueError, IndexError) as error:                # Mismatch Between Num & Str
@@ -178,14 +179,26 @@ def update_row(st,wconn, wcur, wdict):
 #===================================================================================================
 #
 def process_servers(wconn,wcur,st):
-    #st.writelog (" ")
-    #st.writelog (" ")
     st.writelog (('-' * 40))
     st.writelog ("PROCESSING ALL ACTIVES SERVERS")
-    #st.writelog (" ")
 
+    # Check If architecture column is defines in database, if not add the column definition
+    sql = "SHOW COLUMNS FROM server LIKE 'srv_arch%';";                 # Select that show Arch Col.
+    try:
+        wcur.execute(sql);                                              # Execute the Select SQL
+        rows = wcur.fetchall()                                          # FetchAll Result.
+        rc = wcur.rowcount                                              # How many rows returned
+        if rc < 1 :                                                     # If row is less than 1
+            sql  = "ALTER TABLE `server` ADD `srv_arch` VARCHAR(12) "   # Insert Col. Definition SQL
+            sql += "NOT NULL COMMENT 'System Architecture' "            # Insert Col. Definition SQL
+            sql += "AFTER `srv_uptime`;"                                # Insert Col. Definition SQL
+            wcur.execute(sql);                                          # Insert new column in table
+    except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
+        self.enum, self.emsg = error.args                               # Get Error No. & Message
+        print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
+        return (1)                                                      # Return Error to caller
+   
     # Read All Actives Servers
-#    sql  = "SELECT srv_name, srv_desc, srv_domain, srv_osname, srv_sadmin_dir "
     sql  = "SELECT srv_name, srv_desc, srv_domain, srv_osname  "
     sql += " FROM server WHERE srv_active = %s " % ('True')
     sql += " order by srv_name;"
@@ -237,6 +250,7 @@ def process_servers(wconn,wcur,st):
         wdict['srv_sadmin_dir']    = "/opt/sadmin"                      # Set Def. SADMIN Root Dir
         wdict['srv_date_osupdate'] = "0000-00-00 00:00:00"              # Def. O/S Update Date
         wdict['srv_update_status'] = "U"                                # Def. O/S Update Status
+        wdict['srv_arch'] = ""                                          # Def. Server Architecture
         for cfg_line in FH:                                             # Loop until all lines parse
             wline = cfg_line.strip()                                    # Strip CR/LF/Trailing space
             if '#' in wline or len(wline) == 0:                         # If comment or blank line
@@ -274,6 +288,7 @@ def process_servers(wconn,wcur,st):
                 if "SADM_OSUPDATE_DATE"     in CFG_NAME: wdict['srv_date_osupdate']     = CFG_VALUE
                 if "SADM_OSUPDATE_STATUS"   in CFG_NAME: wdict['srv_update_status']     = CFG_VALUE
                 if "SADM_ROOT_DIRECTORY"    in CFG_NAME: wdict['srv_sadmin_dir']        = CFG_VALUE
+                if "SADM_SERVER_ARCH"       in CFG_NAME: wdict['srv_arch']              = CFG_VALUE
                 if wdict['srv_date_osupdate'] == '' :
                    wdict['srv_date_osupdate'] = "0000-00-00 00:00:00"   # Def. O/S Update Date
 
