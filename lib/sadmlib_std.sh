@@ -106,14 +106,16 @@
 # 2019_06_23 nolog: v3.06b Correct Typo error, in email alert.
 # 2019_06_25 Update: v3.07 Optimize 'send_alert' function.
 # 2019_06_27 Nolog: v3.08 Change 'Alert' for 'Notification' in source & email '1 of 0' corrected.
-#@2019_07_14 Update: v3.09 Change History file format , correct some alert issues.
-#@2019_07_18 Update: v3.10 Repeat SysMon (not Script) Alert once a day if not solve the next day.
-#@2019_08_04 Update: v3.11 Minor change to alert message format
-#@2019_08_19 Update: v3.12 Added SADM_REAR_EXCLUDE_INIT Global Var. as default Rear Exclude List 
-#@2019_08_19 Update: v3.13 Added Global Var. SADM_REAR_NEWCRON and SADM_REAR_CRONTAB file location
-#@2019_08_23 Update: v3.14 Create all necessary dir. in ${SADMIN}/www for the git pull to work
-#@2019_08_31 Update: v3.15 Change owner of web directories differently if on client or server.
-#@2019_09_20 Update: v3.16 Foreground color definition, typo corrections.
+# 2019_07_14 Update: v3.09 Change History file format , correct some alert issues.
+# 2019_07_18 Update: v3.10 Repeat SysMon (not Script) Alert once a day if not solve the next day.
+# 2019_08_04 Update: v3.11 Minor change to alert message format
+# 2019_08_19 Update: v3.12 Added SADM_REAR_EXCLUDE_INIT Global Var. as default Rear Exclude List 
+# 2019_08_19 Update: v3.13 Added Global Var. SADM_REAR_NEWCRON and SADM_REAR_CRONTAB file location
+# 2019_08_23 Update: v3.14 Create all necessary dir. in ${SADMIN}/www for the git pull to work
+# 2019_08_31 Update: v3.15 Change owner of web directories differently if on client or server.
+# 2019_09_20 Update: v3.16 Foreground color definition, typo corrections.
+#@2019_10_13 Update: v3.17 Added function 'sadm_server_arch' - Return system arch. (x86_64,armv7l,.)
+#@2019_10_15 Update: v3.18 Enhance method to get host domain name in function $(sadm_get_domainname)
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -123,7 +125,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.16"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.18"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -851,25 +853,21 @@ sadm_get_domainname() {
     wdom=""
     case "$(sadm_get_ostype)" in
         "LINUX"|"DARWIN")   
-            wdom=""                                                     # Set Domain Default
-            which dnsdomainname > /dev/null 2>&1                        # Cmd dnsdomainname avail.?
-            if [ $? -eq 0 ] ; then wdom=`dnsdomainname` ; fi            # If Found Run & Save Domain
-
-            which facter > /dev/null 2>&1                               # Cmd facter available ?
-            if [ $? -eq 0 ] && [ $wdom = "" ]                           # Cmd facter & No domain yet
-                then wdom=`facter |grep "^domain"|awk '{print $3}'`     # Get Domain Return by facter
-            fi 
-
-            host -4 ${SADM_HOSTNAME} >/dev/null 2>&1                    # Try host Command
-            if [ $? -eq 0 ]                                             # Host Command worked ?
-               then wdom=`host ${SADM_HOSTNAME} |head -1 |awk '{ print $1 }' |cut -d. -f2-3`
-                    if [ $wdom = ${SADM_HOSTNAME} ] ; then wdom="" ;fi  # If domain = host no domain
+            wdom=""                                                     # No Domain Default
+            wdom=`hostname -d`                                          # Get Hostname Domain
+            if [ $? -ne 0 ] || [ "$wdom" = "" ]                         # If Domain Name Problem
+                then host -4 ${SADM_HOSTNAME} >/dev/null 2>&1           # Try host Command
+                     if [ $? -eq 0 ]                                    # Host Command worked ?
+                        then wdom=`host ${SADM_HOSTNAME} |head -1 |awk '{ print $1 }' |cut -d. -f2-3`
+                             if [ $wdom = ${SADM_HOSTNAME} ] ; then wdom="" ;fi  
+                     fi
             fi
             ;;
         "AIX")              
             wdom=`namerslv -s | grep domain | awk '{ print $2 }'`
             ;;
     esac
+
     if [ "$wdom" = "" ] ; then wdom="$SADM_DOMAIN" ; fi                 # No Domain = Def DomainName
     echo "$wdom"
 }
@@ -1101,6 +1099,22 @@ sadm_server_memory() {
                     ;;
     esac
     echo "$sadm_server_memory"
+}
+
+
+# --------------------------------------------------------------------------------------------------
+#                             RETURN THE SYSTEM ARCHITECTURE 
+# --------------------------------------------------------------------------------------------------
+sadm_server_arch() {
+    case "$(sadm_get_ostype)" in
+        "LINUX")    warch=`uname -m`
+                    ;;
+        "AIX")      warch=`uname -p`  
+                    ;;
+        "DARWIN")   warch=`uname -m` 
+                    ;;
+    esac
+    echo "$warch"
 }
 
 
