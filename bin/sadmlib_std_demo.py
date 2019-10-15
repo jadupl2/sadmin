@@ -41,6 +41,7 @@
 #@2019_04_25 Update: v3.5 Add Alert_Repeat, Textbelt API Key and URL Variable in Output
 #@2019_05_17 Update: v3.6 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
 #@2019_08_19 update: v3.7 Remove printing of st.alert_seq (not used anymore)
+#@2019_10_14 Update: v3.8 Add demo for calling sadm_server_arch function & show result.
 #===================================================================================================
 #
 try :
@@ -87,7 +88,7 @@ def setup_sadmin():
     st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
-    st.ver              = "3.7"                 # Current Script Version
+    st.ver              = "3.8"                 # Current Script Version
     st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
     st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
     st.log_header       = False                 # Show/Generate Header in script log (.log)
@@ -259,6 +260,11 @@ def print_functions(st):
     pexample="st.get_packagetype()"                                     # Example Calling Function
     pdesc="Get package type (rpm,deb,aix,dmg)"                          # Function Description
     presult=st.get_packagetype()                                        # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.get_arch()"                                            # Example Calling Function
+    pdesc="Get system architecture"                                     # Function Description
+    presult=st.get_arch()                                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
 
