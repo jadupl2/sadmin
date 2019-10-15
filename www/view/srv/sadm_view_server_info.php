@@ -38,7 +38,8 @@
 # 2019_01_21 Change: v2.9 Dark Theme, new presentation, button , perf. graph ...
 # 2019_03_17 Change: v2.10 Volume Group Used & Free Size now show with GB unit.
 # 2019_04_04 Change: v2.11 Adapt for Schedule_text function change in library
-#@2019_07_25 Update: v2.12 Minor code changes
+# 2019_07_25 Update: v2.12 Minor code changes
+#@2019_10_15 Update: v2.13 Color change of input fields.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -48,7 +49,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 ?>
 <style>
 .button {
-    background-color: #2375a4;
+    background-color: #4178be;
     /* border: none; */
     color: white;
     padding: 5px 16px;
@@ -72,7 +73,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.12" ;                                                       # Current version number
+$SVER  = "2.13" ;                                                       # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -96,9 +97,7 @@ function display_server_data ($wrow) {
     
     # DISPLAY TOP BUTTONS 
     echo "\n\n<div class='server_top_buttons'>          <!-- Start of Bottom Buttons DIV -->";
-    echo "\n<center>";
-    display_top_buttons ($wrow);  
-    echo "\n</center>";
+    echo "\n<center>"; display_top_buttons ($wrow); echo "\n</center>";
     echo "\n</div>                                      <!-- End of Bottom Buttons DIV -->";
     echo "\n<br>";
     
@@ -480,7 +479,6 @@ function display_top_buttons ($wrow) {
     if (file_exists($fname)) {                                          # If FileName Received exist
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
         echo "' class='button' data-toggle='tooltip' title='View System Information' >";# Tool Tips
-#        echo "<button type='button'>System Info</button></a>";          # Display Button
         echo "System</a>";          # Display Button
     }
 
@@ -593,8 +591,7 @@ function display_top_buttons ($wrow) {
 
     $heading1 = "System Information" ; 
     $heading2 = $row['srv_name'].".".$row['srv_domain'];
-    display_lib_heading("NotHome","$heading1","$heading2",$SVER);
-               # Display Content Heading
+    display_lib_heading("NotHome","$heading1","$heading2",$SVER);       # Display Content Heading
     display_server_data ($row);                                         # Display Server Data
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
