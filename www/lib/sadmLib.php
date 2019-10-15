@@ -41,7 +41,8 @@
 # 2019_08_04 Update: v2.10 Added function 'sadm_show_logo' to show distribution logo in a table cell.
 # 2019_08_13 Update: v2.11 Fix bug - When creating one line schedule summary
 # 2019_08_14 Update: v2.12 Add function for new page header look (display_lib_heading).
-# 2019_10_15 Update: v2.13 Reduce Logo size image from 32 to 24 square pixels
+#@2019_10_15 Update: v2.13 Reduce Logo size image from 32 to 24 square pixels
+#@2019_10_15 Update: v2.14 Reduce font size on 2nd line of heading in "display_lib_heading".
 # ==================================================================================================
 #
 
@@ -50,7 +51,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.13" ;   
+$LIBVER = "2.14" ;   
     
 
 #===================================================================================================
@@ -72,7 +73,7 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
     if ($TITLE2 != "") {
         echo "\n<div style='";
         echo "text-align: center ; color: #271c1c; ";
-        echo "font-size: 1.8em; font-family: Verdana, sans-serif; ";
+        echo "font-size: 1.0em; font-family: Verdana, sans-serif; ";
         echo "font-weight: bold; '>"; 
         echo "${TITLE2}" ;   
         echo "\n</div>";
