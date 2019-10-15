@@ -40,7 +40,8 @@
 # 2019_01_01    Added: sadm_create_sysinfo v3.10 - Added lspci, lsscsi and create hardware html list.
 # 2019_01_28 Added: v3.11 Change Header of files produced by this script.
 # 2019_03_17 Change: v3.12 PCI hardware list moved to end of system report file.
-#@2019_07_07 Fix: v3.13 O/S Update was indicating 'Failed' when it should have been 'Success'.
+# 2019_07_07 Fix: v3.13 O/S Update was indicating 'Failed' when it should have been 'Success'.
+#@2019_10_13 Update: v3.14 Collect Server Architecture to be store later on in Database.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -89,7 +90,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.13'                              # Your Current Script Version
+    export SADM_VER='3.14'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -814,6 +815,7 @@ create_summary_file()
     echo "SADM_SERVER_HARDWARE_BITMODE          = $(sadm_server_hardware_bitmode)"   >> $HWD_FILE
     echo "SADM_SERVER_NB_CPU                    = $(sadm_server_nb_cpu)"             >> $HWD_FILE
     echo "SADM_SERVER_CPU_SPEED (in MHz)        = $(sadm_server_cpu_speed)"          >> $HWD_FILE
+    echo "SADM_SERVER_ARCH                      = $(sadm_server_arch)"               >> $HWD_FILE
     echo "SADM_SERVER_NB_SOCKET                 = $(sadm_server_nb_socket)"          >> $HWD_FILE
     echo "SADM_SERVER_CORE_PER_SOCKET           = $(sadm_server_core_per_socket)"    >> $HWD_FILE
     echo "SADM_SERVER_THREAD_PER_CORE           = $(sadm_server_thread_per_core)"    >> $HWD_FILE
