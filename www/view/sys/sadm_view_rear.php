@@ -23,7 +23,8 @@
 #
 # 2019_08_26 New: v1.0 Initial version of ReaR backup Status Page
 # 2019_08_26 New: v1.1 First Release of Rear Backup Status Page.
-#@2019_09_20 Update: v1.2 Show History (RCH) content using same uniform way.
+# 2019_09_20 Update: v1.2 Show History (RCH) content using same uniform way.
+#@2019_10_15 Update: v1.3 Add Architecture, O/S Name, O/S Version to page
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -52,7 +53,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG           = False ;                                              # Debug Activated True/False
-$WVER            = "1.2" ;                                              # Current version number
+$WVER            = "1.3" ;                                              # Current version number
 $URL_CREATE      = '/crud/srv/sadm_server_create.php';                  # Create Page URL
 $URL_UPDATE      = '/crud/srv/sadm_server_update.php';                  # Update Page URL
 $URL_DELETE      = '/crud/srv/sadm_server_delete.php';                  # Delete Page URL
@@ -84,6 +85,9 @@ function setup_table() {
     echo "<tr>\n";
     echo "<th>Server</th>\n";
     echo "<th class='dt-head-left'>Description</th>\n";
+    echo "<th class='dt-head-left'>Arch</th>\n";
+    echo "<th class='dt-head-left'>O/S Name</th>\n";
+    echo "<th class='dt-head-left'>O/S Version</th>\n";
     echo "<th class='text-center'>Next Rear Backup</th>\n";
     echo "<th class='text-center'>Last Rear Backup</th>\n";
     echo "<th class='dt-head-left'>Rear Backup Occurrence</th>\n";
@@ -98,6 +102,9 @@ function setup_table() {
     echo "<tr>\n";
     echo "<th>Server</th>\n";
     echo "<th class='dt-head-left'>Description</th>\n";
+    echo "<th class='dt-head-left'>Arch</th>\n";
+    echo "<th class='dt-head-left'>O/S Name</th>\n";
+    echo "<th class='dt-head-left'>O/S Version</th>\n";
     echo "<th class='text-center'>Next Rear Backup</th>\n";
     echo "<th class='text-center'>Last Rear Backup</th>\n";
     echo "<th class='dt-head-left'>Rear Backup Occurrence</th>\n";
@@ -119,20 +126,29 @@ function display_data($count, $row) {
     global  $URL_HOST_INFO, $URL_VIEW_FILE, $URL_BACKUP, $URL_VIEW_RCH, 
             $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG; 
     
+    if (($row['srv_arch'] != "x86_64") and ($row['srv_arch'] != "i686")) {
+        return;
+    }
     echo "<tr>\n";  
     
     # Server Name
     echo "<td class='dt-center'>";
-    $WOS  = $row['srv_osname'];
-    $WVER = $row['srv_osversion'];
-    echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP ;
-    echo "' title='$WOS $WVER server, ip address is " .$row['srv_ip']. ", click to edit schedule'>";
+    echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP ."'";
+    echo " title='" .$row['srv_osname']. "-" .$row['srv_osversion']." server, ip address is " ;
+    echo $row['srv_ip']  . ", click to edit schedule\'>";
     echo $row['srv_name']  . "</a></td>\n";
 
-    
     # Server Description
     echo "<td class='dt-body-left'>" . nl2br( $row['srv_desc']) . "</td>\n";  
-
+    
+    # Server Architecture  
+    echo "<td class='dt-body-left'>" . ucfirst( $row['srv_arch']) . "</td>\n";  
+    
+    # Server O/S Name 
+    echo "<td class='dt-body-center'>" . ucfirst( $row['srv_osname']) . "</td>\n";  
+    
+    # Server O/S Version
+    echo "<td class='dt-body-center'>" . nl2br( $row['srv_osversion']) . "</td>\n";  
 
     # Next Rear Backup Date
     echo "<td class='dt-center'>";
@@ -230,32 +246,20 @@ function display_data($count, $row) {
 # ==================================================================================================
 
     $sql = "SELECT * FROM server where srv_active = True order by srv_name;";
-    $TITLE = "O/S Backup Status";
-    
     $result=mysqli_query($con,$sql) ;     
-    if (!$result)   {                                               # If Server not found
-        $err_msg = "<br>Server " . $HOSTNAME . " not found in the database.";  
-        $err_msg = $err_msg . mysqli_error($con) ;                  # Add MySQL Error Msg
-        sadm_fatal_error($err_msg);                                 # Display Error & Go Back
-        exit();            
-    }
-
-    $NUMROW = mysqli_num_rows($result);                             # Get Nb of rows returned
-    if ($NUMROW == 0)  {                                            # If Server not found
-        $err_msg = "<br>Server " . $HOSTNAME . " not found in Database"; # Construct msg to user
-        $err_msg = $err_msg . mysqli_error($con) ;                  # Add MySQL Error Msg
-        if ($DEBUG) {                                               # In Debug Insert SQL in Msg
+    $NUMROW = mysqli_num_rows($result);                                 # Get Nb of rows returned
+    if ($NUMROW == 0)  {                                                # If No Server found
+        $err_msg = "<br>No active server found in Database";            # Construct msg to user
+        $err_msg = $err_msg . mysqli_error($con) ;                      # Add MySQL Error Msg
+        if ($DEBUG) {                                                   # In Debug Insert SQL in Msg
             $err_msg = $err_msg . "<br>\nMaybe a problem with SQL Command ?\n" . $query ;
         }
-        sadm_fatal_error($err_msg);                                 # Display Error & Go Back
+        sadm_fatal_error($err_msg);                                     # Display Error & Go Back
         exit();  
     }
-    
-    # DISPLAY SCREEN HEADING    
-    $title1="ReaR Backup Schedule Status";
-    $title2="";
-    display_lib_heading("NotHome","$title1","$title2",$WVER);           # Display Content Heading
-
+    $title1="ReaR Backup Schedule Status";                              # Page Title 1
+    $title2="ReaR only available on x86_64 and i686 architecture";                                                         # Page Title 2
+    display_lib_heading("NotHome","$title1","$title2",$WVER);           # Display Heading
     setup_table();                                                      # Create Table & Heading
     
     # Loop Through Retrieved Data and Display each Row
