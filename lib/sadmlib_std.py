@@ -48,6 +48,7 @@
 #@2019_07_23 Update: v3.05 Remove utilization of history sequence number file.
 #@2019_08_19 Update: v3.06 Added rear_exclude_init Global Var. as default Rear Exclude List 
 #@2019_08_19 Update: v3.07 Added Global Var. rear_newcron and rear_crontab file location 
+#@2019_10_14 Update: v3.08 Added function 'get_arch' - Return system arch. (x86_64,armv7l,i686,...)
 #
 #==================================================================================================
 try :
@@ -727,6 +728,21 @@ class sadmtools():
             ccode, cstdout, cstderr = self.oscommand("uname -mrs | awk '{ print $2 }'")
         wkver=cstdout
         return wkver
+
+
+    # ----------------------------------------------------------------------------------------------
+    #                                 RETURN SYSTEM ARCHITECTURE
+    # ----------------------------------------------------------------------------------------------
+    def get_arch(self):
+        cstdout = "unknown"
+        if self.os_type == "LINUX" :                                    # Under Linux
+            ccode, cstdout, cstderr = self.oscommand("uname -m")
+        if self.os_type == "AIX" :                                      # Under AIX
+            ccode, cstdout, cstderr = self.oscommand("uname -p")
+        if self.os_type == "DARWIN" :                                   # Under MacOS
+            ccode, cstdout, cstderr = self.oscommand("uname -m")
+        warch=cstdout
+        return cstdout
 
 
     # ----------------------------------------------------------------------------------------------
