@@ -31,12 +31,13 @@
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 #  2018_08_10   v2.1 Remove Alert field on page - Not yet ready for release
-#@ 2018_12_15   v2.2 Show Server memory, number of CPU and cpu Speed on home page.
-#@ 2019_01_06 Feature: v2.3 Add link to see Performance Graph of yesterday.
-#@ 2019_01_14 Feature: v2.4 See Server Model and Serial No. when mouse over server name.
-#@ 2019_08_04 Update: v2.5 Added O/S distribution logo instead of name on page
-#@ 2019_08_18 Update: v2.6 Change page heading and some text fields.
-#@ 2019_09_23 Update: v2.7 Add Distribution logo and Version for each servers.
+# 2018_12_15   v2.2 Show Server memory, number of CPU and cpu Speed on home page.
+# 2019_01_06 Feature: v2.3 Add link to see Performance Graph of yesterday.
+# 2019_01_14 Feature: v2.4 See Server Model and Serial No. when mouse over server name.
+# 2019_08_04 Update: v2.5 Added O/S distribution logo instead of name on page
+# 2019_08_18 Update: v2.6 Change page heading and some text fields.
+# 2019_09_23 Update: v2.7 Add Distribution logo and Version for each servers.
+#@2019_10_13 Update: v2.8 Add System Architecture to page.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -65,7 +66,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG          = False ;                                               # Debug Activated True/False
-$WVER           = "2.7" ;                                               # Current version number
+$WVER           = "2.8" ;                                               # Current version number
 $URL_CREATE     = '/crud/srv/sadm_server_create.php';                   # Create Page URL
 $URL_UPDATE     = '/crud/srv/sadm_server_update.php';                   # Update Page URL
 $URL_DELETE     = '/crud/srv/sadm_server_delete.php';                   # Delete Page URL
@@ -94,8 +95,9 @@ function setup_table() {
     echo "\n<tr>";
     echo "\n<th class='dt-head-left'>Name</th>";                        # Left Align Header & Body
     echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
+    echo "\n<th class='dt-head-left'>Arch</th>";                        # Left Header Only
     echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
-    echo "\n<th class='dt-head-center'>Version</th>";                   # Center Header Only
+    echo "\n<th class='dt-head-center'>Version</th>";                   # Left Header Only
     echo "\n<th class='dt-head-left'>Cat.</th>";                        # Left Align Cat
     echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
     echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
@@ -111,8 +113,9 @@ function setup_table() {
     echo "\n<tr>";
     echo "\n<th class='dt-head-left'>Name</th>";                        # Left Align Header & Body
     echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
+    echo "\n<th class='dt-head-left'>Arch</th>";                        # Left Header Only
     echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
-    echo "\n<th class='dt-head-center'>Version</th>";                   # Center Header Only
+    echo "\n<th class='dt-head-center'>Version</th>";                   # Left Header Only
     echo "\n<th class='dt-head-left'>Cat.</th>";                        # Left Align Cat
     echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
     echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
@@ -151,6 +154,9 @@ function display_data($count,$con,$row) {
     # Display Server Desc.
     echo "\n<td class='dt-left'>"    . $row['srv_desc']   . "</td>";    # Display Description
 
+    # Server Architecture  
+    echo "<td class='dt-body-left'>" . ucfirst( $row['srv_arch']) . "</td>\n";  
+    
     # Display Operating System Logo
     $WOS   = sadm_clean_data($row['srv_osname']);
     sadm_show_logo($WOS);                                               # Show Distribution Logo
