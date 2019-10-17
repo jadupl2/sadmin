@@ -34,6 +34,7 @@
 # 2018_12_19    v3.5 Fix update problem when O/S Update Date was blank.
 #@2019_10_13 Update: v3.6 Take Architecture in Sysinfo.txt and store it in server database table.
 #@2019_10_14 Update: v3.7 Check if Architecture column is present in server Table, if not add it.
+#@2019_10_16 Update: v3.8 Don't update anymore the domain column in the Database (Change with CRUD)
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -76,7 +77,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.7"                 # Current Script Version
+    st.ver              = "3.8"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = False                 # Append Existing Log or Create New One
@@ -114,7 +115,7 @@ def update_row(st,wconn, wcur, wdict):
     try:
         sql =   "UPDATE server SET \
                 srv_ostype='%s',            srv_osname='%s', \
-                srv_domain='%s',            srv_vm='%d', \
+                srv_vm='%d', \
                 srv_ostype='%s',            srv_oscodename='%s', \
                 srv_osversion='%s',         srv_osver_major='%s', \
                 srv_kernel_version='%s',    srv_kernel_bitmode='%d', \
@@ -129,7 +130,7 @@ def update_row(st,wconn, wcur, wdict):
                 srv_vgs_info='%s',          srv_date_update='%s' \
                 where srv_name='%s' " %  \
                 (wdict['srv_ostype'],           wdict['srv_osname'], \
-                wdict['srv_domain'],            wdict['srv_vm'], \
+                wdict['srv_vm'], \
                 wdict['srv_ostype'],            wdict['srv_oscodename'], \
                 wdict['srv_osversion'],         wdict['srv_osver_major'], \
                 wdict['srv_kernel_version'],    wdict['srv_kernel_bitmode'], \
