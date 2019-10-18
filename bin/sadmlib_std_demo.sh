@@ -30,6 +30,7 @@
 #@2019_04_25 Update: v3.12 Add Alert_Repeat, Textbelt API Key and URL Variables in Output.
 #@2019_05_17 Update: v3.13 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
 #@2019_10_14 Update: v3.14 Add demo for calling sadm_server_arch function & show result.
+#@2019_10_17 Update: v3.15 Print Category and Group table content at the end of report.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -51,7 +52,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.14'                              # Current Script Version
+    export SADM_VER='3.15'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -1085,13 +1086,15 @@ print_db_variables()
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
     printf "\n\nCategory Table:\n"
-    SQL="select * from server_category; "                               # Show Table SQL
     SQL="describe server_category; "                                    # Show Table Format/colums
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+    SQL="select * from server_category; "                               # Show Table SQL
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
     printf "\n\nGroup Table:\n"
+    SQL="show columns from server_group; "                              # Show Table Format/columns
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
     SQL="select * from server_group; "                                  # Show Table SQL
-    SQL="describe server_group; "                                       # Show Table Format/columns
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
     printf "\n\nServer Table:\n"
@@ -1203,7 +1206,7 @@ print_start_stop()
     print_client_directory                                              # List Client Dir. Var. 
     print_server_directory                                              # List Server Dir. Var. 
     print_file_variable                                                 # List Files Var. of SADMIN
-    print_command_path                                                  # List Command PAth
+    print_command_path                                                  # List Command Path
     if [ "$SADM_HOST_TYPE" = "S" ] ; then print_db_variables ;fi        # On SADM Server List DB Var.
     printf "\n\n"                                                       # End of report Line Feeds
     SDAM_EXIT_CODE=0                                                    # For Test purpose
