@@ -42,6 +42,7 @@
 #@2019_05_17 Update: v3.6 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
 #@2019_08_19 update: v3.7 Remove printing of st.alert_seq (not used anymore)
 #@2019_10_14 Update: v3.8 Add demo for calling sadm_server_arch function & show result.
+#@2019_10_18 Update: v3.9 Print SADMIN Database Tables and columns at the end of report.
 #===================================================================================================
 #
 try :
@@ -88,7 +89,7 @@ def setup_sadmin():
     st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
-    st.ver              = "3.8"                 # Current Script Version
+    st.ver              = "3.9"                 # Current Script Version
     st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
     st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
     st.log_header       = False                 # Show/Generate Header in script log (.log)
@@ -143,6 +144,7 @@ def printline(st,col1="",col2="",col3=""):
     if col1 != "" and col2 != "" : print ("%-s%-s%-s" % (": ",col3," "))
 
 
+
 #===================================================================================================
 # Standardize Print Header Function 
 #===================================================================================================
@@ -154,6 +156,8 @@ def printheader(st,col1,col2,col3=" "):
     print ("%s v%s - Library v%s" % (st.pn,st.ver,st.libver))
     print ("%-39s%-36s%-33s" % (col1,col2,col3))
     print ("%s" % ("=" * 100))
+
+
 
 #===================================================================================================
 # Print SADMIN Function available to Users
@@ -1068,6 +1072,45 @@ def print_db_variables(st):
     if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
         st.writelog ("Database connection succeeded")                   # Show COnnect to DB Worked
+        
+        print ("\n\nShow SADMIN Tables:")
+        sql="show tables;" 
+        cmd =  "mysql -t -u%s -p%s -h%s" % (st.cfg_ro_dbuser, st.cfg_ro_dbpwd, st.cfg_dbhost)
+        cmd = "%s %s -e '%s'" % (cmd, st.cfg_dbname, sql)
+        (returncode,stdout,stderr)=st.oscommand(cmd)
+        print (stdout);
+
+        print ("\n\nCategory Table:")
+        sql="describe server_category; "                                    # Show Table Format/colums
+        cmd =  "mysql -t -u%s -p%s -h%s" % (st.cfg_ro_dbuser, st.cfg_ro_dbpwd, st.cfg_dbhost)
+        cmd = "%s %s -e '%s'" % (cmd, st.cfg_dbname, sql)
+        (returncode,stdout,stderr)=st.oscommand(cmd)
+        print (stdout);
+        sql="select * from server_category; "                              # Show Table Format/columns
+        cmd =  "mysql -t -u%s -p%s -h%s" % (st.cfg_ro_dbuser, st.cfg_ro_dbpwd, st.cfg_dbhost)
+        cmd = "%s %s -e '%s'" % (cmd, st.cfg_dbname, sql)
+        (returncode,stdout,stderr)=st.oscommand(cmd)
+        print (stdout);
+
+        print ("\n\nGroup Table:")
+        sql="show columns from server_group; "                              # Show Table Format/columns
+        cmd =  "mysql -t -u%s -p%s -h%s" % (st.cfg_ro_dbuser, st.cfg_ro_dbpwd, st.cfg_dbhost)
+        cmd = "%s %s -e '%s'" % (cmd, st.cfg_dbname, sql)
+        (returncode,stdout,stderr)=st.oscommand(cmd)
+        print (stdout);
+        sql="select * from server_group; "                              # Show Table Format/columns
+        cmd =  "mysql -t -u%s -p%s -h%s" % (st.cfg_ro_dbuser, st.cfg_ro_dbpwd, st.cfg_dbhost)
+        cmd = "%s %s -e '%s'" % (cmd, st.cfg_dbname, sql)
+        (returncode,stdout,stderr)=st.oscommand(cmd)
+        print (stdout);
+
+        print ("\n\nServer Table:")
+        sql="describe server; "
+        cmd =  "mysql -t -u%s -p%s -h%s" % (st.cfg_ro_dbuser, st.cfg_ro_dbpwd, st.cfg_dbhost)
+        cmd = "%s %s -e '%s'" % (cmd, st.cfg_dbname, sql)
+        (returncode,stdout,stderr)=st.oscommand(cmd)
+        print (stdout);
+
         st.writelog ("Closing Database connection")                     # Show we are closing DB
         st.dbclose()                                                    # Close the Database
         st.writelog (" ")                                               # Blank Line
