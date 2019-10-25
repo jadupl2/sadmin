@@ -13,6 +13,7 @@
 #         - The result of the operation is reflected in the second column.
 # 2018_09_14 v2.6 - Change Default Warning and Error Alert Group 
 #@2019_10_08 v2.7 - Turn off (Comment line) syslog service check.
+#@2019_10_25 v2.8 - Turn off (Comment line) ping test lines.
 ##
 #---------------------------------------------------------------------------------------------------
 # Col   Name            Description
@@ -232,10 +233,10 @@ service_syslog,rsyslog,syslogd   0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 2018
 check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 #
 # Ping server (Return 0=Ok 1=Error) Line below raise a Warning if site doesn't respond to ping.
-ping_www.google.com              0  =  01  00 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+#ping_www.google.com              0  =  01  00 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 
 # Ping server (Return 0=Ok 1=Error) Line below raise an Error if site doesn't respond to ping.
-ping_www.ibm.com                 0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+#ping_www.ibm.com                 0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 #
 #
 #
