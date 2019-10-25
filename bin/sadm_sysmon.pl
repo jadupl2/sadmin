@@ -35,8 +35,9 @@
 # 2019_04_17 Update: v2.31 Get SADMIN Root Directory from /etc/environment.
 # 2019_04_19 Update: v2.32 Produce customized Error Message, when running External Script.
 # 2019_05_13 Update: v2.33 Don't abort if can't create sysmon.lock file, happen during setup.
-#@2019_07_07 Update: v2.34 Update Filesystem Increase Message & verification.
-#@2019_07_25 Update: v2.35 Now using a tmp rpt file and real rpt is replace at the end of execution.
+# 2019_07_07 Update: v2.34 Update Filesystem Increase Message & verification.
+# 2019_07_25 Update: v2.35 Now using a tmp rpt file and real rpt is replace at the end of execution.
+# 2019_10_25 Update: v2.36 Don't check SNAP filesystem usage (snap filesystem always at 100%).
 #===================================================================================================
 #
 use English;
@@ -50,7 +51,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.35";                                       # Version Number
+my $VERSION_NUMBER      = "2.36";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -1140,6 +1141,14 @@ sub check_swap_space  {
 #---------------------------------------------------------------------------------------------------
 sub check_filesystems_usage  {
 
+    if (substr($SADM_RECORD->{SADM_ID},2,6) eq "\/snap\/") {
+        $FSTAT = sprintf "%s%s[OK]%s", BOLD, GREEN, RESET;          # Default Status
+        $MSG1  = sprintf "Filesystem %s disk usage aren't check",substr($SADM_RECORD->{SADM_ID},2); 
+        printf "\n$FSTAT $MSG1 (Snap package always at 100%)"; 
+#        printf "\n$FSTAT Filesystem %s disk usage aren't check (Snap package always at 100%)",substr($SADM_RECORD->{SADM_ID},2); 
+        return;
+    }
+  
     foreach $key (keys %df_array) {                                     # Process each FS in Array
         if ($key eq $SADM_RECORD->{SADM_ID}) {                          # Current FS = Array FS Key
             @dummy = split /_/, $key ;                                  # Split Filesystem Key/Name
@@ -1784,7 +1793,9 @@ sub loop_through_array {
         if ($SADM_RECORD->{SADM_ID} =~ /^swap_space/ ) {check_swap_space ; }
 
         # Check filesystem usage
-        if ($SADM_RECORD->{SADM_ID} =~ /^FS/ ) {check_filesystems_usage ; }
+#        if (($SADM_RECORD->{SADM_ID} =~ /^FS/ ) && (substr($SADM_RECORD->{SADM_ID},3,6) != "/snap/"))
+        if ($SADM_RECORD->{SADM_ID} =~ /^FS/ ) 
+            {check_filesystems_usage ; }
 
         # Check Ping an IP
         if ($SADM_RECORD->{SADM_ID} =~ /^ping_/ ) {ping_ip; }
