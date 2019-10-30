@@ -3,8 +3,8 @@
 -- https://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Aug 24, 2019 at 11:43 AM
--- Server version: 5.5.60-MariaDB
+-- Generation Time: Oct 27, 2019 at 09:18 PM
+-- Server version: 5.5.64-MariaDB
 -- PHP Version: 5.4.16
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -27,7 +27,6 @@ USE `sadmin`;
 --
 -- Table structure for table `server`
 --
-
 DROP TABLE IF EXISTS `server`;
 CREATE TABLE IF NOT EXISTS `server` (
   `srv_id` int(11) NOT NULL COMMENT 'Server ID',
@@ -94,14 +93,15 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_img_dow` varchar(8) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNN' COMMENT 'Image Backup Day of the Week',
   `srv_img_hour` smallint(6) NOT NULL DEFAULT '4' COMMENT 'Image Backup Start Hour',
   `srv_img_minute` smallint(6) NOT NULL DEFAULT '0' COMMENT 'Image Backup Start Minute',
-  `srv_uptime` varchar(20) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Uptime'
-) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
+  `srv_uptime` varchar(20) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Uptime',
+  `srv_arch` varchar(12) COLLATE utf8_unicode_ci NOT NULL COMMENT 'System Architecture'
+) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
+
 
 
 --
 -- Table structure for table `server_category`
 --
-
 DROP TABLE IF EXISTS `server_category`;
 CREATE TABLE IF NOT EXISTS `server_category` (
   `cat_id` int(11) NOT NULL COMMENT 'Category ID',
@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS `server_category` (
   `cat_date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP COMMENT 'Cat. Upd. TimeStamp',
   `cat_default` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Default Category ?'
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Category Table';
+
 
 --
 -- Dumping data for table `server_category`
@@ -142,7 +143,6 @@ CREATE TABLE IF NOT EXISTS `server_group` (
 --
 -- Dumping data for table `server_group`
 --
-
 INSERT INTO `server_group` (`grp_id`, `grp_code`, `grp_desc`, `grp_active`, `grp_date`, `grp_default`) VALUES
 (2, 'Cluster', 'Clustered Server', 1, '2017-11-22 16:55:50', 0),
 (3, 'Service', 'Infrastructure Service', 1, '2017-11-07 05:00:00', 0),
@@ -157,7 +157,6 @@ INSERT INTO `server_group` (`grp_id`, `grp_code`, `grp_desc`, `grp_active`, `grp
 --
 -- Table structure for table `server_network`
 --
-
 DROP TABLE IF EXISTS `server_network`;
 CREATE TABLE IF NOT EXISTS `server_network` (
   `net_ip` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'IP Address',
@@ -170,6 +169,10 @@ CREATE TABLE IF NOT EXISTS `server_network` (
   `net_date_update` datetime NOT NULL COMMENT 'Date Last Change'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+
+--
+-- Indexes for dumped tables
+--
 
 --
 -- Indexes for table `server`
@@ -207,7 +210,7 @@ ALTER TABLE `server_network`
 -- AUTO_INCREMENT for table `server`
 --
 ALTER TABLE `server`
-  MODIFY `srv_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server ID',AUTO_INCREMENT=42;
+  MODIFY `srv_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server ID',AUTO_INCREMENT=45;
 --
 -- AUTO_INCREMENT for table `server_category`
 --
@@ -218,8 +221,6 @@ ALTER TABLE `server_category`
 --
 ALTER TABLE `server_group`
   MODIFY `grp_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server Group ID',AUTO_INCREMENT=9;
-
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-
