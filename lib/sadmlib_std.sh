@@ -116,6 +116,7 @@
 # 2019_09_20 Update: v3.16 Foreground color definition, typo corrections.
 #@2019_10_13 Update: v3.17 Added function 'sadm_server_arch' - Return system arch. (x86_64,armv7l,.)
 #@2019_10_15 Update: v3.18 Enhance method to get host domain name in function $(sadm_get_domainname)
+#@2019_10_30 Update: v3.19 Remove utilization of 'facter' (Depreciated)
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -125,7 +126,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.18"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.19"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -223,7 +224,6 @@ SADM_PARTED=""                              ; export SADM_PARTED        # Path t
 SADM_ETHTOOL=""                             ; export SADM_ETHTOOL       # Path to ethtool Command
 SADM_SSH=""                                 ; export SADM_SSH           # Path to ssh Exec.
 SADM_MYSQL=""                               ; export SADM_MYSQL         # Default mysql FQDN
-SADM_FACTER=""                              ; export SADM_FACTER        # Default facter Cmd Path
 
 # SADMIN CONFIG FILE VARIABLES (Default Values here will be overridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export SADM_MAIL_ADDR     # Default is in sadmin.cfg
@@ -555,9 +555,7 @@ sadm_check_requirements() {
     SADM_SSH=$(sadm_get_command_path "ssh")                             # Get ssh cmd path   
     SADM_BC=$(sadm_get_command_path "bc")                               # Get bc cmd path   
     SADM_MAIL=$(sadm_get_command_path "mail")                           # Get mail cmd path   
-    SADM_FACTER=$(sadm_get_command_path "facter")                       # Get facter cmd path   
     SADM_CURL=$(sadm_get_command_path "curl")                           # Get curl cmd path   
-    SADM_FACTER=$(sadm_get_command_path "facter")                       # Get facter cmd path   
     SADM_MYSQL=$(sadm_get_command_path "mysql")                         # Get mysql cmd path  
     return 0
 }
@@ -1001,18 +999,12 @@ sadm_server_ips() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_type() {
     case "$(sadm_get_ostype)" in
-        "LINUX")    if [ "$SADM_FACTER" != "" ]                         # If facter is installed
-                       then W=`facter |grep is_virtual |awk '{ print $3 }'`   # Get VM True or False
-                            if [ "$W" = "false" ]
-                                then sadm_server_type="P"               # Physical Server
-                                else sadm_server_type="V"               # Virtual Server
-                            fi
-                       else if [ "$SADM_DMIDECODE" != "" ]
-                                then $SADM_DMIDECODE |grep -i vmware >/dev/null 2>&1 # Search vmware
-                                     if [ $? -eq 0 ]                    # If vmware was found
-                                        then sadm_server_type="V"       # If VMware Server
-                                        else sadm_server_type="P"       # Default Assume Physical
-                                     fi
+        "LINUX")    sadm_server_type="P"                                # Physical Server Default
+                    if [ "$SADM_DMIDECODE" != "" ]
+                       then $SADM_DMIDECODE |grep -i vmware >/dev/null 2>&1 # Search vmware
+                            if [ $? -eq 0 ]                             # If vmware was found
+                               then sadm_server_type="V"                # If VMware Server
+                               else sadm_server_type="P"                # Default Assume Physical
                             fi
                     fi
                     ;;
