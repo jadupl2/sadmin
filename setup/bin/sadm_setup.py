@@ -60,11 +60,12 @@
 # 2019_04_15 Fix: v3.23 Fix 'squery' database user password typo error.
 # 2019_04_18 Update: v3.24 Release 0.97 Re-tested with Ubuntu version.
 # 2019_04_18 Fix: v3.25 Release 0.97 Re-tested with CentOS/RedHat version.
-#@2019_06_19 Update: v3.26 Ask for sadmin Database password until it's valid.
-#@2019_06_21 Update: v3.27 Ask user 'sadmin' & 'squery' database password until it's valid.
-#@2019_06_25 Update: v3.28 Modification of the text displayed at the end of installation.
-#@2019_07_04 Update: v3.29 Crontab client and Server definition revised for Aix and Linux.
-#@2019_08_25 Update: v3.30 On Client setup Web USer and Group in sadmin.cfg to sadmin user & group.
+# 2019_06_19 Update: v3.26 Ask for sadmin Database password until it's valid.
+# 2019_06_21 Update: v3.27 Ask user 'sadmin' & 'squery' database password until it's valid.
+# 2019_06_25 Update: v3.28 Modification of the text displayed at the end of installation.
+# 2019_07_04 Update: v3.29 Crontab client and Server definition revised for Aix and Linux.
+# 2019_08_25 Update: v3.30 On Client setup Web USer and Group in sadmin.cfg to sadmin user & group.
+# 2019_10_30 Update: v3.31 Remove installation of 'facter' package (Depreciated).
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -81,7 +82,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.30"                                            # Setup Version Number
+sver                = "3.31"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -133,8 +134,6 @@ req_client = {
                     'deb':'mutt',                           'drepo':'base'},
     'gawk'       :{ 'rpm':'gawk',                           'rrepo':'base',
                     'deb':'gawk',                           'drepo':'base'},
-    'facter'     :{ 'rpm':'facter',                         'rrepo':'epel',  
-                    'deb':'facter',                         'drepo':'base'},
     'ruby-libs'  :{ 'rpm':'ruby-libs',                      'rrepo':'epel',  
                     'deb':'ruby-full',                      'drepo':'base'},
     'bc'         :{ 'rpm':'bc',                             'rrepo':'base',  
