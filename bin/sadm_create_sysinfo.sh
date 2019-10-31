@@ -42,6 +42,7 @@
 # 2019_03_17 Change: v3.12 PCI hardware list moved to end of system report file.
 # 2019_07_07 Fix: v3.13 O/S Update was indicating 'Failed' when it should have been 'Success'.
 #@2019_10_13 Update: v3.14 Collect Server Architecture to be store later on in Database.
+#@2019_10_30 Update: v3.15 Remove utilization on 'facter' for collecting info (Not always available)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -90,7 +91,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.14'                              # Your Current Script Version
+    export SADM_VER='3.15'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -132,7 +133,6 @@ DASH_LINE=`printf %79s |tr " " "-"`             ; export DASH_LINE      # 79 min
 # Name of all Output Files
 HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"   ; export HPREFIX        # Output File Loc & Name
 HWD_FILE="${HPREFIX}_sysinfo.txt"               ; export HWD_FILE       # Hardware File Info
-FACTER_FILE="${HPREFIX}_facter.txt"             ; export LVSCAN_FILE    # Facter Output File
 PRTCONF_FILE="${HPREFIX}_prtconf.txt"           ; export PRTCONF_FILE   # prtconf output file
 DISKS_FILE="${HPREFIX}_diskinfo.txt"            ; export DISKS_FILE     # disk Inofrmation File
 LVM_FILE="${HPREFIX}_lvm.txt"                   ; export LVM_FILE       # lvm Information File
@@ -154,7 +154,6 @@ NETSTAT=""                                      ; export NETSTAT        # netsta
 IP=""                                           ; export IP             # ip Cmd with Path
 DF=""                                           ; export DF             # df Cmd with Path
 IFCONFIG=""                                     ; export IFCONFIG       # ifconfig Cmd with Path
-FACTER=""                                       ; export FACTER         # facter Cmd with Path
 DMIDECODE=""                                    ; export DMIDECODE      # dmidecode Cmd with Path
 SADM_CPATH=""                                   ; export SADM_CPATH     # Tmp Var Store Cmd Path
 LSBLK=""                                        ; export LSBLK          # lsblk Cmd Path
@@ -264,8 +263,6 @@ pre_validation()
     # If command is found the uppercase command variable is set to full command path
     # If command isn't found the uppercase command variable is set nothing
     #-----------------------------------------------------------------------------------------------
-    command_available "facter"      ; FACTER=$SADM_CPATH                # Cmd Path,Blank if not fnd
-
     if [ "$SADM_OS_TYPE"  = "AIX" ]
         then    command_available "lspv"        ; LSPV=$SADM_CPATH      # Cmd Path or Blank !found
                 command_available "lsvg"        ; LSVG=$SADM_CPATH      # Cmd Path or Blank !found
@@ -692,9 +689,6 @@ create_linux_config_files()
              $LSHW -html > $LSHW_FILE                                   # Create Hardware HTML File
     fi
 
-    if [ "$FACTER" != "" ] 
-        then create_command_output "facter"  "$FACTER"  "$FACTER_FILE"  
-    fi
 }
 
 
@@ -703,7 +697,6 @@ create_linux_config_files()
 # ==================================================================================================
 create_aix_config_files()
 {
-    if [ "$FACTER" != "" ]  ; then create_command_output "facter"  "$FACTER"  "$FACTER_FILE"   ; fi
     if [ "$PRTCONF" != "" ] ; then create_command_output "prtconf" "$PRTCONF" "$SYSTEM_FILE"  ; fi
 
     # Collect Disk Information ---------------------------------------------------------------------
