@@ -42,13 +42,14 @@
 # 2019_05_16 Update: v3.00 Only one summary line is now added to RCH file when scripts are executed.
 # 2019_05_16 Update: v3.01 New 'st.show_version()' function, libr. debug variable (st.lib_debug), 
 #                    script alert not send by script anymore but by SADMIN master.
-#@2019_05_20 Fix: v3.02 Was not loading Storix mount point directory info.
-#@2019_06_07 Update: v3.03 Create/Update the rch file using the new format (with alarm type).
-#@2019_06_19 Update: v3.04 Trap and show error when can't connect to Database, instead of crashing.
-#@2019_07_23 Update: v3.05 Remove utilization of history sequence number file.
-#@2019_08_19 Update: v3.06 Added rear_exclude_init Global Var. as default Rear Exclude List 
-#@2019_08_19 Update: v3.07 Added Global Var. rear_newcron and rear_crontab file location 
+# 2019_05_20 Fix: v3.02 Was not loading Storix mount point directory info.
+# 2019_06_07 Update: v3.03 Create/Update the rch file using the new format (with alarm type).
+# 2019_06_19 Update: v3.04 Trap and show error when can't connect to Database, instead of crashing.
+# 2019_07_23 Update: v3.05 Remove utilization of history sequence number file.
+# 2019_08_19 Update: v3.06 Added rear_exclude_init Global Var. as default Rear Exclude List 
+# 2019_08_19 Update: v3.07 Added Global Var. rear_newcron and rear_crontab file location 
 #@2019_10_14 Update: v3.08 Added function 'get_arch' - Return system arch. (x86_64,armv7l,i686,...)
+#@2019_10_30 Update: v3.09 Remove 'facter' utilization (Depreciated).
 #
 #==================================================================================================
 try :
@@ -121,7 +122,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.07"                                # This Library Version
+        self.libver             = "3.09"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -267,7 +268,6 @@ class sadmtools():
         self.dmidecode          = ""                                    # Command dmidecode Path
         self.bc                 = ""                                    # Command bc (Do Some Math)
         self.fdisk              = ""                                    # fdisk (Read Disk Capacity)
-        self.facter             = ""                                    # facter info collector
         self.perl               = ""                                    # perl Path (for epoch time)
         self.uname              = ""                                    # uname command path
         self.mail               = ""                                    # mail command path
@@ -1005,7 +1005,7 @@ class sadmtools():
     # It is recommended to install any missing command.
     # ----------------------------------------------------------------------------------------------
     def check_requirements(self):
-        global which,lsb_release,uname,bc,fdisk,facter,mail,ssh,dmidecode,perl
+        global which,lsb_release,uname,bc,fdisk,mail,ssh,dmidecode,perl
         global nmon,lscpu,ethtool,parted,curl,mutt
 
         requisites_status=True                                          # Assume Requirement all Met
@@ -1036,10 +1036,6 @@ class sadmtools():
         if (self.os_type == "LINUX"):                                   # On Linux
             self.fdisk = self.locate_command('fdisk')                   # Locate fdisk command
             if self.fdisk == "" : requisites_status=False               # if blank didn't find it
-
-        if (self.os_type == "LINUX"):                                   # On Linux
-            self.facter = self.locate_command('facter')                 # Locate facter
-            if self.facter == "" : requisites_status=False              # if blank didn't find it
 
         # Get the location of mail command
         self.mail = self.locate_command('mail')                         # Locate mail command
