@@ -31,6 +31,7 @@
 #@2019_05_17 Update: v3.13 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
 #@2019_10_14 Update: v3.14 Add demo for calling sadm_server_arch function & show result.
 #@2019_10_17 Update: v3.15 Print Category and Group table content at the end of report.
+#@2019_10_30 Update: v3.16 Remove 'facter' utilization (depreciated).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -52,7 +53,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.15'                              # Current Script Version
+    export SADM_VER='3.16'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -997,11 +998,6 @@ print_command_path()
     pexample="\$SADM_DMIDECODE"                                         # Variable Name
     pdesc="Cmd. 'dmidecode', Get model & type"                          # Command Location
     presult="$SADM_DMIDECODE"                                           # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-
-    pexample="\$SADM_FACTER"                                            # Variable Name
-    pdesc="Cmd. 'facter', Get System Info"                              # Command Location
-    presult="$SADM_FACTER"                                              # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_BC"                                                # Variable Name
