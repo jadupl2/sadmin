@@ -80,10 +80,13 @@ usr/lib/*
 usr/mon/*
 !usr/mon/.gitkeep
 !usr/mon/srestart.sh
+usr/mon/srestart.log
 !usr/mon/stemplate.txt
 !usr/mon/stemplate.sh
+usr/mon/stemplate.log
 !usr/mon/swatch_nmon.sh
 !usr/mon/swatch_nmon.txt
+usr/mon/swatch_nmon.log
 doc/odt/*
 usr/cfg/*
 usr/pkg/*
