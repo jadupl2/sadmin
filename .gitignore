@@ -78,10 +78,10 @@ usr/doc/*
 usr/lib/*
 !usr/lib/.gitkeep
 usr/mon/*
+!usr/mon/.gitkeep
 !usr/mon/srestart.sh
-!usr/mon/stemplate.sh
-!usr/mon/swatch_nmon.sh
-!usr/mon/swatch_nmon.txt
+!usr/mon/stemplate.*
+!usr/mon/swatch_nmon.*
 doc/odt/*
 #
 usr/cfg/*
