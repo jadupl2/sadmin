@@ -24,7 +24,7 @@
 *.obj
 *.pdb
 *.bak
-**/*.log
+*.log
 *.cache
 *.org
 *.tmp
@@ -85,7 +85,6 @@ usr/mon/*
 !usr/mon/swatch_nmon.sh
 !usr/mon/swatch_nmon.txt
 doc/odt/*
-#
 usr/cfg/*
 usr/pkg/*
 usr/dat/*
