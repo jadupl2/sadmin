@@ -729,7 +729,7 @@ sub check_for_error {
    if ($MODULE eq "NETWORK")   {
       if ($SUBMODULE eq "PING")   {
          if ($SYSMON_DEBUG >= 5) { print "\nPing to server $WID failed"; }
-         $ERR_MESS = "Cannot ping server $WID" ;
+         $ERR_MESS = "$HOSTNAME can't ping server $WID" ;
          write_rpt_file($alert_type,"NETWORK","PING",$ERR_MESS );
       }
    }
