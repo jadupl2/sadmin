@@ -23,7 +23,8 @@
 # 2018-06_09    v1.9 Change Script name to sadm_subnet_lookup
 # 2018-09_22    v2.0 Fix Problem with Updating Last Ping Date
 # 2018-11_09    v2.1 DataBase Connect/Disconnect revised.
-#@2019_03_30 Fix: v2.2 Fix problem reading the fping result, database update fix.
+# 2019_03_30 Fix: v2.2 Fix problem reading the fping result, database update fix.
+#@2019_11_05 Update: v2.3 Restructure code for performance.
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -37,12 +38,14 @@ except ImportError as e:
 #pdb.set_trace()                                                        # Activate Python Debugging
 
 
+
 #===================================================================================================
 #                                 Local Variables used by this script
 #===================================================================================================
 #
 DEBUG = False                                                           # Activate Debug (Verbosity)
 netdict = {}                                                            # Network Work Dictionnary
+
 
 
 #===================================================================================================
@@ -63,7 +66,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "2.2"                 # Current Script Version
+    st.ver              = "2.3"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = False                 # Append Existing Log or Create New One
@@ -99,21 +102,30 @@ def oscommand(command) :
     out = p.stdout.read().strip().decode()
     err = p.stderr.read().strip().decode()
     returncode = p.wait()
-    if (DEBUG) :
-        print ("In sadm_oscommand function stdout is      : %s" % (out))
-        print ("In sadm_oscommand function stderr is      : %s " % (err))
-        print ("In sadm_oscommand function returncode is  : %s" % (returncode))
+    #if (DEBUG) :
+    #    print ("In sadm_oscommand function stdout is      : %s" % (out))
+    #    print ("In sadm_oscommand function stderr is      : %s " % (err))
+    #    print ("In sadm_oscommand function returncode is  : %s" % (returncode))
     return (returncode,out,err)
 
 
 # ----------------------------------------------------------------------------------------------
-# READ IP KEY IN SERVER_NETWORK TABLE
+# Determine if the key (IP) is present or not in the Network Table.
+#
+# Function parameters :
+#   - st = Object Instance of SADM Tools 
+#   - wcon = Connection Object to Database
+#   - wcur = Cursor Object on Database
+#   - tbkey = IP (Ex: 192.168.1.145) to check existence in Network Table
+#   - dbsilent = if True (Default), return error code and no error message.
+#                if False return error code and if Error show Error message returned I/O.
+#
 # Return 2 parameters :
 #   1 = Error Code (0=found 1=NotFound)
 #   2 = If Row was found then return row data as a tuple.
 #       If Row was not found 'None' is returned as the second parameter
 # ----------------------------------------------------------------------------------------------
-def db_readkey(st,wconn,wcur,tbkey,dbsilent):
+def db_readkey(st,wconn,wcur,tbkey,dbsilent=True):
 
 
     sql = "SELECT * FROM server_network WHERE net_ip='%s'" % (tbkey)    # Build select statement
@@ -141,13 +153,25 @@ def db_readkey(st,wconn,wcur,tbkey,dbsilent):
     return(0,dbrow)                                                     # Return no Error & row data
 
 
+
 #-----------------------------------------------------------------------------------------------
 # INSERT ROW IN SERVER_NETWORK TABLE
-# return (0) if no error - return (1) if error encountered
 #
-# Example of tbdata received
-# ['192.168.1.1','192.168.001.001','Router','b8:27:eb:9e:77:81','Y',\
-#   '2018-04-18 21:09:58','2018-04-18 21:09:58']
+# Function parameters :
+#   - st = Object Instance of SADM Tools 
+#   - wcon = Connection Object to Database
+#   - wcur = Cursor Object on Database
+#   - tbkey = IP (Ex: 192.168.1.145) to update
+#   - tbdata = Data collected about IP 
+#       Example of tbdata received
+#       ['192.168.1.1','192.168.001.001','Router','b8:27:eb:9e:77:81','Y',\
+#       '2018-04-18 21:09:58','2018-04-18 21:09:58']
+#   - dbsilent = if True, return error code and no error message.
+#                if False (Default) return error code and if Error show Error message returned I/O.
+#
+# Return parameter :
+#   0 = Update Succeeded     
+#   1 = Update Failed 
 #-----------------------------------------------------------------------------------------------
 def db_insert(st,wconn,wcur,tbkey,tbdata,dbsilent=False):
     if DEBUG : st.writelog("Insert IP: %s " % tbkey);                   # Show key to Insert
@@ -188,6 +212,22 @@ def db_insert(st,wconn,wcur,tbkey,tbdata,dbsilent=False):
 
 #===================================================================================================
 # UPDATE THE NETWORK IP DATABASE TABLE
+#
+# Function parameters :
+#   - st            = Object Instance of SADM Tools 
+#   - wcon          = Connection Object to Database
+#   - wcur          = Cursor Object on Database
+#   - wip           = IP (Ex: 192.168.1.222)
+#   - wzero         = IP with 3 digits (use for sorting) (Ex: 192.168.001.222)
+#   - wman          = Manufacturer (Vendor) of network device.
+#   - wping         = 1= if responded to ping  
+#                     0= Didn't responded to ping  
+#   - wdateping     = Date of Last Ping (Ex: 2019-11-05 07:43:52)
+#   - wdatechange   = Date if last change of MacAddress or Hostname.
+#
+# Return parameter :
+#   0 = Update Succeeded     
+#   1 = Update Failed 
 #===================================================================================================
 #
 def db_update(st,wconn,wcur,wip,wzero,wname,wmac,wman,wping,wdateping,wdatechange):
@@ -243,14 +283,17 @@ def scan_network(st,snet,wconn,wcur) :
         netdev=cstdout                                                  # Save Net. Interface Name
         st.writelog ("Current host interface name     : %s" % (netdev)) # Show Interface selected
 
+
     # Print Number of IP in Network Subnet----------------------------------------------------------
     NET4 = ipaddress.ip_network(snet)                                   # Create instance of network
     snbip = NET4.num_addresses                                          # Save Number of possible IP
     st.writelog ("Possible IP on %s   : %s " % (snet,snbip))            # Show Nb. Possible IP
 
+
     # Print the Network Netmask of Subnet-----------------------------------------------------------
     snetmask = NET4.netmask                                             # Save Network Netmask
     st.writelog ("Network netmask                 : %s" % (snetmask))   # Show User Netmask
+
 
     # Open Network Output Result File (Read by Web Interface)
     (wnet,wmask) = snet.split('/')                                      # Split Network & Netmask
@@ -263,25 +306,47 @@ def scan_network(st,snet,wconn,wcur) :
         st.writelog ("Error creating output file %s" % (SFILE))         # Error Msg if open failed
         sys.exit(1)                                                     # Exit Script with Error
 
+
+    # Run fping on Subnet and generate a file containing that IP of servers alive.
+    # Example of output from fping (After running cmd):
+    #   192.168.1.1 is alive
+    #   192.168.1.5 is alive
+    #   192.168.1.6 is alive
+    fpingfile = "%s/fping.txt" % (st.net_dir)                           # fping result file name
+    cmd  = "fping -i 1 -g %s 2>/dev/null | grep -i alive | tee %s" % (snet,fpingfile) # fping cmd
+    st.writelog ("\nThe fping output file           : %s" % (fpingfile)) # Show fping output filename
+    if (DEBUG) :
+        st.writelog ("Command : %s" % (cmd))   
+    ccode,fpinglist,cstderr = oscommand(cmd)                            # Run the fping command
+    if (ccode > 1):                                                     # If Error running command
+        st.writelog ("Problem running : %s" % (cmd))                    # Show Command in Error
+        st.writelog ("Stdout : %s \nStdErr : %s" % (cstdout,cstderr))   # Write stdout & stderr
+        sys.exit(1)                                                     # Exit script with Error
+    else: 
+        st.writelog ("The fping finished with success.")                # Show Command Success
+
+
     # Run arp-scan command to create Arp file (MAC Address and Network Interface Manufacturer)
+    # The output fields are separated by a single tab character.
+    # Example of Output (';'delimited file) after running customized command (cmd) is :
+    #   <IP Address>   <Hardware Address>   <Vendor Details>
+    #   192.168.1.44;b8:27:eb:9e:77:81;Raspberry Pi Foundation
+    #   192.168.1.45;a0:99:9b:08:f5:11;Apple, Inc.
+    #   192.168.1.31;b8:27:eb:48:73:c2;Raspberry Pi Foundation
     (ip1,ip2,ip3,ip4) = wnet.split('.')                                 # Split Network IP
     arpfile = "%s/arp-scan.txt" % (st.net_dir)                          # arp result file name
     cmd  = "arp-scan --interface=%s %s | " % (netdev,snet)              # arp-scan command
-    cmd += "awk -F'\t' '{ print $1,$2,$3 }' | tr -d ',' |grep '^%s'> %s" % (ip1,arpfile)  
-    st.writelog ("The arp-scan output file        : %s" % (arpfile))    # Show arp-scan IP+Mac Addr.
+    cmd += " tr '\\t' ';' | grep '^%s'> %s" % (ip1,arpfile)             # Replace Tab by ; 
+    st.writelog ("\nThe arp-scan output file        : %s" % (arpfile))  # Show arp-scan IP+Mac Addr.
     ccode,cstdout,cstderr = oscommand(cmd)                              # Run the arp-scan command
     if (ccode != 0):                                                    # If Error running command
         st.writelog ("Problem running : %s" % (cmd))                    # Show Command in Error
         st.writelog ("Stdout : %s \nStdErr : %s" % (cstdout,cstderr))   # Write stdout & stderr
         sys.exit(1)                                                     # Exit script with Error
+    else:
+        st.writelog ("The arp-scan finished with success.")             # Show Command Success
 
-    # Run fping on Subnet and generate a file containing that IP of servers alive.
-    fpingfile = "%s/fping.txt" % (st.net_dir)                           # fping result file name
-    cmd  = "fping -i 1 -g %s 2>/dev/null | grep -i alive | tee %s"  % (snet,fpingfile) # fping cmd
-    st.writelog ("The fping output file           : %s" % (fpingfile))  # Show fping output filename
-    if (DEBUG) :
-        st.writelog ("Command : %s" % (cmd))   
-    ccode,fpinglist,cstderr = oscommand(cmd)                            # Run the fping command
+
 
     # Opening Arp file, read all file into memory
     try:                                                                # Try Opening arp-scan file
@@ -289,12 +354,13 @@ def scan_network(st,snet,wconn,wcur) :
     except Exception:                                                   # If Error opening file
         st.writelog("Error opening arp-scan result file %s" % (arpfile))# Error Msg if open failed
         sys.exit(1)                                                     # Exit Script with Error
-    lines = f.readlines()                                               # Read all lines put in list
+    arplines = f.readlines()                                            # Read all lines put in list
     f.close()                                                           # Close Arp Result file
     st.writelog(' ')                                                    # Space line
     st.writelog('----------')                                           # Space line
 
-    # Iterating through the “usable” addresses on a network:
+
+    # Iterating through the usable addresses on a network:
     for ip in NET4.hosts():                                             # Loop through possible IP
         hip = str(ipaddress.ip_address(ip))                             # Save processing IP
         if (DEBUG) :
@@ -306,82 +372,102 @@ def scan_network(st,snet,wconn,wcur) :
         except socket.herror as e:                                      # If IP has no Name
             hname = ""                                                  # Clear IP Hostname
         hmac = ''                                                       # Clear Work Mac Address
-        hmanu = ''                                                      # Clear Work Manufacturer
-        for arpline in lines:                                           # Loop through arp file
-            if (arpline.split(' ')[0] == hip) :                         # Found Cur. IP in arp file
-                hmac  = arpline.split(' ')[1]                           # Save Mac Address
-                arpline = arpline.replace (hip ,  "%s," % (hip))
-                arpline = arpline.replace (hmac , "%s," % (hmac))
-                hmanu = arpline.split(',')[2]                           # Save Manufacturer
-                hmanu = hmanu.rstrip(',\n')                             # Remove command & NewLine
+        hmanu = ''                                                      # Clear Work Vendor
+        for arpline in arplines:                                        # Loop through arp file
+            if (arpline.split(';')[0] == hip) :                         # Found Cur. IP in arp file
+                hmac  = arpline.split(';')[1]                           # Save Mac Address
+                hmanu = arpline.split(';')[2]                           # Save Manufacturer
+                hmanu = hmanu.rstrip('\n')                              # Remove NewLine
+                hmanu = hmanu.replace(',', '')                          # Remove comma from Vendor
                 break                                                   # Break out of loop
 
         if (DEBUG) :
             st.writelog ("Is ip %s alive in fpinglist ?" % (hip))
         hactive = 0                                                     # Default Card is inactive
-        if ("%s is alive" % (hip) in fpinglist) : hactive = 1                             # Ip Is Pingable
+        if ("%s is alive" % (hip) in fpinglist) : hactive = 1           # Ip Is Pingable
         if (DEBUG) :
-            if (hactive != 0) : 
-                st.writelog ("Yes it is")
+            if (hactive !=0):
+                st.writelog ("Yes it is - Responded to ping")
             else:
-                st.writelog ("Not it isn't")
+                st.writelog ("Not it isn't - No ping response")
 
-        (ip1,ip2,ip3,ip4) = hip.split('.')                              # Split IP
-        zip = "%03d.%03d.%03d.%03d" % (int(ip1),int(ip2),int(ip3),int(ip4)) # Build Ip Addr with ZeroIP
+        (ip1,ip2,ip3,ip4) = hip.split('.')                              # Split IP Address
+        zip = "%03d.%03d.%03d.%03d" % (int(ip1),int(ip2),int(ip3),int(ip4)) # Ip with Leading Zero
         WLINE = "%s,%s,%s,%s,%d" % (zip, hname, hmac, hmanu, hactive)   # Format Output file Line
         netdict[hip] = WLINE                                            # Put Line in Dictionary
-
         if (DEBUG) :
-            st.writelog(' ')                                            # Space line
+            st.writelog ("Info build from arp-scan & fping for %s is %s" % (hip,WLINE))
+
+
+        # Verify if IP is in Database Network Table
+        if (DEBUG) :
             st.writelog("Verifying if IP '%s' exist in database" % (hip)) # Show IP were looking for
         (dberr,dbrow) = db_readkey(st,wconn,wcur,hip,True)              # Read IP Row if Exist
+
+        # IP was not found in Database
         if (dberr != 0):                                                # If IP Not in Database
             if (DEBUG) : st.writelog("IP %s doesn't exist in database" % (hip)) # Advise Usr of flow
             cdata = [hip,zip,hname,hmac,hmanu,hactive]                  # Data to Insert
             dberr = db_insert(st,wconn,wcur,hip,cdata,False)            # Insert Data in Cat. Table
             if (dberr != 0) :                                           # Did the insert went well ?
                 st.writelog("Error %d adding '%s' to database" % (dberr,hip))  # Show Error & Mess.
-        else :
-            old_hostname    = dbrow[2]
-            old_mac         = dbrow[3]
-            old_ping        = dbrow[5]
-            wdateping       = dbrow[6]
-            wdatechange     = dbrow[7]
-            if (DEBUG) :
-                st.writelog("OLD - hostname %s, Mac %s, Ping %s, DatePing %s, DateUpdate %s" % (old_hostname,old_mac,old_ping,wdateping,wdatechange))
-            wdate = time.strftime('%Y-%m-%d %H:%M:%S')                  # Save Current Date & Time
+            continue                                                    # Continue with next IP
 
-            # If Ip is Pingable
-            if (hactive == 1) :                                         # If IP is pingable
-                wdateping = wdate                                       # Update Last Ping Date
-                st.writelog("%-17s - Ping work - Last change date updated." % (hip)) # Advise User
+        # Record was found - Save actual row information
+        row_hostname    = dbrow[2]                                      # Save DB Hostname
+        row_mac         = dbrow[3]                                      # Save DB Mac Adress
+        row_manu        = dbrow[4]                                      # Save DB Vendor
+        row_ping        = dbrow[5]                                      # Save Last Ping Result(0,1)
+        row_pingdate    = dbrow[6]                                      # Save Last Ping Date
+        row_datechg     = dbrow[7]                                      # Save Last Mac/Name Chg Date
+        if (DEBUG) :
+            st.writelog("DB Row Found: hostname %s, Mac %s, Ping %s, DatePing %s, DateUpdate %s" 
+            % (row_hostname,row_mac,row_ping,row_pingdate,row_datechg))
+        wdate = time.strftime('%Y-%m-%d %H:%M:%S')                      # Save Current Date & Time
 
-            # If MAC have changed and new MAC is not blank then update last change date.
-            if (old_mac != hmac) :                                      # If MAC Change
-                if (hmac == "") :                                       # If No New MAC
-                    st.writelog("%-17s - Leave old mac at '%s' since new mac is '%s'" % (hip,old_mac,hmac))
-                    hmac = old_mac                                      # Keep Old MAC
-                else:
-                    st.writelog("%-17s - Mac Address changed from '%s' to '%s'" % (hip,old_mac,hmac))
-                    wdatechange = wdate                                 # MAC Changed Upd. Date Chng
+        # Update IP Ping Status
+        if (hactive == 1) :                                             # If IP is pingable
+            row_pingdate = wdate                                        # Update Last Ping Date
+            row_ping = True                                             # Update Row Ping Info
+            st.writelog("%-17s - Ping work - Change last ping date." % (hip)) # Advise User
+        else:
+            row_ping = False                                            # Update Row Ping Info
 
-            # If HostName of the IP have changed, update last change date.
-            if (old_hostname != hname):
-                st.writelog("%-17s - Host Name changed from '%s' to '%s'" % (hip,old_hostname,hname))
-                wdatechange = wdate                                     # MAC Changed Upd. Date Chng
+        # If MAC have changed and new MAC is not blank then update last change date.
+        if (row_mac != hmac) :                                          # If MAC Change
+            if (hmac == "") :                                           # If No New MAC
+                st.writelog("%-17s - Keep old mac at '%s' since new mac is '%s'" % (hip,row_mac,hmac))
+            else:
+                st.writelog("%-17s - Mac Address changed from '%s' to '%s'" % (hip,row_mac,hmac))
+                row_datechg = wdate                                     # MAC Changed Upd. Date Chng
+                row_mac = hmac                                          # Update IP Mac Address
+    
+        # If HostName of the IP have changed, update last change date.
+        if (row_hostname != hname):
+            st.writelog("%-17s - Host Name changed from '%s' to '%s'" % (hip,row_hostname,hname))
+            row_datechg = wdate                                         # Hostname Chg Upd Date Chng
+            row_hostname = hname                                        # Update IP new hostname
 
-            # Go Update Database
-            if (DEBUG) : st.writelog ("Updating '%s' data" % (hip))
-            dberr = db_update(st,wconn,wcur,hip,zip,hname,hmac,hmanu,hactive,wdateping,wdatechange)
-            if (dberr != 0) :                                           # If no Error updating IP
-                st.writelog("[ERROR] Updating IP '%s'" % (hip))         # Advise User Update Error
+        # If Manufacturer Changed
+        if (row_manu != hmanu):
+            if (hmac == "") :                                           # If No New MAC
+                st.writelog("%-17s - Keep old Vendor at '%s' since new vendor is '%s'" % (hip,row_manu,hmanu))
+            else:
+                st.writelog("%-17s - Device vendor changed from '%s' to '%s'" % (hip,row_manu,hmanu))
+                row_datechg = wdate                                     # MAC Changed Upd. Date Chng
+                row_manu = hmanu                                        # Update IP Mac Address
+
+        # Go Update Database
+        if (DEBUG) : st.writelog ("Updating '%s' data" % (hip))
+        dberr = db_update(st,wconn,wcur,hip,zip,row_hostname,row_mac,row_manu,row_ping,row_pingdate,row_datechg)
+        if (dberr != 0) :                                               # If no Error updating IP
+            st.writelog("[ERROR] Updating IP '%s'" % (hip))             # Advise User Update Error
 
 
     # Loop through the dictionnary create and write value to output file
     for k, v in netdict.items():                                        # For every line in dict
-        #if (DEBUG) : st.writelog("Key: {0}, Value: {1}".format(k, v)) # Under Debug print out Line
+        if (DEBUG) : st.writelog("Key: {0}, Value: {1}".format(k, v)) # Under Debug print out Line
         OUT.write ("%s,%s\n" % (v,k))                                   # Dict Value to Output File
-
     OUT.close()                                                         # Close Output File
 
     # Make Sure $SADMIN/www/dat/`hostname -s`/net Directory exist
