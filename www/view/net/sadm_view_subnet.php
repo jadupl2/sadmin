@@ -101,6 +101,7 @@ function show_subnet($wsubnet,$woption,$con) {
         $sql = "SELECT * FROM server_network where net_ip = '" . $wip . "' ;";
         $result=mysqli_query($con,$sql) ;                               # Execute SQL Select
         if (!$result) { continue ; }                                    # IP not in DB. Then Next IP
+
         $row = mysqli_fetch_assoc($result);                             # Read Current Processing IP
         # Select to show or not based on the option requested --------------------------------------
         #  option   = [all]   Display all ip regardless of their status 
@@ -108,10 +109,13 @@ function show_subnet($wsubnet,$woption,$con) {
         #             [iwn]   Inactive With Name        (no respond to ping and have DNS entry)
         #             [awn]   Active Without Name       (respond to ping and have NO DNS entry)
         #             [used]  Display only the used IPs (respond to ping and have DNS entry)
+
+        # Set the State according to Ping result and if got a hostname.
         if (($row['net_ping'] == "0")  and ($row['net_hostname'] == "")) { $wstate="free" ; } 
         if (($row['net_ping'] == "1")  and ($row['net_hostname'] != "")) { $wstate="used" ; }
         if (($row['net_ping'] == "1")  and ($row['net_hostname'] == "")) { $wstate="awn";}
         if (($row['net_ping'] == "0")  and ($row['net_hostname'] != "")) { $wstate="iwn";}
+        
         # Display IP Information -------------------------------------------------------------------
         if  (($woption == "all") or 
             (($woption == "iwn")  and ($wstate == "iwn")) or 
