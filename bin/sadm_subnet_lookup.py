@@ -25,6 +25,7 @@
 # 2018-11_09    v2.1 DataBase Connect/Disconnect revised.
 # 2019_03_30 Fix: v2.2 Fix problem reading the fping result, database update fix.
 #@2019_11_05 Update: v2.3 Restructure code for performance.
+#@2019_11_06 Fix: v2.4 Ping response was not recorded properly
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -66,7 +67,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "2.3"                 # Current Script Version
+    st.ver              = "2.4"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = False                 # Append Existing Log or Create New One
@@ -428,10 +429,10 @@ def scan_network(st,snet,wconn,wcur) :
         # Update IP Ping Status
         if (hactive == 1) :                                             # If IP is pingable
             row_pingdate = wdate                                        # Update Last Ping Date
-            row_ping = True                                             # Update Row Ping Info
+            row_ping = 1                                                # Update Row Ping Info
             st.writelog("%-17s - Ping work - Change last ping date." % (hip)) # Advise User
         else:
-            row_ping = False                                            # Update Row Ping Info
+            row_ping = 0                                                # Update Row Ping Info
 
         # If MAC have changed and new MAC is not blank then update last change date.
         if (row_mac != hmac) :                                          # If MAC Change
