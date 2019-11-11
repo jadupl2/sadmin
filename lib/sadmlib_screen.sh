@@ -13,8 +13,9 @@
 # 2018_09_20    v1.4 Show SADM Version instead of Release No.
 # 2019_02_25 Change: v1.5 Code revamp and new menu design.
 # 2019_03_03 Change: v1.6 Added color possibilities and cursor control to library.
-#@2019_03_17 Update: v1.7 Add time in menu heading.
-#@2019_04_07 Update: v1.8 Use Color constant variable now available from standard SADMIN Shell Libr.
+# 2019_03_17 Update: v1.7 Add time in menu heading.
+# 2019_04_07 Update: v1.8 Use Color constant variable now available from standard SADMIN Shell Libr.
+# 2019_11_11 Update: v1.9 Add function 'sadm_pager' to display a file and navigating into it.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
@@ -25,8 +26,8 @@
 # L O C A L    V A R I A B L E S    
 # --------------------------------------------------------------------------------------------------
 #
-lib_screen_ver=1.8                              ; export lib_screen_ver
-
+export lib_screen_ver=1.9                                               # This Library Version
+export WDATA=""                                                         # Input Entered, Accept Data
 
 
 
@@ -37,9 +38,10 @@ lib_screen_ver=1.8                              ; export lib_screen_ver
 sadm_writexy()
 {
 
-    tput cup `expr $1 - 1`  `expr $2 - 1`                               # tput command pos. cursor
-    case "$(sadm_get_ostype)" in
-        "LINUX")    echo -e "$3\c"                                      # -e enable interpretation  
+    tput cup `expr $1 - 1`  `expr $2 - 1`                               # Position the Cursor
+    case "$(sadm_get_ostype)" in                                        # Depending on OS 
+        "LINUX")    #echo -e "$3\c"                                      # -e enable interpretation
+                    printf "%s" "$3"                                  # -e enable interpretation    
                     ;;
         "AIX")      echo "$3\c"                                         # Don't need the in AIX
                     ;;      
@@ -89,14 +91,86 @@ sadm_mess() {
 }
 
 
+#---------------------------------------------------------------------------------------------------
+# Display file receive on a page by page basis.
+# The page lenght is the third parameter received
+# Receive (1)Heading title, (2)filename to display and (3)number of Lines per page
+#---------------------------------------------------------------------------------------------------
+sadm_pager() {
+    PTITLE="$1"                                                         # Screen Menu Title
+    PFILE="$2"                                                          # Filename to show
+    lines_per_page=$3                                                   # Number of line per screen
+    sadm_display_heading "$PTITLE"                                      # Show Screen Heading Recv.
+
+    if [ ! -r "$PFILE" ]                                                # File to show doesn't exist
+        then sadm_mess "No result were found for this search"           # Advise user
+             return 0                                                   # Return to caller
+    fi
+
+    cur_page=1                                                          # Current page Number
+    tot_line=`wc -l $PFILE | awk '{ print $1}'`                         # Number of lines in File
+    tot_page=`echo "$tot_line / $lines_per_page" | bc`                  # Total Line / Line per page
+    tmp=`echo "$tot_page * $lines_per_page" | bc`                       # Total Page * Line per Page    
+    if [ $tot_page -lt $tmp ] ; then tot_page=$((tot_page+1 )) ;fi      # Check if need on more page
+    if [ $tot_page -lt 1 ] ; then tot_page=1 ; fi                       # Minimum one page
+
+    nl -w4 $PFILE > $SADM_TMP_FILE3                                     # Number all lines >tmpfile
+    while : 
+        do 
+        sadm_writexy 04 01 "$SADM_CLREOS"
+        tail_num=`echo "$cur_page * $lines_per_page" | bc` 
+        tail_num=`echo "$tail_num - $lines_per_page" | bc` 
+        tail_num=`echo "$tot_line - $tail_num" | bc`
+        tail -$tail_num $SADM_TMP_FILE3 | head -$lines_per_page
+        sadm_writexy 22 01 "${SADM_WHITE}${SADM_BOLD}${SADM_RVS}${eighty_spaces}" 
+        OPTMESS="[N]ext page  [P]revious page  [Q]uit  [#]Page Number ?  "
+        sadm_writexy 22 01 "Page $cur_page of $tot_page - $OPTMESS"
+        printf "%s" "${SADM_RESET}"
+        sadm_writexy 22 71 " "                                          # Position to accept Choice
+        read page_opt                                                   # Accept User Choice
+        if [ "$page_opt" = "" ] ; then page_opt="N" ; fi                # Default is next page
+        case "$page_opt" in
+            "n"|"N")    
+                if [ $cur_page = $tot_page ] 
+                   then sadm_mess "Page $tot_page is the last one." 
+                   else cur_page=`echo "$cur_page + 1" | bc` 
+                fi
+                continue
+                ;;
+            "p"|"P" ) 
+                if [ $cur_page -lt 2 ] 
+                   then sadm_mess "There is no previous page." 
+                   else cur_page=`echo "$cur_page - 1" | bc` 
+                fi
+                continue
+                ;;
+            "q"|"Q" ) 
+                break 
+                ;;
+
+            *)  echo $page_opt | grep [^0-9] > /dev/null 2>&1              # Grep for Number
+                if [ "$?" -eq "0" ]
+                   then sadm_mess "Sorry, wanted a number"                   # Error Msg on Line 22
+                   else if [ $page_opt -ge 1 ] && [ $page_opt -le $tot_page ] 
+                            then cur_page=$page_opt
+                            else sadm_mess "Invalid Entry."
+                        fi
+                fi
+                continue
+                ;;
+        esac 
+        done 
+}
+
+
 
 
 #---------------------------------------------------------------------------------------------------
-# DISPLAY MESSAGE ON LINE 22 WITH BELL SOUND
+# DISPLAY MESSAGE ON LINE 23 WITH BELL SOUND
 #---------------------------------------------------------------------------------------------------
 sadm_display_message() {
-   sadm_writexy 22 01 "${SADM_CLREOS}"                                       # Clear from lines 22 to EOS
-   sadm_writexy 22 01 "${SADM_BOLD}${1}${SADM_RESET}${SADM_BELL}"                      # Display Mess. on Line 22
+   sadm_writexy 23 01 "${SADM_CLREOS}"                                  # Clear from lines 23 to EOS
+   sadm_writexy 23 01 "${SADM_BOLD}${1}${SADM_RESET}${SADM_BELL}"       # Display Mess. on Line 23
 }
 
 
@@ -112,24 +186,24 @@ sadm_display_heading()
     titre=`echo $1`                                                     # Save Menu Title
     eighty_spaces=`printf %80s " "`                                     # 80 white space
 
-    # Clear screen and display line 21 in reverse video
-    sadm_writexy 01 01  "${SADM_CLR}\c"                                 # ClrScr_ Activate. Rev. Video
-    #sadm_writexy 21 01 "${bgreen}${SADM_RVS}${eighty_spaces}${SADM_RESET}" # Line 21 in Reverse Video
-    #sadm_writexy 21 01 "${bgreen}${eighty_spaces}${SADM_RESET}"        # Line 21 in Reverse Video
+    # Clear screen and display two blank lines in reverse video on line 1 and 2 
+    sadm_writexy 01 01  "${SADM_CLR}"                                   # Clear the Screen
+    sadm_writexy 01 01 "${SADM_WHITE}${SADM_BOLD}${SADM_RVS}${eighty_spaces}${SADM_RESET}" 
+    sadm_writexy 02 01 "${SADM_WHITE}${SADM_BOLD}${SADM_RVS}${eighty_spaces}${SADM_RESET}" 
 
     # Display Line 1 (Hostname + Menu Name + Date)
-    sadm_writexy 01 01 "${SADM_BOLD}${SADM_GREEN}$(sadm_get_fqdn)"      # Top Left Show HostName 
-    let wpos="((80 - ${#titre}) / 2)"                                   # Calc. Center Pos for Name
-    sadm_writexy 01 $wpos "${SADM_MAGENTA}$titre"                       # Display Title Centered
-    sadm_writexy 01 65 "${SADM_GREEN}`date '+%Y/%m/%d %H:%M'`"          # Top Right Show Current Date 
+    sadm_writexy 01 01 "${SADM_WHITE}${SADM_RVS}${SADM_BOLD}$(sadm_get_fqdn)"      # Top Left Show HostName 
+    let wpos="(((80 - ${#titre}) / 2) + 1)"                             # Calc. Center Pos for Name
+    sadm_writexy 01 $wpos "$titre"                       # Display Title Centered
+    sadm_writexy 01 65 "`date '+%Y/%m/%d %H:%M'`"          # Top Right Show Current Date 
 
     # Display Line 2 - (OS Name and version + Cie Name and SADM Release No.
     sadm_writexy 02 01 "$(sadm_get_osname) $(sadm_get_osversion)"       # Display OSNAME + OS Ver.
-    let wpos="((80 - ${#SADM_CIE_NAME}) / 2)"                           # Calc. Center Pos for Name
-    sadm_writexy 02 $wpos "${SADM_CYAN}$SADM_CIE_NAME"                  # Display Cie Name Centered 
+    let wpos="(((80 - ${#SADM_CIE_NAME}) / 2) + 1)"                     # Calc. Center Pos for Name
+    sadm_writexy 02 $wpos "$SADM_CIE_NAME"                  # Display Cie Name Centered 
     let wpos="74 - ${#SADM_VERSION}"                                    # Calc. Pos. Line 2 on Right
-    sadm_writexy 02 $wpos "${SADM_GREEN}Ver $SADM_VER"                  # Display Script Version
-    sadm_writexy 04 01 "${SADM_RESET}\c"                                # Reset to Normal & Pos. Cur
+    sadm_writexy 02 $wpos "Ver $SADM_VER"                  # Display Script Version
+    sadm_writexy 04 01 "${SADM_RESET}"                                  # Reset to Normal & Pos. Cur
 }
 
 
@@ -308,24 +382,38 @@ sadm_display_menu()
             #sadm_writexy 19 43 "[${SADM_BOLD}Q${SADM_RESET}]  Quit............................"
     fi
     
-    
-    # Accept choice on line 21 - Validate it and set return code accordingly
+    sadm_accept_choice $s_count
+    return $?                                                           # Return Selected Choice
+}
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Accept Menu Choice
+# --------------------------------------------------------------------------------------------------
+sadm_accept_choice()
+{
+    s_count=$1                                                          # Nb item in Menu
+
+    # Accept choice on line 22 - Validate it and set return code accordingly
     while :                                                             # Repeat Until good choice
         do                                                              # Begin of loop
         sadm_space_line=`printf %80s`                                   # 80 Spaces Line
-        sadm_writexy 21 01 "${SADM_GREEN}${SADM_RVS}${sadm_space_line}\c" # Display Rev. Video Line
-        sadm_writexy 21 29 "Option ? ${SADM_RESET}  ${SADM_RIGHT}"      # Display Option 
-        sadm_writexy 21 38 " "                                          # Position to accept Choice
+        #sadm_writexy 22 01 "${SADM_GREEN}${SADM_RVS}${sadm_space_line}\c" # Display Rev. Video Line
+        #sadm_writexy 22 01 "${SADM_GREEN}${SADM_RVS}${sadm_space_line}" # Display Rev. Video Line
+        sadm_writexy 22 01 "${SADM_WHITE}${SADM_BOLD}${SADM_RVS}${sadm_space_line}"         
+        sadm_writexy 22 29 "Option ? ${SADM_RESET}  ${SADM_RIGHT}"      # Display Option 
+        sadm_writexy 22 38 " "                                          # Position to accept Choice
         read adm_choix                                                  # Accept User Choice
         if [ "$adm_choix" = "" ] ; then continue ; fi                   # [ENTER] Only = Re-Accept
         if [ "$adm_choix" = "q" ] || [ "$adm_choix" = "Q" ]             # If Quit is selected
             then adm_choix=99 ; break  ; fi                             # Quit = Return code of 99
         echo "$adm_choix" | grep [^0-9] >/dev/null 2>&1                 # Grep for Number
         if [ $? -eq 0 ]                                                 # If not only number
-           then sadm_mess "Sorry, wanted a number"                      # Error Msg on Line 22
+           then sadm_mess "Sorry, need a number"                        # Error Msg on Line 22
                 continue                                                # Go Re-Accept choice
         fi
-        if [ "$adm_choix" -lt 1 ] || [ "$adm_choix" -gt "$s_count" ] # If Invalid Choice Number 
+        if [ "$adm_choix" -lt 1 ] || [ "$adm_choix" -gt "$s_count" ]    # If Invalid Choice Number 
            then sadm_mess "Choice is invalid"                           # Invalid Choice  Message
                 continue                                                # Go Back to ReAccept Choice
            else break                                                   # Valid Choice Selected
