@@ -31,7 +31,8 @@
 # 2018_05_14 V2.4 Fix Problem with echo command on MacOS
 # 2018_05_14 V2.5 Add SADM_USE_RCH Variable to use or not a RCH FIle (Set to 'N' for this Script)
 # 2018_09_20 v2.6 Update code to align with latest Library
-#@2019_02_25 Change: v2.7 Nicer color presentation and code cleanup.
+# 2019_02_25 Change: v2.7 Nicer color presentation and code cleanup.
+#@2019_11_11 Change: v2.8 Add RPM Tools option in menu.
 #=================================================================================================== 
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -54,7 +55,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.7'                               # Current Script Version
+    export SADM_VER='2.8'                               # Current Script Version
     export SADM_LOG_TYPE="L"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -111,15 +112,14 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     while :
         do
         sadm_display_heading "SADMIN Main Menu"
-        #menu_array="Filesystem_Tools RPM_DataBase_Tools"
-        menu_array="Filesystem_Tools "
-        sadm_display_menu "$menu_array"
+        menu_array=("Filesystem Tools" "RPM Packages Tools")
+        sadm_display_menu "${menu_array[@]}"                            # Display menu Array
         CHOICE=$?
         case $CHOICE in
             1)  . $SADM_BIN_DIR/sadm_ui_fsmenu.sh
                 ;;
-            #2)  . $SADM_BIN_DIR/sadm_ui_rpm.sh
-            #    ;;
+            2)  . $SADM_BIN_DIR/sadm_ui_rpm.sh
+                ;;
             99) stty $stty_orig
                 cd $CURDIR
                 SADM_EXIT_CODE=0
