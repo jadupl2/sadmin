@@ -15,6 +15,7 @@
 # History    :
 #@2019_11_06 Added: v1.0 Initial version
 #@2019_11_11 Updated: v1.1 Revamp the RPM question & display of results.
+#@2019_11_11 Updated: v1.2 Fix problem with List of repositories.
 #
 #===================================================================================================
 trap 'exec $SADM/sadm' 2                                                # INTERCEPTE LE ^C
@@ -44,6 +45,82 @@ display_menu()
     return $?
 }
 
+
+# --------------------------------------------------------------------------------------------------
+# List Repositories ([A]ll, [D]isabled, [E]nabled.
+# --------------------------------------------------------------------------------------------------
+repolist() 
+{
+
+    while : 
+        do 
+        menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
+        sadm_display_heading "$menu_title"                      # Show Screen Std Heading
+        sadm_writexy 04 01 "Show [A]ll, [D]isabled, [E]nabled repositories or [Q]uit :"
+        
+        RPM=""                                                          # Clear User response
+        sadm_accept_data 04 60 1 A $RPM                                 # Accept A,D,E,Q 
+        ANS=`echo $WDATA |tr  "[:lower:]" "[:upper:]"`                  # Transform A,D,E,Q UpCase
+        if [ "$ANS" = "Q" ] ; then break ; fi                           # Exit loop on Quit
+
+        if [ -z "$ANS" ]                                                # If didn't enter anything
+            then sadm_mess "Invalid entry, you need to enter A,D,E or Q" 
+                 continue
+        fi
+        if [ "$ANS" != "A" ] && [ "$ANS" != "D" ] && [ "$ANS" != "E" ] 
+           then sadm_mess "Option '$ANS' is invalid."
+                continue
+           else break 
+        fi 
+        done
+
+    if [ "$ANS" = "Q" ] ; then return ; fi
+        
+    while : 
+        do
+        sadm_writexy 05 01 "[S]ummary, [D]etail view or [Q]uit :" 
+        RPM=""                                                  # Clear User response
+        sadm_accept_data 05 38 1 A $RPM                         # Accept Expr. to search
+        DET=`echo $WDATA |tr  "[:lower:]" "[:upper:]"`                  # Transform A,D,E,Q UpCase
+        if [ "$DET" = "Q" ] ; then break ; fi
+        if [ -z "$DET" ]                                                # If didn't enter anything
+            then sadm_mess "Invalid entry, you need to enter S,D or Q" 
+        fi
+        if [ "$DET" != "S" ] && [ "$DET" != "D" ]  
+           then sadm_mess "Option '$DET' is invalid."
+           else break 
+        fi 
+        done
+
+    if [ "$DET" = "Q" ] ; then return ; fi
+
+    if [ "$ANS" = "A" ]                                     # If Display All Repo.
+       then if [ "$DET" = "S" ]                             # If Asked for Summary list
+               then yum repolist > $SADM_TMP_FILE1 2>%1    # Summary Repo List
+               else yum -v repolist > $SADM_TMP_FILE1 2>%1 # Detail Repo List 
+            fi
+    fi
+ 
+    if [ "$ANS" = "E" ]                                     # If Display Enabled Repo.
+       then if [ "$DET" = "S" ]                             # If Asked for Summary list
+                then yum repolist enabled > $SADM_TMP_FILE1 2>%1 # Sum Enable Repo List
+                else yum -v repolist enabled >$SADM_TMP_FILE1 2>%1 # Detail Enable Repo  
+            fi
+    fi
+    
+    if [ "$ANS" = "D" ]                                     # If Display Disabled Repo.
+       then if [ "$DET" = "S" ]                             # If Asked for Summary list
+               then yum repolist disabled > $SADM_TMP_FILE1 2>%1   # Sum. Disable Repo 
+               else yum -v repolist disabled >$SADM_TMP_FILE1 2>%1 # Detail Disable Repo 
+            fi
+    fi
+    
+    if [ -s $SADM_TMP_FILE1 ]                               # If file not empty
+       then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17       # Show results
+       else sadm_display_heading "$stitle"                  # Show Screen Std Heading
+            sadm_mess "No repositories match request."      # Advise user
+    fi
+}
 
 
 
@@ -233,27 +310,8 @@ display_menu()
                 fi
                 ;;
 
-
-
-
             # List Repositories ([A]ll, [D]isabled, [E]nabled.
-            10)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
-                sadm_writexy 04 01 "Show Home page of package $RPM (or [Q]) :"
-                RPM=""                                                  # Clear User response
-                sadm_accept_data 04 39 25 A $RPM                        # Accept Expr. to search
-                if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then continue ; fi
-                if [ -z "$WDATA" ]                                      # If didn't enter anything
-                    then continue                                       # Go and ask again
-                    else rpm -q $WDATA > /dev/null 2>&1                 # Check if package exist
-                         if [ $? -ne 0 ]                                # If Package doesn't exist
-                            then sadm_mess "Package '$WDATA' doesn't exist or not installed"
-                            else sadm_writexy 06 01 "The Home page of $WDATA is "
-                                 PHOME=`rpm -q --qf "%{name} - %{url}\n" $WDATA`
-                                 sadm_writexy 07 01 "$PHOME"
-                                 sadm_mess " "
-                         fi
-                fi
+            10) repolist
                 ;;
 
             # 99 = Quit was pressed
@@ -264,7 +322,5 @@ display_menu()
                 ;;
             
             # Anything else is invalid 
-            *)  sadm_mess "Invalid option - $CHOICE"
-                ;;
         esac
     done
