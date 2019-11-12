@@ -16,6 +16,7 @@
 # 2019_03_17 Update: v1.7 Add time in menu heading.
 # 2019_04_07 Update: v1.8 Use Color constant variable now available from standard SADMIN Shell Libr.
 # 2019_11_11 Update: v1.9 Add function 'sadm_pager' to display a file and navigating into it.
+# 2019_11_12 Update: v2.0 Add comments and minor corrections.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
@@ -26,8 +27,7 @@
 # L O C A L    V A R I A B L E S    
 # --------------------------------------------------------------------------------------------------
 #
-export lib_screen_ver=1.9                                               # This Library Version
-export WDATA=""                                                         # Input Entered, Accept Data
+export lib_screen_ver=2.0                                               # This Library Version
 
 
 
@@ -93,7 +93,7 @@ sadm_mess() {
 
 #---------------------------------------------------------------------------------------------------
 # Display file receive on a page by page basis.
-# The page lenght is the third parameter received
+# The page length is the third parameter received
 # Receive (1)Heading title, (2)filename to display and (3)number of Lines per page
 #---------------------------------------------------------------------------------------------------
 sadm_pager() {
@@ -424,17 +424,20 @@ sadm_accept_choice()
 
 
 #---------------------------------------------------------------------------------------------------
-# Param #1 = Position the cursor on that line number
-# Param #2 = Cursor position on the line
-# Param #3 = Number of Character to accept
-# Param #4 = Type of accept A=AlphaNumeric N=NUmeric
-# Param #5 = Value of field just entered ("NULL"  = No Default)
+# This function is used to accept data input from the user (using the keyboard)
+# The input data is return in the Global Variable $WDATA.
+#
+# This function need to receive 5 parameters :
+#   Param #1 = Position the cursor on that line number
+#   Param #2 = Cursor position on the line
+#   Param #3 = Number of Character to accept
+#   Param #4 = Type of accept A=AlphaNumeric N=NUmeric
+#   Param #5 = Value of field just entered ("NULL"  = No Default)
 #---------------------------------------------------------------------------------------------------
 sadm_accept_data()
 {
   while :
         do
-        WBLANK="                              "
         WLINE=$1                                                        # Save Line to accept Data
         WCOL=$2                                                         # Save Column to accept data
         WLEN=$3                                                         # Max Nb Char. to Accept
@@ -451,8 +454,8 @@ sadm_accept_data()
               a=$(($a+1))                                               # Incr Counter by 1
               done                                                      # Next iteration
         if [ "$WDEFAULT" = "NULL" ] ; then WDEFAULT="" ; fi             # Default is Clear if NULL 
-        sadm_writexy $WLINE $WCOL "${SADM_RVS}${WMASK}"                  # Display Mask in Rvs Video
-        sadm_writexy $WLINE $WCOL "${WDEFAULT}${SADM_RESET}"                 # Display Default Value
+        sadm_writexy $WLINE $WCOL "${SADM_RVS}${WMASK}"                 # Display Mask in Rvs Video
+        sadm_writexy $WLINE $WCOL "${WDEFAULT}${SADM_RESET}"            # Display Default Value
 
         # Accept the Data
         sadm_writexy $WLINE $WCOL ""                                    # Pos. Cursor Ready to Input
