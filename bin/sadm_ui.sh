@@ -33,6 +33,7 @@
 # 2018_09_20 v2.6 Update code to align with latest Library
 # 2019_02_25 Change: v2.7 Nicer color presentation and code cleanup.
 #@2019_11_11 Change: v2.8 Add RPM Tools option in menu.
+#@2019_11_21 Change: v2.9 Minor correction to RPM Tools Menu
 #=================================================================================================== 
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -55,7 +56,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.8'                               # Current Script Version
+    export SADM_VER='2.9'                               # Current Script Version
     export SADM_LOG_TYPE="L"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -83,6 +84,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #
 #===================================================================================================
 #
+export WDATA=""                                         # Global Var. that contain user data input
 [ -f ${SADMIN}/lib/sadmlib_screen.sh ]  && . ${SADMIN}/lib/sadmlib_screen.sh  # Load SADM Screen Lib
 
 
