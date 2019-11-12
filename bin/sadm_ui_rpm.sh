@@ -16,9 +16,10 @@
 #@2019_11_06 Added: v1.0 Initial version
 #@2019_11_11 Updated: v1.1 Revamp the RPM question & display of results.
 #@2019_11_11 Updated: v1.2 Fix problem with List of repositories.
+#@2019_11_12 Updated: v1.3 Production version
 #
 #===================================================================================================
-trap 'exec $SADM/sadm' 2                                                # INTERCEPTE LE ^C
+trap 'exec $SADMIN/sadm' 2                                                # INTERCEPT  ^C
 #
 
 
@@ -38,7 +39,7 @@ display_menu()
     OPT7="List files included in this package....."
     OPT8="Display Information about this package.."
     OPT9="Display URL of a package................"
-    OPT10="List Repositories......................" 
+    OPT10="List Repositories(Enabled,Disabled,All)." 
     menu_array=("$OPT1" "$OPT2" "$OPT3" "$OPT4" "$OPT5" "$OPT6" "$OPT7" "$OPT8" "$OPT9" "$OPT10")
     s_count=${#menu_array[@]}                                           # Get Nb, of  items in Menu
     sadm_display_menu "${menu_array[@]}"                                # Display Menu Array
@@ -46,79 +47,78 @@ display_menu()
 }
 
 
+
 # --------------------------------------------------------------------------------------------------
 # List Repositories ([A]ll, [D]isabled, [E]nabled.
 # --------------------------------------------------------------------------------------------------
 repolist() 
 {
-
     while : 
         do 
-        menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-        sadm_display_heading "$menu_title"                      # Show Screen Std Heading
+        menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"      # Build Menu Title From Desc
+        sadm_display_heading "$menu_title"                              # Show Screen Std Heading
         sadm_writexy 04 01 "Show [A]ll, [D]isabled, [E]nabled repositories or [Q]uit :"
         
-        RPM=""                                                          # Clear User response
+        RPM=""                                                          # Set Default Value
         sadm_accept_data 04 60 1 A $RPM                                 # Accept A,D,E,Q 
         ANS=`echo $WDATA |tr  "[:lower:]" "[:upper:]"`                  # Transform A,D,E,Q UpCase
         if [ "$ANS" = "Q" ] ; then break ; fi                           # Exit loop on Quit
 
         if [ -z "$ANS" ]                                                # If didn't enter anything
-            then sadm_mess "Invalid entry, you need to enter A,D,E or Q" 
+            then sadm_mess "You need to enter A,D,E or Q"               # Show User Error Message
                  continue
         fi
-        if [ "$ANS" != "A" ] && [ "$ANS" != "D" ] && [ "$ANS" != "E" ] 
-           then sadm_mess "Option '$ANS' is invalid."
-                continue
-           else break 
+        if [ "$ANS" != "A" ] && [ "$ANS" != "D" ] && [ "$ANS" != "E" ]  # Only A,D,E are valid
+           then sadm_mess "Option '$ANS' is invalid."                   # Show user Error Message
+                continue                                                # Restart the loop
+           else break                                                   # OK - Break out of loop
         fi 
         done
-
-    if [ "$ANS" = "Q" ] ; then return ; fi
+    if [ "$ANS" = "Q" ] ; then return ; fi                              # If Quit, return to caller
         
     while : 
         do
         sadm_writexy 05 01 "[S]ummary, [D]etail view or [Q]uit :" 
-        RPM=""                                                  # Clear User response
-        sadm_accept_data 05 38 1 A $RPM                         # Accept Expr. to search
+        RPM=""                                                          # Set Default Value
+        sadm_accept_data 05 38 1 A $RPM                                 # Accept User Response
         DET=`echo $WDATA |tr  "[:lower:]" "[:upper:]"`                  # Transform A,D,E,Q UpCase
-        if [ "$DET" = "Q" ] ; then break ; fi
+        if [ "$DET" = "Q" ] ; then break ; fi                           # Quit = Break out of loop
         if [ -z "$DET" ]                                                # If didn't enter anything
-            then sadm_mess "Invalid entry, you need to enter S,D or Q" 
+            then sadm_mess "Invalid entry, you need to enter S,D or Q"  # Show User Error Message
         fi
-        if [ "$DET" != "S" ] && [ "$DET" != "D" ]  
-           then sadm_mess "Option '$DET' is invalid."
-           else break 
+        if [ "$DET" != "S" ] && [ "$DET" != "D" ]                       # If Not S and Not D
+           then sadm_mess "Option '$DET' is invalid."                   # Show user Error Message
+           else break                                                   # Else=OK=Break out of loop
         fi 
         done
 
-    if [ "$DET" = "Q" ] ; then return ; fi
+    if [ "$DET" = "Q" ] ; then return ; fi                              # If Quit, return to caller
 
-    if [ "$ANS" = "A" ]                                     # If Display All Repo.
-       then if [ "$DET" = "S" ]                             # If Asked for Summary list
-               then yum repolist > $SADM_TMP_FILE1 2>%1    # Summary Repo List
-               else yum -v repolist > $SADM_TMP_FILE1 2>%1 # Detail Repo List 
+    if [ "$ANS" = "A" ]                                                 # If Display All Repo.
+       then if [ "$DET" = "S" ]                                         # If Asked for Summary list
+               then yum repolist > $SADM_TMP_FILE1 2>%1                 # Summary Repo List
+               else yum -v repolist > $SADM_TMP_FILE1 2>%1              # Detail Repo List 
             fi
     fi
  
-    if [ "$ANS" = "E" ]                                     # If Display Enabled Repo.
-       then if [ "$DET" = "S" ]                             # If Asked for Summary list
-                then yum repolist enabled > $SADM_TMP_FILE1 2>%1 # Sum Enable Repo List
-                else yum -v repolist enabled >$SADM_TMP_FILE1 2>%1 # Detail Enable Repo  
+    if [ "$ANS" = "E" ]                                                 # If Display Enabled Repo.
+       then if [ "$DET" = "S" ]                                         # If Asked for Summary list
+                then yum repolist enabled > $SADM_TMP_FILE1 2>%1        # Sum Enable Repo List
+                else yum -v repolist enabled >$SADM_TMP_FILE1 2>%1      # Detail Enable Repo  
             fi
     fi
     
-    if [ "$ANS" = "D" ]                                     # If Display Disabled Repo.
-       then if [ "$DET" = "S" ]                             # If Asked for Summary list
-               then yum repolist disabled > $SADM_TMP_FILE1 2>%1   # Sum. Disable Repo 
-               else yum -v repolist disabled >$SADM_TMP_FILE1 2>%1 # Detail Disable Repo 
+    if [ "$ANS" = "D" ]                                                 # If Display Disabled Repo.
+       then if [ "$DET" = "S" ]                                         # If Asked for Summary list
+               then yum repolist disabled > $SADM_TMP_FILE1 2>%1        # Sum. Disable Repo 
+               else yum -v repolist disabled >$SADM_TMP_FILE1 2>%1      # Detail Disable Repo 
             fi
     fi
     
-    if [ -s $SADM_TMP_FILE1 ]                               # If file not empty
-       then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17       # Show results
-       else sadm_display_heading "$stitle"                  # Show Screen Std Heading
-            sadm_mess "No repositories match request."      # Advise user
+    if [ -s $SADM_TMP_FILE1 ]                                           # If file not empty
+       then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17                   # Show results
+       else sadm_display_heading "$stitle"                              # Show Screen Std Heading
+            sadm_mess "No repositories match request."                  # No Result - Advise user
     fi
 }
 
@@ -289,7 +289,6 @@ repolist()
                 fi
                 ;;
 
-
             # Display Home Page of a package
             9)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
                 sadm_display_heading "$menu_title"                      # Show Screen Std Heading
@@ -314,13 +313,8 @@ repolist()
             10) repolist
                 ;;
 
-            # 99 = Quit was pressed
-            99) stty $stty_orig
-                cd $CURDIR
-                SADM_EXIT_CODE=0
-                break
+            # 99 = Quit was pressed, return to caller
+            99) break
                 ;;
-            
-            # Anything else is invalid 
         esac
     done
