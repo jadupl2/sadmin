@@ -192,17 +192,17 @@ sadm_display_heading()
     sadm_writexy 02 01 "${SADM_WHITE}${SADM_BOLD}${SADM_RVS}${eighty_spaces}${SADM_RESET}" 
 
     # Display Line 1 (Hostname + Menu Name + Date)
-    sadm_writexy 01 01 "${SADM_WHITE}${SADM_RVS}${SADM_BOLD}$(sadm_get_fqdn)"      # Top Left Show HostName 
+    sadm_writexy 01 01 "${SADM_WHITE}${SADM_RVS}${SADM_BOLD}$(sadm_get_fqdn)" # Top Left  HostName 
     let wpos="(((80 - ${#titre}) / 2) + 1)"                             # Calc. Center Pos for Name
-    sadm_writexy 01 $wpos "$titre"                       # Display Title Centered
-    sadm_writexy 01 65 "`date '+%Y/%m/%d %H:%M'`"          # Top Right Show Current Date 
+    sadm_writexy 01 $wpos "$titre"                                      # Display Title Centered
+    sadm_writexy 01 65 "`date '+%Y/%m/%d %H:%M'`"                       # Top Right Show Cur. Date 
 
     # Display Line 2 - (OS Name and version + Cie Name and SADM Release No.
     sadm_writexy 02 01 "$(sadm_get_osname) $(sadm_get_osversion)"       # Display OSNAME + OS Ver.
     let wpos="(((80 - ${#SADM_CIE_NAME}) / 2) + 1)"                     # Calc. Center Pos for Name
-    sadm_writexy 02 $wpos "$SADM_CIE_NAME"                  # Display Cie Name Centered 
+    sadm_writexy 02 $wpos "$SADM_CIE_NAME"                              # Display Cie Name Centered 
     let wpos="74 - ${#SADM_VERSION}"                                    # Calc. Pos. Line 2 on Right
-    sadm_writexy 02 $wpos "Ver $SADM_VER"                  # Display Script Version
+    sadm_writexy 02 $wpos "Ver $SADM_VER"                               # Display Script Version
     sadm_writexy 04 01 "${SADM_RESET}"                                  # Reset to Normal & Pos. Cur
 }
 
