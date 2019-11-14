@@ -29,16 +29,16 @@ trap 'exec $SADMIN/sadm' 2                                                # INTE
 # --------------------------------------------------------------------------------------------------
 display_menu()
 {
-    sadm_display_heading "RPM Packages Tools"
-    OPT1="Search package name using this pattern.."
-    OPT2="View changelog of the package..........." 
+    sadm_display_heading "RPM Package Tools"
+    OPT1="Search installed package for pattern...."
+    OPT2="View changelog of a package............." 
     OPT3="Reset files permissions of package......"
-    OPT4="Display documentation files of package.."
-    OPT5="Query RPM DB for install/update by date."
-    OPT6="What RPM package provide that program..."
+    OPT4="List documentation files of a package..."
+    OPT5="List install/update history by date....."
+    OPT6="What package provide this program/file.."
     OPT7="List files included in this package....."
-    OPT8="Display Information about this package.."
-    OPT9="Display URL of a package................"
+    OPT8="Display Information about a package....."
+    OPT9="Show Home Page of a package............."
     OPT10="List Repositories(Enabled,Disabled,All)." 
     menu_array=("$OPT1" "$OPT2" "$OPT3" "$OPT4" "$OPT5" "$OPT6" "$OPT7" "$OPT8" "$OPT9" "$OPT10")
     s_count=${#menu_array[@]}                                           # Get Nb, of  items in Menu
