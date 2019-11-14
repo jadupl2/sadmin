@@ -114,6 +114,7 @@ export WDATA=""                                         # Global Var. that conta
     while :
         do
         sadm_display_heading "SADMIN Main Menu"
+        #menu_array=("Filesystem Tools" "RPM Packages Tools" "DEB Packages Tools")
         menu_array=("Filesystem Tools" "RPM Packages Tools")
         sadm_display_menu "${menu_array[@]}"                            # Display menu Array
         CHOICE=$?
@@ -122,6 +123,8 @@ export WDATA=""                                         # Global Var. that conta
                 ;;
             2)  . $SADM_BIN_DIR/sadm_ui_rpm.sh
                 ;;
+            #3)  . $SADM_BIN_DIR/sadm_ui_deb.sh
+            #    ;;
             99) stty $stty_orig
                 cd $CURDIR
                 SADM_EXIT_CODE=0
