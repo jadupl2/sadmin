@@ -183,6 +183,24 @@ sadm_display_message() {
 #---------------------------------------------------------------------------------------------------
 sadm_display_heading() 
 {
+
+#    echo 
+#TEXT="Jacques Duplessis" 
+#JBG="\033[1;31m"  # Background Blue
+#JRESET="\033[0m"
+
+#JFG="\033[1;31m\033[44m"
+#echo -en "${JBG}${JFG}${TEXT}${JRESET}"
+#echo
+
+#JFG="\033[1;33m\033[44m"
+#echo -en "${JBG}${JFG}${TEXT}${JRESET}"
+#echo 
+#JFG="\033[1;37m\033[44m"
+#echo -en "${JBG}${JFG}${TEXT}${JRESET}"
+#echo
+
+
     titre=`echo $1`                                                     # Save Menu Title
     eighty_spaces=`printf %80s " "`                                     # 80 white space
 
