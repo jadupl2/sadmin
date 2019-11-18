@@ -32,6 +32,7 @@
 # 2018_06_06    v1.1 Restructure and Add code examples
 #@2019_05_22 Updated: v1.2 Comment code for documentation
 #@2019_05_23 Updated: v1.3 Correct Typo Error
+#@2019_11_18 Updated: v1.4 Put 'root' and SADM_SERVER test in comment.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -52,7 +53,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.3'                               # Current Script Version
+    export SADM_VER='1.4'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Header in script log (.log)
@@ -114,18 +115,18 @@ main_process()
     sadm_start                                                          # Init Env Dir & RC/Log File
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with error
-    fi
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
+#    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+#        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
+#             sadm_writelog "Process aborted"                            # Abort advise message
+#             sadm_stop 1                                                # Close and Trim Log
+#             exit 1                                                     # Exit To O/S with error
+#    fi
+#    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+#        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
+#             sadm_writelog "Process aborted"                            # Abort advise message
+#             sadm_stop 1                                                # Close and Trim Log
+#             exit 1                                                     # Exit To O/S with Error
+#    fi
 
     # Display Main Menu     
     while :
