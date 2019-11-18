@@ -17,6 +17,7 @@
 # 2019_04_07 Update: v1.8 Use Color constant variable now available from standard SADMIN Shell Libr.
 # 2019_11_11 Update: v1.9 Add function 'sadm_pager' to display a file and navigating into it.
 # 2019_11_12 Update: v2.0 Add comments and minor corrections.
+# 2019_11_18 Update: v2.1 Bug corrections and change heading colors.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
@@ -27,8 +28,8 @@
 # L O C A L    V A R I A B L E S    
 # --------------------------------------------------------------------------------------------------
 #
-export lib_screen_ver=2.0                                               # This Library Version
-
+export lib_screen_ver=2.1                                               # This Library Version
+export MAXCOL=80                                                        # Maximum NB Char. on a line
 
 
 
@@ -84,8 +85,9 @@ sadm_messok() {
 # DISPLAY MESSAGE RECEIVE IN BOLD (AND SOUND BELL) AT LINE 22 & WAIT FOR RETURN
 #---------------------------------------------------------------------------------------------------
 sadm_mess() {
-   sadm_writexy 22 01 "${SADM_CLREOS}${SADM_BOLD}${SADM_MAGENTA}${1}${SADM_RESET}${SADM_BELL}" 
-   sadm_writexy 23 01 "${SADM_BOLD}${SADM_WHITE}Press [ENTER] to continue${SADM_RESET}"
+   sadm_writexy 22 01 "${SADM_CLREOS}${SADM_BOLD}${SADM_RED}${1}${SADM_RESET}${SADM_BELL}" 
+#   sadm_writexy 23 01 "${SADM_BOLD}${SADM_WHITE}Press [ENTER] to continue${SADM_RESET}"
+   sadm_writexy 23 01 "Press [ENTER] to continue${SADM_RESET}"
    read sadm_dummy                                                      # Wait for  [RETURN]
    sadm_writexy 22 01 "${SADM_CLREOS}"                                  # Clear from lines 22 to EOS
 }
@@ -114,7 +116,8 @@ sadm_pager() {
     if [ $tot_page -lt $tmp ] ; then tot_page=$((tot_page+1 )) ;fi      # Check if need on more page
     if [ $tot_page -lt 1 ] ; then tot_page=1 ; fi                       # Minimum one page
 
-    nl -w4 $PFILE > $SADM_TMP_FILE3                                     # Number all lines >tmpfile
+#    nl -w3 $PFILE | cut -c 1-$((MAXCOL -1)) > $SADM_TMP_FILE3          # Number all lines >tmpfile
+    cut -c 1-$((MAXCOL -1)) $PFILE > $SADM_TMP_FILE3                    # Cut Line to Screen Lenght
     while : 
         do 
         sadm_writexy 04 01 "$SADM_CLREOS"
@@ -122,11 +125,11 @@ sadm_pager() {
         tail_num=`echo "$tail_num - $lines_per_page" | bc` 
         tail_num=`echo "$tot_line - $tail_num" | bc`
         tail -$tail_num $SADM_TMP_FILE3 | head -$lines_per_page
-        sadm_writexy 22 01 "${SADM_WHITE}${SADM_BOLD}${SADM_RVS}${eighty_spaces}" 
+        sadm_writexy 22 01 "${SADM_RED}${SADM_BOLD}${SADM_RVS}${eighty_spaces}" 
         OPTMESS="[N]ext page  [P]revious page  [Q]uit  [#]Page Number ?  "
         sadm_writexy 22 01 "Page $cur_page of $tot_page - $OPTMESS"
         printf "%s" "${SADM_RESET}"
-        sadm_writexy 22 71 " "                                          # Position to accept Choice
+        sadm_writexy 22 73 " "                                          # Position to accept Choice
         read page_opt                                                   # Accept User Choice
         if [ "$page_opt" = "" ] ; then page_opt="N" ; fi                # Default is next page
         case "$page_opt" in
@@ -183,34 +186,18 @@ sadm_display_message() {
 #---------------------------------------------------------------------------------------------------
 sadm_display_heading() 
 {
-
-#    echo 
-#TEXT="Jacques Duplessis" 
-#JBG="\033[1;31m"  # Background Blue
-#JRESET="\033[0m"
-
-#JFG="\033[1;31m\033[44m"
-#echo -en "${JBG}${JFG}${TEXT}${JRESET}"
-#echo
-
-#JFG="\033[1;33m\033[44m"
-#echo -en "${JBG}${JFG}${TEXT}${JRESET}"
-#echo 
-#JFG="\033[1;37m\033[44m"
-#echo -en "${JBG}${JFG}${TEXT}${JRESET}"
-#echo
-
-
     titre=`echo $1`                                                     # Save Menu Title
     eighty_spaces=`printf %80s " "`                                     # 80 white space
+    set_foreground=$(tput setaf 7)
+    set_background=$(tput setab 4)
 
     # Clear screen and display two blank lines in reverse video on line 1 and 2 
-    sadm_writexy 01 01  "${SADM_CLR}"                                   # Clear the Screen
-    sadm_writexy 01 01 "${SADM_WHITE}${SADM_BOLD}${SADM_RVS}${eighty_spaces}${SADM_RESET}" 
-    sadm_writexy 02 01 "${SADM_WHITE}${SADM_BOLD}${SADM_RVS}${eighty_spaces}${SADM_RESET}" 
+    sadm_writexy 01 01 "${SADM_CLR}"                                   # Clear the Screen
+    sadm_writexy 01 01 "${SADM_RED}${SADM_BOLD}${SADM_RVS}${eighty_spaces}${SADM_RESET}" 
+    sadm_writexy 02 01 "${SADM_RED}${SADM_BOLD}${SADM_RVS}${eighty_spaces}${SADM_RESET}" 
 
     # Display Line 1 (Hostname + Menu Name + Date)
-    sadm_writexy 01 01 "${SADM_WHITE}${SADM_RVS}${SADM_BOLD}$(sadm_get_fqdn)" # Top Left  HostName 
+    sadm_writexy 01 01 "${SADM_RED}${SADM_RVS}${SADM_BOLD}$(sadm_get_fqdn)" # Top Left  HostName 
     let wpos="(((80 - ${#titre}) / 2) + 1)"                             # Calc. Center Pos for Name
     sadm_writexy 01 $wpos "$titre"                                      # Display Title Centered
     sadm_writexy 01 65 "`date '+%Y/%m/%d %H:%M'`"                       # Top Right Show Cur. Date 
@@ -417,9 +404,7 @@ sadm_accept_choice()
     while :                                                             # Repeat Until good choice
         do                                                              # Begin of loop
         sadm_space_line=`printf %80s`                                   # 80 Spaces Line
-        #sadm_writexy 22 01 "${SADM_GREEN}${SADM_RVS}${sadm_space_line}\c" # Display Rev. Video Line
-        #sadm_writexy 22 01 "${SADM_GREEN}${SADM_RVS}${sadm_space_line}" # Display Rev. Video Line
-        sadm_writexy 22 01 "${SADM_WHITE}${SADM_BOLD}${SADM_RVS}${sadm_space_line}"         
+        sadm_writexy 22 01 "${SADM_RED}${SADM_BOLD}${SADM_RVS}${sadm_space_line}"         
         sadm_writexy 22 29 "Option ? ${SADM_RESET}  ${SADM_RIGHT}"      # Display Option 
         sadm_writexy 22 38 " "                                          # Position to accept Choice
         read adm_choix                                                  # Accept User Choice
