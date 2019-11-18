@@ -165,8 +165,8 @@ repolist()
                     then continue                                       # Go and ask again
                     else rpm -q $WDATA > /dev/null 2>&1                 # Check if package exist
                          if [ $? -ne 0 ]                                # If Package doesn't exist
-                            then sadm_mess "Package '$WDATA' doesn't exist or not installed"
-                            else rpm -q --changelog $WDAT >$SADM_TMP_FILE1  # Query RPM DB 
+                            then sadm_mess "Package '$WDATA' doesn't exist or not installed."
+                            else rpm -q --changelog $WDATA >$SADM_TMP_FILE1  # Query RPM DB 
                                  stitle="'$WDATA' Change Log"           # Heading Search Title 
                                  if [ -s $SADM_TMP_FILE1 ]              # If file not empty
                                     then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17   # Show results
