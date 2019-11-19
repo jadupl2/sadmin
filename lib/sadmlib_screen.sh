@@ -116,7 +116,6 @@ sadm_pager() {
     if [ $tot_page -lt $tmp ] ; then tot_page=$((tot_page+1 )) ;fi      # Check if need on more page
     if [ $tot_page -lt 1 ] ; then tot_page=1 ; fi                       # Minimum one page
 
-#    nl -w3 $PFILE | cut -c 1-$((MAXCOL -1)) > $SADM_TMP_FILE3          # Number all lines >tmpfile
     cut -c 1-$((MAXCOL -1)) $PFILE > $SADM_TMP_FILE3                    # Cut Line to Screen Lenght
     while : 
         do 
@@ -203,10 +202,13 @@ sadm_display_heading()
     sadm_writexy 01 65 "`date '+%Y/%m/%d %H:%M'`"                       # Top Right Show Cur. Date 
 
     # Display Line 2 - (OS Name and version + Cie Name and SADM Release No.
-    sadm_writexy 02 01 "$(sadm_get_osname) $(sadm_get_osversion)"       # Display OSNAME + OS Ver.
+    hosname=`echo "$(sadm_get_osname)" | tr '[A-Z]' '[a-z]'`            # Transform OSNAME lowcase
+    hosname=`echo ${hosname:0:1} | tr  '[a-z]' '[A-Z]'`${hosname:1}     # Upcase 1st Letter
+    sadm_writexy 02 01 "$hosname $(sadm_get_osversion)"                 # Display OSNAME + OS Ver.
+    #sadm_writexy 02 01 "$(sadm_get_osname) $(sadm_get_osversion)"       # Display OSNAME + OS Ver.
     let wpos="(((80 - ${#SADM_CIE_NAME}) / 2) + 1)"                     # Calc. Center Pos for Name
     sadm_writexy 02 $wpos "$SADM_CIE_NAME"                              # Display Cie Name Centered 
-    let wpos="74 - ${#SADM_VERSION}"                                    # Calc. Pos. Line 2 on Right
+    let wpos="73 - ${#SADM_VERSION}"                                    # Calc. Pos. Line 2 on Right
     sadm_writexy 02 $wpos "Ver $SADM_VER"                               # Display Script Version
     sadm_writexy 04 01 "${SADM_RESET}"                                  # Reset to Normal & Pos. Cur
 }
@@ -246,7 +248,7 @@ sadm_show_menuitem()
 {
     mrow=$1                                                             # Line no. where to display
     mcol=$2                                                             # Column no. to display
-    mno=$3                                                              # Item Menu Choice 
+    mno=$3                                                              # Item Menu Choice (No./Str)
     mdesc=$4                                                            # Item Menu Description
 
     if [ -n "$mno" ] && [ "$mno" -eq "$mno" ] 2>/dev/null
@@ -317,48 +319,58 @@ sadm_display_menu()
              return 98                                                  # Set Error return code
     fi
     
-    
+    # Determine the longest menu description length.
+    LONGEST_LEN=0
+    for i in "${s_array[@]}"                                            # Loop through the array
+        do                                                              # Start of loop
+        mmm=$i
+        VAR_LENGTH=`expr length "$i"`                                   # Get length of Menu Desc.
+        if [ "$VAR_LENGTH" -gt "$LONGEST_LEN" ] ; then LONGEST_LEN=${VAR_LENGTH} ; fi
+        done
+
     # If from 1 to 8 items to display in the menu
     adm_choice=0                                                        # Initial menu item to zero
     if [ "$s_count" -lt 8 ]                                             # If less than 9 items
-        then for i in "${s_array[@]}"                                   # Loop through the array
+        then wrow=`echo "( ($MAXCOL - ($LONGEST_LEN +5)) / 2 ) + 1" | bc`
+             for i in "${s_array[@]}"                                   # Loop through the array
                 do                                                      # Start of loop
                 let adm_choice="$adm_choice + 1"                        # Increment menu option no. 
                 menu_item=$i
-                for (( c=${#menu_item} ; c<32; c++ ))
-                    do
-                    menu_item="${menu_item}."
-                    done
                 let wline="2 + ($adm_choice * 2)"                       # Cacl. display Line Number
-                sadm_show_menuitem $wline 22 "$adm_choice" "$menu_item"
+                sadm_show_menuitem $wline $wrow "$adm_choice" "$menu_item"
                 done                                                    # End of loop
             let adm_choice="$adm_choice + 1"                            # Increment menu option no. 
             let wline="2 + ($adm_choice * 2)"                           # Cacl. display Line Number
             menuno=`printf "${SADM_BOLD}${SADM_GREEN}[${SADM_CYAN}Q${SADM_GREEN}]"`
-            menuitem=`printf "${SADM_BOLD}${SADM_MAGENTA}Quit............................${SADM_RESET}"`
-            sadm_writexy $wline 22 "${menuno}  ${menuitem}" 
+            MQUIT="Quit"
+            for (( c=4 ; c<$LONGEST_LEN; c++ ))
+                do
+                MQUIT="${MQUIT}."
+                done
+            menuitem=`printf "${SADM_BOLD}${SADM_MAGENTA}${MQUIT}${SADM_RESET}"`
+            sadm_writexy $wline $wrow "${menuno}  ${menuitem}" 
     fi
     
     # If from 8 to 15 items to display in the menu
      if [ "$s_count" -gt 7 ] && [ "$s_count" -lt 16 ]         # If from 8 to 15 Items
-        then for i in "${s_array[@]}"                                   # Loop through the array
+        then wrow=`echo "( ($MAXCOL - ($LONGEST_LEN +5)) / 2 ) + 1" | bc`
+             for i in "${s_array[@]}"                                   # Loop through the array
                 do                                                      # Start of loop
                 let adm_choice="$adm_choice + 1"                        # Increment menu option no.
                 menu_item=$i
-                for (( c=${#menu_item} ; c<32; c++ ))
-                    do
-                    menu_item="${menu_item}."
-                    done    
                 menuno=`printf "${SADM_BOLD}${SADM_GREEN}[${SADM_CYAN}%02d${SADM_GREEN}] " "$adm_choice"`
                 witem=`printf "${SADM_BOLD}${SADM_MAGENTA}%-s${SADM_RESET}" "$menuno" "$menu_item"` 
-                #witem=`printf "[%s%02d%s] %-s" $bold $adm_choice $reset "$menu_item"` # Menu No. & Desc
                 let wline="3 + $adm_choice"                             # Cacl. display Line Number
-                sadm_writexy $wline 22 "$witem"                         # Display Item on screen
+                sadm_writexy $wline $wrow "$witem"                      # Display Item on screen
                 done                                                    # End of loop
             menuno=`printf "${SADM_BOLD}${SADM_GREEN}[${SADM_CYAN}Q${SADM_GREEN}]"`
-            menuitem=`printf "${SADM_BOLD}${SADM_MAGENTA}Quit............................${SADM_RESET}"`
-            sadm_writexy 19 22 "${menuno}  ${menuitem}" 
-            #sadm_writexy 19 22 "[${SADM_BOLD}Q${SADM_RESET}]  Quit............................"
+            MQUIT="Quit"
+            for (( c=4 ; c<$LONGEST_LEN; c++ ))
+                do
+                MQUIT="${MQUIT}."
+                done
+            menuitem=`printf "${SADM_BOLD}${SADM_MAGENTA}${MQUIT}${SADM_RESET}"`
+            sadm_writexy $wline $wrow "${menuno}  ${menuitem}" 
     fi
 
     # If from 16 to 30 items to display in the menu
@@ -367,10 +379,6 @@ sadm_display_menu()
                 do                                                      # Start of loop
                 let adm_choice="$adm_choice + 1"                        # Increment menu option no. 
                 menu_item=$i
-                for (( c=${#menu_item} ; c<32; c++ ))
-                    do
-                    menu_item="${menu_item}."
-                    done
                 menuno=`printf "${SADM_BOLD}${SADM_GREEN}[${SADM_CYAN}%02d${SADM_GREEN}] " "$adm_choice"`
                 witem=`printf "${SADM_BOLD}${SADM_MAGENTA}%-s${SADM_RESET}" "$menuno" "$menu_item"` 
                 #witem=`printf "[%s%02d%s] %-s" $bold $adm_choice $reset "$menu_item"` 
@@ -382,9 +390,13 @@ sadm_display_menu()
                 fi                          
                 done                                                    # End of loop
             menuno=`printf "${SADM_BOLD}${SADM_GREEN}[${SADM_CYAN}Q${SADM_GREEN}]"`
-            menuitem=`printf "${SADM_BOLD}${SADM_MAGENTA}Quit............................${SADM_RESET}"`
-            sadm_writexy 19 43 "${menuno}  ${menuitem}" 
-            #sadm_writexy 19 43 "[${SADM_BOLD}Q${SADM_RESET}]  Quit............................"
+            MQUIT="Quit"
+            for (( c=4 ; c<$LONGEST_LEN; c++ ))
+                do
+                MQUIT="${MQUIT}."
+                done
+            menuitem=`printf "${SADM_BOLD}${SADM_MAGENTA}${MQUIT}${SADM_RESET}"`
+            sadm_writexy 19 43 $wline $wrow "${menuno}  ${menuitem}" 
     fi
     
     sadm_accept_choice $s_count

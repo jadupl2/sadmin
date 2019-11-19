@@ -56,7 +56,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.9'                               # Current Script Version
+    export SADM_VER='2.10'                              # Current Script Version
     export SADM_LOG_TYPE="L"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -114,8 +114,7 @@ export WDATA=""                                         # Global Var. that conta
     while :
         do
         sadm_display_heading "SADMIN Main Menu"
-        menu_array=("Filesystem Tools" "RPM Packages Tools" "DEB Packages Tools")
-        #menu_array=("Filesystem Tools" "RPM Packages Tools")
+        menu_array=("Filesystem Tools......" "RPM Packages Tools...." "DEB Packages Tools....")
         sadm_display_menu "${menu_array[@]}"                            # Display menu Array
         CHOICE=$?
         case $CHOICE in

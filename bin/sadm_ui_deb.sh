@@ -29,12 +29,12 @@ trap 'exec $SADMIN/sadm' 2                                                # INTE
 display_menu()
 {
     sadm_display_heading "DEB Package Tools"
-    OPT1="What package provide this program/file.."
-    OPT2="List files included in this package....."
-    OPT3="Search installed package for pattern...."
-    OPT4="View changelog of a package............." 
-    OPT5="List install/update history by date....."
-    OPT6="Display Information about a package....."
+    OPT1="View package that provide a program/file.."
+    OPT2="List files included in a package.........."
+    OPT3="Search installed package for a pattern...."
+    OPT4="View changelog of a package..............." 
+    OPT5="View 'apt' history log(s)................."
+    OPT6="View Information about a package.........."
     menu_array=("$OPT1" "$OPT2" "$OPT3" "$OPT4" "$OPT5" "$OPT6" )
     s_count=${#menu_array[@]}                                           # Get Nb, of  items in Menu
     sadm_display_menu "${menu_array[@]}"                                # Display Menu Array
@@ -53,28 +53,19 @@ search_package_name()
         menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
         sadm_display_heading "$menu_title"                              # Show Screen Std Heading
         sadm_writexy 04 01 "Enter string to search (or [Q] ):"          # Display What to Enter
-        RPM=""                                                          # Clear User response
-        sadm_accept_data 04 35 25 A $RPM                                # Accept Expr. to search
+        sadm_accept_data 04 35 25 A ""                                  # Accept Expr. to search
         if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then break ; fi   # Quit = Return to Caller
-        if [ -z "$WDATA" ]                                              # If didn't enter anything
-           then continue                                                # Go and ask again
-           else #dpkg -l $WDATA >/dev/null 2>&1                          # Try to list package
-                #if [ $? -ne 0 ]
-                #    then sadm_mess "No match were found for '$WDATA'."  # Advise user
-                #         continue
-                #    else
-                        format='${binary:Package}\t${Version}\t${binary:Summary}\n'
-                        #dpkg-query -W -f="$format" $WDATA > $SADM_TMP_FILE1 2>&1
-                        apt list --installed | grep $WDATA |awk -F, '{ printf "%-40s%-39s\n",$1,$2}' 
-                        #dpkg -l | awk '{ printf "%-42s\n" ,$2 }'| grep $WDATA >$SADM_TMP_FILE1 2>&1
-                        stitle="Search for '$WDATA' package name"      # Heading Search Title 
-                        if [ -s $SADM_TMP_FILE1 ]                      # If file not empty
-                           then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17      # Show results
-                           else sadm_display_heading "$stitle"         # Show Screen Std Heading
-                                sadm_mess "No match were found for '$WDATA'."  # Advise user
-                                continue
-                        fi
-                #fi
+        if [ -z "$WDATA" ] ; then continue ; fi                         # If didn't enter anything
+
+        #format='${binary:Package}\t${Version}\t${binary:Summary}\n'
+        #dpkg-query -W -f="$format" $WDATA > $SADM_TMP_FILE1 2>&1
+        dpkg -l | awk '{ printf "%-42s\n" ,$2 }'| grep $WDATA >$SADM_TMP_FILE1 2>&1
+        stitle="Search for '$WDATA' package name"                       # Heading Search Title 
+        if [ -s $SADM_TMP_FILE1 ]                                       # If file not empty
+           then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17               # Show results
+           else sadm_display_heading "$stitle"                          # Show Screen Std Heading
+                sadm_mess "No match were found for '$WDATA'."           # Advise user
+                continue
         fi
         done
 }
@@ -144,22 +135,22 @@ what_provides()
 
 
         # Find what package provide for a non existing command/file.
-        stitle="What package provide '$WDATA'"                  # Menu Heading
+        stitle="What package provide '$WDATA'"                          # Menu Heading
         sadm_writexy 08 01 "Running 'apt-file update' to refresh cache ..." 
         apt-file update >/dev/null 2>&1
-        if [ $? -eq 0 ]                                         # If Command Successful
+        if [ $? -eq 0 ]                                                 # If Command Successful
            then sadm_writexy 09 01 "Command completed with success." 
            else sadm_writexy 09 01 "Command completed with error."
         fi 
         #
-        sadm_writexy 11 01 "Running 'apt-file search $WDATA' ..." 
-        apt-file search $WDATA > $SADM_TMP_FILE1 2>&1           # How provide this command
-        if [ $? -eq 0 ]                                         # If Command Successful
-           then if [ -s $SADM_TMP_FILE1 ]                       # If file not empty
-                   then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17 # Show results
+        sadm_writexy 11 01 "Running 'apt-file search "$WDATA" | grep \"${WDATA}$\"' ..." 
+        apt-file search "$WDATA" |grep "${WDATA}$" >$SADM_TMP_FILE1 2>&1 # How provide this command
+        if [ $? -eq 0 ]                                                 # If Command Successful
+           then if [ -s $SADM_TMP_FILE1 ]                               # If file not empty
+                   then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17       # Show results
                    else sadm_mess "The search didn't return anything." 
                 fi
-           else sadm_mess "Operation completed with error."     # Show Error was returned
+           else sadm_mess "Operation completed with error."             # Show Error was returned
         fi 
         done
 }
@@ -215,6 +206,38 @@ show_package_info()
         done
 }
 
+
+
+# --------------------------------------------------------------------------------------------------
+# View apt history log
+# --------------------------------------------------------------------------------------------------
+view_apt_history_log() 
+{
+    menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
+    sadm_display_heading "$menu_title"                                  # Show Screen Std Heading
+    w="/var/log/apt/history.log"                                        # First log file name
+    rm -f $SADM_TMP_FILE1 > /dev/null 2>&1                              # Make sure it doesn't exist
+
+    if [ -f "$w" ]                                                      # First log file exist ?
+       then printf "\n ----- Content of log file $w -----\n" >>$SADM_TMP_FILE1
+            cat /var/log/apt/history.log >> $SADM_TMP_FILE1             # cat first log file
+            for w in `ls -1t /var/log/apt/history*.gz`                  # Include All gz log
+                do 
+                printf "\n ----- Content of log file $w -----\n" >>$SADM_TMP_FILE1
+                zcat $w >> $SADM_TMP_FILE1                              # Include compress log 
+                done
+    fi               
+
+    stitle="APT History Log"                                            # Heading Title 
+    if [ -s $SADM_TMP_FILE1 ]                                           # If file not empty
+       then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17                   # Show results
+       else sadm_display_heading "$stitle"                              # Show Screen Std Heading
+            sadm_mess "No log were found ($w)."                         # Advise user
+    fi
+}
+
+
+
 #===================================================================================================
 #  P R O G R A M    S T A R T    H E R E
 #===================================================================================================
@@ -233,7 +256,7 @@ show_package_info()
             2)  list_package_files
                 ;;
 
-            # Search the list of package installed for the string specified.
+            # Search package installed for the string specified.
             3)  search_package_name
                 ;;
 
@@ -242,11 +265,7 @@ show_package_info()
                 ;;
 
             # View Change log of a package
-            5)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
-                cat /var/log/apt/history.log > $SADM_TMP_FILE1          # Query RPM DB
-                stitle="Install/Update sorted by date"                  # Heading Title 
-                sadm_pager "$stitle" "$SADM_TMP_FILE1" 17               # Show results
+            5)  view_apt_history_log 
                 ;;
 
             # Display Information about a package
