@@ -15,6 +15,7 @@
 # History    :
 #@2019_11_12 Added: v1.0 Initial version
 #@2019_11_14 Added: v1.1 Working on option 1
+#@2019_11_18 Added: v1.2 First functionnal release
 #
 #===================================================================================================
 trap 'exec $SADMIN/sadm' 2                                                # INTERCEPT  ^C
@@ -28,17 +29,13 @@ trap 'exec $SADMIN/sadm' 2                                                # INTE
 display_menu()
 {
     sadm_display_heading "DEB Package Tools"
-    OPT1="Search installed package for pattern...."
-    OPT2="View changelog of a package............." 
-    OPT3="Reset files permissions of package......"
-    OPT4="List documentation files of a package..."
-    OPT5="List install/update history by date....."
-    OPT6="What package provide this program/file.."
-    OPT7="List files included in this package....."
-    OPT8="Display Information about a package....."
-    OPT9="Show Home Page of a package............."
-    OPT10="List Repositories(Enabled,Disabled,All)." 
-    menu_array=("$OPT1" "$OPT2" "$OPT3" "$OPT4" "$OPT5" "$OPT6" "$OPT7" "$OPT8" "$OPT9" "$OPT10")
+    OPT1="View package that provide a program/file.."
+    OPT2="List files included in a package.........."
+    OPT3="Search installed package for a pattern...."
+    OPT4="View changelog of a package..............." 
+    OPT5="View 'apt' history log(s)................."
+    OPT6="View Information about a package.........."
+    menu_array=("$OPT1" "$OPT2" "$OPT3" "$OPT4" "$OPT5" "$OPT6" )
     s_count=${#menu_array[@]}                                           # Get Nb, of  items in Menu
     sadm_display_menu "${menu_array[@]}"                                # Display Menu Array
     return $?
@@ -47,113 +44,199 @@ display_menu()
 
 
 # --------------------------------------------------------------------------------------------------
-# List Repositories ([A]ll, [D]isabled, [E]nabled.
-# --------------------------------------------------------------------------------------------------
-repolist() 
-{
-    while : 
-        do 
-        menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"      # Build Menu Title From Desc
-        sadm_display_heading "$menu_title"                              # Show Screen Std Heading
-        sadm_writexy 04 01 "Show [A]ll, [D]isabled, [E]nabled repositories or [Q]uit :"
-        
-        RPM=""                                                          # Set Default Value
-        sadm_accept_data 04 60 1 A $RPM                                 # Accept A,D,E,Q 
-        ANS=`echo $WDATA |tr  "[:lower:]" "[:upper:]"`                  # Transform A,D,E,Q UpCase
-        if [ "$ANS" = "Q" ] ; then break ; fi                           # Exit loop on Quit
-
-        if [ -z "$ANS" ]                                                # If didn't enter anything
-            then sadm_mess "You need to enter A,D,E or Q"               # Show User Error Message
-                 continue
-        fi
-        if [ "$ANS" != "A" ] && [ "$ANS" != "D" ] && [ "$ANS" != "E" ]  # Only A,D,E are valid
-           then sadm_mess "Option '$ANS' is invalid."                   # Show user Error Message
-                continue                                                # Restart the loop
-           else break                                                   # OK - Break out of loop
-        fi 
-        done
-    if [ "$ANS" = "Q" ] ; then return ; fi                              # If Quit, return to caller
-        
-    while : 
-        do
-        sadm_writexy 05 01 "[S]ummary, [D]etail view or [Q]uit :" 
-        RPM=""                                                          # Set Default Value
-        sadm_accept_data 05 38 1 A $RPM                                 # Accept User Response
-        DET=`echo $WDATA |tr  "[:lower:]" "[:upper:]"`                  # Transform A,D,E,Q UpCase
-        if [ "$DET" = "Q" ] ; then break ; fi                           # Quit = Break out of loop
-        if [ -z "$DET" ]                                                # If didn't enter anything
-            then sadm_mess "Invalid entry, you need to enter S,D or Q"  # Show User Error Message
-        fi
-        if [ "$DET" != "S" ] && [ "$DET" != "D" ]                       # If Not S and Not D
-           then sadm_mess "Option '$DET' is invalid."                   # Show user Error Message
-           else break                                                   # Else=OK=Break out of loop
-        fi 
-        done
-
-    if [ "$DET" = "Q" ] ; then return ; fi                              # If Quit, return to caller
-
-    if [ "$ANS" = "A" ]                                                 # If Display All Repo.
-       then if [ "$DET" = "S" ]                                         # If Asked for Summary list
-               then yum repolist > $SADM_TMP_FILE1 2>%1                 # Summary Repo List
-               else yum -v repolist > $SADM_TMP_FILE1 2>%1              # Detail Repo List 
-            fi
-    fi
- 
-    if [ "$ANS" = "E" ]                                                 # If Display Enabled Repo.
-       then if [ "$DET" = "S" ]                                         # If Asked for Summary list
-                then yum repolist enabled > $SADM_TMP_FILE1 2>%1        # Sum Enable Repo List
-                else yum -v repolist enabled >$SADM_TMP_FILE1 2>%1      # Detail Enable Repo  
-            fi
-    fi
-    
-    if [ "$ANS" = "D" ]                                                 # If Display Disabled Repo.
-       then if [ "$DET" = "S" ]                                         # If Asked for Summary list
-               then yum repolist disabled > $SADM_TMP_FILE1 2>%1        # Sum. Disable Repo 
-               else yum -v repolist disabled >$SADM_TMP_FILE1 2>%1      # Detail Disable Repo 
-            fi
-    fi
-    
-    if [ -s $SADM_TMP_FILE1 ]                                           # If file not empty
-       then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17                   # Show results
-       else sadm_display_heading "$stitle"                              # Show Screen Std Heading
-            sadm_mess "No repositories match request."                  # No Result - Advise user
-    fi
-}
-
-
-# --------------------------------------------------------------------------------------------------
 # Search if a package is installed and list version, a brief description
 # --------------------------------------------------------------------------------------------------
-find_package() 
+search_package_name() 
 {
     while : 
         do 
         menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
         sadm_display_heading "$menu_title"                              # Show Screen Std Heading
-        sadm_writexy 04 01 "Enter package name to search (or [Q] ):"    # Display What to Enter
-        RPM=""                                                          # Clear User response
-        sadm_accept_data 04 41 25 A $RPM                                # Accept Expr. to search
+        sadm_writexy 04 01 "Enter string to search (or [Q] ):"          # Display What to Enter
+        sadm_accept_data 04 35 25 A ""                                  # Accept Expr. to search
         if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then break ; fi   # Quit = Return to Caller
-        if [ -z "$WDATA" ]                                              # If didn't enter anything
-           then continue                                                # Go and ask again
-           else dpkg -l $WDATA >/dev/null 2>&1                          # Try to list package
-                if [ $? -ne 0 ]
-                    then sadm_mess "No match were found for '$WDATA'."  # Advise user
-                         continue
-                    else
-                        format='${binary:Package}\t${Version}\t${binary:Summary}\n'
-                        dpkg-query -W -f="$format" $WDATA > $SADM_TMP_FILE1 2>&1
-                        stitle="Search for '$WDATA' package name"      # Heading Search Title 
-                        if [ -s $SADM_TMP_FILE1 ]                      # If file not empty
-                           then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17      # Show results
-                           else sadm_display_heading "$stitle"         # Show Screen Std Heading
-                                sadm_mess "No match were found for '$WDATA'."  # Advise user
-                                continue
-                        fi
-                fi
+        if [ -z "$WDATA" ] ; then continue ; fi                         # If didn't enter anything
+
+        #format='${binary:Package}\t${Version}\t${binary:Summary}\n'
+        #dpkg-query -W -f="$format" $WDATA > $SADM_TMP_FILE1 2>&1
+        dpkg -l | awk '{ printf "%-42s\n" ,$2 }'| grep $WDATA >$SADM_TMP_FILE1 2>&1
+        stitle="Search for '$WDATA' package name"                       # Heading Search Title 
+        if [ -s $SADM_TMP_FILE1 ]                                       # If file not empty
+           then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17               # Show results
+           else sadm_display_heading "$stitle"                          # Show Screen Std Heading
+                sadm_mess "No match were found for '$WDATA'."           # Advise user
+                continue
         fi
         done
 }
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Show the change log of a particular package
+# --------------------------------------------------------------------------------------------------
+view_changelog() 
+{
+    while : 
+        do 
+        menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"      # Build Title minux the dot
+        sadm_display_heading "$menu_title"                              # Show Screen Std Heading
+        sadm_writexy 04 01 "View change log of the package (or [Q]) :"  # Show What to Enter
+        sadm_accept_data 04 43 25 A ""                                  # Accept Expr. to search
+        if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then break ; fi   # Exit - Return to caller
+        if [ -z "$WDATA" ]                                              # If didn't enter anything
+           then continue                                                # Go and ask again
+           else dpkg -l $WDATA > /dev/null 2>&1                         # Check if package exist
+                if [ $? -ne 0 ]                                         # If Package doesn't exist
+                   then sadm_mess "Package '$WDATA' doesn't exist or not installed."
+                   else apt-get changelog $WDATA >$SADM_TMP_FILE1       # Query package
+                        stitle="'$WDATA' Change Log"                    # Heading Search Title 
+                        if [ -s $SADM_TMP_FILE1 ]                       # If file not empty
+                           then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17   # Show results
+                           else sadm_display_heading "$stitle"          # Show Screen Std Heading
+                                sadm_mess "No log were found for '$WDATA'." # Advise user
+                                continue
+                        fi
+                fi
+        fi 
+        done
+}
+
+
+# --------------------------------------------------------------------------------------------------
+# Find what package provide the command or file entered
+# --------------------------------------------------------------------------------------------------
+what_provides() 
+{
+    while : 
+        do 
+        menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"      # Build Menu title, no dot
+        sadm_display_heading "$menu_title"                              # Show Screen Std Heading
+        sadm_writexy 04 01 "For better and faster result, specify the full path of command or file."
+        sadm_writexy 06 01 "Show what package provide this program (or [Q]):"
+        sadm_accept_data 06 50 30 A ""                                  # Accept Expr. to search
+        if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then break ; fi   # Exit - Return to caller
+
+        if [ -z "$WDATA" ] ; then continue ; fi                         # Nothing Entered = Menu
+
+        # Find what package provide an existing command/file.
+        if [ -f "$WDATA" ]                                              # If command/file exist
+           then sadm_writexy 08 01 "Running 'dpkg -S $WDATA' ..."       # Show what we do
+                sadm_writexy 10 01 ""                                   # Position cursor for result
+                dpkg -S "$WDATA" > $SADM_TMP_FILE1 2>&1                 # Execute the search
+                RC=$?                                                   # Save Return Code
+                cat $SADM_TMP_FILE1                                     # Show result & Error
+                if [ $RC -ne 0 ]                                        # If Command Not Successful
+                   then sadm_mess "Command completed with error."       # Advise user.
+                   else sadm_mess "Command completed with success."     # Show user status
+                fi 
+                continue                                                # Go to while beginning
+        fi
+
+
+        # Find what package provide for a non existing command/file.
+        stitle="What package provide '$WDATA'"                          # Menu Heading
+        sadm_writexy 08 01 "Running 'apt-file update' to refresh cache ..." 
+        apt-file update >/dev/null 2>&1
+        if [ $? -eq 0 ]                                                 # If Command Successful
+           then sadm_writexy 09 01 "Command completed with success." 
+           else sadm_writexy 09 01 "Command completed with error."
+        fi 
+        #
+        sadm_writexy 11 01 "Running 'apt-file search "$WDATA" | grep \"${WDATA}$\"' ..." 
+        apt-file search "$WDATA" |grep "${WDATA}$" >$SADM_TMP_FILE1 2>&1 # How provide this command
+        if [ $? -eq 0 ]                                                 # If Command Successful
+           then if [ -s $SADM_TMP_FILE1 ]                               # If file not empty
+                   then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17       # Show results
+                   else sadm_mess "The search didn't return anything." 
+                fi
+           else sadm_mess "Operation completed with error."             # Show Error was returned
+        fi 
+        done
+}
+
+
+
+# --------------------------------------------------------------------------------------------------
+# List files included in a package
+# --------------------------------------------------------------------------------------------------
+list_package_files() 
+{
+    while : 
+        do 
+        menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"      # Build Menu Title from Item
+        sadm_display_heading "$menu_title"                              # Show Screen Std Heading
+        sadm_writexy 04 01 "List files included in this package (or [Q]):"
+        sadm_accept_data 04 48 25 A ""                                  # Accept Expr. to search
+        if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then break ; fi   # Quit and return to caller
+
+        if [ -z "$WDATA" ] ; then continue ; fi                         # If didn't enter anything
+        dpkg -L $WDATA > /dev/null 2>&1                                 # Check if package exist
+        if [ $? -ne 0 ]                                                 # If Package doesn't exist
+           then sadm_mess "Package '$WDATA' doesn't exist or not installed"
+           else dpkg -L $WDATA > $SADM_TMP_FILE1 2>&1                   # Create List if files incl.
+                stitle="Files included in package '$WDATA'"             # Pager Heading 
+                sadm_pager "$stitle" "$SADM_TMP_FILE1" 17               # Show results per page
+        fi
+        done
+}
+
+
+# --------------------------------------------------------------------------------------------------
+# Show information about package
+# --------------------------------------------------------------------------------------------------
+show_package_info() 
+{
+    while : 
+        do 
+        menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"      # Build Menu Title from Item
+        sadm_display_heading "$menu_title"                              # Show Screen Std Heading
+        sadm_writexy 04 01 "See information about the package name (or [Q]):"
+        sadm_accept_data 04 50 25 A ""                                  # Accept Expr. to search
+        if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then break ; fi   # Quit and return to caller
+        if [ -z "$WDATA" ] ; then continue ; fi                         # If didn't enter anything
+
+        dpkg -s $WDATA > $SADM_TMP_FILE1 2>&1                           # Check if package exist
+        if [ $? -ne 0 ]                                                 # If Package doesn't exist
+           then sadm_mess "Package '$WDATA' doesn't exist or not installed"
+                continue                                                # Back to accept package 
+        fi 
+        stitle="Information about package '$WDATA'"                     # Pager Heading 
+        sadm_pager "$stitle" "$SADM_TMP_FILE1" 17                       # Show results per page
+        done
+}
+
+
+
+# --------------------------------------------------------------------------------------------------
+# View apt history log
+# --------------------------------------------------------------------------------------------------
+view_apt_history_log() 
+{
+    menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
+    sadm_display_heading "$menu_title"                                  # Show Screen Std Heading
+    w="/var/log/apt/history.log"                                        # First log file name
+    rm -f $SADM_TMP_FILE1 > /dev/null 2>&1                              # Make sure it doesn't exist
+
+    if [ -f "$w" ]                                                      # First log file exist ?
+       then printf "\n ----- Content of log file $w -----\n" >>$SADM_TMP_FILE1
+            cat /var/log/apt/history.log >> $SADM_TMP_FILE1             # cat first log file
+            for w in `ls -1t /var/log/apt/history*.gz`                  # Include All gz log
+                do 
+                printf "\n ----- Content of log file $w -----\n" >>$SADM_TMP_FILE1
+                zcat $w >> $SADM_TMP_FILE1                              # Include compress log 
+                done
+    fi               
+
+    stitle="APT History Log"                                            # Heading Title 
+    if [ -s $SADM_TMP_FILE1 ]                                           # If file not empty
+       then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17                   # Show results
+       else sadm_display_heading "$stitle"                              # Show Screen Std Heading
+            sadm_mess "No log were found ($w)."                         # Advise user
+    fi
+}
+
+
 
 #===================================================================================================
 #  P R O G R A M    S T A R T    H E R E
@@ -165,167 +248,28 @@ find_package()
         CHOICE=$?                                                       # Save User choice
         case $CHOICE in                         
 
-            # Search the list of package installed for the string specified.
-            1)  find_package
+            # What package provide this program
+            1)  what_provides
+                ;;
+
+            # List files included in the specified package
+            2)  list_package_files
+                ;;
+
+            # Search package installed for the string specified.
+            3)  search_package_name
                 ;;
 
             # View the change log of the package specified.
-            2)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
-                sadm_writexy 04 01 "View change log of the package (or [Q]) :" # Show What to Enter
-                RPM=""                                                  # Clear User response
-                sadm_accept_data 04 43 25 A $rpm                        # Accept Expr. to search
-                if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then continue ; fi
-                if [ -z "$WDATA" ]                                      # If didn't enter anything
-                    then continue                                       # Go and ask again
-                    else rpm -q $WDATA > /dev/null 2>&1                 # Check if package exist
-                         if [ $? -ne 0 ]                                # If Package doesn't exist
-                            then sadm_mess "Package '$WDATA' doesn't exist or not installed"
-                            else rpm -q --changelog $WDAT >$SADM_TMP_FILE1  # Query RPM DB 
-                                 stitle="'$WDATA' Change Log"           # Heading Search Title 
-                                 if [ -s $SADM_TMP_FILE1 ]              # If file not empty
-                                    then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17   # Show results
-                                    else sadm_display_heading "$stitle" # Show Screen Std Heading
-                                         sadm_mess "No log were found for '$WDATA'." # Advise user
-                                         continue
-                                 fi
-                         fi
-                fi
+            4)  view_changelog
                 ;;
 
-            # Reset files permissions included in the package specified.
-            3)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
-                sadm_writexy 04 01 "Reset files permissions part of package (or [Q]) : " # Question 
-                RPM=""                                                  # Clear User response
-                sadm_accept_data 04 52 20 A $RPM                        # Accept Expr. to search
-                if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then continue ; fi
-                if [ -z "$WDATA" ]                                      # If didn't enter anything
-                    then continue                                       # Go and ask again
-                    else RPM=$WDATA                                     # Save User Response
-                         rpm -q $RPM > /dev/null 2>&1                   # Check if package exist
-                         if [ $? -ne 0 ]                                # If Package doesn't exist
-                            then sadm_mess "Package '$RPM' doesn't exist or not installed"
-                            else sadm_messok 06 01 "Reset files permissions of package '$RPM'"
-                                 if [ $? -eq 1 ]                        # If responded Yes
-                                    then sadm_writexy 08 01 "Running command : 'rpm --setperms $RPM'" 
-                                         rpm --setperms $RPM >$SADM_TMP_FILE1 2>&1 # Reset perm
-                                         if [ $? -eq 0 ]                # If command went ok
-                                            then msg="Files permissions were reset successfully."
-                                            else msg="Files permissions were NOT reset successfully."
-                                         fi
-                                         sadm_writexy 09 01 "$msg"      # Show result to user
-                                         sadm_mess ""                   # Wait for [ENTER]
-                                 fi
-                         fi
-                fi 
+            # View Change log of a package
+            5)  view_apt_history_log 
                 ;;
 
-            # List documentation files included in a package
-            4)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
-                sadm_writexy 04 01 "View documentation files included in package (or [Q] ):"
-                RPM=""                                                  # Clear User response
-                sadm_accept_data 04 57 25 A $RPM                        # Accept Expr. to search
-                if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then continue ; fi
-                if [ -z "$WDATA" ]                                      # If didn't enter anything
-                    then continue                                       # Go and ask again
-                    else RPM=$WDATA                                     # Save User Response
-                         rpm -q $RPM > /dev/null 2>&1                   # Check if package exist
-                         if [ $? -ne 0 ]                                # If Package doesn't exist
-                            then sadm_mess "Package '$RPM' doesn't exist or not installed"
-                            else rpm -qd $RPM >$SADM_TMP_FILE1  # Query RPM DB 
-                                 stitle="Documentation files included in '$RPM'" # Heading DocSearch
-                                 sadm_pager "$stitle" "$SADM_TMP_FILE1" 17 # Show results
-                         fi
-                fi
-                ;;
-
-            # Query RPM Database for install/update by Date.
-            5)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
-                rpm -qa --last > $SADM_TMP_FILE1                        # Query RPM DB
-                stitle="Install/Update sorted by date"                  # Heading Title 
-                sadm_pager "$stitle" "$SADM_TMP_FILE1" 17               # Show results
-                ;;
-
-            # What package provide this program
-            6)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
-                sadm_writexy 04 01 "Show what package provide this program (or [Q] ):"
-                RPM=""                                                  # Clear User response
-                sadm_accept_data 04 52 25 A $RPM                        # Accept Expr. to search
-                if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then continue ; fi
-                if [ -z "$WDATA" ]                                      # If didn't enter anything
-                    then continue                                       # Nothing Entered = Menu
-                    else stitle="What package provide '$WDATA'"         # Menu Heading
-                         yum whatprovides $WDATA > $SADM_TMP_FILE1 2>&1 # How provide this command
-                         sadm_pager "$stitle" "$SADM_TMP_FILE1" 17      # Show results
-                fi
-                ;;
-
-
-            # List files included in the specified package
-            7)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
-                sadm_writexy 04 01 "List files included in this package (or [Q] ):"
-                RPM=""                                                  # Clear User response
-                sadm_accept_data 04 49 25 A $RPM                        # Accept Expr. to search
-                if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then continue ; fi
-                if [ -z "$WDATA" ]                                      # If didn't enter anything
-                    then continue                                       # Go and ask again
-                    else rpm -q $WDATA > /dev/null 2>&1                 # Check if package exist
-                         if [ $? -ne 0 ]                                # If Package doesn't exist
-                            then sadm_mess "Package '$WDATA' doesn't exist or not installed"
-                            else rpm -ql $WDATA > $SADM_TMP_FILE1 2>&1
-                                 stitle="Files included in package '$WDATA'"
-                                 sadm_pager "$stitle" "$SADM_TMP_FILE1" 17      # Show results
-                         fi
-                fi
-                ;;
-
-
-            # Display Information about a package     # Show results
-            8)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
-                sadm_writexy 04 01 "Show information about this package (or [Q] ):"
-                RPM=""                                                  # Clear User response
-                sadm_accept_data 04 49 25 A $RPM                        # Accept Expr. to search
-                if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then continue ; fi
-                if [ -z "$WDATA" ]                                      # If didn't enter anything
-                    then continue                                       # Go and ask again
-                    else rpm -q $WDATA > /dev/null 2>&1                 # Check if package exist
-                         if [ $? -ne 0 ]                                # If Package doesn't exist
-                            then sadm_mess "Package '$WDATA' doesn't exist or not installed"
-                            else rpm -qi $WDATA > $SADM_TMP_FILE1 2>&1
-                                 stitle="Display $WDATA Package Information"
-                                 sadm_pager "$stitle" "$SADM_TMP_FILE1" 17      # Show results
-                         fi
-                fi
-                ;;
-
-            # Display Home Page of a package
-            9)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
-                sadm_writexy 04 01 "Show Home page of package $RPM (or [Q]) :"
-                RPM=""                                                  # Clear User response
-                sadm_accept_data 04 39 25 A $RPM                        # Accept Expr. to search
-                if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then continue ; fi
-                if [ -z "$WDATA" ]                                      # If didn't enter anything
-                    then continue                                       # Go and ask again
-                    else rpm -q $WDATA > /dev/null 2>&1                 # Check if package exist
-                         if [ $? -ne 0 ]                                # If Package doesn't exist
-                            then sadm_mess "Package '$WDATA' doesn't exist or not installed"
-                            else sadm_writexy 06 01 "The Home page of $WDATA is "
-                                 PHOME=`rpm -q --qf "%{name} - %{url}\n" $WDATA`
-                                 sadm_writexy 07 01 "$PHOME"
-                                 sadm_mess " "
-                         fi
-                fi
-                ;;
-
-            # List Repositories ([A]ll, [D]isabled, [E]nabled.
-            10) repolist
+            # Display Information about a package
+            6)  show_package_info
                 ;;
 
             # 99 = Quit was pressed, return to caller
