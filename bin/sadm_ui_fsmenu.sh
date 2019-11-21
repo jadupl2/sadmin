@@ -28,11 +28,13 @@
 # Load Filesystem Library Tools
 [ -f ${SADM_LIB_DIR}/sadmlib_fs.sh ] && . ${SADM_LIB_DIR}/sadmlib_fs.sh  
 
+
+
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
 BATCH_MODE=0                        ; export BATCH_MODE                 # Batch mode OFF interactive
-
+export FS_VER="02.05"                                                   # Filesystem Menu Version
 
 #===================================================================================================
 #                       Set FileSystem Creation Screen Default Value
@@ -73,7 +75,7 @@ create_filesystem()
     set_creation_default                                                # Set FS Creation Default
     while : 
         do 
-        sadm_display_heading  "Create Filesystem"
+        sadm_display_heading  "Create Filesystem" "$FS_VER"
         sadm_show_menuitem 06 03 1 "Volume group............................. $CR_VG "
         sadm_show_menuitem 07 03 2 "Logical volume name...................... $CR_LV "
         sadm_show_menuitem 08 03 3 "Logical volume size in MB................ $CR_MB "
@@ -124,7 +126,7 @@ create_filesystem()
 	                    ;;
               p|P )     sadm_messok 22 01 "Want to create $CR_MP filesystem" # Proceed with Creation ? 
                         if [ "$?" = "1" ] 
-                            then sadm_display_heading  "Creating the filesystem"
+                            then sadm_display_heading  "Creating the filesystem" "$FS_VER"
                                  LVNAME=$CR_LV
                                  VGNAME=$CR_VG
                                  LVSIZE=$CR_MB
@@ -166,7 +168,7 @@ filesystem_check()
     RM_FLAG=0
     while :
         do
-        sadm_display_heading  "Filesystem Integrity Check"
+        sadm_display_heading  "Filesystem Integrity Check" "$FS_VER"
         if [ $RM_FLAG -eq 1 ]
            then sadm_writexy 07 10 "Logical Volume Name .............: $LVNAME"
                 sadm_writexy 08 10 "Volume Group ....................: $VGNAME"
@@ -195,7 +197,7 @@ filesystem_check()
                 ;;
           p|P ) sadm_messok 22 01 "Do you want to run a fsck on $RM_MP filesystem"
                 if [ "$?" = "1" ]
-                   then sadm_display_heading  "Filesystem Integrity Check"
+                   then sadm_display_heading  "Filesystem Integrity Check" "$FS_VER"
                         RM_FLAG=0
                         filesystem_fsck
                         RC=$?
@@ -225,7 +227,7 @@ delete_filesystem()
     RM_FLAG=0
     while :
 	    do
-        sadm_display_heading  "Delete a Filesystem"                 
+        sadm_display_heading  "Delete a Filesystem" "$FS_VER"                 
         if [ $RM_FLAG -eq 1 ] 
            then sadm_writexy 07 09 "Logical Volume Name .........: $LVNAME"
                 sadm_writexy 08 09 "Volume Group ................: $VGNAME"
@@ -255,7 +257,7 @@ delete_filesystem()
                 ;;
           p|P ) sadm_messok 22 01 "Do you really want to delete $RM_MP filesystem"
                 if [ "$?" = "1" ]
-                   then sadm_display_heading  "Delete the filesystem"
+                   then sadm_display_heading  "Delete the filesystem" "$FS_VER"
                         echo " "                                        # Blank line after heading
                         RM_FLAG=0
                         remove_fs 
@@ -285,7 +287,7 @@ enlarge_filesystem()
     RM_FLAG=0
     while :
         do
-        sadm_display_heading  "Filesystem size increase"
+        sadm_display_heading  "Filesystem size increase" "$FS_VER"
         if [ $RM_FLAG -eq 1 ]
            then sadm_writexy 07 08 "Logical Volume Name .................: $LVNAME"
                 sadm_writexy 08 08 "Filesystem Type .....................: $LVTYPE"
@@ -323,7 +325,7 @@ enlarge_filesystem()
            p|P ) let "wincr=$RM_MB - $LVSIZE"                           # Proceed with Creation
                  sadm_messok 22 01 "Do you want to increase $RM_MP filesystem by $wincr MB"
                  if [ "$?" = "1" ]
-                    then sadm_display_heading  "Filesystem size increase"
+                    then sadm_display_heading  "Filesystem size increase" "$FS_VER"
                          echo " "                                       # Blank line after heading
                          LVSIZE=$wincr
                          mount $LVMOUNT > /dev/null 2>&1
@@ -350,7 +352,7 @@ enlarge_filesystem()
 #===================================================================================================
     while :
         do
-        sadm_display_heading  "Filesystem - Maintenance"
+        sadm_display_heading  "Filesystem - Maintenance" "$FS_VER"
         menu_array=("Create a filesystem..............." \
                     "Increase filesystem size ........." \
                     "Remove a filesystem..............." \

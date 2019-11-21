@@ -102,7 +102,7 @@ sadm_pager() {
     PTITLE="$1"                                                         # Screen Menu Title
     PFILE="$2"                                                          # Filename to show
     lines_per_page=$3                                                   # Number of line per screen
-    sadm_display_heading "$PTITLE"                                      # Show Screen Heading Recv.
+    sadm_display_heading "$PTITLE" "$SADM_VER"                          # Show Screen Heading Recv.
 
     if [ ! -r "$PFILE" ]                                                # File to show doesn't exist
         then sadm_mess "No result were found for this search"           # Advise user
@@ -185,7 +185,8 @@ sadm_display_message() {
 #---------------------------------------------------------------------------------------------------
 sadm_display_heading() 
 {
-    titre=`echo $1`                                                     # Save Menu Title
+    titre="$1"                                                          # Save Menu Title
+    tver="$2"                                                           # Save Menu Version
     eighty_spaces=`printf %80s " "`                                     # 80 white space
     set_foreground=$(tput setaf 7)
     set_background=$(tput setab 4)
@@ -208,8 +209,8 @@ sadm_display_heading()
     #sadm_writexy 02 01 "$(sadm_get_osname) $(sadm_get_osversion)"       # Display OSNAME + OS Ver.
     let wpos="(((80 - ${#SADM_CIE_NAME}) / 2) + 1)"                     # Calc. Center Pos for Name
     sadm_writexy 02 $wpos "$SADM_CIE_NAME"                              # Display Cie Name Centered 
-    let wpos="73 - ${#SADM_VERSION}"                                    # Calc. Pos. Line 2 on Right
-    sadm_writexy 02 $wpos "Ver $SADM_VER"                               # Display Script Version
+    let wpos="72 - ${#SADM_VERSION}"                                    # Calc. Pos. Line 2 on Right
+    sadm_writexy 02 $wpos "Ver $tver"                                   # Display Script Version
     sadm_writexy 04 01 "${SADM_RESET}"                                  # Reset to Normal & Pos. Cur
 }
 

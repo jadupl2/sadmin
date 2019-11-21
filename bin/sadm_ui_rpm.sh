@@ -22,6 +22,10 @@
 trap 'exec $SADMIN/sadm' 2                                                # INTERCEPT  ^C
 #
 
+# --------------------------------------------------------------------------------------------------
+#              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
+# --------------------------------------------------------------------------------------------------
+export RPM_VER="01.03"                                                  # RPM Menu Version
 
 
 # --------------------------------------------------------------------------------------------------
@@ -29,7 +33,7 @@ trap 'exec $SADMIN/sadm' 2                                                # INTE
 # --------------------------------------------------------------------------------------------------
 display_menu()
 {
-    sadm_display_heading "RPM Package Tools"
+    sadm_display_heading "RPM Package Tools" "$RPM_VER"
     OPT1="Search installed package for pattern...."
     OPT2="View changelog of a package............." 
     OPT3="Reset files permissions of package......"
@@ -56,7 +60,7 @@ repolist()
     while : 
         do 
         menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"      # Build Menu Title From Desc
-        sadm_display_heading "$menu_title"                              # Show Screen Std Heading
+        sadm_display_heading "$menu_title" "$RPM_VER"                   # Show Screen Std Heading
         sadm_writexy 04 01 "Show [A]ll, [D]isabled, [E]nabled repositories or [Q]uit :"
         
         RPM=""                                                          # Set Default Value
@@ -117,7 +121,7 @@ repolist()
     
     if [ -s $SADM_TMP_FILE1 ]                                           # If file not empty
        then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17                   # Show results
-       else sadm_display_heading "$stitle"                              # Show Screen Std Heading
+       else sadm_display_heading "$stitle" "$RPM_VER"                   # Show Screen Std Heading
             sadm_mess "No repositories match request."                  # No Result - Advise user
     fi
 }
@@ -136,7 +140,7 @@ repolist()
 
             # Search the list of package installed for the string specified.
             1)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
+                sadm_display_heading "$menu_title" "$RPM_VER"           # Show Screen Std Heading
                 sadm_writexy 04 01 "Enter package name to search (or [Q] ):" # Display What to Enter
                 RPM=""                                                  # Clear User response
                 sadm_accept_data 04 41 25 A $RPM                        # Accept Expr. to search
@@ -147,7 +151,7 @@ repolist()
                          stitle="Search for '$WDATA' package name"      # Heading Search Title 
                          if [ -s $SADM_TMP_FILE1 ]                      # If file not empty
                             then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17      # Show results
-                            else sadm_display_heading "$stitle"         # Show Screen Std Heading
+                            else sadm_display_heading "$stitle" "$RPM_VER" # Show Screen Std Heading
                                  sadm_mess "No match were found for '$WDATA'."  # Advise user
                                  continue
                          fi
@@ -156,7 +160,7 @@ repolist()
 
             # View the change log of the package specified.
             2)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
+                sadm_display_heading "$menu_title" "$RPM_VER"           # Show Screen Std Heading
                 sadm_writexy 04 01 "View change log of the package (or [Q]) :" # Show What to Enter
                 RPM=""                                                  # Clear User response
                 sadm_accept_data 04 43 25 A $rpm                        # Accept Expr. to search
@@ -170,7 +174,7 @@ repolist()
                                  stitle="'$WDATA' Change Log"           # Heading Search Title 
                                  if [ -s $SADM_TMP_FILE1 ]              # If file not empty
                                     then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17   # Show results
-                                    else sadm_display_heading "$stitle" # Show Screen Std Heading
+                                    else sadm_display_heading "$stitle" "$RPM_VER" # Screen Std Head
                                          sadm_mess "No log were found for '$WDATA'." # Advise user
                                          continue
                                  fi
@@ -180,7 +184,7 @@ repolist()
 
             # Reset files permissions included in the package specified.
             3)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
+                sadm_display_heading "$menu_title" "$RPM_VER"           # Show Screen Std Heading
                 sadm_writexy 04 01 "Reset files permissions part of package (or [Q]) : " # Question 
                 RPM=""                                                  # Clear User response
                 sadm_accept_data 04 52 20 A $RPM                        # Accept Expr. to search
@@ -208,7 +212,7 @@ repolist()
 
             # List documentation files included in a package
             4)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
+                sadm_display_heading "$menu_title" "$RPM_VER"           # Show Screen Std Heading
                 sadm_writexy 04 01 "View documentation files included in package (or [Q] ):"
                 RPM=""                                                  # Clear User response
                 sadm_accept_data 04 57 25 A $RPM                        # Accept Expr. to search
@@ -228,7 +232,7 @@ repolist()
 
             # Query RPM Database for install/update by Date.
             5)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
+                sadm_display_heading "$menu_title" "$RPM_VER"           # Show Screen Std Heading
                 rpm -qa --last > $SADM_TMP_FILE1                        # Query RPM DB
                 stitle="Install/Update sorted by date"                  # Heading Title 
                 sadm_pager "$stitle" "$SADM_TMP_FILE1" 17               # Show results
@@ -236,7 +240,7 @@ repolist()
 
             # What package provide this program
             6)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
+                sadm_display_heading "$menu_title" "$RPM_VER"           # Show Screen Std Heading
                 sadm_writexy 04 01 "Show what package provide this program (or [Q] ):"
                 RPM=""                                                  # Clear User response
                 sadm_accept_data 04 52 25 A $RPM                        # Accept Expr. to search
@@ -252,7 +256,7 @@ repolist()
 
             # List files included in the specified package
             7)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
+                sadm_display_heading "$menu_title" "$RPM_VER"           # Show Screen Std Heading
                 sadm_writexy 04 01 "List files included in this package (or [Q] ):"
                 RPM=""                                                  # Clear User response
                 sadm_accept_data 04 49 25 A $RPM                        # Accept Expr. to search
@@ -272,7 +276,7 @@ repolist()
 
             # Display Information about a package     # Show results
             8)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
+                sadm_display_heading "$menu_title" "$RPM_VER"           # Show Screen Std Heading
                 sadm_writexy 04 01 "Show information about this package (or [Q] ):"
                 RPM=""                                                  # Clear User response
                 sadm_accept_data 04 49 25 A $RPM                        # Accept Expr. to search
@@ -291,7 +295,7 @@ repolist()
 
             # Display Home Page of a package
             9)  menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-                sadm_display_heading "$menu_title"                      # Show Screen Std Heading
+                sadm_display_heading "$menu_title" "$RPM_VER"           # Show Screen Std Heading
                 sadm_writexy 04 01 "Show Home page of package $RPM (or [Q]) :"
                 RPM=""                                                  # Clear User response
                 sadm_accept_data 04 39 25 A $RPM                        # Accept Expr. to search

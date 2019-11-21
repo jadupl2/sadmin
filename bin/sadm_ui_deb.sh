@@ -16,11 +16,16 @@
 #@2019_11_12 Added: v1.0 Initial version
 #@2019_11_14 Added: v1.1 Working on option 1
 #@2019_11_18 Added: v1.2 First functionnal release
+#@2019_11_21 Added: v1.3 Change Deb search method, now usinf 'apt-cache search'.
 #
 #===================================================================================================
 trap 'exec $SADMIN/sadm' 2                                                # INTERCEPT  ^C
 #
 
+#===================================================================================================
+# Scripts Variables 
+#===================================================================================================
+export DEB_VER="01.03"                                                  # This script Version.
 
 
 # --------------------------------------------------------------------------------------------------
@@ -28,7 +33,7 @@ trap 'exec $SADMIN/sadm' 2                                                # INTE
 # --------------------------------------------------------------------------------------------------
 display_menu()
 {
-    sadm_display_heading "DEB Package Tools"
+    sadm_display_heading "DEB Package Tools" "$DEB_VER" 
     OPT1="View package that provide a program/file.."
     OPT2="List files included in a package.........."
     OPT3="Search installed package for a pattern...."
@@ -51,19 +56,26 @@ search_package_name()
     while : 
         do 
         menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-        sadm_display_heading "$menu_title"                              # Show Screen Std Heading
+        sadm_display_heading "$menu_title" "$DEB_VER"                   # Show Screen Std Heading
         sadm_writexy 04 01 "Enter string to search (or [Q] ):"          # Display What to Enter
         sadm_accept_data 04 35 25 A ""                                  # Accept Expr. to search
         if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then break ; fi   # Quit = Return to Caller
         if [ -z "$WDATA" ] ; then continue ; fi                         # If didn't enter anything
+        
+        sadm_writexy 06 01 "Running 'apt-get update' to refresh cache ..." 
+        apt-get update >/dev/null 2>&1
+        if [ $? -ne 0 ]                                                 # Command finish with error
+           then sadm_mess "Command completed with error."               # Advise user
+        fi 
 
         #format='${binary:Package}\t${Version}\t${binary:Summary}\n'
         #dpkg-query -W -f="$format" $WDATA > $SADM_TMP_FILE1 2>&1
-        dpkg -l | awk '{ printf "%-42s\n" ,$2 }'| grep $WDATA >$SADM_TMP_FILE1 2>&1
+        #dpkg -l | awk '{ printf "%-42s\n" ,$2 }'| grep $WDATA >$SADM_TMP_FILE1 2>&1
+        apt-cache search --names-only "$WDATA" >$SADM_TMP_FILE1 2>&1    # Search Package in cache
         stitle="Search for '$WDATA' package name"                       # Heading Search Title 
         if [ -s $SADM_TMP_FILE1 ]                                       # If file not empty
            then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17               # Show results
-           else sadm_display_heading "$stitle"                          # Show Screen Std Heading
+           else sadm_display_heading "$stitle" "$DEB_VER"               # Show Screen Std Heading
                 sadm_mess "No match were found for '$WDATA'."           # Advise user
                 continue
         fi
@@ -80,7 +92,7 @@ view_changelog()
     while : 
         do 
         menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"      # Build Title minux the dot
-        sadm_display_heading "$menu_title"                              # Show Screen Std Heading
+        sadm_display_heading "$menu_title" "$DEB_VER"                   # Show Screen Std Heading
         sadm_writexy 04 01 "View change log of the package (or [Q]) :"  # Show What to Enter
         sadm_accept_data 04 43 25 A ""                                  # Accept Expr. to search
         if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then break ; fi   # Exit - Return to caller
@@ -93,7 +105,7 @@ view_changelog()
                         stitle="'$WDATA' Change Log"                    # Heading Search Title 
                         if [ -s $SADM_TMP_FILE1 ]                       # If file not empty
                            then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17   # Show results
-                           else sadm_display_heading "$stitle"          # Show Screen Std Heading
+                           else sadm_display_heading "$stitle" "$DEB_VER" # Show Screen Std Heading
                                 sadm_mess "No log were found for '$WDATA'." # Advise user
                                 continue
                         fi
@@ -111,7 +123,7 @@ what_provides()
     while : 
         do 
         menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"      # Build Menu title, no dot
-        sadm_display_heading "$menu_title"                              # Show Screen Std Heading
+        sadm_display_heading "$menu_title" "$DEB_VER"                   # Show Screen Std Heading
         sadm_writexy 04 01 "For better and faster result, specify the full path of command or file."
         sadm_writexy 06 01 "Show what package provide this program (or [Q]):"
         sadm_accept_data 06 50 30 A ""                                  # Accept Expr. to search
@@ -165,7 +177,7 @@ list_package_files()
     while : 
         do 
         menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"      # Build Menu Title from Item
-        sadm_display_heading "$menu_title"                              # Show Screen Std Heading
+        sadm_display_heading "$menu_title" "$DEB_VER"                   # Show Screen Std Heading
         sadm_writexy 04 01 "List files included in this package (or [Q]):"
         sadm_accept_data 04 48 25 A ""                                  # Accept Expr. to search
         if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then break ; fi   # Quit and return to caller
@@ -190,7 +202,7 @@ show_package_info()
     while : 
         do 
         menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"      # Build Menu Title from Item
-        sadm_display_heading "$menu_title"                              # Show Screen Std Heading
+        sadm_display_heading "$menu_title" "$DEB_VER"                   # Show Screen Std Heading
         sadm_writexy 04 01 "See information about the package name (or [Q]):"
         sadm_accept_data 04 50 25 A ""                                  # Accept Expr. to search
         if [ "$WDATA" = "Q" ] || [ "$WDATA" = "q" ] ; then break ; fi   # Quit and return to caller
@@ -214,7 +226,7 @@ show_package_info()
 view_apt_history_log() 
 {
     menu_title="`echo ${menu_array[$CHOICE - 1]} | tr -d '.'`"
-    sadm_display_heading "$menu_title"                                  # Show Screen Std Heading
+    sadm_display_heading "$menu_title" "$DEB_VER"                       # Show Screen Std Heading
     w="/var/log/apt/history.log"                                        # First log file name
     rm -f $SADM_TMP_FILE1 > /dev/null 2>&1                              # Make sure it doesn't exist
 
@@ -231,7 +243,7 @@ view_apt_history_log()
     stitle="APT History Log"                                            # Heading Title 
     if [ -s $SADM_TMP_FILE1 ]                                           # If file not empty
        then sadm_pager "$stitle" "$SADM_TMP_FILE1" 17                   # Show results
-       else sadm_display_heading "$stitle"                              # Show Screen Std Heading
+       else sadm_display_heading "$stitle"  "$DEB_VER"                  # Show Screen Std Heading
             sadm_mess "No log were found ($w)."                         # Advise user
     fi
 }

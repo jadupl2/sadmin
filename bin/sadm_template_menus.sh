@@ -131,7 +131,7 @@ main_process()
     # Display Main Menu     
     while :
         do
-        sadm_display_heading "Your Menu Heading Here"                   # Std SADMIN Menu Heading
+        sadm_display_heading "Your Menu Heading Here" "$SADM_VER"       # Std SADMIN Menu Heading
         menu_array=("Your Menu Item 1" "Your Menu Item 2" "Your Menu Item 3" "Your Menu Item 4" )             
         sadm_display_menu "${menu_array[@]}"                            # Display menu Array
         sadm_choice=$?                                                  # Choice is returned in $?
