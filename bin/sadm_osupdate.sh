@@ -32,6 +32,7 @@
 # 2019_07_12  Update: v3.13 O/S update script now update the date and status in sysinfo.txt. 
 # 2019_07_17  Update: v3.14 O/S update script now perform apt-get clean before update start on *.deb
 #@2019_11_21  Update: v3.15 Add 'export DEBIAN_FRONTEND=noninteractive' prior to 'apt-get upgrade'.
+#@2019_11_21  Update: v3.16 Email sent to SysAdmin if some package are kept back from update.
 #
 # --------------------------------------------------------------------------------------------------
 #set -x
@@ -154,7 +155,7 @@ run_command()
     CMDLINE="$*"                                                        # Command with All Parameter
     SCMD="${SADM_BIN_DIR}/${CMDLINE}"                                   # Full Path of the script
 
-    if [ ! -x "${SADM_BIN_DIR}/${SCRIPT}" ]                               # If SCript do not exist
+    if [ ! -x "${SADM_BIN_DIR}/${SCRIPT}" ]                             # If SCript do not exist
         then sadm_writelog "[ERROR] ${SADM_BIN_DIR}/${SCRIPT} Don't exist or can't execute" 
              sadm_writelog " " 
              return 1                                                   # Return Error to Caller
@@ -233,7 +234,6 @@ check_available_update()
             esac
             ;;
     
-    
         "UBUNTU"|"DEBIAN"|"RASPBIAN"|"LINUXMINT" ) 
             sadm_writelog "Start with a clean APT cache, running 'apt-get clean'" 
             apt-get clean >> $SADM_LOG 2>&1                             # Cleanup /var/cache/apt
@@ -248,13 +248,13 @@ check_available_update()
                     sadm_writelog "We had a return code of $rc" 
                     sadm_writelog "For more information check the log $SADM_LOG"
                else sadm_writelog "Return Code of apt-get update is $rc" # Show  Return Code
-                    sadm_writelog "Querying list of package that will be updated"
+                    sadm_writelog "List of package(s) that can be updated"
                     #NB_UPD=`apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }' |wc -l |tr -d ' '`
                     NB_UPD=`apt list --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l`
-                    apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }'
+                    #apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }'
                     if [ "$NB_UPD" -ne 0 ]
                        then UpdateStatus=0
-                            sadm_writelog "${NB_UPD} Updates are available"
+                            sadm_writelog "There are ${NB_UPD} update available"
                             apt list --upgradable 2>/dev/null | grep -v 'Listing...' | nl
                        else UpdateStatus=1
                             sadm_writelog "No Update available"
@@ -333,8 +333,6 @@ run_apt_get()
     sadm_writelog "Starting $(sadm_get_osname) update process ..."
     
     sadm_writelog "${SADM_TEN_DASH}"
-    #sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade"
-    #apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade >>$SADM_LOG 2>&1
     sadm_writelog "Updating O/S, running 'export DEBIAN_FRONTEND=noninteractive ; apt-get -y upgrade'"
     export DEBIAN_FRONTEND=noninteractive ; apt-get -y upgrade
     RC=$?
@@ -352,8 +350,31 @@ run_apt_get()
              return $RC
     fi
     
+    # Verify a last time to see if any package are kept back from update.
+    # - If the dependencies have changed on one of the packages you have installed so that a new 
+    #   package must be installed to perform the upgrade then that will be listed as "kept-back".
+    sadm_writelog " "
+    sadm_writelog "Check if there are update that are kept back ..."
+    NB_UPD=`apt list --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l`
+    if [ "$NB_UPD" -ne 0 ]
+       then sadm_writelog "There are ${NB_UPD} update available"
+            apt list --upgradable 2>/dev/null | grep -v 'Listing...' | nl
+            sadm_writelog "Avise SysAdmin - Send warning email that some update are kept back."
+            msub="SADM WARNING: Update are kept back on host $SADM_HOSTNAME" 
+            body1=`date`
+            body2=$(printf "\n\n${msub}\nThere are ${NB_UPD} update available\n\n")
+            body3=`apt list --upgradable 2>/dev/null | grep -v 'Listing...' | nl` 
+            body4="If the dependencies have changed on one of the packages you have installed "
+            body5="so that a new package must be installed to perform the upgrade then that " 
+            body6="will be listed as 'kept-back'."
+            body7="run apt-get install <list of packages kept back>."
+            mbody=`echo -e "${body1}${body2}\n${body3}\n${body4}\n\n${body5}\n${body6}\n\n${body7}"`
+            printf "%s" "$mbody" | $SADM_MUTT -s "$msub" "$SADM_MAIL_ADDR" >>$SADM_LOG 2>&1 
+    fi
+
+
     sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Success execution of apt-get upgrade & apt-get dist-upgrade & apt-get autoremove"
+    sadm_writelog "Update Successfull."
     return 0
 }
 
