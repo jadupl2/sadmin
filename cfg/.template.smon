@@ -11,9 +11,9 @@
 #     - Column are delimited by space(s) and/or tabulation.
 #     - At execution each line is evaluated based on the test requested by the first column.
 #         - The result of the operation is reflected in the second column.
-# 2018_09_14 v2.6 - Change Default Warning and Error Alert Group 
-#@2019_10_08 v2.7 - Turn off (Comment line) syslog service check.
-#@2019_10_25 v2.8 - Turn off (Comment line) ping test lines.
+# 2018_09_14 Update: v2.6 - Change Default Warning and Error Alert Group 
+#@2019_10_08 Update: v2.7 - Turn off (Comment line) syslog service check.
+#@2019_10_25 Update: v2.8 - Turn off (Comment line) ping test lines.
 ##
 #---------------------------------------------------------------------------------------------------
 # Col   Name            Description
