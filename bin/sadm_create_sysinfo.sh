@@ -43,6 +43,7 @@
 # 2019_07_07 Fix: v3.13 O/S Update was indicating 'Failed' when it should have been 'Success'.
 #@2019_10_13 Update: v3.14 Collect Server Architecture to be store later on in Database.
 #@2019_10_30 Update: v3.15 Remove utilization on 'facter' for collecting info (Not always available)
+#@2019_11_22 Fix: v3.16 Problem with 'nmcli -t' on Ubuntu,Debian corrected.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -91,7 +92,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.15'                              # Your Current Script Version
+    export SADM_VER='3.16'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -306,9 +307,9 @@ pre_validation()
     command_available "uptime"      ; UPTIME=$SADM_CPATH                # Cmd Path or Blank !found
     command_available "last"        ; LAST=$SADM_CPATH                  # Cmd Path or Blank !found
 
-    sadm_writelog " "
-    sadm_writelog "----------"
-    sadm_writelog " "
+    #sadm_writelog " "
+    #sadm_writelog "----------"
+    #sadm_writelog " "
     return 0
 }
 
@@ -461,7 +462,7 @@ execute_command()
     echo "# Command: $ECMD"         >> $EFILE
     echo "#${DASH_LINE}"            >> $EFILE
     echo "#"                        >> $EFILE
-    eval $ECMD                      >> $EFILE 
+    eval $ECMD                      >> $EFILE 2>&1
     echo "#"                        >> $EFILE
     return 0
 }
@@ -542,7 +543,7 @@ create_linux_config_files()
     fi
 
     if [ "$NMCLI" != "" ]
-        then for w in `$NMCLI -t device | awk -F: '{ print $1 }'| grep -v lo `
+        then for w in `$NMCLI --terse --fields DEVICE device | awk -F: '{ print $1 }'| grep -v lo `
                 do
                 CMD="$NMCLI device show $w"
                 execute_command "$CMD" "$NET_FILE" 
