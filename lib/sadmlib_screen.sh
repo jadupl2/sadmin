@@ -18,6 +18,7 @@
 # 2019_11_11 Update: v1.9 Add function 'sadm_pager' to display a file and navigating into it.
 # 2019_11_12 Update: v2.0 Add comments and minor corrections.
 # 2019_11_18 Update: v2.1 Bug corrections and change heading colors.
+# 2019_11_22 Update: v2.2 Change Menu color to fit with white and black background color.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
@@ -28,7 +29,7 @@
 # L O C A L    V A R I A B L E S    
 # --------------------------------------------------------------------------------------------------
 #
-export lib_screen_ver=2.1                                               # This Library Version
+export lib_screen_ver=2.2                                               # This Library Version
 export MAXCOL=80                                                        # Maximum NB Char. on a line
 
 
@@ -87,7 +88,7 @@ sadm_messok() {
 sadm_mess() {
    sadm_writexy 22 01 "${SADM_CLREOS}${SADM_BOLD}${SADM_RED}${1}${SADM_RESET}${SADM_BELL}" 
 #   sadm_writexy 23 01 "${SADM_BOLD}${SADM_WHITE}Press [ENTER] to continue${SADM_RESET}"
-   sadm_writexy 23 01 "Press [ENTER] to continue${SADM_RESET}"
+   sadm_writexy 23 01 "${SADM_BOLD}${SADM_RED}Press [ENTER] to continue${SADM_RESET}"
    read sadm_dummy                                                      # Wait for  [RETURN]
    sadm_writexy 22 01 "${SADM_CLREOS}"                                  # Clear from lines 22 to EOS
 }
@@ -188,29 +189,27 @@ sadm_display_heading()
     titre="$1"                                                          # Save Menu Title
     tver="$2"                                                           # Save Menu Version
     eighty_spaces=`printf %80s " "`                                     # 80 white space
-    set_foreground=$(tput setaf 7)
-    set_background=$(tput setab 4)
 
     # Clear screen and display two blank lines in reverse video on line 1 and 2 
     sadm_writexy 01 01 "${SADM_CLR}"                                   # Clear the Screen
-    sadm_writexy 01 01 "${SADM_RED}${SADM_BOLD}${SADM_RVS}${eighty_spaces}${SADM_RESET}" 
-    sadm_writexy 02 01 "${SADM_RED}${SADM_BOLD}${SADM_RVS}${eighty_spaces}${SADM_RESET}" 
+    sadm_writexy 02 01 "${SADM_UND}${SADM_GREEN}${eighty_spaces}${SADM_RESET}" 
 
     # Display Line 1 (Hostname + Menu Name + Date)
-    sadm_writexy 01 01 "${SADM_RED}${SADM_RVS}${SADM_BOLD}$(sadm_get_fqdn)" # Top Left  HostName 
+    sadm_writexy 01 01 "${SADM_GREEN}${SADM_BOLD}$(sadm_get_fqdn)"      # Top Left  HostName 
     let wpos="(((80 - ${#titre}) / 2) + 1)"                             # Calc. Center Pos for Name
-    sadm_writexy 01 $wpos "$titre"                                      # Display Title Centered
-    sadm_writexy 01 65 "`date '+%Y/%m/%d %H:%M'`"                       # Top Right Show Cur. Date 
+    sadm_writexy 01 $wpos "${SADM_BLUE}${BOLD}${titre}${SADM_RESET}"    # Display Title Centered
+    sadm_writexy 01 65 "${SADM_GREEN}${SADM_BOLD}`date '+%Y/%m/%d %H:%M'`" # Top Right Show Cur Date 
 
     # Display Line 2 - (OS Name and version + Cie Name and SADM Release No.
     hosname=`echo "$(sadm_get_osname)" | tr '[A-Z]' '[a-z]'`            # Transform OSNAME lowcase
     hosname=`echo ${hosname:0:1} | tr  '[a-z]' '[A-Z]'`${hosname:1}     # Upcase 1st Letter
-    sadm_writexy 02 01 "$hosname $(sadm_get_osversion)"                 # Display OSNAME + OS Ver.
-    #sadm_writexy 02 01 "$(sadm_get_osname) $(sadm_get_osversion)"       # Display OSNAME + OS Ver.
+    sadm_writexy 02 01 "${SADM_UND}${SADM_GREEN}${SADM_BOLD}$hosname $(sadm_get_osversion)" 
+    #
     let wpos="(((80 - ${#SADM_CIE_NAME}) / 2) + 1)"                     # Calc. Center Pos for Name
-    sadm_writexy 02 $wpos "$SADM_CIE_NAME"                              # Display Cie Name Centered 
+    sadm_writexy 02 $wpos "${SADM_UND}${SADM_MAGENTA}${SADM_BOLD}$SADM_CIE_NAME"  
+    #
     let wpos="72 - ${#SADM_VERSION}"                                    # Calc. Pos. Line 2 on Right
-    sadm_writexy 02 $wpos "Ver $tver"                                   # Display Script Version
+    sadm_writexy 02 $wpos "${SADM_UND}${SADM_GREEN}${SADM_BOLD}Ver $tver"  # Display Script Version
     sadm_writexy 04 01 "${SADM_RESET}"                                  # Reset to Normal & Pos. Cur
 }
 
@@ -324,9 +323,8 @@ sadm_display_menu()
     LONGEST_LEN=0
     for i in "${s_array[@]}"                                            # Loop through the array
         do                                                              # Start of loop
-        mmm=$i
         VAR_LENGTH=`expr length "$i"`                                   # Get length of Menu Desc.
-        if [ "$VAR_LENGTH" -gt "$LONGEST_LEN" ] ; then LONGEST_LEN=${VAR_LENGTH} ; fi
+        if [ $VAR_LENGTH -gt $LONGEST_LEN ] ; then LONGEST_LEN=${VAR_LENGTH} ; fi
         done
 
     # If from 1 to 8 items to display in the menu
@@ -417,9 +415,9 @@ sadm_accept_choice()
     while :                                                             # Repeat Until good choice
         do                                                              # Begin of loop
         sadm_space_line=`printf %80s`                                   # 80 Spaces Line
-        sadm_writexy 22 01 "${SADM_RED}${SADM_BOLD}${SADM_RVS}${sadm_space_line}"         
-        sadm_writexy 22 29 "Option ? ${SADM_RESET}  ${SADM_RIGHT}"      # Display Option 
-        sadm_writexy 22 38 " "                                          # Position to accept Choice
+        sadm_writexy 22 01 "${SADM_BLUE}${SADM_BOLD}${SADM_RVS}${sadm_space_line}"         
+        sadm_writexy 22 29 "${SADM_BWHITE}Option ? ${SADM_RESET}  ${SADM_RIGHT}${SADM_CYAN}" 
+        #sadm_writexy 22 38 " "                                          # Position to accept Choice
         read adm_choix                                                  # Accept User Choice
         if [ "$adm_choix" = "" ] ; then continue ; fi                   # [ENTER] Only = Re-Accept
         if [ "$adm_choix" = "q" ] || [ "$adm_choix" = "Q" ]             # If Quit is selected
