@@ -117,6 +117,7 @@
 #@2019_10_13 Update: v3.17 Added function 'sadm_server_arch' - Return system arch. (x86_64,armv7l,.)
 #@2019_10_15 Update: v3.18 Enhance method to get host domain name in function $(sadm_get_domainname)
 #@2019_10_30 Update: v3.19 Remove utilization of 'facter' (Depreciated)
+#@2019_11_22 Update: v3.20 Change the way domain name is obtain on MacOS $(sadm_get_domainname).
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -126,7 +127,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.19"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.20"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -850,7 +851,7 @@ sadm_get_hostname() {
 sadm_get_domainname() {
     wdom=""
     case "$(sadm_get_ostype)" in
-        "LINUX"|"DARWIN")   
+        "LINUX")   
             wdom=""                                                     # No Domain Default
             wdom=`hostname -d`                                          # Get Hostname Domain
             if [ $? -ne 0 ] || [ "$wdom" = "" ]                         # If Domain Name Problem
@@ -864,6 +865,9 @@ sadm_get_domainname() {
         "AIX")              
             wdom=`namerslv -s | grep domain | awk '{ print $2 }'`
             ;;
+        "DARWIN")              
+            wdom=`scutil --dns |grep 'search domain\[0\]' |head -1 |awk -F\: '{print $2}' |tr -d ' '`
+            ;;            
     esac
 
     if [ "$wdom" = "" ] ; then wdom="$SADM_DOMAIN" ; fi                 # No Domain = Def DomainName
