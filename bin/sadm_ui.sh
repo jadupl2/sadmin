@@ -34,6 +34,7 @@
 # 2019_02_25 Change: v2.7 Nicer color presentation and code cleanup.
 #@2019_11_11 Change: v2.8 Add RPM Tools option in menu.
 #@2019_11_21 Change: v2.10 Minor correction to RPM Tools Menu
+#@2019_11_22 Change: v2.11 Restrict RPM & DEV Menu when available only.
 #=================================================================================================== 
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -56,7 +57,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='02.10'                             # Current Script Version
+    export SADM_VER='02.11'                             # Current Script Version
     export SADM_LOG_TYPE="L"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -129,9 +130,15 @@ export WDATA=""                                                         # Contai
         case $CHOICE in
             1)  . $SADM_BIN_DIR/sadm_ui_fsmenu.sh
                 ;;
-            2)  . $SADM_BIN_DIR/sadm_ui_rpm.sh
+            2)  if [ $(sadm_get_packagetype) = "rpm" ] 
+                   then . $SADM_BIN_DIR/sadm_ui_rpm.sh
+                   else sadm_mess "Accessible only on system using Red Hat Package Manager ('.rpm')."
+                fi 
                 ;;
-            3)  . $SADM_BIN_DIR/sadm_ui_deb.sh
+            3)  if [ $(sadm_get_packagetype) = "deb" ] 
+                   then . $SADM_BIN_DIR/sadm_ui_deb.sh
+                   else sadm_mess "Accessible only on system using Debian packages ('.deb')."
+                fi 
                 ;;
             99) stty $stty_orig
                 cd $CURDIR
