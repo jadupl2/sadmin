@@ -44,6 +44,8 @@ __pycache__/
 
 # Ignore Linux related files
 .bash_history
+.bash_profile
+.bashrc
 .viminfo
 .mysql_history
 .Trash-*/
