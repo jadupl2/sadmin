@@ -1,5 +1,5 @@
 ![SADMIN Tools][1] 
-# SADMIN Tools v1.1.0             <!-- omit in toc -->
+# SADMIN Tools v1.2.0             <!-- omit in toc -->
  
 ### Table of content
 - [Brief description](#brief-description)
@@ -18,7 +18,7 @@
 
 ## Brief description
 
-**The SADMIN tools is a series of Web and command line tools that allow you to :**
+**The SADMIN tools is a series of command line and web interface that allow you to :**
 
 * **Scripts Framework and Monitoring Tools**
   * The SADMIN server is the central place for monitoring scripts running on your systems.
