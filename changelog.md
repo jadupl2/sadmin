@@ -1,7 +1,7 @@
 # Changelog
 
 
-## Release v[1.2.0](https://github.com/jadupl2/sadmin/releases) (2019-11-26)
+## Release v[1.2.0](https://github.com/jadupl2/sadmin/releases) (2019-11-25)
 - Fixes
 	- 2019_11_06 sadm_subnet_lookup.py (v2.4) - Ping response was not recorded properly
 	- 2019_11_22 sadm_create_sysinfo.sh (v3.16) - Problem with 'nmcli -t' on Ubuntu,Debian corrected.
