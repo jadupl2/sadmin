@@ -40,9 +40,10 @@
 # 2019_04_17 Update: v1.28 Make 'sadmin' account & password never expire (Solve Acc. & sudo Lock)
 # 2019_05_19 Update: v1.29 Change for lowercase readme.md,license,changelog.md files and bug fixes.
 # 2019_06_03 Update: v1.30 Include logic to convert RCH file format to the new one, if not done.
-#@2019_07_14 Update: v1.31 Add creation of Directory /preserve/mnt if it doesn't exist (Mac Only)
-#@2019_07_23 Update: v1.32 Remove utilization of history sequence number file.
-#@2019_08_19 Update: v1.33 Check /etc/cron.d/sadm_rear_backup permission & remove /etc/cron.d/rear
+# 2019_07_14 Update: v1.31 Add creation of Directory /preserve/mnt if it doesn't exist (Mac Only)
+# 2019_07_23 Update: v1.32 Remove utilization of history sequence number file.
+# 2019_08_19 Update: v1.33 Check /etc/cron.d/sadm_rear_backup permission & remove /etc/cron.d/rear
+#@2019_11_25 Update: v1.34 Remove deletion of what is contained in $SADMIN/www on SADMIN client.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -91,7 +92,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='1.33'                              # Your Current Script Version
+    export SADM_VER='1.34'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -482,11 +483,11 @@ dir_housekeeping()
                      rm -fr $SADM_NET_DIR
             fi
             # Remove Web Site Directory on SADMIN Client if it exist
-            if [ -d "$SADM_WWW_DIR" ] && [ "$SADM_HOST_TYPE" = "C" ]
-                then sadm_writelog "Directory $SADM_WWW_DIR should exist only on SADMIN server."
-                     sadm_writelog "I am deleting it now."
-                     rm -fr $SADM_WWW_DIR
-            fi
+            #if [ -d "$SADM_WWW_DIR" ] && [ "$SADM_HOST_TYPE" = "C" ]
+            #    then sadm_writelog "Directory $SADM_WWW_DIR should exist only on SADMIN server."
+            #         sadm_writelog "I am deleting it now."
+            #         rm -fr $SADM_WWW_DIR
+            #fi
             sadm_writelog "${SADM_TEN_DASH}"
     fi
 
