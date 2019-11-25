@@ -1,6 +1,58 @@
 # Changelog
 
 
+## Release v[1.2.0](https://github.com/jadupl2/sadmin/releases) (2019-11-26)
+- Fixes
+	- 2019_11_06 sadm_subnet_lookup.py (v2.4) - Ping response was not recorded properly
+	- 2019_11_22 sadm_create_sysinfo.sh (v3.16) - Problem with 'nmcli -t' on Ubuntu,Debian corrected.
+- New
+	- 2019_11_06 sadm_ui_rpm.sh (v1.0) - Initial version
+	- 2019_11_12 sadm_ui_deb.sh (v1.0) - Initial version
+	- 2019_11_14 sadm_ui_deb.sh (v1.1) - Test Phase
+	- 2019_11_18 sadm_ui_deb.sh (v1.2) - First functional release
+	- 2019_11_21 sadm_ui_deb.sh (v1.3) - Change Deb search method, now using 'apt-cache search'.
+- Update
+	- 2019_10_13 sadm_create_sysinfo.sh (v3.14) - Collect Server Architecture to be store later on in Database.
+	- 2019_10_13 sadm_database_update.py (v3.6) - Take Architecture in Sysinfo.txt and store it in server database table.
+	- 2019_10_13 sadmlib_std.sh (v3.17) - Added function 'sadm_server_arch' - Return system arch. (x86_64,armv7l,.)
+	- 2019_10_13 sadm_view_servers.php (v2.8) - Add System Architecture to page.
+	- 2019_10_14 sadm_database_update.py (v3.7) - Check if Architecture column is present in server Table, if not add it.
+	- 2019_10_14 sadmlib_std_demo.py (v3.8) - Add demo for calling sadm_server_arch function & show result.
+	- 2019_10_14 sadmlib_std_demo.sh (v3.14) - Add demo for calling sadm_server_arch function & show result.
+	- 2019_10_14 sadmlib_std.py (v3.08) - Added function 'get_arch' - Return system arch. (x86_64,armv7l,i686,...)
+	- 2019_10_15 sadmLib.php (v2.13) - Reduce Logo size image from 32 to 24 square pixels
+	- 2019_10_15 sadmLib.php (v2.14) - Reduce font size on 2nd line of heading in "display_lib_heading".
+	- 2019_10_15 sadmlib_std.sh (v3.18) - Enhance method to get host domain name in function $(sadm_get_domainname)
+	- 2019_10_15 sadm_view_rear.php (v1.3) - Add Architecture, O/S Name, O/S Version to page
+	- 2019_10_15 sadm_view_server_info.php (v2.13) - Color change of input fields.
+	- 2019_10_15 sadm_view_sysmon.php (v2.9) - Add Architecture, O/S Name, O/S Version to page
+	- 2019_10_16 sadm_database_update.py (v3.8) - Don't update anymore the domain column in the Database (Change with CRUD)
+	- 2019_10_17 sadmlib_std_demo.sh (v3.15) - Print Category and Group table content at the end of report.
+	- 2019_10_18 sadmlib_std_demo.py (v3.9) - Print SADMIN Database Tables and columns at the end of report.
+	- 2019_10_25 .template.smon (v2.8) - - Turn off (Comment line) ping test lines.
+	- 2019_10_30 sadm_create_sysinfo.sh (v3.15) - Remove utilization on 'facter' for collecting info (Not always available)
+	- 2019_10_30 sadmlib_std_demo.py (v3.10) - Remove Utilization of 'facter' (Depreciated).
+	- 2019_10_30 sadmlib_std_demo.sh (v3.16) - Remove 'facter' utilization (depreciated).
+	- 2019_10_30 sadmlib_std.py (v3.09) - Remove 'facter' utilization (Depreciated).
+	- 2019_10_30 sadmlib_std.sh (v3.19) - Remove utilization of 'facter' (Depreciated)
+	- 2019_11_05 sadm_subnet_lookup.py (v2.3) - Restructure code for performance.
+	- 2019_11_11 sadm_ui_rpm.sh (v1.1) - Revamp the RPM question & display of results.
+	- 2019_11_11 sadm_ui_rpm.sh (v1.2) - Fix problem with List of repositories.
+	- 2019_11_11 sadm_ui.sh (v2.8) - Add RPM Tools option in menu.
+	- 2019_11_12 sadm_ui_rpm.sh (v1.3) - Production version
+	- 2019_11_18 sadm_template_menus.sh (v1.4) - Put 'root' and SADM_SERVER test in comment.
+	- 2019_11_21 sadm_osupdate.sh (v3.15) - Add 'export DEBIAN_FRONTEND=noninteractive' prior to 'apt-get upgrade'.
+	- 2019_11_21 sadm_osupdate.sh (v3.16) - Email sent to SysAdmin if some package are kept back from update.
+	- 2019_11_21 sadm_ui.sh (v2.10) - Minor correction to RPM Tools Menu
+	- 2019_11_22 man_sadmlib_std_demo_py.php (v1.2) - Add sample of calling get architecture function (st.get_arch()).
+	- 2019_11_22 sadmlib_std.sh (v3.20) - Change the way domain name is obtain on MacOS $(sadm_get_domainname).
+	- 2019_11_22 sadm_ui.sh (v2.11) - Restrict RPM & DEV Menu when available only.
+	- 2019_11_25 sadm_client_housekeeping.sh (v1.34) - Remove deletion of what is contained in $SADMIN/www on SADMIN client.
+	- 2019_11_25 sadmlib_std_demo.sh (v3.17) - Database table printer at the is in a prettier format (server only)
+
+
+
+
 ## Release v[1.1.0](https://github.com/jadupl2/sadmin/releases) (2019-10-10)
 - Update
 	- 2019_09_01 sadm_rear_backup.sh (v2.8) - Remove separate creation of ISO (Already part of backup)
