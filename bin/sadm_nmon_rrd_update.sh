@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis 
-#   Title       :   sadm_server_nmon_rrd_update.sh
+#   Title       :   sadm__nmon_rrd_update.sh
 #   Synopsis    :   Script that Create/Update RRD (Round Robin Database) file from nmon output file.
 #                   This script Read the nmon file (ex: server1_130324_0000.nmon) and update the
 #                   statistic in the Proper RRD File.
@@ -44,7 +44,8 @@
 # 2018_06_04    v2.0 Adapt to new SADMIN Libr.
 # 2018_06_09    v2.1 Change Help and Version Function, Change Script Name, Change Startup Order
 # 2018_07_14    v2.2 Switch to Bash Shell instead of sh (Causing Problem with Dash on Debian/Ubuntu)
-#@2018_09_17    v2.3 Insert Default Alert Group 
+# 2018_09_17    v2.3 Insert Default Alert Group 
+#@2018_11_26 Fix: v2.4 Problem running on RHEL8 with rrdtool 1.7, wasn't updating the rrd database.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -67,7 +68,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.3'                               # Current Script Version
+    export SADM_VER='2.4'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -89,7 +90,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
     #export SADM_ALERT_GROUP="default"                   # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
+    export SADM_MAX_LOGLINE=150000                       # When Script End Trim log file to 1000 Lines
     #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
@@ -181,7 +182,7 @@ read_nmon_info_and_setup_rrd()
     if [ ! -e  $RRD_FILE ]                                              # Create rrd if not exist
         then sadm_writelog "Creating RRD File for $NMON_HOST ($RRD_FILE)"
              $RRDTOOL create $RRD_FILE                       \
-                --start "00:00 01.01.2018" --step 300  \
+                --start "00:00 01.01.2019" --step 300  \
                 DS:cpu_user:GAUGE:900:0:100            \
                 DS:cpu_sys:GAUGE:900:0:100             \
                 DS:cpu_wait:GAUGE:900:0:100            \
@@ -995,41 +996,56 @@ rrd_update()
         A_MPINNED=`echo ${ARRAY_MEMNEW[$i]}      | awk -F, '{ print $5}'` 
         A_MUSER=`echo ${ARRAY_MEMNEW[$i]}        | awk -F, '{ print $6}'` 
         
+        if [ "$A_ETHA_READ" = "" ]   ; then A_ETHA_READ="0.0"  ; fi
+        if [ "$A_ETHB_READ" = "" ]   ; then A_ETHB_READ="0.0"  ; fi 
+        if [ "$A_ETHC_READ" = "" ]   ; then A_ETHC_READ="0.0"  ; fi 
+        if [ "$A_ETHD_READ" = "" ]   ; then A_ETHD_READ="0.0"  ; fi 
+        if [ "$A_ETHA_WRITE" = "" ]  ; then A_ETHA_WRITE="0.0" ; fi 
+        if [ "$A_ETHB_WRITE" = "" ]  ; then A_ETHB_WRITE="0.0" ; fi 
+        if [ "$A_ETHC_WRITE" = "" ]  ; then A_ETHC_WRITE="0.0" ; fi 
+        if [ "$A_ETHD_WRITE" = "" ]  ; then A_ETHD_WRITE="0.0" ; fi 
+        if [ "$A_MPROCESS" = "" ]    ; then A_MPROCESS="0.0"   ; fi
+        if [ "$A_MFSCACHE" = "" ]    ; then A_MFSCACHE="0.0"   ; fi
+        if [ "$A_MSYSTEM" = "" ]     ; then A_MSYSTEM="0.0"    ; fi 
+        if [ "$A_MFREE" = "" ]       ; then A_MFREE="0.0"      ; fi
+        if [ "$A_MPINNED" = "" ]     ; then A_MPINNED="0.0"    ; fi
+        if [ "$A_MUSER" = "" ]       ; then A_MUSER="0.0"      ; fi
+
         if [ $DEBUG_LEVEL -gt 6 ]
         then sadm_writelog "Values before running the rrdupdate"
              sadm_writelog "SNAPSHOT    =   $i"            
-             sadm_writelog "A_DATE      =   $A_DATE"            
-             sadm_writelog "A_EPOCH     =   $A_EPOCH"            
-             sadm_writelog "A_USER      =   $A_USER"
-             sadm_writelog "A_SYST      =   $A_SYST"            
-             sadm_writelog "A_WAIT      =   $A_WAIT"            
-             sadm_writelog "A_IDLE      =   $A_IDLE"            
-             sadm_writelog "A_TOTAL     =   $A_TOTAL"            
-             sadm_writelog "A_RUNQ      =   $A_RUNQ"            
-             sadm_writelog "A_DISKREAD  =   $A_DISKREAD"            
-             sadm_writelog "A_DISKWRITE =   $A_DISKWRITE"            
-             sadm_writelog "A_MEM_TOTAL =   $A_MEM_TOTAL"            
-             sadm_writelog "A_MEM_FREE  =   $A_MEM_FREE"            
-             sadm_writelog "A_MEM_USED  =   $A_MEM_USED"            
-             sadm_writelog "A_VIR_TOTAL =   $A_VIR_TOTAL"            
-             sadm_writelog "A_VIR_FREE  =   $A_VIR_FREE"            
-             sadm_writelog "A_VIR_USED  =   $A_VIR_USED"            
-             sadm_writelog "A_PAGE_OUT  =   $A_PAGE_OUT"            
-             sadm_writelog "A_PAGE_IN   =   $A_PAGE_IN"            
-             sadm_writelog "A_ETHA_READ =   $A_ETHA_READ"            
-             sadm_writelog "A_ETHA_WRITE=   $A_ETHA_WRITE"            
-             sadm_writelog "A_ETHB_READ =   $A_ETHB_READ"            
-             sadm_writelog "A_ETHB_WRITE=   $A_ETHB_WRITE"            
-             sadm_writelog "A_ETHC_READ =   $A_ETHC_READ"            
-             sadm_writelog "A_ETHC_WRITE=   $A_ETHC_WRITE"            
-             sadm_writelog "A_ETHD_READ =   $A_ETHD_READ"            
-             sadm_writelog "A_ETHD_WRITE=   $A_ETHD_WRITE"            
-             sadm_writelog "A_MPROCESS  =   $A_MPROCESS"
-             sadm_writelog "A_MFSCACHE  =   $A_MFSCACHE"
-             sadm_writelog "A_MSYSTEM   =   $A_MSYSTEM"
-             sadm_writelog "A_MFREE     =   $A_MFREE"
-             sadm_writelog "A_MPINNED   =   $A_MPINNED"
-             sadm_writelog "A_MUSER     =   $A_MUSER"
+             sadm_writelog "A_DATE      =   ..${A_DATE}.."            
+             sadm_writelog "A_EPOCH     =   ..${A_EPOCH}.."            
+             sadm_writelog "A_USER      =   ..${A_USER}.."
+             sadm_writelog "A_SYST      =   ..${A_SYST}.."            
+             sadm_writelog "A_WAIT      =   ..${A_WAIT}.."            
+             sadm_writelog "A_IDLE      =   ..${A_IDLE}.."            
+             sadm_writelog "A_TOTAL     =   ..${A_TOTAL}.."            
+             sadm_writelog "A_RUNQ      =   ..${A_RUNQ}.."            
+             sadm_writelog "A_DISKREAD  =   ..${A_DISKREAD}.."            
+             sadm_writelog "A_DISKWRITE =   ..${A_DISKWRITE}.."            
+             sadm_writelog "A_MEM_TOTAL =   ..${A_MEM_TOTAL}.."            
+             sadm_writelog "A_MEM_FREE  =   ..${A_MEM_FREE}.."            
+             sadm_writelog "A_MEM_USED  =   ..${A_MEM_USED}.."            
+             sadm_writelog "A_VIR_TOTAL =   ..${A_VIR_TOTAL}.."            
+             sadm_writelog "A_VIR_FREE  =   ..${A_VIR_FREE}.."            
+             sadm_writelog "A_VIR_USED  =   ..${A_VIR_USED}.."            
+             sadm_writelog "A_PAGE_OUT  =   ..${A_PAGE_OUT}.."            
+             sadm_writelog "A_PAGE_IN   =   ..${A_PAGE_IN}.."            
+             sadm_writelog "A_ETHA_READ =   ..${A_ETHA_READ}.."            
+             sadm_writelog "A_ETHA_WRITE=   ..${A_ETHA_WRITE}.."            
+             sadm_writelog "A_ETHB_READ =   ..${A_ETHB_READ}.."            
+             sadm_writelog "A_ETHB_WRITE=   ..${A_ETHB_WRITE}.."            
+             sadm_writelog "A_ETHC_READ =   ..${A_ETHC_READ}.."            
+             sadm_writelog "A_ETHC_WRITE=   ..${A_ETHC_WRITE}.."            
+             sadm_writelog "A_ETHD_READ =   ..${A_ETHD_READ}.."            
+             sadm_writelog "A_ETHD_WRITE=   ..${A_ETHD_WRITE}.."            
+             sadm_writelog "A_MPROCESS  =   ..${A_MPROCESS}.."
+             sadm_writelog "A_MFSCACHE  =   ..${A_MFSCACHE}.."
+             sadm_writelog "A_MSYSTEM   =   ..${A_MSYSTEM}.."
+             sadm_writelog "A_MFREE     =   ..${A_MFREE}.."
+             sadm_writelog "A_MPINNED   =   ..${A_MPINNED}.."
+             sadm_writelog "A_MUSER     =   ..${A_MUSER}.."
         fi
        
 
@@ -1052,9 +1068,6 @@ rrd_update()
         field_value="${field_value1}${field_value2}${field_value3}${field_value4}${field_value5}${field_value6}${field_value7}"
 
         RRD_LAST_EPOCH=`${RRDTOOL} last ${RRD_FILE}`                    # Get RRD Last Epoch Update
-        if [ $DEBUG_LEVEL -gt 0 ] 
-            then sadm_writelog "$RRDUPDATE ${RRD_FILE} -t ${A_EPOCH}:${field_name} ${field_value}"
-        fi
         if [ "${A_EPOCH}" = "" ]                                        # If Epoch is Blank ?
             then sadm_writelog "Epoch time invalid (${A_EPOCH}) can't run rrdupdate"
                  RC=1
@@ -1062,13 +1075,21 @@ rrd_update()
                     then sadm_writelog "[WARNING] NMON Epoch Time (${A_EPOCH}) <= last epoch (${RRD_LAST_EPOCH}) in RRD"
                          TOTAL_WARNING=$(($TOTAL_WARNING+1))            # Increment Total Warning 
                          RC=0
-                    else $RRDUPDATE ${RRD_FILE} -t ${field_name} ${A_EPOCH}:${field_value} >>$SADM_LOG 2>&1
+                    else if [ $DEBUG_LEVEL -gt 0 ] 
+                            then sadm_writelog "$RRDUPDATE ${RRD_FILE} -t ${field_name} ${A_EPOCH}:${field_value}"
+                         fi
+                         $RRDUPDATE ${RRD_FILE} -t ${field_name} ${A_EPOCH}:${field_value} >>$SADM_LOG 2>&1
                          RC=$?
                  fi
         fi
         if [ $RC -ne 0 ] 
             then TOTAL_ERROR=$(($TOTAL_ERROR+1))                        # Increment Total Error  
+                 if [ $DEBUG_LEVEL -gt 0 ] 
+                    then sadm_writelog "$RRDUPDATE ${RRD_FILE} -t ${field_name} ${A_EPOCH}:${field_value}"
+                         sadm_writelog "[ERROR] Return Code $RC"
+                 fi
             else TOTAL_SUCCESS=$(($TOTAL_SUCCESS+1))                    # Increment Total Counter 
+                 if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "[Success] Return Code $RC" ; fi
         fi
         done
     
@@ -1146,6 +1167,8 @@ main_process()
                   ERROR_COUNT=$(($ERROR_COUNT+1))                       # Increment Error Counter 
                   continue                                              # Continue with next file
         fi
+        #sadm_writelog "Empty rrd created"
+        #exit 
 
         # Build an Array indexed by Snotshot Number for Each data we want to collect
         build_epoch_array                                               # Put Snapshot/Epoch Array
@@ -1216,12 +1239,12 @@ main_process()
     fi
 
 # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close/Trim Log & Del PID
-             exit 1                                                     # Exit To O/S with error
-    fi
+#    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+#        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
+#             sadm_writelog "Process aborted"                            # Abort advise message
+#             sadm_stop 1                                                # Close/Trim Log & Del PID
+#             exit 1                                                     # Exit To O/S with error
+#    fi
 
 
 # Check Availibilty of rrdupdate and cut command
@@ -1237,6 +1260,7 @@ main_process()
              sadm_stop 1                                                # Close/Trim Log & Upd. RCH
              exit 1                                                     # Exit To O/S
     fi
+    RRDUPDATE="$RRDTOOL update"  ; export RRDUPDATE          # Get Location of rrdupdate
     CUT=`which cut 2>/dev/null`                 ; export CUT            # Get Path to cut command
     if [ $? -ne 0 ]                                                     # cut Command not found
         then sadm_writelog "Script aborted : 'cut' command not found"   # Show User Error
