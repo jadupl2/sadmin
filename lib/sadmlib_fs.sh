@@ -2,7 +2,7 @@
 #---------------------------------------------------------------------------------------------------
 # Shellscript:	sadmlib_fs.sh - Contains SADM FileSystem Related functions
 # Version    :	2.0
-# Author     :	jacques duplessis (duplessis.jacques@gmail.com)
+# Author     :	jacques duplessis (jacques.duplessis@sadmin.ca)
 # Date       :	2016-06-01
 # Requires   :	bash shell - lvm installed
 # Category   :	filesystem tools

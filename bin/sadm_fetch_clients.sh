@@ -58,7 +58,7 @@
 #@2019_08_31 Update: v3.4 More consice of alert email subject.
 # --------------------------------------------------------------------------------------------------
 #
-#   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
+#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either

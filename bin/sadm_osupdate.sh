@@ -7,7 +7,7 @@
 #   Update  :   March 2015 -  J.Duplessis
 #
 # --------------------------------------------------------------------------------------------------
-# 2016_11_06    V2.6 Insert Logic to Reboot the server after a successfull update
+# 2016_11_06    V2.6 Insert Logic to Reboot the server after a successful update
 #                    (If Specified in Server information in the Database)
 #                    The script receive a Y or N (Uppercase) as the first command line parameter to
 #                    indicate if a reboot is requested.
@@ -19,7 +19,7 @@
 #                    No automatic reboot on SADMIN server while it is use to start update on client
 # 2017_04_09    v2.9 Added Support for Linux Mint
 # 2017_04_10    v3.0 Not detecting Error correctly on Debian Family update, Add Error Message in Log
-# 2017_07_08    v3.2 Now using DNF instead of yum for updating Fedora 25 and beyong.
+# 2017_07_08    v3.2 Now using DNF instead of yum for updating Fedora 25 and beyond.
 # 2017_12_10    v3.4 No longer Support Redhat/CentOS 3 and 4
 # 2018_06_05    v3.5 Adapt to new SADMIN Libr.
 # 2018_06_09    v3.6 Change name of this script from sadm_osupdate_client to sadm_client_osupdate

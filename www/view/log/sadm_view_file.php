@@ -8,7 +8,7 @@
 #   Requires :  php
 #   Synopsis :  Present a summary of all rch files received from all servers.
 #   
-#   Copyright (C) 2016-2018 Jacques Duplessis <duplessis.jacques@gmail.com>
+#   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either

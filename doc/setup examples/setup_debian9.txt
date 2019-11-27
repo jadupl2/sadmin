@@ -41,8 +41,8 @@ Enter your Company Name : The Batcave
 [SADM_MAIL_ADDR]
 This field specify the email address of the system administrator.
 It's use by SADMIN Tools to send various email and alert.
-Enter System Administrator Email : duplessis.jacques@gmail.com
-[SADM_MAIL_ADDR] set to 'duplessis.jacques@gmail.com' in /opt/sadmin/cfg/sadmin.cfg
+Enter System Administrator Email : jacques.duplessis@sadmin.ca
+[SADM_MAIL_ADDR] set to 'jacques.duplessis@sadmin.ca' in /opt/sadmin/cfg/sadmin.cfg
  
 ----------
 [SADM_ALERT_TYPE]
@@ -376,8 +376,8 @@ Enter your Company Name : The Batcave
 [SADM_MAIL_ADDR]
 This field specify the email address of the system administrator.
 It's use by SADMIN Tools to send various email and alert.
-Enter System Administrator Email : duplessis.jacques@gmail.com
-[SADM_MAIL_ADDR] set to 'duplessis.jacques@gmail.com' in /opt/sadmin/cfg/sadmin.cfg
+Enter System Administrator Email : jacques.duplessis@sadmin.ca
+[SADM_MAIL_ADDR] set to 'jacques.duplessis@sadmin.ca' in /opt/sadmin/cfg/sadmin.cfg
  
 ----------
 [SADM_ALERT_TYPE]

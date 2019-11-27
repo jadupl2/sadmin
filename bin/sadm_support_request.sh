@@ -10,7 +10,7 @@
 #                   If problem detectied during installation, run this script an send the
 #                   resulting log (setup_result.log) to support at support@sadmin.ca
 #
-#   This code was originally written by Jacques Duplessis <duplessis.jacques@gmail.com>,
+#   This code was originally written by Jacques Duplessis <jacques.duplessis@sadmin.ca>,
 #   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca> - http://www.sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
@@ -150,7 +150,7 @@ run_command()
     CMDLINE="$*"                                                        # Command with All Parameter
     SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Full Path of the script
 
-    if [ ! -x "${SADM_BIN_DIR}/${SCRIPT}" ]                               # If SCript do not exist
+    if [ ! -x "${SADM_BIN_DIR}/${SCRIPT}" ]                             # If SCript do not exist
         then sadm_writelog "[ERROR] ${SADM_BIN_DIR}/${SCRIPT} Don't exist or can't execute" 
              sadm_writelog " " 
              return 1                                                   # Return Error to Callerr

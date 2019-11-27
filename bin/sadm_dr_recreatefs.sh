@@ -6,7 +6,7 @@
 #                  On Linux environnement the VG MUST create before running this script.
 #                  On Aix the VG is Create and the filesystem within it are created.
 # Version       :  1.5
-# Author        :  Jacques Duplessis (duplessis.jacques@gmail.com)
+# Author        :  Jacques Duplessis (jacques.duplessis@sadmin.ca)
 # Date          :  2010-10-09
 # Requires      :  bash shell or sh under Aix - lvm installed (on Linux)
 # Category      :  Disaster recovery tools 

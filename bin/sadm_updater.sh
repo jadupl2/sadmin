@@ -8,7 +8,7 @@
 #   Requires    :   sh and SADMIN Library
 #   Description :
 #
-#   This code was originally written by Jacques Duplessis <duplessis.jacques@gmail.com>,
+#   This code was originally written by Jacques Duplessis <jacques.duplessis@sadmin.ca>,
 #   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca> - http://www.sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
@@ -35,9 +35,9 @@
 # 2018_06_21    V2.0 Fix and Minor Minor bug - Re-tested on Raspbian
 # 2018_06_21    V2.1 Minor Fix and Improvements 
 # 2018_06_22    V2.2 New File were not copied and Rollback Dir. was not populated in some conditions
-# 2018_06_23    V2.4 Lot of adjustements,enhancements and change name to sadm_updater.
+# 2018_06_23    V2.4 Lot of adjustments,enhancements and change name to sadm_updater.
 # 2018_06_24    V2.5 Rollback dir. moved to setup/update, performance boost, bug fixes
-# 2018_09_19    V2.6 Alert Group Utilisation
+# 2018_09_19    V2.6 Alert Group Utilization
 #@2018_12_08    V2.7 On client, don't check for change in web directories.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C

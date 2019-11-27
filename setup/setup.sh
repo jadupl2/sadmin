@@ -8,7 +8,7 @@
 #   Requires    :   sh 
 #   Description :   Make sure python 3 is installed and then execute sadm_setup.py
 #
-#   This code was originally written by Jacques Duplessis <duplessis.jacques@gmail.com>,
+#   This code was originally written by Jacques Duplessis <jacques.duplessis@sadmin.ca>,
 #   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca> - https://www.sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
