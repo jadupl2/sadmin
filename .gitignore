@@ -50,7 +50,7 @@ __pycache__/
 .mysql_history
 .Trash-*/
 .vscode/
-
+bitbucket-pipelines.yml
 
 # --------------------------------------
 # SADMIN PROJECT 
@@ -58,7 +58,6 @@ __pycache__/
 
 # Exclude the SADMIN System monitor lock file.
 sysmon.lock
-bitbucket-pipelines.yml
 
 # Want theses directories to be part of the project (but empty)
 dat/*
