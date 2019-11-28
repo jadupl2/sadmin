@@ -37,7 +37,8 @@
 # 2019_09_25 Update: v2.7 Page has become starting page and change page Title.
 # 2019_10_01 Update: v2.8 Page Added links to log, rch and script documentation.
 # 2019_10_15 Update: v2.9 Add Architecture, O/S Name, O/S Version to page
-# 2019_11_26 Update: v2.10 Change location of temp files from $SADMIN/tmp to $SADMIN/www/tmp
+#@2019_11_26 Update: v2.10 Change location of temp files from $SADMIN/tmp to $SADMIN/www/tmp
+#@2019_11_27 Fix: v2.11 Problem when no rpt exist or are all rpt empty, open append failed.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -71,7 +72,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.10" ;                                                       # Current version number
+$SVER  = "2.11" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -139,9 +140,15 @@ function create_alert_file() {
     # Error;nano;2017.02.08;17:00;SERVICE;PROCESS;Service syslogd not running !;sadm;sadm;
     #   1    2       3        4      5       6             7                     8     9
     $lines = file($tmp_file2);                                          # Load RCH Line into Array
-    $afile = fopen("$alert_file","a") or die("can't open in append mode file " . $alert_file );
-
-    foreach ($lines as $line_num => $line) {
+    if ( file_exists ($alert_file) and (filesize($alert_file) > 0) ) 
+    {
+        if ($DEBUG) { echo "\n<br>Opening alert file in append mode"; }        
+        $afile = fopen("$alert_file","a") or die("can't open in append mode file " . $alert_file );
+    }else{
+        if ($DEBUG) { echo "\n<br>Opening alert file in write mode"; }        
+        $afile = fopen("$alert_file","w") or die("can't open in write mode file " . $alert_file );
+    }
+    foreach ($lines as $line_num => $line) { 
         if ($DEBUG) { echo "\n<br>RCH Before conversion :<code><pre>" .$line. '</pre></code>'; }
         list($whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$walert,$gtype,$wcode) = explode(" ",$line);
         $rdate = trim($wdate2);                                         # Event Date = Finish Date
