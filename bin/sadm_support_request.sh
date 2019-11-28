@@ -35,8 +35,9 @@
 # 2018_12_11 v1.6 Include Shell and Python Library Demo output in log and SADM_USER info.
 # 2018_12_31 Added: sadm_support_request.sh v1.7 - Include system information files from dat/dr dir.
 # 2018_12_31 Added: sadm_support_request.sh v1.8 - Remove blank line & Comment Line (#) from output.
-#@2019_06_10 Updated: v1.9 Add /etc/postfix/main.cf to support request output.
-#@2019_06_11 Updated: V2.0 Code Revision and performance improvement.
+# 2019_06_10 Updated: v1.9 Add /etc/postfix/main.cf to support request output.
+# 2019_06_11 Updated: V2.0 Code Revision and performance improvement.
+#@2019_11_28 Updated: V2.1 If ran on SADM server, include crontab (osupdate,backup,rear_backup)
 #
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
@@ -65,7 +66,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.0'                               # Your Current Script Version
+    export SADM_VER='2.1'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -178,17 +179,26 @@ main_process()
     print_file "/etc/profile.d/sadmin.sh" 
     print_file "$SADM_CFG_FILE"
     print_file "/etc/sudoers.d/033_sadmin-nopasswd"
-    print_file "/etc/cron.d/sadm_server"
     print_file "/etc/cron.d/sadm_client"
-    print_file "/etc/cron.d/sadm_osupdate"
+
+    # Files that appears only on the SADMIN server.
+    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # If Running on SADM Server
+        then print_file "/etc/cron.d/sadm_server"
+             print_file "/etc/cron.d/sadm_osupdate"
+             print_file "/etc/cron.d/sadm_backup"
+             print_file "/etc/cron.d/sadm_rear_backup"
+    fi    
     print_file "/etc/selinux/config"
     print_file "/etc/postfix/main.cf"
     print_file "/etc/hosts"
-    print_file "${SADM_DR_DIR}/${SADM_HOSTNAME}_system.txt"
+    #print_file "${SADM_DR_DIR}/${SADM_HOSTNAME}_system.txt"
     print_file "${SADM_DR_DIR}/${SADM_HOSTNAME}_sysinfo.txt"
     print_file "/etc/httpd/conf.d/sadmin.conf"
-    print_file "$SADM_SETUP_DIR/log/sadm_setup.log"
 
+    # Copy the setup log (if exist) to SADMIN normal log directory,
+    if [ -f "$SADM_SETUP_DIR/log/sadm_setup.log" ] 
+        then cp $SADM_SETUP_DIR/log/sadm_setup.log $SADM_LOG_DIR >/dev/null 2>&1
+    fi 
 
     # Run the Shell Library Demo 
     sadm_writelog " "                                                   # Blank LIne
@@ -203,19 +213,35 @@ main_process()
     CMD="sadmlib_std_demo"                                              # Script Name to execute
     CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${CMD}.log"                # Script Log file Name
     run_command "${CMD}.py" "$CMDLOG"                                   # Run Python Library Demo
-    print_file "${CMDLOG}"                                              # Print log 
-    if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove log
+    print_file "${CMDLOG}"                                              # Print tmp log 
+    if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove tmp log
 
     # Include result of command "chage -l $SADM_USER", to see if password is expire
     if [ "$(sadm_get_ostype)" = "LINUX" ]                               # If Current O/S is Linux 
         then CMD="chage -l $SADM_USER"                                  # Command Name to execute
              CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_chage.log"        # Command Log file Name
+             sadm_writelog " "                                          # Blank LIne
              sadm_writelog "Running $CMD ..."                           # Show Command about to run
              $CMD > $CMDLOG                                             # Exec Command
-             print_file "${CMDLOG}"                                     # Print log 
+             print_file "${CMDLOG}"                                     # Print tmp log 
              if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove log
     fi
+
+    # Create file with SADMIN tree in it
+    which tree >/dev/null 2>&1
+    if [ $? -eq 0 ] 
+        then sadm_writelog " "                                          # Blank LIne
+             TLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_sadm_support_tree.log"
+             sadm_writelog "Recording $SADMIN tree structure list in $TLOG ..."
+             tree > $TLOG
+    fi
     
+    # List of files in SADMIN
+    sadm_writelog " "                                                   # Blank LIne
+    LLOG="$SADM_LOG_DIR/${SADM_HOSTNAME}_sadm_support_files_list.log" 
+    sadm_writelog "Creating a listing of all files in $SADMIN to $LLOG ..."
+    find $SADMIN -ls > $LLOG
+
     return 0
 }
 
@@ -275,7 +301,7 @@ main_process()
     if [ $SADM_DEBUG -gt 0 ] 
         then echo "tar -cvzf ${SADM_TMP_DIR}/${SADM_INST}.tgz ${SADM_LOG}"
     fi
-    tar -cvzf $SRQ_FILE log 2>1 >/dev/null
+    tar -cvzf $SRQ_FILE log >/dev/null 2>&1
     echo "Please send the file '$SRQ_FILE' to support@sadmin.ca."
     echo "We will get back to you as soon as possible."
     echo " "                                                            # Insert Blank Line
