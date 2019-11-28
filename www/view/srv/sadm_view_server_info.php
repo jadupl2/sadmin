@@ -49,16 +49,19 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 ?>
 <style>
 .button {
+    /* 
     background-color: #4178be;
-    /* border: none; */
-    color: white;
-    padding: 5px 16px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 13px;
-    margin: 2px 1px;
-    cursor: pointer;
+    border: none; 
+    */
+    background-color: #f37320;
+    color           : white;
+    padding         : 5px 16px;
+    text-align      : center;
+    text-decoration : none;
+    display         : inline-block;
+    font-size       : 13px;
+    margin          : 2px 1px;
+    cursor          : pointer;
     border-style    :   solid;
     border-color    :   #6b6c6f;
     border-radius   :   10px;
