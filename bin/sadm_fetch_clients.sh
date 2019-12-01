@@ -51,11 +51,12 @@
 # 2019_06_06  Fix: v2.37 Fix problem sending alert when SADM_ALERT_TYPE was set 2 or 3.
 # 2019_06_07  New: v2.38 An alert status summary of all systems is displayed at the end.
 # 2019_06_19  Update: v2.39 Cosmetic change to alerts summary and alert subject.
-#@2019_07_12  Update: v3.00 Fix script path for backup and o/s update in respective crontab file.
-#@2019_07_24  Update: v3.1 Major revamp of code.
-#@2019_08_23  Update: v3.2 Remove Crontab work file (Cleanup)
-#@2019_08_29 Fix: v3.3 Correct problem with CR in site.conf 
-#@2019_08_31 Update: v3.4 More consice of alert email subject.
+# 2019_07_12  Update: v3.00 Fix script path for backup and o/s update in respective crontab file.
+# 2019_07_24  Update: v3.1 Major revamp of code.
+# 2019_08_23  Update: v3.2 Remove Crontab work file (Cleanup)
+# 2019_08_29 Fix: v3.3 Correct problem with CR in site.conf 
+# 2019_08_31 Update: v3.4 More consice of alert email subject.
+#@2019_12_01 Update: v3.5 Backup crontab will backup daily not to miss weekly,monthly and yearly.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -117,7 +118,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.4'                               # Your Current Script Version
+    export SADM_VER='3.5'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -500,79 +501,79 @@ update_backup_crontab ()
     # Begin constructing our crontab line ($cline) - Based on Hour and Min. Received ---------------
     cline=`printf "%02d %02d" "$cmin" "$chour"`                         # Hour & Min. of Execution
     if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
-
+    cline="$cline * * * "
 
     # Construct DATE of the month (1-31) to run and add it to crontab line ($cline) ----------------
-    flag_dom=0
-    if [ "$cdom" = "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN" ]                 # If it's to run every Date
-        then cline="$cline *"                                           # Then use a Star for Date
-        else fdom=""                                                    # Clear Final Date of Month
-             for i in $(seq 2 32)
-                do    
-                wchar=`expr substr $cdom $i 1`
-                if [ $SADM_DEBUG -gt 5 ] ; then echo "cdom[$i] = $wchar" ; fi
-                xmth=`expr $i - 1`                                      # Date = Index -1 ,Cron Mth
-                if [ "$wchar" = "Y" ]                                   # If Date Set to Yes 
-                    then if [ $flag_dom -eq 0 ]                         # If First Date to Run 
-                            then fdom=`printf "%02d" "$xmth"`           # Add Date to Final DOM
-                                 flag_dom=1                             # No Longer the first date
-                            else wdom=`printf "%02d" "$xmth"`           # Format the Date number
-                                 fdom=`echo "${fdom},${wdom}"`          # Combine Final+New Date
-                         fi
-                fi                                                      # If Date is set to No
-                done                                                    # End of For Loop
-             cline="$cline $fdom"                                       # Add DOM in Crontab Line
-    fi
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
-
+    # flag_dom=0
+    # if [ "$cdom" = "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN" ]                 # If it's to run every Date
+    #     then cline="$cline *"                                           # Then use a Star for Date
+    #     else fdom=""                                                    # Clear Final Date of Month
+    #          for i in $(seq 2 32)
+    #             do    
+    #             wchar=`expr substr $cdom $i 1`
+    #             if [ $SADM_DEBUG -gt 5 ] ; then echo "cdom[$i] = $wchar" ; fi
+    #             xmth=`expr $i - 1`                                      # Date = Index -1 ,Cron Mth
+    #             if [ "$wchar" = "Y" ]                                   # If Date Set to Yes 
+    #                 then if [ $flag_dom -eq 0 ]                         # If First Date to Run 
+    #                         then fdom=`printf "%02d" "$xmth"`           # Add Date to Final DOM
+    #                              flag_dom=1                             # No Longer the first date
+    #                         else wdom=`printf "%02d" "$xmth"`           # Format the Date number
+    #                              fdom=`echo "${fdom},${wdom}"`          # Combine Final+New Date
+    #                      fi
+    #             fi                                                      # If Date is set to No
+    #             done                                                    # End of For Loop
+    #          cline="$cline $fdom"                                       # Add DOM in Crontab Line
+    # fi
+    # if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+# 
 
     # Construct the month(s) (1-12) to run the script and add it to crontab line ($cline) ----------
-    flag_mth=0
-    if [ "$cmonth" = "YNNNNNNNNNNNN" ]                                  # 1st Char=Y = run every Mth
-        then cline="$cline *"                                           # Then use a Star for Month
-        else fmth=""                                                    # Clear Final Date of Month
-             for i in $(seq 2 13)                                       # Check Each Mth 2-13 = 1-12
-                do                                                      # Get Y or N for the Month                 wchar=`expr substr "$cmonth" $i 1`
-                wchar=`expr substr $cmonth $i 1`
-                xmth=`expr $i - 1`                                      # Mth = Index -1 ,Cron Mth
-                if [ "$wchar" = "Y" ]                                   # If Month Set to Yes 
-                    then if [ $flag_mth -eq 0 ]                         # If 1st Insert in Cron Line
-                            then fmth=`printf "%02d" "$xmth"`           # Add Month to Final Months
-                                 flag_mth=1                             # No Longer the first Month
-                            else wmth=`printf "%02d" "$xmth"`           # Format the Month number
-                                 fmth=`echo "${fmth},${wmth}"`          # Combine Final+New Months
-                         fi
-                fi                                                      # If Month is set to No
-                done                                                    # End of For Loop
-             cline="$cline $fmth"                                       # Add Month in Crontab Line
-    fi
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    # flag_mth=0
+    # if [ "$cmonth" = "YNNNNNNNNNNNN" ]                                  # 1st Char=Y = run every Mth
+    #     then cline="$cline *"                                           # Then use a Star for Month
+    #     else fmth=""                                                    # Clear Final Date of Month
+    #          for i in $(seq 2 13)                                       # Check Each Mth 2-13 = 1-12
+    #             do                                                      # Get Y or N for the Month                 wchar=`expr substr "$cmonth" $i 1`
+    #             wchar=`expr substr $cmonth $i 1`
+    #             xmth=`expr $i - 1`                                      # Mth = Index -1 ,Cron Mth
+    #             if [ "$wchar" = "Y" ]                                   # If Month Set to Yes 
+    #                 then if [ $flag_mth -eq 0 ]                         # If 1st Insert in Cron Line
+    #                         then fmth=`printf "%02d" "$xmth"`           # Add Month to Final Months
+    #                              flag_mth=1                             # No Longer the first Month
+    #                         else wmth=`printf "%02d" "$xmth"`           # Format the Month number
+    #                              fmth=`echo "${fmth},${wmth}"`          # Combine Final+New Months
+    #                      fi
+    #             fi                                                      # If Month is set to No
+    #             done                                                    # End of For Loop
+    #          cline="$cline $fmth"                                       # Add Month in Crontab Line
+    # fi
+    # if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
 
-    # Construct the day of the week (0-6) to run the script and add it to crontab line ($cline) ----
-    flag_dow=0
-    if [ "$cdow" = "YNNNNNNN" ]                                         # 1st Char=Y Run all dayWeek
-        then cline="$cline *"                                           # Then use Star for All Week
-        else fdow=""                                                    # Final Day of Week Flag
-             for i in $(seq 2 8)                                        # Check Each Day 2-8 = 0-6
-                do                                                      # Day of the week (dow)
-                wchar=`expr substr "$cdow" $i 1`                        # Get Char of loop
-                if [ $SADM_DEBUG -gt 5 ] ; then echo "cdow[$i] = $wchar" ; fi
-                if [ "$wchar" = "Y" ]                                   # If Day is Yes 
-                    then xday=`expr $i - 2`                             # Adjust Indx to Crontab Day
-                         if [ $SADM_DEBUG -gt 5 ] ; then echo "xday = $xday" ; fi
-                         if [ $flag_dow -eq 0 ]                         # If First Day to Insert
-                            then fdow=`printf "%02d" "$xday"`           # Add day to Final Day
-                                 flag_dow=1                             # No Longer the first Insert
-                            else wdow=`printf "%02d" "$xday"`           # Format the day number
-                                 fdow=`echo "${fdow},${wdow}"`          # Combine Final+New Day
-                         fi
-                fi                                                      # If DOW is set to No
-                done                                                    # End of For Loop
-             cline="$cline $fdow"                                       # Add DOW in Crontab Line
-    fi
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
-    
+    # # Construct the day of the week (0-6) to run the script and add it to crontab line ($cline) ----
+    # flag_dow=0
+    # if [ "$cdow" = "YNNNNNNN" ]                                         # 1st Char=Y Run all dayWeek
+    #     then cline="$cline *"                                           # Then use Star for All Week
+    #     else fdow=""                                                    # Final Day of Week Flag
+    #          for i in $(seq 2 8)                                        # Check Each Day 2-8 = 0-6
+    #             do                                                      # Day of the week (dow)
+    #             wchar=`expr substr "$cdow" $i 1`                        # Get Char of loop
+    #             if [ $SADM_DEBUG -gt 5 ] ; then echo "cdow[$i] = $wchar" ; fi
+    #             if [ "$wchar" = "Y" ]                                   # If Day is Yes 
+    #                 then xday=`expr $i - 2`                             # Adjust Indx to Crontab Day
+    #                      if [ $SADM_DEBUG -gt 5 ] ; then echo "xday = $xday" ; fi
+    #                      if [ $flag_dow -eq 0 ]                         # If First Day to Insert
+    #                         then fdow=`printf "%02d" "$xday"`           # Add day to Final Day
+    #                              flag_dow=1                             # No Longer the first Insert
+    #                         else wdow=`printf "%02d" "$xday"`           # Format the day number
+    #                              fdow=`echo "${fdow},${wdow}"`          # Combine Final+New Day
+    #                      fi
+    #             fi                                                      # If DOW is set to No
+    #             done                                                    # End of For Loop
+    #          cline="$cline $fdow"                                       # Add DOW in Crontab Line
+    # fi
+    # if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    # 
     
     # Add User, script name and script parameter to crontab line -----------------------------------
     # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN 
@@ -1236,6 +1237,7 @@ crontab_update()
 
     # Create New O/S Update crontab sha1sum
     if [ -f ${SADM_CRON_FILE} ] ; then work_sha1=`sha1sum ${SADM_CRON_FILE} |awk '{print $1}'` ;fi 
+
     # Create Actual O/S Update crontab sha1sum
     if [ -f ${SADM_CRONTAB} ]   ; then real_sha1=`sha1sum ${SADM_CRONTAB}   |awk '{print $1}'` ;fi 
 
