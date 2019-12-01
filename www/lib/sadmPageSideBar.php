@@ -33,10 +33,11 @@
 # 2018_09_22 v2.5 Failed Script counter was wrong
 # 2019_01_05 Improvement: v2.6 Add SideBar link to view all servers CPU performance on one page.
 # 2019_06_07 Update: v2.7 Updated to deal with the new format of the RCH file.
-#@2019_07-15 Update: v2.8 Add 'Backup Status Page' & Fix RCH files with only one line not reported.
-#@2019_08-26 New: v2.9 Add 'Rear Backup Status Page' 
-#@2019_08-30 New: v2.10 Side Bar re-arrange order.
-#@2019_09-23 Update: v2.11 Change 'Status' for ' Job' in Sidebar.
+# 2019_07-15 Update: v2.8 Add 'Backup Status Page' & Fix RCH files with only one line not reported.
+# 2019_08-26 New: v2.9 Add 'Rear Backup Status Page' 
+# 2019_08-30 New: v2.10 Side Bar re-arrange order.
+# 2019_09-23 Update: v2.11 Change 'Status' for ' Job' in Sidebar.
+#@2019_12_01 Update: v2.12 Shorten label name of sidebar.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -51,7 +52,7 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.11";                                                        # Current version number
+$SVER  = "2.12";                                                        # Current version number
 $URL_SERVER    = '/view/srv/sadm_view_servers.php';                     # Show Servers List URL
 $URL_OSUPDATE  = "/view/sys/sadm_view_schedule.php";                    # View O/S Update Status URL 
 $URL_BACKUP    = "/view/sys/sadm_view_backup.php";                      # View Backup Status URL 
@@ -92,7 +93,7 @@ function build_sidebar_scripts_info() {
     
     # Create unique filename that will contains all servers *.rch filename
     #$tmprch = tempnam ('tmp/', 'ref_rch_file-');                        # Create unique file name
-    $tmprch = tempnam ($_SERVER['DOCUMENT_ROOT'] . "/dat/", 'ref_rch_file-');                        # Create unique file name
+    $tmprch = tempnam ($_SERVER['DOCUMENT_ROOT'] . "/dat/", 'ref_rch_file-'); # Create unique file name
     if ($DEBUG) { echo "<br>Temp file of rch filename : " . $tmprch;}   # Show unique filename
     $CMD="find $RCH_ROOT -name '*.rch'  > $tmprch";                     # Construct find command
     if ($DEBUG) { echo "<br>Command executed is : " . $CMD ; }          # Show command constructed
@@ -111,9 +112,9 @@ function build_sidebar_scripts_info() {
             if ($DEBUG) { echo "\n>Number of line in $wfile is ". count($line_array);} 
             $last_index = count($line_array) - 1;                       # Array Index of Last Line
             if ($DEBUG) { echo "\n<br>line_array[last_index]=" . $line_array[$last_index];}
-            if ($line_array[$last_index] != "") {                   # If None Blank Last Line
-                $tag = explode(" ",$line_array[$last_index]);       # Split Line space delimited
-                $num_tags = count($tag);                            # Nb Elements on lines
+            if ($line_array[$last_index] != "") {                       # If None Blank Last Line
+                $tag = explode(" ",$line_array[$last_index]);           # Split Line space delimited
+                $num_tags = count($tag);                                # Nb Elements on lines
                 if ($num_tags == 10) {
                    list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode) = explode(" ",$line_array[$last_index], 10);
                    $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". $calert .",". $ctype . "," . trim($ccode) .",". basename($wfile) ."\n";
@@ -337,13 +338,13 @@ function SideBar_OS_Summary() {
     echo "\n<div class='SideBarTitle'>Server Info</div>";               # SideBar Section Title
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_OSUPDATE . "'>O/S Update Job</a></div>";    # URL To View O/S Upd. Page
+    echo "<a href='" . $URL_OSUPDATE . "'>O/S Update</a></div>";    # URL To View O/S Upd. Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_BACKUP . "'>Backup Job</a></div>";          # View Backup Status Page
+    echo "<a href='" . $URL_BACKUP . "'>Daily Backup</a></div>";          # View Backup Status Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_VIEW_REAR . "'>ReaR Backup Job</a></div>";  # URL View Rear Backup Page
+    echo "<a href='" . $URL_VIEW_REAR . "'>ReaR Backup</a></div>";  # URL View Rear Backup Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_MONITOR . "'>System Monitor</a></div>";     # URL to System Monitor Page
