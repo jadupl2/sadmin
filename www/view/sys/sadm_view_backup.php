@@ -23,7 +23,8 @@
 #
 # 2019_07_06 New: v1.0 Initial version of backup Status Page
 # 2019_08_14 New: v1.1 Allow to return to this page when backup schedule is updated (Send BACKURL)
-#@2019_09_20 Update v1.3 Show History (RCH) content using same uniform way.
+# 2019_09_20 Update v1.3 Show History (RCH) content using same uniform way.
+#@2019_12_01 Update v1.4 Change Layout to align with daily backup schedule.
 #
 # ==================================================================================================
 #
@@ -53,7 +54,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG           = False ;                                              # Debug Activated True/False
-$WVER            = "1.3" ;                                              # Current version number
+$WVER            = "1.4" ;                                              # Current version number
 $URL_CREATE      = '/crud/srv/sadm_server_create.php';                  # Create Page URL
 $URL_UPDATE      = '/crud/srv/sadm_server_update.php';                  # Update Page URL
 $URL_DELETE      = '/crud/srv/sadm_server_delete.php';                  # Delete Page URL
@@ -85,8 +86,8 @@ function setup_table() {
     echo "<tr>\n";
     echo "<th>Server</th>\n";
     echo "<th class='dt-head-left'>Description</th>\n";
-    echo "<th class='dt-head-left'>Backup Occurrence</th>\n";
-    echo "<th class='text-center'>Next Backup</th>\n";
+    echo "<th class='dt-head-center'>Backup Time</th>\n";
+    #echo "<th class='text-center'>Next Backup</th>\n";
     echo "<th class='text-center'>Last Backup</th>\n";
     echo "<th class='text-center'>Duration</th>\n";
     echo "<th class='text-center'>Status</th>\n";
@@ -99,8 +100,8 @@ function setup_table() {
     echo "<tr>\n";
     echo "<th>Server</th>\n";
     echo "<th class='dt-head-left'>Description</th>\n";
-    echo "<th class='dt-head-left'>Backup Occurrence</th>\n";
-    echo "<th class='text-center'>Next Backup</th>\n";
+    echo "<th class='dt-head-center'>Backup Time</th>\n";
+    #echo "<th class='text-center'>Next Backup</th>\n";
     echo "<th class='text-center'>Last Backup</th>\n";
     echo "<th class='text-center'>Duration</th>\n";
     echo "<th class='text-center'>Status</th>\n";
@@ -132,16 +133,17 @@ function display_data($count, $row) {
     echo $row['srv_name']  . "</a></td>\n";
     
     # Server Description
-    #echo "<td class='dt-center'>" . nl2br( $row['srv_desc']) . "</td>\n";  
-    echo "<td class='dt-body-left'>" . nl2br( $row['srv_desc']) . "</td>\n";  
+    #echo "<td class='dt-center'>" .$row['srv_desc']) . "</td>\n";  
+    echo "<td class='dt-body-left'>" . $row['srv_desc'] . "</td>\n";  
 
 
-    # Occurrence of the O/S Backup
-    echo "<td class='dt-body-left'>";
+    # Time of the O/S Backup
+    echo "<td class='dt-body-center'>";
     if ($row['srv_backup'] == True ) { 
         list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_backup_dom'], $row['srv_backup_month'],
             $row['srv_backup_dow'], $row['srv_backup_hour'], $row['srv_backup_minute']);
-        echo $STR_SCHEDULE ;
+        #echo $STR_SCHEDULE ;
+        echo sprintf("%02d",$row['srv_backup_hour']) .":". sprintf("%02d",$row['srv_backup_minute']); 
     }else{
         echo "Not scheduled";
     }
@@ -149,15 +151,15 @@ function display_data($count, $row) {
 
 
     # Next Backup Date
-    echo "<td class='dt-center'>";
-    if ($row['srv_backup'] == True ) { 
-        list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_backup_dom'], $row['srv_backup_month'],
-            $row['srv_backup_dow'], $row['srv_backup_hour'], $row['srv_backup_minute']);
-        echo $UPD_DATE_TIME ;
-    }else{
-        echo "Not activated";
-    }
-    echo "</td>\n";  
+    #echo "<td class='dt-center'>";
+    #if ($row['srv_backup'] == True ) { 
+    #    list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_backup_dom'], $row['srv_backup_month'],
+    #        $row['srv_backup_dow'], $row['srv_backup_hour'], $row['srv_backup_minute']);
+    #    echo $UPD_DATE_TIME ;
+    #}else{
+    #    echo "Not activated";
+    #}
+    #echo "</td>\n";  
 
 
     # Last O/S Backup Date 
@@ -182,7 +184,7 @@ function display_data($count, $row) {
     if (! file_exists($rch_file))  {                                    # If RCH File Not Found
         echo "\n<td class='dt-center'>  </td>";
     }else{
-        echo "<td class='dt-center'>" . nl2br($celapse) . "</td>\n";  
+        echo "<td class='dt-center'>" .$celapse . "</td>\n";  
     }
 
 
