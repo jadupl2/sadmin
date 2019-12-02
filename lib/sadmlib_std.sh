@@ -114,10 +114,12 @@
 # 2019_08_23 Update: v3.14 Create all necessary dir. in ${SADMIN}/www for the git pull to work
 # 2019_08_31 Update: v3.15 Change owner of web directories differently if on client or server.
 # 2019_09_20 Update: v3.16 Foreground color definition, typo corrections.
-#@2019_10_13 Update: v3.17 Added function 'sadm_server_arch' - Return system arch. (x86_64,armv7l,.)
-#@2019_10_15 Update: v3.18 Enhance method to get host domain name in function $(sadm_get_domainname)
-#@2019_10_30 Update: v3.19 Remove utilization of 'facter' (Depreciated)
-#@2019_11_22 Update: v3.20 Change the way domain name is obtain on MacOS $(sadm_get_domainname).
+# 2019_10_13 Update: v3.17 Added function 'sadm_server_arch' - Return system arch. (x86_64,armv7l,.)
+# 2019_10_15 Update: v3.18 Enhance method to get host domain name in function $(sadm_get_domainname)
+# 2019_10_30 Update: v3.19 Remove utilization of 'facter' (Depreciated)
+# 2019_11_22 Update: v3.20 Change the way domain name is obtain on MacOS $(sadm_get_domainname).
+# 2019_11_22 Update: v3.20 Change the way domain name is obtain on MacOS $(sadm_get_domainname).
+#@2019_12_02 Update: v3.21 Add Server name in susbject of Alert,
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -129,7 +131,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.20"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.21"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2315,17 +2317,15 @@ sadm_send_alert() {
 
     # Construct Email Subject 
     case "$atype" in                                                    # Depending on Alert Type
-        e|E) ws="SADM ERROR: ${asubject}"                               # Construct Mess. Subject
+        e|E) ws="SADM ERROR: ${aserver} ${asubject}"                    # Construct Mess. Subject
              ;;
-        w|W) ws="SADM WARNING: ${asubject}"                             # Build Warning Subject
+        w|W) ws="SADM WARNING: ${aserver} ${asubject}"                  # Build Warning Subject
              ;;
-        i|I) ws="SADM INFO: ${asubject}"                                # Build Info Mess Subject
+        i|I) ws="SADM INFO: ${aserver} ${asubject}"                     # Build Info Mess Subject
              ;;
-        s|S) ws="SADM SCRIPT: ${asubject}"                               # Build Script Msg Subject
+        s|S) ws="SADM SCRIPT: ${asubject}"                              # Build Script Msg Subject
              ;;
-        e|E) ws="SADM ERROR: ${asubject}"                               # Construct Mess. Subject
-             ;;
-        *)   ws="Invalid Alert Type ($atype): ${asubject}"              # Invalid Alert type Message
+        *)   ws="Invalid Alert Type ($atype): ${aserver} ${asubject}"   # Invalid Alert type Message
              ;;
     esac
 
