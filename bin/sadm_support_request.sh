@@ -38,6 +38,7 @@
 # 2019_06_10 Updated: v1.9 Add /etc/postfix/main.cf to support request output.
 # 2019_06_11 Updated: V2.0 Code Revision and performance improvement.
 #@2019_11_28 Updated: V2.1 If ran on SADM server, include crontab (osupdate,backup,rear_backup)
+#@2019_12_02 Updated: V2.2 Add execution of sadm_check_requirenent to see all requirement are met.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
@@ -66,7 +67,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.1'                               # Your Current Script Version
+    export SADM_VER='2.2'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -213,6 +214,14 @@ main_process()
     CMD="sadmlib_std_demo"                                              # Script Name to execute
     CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${CMD}.log"                # Script Log file Name
     run_command "${CMD}.py" "$CMDLOG"                                   # Run Python Library Demo
+    print_file "${CMDLOG}"                                              # Print tmp log 
+    if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove tmp log
+
+    # Run the check requirement script.
+    sadm_writelog " "                                                   # Blank LIne
+    CMD="sadm_check_requirements.sh"                                    # Script Name to execute
+    CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${CMD}.log"                # Script Log file Name
+    run_command "${CMD}" "$CMDLOG"                                      # Run Check Requirement
     print_file "${CMDLOG}"                                              # Print tmp log 
     if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove tmp log
 
