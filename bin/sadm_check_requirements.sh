@@ -35,6 +35,7 @@
 # 2019_04_07 Update: v1.3 Use color variables from SADMIN Library.
 # 2019_05_16 Update: v1.4 Don't generate the RCH file & allow running multiple instance of script.
 # 2019_10_30 Update: v1.5 Remove 'facter' requirement.
+#@2019_12_02 Fix: v1.6 Fix Mac OS crash.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
@@ -64,7 +65,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.5'                               # Your Current Script Version
+    export SADM_VER='1.6'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -93,7 +94,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 SPATH=""                                    ; export SPATH              # Full Path of Command 
 INSTREQ=0                                   ; export INSTREQ            # Install Mode default OFF
-SADM_OSVERSION=`lsb_release -sr |awk -F. '{ print $1 }'| tr -d ' '` ; export SADM_OSVERSION 
+
 package_type="$(sadm_get_packagetype)"      ; export package_type       # System Pack Type (rpm,deb)
 #
 command -v systemctl > /dev/null 2>&1                                   # Using sysinit or systemd ?
@@ -196,6 +197,8 @@ install_package()
 #===================================================================================================
 add_epel_repo()
 {
+    SADM_OSVERSION=`lsb_release -sr |awk -F. '{ print $1 }'| tr -d ' '` ; export SADM_OSVERSION 
+    
     # Add EPEL Repository on Redhat / CentOS 6 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 6 ] 
         then yum -C repolist | grep "^epel " >/dev/null 2>&1
