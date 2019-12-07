@@ -27,8 +27,9 @@
 # 2018_10_16    V3.6 Suppress Header and footer from the log (Cleaner Status display).
 # 2018_10_18    V3.7 Only send alert when exit with error.
 # 2018_11_02    V3.8 Added sleep before updating time clock (Raspbian Problem)
-#@2019_03_27 Update: v3.9 If 'ntpdate' report an error, show error message and add cosmetic messages
-#@2019_03_29 Update: v3.10 Get SADMIN Directory Location from /etc/environment
+# 2019_03_27 Update: v3.9 If 'ntpdate' report an error, show error message and add cosmetic messages
+# 2019_03_29 Update: v3.10 Get SADMIN Directory Location from /etc/environment
+#@2019_12_07 Update: v3.11 Avoid NTP Server name resolution (DNS not up), use IP Addr. now.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x 
@@ -58,7 +59,7 @@ fi
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.10'                              # Current Script Version
+    export SADM_VER='3.11'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -93,7 +94,7 @@ fi
 #                                   This Script environment variables
 # --------------------------------------------------------------------------------------------------
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-NTP_SERVER="0.ca.pool.ntp.org"              ; export NTP_SERVER         # Canada NTP Pool
+NTP_SERVER="68.69.221.61 162.159.200.1 205.206.70.2" ;export NTP_SERVER # Canada NTP Pool
 
 
 
@@ -103,7 +104,6 @@ NTP_SERVER="0.ca.pool.ntp.org"              ; export NTP_SERVER         # Canada
 main_process()
 {
     ERROR_COUNT=0
-    #sadm_writelog "$SADM_80_DASH"                                       # 80 Equal Sign Line
     sadm_writelog "*** Running SADM System Startup Script on $(sadm_get_fqdn)  ***"
     sadm_writelog " "
     
