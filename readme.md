@@ -1,8 +1,6 @@
 ![SADMIN Tools][1] 
-# SADMIN Tools v1.2.1             <!-- omit in toc -->
- 
- 
-### Table of content
+<h1> SADMIN Tools v1.2.1</h1>
+
 - [Brief description](#brief-description)
 - [Run on most popular Linux distributions](#run-on-most-popular-linux-distributions)
 - [Download](#download)
