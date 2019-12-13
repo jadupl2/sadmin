@@ -43,7 +43,7 @@
 # 2019_07_14 Update: v1.31 Add creation of Directory /preserve/mnt if it doesn't exist (Mac Only)
 # 2019_07_23 Update: v1.32 Remove utilization of history sequence number file.
 # 2019_08_19 Update: v1.33 Check /etc/cron.d/sadm_rear_backup permission & remove /etc/cron.d/rear
-#@2019_11_25 Update: v1.34 Remove deletion of what is contained in $SADMIN/www on SADMIN client.
+#@2019_11_25 Fix: v1.34 Remove deletion of $SADMIN/www on SADMIN client.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C

@@ -37,8 +37,8 @@
 # 2018_12_31 Added: sadm_support_request.sh v1.8 - Remove blank line & Comment Line (#) from output.
 # 2019_06_10 Updated: v1.9 Add /etc/postfix/main.cf to support request output.
 # 2019_06_11 Updated: V2.0 Code Revision and performance improvement.
-#@2019_11_28 Updated: V2.1 If ran on SADM server, include crontab (osupdate,backup,rear_backup)
-#@2019_12_02 Updated: V2.2 Add execution of sadm_check_requirenent to see all requirement are met.
+#@2019_11_28 Updated: V2.1 When run on SADM server, will include crontab (osupdate,backup,rear).
+#@2019_12_02 Updated: V2.2 Add execution of sadm_check_requirenent.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C

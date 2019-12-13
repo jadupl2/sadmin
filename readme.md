@@ -1,5 +1,6 @@
 ![SADMIN Tools][1] 
-# SADMIN Tools v1.2.0             <!-- omit in toc -->
+# SADMIN Tools v1.2.1             <!-- omit in toc -->
+ 
  
 ### Table of content
 - [Brief description](#brief-description)

@@ -28,8 +28,8 @@
 # 2019_01_22 Added: v1.4 Add Dark Theme
 # 2019_08_14 Update: v1.5 Redesign page,show one line schedule,show backup policies, fit Ipad screen.
 # 2019_08_19 Update: v1.6 Some typo error and show 'Backup isn't activated' when no schedule define.
-#@2019_12_01 Update: v1.7 Remove entry fields for specify day of backup (They need to run every day)
-#       If not run every day, they could miss the day of weekly & monthly and date of Yearly backup.          
+#@2019_12_01 Update: v1.7 Backup will run daily (Remove entry fields for specify day of backup)
+#       If not run every day, they could miss the day of weekly & monthly and date of Yearly backup.
 # ==================================================================================================
 #
 #

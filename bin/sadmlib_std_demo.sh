@@ -32,7 +32,7 @@
 #@2019_10_14 Update: v3.14 Add demo for calling sadm_server_arch function & show result.
 #@2019_10_17 Update: v3.15 Print Category and Group table content at the end of report.
 #@2019_10_30 Update: v3.16 Remove 'facter' utilization (depreciated).
-#@2019_11_25 Update: v3.17 Database table printer at the is in a prettier format (server only)
+#@2019_11_25 Update: v3.17 Change printing format of Database table at the end of execution.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

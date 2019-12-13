@@ -1,6 +1,24 @@
 # Changelog
 
 
+## Release v[1.2.1](https://github.com/jadupl2/sadmin/releases) (2019-12-13)
+- Fixes
+	- 2019_11_25 sadm_client_housekeeping.sh (v1.34) - Remove deletion of $SADMIN/www on SADMIN client.
+	- 2019_11_26 sadm_view_sysmon.php (v2.10) - Fix problem with temp files (Change from $SADMIN/tmp to $SADMIN/www/tmp)
+	- 2019_11_27 sadm_view_sysmon.php (v2.11) - Fix 'open append failed', when no *.rpt exist or are all empty.
+	- 2019_12_02 sadm_check_requirements.sh (v1.6) - Fix Mac OS crash.
+- Update
+	- 2019_11_25 sadmlib_std_demo.sh (v3.17) - Change printing format of Database table at the end of execution.
+	- 2019_11_28 sadm_support_request.sh (V2.1) - When run on SADM server, will include crontab (osupdate,backup,rear).
+	- 2019_12_01 sadm_fetch_clients.sh (v3.5) - Backup crontab will backup daily not to miss weekly,monthly and yearly.
+	- 2019_12_01 sadmPageSideBar.php (v2.12) - Shorten label name of sidebar.
+	- 2019_12_01 sadm_server_backup.php (v1.7) - Backup will run daily (Remove entry fields for specify day of backup)
+	- 2019_12_01 sadm_view_backup.php (v1.4) - Change Layout to align with daily backup schedule.
+	- 2019_12_02 sadmlib_std.sh (v3.21) - Add Server name in susbject of Email Alert,
+	- 2019_12_02 sadm_support_request.sh (V2.2) - Add execution of sadm_check_requirenent.
+
+
+
 ## Release v[1.2.0](https://github.com/jadupl2/sadmin/releases) (2019-11-25)
 - Fixes
 	- 2019_11_06 sadm_subnet_lookup.py (v2.4) - Ping response was not recorded properly

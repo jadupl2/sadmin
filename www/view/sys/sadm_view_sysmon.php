@@ -37,8 +37,8 @@
 # 2019_09_25 Update: v2.7 Page has become starting page and change page Title.
 # 2019_10_01 Update: v2.8 Page Added links to log, rch and script documentation.
 # 2019_10_15 Update: v2.9 Add Architecture, O/S Name, O/S Version to page
-#@2019_11_26 Update: v2.10 Change location of temp files from $SADMIN/tmp to $SADMIN/www/tmp
-#@2019_11_27 Fix: v2.11 Problem when no rpt exist or are all rpt empty, open append failed.
+#@2019_11_26 Fix: v2.10 Fix problem with temp files (Change from $SADMIN/tmp to $SADMIN/www/tmp)
+#@2019_11_27 Fix: v2.11 Fix 'open append failed', when no *.rpt exist or are all empty.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

@@ -119,7 +119,7 @@
 # 2019_10_30 Update: v3.19 Remove utilization of 'facter' (Depreciated)
 # 2019_11_22 Update: v3.20 Change the way domain name is obtain on MacOS $(sadm_get_domainname).
 # 2019_11_22 Update: v3.20 Change the way domain name is obtain on MacOS $(sadm_get_domainname).
-#@2019_12_02 Update: v3.21 Add Server name in susbject of Alert,
+#@2019_12_02 Update: v3.21 Add Server name in susbject of Email Alert,
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x

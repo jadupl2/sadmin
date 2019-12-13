@@ -3,8 +3,8 @@
 #
 *.iso 
 *.pyc
-sysmon.lock 
+./sysmon.lock 
 ./cache/*
 __pycache__/
-./tmp/*
-./temp/*
+./tmp
+./temp
