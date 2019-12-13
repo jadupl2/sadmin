@@ -1,4 +1,4 @@
-53628d4ae3b2d40d5b30714d8917a250  ./.git/refs/heads/master
+0e8e4a1634472059cafe148e81a835c0  ./.git/refs/heads/master
 73a00957034783b7b5c8294c54cd3e12  ./.git/refs/remotes/origin/HEAD
 a0a7c3fff21f2aea3cfa1d0316dd816c  ./.git/description
 9cc72dc973e24f9623bd3fe708f60ef5  ./.git/hooks/applypatch-msg.sample
@@ -13,13 +13,13 @@ f51b02427757e79621b5235d7efdf117  ./.git/hooks/update.sample
 036208b4a1ab4a235d75c181e685e5a3  ./.git/info/exclude
 4cf2d64e44205fe628ddd534e1151b58  ./.git/HEAD
 eb9762181bd7e1b3c685ede8ecde2e63  ./.git/config
-5318491b65abb477e517489630e971e5  ./.git/objects/pack/pack-393da095dcbeb6fbfc167d6b8835e703558c3c87.pack
-1f5143881526c826ab89a2937687da0a  ./.git/objects/pack/pack-393da095dcbeb6fbfc167d6b8835e703558c3c87.idx
-0fe1b308335b950487541e7cdbc4e65a  ./.git/packed-refs
-93d32185e806de8b674cec9e0c4eb1a8  ./.git/logs/refs/remotes/origin/HEAD
-93d32185e806de8b674cec9e0c4eb1a8  ./.git/logs/refs/heads/master
-93d32185e806de8b674cec9e0c4eb1a8  ./.git/logs/HEAD
-9c0c355ff8a9a2529cb448a04d3760d5  ./.git/index
+b2200fc894f7e1db57288ce50afadd0d  ./.git/objects/pack/pack-bcac02caf13c81467b4b567457080b970ab1b1c8.pack
+83b4cb3f692ea75b7c653dfa035ffaaa  ./.git/objects/pack/pack-bcac02caf13c81467b4b567457080b970ab1b1c8.idx
+3faedecf5ef2df48d9748ac8f6e2697f  ./.git/packed-refs
+c45237193d2e4aed15d8180cfe52fa1e  ./.git/logs/refs/remotes/origin/HEAD
+c45237193d2e4aed15d8180cfe52fa1e  ./.git/logs/refs/heads/master
+c45237193d2e4aed15d8180cfe52fa1e  ./.git/logs/HEAD
+dd1c462a617c8e0483b1a0a9cc2fd655  ./.git/index
 314407faf0d39903d21bbaabc1b54961  ./.bash_profile
 e4ad797dc81f9026e31ddf2b78c38760  ./.bashrc
 2a63ad322e85bd85e1f4715a1208721f  ./.gitignore
@@ -28,7 +28,7 @@ e4ad797dc81f9026e31ddf2b78c38760  ./.bashrc
 3787e4fa404c434478ed4b694c194997  ./bin/sadm_backupdb.sh
 e49e5ea4e93a0396cd647761d4975338  ./bin/sadm_cfg2html.sh
 6fef29d0df57c1cfe5f5fe05b9e9a009  ./bin/sadm_check_requirements.sh
-be6dacfe023d45d5cf1840c9d38d2d81  ./bin/sadm_client_housekeeping.sh
+0834935d4f521ee3736daaea1c8bfbe2  ./bin/sadm_client_housekeeping.sh
 027a0692234fc715b8630f3269f89a06  ./bin/sadm_client_sunset.sh
 af05bf9f1c1cf22e62da307217b470a4  ./bin/sadm_create_mksysb.sh
 0cf201daf2954c1c4601005bf2c48dcb  ./bin/sadm_create_sysinfo.sh
@@ -50,7 +50,7 @@ a653b29ab4bc7837dd79530f5aa04268  ./bin/sadm_server_housekeeping.sh
 4b9d2ae56be386c3274e53b3b54e3f2b  ./bin/sadm_server_sunrise.sh
 0d67ef3fea7a341daabd4a22ea4a24cf  ./bin/sadm_service_ctrl.sh
 add844c279695ce4c2f4cf541df32aac  ./bin/sadm_subnet_lookup.py
-73f5413aae53854d6cd5150f60e39582  ./bin/sadm_support_request.sh
+b2c782eb5013ea6929d54d9ff08919c3  ./bin/sadm_support_request.sh
 6abb1b85b2aabe4abef1e0fe81b2c18b  ./bin/sadm_sysmon.pl
 cbd0a83836f66e74e725a00ee791b029  ./bin/sadm_sysmon_cli.sh
 3c2240388a87f02729af1694de409f47  ./bin/sadm_sysmon_tui.pl
@@ -65,11 +65,11 @@ f3d08f5aae0a451efde8316b305d8260  ./bin/sadm_uninstall.sh
 de459976d9092f64db6518de7311ccce  ./bin/sadm_updater.sh
 875229bfa1657b373c76f9ba4532cc4a  ./bin/sadm_wrapper.sh
 6fa59928f893add74e1ed09d2f165a9c  ./bin/sadmlib_std_demo.py
-1e93cc1a1fbd9e369aac50fec9a9f075  ./bin/sadmlib_std_demo.sh
+1fed23dd825e9ca0ec889eabe849fdf6  ./bin/sadmlib_std_demo.sh
 0b3fb80938bd19de6788b596c8c4e838  ./cfg/.alert_group.cfg
 9ab06715e2c773b12b3a27bf066e2f19  ./cfg/.alert_history.txt
 ec38aa711a4bbfdedf6123408219c7ef  ./cfg/.alert_slack.cfg
-a2f7f4f0c2176aa79341234463039c85  ./cfg/.backup_exclude.txt
+d14b30553ea6f13bb55b387a4d5379fe  ./cfg/.backup_exclude.txt
 f08d31bc6515a00e9e3901233760ddd0  ./cfg/.backup_list.txt
 d14bfe06935fe119aa3970b573b84fd2  ./cfg/.rear_exclude.txt
 acb766c6067f046105f8b1263b9e5172  ./cfg/.release
@@ -78,8 +78,8 @@ acb766c6067f046105f8b1263b9e5172  ./cfg/.release
 2ef2e4cdc22f350d892f0a1424d621da  ./cfg/.sadmin.service
 80decdfe9bcb558728b97dd36b76fd38  ./cfg/.template.smon
 e49d4792442a13a4d0b1205d09d47719  ./cfg/.version
-f145a6e1c80efbcd680b5bcd2f7d6d19  ./cfg/.versum
-ddf22cdbb8c1de6dd02f3ffa02bea71a  ./changelog.md
+f179f347b2d7b0fd97bbfa7b38c2236d  ./cfg/.versum
+6281a2d9fdeee451aea5fa6924d52b73  ./changelog.md
 d41d8cd98f00b204e9800998ecf8427e  ./dat/.gitkeep
 3b5cddb8e4b260177a62a705965c0a4a  ./doc/pdf/calendar_php.pdf
 d5dbd9e0e2ac44d6efcf6962411b0d6d  ./doc/pdf/database/table_structure_category.pdf
@@ -102,7 +102,7 @@ a7d133e8af370e53c828746d6f754833  ./doc/setup examples/setup_centos7.pdf
 9d4de8180c5b6d8e2d8614acd3322a73  ./lib/sadmlib_fs.sh
 b7686a0ed2071ec224d5433733809abc  ./lib/sadmlib_screen.sh
 518aae5f6e4645d2ee742c936711f7a9  ./lib/sadmlib_std.py
-f48fa643d81d5044a2cb524ab29083b0  ./lib/sadmlib_std.sh
+e5306d7ed9ec1099cb3d33edae841929  ./lib/sadmlib_std.sh
 d32239bcb673463ab874e80d47fae504  ./license
 d41d8cd98f00b204e9800998ecf8427e  ./log/.gitkeep
 3a47604ed48c9b842772013e72f98995  ./pkg/DataTables/DataTables-1.10.11.zip
@@ -204,9 +204,9 @@ cc8f29b78df168f1f8138a16abc3e1ee  ./pkg/rear/ubuntu/1604/64bits/rear_2.5-0_amd64
 4fc31d52427474ca2c0517c5e7ed18b0  ./pkg/rear/ubuntu/1804/64bits/rear_2.5-0_amd64.deb
 adde8c77d7d24bac4dcc2017346e4089  ./pkg/rear/ubuntu/1810/64bits/rear_2.5-0_amd64.deb
 8e2643ed8ee620314b619254806f9cbf  ./pkg/rear/ubuntu/1904/64bits/rear_2.5-0_amd64.deb
-2fd0bf08573f36b0430e137988e8a115  ./readme.html
-da45dde622d2b148be45742e38316321  ./readme.md
-edc03cf49fd62ac2725872fb2d2b69d2  ./readme.pdf
+e14401a00f0bbed92486d2d77766af30  ./readme.html
+b18d6087eddb05c34a708360bc169539  ./readme.md
+4a5e6d7affab17af4c66536ca088790f  ./readme.pdf
 800418ae4a61d325bf3236d02fe59309  ./setup/bin/sadm_setup.py
 5ed3bb72515445d833278db5e9e5f4b7  ./setup/etc/sadmin.cnf
 e41041df77dad2bab316af06c450b8cf  ./setup/etc/sadmin.conf
@@ -259,7 +259,7 @@ ba3c1c5009675f77c77b034b49f008f5  ./www/crud/cat/sadm_category_main.php
 781b03aaeb6316fa4d8e48aec45c14d9  ./www/crud/grp/sadm_group_delete.php
 5894acd9ee714dcccab632fc277abb12  ./www/crud/grp/sadm_group_main.php
 9d0510653e13899eeaf7d16d3d5ce35a  ./www/crud/grp/sadm_group_update.php
-ba1dc8e8c7b2753c0df8de24b97072fe  ./www/crud/srv/sadm_server_backup.php
+0c6b895fba32fe2f531f78e603672478  ./www/crud/srv/sadm_server_backup.php
 064cf680772a368af0017c95f803266c  ./www/crud/srv/sadm_server_common.php
 ed0de0bf90753eef65ecbd0131ca2b9c  ./www/crud/srv/sadm_server_create.php
 d6a7d9b2cc43e11c10e73699cea7acf9  ./www/crud/srv/sadm_server_delete.php
@@ -383,4 +383,4 @@ df7990cdf4342593780e48337eb3ec9f  ./www/view/perf/sadm_server_perf_menu.php
 b09c4499a15a6e8df74ed45861a7ef6d  ./www/view/sys/sadm_view_cfg2html.php
 14ba3b31156ab4b2e6974944c1e997cc  ./www/view/sys/sadm_view_rear.php
 6f79a3a0a25cd5a3e7adea934f3daf40  ./www/view/sys/sadm_view_schedule.php
-9ddb70a50d18e7798255bf5cdefe60f1  ./www/view/sys/sadm_view_sysmon.php
+b0423cf712bcb48c5aabe3285dc04096  ./www/view/sys/sadm_view_sysmon.php
