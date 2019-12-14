@@ -50,13 +50,13 @@ ec38aa711a4bbfdedf6123408219c7ef  ./cfg/.alert_slack.cfg
 d14b30553ea6f13bb55b387a4d5379fe  ./cfg/.backup_exclude.txt
 f08d31bc6515a00e9e3901233760ddd0  ./cfg/.backup_list.txt
 d14bfe06935fe119aa3970b573b84fd2  ./cfg/.rear_exclude.txt
-acb766c6067f046105f8b1263b9e5172  ./cfg/.release
+bf701dae9aff5bb22b8f000dc9bf6199  ./cfg/.release
 745bfc791c4205d1329b9a34546eaf28  ./cfg/.sadmin.cfg
 04d15c166639621f7cc19eb32640e936  ./cfg/.sadmin.rc
 2ef2e4cdc22f350d892f0a1424d621da  ./cfg/.sadmin.service
 80decdfe9bcb558728b97dd36b76fd38  ./cfg/.template.smon
-e49d4792442a13a4d0b1205d09d47719  ./cfg/.version
-890248a64c90cac85d757537555f5021  ./cfg/.versum
+0367a72f0d96aa0bdeab7190ad49a89e  ./cfg/.version
+6ab25d014d77a9190555aa2d955db0b5  ./cfg/.versum
 6281a2d9fdeee451aea5fa6924d52b73  ./changelog.md
 d41d8cd98f00b204e9800998ecf8427e  ./dat/.gitkeep
 3b5cddb8e4b260177a62a705965c0a4a  ./doc/pdf/calendar_php.pdf
