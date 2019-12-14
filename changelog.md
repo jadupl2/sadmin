@@ -1,6 +1,12 @@
 # Changelog
 
 
+## Release v[1.2.2](https://github.com/jadupl2/sadmin/releases) (2019-12-14)
+- Fixes
+	- Fix format problem (tgz) with previous version (1.2.1) (problem with sadm_updater.sh).
+	- You should use 1.2.2 instead of 1.2.1,
+
+
 ## Release v[1.2.1](https://github.com/jadupl2/sadmin/releases) (2019-12-13)
 - Fixes
 	- 2019_11_25 sadm_client_housekeeping.sh (v1.34) - Remove deletion of $SADMIN/www on SADMIN client.

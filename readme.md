@@ -1,5 +1,5 @@
 ![SADMIN Tools][1] 
-SADMIN Tools v1.2.1
+SADMIN Tools v1.2.2
 
 
 - [Brief description](#brief-description)
