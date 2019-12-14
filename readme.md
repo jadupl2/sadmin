@@ -1,7 +1,6 @@
 ![SADMIN Tools][1] 
 SADMIN Tools v1.2.2
 
-
 - [Brief description](#brief-description)
 - [Run on most popular Linux distributions](#run-on-most-popular-linux-distributions)
 - [Download](#download)
