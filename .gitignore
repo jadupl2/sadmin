@@ -58,6 +58,8 @@ bitbucket-pipelines.yml
 
 # Exclude the SADMIN System monitor lock file.
 sysmon.lock
+readme.html
+readme.pdf
 
 # Want theses directories to be part of the project (but empty)
 dat/*
