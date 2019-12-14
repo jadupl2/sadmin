@@ -57,7 +57,7 @@ bf701dae9aff5bb22b8f000dc9bf6199  ./cfg/.release
 80decdfe9bcb558728b97dd36b76fd38  ./cfg/.template.smon
 0367a72f0d96aa0bdeab7190ad49a89e  ./cfg/.version
 6ab25d014d77a9190555aa2d955db0b5  ./cfg/.versum
-6281a2d9fdeee451aea5fa6924d52b73  ./changelog.md
+9b7b97a806fd7f730f6b2b8086eafb30  ./changelog.md
 d41d8cd98f00b204e9800998ecf8427e  ./dat/.gitkeep
 3b5cddb8e4b260177a62a705965c0a4a  ./doc/pdf/calendar_php.pdf
 d5dbd9e0e2ac44d6efcf6962411b0d6d  ./doc/pdf/database/table_structure_category.pdf
@@ -182,9 +182,9 @@ cc8f29b78df168f1f8138a16abc3e1ee  ./pkg/rear/ubuntu/1604/64bits/rear_2.5-0_amd64
 4fc31d52427474ca2c0517c5e7ed18b0  ./pkg/rear/ubuntu/1804/64bits/rear_2.5-0_amd64.deb
 adde8c77d7d24bac4dcc2017346e4089  ./pkg/rear/ubuntu/1810/64bits/rear_2.5-0_amd64.deb
 8e2643ed8ee620314b619254806f9cbf  ./pkg/rear/ubuntu/1904/64bits/rear_2.5-0_amd64.deb
-e14401a00f0bbed92486d2d77766af30  ./readme.html
-989947a1fbde7cbad6cb46b3eea42dfe  ./readme.md
-4a5e6d7affab17af4c66536ca088790f  ./readme.pdf
+315294d5fed4648caf95cad96b1d523b  ./readme.html
+2981a8986f7ae4defa66185c925863a4  ./readme.md
+257befd9c7eaa23dc7cf0c29403b5657  ./readme.pdf
 800418ae4a61d325bf3236d02fe59309  ./setup/bin/sadm_setup.py
 5ed3bb72515445d833278db5e9e5f4b7  ./setup/etc/sadmin.cnf
 e41041df77dad2bab316af06c450b8cf  ./setup/etc/sadmin.conf
