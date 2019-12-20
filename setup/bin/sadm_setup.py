@@ -947,10 +947,10 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     sql += " srv_sporadic='0', srv_monitor='1', srv_cat='Prod', srv_group='Regular', "
     sql += " srv_backup='0', srv_update_auto='0', srv_tag='SADMin Server', " 
     sql += " srv_osname='%s'," % (osdist)
+    sql += " srv_arch='%s'  ," % (warch) 
     sql += " srv_osversion='%s'," % (osver)
     sql += " srv_ostype='linux', srv_graph='1', srv_note='', srv_kernel_version='', srv_model='',"
-    sql += " srv_serial='', srv_memory='0', srv_cpu_speed='0', "
-    sql += " srv_arch='%s' % (warch) ;"  
+    sql += " srv_serial='', srv_memory='0', srv_cpu_speed='0' ;"
     #
     # Execute the Insert New Server Statement
     cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
