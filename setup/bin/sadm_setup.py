@@ -924,6 +924,9 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     wcmd = "%s %s" % ("lsb_release","-si")
     ccode, cstdout, cstderr = oscommand(wcmd)
     osdist=cstdout.upper()
+    if osdist == "REDHATENTERPRISESERVER" : osdist="REDHAT"
+    if osdist == "REDHATENTERPRISEAS"     : osdist="REDHAT"
+    if osdist == "REDHATENTERPRISE"       : osdist="REDHAT"
     #
     wcmd = "%s %s" % ("lsb_release","-sr")
     ccode, cstdout, cstderr = oscommand(wcmd)
@@ -933,17 +936,21 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     ccode, cstdout, cstderr = oscommand(wcmd)
     oscodename=cstdout
     #
+    wcmd = "%s %s" % ("uname","-m")
+    ccode, cstdout, cstderr = oscommand(wcmd)
+    warch=cstdout
+    #
     # Construct insert new server SQL Statement
     sql = "use sadmin; "
     sql += "insert into server set srv_name='%s', srv_domain='%s'," % (sname,sdomain);
-    sql += " srv_desc='SADMIN Server', srv_active='1', srv_date_creation='%s'," % (dbdate);
-    sql += " srv_sporadic='0', srv_monitor='1', srv_cat='Prod', srv_group='Regular', ";
-    sql += " srv_backup='0', srv_update_auto='0', srv_tag='SADMin Server', ";
-    sql += " srv_osname='%s'," % (osdist);
-    sql += " srv_osversion='%s'," % (osver);
+    sql += " srv_desc='SADMIN Server', srv_active='1', srv_date_creation='%s'," % (dbdate)
+    sql += " srv_sporadic='0', srv_monitor='1', srv_cat='Prod', srv_group='Regular', "
+    sql += " srv_backup='0', srv_update_auto='0', srv_tag='SADMin Server', " 
+    sql += " srv_osname='%s'," % (osdist)
+    sql += " srv_osversion='%s'," % (osver)
     sql += " srv_ostype='linux', srv_graph='1', srv_note='', srv_kernel_version='', srv_model='',"
-    sql += " srv_serial='', srv_memory='', srv_cpu_speed='' ;"  
-    , srv_ip='' , srv_ips_info='' , srv_disks_info='' , srv_vgs_info='' , srv_update_status='R' ;"
+    sql += " srv_serial='', srv_memory='0', srv_cpu_speed='0', "
+    sql += " srv_arch='%s' % (warch) ;"  
     #
     # Execute the Insert New Server Statement
     cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
