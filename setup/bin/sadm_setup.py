@@ -66,6 +66,7 @@
 # 2019_07_04 Update: v3.29 Crontab client and Server definition revised for Aix and Linux.
 # 2019_08_25 Update: v3.30 On Client setup Web USer and Group in sadmin.cfg to sadmin user & group.
 # 2019_10_30 Update: v3.31 Remove installation of 'facter' package (Depreciated).
+# 2019_12_18 Update: v3.32 Fix problem when inserting server into database on Ubuntu/Raspbian.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -82,7 +83,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.31"                                            # Setup Version Number
+sver                = "3.32"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -928,6 +929,10 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     ccode, cstdout, cstderr = oscommand(wcmd)
     osver=cstdout
     #
+    wcmd = "%s %s" % ("lsb_release","-c | awk '{print$2}'")
+    ccode, cstdout, cstderr = oscommand(wcmd)
+    oscodename=cstdout
+    #
     # Construct insert new server SQL Statement
     sql = "use sadmin; "
     sql += "insert into server set srv_name='%s', srv_domain='%s'," % (sname,sdomain);
@@ -936,7 +941,9 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     sql += " srv_backup='0', srv_update_auto='0', srv_tag='SADMin Server', ";
     sql += " srv_osname='%s'," % (osdist);
     sql += " srv_osversion='%s'," % (osver);
-    sql += " srv_ostype='linux', srv_graph='1' ;"
+    sql += " srv_ostype='linux', srv_graph='1', srv_note='', srv_kernel_version='', srv_model='',"
+    sql += " srv_serial='', srv_memory='', srv_cpu_speed='' ;"  
+    , srv_ip='' , srv_ips_info='' , srv_disks_info='' , srv_vgs_info='' , srv_update_status='R' ;"
     #
     # Execute the Insert New Server Statement
     cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
