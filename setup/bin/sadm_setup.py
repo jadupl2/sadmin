@@ -66,7 +66,8 @@
 # 2019_07_04 Update: v3.29 Crontab client and Server definition revised for Aix and Linux.
 # 2019_08_25 Update: v3.30 On Client setup Web USer and Group in sadmin.cfg to sadmin user & group.
 # 2019_10_30 Update: v3.31 Remove installation of 'facter' package (Depreciated).
-# 2019_12_18 Update: v3.32 Fix problem when inserting server into database on Ubuntu/Raspbian.
+#@2019_12_18 Update: v3.32 Fix problem when inserting server into database on Ubuntu/Raspbian.
+#@2019_12_20 Update: v3.33 Remove installation of ruby (was used for facter) & of pymysql (Done)
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -83,7 +84,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.32"                                            # Setup Version Number
+sver                = "3.33"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -135,8 +136,8 @@ req_client = {
                     'deb':'mutt',                           'drepo':'base'},
     'gawk'       :{ 'rpm':'gawk',                           'rrepo':'base',
                     'deb':'gawk',                           'drepo':'base'},
-    'ruby-libs'  :{ 'rpm':'ruby-libs',                      'rrepo':'epel',  
-                    'deb':'ruby-full',                      'drepo':'base'},
+#    'ruby-libs'  :{ 'rpm':'ruby-libs',                      'rrepo':'epel',  
+#                    'deb':'ruby-full',                      'drepo':'base'},
     'bc'         :{ 'rpm':'bc',                             'rrepo':'base',  
                     'deb':'bc',                             'drepo':'base'},
     'curl'       :{ 'rpm':'curl',                           'rrepo':'base',  
@@ -2271,7 +2272,7 @@ def mainflow(sroot):
 
     # Check and if needed install missing packages require.
     satisfy_requirement('C',sroot,packtype,logfile,sosname,sosver,sosbits) # Chk/Install Client Req.
-    special_install(packtype,sosname,logfile)                           # Install pymysql module
+    # special_install(packtype,sosname,logfile)                           # Install pymysql module
 
     # Create SADMIN user sudo file
     update_sudo_file(logfile,uuser)                                     # Create User sudo file
