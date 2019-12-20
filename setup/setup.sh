@@ -223,6 +223,7 @@ check_python3()
              echo " " | tee -a $SLOG
         else echo "Python3 is not installed."  | tee -a $SLOG
              install_python3 
+             echo "[OK] python3 is installed." | tee -a $SLOG
     fi
 
     
@@ -242,6 +243,7 @@ check_python3()
                      echo "Then run this script again." | tee -a $SLOG 
                      echo "----------" | tee -a $SLOG
                      exit 1
+                else echo "[OK] Module installed." | tee -a $SLOG
              fi
     fi
     return 0                                                            # Return No Error to Caller
