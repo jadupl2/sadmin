@@ -42,7 +42,8 @@
 # 2018_07_11  v3.9 Solve problem when running update on SADMIN server (Won't start)
 # 2018_09_19  v3.10 Include Alert Group
 # 2018_10_24  v3.11 Adjustment needed to call sadm_osupdate.sh with or without '-r' (reboot) option.
-#@2019_07_14 Update: v3.12 Adjustment for Library Changes.
+# 2019_07_14 Update: v3.12 Adjustment for Library Changes.
+#@2019_12_22 Fix: v3.13 Fix problem when using debug (-d) option without specifying level of debug.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -93,7 +94,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.12'                              # Your Current Script Version
+    export SADM_VER='3.13'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -130,7 +131,6 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 ERROR_COUNT=0                               ; export ERROR_COUNT        # Nb. of update failed
 WARNING_COUNT=0                             ; export WARNING_COUNT      # Nb. of warning failed
 STAR_LINE=`printf %80s |tr " " "*"`         ; export STAR_LINE          # 80 equals sign line
@@ -176,7 +176,7 @@ update_server_db()
     WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -e '$SQL'"           # Build Full Command Line
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
 
     # Execute SQL to Update Server O/S Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e "$SQL" >>$SADM_LOG 2>&1
@@ -212,7 +212,7 @@ process_servers()
     WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL'"        # Build Full Command Line
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
 
     # Execute SQL to Update Server O/S Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
@@ -317,7 +317,14 @@ process_servers()
         case $opt in
             s) ONE_SERVER="$OPTARG"                                     # Display Only Server Name
                ;;
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+            d) SADM_DEBUG=$OPTARG                                       # Debug Level from 0 to 9 
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       sadm_stop 1                                      # Close/Trim Log & Del PID
+                       exit 1
+               fi
                ;;                                                       # No stop after each page 
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
@@ -331,7 +338,7 @@ process_servers()
                ;;
         esac                                                            # End of case
         done             
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}" ; fi
+    if [ $SADM_DEBUG -gt 0 ] ; then printf "Debug activated, Level ${SADM_DEBUG}\n" ; fi
 
 
     # RUN ON THE SADMIN MAIN SERVER ONLY
