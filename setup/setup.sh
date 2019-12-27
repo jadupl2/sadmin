@@ -41,6 +41,7 @@
 # 2019_04_19 Fix: v2.7 Solve problem with pip3 on Ubuntu.
 # 2019_06_19 Update: v2.8 Update procedure to install CentOS/RHEL repository for version 5,6,7,8
 #@2019_12_20 Update: v2.9 Better verification and installation of python3 (If needed)
+#@2019_12_27 Update: v3.0 Add recommended EPEL Repos on CentOS/RHEL 8.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
@@ -50,7 +51,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='2.9'                              ; export SADM_VER           # Your Script Version
+SADM_VER='3.0'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -170,6 +171,23 @@ add_epel_repo()
                 then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
                      return 1
              fi 
+             #
+             # On RHEL 8 it is required to also enable the codeready-builder-for-rhel-8-*-rpms 
+             # repository since EPEL packages may depend on packages from it:
+             if [ "$SADM_OSNAME" = "REDHAT" ] 
+                then echo "On RHEL 8, it's required to also enable codeready-builder ..." 
+                     echo "Since EPEL packages may depend on packages from it." 
+                     ARCH=$( /bin/arch )
+                     subscription-manager repos --enable "codeready-builder-for-rhel-8-${ARCH}-rpms"
+             fi
+             #
+             # On CentOS 8 it is recommended to also enable the PowerTools repository since EPEL 
+             # packages may depend on packages from it:
+             if [ "$SADM_OSNAME" = "CENTOS" ] 
+                then echo "On CentOS 8, it is recommended to also enable the PowerTools ..."  
+                     dnf config-manager --set-enabled PowerTools
+             fi
+
     fi
 
     return 0 
