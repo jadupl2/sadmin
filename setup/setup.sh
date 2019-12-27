@@ -42,6 +42,7 @@
 # 2019_06_19 Update: v2.8 Update procedure to install CentOS/RHEL repository for version 5,6,7,8
 #@2019_12_20 Update: v2.9 Better verification and installation of python3 (If needed)
 #@2019_12_27 Update: v3.0 Add recommended EPEL Repos on CentOS/RHEL 8.
+#@2019_12_27 Update: v3.1 On RHEL/CentOS 6/7, revert to Python 3.4 (3.6 Incomplete on EPEL)
 #
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
@@ -51,7 +52,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.0'                              ; export SADM_VER           # Your Script Version
+SADM_VER='3.1'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -202,13 +203,13 @@ install_python3()
     echo "Installing python3." | tee -a $SLOG
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
-        then echo "Running 'yum --enablerepo=epel -y install python36 python36-setuptools python36-pip'" |tee -a $SLOG
-             yum --enablerepo=epel -y install python36 python36-setuptools python36-pip >>$SLOG 2>&1
+        then echo "Running 'yum --enablerepo=epel -y install python34 python34-setuptools python34-pip'" |tee -a $SLOG
+             yum --enablerepo=epel -y install python34 python34-setuptools python34-pip >>$SLOG 2>&1
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
         then apt-get update >> $SLOG 2>&1
              echo "Running 'apt-get -y install python3 python3-pip'"| tee -a $SLOG
-             apt-get -y install python3 python3-pip >>$SLOG 2>&1
+             apt-get -y install python3 python3-venv python3-pip >>$SLOG 2>&1
     fi 
     
     # python3 should now be installed, if not then abort installation
