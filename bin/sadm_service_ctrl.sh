@@ -50,6 +50,7 @@
 #@2019_03_29 Update: v2.5 Major Revamp - Re-Tested - SysV and SystemD
 #@2019_03_30 Update: v2.6 Added message when enabling/disabling sadmin service.
 #@2019_04_07 Update: v2.7 Use color variables from SADMIN Library.
+#@2019_12_27 Update: v2.8 Was exiting with error when using options '-h' or '-v'.
 #--------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -74,7 +75,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.7'                               # Current Script Version
+    export SADM_VER='2.8'                               # Current Script Version
     export SADM_LOG_TYPE="L"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -445,8 +446,12 @@ service_start()
                service_status sadmin                                    # Status of sadmin Service
                ;;                                                      
             h) show_usage                                               # Display Help Usage
+               sadm_stop 0                                              # Close and Trim Log
+               exit 0                                                   # Exit To O/S
                ;;
             v) show_version                                             # Display Script Version
+               sadm_stop 0                                              # Close and Trim Log
+               exit 0                                                   # Exit To O/S
                ;;
            \?) echo "Invalid option: -$OPTARG" >&2                      # Invalid Option Message
                show_usage                                               # Display Help Usage
