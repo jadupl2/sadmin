@@ -39,6 +39,7 @@
 # 2019_10_15 Update: v2.9 Add Architecture, O/S Name, O/S Version to page
 #@2019_11_26 Fix: v2.10 Fix problem with temp files (Change from $SADMIN/tmp to $SADMIN/www/tmp)
 #@2019_11_27 Fix: v2.11 Fix 'open append failed', when no *.rpt exist or are all empty.
+#@2020_01_11 Update: v2.12 Remove Arch,Category and OS Version to make space on Line.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -72,7 +73,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.11" ;                                                       # Current version number
+$SVER  = "2.12" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -206,10 +207,10 @@ function sysmon_page_heading() {
     echo "\n<th class='dt-center'>Server</th>";
     #echo "\n<th class='dt-center'>Distribution</th>";
     echo "\n<th class='dt-head-left'>Server Description</th>";
-    echo "\n<th class='dt-head-left'>Cat.</th>";
-    echo "<th class='dt-head-left'>Arch</th>\n";
+#    echo "\n<th class='dt-head-left'>Cat.</th>";
+#    echo "<th class='dt-head-left'>Arch</th>\n";
     echo "<th class='dt-head-left'>O/S Name</th>\n";
-    echo "<th class='dt-head-left'>O/S Version</th>\n";
+#    echo "<th class='dt-head-left'>O/S Version</th>\n";
     echo "\n<th class='dt-center'>Alert Group/Type</th>";
     echo "\n</tr>";
     echo "\n</thead>\n";
@@ -224,10 +225,10 @@ function sysmon_page_heading() {
     echo "\n<th class='dt-center'>Server</th>";
     #echo "\n<th class='dt-center'>Distribution</th>";
     echo "\n<th class='dt-head-left'>Server Description</th>";
-    echo "\n<th class='dt-head-left'>Cat.</th>";
-    echo "<th class='dt-head-left'>Arch</th>\n";
+#    echo "\n<th class='dt-head-left'>Cat.</th>";
+#    echo "<th class='dt-head-left'>Arch</th>\n";
     echo "<th class='dt-head-left'>O/S Name</th>\n";
-    echo "<th class='dt-head-left'>O/S Version</th>\n";
+#    echo "<th class='dt-head-left'>O/S Version</th>\n";
     echo "\n<th class='dt-center'>Alert Group/Type</th>";
     echo "\n</tr>";
     echo "\n</tfoot>\n";
@@ -347,16 +348,16 @@ function display_data($con,$alert_file) {
       echo "<td>" . $WDESC . "</td>\n";                                 # Server Description
 
       # Server Category  
-      echo "<td class='dt-body-left'>" . ucfirst( $row['srv_cat']) . "</td>\n";  
+      #echo "<td class='dt-body-left'>" . ucfirst( $row['srv_cat']) . "</td>\n";  
 
       # Server Architecture  
-      echo "<td class='dt-body-left'>" . ucfirst( $row['srv_arch']) . "</td>\n";  
+      #echo "<td class='dt-body-left'>" . ucfirst( $row['srv_arch']) . "</td>\n";  
     
       # Server O/S Name 
       echo "<td class='dt-body-center'>" . ucfirst( $row['srv_osname']) . "</td>\n";  
     
       # Server O/S Version
-      echo "<td class='dt-body-center'>" . nl2br( $row['srv_osversion']) . "</td>\n";  
+      #echo "<td class='dt-body-center'>" . nl2br( $row['srv_osversion']) . "</td>\n";  
       
       # Display Operating System Logo
       #$WOS   = sadm_clean_data($row['srv_osname']);                     # Set Server O/S Name
