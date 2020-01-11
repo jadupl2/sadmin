@@ -28,8 +28,9 @@
 # 2019_01_22 Added: v1.4 Add Dark Theme
 # 2019_08_14 Update: v1.5 Redesign page,show one line schedule,show backup policies, fit Ipad screen.
 # 2019_08_19 Update: v1.6 Some typo error and show 'Backup isn't activated' when no schedule define.
-#@2019_12_01 Update: v1.7 Backup will run daily (Remove entry fields for specify day of backup)
+# 2019_12_01 Update: v1.7 Backup will run daily (Remove entry fields for specify day of backup)
 #       If not run every day, they could miss the day of weekly & monthly and date of Yearly backup.
+#@2020_01_03 Update: v1.8 Web Page disposition and input was changed.
 # ==================================================================================================
 #
 #
@@ -44,21 +45,21 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     color           :   #f9f4be;   
     font-family     :   Verdana, Geneva, sans-serif;
     font-size       :   0.9em;
-    width           :   90%;
-    margin          :   0 auto;
+    width           :   60%;
+    margin          : 0px 10px 10px 10px;
     text-align      :   left;
     border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
     border-color    :   #000000;             border-radius: 10px;
     line-height     :   1.7;    
 }
-.backup_left_side   { width : 50%;  float : left;   margin : 10px 0px 10px 0px;    }
+.backup_left_side   { width : 40%;  float : left;   margin : 10px 0px 10px 0px;    }
 .left_label         { float : left; width : 50%;    text-align: right; font-weight : bold; }
-.left_input         { margin-bottom : 5px;  margin-left : 50%;  background-color : #393a3c;
+.left_input         { margin-bottom : 5px;  margin-left : 55%;  background-color : #393a3c;
                       width : 50%; border-width: 0px;  border-style : solid;  border-color : #000000;
                       padding-left: 6px;
 }
 
-.backup_right_side  { width : 50%;  float : right;  margin : 10px auto;     }
+.backup_right_side  { width : 50%;  float : right;  margin : 10px 0px 10px 0px;    }
 .right_label        { float : left; width : 85%;    font-weight : bold; }
 .right_input        { margin-bottom : 4px;  margin-right : 10px;     background-color:    #454c5e;
                       float : left;  padding-left : 5px;  padding-right : 5px;  padding-top : 5px;
@@ -66,10 +67,10 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 }                      
 .backup_policy {
     background-color:   #28866c;
-    color           :   #FF9800;;   
+    color           :   #F7FF00; 
     font-family     :   Verdana, Geneva, sans-serif;
-    width           :   90%;
-    margin          :   auto;
+    width           :   60%;
+    margin          :   0px 0px 0px 10px;
     padding-top     :   10px;
     padding-left    :   15px; 
     text-align      :   left;
@@ -90,8 +91,8 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     border-color    :   #000000;             border-radius: 10px; */
     line-height     :   1.5;    
 }
-.deux_boutons   { width : 70%;   margin: 1% auto;   } 
-.premier_bouton { width : 20%;  float : left;   margin-left : 25%;  text-align : right ; }
+.deux_boutons   { width : 60%;  margin: 0px 0px 0px 0px;  } 
+.premier_bouton { width : 20%;  height : 20px ; float : left;   margin-left : 25%;  text-align : right ; }
 .second_bouton  { width : 20%;  float : right;  margin-right: 25%;  text-align : left  ; }
 </style>
 
@@ -106,7 +107,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.7" ;                                                        # Current version number
+$SVER  = "1.8" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -382,7 +383,7 @@ function display_left_side($con,$wrow,$mode) {
     # ----------------------------------------------------------------------------------------------
     # Hour to Run the Backup
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='left_label'>Time of Backup</div>";
+    echo "\n\n<div class='left_label'>Daily Backup Time</div>";
     echo "\n<div class='left_input'>";
     echo "\n<select name='scr_backup_hour' size=1>";
     switch ($mode) {
@@ -435,7 +436,7 @@ function display_left_side($con,$wrow,$mode) {
     # Files and Directories to Backup
     echo "\n\n<div class='left_label'>Backup List (Files & Dir.)</div>";
     echo "\n<div class='left_input'>";
-    echo "  <textarea rows='12' cols='80' name='backuplist' form='backup'>";
+    echo "  <textarea rows='15' cols='82' name='backuplist' form='backup'>";
     $BLHASH = Read_BackupList($wrow);
     echo "</textarea>";
     echo "\n</div>";
@@ -443,7 +444,7 @@ function display_left_side($con,$wrow,$mode) {
     # Files and Directories to Exclude from Backup
     echo "\n\n<div class='left_label'>Exclude List (Files & Dir.)</div>";
     echo "\n<div class='left_input'>";
-    echo "  <textarea rows='12' cols='80' name='backupexclude' form='backup'>";
+    echo "  <textarea rows='15' cols='82' name='backupexclude' form='backup'>";
     $BEHASH = Read_BackupExclude($wrow);
     echo "</textarea>";
     echo "\n</div>";
@@ -700,7 +701,7 @@ if (isset($_POST['submitted'])) {
         $title2="Backup isn't activated";
     }
     display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
-    show_backup_policy();
+#    show_backup_policy();
     
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
     echo "\n\n<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' id='backup' method='POST'>";
@@ -725,5 +726,6 @@ if (isset($_POST['submitted'])) {
     echo "\n</form>";                                                   # End of Form
     echo "\n<br>";                                                      # Blank Line After Button
     echo "\n<br>";                                                      # Blank Line After Button
+    show_backup_policy();
     std_page_footer($con)                                               # Close MySQL & HTML Footer
     ?>
