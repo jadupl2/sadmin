@@ -257,7 +257,7 @@ main_process()
 
     # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Only 'root' can run this script."           # Advise User Message
+        then sadm_writelog "Only 'root' user can run this script."      # Advise User Message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S with Error
     fi
