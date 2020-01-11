@@ -28,11 +28,11 @@
 # 2018_09_19    v3.9 Include Alert Group 
 # 2018_10_24    v3.10 Command line option -d -r -h -v added.
 # 2019_01_16 Improvement: v3.11 Add 'apt-get autoremove' when 'deb' package is use.
-# 2019_05_23  Update: v3.12 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
-# 2019_07_12  Update: v3.13 O/S update script now update the date and status in sysinfo.txt. 
-# 2019_07_17  Update: v3.14 O/S update script now perform apt-get clean before update start on *.deb
-#@2019_11_21  Update: v3.15 Add 'export DEBIAN_FRONTEND=noninteractive' prior to 'apt-get upgrade'.
-#@2019_11_21  Update: v3.16 Email sent to SysAdmin if some package are kept back from update.
+# 2019_05_23 Update: v3.12 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
+# 2019_07_12 Update: v3.13 O/S update script now update the date and status in sysinfo.txt. 
+# 2019_07_17 Update: v3.14 O/S update script now perform apt-get clean before update start on *.deb
+#@2019_11_21 Update: v3.15 Add 'export DEBIAN_FRONTEND=noninteractive' prior to 'apt-get upgrade'.
+#@2019_11_21 Update: v3.16 Email sent to SysAdmin if some package are kept back from update.
 #
 # --------------------------------------------------------------------------------------------------
 #set -x
@@ -364,14 +364,13 @@ run_apt_get()
             body1=`date`
             body2=$(printf "\n\n${msub}\nThere are ${NB_UPD} update available\n\n")
             body3=`apt list --upgradable 2>/dev/null | grep -v 'Listing...' | nl` 
-            body4="If the dependencies have changed on one of the packages you have installed "
-            body5="so that a new package must be installed to perform the upgrade then that " 
+            body4=$(printf "\nIf some dependencies have changed on one of the packages you have installed, ")
+            body5="maybe some new package must be installed to perform the upgrade then, it "
             body6="will be listed as 'kept-back'."
             body7="run apt-get install <list of packages kept back>."
-            mbody=`echo -e "${body1}${body2}\n${body3}\n${body4}\n\n${body5}\n${body6}\n\n${body7}"`
+            mbody=`echo -e "${body1}\n${body2}\n${body3}\n${body4}\n\n${body5}\n${body6}\n\n${body7}\n\nHave a nice day."`
             printf "%s" "$mbody" | $SADM_MUTT -s "$msub" "$SADM_MAIL_ADDR" >>$SADM_LOG 2>&1 
     fi
-
 
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Update Successfull."
