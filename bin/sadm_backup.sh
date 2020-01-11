@@ -381,7 +381,7 @@ backup_setup()
 
     # Make sure the Server Backup Directory exist on NFS Drive -------------------------------------
     if [ ! -d ${ARCHIVE_DIR} ]                                          # Check if Server Dir Exist
-        then sadm_writelog "Making Today backup directory $ARCHIVE_DIR" # Show user what were doing
+        then sadm_writelog "Making today archive directory $ARCHIVE_DIR" # Show user what were doing
              mkdir ${ARCHIVE_DIR}                                       # If Not Create it
              if [ $? -ne 0 ]                                            # If Error trying to mount
                 then sadm_writelog "[ERROR] Creating Directory $ARCHIVE_DIR"
@@ -395,7 +395,7 @@ backup_setup()
     # Make sure the Server Backup Directory With Today's Date exist on NFS Drive -------------------
     BACKUP_DIR="${ARCHIVE_DIR}/${CUR_DATE}"                             # Set Backup Directory
     if [ ! -d ${BACKUP_DIR} ]                                           # Check if Server Dir Exist
-        then sadm_writelog "Making Today backup directory $BACKUP_DIR"
+        then sadm_writelog "Making today backup directory $BACKUP_DIR"
              mkdir ${BACKUP_DIR}                                        # If Not Create it
              if [ $? -ne 0 ]                                            # If Error trying to mount
                 then sadm_writelog "[ERROR] Creating Directory ${BACKUP_DIR}"
