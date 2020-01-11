@@ -269,7 +269,7 @@ table thead td {
     font-family     :   Verdana, Geneva, sans-serif;
     /* background-color:   #fff5c3;
     color           :   black; */
-    background-color:   #2d3139;
+    background-color:   #006456;
     color           :    white;
     width           :   45%;
     margin-top      :   5%;
@@ -289,7 +289,7 @@ table thead td {
 .simple_label {
     float           :   left;
     width           :   210px;
-    font-weight     :   bold; 
+    font-weight     :   normal; 
     text-align      :   right;   
     margin-right    :   15px;
 
@@ -298,10 +298,10 @@ table thead td {
 .simple_input {
     float           :   left;
     margin-bottom   :   10px;
-    color           :   white;
-    background-color:   #454c5e;
+    color           :   White;
+    background-color:   #006456;
     width           :   200px;
-    border          :   1px solid  black;
+    /*border          :   1px solid  black; */
     
 }
 /* Attribute for the Category, Group Main Screen Table (That List All Category, Group) */
@@ -335,9 +335,9 @@ table thead td {
     font-family     :   Verdana, Geneva, sans-serif;
     /* background-color:   #fff5c3;
     color           :   black; */
-    background-color:   #2d3139;
-    color           :    white;
-    width           :   58%;
+    background-color:   #006456;
+    color           :   white;
+    width           :   50%;
     margin-top      :   2%;
     margin-left     :   auto;
     margin-right    :   auto;
@@ -345,32 +345,32 @@ table thead td {
     font-size       :   12px;
     text-align      :   left;
     padding         :   2%;
-    border-width    :   1px;
+    border-width    :   0px;
     border-style    :   solid;
     border-color    :   #000000;
     border-radius   :   10px;
-    line-height     :   1.7;    
+    line-height     :   1.5;    
     /* background-color:   #8ee9d4;      */
 }
 /* Attribute for Column Name at the left of the form */
 .double_label {
     float           :   left;
     width           :   200px;
-    font-weight     :   bold;    
+    /*font-weight     :   normal;    */
     text-align      :   right;
     margin-right    :   10px;
 }
 /* Attribute for column Input at the right of the screen in the form */
 .double_input {
-    margin-bottom   :   8px;
-    color           :   white;
-    background-color:   #454c5e;
+    margin-bottom   :   10px;
+    color           :   White;
+    background-color:   #006456;
     float           :   left;
     /* width           :   200px; */
 }
 
 .input_color {
-    color           :  #454c5e;
+    color           :  White ;
     font-size       :   14px;
   }
 
@@ -400,7 +400,7 @@ table thead td {
 /* ---------------------------------------------------------------------------------------------- */
 div.server_data {
     font-family     :   Geneva, sans-serif;
-    background-color:   #2d3139;
+    background-color:   #006456;
     color           :    white;
     margin-left     :   5px;
     margin-right    :   auto;
@@ -420,7 +420,7 @@ div.server_data {
 
 /* ===== Server Left side of Server Info Screen  ===== */
 div.server_leftside {
-    width           : 43%;
+    width           : 45%;
     float           : left;
     margin-left     : 1px; 
     padding         : 0px;
@@ -428,9 +428,9 @@ div.server_leftside {
 }
 /* ===== Server Right side of Server Info Screen  ===== */
 div.server_rightside {
-    width           : 50%;
+    width           : 45%;
     float           : left;
-    margin-left     : 10px; 
+    margin-left     : 1px; 
     padding         : 0px;
     /* background-color: blue; */
 }
@@ -438,9 +438,9 @@ div.server_rightside {
 /* ===== Label on left size of the Server Info Screen ==== */
 div.server_left_label {
     float           : left;
-    width           : 38%;
-    font-weight     : bold;
-    text-align      : right;
+    width           : 20%;
+    font-weight     : normal;
+    text-align      : left;
     /*font-family: "Verdana";*/
     /* font: 13px arial, sans-serif; */
     /*background-color: yellow;*/
@@ -449,9 +449,9 @@ div.server_left_label {
 /* ===== Label on right size of the Server Info Screen ==== */
 div.server_right_label {
     float           : left;
-    width           : 38%;
-    font-weight     : bold;
-    text-align      : right;
+    width           : 22%;
+    font-weight     : normal;
+    text-align      : left;
     /* font: 13px arial, sans-serif; */
     /*background-color: yellow;*/
 }
@@ -459,16 +459,17 @@ div.server_right_label {
 /* ===== Data on right size of Server Info Screen  ===== */
 div.server_left_data {
     margin-bottom   : 4px;
-    margin-left     : 40%;
+    margin-left     : 20%;
     /* color           : black;
     background-color: #f5f4f0; */
-    background-color: #333333;
-    color           : white;
+    background-color: #FFFFFF;
+    text-align      : left;
+    color           : black;
     /* 
     background-color: #4178be;
     */
     border:1px solid  black;
-    width           : 60%;
+    width           : 40%;
     padding-left    : 5px;
     /* font: 13px arial, sans-serif; */
     /*background-color: green;*/
@@ -477,14 +478,15 @@ div.server_left_data {
 /* ===== Data on Left size of Server Info Screen  ===== */
 div.server_right_data {
     margin-bottom   : 4px;
-    margin-left     : 40%;
+    margin-left     : 25%;
     padding-left    : 5px;
     /* color           : black;
     background-color: #f5f4f0; */
-    color           : white;
-    background-color: #333333;
+    color           : black;
+    background-color: #FFFFFF;
+    text-align      : left;
     border          : 1px solid black;
-    width           : 60%;
+    width           : 40%;
     /* font: 13px arial, sans-serif; */
     /*background-color: green;*/
 }
@@ -494,6 +496,7 @@ div.server_top_buttons {
     font-family     :   Geneva, sans-serif;
     /* background-color:   #fff5c3; */
     background-color:   #2d3139;
+    background-color:   #124f44;
     color           :    white;
     margin-left     :   5px;
     margin-right    :   auto;
