@@ -54,7 +54,9 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     border: none; 
     */
     background-color: #f37320;
+    background-color: #9FBF8C;
     color           : white;
+    color           : black;
     padding         : 5px 16px;
     text-align      : center;
     text-decoration : none;
@@ -83,6 +85,7 @@ $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $URL_MENU   = '/crud/srv/sadm_server_menu.php';                         # Maintenance Main Menu URL
+$URL_VIEW   = '/view/srv/sadm_view_server_info.php';                    # URL of this page
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
@@ -106,6 +109,7 @@ function display_server_data ($wrow) {
     
     # Server Data Info DIV
     echo "\n\n<div class='server_data'>                 <!-- Start of Server Data DIV -->";
+    echo "\n<center>";
 
     # DATA LEFT SIDE DIV
     echo "\n\n<div class='server_leftside'>             <!-- Start Data LeftSide  -->";
@@ -116,7 +120,8 @@ function display_server_data ($wrow) {
     echo "\n\n<div class='server_rightside'>            <!-- Start RightSide Data  -->";
     display_right_side ($wrow);
     echo "\n\n</div>                                    <!-- End of RightSide Data -->";
-
+    echo "\n</center>";
+    
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     echo "\n</div>                                      <!-- End of Server Data DIV -->";
 
@@ -474,7 +479,7 @@ function display_right_side ($wrow) {
 #                           wrow  = Array containing table row keys/values
 # ==================================================================================================
 function display_top_buttons ($wrow) {
-    global $URL_UPDATE, $URL_MENU;
+    global $URL_UPDATE, $URL_MENU, $URL_VIEW;
     
     # Display Button to Display System Information
     $wname = "/view/log/sadm_view_file.php";                            # URL that display File Recv
@@ -543,9 +548,12 @@ function display_top_buttons ($wrow) {
     }
 
     # Display the Update Button
-    echo "\n<a href=" . $URL_MENU . "?sel=" . $wrow['srv_name'] ." class='button'>";
-    echo "\nUpdate</a>";
-    echo "\n\n<br>                                          ";
+    #http://sadmin.maison.ca/crud/srv/sadm_server_update.php?sel=debian7&back=/crud/srv/sadm_server_menu.php
+    # 
+    echo "\n<a href='" . $URL_UPDATE . "?sel=" . $wrow['srv_name'] . "&back=" . $URL_VIEW . "'" ;
+    #. "?host=" . $wrow['srv_name'] . "'" ;
+    echo " class='button' data-toggle='tooltip' title='Create, Read, Update, Delete System Static Info'> ";
+    echo "\nC.R.U.D.</a>\n\n<br>";
 }
 
 
@@ -556,8 +564,8 @@ function display_top_buttons ($wrow) {
 # ==================================================================================================
 #
     # Get the first Parameter (Should be the server name)
-    if (isset($_GET['host']) ) {                                        # Get Parameter Expected
-        $HOSTNAME = $_GET['host'];                                      # Parameter is Server Name
+    if (isset($_GET['sel']) ) {                                        # Get Parameter Expected
+        $HOSTNAME = $_GET['sel'];                                      # Parameter is Server Name
         if ($DEBUG) {echo "<br>Parameter received is $HOSTNAME\n";}     # Display Parameter Recv.
 
         # Construct SQL to Read the row

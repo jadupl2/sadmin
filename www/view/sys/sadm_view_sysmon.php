@@ -339,7 +339,7 @@ function display_data($con,$alert_file) {
 
       # Server Name with link to System Information page. 
       echo "<td class='dt-center'>";
-      echo "<a href='" . $URL_HOST_INFO . "?host=" . nl2br($whost) ;
+      echo "<a href='" . $URL_HOST_INFO . "?sel=" . nl2br($whost) ;
       echo "' title='$WOS $WVER server - ip address is " . $row['srv_ip'] . "'>" ;
       echo nl2br($whost) . "</a></td>\n";
 
