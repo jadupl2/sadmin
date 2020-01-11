@@ -52,10 +52,11 @@
 # 2019_08_19 Update: v2.5 Updated to align with new SADMIN definition section.
 # 2019_08_29 Fix: v2.6 Code restructure and was not reporting error properly.
 # 2019_08_30 Fix: v2.7 Fix renaming backup problem at the end of the backup.
-#@2019_09_01 Update: v2.8 Remove separate creation of ISO (Already part of backup)
-#@2019_09_02 Update: v2.9 Change syntax of error messages.
-#@2019_09_14 Update: v2.10 Backup list before housekeeping was not showing.
-#@2019_09_18 Update: v2.11 Show Backup size in human redeable form.
+# 2019_09_01 Update: v2.8 Remove separate creation of ISO (Already part of backup)
+# 2019_09_02 Update: v2.9 Change syntax of error messages.
+# 2019_09_14 Update: v2.10 Backup list before housekeeping was not showing.
+# 2019_09_18 Update: v2.11 Show Backup size in human redeable form.
+#@2020_01_08 Update: v2.12 Minor logging changes.
 #
 #
 # --------------------------------------------------------------------------------------------------
@@ -93,9 +94,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
         then missenv="Please set 'SADMIN' environment variable to the install directory."
              printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
              exit 1                                                     # Exit to Shell with Error
-    fi
-
-    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+    fiShow Backup size in human redeable form.ABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
     export SADM_PN=${0##*/}                             # Current Script filename(with extension)
     export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
     export SADM_TPID="$$"                               # Current Script PID
@@ -103,7 +102,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.11'                              # Your Current Script Version
+    export SADM_VER='2.12'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -360,10 +359,12 @@ create_backup()
         then sadm_writelog "See the error message in ${SADM_LOG}." 
              sadm_writelog "***** Rear Backup completed with Error - Aborting Script *****"
              sadm_writelog " "
+             sadm_writelog "$SADM_FIFTY_DASH"                           # Write 50 dashes line
              return 1                                                   # Back to caller with error
         else sadm_writelog "***** Rear Backup completed with Success *****"
              sadm_writelog " "
              sadm_writelog " "
+             sadm_writelog "$SADM_FIFTY_DASH"                           # Write 50 dashes line
              sadm_writelog "List of Rear backup on NFS server."
              #ls -ltr ${REAR_DIR}/*.gz | nl | while read wline ; do sadm_writelog "$wline"; done
              ls -ltr ${REAR_NAME}* | while read wline ; do sadm_writelog "$wline"; done
