@@ -142,7 +142,7 @@ function display_script_array($con,$wpage_type,$script_array) {
             # DISPLAY SERVER NAME ------------------------------------------------------------------
             echo "\n<tr>";
             echo "\n<td class='dt-left'>" ;
-            echo "<a href='" . $URL_HOST_INFO . "?host=" . $cserver . 
+            echo "<a href='" . $URL_HOST_INFO . "?sel=" . $cserver . 
                  "' data-toggle='tooltip' title='" . $wdesc . "'>" . $cserver . "</a></td>";
                  
             # DISPLAY SCRIPT NAME, START DATE, START TIME, END TIME AND ELAPSE SCRIPT TIME ---------
