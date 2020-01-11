@@ -31,6 +31,7 @@
 #@2019_01_11 Update: v1.2 Add menu item for updating backup schedule,
 #@2019_07_25 Update: v1.3 Minor modification to page layout.
 #@2019_08_18 Update: v1.4 Add ReaR Backup in menu.
+#@2020_01_04 Update: v1.5 Change Server C.R.U.D. Menu
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -49,10 +50,10 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     color           :   #f9f4be;   
     font-family     :   Verdana, Geneva, sans-serif;
     font-size       :   1.0em;
-    width           :   45%;
-    margin          :   0 auto;
-    text-align      :   left;
-    border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
+    width           :   50%;
+    margin          :   0px 0px 0px 0px;
+    text-align      :   Center;
+    border          :   10px solid #000000;   border-width : 1px;     border-style : solid;   
     border-color    :   #000000;             border-radius: 10px;
     line-height     :   1.7;    
 }
@@ -107,7 +108,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG          = False ;                                               # Debug Activated True/False
-$SVER           = "1.4" ;                                               # Current version number
+$SVER           = "1.5" ;                                               # Current version number
 $URL_MAIN       = '/crud/srv/sadm_server_main.php';                     # Maintenance Main Page URL
 $URL_UPDATE     = '/crud/srv/sadm_server_update.php';                   # Update Page URL
 $URL_OSUPDATE   = '/crud/srv/sadm_server_osupdate.php';                 # O/S Update Page URL
@@ -123,7 +124,7 @@ $URL_MENU       = "/crud/srv/sadm_server_menu.php";                     # CRUD S
 // ================================================================================================
 function display_menu($wkey) {
     global $URL_UPDATE, $URL_OSUPDATE, $URL_BACKUP, $URL_MAIN, $URL_MENU, $URL_REAR;
-    echo "\n<br><br>";
+    echo "\n<br><br><center>";
     echo "\n\n<div class='menu'>\n";                                    # Start Menu
     echo "\n<br>";
 
@@ -144,7 +145,7 @@ function display_menu($wkey) {
     echo "\n<p>\n<a href='" . $URL_MAIN . "'>Back to system list</a></p>";
     echo "\n</div>";                                                    # << End of menu_item
     echo "\n<br>";
-
+    echo "\n</center>";
     echo "\n</div>\n<br>\n\n";                                          # End of Menu Div.
 }
 
