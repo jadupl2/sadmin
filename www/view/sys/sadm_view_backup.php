@@ -91,7 +91,7 @@ function setup_table() {
     echo "<th class='text-center'>Last Backup</th>\n";
     echo "<th class='text-center'>Duration</th>\n";
     echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='text-center'>View Log / History</th>\n";
+    echo "<th class='text-center'>Log / History</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
 
@@ -105,7 +105,7 @@ function setup_table() {
     echo "<th class='text-center'>Last Backup</th>\n";
     echo "<th class='text-center'>Duration</th>\n";
     echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='text-center'>View log/rch</th>\n";
+    echo "<th class='text-center'>Log / History</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
  
@@ -211,7 +211,7 @@ function display_data($count, $row) {
     $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_" . $BACKUP_LOG;
     if (file_exists($log_name)) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
-        echo " title='View Backup Log'>Log</a>&nbsp;&nbsp;&nbsp;";
+        echo " title='View Backup Log'>[log]</a>&nbsp;&nbsp;";
     }else{
         echo " N/A ";
     }
@@ -219,7 +219,7 @@ function display_data($count, $row) {
     $rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
     if (file_exists($rch_name)) {
         echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
-        echo " title='View Backup History (rch) file'>History</a>";
+        echo " title='View Backup History (rch) file'>[rch]</a>";
     }else{
         echo "N/A";
     }

@@ -74,14 +74,14 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 }
 /* Attribute for column Input at the right of the screen in the form */
 .osupdate_input {
-    background-color:    #454c5e;
+/*    background-color:    #454c5e;*/
     color           :   white;
     float           :   left;
     margin-bottom   :   8px;
     margin-left     :   5px;
     text-align      :   left;
     width           :   40%;
-    border-width    :   1px;
+    border-width    :   0px;
     border-style    :   solid;
     border-color    :   #000000;
 }

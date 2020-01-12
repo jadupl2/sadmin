@@ -99,7 +99,7 @@ function setup_table() {
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Next Update</th>\n";
     echo "<th class='text-center'>Update Occurrence</th>\n";
-    echo "<th class='text-center'>View Log / History</th>\n";
+    echo "<th class='text-center'>Log / History</th>\n";
     echo "<th class='text-center'>Auto Update</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
     echo "</tr>\n"; 
@@ -115,7 +115,7 @@ function setup_table() {
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Next Update</th>\n";
     echo "<th class='text-center'>Update Occurrence</th>\n";
-    echo "<th class='text-center'>View Log / History</th>\n";
+    echo "<th class='text-center'>Log / History</th>\n";
     echo "<th class='text-center'>Auto Update</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
     echo "</tr>\n"; 
@@ -198,7 +198,7 @@ function display_data($count, $row) {
     $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate.log";
     if (file_exists($log_name)) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
-        echo " title='View Update Log'>Log</a>&nbsp;&nbsp;&nbsp;";
+        echo " title='View Update Log'>[log]</a>&nbsp;&nbsp;&nbsp;";
     }else{
         echo "N/A&nbsp;&nbsp;&nbsp;";
     }
@@ -206,7 +206,7 @@ function display_data($count, $row) {
     $rch_www_name  = $row['srv_name'] . "_sadm_osupdate.rch";
     if (file_exists($rch_name)) {
         echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
-        echo " title='View Update rch file'>History</a>";
+        echo " title='View Update rch file'>[rch]</a>";
     }else{
         echo "N/A";
     }

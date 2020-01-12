@@ -45,15 +45,15 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     color           :   #f9f4be;   
     font-family     :   Verdana, Geneva, sans-serif;
     font-size       :   0.9em;
-    width           :   60%;
+    width           :   85%;
     margin          : 0px 10px 10px 10px;
     text-align      :   left;
     border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
     border-color    :   #000000;             border-radius: 10px;
     line-height     :   1.7;    
 }
-.backup_left_side   { width : 40%;  float : left;   margin : 10px 0px 10px 0px;    }
-.left_label         { float : left; width : 50%;    text-align: right; font-weight : bold; }
+.backup_left_side   { width : 45%;  float : left;   margin : 10px 0px 10px 0px;    }
+.left_label         { float : left; width : 50%;      padding : 2%; margin-left :10 px;  text-align: left; font-weight : bold; }
 .left_input         { margin-bottom : 5px;  margin-left : 55%;  background-color : #393a3c;
                       width : 50%; border-width: 0px;  border-style : solid;  border-color : #000000;
                       padding-left: 6px;
@@ -69,7 +69,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     background-color:   #28866c;
     color           :   #F7FF00; 
     font-family     :   Verdana, Geneva, sans-serif;
-    width           :   60%;
+    width           :   85%;
     margin          :   0px 0px 0px 10px;
     padding-top     :   10px;
     padding-left    :   15px; 
@@ -91,7 +91,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     border-color    :   #000000;             border-radius: 10px; */
     line-height     :   1.5;    
 }
-.deux_boutons   { width : 60%;  margin: 0px 0px 0px 0px;  } 
+.deux_boutons   { width : 85%;  margin: 0px 0px 0px 0px;  } 
 .premier_bouton { width : 20%;  height : 20px ; float : left;   margin-left : 25%;  text-align : right ; }
 .second_bouton  { width : 20%;  float : right;  margin-right: 25%;  text-align : left  ; }
 </style>
