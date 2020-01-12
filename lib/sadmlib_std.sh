@@ -119,7 +119,8 @@
 # 2019_10_30 Update: v3.19 Remove utilization of 'facter' (Depreciated)
 # 2019_11_22 Update: v3.20 Change the way domain name is obtain on MacOS $(sadm_get_domainname).
 # 2019_11_22 Update: v3.20 Change the way domain name is obtain on MacOS $(sadm_get_domainname).
-#@2019_12_02 Update: v3.21 Add Server name in susbject of Email Alert,
+# 2019_12_02 Update: v3.21 Add Server name in susbject of Email Alert,
+#@2020_01_12 Update: v3.22 When script run on SADMIN server, copy 'rch' & 'log' in Web Interface Dir.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -131,7 +132,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.21"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.22"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2042,7 +2043,7 @@ sadm_stop() {
     chmod 664 ${SADM_LOG} >>/dev/null 2>&1                              # Owner/Group Write Else Read
     chgrp ${SADM_GROUP} ${SADM_LOG} >>/dev/null 2>&1                    # Change Log file Group
     [ $(id -u) -eq 0 ] && chmod 664 ${SADM_LOG}                         # R/W Owner/Group R by World
-    [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}  # Change RCH Owner
+    [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}  # Change Log Owner
 
     # Alert the Unix Admin. based on his selected choice
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "SADM_ALERT_TYPE = $SADM_ALERT_TYPE" ; fi
@@ -2089,6 +2090,14 @@ sadm_stop() {
     if [ -e "$SADM_TMP_FILE1" ] ; then rm -f $SADM_TMP_FILE1 >/dev/null 2>&1 ; fi
     if [ -e "$SADM_TMP_FILE2" ] ; then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1 ; fi
     if [ -e "$SADM_TMP_FILE3" ] ; then rm -f $SADM_TMP_FILE3 >/dev/null 2>&1 ; fi
+
+    # If on the SADMIN server, copy the script final log and rch to web data section.
+    # If we don't do that, log look incomplete & script seem to be always running on web interface.
+    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                         # Only run on SADMIN 
+       then cp $SADM_LOG    ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log
+            cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
+    fi
+
     return $SADM_EXIT_CODE
 }
 
