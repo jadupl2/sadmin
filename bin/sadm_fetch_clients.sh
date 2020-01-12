@@ -56,7 +56,8 @@
 # 2019_08_23  Update: v3.2 Remove Crontab work file (Cleanup)
 # 2019_08_29 Fix: v3.3 Correct problem with CR in site.conf 
 # 2019_08_31 Update: v3.4 More consice of alert email subject.
-#@2019_12_01 Update: v3.5 Backup crontab will backup daily not to miss weekly,monthly and yearly.
+# 2019_12_01 Update: v3.5 Backup crontab will backup daily not to miss weekly,monthly and yearly.
+#@2020_01_12 Update: v3.6 Compact log produced by the script.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -118,7 +119,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.5'                               # Your Current Script Version
+    export SADM_VER='3.6'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -623,7 +624,7 @@ rsync_function()
                    else sadm_writelog "[ ERROR $RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
                         break
                 fi
-           else sadm_writelog "[ OK ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+           else sadm_writelog "[OK] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
                 break
         fi
     done
@@ -724,7 +725,9 @@ process_servers()
     fi 
 
     sadm_writelog " "
+    sadm_writelog "=================================================="
     sadm_writelog "Processing active '$WOSTYPE' server(s)"              # Display/Log O/S type
+    sadm_writelog "=================================================="
     sadm_writelog " "
 
     # If on Linux, create the standard header for the O/S update and the backup crontab file.
@@ -816,7 +819,7 @@ process_servers()
 
         # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR AND CONTINUE WITH NEXT SERVER
         if ! host  $fqdn_server >/dev/null 2>&1
-           then SMSG="[ ERROR ] Can't process '$fqdn_server', hostname can't be resolved"
+           then SMSG="[ERROR] Can't process '$fqdn_server', hostname can't be resolved"
                 sadm_writelog "$SMSG"                                   # Advise user
                 echo "$SMSG" >> $SADM_ELOG                              # Log Err. to Email Log
                 ERROR_COUNT=$(($ERROR_COUNT+1))                         # Consider Error -Incr Cntr
@@ -860,11 +863,11 @@ process_servers()
             then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1       # SSH to Server for date
                  RC=$?                                                  # Save Error Number
                  if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]      # SSH don't work & Sporadic
-                    then sadm_writelog "[ WARNING ] Can't SSH to sporadic server $fqdn_server"
+                    then sadm_writelog "[WARNING] Can't SSH to sporadic server $fqdn_server"
                          continue                                       # Go process next server
                  fi
                  if [ $RC -ne 0 ] &&  [ "$server_monitor" = "0" ]       # SSH don't work/Monitor OFF
-                    then sadm_writelog "[ WARNING ] Can't SSH to $fqdn_server - Monitoring SSH is OFF"
+                    then sadm_writelog "[WARNING] Can't SSH to $fqdn_server - Monitoring SSH is OFF"
                          continue                                       # Go process next server
                  fi
                 RETRY=0                                                 # Set Retry counter to zero
@@ -880,7 +883,7 @@ process_servers()
                                         then sadm_writelog "[ ERROR $RETRY ] $SADM_SSH_CMD $fqdn_server date"
                                              ERROR_COUNT=$(($ERROR_COUNT+1))    # Consider Error -Incr Cntr
                                              sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
-                                             SMSG="[ ERROR ] Can't SSH to server '${fqdn_server}'"  
+                                             SMSG="[ERROR] Can't SSH to server '${fqdn_server}'"  
                                              sadm_writelog "$SMSG"              # Display Error Msg
                                              echo "$SMSG" >> $SADM_ELOG         # Log Err. to Email Log
                                              echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_ELOG
@@ -892,7 +895,7 @@ process_servers()
                                              continue 
                                      fi
                              fi
-                        else sadm_writelog "[ OK ] $SADM_SSH_CMD $fqdn_server date"
+                        else sadm_writelog "[OK] $SADM_SSH_CMD $fqdn_server date"
                              break
                     fi
                     done
@@ -943,14 +946,14 @@ process_servers()
                    then #sadm_writelog "rsync -var $REAR_CFG ${server_name}:/etc/rear/site.conf "
                         rsync $REAR_CFG ${server_name}:/etc/rear/site.conf 
                         if [ $? -eq 0 ] 
-                            then sadm_writelog "[ OK ] /etc/rear/site.conf updated on ${server_name}"
+                            then sadm_writelog "[OK] /etc/rear/site.conf updated on ${server_name}"
                         fi
                         #sadm_writelog "rsync -var $REAR_USER_EXCLUDE ${server_name}:${SADM_CFG_DIR}/rear_exclude.txt" 
                         rsync $REAR_USER_EXCLUDE ${server_name}:${SADM_CFG_DIR}/rear_exclude.txt 
                    else #sadm_writelog "rsync -var $REAR_CFG /etc/rear/site.conf" 
                         rsync $REAR_CFG /etc/rear/site.conf
                         if [ $? -eq 0 ] 
-                            then sadm_writelog "[ OK ] /etc/rear/site.conf updated on ${server_name}"
+                            then sadm_writelog "[OK] /etc/rear/site.conf updated on ${server_name}"
                         fi
                         rsync $REAR_USER_EXCLUDE ${SADM_CFG_DIR}/rear_exclude.txt
                 fi
@@ -1026,7 +1029,8 @@ process_servers()
 # --------------------------------------------------------------------------------------------------
 check_all_rpt()
 {
-    sadm_writelog "Verifying all systems 'Sysmon report file' (*.rpt) for Warning, Info and Errors."
+    sadm_writelog "Verifying all systems for :"
+    sadm_writelog "  - 'Sysmon report file' (*.rpt) for Warning, Info and Errors."
     sadm_writelog " "
     #find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; 
     find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; > $SADM_TMP_FILE1
@@ -1059,7 +1063,8 @@ check_all_rpt()
                 if [ $SADM_DEBUG -gt 0 ] 
                     then sadm_writelog "sadm_send_alert $etype $etime $ehost sysmon $egname $esub $emess $eattach"
                 fi
-                sadm_writelog "$etime alert ($etype) from 'SysMon' on ${ehost}: $emess"
+                sadm_writelog "$etime alert ($etype) from 'SysMon' on ${ehost} :"
+                sadm_writelog "  - $emess"
                 sadm_send_alert "$etype" "$etime" "$ehost" "SysMon" "$egname" "$esub" "$emess" "$eattach"
                 done 
         else sadm_writelog  "No error reported by SysMon report files (*.rpt)" 
@@ -1147,7 +1152,8 @@ check_all_rch()
                 fi
                 alert_counter=`expr $alert_counter + 1`                 # Increase Submit AlertCount
                 sadm_writelog " " 
-                sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: $emess"
+                sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: "
+                sadm_writelog "   - $emess"
                 sadm_send_alert "$etype" "$etime" "$ehost" "$escript" "$egname" "$esub" "$emess" "$eattach"
                 RC=$?
                 if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "RC=$RC" ;fi # Debug Show ReturnCode
