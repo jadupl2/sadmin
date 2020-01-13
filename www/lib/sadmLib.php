@@ -41,8 +41,9 @@
 # 2019_08_04 Update: v2.10 Added function 'sadm_show_logo' to show distribution logo in a table cell.
 # 2019_08_13 Update: v2.11 Fix bug - When creating one line schedule summary
 # 2019_08_14 Update: v2.12 Add function for new page header look (display_lib_heading).
-#@2019_10_15 Update: v2.13 Reduce Logo size image from 32 to 24 square pixels
-#@2019_10_15 Update: v2.14 Reduce font size on 2nd line of heading in "display_lib_heading".
+# 2019_10_15 Update: v2.13 Reduce Logo size image from 32 to 24 square pixels
+# 2019_10_15 Update: v2.14 Reduce font size on 2nd line of heading in "display_lib_heading".
+#@2020_01_13 Update: v2.15 Reduce Day of the week name returned by SCHEDULE_TO_TEXT to 3 Char.
 # ==================================================================================================
 #
 
@@ -51,7 +52,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.14" ;   
+$LIBVER = "2.15" ;   
     
 
 #===================================================================================================
@@ -686,13 +687,20 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
         if (substr($wdow,0,1) == "Y") {                                 # If DOW begin with Y=AllWeek
             $part3 = " day"; 
         }else{                                                          # If not Get Days it Run
-            if (substr($wdow,1,1) == "Y") { $part3 = $part3 . "Sunday,"    ;  $sday="1,"; }
-            if (substr($wdow,2,1) == "Y") { $part3 = $part3 . "Monday,"    ;  $sday = $sday . "2," ;}
-            if (substr($wdow,3,1) == "Y") { $part3 = $part3 . "Tuesday,"   ;  $sday = $sday . "3," ;}
-            if (substr($wdow,4,1) == "Y") { $part3 = $part3 . "Wednesday," ;  $sday = $sday . "4," ;}
-            if (substr($wdow,5,1) == "Y") { $part3 = $part3 . "Thursday,"  ;  $sday = $sday . "5," ;}
-            if (substr($wdow,6,1) == "Y") { $part3 = $part3 . "Friday,"    ;  $sday = $sday . "6," ;}
-            if (substr($wdow,7,1) == "Y") { $part3 = $part3 . "Saturday,"  ;  $sday = $sday . "7," ;}
+            #if (substr($wdow,1,1) == "Y") { $part3 = $part3 . "Sunday,"    ;  $sday="1,"; }
+            #if (substr($wdow,2,1) == "Y") { $part3 = $part3 . "Monday,"    ;  $sday = $sday . "2," ;}
+            #if (substr($wdow,3,1) == "Y") { $part3 = $part3 . "Tuesday,"   ;  $sday = $sday . "3," ;}
+            #if (substr($wdow,4,1) == "Y") { $part3 = $part3 . "Wednesday," ;  $sday = $sday . "4," ;}
+            #if (substr($wdow,5,1) == "Y") { $part3 = $part3 . "Thursday,"  ;  $sday = $sday . "5," ;}
+            #if (substr($wdow,6,1) == "Y") { $part3 = $part3 . "Friday,"    ;  $sday = $sday . "6," ;}
+            #if (substr($wdow,7,1) == "Y") { $part3 = $part3 . "Saturday,"  ;  $sday = $sday . "7," ;}
+            if (substr($wdow,1,1) == "Y") { $part3 = $part3 . "Sun," ;  $sday="1,"; }
+            if (substr($wdow,2,1) == "Y") { $part3 = $part3 . "Mon," ;  $sday = $sday . "2," ;}
+            if (substr($wdow,3,1) == "Y") { $part3 = $part3 . "Tue," ;  $sday = $sday . "3," ;}
+            if (substr($wdow,4,1) == "Y") { $part3 = $part3 . "Wed," ;  $sday = $sday . "4," ;}
+            if (substr($wdow,5,1) == "Y") { $part3 = $part3 . "Thu," ;  $sday = $sday . "5," ;}
+            if (substr($wdow,6,1) == "Y") { $part3 = $part3 . "Fri," ;  $sday = $sday . "6," ;}
+            if (substr($wdow,7,1) == "Y") { $part3 = $part3 . "Sat," ;  $sday = $sday . "7," ;}
         }
     }else{
         $part3=""; 
