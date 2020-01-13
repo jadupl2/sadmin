@@ -24,7 +24,8 @@
 # 2019_08_26 New: v1.0 Initial version of ReaR backup Status Page
 # 2019_08_26 New: v1.1 First Release of Rear Backup Status Page.
 # 2019_09_20 Update: v1.2 Show History (RCH) content using same uniform way.
-#@2019_10_15 Update: v1.3 Add Architecture, O/S Name, O/S Version to page
+# 2019_10_15 Update: v1.3 Add Architecture, O/S Name, O/S Version to page
+#@2020_01_13 Update: v1.4 Change column disposition and show ReaR version no. of systems.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -53,7 +54,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG           = False ;                                              # Debug Activated True/False
-$WVER            = "1.3" ;                                              # Current version number
+$WVER            = "1.4" ;                                              # Current version number
 $URL_CREATE      = '/crud/srv/sadm_server_create.php';                  # Create Page URL
 $URL_UPDATE      = '/crud/srv/sadm_server_update.php';                  # Update Page URL
 $URL_DELETE      = '/crud/srv/sadm_server_delete.php';                  # Delete Page URL
@@ -78,21 +79,21 @@ function setup_table() {
 
     # Table creation
     echo "<div id='SimpleTable'>"; 
-    echo '<table id="sadmTable" class="display" row-border width="100%">';   
+    echo '<table id="sadmTable" class="display" row-border width="96%">';   
 
     # Table Heading
     echo "<thead>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
     echo "<th class='dt-head-left'>Description</th>\n";
-    echo "<th class='dt-head-left'>Arch</th>\n";
-    echo "<th class='dt-head-left'>O/S Name</th>\n";
-    echo "<th class='dt-head-left'>O/S Version</th>\n";
-    echo "<th class='text-center'>Next Rear Backup</th>\n";
-    echo "<th class='text-center'>Last Rear Backup</th>\n";
-    echo "<th class='dt-head-left'>Rear Backup Occurrence</th>\n";
-    echo "<th class='text-center'>Duration</th>\n";
+    #echo "<th class='dt-head-left'>Arch</th>\n";
+    echo "<th class='dt-head-left'>O/S</th>\n";
+    echo "<th class='dt-head-left'>Rear Ver</th>\n";
+    echo "<th class='text-center'>Last Backup</th>\n";
     echo "<th class='text-center'>Status</th>\n";
+    echo "<th class='text-center'>Duration</th>\n";
+    echo "<th class='text-center'>Next Backup</th>\n";
+    echo "<th class='dt-head-left'>Backup Occurrence</th>\n";
     echo "<th class='text-center'>Log / History</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
@@ -102,14 +103,14 @@ function setup_table() {
     echo "<tr>\n";
     echo "<th>Server</th>\n";
     echo "<th class='dt-head-left'>Description</th>\n";
-    echo "<th class='dt-head-left'>Arch</th>\n";
-    echo "<th class='dt-head-left'>O/S Name</th>\n";
-    echo "<th class='dt-head-left'>O/S Version</th>\n";
-    echo "<th class='text-center'>Next Rear Backup</th>\n";
-    echo "<th class='text-center'>Last Rear Backup</th>\n";
-    echo "<th class='dt-head-left'>Rear Backup Occurrence</th>\n";
-    echo "<th class='text-center'>Duration</th>\n";
+    #echo "<th class='dt-head-left'>Arch</th>\n";
+    echo "<th class='dt-head-left'>O/S</th>\n";
+    echo "<th class='dt-head-left'>Rear Ver</th>\n";
+    echo "<th class='text-center'>Last Backup</th>\n";
     echo "<th class='text-center'>Status</th>\n";
+    echo "<th class='text-center'>Duration</th>\n";
+    echo "<th class='text-center'>Next Backup</th>\n";
+    echo "<th class='dt-head-left'>Backup Occurrence</th>\n";
     echo "<th class='text-center'>Log / History</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
@@ -142,24 +143,20 @@ function display_data($count, $row) {
     echo "<td class='dt-body-left'>" . nl2br( $row['srv_desc']) . "</td>\n";  
     
     # Server Architecture  
-    echo "<td class='dt-body-left'>" . ucfirst( $row['srv_arch']) . "</td>\n";  
+    #echo "<td class='dt-body-left'>" . ucfirst( $row['srv_arch']) . "</td>\n";  
     
     # Server O/S Name 
-    echo "<td class='dt-body-center'>" . ucfirst( $row['srv_osname']) . "</td>\n";  
+    #echo "<td class='dt-body-center'>" . ucfirst( $row['srv_osname']) . "</td>\n";  
+    
+    # Display Operating System Logo
+    $WOS   = sadm_clean_data($row['srv_osname']);
+    sadm_show_logo($WOS);                                               # Show Distribution Logo
     
     # Server O/S Version
-    echo "<td class='dt-body-center'>" . nl2br( $row['srv_osversion']) . "</td>\n";  
+    #echo "<td class='dt-body-center'>" . nl2br( $row['srv_osversion']) . "</td>\n";  
 
-    # Next Rear Backup Date
-    echo "<td class='dt-center'>";
-    if ($row['srv_img_backup'] == True ) { 
-        list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
-            $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
-        echo $UPD_DATE_TIME ;
-    }else{
-        echo "Not activated";
-    }
-    echo "</td>\n";  
+    # ReaR Server Version
+    echo "<td class='dt-body-center'>" . nl2br( $row['srv_rear_ver']) . "</td>\n";  
 
 
     # Last Rear Backup Date 
@@ -180,26 +177,6 @@ function display_data($count, $row) {
     echo "</td>\n";  
 
 
-    # Rear Backup Occurrence
-    echo "<td class='dt-body-left'>";
-    if ($row['srv_img_backup'] == True ) { 
-        list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
-            $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
-        echo $STR_SCHEDULE ;
-    }else{
-        echo " ";
-    }
-    echo "</td>\n"; 
-
-
-    # Backup elapse time
-    if (! file_exists($rch_file))  {                                    # If RCH File Not Found
-        echo "\n<td class='dt-center'>  </td>";
-    }else{
-        echo "<td class='dt-center'>" . nl2br($celapse) . "</td>\n";  
-    }
-
-
     # Last Backup Status
     if (! file_exists($rch_file))  {                                    # If RCH File Not Found
         echo "\n<td class='dt-center'>  </td>";
@@ -215,6 +192,42 @@ function display_data($count, $row) {
                         break;
         }   
     }
+
+    
+    # Backup elapse time
+    if (! file_exists($rch_file))  {                                    # If RCH File Not Found
+        echo "\n<td class='dt-center'>  </td>";
+    }else{
+        echo "<td class='dt-center'>" . nl2br($celapse) . "</td>\n";  
+    }
+
+
+    # Next Rear Backup Date
+    echo "<td class='dt-center'>";
+    if ($row['srv_img_backup'] == True ) { 
+        list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
+            $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
+        echo $UPD_DATE_TIME ;
+    }else{
+        echo "Not activated";
+    }
+    echo "</td>\n";  
+
+
+
+    # Rear Backup Occurrence
+    echo "<td class='dt-body-left'>";
+    if ($row['srv_img_backup'] == True ) { 
+        list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
+            $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
+        echo $STR_SCHEDULE ;
+    }else{
+        echo " ";
+    }
+    echo "</td>\n"; 
+
+
+
 
 
     # Display link to view Rear Backup log and rch file
