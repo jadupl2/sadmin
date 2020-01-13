@@ -31,6 +31,7 @@
 # 2019_12_01 Update: v1.7 Backup will run daily (Remove entry fields for specify day of backup)
 #       If not run every day, they could miss the day of weekly & monthly and date of Yearly backup.
 #@2020_01_03 Update: v1.8 Web Page disposition and input was changed.
+#@2020_01_13 Update: v1.9 Enhance Web Appearance and color. 
 # ==================================================================================================
 #
 #
@@ -41,27 +42,27 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 ?>
   <style media="screen" type="text/css">
 .backup_page {
-    background-color:   #3b3b3b;
-    color           :   #f9f4be;   
+    background-color:   #28866c;
+    color           :   White;   
     font-family     :   Verdana, Geneva, sans-serif;
     font-size       :   0.9em;
     width           :   85%;
-    margin          : 0px 10px 10px 10px;
+    margin          :   0px 10px 10px 10px;
     text-align      :   left;
     border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
     border-color    :   #000000;             border-radius: 10px;
     line-height     :   1.7;    
 }
-.backup_left_side   { width : 45%;  float : left;   margin : 10px 0px 10px 0px;    }
-.left_label         { float : left; width : 50%;      padding : 2%; margin-left :10 px;  text-align: left; font-weight : bold; }
-.left_input         { margin-bottom : 5px;  margin-left : 55%;  background-color : #393a3c;
+.backup_left_side   { width : 50%;  float : left;   margin : 10px 0px 10px 0px;    }
+.left_label         { float : left; width : 50%;  padding-left : 2%; margin-left :5 px;  text-align: left; font-weight : normal; }
+.left_input         { margin-bottom : 5px;  margin-left : 55%;  
                       width : 50%; border-width: 0px;  border-style : solid;  border-color : #000000;
                       padding-left: 6px;
 }
 
 .backup_right_side  { width : 50%;  float : right;  margin : 10px 0px 10px 0px;    }
-.right_label        { float : left; width : 85%;    font-weight : bold; }
-.right_input        { margin-bottom : 4px;  margin-right : 10px;     background-color:    #454c5e;
+.right_label        { float : left; width : 85%;    font-weight : normal; }
+.right_input        { margin-bottom : 4px;  margin-right : 10px;     
                       float : left;  padding-left : 5px;  padding-right : 5px;  padding-top : 5px;
                       border-width: 1px;  border-style : solid;  border-color : #000000;
 }                      
@@ -107,7 +108,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.8" ;                                                        # Current version number
+$SVER  = "1.9" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
