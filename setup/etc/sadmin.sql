@@ -95,8 +95,10 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_img_hour` smallint(6) NOT NULL DEFAULT '4' COMMENT 'Image Backup Start Hour',
   `srv_img_minute` smallint(6) NOT NULL DEFAULT '0' COMMENT 'Image Backup Start Minute',
   `srv_uptime` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Server Uptime',
-  `srv_arch` varchar(12) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'System Architecture'
+  `srv_arch` varchar(12) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'System Architecture',
+  `srv_rear_ver` varchar(7) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'N/A' COMMENT 'System Rear Version'
 ) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
+
 
 
 --
