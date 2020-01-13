@@ -34,7 +34,8 @@
 # 2019_01_21 Change: v2.5 Show on one line next o/s update amd show server domain.
 # 2019_04_04 Update: v2.6 If a Date is used to schedule O/S Update then the day specify is not used.
 # 2019_05_04 Update: v2.7 When specific date(s) specified for update, day of week change to 'All'.
-#@2019_08_17 Update: v2.8 Use new heading function, New parameter (URL) to get back to caller page.
+# 2019_08_17 Update: v2.8 Use new heading function, New parameter (URL) to get back to caller page.
+#@2020_01_12 Update: v2.9 Enhance appearance and color of form. 
 #
 # ==================================================================================================
 #
@@ -47,7 +48,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 <style media="screen" type="text/css">
 .osupdate_form {
     font-family     :   Verdana, Geneva, sans-serif;
-    background-color:   #2d3139;
+    background-color:   #006456;
     color           :    white;    
     width           :   55%;
     margin-top      :   1%;
@@ -68,7 +69,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     float           :   left;
     width           :   48%;
     /* background-color:   Yellow; */
-    font-weight     :   bold; 
+    font-weight     :   normal; 
     margin-right: 12px;   
 
 }
@@ -103,7 +104,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.8" ;                                                        # Current version number
+$SVER  = "2.9" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
