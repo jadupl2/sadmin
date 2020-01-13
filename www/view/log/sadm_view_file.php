@@ -27,6 +27,7 @@
 # 2019_01_20 Improvement v1.2 Web Page revamp - New Dark Look
 #@2019_01_20 Update v1.3 Customize file not found message 
 #@2019_07_25 Update: v1.4 File is displayed using monospace character.
+#@2020_01_13 Update: v1.5 Enhance Web Page Appearance and color. 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -39,15 +40,17 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 <style>
 
 div.data_frame {
-    font-family:  Courier, Consolas,   Menlo, "Liberation Mono",  monospace;
-    background-color:   #2d3139;
-    color           :    white;
+    font-family     :   Monaco, Menlo, "Liberation Mono",  monospace;
+    background-color:   #006456;
+    font-size       :   14px;
+    font-weight     :   normal;
+    color           :   white;
     margin-left     :   5px;
-    width           :   85%;
+    width           :   96%;
     border          :   1px solid #000000;
     text-align      :   left;
     padding         :   1%;
-    border-width    :   1px;
+    border-width    :   8px;
     border-style    :   solid;
     border-color    :   #6b6c6f;
     border-radius   :   10px;
@@ -62,7 +65,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.4" ;                                                        # Current version number
+$SVER  = "1.5" ;                                                        # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
@@ -89,7 +92,8 @@ function display_file ($WNAME)
         $wline = fgets($fh);                                            # Read Line By Line    
         if (strlen($wline) > 0) {                                       # Don't process empty Line
             $count+=1;                                                  # Increase Line Counter
-            $pline = sprintf("%06d - %s" , $count,trim($wline));        # Format Line
+            #$pline = sprintf("%06d - %s" , $count,trim($wline));        # Format Line
+            $pline = sprintf("%s" , trim($wline));                      # Format Line
             echo "<br>" . $pline  ;                                     # Print Log Line
         }
     }
@@ -123,7 +127,9 @@ function display_file ($WNAME)
     }
     
     # Display Standard Page Heading and Display Log ------------------------------------------------
-    display_lib_heading("NotHome","File Viewer",$FILENAME,$SVER);  
+    $title1="File Viewer";                                              # Heading Line 1 
+    $title2="'" . $FILENAME . "'" ;                                     # Heading Line 2
+    display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Page Heading
     display_file ($FILENAME);                                           # Go Display File Content
     std_page_footer()                                                   # HTML Footer
     ?>
