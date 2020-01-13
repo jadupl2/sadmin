@@ -41,9 +41,10 @@
 # 2019_01_28 Added: v3.11 Change Header of files produced by this script.
 # 2019_03_17 Change: v3.12 PCI hardware list moved to end of system report file.
 # 2019_07_07 Fix: v3.13 O/S Update was indicating 'Failed' when it should have been 'Success'.
-#@2019_10_13 Update: v3.14 Collect Server Architecture to be store later on in Database.
-#@2019_10_30 Update: v3.15 Remove utilization on 'facter' for collecting info (Not always available)
-#@2019_11_22 Fix: v3.16 Problem with 'nmcli -t' on Ubuntu,Debian corrected.
+# 2019_10_13 Update: v3.14 Collect Server Architecture to be store later on in Database.
+# 2019_10_30 Update: v3.15 Remove utilization on 'facter' for collecting info (Not always available)
+# 2019_11_22 Fix: v3.16 Problem with 'nmcli -t' on Ubuntu,Debian corrected.
+#@2020_01_13 Update: v3.17 Collect 'rear' version to show on rear schedule web page.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -92,7 +93,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.16'                              # Your Current Script Version
+    export SADM_VER='3.17'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -296,6 +297,7 @@ pre_validation()
                 command_available "sysctl"      ; SYSCTL=$SADM_CPATH    # Cmd Path or Blank !found
                 command_available "scutil"      ; SCUTIL=$SADM_CPATH    # CmdPath="" if not found
                 command_available "lsscsi"      ; LSSCSI=$SADM_CPATH    # CmdPath="" if not found
+                command_available "rear"        ; REAR=$SADM_CPATH      # CmdPath="" if not found
                 command_available "lspci"       ; LSPCI=$SADM_CPATH     # CmdPath="" if not found
     fi
 
@@ -819,6 +821,9 @@ create_summary_file()
     echo "SADM_OSUPDATE_DATE                    = ${OSUPDATE_DATE}"                  >> $HWD_FILE
     echo "SADM_OSUPDATE_STATUS                  = ${OSUPDATE_STATUS}"                >> $HWD_FILE
     echo "SADM_ROOT_DIRECTORY                   = ${SADMIN}"                         >> $HWD_FILE
+    if [ "$REAR" != "" ] ;then REAR_VER=`$REAR -V | awk '{print $2}'` ; else REAR_VER="N/A" ; fi
+    echo "SADM_REAR_VERSION                     = $REAR_VER"                         >> $HWD_FILE
+
     return $SADM_EXIT_CODE
 }
 
