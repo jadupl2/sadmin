@@ -693,7 +693,7 @@ if (isset($_POST['submitted'])) {
     }
     
     # DISPLAY SCREEN HEADING    
-    $title1="Backup schedule of '" . $row['srv_name'] . "." . $row['srv_domain'] . "'";
+    $title1="Daily backup schedule of '" . $row['srv_name'] . "." . $row['srv_domain'] . "'";
     if ($row['srv_backup'] == True) {
         list ($title2, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_backup_dom'], 
         $row['srv_backup_month'],$row['srv_backup_dow'], 
