@@ -271,7 +271,7 @@ function display_data($count, $row) {
     }
     
     # DISPLAY SCREEN HEADING    
-    $title1="Backup Schedule Status";
+    $title1="Daily Backup Status";
     $title2="";
     display_lib_heading("NotHome","$title1","$title2",$WVER);           # Display Content Heading
 
