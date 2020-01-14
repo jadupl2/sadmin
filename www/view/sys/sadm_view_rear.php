@@ -26,6 +26,7 @@
 # 2019_09_20 Update: v1.2 Show History (RCH) content using same uniform way.
 # 2019_10_15 Update: v1.3 Add Architecture, O/S Name, O/S Version to page
 #@2020_01_13 Update: v1.4 Change column disposition and show ReaR version no. of systems.
+#@2020_01_14 Update: v1.5 Don't show MacOS System on page (Not supported by ReaR).
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -54,7 +55,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG           = False ;                                              # Debug Activated True/False
-$WVER            = "1.4" ;                                              # Current version number
+$WVER            = "1.5" ;                                              # Current version number
 $URL_CREATE      = '/crud/srv/sadm_server_create.php';                  # Create Page URL
 $URL_UPDATE      = '/crud/srv/sadm_server_update.php';                  # Update Page URL
 $URL_DELETE      = '/crud/srv/sadm_server_delete.php';                  # Delete Page URL
@@ -127,12 +128,13 @@ function display_data($count, $row) {
     global  $URL_HOST_INFO, $URL_VIEW_FILE, $URL_BACKUP, $URL_VIEW_RCH, 
             $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG; 
     
-    if (($row['srv_arch'] != "x86_64") and ($row['srv_arch'] != "i686")) {
-        return;
-    }
-    echo "<tr>\n";  
+    # ReaR Not Supported on MacOS and Raspberry Pi
+    if (($row['srv_arch'] != "x86_64") and ($row['srv_arch'] != "i686")) { return ; } 
+    if ($row['srv_ostype'] == "darwin") { return ; }
+
     
     # Server Name
+    echo "<tr>\n";  
     echo "<td class='dt-center'>";
     echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP ."'";
     echo " title='" .$row['srv_osname']. "-" .$row['srv_osversion']." server, ip address is " ;
@@ -282,6 +284,7 @@ function display_data($count, $row) {
         display_data($count, $row);                                     # Display Next Server
     }
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
+    echo "<center>MacOS and Raspberry Pi aren't shown on this page because they are not supported by ReaR.</center>.";
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
