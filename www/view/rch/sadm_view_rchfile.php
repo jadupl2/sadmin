@@ -29,6 +29,7 @@
 # 2018_07_21  v2.2 Make screen more compact
 #@2018_09_16  v2.3 Added Alert Group Display on Page
 #@2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
+#@2020_01_14 Update: v2.5 Add link to allow to view script log on the page.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -58,7 +59,8 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.4" ;                                                        # Current version number
+$SVER  = "2.5" ;                                                        # Current version number
+$URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
 
 
 # ==================================================================================================
@@ -82,6 +84,7 @@ function setup_table() {
     echo "\n<th>Alert Group</th>";
     echo "\n<th>Alert Type</th>";
     echo "\n<th>Status</th>";
+    echo "\n<th>Log</th>";
     echo "\n</tr>";
     echo "\n</thead>\n";
 
@@ -97,6 +100,7 @@ function setup_table() {
     echo "\n<th>Alert Group</th>";
     echo "\n<th>Alert Type</th>";
     echo "\n<th>Status</th>";
+    echo "\n<th>Log</th>";
     echo "\n</tr>";
     echo "\n</tfoot>\n\n";
 }
@@ -104,12 +108,13 @@ function setup_table() {
 
 // =================================================================================================
 //           D I S P L A Y    R C H   (WFILE)   F O R    T H E   S E L E C T E D   H O S T
-//  For the received host ($WHOST) 
-//  Host Description is also received (WDESC)
-//  The Sorted and Purge RCH File Name (WFILE) file to display 
-//  The RCH File Name (WNAME)
+//  1- For the received host ($WHOST) 
+//  2- Host Description is also received (WDESC)
+//  3- The Sorted and Purge RCH File Name (WFILE) file to display 
+//  4- The RCH File Name (WNAME)
 // =================================================================================================
 function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
+    global $URL_VIEW_FILE ;
     $count=0; $ddate = 0 ;                                              # Reset Counter & Var.
 
     $fh = fopen($WFILE, "r") or exit("Unable to open file" . $WFILE);   # Open RCH  Requested file
@@ -158,7 +163,21 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
                             break;
                 default:    echo "\n<td class='dt-center'>" . $ccode . "</td>";
                             break;
-            }                    
+            }       
+            
+            # Display Log Link
+            echo "\n<td class='dt-center'>" ;
+            $x = basename($WNAME, '.rch');                              # Remove RCH file extension
+            $LOGFILE = $x . ".log";                                     # Add .log to Script Name
+            $log_name  = SADM_LOG_DIR . "/" . $LOGFILE ;
+            if (file_exists($log_name)) {
+                echo "<a href='" . $URL_VIEW_FILE . "?filename=" . 
+                $log_name .  "' data-toggle='tooltip' title='View script log file.'>[log]</a>&nbsp;&nbsp;&nbsp";
+            }else{
+                echo "No Log";                                          # If No log exist for script
+            }
+            echo "</td>";
+
             echo "\n</tr>\n";
         }
     }
