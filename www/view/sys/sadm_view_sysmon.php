@@ -40,6 +40,7 @@
 #@2019_11_26 Fix: v2.10 Fix problem with temp files (Change from $SADMIN/tmp to $SADMIN/www/tmp)
 #@2019_11_27 Fix: v2.11 Fix 'open append failed', when no *.rpt exist or are all empty.
 #@2020_01_11 Update: v2.12 Remove Arch,Category and OS Version to make space on Line.
+#@2020_01_13 Fix: v2.13 Bug fix, displaying empty error line.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -73,7 +74,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.12" ;                                                       # Current version number
+$SVER  = "2.13" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -248,8 +249,10 @@ function display_data($con,$alert_file) {
 
     # Display each line of the alert file (Now in $array_sysmon).
     foreach ($array_sysmon as $line_num => $line) {
-      if ($DEBUG) { echo "Processing Line #{$line_num} : " .htmlspecialchars($line). "<br />\n"; }
-
+      if ($DEBUG) { echo "\nProcessing Line #{$line_num} : ." .htmlspecialchars($line). ".<br />\n"; }
+      if ($DEBUG) { echo "Length of line #{$line_num} is ". strlen($line) ; }
+      if (strlen($line) > 4095) { continue ; }                          # Empty Line Exceeding 4095
+    
       # Split alert Line (Example below)
       # Warning;holmes;2019.09.30;10:37;linux;FILESYSTEM;Filesystem /tmp at 89% >= 75%;default;default
       # Running;holmes;2019.09.30;10:39;SADM;SCRIPT;sadm_fetch_clients;default/1;default/1 
