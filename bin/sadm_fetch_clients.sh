@@ -58,6 +58,7 @@
 # 2019_08_31 Update: v3.4 More consice of alert email subject.
 # 2019_12_01 Update: v3.5 Backup crontab will backup daily not to miss weekly,monthly and yearly.
 #@2020_01_12 Update: v3.6 Compact log produced by the script.
+#@2020_01_14 Update: v3.7 Don't use SSH when running daily backup and ReaR Backup for SADMIN server. 
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -119,7 +120,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.6'                               # Your Current Script Version
+    export SADM_VER='3.7'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -444,7 +445,10 @@ update_rear_crontab ()
     # Add User, script name and script parameter to crontab line -----------------------------------
     # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN 
     # $SADM_TMP_DIR
-    cline="$cline $SADM_USER sudo $SADM_SSH_CMD $cserver \"$cscript\" >/dev/null 2>&1";   
+    if [ "$SADM_HOSTNAME" != "$cserver" ]  
+        then cline="$cline $SADM_USER sudo $SADM_SSH_CMD $cserver \"$cscript\" >/dev/null 2>&1";
+        else cline="$cline $SADM_USER sudo \"$cscript\" >/dev/null 2>&1";
+    fi 
     if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
     echo "$cline" >> $SADM_REAR_NEWCRON                               # Output Line to Crontab cfg
@@ -579,7 +583,10 @@ update_backup_crontab ()
     # Add User, script name and script parameter to crontab line -----------------------------------
     # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN 
     # $SADM_TMP_DIR
-    cline="$cline $SADM_USER sudo $SADM_SSH_CMD $cserver \"$cscript\" >/dev/null 2>&1";   
+    if [ "$SADM_HOSTNAME" != "$cserver" ]  
+        then cline="$cline $SADM_USER sudo $SADM_SSH_CMD $cserver \"$cscript\" >/dev/null 2>&1";
+        else cline="$cline $SADM_USER sudo \"$cscript\" >/dev/null 2>&1"; 
+    fi 
     if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
     echo "$cline" >> $SADM_BACKUP_NEWCRON                               # Output Line to Crontab cfg
