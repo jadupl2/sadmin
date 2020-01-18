@@ -32,6 +32,7 @@
 #       If not run every day, they could miss the day of weekly & monthly and date of Yearly backup.
 #@2020_01_03 Update: v1.8 Web Page disposition and input was changed.
 #@2020_01_13 Update: v1.9 Enhance Web Appearance and color. 
+#@2020_01_18 Update: v2.0 Reduce width of text-area for include,exclude list to fit on Ipad.
 # ==================================================================================================
 #
 #
@@ -108,7 +109,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.9" ;                                                        # Current version number
+$SVER  = "2.0" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -437,7 +438,7 @@ function display_left_side($con,$wrow,$mode) {
     # Files and Directories to Backup
     echo "\n\n<div class='left_label'>Backup List (Files & Dir.)</div>";
     echo "\n<div class='left_input'>";
-    echo "  <textarea rows='15' cols='82' name='backuplist' form='backup'>";
+    echo "  <textarea rows='15' cols='60' name='backuplist' form='backup'>";
     $BLHASH = Read_BackupList($wrow);
     echo "</textarea>";
     echo "\n</div>";
@@ -445,7 +446,7 @@ function display_left_side($con,$wrow,$mode) {
     # Files and Directories to Exclude from Backup
     echo "\n\n<div class='left_label'>Exclude List (Files & Dir.)</div>";
     echo "\n<div class='left_input'>";
-    echo "  <textarea rows='15' cols='82' name='backupexclude' form='backup'>";
+    echo "  <textarea rows='15' cols='60' name='backupexclude' form='backup'>";
     $BEHASH = Read_BackupExclude($wrow);
     echo "</textarea>";
     echo "\n</div>";
