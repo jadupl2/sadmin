@@ -33,6 +33,7 @@
 # 2019_07_17 Update: v3.14 O/S update script now perform apt-get clean before update start on *.deb
 #@2019_11_21 Update: v3.15 Add 'export DEBIAN_FRONTEND=noninteractive' prior to 'apt-get upgrade'.
 #@2019_11_21 Update: v3.16 Email sent to SysAdmin if some package are kept back from update.
+#@2020_01_18 Update: v3.17 Include evrything in script log while running 'apt-get upgrade'. 
 #
 # --------------------------------------------------------------------------------------------------
 #set -x
@@ -82,7 +83,7 @@
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.15'                              # Your Current Script Version
+    export SADM_VER='3.17'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -334,7 +335,7 @@ run_apt_get()
     
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Updating O/S, running 'export DEBIAN_FRONTEND=noninteractive ; apt-get -y upgrade'"
-    export DEBIAN_FRONTEND=noninteractive ; apt-get -y upgrade
+    export DEBIAN_FRONTEND=noninteractive ; apt-get -y upgrade >>$SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
        then sadm_writelog "Return Code of \"apt-get -y upgrade\" is $RC"
