@@ -43,6 +43,7 @@
 #@2019_12_20 Update: v2.9 Better verification and installation of python3 (If needed)
 #@2019_12_27 Update: v3.0 Add recommended EPEL Repos on CentOS/RHEL 8.
 #@2019_12_27 Update: v3.1 On RHEL/CentOS 6/7, revert to Python 3.4 (3.6 Incomplete on EPEL)
+#@2020_01_18 Fix: v3.2 Fix problem installing pip3, when running setup.sh script.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
@@ -52,7 +53,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.1'                              ; export SADM_VER           # Your Script Version
+SADM_VER='3.2'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -228,6 +229,39 @@ install_python3()
 
 
 #===================================================================================================
+# Install pip3 on system
+#===================================================================================================
+install_pip3()
+{
+    echo "Installing pip3." | tee -a $SLOG
+
+    if [ "$SADM_PACKTYPE" = "rpm" ] 
+        then echo "Running 'yum --enablerepo=epel -y install python34 python34-setuptools python34-pip'" |tee -a $SLOG
+             yum --enablerepo=epel -y install python34-pip >>$SLOG 2>&1
+    fi 
+    if [ "$SADM_PACKTYPE" = "deb" ] 
+        then apt-get update >> $SLOG 2>&1
+             echo "Running 'apt-get -y install python3-pip'"| tee -a $SLOG
+             apt-get -y install python3-pip >>$SLOG 2>&1
+    fi 
+    
+    # pip3 should now be installed, if not then abort installation
+    which pip3 > /dev/null 2>&1
+    if [ $? -ne 0 ]
+        then echo " " | tee -a $SLOG
+             echo "----------" | tee -a $SLOG
+             echo "We are having problem installing pip3" | tee -a $SLOG
+             echo "Please install python-pip3 package" | tee -a $SLOG
+             echo "Then run this script again." | tee -a $SLOG 
+             echo "----------" | tee -a $SLOG
+             exit 1
+    fi
+
+}
+
+
+
+#===================================================================================================
 # Check if python 3 is installed, if not install it 
 #===================================================================================================
 check_python3()
@@ -235,7 +269,7 @@ check_python3()
     # Check if python3 is installed 
     echo "Check if python3 is installed ..." | tee -a $SLOG
 
-    # python3 should now be installed, if not then abort installation
+    # python3 should now be installed, if not then install it or abort installation
     which python3 > /dev/null 2>&1
     if [ $? -eq 0 ]
         then echo "[OK] python3 is installed." | tee -a $SLOG
@@ -245,7 +279,19 @@ check_python3()
              echo "[OK] python3 is installed." | tee -a $SLOG
     fi
 
-    
+    # Check if pip3 is installed 
+    echo "Check if pip3 is installed ..." | tee -a $SLOG
+
+    # pip3 should be installed, if not then install it or abort installation
+    which pip3 > /dev/null 2>&1
+    if [ $? -eq 0 ]
+        then echo "[OK] pip3 is installed." | tee -a $SLOG
+             echo " " | tee -a $SLOG
+        else echo "Pip3 is not installed."  | tee -a $SLOG
+             install_pip3
+             echo "[OK] pip3 is installed." | tee -a $SLOG
+    fi
+   
     # Check if python3 'pymsql' module is installed 
     echo "Check if python3 'pymsql' module is installed ..." | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
