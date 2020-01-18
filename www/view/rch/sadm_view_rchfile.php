@@ -30,6 +30,7 @@
 #@2018_09_16  v2.3 Added Alert Group Display on Page
 #@2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
 #@2020_01_14 Update: v2.5 Add link to allow to view script log on the page.
+#@2020_01_19 Update: v2.6 Remove line counter and some other cosmetics changes.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -59,7 +60,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.5" ;                                                        # Current version number
+$SVER  = "2.6" ;                                                        # Current version number
 $URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
 
 
@@ -70,12 +71,12 @@ function setup_table() {
     
     # TABLE CREATION
     echo "\n<div id='SimpleTable'>";                                      # Width Given to Table
-    echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='80%'>";
+    echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='90%'>";
     
     # PAGE TABLE HEADING 
     echo "\n<thead>";
     echo "\n<tr>" ;
-    echo "\n<th>No.</th>";
+    #echo "\n<th>No.</th>";
     echo "\n<th class='dt-head-center'>Start Date</th>";
     echo "\n<th class='dt-center'>Start Time</th>";
     echo "\n<th>End Date</th>";
@@ -91,7 +92,7 @@ function setup_table() {
     # PAGE TABLE FOOTER 
     echo "\n<tfoot>";
     echo "\n<tr>" ;
-    echo "\n<th>No.</th>";
+    #echo "\n<th>No.</th>";
     echo "\n<th class='dt-head-center'>Start Date</th>";
     echo "\n<th class='dt-center'>Start Time</th>";
     echo "\n<th>End Date</th>";
@@ -125,7 +126,7 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
             echo "\n<tr>";
             $BGCOLOR = "lavender";
             if ($count % 2 == 0) { $BGCOLOR="#FFF8C6" ; }else{ $BGCOLOR="#FAAFBE" ;}
-            echo "\n<td class='dt-center'>" . $count   . "</td>";
+            #echo "\n<td class='dt-center'>" . $count   . "</td>";
             echo "\n<td class='dt-center'>" . $cdate1  . "</td>";
             echo "\n<td class='dt-center'>" . $ctime1  . "</td>";
             echo "\n<td class='dt-center'>" . $cdate2  . "</td>";
