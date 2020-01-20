@@ -48,8 +48,9 @@
 # 2019_07_23 Update: v3.05 Remove utilization of history sequence number file.
 # 2019_08_19 Update: v3.06 Added rear_exclude_init Global Var. as default Rear Exclude List 
 # 2019_08_19 Update: v3.07 Added Global Var. rear_newcron and rear_crontab file location 
-#@2019_10_14 Update: v3.08 Added function 'get_arch' - Return system arch. (x86_64,armv7l,i686,...)
-#@2019_10_30 Update: v3.09 Remove 'facter' utilization (Depreciated).
+# 2019_10_14 Update: v3.08 Added function 'get_arch' - Return system arch. (x86_64,armv7l,i686,...)
+# 2019_10_30 Update: v3.09 Remove 'facter' utilization (Depreciated).
+#@2020_01_20 Update: v3.10 Better handling & Error message when can't connect to database.
 #
 #==================================================================================================
 try :
@@ -122,7 +123,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.09"                                # This Library Version
+        self.libver             = "3.10"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -324,17 +325,24 @@ class sadmtools():
 
         # Try to connect to Database
         try :
-            #self.conn = pymysql.connect(conn_string)
             self.conn=pymysql.connect(self.cfg_dbhost,self.cfg_rw_dbuser,self.cfg_rw_dbpwd,self.cfg_dbname)
+        except pymysql.err.OperationalError as error : 
+            self.enum, self.emsg = error.args                           # Get Error No. & Message
+            self.writelog("Error connecting to Database '%s'" % (self.cfg_dbname))
+            errmsg  = ">>>>>>>>>>>>>"                                   # Error Message Part 1    
+            errmsg += "'%s' " % (self.enum)                             # Error Message Part 2
+            errmsg += "'%s' " % (self.emsg)                             # Error Message Part 3
+            self.writelog(errmsg)                                       # Print Error No. & Message
+            self.stop (1)                                               # Close and Trim Log/Email
+            sys.exit(1)                                                 # Exit Pgm with Error Code 1
         except pymysql.err.InternalError as error :
             self.enum, self.emsg = error.args                           # Get Error No. & Message
-            print ("Error connecting to Database '%s'" % (self.cfg_dbname))
-            print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
-            sys.exit(1)                                                 # Exit Pgm with Error Code 1
-        except pymysql.err.OperationalError as error :
-            self.enum, self.emsg = error.args                           # Get Error No. & Message
-            print ("Error connecting to Database '%s'" % (self.cfg_dbname))
-            print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
+            self.writelog("Error connecting to Database '%s'" % (self.cfg_dbname))
+            errmsg  = ">>>>>>>>>>>>>"                                   # Error Message Part 1    
+            errmsg += "'%s' " % (self.enum)                             # Error Message Part 2
+            errmsg += "'%s' " % (self.emsg)                             # Error Message Part 3
+            self.writelog(errmsg)                                       # Print Error No. & Message
+            self.stop (1)                                               # Close and Trim Log/Email
             sys.exit(1)                                                 # Exit Pgm with Error Code 1
 
         # Define a cursor object using cursor() method
