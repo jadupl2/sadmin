@@ -51,7 +51,7 @@
 # 2019_10_14 Update: v3.08 Added function 'get_arch' - Return system arch. (x86_64,armv7l,i686,...)
 # 2019_10_30 Update: v3.09 Remove 'facter' utilization (Depreciated).
 #@2020_01_20 Update: v3.10 Better handling & Error message when can't connect to database.
-#
+#@2020_01_20 Fix: v3.11 Fix 'get_osminorversion' function. Crash (raspbian) when no os minor version 
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -123,7 +123,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.10"                                # This Library Version
+        self.libver             = "3.11"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -876,8 +876,12 @@ class sadmtools():
     def get_osminorversion(self) :
         if self.os_type == "LINUX" :
             ccode, cstdout, cstderr = self.oscommand(self.lsb_release + " -sr")
-            osversion=cstdout
-            osminorversion=osversion.split('.')[1]
+            osversion=str(cstdout)
+            pos=osversion.find(".")
+            if pos == -1 :
+                osminorversion=""
+            else:
+                osminorversion=osversion.split('.')[1]
         if self.os_type == "AIX" :
             ccode, cstdout, cstderr = self.oscommand("uname -r")
             osminorversion=cstdout
