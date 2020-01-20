@@ -121,6 +121,7 @@
 # 2019_11_22 Update: v3.20 Change the way domain name is obtain on MacOS $(sadm_get_domainname).
 # 2019_12_02 Update: v3.21 Add Server name in susbject of Email Alert,
 #@2020_01_12 Update: v3.22 When script run on SADMIN server, copy 'rch' & 'log' in Web Interface Dir.
+#@2020_01_20 Update: v3.23 Place Alert Message on top of Alert Message (SMS,SLACK,EMAIL)
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -132,7 +133,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.22"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.23"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2353,7 +2354,10 @@ sadm_send_alert() {
                 ;;
     esac             
     body2=`printf "%-15s: %s" "Event date/time" "$atime"`               # Date/Time event occured
-    body3=`printf "%-15s: %02d of %02d" "Alert counter" "$acounter" "$MaxRepeat"` # AlertCountr
+    if [ $acounter -eq 1 ] && [ $MaxRepeat -eq 1 ]                      # If Alarm is 1 of 1 bypass
+        then body3=""
+        else body3=`printf "%-15s: %02d of %02d" "Alert counter" "$acounter" "$MaxRepeat"` 
+    fi 
     if [ $SADM_ALERT_REPEAT -ne 0 ] && [ $acounter -ne $MaxRepeat ]     # If Repeat or Not Last
        then body3=`printf "%s, next notification around %s" "$body3" "$NxtAlarmTime"`    # Time NextAlert
     fi
@@ -2363,7 +2367,7 @@ sadm_send_alert() {
     body4=`printf "%-15s: %s" "Event Message"   "$amessage"`            # Body of the message
     body5=`printf "%-15s: %s" "Event on system" "$aserver"`             # Server where alert occured
     body6=`printf "%-15s: %s" "Script Name    " "$ascript"`             # Script Name
-    body=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$body0" "$body1" "$body2" "$body3" "$body4" "$body5" "$body6"`
+    body=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$body0" "$body4" "$body1" "$body2" "$body3" "$body5" "$body6"`
 
 
 
