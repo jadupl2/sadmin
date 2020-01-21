@@ -433,7 +433,7 @@ process_servers()
         rem_files_to_rsync=(usr/mon/swatch_nmon.sh usr/mon/swatch_nmon.txt 
                             usr/mon/stemplate.sh   usr/mon/srestart.sh ) 
         sadm_writelog "---"                                             # Separation line
-        sadm_writelog "Syncing System Monitor templates files."         # Show user what we do
+        sadm_writelog "Syncing System Monitor Basic files."         # Show user what we do
         for WFILE in "${rem_files_to_rsync[@]}"                         # Loop to sync template file
           do
             if [ $DEBUG_LEVEL -gt 5 ]                                   # If Debug is Activated
