@@ -34,6 +34,7 @@
 #@2019_11_21 Update: v3.15 Add 'export DEBIAN_FRONTEND=noninteractive' prior to 'apt-get upgrade'.
 #@2019_11_21 Update: v3.16 Email sent to SysAdmin if some package are kept back from update.
 #@2020_01_18 Update: v3.17 Include evrything in script log while running 'apt-get upgrade'. 
+#@2020_01_21 Update: v3.18 Enhance the update checking process.
 #
 # --------------------------------------------------------------------------------------------------
 #set -x
@@ -83,7 +84,7 @@
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.17'                              # Your Current Script Version
+    export SADM_VER='3.18'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -188,27 +189,46 @@ run_command()
 # --------------------------------------------------------------------------------------------------
 check_available_update()
 {
-    sadm_writelog "Verifying update availability for $(sadm_get_osname) $(sadm_get_osmajorversion)"
+    x_osname=$(sadm_tolower $(sadm_get_osname))
+    x_version="$(sadm_get_osmajorversion).$(sadm_get_osminorversion)"
+    sadm_writelog "Verifying update availability for $(sadm_get_osname) v${x_version}"
     
     case "$(sadm_get_osname)" in
 
         "REDHAT"|"CENTOS" ) 
             case "$(sadm_get_osmajorversion)" in
-                [3-4])  UpdateStatus=1                                      # No Update available
+                [3-5])  UpdateStatus=1                                      # No Update available
+                        sadm_writelog "No more update for Redhat/CentOS $(sadm_get_osmajorversion)."
+                        sadm_writelog "This version have reach end of life."
                         ;;
-                [5-8])  sadm_writelog "Running \"yum check-update\""        # Update the log
+                [6-7])  sadm_writelog "Checking if update are available, with 'yum check-update'."
                         yum check-update >> $SADM_LOG 2>&1                  # List Available update
                         rc=$?                                               # Save Exit Code
-                        sadm_writelog "Return Code is $rc"                  # Exit code to log
                         case $rc in
                             100) UpdateStatus=0                             # Update Exist
-                                 sadm_writelog "Update are available"       # Update the log
+                                 sadm_writelog "[OK] Update are available." # Update the log
                                  ;;
-                              0) UpdateStatus=1                             # No Update available
-                                 sadm_writelog "No Update available"
+                            0)   UpdateStatus=1                             # No Update available
+                                 sadm_writelog "[OK] No Update available."
                                  ;;
-                              *) UpdateStatus=2                             # Problem Abort Update
-                                 sadm_writelog "Error Encountered - Update aborted"  # Update the log
+                            *)   UpdateStatus=2                             # Problem Abort Update
+                                 sadm_writelog "[Error] encountered, update aborted."  
+                                 sadm_writelog "For more information check the log $SADM_LOG"
+                                 ;;
+                        esac
+                        ;;
+                [8-9])  sadm_writelog "Checking if update are available, with 'dnf check-update'."
+                        dnf check-update >> $SADM_LOG 2>&1                  # List Available update
+                        rc=$?                                               # Save Exit Code
+                        case $rc in
+                            100) UpdateStatus=0                             # Update Exist
+                                 sadm_writelog "[OK] Update are available." # Update the log
+                                 ;;
+                            0)   UpdateStatus=1                             # No Update available
+                                 sadm_writelog "[OK] No Update available."
+                                 ;;
+                            *)   UpdateStatus=2                             # Problem Abort Update
+                                 sadm_writelog "[Error] encountered, update aborted."  
                                  sadm_writelog "For more information check the log $SADM_LOG"
                                  ;;
                         esac
@@ -217,49 +237,54 @@ check_available_update()
             ;;
             
         "FEDORA" )
-            sadm_writelog "Running \"dnf check-update\""        # Update the log
-            dnf check-update >> $SADM_LOG 2>&1                  # List Available update
-            rc=$?                                               # Save Exit Code
-            sadm_writelog "Return Code after \"yum check-update\" is $rc" # Exit code to log
+            sadm_writelog "Checking for new update, with 'dnf check-update'"  # Update the log
+            dnf check-update >> $SADM_LOG 2>&1                          # List Available update
+            rc=$?                                                       # Save Exit Code
+            #sadm_writelog "Return Code after \"yum check-update\" is $rc" # Exit code to log
             case $rc in
-                100) UpdateStatus=0                             # Update Exist
-                     sadm_writelog "Update are available"       # Update the log
+                100) UpdateStatus=0                                     # Update Exist
+                     sadm_writelog "[OK] Update are available."          # Update the log
                      ;;
-                  0) UpdateStatus=1                             # No Update available
-                     sadm_writelog "No Update available"
+                  0) UpdateStatus=1                                     # No Update available
+                     sadm_writelog "[OK] No Update available."
                      ;;
-                  *) UpdateStatus=2                             # Problem Abort Update
-                     sadm_writelog "Error Encountered - Update aborted"  # Update the log
+                  *) UpdateStatus=2                                     # Problem Abort Update
+                     sadm_writelog "[Error] encountered, update aborted."  # Update the log
                      sadm_writelog "For more information check the log $SADM_LOG"
                      ;;
             esac
             ;;
     
         "UBUNTU"|"DEBIAN"|"RASPBIAN"|"LINUXMINT" ) 
-            sadm_writelog "Start with a clean APT cache, running 'apt-get clean'" 
+            sadm_writelog ""                                            # White Line
+            sadm_writelog "Start with a clean of APT cache, running 'apt-get clean'" 
             apt-get clean >> $SADM_LOG 2>&1                             # Cleanup /var/cache/apt
             rc=$?                                                       # Save Exit Code
-            if [ $rc -ne 0 ] ; then sadm_writelog "Error while cleaning apt cache" ; fi
-            sadm_writelog "Updating APT cache, running 'apt-get update'" # Update apt cache
-            apt-get update  >> $SADM_LOG 2>&1                          # Updating the apt-cache
-            rc=$?                                                      # Save Exit Code
+            if [ $rc -ne 0 ] 
+                then sadm_writelog "[Error] while cleaning apt cache, return code $rc" 
+                else sadm_writelog "[OK] APT cache is now cleaned." 
+            fi
+            sadm_writelog ""                                            # White Line
+            sadm_writelog "Building a fresh APT cache, with 'apt-get update'" # Update apt cache
+            apt-get update  >> $SADM_LOG 2>&1                           # Updating the apt-cache
+            rc=$?                                                       # Save Exit Code
             if [ "$rc" -ne 0 ]
-               then UpdateStatus=2
-                    sadm_writelog "We had problem running the \"apt-get update\" command" 
+               then UpdateStatus=2                                      # 2=Problem checking update
+                    sadm_writelog "[ERROR] We had problem running the 'apt-get update' command" 
                     sadm_writelog "We had a return code of $rc" 
                     sadm_writelog "For more information check the log $SADM_LOG"
-               else sadm_writelog "Return Code of apt-get update is $rc" # Show  Return Code
-                    sadm_writelog "List of package(s) that can be updated"
-                    #NB_UPD=`apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }' |wc -l |tr -d ' '`
+                    sadm_writelog ""                                    # White Line
+               else sadm_writelog "[OK] The cache have been updated."   # Show  Return Code
+                    sadm_writelog ""                                    # White Line
                     NB_UPD=`apt list --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l`
-                    #apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }'
                     if [ "$NB_UPD" -ne 0 ]
-                       then UpdateStatus=0
-                            sadm_writelog "There are ${NB_UPD} update available"
+                       then UpdateStatus=0                              # 0= Update are available
+                            sadm_writelog "Here is the list of the ${NB_UPD} update available."
                             apt list --upgradable 2>/dev/null | grep -v 'Listing...' | nl
-                       else UpdateStatus=1
-                            sadm_writelog "No Update available"
+                       else UpdateStatus=1                              # 1= No Update are available
+                            sadm_writelog "No Update available."
                     fi
+                    sadm_writelog ""                                    # White Line
             fi
             ;;
     esac 
@@ -422,7 +447,7 @@ run_apt_get()
     # Check if Actual Server is the Main SADMIN server - No automatic Reboot for that server
     SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'`         # Need a No FQDM of SADM Srv
     if [ "$HOSTNAME" = "$SADM_SRV_NAME" ]                               # We are on SADM Master Srv
-        then sadm_writelog "No Automatic reboot on the SADMIN Main server ($SADM_SERVER)"
+        then sadm_writelog "No Automatic reboot on the SADMIN Main server - $SADM_SERVER"
              sadm_writelog "Automatic reboot cancelled for this server"
              sadm_writelog "You will need to reboot system at your choosen time."
              sadm_writelog " "
@@ -456,7 +481,7 @@ run_apt_get()
                         ;;
 
                 *)
-                        sadm_writelog "This OS ($(sadm_get_osname)) is not yet supported"
+                        sadm_writelog "$(sadm_get_osname) is not yet supported"
                         sadm_writelog "Please report it to SADMIN Web Site at this email :"
                         sadm_writelog "support@sadmin.ca"
                         ;;
@@ -468,7 +493,7 @@ run_apt_get()
     fi
 
     ### Update $SADMIN/dat/dr/`hostname -s`_sysinfo.txt (Update the O/S Update date & Status)
-    sadm_writelog "Updating 'O/S Update' date in $HWD_FILE"
+     if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "Updating 'O/S Update' date in $HWD_FILE" ; fi
     grep -vi "SADM_OSUPDATE_" $HWD_FILE > $SADM_TMP_FILE1               # Remove lines to update
     if [ "$SADM_EXIT_CODE" -eq 0 ]                                      # O/S Update was a success
         then echo "SADM_OSUPDATE_STATUS                  = S"  >> $SADM_TMP_FILE1   # Success
