@@ -44,6 +44,7 @@
 # 2019_07_23 Update: v1.32 Remove utilization of history sequence number file.
 # 2019_08_19 Update: v1.33 Check /etc/cron.d/sadm_rear_backup permission & remove /etc/cron.d/rear
 #@2019_11_25 Fix: v1.34 Remove deletion of $SADMIN/www on SADMIN client.
+#@2020_01_21 Update: v1.35 Remove alert_group.cfg and alert_slack.cfg, if present in $SADMIN/cfg
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -92,7 +93,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='1.34'                              # Your Current Script Version
+    export SADM_VER='1.35'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -516,10 +517,19 @@ file_housekeeping()
             afile="$SADM_WWW_LIB_DIR/.crontab.txt"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
+            afile="$SADM_CFG_DIR/alert_group.cfg"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
+            afile="$SADM_CFG_DIR/alert_slack.cfg"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
             afile="$SADM_CFG_DIR/.dbpass"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
             afile="$SADM_CFG_DIR/.alert_history.txt"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
+            afile="$SADM_CFG_DIR/.rch_conversion_done"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
             afile="$SADM_CFG_DIR/alert_history.txt"
