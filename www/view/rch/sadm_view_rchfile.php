@@ -31,6 +31,7 @@
 #@2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
 #@2020_01_14 Update: v2.5 Add link to allow to view script log on the page.
 #@2020_01_19 Update: v2.6 Remove line counter and some other cosmetics changes.
+#@2020_01_21 Update: v2.7 Display rch date in date reverse order (Recent at the top)
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -47,6 +48,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
             "lengthMenu": [[25, 50, 100, -1], [25, 50, ,100, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
+            "order"     : [[ 0, "desc" ]],
             "ordering"  : true,
             "info"      : true
         } );
@@ -60,7 +62,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.6" ;                                                        # Current version number
+$SVER  = "2.7" ;                                                        # Current version number
 $URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
 
 
@@ -77,7 +79,7 @@ function setup_table() {
     echo "\n<thead>";
     echo "\n<tr>" ;
     #echo "\n<th>No.</th>";
-    echo "\n<th class='dt-head-center'>Start Date</th>";
+    echo "\n<th class='dt-head-left'>Start Date</th>";
     echo "\n<th class='dt-center'>Start Time</th>";
     echo "\n<th>End Date</th>";
     echo "\n<th>End Time</th>";
@@ -93,7 +95,7 @@ function setup_table() {
     echo "\n<tfoot>";
     echo "\n<tr>" ;
     #echo "\n<th>No.</th>";
-    echo "\n<th class='dt-head-center'>Start Date</th>";
+    echo "\n<th class='dt-head-left'>Start Date</th>";
     echo "\n<th class='dt-center'>Start Time</th>";
     echo "\n<th>End Date</th>";
     echo "\n<th>End Time</th>";
@@ -127,7 +129,7 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
             $BGCOLOR = "lavender";
             if ($count % 2 == 0) { $BGCOLOR="#FFF8C6" ; }else{ $BGCOLOR="#FAAFBE" ;}
             #echo "\n<td class='dt-center'>" . $count   . "</td>";
-            echo "\n<td class='dt-center'>" . $cdate1  . "</td>";
+            echo "\n<td class='dt-left'>" . $cdate1  . "</td>";
             echo "\n<td class='dt-center'>" . $ctime1  . "</td>";
             echo "\n<td class='dt-center'>" . $cdate2  . "</td>";
             echo "\n<td class='dt-center'>" . $ctime2  . "</td>";
@@ -245,32 +247,21 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
     
     $tmpfile    = tempnam ('/tmp/', 'rchfiles-');                       # Create Tmp File Unsorted
     $csv_sorted = tempnam ('/tmp/', 'rchfiles_sorted_');                # Create Tmp file Sorted
+    if ($DEBUG) { echo "<br><pre>csv_sorted=$csv_sorted</pre>"; }
 
     # Eliminate line with dotted date & time and Create Sorted RCH file
-    $cmd="grep -v '\.\.\.\.' $RCHFILE | sort -t, -rk 1,1 -k 2,2n > $tmpfile";
-    if ($DEBUG) { echo "<br>CMD = $cmd"; }
-    $last_line = system($cmd, $retval);
-    if ($DEBUG) { echo "<br><pre>cmd=$cmd lastline=$last_line retval=$retval</pre>"; }
+    $cmd="grep -v '\.\.\.\.' $RCHFILE | sort -t, -rk 1,1 -k 2,2n > $csv_sorted";
+    if ($DEBUG) { echo "<br>CMD = $cmd <br>"; }
 
-    # Always want the last line of rch file (Maybe a line with dot (running) and we want that one)
-    $cmd="tail -1 $RCHFILE >> $tmpfile";
-    if ($DEBUG) { echo "<br>CMD = $cmd"; }
-    $last_line = system($cmd, $retval);
-    if ($DEBUG) { echo "<br><pre>cmd=$cmd lastline=$last_line retval=$retval</pre>"; }
-
-    # Sort Resulting file - Eliminate the last line inserted if it was already in the file
-    $cmd="cat $tmpfile | sort -t, -rk 1,1 -k 2,2n | uniq > $csv_sorted";
-    if ($DEBUG) { echo "<br>CMD = $cmd"; }
-    $last_line = system($cmd, $retval);
-    if ($DEBUG) { echo "<br><pre>cmd=$cmd lastline=$last_line retval=$retval</pre>"; }
-    unlink($tmpfile);
+    $rchline = system($cmd, $retval);
+    if ($DEBUG) { echo "<br><pre>cmd=$cmd rchline=$rchline retval=$retval</pre>"; }
 
     display_lib_heading("NotHome","[R]esult [C]ode [H]istory file viewer",$RCHFILE,$SVER);      
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
     display_rch_file ($HOSTNAME, $HOSTDESC, $csv_sorted, $RCV_FILENAME);# Go Display RCH File
     if ($DEBUG) { echo "<br>Final File " . $csv_sorted ; }              # Name of filename sorted
-    unlink($csv_sorted);                                                # Delete Tmp file Sorted
+    #unlink($csv_sorted);                                                # Delete Tmp file Sorted
     
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
