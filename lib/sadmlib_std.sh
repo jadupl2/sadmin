@@ -123,7 +123,7 @@
 #@2020_01_12 Update: v3.22 When script run on SADMIN server, copy 'rch' & 'log' in Web Interface Dir.
 #@2020_01_20 Update: v3.23 Place Alert Message on top of Alert Message (SMS,SLACK,EMAIL)
 #@2020_01_21 Update: v3.24 For Texto alert put alet message on top of texto and don't show if 1 of 1
-#@2020_01_21 Update: v3.25 Show the script starting date in the header.
+#@2020_01_21 Update: v3.25 Show the script starting date in the header. 
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
