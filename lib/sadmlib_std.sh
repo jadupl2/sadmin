@@ -122,6 +122,8 @@
 # 2019_12_02 Update: v3.21 Add Server name in susbject of Email Alert,
 #@2020_01_12 Update: v3.22 When script run on SADMIN server, copy 'rch' & 'log' in Web Interface Dir.
 #@2020_01_20 Update: v3.23 Place Alert Message on top of Alert Message (SMS,SLACK,EMAIL)
+#@2020_01_21 Update: v3.24 For Texto alert put alet message on top of texto and don't show if 1 of 1
+#@2020_01_21 Update: v3.25 Show the script starting date in the header.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -133,7 +135,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.23"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.25"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -1678,7 +1680,7 @@ sadm_start() {
     if [ -z "$SADM_LOG_HEADER" ] || [ "$SADM_LOG_HEADER" = "Y" ]        # Want to Produce Log Header
         then echo " " >>$SADM_LOG                                       # Blank line at beginning
              sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
-             sadm_writelog "Starting ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
+             sadm_writelog "`date` - ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
              sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)"
              sadm_writelog "$(sadm_get_osname) $(sadm_get_osversion) Kernel $(sadm_get_kernel_version)"
              sadm_writelog "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
@@ -2345,12 +2347,16 @@ sadm_send_alert() {
     if [ "$atype" = "S" ] ; then body0="SADM Script Alert" ; else body0="SADM Sysmon Alert" ;fi 
     case "$agroup_type" in
         m|M)    body1=`printf "%-15s: %s" "Email date/time" "$mdate"`   # Date/Time of email 
+                body4=`printf "%-15s: %s" "Event Message"  "$amessage"` # Body of the message
                 ;;
-        c|C)    body1=`printf "%-15s: %s" "SMS date/time" "$mdate"`     # Date the SMS was Sent
+        c|C)    body1=`printf "%-15s: %s" "SMS date/time" "$mdate"`     # Date the Cell Texto Sent
+                body4=`printf "%s" "$amessage"`                         # Body of the message
                 ;;
-        s|S)    body1=`printf "%-15s: %s" "Slack sent date/time" "$mdate"` # Date/Time of email 
+        s|S)    body1=`printf "%-15s: %s" "Slack sent date/time" "$mdate"` # Date/Time Slack Sent 
+                body4=`printf "%-15s: %s" "Event Message" "$amessage"`  # Body of the message
                 ;;
-        t|T)    body1=`printf "%-15s: %s" "SMS date/time" "$mdate"`     # Date the SMS was Sent
+        t|T)    body1=`printf "%-15s: %s" "SMS date/time" "$mdate"`     # Date the Texto was Sent
+                body4=`printf "%s" "$amessage"`                         # Body of the message
                 ;;
     esac             
     body2=`printf "%-15s: %s" "Event date/time" "$atime"`               # Date/Time event occured
@@ -2364,11 +2370,13 @@ sadm_send_alert() {
     #if [ $SADM_ALERT_REPEAT -eq 0 ] || [ $acounter -eq $MaxRepeat ]     # Final Alert Message
     #   then body3=`printf "%s, final notice." "$body3"`                 # Insert Final Notice
     #fi
-    body4=`printf "%-15s: %s" "Event Message"   "$amessage"`            # Body of the message
+    #body4=`printf "%-15s: %s" "Event Message"   "$amessage"`            # Body of the message
     body5=`printf "%-15s: %s" "Event on system" "$aserver"`             # Server where alert occured
     body6=`printf "%-15s: %s" "Script Name    " "$ascript"`             # Script Name
-    body=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$body0" "$body4" "$body1" "$body2" "$body3" "$body5" "$body6"`
-
+    if [ "$body3" != "" ] 
+       then body=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$body0" "$body4" "$body1" "$body2" "$body3" "$body5" "$body6"`
+       else body=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$body0" "$body4" "$body1" "$body2" "$body5" "$body6"`
+    fi
 
 
     # Send the Alert Message using the type of alert requested
