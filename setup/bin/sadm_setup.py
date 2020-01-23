@@ -66,7 +66,7 @@
 # 2019_07_04 Update: v3.29 Crontab client and Server definition revised for Aix and Linux.
 # 2019_08_25 Update: v3.30 On Client setup Web USer and Group in sadmin.cfg to sadmin user & group.
 # 2019_10_30 Update: v3.31 Remove installation of 'facter' package (Depreciated).
-#@2019_12_18 Update: v3.32 Fix problem when inserting server into database on Ubuntu/Raspbian.
+#@2019_12_18 Fix: v3.32 Fix problem when inserting server into database on Ubuntu/Raspbian.
 #@2019_12_20 Update: v3.33 Remove installation of ruby (was used for facter) & of pymysql (Done)
 # ==================================================================================================
 #

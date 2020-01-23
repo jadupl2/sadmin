@@ -1,5 +1,50 @@
 # Changelog
 
+## Release v[1.2.3](https://github.com/jadupl2/sadmin/releases) (2020-01-23)
+- Fixes
+	- 2019_12_22 sadm_osupdate_farm.sh (v3.13) - Fix problem when using debug (-d) option without specifying level of debug.
+	- 2020_01_13 sadm_view_sysmon.php (v2.13) - Bug fix, displaying empty error line.
+	- 2020_01_18 setup.sh (v3.2) - Fix problem installing pip3, when running setup.sh script.
+	- 2020_01_20 sadmlib_std.py (v3.11) - Fix 'get_osminorversion' function. Crash (raspbian) when no os minor version
+- Update
+	- 2019_12_18 sadm_setup.py (v3.32) - Fix problem when inserting server into database on Ubuntu/Raspbian.
+	- 2019_12_20 sadm_setup.py (v3.33) - Remove installation of ruby (was used for facter) & of pymysql (Done)
+	- 2019_12_20 setup.sh (v2.9) - Better verification and installation of python3 (If needed)
+	- 2019_12_27 sadm_service_ctrl.sh (v2.8) - Was exiting with error when using options '-h' or '-v'.
+	- 2019_12_27 setup.sh (v3.0) - Add recommended EPEL Repos on CentOS/RHEL 8.
+	- 2019_12_27 setup.sh (v3.1) - On RHEL/CentOS 6/7, revert to Python 3.4 (3.6 Incomplete on EPEL)
+	- 2020_01_03 sadm_server_backup.php (v1.8) - Web Page disposition and input was changed.
+	- 2020_01_04 sadm_server_menu.php (v1.5) - Change Server C.R.U.D. Menu
+	- 2020_01_07 sadm_group_common.php (v2.2) - Change web page for a lighter look.
+	- 2020_01_08 sadm_rear_backup.sh (v2.12) - Minor logging changes.
+	- 2020_01_09 sadm_category_common.php (v2.2) - Web page have now a new lighter look.
+	- 2020_01_11 sadm_view_sysmon.php (v2.12) - Remove Arch,Category and OS Version to make space on Line.
+	- 2020_01_12 sadm_fetch_clients.sh (v3.6) - Compact log produced by the script.
+	- 2020_01_12 sadmlib_std.sh (v3.22) - When script run on SADMIN server, copy 'rch' & 'log' in Web Interface Dir.
+	- 2020_01_12 sadm_server_osupdate.php (v2.9) - Enhance appearance and color of form.
+	- 2020_01_13 sadm_create_sysinfo.sh (v3.17) - Collect 'rear' version to show on rear schedule web page.
+	- 2020_01_13 sadmLib.php (v2.15) - Reduce Day of the week name returned by SCHEDULE_TO_TEXT to 3 Char.
+	- 2020_01_13 sadm_server_backup.php (v1.9) - Enhance Web Appearance and color.
+	- 2020_01_13 sadm_server_rear_backup.php (v1.2) - Enhance Web Page Appearance and color.
+	- 2020_01_13 sadm_view_file.php (v1.5) - Enhance Web Page Appearance and color.
+	- 2020_01_13 sadm_view_rear.php (v1.4) - Change column disposition and show ReaR version no. of systems.
+	- 2020_01_13 sadm_view_servers.php (v2.9) - Minor Appearance page change (Nb.Cpu and page width).
+	- 2020_01_14 sadm_fetch_clients.sh (v3.7) - Don't use SSH when running daily backup and ReaR Backup for SADMIN server.
+	- 2020_01_14 sadm_view_rchfile.php (v2.5) - Add link to allow to view script log on the page.
+	- 2020_01_14 sadm_view_rear.php (v1.5) - Don't show MacOS System on page (Not supported by ReaR).
+	- 2020_01_18 sadm_osupdate.sh (v3.17) - Include evrything in script log while running 'apt-get upgrade'.
+	- 2020_01_18 sadm_server_backup.php (v2.0) - Reduce width of text-area for include,exclude list to fit on Ipad.
+	- 2020_01_19 sadm_rsync_sadmin.sh (v2.14) - Option -u to sync the $SADMIN/usr/bin of SADMIN server to all clients.
+	- 2020_01_19 sadm_view_rchfile.php (v2.6) - Remove line counter and some other cosmetics changes.
+	- 2020_01_20 sadmlib_std.py (v3.10) - Better handling & Error message when can't connect to database.
+	- 2020_01_20 sadmlib_std.sh (v3.23) - Place Alert Message on top of Alert Message (SMS,SLACK,EMAIL)
+	- 2020_01_20 sadm_rsync_sadmin.sh (v2.15) - Option -s to sync the $SADMIN/sys of SADMIN server to all clients.
+	- 2020_01_21 sadm_client_housekeeping.sh (v1.35) - Remove alert_group.cfg and alert_slack.cfg, if present in $SADMIN/cfg
+	- 2020_01_21 sadmlib_std.sh (v3.24) - For Texto alert put alet message on top of texto and don't show if 1 of 1
+	- 2020_01_21 sadmlib_std.sh (v3.25) - Show the script starting date in the header.
+	- 2020_01_21 sadm_osupdate.sh (v3.18) - Enhance the update checking process.
+	- 2020_01_21 sadm_view_rchfile.php (v2.7) - Display rch date in date reverse order (Recent at the top)
+
 
 ## Release v[1.2.2](https://github.com/jadupl2/sadmin/releases) (2019-12-14)
 - Fixes
