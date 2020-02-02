@@ -124,8 +124,9 @@
 #@2020_01_20 Update: v3.23 Place Alert Message on top of Alert Message (SMS,SLACK,EMAIL)
 #@2020_01_21 Update: v3.24 For texto alert, put alert message on top of texto & don't show if 1 of 1
 #@2020_01_21 Update: v3.25 Show the script starting date in the header. 
+#@2020_02_01 Fix: v3.26 If on SADM Server & script don't use 'rch', gave error trying to copy 'rch'.
 #===================================================================================================
-trap 'exit 0' 2                                                         # Intercepte The ^C
+trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
  
 
@@ -135,7 +136,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.25"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.26"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2098,7 +2099,9 @@ sadm_stop() {
     # If we don't do that, log look incomplete & script seem to be always running on web interface.
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                         # Only run on SADMIN 
        then cp $SADM_LOG    ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log
-            cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
+            if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]     # Want to Produce RCH File
+               then cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
+            fi 
     fi
 
     return $SADM_EXIT_CODE
