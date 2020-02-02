@@ -385,16 +385,16 @@ run_apt_get()
     if [ "$NB_UPD" -ne 0 ]
        then sadm_writelog "There are ${NB_UPD} update available"
             apt list --upgradable 2>/dev/null | grep -v 'Listing...' | nl
-            sadm_writelog "Avise SysAdmin - Send warning email that some update are kept back."
-            msub="SADM WARNING: Update are kept back on host $SADM_HOSTNAME" 
+            sadm_writelog "Advise SysAdmin - Send warning email that some update are kept back."
+            msub="SADM WARNING: Update are kept back on system $SADM_HOSTNAME" 
             body1=`date`
             body2=$(printf "\n\n${msub}\nThere are ${NB_UPD} update available\n\n")
             body3=`apt list --upgradable 2>/dev/null | grep -v 'Listing...' | nl` 
-            body4=$(printf "\nIf some dependencies have changed on one of the packages you have installed, ")
-            body5="maybe some new package must be installed to perform the upgrade then, it "
-            body6="will be listed as 'kept-back'."
+            body4=$(printf "\nSome dependencies may have changed on one of the packages you have installed, ")
+            body5="or maybe some new package must be installed to perform the upgrade."
+            body6="They are then listed as 'kept-back'."
             body7="run apt-get install <list of packages kept back>."
-            mbody=`echo -e "${body1}\n${body2}\n${body3}\n${body4}\n\n${body5}\n${body6}\n\n${body7}\n\nHave a nice day."`
+            mbody=`echo -e "${body1}\n${body2}\n${body3}\n${body4}\n${body5}\n${body6}\n\n${body7}\n\nHave a nice day."`
             printf "%s" "$mbody" | $SADM_MUTT -s "$msub" "$SADM_MAIL_ADDR" >>$SADM_LOG 2>&1 
     fi
 
