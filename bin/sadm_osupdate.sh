@@ -31,10 +31,11 @@
 # 2019_05_23 Update: v3.12 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
 # 2019_07_12 Update: v3.13 O/S update script now update the date and status in sysinfo.txt. 
 # 2019_07_17 Update: v3.14 O/S update script now perform apt-get clean before update start on *.deb
-#@2019_11_21 Update: v3.15 Add 'export DEBIAN_FRONTEND=noninteractive' prior to 'apt-get upgrade'.
-#@2019_11_21 Update: v3.16 Email sent to SysAdmin if some package are kept back from update.
+# 2019_11_21 Update: v3.15 Add 'export DEBIAN_FRONTEND=noninteractive' prior to 'apt-get upgrade'.
+# 2019_11_21 Update: v3.16 Email sent to SysAdmin if some package are kept back from update.
 #@2020_01_18 Update: v3.17 Include evrything in script log while running 'apt-get upgrade'. 
 #@2020_01_21 Update: v3.18 Enhance the update checking process.
+#@2020_02_17 Update: v3.19 Add error message when problem getting the list of package to update.
 #
 # --------------------------------------------------------------------------------------------------
 #set -x
@@ -84,7 +85,7 @@
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.18'                              # Your Current Script Version
+    export SADM_VER='3.19'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -276,25 +277,32 @@ check_available_update()
                     sadm_writelog ""                                    # White Line
                else sadm_writelog "[OK] The cache have been updated."   # Show  Return Code
                     sadm_writelog ""                                    # White Line
+                    sadm_writelog "Retrieving list of upgradable packages." 
+                    sadm_writelog "Running 'apt list --upgradable'."
                     NB_UPD=`apt list --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l`
                     if [ "$NB_UPD" -ne 0 ]
-                       then UpdateStatus=0                              # 0= Update are available
-                            sadm_writelog "Here is the list of the ${NB_UPD} update available."
-                            apt list --upgradable 2>/dev/null | grep -v 'Listing...' | nl
-                       else UpdateStatus=1                              # 1= No Update are available
-                            sadm_writelog "No Update available."
+                        then sadm_writelog "There are ${NB_UPD} update available."
+                             apt list --upgradable 2>/dev/null |grep -v 'Listing...' >$SADM_TMP_FILE3 
+                             if [ $? -ne 0 ] 
+                                then sadm_writelog "Error getting list of packages to update."
+                                     sadm_writelog "Script aborted ..." 
+                                     sadm_stop 1
+                                     exit 1
+                                else nl $SADM_TMP_FILE3
+                                     UpdateStatus=0                     # 0= Update are available
+                             fi 
+                        else UpdateStatus=1                             # 1= No Update are available
+                             sadm_writelog "[OK] No Update available."
                     fi
                     sadm_writelog ""                                    # White Line
             fi
             ;;
     esac 
     
-    sadm_writelog " "
+    #sadm_writelog " "
     return $UpdateStatus                                                # 0=UpdExist 1=NoUpd 2=Abort
 
 }
-
-
 
 
 # --------------------------------------------------------------------------------------------------
@@ -355,19 +363,21 @@ run_dnf()
 # --------------------------------------------------------------------------------------------------
 run_apt_get()
 {
-    sadm_writelog "${SADM_TEN_DASH}"
+    #sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Starting $(sadm_get_osname) update process ..."
     
-    sadm_writelog "${SADM_TEN_DASH}"
+    #sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Updating O/S, running 'export DEBIAN_FRONTEND=noninteractive ; apt-get -y upgrade'"
     export DEBIAN_FRONTEND=noninteractive ; apt-get -y upgrade >>$SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
        then sadm_writelog "Return Code of \"apt-get -y upgrade\" is $RC"
             return $RC
+       else sadm_writelog "[OK] Update done with success, return code is ${RC}."
     fi
     
-    sadm_writelog "${SADM_TEN_DASH}"
+    #sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog " "
     sadm_writelog "Remove orphaned packages, running 'apt-get autoremove'"
     apt-get autoremove -y >>$SADM_LOG 2>&1
     RC=$?
@@ -398,8 +408,8 @@ run_apt_get()
             printf "%s" "$mbody" | $SADM_MUTT -s "$msub" "$SADM_MAIL_ADDR" >>$SADM_LOG 2>&1 
     fi
 
-    sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Update Successfull."
+    #sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "System Updated with Success."
     return 0
 }
 
