@@ -59,6 +59,7 @@
 # 2019_12_01 Update: v3.5 Backup crontab will backup daily not to miss weekly,monthly and yearly.
 #@2020_01_12 Update: v3.6 Compact log produced by the script.
 #@2020_01_14 Update: v3.7 Don't use SSH when running daily backup and ReaR Backup for SADMIN server. 
+#@2020_02_19 Update: v3.8 Restructure & Report an Error when can't SSH to client. 
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -120,7 +121,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.7'                               # Your Current Script Version
+    export SADM_VER='3.8'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -161,6 +162,7 @@ BA_SCRIPT="sadm_backup.sh"                        ; export BA_SCRIPT    # Backup
 REAR_SCRIPT="sadm_rear_backup.sh"                 ; export REAR_SCRIPT  # ReaR Backup Script 
 REAR_TMP="${SADMIN}/tmp/rear_site.tmp$$"          ; export REAR_TMP     # New ReaR site.conf tmp file
 REAR_CFG="${SADMIN}/tmp/rear_site.cfg$$"          ; export REAR_CFG     # Will be new /etc/site.conf
+export FETCH_RPT="${SADM_RPT_DIR}/${SADM_HOSTNAME}_fetch.rpt"           # RPT for unresponsive host
 #
 REBOOT_SEC=900                                    ; export REBOOT_SEC   # O/S Upd Reboot Nb Sec.wait
 RCH_FIELD=10                                      ; export RCH_FIELD    # Nb. of field on rch file.
@@ -686,6 +688,138 @@ update_rear_site_conf()
     #if [ $? -eq 0 ] ; then sadm_writelog "[OK] /etc/rear/site.conf is updated on ${WSERVER}" ;fi
 }
 
+# --------------------------------------------------------------------------------------------------
+# On Linux, Create standard crontab header for O/S Update, Daily Backup and ReaR Backup 
+# --------------------------------------------------------------------------------------------------
+create_crontab_files_header()
+{
+    # Header for O/S Update Crontab File
+    echo "# "                                                        > $SADM_CRON_FILE 
+    echo "# SADMIN - Operating System Update Schedule"              >> $SADM_CRON_FILE 
+    echo "# Please don't edit manually, SADMIN generated."          >> $SADM_CRON_FILE 
+    echo "# "                                                       >> $SADM_CRON_FILE 
+    echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> $SADM_CRON_FILE
+    echo "# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"          >> $SADM_CRON_FILE
+    echo "# "                                                       >> $SADM_CRON_FILE 
+    echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_CRON_FILE
+    echo "# "                                                       >> $SADM_CRON_FILE
+
+    # Header for Backup Crontab File
+    echo "# "                                                        > $SADM_BACKUP_NEWCRON 
+    echo "# SADMIN Client Backup Schedule"                          >> $SADM_BACKUP_NEWCRON 
+    echo "# Please don't edit manually, SADMIN generated."          >> $SADM_BACKUP_NEWCRON 
+    echo "# "                                                       >> $SADM_BACKUP_NEWCRON 
+    echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> $SADM_BACKUP_NEWCRON
+    echo "# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"          >> $SADM_BACKUP_NEWCRON
+    echo "# "                                                       >> $SADM_BACKUP_NEWCRON 
+    echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_BACKUP_NEWCRON
+    echo "# "                                                       >> $SADM_BACKUP_NEWCRON
+
+    # Header for Rear Crontab File
+    echo "# "                                                        > $SADM_REAR_NEWCRON 
+    echo "# SADMIN Client ReaR Schedule"                            >> $SADM_REAR_NEWCRON 
+    echo "# Please don't edit manually, SADMIN generated."          >> $SADM_REAR_NEWCRON 
+    echo "# "                                                       >> $SADM_REAR_NEWCRON 
+    echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> $SADM_REAR_NEWCRON
+    echo "# Day 0or7=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"       >> $SADM_REAR_NEWCRON
+    echo "# "                                                       >> $SADM_REAR_NEWCRON 
+    echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_REAR_NEWCRON
+    echo "# "                                                       >> $SADM_REAR_NEWCRON
+    return
+}
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Validate connectivity to server received 
+# 1st Parameter is the server name
+# 2nd Parameter is the fully qualified domain name of the server
+# --------------------------------------------------------------------------------------------------
+validate_server_connectivity()
+{
+    # Parameters received should always by two - If not write error to log and return to caller
+    if [ $# -ne 2 ]
+        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters."
+             sadm_writelog "Function received $* and this isn't valid."
+             sadm_writelog "Should receive the server name and the fqdn of the server "
+             return 1
+    fi
+    SNAME=$1                                                            # Server Name
+    FQDN_SNAME=$2                                                       # Server Name Full Qualified
+
+
+    # If server name can't be resolved - signal error and continue with next server
+    if ! host  $FQDN_SNAME >/dev/null 2>&1
+           then SMSG="[ERROR] Can't process '$FQDN_SNAME', hostname can't be resolved."
+                sadm_writelog "$SMSG"                                   # Advise user
+                return 1                                                # Return Error to Caller
+    fi
+
+    # upd_elapse = The Epoch time of the last Modif. to O/S Update RCH file - Current Epoch time
+    # If Problem connecting to Server and O/S update terminated less than 900 Seconds (15 Min) ago,
+    # then don't signal an error yet, just skip the server for now.
+    rch_osupd_name="${SADM_WWW_DAT_DIR}/${SNAME}/rch/${SNAME}_sadm_osupdate.rch"
+    if [ -r "$rch_osupd_name" ] 
+        then rch_epoch=`stat --printf='%Y\n' $rch_osupd_name`           # RCH last modif. Epoch
+             cur_epoch=$(sadm_get_epoch_time)                           # Get Current Epoch
+             upd_elapse=`echo $cur_epoch - $rch_epoch | $SADM_BC`       # Nb. Sec. since last mod.
+             if [ $SADM_DEBUG -gt 0 ]                                   # Show Nb. Sec. Since 
+                then sadm_writelog "Last O/S Update done $upd_elapse sec. ago ($rch_osupd_name)." 
+             fi
+    fi
+
+    # First Test ssh to server
+    $SADM_SSH_CMD $FQDN_SNAME date > /dev/null 2>&1                     # SSH to Server for date
+    RC=$?                                                               # Save Error Number
+    if [ $RC -eq 0 ] ; then return 0 ; fi                               # OK SSH Worked the 1st time
+
+    # SSH didn't work, but it's a sporadic server (Can happen, don't report an eror)
+    if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]                   # If Error on Sporadic Host
+        then sadm_writelog "[WARNING] Can't SSH to sporadic server $FQDN_SNAME, skipping it."
+             return 2                                                   # Return Skip Code to caller
+    fi 
+
+    # SSH didn't work, but monitoring for that server is OFF (don't report an eror)
+    if [ $RC -ne 0 ] &&  [ "$server_monitor" = "0" ]                    # If Error & Monitor is OFF
+        then sadm_writelog "[WARNING] Can't SSH to ${FQDN_SNAME}, monitoring is OFF, skipping it."
+             return 2                                                   # Return Skip Code to caller
+    fi 
+
+    # SSH didn't work, we will try 3 times before reprting an error (to eliminate false positive).
+    RETRY=1                                                             # Set Retry counter to 1
+    sadm_writelog "[ ERROR ] [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date" # 1st SSH didn't work msg
+    while [ $RETRY -lt 3 ]                                              # Retry ssh 3 times 
+        do
+        RETRY=$(($RETRY+1))                                             # Increase Retry counter
+        $SADM_SSH_CMD $FQDN_SNAME date > /dev/null 2>&1                 # SSH to Server for date
+        RC=$?                                                           # Save Error Number
+        if [ $RC -ne 0 ]                                                # If Error doing ssh
+            then if [ $RETRY -lt 3 ]                                    # If less than 3 retry
+                    then sadm_writelog "[ ERROR ] [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date"
+                    else if [ "$upd_elapse" -gt "$REBOOT_SEC" ]         # O/S Upd more than 900 Sec?
+                            then sadm_writelog "[ ERROR ] [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date"
+                                 SMSG="[ERROR] Can't SSH to server '${FQDN_SNAME}'"  
+                                 sadm_writelog "$SMSG"                  # Display Error Msg
+                                 ADATE=`date "+%Y.%m.%d;%H:%M"`         # Current Date/Time
+                                 # Create Error Line in Error Report File (rpt)
+                                 RPTLINE="Error;${SNAME};${ADATE};linux;NETWORK"
+                                 RPTLINE="${RPTLINE};Can't SSH to server '${FQDN_SNAME}'"
+                                 RPTLINE="${RPTLINE};${SADM_ALERT_GROUP};${SADM_ALERT_GROUP}" 
+                                 echo "$RPTLINE" >> $FETCH_RPT          # Create Skip Code to caller                              
+                                 return 2                               # Return Error to caller
+                            else sadm_writelog "[WARNING] Waiting for reboot to finish after O/S Update."
+                                 sadm_writelog "O/S Update RCH file was modified $upd_elapse seconds ago."
+                                 sadm_writelog "Continuing with next server, till we reach $REBOOT_SEC seconds."
+                                 return 2                               # Return Skip Code to caller
+                         fi
+                 fi
+            else sadm_writelog "[OK] $SADM_SSH_CMD $FQDN_SNAME date"
+                 return 0                                               # Return SSH is OK to Caller 
+        fi
+        done
+}
+
 
 
 
@@ -719,10 +853,10 @@ process_servers()
              return 1                                                   # Return Error to Caller
     fi 
 
-    # Execute SQL to list active servers of the right O/S Type
+    # Execute SQL to list active servers of the received O/S Type into $SADM_TMP_FILE1
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
     
-    # If file was not created or has a zero lenght, then no actives systems were found
+    # If file wasn't created or has a zero lenght, then no active system is found, return to caller.
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
         then sadm_writelog " "
              sadm_writelog "${SADM_TEN_DASH}"                           # Print 10 Dash line
@@ -737,46 +871,11 @@ process_servers()
     sadm_writelog "=================================================="
     sadm_writelog " "
 
-    # If on Linux, create the standard header for the O/S update and the backup crontab file.
-    if [ "$WOSTYPE" = "linux" ] 
-        then #
-             # Header for O/S Update Crontab File
-             echo "# "                                                        > $SADM_CRON_FILE 
-             echo "# SADMIN - Operating System Update Schedule"              >> $SADM_CRON_FILE 
-             echo "# Please don't edit manually, SADMIN generated."          >> $SADM_CRON_FILE 
-             echo "# "                                                       >> $SADM_CRON_FILE 
-             echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> $SADM_CRON_FILE
-             echo "# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"          >> $SADM_CRON_FILE
-             echo "# "                                                       >> $SADM_CRON_FILE 
-             echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_CRON_FILE
-             echo "# "                                                       >> $SADM_CRON_FILE
-             #
-             # Header for Backup Crontab File
-             echo "# "                                                        > $SADM_BACKUP_NEWCRON 
-             echo "# SADMIN Client Backup Schedule"                          >> $SADM_BACKUP_NEWCRON 
-             echo "# Please don't edit manually, SADMIN generated."          >> $SADM_BACKUP_NEWCRON 
-             echo "# "                                                       >> $SADM_BACKUP_NEWCRON 
-             echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> $SADM_BACKUP_NEWCRON
-             echo "# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"          >> $SADM_BACKUP_NEWCRON
-             echo "# "                                                       >> $SADM_BACKUP_NEWCRON 
-             echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_BACKUP_NEWCRON
-             echo "# "                                                       >> $SADM_BACKUP_NEWCRON
-             #
-             # Header for Rear Crontab File
-             echo "# "                                                        > $SADM_REAR_NEWCRON 
-             echo "# SADMIN Client ReaR Schedule"                            >> $SADM_REAR_NEWCRON 
-             echo "# Please don't edit manually, SADMIN generated."          >> $SADM_REAR_NEWCRON 
-             echo "# "                                                       >> $SADM_REAR_NEWCRON 
-             echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> $SADM_REAR_NEWCRON
-             echo "# Day 0or7=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"       >> $SADM_REAR_NEWCRON
-             echo "# "                                                       >> $SADM_REAR_NEWCRON 
-             echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_REAR_NEWCRON
-             echo "# "                                                       >> $SADM_REAR_NEWCRON
-             
-    fi
+    # On Linux, create header of crontab files for the O/S update, Daily backup and ReaR Backup.
+    if [ "$WOSTYPE" = "linux" ] ; then create_crontab_files_header ; fi
 
     xcount=0; ERROR_COUNT=0;
-    while read wline                                                    # Data in File then read it
+    while read wline                                                    # Read Server Data from DB
         do                                                              # Line by Line
         xcount=`expr $xcount + 1`                                       # Incr Server Counter Var.
         server_name=`    echo $wline|awk -F, '{ print $1 }'`            # Extract Server Name
@@ -787,26 +886,26 @@ process_servers()
         server_dir=`     echo $wline|awk -F, '{ print $7 }'`            # SADMIN Dir on Client 
         fqdn_server=`    echo ${server_name}.${server_domain}`          # Create FQN Server Name
         #
-        db_updmin=`     echo $wline|awk -F, '{ print $8 }'`            # crontab Update Min field
-        db_updhrs=`     echo $wline|awk -F, '{ print $9 }'`            # crontab Update Hrs field
-        db_upddom=`     echo $wline|awk -F, '{ print $10 }'`           # crontab Update DOM field
-        db_updmth=`     echo $wline|awk -F, '{ print $11 }'`           # crontab Update Mth field
-        db_upddow=`     echo $wline|awk -F, '{ print $12 }'`           # crontab Update DOW field 
-        db_updauto=`    echo $wline|awk -F, '{ print $13 }'`           # crontab Update DOW field 
+        db_updmin=`     echo $wline|awk -F, '{ print $8 }'`             # crontab Update Min field
+        db_updhrs=`     echo $wline|awk -F, '{ print $9 }'`             # crontab Update Hrs field
+        db_upddom=`     echo $wline|awk -F, '{ print $10 }'`            # crontab Update DOM field
+        db_updmth=`     echo $wline|awk -F, '{ print $11 }'`            # crontab Update Mth field
+        db_upddow=`     echo $wline|awk -F, '{ print $12 }'`            # crontab Update DOW field 
+        db_updauto=`    echo $wline|awk -F, '{ print $13 }'`            # crontab Update DOW field 
         #
-        backup_auto=`   echo $wline|awk -F, '{ print $14 }'`           # crontab Backup 1=Yes 0=No 
-        backup_mth=`    echo $wline|awk -F, '{ print $15 }'`           # crontab Backup Mth field
-        backup_dom=`    echo $wline|awk -F, '{ print $16 }'`           # crontab Backup DOM field
-        backup_dow=`    echo $wline|awk -F, '{ print $17 }'`           # crontab Backup DOW field 
-        backup_hrs=`    echo $wline|awk -F, '{ print $18 }'`           # crontab Backup Hrs field
-        backup_min=`    echo $wline|awk -F, '{ print $19 }'`           # crontab Backup Min field
+        backup_auto=`   echo $wline|awk -F, '{ print $14 }'`            # crontab Backup 1=Yes 0=No 
+        backup_mth=`    echo $wline|awk -F, '{ print $15 }'`            # crontab Backup Mth field
+        backup_dom=`    echo $wline|awk -F, '{ print $16 }'`            # crontab Backup DOM field
+        backup_dow=`    echo $wline|awk -F, '{ print $17 }'`            # crontab Backup DOW field 
+        backup_hrs=`    echo $wline|awk -F, '{ print $18 }'`            # crontab Backup Hrs field
+        backup_min=`    echo $wline|awk -F, '{ print $19 }'`            # crontab Backup Min field
         #
-        rear_auto=`     echo $wline|awk -F, '{ print $20 }'`           # Rear Crontab 1=Yes 0=No 
-        rear_mth=`      echo $wline|awk -F, '{ print $21 }'`           # Rear Crontab Mth field
-        rear_dom=`      echo $wline|awk -F, '{ print $22 }'`           # Rear Crontab DOM field
-        rear_dow=`      echo $wline|awk -F, '{ print $23 }'`           # Rear Crontab DOW field 
-        rear_hrs=`      echo $wline|awk -F, '{ print $24 }'`           # Rear Crontab Hrs field
-        rear_min=`      echo $wline|awk -F, '{ print $25 }'`           # Rear Crontab Min field
+        rear_auto=`     echo $wline|awk -F, '{ print $20 }'`            # Rear Crontab 1=Yes 0=No 
+        rear_mth=`      echo $wline|awk -F, '{ print $21 }'`            # Rear Crontab Mth field
+        rear_dom=`      echo $wline|awk -F, '{ print $22 }'`            # Rear Crontab DOM field
+        rear_dow=`      echo $wline|awk -F, '{ print $23 }'`            # Rear Crontab DOW field 
+        rear_hrs=`      echo $wline|awk -F, '{ print $24 }'`            # Rear Crontab Hrs field
+        rear_min=`      echo $wline|awk -F, '{ print $25 }'`            # Rear Crontab Min field
         #
         sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash line
         sadm_writelog "Processing [$xcount] ${fqdn_server}"             # Print Counter/Server Name
@@ -823,20 +922,21 @@ process_servers()
                  sadm_writelog "backup_min    = $backup_min"            # Min. to run Script
                  sadm_writelog "fqdn_server   = $fqdn_server"           # Name of Output file
         fi
+    
+        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Test SSH
+            then validate_server_connectivity "$server_name" "$fqdn_server" # Check Access to Server
+                 RC=$?                                                  # Save function return code 
+                 if [ $RC -eq 2 ]                                       # Sporadic,Monitor Off Host
+                    then continue                                       # Not accessible, Nxt Server
+                 fi 
+                 if [ $RC -eq 1 ]                                       # Error Connecting to Host
+                    then ERROR_COUNT=$(($ERROR_COUNT+1))                # Error - Incr Error counter
+                         sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
+                         continue                                       # Not accessible, Nxt Server
+                 fi 
+        fi                            
 
-        # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR AND CONTINUE WITH NEXT SERVER
-        if ! host  $fqdn_server >/dev/null 2>&1
-           then SMSG="[ERROR] Can't process '$fqdn_server', hostname can't be resolved"
-                sadm_writelog "$SMSG"                                   # Advise user
-                echo "$SMSG" >> $SADM_ELOG                              # Log Err. to Email Log
-                ERROR_COUNT=$(($ERROR_COUNT+1))                         # Consider Error -Incr Cntr
-                if [ $ERROR_COUNT -ne 0 ]
-                   then sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
-                fi
-                continue                                                # skip this server
-        fi
-
-        # On Linux & O/S AutoUpdate is ON, Generate Crontab entry in O/S Update crontab work file
+         # On Linux & O/S AutoUpdate is ON, Generate Crontab entry in O/S Update crontab work file
         if [ "$WOSTYPE" = "linux" ] && [ "$db_updauto" -eq 1 ]          # If O/S Update Scheduled
             then update_osupdate_crontab "$server_name" "${SADM_BIN_DIR}/$OS_SCRIPT" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
         fi
@@ -852,65 +952,6 @@ process_servers()
             then update_rear_crontab "$server_name" "${server_dir}/bin/$REAR_SCRIPT" "$rear_min" "$rear_hrs" "$rear_mth" "$rear_dom" "$rear_dow"
         fi
                 
-        # Test to prevent false Alert when the server is rebooting after a O/S Update.
-        # Wait 15 minutes (900 Seconds) before signaling a problem.
-        rch_osupd_name="${SADM_WWW_DAT_DIR}/${server_name}/rch/${server_name}_sadm_osupdate.rch"
-        if [ -r "$rch_osupd_name" ] 
-            then rch_epoch=`stat --printf='%Y\n' $rch_osupd_name`
-                 cur_epoch=$(sadm_get_epoch_time)
-                 upd_elapse=`echo $cur_epoch - $rch_epoch | $SADM_BC`
-                  if [ $SADM_DEBUG -gt 0 ] 
-                        then sadm_writelog "Last O/S Update done $upd_elapse sec. ago ($rch_osupd_name)." 
-                  fi
-        fi
-
-
-        # TEST SSH TO SERVER
-        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH
-            then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1       # SSH to Server for date
-                 RC=$?                                                  # Save Error Number
-                 if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]      # SSH don't work & Sporadic
-                    then sadm_writelog "[WARNING] Can't SSH to sporadic server $fqdn_server"
-                         continue                                       # Go process next server
-                 fi
-                 if [ $RC -ne 0 ] &&  [ "$server_monitor" = "0" ]       # SSH don't work/Monitor OFF
-                    then sadm_writelog "[WARNING] Can't SSH to $fqdn_server - Monitoring SSH is OFF"
-                         continue                                       # Go process next server
-                 fi
-                RETRY=0                                                 # Set Retry counter to zero
-                while [ $RETRY -lt 3 ]                                  # Retry rsync 3 times
-                    do
-                    let RETRY=RETRY+1                                   # Incr Retry counter
-                    $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1    # SSH to Server for date
-                    RC=$?                                               # Save Error Number
-                    if [ $RC -ne 0 ]                                    # If Error doing ssh
-                        then if [ $RETRY -lt 3 ]                        # If less than 3 retry
-                                then sadm_writelog "[ RETRY $RETRY ] $SADM_SSH_CMD $fqdn_server date"
-                                else if "$upd_elapse" -gt "$REBOOT_SEC" ] 
-                                        then sadm_writelog "[ ERROR $RETRY ] $SADM_SSH_CMD $fqdn_server date"
-                                             ERROR_COUNT=$(($ERROR_COUNT+1))    # Consider Error -Incr Cntr
-                                             sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
-                                             SMSG="[ERROR] Can't SSH to server '${fqdn_server}'"  
-                                             sadm_writelog "$SMSG"              # Display Error Msg
-                                             echo "$SMSG" >> $SADM_ELOG         # Log Err. to Email Log
-                                             echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_ELOG
-                                             echo "----------" >> $SADM_ELOG 
-                                             continue
-                                        else sadm_writelog "Waiting for reboot to finish after O/S Update."
-                                             sadm_writelog "O/S Update started $upd_elapse seconds ago."
-                                             sadm_writelog "Will continue with next server."
-                                             continue 
-                                     fi
-                             fi
-                        else sadm_writelog "[OK] $SADM_SSH_CMD $fqdn_server date"
-                             break
-                    fi
-                    done
-        fi
-
-
-
-
         # Set remote $SADMIN/cfg Dir. and local www/dat/${server_name}/cfg directory.
         LDIR="${SADM_WWW_DAT_DIR}/${server_name}/cfg"                   # cfg Local Receiving Dir.
         RDIR="${server_dir}/cfg"                                        # Remote cfg Directory
@@ -1038,7 +1079,7 @@ check_all_rpt()
 {
     sadm_writelog "Verifying all systems for :"
     sadm_writelog "  - 'Sysmon report file' (*.rpt) for Warning, Info and Errors."
-    sadm_writelog " "
+    #sadm_writelog " "
     #find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; 
     find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; > $SADM_TMP_FILE1
 
@@ -1158,26 +1199,27 @@ check_all_rch()
                         sadm_writelog "sadm_send_alert $dmess RC=$RC"   # Show User Paramaters sent
                 fi
                 alert_counter=`expr $alert_counter + 1`                 # Increase Submit AlertCount
-                sadm_writelog " " 
-                sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: "
-                sadm_writelog "   - $emess"
+                #sadm_writelog " " 
+                #sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: "
+                #sadm_writelog "   - $emess"
                 sadm_send_alert "$etype" "$etime" "$ehost" "$escript" "$egname" "$esub" "$emess" "$eattach"
                 RC=$?
                 if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "RC=$RC" ;fi # Debug Show ReturnCode
                 case $RC in
                     0)  total_ok=`expr $total_ok + 1`
-                        sadm_writelog "   - Alert was sent successfully." 
+                        sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: Alert was sent successfully."
                         ;;
                     1)  total_error=`expr $total_error + 1`
-                        sadm_writelog "   - Error submitting the alert."
+                        sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: Error submitting the alert."
                         ;;
                     2)  total_duplicate=`expr $total_duplicate + 1`
-                        sadm_writelog "   - Alert already sent."
+                        sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: Alert already sent."
+                        if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "   - Alert already sent." ; fi
                         ;;
                     3)  total_oldies=`expr $total_oldies + 1`
-                        sadm_writelog "   - Alert is older than 24 hrs."
+                        sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: Alert is older than 24 hrs."
                         ;;
-                    *)  sadm_writelog "   - ERROR: Unknown return code $RC"
+                    *)  if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "   - ERROR: Unknown return code $RC"; fi
                         ;;
                 esac                                                    # End of case
         fi
@@ -1204,6 +1246,7 @@ check_all_rch()
 main_process()
 {
     # Process All Active Linux/Aix servers
+    > $FETCH_RPT                                                        # Create Empty Fetch RPT
     LINUX_ERROR=0; AIX_ERROR=0 ; MAC_ERROR=0                            # Init. Error count to 0
     process_servers "linux"                                             # Process Active Linux
     LINUX_ERROR=$?                                                      # Save Nb. Errors in process
@@ -1229,12 +1272,13 @@ main_process()
 
     if [ $(sadm_get_ostype) = "LINUX" ] ; then crontab_update ; fi      # Update crontab if needed
     
-    # This script is run regularely (every 5 minutes), we copy the updated .rch file in 
-    # the directory used by web interface, otherwise it shows as running most of the times
+    # To prevent this script from showing very often (This script is run every 5 minutes) on the 
+    # Web interface, we copy the updated .rch file in the web centrail directory. 
     if [ ! -d ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ]                # Web RCH repo Dir not exist
         then mkdir -p ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch          # Create it
     fi
     cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch            # cp rch for instant Status
+    cp ${SADM_RPT_DIR}/*.rpt ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt   # cp rpt for instant Status
 
     return $SADM_EXIT_CODE
 }
