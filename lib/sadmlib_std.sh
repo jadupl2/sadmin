@@ -125,6 +125,7 @@
 #@2020_01_21 Update: v3.24 For texto alert, put alert message on top of texto & don't show if 1 of 1
 #@2020_01_21 Update: v3.25 Show the script starting date in the header. 
 #@2020_02_01 Fix: v3.26 If on SADM Server & script don't use 'rch', gave error trying to copy 'rch'.
+#@2020_02_19 Update v3.27 Added History Archive Definition
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -136,7 +137,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.26"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.27"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -194,6 +195,8 @@ SADM_SLACK_FILE="$SADM_CFG_DIR/alert_slack.cfg"             ; export SADM_SLACK_
 SADM_SLACK_INIT="$SADM_CFG_DIR/.alert_slack.cfg"            ; export SADM_SLACK_INIT # Slack Init WH
 SADM_ALERT_HIST="$SADM_CFG_DIR/alert_history.txt"           ; export SADM_ALERT_HIST # Alert History
 SADM_ALERT_HINI="$SADM_CFG_DIR/.alert_history.txt"          ; export SADM_ALERT_HINI # History Init
+SADM_ALERT_ARC="$SADM_CFG_DIR/alert_archive.txt"            ; export SADM_ALERT_ARC  # Alert Archive
+SADM_ALERT_ARCINI="$SADM_CFG_DIR/.alert_archive.txt"        ; export SADM_ALERT_ARCINI # Init Archive
 SADM_REL_FILE="$SADM_CFG_DIR/.release"                      ; export SADM_REL_FILE   # Release Ver.
 SADM_SYS_STARTUP="$SADM_SYS_DIR/sadm_startup.sh"            ; export SADM_SYS_STARTUP # Startup File
 SADM_SYS_START="$SADM_SYS_DIR/.sadm_startup.sh"             ; export SADM_SYS_START  # Startup Template
