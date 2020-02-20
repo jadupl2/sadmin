@@ -364,9 +364,9 @@ file_housekeeping()
             if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
     fi
 
-    # Set Permission on all *.txt files 
-    CMD="find $SADM_WWW_DIR -type f -name *.txt -exec chmod 664 {} \;"
-    find $SADM_WWW_DIR -type f -name *.txt -exec chmod 664 {} \; >/dev/null 2>&1
+    # Set Permission on all *.pdf files 
+    CMD="find $SADM_WWW_DIR -type f -name *.pdf -exec chmod 664 {} \;"
+    find $SADM_WWW_DIR -type f -name *.pdf -exec chmod 664 {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
        then sadm_writelog "[ ERROR ] running $CMD"
             ERROR_COUNT=$(($ERROR_COUNT+1))
