@@ -122,7 +122,6 @@ show_usage()
 #===================================================================================================
 main_process()
 {
-    sadm_writelog "Starting Main Process ... "                          # Inform User Starting Main
     ERROR_COUNT=0                                                       # Clear Error Counter
 
     # Once a day - Delete old rch and log files & chown+chmod on SADMIN Server
