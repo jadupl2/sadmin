@@ -35,7 +35,8 @@
 # 2018_06_03    v2.2 Adapt to new version of Shell Library and small ameliorations
 # 2018_06_09    v2.3 Change & Standardize scripts name called by this script & Change Startup Order
 # 2018_09_16    v2.4 Added Default Alert Group
-#@2018_11_13    v2.5 Adapted for MacOS (Don't run Aix/Linux scripts)
+# 2018_11_13    v2.5 Adapted for MacOS (Don't run Aix/Linux scripts)
+#@2020_02_23 Update: v2.6  Return error only if one script is not executable or doesn't exist.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -57,7 +58,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.5'                               # Current Script Version
+    export SADM_VER='2.6'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -118,7 +119,7 @@ show_version()
 
 
 #===================================================================================================
-#                  Run the script received if parameter (Return 0=Success 1= Error)
+#                  Run the script received as parameter (Return 0=Success 1= Error)
 #===================================================================================================
 run_command()
 {
@@ -127,22 +128,20 @@ run_command()
     SCMD="${SADM_BIN_DIR}/${CMDLINE}"                                   # Full Path of the script
 
     if [ ! -x "${SADM_BIN_DIR}/${SCRIPT}" ]                               # If SCript do not exist
-        then sadm_writelog "[ERROR] ${SADM_BIN_DIR}/${SCRIPT} Don't exist or can't execute" 
+        then sadm_writelog "[ ERROR ] Script $SCMD not executable or doesn't exist."
              sadm_writelog " " 
              return 1                                                   # Return Error to Caller
     fi 
 
     sadm_writelog "Running $SCMD ..."                                   # Show Command about to run
     $SCMD >/dev/null 2>&1                                               # Run the Script
-    if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] $SCRIPT Terminate with Error"       # Signal Error in Log
-             sadm_writelog "Check Log for further detail about Error"   # Show user where to look
+    if [ $? -ne 0 ]                                            # If Error was encounter
+        then sadm_writelog "[ WARNING ] Encounter while running $SCRIPT"   
              sadm_writelog "${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SCRIPT}.log" # Show Log Name    
-             sadm_writelog " " 
-             return 1                                                   # Return Error to Caller
-        else sadm_writelog "[SUCCESS] Script $SCRIPT terminated"        # Advise user it's OK
-             sadm_writelog " " 
+        else sadm_writelog "[ SUCCESS ] Running $SCMD"          # Advise user it's OK
     fi
+
+    sadm_writelog " " 
     return 0                                                            # Return Success to Caller
 }
 
@@ -152,7 +151,6 @@ run_command()
 #===================================================================================================
 main_process()
 {
-    sadm_writelog "Main Process as started ..."
     SADM_EXIT_CODE=0                                                    # Reset Error counter
 
     # On Every Client (including SADMIN Server) we prune some files & check file owner & Permission
@@ -218,7 +216,5 @@ main_process()
     
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
-
-# SADMIN CLosing procedure - Close/Trim log and rch file, Remove PID File, Send email if requested
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
