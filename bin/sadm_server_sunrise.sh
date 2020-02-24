@@ -43,8 +43,9 @@
 # 2018_06_11 v2.2 Backtrack change v2.1
 # 2018_06_19 v2.3 Change Backup DB Command line (Default compress)
 # 2018_09_14 v2.4 Was reporting Error, even when all scripts ran ok.
-#@2019_05_01 Update: v2.5 Log name now showed to help user diagnostic problem when an error occurs.
-#@2019_05_23  Update: v2.6 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
+# 2019_05_01 Update: v2.5 Log name now showed to help user diagnostic problem when an error occurs.
+# 2019_05_23 Update: v2.6 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
+#@2020_02_23 Update: v2.7 Return error only if one script is not executable or doesn't exist.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -66,7 +67,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.6'                               # Current Script Version
+    export SADM_VER='2.7'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -118,6 +119,33 @@ show_usage()
 
 
 #===================================================================================================
+#                  Run the script received as parameter (Return 0=Success 1= Error)
+#===================================================================================================
+exec_script()
+{
+    RC=0                                                                # Set Error Flag at OFF
+    SCRIPT="$*"                                                         # Name of Script to execute
+    SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Script full path name
+    FLOG=`echo $SCRIPT | awk -F\. '{print $1}'`                         # Log name without extension
+    SLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${FLOG}.log"                 # Log Name full path
+    if [ ! -x $SCMD ]                                                   # Script not executable
+        then sadm_writelog "[ ERROR ] Script $SCMD not executable or doesn't exist."
+             RC=1                                                       # Raise Error Flag 
+        else sadm_writelog "Running $SCMD ..."                          # Show Running Script Name
+             $SCMD >/dev/null 2>&1                                      # Run the Script
+             if [ $? -ne 0 ]                                            # If Error was encounter
+                then sadm_writelog "[ WARNING ] Encounter while running $SCRIPT"   
+                     sadm_writelog "For detail consult the log ($SLOG)" # Log for more detail
+                else sadm_writelog "[ SUCCESS ] Running $SCMD"          # Advise user it's OK
+             fi
+    fi    
+    return $RC
+}
+
+
+
+
+#===================================================================================================
 # Main Process (Used to run script on current server)
 #===================================================================================================
 main_process()
@@ -125,94 +153,28 @@ main_process()
     ERROR_COUNT=0                                                       # Clear Error Counter
 
     # Once a day - Delete old rch and log files & chown+chmod on SADMIN Server
-    SCRIPT="sadm_server_housekeeping.sh"                                # Name of Script to execute
-    SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Script full path name
-    FLOG=`echo $SCRIPT | awk -F\. '{print $1}'`                         # Log name without extension
-    SLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${FLOG}.log"                 # Log Name full path
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."               # Show Running Script Name
-    $SCMD >/dev/null 2>&1                                               # Run the Script
-    if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] Encounter in $SCRIPT"               # Signal Error to user
-             sadm_writelog "For more detail consult the log ($SLOG)"    # Log for more detail
-             ERROR_COUNT=$(($ERROR_COUNT+1))                            # Increase Error Counter
-        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
-    fi
+    exec_script "sadm_server_housekeeping.sh"                           # Name of Script to execute
+    if [ $? -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi         # On Error Incr. Err. Count
     
-
     # Collect from all servers Hardware info, Perf. Stat, ((nmon and sar)
-    SCRIPT="sadm_daily_farm_fetch.sh"                                   # Name of Script to execute
-    SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Script full path name
-    FLOG=`echo $SCRIPT | awk -F\. '{print $1}'`                         # Log name without extension
-    SLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${FLOG}.log"                 # Log Name full path
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."               # Show Running Script Name
-    $SCMD >/dev/null 2>&1                                               # Run the Script
-    if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] Encounter in $SCRIPT"               # Signal Error to user
-             sadm_writelog "For more detail consult the log ($SLOG)"    # Log for more detail
-             ERROR_COUNT=$(($ERROR_COUNT+1))                            # Increase Error Counter
-        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
-    fi
-
+    exec_script "sadm_daily_farm_fetch.sh"                              # Name of Script to execute
+    if [ $? -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi         # On Error Incr. Err. Count
 
     # Daily DataBase Update with the Data Collected
-    SCRIPT="sadm_database_update.py"                                    # Name of Script to execute
-    SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Script full path name
-    FLOG=`echo $SCRIPT | awk -F\. '{print $1}'`                         # Log name without extension
-    SLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${FLOG}.log"                 # Log Name full path
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."               # Show Running Script Name
-    $SCMD >/dev/null 2>&1                                               # Run the Script
-    if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] Encounter in $SCRIPT"               # Signal Error to user
-             sadm_writelog "For more detail consult the log ($SLOG)"    # Log for more detail
-             ERROR_COUNT=$(($ERROR_COUNT+1))                            # Increase Error Counter
-        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
-    fi 
-
+    exec_script "sadm_database_update.py"                               # Name of Script to execute
+    if [ $? -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi         # On Error Incr. Err. Count
 
     # With all the nmon collect from the server farm update respective host rrd performace database
-    SCRIPT="sadm_nmon_rrd_update.sh"                                    # Name of Script to execute
-    SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Script full path name
-    FLOG=`echo $SCRIPT | awk -F\. '{print $1}'`                         # Log name without extension
-    SLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${FLOG}.log"                 # Log Name full path
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."               # Show Running Script Name
-    $SCMD >/dev/null 2>&1                                               # Run the Script
-    if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] Encounter in $SCRIPT"               # Signal Error to user
-             sadm_writelog "For more detail consult the log ($SLOG)"    # Log for more detail
-             ERROR_COUNT=$(($ERROR_COUNT+1))                            # Increase Error Counter
-        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
-    fi 
-
+    exec_script "sadm_nmon_rrd_update.sh"                               # Name of Script to execute
+    if [ $? -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi         # On Error Incr. Err. Count
 
     # Scan the Subnet Selected - Inventory IP Address Avail.
-    SCRIPT="sadm_subnet_lookup.py"                                      # Name of Script to execute
-    SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Script full path name
-    FLOG=`echo $SCRIPT | awk -F\. '{print $1}'`                         # Log name without extension
-    SLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${FLOG}.log"                 # Log Name full path
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."               # Show Running Script Name
-    $SCMD >/dev/null 2>&1                                               # Run the Script
-    if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] Encounter in $SCRIPT"               # Signal Error to user
-             sadm_writelog "For more detail consult the log ($SLOG)"    # Log for more detail
-             ERROR_COUNT=$(($ERROR_COUNT+1))                            # Increase Error Counter
-        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
-    fi 
-
+    exec_script "sadm_subnet_lookup.py"                                 # Name of Script to execute
+    if [ $? -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi         # On Error Incr. Err. Count
 
     # Once a day we Backup the MySQL Database
-    SCRIPT="sadm_backupdb.sh"                                           # Name of Script to execute
-    SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Script full path name
-    FLOG=`echo $SCRIPT | awk -F\. '{print $1}'`                         # Log name without extension
-    SLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${FLOG}.log"                 # Log Name full path
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."               # Show Running Script Name
-    $SCMD >/dev/null 2>&1                                               # Run the Script
-    if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] Encounter in $SCRIPT"               # Signal Error to user
-             sadm_writelog "For more detail consult the log ($SLOG)"    # Log for more detail
-             ERROR_COUNT=$(($ERROR_COUNT+1))                            # Increase Error Counter
-        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
-    fi 
-
+    exec_script "sadm_backupdb.sh"                                      # Name of Script to execute
+    if [ $? -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi         # On Error Incr. Err. Count
 
     # Set SADM_EXIT_CODE according to Error Counter (Return 1 or 0)
     if [ "$ERROR_COUNT" -gt 0 ]                                         # If some error occured
