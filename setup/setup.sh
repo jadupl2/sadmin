@@ -14,7 +14,7 @@
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
-
+#
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
@@ -44,6 +44,7 @@
 #@2019_12_27 Update: v3.0 Add recommended EPEL Repos on CentOS/RHEL 8.
 #@2019_12_27 Update: v3.1 On RHEL/CentOS 6/7, revert to Python 3.4 (3.6 Incomplete on EPEL)
 #@2020_01_18 Fix: v3.2 Fix problem installing pip3, when running setup.sh script.
+#@2020_02_23 Fix: v3.3 Fix problem installing lsb_release
 #
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
@@ -53,7 +54,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.2'                              ; export SADM_VER           # Your Script Version
+SADM_VER='3.3'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -94,7 +95,7 @@ add_epel_repo()
     # Add EPEL Repository on Redhat / CentOS 5 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 5 ] 
         then if [ ! -r /etc/yum.repos.d/epel.repo ] 
-                then echo "Adding CentOS/Redhat V5 EPEL repository ..." |tee -a $SLOG
+                then echo " "; echo "Adding CentOS/Redhat V5 EPEL repository ..." |tee -a $SLOG
                      EPEL="https://archives.fedoraproject.org/pub/archive/epel/epel-release-latest-5.noarch.rpm"
                      yum install -y $EPEL >>$SLOG 2>&1
                      if [ $? -ne 0 ]
@@ -350,7 +351,10 @@ check_hostname()
 #===================================================================================================
 check_lsb_release()
 {
-    if [ "$SADM_OSTYPE" != LINUX ] ; then return 1 ; fi                 # Only available on Linux
+    SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`  
+    if [ "$SADM_OSTYPE" != LINUX ]
+        then return 1 
+    fi                                                                  # Only available on Linux
 
     # Make sure lsb_release is installed
     echo -n "Checking if 'lsb_release' is available ... " | tee -a $SLOG
