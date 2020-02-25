@@ -41,6 +41,7 @@
 # 2018_09_16    v3.3 Added Default Alert Group
 #@2019_02_27 Change: v3.4 Change error message when ping to system don't work
 #@2019_05_07 Update: v3.5 Add 'W 5' ping option, should produce less false alert
+#@2020_02_25 Update: v3.6 Fix intermittent problem getting SADMIN value from /etc/environment.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -48,48 +49,55 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #set -x
 
 
-
 #===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
+# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
-#
-    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.5'                               # Current Script Version
+    # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]                             # If SADMIN EnvVar not right
+        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
+             printf "\nAdd this line to /etc/environment file; 'export SADMIN=/InstallDir'" 
+             exit 1
+    fi 
+
+    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
+    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+
+    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
+    export SADM_VER='3.6'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
+    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
+    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
+    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
+    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
+    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
+    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
+    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library
+    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
+    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
 
-    # Load SADMIN Standard Shell Library 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                   # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
+#---------------------------------------------------------------------------------------------------
+# Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
+# They can be overridden here, on a per script basis (if needed).
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
+    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
+    #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
+
 
 
 
@@ -217,24 +225,26 @@ process_servers()
         # CREATE LOCAL RECEIVING DIR
         # Making sure the $SADMIN/dat/$server_name exist on Local SADMIN server
         #-------------------------------------------------------------------------------------------
-        sadm_writelog "Make sure local directory ${SADM_WWW_DAT_DIR}/${server_name} exist"
+        #sadm_writelog "Make sure local directory ${SADM_WWW_DAT_DIR}/${server_name} exist"
         if [ ! -d "${SADM_WWW_DAT_DIR}/${server_name}" ]
-            then sadm_writelog "  - Creating ${SADM_WWW_DAT_DIR}/${server_name} directory"
+            then sadm_writelog "Creating ${SADM_WWW_DAT_DIR}/${server_name} directory"
                  mkdir -p "${SADM_WWW_DAT_DIR}/${server_name}"
                  chmod 2775 "${SADM_WWW_DAT_DIR}/${server_name}"
         fi
 
         # Get the remote /etc/environment file to determine where SADMIN is install on remote
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}"
-        sadm_writelog "Getting /etc/environment from ${server_name}"
+        #sadm_writelog "Getting /etc/environment from ${server_name}"
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
             then scp -P${SADM_SSH_PORT} ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
             else cp /etc/environment ${WDIR} >/dev/null 2>&1  
         fi
         if [ $? -eq 0 ]                                                 # If file was transfered
-            then RDIR=`grep "^SADMIN=" $WDIR/environment |awk -F= '{print $2}'` # Set Remote Dir.
+            then RDIR=`grep "SADMIN=" $WDIR/environment |sed 's/export //g' |awk -F= '{print $2}'`
                  if [ "$RDIR" != "" ]                                   # No Remote Dir. Set
-                    then sadm_writelog "SADMIN is install in $RDIR on ${server_name}."
+                    then um1="File '/etc/environment' on ${server_name}," 
+                         umess="${um1} tell us that SADMIN was installed in ${RDIR}."
+                         sadm_writelog "$umess" 
                     else sadm_writelog "  - [ERROR] Couldn't get /etc/environment on ${server_name}"
                          ERROR_COUNT=$(($ERROR_COUNT+1))
                          sadm_writelog "  - Assuming /opt/sadmin" 
