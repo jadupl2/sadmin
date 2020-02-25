@@ -52,6 +52,7 @@
 # 2019_10_30 Update: v3.09 Remove 'facter' utilization (Depreciated).
 #@2020_01_20 Update: v3.10 Better handling & Error message when can't connect to database.
 #@2020_01_20 Fix: v3.11 Fix 'get_osminorversion' function. Crash (raspbian) when no os minor version 
+#@2020_02_25 Update: v3.12 Add 'export' line definition of SADMIN in /etc/environment.
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -112,18 +113,18 @@ class sadmtools():
         """
 
         # Making Sure SADMIN Environment Variable is Define & import 'sadmlib_std.py' if can be found.
-        if (os.getenv("SADMIN",default="X") == "X"):                    # SADMIN Env. Var. Defined ?
-            print ("SADMIN Environment Variable isn't define.")         # SADMIN Var MUST be defined
+        if (os.getenv("SADMIN",default="X") == "X"):                    # SADMIN Env.Var. Not Define
+            print ("'SADMIN' Environment Variable isn't defined.")      # SADMIN Var MUST be defined
             print ("It specify the directory where you installed the SADMIN Tools")
             print ("Add this line at the end of /etc/environment file") # Show Where to Add Env. Var
-            print ("SADMIN='/[dir-where-you-install-sadmin]'")          # Show What to Add.
+            print ("export SADMIN='/[dir-where-you-install-sadmin]'")   # Show What to Add.
             print ("Then logout and log back in and run this script again.")
             sys.exit(1)                                                 # Exit to O/S with Error 1
         else:
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.11"                                # This Library Version
+        self.libver             = "3.12"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
