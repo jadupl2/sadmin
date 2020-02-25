@@ -126,6 +126,7 @@
 #@2020_01_21 Update: v3.25 Show the script starting date in the header. 
 #@2020_02_01 Fix: v3.26 If on SADM Server & script don't use 'rch', gave error trying to copy 'rch'.
 #@2020_02_19 Update v3.27 Added History Archive Definition
+#@2020_02_25 Update v3.28 Add 'export SADMIN=$INSTALLDIR' to /etc/environment if not there.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -137,7 +138,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.27"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.28"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2576,9 +2577,9 @@ write_alert_history() {
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Statup Time of Script
 
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "main: grepping /etc/environment" ; fi
-    grep "^SADMIN" /etc/environment >/dev/null 2>&1                     # Do Env.File include SADMIN
+    grep "SADMIN=" /etc/environment >/dev/null 2>&1                     # Do Env.File include SADMIN
     if [ $? -ne 0 ]                                                     # SADMIN missing in /etc/env
-        then echo "SADMIN=$SADMIN" >> /etc/environment                  # Then add it to the file
+        then echo "export SADMIN=$SADMIN" >> /etc/environment           # Then add it to the file
     fi
     sadm_load_config_file                                               # Load sadmin.cfg file
     sadm_check_requirements                                             # Check Lib Requirements
