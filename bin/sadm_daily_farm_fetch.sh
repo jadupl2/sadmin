@@ -264,7 +264,7 @@ process_servers()
         # Transfer $SADMIN/dat/dr (Disaster Recovery) from Remote to $SADMIN/www/dat/$server/dr Dir.
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/dr"                    # Local Receiving Dir.
-        sadm_writelog "Make sure local directory $WDIR exist"
+        #sadm_writelog "Make sure local directory $WDIR exist"
         if [ ! -d "${WDIR}" ]
             then sadm_writelog "  - Creating ${WDIR} directory"
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
@@ -288,7 +288,7 @@ process_servers()
         # Transfer Remote $SADMIN/dat/nmon files to local $SADMIN/www/dat/$server_name/nmon  Dir
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/nmon"                     # Local Receiving Dir.
-        sadm_writelog "Make sure local directory $WDIR exist"
+        #sadm_writelog "Make sure local directory $WDIR exist"
         if [ ! -d "${WDIR}" ]
             then sadm_writelog "  - Creating ${WDIR} directory"
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
