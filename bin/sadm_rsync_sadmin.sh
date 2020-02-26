@@ -41,6 +41,7 @@
 # 2019_08_24 Fix: v2.13 Under certain condition not all servers were process (SSH in a loop problem)
 #@2020_01_19 Update: v2.14 Option -u to sync the $SADMIN/usr/bin of SADMIN server to all clients.
 #@2020_01_20 Update: v2.15 Option -s to sync the $SADMIN/sys of SADMIN server to all clients.
+#@2020_01_26 Update: v2.16 Option -c [hostname]  to sync of SADMIN server version to one client.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -52,30 +53,16 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
 
-    # Is 'SADMIN' environment variable defined ?. If not try to use /etc/environment SADMIN value.
-    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]                             # If SADMIN EnvVar not right
-        then missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
-             if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
-             missenv="Please set 'SADMIN' environment variable to the install directory."
-             grep "^SADMIN" /etc/environment >/dev/null 2>&1            # SADMIN line in /etc/env.? 
-             if [ $? -eq 0 ]                                            # Yes use SADMIN definition
-                 then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
-                      misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
-                      missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
-                      if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
-                      printf "\n${missenv}\n${misstmp}\n\n"
-                 else missvar="Add 'SADMIN=/InstallDir' in /etc/environment to remove this message."
-                      printf "\n${missenv}\n$missvar\n"                 # Recommendation to user    
-                      exit 1                                            # Back to shell with Error
+    # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+    if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
+        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
+             EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
+             if [ $? -eq 0 ]                                            # Yes it is 
+                then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                     printf "'SADMIN' Environment variable was temporarily set to ${SADMIN}."
+                else exit 1                                             # No SADMIN Env. Var. Exit
              fi
     fi 
-        
-    # Check if the SADMIN Shell Library is accessible, if not advise user and exit with error.
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                            # Shell Library not readable
-        then missenv="Please set 'SADMIN' environment variable to the install directory."
-             printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
-             exit 1                                                     # Exit to Shell with Error
-    fi
 
     # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
     export SADM_PN=${0##*/}                             # Current Script filename(with extension)
@@ -85,22 +72,22 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.15'                               # Your Current Script Version
+    export SADM_VER='2.16'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
-    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
+    export SADM_DEBUG=6                                 # Debug Level - 0=NoDebug Higher=+Verbose
     export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
     export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
     export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
     export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Ok now, load Standard Shell Library
-    export SADM_OS_NAME=$(sadm_get_osname)              # Uppercase, REDHAT,CENTOS,UBUNTU,AIX,DEBIAN
-    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number (ex: 7.6.5)
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library Functions
+    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
     export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
 
 #---------------------------------------------------------------------------------------------------
@@ -109,8 +96,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
-    export SADM_MAX_LOGLINE=1000                        # When script end Trim log to 500 Lines
-    #export SADM_MAX_RCLINE=60                          # When script end Trim rch file to 60 Lines
+    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
+    #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
 
@@ -120,21 +107,22 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
-export DEBUG_LEVEL=0                                                    # 0=NoDebug Higher=+Verbose
-export SYNC_USR="N"                                                     # Default don't sync usr/bin
-export SYNC_SYS="N"                                                     # Default don't sync sys Dir
-
+export SADM_DEBUG=0                                                    # 0=NoDebug Higher=+Verbose
+export SYNC_USR="N"                                                     # -u Don't sync usr/bin
+export SYNC_SYS="N"                                                     # -s Don't sync sys Dir
+export SYNC_CLIENT=""                                                   # -c SADMIN client to sync
 
 # --------------------------------------------------------------------------------------------------
 #                H E L P       U S A G E    D I S P L A Y    F U N C T I O N
 # --------------------------------------------------------------------------------------------------
 help_usage()
 {
-    printf "\n${SADM_PN} usage :"
+    printf "\n${SADM_PN} usage : -d[0-9] -c[hostname] -u -v -s -h "
     printf "\n\t-d   (Debug Level [0-9])"
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\t-u   (Also sync $SADMIN/usr/bin to all active clients)" 
+    printf "\n\t-c   (Push SADMIN version to active client specified)" 
     printf "\n\t-s   (Also sync $SADMIN/sys to all active clients)" 
     printf "\n\n" 
 }
@@ -157,7 +145,7 @@ create_remote_dir()
     REM_DIR=$2                                                          # Dir that should exist 
 
     # List Directory Received on the remote server
-    if [ $DEBUG_LEVEL -gt 8 ]                                           # If Debug is Activated
+    if [ $SADM_DEBUG -gt 8 ]                                           # If Debug is Activated
         then sadm_writelog "$SADM_SSH_CMD ${REM_SERVER} ls -l ${REM_DIR}"
     fi
     # ssh -n ${REM_SERVER} ls -l ${REM_DIR} >/dev/null 2>&1
@@ -204,18 +192,27 @@ process_servers()
     # MySQL Select All Actives Servers (Except SADMIN Server) & output result in $SADM_TMP_FILE.
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_sadmin_dir"
     SQL="${SQL} from server"
-    SQL="${SQL} where srv_active = True and srv_name <> '$SADM_HOSTNAME' "
+    #SQL="${SQL} where srv_active = True and srv_name <> '$SADM_HOSTNAME' "
+    if [ "$SYNC_CLIENT" != "" ]
+        then SQL="${SQL} where srv_active = True and srv_name = '$SYNC_CLIENT' "
+        else SQL="${SQL} where srv_active = True and srv_name <> '$SADM_HOSTNAME' "
+    fi 
+    #SQL="${SQL} where srv_active = True and srv_name <> '$SADM_HOSTNAME' "
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
-   
+    if [ $SADM_DEBUG -gt 5 ] 
+       then sadm_writelog ""
+            sadm_writelog "SQL = ${SQL}"
+    fi
+    
     # Setup Database Authentication
     WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/,/'" # Build CmdLine
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
 
     # Execute SQL to Select Active servers Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
-    if [ $DEBUG_LEVEL -gt 5 ] 
+    if [ $SADM_DEBUG -gt 5 ] 
         then sadm_writelog ""
              sadm_writelog "List of actives servers to process" 
              cat $SADM_TMP_FILE1 | while read wline ; do sadm_writelog "$wline"; done
@@ -248,7 +245,7 @@ process_servers()
         sadm_writelog "Processing ($xcount) $server_fqdn"               # Show ServerName Processing
         
         # In Debug Mode Display if the server is defined as Sporadic.
-        if [ $DEBUG_LEVEL -gt 3 ]                                       # If Debug is Activated
+        if [ $SADM_DEBUG -gt 3 ]                                       # If Debug is Activated
           then if [ "$server_sporadic" == "1" ]
                       then sadm_writelog "Server defined as sporadically available"
                       else sadm_writelog "Server always available (Not Sporadic)"
@@ -347,7 +344,7 @@ process_servers()
         rem_std_dir_to_rsync=( bin sys pkg lib )                        # Directories array to sync
         for WDIR in "${rem_std_dir_to_rsync[@]}"
           do
-          if [ $DEBUG_LEVEL -gt 5 ]                                     # If Debug is Activated
+          if [ $SADM_DEBUG -gt 5 ]                                     # If Debug is Activated
               then sadm_writelog "rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
           fi
           rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
@@ -364,7 +361,7 @@ process_servers()
             then rem_usr_dir_to_rsync=( usr/bin )
                  for WDIR in "${rem_usr_dir_to_rsync[@]}"
                     do
-                    if [ $DEBUG_LEVEL -gt 5 ]                           # If Debug is Activated
+                    if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
                         then sadm_writelog "rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
                     fi
                     rsync -ar --delete  ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
@@ -379,7 +376,7 @@ process_servers()
 
         # RSYNC ALL DOT CONFIGURATION(TEMPLATE) FILES IN $SADMIN/CFG TO ALL ACTIVES CLIENTS
         CFG_EXCL="--exclude .dbpass --exclude .rch_conversion_done "
-        if [ $DEBUG_LEVEL -gt 5 ]                           # If Debug is Activated
+        if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
             then sadm_writelog "rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/"
         fi
         rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/
@@ -393,7 +390,7 @@ process_servers()
         # IF USER CHOOSE TO RSYNC $SADMIN/SYS TO ALL ACTIVES CLIENTS, THEN DO IT HERE.
         if [ "$SYNC_SYS" = "Y" ] 
 
-            then if [ $DEBUG_LEVEL -gt 5 ]                           # If Debug is Activated
+            then if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
                     then sadm_writelog "rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/"
                  fi
                  rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/
@@ -405,7 +402,7 @@ process_servers()
                  fi
 
             else # RSYNC STARTUP/SHUTDOWN TEMPLATE SCRIPT FILES IN $SADMIN/SYS TO ALL ACTIVES CLIENTS
-                 if [ $DEBUG_LEVEL -gt 5 ]                           # If Debug is Activated
+                 if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
                     then sadm_writelog "rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/"
                  fi
                  rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/
@@ -436,7 +433,7 @@ process_servers()
         sadm_writelog "Syncing System Monitor Basic files."         # Show user what we do
         for WFILE in "${rem_files_to_rsync[@]}"                         # Loop to sync template file
           do
-            if [ $DEBUG_LEVEL -gt 5 ]                                   # If Debug is Activated
+            if [ $SADM_DEBUG -gt 5 ]                                   # If Debug is Activated
                   then sadm_writelog "rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}"
             fi
             #sadm_writelog "Sync ${SADM_BASE_DIR}/${WFILE} to ${server_fqdn}:${server_dir}/${WFILE}."
@@ -484,11 +481,22 @@ process_servers()
     
 
     # Switch for Help Usage (-h), Activate Debug Level (-d[1-9]), 
-    # -u rsync $SADMIN/usr/bin to all clients
-    # -s rsync $SADMIN/sys to all clients
-    while getopts "hsud:" opt ; do                                      # Loop to process Switch
+    # -u rsync $SADMIN/usr/bin to clients
+    # -s rsync $SADMIN/sys to clients
+    # -c rsync Clients Hostname Name to update (Comma separated, no space between them: host1,host2)
+    while getopts "hsuc:d:" opt ; do                                   # Loop to process Switch
         case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       sadm_stop 1                                      # Close/Trim Log & Del PID
+                       exit 1
+               fi
+               sadm_writelog "Debug Level ${SADM_DEBUG} activated."     # Display Debug Level
+               ;;                                                       
+            c) SYNC_CLIENT=$OPTARG                                      # Gather host name to Update
                ;;                                                       # No stop after each page
             h) help_usage                                               # Display Help Usage
                sadm_stop 0                                              # Close the shop
@@ -505,10 +513,6 @@ process_servers()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
-        then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
-    fi
-
     process_servers                                                     # Process Active Servers
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
