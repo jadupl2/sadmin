@@ -36,6 +36,7 @@
 #@2019_07_25 Update: v2.3 New variables available (SADM_OS_NAME, SADM_OS_VERSION, SADM_OS_MAJORVER).
 #@2019_09_03 Update: v2.4 Change default value for max line in rch (35) and log (500) file.
 #@2020_02_25 Update: v2.5 Reduce SADMIN Section needed at beginning of script.
+#@2020_02_26 Update: v2.6 Change code to show debug level at the beginning of script.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -67,7 +68,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.5'                               # Your Current Script Version
+    export SADM_VER='2.6'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -263,11 +264,12 @@ main_process()
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        sadm_stop 1                                      # Close/Trim Log & Del PID
-                       exit 1
+                       exit 1                                           # Exit Script with Error
                fi
+               sadm_writelog "Debug Level ${SADM_DEBUG} activated."     # Display Debug Level
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                sadm_stop 0                                              # Close/Trim Log & Del PID
@@ -284,16 +286,11 @@ main_process()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $SADM_DEBUG -gt 0 ] ; then printf "\nDebug activated, Level ${SADM_DEBUG}\n" ; fi
-
-
-# Your Main process procedure
+    
     main_process                                                        # Main Process
     # OR                                                                # Use line below or above
     #process_servers                                                    # Process All Active Servers
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
-
-# SADMIN Closing procedure - Close/Trim log and rch file, Remove PID File, Remove TMP files ...
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
     
