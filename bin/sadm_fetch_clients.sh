@@ -59,7 +59,7 @@
 # 2019_12_01 Update: v3.5 Backup crontab will backup daily not to miss weekly,monthly and yearly.
 #@2020_01_12 Update: v3.6 Compact log produced by the script.
 #@2020_01_14 Update: v3.7 Don't use SSH when running daily backup and ReaR Backup for SADMIN server. 
-#@2020_02_19 Update: v3.8 Restructure & Report an Error when can't SSH to client. 
+#@2020_02_19 Update: v3.8 Restructure & Create an Alert when can't SSH to client. 
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>

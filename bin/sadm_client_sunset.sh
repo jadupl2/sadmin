@@ -36,7 +36,7 @@
 # 2018_06_09    v2.3 Change & Standardize scripts name called by this script & Change Startup Order
 # 2018_09_16    v2.4 Added Default Alert Group
 # 2018_11_13    v2.5 Adapted for MacOS (Don't run Aix/Linux scripts)
-#@2020_02_23 Update: v2.6  Return error only if one script is not executable or doesn't exist.
+#@2020_02_23 Update: v2.6 Produce an alert only if one of the executed scripts isn't executable.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

@@ -1,5 +1,27 @@
 # Changelog
 
+## Release v[1.2.4](https://github.com/jadupl2/sadmin/releases) (2020-02-27)
+- Fixes
+	- 2020_02_01 sadmlib_std.sh (v3.26) - If on SADM Server & script don't use 'rch', gave error trying to copy 'rch'.
+	- 2020_02_23 setup.sh (v3.3) - Fix some problem installing lsb_release and typo with 'dnf' command..
+- Update
+	- 2020_01_26 sadm_rsync_sadmin.sh (v2.16) - Add Option -c [hostname] to sync of SADMIN server version to one client.
+	- 2020_02_17 sadm_osupdate.sh (v3.19) - Add error message when problem getting the list of package to update.
+	- 2020_02_18 sadm_rear_backup.sh (v2.13) - Correct typo error introduce in v2.12
+	- 2020_02_19 sadm_fetch_clients.sh (v3.8) - Restructure & Create an Alert when can't SSH to client.
+	- 2020_02_19 sadmlib_std.sh (v3.27) - Added History Archive File Definition
+	- 2020_02_19 sadm_server_housekeeping.sh (v2.5) - Restructure & added archiving of old alert history to history archive.
+	- 2020_02_23 sadm_client_sunset.sh (v2.6) - Produce an alert only if one of the executed scripts isn't executable.
+	- 2020_02_23 sadm_server_sunrise.sh (v2.7) - Produce an alert only if one of the executed scripts isn't executable.
+	- 2020_02_25 sadm_daily_farm_fetch.sh (v3.6) - Fix intermittent problem getting SADMIN value from /etc/environment.
+	- 2020_02_25 sadmlib_std.py (v3.12) - Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
+	- 2020_02_25 sadmlib_std.sh (v3.28) - Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
+	- 2020_02_25 sadm_template.sh (v2.5) - Reduce SADMIN Section needed at beginning of script.
+	- 2020_02_26 sadm_template.sh (v2.6) - Change code to show debug level at the beginning of script.
+
+
+
+
 ## Release v[1.2.3](https://github.com/jadupl2/sadmin/releases) (2020-01-23)
 - Fixes
 	- 2019_12_22 sadm_osupdate_farm.sh (v3.13) - Fix problem when using debug (-d) option without specifying level of debug.

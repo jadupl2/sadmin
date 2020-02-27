@@ -44,7 +44,7 @@
 #@2019_12_27 Update: v3.0 Add recommended EPEL Repos on CentOS/RHEL 8.
 #@2019_12_27 Update: v3.1 On RHEL/CentOS 6/7, revert to Python 3.4 (3.6 Incomplete on EPEL)
 #@2020_01_18 Fix: v3.2 Fix problem installing pip3, when running setup.sh script.
-#@2020_02_23 Fix: v3.3 Fix problem installing lsb_release
+#@2020_02_23 Fix: v3.3 Fix some problem installing lsb_release and typo with 'dnf' command..
 #
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
@@ -371,8 +371,8 @@ check_lsb_release()
     fi 
     which dnf >/dev/null 2>&1
     if [ $? -eq 0 ] 
-        then echo "Running 'dnf-y install redhat-lsb-core' ..." >>$SLOG
-             dnf-y install redhat-lsb-core >>$SLOG  2>&1
+        then echo "Running 'dnf -y install redhat-lsb-core' ..." >>$SLOG
+             dnf -y install redhat-lsb-core >>$SLOG  2>&1
     fi 
     which apt-get >/dev/null 2>&1
     if [ $? -eq 0 ] 

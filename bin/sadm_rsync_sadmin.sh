@@ -39,9 +39,9 @@
 # 2018_12_30  v2.11 Added sys/.sadm_startup.sh sys/.sadm_shutdown.sh to rsync process.
 # 2019_08_23 Update: v2.12 Added copy of Rear Basic exclude file cfg/.rear_exclude.txt.
 # 2019_08_24 Fix: v2.13 Under certain condition not all servers were process (SSH in a loop problem)
-#@2020_01_19 Update: v2.14 Option -u to sync the $SADMIN/usr/bin of SADMIN server to all clients.
-#@2020_01_20 Update: v2.15 Option -s to sync the $SADMIN/sys of SADMIN server to all clients.
-#@2020_01_26 Update: v2.16 Option -c [hostname]  to sync of SADMIN server version to one client.
+#@2020_01_19 Update: v2.14 Add Option -u to sync the $SADMIN/usr/bin of SADMIN server to all clients.
+#@2020_01_20 Update: v2.15 Add Option -s to sync the $SADMIN/sys of SADMIN server to all clients.
+#@2020_01_26 Update: v2.16 Add Option -c [hostname]  to sync of SADMIN server version to one client.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

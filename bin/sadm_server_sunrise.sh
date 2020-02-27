@@ -45,7 +45,7 @@
 # 2018_09_14 v2.4 Was reporting Error, even when all scripts ran ok.
 # 2019_05_01 Update: v2.5 Log name now showed to help user diagnostic problem when an error occurs.
 # 2019_05_23 Update: v2.6 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
-#@2020_02_23 Update: v2.7 Return error only if one script is not executable or doesn't exist.
+#@2020_02_23 Update: v2.7 Produce an alert only if one of the executed scripts isn't executable.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C

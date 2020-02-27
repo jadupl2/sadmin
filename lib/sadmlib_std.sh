@@ -125,8 +125,8 @@
 #@2020_01_21 Update: v3.24 For texto alert, put alert message on top of texto & don't show if 1 of 1
 #@2020_01_21 Update: v3.25 Show the script starting date in the header. 
 #@2020_02_01 Fix: v3.26 If on SADM Server & script don't use 'rch', gave error trying to copy 'rch'.
-#@2020_02_19 Update v3.27 Added History Archive Definition
-#@2020_02_25 Update v3.28 Add 'export SADMIN=$INSTALLDIR' to /etc/environment if not there.
+#@2020_02_19 Update v3.27 Added History Archive File Definition
+#@2020_02_25 Update v3.28 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x

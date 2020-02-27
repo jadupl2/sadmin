@@ -52,7 +52,7 @@
 # 2019_10_30 Update: v3.09 Remove 'facter' utilization (Depreciated).
 #@2020_01_20 Update: v3.10 Better handling & Error message when can't connect to database.
 #@2020_01_20 Fix: v3.11 Fix 'get_osminorversion' function. Crash (raspbian) when no os minor version 
-#@2020_02_25 Update: v3.12 Add 'export' line definition of SADMIN in /etc/environment.
+#@2020_02_25 Update: v3.12 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache

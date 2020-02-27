@@ -2216,7 +2216,7 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("CREATE YOUR OWN SCRIPT USING SADMIN LIBRARIES",'bold')
     writelog ("  - cp %s/bin/sadm_template.sh %s/usr/bin/newscript.sh" % (sroot,sroot))
     writelog ("  - cp %s/bin/sadm_template.py %s/usr/bin/newscript.py" % (sroot,sroot))
-    writelog ("Modify it to your need, run it and see the result.") 
+    writelog ("Run it or/and modify it to your need, run it and see the result.") 
     writelog (" ")
     writelog ("SEE SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :",'bold')
     writelog ("  - %s/bin/sadmlib_std_demo.sh" % (sroot))
