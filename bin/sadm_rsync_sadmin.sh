@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_rsync_sadmin.sh
-#   Synopsis : .
+#   Synopsis :  Copy the SADMIN master version to all actives clients. 
 #   Version  :  1.0
 #   Date     :  6 September 2015
 #   Requires :  sh
