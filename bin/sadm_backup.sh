@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#! /usr/bin/env bash 
 # --------------------------------------------------------------------------------------------------
 #   Author:     Jacques Duplessis
 #   Title:      Backup & optionally compress directories or files specified in the backup list file
