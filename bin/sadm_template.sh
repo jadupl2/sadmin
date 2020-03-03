@@ -269,7 +269,7 @@ main_process()
                        sadm_stop 1                                      # Close/Trim Log & Del PID
                        exit 1                                           # Exit Script with Error
                fi
-               sadm_writelog "Debug Level ${SADM_DEBUG} activated."     # Display Debug Level
+               sadm_writelog "Debug Level set to ${SADM_DEBUG}."        # Display Debug Level
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                sadm_stop 0                                              # Close/Trim Log & Del PID
