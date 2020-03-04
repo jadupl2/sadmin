@@ -2,7 +2,7 @@
 /* Change Log
     2018_02_08 JDuplessis
         V 2.1 Added Bottom Button on Server Update Page
-    
+#@2020_03_03 Update: Standardize Link Color used within site.  
 --------------------------------------------------------------------------------------------------*/
 
 /* Datatable Item per page box color
@@ -57,6 +57,32 @@ hr {
     padding         :   0;
     background-color:   black;
 }
+
+a:link {
+    color: rgb(189, 120, 16) ;
+    background-color: transparent;
+    /* text-decoration: none; */
+  }
+  
+  a:visited {
+    color: #FF9800;
+    background-color: transparent;
+    /* text-decoration: none; */
+}
+  
+  a:hover {
+    color: red;
+    background-color: transparent;
+    text-decoration: underline;
+  }
+  
+  a:active {
+    color: yellow;
+    background-color: transparent;
+    text-decoration: underline;
+  }
+
+
 /* CSS for Standard Table */
 table {
     font-family     :   'Arial';
@@ -139,6 +165,14 @@ table thead td {
 /* ---------------------------------------------------------------------------------------------- */
 /*  THIS SECTION IS USED FOR THE MENU LINE IN THE HEADING AT THE TOP OF PAGE OF EVERY WEB PAGE    */
 /* ---------------------------------------------------------------------------------------------- */
+#topmenu{padding:2px;text-align:center;color:black;}
+#topmenu ul{padding:0;margin:0;font-weight:700;list-style:none}
+#topmenu li{display:inline;padding:0 1em}
+#topmenu li>a:link,
+#topmenu li>a:visited{color:#fff;white-space:nowrap;text-decoration:none}
+#topmenu li>a:hover,
+#topmenu li>a:active{color:red;text-decoration:none}
+
 #sadmTopMenu{
     padding         :   2px;
     /* text-align      :   center; */
