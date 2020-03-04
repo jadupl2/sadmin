@@ -41,6 +41,7 @@
 #@2019_11_27 Fix: v2.11 Fix 'open append failed', when no *.rpt exist or are all empty.
 #@2020_01_11 Update: v2.12 Remove Arch,Category and OS Version to make space on Line.
 #@2020_01_13 Fix: v2.13 Bug fix, displaying empty error line.
+#@2020_03_03 Update: v2.14 Server Description displayed when mouse over server name.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -74,7 +75,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.13" ;                                                       # Current version number
+$SVER  = "2.14" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -207,7 +208,7 @@ function sysmon_page_heading() {
     echo "\n<th class='dt-center'>Event Date/Time</th>";
     echo "\n<th class='dt-center'>System</th>";
     #echo "\n<th class='dt-center'>Distribution</th>";
-    echo "\n<th class='dt-head-center'>System Description</th>";
+    #echo "\n<th class='dt-head-center'>System Description</th>";
 #    echo "\n<th class='dt-head-left'>Cat.</th>";
 #    echo "<th class='dt-head-left'>Arch</th>\n";
     echo "<th class='dt-head-center'>O/S</th>\n";
@@ -225,7 +226,7 @@ function sysmon_page_heading() {
     echo "\n<th class='dt-center'>Event Date/Time</th>";
     echo "\n<th class='dt-center'>System</th>";
     #echo "\n<th class='dt-center'>Distribution</th>";
-    echo "\n<th class='dt-head-center'>System Description</th>";
+    #echo "\n<th class='dt-head-center'>System Description</th>";
 #    echo "\n<th class='dt-head-left'>Cat.</th>";
 #    echo "<th class='dt-head-left'>Arch</th>\n";
     echo "<th class='dt-head-center'>O/S</th>\n";
@@ -346,11 +347,12 @@ function display_data($con,$alert_file) {
       # Server Name 
       echo "<td class='dt-center'>";
       echo "<a href='" . $URL_HOST_INFO . "?sel=" . nl2br($whost) ;
-      echo "' title='$WOS $WVER server - ip address is " . $row['srv_ip'] . "'>" ;
+#      echo "' title='$WDESC - $WOS $WVER at " . $row['srv_ip'] . "'>" ;
+      echo "' title='$WDESC at " . $row['srv_ip'] . "'>" ;
       echo nl2br($whost) . "</a></td>\n";
 
       # Show Server Description.
-      echo "<td>" . $WDESC . "</td>\n";                                 # Server Description
+      #echo "<td>" . $WDESC . "</td>\n";                                 # Server Description
 
       # Server Category  
       #echo "<td class='dt-body-left'>" . ucfirst( $row['srv_cat']) . "</td>\n";  
