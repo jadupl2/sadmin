@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_rsync_sadmin.sh
+#   Title    :  sadm_push_sadmin.sh
 #   Synopsis :  Copy the SADMIN master version to all actives clients. 
 #   Version  :  1.0
 #   Date     :  6 September 2015
@@ -39,9 +39,10 @@
 # 2018_12_30  v2.11 Added sys/.sadm_startup.sh sys/.sadm_shutdown.sh to rsync process.
 # 2019_08_23 Update: v2.12 Added copy of Rear Basic exclude file cfg/.rear_exclude.txt.
 # 2019_08_24 Fix: v2.13 Under certain condition not all servers were process (SSH in a loop problem)
-#@2020_01_19 Update: v2.14 Add Option -u to sync the $SADMIN/usr/bin of SADMIN server to all clients.
-#@2020_01_20 Update: v2.15 Add Option -s to sync the $SADMIN/sys of SADMIN server to all clients.
-#@2020_01_26 Update: v2.16 Add Option -c [hostname]  to sync of SADMIN server version to one client.
+# 2020_01_19 Update: v2.14 Add Option -u to sync the $SADMIN/usr/bin of SADMIN server to all clients.
+# 2020_01_20 Update: v2.15 Add Option -s to sync the $SADMIN/sys of SADMIN server to all clients.
+# 2020_01_26 Update: v2.16 Add Option -c [hostname]  to sync of SADMIN server version to one client.
+#@2020_03_04 Update: v2.17 Script was rename from sadm_rsync_sadmin.sh to sadm_push_sadmin.sh
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -72,7 +73,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.16'                              # Your Current Script Version
+    export SADM_VER='2.17'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -184,10 +185,10 @@ create_remote_dir()
 process_servers()
 {
     WOSTYPE=$1                                                          # Should be aix or linux
-    sadm_writelog " "
-    sadm_writelog "${SADM_FIFTY_DASH}"
-    sadm_writelog "Processing all active server(s)"
-    sadm_writelog " "
+    #sadm_writelog " "
+    #sadm_writelog "${SADM_FIFTY_DASH}"
+    #sadm_writelog "Processing all active server(s)"
+    #sadm_writelog " "
 
     # MySQL Select All Actives Servers (Except SADMIN Server) & output result in $SADM_TMP_FILE.
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_sadmin_dir"
@@ -240,7 +241,7 @@ process_servers()
         server_dir=`     echo $wline|awk -F, '{ print $6 }'`            # Client SADMIN Install Dir.
         server_fqdn=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
         
-        sadm_writelog " " ; sadm_writelog " "                           # Two Blank Lines
+        sadm_writelog " "                                               # Blank Line
         sadm_writelog "${SADM_TEN_DASH}"
         sadm_writelog "Processing ($xcount) $server_fqdn"               # Show ServerName Processing
         
@@ -320,7 +321,7 @@ process_servers()
                  ERROR_COUNT=$(($ERROR_COUNT+1))
                  server_dir="/opt/sadmin" 
         fi
-        if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count at $ERROR_COUNT" ;fi
+        #if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count at $ERROR_COUNT" ;fi
     
 
         # ARRAY OF DIRECTORY THAT WILL BE CREATED IF THEY DON'T EXIST ON THE SADM CLIENT
@@ -453,8 +454,8 @@ process_servers()
 
         done < $SADM_TMP_FILE1
 
-    sadm_writelog " "
     sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog " "
     return $ERROR_COUNT
 }
 
