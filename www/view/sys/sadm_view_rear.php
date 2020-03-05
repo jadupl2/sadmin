@@ -27,6 +27,7 @@
 # 2019_10_15 Update: v1.3 Add Architecture, O/S Name, O/S Version to page
 #@2020_01_13 Update: v1.4 Change column disposition and show ReaR version no. of systems.
 #@2020_01_14 Update: v1.5 Don't show MacOS System on page (Not supported by ReaR).
+#@2020_03_05 Update: v1.6 When mouse over server name (Show more information).
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -55,7 +56,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG           = False ;                                              # Debug Activated True/False
-$WVER            = "1.5" ;                                              # Current version number
+$WVER            = "1.6" ;                                              # Current version number
 $URL_CREATE      = '/crud/srv/sadm_server_create.php';                  # Create Page URL
 $URL_UPDATE      = '/crud/srv/sadm_server_update.php';                  # Update Page URL
 $URL_DELETE      = '/crud/srv/sadm_server_delete.php';                  # Delete Page URL
@@ -137,8 +138,8 @@ function display_data($count, $row) {
     echo "<tr>\n";  
     echo "<td class='dt-center'>";
     echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP ."'";
-    echo " title='" .$row['srv_osname']. "-" .$row['srv_osversion']." server, ip address is " ;
-    echo $row['srv_ip']  . ", click to edit schedule\'>";
+    echo " title='" .$row['srv_osname']. "-" .$row['srv_osversion']." - " ;
+    echo $row['srv_ip']  . ", click to edit the schedule.'>";
     echo $row['srv_name']  . "</a></td>\n";
 
     # Server Description
