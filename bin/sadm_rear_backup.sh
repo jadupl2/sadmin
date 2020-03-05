@@ -56,8 +56,9 @@
 # 2019_09_02 Update: v2.9 Change syntax of error messages.
 # 2019_09_14 Update: v2.10 Backup list before housekeeping was not showing.
 # 2019_09_18 Update: v2.11 Show Backup size in human redeable form.
-#@2020_01_08 Update: v2.12 Minor logging changes.
-#@2020_02_18 Update: v2.13 Correct typo error introduce in v2.12
+# 2020_01_08 Update: v2.12 Minor logging changes.
+# 2020_02_18 Update: v2.13 Correct typo error introduce in v2.12
+#@2020_03_04 Fix: v2.14 always leave lastest ReaR Backup to default name to ease the restore.
 #
 #
 # --------------------------------------------------------------------------------------------------
@@ -72,30 +73,16 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
 
-    # Is 'SADMIN' environment variable defined ?. If not try to use /etc/environment SADMIN value.
-    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]                             # If SADMIN EnvVar not right
-        then missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
-             if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
-             missenv="Please set 'SADMIN' environment variable to the install directory."
-             grep "^SADMIN" /etc/environment >/dev/null 2>&1            # SADMIN line in /etc/env.? 
-             if [ $? -eq 0 ]                                            # Yes use SADMIN definition
-                 then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
-                      misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
-                      missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
-                      if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
-                      printf "\n${missenv}\n${misstmp}\n\n"
-                 else missvar="Add 'SADMIN=/InstallDir' in /etc/environment to remove this message."
-                      printf "\n${missenv}\n$missvar\n"                 # Recommendation to user    
-                      exit 1                                            # Back to shell with Error
+    # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+    if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
+        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
+             EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
+             if [ $? -eq 0 ]                                            # Yes it is 
+                then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}."
+                else exit 1                                             # No SADMIN Env. Var. Exit
              fi
     fi 
-        
-    # Check if the SADMIN Shell Library is accessible, if not advise user and exit with error.
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                            # Shell Library not readable
-        then missenv="Please set 'SADMIN' environment variable to the install directory."
-             printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
-             exit 1                                                     # Exit to Shell with Error
-    fi
 
     # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
     export SADM_PN=${0##*/}                             # Current Script filename(with extension)
@@ -105,7 +92,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.13'                              # Your Current Script Version
+    export SADM_VER='2.14'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -118,19 +105,19 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
     export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Ok now, load Standard Shell Library
-    export SADM_OS_NAME=$(sadm_get_osname)              # Uppercase, REDHAT,CENTOS,UBUNTU,AIX,DEBIAN
-    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number (ex: 7.6.5)
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library Functions
+    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
     export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
 
 #---------------------------------------------------------------------------------------------------
 # Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
 # They can be overridden here, on a per script basis (if needed).
-    export SADM_ALERT_TYPE=3                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
     #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
-    #export SADM_MAX_RCLINE=60                          # When script end Trim rch file to 60 Lines
+    #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
 
@@ -171,13 +158,32 @@ show_usage()
 
 # --------------------------------------------------------------------------------------------------
 # Rear Backup preparation 
-# Make sure mount point exist, do a mount test and make sure backup directory exist
+#   - Test if rear executable exist, if not return error to caller.
+#   - Test existence of ReaR configuration file, if not return error to caller.
+#   - Test if local mount point exist, if not create it.
+#   - Mount the NFS drive over the local mount point, if don't work return error to caller.
+#   - If hostname directory doesn't exist in NFS directory, create it.
+#   - Try to write test file to NFS mount point, if don't work return error to caller.
 # --------------------------------------------------------------------------------------------------
 rear_preparation()
 {
     sadm_writelog "$SADM_FIFTY_DASH"                                    # Write 50 dashes line
     sadm_writelog "Perform ReaR preparation."                           # Feed User and Log
     sadm_writelog " "                                                   # Write white line
+
+    # Check if REAR is not installed - Abort Process 
+    if ${SADM_WHICH} rear >/dev/null 2>&1                               # command is found ?
+        then export REAR=`${SADM_WHICH} rear`                           # Store Path of command
+        else sadm_writelog "The command 'rear' is missing, Job Aborted" # Advise User Aborting
+             return 1                                                   # Return Error to Caller 
+    fi
+
+    # If Rear configuration is not there - Abort Process
+    if [ ! -r "$REAR_CFGFILE" ]                                         # ReaR Site config exist?
+        then sadm_writelog "The $REAR_CFGFILE isn't present"            # Warn User - Missing file
+             sadm_writelog "The backup will not run - Job Aborted"      # Warn User - No Backup
+             return 1                                                   # Return Error to Caller 
+    fi
 
     # Make sure Local mount point exist.
     if [ ! -d ${NFS_MOUNT} ] ; then mkdir ${NFS_MOUNT} ; chmod 775 ${NFS_MOUNT} ; fi
@@ -197,7 +203,6 @@ rear_preparation()
     sadm_writelog "NFS mount succeeded ..."
     df -h | grep ${NFS_MOUNT} | while read wline ; do sadm_writelog "$wline"; done
 
-    
     # Make sure the Directory of the host exist on NFS Server and have proper permission
     if [ ! -d  "${NFS_MOUNT}/${SADM_HOSTNAME}" ]
         then mkdir ${NFS_MOUNT}/${SADM_HOSTNAME}
@@ -206,14 +211,13 @@ rear_preparation()
                      return 1 
              fi
     fi
-    
-    # sadm_writelog "chmod 775 ${NFS_MOUNT}/${SADM_HOSTNAME}"             # Feed user and log.
     chmod 775 ${NFS_MOUNT}/${SADM_HOSTNAME} >> $SADM_LOG 2>&1           # Make sure Dir. is writable
     if [ $? -ne 0 ]                                                     # If error on chmod command
        then sadm_writelog "[ ERROR ] Can't chmod directory ${NFS_MOUNT}/${SADM_HOSTNAME}" 
             return 1 
     fi
     
+    # Write test to NFS Mount Point.
     sadm_writelog "Trying to write to NFS mount ..."                    # Feed user and log
     TEST_FILE="${NFS_MOUNT}/${SADM_HOSTNAME}/rear_pid_$SADM_TPID.txt"   # Create test file name
     touch ${TEST_FILE} >> $SADM_LOG 2>&1                                # Create empty test file
@@ -223,6 +227,44 @@ rear_preparation()
     fi
     sadm_writelog "Wrote to NFS mount with no problem."                 # Feed user and log
     rm -f ${TEST_FILE} >> $SADM_LOG 2>&1                                # Delete the test file
+
+    # If Last Backup ISO Exist, rename it to 'read_hostname_last modification date_time'.iso 
+    # Example: From 'rear_yoda.iso' to 'rear_yoda_2019-08-29_05:00:12.iso')
+    if [ -r "$REAR_CUR_ISO" ]
+        then sadm_writelog " "
+             FDATE=`stat --printf='%y\n' $REAR_CUR_ISO |awk '{ print $1 }'`
+             FTIME=`stat --printf='%y\n' $REAR_CUR_ISO |awk '{ print $2 }' |awk -F\. '{ print $1 }'`
+             REAR_NEW_ISO="${REAR_NAME}_${FDATE}_${FTIME}.iso"
+             sadm_writelog "Renaming ISO from $REAR_CUR_ISO to $REAR_NEW_ISO ..." 
+             #sadm_writelog "mv $REAR_CUR_ISO $REAR_NEW_ISO"
+             mv $REAR_CUR_ISO $REAR_NEW_ISO >> $SADM_LOG 2>&1
+             if [ $? -ne 0 ]
+                 then sadm_writelog "Error trying to move $REAR_CUR_ISO to $REAR_NEW_ISO"
+                      sadm_writelog "***** Rear Backup Abort *****"
+                      return 1                                          # Back to caller with error
+                 else sadm_writelog "The ISO rename was done successfully"
+             fi
+        else sadm_writelog "New ISO will be created under the name of ${REAR_CUR_ISO}."
+    fi
+    
+    # If Last Backup tar.gz Exist, rename it to 'read_hostname_last modification date_time'.tar.gz
+    # Example: From 'rear_yoda.tar.gz' to 'rear_yoda_2019-08-29_05:00:12.tar.gz'
+    if [ -r "$REAR_CUR_BAC" ]
+        then sadm_writelog " "
+             FDATE=`stat --printf='%y\n' $REAR_CUR_BAC |awk '{ print $1 }'`
+             FTIME=`stat --printf='%y\n' $REAR_CUR_BAC |awk '{ print $2 }' |awk -F\. '{ print $1 }'`
+             REAR_NEW_BAC="${REAR_NAME}_${FDATE}_${FTIME}.tar.gz"
+             sadm_writelog "Rename backup from ${REAR_CUR_BAC} to ${REAR_NEW_BAC} ..."
+             #sadm_writelog "mv ${REAR_CUR_BAC} ${REAR_NEW_BAC}"
+             mv ${REAR_CUR_BAC} ${REAR_NEW_BAC} >> $SADM_LOG 2>&1
+             if [ $? -ne 0 ]
+                 then sadm_writelog "Error trying to move ${REAR_CUR_BAC} to ${REAR_NEW_BAC}"
+                      sadm_writelog "***** Rear Backup Abort *****"
+                      return 1                                          # Back to caller with error
+                 else sadm_writelog "The rename of the backup file was done successfully"
+             fi
+        else sadm_writelog "New Backup will be created under the name of ${REAR_CUR_BAC}."
+    fi
 
     #sadm_writelog " "
     sadm_writelog "ReaR preparation done with success."
@@ -241,36 +283,6 @@ rear_housekeeping()
     FNC_ERROR=0                                                       # Cleanup Error Default 0
     sadm_writelog "$SADM_FIFTY_DASH"                                    # Write 50 dashes line
     sadm_writelog "Perform ReaR housekeeping."
-    
-    # Rename the Newly created ISO 
-    # Example: From 'rear_yoda.iso' to 'rear_yoda_2019.08.29_05:00:12.iso')
-    if [ -r "$REAR_CUR_ISO" ]
-        then sadm_writelog " "
-             sadm_writelog "Rename new ISO ..." 
-             sadm_writelog "mv $REAR_CUR_ISO $REAR_NEW_ISO"
-             mv $REAR_CUR_ISO $REAR_NEW_ISO >> $SADM_LOG 2>&1
-             if [ $? -ne 0 ]
-                 then sadm_writelog "Error trying to move $REAR_CUR_ISO to $REAR_NEW_ISO"
-                      sadm_writelog "***** Rear Backup Abort *****"
-                      return 1                                          # Back to caller with error
-                 else sadm_writelog "The ISO rename was done successfully"
-             fi
-    fi
-    
-    # Rename the newly created ReaR backup.
-    # Example: From 'rear_yoda.tar.gz' to 'rear_yoda_2019.08.29_05:00:12.tar.gz'
-    if [ -r "$REAR_CUR_BAC" ]
-        then sadm_writelog " "
-             sadm_writelog "Rename new backup ..."
-             sadm_writelog "mv ${REAR_CUR_BAC} ${REAR_NEW_BAC}"
-             mv ${REAR_CUR_BAC} ${REAR_NEW_BAC} >> $SADM_LOG 2>&1
-             if [ $? -ne 0 ]
-                 then sadm_writelog "Error trying to move ${REAR_CUR_BAC} to ${REAR_NEW_BAC}"
-                      sadm_writelog "***** Rear Backup Abort *****"
-                      return 1                                          # Back to caller with error
-                 else sadm_writelog "The rename of the backup file was done successfully"
-             fi
-    fi
                     
     sadm_writelog " "
     sadm_writelog "You have chosen to keep $SADM_REAR_BACKUP_TO_KEEP backup files on the NFS server."
@@ -423,21 +435,6 @@ create_backup()
     done                                                                # End of while
     if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
  
-    # Check if REAR is not installed - Abort Process 
-    if ${SADM_WHICH} rear >/dev/null 2>&1                               # command is found ?
-        then REAR=`${SADM_WHICH} rear`                                  # Store Path of command
-        else sadm_writelog "The command 'rear' is missing, Job Aborted" # Advise User Aborting
-             sadm_stop 1                                                # Upd. RCH File & Trim Log 
-             exit 1                                                     # Exit With Global Err (0/1)
-    fi
-
-    # If Rear configuration is not there - Abort Process
-    if [ ! -r "$REAR_CFGFILE" ]                                         # ReaR Site config exist?
-        then sadm_writelog "The $REAR_CFGFILE isn't present"            # Warn User - Missing file
-             sadm_writelog "The backup will not run - Job Aborted"      # Warn User - No Backup
-             sadm_stop 1                                                # Upd. RCH File & Trim Log 
-             exit 1                                                     # Exit With Global Err (0/1)
-    fi
 
     # Make sure ReaR NFS mount point exist and actually mount, create server dir. on NFS server.
     rear_preparation                                                    # Mount Point Work ?  ...
