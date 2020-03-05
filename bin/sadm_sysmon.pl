@@ -38,6 +38,7 @@
 # 2019_07_07 Update: v2.34 Update Filesystem Increase Message & verification.
 # 2019_07_25 Update: v2.35 Now using a tmp rpt file and real rpt is replace at the end of execution.
 # 2019_10_25 Update: v2.36 Don't check SNAP filesystem usage (snap filesystem always at 100%).
+#@2020_03_05 Fix: v2.37 Not getting 'SADMIN' variable content from /etc/environment (if export used).
 #===================================================================================================
 #
 use English;
@@ -51,7 +52,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.36";                                       # Version Number
+my $VERSION_NUMBER      = "2.37";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -74,7 +75,7 @@ if ( ! -r "$ETC_ENVIRONMENT" ) {                                        # Env. F
 }
 
 # Get the SADMIN Variable content from /etc/environment and set SADM_BASE_DIR to it.
-my $SADM_BASE_DIR = `grep "^SADMIN" /etc/environment | awk -F= '{print \$2}'`; chomp $SADM_BASE_DIR;
+my $SADM_BASE_DIR = `grep "SADMIN=" /etc/environment |sed 's/export //g'| awk -F= '{print \$2}'`; chomp $SADM_BASE_DIR;
 if ( ! -r "${SADM_BASE_DIR}/lib/sadmlib_std.sh") {                      # SADMIN Libr. Readable ? 
     print "SADMIN variable not define in /etc/environment\n" ;          # Advise User 
     print "System Monitor Aborted ...\n";                               # Abort Message
