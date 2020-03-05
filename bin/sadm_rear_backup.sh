@@ -59,6 +59,7 @@
 # 2020_01_08 Update: v2.12 Minor logging changes.
 # 2020_02_18 Update: v2.13 Correct typo error introduce in v2.12
 #@2020_03_04 Fix: v2.14 always leave lastest ReaR Backup to default name to ease the restore.
+#@2020_03_05 Fix: v2.15 Was not removing NFS mount point in /mnt after the backup.
 #
 #
 # --------------------------------------------------------------------------------------------------
@@ -92,7 +93,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.14'                              # Your Current Script Version
+    export SADM_VER='2.15'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -126,16 +127,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+SADM_DEBUG=0                               ; export SADM_DEBUG        # 0=NoDebug Higher=+Verbose
 REAR_CFGFILE="/etc/rear/site.conf"          ; export REAR_CFGFILE       # ReaR Site Config file
-#
 export NFS_MOUNT="/mnt/rear_$$"                                         # NFS Could be more than one
 export REAR_DIR="${NFS_MOUNT}/${SADM_HOSTNAME}"                         # Rear Host Backup Dir.
 export REAR_NAME="${REAR_DIR}/rear_${SADM_HOSTNAME}"                    # ISO & Backup Prefix Name
 export REAR_CUR_ISO="${REAR_NAME}.iso"                                  # Rear Host ISO File Name
-export REAR_NEW_ISO="${REAR_NAME}_$(date "+%C%y.%m.%d_%H:%M:%S").iso"   # Rear Backup ISO 
 export REAR_CUR_BAC="${REAR_NAME}.tar.gz"                               # Rear Host Backup File Name
-export REAR_NEW_BAC="${REAR_NAME}_$(date "+%C%y.%m.%d_%H:%M:%S").tar.gz" # Rear Previous Backup File  
 #
 
 
@@ -335,14 +333,19 @@ rear_housekeeping()
 
     # Ok Cleanup up is finish - Unmount the NFS
     sadm_writelog " "
-    sadm_writelog "Unmounting NFS mount directories"
+    sadm_writelog "Unmounting NFS mount directory ${NFS_MOUNT} ..."
     sadm_writelog "umount ${NFS_MOUNT}"
     umount ${NFS_MOUNT} >> $SADM_LOG 2>&1
     if [ $? -ne 0 ] ; then sadm_writelog "Error returned on previous command" ; FNC_ERROR=1; fi
 
     # Remove NFS mount point.
     # It is different every time you run the script (more than one backup can run simultaneously)
-    if [ -d "${NFS_MOUNT}" ] ; then rm -f ${NFS_MOUNT} >/dev/null 2>&1 ; fi
+    if [ -d "${NFS_MOUNT}" ] 
+        then sadm_writelog "Removing NFS mount directory ${NFS_MOUNT} ..."
+             sadm_writelog "rm -fr ${NFS_MOUNT}"
+             rm -fr ${NFS_MOUNT} >/dev/null 2>&1 
+             if [ $? -ne 0 ] ; then sadm_writelog "Error removing ${NFS_MOUNT}." ; FNC_ERROR=1; fi
+    fi
 
     sadm_writelog " "
     sadm_writelog "ReaR Backup Housekeeping done with success."
@@ -393,9 +396,7 @@ create_backup()
 
 
 # --------------------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------------------
-#                                    Script Start HERE
-# --------------------------------------------------------------------------------------------------
+# Script Start HERE
 # --------------------------------------------------------------------------------------------------
 
     # Call SADMIN Initialization Procedure
@@ -410,30 +411,34 @@ create_backup()
     fi
 
     # Evaluate Command Line Switch Options Upfront
-    # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+    # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
     while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
-                       exit 0
+                       sadm_stop 1                                      # Close/Trim Log & Del PID
+                       exit 1                                           # Exit Script with Error
                fi
-               ;;                                                       # No stop after each page
+               sadm_writelog "Debug Level set to ${SADM_DEBUG}."        # Display Debug Level
+               ;;                                                       
             h) show_usage                                               # Show Help Usage
+               sadm_stop 0                                              # Close/Trim Log & Del PID
                exit 0                                                   # Back to shell
                ;;
             v) sadm_show_version                                        # Show Script Version Info
+               sadm_stop 0                                              # Close/Trim Log & Del PID
                exit 0                                                   # Back to shell
                ;;
            \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
                show_usage                                               # Display Help Usage
+               sadm_stop 1                                              # Close/Trim Log & Del PID
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
  
 
     # Make sure ReaR NFS mount point exist and actually mount, create server dir. on NFS server.
