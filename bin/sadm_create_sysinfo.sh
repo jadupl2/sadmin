@@ -45,6 +45,7 @@
 # 2019_10_30 Update: v3.15 Remove utilization on 'facter' for collecting info (Not always available)
 # 2019_11_22 Fix: v3.16 Problem with 'nmcli -t' on Ubuntu,Debian corrected.
 #@2020_01_13 Update: v3.17 Collect 'rear' version to show on rear schedule web page.
+#@2020_03_08 Update: v3.18 Collect more information about Disks, Partitions, Network and fix lsblk.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -52,38 +53,22 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
+
 #===================================================================================================
-#===================================================================================================
-# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 # To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
 
-    # Make sure the 'SADMIN' environment variable defined and pointing to the install directory.
-    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]
-        then # Check if the file /etc/environment exist, if not exit.
-             missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
-             if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
-             # Check if can use SADMIN definition line in /etc/environment to continue
-             missenv="Please set 'SADMIN' environment variable to the install directory."
-             grep "^SADMIN" /etc/environment >/dev/null 2>&1             # SADMIN line in /etc/env.? 
-             if [ $? -eq 0 ]                                             # Yes use SADMIN definition
-                 then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
-                      misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
-                      missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
-                      if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
-                      printf "\n${missenv}\n${misstmp}\n\n"
-                 else missvar="Add 'SADMIN=/InstallDir' in /etc/environment to remove this message."
-                      printf "\n${missenv}\n$missvar\n"                  # Advise user what to do   
-                      exit 1                                             # Back to shell with Error
+    # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+    if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
+        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
+             EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
+             if [ $? -eq 0 ]                                            # Yes it is 
+                then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}."
+                else exit 1                                             # No SADMIN Env. Var. Exit
              fi
     fi 
-        
-    # Check if SADMIN environment variable is properly defined, check if can locate Shell Library.
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                            # Shell Library not readable
-        then missenv="Please set 'SADMIN' environment variable to the install directory."
-             printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
-             exit 1                                                     # Exit to Shell with Error
-    fi
 
     # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
     export SADM_PN=${0##*/}                             # Current Script filename(with extension)
@@ -92,8 +77,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.17'                              # Your Current Script Version
+    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
+    export SADM_VER='3.18'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -106,22 +91,22 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
     export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Ok now, load Standard Shell Library
-    export SADM_OS_NAME=$(sadm_get_osname)              # Uppercase, REDHAT,CENTOS,UBUNTU,AIX,DEBIAN
-    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number (ex: 7.6.5)
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library Functions
+    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
     export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
 
 #---------------------------------------------------------------------------------------------------
-# Values of these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# They can be overridden here on a per script basis.
+# Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
+# They can be overridden here, on a per script basis (if needed).
     #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
     #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
-    #export SADM_MAX_RCLINE=60                          # When script end Trim rch file to 60 Lines
+    #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
-#===================================================================================================
+
 
 
 
@@ -159,6 +144,8 @@ IFCONFIG=""                                     ; export IFCONFIG       # ifconf
 DMIDECODE=""                                    ; export DMIDECODE      # dmidecode Cmd with Path
 SADM_CPATH=""                                   ; export SADM_CPATH     # Tmp Var Store Cmd Path
 LSBLK=""                                        ; export LSBLK          # lsblk Cmd Path
+BLKID=""                                        ; export BLKID          # blkid Cmd Path
+HWINFO=""                                       ; export HWINFO         # hwinfo Cmd Path
 LSVG=""                                         ; export LSVG           # Aix LSVG Command Path
 LSPV=""                                         ; export LSPV           # Aix LSPV Command Path
 PRTCONF=""                                      ; export PRTCONF        # Aix Print Config Cmd
@@ -282,6 +269,8 @@ pre_validation()
                 command_available "ip"          ; IP=$SADM_CPATH        # Cmd Path or Blank !found
                 command_available "dmidecode"   ; DMIDECODE=$SADM_CPATH # Cmd Path or Blank !found
                 command_available "lsblk"       ; LSBLK=$SADM_CPATH     # Cmd Path or Blank !found
+                command_available "blkid"       ; BLKID=$SADM_CPATH     # Cmd Path or Blank !found
+                command_available "hwinfo"      ; HWINFO=$SADM_CPATH    # Cmd Path or Blank !found
                 command_available "diskutil"    ; DISKUTIL=$SADM_CPATH  # Cmd Path or Blank !found
                 command_available "networksetup" ; NETWORKSETUP=$SADM_CPATH  # NetworkSetup Cmd Path
                 command_available "hostinfo"    ; HOSTINFO=$SADM_CPATH  # HostInfo Cmd Path
@@ -462,6 +451,7 @@ execute_command()
     echo "#"                        >> $EFILE
     echo "#${DASH_LINE}"            >> $EFILE
     echo "# Command: $ECMD"         >> $EFILE
+    if [ $SADM_DEBUG -gt 4 ] ;then echo "Command executed is ${ECMD}." ; fi
     echo "#${DASH_LINE}"            >> $EFILE
     echo "#"                        >> $EFILE
     eval $ECMD                      >> $EFILE 2>&1
@@ -479,22 +469,34 @@ create_linux_config_files()
     write_file_header "Disks Information" "$DISKS_FILE"
     sadm_writelog "Creating $DISKS_FILE ..."
 
-    if [ "$LSBLK" != "" ] 
-        then CMD="$LSBLK -p" 
-             execute_command "$CMD" "$DISKS_FILE" 
-             CMD="$LSBLK -pf" 
+    if [ "$HWINFO" != "" ]
+        then CMD="hwinfo --block --short"
              execute_command "$CMD" "$DISKS_FILE" 
     fi
+
+    if [ "$DF" != "" ]
+        then CMD="df -hP"
+             execute_command "$CMD" "$DISKS_FILE" 
+    fi
+
+    if [ "$LSBLK" != "" ] 
+        then CMD="$LSBLK" 
+             execute_command "$CMD" "$DISKS_FILE" 
+             CMD="$LSBLK -f" 
+             execute_command "$CMD" "$DISKS_FILE" 
+    fi
+
+    if [ "$BLKID" != "" ]
+        then CMD="blkid"
+             execute_command "$CMD" "$DISKS_FILE" 
+    fi
+
 
     if [ "$SADM_PARTED" != "" ]
         then CMD="$SADM_PARTED -l | grep '^Disk' | grep -vE 'mapper|Disk Flags:'"
              execute_command "$CMD" "$DISKS_FILE" 
     fi
 
-    if [ "$DF" != "" ]
-        then CMD="df -h"
-             execute_command "$CMD" "$DISKS_FILE" 
-    fi
 
     if [ "$SADM_OS_TYPE"  = "DARWIN" ]                                # If running in OSX
         then if [ "$DISKUTIL" != "" ]
@@ -505,7 +507,7 @@ create_linux_config_files()
 
     # List Disks Name, Size, Manufacturer, Serial, Model, ...
     if [ "$LSHW" != "" ]
-        then CMD="$LSHW -C disk"
+        then CMD="$LSHW -C disk | grep -Ei 'product|vendor|physical|logical name|size:'"
              execute_command "$CMD" "$DISKS_FILE" 
     fi
 
@@ -594,6 +596,13 @@ create_linux_config_files()
         then CMD="$LSHW -C network"
              execute_command "$CMD" "$NET_FILE" 
     fi
+
+    # Networdk Card Information 
+    if [ "$HWINFO" != "" ]
+        then CMD="hwinfo --netcard | grep -Ei 'model|driver'"
+             execute_command "$CMD" "$NET_FILE" 
+    fi
+
 
     # Network Device information
     if [ "$IPCONFIG" != "" ]
