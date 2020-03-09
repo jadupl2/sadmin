@@ -68,6 +68,7 @@
 # 2019_10_30 Update: v3.31 Remove installation of 'facter' package (Depreciated).
 #@2019_12_18 Fix: v3.32 Fix problem when inserting server into database on Ubuntu/Raspbian.
 #@2019_12_20 Update: v3.33 Remove installation of ruby (was used for facter) & of pymysql (Done)
+#@2020_03_08 Update: v3.34 Added 'hwinfo' package to installation requirement.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -84,7 +85,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.33"                                            # Setup Version Number
+sver                = "3.34"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -122,6 +123,8 @@ req_client = {
                     'deb':'nmon',                           'drepo':'base'},
     'ethtool'    :{ 'rpm':'ethtool',                        'rrepo':'base',  
                     'deb':'ethtool',                        'drepo':'base'},
+    'hwinfo'     :{ 'rpm':'hwinfo',                         'rrepo':'base',  
+                    'deb':'hwinfo',                         'drepo':'base'},
     'ifconfig'   :{ 'rpm':'net-tools',                      'rrepo':'base',  
                     'deb':'net-tools',                      'drepo':'base'},
     'sudo'       :{ 'rpm':'sudo',                           'rrepo':'base',  
