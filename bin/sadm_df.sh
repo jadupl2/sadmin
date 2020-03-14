@@ -40,7 +40,7 @@
 # 2019_06_30 Update: v1.8 Remove tmpfs from output on Linux (useless)
 #@2020_03_12 Fix: v1.9 Correct problem under RHEL/CentOS older version (4,5,6).
 #@2020_03_14 Update: v2.0 To increase portability, Column total are now calculated by script.
-#@2020_03_15 Update: v2.1 Add -t to exclude tmpfs filesystem from the output and total line.
+#@2020_03_15 Update: v2.1 Add -t to exclude tmpfs, -n nfs filesystem from the output and total line. 
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -58,11 +58,11 @@ export file="/tmp/sdf_tmp1.$$"                                          # File C
 export data="/tmp/sdf_tmp2.$$"                                          # data (No Heading,no Total)
 export SADM_PN=${0##*/}                                                 # Current Script name
 export TMPFS=0                                                          # 1=Exclude tmpfs filesystem
-#
+export NFS=0                                                            # 1=Exclude nfs filesystem
 export TOTAL_SIZE=0                                                     # df Size column total
 export TOTAL_USED=0                                                     # df Used column total
 export TOTAL_AVAIL=0                                                    # df Available column total
-#
+
 # Screen related variables
 clreol=$(tput el)                               ; export clreol         # Clr to end of lne
 clreos=$(tput ed)                               ; export clreos         # Clr to end of scr
@@ -95,6 +95,8 @@ bcyan=$(tput setab 6)                           ; export bcyan          # Cyan c
 bwhite=$(tput setab 7)                          ; export bwhite         # White color
 
 
+
+
 # --------------------------------------------------------------------------------------------------
 # Show Script command line option
 # --------------------------------------------------------------------------------------------------
@@ -102,11 +104,13 @@ show_usage()
 {
     printf "\n${SADM_PN} usage :"
     printf "\n\t-t   (Exclude tmpfs filesystem)"
+    printf "\n\t-n   (Exclude nfs filesystem)"
     printf "\n\t-d   (Debug Level [0-9])"
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\n" 
 }
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -121,13 +125,16 @@ show_version()
 
 
 
-#===================================================================================================
-#                                       Script Start HERE
-#===================================================================================================
 
+# --------------------------------------------------------------------------------------------------
+# Command line Options functions
+# --------------------------------------------------------------------------------------------------
+function cmd_options()
+{
+     local OPTIND # Must be local
     # Evaluate Command Line Switch Options Upfront
     # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
-    while getopts "htvd:" opt ; do                                      # Loop to process Switch
+    while getopts "htnvd:" opt ; do                                      # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
@@ -139,6 +146,8 @@ show_version()
                printf "Debug Level set to ${SADM_DEBUG}."               # Display Debug Level
                ;;                                                       
             t) TMPFS=1                                                  # Exclude tmpfs filesystem
+               ;;
+            n) NFS=1                                                    # Exclude NFS filesystem
                ;;
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -152,7 +161,15 @@ show_version()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
+    return 
+}
 
+
+#===================================================================================================
+# Script Start HERE
+#===================================================================================================
+
+    cmd_options "$@"                                                         # Set command-line Options
 
     # Run df command and output to file
     case "$ostype" in
@@ -170,15 +187,18 @@ show_version()
         then grep -Ev "^tmpfs|^devtmpfs" $tmpfile > $file
         else cp $tmpfile  $file
     fi
+    if [ $NFS -eq 1 ] 
+        then grep -Ev " nfs" $file > $tmpfile
+             cp $tmpfile  $file
+    fi
 
 # Work on df result file - getting ready to output
 lines=`wc -l $file | awk '{print $1}'`                                  # Total Lines in file
 ntail=`expr $lines - 1`                                                 # Calc. tail Number to use
-nhead=`expr $ntail - 1`                                                 # Calc. head Number to use
 title=`head -1 $file`                                                   # Save 'df' Title Line
-tail -${ntail} $file | head -${nhead}|sort -k7 > $data                  # Sort by MntPoint 
+tail -${ntail} $file | sort -k7 > $data                                 # Sort by MntPoint 
 
-while read wline                                            # Read df Output line by line
+while read wline                                                        # Read df Output line by line
     do
     size=` echo "$wline" | awk '{ print $3 }'`                          # Size of Filesystem
     used=` echo "$wline" | awk '{ print $4 }'`                          # Size Used
@@ -253,7 +273,7 @@ TS=`echo "$TOTAL_SIZE  / 1024" | bc -l` ; TS=`printf "%6.2f" $TS`
 TU=`echo "$TOTAL_USED  / 1024" | bc -l` ; TU=`printf "%5.2f" $TU`
 TA=`echo "$TOTAL_AVAIL / 1024" | bc -l` ; TA=`printf "%5.2f" $TA`
 PC=`echo "($TOTAL_USED / $TOTAL_SIZE) * 100" | bc -l` ; PC=`printf "%3.2f" $PC`
-total_line=`printf "%-40s %8s %8s %8s %9s\n" "Total in GB (-t to exclude tmpfs)" ${TS}G ${TU}G ${TA}G ${PC}%` 
+total_line=`printf "%-40s %8s %8s %8s %9s\n" "Total (-t exclude tmpfs, -n exclude nfs)" ${TS}G ${TU}G ${TA}G ${PC}%` 
 printf "${yellow}${bold}%s${reset}\n" "$total_line"                     # Print total line
 printf "${magenta}${bold}${SADM_DASH}${reset}\n"                        # Print dash line
 
