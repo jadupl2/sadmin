@@ -120,13 +120,14 @@
 # 2019_11_22 Update: v3.20 Change the way domain name is obtain on MacOS $(sadm_get_domainname).
 # 2019_11_22 Update: v3.20 Change the way domain name is obtain on MacOS $(sadm_get_domainname).
 # 2019_12_02 Update: v3.21 Add Server name in susbject of Email Alert,
-#@2020_01_12 Update: v3.22 When script run on SADMIN server, copy 'rch' & 'log' in Web Interface Dir.
-#@2020_01_20 Update: v3.23 Place Alert Message on top of Alert Message (SMS,SLACK,EMAIL)
-#@2020_01_21 Update: v3.24 For texto alert, put alert message on top of texto & don't show if 1 of 1
-#@2020_01_21 Update: v3.25 Show the script starting date in the header. 
+# 2020_01_12 Update: v3.22 When script run on SADMIN server, copy 'rch' & 'log' in Web Interface Dir.
+# 2020_01_20 Update: v3.23 Place Alert Message on top of Alert Message (SMS,SLACK,EMAIL)
+# 2020_01_21 Update: v3.24 For texto alert, put alert message on top of texto & don't show if 1 of 1
+# 2020_01_21 Update: v3.25 Show the script starting date in the header. 
 #@2020_02_01 Fix: v3.26 If on SADM Server & script don't use 'rch', gave error trying to copy 'rch'.
 #@2020_02_19 Update v3.27 Added History Archive File Definition
 #@2020_02_25 Update v3.28 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
+#@2020_03_15 Update v3.29 Change the way script info (-v) is shown.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -138,7 +139,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.28"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.29"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -427,10 +428,10 @@ sadm_writelog() {
 # --------------------------------------------------------------------------------------------------
 sadm_show_version()
 {
-    printf "\n${SADM_PN} - Version $SADM_VER"
-    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
-    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
-    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n${SADM_PN} v${SADM_VER} - Hostname ${SADM_HOSTNAME}"
+    printf "\nSADMIN Shell Library v${SADM_LIB_VER}"
+    printf "\n$(sadm_get_osname) v$(sadm_get_osversion)"
+    printf " - Kernel $(sadm_get_kernel_version)"
     printf "\n\n" 
 }
 
