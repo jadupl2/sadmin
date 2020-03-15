@@ -2,7 +2,7 @@
 #---------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
 #   Script Name :   XXXXXXXX.sh
-#   Date        :   2019/MM/DD
+#   Date        :   2020/MM/DD
 #   Requires    :   sh and SADMIN Shell Library
 #   Description :
 #
@@ -37,6 +37,7 @@
 #@2019_09_03 Update: v2.4 Change default value for max line in rch (35) and log (500) file.
 #@2020_02_25 Update: v2.5 Reduce SADMIN Section needed at beginning of script.
 #@2020_02_26 Update: v2.6 Change code to show debug level at the beginning of script.
+#@2020_03_15 Update: v2.7 Command line option code is now in a function.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -68,7 +69,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.6'                               # Your Current Script Version
+    export SADM_VER='2.7'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -118,9 +119,6 @@ show_usage()
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\n" 
 }
-
-
-
 
 
 #===================================================================================================
@@ -235,11 +233,45 @@ main_process()
 }
 
 
+# --------------------------------------------------------------------------------------------------
+# Command line Options functions
+# Evaluate Command Line Switch Options Upfront
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# --------------------------------------------------------------------------------------------------
+function cmd_options()
+{
+    while getopts "htnvd:" opt ; do                                      # Loop to process Switch
+        case $opt in
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 1                                           # Exit Script with Error
+               fi
+               printf "Debug Level set to ${SADM_DEBUG}."               # Display Debug Level
+               ;;                                                       
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) sadm_show_version                                        # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    return 
+}
+
+
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
 
-    # Call SADMIN Initialization Procedure
+    cmd_options "$@"                                                    # Check command-line Options    
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
 
@@ -256,37 +288,6 @@ main_process()
              sadm_stop 1                                                # Close/Trim Log & Del PID
              exit 1                                                     # Exit To O/S with error
     fi
-
-    # Evaluate Command Line Switch Options Upfront
-    # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
-    while getopts "hvd:" opt ; do                                       # Loop to process Switch
-        case $opt in
-            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
-               if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
-                       show_usage                                       # Display Help Usage
-                       sadm_stop 1                                      # Close/Trim Log & Del PID
-                       exit 1                                           # Exit Script with Error
-               fi
-               sadm_writelog "Debug Level set to ${SADM_DEBUG}."        # Display Debug Level
-               ;;                                                       
-            h) show_usage                                               # Show Help Usage
-               sadm_stop 0                                              # Close/Trim Log & Del PID
-               exit 0                                                   # Back to shell
-               ;;
-            v) sadm_show_version                                        # Show Script Version Info
-               sadm_stop 0                                              # Close/Trim Log & Del PID
-               exit 0                                                   # Back to shell
-               ;;
-           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
-               show_usage                                               # Display Help Usage
-               sadm_stop 1                                              # Close/Trim Log & Del PID
-               exit 1                                                   # Exit with Error
-               ;;
-        esac                                                            # End of case
-    done                                                                # End of while
-    
     main_process                                                        # Main Process
     # OR                                                                # Use line below or above
     #process_servers                                                    # Process All Active Servers
