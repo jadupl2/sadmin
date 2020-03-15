@@ -58,8 +58,10 @@ hr {
     background-color:   black;
 }
 
+
+/* Default Link Color */
 a:link {
-    color: rgb(189, 120, 16) ;
+    color: #4a2874 ;
     background-color: transparent;
     /* text-decoration: none; */
   }
@@ -146,7 +148,6 @@ table thead td {
     text-align      :   center;
     background-color:   #124f44; 
     color           :   white;
-    padding         :   5px 5px 5px 5px;
     margin          :   2px;
     border-width    :   1px;
     border-style    :   solid;
@@ -157,21 +158,20 @@ table thead td {
 	box-shadow      :   3px 3px 5px #888;
 	position        :   relative;
 	top             :   5px;    
-    /* height          :   120px;
-    padding         :   1px 1px 1px 5px; */
+	bottom          :   5px;    
+    height          :   120px;
+    /* padding         :   1px 1px 1px 5px; */
 }
 
 
 /* ---------------------------------------------------------------------------------------------- */
 /*  THIS SECTION IS USED FOR THE MENU LINE IN THE HEADING AT THE TOP OF PAGE OF EVERY WEB PAGE    */
 /* ---------------------------------------------------------------------------------------------- */
-#topmenu{padding:2px;text-align:center;color:black;}
-#topmenu ul{padding:0;margin:0;font-weight:700;list-style:none}
-#topmenu li{display:inline;padding:0 1em}
-#topmenu li>a:link,
-#topmenu li>a:visited{color:#fff;white-space:nowrap;text-decoration:none}
-#topmenu li>a:hover,
-#topmenu li>a:active{color:red;text-decoration:none}
+
+#quick_link     a:visited {color : black}
+#quick_link     a:link    {color : white}
+#quick_link     a:hover   {color : yellow}
+#quick_link     a:active  {color : green}
 
 #sadmTopMenu{
     padding         :   2px;

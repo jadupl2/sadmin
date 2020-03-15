@@ -4,7 +4,7 @@
 #   Title       :  sadm_view_sysmon.php
 #   Version     :  1.5
 #   Date        :  4 February 2017
-#   Requires    :  secure.php.net, postgresql.org, getbootstrap.com, DataTables.net
+#   Requires    :  secure.php.net, mysql.org, getbootstrap.com, DataTables.net
 #   Description :  This page allow to view the servers alerts information in various ways
 #                  depending on parameters received.
 #
@@ -29,7 +29,8 @@
 # ==================================================================================================
 #
     echo "</head>";
-    echo "\n<body vlink='red'>\n";
+    #echo "\n<body vlink='red'>\n";
+    echo "\n<body>\n";
 
     echo "\n<div id='sadmWrapper'>                  <!-- Start Of sadmWrapper -->\n";
     echo "\n<div id='sadmHeader'>                   <!-- Start Of sadmHeader  -->";
@@ -62,8 +63,9 @@
         </td>
     </tr>
 
-    <tr> 
-        <td colspan="1" bgcolor="#124f44" align="center">
+</table>
+
+<div id='quick_link'>
         <a href='/view/srv/sadm_view_servers.php?selection=all_servers'>All Servers</a>
         &nbsp;&nbsp;&nbsp;
         <a href='/view/rch/sadm_view_rch_summary.php?sel=all'>Scripts Status</a>
@@ -77,9 +79,8 @@
         <a href='/view/sys/sadm_view_rear.php'>ReaR Backup</a>
         &nbsp;&nbsp;&nbsp;
         <a href='/view/perf/sadm_server_perf_menu.php'>Performance</a>
-    </td></tr>
-
-</table>
+</div
+<br>
 </center>
 
 
