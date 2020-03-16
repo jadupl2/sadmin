@@ -40,6 +40,7 @@
 # 2018_09_30    V1.5 Reformat error message for alerting system
 # 2019_06_11 Update: v1.6 Alert message change when filesystem increase failed.
 #@2019_07_11 Update: v1.7 Change Email Body when filesystem in increase
+#@2020_03_16 Update: v1.8 Separation Blank Lines added to log.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -87,7 +88,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='1.7'                               # Your Current Script Version
+    export SADM_VER='1.8'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -247,6 +248,7 @@ send_email()
 main_process()
 {
     sadm_writelog "Filesystem Increase Process as started ... "
+    sadm_writelog " "
 
     # Check if filesystem (mount point) to increase exist in /etc/fstab
     if ! mntexist $FSNAME                                               # Mount Point don't exist ?
@@ -286,6 +288,7 @@ main_process()
     # Calculate number of MB that will be added
     SIZE2ADD=`echo "$NEW_LVSIZE - $OLDSIZE" | bc `                      # New Size - Old Size 
     sadm_writelog "FS will be increase by (MB)...: $SIZE2ADD"           # Show NB. MB will Add
+    sadm_writelog " "
 
     # Get VG Information (VGSIZE and VGFREE)
     VGSOPT="--noheadings --separator , --units m "                      # VGS Command Options
@@ -315,12 +318,13 @@ main_process()
 
     # Calculate the % Left in the VG
     VGPCT_LEFT=`echo "(($VGFREE/$VGSIZE)*100)" | bc -l | xargs printf "%2.0f"`
+    sadm_writelog " "
     sadm_writelog "Percent free space left in VG.: $VGPCT_LEFT %"       # Percent Free Space in VG
     sadm_writelog "Minimum percent needed in VG..: $VGMIN_PCT %"        # Min. % Req. in VG
 
     # Free MB in VG after filesystem increase is less than Min. Require (10240MB)
     if [ $MBLEFT -le $VGMIN_MB ]                                        # Free MB < then Min Req.
-       then WMESS="$FSNAME increase refused only ${MBLEFT}MB free in VG $VGNAME"
+       then WMESS="[ERROR] $FSNAME increase refused only ${MBLEFT}MB free in VG $VGNAME"
             sadm_writelog "$WMESS"                                      # Show User Error 
             echo "$WMESS" >> $MAIL_BODY                                 # Add Mess. to Mail Body
             wmess="Filesystem $FSNAME was rejected"                     # Send Email to Sysadmin
