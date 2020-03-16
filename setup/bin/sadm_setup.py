@@ -69,6 +69,7 @@
 #@2019_12_18 Fix: v3.32 Fix problem when inserting server into database on Ubuntu/Raspbian.
 #@2019_12_20 Update: v3.33 Remove installation of ruby (was used for facter) & of pymysql (Done)
 #@2020_03_08 Update: v3.34 Added 'hwinfo' package to installation requirement.
+#@2020_03_16 Update: v3.35 Set default alert group to sysadmin email in .alert_group.cfg. 
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -85,7 +86,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.34"                                            # Setup Version Number
+sver                = "3.35"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1921,8 +1922,7 @@ def setup_sadmin_config_file(sroot,wostype):
             continue                                                    # Go Back re-accept email
         break                                                           # Ok Email seem valid enough
     update_sadmin_cfg(sroot,"SADM_MAIL_ADDR",wcfg_mail_addr)            # Update Value in sadmin.cfg 
-    if (wcfg_host_type == "S"):                                         # If Host is SADMIN Server
-        update_alert_group_default(sroot,wcfg_mail_addr)                # Upd. AlertGroup Def. Email 
+    update_alert_group_default(sroot,wcfg_mail_addr)                    # Upd. AlertGroup Def. Email 
 
 
     # Accept the Alert type to use at the end of each script execution
