@@ -125,9 +125,10 @@
 # 2020_01_21 Update: v3.24 For texto alert, put alert message on top of texto & don't show if 1 of 1
 # 2020_01_21 Update: v3.25 Show the script starting date in the header. 
 #@2020_02_01 Fix: v3.26 If on SADM Server & script don't use 'rch', gave error trying to copy 'rch'.
-#@2020_02_19 Update v3.27 Added History Archive File Definition
-#@2020_02_25 Update v3.28 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
-#@2020_03_15 Update v3.29 Change the way script info (-v) is shown.
+#@2020_02_19 Update: v3.27 Added History Archive File Definition
+#@2020_02_25 Update: v3.28 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
+#@2020_03_15 Update: v3.29 Change the way script info (-v) is shown.
+#@2020_03_16 Update: v3.30 If not present, create Alert Group file (alert_group.cfg) from template.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -139,7 +140,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.29"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.30"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -1881,27 +1882,28 @@ sadm_start() {
     fi
 
 
-    # Check Files that are present ONLY ON SADMIN SERVER
     # Alert Group File ($SADMIN/cfg/alert_group.cfg) MUST be present.
-    # If it doesn't exist create it from initial file ($SADMIN/cfg/.alert_group.cfg)
-    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-        then if [ ! -r "$SADM_ALERT_FILE" ]                              # If AlertGrp not Exist
-                then if [ ! -r "$SADM_ALERT_INIT" ]                     # If AlertInit File not Fnd
-                       then sadm_writelog "********************************************************"
-                            sadm_writelog "SADMIN Alert Group file not found - $SADM_ALERT_FILE "
-                            sadm_writelog "Even Alert Group template file is missing - $SADM_ALERT_INIT"
-                            sadm_writelog "Copy both files from another system to this server"
-                            sadm_writelog "Or restore them from a backup"
-                            sadm_writelog "Don't forget to review the file content."
-                            sadm_writelog "********************************************************"
-                            sadm_stop 1                                 # Exit to O/S with Error
-                       else cp $SADM_ALERT_INIT $SADM_ALERT_FILE        # Copy Template as initial
-                            chmod 664 $SADM_ALERT_FILE
-                     fi
+    # If it doesn't exist, create it from initial file ($SADMIN/cfg/.alert_group.cfg)
+    if [ ! -r "$SADM_ALERT_FILE" ]                                      # alert_group.cfg not Exist
+       then if [ ! -r "$SADM_ALERT_INIT" ]                              # .alert_group.cfg not Exist
+               then sadm_writelog "********************************************************"
+                    sadm_writelog "SADMIN Alert Group file not found - $SADM_ALERT_FILE "
+                    sadm_writelog "Even Alert Group Template file is missing - $SADM_ALERT_INIT"
+                    sadm_writelog "Copy both files from another system to this server"
+                    sadm_writelog "Or restore them from a backup"
+                    sadm_writelog "Don't forget to review the file content."
+                    sadm_writelog "********************************************************"
+                    sadm_stop 1                                         # Exit to O/S with Error
+               else cp $SADM_ALERT_INIT $SADM_ALERT_FILE                # Copy Template as initial
+                    chmod 664 $SADM_ALERT_FILE
             fi
-            # Slack Channel File ($SADMIN/cfg/slackchannel.cfg) MUST be present.
-            # If it doesn't exist create it from initial file ($SADMIN/cfg/.slackchannel.cfg)
-            if [ ! -r "$SADM_SLACK_FILE" ]                              # If AlertGrp not Exist
+    fi
+
+    # Check Files that are present ONLY ON SADMIN SERVER
+    # Slack Channel File ($SADMIN/cfg/slackchannel.cfg) MUST be present.
+    # If it doesn't exist create it from initial file ($SADMIN/cfg/.slackchannel.cfg)
+    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
+        then if [ ! -r "$SADM_SLACK_FILE" ]                             # If AlertGrp not Exist
                 then if [ ! -r "$SADM_SLACK_INIT" ]                     # If AlertInit File not Fnd
                        then sadm_writelog "********************************************************"
                             sadm_writelog "SADMIN Slack Channel file is missing - $SADM_SLACK_FILE "
@@ -1914,19 +1916,19 @@ sadm_start() {
                        else cp $SADM_SLACK_INIT $SADM_SLACK_FILE        # Copy Template as initial
                             chmod 664 $SADM_SLACK_FILE
                      fi
-            fi
-            # Alert History File ($SADMIN/cfg/alert_history.txt) MUST be present.
-            if [ ! -r "$SADM_ALERT_HIST" ]                              # If Alert History Missing
+             fi
+             # Alert History File ($SADMIN/cfg/alert_history.txt) MUST be present.
+             if [ ! -r "$SADM_ALERT_HIST" ]                             # If Alert History Missing
                 then if [ ! -r "$SADM_ALERT_HINI" ]                     # If Alert Init File not Fnd
-                       then touch $SADM_ALERT_HIST                      # Create a Blank One
-                       else cp $SADM_ALERT_HINI $SADM_ALERT_HIST        # Copy Initial Hist. File
+                        then touch $SADM_ALERT_HIST                     # Create a Blank One
+                        else cp $SADM_ALERT_HINI $SADM_ALERT_HIST       # Copy Initial Hist. File
                      fi
                      chmod 666 $SADM_ALERT_HIST                         # Make sure it's writable
-            fi
+             fi
     fi
 
     # Feed the (RCH) Return Code History File stating the script is Running (Code 2)
-    #SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Statup Time of Script
+    #SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME      # Statup Time of Script
     if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
         then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
              [ $(id -u) -eq 0 ] && chmod 664 $SADM_RCHLOG               # Change protection on RCH
