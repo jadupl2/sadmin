@@ -61,11 +61,10 @@ hr {
 
 /* Default Link Color */
 a:link {
-    color: #4a2874 ;
+    color: Blue ;
     background-color: transparent;
     /* text-decoration: none; */
   }
-  
   a:visited {
     color: #FF9800;
     background-color: transparent;
