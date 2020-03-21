@@ -42,6 +42,7 @@
 #@2019_02_27 Change: v3.4 Change error message when ping to system don't work
 #@2019_05_07 Update: v3.5 Add 'W 5' ping option, should produce less false alert
 #@2020_02_25 Update: v3.6 Fix intermittent problem getting SADMIN value from /etc/environment.
+#@2020_03_21 Update: v3.7 Show Error Total only at the end of each system processed.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -69,7 +70,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.6'                               # Your Current Script Version
+    export SADM_VER='3.7'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -217,7 +218,7 @@ process_servers()
         if [ $RC -ne 0 ]
             then sadm_writelog "[ ERROR ] Ping to server failed - Unable to process system."
                  ERROR_COUNT=$(($ERROR_COUNT+1))
-                 if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count at $ERROR_COUNT" ;fi
+                 #if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count at $ERROR_COUNT" ;fi
                  continue
         fi
 
@@ -256,7 +257,7 @@ process_servers()
                  ERROR_COUNT=$(($ERROR_COUNT+1))
                  RDIR="/opt/sadmin" 
         fi
-        if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count at $ERROR_COUNT" ;fi
+        #if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count at $ERROR_COUNT" ;fi
     
 
 
@@ -281,7 +282,7 @@ process_servers()
            then sadm_writelog "  - [ERROR] $RC for $server_name"
                 ERROR_COUNT=$(($ERROR_COUNT+1))
         fi
-        if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count at $ERROR_COUNT" ;fi
+        #if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count at $ERROR_COUNT" ;fi
  
 
         # NMON FILES
