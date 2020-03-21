@@ -68,7 +68,12 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     border-color    :   #6b6c6f;
     border-radius   :   10px;
 }
+a:link      { color: #ffdfbd;   background-color: transparent; text-decoration: none; }
+a:visited   { color: pink;      background-color: transparent; text-decoration: none; }
+a:hover     { color: white;     background-color: transparent; text-decoration: underline; }
+a:active    { color: yellow;    background-color: transparent; text-decoration: underline; }
 </style>
+
 <?php
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
