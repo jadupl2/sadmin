@@ -60,6 +60,8 @@
 #@2020_01_12 Update: v3.6 Compact log produced by the script.
 #@2020_01_14 Update: v3.7 Don't use SSH when running daily backup and ReaR Backup for SADMIN server. 
 #@2020_02_19 Update: v3.8 Restructure & Create an Alert when can't SSH to client. 
+#@2020_03_21 Fix: v3.9 SSH error to client were not reported in System Monitor.
+#
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -121,7 +123,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.8'                               # Your Current Script Version
+    export SADM_VER='3.9'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -799,12 +801,12 @@ validate_server_connectivity()
                     then sadm_writelog "[ ERROR ] [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date"
                     else if [ "$upd_elapse" -gt "$REBOOT_SEC" ]         # O/S Upd more than 900 Sec?
                             then sadm_writelog "[ ERROR ] [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date"
-                                 SMSG="[ERROR] Can't SSH to server '${FQDN_SNAME}'"  
+                                 SMSG="[ERROR] System '${FQDN_SNAME}' may be down, can't SSH to it."  
                                  sadm_writelog "$SMSG"                  # Display Error Msg
                                  ADATE=`date "+%Y.%m.%d;%H:%M"`         # Current Date/Time
                                  # Create Error Line in Error Report File (rpt)
                                  RPTLINE="Error;${SNAME};${ADATE};linux;NETWORK"
-                                 RPTLINE="${RPTLINE};Can't SSH to server '${FQDN_SNAME}'"
+                                 RPTLINE="${RPTLINE};System '${FQDN_SNAME}' may be down, can't SSH to it."
                                  RPTLINE="${RPTLINE};${SADM_ALERT_GROUP};${SADM_ALERT_GROUP}" 
                                  echo "$RPTLINE" >> $FETCH_RPT          # Create Skip Code to caller                              
                                  return 2                               # Return Error to caller
@@ -825,6 +827,7 @@ validate_server_connectivity()
 
 # --------------------------------------------------------------------------------------------------
 # Process Operating System received in parameter (aix/linux,darwin)
+# Function call 3 times - One for Linux, one for Aix, and one for MacOS
 # --------------------------------------------------------------------------------------------------
 process_servers()
 {
@@ -1047,7 +1050,7 @@ process_servers()
         RDIR="${server_dir}/dat/rpt"                                    # Remote log Directory
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
             then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
-            else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
+            #else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
 
@@ -1079,13 +1082,20 @@ check_all_rpt()
 {
     sadm_writelog "Verifying all systems for :"
     sadm_writelog "  - 'Sysmon report file' (*.rpt) for Warning, Info and Errors."
-    #sadm_writelog " "
-    #find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; 
-    find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; > $SADM_TMP_FILE1
+    if [ $SADM_DEBUG -gt 0 ] 
+        then sadm_writelog "find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \;" 
+    fi 
+    find $SADM_WWW_DAT_DIR -name *.rpt -exec cat {} \;  > $SADM_TMP_FILE3
+    if [ $SADM_DEBUG -gt 0 ] 
+        then sadm_writelog " "
+             ls -l $SADM_TMP_FILE3
+             cat  $SADM_TMP_FILE3 | while read wline ; do sadm_writelog "$wline"; done
+    fi 
+
 
     # Process the file containing all *.rpt content (if any).
-    if [ -s "$SADM_TMP_FILE1" ]                                         # If File Not Zero in Size
-        then cat $SADM_TMP_FILE1 | while read line                      # Read Each Line of file
+    if [ -s "$SADM_TMP_FILE3" ]                                         # If File Not Zero in Size
+        then cat $SADM_TMP_FILE3 | while read line                      # Read Each Line of file
                 do
                 if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
                 ehost=`echo $line | awk -F\; '{ print $2 }'`            # Get Hostname for Event
@@ -1265,11 +1275,6 @@ main_process()
     sadm_writelog " - Script Total Error(s) : ${SADM_EXIT_CODE}"        # Display Total Script Error
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
     sadm_writelog " "                                                   # Separation Blank Line
-
-    # Check for Error or Alert to submit
-    check_all_rpt                                                       # Check all *.rpt for Alert
-    check_all_rch                                                       # Check all *.rch for Alert
-
     if [ $(sadm_get_ostype) = "LINUX" ] ; then crontab_update ; fi      # Update crontab if needed
     
     # To prevent this script from showing very often (This script is run every 5 minutes) on the 
@@ -1279,6 +1284,11 @@ main_process()
     fi
     cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch            # cp rch for instant Status
     cp ${SADM_RPT_DIR}/*.rpt ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt   # cp rpt for instant Status
+
+    # Check for Error or Alert to submit
+    check_all_rpt                                                       # Check all *.rpt for Alert
+    check_all_rch                                                       # Check all *.rch for Alert
+
 
     return $SADM_EXIT_CODE
 }
