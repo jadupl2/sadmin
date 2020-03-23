@@ -39,8 +39,10 @@
 # 2018_09_25    V1.4 Alerting can now send attachment with Subject
 # 2018_09_30    V1.5 Reformat error message for alerting system
 # 2019_06_11 Update: v1.6 Alert message change when filesystem increase failed.
-#@2019_07_11 Update: v1.7 Change Email Body when filesystem in increase
+# 2019_07_11 Update: v1.7 Change Email Body when filesystem in increase
 #@2020_03_16 Update: v1.8 Separation Blank Lines added to log.
+#@2020_03_23 Update: v1.9 Minor modifications in log and email.
+#@2020_03_24 Update: v2.0 Script will not generate an rpt file anymore (Remove double error report)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -88,13 +90,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='1.8'                               # Your Current Script Version
+    export SADM_VER='2.0'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+    export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
     export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
     export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
     export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
@@ -247,7 +249,10 @@ send_email()
 #===================================================================================================
 main_process()
 {
-    sadm_writelog "Filesystem Increase Process as started ... "
+    sadm_writelog "Filesystem $FSNAME Increase Process started."
+    sadm_writelog " "
+    sadm_writelog "Filesystem before increase."
+    df -hP $FSNAME | while read wline ; do sadm_writelog "$wline"; done 
     sadm_writelog " "
 
     # Check if filesystem (mount point) to increase exist in /etc/fstab
@@ -260,14 +265,14 @@ main_process()
     get_mntdata $FSNAME                                                 # Get Filesystem Metadata
 
     # Display Metadata Received for debugging
-    sadm_writelog "Logical Volume Name ..........: ...$LVNAME..."
-    sadm_writelog "Volume Group .................: ...$VGNAME..."
-    sadm_writelog "Filesystem Type ..............: ...$LVTYPE..."
-    sadm_writelog "Filesystem Size in MB ........: ...$LVSIZE..."
-    sadm_writelog "Filesystem Owner .............: ...$LVOWNER..."
-    sadm_writelog "Filesystem Group .............: ...$LVGROUP..."
-    sadm_writelog "Filesystem Permission ........: ...$LVPROT..."
-    sadm_writelog "Filesystem Increase Pct.......: ...$INCR_PCT..."
+    sadm_writelog "Logical Volume Name ..........: $LVNAME"
+    sadm_writelog "Volume Group .................: $VGNAME"
+    sadm_writelog "Filesystem Type ..............: $LVTYPE"
+    sadm_writelog "Filesystem Size in MB ........: $LVSIZE"
+    sadm_writelog "Filesystem Owner .............: $LVOWNER"
+    sadm_writelog "Filesystem Group .............: $LVGROUP"
+    sadm_writelog "Filesystem Permission ........: $LVPROT"
+    sadm_writelog "Filesystem Increase Pct.......: $INCR_PCT"
 
     # Check if Filesystem Type is Supported
     if [ "$LVTYPE" != "ext3" ] && [ "$LVTYPE" != "ext4" ] && [ "$LVTYPE" != "xfs" ] 
@@ -325,9 +330,13 @@ main_process()
     # Free MB in VG after filesystem increase is less than Min. Require (10240MB)
     if [ $MBLEFT -le $VGMIN_MB ]                                        # Free MB < then Min Req.
        then WMESS="[ERROR] $FSNAME increase refused only ${MBLEFT}MB free in VG $VGNAME"
+            sadm_writelog " " 
             sadm_writelog "$WMESS"                                      # Show User Error 
             echo "$WMESS" >> $MAIL_BODY                                 # Add Mess. to Mail Body
-            wmess="Filesystem $FSNAME was rejected"                     # Send Email to Sysadmin
+            sadm_writelog " " 
+            sadm_writelog "You may need to do a cleanup in this filesystem." 
+            echo "You may need to do a cleanup in this filesystem." >> $MAIL_BODY # Add Mess to Body
+            wmess="Filesystem $FSNAME increase rejected"                # Send Email to Sysadmin
             wsub="$SADM_PN reported an error on $SADM_HOSTNAME"   
             wtime=`date "+%Y.%m.%d %H:%M"`
             sadm_send_alert "S" "$wtime" "$SADM_HOSTNAME" "$SADM_PN" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
@@ -355,12 +364,11 @@ main_process()
              sadm_writelog "$WMESS"                                     # Show Success to User
              echo -e "$WMESS " >> $MAIL_BODY                            # Add Success to Mail Body
     fi
-    sadm_writelog ""                                                    # Blank Line
-    sadm_writelog "df -hP $FSNAME - After increase"                     # Show FS Usage after Incr.
-    df -hP $FSNAME                                                      # Show FS Usage to User  
-    #echo -e "`date`\nFilesystem $FSNAME after increase.\n\n`df -hP $FSNAME` \n" >> $MAIL_BODY
-    sadm_writelog ""                                                    # Blank Line
-    wmess="Filesystem $FSNAME on $SADM_HOSTNAME was increase"
+    sadm_writelog " "
+    sadm_writelog "Filesystem after increase."
+    df -hP $FSNAME | while read wline ; do sadm_writelog "$wline"; done 
+    sadm_writelog " "
+    wmess="Filesystem $FSNAME on $SADM_HOSTNAME was increase."
     wsub="$SADM_PN reported an error on $SADM_HOSTNAME"   
     wtime=`date "+%Y.%m.%d %H:%M"`
     sadm_send_alert "S" "$wtime" "$SADM_HOSTNAME" "$SADM_PN" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
