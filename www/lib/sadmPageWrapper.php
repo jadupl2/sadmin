@@ -38,48 +38,52 @@
 
 
 <center>
-<table border=0 bgcolor="#124f44" cellspacing="1" cellpadding="2" width=98s% >
+<table border=0 bgcolor="#124f44" cellspacing="1" cellpadding="3" width=98% >
 
     <tr>
         <td bgcolor="#124f44" rowspan="3" align="center" valign="middle" style="width:15%">
-            <a href="/index.php"><img width=80 height=80 src=/images/sadmin_logo.png></a>
+            <a href="/index.php"><img width=90 height=90 src=/images/sadmin_logo.png></a>
         </td>
-        <td bgcolor="#124f44" align="center" style="width:70%">
-            <img width=200 height=40 src=/images/sadmin_text.png>
+        <td bgcolor="#124f44" align="center" valign="middle">
+            <img width=645 height=69 src=/images/sadmin_new_text.png>
         </td>
-        <td bgcolor="#124f44" align="right" valign="bottom" style="width:15%">
+        <td bgcolor="#124f44" align="right" valign="middle" style="width:15%">
             <font size="3"><font color="#ffffff"><strong>
             <?php echo SADM_CIE_NAME ?></strong></font>
         </td>
     </tr>
 
     <tr>
-        <td bgcolor="#124f44" align="center">
-            <img width=575 height=40 src=/images/UnixSystemAdminTools.png>
+
+        <td  bgcolor="#124f44" align="center" valign="top">
+            <font size="2"><font color="#ffffff"><strong>
+        <div id='quick_link'>
+            <a href='/view/srv/sadm_view_servers.php?selection=all_servers'>All Servers</a>
+            &nbsp;&nbsp;&nbsp;
+            <a href='/view/rch/sadm_view_rch_summary.php?sel=all'>Scripts Status</a>
+            &nbsp;&nbsp;&nbsp;
+            <a href='/view/sys/sadm_view_schedule.php'>O/S Update</a>
+            &nbsp;&nbsp;&nbsp;
+            <a href='/view/sys/sadm_view_sysmon.php'>Monitor</a>
+            &nbsp;&nbsp;&nbsp;
+            <a href='/view/sys/sadm_view_backup.php'>Daily Backup</a>
+            &nbsp;&nbsp;&nbsp;
+            <a href='/view/sys/sadm_view_rear.php'>ReaR Backup</a>
+            &nbsp;&nbsp;&nbsp;
+            <a href='/view/perf/sadm_server_perf_menu.php'>Performance</a>
+        </div>
         </td>
-        <td  rowspan="2" bgcolor="#124f44" align="right" valign="bottom">
+
+        <td bgcolor="#124f44" align="right" valign="bottom">
             <font size="2"><font color="#ffffff"><strong>
             <?php echo "Release "  . SADM_VERSION ?></strong></font>
         </td>
+
     </tr>
 
 </table>
 
-<div id='quick_link'>
-        <a href='/view/srv/sadm_view_servers.php?selection=all_servers'>All Servers</a>
-        &nbsp;&nbsp;&nbsp;
-        <a href='/view/rch/sadm_view_rch_summary.php?sel=all'>Scripts Status</a>
-        &nbsp;&nbsp;&nbsp;
-        <a href='/view/sys/sadm_view_schedule.php'>O/S Update</a>
-        &nbsp;&nbsp;&nbsp;
-        <a href='/view/sys/sadm_view_sysmon.php'>Monitor</a>
-        &nbsp;&nbsp;&nbsp;
-        <a href='/view/sys/sadm_view_backup.php'>Daily Backup</a>
-        &nbsp;&nbsp;&nbsp;
-        <a href='/view/sys/sadm_view_rear.php'>ReaR Backup</a>
-        &nbsp;&nbsp;&nbsp;
-        <a href='/view/perf/sadm_server_perf_menu.php'>Performance</a>
-</div
+
 <br>
 </center>
 
