@@ -1665,7 +1665,7 @@ sadm_load_config_file() {
 #   5) Add line in the [R]eturn [C]ode [H]istory file stating script is started (Code 2 = Running)
 #   6) Write HostName - Script name and version - O/S Name and version to the Log file ($SADM_LOG)
 # --------------------------------------------------------------------------------------------------
-#
+# mkdir -p ${SADMIN}/{etc/x1,lib,usr/{x2,x3},bin,tmp/{Y1,Y2,Y3/z},opt,var}
 sadm_start() {
 
     # ($SADMIN/log) If log Directory doesn't exist, create it.
