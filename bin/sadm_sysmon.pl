@@ -39,6 +39,7 @@
 # 2019_07_25 Update: v2.35 Now using a tmp rpt file and real rpt is replace at the end of execution.
 # 2019_10_25 Update: v2.36 Don't check SNAP filesystem usage (snap filesystem always at 100%).
 #@2020_03_05 Fix: v2.37 Not getting 'SADMIN' variable content from /etc/environment (if export used).
+#@2020_03_28 Fix: v2.38 Fix problem when 'dmidecode' is not available on system.
 #===================================================================================================
 #
 use English;
@@ -52,7 +53,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.37";                                       # Version Number
+my $VERSION_NUMBER      = "2.38";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -129,14 +130,42 @@ my $CMD_TAIL            = `which tail`       ;chomp($CMD_TAIL);         # Locati
 my $CMD_HEAD            = `which head`       ;chomp($CMD_HEAD);         # Location of head command
 my $CMD_UPTIME          = `which uptime`     ;chomp($CMD_UPTIME);       # Location of uptime command
 my $CMD_VMSTAT          = `which vmstat`     ;chomp($CMD_VMSTAT);       # Location of vmstat command
-my $CMD_IOSTAT          = `which iostat`     ;chomp($CMD_IOSTAT);       # Location of iostat command
-my $CMD_MPATHD          = `which multipathd` ;chomp($CMD_MPATHD);       # Location of multipathd cmd
-my $CMD_DMIDECODE       = `which dmidecode`  ;chomp($CMD_DMIDECODE);    # To check if we are in a VM
+#my $CMD_IOSTAT          = `which iostat`     ;chomp($CMD_IOSTAT);       # Location of iostat command
+#my $CMD_MPATHD          = `which multipathd` ;chomp($CMD_MPATHD);       # Location of multipathd cmd
+#my $CMD_DMIDECODE       = `which dmidecode`  ;chomp($CMD_DMIDECODE);    # To check if we are in a VM
 my $CMD_TOUCH           = `which touch`      ;chomp($CMD_TOUCH);        # Location of touch command
+
+# Determine if 'iostat' command is available on system
+system ("which iostat >/dev/null 2>&1"); 
+if ( $? != 0 ) { 
+    my $CMD_IOSTAT = ""; 
+}else{ 
+    my $CMD_IOSTAT = `which iostat 2>/dev/null`; chomp($CMD_IOSTAT);
+}
+
+# Determine if 'dmidecode' command is available on system
+system ("which dmidecode >/dev/null 2>&1"); 
+if ( $? != 0 ) { 
+    my $CMD_DMIDECODE = ""; 
+}else{ 
+    my $CMD_DMIDECODE = `which dmidecode 2>/dev/null`; chomp($CMD_DMIDECODE); 
+}
+
+# Determine if 'multipathd' command is available on system
+system ("which multipathd >/dev/null 2>&1"); 
+if ( $? != 0 ) { 
+    my $CMD_MPATHD = ""; 
+}else{ 
+    my $CMD_MPATHD = `which multipathd 2>/dev/null`; chomp($CMD_MPATHD);
+}
 
 # Determine if system use SysInit or SystemD 
 system ("which systemctl >/dev/null 2>&1"); 
-if ( $? != 0 ) { my $CMD_SYSTEMCTL = ""; }else{ my $CMD_SYSTEMCTL = `which systemctl 2>/dev/null`;}
+if ( $? != 0 ) { 
+    my $CMD_SYSTEMCTL = ""; 
+}else{ 
+    my $CMD_SYSTEMCTL = `which systemctl 2>/dev/null`; chomp($CMD_SYSTEMCTL); 
+}
 
 
 # `hostname`.smon file layout, fields are separated by space (be carefull)
@@ -1718,7 +1747,7 @@ sub init_process {
 
     # Under Linux, Check if we are running under a VM or not.
     $VM = "N" ;                                                         # By Default not a VM
-    if ( $OSNAME eq "linux" ) {                                         # Under Linux Only (Not Aix)
+    if (( $OSNAME eq "linux" ) && ( $CMD_DMIDECODE != "" )) {           # Under Linux Only (Not Aix)
         $COMMAND = "$CMD_DMIDECODE | grep -i vmware >/dev/null 2>&1" ;  # Cmd to Check if a VM
          @args = ("$COMMAND");                                          # Form the O/S Command
         system(@args) ;                                                 # Execute dmidecode command
