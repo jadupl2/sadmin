@@ -147,8 +147,8 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
     if [ "$(whoami)" != "root" ]                                        # Is it root running script?
-        then sadm_writelog "Script can only be run user 'root'"         # Advise User should be root
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_write "Script can only be run user 'root'.\n"         # Advise User should be root
+             sadm_write "Process aborted.\n"                            # Abort advise message
              sadm_stop 1                                                # Close/Trim Log & Upd. RCH
              exit 1                                                     # Exit To O/S
     fi

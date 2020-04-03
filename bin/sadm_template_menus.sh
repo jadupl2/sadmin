@@ -116,14 +116,14 @@ main_process()
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
 #    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-#        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
-#             sadm_writelog "Process aborted"                            # Abort advise message
+#        then sadm_write "Script can run only on SADMIN server (${SADM_SERVER}).\n"
+#             sadm_write "Process aborted.\n"                            # Abort advise message
 #             sadm_stop 1                                                # Close and Trim Log
 #             exit 1                                                     # Exit To O/S with error
 #    fi
 #    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-#        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-#             sadm_writelog "Process aborted"                            # Abort advise message
+#        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
+#             sadm_write "Process aborted.\n"                            # Abort advise message
 #             sadm_stop 1                                                # Close and Trim Log
 #             exit 1                                                     # Exit To O/S with Error
 #    fi

@@ -153,19 +153,18 @@ run_command()
     SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Full Path of the script
 
     if [ ! -x "${SADM_BIN_DIR}/${SCRIPT}" ]                             # If SCript do not exist
-        then sadm_writelog "[ERROR] ${SADM_BIN_DIR}/${SCRIPT} Don't exist or can't execute" 
-             sadm_writelog " " 
+        then sadm_write "[ERROR] ${SADM_BIN_DIR}/${SCRIPT} Don't exist or can't execute\n\n" 
              return 1                                                   # Return Error to Callerr
     fi 
 
-    sadm_writelog "Running $SCMD ..."                                   # Show Command about to run
+    sadm_write "Running $SCMD ...\n"                                    # Show Command about to run
     $SCMD >${CMDLOG} 2>&1                                               # Run Script Collect output
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] $SCRIPT Terminate with Error"       # Signal Error in Log
-             sadm_writelog "Check Log for further detail about Error"   # Show user where to look
-             sadm_writelog "${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SCRIPT}.log" # Show Log Name    
+        then sadm_write "[ERROR] $SCRIPT Terminate with Error\n"        # Signal Error in Log
+             sadm_write "Check Log for further detail about Error\n"    # Show user where to look
+             sadm_write "${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SCRIPT}.log\n" # Show Log Name    
              return 1                                                   # Return Error to Callerr
-        else sadm_writelog "[SUCCESS] Script $SCRIPT terminated"        # Advise user it's OK
+        else sadm_write "[SUCCESS] Script $SCRIPT terminated.\n"        # Advise user it's OK
     fi
     return 0                                                            # Return Success to Caller
 }
@@ -202,7 +201,7 @@ main_process()
     fi 
 
     # Run the Shell Library Demo 
-    sadm_writelog " "                                                   # Blank LIne
+    sadm_write "\n"                                                     # Blank LIne
     CMD="sadmlib_std_demo"                                              # Script Name to execute
     CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${CMD}.log"                # Script Log file Name
     run_command "${CMD}.sh" "$CMDLOG"                                   # Run Shell Library Demo
@@ -210,7 +209,7 @@ main_process()
     if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove log
 
     # Run the Python Library Demo 
-    sadm_writelog " "                                                   # Blank LIne
+    sadm_write "\n"                                                     # Blank LIne
     CMD="sadmlib_std_demo"                                              # Script Name to execute
     CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${CMD}.log"                # Script Log file Name
     run_command "${CMD}.py" "$CMDLOG"                                   # Run Python Library Demo
@@ -218,7 +217,7 @@ main_process()
     if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove tmp log
 
     # Run the check requirement script.
-    sadm_writelog " "                                                   # Blank LIne
+    sadm_write "\n"                                                     # Blank LIne
     CMD="sadm_check_requirements.sh"                                    # Script Name to execute
     CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${CMD}.log"                # Script Log file Name
     run_command "${CMD}" "$CMDLOG"                                      # Run Check Requirement
@@ -229,8 +228,7 @@ main_process()
     if [ "$(sadm_get_ostype)" = "LINUX" ]                               # If Current O/S is Linux 
         then CMD="chage -l $SADM_USER"                                  # Command Name to execute
              CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_chage.log"        # Command Log file Name
-             sadm_writelog " "                                          # Blank LIne
-             sadm_writelog "Running $CMD ..."                           # Show Command about to run
+             sadm_write "\nRunning $CMD ...\n"                          # Show Command about to run
              $CMD > $CMDLOG                                             # Exec Command
              print_file "${CMDLOG}"                                     # Print tmp log 
              if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove log
@@ -239,16 +237,14 @@ main_process()
     # Create file with SADMIN tree in it
     which tree >/dev/null 2>&1
     if [ $? -eq 0 ] 
-        then sadm_writelog " "                                          # Blank LIne
-             TLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_sadm_support_tree.log"
-             sadm_writelog "Recording $SADMIN tree structure list in $TLOG ..."
+        then TLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_sadm_support_tree.log"
+             sadm_write "\nRecording $SADMIN tree structure list in $TLOG ...\n"
              tree > $TLOG
     fi
     
     # List of files in SADMIN
-    sadm_writelog " "                                                   # Blank LIne
     LLOG="$SADM_LOG_DIR/${SADM_HOSTNAME}_sadm_support_files_list.log" 
-    sadm_writelog "Creating a listing of all files in $SADMIN to $LLOG ..."
+    sadm_write "\nCreating a listing of all files in $SADMIN to $LLOG ...\n"
     find $SADMIN -ls > $LLOG
 
     return 0
@@ -291,8 +287,8 @@ main_process()
 
     # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
+             sadm_write "Process aborted.\n"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S with Error
     fi
