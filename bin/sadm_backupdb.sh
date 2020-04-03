@@ -38,52 +38,65 @@
 # 2018_07_14    v1.9 Switch to Bash Shell instead of sh (Causing Problem with Dash on Debian/Ubuntu)
 # 2018_08_19    v2.0 Add '-b' to specify backup directory, enhance log verbose. 
 #@2018_09_16 v2.1 Insert Aler Group Default
+#@2020_04_01 Update: v2.2 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
 #===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
+# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
-#
-    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.1'                               # Current Script Version
+    # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+    if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
+        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
+             EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
+             if [ $? -eq 0 ]                                            # Yes it is 
+                then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}."
+                else exit 1                                             # No SADMIN Env. Var. Exit
+             fi
+    fi 
+
+    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
+    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+
+    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
+    export SADM_VER='2.2'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
+    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
+    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
+    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
+    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
+    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
+    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
+    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library Functions
+    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
+    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
 
-    # Load SADMIN Standard Shell Library 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                   # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
+#---------------------------------------------------------------------------------------------------
+# Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
+# They can be overridden here, on a per script basis (if needed).
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
+    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
+    #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
+
 
 
 
@@ -145,13 +158,12 @@ help()
 #===================================================================================================
 backup_setup()
 {
-    sadm_writelog "----------"                                          # Insert Sperator Dash Line
-    sadm_writelog "Setup Backup Environment ..."                        # Advise User were Starting
+    sadm_write "\n----------Setup Backup Environment ...\n"             # Advise User were Starting
     
     which mysqldump >/dev/null 2>&1                                     # See if mysqldump available
     if [ $? -ne 0 ]                                                     # If Can't be found 
-        then sadm_writelog "The 'mysqldump' command can't be found"     # Advise User
-             sadm_writelog "The Backup cannot be started"               # No Backup can be performed
+        then sadm_write "The 'mysqldump' command can't be found.\n"     # Advise User
+             sadm_write "The Backup cannot be started.\n"               # No Backup can be performed
              return 1                                                   # Return Error to Caller
         else                                                            # If mysqldump was found
             MYSQLDUMP=`which mysqldump`                                 # Save mysqldump Full Path
@@ -207,34 +219,34 @@ backup_setup()
     if [ "$BACKUP_NAME" != 'all' ]                                      # If Backup one Database
         then grep -i "$BACKUP_NAME" $SADM_TMP_FILE2 > /dev/null 2>&1    # Grep for DB Name in DBList
              if [ $? -ne 0 ]                                            # If DB wasn't found 
-                then sadm_writelog "The Database $BACKUP_NAME doesn't exist in Database" 
-                     sadm_writelog "The valid Database name are : "     # SHow user List valid DB
+                then sadm_write "The Database $BACKUP_NAME doesn't exist in Database.\n" 
+                     sadm_write "The valid Database name are : \n"     # SHow user List valid DB
                      while read dbname                                  # Read DB List one by one
                         do
-                        sadm_writelog "$dbname"                         # Display DB Name
+                        sadm_write "${dbname}\n"                        # Display DB Name
                         done <$SADM_TMP_FILE2
                      return 1                                           # Return Error to Caller
                 else echo "$BACKUP_NAME" > $SADM_TMP_FILE2              # Put Name in List to Backup
              fi
     fi
 
-    sadm_writelog "You have chosen to : "
+    sadm_write "You have chosen to : \m"
     if [ "$BACKUP_NAME" = 'all' ] 
-        then sadm_writelog " - Backup All Databases"
-             sadm_writelog "   - Except these databases ; $DBEXCLUDE" 
-        else sadm_writelog " - Backup the Database '$BACKUP_NAME'" 
+        then sadm_write " - Backup All Databases.\n"
+             sadm_write "   - Except these databases ; $DBEXCLUDE \n" 
+        else sadm_write " - Backup the Database '$BACKUP_NAME' \n" 
     fi
     if [ "$COMPRESS_BACKUP" = 'Y' ] 
-        then sadm_writelog " - Compress the backup file" 
-        else sadm_writelog " - Not compress the backup file"
+        then sadm_write " - Compress the backup file.\n" 
+        else sadm_write " - Not compress the backup file.\n"
     fi
-    sadm_writelog " - Keep $DAILY_BACKUP_TO_KEEP daily backups"
-    sadm_writelog " - Keep $WEEKLY_BACKUP_TO_KEEP weekly backups"
-    sadm_writelog " - Keep $MONTHLY_BACKUP_TO_KEEP monthly backups"
-    sadm_writelog " - Keep $YEARLY_BACKUP_TO_KEEP yearly backups"
-    sadm_writelog " - Do the weekly backup on ${WEEKDAY[$WEEKLY_BACKUP_DAY]}"
-    sadm_writelog " - Do the monthy backup on the $MONTHLY_BACKUP_DATE of every month"
-    sadm_writelog " - Do the yearly backup on the $YEARLY_BACKUP_DATE of ${MTH_NAME[$YEARLY_BACKUP_MONTH]} every year"
+    sadm_write " - Keep $DAILY_BACKUP_TO_KEEP daily backups.\n"
+    sadm_write " - Keep $WEEKLY_BACKUP_TO_KEEP weekly backups.\n"
+    sadm_write " - Keep $MONTHLY_BACKUP_TO_KEEP monthly backups.\n"
+    sadm_write " - Keep $YEARLY_BACKUP_TO_KEEP yearly backups.\n"
+    sadm_write " - Do the weekly backup on ${WEEKDAY[$WEEKLY_BACKUP_DAY]}.\n"
+    sadm_write " - Do the monthy backup on the $MONTHLY_BACKUP_DATE of every month.\n"
+    sadm_write " - Do the yearly backup on the $YEARLY_BACKUP_DATE of ${MTH_NAME[$YEARLY_BACKUP_MONTH]} every year.\n"
 }
 
 #===================================================================================================
@@ -245,13 +257,12 @@ backup_cleanup()
 {
     CLEAN_DIR=$1                                                        # Save Backup Dir. to Clean
     NB_KEEP=$2                                                          # Nb. OF Backup to Keep
-    sadm_writelog " "   
-    sadm_writelog "Cleaning `basename $CLEAN_DIR` Backup (Keep last $NB_KEEP Backups)"   
+    sadm_write "\nCleaning `basename $CLEAN_DIR` Backup (Keep last $NB_KEEP Backups).\n"   
 
     # Produce a list of Databases Directories in $CLEAN_DIR 
     find $CLEAN_DIR -type d -print |grep -v "${CLEAN_DIR}$" >${SADM_TMP_FILE1} 
     if [ ! -s ${SADM_TMP_FILE1} ]                                       # Result file is Empty
-       then sadm_writelog "      - No Backup to delete (Currently 0)"   # No Backup done yet
+       then sadm_write "      - No Backup to delete (Currently 0).\n"   # No Backup done yet
             return 0                                                    # Return Caller
     fi 
 
@@ -259,24 +270,23 @@ backup_cleanup()
     pwd_save=`pwd`                                                      # Save Current Directory
     while read dbdir                                                    # Read All DB Dir to process
         do
-        #sadm_writelog "    - Pruning `basename $dbdir` Database Backup" # Show User Database pruning
-        sadm_writelog "    - Pruning $dbdir Database Backup"            # Show User Database pruning
+        sadm_write "    - Pruning $dbdir Database Backup.\n"            # Show User Database pruning
         cd $dbdir                                                       # cd to Database Backup Dir.
         if [ $DEBUG_LEVEL -gt 0 ] ; then ls -l ; fi                     # In Debug List Backup files
         NB_BACKUP=`ls -1 | wc -l | tr -d ' '`                           # Count Nb. Backup in Dir.
         NB_DELETE=`echo "$NB_BACKUP - $NB_KEEP" | $SADM_BC`             # Nb. Backup to Delete
         if [ $DEBUG_LEVEL -gt 0 ]                                       # If Debug Activated
-            then sadm_writelog "NB_DELETE = $NB_BACKUP - $NB_KEEP"      # Show Math Done to Get Nb
+            then sadm_write "NB_DELETE = $NB_BACKUP - $NB_KEEP \n"      # Show Math Done to Get Nb
         fi
         if [ "$NB_DELETE" -gt 0 ]                                       # At Least 1 Backup to del.?
-            then sadm_writelog "      - $NB_DELETE Backup(s) out of $NB_BACKUP will be remove"  
+            then sadm_write "      - $NB_DELETE Backup(s) out of $NB_BACKUP will be remove.\n"  
                  if [ $DEBUG_LEVEL -gt 0 ] ; then ls -1t | tail -${NB_DELETE} ;fi 
                  ls -1t | tail -${NB_DELETE} | while read bname         # Process each Backup to Del
                     do
-                    sadm_writelog "      - Deleting file $bname ..."    # Show Backup file to Del.
+                    sadm_write "      - Deleting file $bname ...\n"     # Show Backup file to Del.
                     rm -f $bname                                        # Remove Database Backup
                     done                 
-            else sadm_writelog "      - No Backup to delete (We have now $NB_BACKUP backup file(s))"  
+            else sadm_write "      - No Backup to delete (We have now $NB_BACKUP backup file(s)).\n"  
         fi
         done < ${SADM_TMP_FILE1}                                        # List of Database to clean
     cd $pwd_save                                                        # cd to previous save dir.
@@ -313,28 +323,26 @@ backup_db()
              chmod 770 $BACKUP_DIR                                      # Read/Write to SADM Usr/Grp
     fi
 
-    sadm_writelog " "                                                   # Insert Blank Line in Log
-    sadm_writelog "----------"                                          # Insert Sperator Dash Line
-    sadm_writelog "Starting Backup of Database $CURRENT_DB"             # Advise User were Starting
+    sadm_write "\n----------\nStarting Backup of Database ${CURRENT_DB}.\n"  # Advise User were Starting
     BFILE="${BACKUP_DIR}/${BACKUP_FILENAME}"                            # Backup Filename Full Path 
-    sadm_writelog "Backup Directory is ${BACKUP_DIR}"                   # Show User Backup Directory
+    sadm_write "Backup Directory is ${BACKUP_DIR}\n"                    # Show User Backup Directory
     if [ "$COMPRESS_BACKUP" = 'Y' ]                                     # If Compress option Chosen
-        then sadm_writelog "Backup FileName is ${BACKUP_FILENAME}.gz"   # Show Compress Backup Name
-        else sadm_writelog "Backup FileName is ${BACKUP_FILENAME}"      # Show User Backup Filename
+        then sadm_write "Backup FileName is ${BACKUP_FILENAME}.gz\n"    # Show Compress Backup Name
+        else sadm_write "Backup FileName is ${BACKUP_FILENAME}\n"       # Show User Backup Filename
     fi
     touch $BFILE                                                        # Create empty backup file
     chown ${SADM_USER}:${SADM_GROUP} $BFILE                             # Assign it SADM USer&Group
     chmod 640 $BFILE                                                    # Read/Write 2 SADM Usr Only
     if [ $DEBUG_LEVEL -gt 5 ]                                           # If Debug Level > 5 
-        then sadm_writelog "$MYSQLDUMP $CREDENTIAL $SADM_DBNAME "       # Debug = Write Command Used
+        then sadm_write "$MYSQLDUMP $CREDENTIAL $SADM_DBNAME \n"        # Debug = Write Command Used
     fi
 
-    sadm_writelog "Running mysqldump ..."                               # Inform User
+    sadm_write "Running mysqldump ...\n"                                # Inform User
     $MYSQLDUMP $CREDENTIAL $SADM_DBNAME > $BFILE 2>&1                   # Run the Database Backup
     if [ $? -ne 0 ]                                                     # If Can't be found 
-        then sadm_writelog "[ERROR] The 'mysqldump' command failed"     # Advise User
+        then sadm_write "[ERROR] The 'mysqldump' command failed \n"     # Advise User
              return 1                                                   # Return Error to Caller
-        else sadm_writelog "[SUCCESS] Backup Succeeded"                 # Advise User
+        else sadm_write "[SUCCESS] Backup Succeeded \n"                 # Advise User
              rm -f ${LATEST_DIR}/${CURRENT_DB}*                         # Remove Last DB Backup
              if [ "$COMPRESS_BACKUP" = 'Y' ]                            # If Compress option Chosen
                 then gzip $BFILE                                        # Compress File
@@ -356,7 +364,7 @@ main_process()
 {
     # Make sure at least (-a or -n) we have a database backup to do.
     if [ "$BACKUP_NAME"  = "" ]                                         # No Database Name Specified
-        then sadm_writelog "[ERROR] No Database Name Specified"
+        then sadm_write "[ERROR] No Database Name Specified.\n"
              return 1
     fi
 
@@ -380,8 +388,7 @@ main_process()
     if [ "$ERROR_COUNT" -ne 0 ] ; then return 1 ; fi                    # If Error Return to Caller
 
     # Prune Backup Directories to respect the number of backup to keep, based on user choice -------
-    sadm_writelog " "                                                   # Insert Blank Line in Log
-    sadm_writelog "----------"                                          # Insert Sperator Dash Line
+    sadm_write "\n----------\n"                                         # Insert Sperator Dash Line
     backup_cleanup "$DAILY_DIR"   "$DAILY_BACKUP_TO_KEEP"               # Purge unwanted Backup file
     if [ $? -ne 0 ] ; then return 1 ; fi                                # If Error Return to Caller
     backup_cleanup "$WEEKLY_DIR"  "$WEEKLY_BACKUP_TO_KEEP"              # Purge unwanted Backup file
@@ -409,8 +416,8 @@ main_process()
     sadm_start                                                          # Init Env. Dir. & RC/Log
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # DB Only on SADMIN Server
-        then sadm_writelog "Database backup only run on the SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_write "Database backup only run on the SADMIN server (${SADM_SERVER}).\n"
+             sadm_write "Process aborted.\n"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
@@ -433,7 +440,7 @@ main_process()
                sadm_stop 0                                              # Close the shop
                exit 0                                                   # Back to shell
                ;;
-           \?) sadm_writelog "Invalid option: -$OPTARG"                 # Invalid Option Message
+           \?) sadm_write "Invalid option: -$OPTARG \n"                 # Invalid Option Message
                help_usage                                               # Display Help Usage
                sadm_stop 1                                              # Close the shop
                exit 1                                                   # Exit with Error
@@ -441,7 +448,7 @@ main_process()
         esac                                                            # End of case
     done                                                                # End of while
     if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
-        then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
+        then sadm_write "Debug activated, Level ${DEBUG_LEVEL}\n"       # Display Debug Level
     fi
 
     main_process                                                        # Main Process
