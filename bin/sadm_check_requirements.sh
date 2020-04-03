@@ -36,7 +36,7 @@
 # 2019_05_16 Update: v1.4 Don't generate the RCH file & allow running multiple instance of script.
 # 2019_10_30 Update: v1.5 Remove 'facter' requirement.
 #@2019_12_02 Fix: v1.6 Fix Mac OS crash.
-#
+#@2020_04_01 Update: v1.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -65,7 +65,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.6'                               # Your Current Script Version
+    export SADM_VER='1.7'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -115,14 +115,7 @@ show_usage()
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\n" 
 }
-show_version()
-{
-    printf "\n${SADM_PN} - Version $SADM_VER"
-    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
-    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
-    printf " - Kernel Version $(sadm_get_kernel_version)"
-    printf "\n\n" 
-}
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -133,8 +126,8 @@ install_package()
 {
     # Check if we received at least a parameter
     if [ $# -ne 2 ]                                                      # Should have rcv 2 Param
-        then sadm_writelog "Nb. Parameter received by $FUNCNAME function is incorrect"
-             sadm_writelog "Please correct your script - Script Aborted" # Advise User to Correct
+        then sadm_write "Nb. Parameter received by $FUNCNAME function is incorrect.\n"
+             sadm_write "Please correct your script - Script Aborted.\n" # Advise User to Correct
              sadm_stop 1                                                 # Prepare exit gracefully
              exit 1                                                      # Terminate the script
     fi
@@ -145,23 +138,23 @@ install_package()
         "rpm" )
                 lmess="Starting installation of ${PACKAGE_RPM} under $(sadm_get_osname)"
                 lmess="${lmess} Version $(sadm_get_osmajorversion)"
-                sadm_writelog "$lmess"
+                sadm_write "${lmess}\n"
                 case "$(sadm_get_osmajorversion)" in
-                    [567])  sadm_writelog "Running \"yum -y install ${PACKAGE_RPM}\"" # Install Command
+                    [567])  sadm_write "Running \"yum -y install ${PACKAGE_RPM}\"\n" # Install Command
                             yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
                             rc=$?                                            # Save Exit Code
-                            sadm_writelog "Return Code after in installation of ${PACKAGE_RPM} is $rc"
+                            sadm_write "Return Code after in installation of ${PACKAGE_RPM} is ${rc}.\n"
                             break
                             ;;
-                    [8])    sadm_writelog "Running \"yum -y install ${PACKAGE_RPM}\"" # Install Command
+                    [8])    sadm_write "Running \"yum -y install ${PACKAGE_RPM}\"\n" # Install Command
                             yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
                             rc=$?                                            # Save Exit Code
-                            sadm_writelog "Return Code after in installation of ${PACKAGE_RPM} is $rc"
+                            sadm_write "Return Code after in installation of ${PACKAGE_RPM} is ${rc}.\n"
                             break
                             ;;
                     *)      lmess="The version $(sadm_get_osmajorversion) of"
                             lmess="${lmess} $(sadm_get_osname) isn't supported at the moment"
-                            sadm_writelog "$lmess"
+                            sadm_write "${lmess}.\n"
                             rc=1                                             # Save Exit Code
                             break
                             ;;
@@ -169,25 +162,25 @@ install_package()
                 break
                 ;;
         "deb" )
-                sadm_writelog "Synchronize package index files"
-                sadm_writelog "Running \"apt-get update\""                 # Msg Get package list
-                apt-get update > /dev/null 2>&1                            # Get Package List From Repo
-                rc=$?                                                      # Save Exit Code
+                sadm_write "Synchronize package index files.\n"
+                sadm_write "Running \"apt-get update\"\n"               # Msg Get package list
+                apt-get update > /dev/null 2>&1                         # Get Package List From Repo
+                rc=$?                                                   # Save Exit Code
                 if [ "$rc" -ne 0 ]
-                    then sadm_writelog "We had problem running the \"apt-get update\" command"
-                         sadm_writelog "We had a return code $rc"
-                    else sadm_writelog "Return Code after apt-get update is $rc"  # Show  Return Code
-                         sadm_writelog "Installing the Package ${PACKAGE_DEB} now"
-                         sadm_writelog "apt-get -y install ${PACKAGE_DEB}"
+                    then sadm_write "We had problem running the \"apt-get update\" command.\n"
+                         sadm_write "We had a return code ${rc}.\n"
+                    else sadm_write "Return Code after apt-get update is ${rc}.\n" 
+                         sadm_write "Installing the Package ${PACKAGE_DEB} now.\n"
+                         sadm_write "apt-get -y install ${PACKAGE_DEB}.\n"
                          apt-get -y install ${PACKAGE_DEB} >>$SADM_LOG 2>&1
-                         rc=$?                                              # Save Exit Code
-                         sadm_writelog "Return Code after installation of ${PACKAGE_DEB} is $rc"
+                         rc=$?                                          # Save Exit Code
+                         sadm_write "Return Code after installation of ${PACKAGE_DEB} is $rc \n"
                 fi
                 break
                 ;;
     esac
 
-    sadm_writelog " "
+    sadm_write "\n"
     return $rc                                                          # 0=Installed 1=Error
 }
 
@@ -337,15 +330,15 @@ package_available() {
 # --------------------------------------------------------------------------------------------------
 #
 check_sadmin_requirements() {
-    sadm_writelog "SADMIN client requirements"
+    sadm_write "SADMIN client requirements\n"
 
     # The 'which' command is needed to determine presence of command - Return Error if not found
     if which which >/dev/null 2>&1                                      # Try the command which
         then SADM_WHICH=`which which`  ; export SADM_WHICH              # Save Path of Which Command
-        else sadm_writelog "[ERROR] The command 'which' couldn't be found"
-             sadm_writelog "        This program is often used by the SADMIN tools"
-             sadm_writelog "        Please install it and re-run this script"
-             sadm_writelog "        *** Script Aborted"
+        else sadm_write "[ERROR] The command 'which' couldn't be found.\n"
+             sadm_write "        This program is often used by the SADMIN tools.\n"
+             sadm_write "        Please install it and re-run this script.\n"
+             sadm_write "        *** Script Aborted.\n"
              return 1                                                   # Return Error to Caller
     fi
 
@@ -358,9 +351,9 @@ check_sadmin_requirements() {
                     NMON_EXE="nmon_aix$(sadm_get_osmajorversion)$(sadm_get_osminorversion)"
                     NMON_USE="${NMON_WDIR}${NMON_EXE}"                  # Use exec. of your version
                     if [ ! -x "$NMON_USE" ]                             # nmon exist and executable
-                        then sadm_writelog "'nmon' for AIX $(sadm_get_osversion) isn't available"
-                             sadm_writelog "The nmon executable we need is $NMON_USE"
-                        else sadm_writelog "ln -s ${NMON_USE} /usr/bin/nmon"
+                        then sadm_write "'nmon' for AIX $(sadm_get_osversion) isn't available.\n"
+                             sadm_write "The nmon executable we need is ${NMON_USE}.\n"
+                        else sadm_write "ln -s ${NMON_USE} /usr/bin/nmon\n"
                              ln -s ${NMON_USE} /usr/bin/nmon            # Link nmon avail to user
                              if [ $? -eq 0 ] ; then SADM_NMON="/usr/bin/nmon" ; fi # Set SADM_NMON
                     fi
@@ -500,8 +493,7 @@ check_sadmin_requirements() {
 
     # If on the SADMIN Server mysql MUST be present - Check Availibility of the mysql command.
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only Check on SADMIN Srv
-        then sadm_writelog " " 
-             sadm_writelog "SADMIN server requirements"
+        then sadm_write "\nSADMIN server requirements.\n"
              command_available "mysql" ; SADM_MYSQL=$SPATH              # Get mysql cmd path  
              if [ "$SADM_MYSQL" = "" ] && [ "$INSTREQ" -eq 1 ]          # Cmd not found & Inst Req.
                 then install_package "mariadb-server " "mariadb-server mariadb-client"  
@@ -567,32 +559,33 @@ main_process()
 }
 
 
-#===================================================================================================
-#                                       Script Start HERE
-#===================================================================================================
-
+# --------------------------------------------------------------------------------------------------
+# Command line Options functions
 # Evaluate Command Line Switch Options Upfront
-# By Default (-h) Show Help Usage, (-v) Show Script Version,
-# (-d0-9] Set Debug Level, (-i) install missing package
-    while getopts "hvid:" opt ; do                                      # Loop to process Switch
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# --------------------------------------------------------------------------------------------------
+function cmd_options()
+{
+    while getopts "hivd:" opt ; do                                      # Loop to process Switch
         case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
-                       exit 0
+                       exit 1                                           # Exit Script with Error
                fi
-               ;;                                                       # No stop after each page
+               printf "Debug Level set to ${SADM_DEBUG}."               # Display Debug Level
+               ;;                                                       
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
             i) INSTREQ=1                                                # Install Requirement ON
                if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ]
                    then add_epel_repo
                fi 
                ;;                                                       # No stop after each page
-            h) show_usage                                               # Show Help Usage
-               exit 0                                                   # Back to shell
-               ;;
-            v) show_version                                             # Show Script Version Info
+            v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
            \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
@@ -601,25 +594,28 @@ main_process()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+    return 
+}
 
-    # Call SADMIN Initialization Procedure
-    sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+
+#===================================================================================================
+#                                       Script Start HERE
+#===================================================================================================
+
+    cmd_options "$@"                                                    # Check command-line Options    
+    sadm_start                                                          # Create Dir.,PID,log,rch
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
 
     # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
+             sadm_write "Process aborted.\n"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S with Error
     fi
 
-# Your Main process procedure
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
-
-# SADMIN Closing procedure - Close/Trim log and rch file, Remove PID File, Remove TMP files ...
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
     
