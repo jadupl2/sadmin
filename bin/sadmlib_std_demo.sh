@@ -33,6 +33,7 @@
 #@2019_10_17 Update: v3.15 Print Category and Group table content at the end of report.
 #@2019_10_30 Update: v3.16 Remove 'facter' utilization (depreciated).
 #@2019_11_25 Update: v3.17 Change printing format of Database table at the end of execution.
+#@2020_04_01 Update: v3.18 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -54,7 +55,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.17'                              # Current Script Version
+    export SADM_VER='3.18'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
