@@ -60,7 +60,7 @@ set_creation_default()
                                 ;;
         "UBUNTU"|"DEBIAN"|"RASPBIAN"|"LINUXMINT") CR_FT="ext4" 
                                 ;;
-        "*" )                   sadm_writelog "O/S $(sadm_get_osname) not supported yet" 
+        "*" )                   sadm_write "O/S $(sadm_get_osname) not supported yet.\n" 
                                 ;;
     esac
     export CR_FT

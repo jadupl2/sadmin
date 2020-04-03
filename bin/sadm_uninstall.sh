@@ -282,7 +282,7 @@ main_process()
                      
                      SQL="drop database sadmin;" 
                      CMDLINE="$SADM_MYSQL -u root  -p$ROOTPWD -h $SADM_DBHOST "
-                     if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi  
+                     if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi  
                      printf "\nDropping 'sadmin' database ..." 
                      if [ $SADM_DEBUG -gt 0 ] 
                         then printf "\n$CMDLINE -Ne $SQL"
@@ -365,8 +365,8 @@ main_process()
     
     # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
+             sadm_write "Process aborted.\n"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S with Error
     fi
