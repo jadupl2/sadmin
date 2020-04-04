@@ -46,6 +46,7 @@
 #@2019_11_25 Fix: v1.34 Remove deletion of $SADMIN/www on SADMIN client.
 #@2020_01_21 Update: v1.35 Remove alert_group.cfg and alert_slack.cfg, if present in $SADMIN/cfg
 #@2020_04_01 Update: v1.36 Code rewrite for better performance and maintenance. 
+#@2020_04_04 Update: v1.37 Fix minor bugs & Restructure log presentation
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -77,7 +78,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.36'                              # Your Current Script Version
+    export SADM_VER='1.37'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -141,7 +142,7 @@ show_usage()
 check_sadmin_account()
 {
     lock_error=0
-    sadm_write "\nCheck status of account '$SADM_USER' ...\n" 
+    sadm_write "\n${SADM_BOLD}Check status of account '$SADM_USER' ...${SADM_RESET}\n" 
 
     # Make sure sadmin account is not asking for password change and block crontab sudo.
     # So we make sadmin account non-expirable and password non-expire
@@ -185,7 +186,7 @@ check_sadmin_account()
     if [ "$SADM_OS_TYPE"  = "AIX" ]
         then lsuser -a account_locked $SADM_USER | grep -i 'true' >/dev/null 2>&1
              if [ $? -eq 0 ] 
-                then sadm_write "  - [ERROR] Account $SADM_USER is locked and need to be unlock ...\n"
+                then sadm_write "  - ${SADM_ERROR} Account $SADM_USER is locked and need to be unlock ...\n"
                      sadm_write "  - Please check the account and unlock it with these commands ; \n"
                      sadm_write "  - chsec -f /etc/security/lastlog -a 'unsuccessful_login_count=0' -s $SADM_USER \n"
                      sadm_write "  - chuser 'account_locked=false' $SADM_USER \n"
@@ -193,7 +194,7 @@ check_sadmin_account()
              fi
     fi
 
-    if [ $lock_error -eq 0 ] ; then sadm_write "  - No problem with '$SADM_USER' account. [ OK ]\n" ; fi
+    if [ $lock_error -eq 0 ] ; then sadm_write "  - No problem with '$SADM_USER' account. ${SADM_OK}\n" ; fi
     return $lock_error
 }
 
@@ -215,8 +216,9 @@ rch_conversion()
 {
 
     #sadm_write "\n"
-    if [ ! -e "${SADM_CFG_DIR}/.rch_conversion_done" ]
+    if [ ! -f "${SADM_CFG_DIR}/.rch_conversion_done" ]
         then sadm_write "\nConversion of RCH files need to be done, please wait ...\n" 
+             ls -l ${SADM_CFG_DIR}/.rch_conversion_done
         else return 0 
     fi 
 
@@ -276,8 +278,9 @@ rch_conversion()
         else sadm_write  "No error rch files were found.\n" 
     fi
 
-    sadm_write "Conversion of RCH file is now done.\n\n${SADM_TEN_DASH}\n\n"
-    echo "done" > ${SADM_CFG_DIR}/.rch_conversion_done                  # State that conversion done
+    sadm_write "Conversion of RCH file is now done.\n\n\n"
+    touch ${SADM_CFG_DIR}/.rch_conversion_done                  # State that conversion done
+    ls -l ${SADM_CFG_DIR}/.rch_conversion_done
 }
 
 
@@ -298,18 +301,18 @@ set_dir()
         then sadm_write "  - chmod $VAL_OCTAL $VAL_DIR "
              chmod $VAL_OCTAL $VAL_DIR  >>$SADM_LOG 2>&1
              if [ $? -ne 0 ]
-                then sadm_write "[ ERROR ] On 'chmod' operation for ${VALDIR}.\n"
+                then sadm_write " ${SADM_ERROR} On 'chmod' operation for ${VALDIR}.\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
-                else sadm_write " [ OK ]\n"
+                else sadm_write " ${SADM_OK}\n"
              fi
              sadm_write "  - chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR"
              chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR >>$SADM_LOG 2>&1
              if [ $? -ne 0 ]
-                then sadm_write "[ ERROR ] On 'chown' operation for ${VALDIR}.\n"
+                then sadm_write " ${SADM_ERROR} On 'chown' operation for ${VALDIR}.\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
-                else sadm_write " [ OK ]\n"
+                else sadm_write " ${SADM_OK}\n"
              fi
              #lsline=`ls -ld $VAL_DIR`
              #sadm_write "${lsline}\n"
@@ -334,20 +337,21 @@ set_files_recursive()
         then sadm_write "  - find $VAL_DIR -type f -exec chown ${VAL_OWNER}:${VAL_GROUP} {} \;"
              find $VAL_DIR -type f -exec chown ${VAL_OWNER}:${VAL_GROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then sadm_write "[ ERROR ] On 'chown' operation of ${VALDIR}.\n"
+                then sadm_write " ${SADM_ERROR} On 'chown' operation of ${VALDIR}.\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
-                else sadm_write " [ OK ]\n"
+                else sadm_write " ${SADM_OK}\n"
              fi
              sadm_write "  - find $VAL_DIR -type f -exec chmod $VAL_OCTAL{} \;"
              find $VAL_DIR -type f -exec chmod $VAL_OCTAL {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then sadm_write "[ ERROR ] On 'chmod' operation of ${VALDIR}.\n"
+                then sadm_write " ${SADM_ERROR} On 'chmod' operation of ${VALDIR}.\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_write " [ OK ]\n"
+                else sadm_write " ${SADM_OK}\n"
                      RETURN_CODE=1                                      # Error = Return Code to 1
              fi
     fi
+    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
     return $RETURN_CODE
 }
 
@@ -360,7 +364,7 @@ set_files_recursive()
 # --------------------------------------------------------------------------------------------------
 dir_housekeeping()
 {
-    sadm_write "SADMIN Client Directories Housekeeping.\n"
+    sadm_write "${SADM_BOLD}SADMIN Client Directories Housekeeping.${SADM_RESET}\n"
     ERROR_COUNT=0                                                       # Reset Error Count
 
     # Path is needed to perform NFS Backup (It doesn't exist by default on Mac)
@@ -462,32 +466,31 @@ dir_housekeeping()
     fi
 
 
-    # Remove Directory that should only be there on the SADMIN Server not the client.
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]
-       then sadm_write "${SADM_TEN_DASH}\n"
-            sadm_write "Remove useless Directories on client (if any) ...\n"
-            #
-            # Remove Database Backup Directory on SADMIN Client if it exist
-            if [ -d "$SADM_DBB_DIR" ] && [ "$SADM_HOST_TYPE" = "C" ]
-                then sadm_write "Directory $SADM_DBB_DIR should exist only on SADMIN server.\n"
-                     sadm_write "I am deleting it now.\n"
-                     rm -fr $SADM_DBB_DIR
-            fi
-            # Remove Network Scan Directory on SADMIN Client if it exist
-            if [ -d "$SADM_NET_DIR" ] && [ "$SADM_HOST_TYPE" = "C" ]
-                then sadm_write "Directory $SADM_NET_DIR should exist only on SADMIN server.\n"
-                     sadm_write "I am deleting it now.\n"
-                     rm -fr $SADM_NET_DIR
-            fi
-            # Remove Web Site Directory on SADMIN Client if it exist
-            #if [ -d "$SADM_WWW_DIR" ] && [ "$SADM_HOST_TYPE" = "C" ]
-            #    then sadm_write "Directory $SADM_WWW_DIR should exist only on SADMIN server.\n"
-            #         sadm_write "I am deleting it now.\n"
-            #         rm -fr $SADM_WWW_DIR
-            #fi
-            sadm_write "${SADM_TEN_DASH}\n"
-    fi
-
+#    # Remove Directory that should only be there on the SADMIN Server not the client.
+#    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]
+#       then sadm_write "\nRemove useless directories on client (if any) ...\n"
+#            #
+#            # Remove Database Backup Directory on SADMIN Client if it exist
+#            if [ -d "$SADM_DBB_DIR" ] && [ "$SADM_HOST_TYPE" = "C" ]
+#                then sadm_write "Directory $SADM_DBB_DIR should exist only on SADMIN server.\n"
+#                     sadm_write "I am deleting it now.\n"
+#                     rm -fr $SADM_DBB_DIR
+#            fi
+#            # Remove Network Scan Directory on SADMIN Client if it exist
+#            if [ -d "$SADM_NET_DIR" ] && [ "$SADM_HOST_TYPE" = "C" ]
+#                then sadm_write "Directory $SADM_NET_DIR should exist only on SADMIN server.\n"
+#                     sadm_write "I am deleting it now.\n"
+#                     rm -fr $SADM_NET_DIR
+#            fi
+#            # Remove Web Site Directory on SADMIN Client if it exist
+#            #if [ -d "$SADM_WWW_DIR" ] && [ "$SADM_HOST_TYPE" = "C" ]
+#            #    then sadm_write "Directory $SADM_WWW_DIR should exist only on SADMIN server.\n"
+#            #         sadm_write "I am deleting it now.\n"
+#            #         rm -fr $SADM_WWW_DIR
+#            #fi
+#            sadm_write "${SADM_TEN_DASH}\n"
+#    fi
+#
     return $ERROR_COUNT
 }
 
@@ -505,21 +508,21 @@ set_file()
     RETURN_CODE=0                                                       # Reset Error Counter
 
     if [ -f "$VAL_FILE" ]
-        then sadm_write "  - chmod 0644 ${VAL_FILE}"
-             chmod 0644 $VAL_FILE
+        then sadm_write "  - chmod ${VAL_OCTAL} ${VAL_FILE}"
+             chmod ${VAL_OCTAL} ${VAL_FILE}
              if [ $? -ne 0 ]
-                then sadm_write " [ ERROR ] On 'chmod' operation on ${VAL_FILE}.\n"
+                then sadm_write " ${SADM_ERROR} On 'chmod' operation on ${VAL_FILE}.\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
-                else sadm_write " [ OK ]\n"
+                else sadm_write " ${SADM_OK}\n"
              fi
-             sadm_write "  - chown root:root ${VAL_FILE}"
-             chown root:root ${VAL_FILE}
+             sadm_write "  - chown ${VAL_OWNER}:${VAL_GROUP} ${VAL_FILE}"
+             chown ${VAL_OWNER}:${VAL_GROUP} ${VAL_FILE}
              if [ $? -ne 0 ]
-                then sadm_write " [ ERROR ] On 'chown' operation on ${VAL_FILE}.\n"
+                then sadm_write " ${SADM_ERROR} On 'chown' operation on ${VAL_FILE}.\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
-                else sadm_write " [ OK ]\n"
+                else sadm_write " ${SADM_OK}\n"
              fi
              #lsline=`ls -l $VAL_FILE`
              #sadm_write "${lsline}\n"
@@ -531,11 +534,11 @@ set_file()
 
 
 # --------------------------------------------------------------------------------------------------
-#                               General Files Housekeeping Function
+# General Files Housekeeping Function
 # --------------------------------------------------------------------------------------------------
 file_housekeeping()
 {
-    sadm_write "\nSADMIN Client Files Housekeeping.\n"
+    sadm_write "\n${SADM_BOLD}SADMIN Client Files Housekeeping.${SADM_RESET}\n"
 
    # Just to make sure .gitkeep file always exist
     if [ ! -f "${SADM_TMP_DIR}/.gitkeep" ]  ; then touch ${SADM_TMP_DIR}/.gitkeep ; fi 
@@ -548,28 +551,26 @@ file_housekeeping()
     
     # Remove files that should only be there on the SADMIN Server not the client.
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]
-       then sadm_write "${SADM_TEN_DASH}\nRemove useless files on client (if any) ...\n"
-            #
-            afile="$SADM_WWW_LIB_DIR/.crontab.txt"
+       then afile="$SADM_WWW_LIB_DIR/.crontab.txt"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
-            afile="$SADM_CFG_DIR/alert_group.cfg"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #afile="$SADM_CFG_DIR/alert_group.cfg"
+            #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
-            afile="$SADM_CFG_DIR/alert_slack.cfg"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #afile="$SADM_CFG_DIR/alert_slack.cfg"
+            #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
             afile="$SADM_CFG_DIR/.dbpass"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
-            afile="$SADM_CFG_DIR/.alert_history.txt"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #afile="$SADM_CFG_DIR/.alert_history.txt"
+            #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
-            afile="$SADM_CFG_DIR/.rch_conversion_done"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #afile="$SADM_CFG_DIR/.rch_conversion_done"
+            #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
-            afile="$SADM_CFG_DIR/alert_history.txt"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #afile="$SADM_CFG_DIR/alert_history.txt"
+            #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
     fi
 
     # Remove default crontab job - We want to run the ReaR Backup from the sadm_rear_backup crontab.
@@ -581,6 +582,8 @@ file_housekeeping()
     set_file "/etc/cron.d/sadm_osupdate"     "0644" "root" "root"
     set_file "/etc/cron.d/sadm_backup"       "0644" "root" "root"
     set_file "/etc/cron.d/sadm_rear_backup"  "0644" "root" "root"
+
+    # SADMIN Readme, changelog and license file.
     set_file "${SADM_BASE_DIR}/readme.md"    "0644" "${SADM_USER}" "${SADM_GROUP}" 
     set_file "${SADM_BASE_DIR}/readme.html"  "0644" "${SADM_USER}" "${SADM_GROUP}" 
     set_file "${SADM_BASE_DIR}/readme.pdf"   "0644" "${SADM_USER}" "${SADM_GROUP}" 
@@ -620,81 +623,81 @@ file_housekeeping()
     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
 
 
-    sadm_write "\nSADMIN Files Pruning.\n"
+    sadm_write "\n${SADM_BOLD}SADMIN Files Pruning.${SADM_RESET}\n"
 
     # Remove files older than 7 days in SADMIN TMP Directory
     if [ -d "$SADM_TMP_DIR" ]
-        then sadm_write "  - find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \;"
+        then sadm_write "  - Remove any unmodified file(s) for more than 7 days in ${SADM_TMP_DIR}.\n"
+             sadm_write "    - find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \;"
              find $SADM_TMP_DIR  -type f -mtime +7 -exec ls -l {} \; >> $SADM_LOG
              find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then sadm_write " [ ERROR ] On last pruning operation.\n"
+                then sadm_write " ${SADM_ERROR} On last pruning operation.\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_write " [ OK ]\n"
+                else sadm_write " ${SADM_OK}\n"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
              fi
-             sadm_write "  - Delete pid files once a day - This prevent script from not running.\n"
+             sadm_write "  - Remove all pid files once a day - This prevent script from not running.\n"
              sadm_write "    - find $SADM_TMP_DIR  -type f -name '*.pid' -exec rm -f {} \;"
              find $SADM_TMP_DIR  -type f -name "*.pid" -exec ls -l {} \; >> $SADM_LOG
              find $SADM_TMP_DIR  -type f -name "*.pid" -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then sadm_write " [ ERROR ] On last pruning operation.\n"
+                then sadm_write " ${SADM_ERROR} On last pruning operation.\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_write " [ OK ]\n"
+                else sadm_write " ${SADM_OK}\n"
              fi
              if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
     fi
 
     # Remove *.rch (Return Code History) files older than ${SADM_RCH_KEEPDAYS} days in SADMIN/DAT/RCH Dir.
     if [ -d "${SADM_RCH_DIR}" ]
-        then sadm_write "\n  - You chosen to keep *.rch files for ${SADM_RCH_KEEPDAYS} days.\n"
-             sadm_write "  - Remove any *.rch file(s) older than ${SADM_RCH_KEEPDAYS} days in ${SADM_RCH_DIR}.\n"
+        then sadm_write "  - Remove any unmodified *.rch file(s) for more than ${SADM_RCH_KEEPDAYS} days in ${SADM_RCH_DIR}.\n"
              echo "  - List of rch file that will be deleted." >> $SADM_LOG
              find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec ls -l {} \; >>$SADM_LOG
-             sadm_write "  - find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name '*.rch' -exec rm -f {} \;"
+             sadm_write "    - find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name '*.rch' -exec rm -f {} \;"
              find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
-                then sadm_write " [ ERROR ] On last operation.\n"
+                then sadm_write " ${SADM_ERROR} On last operation.\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_write " [ OK ]\n"
+                else sadm_write " ${SADM_OK}\n"
              fi
              if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
     fi
 
     # Remove any *.log in SADMIN LOG Directory older than ${SADM_LOG_KEEPDAYS} days
     if [ -d "${SADM_LOG_DIR}" ]
-        then sadm_write "\n  - You chosen to keep *.log files for ${SADM_LOG_KEEPDAYS} days.\n"
-             sadm_write "  - Remove any *.log file(s) older than ${SADM_LOG_KEEPDAYS} days in ${SADM_LOG_DIR}.\n"
+        then sadm_write "  - Remove any unmodified *.log file(s) for more than ${SADM_LOG_KEEPDAYS} days in ${SADM_LOG_DIR}.\n"
              echo "List of log file that will be deleted." >>$SADM_LOG
              find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec ls -l {} \; >>$SADM_LOG
-             sadm_write "  - find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name '*.log' -exec rm -f {} \;"
+             sadm_write "    - find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name '*.log' -exec rm -f {} \;"
              find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
-                then sadm_write " [ ERROR ] On last operation.\n"
+                then sadm_write " ${SADM_ERROR} On last operation.\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_write " [ OK ]\n"
+                else sadm_write " ${SADM_OK}\n"
              fi
              if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
     fi
 
     # Delete old nmon files - As defined in the sadmin.cfg file
     if [ -d "${SADM_NMON_DIR}" ]
-        then sadm_write "\n  - You have chosen to keep *.nmon files for $SADM_NMON_KEEPDAYS days.\n"
+        then sadm_write "  - Remove any unmodified *.nmon file(s) for more than ${SADM_NMON_KEEPDAYS} days in ${SADM_NMON_DIR}.\n"
              echo "List of nmon file that will be deleted." >>$SADM_LOG
              find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec ls -l {} \; >> $SADM_LOG 2>&1
-             sadm_write "  - find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name '*.nmon' -exec rm {} \;"
+             sadm_write "    - find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name '*.nmon' -exec rm {} \;"
              find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec rm {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then sadm_write " [ ERROR ] On last operation.\n"
+                then sadm_write " ${SADM_ERROR} On last operation.\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_write " [ OK ]\n"
+                else sadm_write " ${SADM_OK}\n"
              fi
              if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
     fi
 
- 
     return $ERROR_COUNT
 }
+
+
 
 
 # --------------------------------------------------------------------------------------------------
