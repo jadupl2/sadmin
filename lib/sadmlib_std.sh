@@ -131,6 +131,7 @@
 #@2020_03_16 Update: v3.30 If not present, create Alert Group file (alert_group.cfg) from template.
 #@2020_04_01 Update: v3.31 Function sadm_writelog() with N/L depreciated, remplace by sadm_write().
 #@2020_04_01 Update: v3.32 Function sadm_writelog() replaced by sadm_write in Library.
+#@2020_04_04 Update: v3.33 New Variable SADM_OK, SADM_WARNING, SADM_ERROR to Show Status in Color.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -142,7 +143,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.32"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.33"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -375,7 +376,10 @@ if [ -z $TERM ] || [ "$TERM" = "dumb" ]
          export SADM_BWHITE=$(tput setab 7)     2>/dev/null             # White color
 fi
 
-
+# Standard Variable to Show ERROR,OK,WARNING status uniformingly.
+export SADM_ERROR="[ $SADM_RED}ERROR${SADM_RESET} ]"                    # [ ERROR ] in Red
+export SADM_WARNING="[ ${SADM_BOLD}$SADM_YELLOW}WARNING${SADM_RESET} ]" # [ WARNING ] in Yellow
+export SADM_OK="[ ${SADM_BOLD}${SADM_GREEN}OK${SADM_RESET} ]"           # [ OK ] in Green
 
 
 # --------------------------------------------------------------------------------------------------
