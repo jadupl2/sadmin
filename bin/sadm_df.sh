@@ -42,6 +42,7 @@
 #@2020_03_14 Update: v2.0 To increase portability, Column total are now calculated by script.
 #@2020_03_15 Update: v2.1 Add -t to exclude tmpfs, -n nfs filesystem from the output and total line. 
 #@2020_03_15 Update: v2.2 Modified to work on MacOS
+#@2020_04_05 Update: v2.3 Add hostname and date in heading line.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -50,7 +51,7 @@
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-export SADM_VER='2.2'                                                   # Current Script Version
+export SADM_VER='2.3'                                                   # Current Script Version
 export ostype=`uname -s | tr '[:lower:]' '[:upper:]'`                   # OS Name (AIX/LINUX/DARWIN)
 export SADM_DASH=`printf %100s |tr " " "="`                             # 100 equals sign line
 export SADM_DEBUG=0                                                     # 0=NoDebug Higher=+Verbose
@@ -63,6 +64,7 @@ export NFS=0                                                            # 1=Excl
 export TOTAL_SIZE=0                                                     # df Size column total
 export TOTAL_USED=0                                                     # df Used column total
 export TOTAL_AVAIL=0                                                    # df Available column total
+export SADM_HOSTNAME=`hostname -s`                                      # Host name without Domain
 
 # Screen related variables
 clreol=$(tput el)                               ; export clreol         # Clr to end of lne
@@ -271,7 +273,7 @@ function cmd_options()
 
 
     # Print DF Information
-    printf "${green}${bold}${SADM_PN} - v${SADM_VER}${reset}\n"         # Print Script Name & Ver.
+    printf "${green}${bold}${SADM_PN} v${SADM_VER} - hostname: ${SADM_HOSTNAME} - `date`${reset}\n"
     printf "${magenta}${bold}${SADM_DASH}${reset}\n"                    # Print dash line
     printf "${yellow}${bold}%s${reset}\n" "${title}"                    # Print title line
     printf "${magenta}${bold}${SADM_DASH}${reset}\n"                    # Print dash line
