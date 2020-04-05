@@ -380,7 +380,7 @@ fi
 # Standard Variable to Show ERROR,OK,WARNING status uniformingly.
 export SADM_ERROR="[ $SADM_RED}ERROR${SADM_RESET} ]"                    # [ ERROR ] in Red
 export SADM_FAILED="[ $SADM_RED}FAILED${SADM_RESET} ]"                  # [ FAILED ] in Red
-export SADM_WARNING="[ ${SADM_BOLD}$SADM_YELLOW}WARNING${SADM_RESET} ]" # [ WARNING ] in Yellow
+export SADM_WARNING="[ ${SADM_BOLD}${SADM_YELLOW}WARNING${SADM_RESET} ]" # [ WARNING ] in Yellow
 export SADM_OK="[ ${SADM_BOLD}${SADM_GREEN}OK${SADM_RESET} ]"           # [ OK ] in Green
 export SADM_SUCCESS="[ ${SADM_BOLD}${SADM_GREEN}SUCCESS${SADM_RESET} ]" # [ SUCCESS ] in Green
 
