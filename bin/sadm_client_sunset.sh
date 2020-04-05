@@ -38,6 +38,7 @@
 # 2018_11_13    v2.5 Adapted for MacOS (Don't run Aix/Linux scripts)
 #@2020_02_23 Update: v2.6 Produce an alert only if one of the executed scripts isn't executable.
 #@2020_04_01 Update: v2.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+#@2020_04_05 Update: v2.8 Remove one call to sadm_start (Was there twice)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -69,12 +70,12 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.7'                               # Your Current Script Version
+    export SADM_VER='2.8'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
-    export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
     export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
     export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
@@ -224,19 +225,12 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options    
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-
-    # Call SADMIN Initialization Procedure
-    sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
-
-    # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
         then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
              sadm_write "Process aborted.\n"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S with Error
     fi
-    
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
