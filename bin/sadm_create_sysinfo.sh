@@ -36,8 +36,8 @@
 # 2018_12_22    v3.6 Minor fix for MacOS
 # 2019_01_01    Added: sadm_create_sysinfo v3.7 - Use scutil for more Network Info. on MacOS
 # 2019_01_01    Added: sadm_create_sysinfo v3.8 - Use lshw to list Disks and Network Info on Linux.
-# 2019_01_01    Added: sadm_create_sysinfo v3.9 - Use lsblk to list Disks Partitions and Filesystems.
-# 2019_01_01    Added: sadm_create_sysinfo v3.10 - Added lspci, lsscsi and create hardware html list.
+# 2019_01_01    Added: sadm_create_sysinfo v3.9 - Use lsblk to list Disks Partitions and Filesystems
+# 2019_01_01    Added: sadm_create_sysinfo v3.10 - Added lspci, lsscsi and create hardware html list
 # 2019_01_28 Added: v3.11 Change Header of files produced by this script.
 # 2019_03_17 Change: v3.12 PCI hardware list moved to end of system report file.
 # 2019_07_07 Fix: v3.13 O/S Update was indicating 'Failed' when it should have been 'Success'.
@@ -46,10 +46,10 @@
 # 2019_11_22 Fix: v3.16 Problem with 'nmcli -t' on Ubuntu,Debian corrected.
 #@2020_01_13 Update: v3.17 Collect 'rear' version to show on rear schedule web page.
 #@2020_03_08 Update: v3.18 Collect more information about Disks, Partitions, Network and fix lsblk.
+#@2020_04_05 Update: v3.19 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
-
 
 
 
@@ -78,11 +78,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.18'                              # Your Current Script Version
+    export SADM_VER='3.19'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
-    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
+    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
+    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
     export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
@@ -106,6 +106,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
+
+
 
 
 
@@ -200,9 +202,9 @@ command_available()
     # Check if only one parameter was received and if parameter is not empty
     #-----------------------------------------------------------------------------------------------
     if [ $# -ne 1 ] || [ -z "$SADM_PKG" ]
-        then sadm_writelog "ERROR : Invalid parameter received by command_available function"
-             sadm_writelog "        Parameter received = $*"
-             sadm_writelog "        Please correct error in the script"
+        then sadm_write "$SADM_ERROR : Invalid parameter received by command_available function\n"
+             sadm_write "        Parameter received = $* \n"
+             sadm_write "        Please correct error in the script.\n"
              return 1
     fi
 
@@ -223,7 +225,7 @@ command_available()
                 then SADM_MSG=`printf "%-10s %-15s : %-30s" "[OK]" "$SADM_PKG" "$SADM_CPATH"`
                 else SADM_MSG=`printf "%-10s %-15s : %-30s" "[NA]" "$SADM_PKG" "Not Found"`
              fi
-             sadm_writelog "$SADM_MSG"
+             sadm_write "${SADM_MSG}\n"
     fi
 
     # If Package was located return 0 else return 1
@@ -239,12 +241,12 @@ command_available()
 #
 pre_validation()
 {
-    sadm_writelog "Verifying command availability ..."
+    sadm_write "Verifying command availability ...\n"
 
     # The which command is needed to determine presence of command - Return Error if not found
     #-----------------------------------------------------------------------------------------------
     if ! which which >/dev/null 2>&1
-        then sadm_writelog "The command 'which' isn't available - Install it and rerun this script"
+        then sadm_write "The command 'which' isn't available - Install it and rerun this script.\n"
              return 1
     fi
 
@@ -298,9 +300,6 @@ pre_validation()
     command_available "uptime"      ; UPTIME=$SADM_CPATH                # Cmd Path or Blank !found
     command_available "last"        ; LAST=$SADM_CPATH                  # Cmd Path or Blank !found
 
-    #sadm_writelog " "
-    #sadm_writelog "----------"
-    #sadm_writelog " "
     return 0
 }
 
@@ -334,10 +333,10 @@ create_command_output()
 {
     SCMD_NAME=$1 ; SCMD_PATH=$2 ; SCMD_TXT=$3
     if [ ! -z "$SCMD_PATH" ]
-        then sadm_writelog "Creating $SCMD_TXT ..."
+        then sadm_write "Creating $SCMD_TXT ...\n"
              write_file_header "$SCMD_NAME" "$SCMD_TXT"
              $SCMD_PATH >> $SCMD_TXT 2>&1
-        else sadm_writelog "The command $SCMD_NAME is not available"
+        else sadm_write "The command $SCMD_NAME is not available.\n"
              write_file_header "$SCMD_NAME" "$SCMD_TXT"
     fi
     chown ${SADM_USER}:${SADM_GROUP} ${SCMD_TXT}
@@ -359,33 +358,29 @@ set_last_osupdate_date()
     # Verify if the o/s update rch file exist
     RCHFILE="${SADM_RCH_DIR}/$(sadm_get_hostname)_sadm_osupdate.rch"
     if [ ! -r "$RCHFILE" ]
-        then sadm_writelog " "
-             sadm_writelog "Missing O/S Update RCH file ($RCHFILE)."
-             sadm_writelog "Can't determine last O/S Update Date/Time & Status."
-             sadm_writelog "You should run 'sadm_osupdate_farm.sh -s $(sadm_get_hostname)' on $SADM_SERVER to update this server."
-             sadm_writelog "You will then get a valid 'rch' file."
+        then sadm_write "\nMissing O/S Update RCH file ($RCHFILE).\n"
+             sadm_write "Can't determine last O/S Update Date/Time & Status.\n"
+             sadm_write "You should run 'sadm_osupdate_farm.sh -s $(sadm_get_hostname)' on $SADM_SERVER to update this server.\n"
+             sadm_write "You will then get a valid 'rch' file.\n\n"
              OSUPDATE_DATE=""
              OSUPDATE_STATUS="U"
-             sadm_writelog " "
              return 1
     fi
 
     # Get Last Update Date from Return History File
-    sadm_writelog "Getting last O/S Update date from $RCHFILE ..."
+    sadm_write "Getting last O/S Update date from $RCHFILE ...\n"
     OSUPDATE_DATE=`tail -1 ${RCHFILE} |awk '{printf "%s %s", $4,$5}'`
     if [ $? -ne 0 ]
-        then sadm_writelog " "
-             sadm_writelog "Can't determine last O/S Update Date ..."
-             sadm_writelog "You should run 'sadm_osupdate_farm.sh -s $(sadm_get_hostname)' on $SADM_SERVER to update this server."
-             sadm_writelog "You will then get a valid 'rch' file ${RCHFILE}."
-             sadm_writelog " "
+        then sadm_write "Can't determine last O/S Update Date ...\n"
+             sadm_write "You should run 'sadm_osupdate_farm.sh -s $(sadm_get_hostname)' on $SADM_SERVER to update this server.\n"
+             sadm_write "You will then get a valid 'rch' file ${RCHFILE}.\n\n"
              return 1
     fi
 
     # Get the Status of the last O/S update
     RCH_CODE=`tail -1 ${RCHFILE} |awk '{printf "%s", $NF}'`
     if [ $? -ne 0 ]
-        then sadm_writelog "Can't determine last O/S Update Status ..."
+        then sadm_write "Can't determine last O/S Update Status ...\n"
              return 1
     fi
     case "$RCH_CODE" in
@@ -408,8 +403,8 @@ print_file ()
 {
     # Parameters received should always by two - If not write error to log and return to caller
     if [ $# -ne 2 ]
-        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters"
-             sadm_writelog "Function received $* and this isn't valid"
+        then sadm_write "${SADM_ERROR} : Function ${FUNCNAME[0]} didn't receive 2 parameters.\n"
+             sadm_write "Function received $* and this isn't valid\n"
              return 1
     fi
 
@@ -418,7 +413,7 @@ print_file ()
 
     # Check if file to print is readable
     if [ ! -r $wfile ]                                                  # If file not readable
-        then sadm_writelog "File to print '$wfile' can be found."       # Inform User
+        then sadm_write "File to print '$wfile' can be found.\n"        # Inform User
              return 1
     fi
 
@@ -440,8 +435,8 @@ execute_command()
 {
     # Validate number of Parameters Received
     if [ $# -ne 2 ]
-        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters"
-             sadm_writelog "Function received $* and this isn't valid"
+        then sadm_write "$SADM_ERROR Function ${FUNCNAME[0]} didn't receive 2 parameters.\n"
+             sadm_write "Function received $* and this isn't valid.\n"
              return 1
     fi 
 
@@ -467,7 +462,7 @@ create_linux_config_files()
 
     # Collect Disk Information ---------------------------------------------------------------------
     write_file_header "Disks Information" "$DISKS_FILE"
-    sadm_writelog "Creating $DISKS_FILE ..."
+    sadm_write "Creating $DISKS_FILE ...\n"
 
     if [ "$HWINFO" != "" ]
         then CMD="hwinfo --block --short"
@@ -514,7 +509,7 @@ create_linux_config_files()
 
     # Collect LVM Information ----------------------------------------------------------------------
     write_file_header "Logical Volume" "$LVM_FILE"
-    sadm_writelog "Creating $LVM_FILE ..."
+    sadm_write "Creating $LVM_FILE ...\n"
     if [ "$PVS"       != "" ] ; then CMD="$PVS"       ; execute_command "$CMD" "$LVM_FILE" ; fi
     if [ "$PVSCAN"    != "" ] ; then CMD="$PVSCAN"    ; execute_command "$CMD" "$LVM_FILE" ; fi
     if [ "$PVDISPLAY" != "" ] ; then CMD="$PVDISPLAY" ; execute_command "$CMD" "$LVM_FILE" ; fi
@@ -528,7 +523,7 @@ create_linux_config_files()
 
     # Collect Network Information ------------------------------------------------------------------
     write_file_header "Network Information" "$NET_FILE"
-    sadm_writelog "Creating $NET_FILE ..."
+    sadm_write "Creating $NET_FILE ...\n"
 
     if [ -d "/sys/class/net" ] && [ "$MIITOOL" != "" ]
         then for w in `ls -1 /sys/class/net  --color=never | grep -v "^lo"`
@@ -638,7 +633,7 @@ create_linux_config_files()
 
     # Collect System Information -------------------------------------------------------------------
     write_file_header "System Information" "$SYSTEM_FILE"
-    sadm_writelog "Creating $SYSTEM_FILE ..."
+    sadm_write "Creating $SYSTEM_FILE ...\n"
 
     if [ "$UNAME" != "" ]
         then CMD="$UNAME -a"
@@ -697,7 +692,7 @@ create_linux_config_files()
     
     # Create List of Hardware in HTML
     if [ "$LSHW" != "" ]
-        then sadm_writelog "Creating $LSHW_FILE ..."
+        then sadm_write "Creating $LSHW_FILE ...\n"
              $LSHW -html > $LSHW_FILE                                   # Create Hardware HTML File
     fi
 
@@ -713,7 +708,7 @@ create_aix_config_files()
 
     # Collect Disk Information ---------------------------------------------------------------------
     write_file_header "Disks Information" "$DISKS_FILE"
-    sadm_writelog "Creating $DISKS_FILE ..."
+    sadm_write "Creating $DISKS_FILE ...\n"
 
     if [ "$DF" != "" ]
         then CMD="$DF -m"
@@ -742,7 +737,7 @@ create_aix_config_files()
 
     # Collect LVM Information ----------------------------------------------------------------------
     write_file_header "Logical Volume" "$LVM_FILE"
-    sadm_writelog "Creating $LVM_FILE ..."
+    sadm_write "Creating $LVM_FILE ...\n"
     
     if [ "$LSVG" != "" ]
         then CMD="lsvg"
@@ -756,7 +751,7 @@ create_aix_config_files()
 
     # Collect Network Information ------------------------------------------------------------------
     write_file_header "Network Information" "$NET_FILE"
-    sadm_writelog "Creating $NET_FILE ..."
+    sadm_write "Creating $NET_FILE ...\n"
 
     if [ "$IFCONFIG" != "" ]
         then CMD="$IFCONFIG -a"
@@ -790,7 +785,7 @@ create_aix_config_files()
 create_summary_file()
 {
 
-    sadm_writelog "Creating $HWD_FILE ..."
+    sadm_write "Creating $HWD_FILE ...\n"
     echo "# $SADM_CIE_NAME - SysInfo Report File - `date`"                           >  $HWD_FILE
     echo "# This file is use to update the SADMIN server inventory."                 >> $HWD_FILE
     echo "#                                                    "                     >> $HWD_FILE
@@ -846,8 +841,8 @@ create_summary_file()
     sadm_start                                                          # Init Env Dir & RC/Log File
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
+             sadm_write "Process aborted.\n"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S with Error
     fi
