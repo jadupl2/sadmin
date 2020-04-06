@@ -38,7 +38,7 @@
 #@2020_02_25 Update: v2.5 Reduce SADMIN Section needed at beginning of script.
 #@2020_02_26 Update: v2.6 Change code to show debug level at the beginning of script.
 #@2020_03_15 Update: v2.7 Command line option code is now in a function.
-#@2020_04_01 Update: v2.8 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+#@2020_04_01 Update: v2.8 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
