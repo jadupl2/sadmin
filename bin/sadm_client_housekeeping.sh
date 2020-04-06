@@ -647,6 +647,7 @@ file_housekeeping()
                 else sadm_write " ${SADM_OK}\n"
              fi
              if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
+             touch ${SADM_TMP_DIR}/.gitkeep
     fi
 
     # Remove *.rch (Return Code History) files older than ${SADM_RCH_KEEPDAYS} days in SADMIN/DAT/RCH Dir.
