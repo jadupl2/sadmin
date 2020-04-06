@@ -71,7 +71,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
     export SADM_VER='2.8'                               # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
@@ -223,9 +223,10 @@ process_servers()
 main_process()
 {
     sadm_write "Starting Main Process ...\n"                            # Inform User Starting Main
-
+    sadm_write "Hello World !\n"
+    
     # PROCESSING CAN BE PUT HERE
-    # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default).
+    # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
     # ........
     # ........
     
