@@ -55,6 +55,7 @@
 # 2019_02_01 Improve: v3.14 Reduce Output when no debug is activated.
 #@2019_07_18 Improve: v3.15 Modified to backup MacOS system onto a NFS drive.
 #@2020_04_01 Update: v3.16 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+#@2020_04_06 Update: v3.17 Don't show anymore directories that are skip because they don't exist.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -85,7 +86,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.16'                              # Your Current Script Version
+    export SADM_VER='3.17'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -455,7 +456,6 @@ create_backup()
         fi  
 
         # Check if File or Directory to Backup and if they Exist
-        sadm_write "${SADM_TEN_DASH}\n"                                 # Line of 10 Dash in Log
         if [ -d "${backup_line}" ]                                      # Dir. To Backup Exist
             then if [ $SADM_DEBUG -gt 0 ] 
                     then sadm_write "Directory to Backup : [${backup_line}]\n" # Processing Line
@@ -464,9 +464,9 @@ create_backup()
                     then if [ $SADM_DEBUG -gt 0 ] 
                             then sadm_write "File to Backup : ${backup_line}.\n"  # Print Current File
                          fi
-                    else MESS="[SKIPPING] [$backup_line] doesn't exist on $(sadm_get_fqdn)"
-                             sadm_write "${MESS}\n"                     # Advise User - Log Info
-                             continue                                   # Go Read Nxt Line to backup
+                    else #MESS="[SKIPPING] [$backup_line] doesn't exist on $(sadm_get_fqdn)"
+                         #    sadm_write "${MESS}\n"                     # Advise User - Log Info
+                         continue                                       # Go Read Nxt Line to backup
                     fi
         fi
 
@@ -476,6 +476,7 @@ create_backup()
         # Backup File
         if [ -f "$backup_line" ] && [ -r "$backup_line" ]               # Line is a File & Readable
             then
+                sadm_write "${SADM_TEN_DASH}\n"                         # Line of 10 Dash in Log
                 if [ "$COMPRESS" == "ON" ]                              # If compression ON
                     then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"     # Final tgz Backup file name
                          sadm_write "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} $backup_line \n"
@@ -491,6 +492,7 @@ create_backup()
         # Backup Directory
         if [ -d ${backup_line} ]                                        # Dir to Backup Exist ?
            then cd $backup_line                                         # Ok then Change Dir into it
+                sadm_write "${SADM_TEN_DASH}\n"                         # Line of 10 Dash in Log
                 sadm_write "Current directory is: [`pwd`]\n"            # Print Current Dir.
                 # Build Backup Exclude list
                 find . -type s -print > /tmp/exclude                    # Put all Sockets in exclude
