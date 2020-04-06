@@ -33,6 +33,7 @@
 # 2019_06_11 Update: v1.14 Change screen & email message when an invalid '.rch' format is encountered.
 #@2019_08_13 Update: v1.15 Fix bug when using -m option (Email report), Error not on top of report.
 #@2019_08_25 Update: v1.16 Put running scripts and scripts with error on top of email report.
+#@2020_04_06 Update: v1.17 Allow simultaneous execution of this script.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -78,12 +79,12 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.16'                              # Your Current Script Version
+    export SADM_VER='1.17'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="N"                          # [Y]=Include Log Header [N]=No log Header
     export SADM_LOG_FOOTER="N"                          # [Y]=Include Log Footer [N]=No log Footer
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
     export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
     export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
@@ -226,14 +227,14 @@ load_array()
 
     # If Option -s was used on the command line to get the report for only the one specified.
     if [ "$SERVER_NAME" != "" ]                                         # CmdLine -s 1 server Report
-        then sadm_writelog "Searching for $SERVER_NAME in RCH files."   # Search ServerName in RCH
+        then sadm_write "Searching for $SERVER_NAME in RCH files.\n"    # Search ServerName in RCH
              grep -i "$SERVER_NAME" $SADM_TMP_FILE1 > $SADM_TMP_FILE2   # Keep only that server
              cp  $SADM_TMP_FILE2  $SADM_TMP_FILE1                       # That become working file
     fi
 
     # Check if working file is empty, then nothing to report
     if [ ! -s "$SADM_TMP_FILE1" ]                                       # No rch file record ??
-       then sadm_writelog "No RCH File to process"                      # Issue message to user
+       then sadm_write "No RCH File to process.\n"                      # Issue message to user
             return 1                                                    # Exit Function 
     fi
     
@@ -248,8 +249,8 @@ load_array()
             then echo $wline >> $SADM_TMP_FILE3                         # Faulty Line to TMP3 file
                  SMESS1="[ERROR] Lines in RCH file should have ${FIELD_IN_RCH} fields," 
                  SMESS2="${SMESS1} line below have $WNB_FIELD and is ignore." 
-                 sadm_writelog "$SMESS2"                                # Advise User Line in Error
-                 sadm_writelog "'$wline'"                               # Show Faulty Line to User
+                 sadm_write "${SMESS2}\n"                                # Advise User Line in Error
+                 sadm_write "'$wline'\n"                                # Show Faulty Line to User
                  continue                                               # Go on and read next line
         fi
         array[$xcount]="$wline"                                         # Put Line in Array
@@ -391,7 +392,7 @@ mail_report()
     echo -e "<br><center><h1>Scripts Daily Report for `date`</h1></center>\n" >> $HTML_FILE
 
     # Produce Report of error/running scripts ------------------------------------------------------
-    sadm_writelog "Producing Summary Report of 'Failed' scripts ..."
+    sadm_write "Producing Summary Report of 'Failed' scripts ...\n"
     xcount=0                                                            # Clear Line Counter  
     rm -f $SADM_TMP_FILE1 >/dev/null 2>&1                               # Make Sure it doesn't exist
     for wline in "${array[@]}"                                          # Process till End of array
@@ -407,8 +408,8 @@ mail_report()
 
     # Produce Report for Today ---------------------------------------------------------------------
     DATE1=`date --date="today" +"%Y.%m.%d"`                         # Date 1 day ago YYY.MM.DD
-    sadm_writelog "Producing Email Summary Report for Today ($DATE1) ..."
-    if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Date for Today : $DATE1" ; fi
+    sadm_write "Producing Email Summary Report for Today ($DATE1) ...\n"
+    if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_write "Date for Today : $DATE1 \n" ; fi
     # Isolate Today Event & Sort by Event Time afterward.
     xcount=0                                                            # Clear Line Counter  
     rm -f $SADM_TMP_FILE1 >/dev/null 2>&1                               # Make Sure it doesn't exist
@@ -425,8 +426,8 @@ mail_report()
 
     # Produce Report for Yesterday -----------------------------------------------------------------
     DATE1=`date --date="yesterday" +"%Y.%m.%d"`                         # Date 1 day ago YYY.MM.DD
-    sadm_writelog "Producing Email Summary Report for yesterday ($DATE1) ..."
-    if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Date for 1 day ago  : $DATE1" ; fi
+    sadm_write "Producing Email Summary Report for yesterday ($DATE1) ...\n"
+    if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_write "Date for 1 day ago  : $DATE1 \n" ; fi
     # Isolate Yesterday Event & Sort by Event Time afterward.
     xcount=0                                                            # Clear Line Counter  
     rm -f $SADM_TMP_FILE1 >/dev/null 2>&1                               # Make Sure it doesn't exist
@@ -443,8 +444,8 @@ mail_report()
 
     # Produce Report for 2 days ago ----------------------------------------------------------------
     #DATE2=`date --date="-2 days" +"%Y.%m.%d"`                           # Date 2 days ago YYY.MM.DD
-    #sadm_writelog "Producing Email Summary Report for 2 days ago ($DATE2) ..."
-    #if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Date for 2 day ago  : $DATE2" ;fi 
+    #sadm_write "Producing Email Summary Report for 2 days ago ($DATE2) ...\n"
+    #if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_write "Date for 2 day ago  : $DATE2 \n" ;fi 
     ## Isolate 2 Days Ago Event & Sort by Event Time afterward.
     #xcount=0                                                            # Clear Line Counter  
     #rm -f $SADM_TMP_FILE1 >/dev/null 2>&1                                    # Make Sure it doesn't exist
@@ -461,8 +462,8 @@ mail_report()
 
     # Produce Report of what is old than number of days to keep rch in sadmin.cfg ------------------
     DATE3=`date --date="-$SADM_RCH_KEEPDAYS days" +"%Y%m%d"`            # Date XX Days Ago YYYY.MM.DD
-    sadm_writelog "Producing Email Summary Report for Status older than $SADM_RCH_KEEPDAYS days ($DATE3) ..."
-    if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Date for $SADM_RCH_KEEPDAYS day ago: $DATE3" ;fi 
+    sadm_write "Producing Email Summary Report for Status older than $SADM_RCH_KEEPDAYS days ($DATE3) ...\n"
+    if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_write "Date for $SADM_RCH_KEEPDAYS day ago: $DATE3 \n" ;fi 
     xcount=0                                                            # Clear Line Counter  
     rm -f $SADM_TMP_FILE1 >/dev/null 2>&1                               # Make Sure it doesn't exist
     for wline in "${array[@]}"                                          # Process till End of array
@@ -482,8 +483,8 @@ mail_report()
     mutt -e 'set content_type="text/html"' $SADM_MAIL_ADDR -s "Scripts Summary Report" <$HTML_FILE
     SADM_EXIT_CODE=$?
     if [ "$SADM_EXIT_CODE" = "0" ]
-        then sadm_writelog "Summary Report sent to $SADM_MAIL_ADDR"
-        else sadm_writelog "Problem sending report to $SADM_MAIL_ADDR"
+        then sadm_write "Summary Report sent to $SADM_MAIL_ADDR \n"
+        else sadm_write "Problem sending report to $SADM_MAIL_ADDR \n"
     fi
     return 
 }
@@ -546,8 +547,8 @@ main_process()
     
     # Script can only be run on the sadmin server (files needed for report are ont it)
     if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
-        then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_write "This script can be run only on the SADMIN server (${SADM_SERVER}).\n"
+             sadm_write "Process aborted.\n"                            # Abort advise message
              echo "This script can be run only on the SADMIN server (${SADM_SERVER})"
              echo "Process aborted"                                     # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
@@ -615,7 +616,7 @@ main_process()
             wmess="See attachment for the list of lines without $FIELD_IN_RCH fields."
             wtime=`date "+%Y.%m.%d %H:%M"`
             if [ $DEBUG_LEVEL -gt 0 ] ; then 
-               sadm_writelog "sadm_send_alert 'S' '$wtime' '$SADM_HOSTNAME' '$SADM_PN' 'default' '$wsubject' '$wmess' '$SADM_TMP_FILE3'"
+               sadm_write "sadm_send_alert 'S' '$wtime' '$SADM_HOSTNAME' '$SADM_PN' 'default' '$wsubject' '$wmess' '$SADM_TMP_FILE3'\n"
             fi
             sadm_send_alert "S" "$wtime" "$SADM_HOSTNAME" "$SADM_PN" "default" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
    fi
