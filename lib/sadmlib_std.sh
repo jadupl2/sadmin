@@ -1719,12 +1719,13 @@ sadm_start() {
 
     # Write Starting Info in the Log
     if [ -z "$SADM_LOG_HEADER" ] || [ "$SADM_LOG_HEADER" = "Y" ]        # Want to Produce Log Header
-        then echo " " >>$SADM_LOG                                       # Blank line at beginning
+        then #echo " " >>$SADM_LOG                                      # Blank line at beginning
              sadm_write "${SADM_80_DASH}\n"                             # Write 80 Dashes Line
              sadm_write "`date` - ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}\n"
              sadm_write "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)\n"
              sadm_write "$(sadm_get_osname) $(sadm_get_osversion) Kernel $(sadm_get_kernel_version)\n"
-             sadm_write "${SADM_FIFTY_DASH}\n\n"                        # Write 50 Dashes Line
+             sadm_write "${SADM_FIFTY_DASH}\n"                          # Write 50 Dashes Line
+             sadm_write "\n"
     fi
 
     # ($SADMIN/tmp) If TMP Directory doesn't exist, create it.
@@ -2022,7 +2023,8 @@ sadm_stop() {
 
     # Start Writing Log Footer
     if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]        # Want to Produce Log Footer
-        then sadm_write "\n${SADM_FIFTY_DASH}\n"                        # Dash Line
+        then sadm_write "\n"                                            # Blank LIne
+             sadm_write "${SADM_FIFTY_DASH}\n"                          # Dash Line
              sadm_write "Script return code is ${SADM_EXIT_CODE}\n"     # Final Exit Code to log
              sadm_write "Script execution time is ${sadm_elapse}\n"     # Write the Elapse Time
     fi
