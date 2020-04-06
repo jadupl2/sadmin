@@ -32,6 +32,7 @@
 #@2020_01_14 Update: v2.5 Add link to allow to view script log on the page.
 #@2020_01_19 Update: v2.6 Remove line counter and some other cosmetics changes.
 #@2020_01_21 Update: v2.7 Display rch date in date reverse order (Recent at the top)
+#@2020_04_05 Fix : v2.8 Fix link problem to show the script log.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -62,7 +63,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.7" ;                                                        # Current version number
+$SVER  = "2.8" ;                                                        # Current version number
 $URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
 
 
@@ -110,11 +111,12 @@ function setup_table() {
 
 
 // =================================================================================================
-//           D I S P L A Y    R C H   (WFILE)   F O R    T H E   S E L E C T E D   H O S T
-//  1- For the received host ($WHOST) 
-//  2- Host Description is also received (WDESC)
-//  3- The Sorted and Purge RCH File Name (WFILE) file to display 
-//  4- The RCH File Name (WNAME)
+//  D I S P L A Y    R C H   (WFILE)   F O R    T H E   S E L E C T E D   H O S T
+// Parameters received : 
+//      1- For the received host ($WHOST) 
+//      2- Host Description is also received (WDESC)
+//      3- The Sorted and Purge RCH File Name (WFILE) file to display 
+//      4- The RCH File Name (WNAME)
 // =================================================================================================
 function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
     global $URL_VIEW_FILE ;
@@ -129,7 +131,7 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
             $BGCOLOR = "lavender";
             if ($count % 2 == 0) { $BGCOLOR="#FFF8C6" ; }else{ $BGCOLOR="#FAAFBE" ;}
             #echo "\n<td class='dt-center'>" . $count   . "</td>";
-            echo "\n<td class='dt-left'>" . $cdate1  . "</td>";
+            echo "\n<td class='dt-left'>"   . $cdate1  . "</td>";
             echo "\n<td class='dt-center'>" . $ctime1  . "</td>";
             echo "\n<td class='dt-center'>" . $cdate2  . "</td>";
             echo "\n<td class='dt-center'>" . $ctime2  . "</td>";
@@ -171,9 +173,10 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
             # Display Log Link
             echo "\n<td class='dt-center'>" ;
             $x = basename($WNAME, '.rch');                              # Remove RCH file extension
+            $xhost = explode("_", $x);                                  # Get the Host Name
             $LOGFILE = $x . ".log";                                     # Add .log to Script Name
-            $log_name  = SADM_LOG_DIR . "/" . $LOGFILE ;
-            if (file_exists($log_name)) {
+            $log_name = SADM_WWW_DAT_DIR ."/$xhost[0]/log/". $LOGFILE ; # Full Path to Script Log
+            if (file_exists($log_name)) {                               # If log exist on Disk
                 echo "<a href='" . $URL_VIEW_FILE . "?filename=" . 
                 $log_name .  "' data-toggle='tooltip' title='View script log file.'>[log]</a>&nbsp;&nbsp;&nbsp";
             }else{
