@@ -56,6 +56,7 @@
 #@2019_07_18 Improve: v3.15 Modified to backup MacOS system onto a NFS drive.
 #@2020_04_01 Update: v3.16 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 #@2020_04_06 Update: v3.17 Don't show anymore directories that are skip because they don't exist.
+#@2020_04_08 Fix: v3.18 Fix 'chown' error.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -86,7 +87,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.17'                              # Your Current Script Version
+    export SADM_VER='3.18'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -386,7 +387,7 @@ backup_setup()
                      sadm_write "        On the NFS Server ${SADM_BACKUP_NFS_SERVER}\n"
                      return 1                                           # End Function with error
              fi
-             chown ${SADM_USER}.${SADM_GROUP} ${BACKUP_DIR}             # Assign it SADM USer&Group
+             chown ${SADM_USER}:${SADM_GROUP} ${BACKUP_DIR}             # Assign it SADM USer&Group
              chmod 775 ${BACKUP_DIR}                                    # Assign Protection
     fi
 
