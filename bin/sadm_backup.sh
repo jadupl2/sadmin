@@ -57,6 +57,8 @@
 #@2020_04_01 Update: v3.16 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 #@2020_04_06 Update: v3.17 Don't show anymore directories that are skip because they don't exist.
 #@2020_04_08 Fix: v3.18 Fix 'chown' error.
+#@2020_04_09 Update: v3.19 Minor logging adjustment.
+#@2020_04_10 Update: v3.20 Change Message when backing up a file and a directory.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -87,7 +89,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.18'                              # Your Current Script Version
+    export SADM_VER='3.20'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -443,7 +445,7 @@ backup_setup()
 # --------------------------------------------------------------------------------------------------
 create_backup()
 {
-    sadm_write "\n${SADM_TEN_DASH}\nStarting the Backup Process\n\n"    # Advise Backup Process Begin
+    sadm_write "\n${SADM_BOLD}Starting Backup Process${SADM_RESET}\n"   # Advise Backup Begin
     CUR_PWD=`pwd`                                                       # Save Current Working Dir.
     TOTAL_ERROR=0                                                       # Make Sure Variable is at 0
 
@@ -478,6 +480,7 @@ create_backup()
         if [ -f "$backup_line" ] && [ -r "$backup_line" ]               # Line is a File & Readable
             then
                 sadm_write "${SADM_TEN_DASH}\n"                         # Line of 10 Dash in Log
+                sadm_write "Backup File : ${backup_line}\n"             # Show Backup filename                 
                 if [ "$COMPRESS" == "ON" ]                              # If compression ON
                     then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"     # Final tgz Backup file name
                          sadm_write "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} $backup_line \n"
@@ -494,7 +497,7 @@ create_backup()
         if [ -d ${backup_line} ]                                        # Dir to Backup Exist ?
            then cd $backup_line                                         # Ok then Change Dir into it
                 sadm_write "${SADM_TEN_DASH}\n"                         # Line of 10 Dash in Log
-                sadm_write "Current directory is: [`pwd`]\n"            # Print Current Dir.
+                sadm_write "Backup Current directory : [`pwd`]\n"       # Print Current Dir.
                 # Build Backup Exclude list
                 find . -type s -print > /tmp/exclude                    # Put all Sockets in exclude
                 while read excl_line                                    # Loop Until EOF Excl. File
@@ -553,7 +556,7 @@ create_backup()
 
     # End of Backup
     cd $CUR_PWD                                                         # Restore Previous Cur Dir.
-    sadm_write "\n${SADM_TEN_DASH}\nTotal error(s) while creating backup is ${TOTAL_ERROR}.\n"
+    sadm_write "\nTotal error(s) while creating backup is ${TOTAL_ERROR}.\n"
     return $TOTAL_ERROR                                                 # Return Total of Error
 }
 
