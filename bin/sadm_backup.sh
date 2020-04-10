@@ -58,7 +58,7 @@
 #@2020_04_06 Update: v3.17 Don't show anymore directories that are skip because they don't exist.
 #@2020_04_08 Fix: v3.18 Fix 'chown' error.
 #@2020_04_09 Update: v3.19 Minor logging adjustment.
-#@2020_04_10 Update: v3.20 Change Message when backing up a file and a directory.
+#@2020_04_10 Update: v3.20 If backup_list.txt contains $ at beginning of line, it Var. is resolved
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -202,7 +202,10 @@ show_usage()
 #===================================================================================================
 backup_setup()
 {
-    sadm_write "\n----------\nSetup Backup Environment ...\n"           # Advise User were Starting
+    sadm_write "\n"
+    sadm_write "\n"
+    sadm_write "----------\n"
+    sadm_write "Setup Backup Environment ...\n"                         # Advise User were Starting
 
     # Daily Root Backup Directory
     if [ ! -d "${DDIR}" ]                                               # Daily Backup Dir. Exist ?
@@ -445,7 +448,10 @@ backup_setup()
 # --------------------------------------------------------------------------------------------------
 create_backup()
 {
-    sadm_write "\n${SADM_BOLD}Starting Backup Process${SADM_RESET}\n"   # Advise Backup Begin
+    sadm_write "\n"
+    sadm_write "\n"
+    sadm_write "----------\n"
+    sadm_write "${SADM_BOLD}Starting Backup Process${SADM_RESET}\n"     # Advise Backup Begin
     CUR_PWD=`pwd`                                                       # Save Current Working Dir.
     TOTAL_ERROR=0                                                       # Make Sure Variable is at 0
 
@@ -457,6 +463,18 @@ create_backup()
         if [ "$FC" = "#" ] || [ ${#backup_line} -eq 0 ]                 # Line begin with # or Empty
             then continue                                               # Skip, Go read Next Line
         fi  
+        
+        if [ "$FC" = "$" ]                                              # If Environment Variable
+            then if [ $SADM_DEBUG -gt 0 ] 
+                     then sadm_write "Before Processing line $backup_line \n"
+                 fi
+                 backup_line=`echo "${backup_line:1}"`                  # Remove Dollar sign
+                 eval "backup_line=\${$backup_line}"                    # Resolve Variable COntent
+                 if [ $SADM_DEBUG -gt 0 ] 
+                    then sadm_write "After Processing line $backup_line \n" # Show Env. Var. Content
+                 fi
+        fi
+
 
         # Check if File or Directory to Backup and if they Exist
         if [ -d "${backup_line}" ]                                      # Dir. To Backup Exist
@@ -465,7 +483,7 @@ create_backup()
                  fi
             else if [ -f "$backup_line" ] && [ -r "$backup_line" ]      # If File to Backup Readable
                     then if [ $SADM_DEBUG -gt 0 ] 
-                            then sadm_write "File to Backup : ${backup_line}.\n"  # Print Current File
+                            then sadm_write "File to Backup : ${backup_line}.\n" # Print Current File
                          fi
                     else #MESS="[SKIPPING] [$backup_line] doesn't exist on $(sadm_get_fqdn)"
                          #    sadm_write "${MESS}\n"                     # Advise User - Log Info
@@ -551,12 +569,13 @@ create_backup()
         TOTAL_ERROR=$(($TOTAL_ERROR+$RC))                               # Total = Cumulate RC Value
 
         rm -f /tmp/exclude >/dev/null 2>&1                              # Remove socket tmp file
-        done < $SADM_BACKUP_LIST                                         # For Loop Read Backup List
+        done < $SADM_BACKUP_LIST                                        # For Loop Read Backup List
 
 
     # End of Backup
     cd $CUR_PWD                                                         # Restore Previous Cur Dir.
-    sadm_write "\nTotal error(s) while creating backup is ${TOTAL_ERROR}.\n"
+    sadm_write "\n"
+    sadm_write "Total error(s) while creating backup is ${TOTAL_ERROR}.\n"
     return $TOTAL_ERROR                                                 # Return Total of Error
 }
 
@@ -579,7 +598,8 @@ clean_backup_dir()
     ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_write "${ln}\n" ;done
     backup_count=`ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l` # Calc. Nb. Days of backup
     day2del=$(($backup_count-$SADM_DAILY_BACKUP_TO_KEEP))               # Calc. Nb. Days to remove
-    sadm_write "\nKeep only the last $SADM_DAILY_BACKUP_TO_KEEP days of each backup.\n"
+    sadm_write "\n"
+    sadm_write "Keep only the last $SADM_DAILY_BACKUP_TO_KEEP days of each backup.\n"
     sadm_write "We now have $backup_count days of backup(s).\n"         # Show Nb. Backup Days
 
     # If current number of backup days on disk is greater than nb. of backup to keep, then cleanup.
@@ -587,7 +607,8 @@ clean_backup_dir()
         then sadm_write "So we need to delete $day2del day(s) of backup.\n"
              ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |tail -$day2del > $SADM_TMP_FILE3
              cat $SADM_TMP_FILE3 |while read ln ;do sadm_write "Deleting ${ln}\n" ;rm -fr ${ln}* ;done
-             sadm_write "\nList of backup currently on disk:\n"
+             sadm_write "\n"
+             sadm_write "List of backup currently on disk:\n"
              ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_write "${ln}\n" ;done
         else sadm_write "No clean up needed\n"
     fi
@@ -637,7 +658,8 @@ mount_nfs()
 # ==================================================================================================
 umount_nfs()
 {
-    sadm_write "\n${SADM_TEN_DASH}\nUnmounting NFS mount directory ${LOCAL_MOUNT}.\n"
+    sadm_write "\n"
+    sadm_write "${SADM_TEN_DASH}\nUnmounting NFS mount directory ${LOCAL_MOUNT}.\n"
     umount $LOCAL_MOUNT >> $SADM_LOG 2>&1                               # Umount Just to make sure
     if [ $? -ne 0 ]                                                     # If Error trying to mount
         then sadm_write "[ERROR] Unmounting NFS Dir. $LOCAL_MOUNT \n"   # Error - Advise User
