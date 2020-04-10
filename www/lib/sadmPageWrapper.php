@@ -25,6 +25,7 @@
 # ChangeLog
 # 2018_01_04 Initial Version v1.0  
 #@2020_03_03 New: v1.1 Shortcut Menu added in page header for fast access within the site.
+#@2020_04_10 Update: v1.2 Add Network link shortcut at the top of each page.
 #
 # ==================================================================================================
 #
@@ -65,6 +66,10 @@
             <a href='/view/sys/sadm_view_schedule.php'>O/S Update</a>
             &nbsp;&nbsp;&nbsp;
             <a href='/view/sys/sadm_view_sysmon.php'>Monitor</a>
+            &nbsp;&nbsp;&nbsp;
+            <?php
+            echo "<a href='/view/net/sadm_view_subnet.php?net=" . SADM_NETWORK1 . "&option=all'>Network</a>"
+            ?>
             &nbsp;&nbsp;&nbsp;
             <a href='/view/sys/sadm_view_backup.php'>Daily Backup</a>
             &nbsp;&nbsp;&nbsp;
