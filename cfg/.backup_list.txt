@@ -1,12 +1,9 @@
-# V1.3 Initial Backup List 
+# V1.4 Template - Initial Backup List 
 # Notes: Socket Files are automatically excluded
+# -----------------------------------------------
 #
+$SADMIN
 /home 
 /etc 
 /root
-/var/named 
-/var/www 
-/var/ftp 
-/var/lib/mysql 
 /var/spool/cron
-/opt/sadmin 
