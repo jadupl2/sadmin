@@ -59,6 +59,7 @@
 #@2020_04_08 Fix: v3.18 Fix 'chown' error.
 #@2020_04_09 Update: v3.19 Minor logging adjustment.
 #@2020_04_10 Update: v3.20 If backup_list.txt contains $ at beginning of line, it Var. is resolved
+#@2020_04_11 Update: v3.21 Log output changes.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -89,7 +90,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.20'                              # Your Current Script Version
+    export SADM_VER='3.21'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -203,8 +204,6 @@ show_usage()
 backup_setup()
 {
     sadm_write "\n"
-    sadm_write "\n"
-    sadm_write "----------\n"
     sadm_write "Setup Backup Environment ...\n"                         # Advise User were Starting
 
     # Daily Root Backup Directory
@@ -449,8 +448,6 @@ backup_setup()
 create_backup()
 {
     sadm_write "\n"
-    sadm_write "\n"
-    sadm_write "----------\n"
     sadm_write "${SADM_BOLD}Starting Backup Process${SADM_RESET}\n"     # Advise Backup Begin
     CUR_PWD=`pwd`                                                       # Save Current Working Dir.
     TOTAL_ERROR=0                                                       # Make Sure Variable is at 0
@@ -586,7 +583,8 @@ create_backup()
 clean_backup_dir()
 {
     TOTAL_ERROR=0                                                       # Reset Total of error
-    sadm_write "\n${SADM_TEN_DASH}\nApplying chosen retention policy to ${ARCHIVE_DIR} directory\n"
+    sadm_write "\n"
+    sadm_write "Applying chosen retention policy to ${ARCHIVE_DIR} directory\n"
     CUR_PWD=`pwd`                                                       # Save Current Working Dir.
 
     # Enter Server Backup Directory
@@ -659,7 +657,7 @@ mount_nfs()
 umount_nfs()
 {
     sadm_write "\n"
-    sadm_write "${SADM_TEN_DASH}\nUnmounting NFS mount directory ${LOCAL_MOUNT}.\n"
+    sadm_write "Unmounting NFS mount directory ${LOCAL_MOUNT}.\n"
     umount $LOCAL_MOUNT >> $SADM_LOG 2>&1                               # Umount Just to make sure
     if [ $? -ne 0 ]                                                     # If Error trying to mount
         then sadm_write "[ERROR] Unmounting NFS Dir. $LOCAL_MOUNT \n"   # Error - Advise User
