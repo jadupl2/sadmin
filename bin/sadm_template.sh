@@ -39,6 +39,7 @@
 #@2020_02_26 Update: v2.6 Change code to show debug level at the beginning of script.
 #@2020_03_15 Update: v2.7 Command line option code is now in a function.
 #@2020_04_01 Update: v2.8 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
+#@2020_04_13 Update: v2.9 Include some new Screen attribute in code ($SADM_BOLD,$SADM_YELLOW,...) 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -70,7 +71,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.8'                               # Your Current Script Version
+    export SADM_VER='2.9'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -122,18 +123,19 @@ show_usage()
 }
 
 
+
 #===================================================================================================
 # Process all your active(s) server(s) in the Database (Used if want to process selected servers)
 #===================================================================================================
 process_servers()
 {
-    sadm_write "Processing All Active(s) Server(s)\n"                   # Enter Servers Processing
+    sadm_write "${SADM_BOLD}${SADM_YELLOW}Processing All Active(s) Server(s) ...${SADM_RESET}\n"
 
-    # Put Rows you want in the select 
+    # Put Rows you want in the select. 
     # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir" 
     
-    # Build SQL to select active server(s) from Database & output result in CSV Format to work file.
+    # Build SQL to select active server(s) from Database.
     SQL="${SQL} from server"                                            # From the Server Table
     SQL="${SQL} where srv_active = True"                                # Select only Active Servers
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
@@ -142,9 +144,8 @@ process_servers()
     CMDLINE="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL Auth/Read Only User
     if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug Show Auth cmdline
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
-    # If File was not created or has a zero lenght then No Actives Servers were found
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
-        then sadm_write "No Active Server were found.\n"                # Not Active Server MSG
+        then sadm_write "$SADM_WARNING No Active Server were found.\n"  # Not Active Server MSG
              return 0                                                   # Return Status to Caller
     fi 
     
@@ -164,7 +165,7 @@ process_servers()
 
         # Check if server name can be resolve - If not, we won't be able to SSH to it.
         if ! host  $fqdn_server >/dev/null 2>&1                         # If hostname not resolvable
-            then SMSG="[ ERROR ] Can't process '$fqdn_server', hostname can't be resolved"
+            then SMSG="$SADM_ERROR Can't process '$fqdn_server', hostname can't be resolved."
                  sadm_write "${SMSG}\n"                                 # Advise user & Feed log
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
                  if [ $ERROR_COUNT -ne 0 ]                              # If Error count not at zero
@@ -173,7 +174,7 @@ process_servers()
                  continue                                               # Continue with next Server
         fi
 
-        # Try a SSH to the Server
+        # Try a SSH to Host Name
         if [ $SADM_DEBUG -gt 0 ] ;then sadm_write "$SADM_SSH_CMD $fqdn_server date\n" ; fi 
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Server
             then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1       # SSH to Server & Run 'date'
@@ -184,28 +185,28 @@ process_servers()
 
         # If SSH failed and it's a Sporadic Server, Show Warning and continue with next system.
         if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]               # SSH don't work & Sporadic
-            then sadm_write "[ WARNING ] Can't SSH to sporadic system ${fqdn_server}.\n"
+            then sadm_write "${SADM_WARNING} Can't SSH to sporadic system ${fqdn_server}.\n"
                  sadm_write "Continuing with next system\n"             # Not Error if Sporadic Srv. 
                  continue                                               # Continue with next system
         fi
 
         # If SSH Failed & Monitoring is Off, Show Warning and continue with next system.
         if [ $RC -ne 0 ] &&  [ "$server_monitor" = "0" ]                # SSH don't work/Monitor OFF
-            then sadm_write "[ WARNING ] Can't SSH to $fqdn_server - Monitoring is OFF\n"
+            then sadm_write "$SADM_WARNING Can't SSH to $fqdn_server - Monitoring is OFF\n"
                  sadm_write "Continuing with next system\n"             # Not Error if don't Monitor
                  continue                                               # Continue with next system
         fi
 
         # If All SSH test failed, Issue Error Message and continue with next system
         if [ $RC -ne 0 ]                                                # If SSH to Server Failed
-            then SMSG="[ ERROR ] Can't SSH to system '${fqdn_server}'"  # Problem with SSH
+            then SMSG="$SADM_ERROR Can't SSH to '${fqdn_server}'"       # Problem with SSH
                  sadm_write "${SMSG}\n"                                 # Show/Log Error Msg
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
                  continue                                               # Continue with next system
         fi
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
-            then sadm_write "[ OK ] SSH to ${fqdn_server} work\n"       # Good SSH Work on Client
-            else sadm_write "[ OK ] No SSH using 'root' on the SADMIN Server ($SADM_SERVER)\n"
+            then sadm_write "$SADM_OK SSH to ${fqdn_server} work\n"     # Good SSH Work on Client
+            else sadm_write "$SADM_OK No SSH using 'root' on the SADMIN Server ($SADM_SERVER)\n"
         fi
 
         # PROCESSING CAN BE PUT HERE
@@ -222,8 +223,8 @@ process_servers()
 #===================================================================================================
 main_process()
 {
-    sadm_write "Starting Main Process ...\n"                            # Inform User Starting Main
-    sadm_write "Hello World !\n"
+    sadm_write "${SADM_BOLD}${SADM_YELLOW}Starting Main Process ...${SADM_RESET}\n"
+
     
     # PROCESSING CAN BE PUT HERE
     # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
@@ -232,6 +233,7 @@ main_process()
     
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
 }
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -258,7 +260,7 @@ function cmd_options()
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
-           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+           \?) printf "\nInvalid option: -${OPTARG}.\n"                 # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
                ;;
@@ -268,8 +270,9 @@ function cmd_options()
 }
 
 
+
 #===================================================================================================
-#                                       Script Start HERE
+# Script Start HERE
 #===================================================================================================
 
     cmd_options "$@"                                                    # Check command-line Options    
