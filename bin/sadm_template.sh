@@ -57,7 +57,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
              EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
              if [ $? -eq 0 ]                                            # Yes it is 
                 then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}."
+                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}.\n"
                 else exit 1                                             # No SADMIN Env. Var. Exit
              fi
     fi 
