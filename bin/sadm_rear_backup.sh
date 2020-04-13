@@ -62,6 +62,7 @@
 #@2020_03_05 Fix: v2.15 Was not removing NFS mount point in /mnt after the backup.
 #@2020_04_11 Fix: v2.16 site.conf, "BACKUP_URL" line is align with sadmin.cfg before each backup.
 #@2020_04_12 Update: v2.17 If ReaR site.conf doesn't exist, create it, bug fix and enhancements.
+#@2020_04_13 Update: v2.18 Lot of little adjustments.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -94,7 +95,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.17'                              # Your Current Script Version
+    export SADM_VER='2.18'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -281,7 +282,6 @@ create_etc_rear_site_conf()
 # --------------------------------------------------------------------------------------------------
 rear_preparation()
 {
-    sadm_write "${SADM_FIFTY_DASH}\n"
     sadm_write "${SADM_BOLD}Perform ReaR preparation.${SADM_RESET}\n"   # Feed User and Log
     sadm_write "\n"                                                     # Write white line
 
@@ -335,7 +335,7 @@ rear_preparation()
     fi
     
     # Write test to NFS Mount Point.
-    sadm_write "Trying to write to NFS mount "                          # Feed user and log
+    sadm_write "Write test to NFS mount ... "                           # Feed user and log
     TEST_FILE="${NFS_MOUNT}/${SADM_HOSTNAME}/rear_pid_$SADM_TPID.txt"   # Create test file name
     touch ${TEST_FILE} >> $SADM_LOG 2>&1                                # Create empty test file
     if [ $? -ne 0 ]                                                     # If error on chmod command
@@ -352,7 +352,7 @@ rear_preparation()
              FDATE=`stat --printf='%y\n' $REAR_CUR_ISO |awk '{ print $1 }'`
              FTIME=`stat --printf='%y\n' $REAR_CUR_ISO |awk '{ print $2 }' |awk -F\. '{ print $1 }'`
              REAR_NEW_ISO="${REAR_NAME}_${FDATE}_${FTIME}.iso"
-             sadm_write "Renaming ISO from `basename $REAR_CUR_ISO` to `basename $REAR_NEW_ISO` " 
+             sadm_write "Rename previous ISO `basename $REAR_CUR_ISO` to `basename $REAR_NEW_ISO` " 
              mv $REAR_CUR_ISO $REAR_NEW_ISO >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
                  then sadm_write "$SADM_ERROR trying to move $REAR_CUR_ISO to $REAR_NEW_ISO \n"
@@ -369,10 +369,10 @@ rear_preparation()
         then FDATE=`stat --printf='%y\n' $REAR_CUR_BAC |awk '{ print $1 }'`
              FTIME=`stat --printf='%y\n' $REAR_CUR_BAC |awk '{ print $2 }' |awk -F\. '{ print $1 }'`
              REAR_NEW_BAC="${REAR_NAME}_${FDATE}_${FTIME}.tar.gz"
-             sadm_write "Renaming backup from `basename ${REAR_CUR_BAC}` to `basename ${REAR_NEW_BAC}` "
+             sadm_write "Rename previous backup `basename ${REAR_CUR_BAC}` to `basename ${REAR_NEW_BAC}` "
              mv ${REAR_CUR_BAC} ${REAR_NEW_BAC} >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
-                 then sadm_write "$SADM_ERROR trying to move ${REAR_CUR_BAC} to ${REAR_NEW_BAC}\n"
+                 then sadm_write "Tried to move ${REAR_CUR_BAC} to ${REAR_NEW_BAC} ${SADM_ERROR}\n"
                       sadm_write "***** Rear Backup Abort *****\n"
                       return 1                                          # Back to caller with error
                  else sadm_write "$SADM_OK \n"
@@ -380,9 +380,8 @@ rear_preparation()
         else sadm_write "New Backup will be created under the name of ${REAR_CUR_BAC}.\n"
     fi
 
-    sadm_write "\n"
-    sadm_write "$SADM_SUCCESS ReaR preparation.\n"
-    sadm_write "\n"
+    sadm_write "\n" 
+    sadm_write "ReaR preparation ${SADM_SUCCESS}.\n"
     return 0
 }
 
@@ -395,7 +394,6 @@ rear_preparation()
 rear_housekeeping()
 {
     FNC_ERROR=0                                                         # Cleanup Error Default 0
-    sadm_write "\n"  
     sadm_write "${SADM_FIFTY_DASH}\n"
     sadm_write "${SADM_BOLD}Perform ReaR housekeeping.${SADM_RESET}\n"
                     
@@ -415,13 +413,12 @@ rear_housekeeping()
              ls -1t ${REAR_NAME}*.gz | sort -r| sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | xargs rm -f >> $SADM_LOG 2>&1
              RC=$?
              if [ $RC -ne 0 ] 
-                then sadm_write "$SADM_ERROR Problem deleting backup file(s)\n" 
+                then sadm_write "Problem deleting backup file(s) ${SADM_ERROR}.\n" 
                      FNC_ERROR=1
-                else sadm_write "$SADM_OK Backup was deleted with success\n" 
+                else sadm_write "Backup deleted ${SADM_OK}.\n" 
              fi
         else RC=0
-             sadm_write "\n"
-             sadm_write "$SADM_OK We don't need to delete any backup file.\n"
+             sadm_write "Don't need to delete any old backup file(s) ${SADM_OK}.\n"
     fi
         
     # Delete the ISO that are over the number we want to keep.
@@ -434,22 +431,22 @@ rear_housekeeping()
              ls -1t ${REAR_NAME}*.iso | sort -r| sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | xargs rm -f >> $SADM_LOG 2>&1
              RC=$?
              if [ $RC -ne 0 ] 
-                 then sadm_write "$SADM_ERROR Problem deleting ISO file(s)\n"
+                 then sadm_write "Problem deleting ISO file(s) ${SADM_ERROR}.\n"
                       FNC_ERROR=1
-                 else sadm_write "$SADM_OK Backup was deleted with success\n" 
+                 else sadm_write "ISO deleted ${SADM_OK}.\n" 
              fi
         else RC=0
-             sadm_write "$SADM_OK We don't need to delete any backup ISO file.\n"
+             sadm_write "Don't need to delete any old ISO file(s) ${SADM_OK}.\n"
     fi
         
     # Make sure Host Directory permission and files below are ok
     sadm_write "\n"
     sadm_write "Make sure backup are readable.\n"
-    sadm_write "chmod 644 ${REAR_NAME}* \n"
+    sadm_write "chmod 644 ${REAR_NAME}* "
     chmod 644 ${REAR_NAME}* >> /dev/null 2>&1
     if [ $? -ne 0 ] 
        then sadm_write "$SADM_ERROR Problem running 'chmod'.\n"
-       else sadm_write "$SADM_OK File permission changed.\n" 
+       else sadm_write "$SADM_OK \n" 
     fi       
 
     # List Backup Directory to user after cleanup
@@ -461,7 +458,7 @@ rear_housekeeping()
     # Ok Cleanup up is finish - Unmount the NFS
     sadm_write "\n"
     sadm_write "Unmounting NFS mount directory ${NFS_MOUNT} ...\n"
-    sadm_write "umount ${NFS_MOUNT}"
+    sadm_write "umount ${NFS_MOUNT} "
     umount ${NFS_MOUNT} >> $SADM_LOG 2>&1
     if [ $? -ne 0 ] 
        then sadm_write "$SADM_ERROR Problem unmounting ${NFS_MOUNT}.\n"
@@ -474,7 +471,7 @@ rear_housekeeping()
     if [ -d "${NFS_MOUNT}" ] 
         then sadm_write "\n" 
              sadm_write "Removing NFS mount directory ${NFS_MOUNT} ...\n"
-             sadm_write "rm -fr ${NFS_MOUNT}"
+             sadm_write "rm -fr ${NFS_MOUNT} "
              rm -fr ${NFS_MOUNT} >/dev/null 2>&1 
              if [ $? -ne 0 ] 
                 then sadm_write "$SADM_ERROR Problem removing mount point unmounting ${NFS_MOUNT}.\n"
@@ -484,8 +481,7 @@ rear_housekeeping()
     fi  
 
     sadm_write "\n"
-    sadm_write "$SADM_SUCCESS ReaR Backup Housekeeping.\n"
-    sadm_write "\n"
+    sadm_write "ReaR Backup Housekeeping ${SADM_SUCCESS}.\n"
     return $FNC_ERROR
 }
 
@@ -509,16 +505,15 @@ create_backup()
     $REAR mkbackup -v >> $SADM_LOG 2>&1                                 # Produce Rear Backup for DR
     RC=$?                                                               # Save Command return code.
     sadm_write "ReaR backup exit code : ${RC}\n"                        # Show user backup exit code 
-    sadm_write "\n"
     if [ $RC -ne 0 ]
-        then sadm_write "$SADM_ERROR See the error message in ${SADM_LOG}.\n" 
+        then sadm_write "See the error message in ${SADM_LOG} ${SADM_ERROR}.\n" 
              sadm_write "***** Rear Backup completed with Error - Aborting Script *****\n"
-             sadm_write "\n"
              return 1                                                   # Back to caller with error
-        else sadm_write "$SADM_SUCCESS Rear Backup completed - More info in the log ${SADM_LOG}.\n"
+        else sadm_write "More info in the log ${SADM_LOG}.\n"
+             sadm_write "\n"
+             sadm_write "Rear Backup completed ${SADM_SUCCESS}.\n"
              sadm_write "\n"
     fi
-    
     return 0                                                            # Return Default return code
 }
 
