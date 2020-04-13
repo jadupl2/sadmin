@@ -55,7 +55,7 @@
 # 2019_07_24  Update: v3.1 Major revamp of code.
 # 2019_08_23  Update: v3.2 Remove Crontab work file (Cleanup)
 # 2019_08_29 Fix: v3.3 Correct problem with CR in site.conf 
-# 2019_08_31 Update: v3.4 More consice of alert email subject.
+# 2019_08_31 Update: v3.4 More compact alert email subject.
 # 2019_12_01 Update: v3.5 Backup crontab will backup daily not to miss weekly,monthly and yearly.
 #@2020_01_12 Update: v3.6 Compact log produced by the script.
 #@2020_01_14 Update: v3.7 Don't use SSH when running daily backup and ReaR Backup for SADMIN server. 
@@ -656,10 +656,10 @@ update_rear_site_conf()
 {
     WSERVER=$1 
 
-    # Build the name of the client footer of modified Rear exclude option file.
+    # Build name of the client footer of modified Rear exclude file (Via Web Interface)
     REAR_USER_EXCLUDE="${SADM_WWW_DAT_DIR}/${WSERVER}/cfg/rear_exclude.tmp"     
 
-    # If client did not modified the ReaR Exclude option file, then retrun to caller.
+    # If client did not modified the ReaR Exclude option file, then return to caller.
     if [ ! -r "$REAR_USER_EXCLUDE" ] ; then return 0 ; fi
     
     # Start creating the header of ReaR site.conf file into a temp. file for now.
