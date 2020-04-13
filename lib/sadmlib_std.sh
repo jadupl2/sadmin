@@ -119,7 +119,7 @@
 # 2019_10_30 Update: v3.19 Remove utilization of 'facter' (Depreciated)
 # 2019_11_22 Update: v3.20 Change the way domain name is obtain on MacOS $(sadm_get_domainname).
 # 2019_11_22 Update: v3.20 Change the way domain name is obtain on MacOS $(sadm_get_domainname).
-# 2019_12_02 Update: v3.21 Add Server name in susbject of Email Alert,
+# 2019_12_02 Update: v3.21 Add Server name in subject of Email Alert,
 # 2020_01_12 Update: v3.22 When script run on SADMIN server, copy 'rch' & 'log' in Web Interface Dir.
 # 2020_01_20 Update: v3.23 Place Alert Message on top of Alert Message (SMS,SLACK,EMAIL)
 # 2020_01_21 Update: v3.24 For texto alert, put alert message on top of texto & don't show if 1 of 1
@@ -133,6 +133,7 @@
 #@2020_04_01 Update: v3.32 Function sadm_writelog() replaced by sadm_write in Library.
 #@2020_04_04 Update: v3.33 New Variable SADM_OK, SADM_WARNING, SADM_ERROR to Show Status in Color.
 #@2020_04_05 Update: v3.34 New Variable SADM_SUCCESS, SADM_FAILED to Show Status in Color.
+#@2020_04_13 Update: v3.35 Correct Typo Error in SADM_ERROR
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -144,7 +145,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.34"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.35"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -378,8 +379,8 @@ if [ -z $TERM ] || [ "$TERM" = "dumb" ]
 fi
 
 # Standard Variable to Show ERROR,OK,WARNING status uniformingly.
-export SADM_ERROR="[ $SADM_RED}ERROR${SADM_RESET} ]"                    # [ ERROR ] in Red
-export SADM_FAILED="[ $SADM_RED}FAILED${SADM_RESET} ]"                  # [ FAILED ] in Red
+export SADM_ERROR="[ ${SADM_RED}ERROR${SADM_RESET} ]"                   # [ ERROR ] in Red
+export SADM_FAILED="[ ${SADM_RED}FAILED${SADM_RESET} ]"                 # [ FAILED ] in Red
 export SADM_WARNING="[ ${SADM_BOLD}${SADM_YELLOW}WARNING${SADM_RESET} ]" # [ WARNING ] in Yellow
 export SADM_OK="[ ${SADM_BOLD}${SADM_GREEN}OK${SADM_RESET} ]"           # [ OK ] in Green
 export SADM_SUCCESS="[ ${SADM_BOLD}${SADM_GREEN}SUCCESS${SADM_RESET} ]" # [ SUCCESS ] in Green
