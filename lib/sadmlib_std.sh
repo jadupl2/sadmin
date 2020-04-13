@@ -134,6 +134,7 @@
 #@2020_04_04 Update: v3.33 New Variable SADM_OK, SADM_WARNING, SADM_ERROR to Show Status in Color.
 #@2020_04_05 Update: v3.34 New Variable SADM_SUCCESS, SADM_FAILED to Show Status in Color.
 #@2020_04_13 Update: v3.35 Correct Typo Error in SADM_ERROR
+#@2020_04_13 Update: v3.36 Add @@LNT (Log No Time) var. to prevent sadm_write to put Date/Time in Log
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -145,7 +146,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.35"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.36"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -378,12 +379,23 @@ if [ -z $TERM ] || [ "$TERM" = "dumb" ]
          export SADM_BWHITE=$(tput setab 7)     2>/dev/null             # White color
 fi
 
+#
+# If Parameter sent to sadm_write begin with a '@@LNT' (LogNoTime)
+#   - These character are ignored, they will not be part of the message written to log or screen.
+#   - When message begin with "@@LNT", the Date/Time prefix will not be written to the log.
+#
+export SADM_LNT="@@LNT"     # If this prefix $SADM_LNT are the first 5 Chars, receive by sadm_write
+                            #   - The Date/Time prefix are not written to the log (Like usual).
+                            #   - This prefix is remove from message (Won't appear on screen or Log)
+
+
 # Standard Variable to Show ERROR,OK,WARNING status uniformingly.
-export SADM_ERROR="[ ${SADM_RED}ERROR${SADM_RESET} ]"                   # [ ERROR ] in Red
-export SADM_FAILED="[ ${SADM_RED}FAILED${SADM_RESET} ]"                 # [ FAILED ] in Red
-export SADM_WARNING="[ ${SADM_BOLD}${SADM_YELLOW}WARNING${SADM_RESET} ]" # [ WARNING ] in Yellow
-export SADM_OK="[ ${SADM_BOLD}${SADM_GREEN}OK${SADM_RESET} ]"           # [ OK ] in Green
-export SADM_SUCCESS="[ ${SADM_BOLD}${SADM_GREEN}SUCCESS${SADM_RESET} ]" # [ SUCCESS ] in Green
+export SADM_ERROR="${SADM_LNT}[ ${SADM_RED}ERROR${SADM_RESET} ]"                    # [ ERROR ] Red
+export SADM_FAILED="${SADM_LNT}[ ${SADM_RED}FAILED${SADM_RESET} ]"                  # [ FAILED ] Red
+export SADM_WARNING="${SADM_LNT}[ ${SADM_BOLD}${SADM_YELLOW}WARNING${SADM_RESET} ]" # WARNING Yellow
+export SADM_OK="${SADM_LNT}[ ${SADM_BOLD}${SADM_GREEN}OK${SADM_RESET} ]"            # [ OK ] Green
+export SADM_SUCCESS="${SADM_LNT}[ ${SADM_BOLD}${SADM_GREEN}SUCCESS${SADM_RESET} ]"  # SUCCESS Green
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -420,7 +432,12 @@ sadm_isnumeric() {
 # --------------------------------------------------------------------------------------------------
 sadm_write() {
     SADM_SMSG="$@"                                                      # Save Received Message
-    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Prefix Msg with Date/Time
+    if [ "${SADM_SMSG:0:5}" = "$SADM_LNT" ]                             # If 5 first Char. are @@LNT
+        then SADM_LMSG="$@"                                             # Then no Time Prefix in Log
+        else SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"              # Prefix Msg with Date/Time
+    fi 
+    SADM_SMSG=${SADM_SMSG/$SADM_LNT/}                                   # Remove @@LNT from Screen
+    SADM_LMSG=${SADM_LMSG/$SADM_LNT/}                                   # Remove @@LNT from Log Msg
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
         s|S) printf -- "$SADM_SMSG"                                     # Write Msg to Screen
              ;;
