@@ -63,6 +63,7 @@
 #@2020_04_11 Fix: v2.16 site.conf, "BACKUP_URL" line is align with sadmin.cfg before each backup.
 #@2020_04_12 Update: v2.17 If ReaR site.conf doesn't exist, create it, bug fix and enhancements.
 #@2020_04_13 Update: v2.18 Lot of little adjustments.
+#@2020_04_14 Update: v2.19 Some more logging adjustments.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -95,7 +96,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.18'                              # Your Current Script Version
+    export SADM_VER='2.19'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -169,7 +170,7 @@ update_url_in_rear_site_conf()
 	    do
         echo $wline | grep -i "^BACKUP_URL" >/dev/null 2>&1
         if [ $? = 0 ]
-            then sadm_write "Update backup destination with value from sadmin.cfg.\n" 
+            then sadm_write "Update backup destination in $REAR_CFGFILE with value from sadmin.cfg.\n" 
                  echo       "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"" >> $REAR_TMP
                  sadm_write "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"\n"
             else echo "$wline" >> $REAR_TMP
@@ -381,7 +382,8 @@ rear_preparation()
     fi
 
     sadm_write "\n" 
-    sadm_write "ReaR preparation ${SADM_SUCCESS}.\n"
+    sadm_write "ReaR preparation ${SADM_SUCCESS}\n"
+    sadm_write "\n" 
     return 0
 }
 
@@ -413,12 +415,12 @@ rear_housekeeping()
              ls -1t ${REAR_NAME}*.gz | sort -r| sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | xargs rm -f >> $SADM_LOG 2>&1
              RC=$?
              if [ $RC -ne 0 ] 
-                then sadm_write "Problem deleting backup file(s) ${SADM_ERROR}.\n" 
+                then sadm_write "Problem deleting backup file(s) ${SADM_ERROR}\n" 
                      FNC_ERROR=1
-                else sadm_write "Backup deleted ${SADM_OK}.\n" 
+                else sadm_write "Backup deleted ${SADM_OK}\n" 
              fi
         else RC=0
-             sadm_write "Don't need to delete any old backup file(s) ${SADM_OK}.\n"
+             sadm_write "Don't need to delete any old backup file(s) ${SADM_OK}\n"
     fi
         
     # Delete the ISO that are over the number we want to keep.
@@ -431,12 +433,12 @@ rear_housekeeping()
              ls -1t ${REAR_NAME}*.iso | sort -r| sed 1,${SADM_REAR_BACKUP_TO_KEEP}d | xargs rm -f >> $SADM_LOG 2>&1
              RC=$?
              if [ $RC -ne 0 ] 
-                 then sadm_write "Problem deleting ISO file(s) ${SADM_ERROR}.\n"
+                 then sadm_write "Problem deleting ISO file(s) ${SADM_ERROR}\n"
                       FNC_ERROR=1
-                 else sadm_write "ISO deleted ${SADM_OK}.\n" 
+                 else sadm_write "ISO deleted ${SADM_OK}\n" 
              fi
         else RC=0
-             sadm_write "Don't need to delete any old ISO file(s) ${SADM_OK}.\n"
+             sadm_write "Don't need to delete any old ISO file(s) ${SADM_OK}\n"
     fi
         
     # Make sure Host Directory permission and files below are ok
@@ -481,7 +483,7 @@ rear_housekeeping()
     fi  
 
     sadm_write "\n"
-    sadm_write "ReaR Backup Housekeeping ${SADM_SUCCESS}.\n"
+    sadm_write "ReaR Backup Housekeeping ${SADM_SUCCESS}\n"
     return $FNC_ERROR
 }
 
@@ -511,7 +513,7 @@ create_backup()
              return 1                                                   # Back to caller with error
         else sadm_write "More info in the log ${SADM_LOG}.\n"
              sadm_write "\n"
-             sadm_write "Rear Backup completed ${SADM_SUCCESS}.\n"
+             sadm_write "Rear Backup completed ${SADM_SUCCESS}\n"
              sadm_write "\n"
     fi
     return 0                                                            # Return Default return code
