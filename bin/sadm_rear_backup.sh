@@ -64,6 +64,7 @@
 #@2020_04_12 Update: v2.17 If ReaR site.conf doesn't exist, create it, bug fix and enhancements.
 #@2020_04_13 Update: v2.18 Lot of little adjustments.
 #@2020_04_14 Update: v2.19 Some more logging adjustments.
+#@2020_04_16 Update: v2.20 Minor adjustments
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -96,7 +97,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.19'                              # Your Current Script Version
+    export SADM_VER='2.20'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -308,7 +309,7 @@ rear_preparation()
 
     # Mount the NFS Mount point 
     sadm_write "\n" 
-    sadm_write "Testing mount operation of the NFS Drive on $SADM_REAR_NFS_SERVER system.\n"
+    sadm_write "Mount the NFS share on $SADM_REAR_NFS_SERVER system.\n"
     umount ${NFS_MOUNT} > /dev/null 2>&1                                # Make sure not already mount
     sadm_write "mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} "
     mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} >>$SADM_LOG 2>&1
@@ -400,7 +401,7 @@ rear_housekeeping()
     sadm_write "${SADM_BOLD}Perform ReaR housekeeping.${SADM_RESET}\n"
                     
     sadm_write "\n"
-    sadm_write "You have chosen to keep $SADM_REAR_BACKUP_TO_KEEP backup files on the NFS server.\n"
+    sadm_write "SADMIN configuration file indicate to you wish to keep $SADM_REAR_BACKUP_TO_KEEP backup files on the NFS server.\n"
     sadm_write "\n"
     sadm_write "List of ReaR backup and ISO actually on NFS Server for ${SADM_HOSTNAME}\n"
     ls -ltrh ${REAR_NAME}* | while read wline ; do sadm_write "${wline}\n"; done
@@ -501,19 +502,20 @@ create_backup()
     sadm_write "${SADM_FIFTY_DASH}\n"
     sadm_write "${SADM_BOLD}Creating the 'ReaR' backup.${SADM_RESET}\n" 
     sadm_write "\n"                                                     # Write white line
-    sadm_write "$REAR mkbackup -v \n"       
+    sadm_write "$REAR mkbackup -v \n\n"       
 
     # Create the Backup TGZ file on the NFS Server
     $REAR mkbackup -v >> $SADM_LOG 2>&1                                 # Produce Rear Backup for DR
     RC=$?                                                               # Save Command return code.
+    sadm_write "\n"                                                     # Write white line
     sadm_write "ReaR backup exit code : ${RC}\n"                        # Show user backup exit code 
     if [ $RC -ne 0 ]
         then sadm_write "See the error message in ${SADM_LOG} ${SADM_ERROR}.\n" 
              sadm_write "***** Rear Backup completed with Error - Aborting Script *****\n"
              return 1                                                   # Back to caller with error
         else sadm_write "More info in the log ${SADM_LOG}.\n"
-             sadm_write "\n"
              sadm_write "Rear Backup completed ${SADM_SUCCESS}\n"
+             sadm_write "\n"
              sadm_write "\n"
     fi
     return 0                                                            # Return Default return code
