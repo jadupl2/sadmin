@@ -1,31 +1,24 @@
-# SADMIN ReaR template exclude options v1.4
+# SADMIN ReaR template exclude options v1.4a
 
 # Only include volume groups (opposite of EXCLUDE_VG)
-# ONLY_INCLUDE_VG=( "vg00" "vg01" ) 
-# ONLY_INCLUDE_VG=( "rootvg" ) 
-
+# ONLY_INCLUDE_VG=( "rootvg" "vg01" ) 
 
 # Exclude Volume Group (and filesystem they include)
 # EXCLUDE_VG & EXCLUDE_MOUNTPOINTS automatically populated
 # EXCLUDE_VG=( datavg ) 
 
-
 # Exclude filesystems by specifying their mountpoints
 # Added automatically to the $BACKUP_PROG_EXCLUDE array 
 # EXCLUDE_MOUNTPOINTS=( /data )
 
-
-# BACKUP_PROG_EXCLUDE is an array of strings that get written to 
-# backup-exclude.txt file used in 'tar -X backup-exclude.txt' to
-# get things excluded from the backup. 
-# Proper quoting of the BACKUP_PROG_EXCLUDE array members is crucial
-# to avoid bash expansions. Example :
+# An array of strings written to backup-exclude.txt
+# file used in 'tar -X backup-exclude.txt'.
+# Proper quoting of BACKUP_PROG_EXCLUDE array is crucial.
 # BACKUP_PROG_EXCLUDE=( ${BACKUP_PROG_EXCLUDE[@]} '/tmp/*' "$HOME/.cache" )
 
-
-# Exclude components from being backed up,recreation information is active
+# Exclude components from being backed up
+# Recreation information is active
 # EXCLUDE_BACKUP=()
-
 
 # Exclude components during the backup restore phase.
 # Only used to exclude files from the restore. 
