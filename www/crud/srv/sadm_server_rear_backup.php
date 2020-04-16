@@ -25,6 +25,7 @@
 #@2019_08_18 New: v1.0 Initial Beta version - Allow to define ReaR Backup schedule.
 #@2019_08_19 Update: v1.1 Initial working version.
 #@2020_01_13 Update: v1.2 Enhance Web Page Appearance and color. 
+#@2020_04_16 Update: v1.3 Small page adjustments.
 # ==================================================================================================
 #
 #
@@ -65,6 +66,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     font-family     :   Verdana, Geneva, sans-serif;
     width           :   90%;
     padding-left    :   10px;
+    padding-top     :   10px;
     margin          :   0 auto;
     text-align      :   left;
     border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
@@ -98,7 +100,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.2" ;                                                        # Current version number
+$SVER  = "1.3" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -386,13 +388,11 @@ function display_left_side($con,$wrow,$mode) {
 function show_rear_policy() {
 
     echo "\n\n<div class='rear_policy'>\n                       <!-- Start rear_policy Div -->";
-
-    echo "<h4>   ReaR backup policies for all systems (as defined in '" . SADM_CFG_FILE . "')</h4>";
-
+    echo "<strong>   ReaR backup policies for all systems (as defined in '\$SADMIN/cfg/sadmin.cfg')</strong>";
     
     # Backup destination
-    echo "\n\n<div class='rear_retension'>\n                    <!-- Start rear_retension Div -->";
-    echo "\nNFS backup server is '" . SADM_REAR_NFS_SERVER ;
+    echo "\n<div class='rear_retension'>\n                    <!-- Start rear_retension Div -->";
+    echo "NFS backup server is '" . SADM_REAR_NFS_SERVER ;
     echo "' and destination directory is '". SADM_REAR_NFS_MOUNT_POINT ."'";
 
     # ReaR Backup policy
@@ -402,7 +402,7 @@ function show_rear_policy() {
     # Script used to run the Rear backup
     echo "\n<br>&nbsp;&nbsp;&nbsp;  - ";
     echo "To create a Rear backup, the script " . SADM_BIN_DIR . "/sadm_rear_backup.sh will be run.";
-    echo "\n<br></div>                                          <!-- End of rear_retension Div -->";
+    echo "\n</div>                                          <!-- End of rear_retension Div -->";
 
     # End Of Backup Policy
     echo "\n<br></div>                                          <!-- End of rear_policy Div -->";
