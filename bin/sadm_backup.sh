@@ -211,13 +211,13 @@ backup_setup()
         then sadm_write "Making Daily backup directory ${DDIR}.\n"      # Show user what were doing
              mkdir -p $DDIR                                             # Create Directory
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] mkdir ${DDIR}.\n" ; return 1 ; fi
-             chown ${SADM_USER}:${SADM_GROUP} $DDIR                     # Assign it SADM USer&Group
-             if [ $? -ne 0 ]
-                then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $DDIR \n"
-                     return 1
-             fi
              chmod 775 $DDIR                                            # Read/Write to SADM Usr/Grp
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] chmod 775 $DDIR \n" ; return 1 ;fi
+             #chown ${SADM_USER}:${SADM_GROUP} $DDIR                     # Assign it SADM USer&Group
+             #if [ $? -ne 0 ]
+             #   then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $DDIR \n"
+             #        return 1
+             #fi
     fi
 
     # Daily Backup Directory
@@ -225,13 +225,13 @@ backup_setup()
         then sadm_write "Making Daily backup directory $DAILY_DIR \n"   # Show user what were doing
              mkdir -p $DAILY_DIR                                        # Create Directory
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] mkdir $DAILY_DIR \n" ; return 1 ; fi
-             chown ${SADM_USER}:${SADM_GROUP} $DAILY_DIR                # Assign it SADM USer&Group
-             if [ $? -ne 0 ]
-                then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $DAILY_DIR \n"
-                     return 1
-             fi
              chmod 775 $DAILY_DIR                                       # Read/Write to SADM Usr/Grp
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] chmod 775 $DAILY_DIR \n" ; return 1 ;fi
+             #chown ${SADM_USER}:${SADM_GROUP} $DAILY_DIR                # Assign it SADM USer&Group
+             #if [ $? -ne 0 ]
+             #   then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $DAILY_DIR \n"
+             #        return 1
+             #fi
     fi
 
     # Weekly Root Backup Directory
@@ -239,13 +239,13 @@ backup_setup()
         then sadm_write "Making Weekly backup directory $WDIR \n"       # Show user what were doing
              mkdir -p $WDIR                                             # Create Directory
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] mkdir $WDIR \n" ; return 1 ; fi
-             chown ${SADM_USER}:${SADM_GROUP} $WDIR                     # Assign it SADM USer&Group
-             if [ $? -ne 0 ]
-                then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $WDIR \n"
-                     return 1
-             fi
              chmod 775 $WDIR                                            # Read/Write to SADM Usr/Grp
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] chmod 775 $WDIR \n" ; return 1 ;fi
+             #chown ${SADM_USER}:${SADM_GROUP} $WDIR                     # Assign it SADM USer&Group
+             #if [ $? -ne 0 ]
+             #   then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $WDIR \n"
+             #        return 1
+             #fi
     fi
 
     # Weekly Backup Directory
@@ -253,13 +253,13 @@ backup_setup()
         then sadm_write "Making Weekly backup directory $WEEKLY_DIR \n" # Show user what were doing
              mkdir -p $WEEKLY_DIR                                       # Create Directory
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] mkdir $WEEKLY_DIR \n" ; return 1 ; fi
-             chown ${SADM_USER}:${SADM_GROUP} $WEEKLY_DIR               # Assign it SADM USer&Group
-             if [ $? -ne 0 ]
-                then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $WEEKLY_DIR \n"
-                     return 1
-             fi
              chmod 775 $WEEKLY_DIR                                      # Read/Write to SADM Usr/Grp
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] chmod 775 $WEEKLY_DIR \n" ; return 1 ;fi
+             #chown ${SADM_USER}:${SADM_GROUP} $WEEKLY_DIR               # Assign it SADM USer&Group
+             #if [ $? -ne 0 ]
+             #   then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $WEEKLY_DIR \n"
+             #        return 1
+             #fi
     fi
 
     # Monthly Root Backup Directory
@@ -267,13 +267,13 @@ backup_setup()
         then sadm_write "Making Monthly backup directory $MDIR \n"      # Show user what were doing
              mkdir -p $MDIR                                             # Create Directory
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] mkdir $MDIR \n" ; return 1 ; fi
-             chown ${SADM_USER}:${SADM_GROUP} $MDIR                     # Assign it SADM USer&Group
-             if [ $? -ne 0 ]
-                then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $MDIR \n"
-                     return 1
-             fi
              chmod 775 $MDIR                                            # Read/Write to SADM Usr/Grp
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] chmod 775 $MDIR \n" ; return 1 ;fi
+             #chown ${SADM_USER}:${SADM_GROUP} $MDIR                     # Assign it SADM USer&Group
+             #if [ $? -ne 0 ]
+             #   then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $MDIR \n"
+             #        return 1
+             #fi
     fi
 
     # Monthly Backup Directory
@@ -281,13 +281,13 @@ backup_setup()
         then sadm_write "Making Monthly backup directory $MONTHLY_DIR \n" # Show user what were doing
              mkdir -p $MONTHLY_DIR                                      # Create Directory
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] mkdir $MONTHLY_DIR \n" ; return 1 ; fi
-             chown ${SADM_USER}:${SADM_GROUP} $MONTHLY_DIR              # Assign it SADM USer&Group
-             if [ $? -ne 0 ]
-                then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $MONTHLY_DIR \n"
-                     return 1
-             fi
              chmod 775 $MONTHLY_DIR                                     # Read/Write to SADM Usr/Grp
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] chmod 775 $MONTHLY_DIR \n" ; return 1 ;fi
+             #chown ${SADM_USER}:${SADM_GROUP} $MONTHLY_DIR              # Assign it SADM USer&Group
+             #if [ $? -ne 0 ]
+             #   then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $MONTHLY_DIR \n"
+             #        return 1
+             #fi
     fi
 
     # Yearly Root Backup Directory
@@ -295,13 +295,13 @@ backup_setup()
         then sadm_write "Making Yearly backup directory $YDIR \n"       # Show user what were doing
              mkdir -p $YDIR                                             # Create Directory
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] mkdir $YDIR \n" ; return 1 ; fi
-             chown ${SADM_USER}:${SADM_GROUP} $YDIR                     # Assign it SADM USer&Group
-             if [ $? -ne 0 ]
-                then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $YDIR \n"
-                     return 1
-             fi
              chmod 775 $YDIR                                            # Read/Write to SADM Usr/Grp
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] chmod 775 $YDIR \n" ; return 1 ;fi
+             #chown ${SADM_USER}:${SADM_GROUP} $YDIR                     # Assign it SADM USer&Group
+             #if [ $? -ne 0 ]
+             #   then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $YDIR \n"
+             #        return 1
+             #fi
     fi
 
     # Yearly Backup Directory
@@ -309,13 +309,13 @@ backup_setup()
         then sadm_write "Making Yearly backup directory $YEARLY_DIR \n" # Show user what were doing
              mkdir -p $YEARLY_DIR                                       # Create Directory
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] mkdir $YEARLY_DIR \n" ; return 1 ; fi
-             chown ${SADM_USER}:${SADM_GROUP} $YEARLY_DIR               # Assign it SADM USer&Group
-             if [ $? -ne 0 ]
-                then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $YEARLY_DIR \n"
-                     return 1
-             fi
              chmod 775 $YEARLY_DIR                                      # Read/Write to SADM Usr/Grp
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] chmod 775 $YEARLY_DIR \n" ; return 1 ;fi
+             #chown ${SADM_USER}:${SADM_GROUP} $YEARLY_DIR               # Assign it SADM USer&Group
+             #if [ $? -ne 0 ]
+             #   then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $YEARLY_DIR \n"
+             #        return 1
+             #fi
     fi
 
     # Latest Root Backup Directory
@@ -323,13 +323,13 @@ backup_setup()
         then sadm_write "Making latest backup directory $LDIR \n"       # Show user what were doing
              mkdir -p $LDIR                                             # Create Directory
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] mkdir $LATEST \n" ; return 1 ; fi
-             chown ${SADM_USER}:${SADM_GROUP} $LDIR                     # Give it SADM USer&Group
-             if [ $? -ne 0 ]
-                then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $LDIR \n"
-                     return 1
-             fi
              chmod 775 $LDIR                                            # R/W to SADM Usr/Grp
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] chmod 775 $LDIR \n" ; return 1 ;fi
+             #chown ${SADM_USER}:${SADM_GROUP} $LDIR                     # Give it SADM USer&Group
+             #if [ $? -ne 0 ]
+             #   then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $LDIR \n"
+             #        return 1
+             #fi
     fi
 
     # Latest Backup Directory
@@ -337,13 +337,13 @@ backup_setup()
         then sadm_write "Making latest backup directory $LATEST_DIR \n" # Show user what were doing
              mkdir -p $LATEST_DIR                                       # Create Directory
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] mkdir $LATEST \n" ; return 1 ; fi
-             chown ${SADM_USER}:${SADM_GROUP} $LATEST_DIR               # Give it SADM USer&Group
-             if [ $? -ne 0 ]
-                then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $LATEST_DIR \n"
-                     return 1
-             fi
              chmod 775 $LATEST_DIR                                      # R/W to SADM Usr/Grp
              if [ $? -ne 0 ] ; then sadm_write "[ERROR] chmod 775 $LATEST_DIR \n" ; return 1 ;fi
+             #chown ${SADM_USER}:${SADM_GROUP} $LATEST_DIR               # Give it SADM USer&Group
+             #if [ $? -ne 0 ]
+             #   then sadm_write "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $LATEST_DIR \n"
+             #        return 1
+             #fi
     fi
 
     # Remove previous backup link in the latest directory
@@ -391,7 +391,7 @@ backup_setup()
                      sadm_write "        On the NFS Server ${SADM_BACKUP_NFS_SERVER}\n"
                      return 1                                           # End Function with error
              fi
-             chown ${SADM_USER}:${SADM_GROUP} ${BACKUP_DIR}             # Assign it SADM USer&Group
+             #chown ${SADM_USER}:${SADM_GROUP} ${BACKUP_DIR}             # Assign it SADM USer&Group
              chmod 775 ${BACKUP_DIR}                                    # Assign Protection
     fi
 
@@ -637,9 +637,9 @@ mount_nfs()
     sadm_write "Mounting NFS Drive on ${SADM_BACKUP_NFS_SERVER}.\n"     # Show NFS Server Name
     umount ${LOCAL_MOUNT} > /dev/null 2>&1                              # Make sure not mounted
     if [ "$SADM_OS_TYPE" = "DARWIN" ]                                   # If on MacOS
-        then sadm_write "mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT}.\n"
+        then sadm_write "mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT}\n"
              mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
-        else sadm_write "mount ${REM_MOUNT} ${LOCAL_MOUNT}.\n"          # If on Linux/Aix
+        else sadm_write "mount ${REM_MOUNT} ${LOCAL_MOUNT}\n"           # If on Linux/Aix
              mount ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1         # Mount NFS Drive
     fi
     if [ $? -ne 0 ]                                                     # If Error trying to mount
