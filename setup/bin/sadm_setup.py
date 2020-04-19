@@ -70,6 +70,7 @@
 #@2019_12_20 Update: v3.33 Remove installation of ruby (was used for facter) & of pymysql (Done)
 #@2020_03_08 Update: v3.34 Added 'hwinfo' package to installation requirement.
 #@2020_03_16 Update: v3.35 Set default alert group to sysadmin email in .alert_group.cfg. 
+#@2020_04_19 Update: v3.36 Minor adjustments.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -86,7 +87,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.35"                                            # Setup Version Number
+sver                = "3.36"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -124,6 +125,8 @@ req_client = {
                     'deb':'nmon',                           'drepo':'base'},
     'ethtool'    :{ 'rpm':'ethtool',                        'rrepo':'base',  
                     'deb':'ethtool',                        'drepo':'base'},
+    'rear'       :{ 'rpm':'rear',                           'rrepo':'base',  
+                    'deb':'rear',                           'drepo':'base'},
     'hwinfo'     :{ 'rpm':'hwinfo',                         'rrepo':'base',  
                     'deb':'hwinfo',                         'drepo':'base'},
     'ifconfig'   :{ 'rpm':'net-tools',                      'rrepo':'base',  
@@ -1606,7 +1609,7 @@ def set_sadmin_env(ver):
     print ("Environment variable 'SADMIN' is now set to %s" % (sadm_base_dir))
     print ("  - Line below is now in %s & %s" % (SADM_PROFILE,SADM_ENVFILE)) 
     print ("    %s" % (eline),end='')                                   # SADMIN Line in sadmin.sh
-    print ("  - This will make 'SADMIN' environment variable set upon reboot")
+    print ("  - This will make 'SADMIN' environment variable set upon reboot.")
     return sadm_base_dir                                                # Return SADMIN Root Dir
 
 
@@ -2015,7 +2018,7 @@ def setup_sadmin_config_file(sroot,wostype):
     if (found_grp == True):                                             # Group were found in file
         writelog("Group %s is an existing group" % (wcfg_group),'bold') # Existing group Advise User 
     else:
-        writelog ("Creating group %s" % (wcfg_group),'nonl')            # Show creating the group
+        writelog ("Creating group %s ... " % (wcfg_group),'nonl')       # Show creating the group
         if wostype == "LINUX" :                                         # Under Linux
             ccode,cstdout,cstderr = oscommand("groupadd %s" % (wcfg_group))   # Add Group on Linux
         if wostype == "AIX" :                                           # Under AIX
@@ -2202,9 +2205,9 @@ def run_script(sroot,sname):
 def end_message(sroot,sdomain,sserver,stype):
     sversion = get_sadmin_version(sroot)
     writelog ("\n\n\n\n\n")
-    writelog ("SADMIN TOOLS - VERSION %s - Successfully Installed" % (sversion),'bold')
+    writelog ("SADMIN TOOLS Successfully Installed")
     writelog ("===========================================================================")
-    writelog ("You need to logout/login before using SADMIN Tools or type the command ")
+    writelog ("You need to logout & log back in, before using SADMIN or type the command ")
     writelog ("'. /etc/profile.d/sadmin.sh', this define 'SADMIN' environment variable.")
     writelog (" ")
     if (stype == "S") :
@@ -2216,9 +2219,10 @@ def end_message(sroot,sdomain,sserver,stype):
         writelog ("  - Have server configuration on hand, usefull in case of a Disaster Recovery.")
         writelog ("  - View your servers farm subnet utilization and see what IP are free to use.")
     writelog (" ")
-    writelog ("CREATE YOUR OWN SCRIPT USING SADMIN LIBRARIES",'bold')
+    writelog ("CREATE YOUR OWN SCRIPT USING SADMIN TEMPLATES",'bold')
     writelog ("  - cp %s/bin/sadm_template.sh %s/usr/bin/newscript.sh" % (sroot,sroot))
     writelog ("  - cp %s/bin/sadm_template.py %s/usr/bin/newscript.py" % (sroot,sroot))
+    writelog ("  - cp %s/bin/sadm_template_menus.sh %s/usr/bin/sadm_template_menus.sh" % (sroot,sroot))
     writelog ("Run it or/and modify it to your need, run it and see the result.") 
     writelog (" ")
     writelog ("SEE SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :",'bold')
@@ -2226,7 +2230,7 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("  - %s/bin/sadmlib_std_demo.py" % (sroot))
     writelog (" ")
     writelog ("USE THE SADMIN WRAPPER TO RUN YOUR EXISTING SCRIPT",'bold')
-    writelog ("  - # $SADMIN/bin/sadm_wrapper.sh yourscript.sh")
+    writelog ("  - $SADMIN/bin/sadm_wrapper.sh yourscript.sh")
     writelog (" ")
     if (stype == "C") :
         writelog ("BUT FIRST YOU NEED TO ADD THIS CLIENT ON THE SADMIN SERVER",'bold')
