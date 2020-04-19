@@ -502,12 +502,11 @@ create_backup()
     sadm_write "${SADM_FIFTY_DASH}\n"
     sadm_write "${SADM_BOLD}Creating the 'ReaR' backup.${SADM_RESET}\n" 
     sadm_write "\n"                                                     # Write white line
-    sadm_write "$REAR mkbackup -v \n\n"       
+    sadm_write "$REAR mkbackup -v \n"       
 
     # Create the Backup TGZ file on the NFS Server
     $REAR mkbackup -v >> $SADM_LOG 2>&1                                 # Produce Rear Backup for DR
     RC=$?                                                               # Save Command return code.
-    sadm_write "\n"                                                     # Write white line
     sadm_write "ReaR backup exit code : ${RC}\n"                        # Show user backup exit code 
     if [ $RC -ne 0 ]
         then sadm_write "See the error message in ${SADM_LOG} ${SADM_ERROR}.\n" 
@@ -515,7 +514,6 @@ create_backup()
              return 1                                                   # Back to caller with error
         else sadm_write "More info in the log ${SADM_LOG}.\n"
              sadm_write "Rear Backup completed ${SADM_SUCCESS}\n"
-             sadm_write "\n"
              sadm_write "\n"
     fi
     return 0                                                            # Return Default return code
