@@ -40,12 +40,13 @@
 # 2019_04_19 Fix: v2.6 Solve problem with installing 'pymysql' module.
 # 2019_04_19 Fix: v2.7 Solve problem with pip3 on Ubuntu.
 # 2019_06_19 Update: v2.8 Update procedure to install CentOS/RHEL repository for version 5,6,7,8
-#@2019_12_20 Update: v2.9 Better verification and installation of python3 (If needed)
-#@2019_12_27 Update: v3.0 Add recommended EPEL Repos on CentOS/RHEL 8.
-#@2019_12_27 Update: v3.1 On RHEL/CentOS 6/7, revert to Python 3.4 (3.6 Incomplete on EPEL)
-#@2020_01_18 Fix: v3.2 Fix problem installing pip3, when running setup.sh script.
+# 2019_12_20 Update: v2.9 Better verification and installation of python3 (If needed)
+# 2019_12_27 Update: v3.0 Add recommended EPEL Repos on CentOS/RHEL 8.
+# 2019_12_27 Update: v3.1 On RHEL/CentOS 6/7, revert to Python 3.4 (3.6 Incomplete on EPEL)
+# 2020_01_18 Fix: v3.2 Fix problem installing pip3, when running setup.sh script.
 #@2020_02_23 Fix: v3.3 Fix some problem installing lsb_release and typo with 'dnf' command..
-#
+#@2020_02_23 Fix: v3.3 Fix some problem installing lsb_release and typo with 'dnf' command..
+#@2020_04_19 Update: v3.4 Minor logging changes.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -54,7 +55,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.3'                              ; export SADM_VER           # Your Script Version
+SADM_VER='3.4'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -268,37 +269,34 @@ install_pip3()
 check_python3()
 {
     # Check if python3 is installed 
-    echo "Check if python3 is installed ..." | tee -a $SLOG
+    printf "\nCheck if python3 is installed ..." | tee -a $SLOG
 
     # python3 should now be installed, if not then install it or abort installation
     which python3 > /dev/null 2>&1
     if [ $? -eq 0 ]
         then echo "[OK] python3 is installed." | tee -a $SLOG
-             echo " " | tee -a $SLOG
         else echo "Python3 is not installed."  | tee -a $SLOG
              install_python3 
              echo "[OK] python3 is installed." | tee -a $SLOG
     fi
 
     # Check if pip3 is installed 
-    echo "Check if pip3 is installed ..." | tee -a $SLOG
+    printf "\nCheck if pip3 is installed ..." | tee -a $SLOG
 
     # pip3 should be installed, if not then install it or abort installation
     which pip3 > /dev/null 2>&1
     if [ $? -eq 0 ]
         then echo "[OK] pip3 is installed." | tee -a $SLOG
-             echo " " | tee -a $SLOG
         else echo "Pip3 is not installed."  | tee -a $SLOG
              install_pip3
              echo "[OK] pip3 is installed." | tee -a $SLOG
     fi
    
     # Check if python3 'pymsql' module is installed 
-    echo "Check if python3 'pymsql' module is installed ..." | tee -a $SLOG
+    printf "\nCheck if python3 'pymsql' module is installed ..." | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[OK] Module already installed." | tee -a $SLOG
-             echo " " | tee -a $SLOG
         else echo "Installing python3 'pymsql' module." 
              pip3 install pymysql  > /dev/null 2>&1
              if [ $? -ne 0 ]
@@ -321,7 +319,7 @@ check_python3()
 #===================================================================================================
 check_hostname()
 {
-    echo -n "Making sure server is defined in /etc/hosts ... " | tee -a $SLOG
+    printf "\nMaking sure server is defined in /etc/hosts ... " | tee -a $SLOG
 
     # Get current IP Address of Server
     S_IPADDR=`ip addr show | grep global | head -1 | awk '{ print $2 }' |awk -F/ '{ print $1 }'`
