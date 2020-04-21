@@ -449,7 +449,7 @@ process_servers()
 
         # SHOW TOTAL ERROR COUNT AFTER PROCESSING EACH SERVER
         if [ "$ERROR_COUNT" -ne 0 ] 
-           then sadm_writelog "Total Error Count after ${server_fqdn} is ${ERROR_COUNT}."
+           then sadm_writelog "$SADM_ERROR Count At ${ERROR_COUNT}."
         fi
 
         done < $SADM_TMP_FILE1
