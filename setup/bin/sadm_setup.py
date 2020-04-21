@@ -71,6 +71,7 @@
 #@2020_03_08 Update: v3.34 Added 'hwinfo' package to installation requirement.
 #@2020_03_16 Update: v3.35 Set default alert group to sysadmin email in .alert_group.cfg. 
 #@2020_04_19 Update: v3.36 Minor adjustments.
+#@2020_04_21 Update: v3.37 Add syslinux,genisomage,rear packages req. & hwinfo to EPEL(RHEL/CentOS8)
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -87,7 +88,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.36"                                            # Setup Version Number
+sver                = "3.37"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -127,7 +128,11 @@ req_client = {
                     'deb':'ethtool',                        'drepo':'base'},
     'rear'       :{ 'rpm':'rear',                           'rrepo':'base',  
                     'deb':'rear',                           'drepo':'base'},
-    'hwinfo'     :{ 'rpm':'hwinfo',                         'rrepo':'base',  
+    'syslinux'   :{ 'rpm':'syslinux',                       'rrepo':'base',  
+                    'deb':'syslinux',                       'drepo':'base'},
+    'genisoimage':{ 'rpm':'genisoimage',                    'rrepo':'base',  
+                    'deb':'genisoimage',                    'drepo':'base'},
+    'hwinfo'     :{ 'rpm':'hwinfo',                         'rrepo':'epel',  
                     'deb':'hwinfo',                         'drepo':'base'},
     'ifconfig'   :{ 'rpm':'net-tools',                      'rrepo':'base',  
                     'deb':'net-tools',                      'drepo':'base'},
@@ -2207,7 +2212,7 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("\n\n\n\n\n")
     writelog ("SADMIN TOOLS Successfully Installed")
     writelog ("===========================================================================")
-    writelog ("You need to logout & log back in, before using SADMIN or type the command ")
+    writelog ("You need to logout & log back in, before using SADMIN or type the command :")
     writelog ("'. /etc/profile.d/sadmin.sh', this define 'SADMIN' environment variable.")
     writelog (" ")
     if (stype == "S") :
@@ -2220,17 +2225,17 @@ def end_message(sroot,sdomain,sserver,stype):
         writelog ("  - View your servers farm subnet utilization and see what IP are free to use.")
     writelog (" ")
     writelog ("CREATE YOUR OWN SCRIPT USING SADMIN TEMPLATES",'bold')
-    writelog ("  - cp %s/bin/sadm_template.sh %s/usr/bin/newscript.sh" % (sroot,sroot))
-    writelog ("  - cp %s/bin/sadm_template.py %s/usr/bin/newscript.py" % (sroot,sroot))
-    writelog ("  - cp %s/bin/sadm_template_menus.sh %s/usr/bin/sadm_template_menus.sh" % (sroot,sroot))
-    writelog ("Run it or/and modify it to your need, run it and see the result.") 
+    writelog ("  - cp %s/bin/sadm_template.sh %s/usr/bin/YourScript.sh" % (sroot,sroot))
+    writelog ("  - cp %s/bin/sadm_template.py %s/usr/bin/YourScript.py" % (sroot,sroot))
+    writelog ("  - cp %s/bin/sadm_template_menus.sh %s/usr/bin/YourMenuScript.sh" % (sroot,sroot))
+    writelog ("Copy the templates, run them and modify them to your need.") 
     writelog (" ")
     writelog ("SEE SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :",'bold')
     writelog ("  - %s/bin/sadmlib_std_demo.sh" % (sroot))
     writelog ("  - %s/bin/sadmlib_std_demo.py" % (sroot))
     writelog (" ")
     writelog ("USE THE SADMIN WRAPPER TO RUN YOUR EXISTING SCRIPT",'bold')
-    writelog ("  - $SADMIN/bin/sadm_wrapper.sh yourscript.sh")
+    writelog ("  - %s/bin/sadm_wrapper.sh YourScript.sh" % (sroot))
     writelog (" ")
     if (stype == "C") :
         writelog ("BUT FIRST YOU NEED TO ADD THIS CLIENT ON THE SADMIN SERVER",'bold')
