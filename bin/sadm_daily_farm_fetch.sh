@@ -44,6 +44,7 @@
 #@2020_02_25 Update: v3.6 Fix intermittent problem getting SADMIN value from /etc/environment.
 #@2020_03_21 Update: v3.7 Show Error Total only at the end of each system processed.
 #@2020_04_05 Update: v3.8 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
+#@2020_04_21 Update: v3.9 Minor Error Message Alignment,
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -71,7 +72,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.8'                               # Your Current Script Version
+    export SADM_VER='3.9'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -245,14 +246,14 @@ process_servers()
                     then um1="File '/etc/environment' on ${server_name}," 
                          umess="${um1} tell us that SADMIN was installed in ${RDIR}."
                          sadm_write "${umess}\n" 
-                    else sadm_write "  - $SADM_ERROR Couldn't get /etc/environment on ${server_name}.\n"
+                    else sadm_write "  $SADM_ERROR Couldn't get /etc/environment on ${server_name}.\n"
                          ERROR_COUNT=$(($ERROR_COUNT+1))
                          sadm_write "  - Assuming /opt/sadmin\n" 
                          RDIR="/opt/sadmin" 
                  fi 
-            else sadm_write "  - $SADM_ERROR Couldn't get /etc/environment on ${server_name}.\n"
-                 sadm_write "  - Assuming /opt/sadmin\n" 
-                 sadm_write "  - Check SSH Connection to ${server_name}\n" 
+            else sadm_write "  $SADM_ERROR Couldn't get /etc/environment on ${server_name}.\n"
+                 sadm_write "  Assuming /opt/sadmin\n" 
+                 sadm_write "  Check SSH Connection to ${server_name}\n" 
                  ERROR_COUNT=$(($ERROR_COUNT+1))
                  RDIR="/opt/sadmin" 
         fi
@@ -302,7 +303,7 @@ process_servers()
         fi
         RC=$?
         if [ $RC -ne 0 ]
-           then sadm_write "  - $SADM_ERROR $RC for $server_name \n"
+           then sadm_write "$SADM_ERROR $RC for $server_name \n"
                 ERROR_COUNT=$(($ERROR_COUNT+1))
         fi
         if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write "Error Count is now at $ERROR_COUNT \n" ;fi
