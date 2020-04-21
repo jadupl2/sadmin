@@ -47,6 +47,7 @@
 #@2020_02_23 Fix: v3.3 Fix some problem installing lsb_release and typo with 'dnf' command..
 #@2020_02_23 Fix: v3.3 Fix some problem installing lsb_release and typo with 'dnf' command..
 #@2020_04_19 Update: v3.4 Minor logging changes.
+#@2020_04_21 Update: v3.5 On RHEL/CENTOS 8 hwinfo package remove from base, use EPEL repo.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -55,7 +56,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.4'                              ; export SADM_VER           # Your Script Version
+SADM_VER='3.5'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -96,7 +97,7 @@ add_epel_repo()
     # Add EPEL Repository on Redhat / CentOS 5 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 5 ] 
         then if [ ! -r /etc/yum.repos.d/epel.repo ] 
-                then echo " "; echo "Adding CentOS/Redhat V5 EPEL repository ..." |tee -a $SLOG
+                then printf "\nAdding CentOS/Redhat V5 EPEL repository ..." |tee -a $SLOG
                      EPEL="https://archives.fedoraproject.org/pub/archive/epel/epel-release-latest-5.noarch.rpm"
                      yum install -y $EPEL >>$SLOG 2>&1
                      if [ $? -ne 0 ]
@@ -116,7 +117,7 @@ add_epel_repo()
     # Add EPEL Repository on Redhat / CentOS 6 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 6 ] 
         then if [ ! -r /etc/yum.repos.d/epel.repo ] 
-                then echo "Adding CentOS/Redhat V6 EPEL repository ..." |tee -a $SLOG
+                then printf "\nAdding CentOS/Redhat V6 EPEL repository ..." |tee -a $SLOG
                      EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm"
                      yum install -y $EPEL >>$SLOG 2>&1
                      if [ $? -ne 0 ]
@@ -136,7 +137,7 @@ add_epel_repo()
     # Add EPEL Repository on Redhat / CentOS 7 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 7 ] 
         then if [ ! -r /etc/yum.repos.d/epel.repo ] 
-                then echo "Adding CentOS/Redhat V7 EPEL repository ..." |tee -a $SLOG
+                then printf "\nAdding CentOS/Redhat V7 EPEL repository ..." |tee -a $SLOG
                      EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
                      yum install -y $EPEL >>$SLOG 2>&1
                      if [ $? -ne 0 ]
@@ -155,7 +156,7 @@ add_epel_repo()
 
     # Add EPEL Repository on Redhat / CentOS 8 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 8 ] 
-        then echo "Adding CentOS/Redhat V8 EPEL repository (Disable by default) ..." |tee -a $SLOG
+        then printf "\nAdding CentOS/Redhat V8 EPEL repository (Disable by default) ..." |tee -a $SLOG
              EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
              yum install -y $EPEL >>$SLOG 2>&1
              if [ $? -ne 0 ]
@@ -188,8 +189,9 @@ add_epel_repo()
              # On CentOS 8 it is recommended to also enable the PowerTools repository since EPEL 
              # packages may depend on packages from it:
              if [ "$SADM_OSNAME" = "CENTOS" ] 
-                then echo "On CentOS 8, it is recommended to also enable the PowerTools ..."  
+                then printf "On CentOS 8, it's recommended to also enable the EPEL PowerTools Repo. "  
                      dnf config-manager --set-enabled PowerTools
+                     printf " Done \n"
              fi
 
     fi
@@ -315,7 +317,7 @@ check_python3()
 
 
 #===================================================================================================
-#     Check if lsb_release command is installed, if not install it, if can't then abort script 
+# Make sure hostname is in /etc/hosts
 #===================================================================================================
 check_hostname()
 {
@@ -355,7 +357,7 @@ check_lsb_release()
     fi                                                                  # Only available on Linux
 
     # Make sure lsb_release is installed
-    echo -n "Checking if 'lsb_release' is available ... " | tee -a $SLOG
+    printf "Checking if 'lsb_release' is available ... " | tee -a $SLOG
     which lsb_release > /dev/null 2>&1
     if [ $? -eq 0 ] ; then echo " Done " | tee -a $SLOG ; return ; fi 
 
