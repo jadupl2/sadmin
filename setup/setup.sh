@@ -48,6 +48,7 @@
 #@2020_02_23 Fix: v3.3 Fix some problem installing lsb_release and typo with 'dnf' command..
 #@2020_04_19 Update: v3.4 Minor logging changes.
 #@2020_04_21 Update: v3.5 On RHEL/CENTOS 8 hwinfo package remove from base, use EPEL repo.
+#@2020_04_21 Update: v3.6 Change processing display & change installation dnf-utils for yum-utils.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -56,7 +57,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.5'                              ; export SADM_VER           # Your Script Version
+SADM_VER='3.6'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -165,10 +166,10 @@ add_epel_repo()
                 else echo " [ OK ]"
              fi
              #
-             rpm -qi dnf-utils >/dev/null 2>&1                          # Check dns-utils is install
+             rpm -qi yum-utils >/dev/null 2>&1                          # Check dns-utils is install
              if [ $? -ne 0 ] 
-                then printf "\nInstalling dnf-utils" | tee -a $LOG
-                     dnf install -y dnf-utils >>$SLOG 2>&1
+                then printf "\nInstalling yum-utils ... \n" | tee -a $LOG
+                     dnf install -y yum-utils >>$SLOG 2>&1
              fi
              #
              echo "Disabling EPEL Repository, will activate it only when needed." |tee -a $SLOG
@@ -310,7 +311,7 @@ check_python3()
                      echo "Then run this script again." | tee -a $SLOG 
                      echo "----------" | tee -a $SLOG
                      exit 1
-                else echo " [ OK ] Module installed." | tee -a $SLOG
+                else echo " [ OK ] " | tee -a $SLOG
              fi
     fi
     return 0                                                            # Return No Error to Caller
@@ -344,7 +345,7 @@ check_hostname()
     cp /tmp/hosts.$$ /etc/hosts ; chmod 644 /etc/hosts ; chown root:root /etc/hosts 
     rm -f /tmp/hosts.$$
     
-    echo " Done " | tee -a $SLOG
+    echo " [ OK ] " | tee -a $SLOG
 }
 
 #===================================================================================================
@@ -360,7 +361,7 @@ check_lsb_release()
     # Make sure lsb_release is installed
     printf "Checking if 'lsb_release' is available ... " | tee -a $SLOG
     which lsb_release > /dev/null 2>&1
-    if [ $? -eq 0 ] ; then echo " Done " | tee -a $SLOG ; return ; fi 
+    if [ $? -eq 0 ] ; then echo " [ OK ] " | tee -a $SLOG ; return ; fi 
 
     echo "[lsb_release] is not installed." | tee -a $SLOG
     echo -n "Installing lsb_release ... " | tee -a $SLOG
