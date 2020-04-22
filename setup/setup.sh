@@ -300,7 +300,7 @@ check_python3()
     printf "\nCheck if python3 'pymsql' module is installed ..." | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
-        then echo " [ OK ] Module already installed." | tee -a $SLOG
+        then echo " [ OK ] " | tee -a $SLOG
         else echo "Installing python3 'pymsql' module." 
              pip3 install pymysql  > /dev/null 2>&1
              if [ $? -ne 0 ]
