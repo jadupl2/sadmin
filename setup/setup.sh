@@ -105,7 +105,7 @@ add_epel_repo()
                              return 1
                      fi
              fi 
-             echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
+             echo "Disabling EPEL Repository, will activate it only when needed." |tee -a $SLOG
              yum-config-manager --disable epel >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
@@ -125,7 +125,7 @@ add_epel_repo()
                              return 1
                      fi
              fi 
-             echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
+             echo "Disabling EPEL Repository, will activate it only when needed." |tee -a $SLOG
              yum-config-manager --disable epel >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
@@ -145,7 +145,7 @@ add_epel_repo()
                              return 1
                      fi
              fi 
-             echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
+             echo "Disabling EPEL Repository, will activate it only when needed." |tee -a $SLOG
              yum-config-manager --disable epel >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
@@ -162,15 +162,16 @@ add_epel_repo()
              if [ $? -ne 0 ]
                 then echo "[Error] Adding EPEL repository." |tee -a $SLOG
                      return 1
+                else echo " [ OK ]"
              fi
              #
              rpm -qi dnf-utils >/dev/null 2>&1                          # Check dns-utils is install
              if [ $? -ne 0 ] 
-                then echo "Installing dnf-utils" | tee -a $LOG
+                then printf "\nInstalling dnf-utils" | tee -a $LOG
                      dnf install -y dnf-utils >>$SLOG 2>&1
              fi
              #
-             echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
+             echo "Disabling EPEL Repository, will activate it only when needed." |tee -a $SLOG
              dnf config-manager --set-disabled epel >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
@@ -191,7 +192,7 @@ add_epel_repo()
              if [ "$SADM_OSNAME" = "CENTOS" ] 
                 then printf "On CentOS 8, it's recommended to also enable the EPEL PowerTools Repo. "  
                      dnf config-manager --set-enabled PowerTools
-                     printf " Done \n"
+                     printf " [ OK ] \n"
              fi
 
     fi
@@ -276,10 +277,10 @@ check_python3()
     # python3 should now be installed, if not then install it or abort installation
     which python3 > /dev/null 2>&1
     if [ $? -eq 0 ]
-        then echo "[OK] python3 is installed." | tee -a $SLOG
+        then echo " [ OK ] " | tee -a $SLOG
         else echo "Python3 is not installed."  | tee -a $SLOG
              install_python3 
-             echo "[OK] python3 is installed." | tee -a $SLOG
+             echo " [ OK ]" | tee -a $SLOG
     fi
 
     # Check if pip3 is installed 
@@ -288,17 +289,17 @@ check_python3()
     # pip3 should be installed, if not then install it or abort installation
     which pip3 > /dev/null 2>&1
     if [ $? -eq 0 ]
-        then echo "[OK] pip3 is installed." | tee -a $SLOG
-        else echo "Pip3 is not installed."  | tee -a $SLOG
+        then echo " [ OK ]" | tee -a $SLOG
+        else echo " Pip3 is not installed."  | tee -a $SLOG
              install_pip3
-             echo "[OK] pip3 is installed." | tee -a $SLOG
+             echo " [ OK ]" | tee -a $SLOG
     fi
    
     # Check if python3 'pymsql' module is installed 
     printf "\nCheck if python3 'pymsql' module is installed ..." | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
-        then echo "[OK] Module already installed." | tee -a $SLOG
+        then echo " [ OK ] Module already installed." | tee -a $SLOG
         else echo "Installing python3 'pymsql' module." 
              pip3 install pymysql  > /dev/null 2>&1
              if [ $? -ne 0 ]
@@ -309,7 +310,7 @@ check_python3()
                      echo "Then run this script again." | tee -a $SLOG 
                      echo "----------" | tee -a $SLOG
                      exit 1
-                else echo "[OK] Module installed." | tee -a $SLOG
+                else echo " [ OK ] Module installed." | tee -a $SLOG
              fi
     fi
     return 0                                                            # Return No Error to Caller
