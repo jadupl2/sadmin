@@ -174,7 +174,7 @@ add_epel_repo()
              if [ $? -ne 0 ] 
                 then printf "Installing yum-utils ... " | tee -a $LOG
                      dnf install -y yum-utils >>$SLOG 2>&1
-                     rpm -qi yum-utils >/dev/null >>$LOG 2>&1           # Check dns-utils is install
+                     rpm -qi yum-utils >>$LOG 2>&1                      # dns-utils now installed ?
                      if [ $? -ne 0 ] 
                         then printf "[ WARNING ] Problem installing yum-utils ... \n" | tee -a $LOG
                         else echo " [ OK ] "
@@ -375,26 +375,24 @@ check_lsb_release()
     # Make sure lsb_release is installed
     printf "Checking if 'lsb_release' is available ... " | tee -a $SLOG
     which lsb_release > /dev/null 2>&1
-    if [ $? -eq 0 ] ; then echo " [ OK ] " | tee -a $SLOG ; return ; fi 
+    if [ $? -eq 0 ] ; then echo "[ OK ] " | tee -a $SLOG ; return ; fi 
 
-    echo "[lsb_release] is not installed." | tee -a $SLOG
-    echo -n "Installing lsb_release ... " | tee -a $SLOG
+    printf "Installing lsb_release ... " | tee -a $SLOG
     
     which yum >/dev/null 2>&1
     if [ $? -eq 0 ] 
-        then echo "Running 'yum -y install redhat-lsb-core' ..." >>$SLOG
+        then echo "'yum -y install redhat-lsb-core' ..." >>$SLOG
              yum -y install redhat-lsb-core >>$SLOG  2>&1 
     fi 
     which dnf >/dev/null 2>&1
     if [ $? -eq 0 ] 
-        then echo "Running 'dnf -y install redhat-lsb-core' ..." >>$SLOG
+        then echo "'dnf -y install redhat-lsb-core' ..." >>$SLOG
              dnf -y install redhat-lsb-core >>$SLOG  2>&1
     fi 
     which apt-get >/dev/null 2>&1
     if [ $? -eq 0 ] 
-        then echo "Running 'apt-get update'" >> $SLOG
-             apt-get update >/dev/null 2>&1
-             echo "Running apt-get -y install lsb-release'" >>$SLOG
+        then apt-get update >/dev/null 2>&1
+             echo "'apt-get -y install lsb-release'" >>$SLOG
              apt-get -y install lsb-release >>$SLOG 2>&1
     fi 
     
@@ -408,6 +406,7 @@ check_lsb_release()
              echo "Then run this script again." | tee -a $SLOG 
              echo "----------" | tee -a $SLOG
              exit 1
+        else echo " [ OK ]"
     fi
 
     return 0
