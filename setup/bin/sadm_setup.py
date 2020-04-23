@@ -1449,7 +1449,7 @@ def update_apache_config(sroot,sfile,sname,svalue):
     wtmp_file = "%s/tmp/apache.tmp" % (sroot)                           # Tmp Apache config file
     wbak_file = "%s/tmp/apache.bak" % (sroot)                           # Backup Apache config file
     if (DEBUG) :
-        writelog ("Update_apache_config - sfile=%s - sname=%s - svalue=%s\n" % (sfile,sname,svalue))
+        writelog ("Update_apache_config - sroot=%s - sfile=%s - sname=%s - svalue=%s\n" % (sroot,sfile,sname,svalue))
         writelog ("\nsfile=%s\nwtmp_file=%s\nwbak_file=%s" % (sfile,wtmp_file,wbak_file))
 
     fi = open(sfile,'r')                                                # Current Apache Input File
