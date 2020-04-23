@@ -98,7 +98,7 @@ add_epel_repo()
     # Add EPEL Repository on Redhat / CentOS 5 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 5 ] 
         then if [ ! -r /etc/yum.repos.d/epel.repo ] 
-                then printf "\nAdding CentOS/Redhat V5 EPEL repository ..." |tee -a $SLOG
+                then printf "Adding CentOS/Redhat V5 EPEL repository ..." |tee -a $SLOG
                      EPEL="https://archives.fedoraproject.org/pub/archive/epel/epel-release-latest-5.noarch.rpm"
                      yum install -y $EPEL >>$SLOG 2>&1
                      if [ $? -ne 0 ]
@@ -118,7 +118,7 @@ add_epel_repo()
     # Add EPEL Repository on Redhat / CentOS 6 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 6 ] 
         then if [ ! -r /etc/yum.repos.d/epel.repo ] 
-                then printf "\nAdding CentOS/Redhat V6 EPEL repository ..." |tee -a $SLOG
+                then printf "Adding CentOS/Redhat V6 EPEL repository ..." |tee -a $SLOG
                      EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm"
                      yum install -y $EPEL >>$SLOG 2>&1
                      if [ $? -ne 0 ]
@@ -138,7 +138,7 @@ add_epel_repo()
     # Add EPEL Repository on Redhat / CentOS 7 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 7 ] 
         then if [ ! -r /etc/yum.repos.d/epel.repo ] 
-                then printf "\nAdding CentOS/Redhat V7 EPEL repository ..." |tee -a $SLOG
+                then printf "Adding CentOS/Redhat V7 EPEL repository ..." |tee -a $SLOG
                      EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
                      yum install -y $EPEL >>$SLOG 2>&1
                      if [ $? -ne 0 ]
@@ -157,7 +157,7 @@ add_epel_repo()
 
     # Add EPEL Repository on Redhat / CentOS 8 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 8 ] 
-        then printf "\nAdding CentOS/Redhat V8 EPEL repository (Disable by default) ..." |tee -a $SLOG
+        then printf "Adding CentOS/Redhat V8 EPEL repository (Disable by default) ..." |tee -a $SLOG
              EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
              yum install -y $EPEL >>$SLOG 2>&1
              if [ $? -ne 0 ]
