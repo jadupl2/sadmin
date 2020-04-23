@@ -49,6 +49,7 @@
 #@2020_04_19 Update: v3.4 Minor logging changes.
 #@2020_04_21 Update: v3.5 On RHEL/CENTOS 8 hwinfo package remove from base, use EPEL repo.
 #@2020_04_21 Update: v3.6 Change processing display & change installation dnf-utils for yum-utils.
+#@2020_04_23 Update: v3.7 Added some more error checking.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -57,7 +58,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.6'                              ; export SADM_VER           # Your Script Version
+SADM_VER='3.7'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -106,11 +107,12 @@ add_epel_repo()
                              return 1
                      fi
              fi 
-             echo "Disabling EPEL Repository, will activate it only when needed." |tee -a $SLOG
+             printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
              yum-config-manager --disable epel >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
                      return 1
+                else echo "[ OK ]"
              fi 
              return 0
     fi
@@ -126,11 +128,12 @@ add_epel_repo()
                              return 1
                      fi
              fi 
-             echo "Disabling EPEL Repository, will activate it only when needed." |tee -a $SLOG
+             printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
              yum-config-manager --disable epel >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
                      return 1
+                else echo "[ OK ]"
              fi 
              return 0
     fi
@@ -146,11 +149,12 @@ add_epel_repo()
                              return 1
                      fi
              fi 
-             echo "Disabling EPEL Repository, will activate it only when needed." |tee -a $SLOG
+             printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
              yum-config-manager --disable epel >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
                      return 1
+                else echo "[ OK ]"
              fi 
              return 0
     fi
@@ -168,16 +172,23 @@ add_epel_repo()
              #
              rpm -qi yum-utils >/dev/null 2>&1                          # Check dns-utils is install
              if [ $? -ne 0 ] 
-                then printf "\nInstalling yum-utils ... \n" | tee -a $LOG
+                then printf "Installing yum-utils ... " | tee -a $LOG
                      dnf install -y yum-utils >>$SLOG 2>&1
+                     rpm -qi yum-utils >/dev/null >>$LOG 2>&1           # Check dns-utils is install
+                     if [ $? -ne 0 ] 
+                        then printf "[ WARNING ] Problem installing yum-utils ... \n" | tee -a $LOG
+                        else echo " [ OK ] "
+                     fi
              fi
              #
-             echo "Disabling EPEL Repository, will activate it only when needed." |tee -a $SLOG
-             dnf config-manager --set-disabled epel >/dev/null 2>&1
+             printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
+             yum-config-manager --disable epel >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
                      return 1
+                else echo "[ OK ]"
              fi 
+             return 0
              #
              # On RHEL 8 it is required to also enable the codeready-builder-for-rhel-8-*-rpms 
              # repository since EPEL packages may depend on packages from it:
@@ -191,11 +202,14 @@ add_epel_repo()
              # On CentOS 8 it is recommended to also enable the PowerTools repository since EPEL 
              # packages may depend on packages from it:
              if [ "$SADM_OSNAME" = "CENTOS" ] 
-                then printf "On CentOS 8, it's recommended to also enable the EPEL PowerTools Repo. "  
+                then printf "On CentOS 8, it's recommended to also enable the EPEL PowerTools Repository.\n"  
+                     print "dnf config-manager --set-enabled PowerTools" 
                      dnf config-manager --set-enabled PowerTools
-                     printf " [ OK ] \n"
+                     if [ $? -ne 0 ]
+                        then echo "[ WARNING ] Couldn't enable EPEL PowerTools repository." | tee -a $SLOG
+                        else echo " [ OK ]"
+                     fi 
              fi
-
     fi
 
     return 0 
@@ -297,11 +311,11 @@ check_python3()
     fi
    
     # Check if python3 'pymsql' module is installed 
-    printf "Check if python3 'pymsql' module is installed ..." | tee -a $SLOG
+    printf "Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
-        then echo " [ OK ] " | tee -a $SLOG
-        else echo "Installing python3 'pymsql' module." 
+        then echo "[ OK ] " | tee -a $SLOG
+        else printf "Installing module " 
              pip3 install pymysql  > /dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo " " | tee -a $SLOG
@@ -345,7 +359,7 @@ check_hostname()
     cp /tmp/hosts.$$ /etc/hosts ; chmod 644 /etc/hosts ; chown root:root /etc/hosts 
     rm -f /tmp/hosts.$$
     
-    echo " [ OK ] " | tee -a $SLOG
+    echo "[ OK ] " | tee -a $SLOG
 }
 
 #===================================================================================================
@@ -470,6 +484,7 @@ EOF
     # Ok Python3 and lsb_release command are installed - Proceeed with Main Setup Script
     echo "We will now proceed with main setup program ($SCRIPT)" >> $SLOG 
     echo "All Verifications done ..." >> $SLOG
+    echo "---------------------------------------------------------------------------"| tee -a $SLOG
     echo -e "\n" | tee -a $SLOG                                         # Blank Lines
     $SCRIPT 
 
