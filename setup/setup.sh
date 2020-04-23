@@ -50,7 +50,7 @@
 #@2020_04_21 Update: v3.5 On RHEL/CENTOS 8 hwinfo package remove from base, use EPEL repo.
 #@2020_04_21 Update: v3.6 Change processing display & change installation dnf-utils for yum-utils.
 #@2020_04_23 Update: v3.7 Added some more error checking.
-#@2020_04_23 Fix: v3.8 Fix after Re-Tested on CentOS/RedHat 8 
+#@2020_04_23 Fix: v3.8a Fix after Re-Tested on CentOS/RedHat 8 
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -59,7 +59,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.8'                              ; export SADM_VER           # Your Script Version
+SADM_VER='3.8a'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -171,15 +171,17 @@ add_epel_repo()
                 else echo " [ OK ]"
              fi
              #
+             printf "Checking if 'yum-utils' is installed ... "
              rpm -qi yum-utils >/dev/null 2>&1                          # Check dns-utils is install
              if [ $? -ne 0 ] 
-                then printf "Installing yum-utils ... " | tee -a $LOG
+                then printf "Installing " | tee -a $LOG
                      dnf install -y yum-utils >>$LOG 2>&1
                      rpm -qi yum-utils >/dev/null 2>&1                  # dns-utils now installed ?
                      if [ $? -ne 0 ] 
-                        then printf "[ WARNING ] Problem installing yum-utils\n" | tee -a $LOG
+                        then echo "[ WARNING ] Problem installing 'yum-utils'." | tee -a $LOG
                         else echo " [ OK ] "
                      fi
+                else echo " [ OK ] "
              fi
              #
              printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
