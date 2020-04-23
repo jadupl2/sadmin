@@ -72,6 +72,7 @@
 #@2020_03_16 Update: v3.35 Set default alert group to sysadmin email in .alert_group.cfg. 
 #@2020_04_19 Update: v3.36 Minor adjustments.
 #@2020_04_21 Update: v3.37 Add syslinux,genisomage,rear packages req. & hwinfo to EPEL(RHEL/CentOS8)
+#@2020_04_23 Update: v3.38 Fix Renaming Apache config error.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -88,7 +89,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.37"                                            # Setup Version Number
+sver                = "3.38"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1446,8 +1447,11 @@ def update_apache_config(sroot,sfile,sname,svalue):
     svalue {[string]}   --  [Variable New value]
     """    
 
-    wtmp_file = "%s/tmp/apache.tmp" % (sroot)                           # Tmp Apache config file
-    wbak_file = "%s/tmp/apache.bak" % (sroot)                           # Backup Apache config file
+    dirname = os.path.dirname(sfile)
+    wtmp_file = "%s/apache.tmp" % (dirname)                             # Tmp Apache config file
+    wbak_file = "%s/apache.bak" % (dirname)                             # Backup Apache config file
+#    wtmp_file = "%s/tmp/apache.tmp" % (sroot)                           # Tmp Apache config file
+#    wbak_file = "%s/tmp/apache.bak" % (sroot)                           # Backup Apache config file
     if (DEBUG) :
         writelog ("Update_apache_config - sroot=%s - sfile=%s - sname=%s - svalue=%s\n" % (sroot,sfile,sname,svalue))
         writelog ("\nsfile=%s\nwtmp_file=%s\nwbak_file=%s" % (sfile,wtmp_file,wbak_file))
