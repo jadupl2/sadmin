@@ -166,7 +166,7 @@ add_epel_repo()
              yum install -y $EPEL >>$SLOG 2>&1
              if [ $? -ne 0 ]
                 then echo "[Error] Adding EPEL repository." |tee -a $SLOG
-                     return 1
+                     return 1 
                 else echo " [ OK ]"
              fi
              #
@@ -176,7 +176,7 @@ add_epel_repo()
                      dnf install -y yum-utils >>$SLOG 2>&1
                      rpm -qi yum-utils >>$LOG 2>&1                      # dns-utils now installed ?
                      if [ $? -ne 0 ] 
-                        then printf "[ WARNING ] Problem installing yum-utils ... \n" | tee -a $LOG
+                        then printf "[ WARNING ] Problem installing yum-utils\n" | tee -a $LOG
                         else echo " [ OK ] "
                      fi
              fi
