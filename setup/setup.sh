@@ -273,7 +273,7 @@ install_pip3()
 check_python3()
 {
     # Check if python3 is installed 
-    printf "\nCheck if python3 is installed ..." | tee -a $SLOG
+    printf "Check if python3 is installed ..." | tee -a $SLOG
 
     # python3 should now be installed, if not then install it or abort installation
     which python3 > /dev/null 2>&1
@@ -285,7 +285,7 @@ check_python3()
     fi
 
     # Check if pip3 is installed 
-    printf "\nCheck if pip3 is installed ..." | tee -a $SLOG
+    printf "Check if pip3 is installed ..." | tee -a $SLOG
 
     # pip3 should be installed, if not then install it or abort installation
     which pip3 > /dev/null 2>&1
@@ -297,7 +297,7 @@ check_python3()
     fi
    
     # Check if python3 'pymsql' module is installed 
-    printf "\nCheck if python3 'pymsql' module is installed ..." | tee -a $SLOG
+    printf "Check if python3 'pymsql' module is installed ..." | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo " [ OK ] " | tee -a $SLOG
@@ -323,7 +323,7 @@ check_python3()
 #===================================================================================================
 check_hostname()
 {
-    printf "\nMaking sure server is defined in /etc/hosts ... " | tee -a $SLOG
+    printf "Making sure server is defined in /etc/hosts ... " | tee -a $SLOG
 
     # Get current IP Address of Server
     S_IPADDR=`ip addr show | grep global | head -1 | awk '{ print $2 }' |awk -F/ '{ print $1 }'`
