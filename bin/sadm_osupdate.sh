@@ -295,7 +295,7 @@ check_available_update()
                 then sadm_write "[Error] while cleaning apt cache, return code ${rc}\n" 
                 else sadm_write "[OK] APT cache is now cleaned.\n" 
             fi
-            sadm_write "\nBuilding a fresh APT cache, with 'apt-get update'\n" # Update apt cache
+            sadm_write "\nUpdate the APT package repository cache with 'apt-get update'\n" 
             apt-get update  >> $SADM_LOG 2>&1                           # Updating the apt-cache
             rc=$?                                                       # Save Exit Code
             if [ "$rc" -ne 0 ]
