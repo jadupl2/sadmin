@@ -43,6 +43,7 @@
 # 2020_01_20 Update: v2.15 Add Option -s to sync the $SADMIN/sys of SADMIN server to all clients.
 # 2020_01_26 Update: v2.16 Add Option -c [hostname]  to sync of SADMIN server version to one client.
 #@2020_03_04 Update: v2.17 Script was rename from sadm_rsync_sadmin.sh to sadm_push_sadmin.sh
+#@2020_04_23 Update: v2.18 Replace sadm_writelog by sadm_write & enhance log output.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -73,7 +74,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.17'                              # Your Current Script Version
+    export SADM_VER='2.18'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -137,9 +138,9 @@ create_remote_dir()
 {
     # Parameters received should always by two - If not write error to log and return to caller
     if [ $# -ne 2 ]
-        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters"
-             sadm_writelog "Function received $* and that isn't valid"
-             sadm_writelog "Should received 'ServerName' and 'Remote Directory'"
+        then sadm_write "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters.\n"
+             sadm_write "Function received $* and that isn't valid.\n"
+             sadm_write "Should received 'ServerName' and 'Remote Directory'\n"
              return 1
     fi
     REM_SERVER=$1                                                       # Remote server Name FQDN
@@ -147,7 +148,7 @@ create_remote_dir()
 
     # List Directory Received on the remote server
     if [ $SADM_DEBUG -gt 8 ]                                           # If Debug is Activated
-        then sadm_writelog "$SADM_SSH_CMD ${REM_SERVER} ls -l ${REM_DIR}"
+        then sadm_write "$SADM_SSH_CMD ${REM_SERVER} ls -l ${REM_DIR}\n"
     fi
     # ssh -n ${REM_SERVER} ls -l ${REM_DIR} >/dev/null 2>&1
     $SADM_SSH_CMD ${REM_SERVER} ls -l ${REM_DIR} >/dev/null 2>&1
@@ -155,7 +156,7 @@ create_remote_dir()
     
     # If SSH Connection is OK and Directory exist on server, then OK
     if [ $RC -eq 0 ]
-        then sadm_writelog "[ OK ] Directory ${REM_DIR} exist on ${REM_SERVER}"
+        then sadm_write "[ OK ] Directory ${REM_DIR} exist on ${REM_SERVER}\n"
              return 0
     fi 
 
@@ -164,15 +165,15 @@ create_remote_dir()
         then #ssh ${REM_SERVER} "mkdir -p ${REM_DIR}" >/dev/null 2>&1
              $SADM_SSH_CMD  ${REM_SERVER} "mkdir -p ${REM_DIR}" >/dev/null 2>&1
              if [ $RC -eq 0 ] || [ $RC -eq 2 ]
-                then sadm_writelog "[ OK ] Directory ${REM_DIR} exist on ${REM_SERVER}"
+                then sadm_write "[ OK ] Directory ${REM_DIR} exist on ${REM_SERVER}\n"
                      RC=0
                      return 0
-                else sadm_writelog "[ ERROR $RC ] Couldn't create directory ${REM_DIR} on ${REM_SERVER}"
+                else sadm_write "$SADM_ERROR ($RC) Couldn't create directory ${REM_DIR} on ${REM_SERVER}\n"
                      return 1
              fi
     fi 
     
-    sadm_writelog "[ ERROR ] Couldn't check existence of ${REM_DIR} on ${REM_SERVER}"
+    sadm_write "$SADM_ERROR Couldn't check existence of ${REM_DIR} on ${REM_SERVER}\n"
     return 1
 }
 
@@ -185,10 +186,6 @@ create_remote_dir()
 process_servers()
 {
     WOSTYPE=$1                                                          # Should be aix or linux
-    #sadm_writelog " "
-    #sadm_writelog "${SADM_FIFTY_DASH}"
-    #sadm_writelog "Processing all active server(s)"
-    #sadm_writelog " "
 
     # MySQL Select All Actives Servers (Except SADMIN Server) & output result in $SADM_TMP_FILE.
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_sadmin_dir"
@@ -201,31 +198,31 @@ process_servers()
     #SQL="${SQL} where srv_active = True and srv_name <> '$SADM_HOSTNAME' "
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
     if [ $SADM_DEBUG -gt 5 ] 
-       then sadm_writelog ""
-            sadm_writelog "SQL = ${SQL}"
+       then sadm_write "\n"
+            sadm_write "SQL = ${SQL}\n"
     fi
     
     # Setup Database Authentication
     WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/,/'" # Build CmdLine
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
 
     # Execute SQL to Select Active servers Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
     if [ $SADM_DEBUG -gt 5 ] 
-        then sadm_writelog ""
-             sadm_writelog "List of actives servers to process" 
-             cat $SADM_TMP_FILE1 | while read wline ; do sadm_writelog "$wline"; done
-             sadm_writelog ""
+        then sadm_write "\n"
+             sadm_write "List of actives servers to process.\n" 
+             cat $SADM_TMP_FILE1 | while read wline ; do sadm_write "${wline}\n"; done
+             sadm_write "\n"
     fi      
 
     xcount=0; ERROR_COUNT=0;                                            # Reset Server/Error Counter
 
     # If file has a zero length, return to caller, nothing to process
         if [ ! -s "$SADM_TMP_FILE1" ]                                   # File has a zero length?
-        then sadm_writelog " "                                          # Nothing to process
-             sadm_writelog "${SADM_TEN_DASH}"                           # Terminate dash line
+        then sadm_write "\n"                                            # Nothing to process
+             sadm_write "${SADM_TEN_DASH}\n"                            # Terminate dash line
              return $ERROR_COUNT                                        # Return to caller RC=0
     fi
 
@@ -241,24 +238,24 @@ process_servers()
         server_dir=`     echo $wline|awk -F, '{ print $6 }'`            # Client SADMIN Install Dir.
         server_fqdn=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
         
-        sadm_writelog " "                                               # Blank Line
-        sadm_writelog "${SADM_TEN_DASH}"
-        sadm_writelog "Processing ($xcount) $server_fqdn"               # Show ServerName Processing
+        sadm_write "\n"                                                 # Blank Line
+        sadm_write "${SADM_TEN_DASH}\n"
+        sadm_write "Processing ($xcount) $server_fqdn \n"               # Show ServerName Processing
         
         # In Debug Mode Display if the server is defined as Sporadic.
-        if [ $SADM_DEBUG -gt 3 ]                                       # If Debug is Activated
-          then if [ "$server_sporadic" == "1" ]
-                      then sadm_writelog "Server defined as sporadically available"
-                      else sadm_writelog "Server always available (Not Sporadic)"
+        if [ $SADM_DEBUG -gt 3 ]                                        # If Debug is Activated
+          then if [ "$server_sporadic" == "1" ]                         # If it's a Sporadic System
+                    then sadm_write "Server defined as sporadically available.\n"
+                    else sadm_write "Server always available (Not Sporadic).\n"
                fi
         fi
 
         # if Can't resolve server name (Get IP of server), signal Error and proceed with next server
         if ! host $server_fqdn >/dev/null 2>&1
            then SMSG="[ ERROR ] Can't process '$server_fqdn', hostname can't be resolved."
-                sadm_writelog "$SMSG"                                   # Advise user
+                sadm_write "${SMSG}\n"                                  # Advise user
                 ERROR_COUNT=$(($ERROR_COUNT+1))                         # Consider Error -Incr Cntr
-                sadm_writelog "Total Error(s) now at $ERROR_COUNT"      # Show Error count
+                sadm_write "Total Error(s) now at ${ERROR_COUNT}\n"     # Show Error count
                 continue                                                # skip this server
         fi
 
@@ -266,7 +263,7 @@ process_servers()
         $SADM_SSH_CMD $server_fqdn date > /dev/null 2>&1                # SSH to Server for date
         RC=$?                                                           # Save Error Number
         if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "1" ]              # SSH don't work & Sporadic
-           then sadm_writelog "[ WARNING ] Can't SSH to sporadic server $server_fqdn"
+           then sadm_write "$SADM_WARNING Can't SSH to sporadic server ${server_fqdn}\n"
                 continue                                                # Go process next server
         fi
 
@@ -281,10 +278,10 @@ process_servers()
                   if [ $RC -ne 0 ]                                      # If Error doing ssh
                       then if [ $RETRY -lt 3 ]                          # If less than 3 retry
                               then MSG="[ RETRY $RETRY ] $SADM_SSH_CMD $server_fqdn date"
-                                   sadm_writelog "$MSG"                 # Show Retry Count to User
+                                   sadm_write "${MSG}\n"                # Show Retry Count to User
                               else break                                # Break out after 3 attempts
                            fi
-                      else sadm_writelog "[ OK ] $SADM_SSH_CMD $server_fqdn date" # Finally went OK
+                      else sadm_write "$SADM_OK $SADM_SSH_CMD $server_fqdn date \n" # Finally OK
                            break                                        # Break out of loop RC=0
                   fi
                   done
@@ -292,13 +289,13 @@ process_servers()
 
         # IF THE THREE SSH ATTEMPT FAILED, ISSUE ERROR MESSAGE AND CONTINUE WITH NEXT SERVER
         if [ $RC -ne 0 ]   
-           then SMSG="[ ERROR ] Can't SSH to server '${server_fqdn}'"  
-                sadm_writelog "$SMSG"                                   # Display Error Msg
+           then SMSG="$SADM_ERROR Can't SSH to server '${server_fqdn}'\n"  
+                sadm_write "${SMSG}\n"                                  # Display Error Msg
                 ERROR_COUNT=$(($ERROR_COUNT+1))                         # Consider Error -Incr Cntr
-                sadm_writelog "Total Error(s) now at $ERROR_COUNT"      # Show Error count
+                sadm_write "Total Error(s) now at ${ERROR_COUNT}\n"     # Show Error count
                 continue                                                # Continue with next server
         fi
-        sadm_writelog "[ OK ] SSH to $server_fqdn"                      # Good SSH Work
+        sadm_write "$SADM_OK SSH to $server_fqdn"                       # Good SSH Work
 
         # Get the remote /etc/environment file to determine where SADMIN is install on remote
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}"
@@ -309,51 +306,31 @@ process_servers()
         if [ $? -eq 0 ]                                                 # If file was transfered
             then server_dir=`grep "^SADMIN=" $WDIR/environment |awk -F= '{print $2}'` # Set Remote Dir.
                  if [ "$server_dir" != "" ]                                   # No Remote Dir. Set
-                    then sadm_writelog "SADMIN is install in $server_dir on ${server_name}."
-                    else sadm_writelog "  - [ERROR] Couldn't get /etc/environment on ${server_name}"
+                    then sadm_write " - SADMIN is install in ${server_dir}.\n"
+                    else sadm_write " - $SADM_ERROR Couldn't get /etc/environment.\n"
                          ERROR_COUNT=$(($ERROR_COUNT+1))
-                         sadm_writelog "  - Assuming /opt/sadmin" 
-                         server_dir="/opt/sadmin" 
+                         continue
                  fi 
-            else sadm_writelog "  - [ERROR] Couldn't get /etc/environment on ${server_name}"
-                 sadm_writelog "  - Assuming /opt/sadmin" 
-                 sadm_writelog "  - Check SSH Connection to ${server_name}" 
+            else sadm_write "${SADM_ERROR} - Couldn't get /etc/environment on ${server_name}\n"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
-                 server_dir="/opt/sadmin" 
+                 #server_dir="/opt/sadmin" 
+                 sadm_write "Continue with next server.\n"
         fi
-        #if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count at $ERROR_COUNT" ;fi
-    
-
-        # ARRAY OF DIRECTORY THAT WILL BE CREATED IF THEY DON'T EXIST ON THE SADM CLIENT
-        #rem_dir_to_create=( ${server_dir}/bin ${server_dir}/sys ${server_dir}/usr/bin 
-        #                    ${server_dir}/pkg ${server_dir}/lib ${server_dir}/cfg 
-        #                    ${server_dir}/dat ${server_dir}/log ${server_dir}/tmp 
-        #                    ${server_dir}/usr/mon 
-        #                    ${server_dir}/www ${server_dir}/www/dat ${server_dir}/www/lib )
-        
-        # CREATE REMOTE DIRECTORY ON CLIENT IF THE DON'T EXIST
-        #for WDIR in "${rem_dir_to_create[@]}"
-        #  do
-        #    create_remote_dir "${server_fqdn}" "${WDIR}"                # If ! Exist create Rem Dir.
-        #    if [ $? -ne 0 ]                                             # If were not able
-        #        then sadm_writelog "[ ERROR ] Creating Dir. ${WDIR} on ${server_fqdn}"
-        #    fi
-        #  done    
 
 
         # RSYNC ARRAY OF IMPORTANT DIRECTORIES TO SADM CLIENT
         rem_std_dir_to_rsync=( bin sys pkg lib )                        # Directories array to sync
         for WDIR in "${rem_std_dir_to_rsync[@]}"
           do
-          if [ $SADM_DEBUG -gt 5 ]                                     # If Debug is Activated
-              then sadm_writelog "rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
+          if [ $SADM_DEBUG -gt 5 ]                                      # If Debug is Activated
+              then sadm_write "rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/\n"
           fi
           rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
           RC=$? 
           if [ $RC -ne 0 ]
-             then sadm_writelog "[ ERROR ] rsync error($RC) for ${server_fqdn}:${server_dir}/${WDIR}/"
+             then sadm_write "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/\n"
                   ERROR_COUNT=$(($ERROR_COUNT+1))                       # Increase Error Counter
-             else sadm_writelog "[ OK ] rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
+             else sadm_write "$SADM_OK rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/\n" 
           fi
           done             
 
@@ -363,14 +340,14 @@ process_servers()
                  for WDIR in "${rem_usr_dir_to_rsync[@]}"
                     do
                     if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
-                        then sadm_writelog "rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
+                        then sadm_write "rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/\n"
                     fi
                     rsync -ar --delete  ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
                     RC=$? 
                     if [ $RC -ne 0 ]
-                        then sadm_writelog "[ ERROR ] rsync error($RC) for ${server_fqdn}:${server_dir}/${WDIR}/"
+                        then sadm_write "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/\n"
                              ERROR_COUNT=$(($ERROR_COUNT+1))            # Increase Error Counter
-                        else sadm_writelog "[ OK ] rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
+                        else sadm_write "$SADM_OK rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/\n" 
                     fi
                     done             
         fi
@@ -378,40 +355,40 @@ process_servers()
         # RSYNC ALL DOT CONFIGURATION(TEMPLATE) FILES IN $SADMIN/CFG TO ALL ACTIVES CLIENTS
         CFG_EXCL="--exclude .dbpass --exclude .rch_conversion_done "
         if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
-            then sadm_writelog "rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/"
+            then sadm_write "rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/\n"
         fi
         rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/
         RC=$? 
         if [ $RC -ne 0 ]
-           then sadm_writelog "[ ERROR ] rsync error($RC) for ${server_fqdn}:${server_dir}/cfg/.??*"
+           then sadm_write "$SADM_ERROR ($RC) doing rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/.??*\n"
                 ERROR_COUNT=$(($ERROR_COUNT+1))            # Increase Error Counter
-           else sadm_writelog "[ OK ] rsync -ar --delete ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/" 
+           else sadm_write "$SADM_OK rsync -ar --delete ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/\n" 
         fi
 
         # IF USER CHOOSE TO RSYNC $SADMIN/SYS TO ALL ACTIVES CLIENTS, THEN DO IT HERE.
         if [ "$SYNC_SYS" = "Y" ] 
 
             then if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
-                    then sadm_writelog "rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/"
+                    then sadm_write "rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/\n"
                  fi
                  rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/
                  RC=$? 
                  if [ $RC -ne 0 ]
-                    then sadm_writelog "[ ERROR ] rsync error($RC) for ${server_fqdn}:${server_dir}/sys/"
+                    then sadm_write "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/\n"
                          ERROR_COUNT=$(($ERROR_COUNT+1))            # Increase Error Counter
-                    else sadm_writelog "[ OK ] rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/" 
+                    else sadm_write "$SADM_OK rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/\n" 
                  fi
 
             else # RSYNC STARTUP/SHUTDOWN TEMPLATE SCRIPT FILES IN $SADMIN/SYS TO ALL ACTIVES CLIENTS
                  if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
-                    then sadm_writelog "rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/"
+                    then sadm_write "rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/\n"
                  fi
                  rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/
                  RC=$? 
                  if [ $RC -ne 0 ]
-                    then sadm_writelog "[ ERROR ] rsync error($RC) for ${server_fqdn}:${server_dir}/cfg/.??*"
+                    then sadm_write "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/.??*\n"
                          ERROR_COUNT=$(($ERROR_COUNT+1))            # Increase Error Counter
-                    else sadm_writelog "[ OK ] rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/" 
+                    else sadm_write "$SADM_OK rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/\n" 
                  fi
         fi
 
@@ -430,32 +407,29 @@ process_servers()
         # RSYNC NMON WATCHER, SADMIN_MONITOR TEMPLATE SCRIPT, SERVICE RESTART SCRIPT
         rem_files_to_rsync=(usr/mon/swatch_nmon.sh usr/mon/swatch_nmon.txt 
                             usr/mon/stemplate.sh   usr/mon/srestart.sh ) 
-        sadm_writelog "---"                                             # Separation line
-        sadm_writelog "Syncing System Monitor Basic files."         # Show user what we do
         for WFILE in "${rem_files_to_rsync[@]}"                         # Loop to sync template file
           do
             if [ $SADM_DEBUG -gt 5 ]                                   # If Debug is Activated
-                  then sadm_writelog "rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}"
+                  then sadm_write "rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}\n"
             fi
-            #sadm_writelog "Sync ${SADM_BASE_DIR}/${WFILE} to ${server_fqdn}:${server_dir}/${WFILE}."
             rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}
             RC=$?
             if [ $RC -ne 0 ]
-                then sadm_writelog "[ ERROR ] rsync error($RC) for ${server_fqdn}:${server_dir}/${WFILE}"
+                then sadm_write "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_writelog "[ OK ] rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}" 
+                else sadm_write "$SADM_OK rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}\n" 
             fi
           done             
 
         # SHOW TOTAL ERROR COUNT AFTER PROCESSING EACH SERVER
         if [ "$ERROR_COUNT" -ne 0 ] 
-           then sadm_writelog "$SADM_ERROR Count At ${ERROR_COUNT}."
+           then sadm_write "$SADM_ERROR Count At ${ERROR_COUNT}.\n"
         fi
 
         done < $SADM_TMP_FILE1
 
-    sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog " "
+    sadm_write "${SADM_TEN_DASH}\n"
+    sadm_write "\n"
     return $ERROR_COUNT
 }
 
@@ -467,15 +441,15 @@ process_servers()
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN Server
-        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_write "Script can run only on SADMIN server (${SADM_SERVER}).\n"
+             sadm_write "Process aborted.\n"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
 
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by user 'root'."     # Advise User should be root
-             sadm_writelog "Process aborted."                           # Abort advise message
+        then sadm_write "Script can only be run by user 'root'.\n"      # Advise User should be root
+             sadm_write "Process aborted.\n"                            # Abort advise message
              sadm_stop 1                                                # Close/Trim Log & Upd. RCH
              exit 1                                                     # Exit To O/S
     fi
@@ -495,7 +469,7 @@ process_servers()
                        sadm_stop 1                                      # Close/Trim Log & Del PID
                        exit 1
                fi
-               sadm_writelog "Debug Level ${SADM_DEBUG} activated."     # Display Debug Level
+               sadm_write "Debug Level ${SADM_DEBUG} activated.\n"      # Display Debug Level
                ;;                                                       
             c) SYNC_CLIENT=$OPTARG                                      # Gather host name to Update
                ;;                                                       # No stop after each page
@@ -507,7 +481,7 @@ process_servers()
                ;;
             s) SYNC_SYS="Y"                                             # Sync $SADMIN/sys Dir.
                ;;
-           \?) sadm_writelog "Invalid option: -$OPTARG"                 # Invalid Option Message
+           \?) sadm_write "Invalid option: -${OPTARG}\n"                # Invalid Option Message
                help_usage                                               # Display Help Usage
                sadm_stop 1                                              # Close the shop
                exit 1                                                   # Exit with Error
