@@ -45,6 +45,7 @@
 #@2020_03_21 Update: v3.7 Show Error Total only at the end of each system processed.
 #@2020_04_05 Update: v3.8 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
 #@2020_04_21 Update: v3.9 Minor Error Message Alignment,
+#@2020_04_24 Update: v4.0 Show rsync status & solve problem if duplicate entry in /etc/environment.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -72,7 +73,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.9'                               # Your Current Script Version
+    export SADM_VER='4.0'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -241,23 +242,19 @@ process_servers()
             else cp /etc/environment ${WDIR} >/dev/null 2>&1  
         fi
         if [ $? -eq 0 ]                                                 # If file was transferred
-            then RDIR=`grep "SADMIN=" $WDIR/environment |sed 's/export //g' |awk -F= '{print $2}'`
+            then RDIR=`grep "SADMIN=" $WDIR/environment |sed 's/export //g' |awk -F= '{print $2}'|tail -1`
                  if [ "$RDIR" != "" ]                                   # No Remote Dir. Set
-                    then um1="File '/etc/environment' on ${server_name}," 
-                         umess="${um1} tell us that SADMIN was installed in ${RDIR}."
-                         sadm_write "${umess}\n" 
-                    else sadm_write "  $SADM_ERROR Couldn't get /etc/environment on ${server_name}.\n"
-                         ERROR_COUNT=$(($ERROR_COUNT+1))
-                         sadm_write "  - Assuming /opt/sadmin\n" 
-                         RDIR="/opt/sadmin" 
+                    then sadm_write "SADMIN installed in ${RDIR} on ${server_name}.\n"
+                    else sadm_write "$SADM_ERROR Couldn't get /etc/environment on ${server_name}.\n"
+                         ERROR_COUNT=$(($ERROR_COUNT+1))                # Add 1 to Error Count
+                         sadm_write "Continuing with next system.\n"    # Advise we are skipping srv
+                         continue                                       # Go process next system
                  fi 
-            else sadm_write "  $SADM_ERROR Couldn't get /etc/environment on ${server_name}.\n"
-                 sadm_write "  Assuming /opt/sadmin\n" 
-                 sadm_write "  Check SSH Connection to ${server_name}\n" 
-                 ERROR_COUNT=$(($ERROR_COUNT+1))
-                 RDIR="/opt/sadmin" 
+            else sadm_write "$SADM_ERROR Couldn't get /etc/environment on ${server_name}.\n"
+                 ERROR_COUNT=$(($ERROR_COUNT+1))                        # Add 1 to Error Count
+                 sadm_write "Continuing with next system.\n"            # Advise we are skipping srv
+                 continue                                               # Go process next system
         fi
-        #if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write "Error Count at $ERROR_COUNT \n" ;fi
     
 
 
@@ -272,15 +269,16 @@ process_servers()
         fi
         REMDIR="${RDIR}/dat/dr" 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then sadm_write "rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ \n"
+            then sadm_write "rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ "
                  rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
-            else sadm_write "rsync -ar --delete  ${REMDIR}/ $WDIR/ \n"
+            else sadm_write "rsync -ar --delete  ${REMDIR}/ $WDIR/ "
                  rsync -ar --delete ${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
         fi
         RC=$?
         if [ $RC -ne 0 ]
-           then sadm_write "  - $SADM_ERROR $RC for $server_name \n"
-                ERROR_COUNT=$(($ERROR_COUNT+1))
+            then sadm_write "$SADM_ERROR ($RC)\n"
+                 ERROR_COUNT=$(($ERROR_COUNT+1))
+            else sadm_write "${SADM_OK}\n" 
         fi
         #if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write "Error Count at $ERROR_COUNT \n" ;fi
  
@@ -296,15 +294,16 @@ process_servers()
         fi
         REMDIR="${RDIR}/dat/nmon" 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then sadm_write "rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ \n"
+            then sadm_write "rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ "
                  rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
-            else sadm_write "rsync -ar --delete ${REMDIR}/ $WDIR/ \n"
+            else sadm_write "rsync -ar --delete ${REMDIR}/ $WDIR/ "
                  rsync -ar --delete ${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
         fi
         RC=$?
         if [ $RC -ne 0 ]
-           then sadm_write "$SADM_ERROR $RC for $server_name \n"
-                ERROR_COUNT=$(($ERROR_COUNT+1))
+            then sadm_write "$SADM_ERROR ($RC)\n"
+                 ERROR_COUNT=$(($ERROR_COUNT+1))
+            else sadm_write "${SADM_OK}\n" 
         fi
         if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write "Error Count is now at $ERROR_COUNT \n" ;fi
 
