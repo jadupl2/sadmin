@@ -27,6 +27,7 @@
 # 2018_09_21 v1.3  Compact Page Layout  
 #@2019_03_30 nolog: v1.4  Small heading change
 #@2019_04_07 Update: v1.5 Show Card Manufacturer when available.
+#@2019_04_25 Update: v1.6 Remove Manufacturer since arp-scan is not used anymore (more portable).
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -35,7 +36,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load P
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head><body>,SideBar
 
-# DataTable Initialisation Function
+# DataTable Initialization Function
 ?>
 <script>
     $(document).ready(function() {
@@ -58,7 +59,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG           = False ;                                               # Debug Activated True/False
-$SVER            = "1.5" ;                                              # Current version number
+$SVER            = "1.6" ;                                              # Current version number
 $URL_HOST_INFO   = '/view/srv/sadm_view_server_info.php';               # Display Host Info URL
 $CREATE_FILE_PGM = "sadm_subnet_lookup.py";                             # Script to create in file
 $URL_IPVIEW      = '/view/net/sadm_view_subnet.php';                    # Display Subnet Network URL
@@ -141,7 +142,7 @@ function show_subnet($wsubnet,$woption,$con) {
                 echo substr ($row['net_date_ping'],0,10) ."</td>";          # that The Ping Worked
             }
             echo "\n<td class='dt-center'>" . $row['net_mac'] ."</td>";     # Show Mac Address Card
-            echo "\n<td class='dt-center'>" . $row['net_man'] ."</td>";     # Show Card Manufacturer
+            #echo "\n<td class='dt-center'>" . $row['net_man'] ."</td>";     # Show Card Manufacturer
             echo "\n<td class='dt-center'>";                                # Show Last Change Date
             echo substr ($row['net_date_update'],0,10) ."</td>";            # Of Mac,Host or Ping
             echo "\n</tr>";
@@ -160,7 +161,7 @@ function show_heading() {
     echo "<div id='SimpleTable'>";                                      # Width Given to Table
     #echo '<table id="sadmTable" class="display" cellspacing="0" style="width:80%">';   
     echo '<table id="sadmTable" class="cell-border" class="hover" compact row-border wrap width="100%">';   
-    #echo '<table id="sadmTable" class="display"      compact row-border wrap width="95%">';    
+    #echo '<table id="sadmTable" class="display"      compact row-border wrap width="85%">';    
     
     # TABLE HEADING
     echo "\n<thead>";
@@ -172,7 +173,7 @@ function show_heading() {
     #echo "\n<th class='dt-head-center'>State</th>";
     echo "\n<th class='dt-head-center'>Last ping</th>";
     echo "\n<th class='dt-head-center'>Mac address</th>";
-    echo "\n<th class='dt-head-center'>Manufacturer</th>";
+    #echo "\n<th class='dt-head-center'>Manufacturer</th>";
     echo "\n<th class='dt-head-center'>Mac or Hostname change</th>";
     echo "\n</tr>";
     echo "\n</thead>";
@@ -187,7 +188,7 @@ function show_heading() {
     #echo "\n<th class='dt-head-center'>State</th>";
     echo "\n<th class='dt-head-center'>Last ping</th>";
     echo "\n<th class='dt-head-center'>Mac address</th>";
-    echo "\n<th class='dt-head-center'>Manufacturer</th>";
+    #echo "\n<th class='dt-head-center'>Manufacturer</th>";
     echo "\n<th class='dt-head-center'>Mac/Hostname change</th>";
     echo "\n</tr>";
     echo "\n</tfoot>";
