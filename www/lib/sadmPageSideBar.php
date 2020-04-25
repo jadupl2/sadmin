@@ -338,13 +338,13 @@ function SideBar_OS_Summary() {
     echo "\n<div class='SideBarTitle'>Server Info</div>";               # SideBar Section Title
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_OSUPDATE . "'>O/S Update</a></div>";    # URL To View O/S Upd. Page
+    echo "<a href='" . $URL_OSUPDATE . "'>O/S Update</a></div>";        # URL To View O/S Upd. Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_BACKUP . "'>Daily Backup</a></div>";          # View Backup Status Page
+    echo "<a href='" . $URL_BACKUP . "'>Daily Backup</a></div>";        # View Backup Status Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_VIEW_REAR . "'>ReaR Backup</a></div>";  # URL View Rear Backup Page
+    echo "<a href='" . $URL_VIEW_REAR . "'>ReaR Backup</a></div>";      # URL View Rear Backup Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_MONITOR . "'>System Monitor</a></div>";     # URL to System Monitor Page
