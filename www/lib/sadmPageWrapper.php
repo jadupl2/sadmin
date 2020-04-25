@@ -26,6 +26,7 @@
 # 2018_01_04 Initial Version v1.0  
 #@2020_03_03 New: v1.1 Shortcut Menu added in page header for fast access within the site.
 #@2020_04_10 Update: v1.2 Add Network link shortcut at the top of each page.
+#@2020_04_25 Update: v1.3 Reduce Menu line in header to fit on Ipad.
 #
 # ==================================================================================================
 #
@@ -59,9 +60,9 @@
         <td  bgcolor="#124f44" align="center" valign="top">
             <font size="2"><font color="#ffffff"><strong>
         <div id='quick_link'>
-            <a href='/view/srv/sadm_view_servers.php?selection=all_servers'>All Servers</a>
+            <a href='/view/srv/sadm_view_servers.php?selection=all_servers'>Servers</a>
             &nbsp;&nbsp;&nbsp;
-            <a href='/view/rch/sadm_view_rch_summary.php?sel=all'>Scripts Status</a>
+            <a href='/view/rch/sadm_view_rch_summary.php?sel=all'>Scripts</a>
             &nbsp;&nbsp;&nbsp;
             <a href='/view/sys/sadm_view_schedule.php'>O/S Update</a>
             &nbsp;&nbsp;&nbsp;
