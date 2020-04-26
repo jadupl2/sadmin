@@ -40,6 +40,7 @@
 #@2020_03_15 Update: v2.7 Command line option code is now in a function.
 #@2020_04_01 Update: v2.8 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
 #@2020_04_13 Update: v2.9 Include some new Screen attribute in code ($SADM_BOLD,$SADM_YELLOW,...) 
+#@2020_04_26 Fix v3.0 Fix problem with server name resolving test.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -71,7 +72,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.9'                               # Your Current Script Version
+    export SADM_VER='3.0'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -164,7 +165,8 @@ process_servers()
         sadm_write "Processing ($xcount) ${fqdn_server}.\n"             # Server Count & FQDN Name 
 
         # Check if server name can be resolve - If not, we won't be able to SSH to it.
-        if ! host  $fqdn_server >/dev/null 2>&1                         # If hostname not resolvable
+        host  $fqdn_server >/dev/null 2>&1                              # Try to resolve Hostname
+        if [ $? -ne 0 ]                                                 # If hostname not resolvable
             then SMSG="$SADM_ERROR Can't process '$fqdn_server', hostname can't be resolved."
                  sadm_write "${SMSG}\n"                                 # Advise user & Feed log
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
