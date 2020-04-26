@@ -141,7 +141,11 @@ function show_subnet($wsubnet,$woption,$con) {
                 echo "\n<td class='dt-center'>";                            # Show most recent Date
                 echo substr ($row['net_date_ping'],0,10) ."</td>";          # that The Ping Worked
             }
-            echo "\n<td class='dt-center'>" . $row['net_mac'] ."</td>";     # Show Mac Address Card
+            if ($row['net_mac'] == "None") {
+                echo "\n<td class='dt-center'>" . " "  ."</td>";     # Show Mac Address Card
+            }else{
+                echo "\n<td class='dt-center'>" . $row['net_mac'] ."</td>";     # Show Mac Address Card
+            } 
             #echo "\n<td class='dt-center'>" . $row['net_man'] ."</td>";     # Show Card Manufacturer
             echo "\n<td class='dt-center'>";                                # Show Last Change Date
             echo substr ($row['net_date_update'],0,10) ."</td>";            # Of Mac,Host or Ping
