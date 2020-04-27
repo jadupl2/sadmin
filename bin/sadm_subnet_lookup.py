@@ -27,6 +27,7 @@
 #@2019_11_05 Update: v2.3 Restructure code for performance.
 #@2019_11_06 Fix: v2.4 Ping response was not recorded properly
 #@2020_04_25 New: v3.0 Major update, more portable, No longer use arp-scan.
+#@2020_04_27 New: v3.1 Show full Ping and change Date/Time.
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -69,7 +70,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "2.5"                 # Current Script Version
+    st.ver              = "3.1"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = False                 # Append Existing Log or Create New One
@@ -305,7 +306,7 @@ def scan_network(st,snet,wconn,wcur) :
     # 192.168.1.101
     fpingfile = "%s/fping.txt" % (st.net_dir)                           # fping result file name
     cmd  = "fping -aq -r1 -g %s 2>/dev/null |tee %s" % (snet,fpingfile) # fping cmd
-    st.writelog ("\nThe fping output file is %s" % (fpingfile))         # Show fping output filename
+    st.writelog ("\nRunning fping and output to %s" % (fpingfile))      # Show fping output filename
     if (DEBUG) : st.writelog ("Command : %s" % (cmd))   
     ccode,fpinglist,cstderr = oscommand(cmd)                            # Run the fping command
     if (ccode > 1):                                                     # If Error running command
@@ -412,7 +413,7 @@ def scan_network(st,snet,wconn,wcur) :
         if (dberr != 0) :                                               # If no Error updating IP
             st.writelog("[ ERROR ] Updating IP '%s'" % (hip))             # Advise User Update Error
         else :
-            st.writelog("[ OK ] Updated in DB = IP=%s Hostname:.%s. Mac:.%s. Vendor=.%s. Active=.%d.\n" % (hip,row_hostname,row_mac,row_manu,row_ping))
+            st.writelog("[ OK ] Updated in DB = IP=%s Hostname:.%s. Mac:.%s. Vendor=.%s. Active=.%d. PingDate=%s ChangeDate=%s\n" % (hip,row_hostname,row_mac,row_manu,row_ping,row_pingdate,row_datechg))
 
     return(0)                                                           # Return to Caller
 
