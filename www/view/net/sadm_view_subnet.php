@@ -28,6 +28,7 @@
 #@2019_03_30 nolog: v1.4  Small heading change
 #@2019_04_07 Update: v1.5 Show Card Manufacturer when available.
 #@2019_04_25 Update: v1.6 Remove Manufacturer since arp-scan is not used anymore (more portable).
+#@2019_04_27 Update: v1.7 Show Full Date & Time for Ping Date and Changed Date.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -59,7 +60,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG           = False ;                                               # Debug Activated True/False
-$SVER            = "1.6" ;                                              # Current version number
+$SVER            = "1.7" ;                                              # Current version number
 $URL_HOST_INFO   = '/view/srv/sadm_view_server_info.php';               # Display Host Info URL
 $CREATE_FILE_PGM = "sadm_subnet_lookup.py";                             # Script to create in file
 $URL_IPVIEW      = '/view/net/sadm_view_subnet.php';                    # Display Subnet Network URL
@@ -139,7 +140,8 @@ function show_subnet($wsubnet,$woption,$con) {
                 echo "\n<td class='dt-center'>None</td>";                   # Show None to User
             }else{                                                          # If Ping Worked Once
                 echo "\n<td class='dt-center'>";                            # Show most recent Date
-                echo substr ($row['net_date_ping'],0,10) ."</td>";          # that The Ping Worked
+                #echo substr ($row['net_date_ping'],0,10) ."</td>";          # that The Ping Worked
+                echo $row['net_date_ping']  ."</td>";          # that The Ping Worked
             }
             if ($row['net_mac'] == "None") {
                 echo "\n<td class='dt-center'>" . " "  ."</td>";     # Show Mac Address Card
@@ -148,7 +150,8 @@ function show_subnet($wsubnet,$woption,$con) {
             } 
             #echo "\n<td class='dt-center'>" . $row['net_man'] ."</td>";     # Show Card Manufacturer
             echo "\n<td class='dt-center'>";                                # Show Last Change Date
-            echo substr ($row['net_date_update'],0,10) ."</td>";            # Of Mac,Host or Ping
+            #echo substr ($row['net_date_update'],0,10) ."</td>";            # Of Mac,Host or Ping
+            echo $row['net_date_update']  ."</td>";          # that The Ping Worked
             echo "\n</tr>";
             }
     }
