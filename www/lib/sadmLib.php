@@ -44,6 +44,7 @@
 # 2019_10_15 Update: v2.13 Reduce Logo size image from 32 to 24 square pixels
 # 2019_10_15 Update: v2.14 Reduce font size on 2nd line of heading in "display_lib_heading".
 #@2020_01_13 Update: v2.15 Reduce Day of the week name returned by SCHEDULE_TO_TEXT to 3 Char.
+#@2020_04_27 Update: v2.16 Change 2019 to 2020 in page footer
 # ==================================================================================================
 #
 
@@ -52,7 +53,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.15" ;   
+$LIBVER = "2.16" ;   
     
 
 #===================================================================================================
@@ -101,7 +102,7 @@ function std_page_footer($wcon="") {
     echo "\n</div> <!-- End of sadmRightColumn   -->" ;                 # End of Left Content Page       
     echo "\n</div> <!-- End of sadmPageContents  -->" ;                 # End of Content Page
     echo "\n\n<div id='sadmFooter'>";
-    echo "\nCopyright &copy; 2015-2019 - www.sadmin.ca - Suggestions, Questions or Report a problem at ";
+    echo "\nCopyright &copy; 2015-2020 - www.sadmin.ca - Suggestions, Questions or Report a problem at ";
     echo '<a href="mailto:support@sadmin.ca">support@sadmin.ca</a></small>';
     echo "\n</div> <!-- End of Div sadmFooter -->";
 
