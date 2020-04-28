@@ -47,6 +47,7 @@
 #@2020_01_21 Update: v1.35 Remove alert_group.cfg and alert_slack.cfg, if present in $SADMIN/cfg
 #@2020_04_01 Update: v1.36 Code rewrite for better performance and maintenance. 
 #@2020_04_04 Update: v1.37 Fix minor bugs & Restructure log presentation
+#@2020_04_28 Update: v1.38 Update readme file permission from 0644 to 0664
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -78,7 +79,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.37'                              # Your Current Script Version
+    export SADM_VER='1.38'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -584,12 +585,12 @@ file_housekeeping()
     set_file "/etc/cron.d/sadm_rear_backup"  "0644" "root" "root"
 
     # SADMIN Readme, changelog and license file.
-    set_file "${SADM_BASE_DIR}/readme.md"    "0644" "${SADM_USER}" "${SADM_GROUP}" 
+    set_file "${SADM_BASE_DIR}/readme.md"    "0664" "${SADM_USER}" "${SADM_GROUP}" 
     set_file "${SADM_BASE_DIR}/readme.html"  "0644" "${SADM_USER}" "${SADM_GROUP}" 
     set_file "${SADM_BASE_DIR}/readme.pdf"   "0644" "${SADM_USER}" "${SADM_GROUP}" 
-    set_file "${SADM_BASE_DIR}/LICENSE"      "0644" "${SADM_USER}" "${SADM_GROUP}" 
-    set_file "${SADM_BASE_DIR}/license"      "0644" "${SADM_USER}" "${SADM_GROUP}" 
-    set_file "${SADM_BASE_DIR}/changelog.md" "0644" "${SADM_USER}" "${SADM_GROUP}" 
+    set_file "${SADM_BASE_DIR}/LICENSE"      "0664" "${SADM_USER}" "${SADM_GROUP}" 
+    set_file "${SADM_BASE_DIR}/license"      "0664" "${SADM_USER}" "${SADM_GROUP}" 
+    set_file "${SADM_BASE_DIR}/changelog.md" "0664" "${SADM_USER}" "${SADM_GROUP}" 
     
 
     set_files_recursive "$SADM_DAT_DIR"        "0644" "${SADM_USER}" "${SADM_GROUP}" 
