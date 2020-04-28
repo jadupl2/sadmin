@@ -51,6 +51,7 @@
 #@2020_04_21 Update: v3.6 Change processing display & change installation dnf-utils for yum-utils.
 #@2020_04_23 Update: v3.7 Added some more error checking.
 #@2020_04_23 Fix: v3.8a Fix after Re-Tested on CentOS/RedHat 8 
+#@2020_04_27 Update: v3.9 Install 'getmac' python3 module (for subnet scan).
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -59,7 +60,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.8b'                              ; export SADM_VER           # Your Script Version
+SADM_VER='3.9'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -331,6 +332,26 @@ check_python3()
                 else echo " [ OK ] " | tee -a $SLOG
              fi
     fi
+
+    # Check if python3 'getmac' module is installed 
+    printf "Check if python3 'getmac' module is installed ... " | tee -a $SLOG
+    python3 -c "import getmac" > /dev/null 2>&1
+    if [ $? -eq 0 ] 
+        then echo "[ OK ] " | tee -a $SLOG
+        else printf "Installing module " 
+             pip3 install getmac  > /dev/null 2>&1
+             if [ $? -ne 0 ]
+                then echo " " | tee -a $SLOG
+                     echo "----------" | tee -a $SLOG
+                     echo "We have problem installing python module 'getmac'." | tee -a $SLOG
+                     echo "Please install getmac package (pip3 install getmac)" | tee -a $SLOG
+                     echo "Then run this script again." | tee -a $SLOG 
+                     echo "----------" | tee -a $SLOG
+                     exit 1
+                else echo " [ OK ] " | tee -a $SLOG
+             fi
+    fi
+
     return 0                                                            # Return No Error to Caller
 }
 
