@@ -38,6 +38,7 @@
 #@2020_02_17 Update: v3.19 Add error message when problem getting the list of package to update.
 #@2020_03_03 Update: v3.20 Restructure some code and change help message. 
 #@2020_04_01 Update: v3.21 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+#@2020_04_28 Update: v3.22 Use 'apt-get dist-upgrade' instead of 'apt-get -y upgrade' on deb system.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -70,7 +71,7 @@
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.21'                              # Your Current Script Version
+    export SADM_VER='3.22'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -392,8 +393,10 @@ run_dnf()
 run_apt_get()
 {
     sadm_write "Starting $(sadm_get_osname) update process ...\n"
-    sadm_write "Updating O/S, running 'export DEBIAN_FRONTEND=noninteractive ; apt-get -y upgrade'\n"
-    export DEBIAN_FRONTEND=noninteractive ; apt-get -y upgrade >>$SADM_LOG 2>&1
+    #sadm_write "Updating O/S, running 'export DEBIAN_FRONTEND=noninteractive ; apt-get -y upgrade'\n"
+    #export DEBIAN_FRONTEND=noninteractive ; apt-get -y upgrade >>$SADM_LOG 2>&1
+    sadm_write "Updating O/S, running 'export DEBIAN_FRONTEND=noninteractive ; apt-get -y dist-upgrade'\n"
+    export DEBIAN_FRONTEND=noninteractive ; apt-get -y dist-upgrade >>$SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
        then sadm_write "Return Code of \"apt-get -y upgrade\" is ${RC}.\n"
