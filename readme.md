@@ -1,5 +1,5 @@
 ![SADMIN Tools][1] 
-SADMIN Tools v1.2.4
+SADMIN Tools v1.2.5
 
 - [Brief description](#brief-description)
 - [Run on most popular Linux distributions](#run-on-most-popular-linux-distributions)
