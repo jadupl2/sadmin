@@ -73,6 +73,8 @@
 #@2020_04_19 Update: v3.36 Minor adjustments.
 #@2020_04_21 Update: v3.37 Add syslinux,genisomage,rear packages req. & hwinfo to EPEL(RHEL/CentOS8)
 #@2020_04_23 Update: v3.38 Fix Renaming Apache config error.
+#@2020_04_27 Update: v3.39 Remove 'arp-scan' installation on server (no longer needed).
+# 
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -89,7 +91,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.38"                                            # Setup Version Number
+sver                = "3.39"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -182,8 +184,8 @@ req_server = {
                     'deb':'rrdtool',                                        'drepo':'base'},
     'fping'      :{ 'rpm':'fping',                                          'rrepo':'epel',
                     'deb':'fping monitoring-plugins-standard',              'drepo':'base'},
-    'arp-scan'   :{ 'rpm':'arp-scan',                                       'rrepo':'epel',
-                    'deb':'arp-scan',                                       'drepo':'base'},
+#    'arp-scan'   :{ 'rpm':'arp-scan',                                       'rrepo':'epel',
+#                    'deb':'arp-scan',                                       'drepo':'base'},
     'php'        :{ 'rpm':'php php-common php-cli php-mysqlnd php-mbstring','rrepo':'base', 
                     'deb':'php php-mysql php-common php-cli ',              'drepo':'base'},
 #    'mysql'      :{ 'rpm':'mariadb-server MySQL-python',                    'rrepo':'base',
