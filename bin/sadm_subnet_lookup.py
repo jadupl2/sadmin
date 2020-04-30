@@ -28,19 +28,45 @@
 #@2019_11_06 Fix: v2.4 Ping response was not recorded properly
 #@2020_04_25 New: v3.0 Major update, more portable, No longer use arp-scan.
 #@2020_04_27 New: v3.1 Show full Ping and change Date/Time.
+#@2020_04_30 Update: v3.2 Install module 'getmac', if it's not installed.
 # --------------------------------------------------------------------------------------------------
 #
 try :
     import os,time,sys,pdb,socket,datetime,pwd,grp,pymysql,subprocess,ipaddress # Import Std Modules
-    from getmac import get_mac_address                                  # For Getting IP Mac Address
+    from subprocess import Popen, PIPE    
     SADM = os.environ.get('SADMIN')                                     # Get SADMIN Root Dir. Name
     sys.path.insert(0,os.path.join(SADM,'lib'))                         # Add SADMIN to sys.path
     import sadmlib_std as sadm                                          # Import SADMIN Python Libr.
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
-#pdb.set_trace()                                                        # Activate Python Debugging
+    #pdb.set_trace()                                                        # Activate Python Debugging
 
+try :
+    from getmac import get_mac_address                                  # For Getting IP Mac Address
+except ImportError as e:
+    print ("Import Error : %s " % e)
+    print ("Installing 'getmac'")
+    command = "pip3 install --user getmac"
+    p = subprocess.Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+    out = p.stdout.read().strip().decode()
+    err = p.stderr.read().strip().decode()
+    returncode = p.wait()
+    #print ("In sadm_oscommand function stdout is      : %s" % (out))
+    #print ("In sadm_oscommand function stderr is      : %s " % (err))
+    if returncode == 0 :
+        print ("Module 'getmac' is now install (%s)\n" % (returncode))
+        print ("Please re-run this script, everything should be ok now")  
+        sys.exit(1)
+    else : 
+        print ("Module 'getmac' could not be install (%s)\n" % (returncode))
+        sys.exit(1)
+
+#try :
+#    import getmac                                 # For Getting IP Mac Address
+#except ImportError as e:
+#    print ("Import Error : %s " % e)
+#    sys.exit(1)
 
 
 #===================================================================================================
@@ -70,7 +96,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.1"                 # Current Script Version
+    st.ver              = "3.2"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = False                 # Append Existing Log or Create New One
