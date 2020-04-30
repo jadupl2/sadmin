@@ -32,7 +32,7 @@
 #@2020_01_14 Update: v2.5 Add link to allow to view script log on the page.
 #@2020_01_19 Update: v2.6 Remove line counter and some other cosmetics changes.
 #@2020_01_21 Update: v2.7 Display rch date in date reverse order (Recent at the top)
-#@2020_04_05 Fix : v2.8 Fix link problem to show the script log.
+#@2020_04_05 Fix: v2.8 Fix link problem to show the script log.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
