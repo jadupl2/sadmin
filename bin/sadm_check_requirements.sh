@@ -37,6 +37,7 @@
 # 2019_10_30 Update: v1.5 Remove 'facter' requirement.
 #@2019_12_02 Fix: v1.6 Fix Mac OS crash.
 #@2020_04_01 Update: v1.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+#@2020_04_29 Update: v1.8 Remove arp-scan from the SADMIN server requirement list.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -65,7 +66,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.7'                               # Your Current Script Version
+    export SADM_VER='1.8'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -509,11 +510,11 @@ check_sadmin_requirements() {
                 then install_package "--enablerepo=epel fping" "fping monitoring-plugins-standard" 
                      command_available "fping" ; SADM_FPING=$SPATH      # Recheck Should be install
              fi    
-             command_available "arp-scan" ; SADM_ARPSCAN=$SPATH         # Get  cmd path  
-             if [ "$SADM_ARPSCAN" = "" ] && [ "$INSTREQ" -eq 1 ]        # Cmd not found & Inst Req.
-                then install_package "--enablerepo=epel arp-scan" "arp-scan" # Install package
-                     command_available "arp-scan" ; SADM_ARPSCAN=$SPATH # Recheck Should be install
-             fi    
+             #command_available "arp-scan" ; SADM_ARPSCAN=$SPATH         # Get  cmd path  
+             #if [ "$SADM_ARPSCAN" = "" ] && [ "$INSTREQ" -eq 1 ]        # Cmd not found & Inst Req.
+             #   then install_package "--enablerepo=epel arp-scan" "arp-scan" # Install package
+             #        command_available "arp-scan" ; SADM_ARPSCAN=$SPATH # Recheck Should be install
+             #fi    
              command_available "pip3" ; SADM_PIP3=$SPATH                # Get  cmd path  
              if [ "$SADM_PIP3" = "" ] && [ "$INSTREQ" -eq 1 ]           # Cmd not found & Inst Req.
                 then install_package "python3-pip" "python3-pip"        # Install package
