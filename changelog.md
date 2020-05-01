@@ -1,95 +1,123 @@
 # Changelog
 
-## Release v[1.2.5](https://github.com/jadupl2/sadmin/releases) (2020-04-30)
-- Fixes
-	- 2020_03_04 sadm_rear_backup.sh (v2.14) - always leave latest ReaR Backup to default name to ease the restore.
-	- 2020_03_05 sadm_rear_backup.sh (v2.15) - Was not removing NFS mount point in /mnt after the backup.
-	- 2020_03_05 sadm_sysmon.pl (v2.37) - Not getting 'SADMIN' variable content from /etc/environment (if export used).
-	- 2020_03_12 sadm_df.sh (v1.9) - Correct problem under RHEL/CentOS older version (4,5,6).
-	- 2020_03_21 sadm_fetch_clients.sh (v3.9) - SSH error to client were not reported in System Monitor.
-	- 2020_03_28 sadm_sysmon.pl (v2.38) - Fix problem when 'dmidecode' is not available on system.
-	- 2020_04_05 sadm_view_rchfile.php (:) - v2.8 Fix link problem to show the script log.
-	- 2020_04_08 sadm_backup.sh (v3.18) - Fix 'chown' error.
-	- 2020_04_08 sadm_sysmon_tui.pl (v2.0) - Correct alignment error.
-	- 2020_04_11 sadm_rear_backup.sh (v2.16) - site.conf, "BACKUP_URL" line is align with sadmin.cfg before each backup.
-	- 2020_04_23 setup.sh (v3.8a) - Fix after Re-Tested on CentOS/RedHat 8
-	- 2020_04_26 sadm_template.sh (v3.0) - Fix problem with server name resolving test.
-- New
-	- 2020_03_03 sadmPageWrapper.php (v1.1) - Shortcut Menu added in page header for fast access within the site.
-	- 2020_04_25 sadm_subnet_lookup.py (v3.0) - Major update, more portable, No longer use arp-scan.
-	- 2020_04_27 sadm_subnet_lookup.py (v3.1) - Show full Ping and change Date/Time.
-- Update
-	- 2020_03_03 sadm_osupdate.sh (v3.20) - Restructure some code and change help message.
-	- 2020_03_03 sadm_view_sysmon.php (v2.14) - Server Description displayed when mouse over server name.
-	- 2020_03_04 sadm_push_sadmin.sh (v2.17) - Script was rename from sadm_rsync_sadmin.sh to sadm_push_sadmin.sh
-	- 2020_03_05 sadm_view_rear.php (v1.6) - When mouse over server name (Show more information).
-	- 2020_03_08 sadm_create_sysinfo.sh (v3.18) - Collect more information about Disks, Partitions, Network and fix lsblk.
-	- 2020_03_08 sadm_setup.py (v3.34) - Added 'hwinfo' package to installation requirement.
-	- 2020_03_14 sadm_df.sh (v2.0) - To increase portability, Column total are now calculated by script.
-	- 2020_03_15 sadm_df.sh (v2.1) - Add -t to exclude tmpfs, -n nfs filesystem from the output and total line.
-	- 2020_03_15 sadm_df.sh (v2.2) - Modified to work on MacOS
-	- 2020_03_15 sadmlib_std.sh (v3.29) - Change the way script info (-v) is shown.
-	- 2020_03_15 sadm_template.sh (v2.7) - Command line option code is now in a function.
-	- 2020_03_16 sadm_fs_incr.sh (v1.8) - Separation Blank Lines added to log.
-	- 2020_03_16 sadmlib_std.sh (v3.30) - If not present, create Alert Group file (alert_group.cfg) from template.
-	- 2020_03_16 sadm_setup.py (v3.35) - Set default alert group to sysadmin email in .alert_group.cfg.
-	- 2020_03_21 sadm_daily_farm_fetch.sh (v3.7) - Show Error Total only at the end of each system processed.
-	- 2020_03_23 sadm_fs_incr.sh (v1.9) - Minor modifications in log and email.
-	- 2020_03_24 sadm_fs_incr.sh (v2.0) - Script will not generate an rpt file anymore (Remove double error report)
-	- 2020_04_01 sadm_backupdb.sh (v2.2) - Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-	- 2020_04_01 sadm_backup.sh (v3.16) - Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-	- 2020_04_01 sadm_cfg2html.sh (v3.6) - Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-	- 2020_04_01 sadm_check_requirements.sh (v1.7) - Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-	- 2020_04_01 sadm_client_housekeeping.sh (v1.36) - Code rewrite for better performance and maintenance.
-	- 2020_04_01 sadm_client_sunset.sh (v2.7) - Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-	- 2020_04_01 sadmlib_std_demo.sh (v3.18) - Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-	- 2020_04_01 sadmlib_std.sh (v3.31) - Function sadm_writelog() with N/L depreciated, remplace by sadm_write().
-	- 2020_04_01 sadmlib_std.sh (v3.32) - Function sadm_writelog() replaced by sadm_write in Library.
-	- 2020_04_01 sadm_osupdate.sh (v3.21) - Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-	- 2020_04_01 sadm_template.sh (v2.8) - Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
-	- 2020_04_02 sadm_wrapper.sh (v1.7) - Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-	- 2020_04_03 sadm_create_mksysb.sh (v2.1) - Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl
-	- 2020_04_04 sadm_client_housekeeping.sh (v1.37) - Fix minor bugs & Restructure log presentation
-	- 2020_04_04 sadmlib_std.sh (v3.33) - New Variable SADM_OK, SADM_WARNING, SADM_ERROR to Show Status in Color.
-	- 2020_04_05 sadm_client_sunset.sh (v2.8) - Remove one call to sadm_start (Was there twice)
-	- 2020_04_05 sadm_create_sysinfo.sh (v3.19) - Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl
-	- 2020_04_05 sadm_daily_farm_fetch.sh (v3.8) - Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
-	- 2020_04_05 sadm_df.sh (v2.3) - Add hostname and date in heading line.
-	- 2020_04_05 sadmlib_std.sh (v3.34) - New Variable SADM_SUCCESS, SADM_FAILED to Show Status in Color.
-	- 2020_04_06 sadm_backup.sh (v3.17) - Don't show anymore directories that are skip because they don't exist.
-	- 2020_04_06 sadm_dr_recreatefs.sh (v2.3) - Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
-	- 2020_04_06 sadm_rch_scr_summary.sh (v1.17) - Allow simultaneous execution of this script.
-	- 2020_04_09 sadm_backup.sh (v3.19) - Minor logging adjustment.
-	- 2020_04_10 sadm_backup.sh (v3.20) - If backup_list.txt contains $ at beginning of line, it Var. is resolved
-	- 2020_04_10 sadmPageWrapper.php (v1.2) - Add Network link shortcut at the top of each page.
-	- 2020_04_11 sadm_backup.sh (v3.21) - Log output changes.
-	- 2020_04_12 sadm_rear_backup.sh (v2.17) - If ReaR site.conf doesn't exist, create it, bug fix and enhancements.
-	- 2020_04_13 sadmlib_std.sh (v3.35) - Correct Typo Error in SADM_ERROR
-	- 2020_04_13 sadmlib_std.sh (v3.36) - Add @@LNT (Log No Time) var. to prevent sadm_write to put Date/Time in Log
-	- 2020_04_13 sadm_rear_backup.sh (v2.18) - Lot of little adjustments.
-	- 2020_04_13 sadm_template.sh (v2.9) - Include some new Screen attribute in code ($SADM_BOLD,$SADM_YELLOW,...)
-	- 2020_04_14 sadm_rear_backup.sh (v2.19) - Some more logging adjustments.
-	- 2020_04_16 sadm_rear_backup.sh (v2.20) - Minor adjustments
-	- 2020_04_16 sadm_server_rear_backup.php (v1.3) - Small page adjustments.
-	- 2020_04_19 sadm_setup.py (v3.36) - Minor adjustments.
-	- 2020_04_19 setup.sh (v3.4) - Minor logging changes.
-	- 2020_04_21 sadm_daily_farm_fetch.sh (v3.9) - Minor Error Message Alignment,
-	- 2020_04_21 sadm_setup.py (v3.37) - Add syslinux,genisomage,rear packages req. & hwinfo to EPEL(RHEL/CentOS8)
-	- 2020_04_21 setup.sh (v3.5) - On RHEL/CENTOS 8 hwinfo package remove from base, use EPEL repo.
-	- 2020_04_21 setup.sh (v3.6) - Change processing display & change installation dnf-utils for yum-utils.
-	- 2020_04_23 sadm_push_sadmin.sh (v2.18) - Replace sadm_writelog by sadm_write & enhance log output.
-	- 2020_04_23 sadm_setup.py (v3.38) - Fix Renaming Apache config error.
-	- 2020_04_23 setup.sh (v3.7) - Added some more error checking.
-	- 2020_04_24 sadm_daily_farm_fetch.sh (v4.0) - Show rsync status & solve problem if duplicate entry in /etc/environment.
-	- 2020_04_25 sadmPageWrapper.php (v1.3) - Reduce Menu line in header to fit on Ipad.
-	- 2020_04_27 sadmLib.php (v2.16) - Change 2019 to 2020 in page footer
-	- 2020_04_27 sadm_setup.py (v3.39) - Remove 'arp-scan' installation on server (no longer needed).
-	- 2020_04_27 setup.sh (v3.9) - Install 'getmac' python3 module (for subnet scan).
-	- 2020_04_28 sadm_client_housekeeping.sh (v1.38) - Update readme file permission from 0644 to 0664
-	- 2020_04_28 sadm_osupdate.sh (v3.22) - Use 'apt-get dist-upgrade' instead of 'apt-get -y upgrade' on deb system.
+## Release v[1.2.5](https://github.com/jadupl2/sadmin/releases) (2020-05-01)
+
+### Web User Interface
+* The main header look appearance was enhance.
+* Part of page header, we now have a menu bar for faster and easier access.
+* We fix link problem to show the script log, on the [R]esult [C]ode [H]istory file viewer page.
+* Lot of functional change & enhancements. 
+
+<br>
+
+------
+
+### Installation Setup
+* Change made for RHEL/CentOS 8
+    * Installation (if needed) of package 'hwinfo' is done using EPEL repository (Not in base repo. anymore).
+    * Installation (if needed) of package 'dnf-utils' is now replace by 'yum-utils'.
+    * Installation a SADMIN server, now include installation of Python3 'getmac' module (For subnet network scanning).
+    * Package 'arp-scan' removed from server installation, using python3 'getmac' module instead.
+    * Some bug fixes and minor adjustment were done for RHEL/CentOS 8.
+* Setup now set the default alert group to 'email' and to sysadmin email address in .alert_group.cfg.
+* Setup now install 'syslinux', 'genisomage' and 'rear' packages (Require to make a ReaR image Backup)
+* Fix Apache config renaming error.
 
 
+<br>
 
+------
+
+### Rear Backup
+* Leave latest ReaR Backup to default name to ease the restore.
+* Remove NFS mount point in /mnt after the backup.
+* "BACKUP_URL" line (in site.conf) is align with sadmin.cfg before each backup.
+* Create /etc/rear/site.conf if it doesn't exist, bug fixes and enhancements.
+* Structure enhancement made to log.
+* sadm_rear_backup.sh Documentation updated.
+* Small CSS adjustments made to ReaR Backup Schedule.
+* Mouse over system name on ReaR Backup Schedule status web page, show O/S name & version & IP.
+
+
+<br>
+
+------
+
+### Server Scripts
+* sadm_daily_farm_fetch.sh
+  * Show Error Total only at the end of each system processed.
+  * Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
+  * Show rsync status & solve problem if duplicate entry in /etc/environment.
+  * Minor error message alignment.
+* sadm_fetch_clients.sh - SSH error to client were not reported in System Monitor.
+* sadm_subnet_lookup.py - Major update, more portable, Faster and no longer use arp-scan.
+* sadm_push_sadmin.sh - Script was rename from sadm_rsync_sadmin.sh to sadm_push_sadmin.sh
+* sadm_rch_scr_summary.sh - Allow simultaneous execution of this script.
+
+
+<br>
+
+------
+
+### Clients Scripts
+* System Monitor
+  * Fix problem getting 'SADMIN' variable content from /etc/environment (if export used).
+  * Fix problem when 'dmidecode' is not available on system.
+* sadm_backup.sh
+  * If backup_list.txt include a '$' at beginning of a line, the environment variable is resolved.
+  * Log output adjustment & enhancement changes.
+  * Fix 'chown' error.
+  * Don't show anymore directories that are skip because they don't exist.
+* sadm_osupdate.sh
+  * Use 'apt-get dist-upgrade' instead of 'apt-get -y upgrade' on deb system.
+  * Restructure some code and change help message.
+* sadm_client_housekeeping.sh
+  * Code rewrite for better performance and maintenance.
+  * Fix minor bugs & Restructure log presentation
+  * Update readme file permission from 0644 to 0664
+* sadm_create_sysinfo.sh
+  * Collect more information about Disks, Partitions, Network and fix lsblk.
+  * Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl
+
+
+<br>
+
+------
+
+### Common Scripts
+* Template Shell Script
+  * Command line option code is now in a function.
+  * Fix problem with server name resolving test.
+  * Include some new Screen attribute in code ($SADM_BOLD,$SADM_YELLOW,...)
+* sadm_df.sh
+  * Fix problem under RHEL/CentOS older version (4,5,6).
+  * To increase portability, Column total are now calculated by script.
+  * Add -t to exclude tmpfs, -n nfs filesystem from the output and total line.
+  * Modified to work on MacOS
+  * Add hostname and date in heading line.
+  * Updated documentation.
+
+
+<br>
+
+------
+
+### SADMIN Library
+* SADMIN Shell Library (sadmlib_std.sh)
+  * Change the way script info (-v) is shown.
+  * If not present, create Alert Group file (alert_group.cfg) from template.
+  * Function sadm_writelog() with N/L depreciated, remplace by sadm_write().
+  * Function sadm_writelog() replaced by sadm_write in Library.
+  * New Variable SADM_OK, SADM_WARNING, SADM_ERROR to Show Status in Color.
+  * New Variable SADM_SUCCESS, SADM_FAILED to Show Status in Color.
+  * Add @@LNT (Log No Time) var. to prevent sadm_write to put Date/Time in Log
+
+
+<br>
+
+<br>
+
+------
 
 ## Release v[1.2.4](https://github.com/jadupl2/sadmin/releases) (2020-02-27)
 - Fixes
