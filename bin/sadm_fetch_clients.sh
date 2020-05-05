@@ -57,10 +57,11 @@
 # 2019_08_29 Fix: v3.3 Correct problem with CR in site.conf 
 # 2019_08_31 Update: v3.4 More compact alert email subject.
 # 2019_12_01 Update: v3.5 Backup crontab will backup daily not to miss weekly,monthly and yearly.
-#@2020_01_12 Update: v3.6 Compact log produced by the script.
-#@2020_01_14 Update: v3.7 Don't use SSH when running daily backup and ReaR Backup for SADMIN server. 
-#@2020_02_19 Update: v3.8 Restructure & Create an Alert when can't SSH to client. 
-#@2020_03_21 Fix: v3.9 SSH error to client were not reported in System Monitor.
+# 2020_01_12 Update: v3.6 Compact log produced by the script.
+# 2020_01_14 Update: v3.7 Don't use SSH when running daily backup and ReaR Backup for SADMIN server. 
+# 2020_02_19 Update: v3.8 Restructure & Create an Alert when can't SSH to client. 
+# 2020_03_21 Fix: v3.9 SSH error to client were not reported in System Monitor.
+# 2020_05_05 Fix: v3.10 Temp. file was not remove under certain circumstance.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -123,7 +124,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.9'                               # Your Current Script Version
+    export SADM_VER='3.10'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -1289,7 +1290,9 @@ main_process()
     check_all_rpt                                                       # Check all *.rpt for Alert
     check_all_rch                                                       # Check all *.rch for Alert
 
-
+    # Delete TMP work file before retuning to caller 
+    if [ ! -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi
+    
     return $SADM_EXIT_CODE
 }
 
