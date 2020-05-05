@@ -118,7 +118,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #---------------------------------------------------------------------------------------------------
 # Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
 # They can be overridden here, on a per script basis (if needed).
-    export SADM_ALERT_TYPE=3                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
     #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
@@ -483,6 +483,9 @@ rear_housekeeping()
              fi
     fi  
 
+    # Delete TMP work file before retuning to caller 
+    if [ ! -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi
+    
     sadm_write "\n"
     sadm_write "ReaR Backup Housekeeping ${SADM_SUCCESS}\n"
     return $FNC_ERROR
