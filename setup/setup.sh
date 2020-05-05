@@ -308,7 +308,7 @@ check_python3()
 
     # pip3 should be installed, if not then install it or abort installation
     which pip3 > /dev/null 2>&1
-    if [ $? -ne 0 ] ; install_pip3 ; fi                        
+    if [ $? -ne 0 ] ; then install_pip3 ; fi                        
     echo " [ OK ]" | tee -a $SLOG
    
     # Check if python3 'pymsql' module is installed 
