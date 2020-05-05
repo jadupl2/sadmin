@@ -66,14 +66,15 @@
 # 2019_07_04 Update: v3.29 Crontab client and Server definition revised for Aix and Linux.
 # 2019_08_25 Update: v3.30 On Client setup Web USer and Group in sadmin.cfg to sadmin user & group.
 # 2019_10_30 Update: v3.31 Remove installation of 'facter' package (Depreciated).
-#@2019_12_18 Fix: v3.32 Fix problem when inserting server into database on Ubuntu/Raspbian.
-#@2019_12_20 Update: v3.33 Remove installation of ruby (was used for facter) & of pymysql (Done)
-#@2020_03_08 Update: v3.34 Added 'hwinfo' package to installation requirement.
-#@2020_03_16 Update: v3.35 Set default alert group to sysadmin email in .alert_group.cfg. 
-#@2020_04_19 Update: v3.36 Minor adjustments.
-#@2020_04_21 Update: v3.37 Add syslinux,genisomage,rear packages req. & hwinfo to EPEL(RHEL/CentOS8)
-#@2020_04_23 Update: v3.38 Fix Renaming Apache config error.
-#@2020_04_27 Update: v3.39 Remove 'arp-scan' installation on server (no longer needed).
+# 2019_12_18 Fix: v3.32 Fix problem when inserting server into database on Ubuntu/Raspbian.
+# 2019_12_20 Update: v3.33 Remove installation of ruby (was used for facter) & of pymysql (Done)
+# 2020_03_08 Update: v3.34 Added 'hwinfo' package to installation requirement.
+# 2020_03_16 Update: v3.35 Set default alert group to sysadmin email in .alert_group.cfg. 
+# 2020_04_19 Update: v3.36 Minor adjustments.
+# 2020_04_21 Update: v3.37 Add syslinux,genisomage,rear packages req. & hwinfo to EPEL(RHEL/CentOS8)
+# 2020_04_23 Update: v3.38 Fix Renaming Apache config error.
+# 2020_04_27 Update: v3.39 Remove 'arp-scan' installation on server (no longer needed).
+#@2020_04_27 Fix: v3.40 Fix problem with typo error.
 # 
 # ==================================================================================================
 #
@@ -91,7 +92,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.39"                                            # Setup Version Number
+sver                = "3.40"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -674,7 +675,7 @@ def firewall_rule() :
     COMMAND = "systemctl status firewalld"                              # Check if Firewall running
     if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
     ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
-    if ccode is not 0 :  
+    if ccode != 0 :  
         writelog("Not running")
         return (0)                                                      # If Firewall not running
     else:
@@ -703,7 +704,7 @@ def locate_command(lcmd) :
     COMMAND = "which %s" % (lcmd)                                       # Build the which command
     if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
     ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
-    if ccode is not 0 :                                                 # Command was not Found
+    if ccode != 0 :                                                     # Command was not Found
         cmd_path=""                                                     # Cmd Path Null when Not fnd
     else :                                                              # If command Path is Found
         cmd_path = cstdout                                              # Save command Path
@@ -1811,15 +1812,15 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
         wdata = 0                                                       # Where response is store
         while True:                                                     # Loop until Valid response
             eprompt = sprompt + " [" + color.BOLD + str(sdefault) + color.END + "]" # Ins Def. in prompt
-            wdata = input("%s : " % (eprompt))                       # Accept an Integer
+            wdata = input("%s : " % (eprompt))                          # Accept an Integer
             if (len(wdata) ==0): wdata = sdefault
             try:
                 wdata = int(wdata)
-            except ValueError as e:                    # If Value is not an Integer
-                writelog ("Value Error - Not an integer (%s)" % (wdata))                            # Advise User Message
+            except ValueError as e:                                     # If Value is not an Integer
+                writelog ("Value Error - Not an integer (%s)" % (wdata)) # Advise User Message
                 continue                                                # Continue at start of loop
-            except TypeError as e:                    # If Value is not an Integer
-                writelog ("Type Error - Not an integer (%s)" % (wdata))                            # Advise User Message
+            except TypeError as e:                                      # If Value is not an Integer
+                writelog ("Type Error - Not an integer (%s)" % (wdata)) # Advise User Message
                 continue                                                # Continue at start of loop
             if (wdata == 0) : wdata = sdefault                          # No Input = Default Value
             if (wdata > smax) or (wdata < smin):                        # Must be between min & max
