@@ -44,14 +44,15 @@
 # 2019_12_27 Update: v3.0 Add recommended EPEL Repos on CentOS/RHEL 8.
 # 2019_12_27 Update: v3.1 On RHEL/CentOS 6/7, revert to Python 3.4 (3.6 Incomplete on EPEL)
 # 2020_01_18 Fix: v3.2 Fix problem installing pip3, when running setup.sh script.
-#@2020_02_23 Fix: v3.3 Fix some problem installing lsb_release and typo with 'dnf' command..
-#@2020_02_23 Fix: v3.3 Fix some problem installing lsb_release and typo with 'dnf' command..
-#@2020_04_19 Update: v3.4 Minor logging changes.
-#@2020_04_21 Update: v3.5 On RHEL/CENTOS 8 hwinfo package remove from base, use EPEL repo.
-#@2020_04_21 Update: v3.6 Change processing display & change installation dnf-utils for yum-utils.
-#@2020_04_23 Update: v3.7 Added some more error checking.
-#@2020_04_23 Fix: v3.8a Fix after Re-Tested on CentOS/RedHat 8 
-#@2020_04_27 Update: v3.9 Install 'getmac' python3 module (for subnet scan).
+# 2020_02_23 Fix: v3.3 Fix some problem installing lsb_release and typo with 'dnf' command..
+# 2020_02_23 Fix: v3.3 Fix some problem installing lsb_release and typo with 'dnf' command..
+# 2020_04_19 Update: v3.4 Minor logging changes.
+# 2020_04_21 Update: v3.5 On RHEL/CENTOS 8 hwinfo package remove from base, use EPEL repo.
+# 2020_04_21 Update: v3.6 Change processing display & change installation dnf-utils for yum-utils.
+# 2020_04_23 Update: v3.7 Added some more error checking.
+# 2020_04_23 Fix: v3.8a Fix after Re-Tested on CentOS/RedHat 8 
+# 2020_04_27 Update: v3.9 Install 'getmac' python3 module (for subnet scan).
+#@2020_05_05 Update: v3.10 Adjust screen presentation.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -60,7 +61,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.9'                              ; export SADM_VER           # Your Script Version
+SADM_VER='3.10'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -257,15 +258,15 @@ install_python3()
 #===================================================================================================
 install_pip3()
 {
-    echo "Installing pip3." | tee -a $SLOG
+    echo "Installing pip3 " | tee -a $SLOG
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
-        then echo "Running 'yum --enablerepo=epel -y install python34 python34-setuptools python34-pip'" |tee -a $SLOG
+        then #echo "Running 'yum --enablerepo=epel -y install python34 python34-setuptools python34-pip'" |tee -a $SLOG
              yum --enablerepo=epel -y install python34-pip >>$SLOG 2>&1
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
         then apt-get update >> $SLOG 2>&1
-             echo "Running 'apt-get -y install python3-pip'"| tee -a $SLOG
+             #echo "Running 'apt-get -y install python3-pip'"| tee -a $SLOG
              apt-get -y install python3-pip >>$SLOG 2>&1
     fi 
     
@@ -303,16 +304,12 @@ check_python3()
     fi
 
     # Check if pip3 is installed 
-    printf "Check if pip3 is installed ..." | tee -a $SLOG
+    printf "Check if pip3 is installed ... " | tee -a $SLOG
 
     # pip3 should be installed, if not then install it or abort installation
     which pip3 > /dev/null 2>&1
-    if [ $? -eq 0 ]
-        then echo " [ OK ]" | tee -a $SLOG
-        else echo " Pip3 is not installed."  | tee -a $SLOG
-             install_pip3
-             echo " [ OK ]" | tee -a $SLOG
-    fi
+    if [ $? -ne 0 ] ; install_pip3 ; fi                        
+    echo " [ OK ]" | tee -a $SLOG
    
     # Check if python3 'pymsql' module is installed 
     printf "Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
