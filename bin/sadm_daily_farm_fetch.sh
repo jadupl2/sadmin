@@ -39,13 +39,14 @@
 # 2018_07_16    v3.1 Remove verbose when doing rsync
 # 2018_08_24    v3.2 If couldn't get /etc/environment from client, change Email format.
 # 2018_09_16    v3.3 Added Default Alert Group
-#@2019_02_27 Change: v3.4 Change error message when ping to system don't work
-#@2019_05_07 Update: v3.5 Add 'W 5' ping option, should produce less false alert
-#@2020_02_25 Update: v3.6 Fix intermittent problem getting SADMIN value from /etc/environment.
-#@2020_03_21 Update: v3.7 Show Error Total only at the end of each system processed.
-#@2020_04_05 Update: v3.8 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
-#@2020_04_21 Update: v3.9 Minor Error Message Alignment,
-#@2020_04_24 Update: v4.0 Show rsync status & solve problem if duplicate entry in /etc/environment.
+# 2019_02_27 Change: v3.4 Change error message when ping to system don't work
+# 2019_05_07 Update: v3.5 Add 'W 5' ping option, should produce less false alert
+# 2020_02_25 Update: v3.6 Fix intermittent problem getting SADMIN value from /etc/environment.
+# 2020_03_21 Update: v3.7 Show Error Total only at the end of each system processed.
+# 2020_04_05 Update: v3.8 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
+# 2020_04_21 Update: v3.9 Minor Error Message Alignment,
+# 2020_04_24 Update: v4.0 Show rsync status & solve problem if duplicate entry in /etc/environment.
+# 2020_05_06 Update: v4.1 Modification to log structure
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -73,7 +74,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='4.0'                               # Your Current Script Version
+    export SADM_VER='4.1'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -152,14 +153,11 @@ process_servers()
     SQL="${SQL} from server"                                            # From the Server Table
     SQL="${SQL} where srv_active = True"                                # Select only Active Servers
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
-    
     CMDLINE1="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL & Use Read Only User  
-    CMDLINE2="-h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' |tr '/\t/' '/,/'" # Build CmdLine
+    #CMDLINE2="-h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' |tr '/\t/' '/,/'" # Build CmdLine
     if [ $DEBUG_LEVEL -gt 5 ]                                           # If Debug Level > 5 
-        then sadm_write "$CMDLINE1 $CMDLINE2 \n"                        # Debug = Write SQL CMD Line
+        then sadm_write "$CMDLINE1 -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' |tr '/\t/' '/,/'\n"
     fi
-
-    # Execute SQL Query to Create CSV Work File - $SADM_TMP_FILE1
     $CMDLINE1 -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
 
     # If File was not created or has a zero lenght then No Actives Servers were found
@@ -179,7 +177,9 @@ process_servers()
         server_sporadic=`echo $wline|awk -F, '{ print $5 }'`            # Sporadic t=True f=False
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
         #
-        sadm_write "\n${SADM_TEN_DASH}\nProcessing ($xcount) $fqdn_server \n" # Show Cur. System 
+        sadm_write "\n"
+        #sadm_write "${SADM_TEN_DASH}\n"
+        sadm_write "Processing ($xcount) $fqdn_server \n"               # Show Cur. System 
         
         if [ $DEBUG_LEVEL -gt 0 ]                                       # If Debug Activated
             then if [ "$server_monitor" = "1" ]                         # Monitor Flag is at True
@@ -197,9 +197,7 @@ process_servers()
             then SMSG="[ ERROR ] Can't process '$fqdn_server', hostname can't be resolved"
                  sadm_write "${SMSG}\n"                                 # Advise user
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
-                 if [ $ERROR_COUNT -ne 0 ]                              # If Error count not at zero
-                    then sadm_write "Total error(s) : $ERROR_COUNT \n"  # Show Total Error Count
-                 fi
+                 sadm_write "Error Count is now at $ERROR_COUNT \n"
                  continue                                               # Continue with next Server
         fi
 
@@ -219,7 +217,7 @@ process_servers()
         if [ $RC -ne 0 ]
             then sadm_write "$SADM_ERROR Ping to server failed - Unable to process system.\n"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
-                 #if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write "Error Count at $ERROR_COUNT \n" ;fi
+                 sadm_write "Error Count is now at $ERROR_COUNT \n"
                  continue
         fi
 
@@ -236,7 +234,6 @@ process_servers()
 
         # Get the remote /etc/environment file to determine where SADMIN is install on remote
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}"
-        #sadm_write "Getting /etc/environment from ${server_name}\n"
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
             then scp -P${SADM_SSH_PORT} ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
             else cp /etc/environment ${WDIR} >/dev/null 2>&1  
@@ -245,13 +242,18 @@ process_servers()
             then RDIR=`grep "SADMIN=" $WDIR/environment |sed 's/export //g' |awk -F= '{print $2}'|tail -1`
                  if [ "$RDIR" != "" ]                                   # No Remote Dir. Set
                     then sadm_write "SADMIN installed in ${RDIR} on ${server_name}.\n"
-                    else sadm_write "$SADM_ERROR Couldn't get /etc/environment on ${server_name}.\n"
-                         ERROR_COUNT=$(($ERROR_COUNT+1))                # Add 1 to Error Count
+                    else sadm_write "$SADM_WARNING Couldn't get /etc/environment.\n"
+                         if [ "$server_sporadic" = "1" ]               # SSH don't work & Sporadic
+                            then sadm_write "${server_name} is a sporadic system.\n"
+                            else ERROR_COUNT=$(($ERROR_COUNT+1))       # Add 1 to Error Count
+                                 sadm_write "Error Count is now at $ERROR_COUNT \n"
+                         fi
                          sadm_write "Continuing with next system.\n"    # Advise we are skipping srv
                          continue                                       # Go process next system
                  fi 
             else sadm_write "$SADM_ERROR Couldn't get /etc/environment on ${server_name}.\n"
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Add 1 to Error Count
+                 sadm_write "Error Count is now at $ERROR_COUNT \n"
                  sadm_write "Continuing with next system.\n"            # Advise we are skipping srv
                  continue                                               # Go process next system
         fi
@@ -278,9 +280,9 @@ process_servers()
         if [ $RC -ne 0 ]
             then sadm_write "$SADM_ERROR ($RC)\n"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
+                 sadm_write "Error Count is now at $ERROR_COUNT \n"
             else sadm_write "${SADM_OK}\n" 
         fi
-        #if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write "Error Count at $ERROR_COUNT \n" ;fi
  
 
         # NMON FILES
@@ -314,35 +316,51 @@ process_servers()
 }
 
 
-# --------------------------------------------------------------------------------------------------
-#                           S T A R T   O F   M A I N    P R O G R A M
-# --------------------------------------------------------------------------------------------------
 
+# --------------------------------------------------------------------------------------------------
+# Command line Options functions
 # Evaluate Command Line Switch Options Upfront
-# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
-    while getopts "hvd:" opt ; do                                       # Loop to process Switch
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# --------------------------------------------------------------------------------------------------
+function cmd_options()
+{
+    while getopts "d:hv" opt ; do                                       # Loop to process Switch
         case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               ;;                                                       # No stop after each page
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 1                                           # Exit Script with Error
+               fi
+               printf "Debug Level set to ${SADM_DEBUG}."               # Display Debug Level
+               ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
-            v) show_version                                             # Show Script Version Info
+            v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
-           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+           \?) printf "\nInvalid option: -${OPTARG}.\n"                 # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+    return 
+}
 
-# Call SADMIN Initialization Procedure
+
+
+# --------------------------------------------------------------------------------------------------
+#                           S T A R T   O F   M A I N    P R O G R A M
+# --------------------------------------------------------------------------------------------------
+
+    cmd_options "$@"                                                    # Check command-line Options    
     sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ; fi                    # Exit if Problem 
 
-# If current user is not 'root', exit to O/S with error code 1 (Optional)
+    # If current user is not 'root', exit to O/S with error code 1 
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
         then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
              sadm_write "Process aborted.\n"                            # Abort advise message
@@ -350,7 +368,7 @@ process_servers()
              exit 1                                                     # Exit To O/S with Error
     fi
 
-# If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
+    # If we are not on the SADMIN Server, exit to O/S with error code 1 
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
         then sadm_write "Script can run only on SADMIN server (${SADM_SERVER}).\n"
              sadm_write "Process aborted.\n"                            # Abort advise message
@@ -358,12 +376,9 @@ process_servers()
              exit 1                                                     # Exit To O/S with error
     fi
 
-
-# Get Statistics and Configuration files from AIX and Linux Servers
+    # Get Statistics and Configuration files from AIX, Mac and Linux Servers
     process_servers                                                     # Collect Files from Servers
     SADM_EXIT_CODE=$?                                                   # Return Code = Exit Code
-
-# SADMIN CLosing procedure - Close/Trim log and rch file, Remove PID File, Send email if requested
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
     
