@@ -58,14 +58,14 @@
 # 2019_09_18 Update: v2.11 Show Backup size in human readable form.
 # 2020_01_08 Update: v2.12 Minor logging changes.
 # 2020_02_18 Update: v2.13 Correct typo error introduce in v2.12
-#@2020_03_04 Fix: v2.14 always leave latest ReaR Backup to default name to ease the restore.
-#@2020_03_05 Fix: v2.15 Was not removing NFS mount point in /mnt after the backup.
-#@2020_04_11 Fix: v2.16 site.conf, "BACKUP_URL" line is align with sadmin.cfg before each backup.
-#@2020_04_12 Update: v2.17 If ReaR site.conf doesn't exist, create it, bug fix and enhancements.
-#@2020_04_13 Update: v2.18 Lot of little adjustments.
-#@2020_04_14 Update: v2.19 Some more logging adjustments.
-#@2020_04_16 Update: v2.20 Minor adjustments
-#
+# 2020_03_04 Fix: v2.14 always leave latest ReaR Backup to default name to ease the restore.
+# 2020_03_05 Fix: v2.15 Was not removing NFS mount point in /mnt after the backup.
+# 2020_04_11 Fix: v2.16 site.conf, "BACKUP_URL" line is align with sadmin.cfg before each backup.
+# 2020_04_12 Update: v2.17 If ReaR site.conf doesn't exist, create it, bug fix and enhancements.
+# 2020_04_13 Update: v2.18 Lot of little adjustments.
+# 2020_04_14 Update: v2.19 Some more logging adjustments.
+# 2020_04_16 Update: v2.20 Minor adjustments
+#@2020_05_13 Update: v2.21 Remove mount directory before exiting script.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -97,7 +97,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.20'                              # Your Current Script Version
+    export SADM_VER='2.21'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -305,7 +305,10 @@ rear_preparation()
     update_url_in_rear_site_conf                                        # Update BACKUP_URL Line
 
     # Make sure Local mount point exist.
-    if [ ! -d ${NFS_MOUNT} ] ; then mkdir ${NFS_MOUNT} ; chmod 775 ${NFS_MOUNT} ; fi
+    if [ ! -d ${NFS_MOUNT} ] 
+        then sadm_write "Create local mount point directory (${NFS_MOUNT}).\n" 
+             mkdir ${NFS_MOUNT} ; chmod 775 ${NFS_MOUNT} 
+     fi
 
     # Mount the NFS Mount point 
     sadm_write "\n" 
@@ -317,6 +320,7 @@ rear_preparation()
         then RC=1
              sadm_write "$SADM_ERROR NFS Mount failed - Process Aborted.\n"
              umount ${NFS_MOUNT} > /dev/null 2>&1
+             rmdir  ${NFS_MOUNT} > /dev/null 2>&1
              return 1
     fi
     sadm_write "$SADM_OK \n"
@@ -466,7 +470,8 @@ rear_housekeeping()
     if [ $? -ne 0 ] 
        then sadm_write "$SADM_ERROR Problem unmounting ${NFS_MOUNT}.\n"
             FNC_ERROR=1
-       else sadm_write "$SADM_OK \n" 
+       else rmdir ${NFS_MOUNT} > /dev/null 2>&1
+            sadm_write "$SADM_OK \n" 
     fi  
 
     # Remove NFS mount point.
