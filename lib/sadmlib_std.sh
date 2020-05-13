@@ -135,6 +135,7 @@
 #@2020_04_05 Update: v3.34 New Variable SADM_SUCCESS, SADM_FAILED to Show Status in Color.
 #@2020_04_13 Update: v3.35 Correct Typo Error in SADM_ERROR
 #@2020_04_13 Update: v3.36 Add @@LNT (Log No Time) var. to prevent sadm_write to put Date/Time in Log
+#@2020_05_12 Fix: v3.37 Fix problem sending attachment file when sending alert by email.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -146,7 +147,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.36"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.37"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2029,8 +2030,8 @@ sadm_start() {
 sadm_stop() {
     if [ $# -eq 0 ]                                                     # If No status Code Received
         then SADM_EXIT_CODE=1                                           # Assume Error if none given
-             sadm_write "Function 'sadm_stop' expect a parameter (SADM_EXIT_CODE)\n"
-             sadm_write "Received None - Assuming 1 (error).\n"        # Advise User
+             sadm_write "Function '${FUNCNAME[0]}' expect one parameter.\n"
+             sadm_write "${SADM_ERROR} Received None.\n"                # Advise User
         else SADM_EXIT_CODE=$1                                          # Save Exit Code Received
     fi
     if [ "$SADM_EXIT_CODE" -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi         # Making Sure code is 1 or 0
@@ -2048,12 +2049,12 @@ sadm_stop() {
     fi
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
-    if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
+    if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File ?
         then XCODE=`tail -1 ${SADM_RCHLOG}| awk '{ print $NF }'`        # Get RCH Code of last line
              if [ "$XCODE" -eq 2 ]                                      # If last Line was code 2
-                then XLINE=`wc -l ${SADM_RCHLOG} | awk '{print $1}'`    # Actual Nb Line in RCH File
+                then XLINE=`wc -l ${SADM_RCHLOG} | awk '{print $1}'`    # Count Nb. Line in RCH File
                      XCOUNT=`expr $XLINE - 1`                           # Count without last line
-                     head -$XCOUNT ${SADM_RCHLOG} > ${SADM_TMP_DIR}/xrch.$$ # Create new rch file
+                     head -$XCOUNT ${SADM_RCHLOG} > ${SADM_TMP_DIR}/xrch.$$ # Create rch file trim
                      rm -f ${SADM_RCHLOG} >/dev/null 2>&1               # Remove old rch file
                      mv ${SADM_TMP_DIR}/xrch.$$ ${SADM_RCHLOG}          # New RCH without code 2
              fi                     
@@ -2192,10 +2193,16 @@ sadm_stop() {
 #
 # Example of parameters: 
 # 'E,W,I,S' EVENT_DATE_TIME HOST_NAME SCRIPT_NAME ALERT_GROUP SUBJECT MESSAGE ATTACHMENT_PATH
+#
+# Function return value 
+#  0 = 
+#  1 = Error - Aborted could not send alert.
+#  2 = 
+#  3 = Alert older than 24 hrs - Alert wasn't send
 # --------------------------------------------------------------------------------------------------
 #
 sadm_send_alert() {
-    #LIB_DEBUG=6                                                        # If Debugging the Library
+    LIB_DEBUG=0                                                        # If Debugging the Library
 
     # Validate the Number of parameter received.
     if [ $# -ne 8 ]                                                     # Invalid No. of Parameter
@@ -2217,19 +2224,15 @@ sadm_send_alert() {
     aattach="$8"                                                        # Save Attachment FileName
     acounter="01"                                                       # Default alert Counter
     if [ "$LIB_DEBUG" -gt 6 ]                                           # Debug Info List what Recv.
-       then sadm_write "\nFunction '${FUNCNAME}' parameters received :\n"
-            debmes="atype=$atype "                                      # Show Alert Type
-            debmes="$debmes atime=$atime "                              # Show Event Date & Time
-            debmes="$debmes aserver=$aserver "                          # Show Server Name
-            debmes="$debmes ascript=$ascript "                          # Show Script Name
-            debmes="$debmes agroup=$agroup "                            # Show Alert Group
-            sadm_write "${debmes}\n"                                    # Show Debug LIne
-            debmes="asubject=\"$asubject\"\n"                           # Show Alert Subject/Title
-            sadm_write "${debmes}\n"                                    # Show Debug LIne
-            debmes="amessage=\"$amessage\"\n"                           # Show Alert Message
-            sadm_write "${debmes}\n"                                    # Show Debug LIne
-            debmes="aattachment=\"$aattach\""                           # Show Alert Attachment File
-            sadm_write "${debmes}\n\n"                                  # Show Debug LIne
+       then sadm_write "\n\n${SADM_BOLD}Function '${FUNCNAME}' parameters received :${SADM_RESET}\n"
+            sadm_write "atype=$atype \n"                                # Show Alert Type
+            sadm_write "atime=$atime \n"                                # Show Event Date & Time
+            sadm_write "aserver=$aserver \n"                            # Show Server Name
+            sadm_write "ascript=$ascript \n"                            # Show Script Name
+            sadm_write "agroup=$agroup \n"                              # Show Alert Group
+            sadm_write "asubject=\"$asubject\"\n"                       # Show Alert Subject/Title
+            sadm_write "amessage=\"$amessage\"\n"                       # Show Alert Message
+            sadm_write "aattachment=\"$aattach\"\n"                     # Show Alert Attachment File
     fi
 
     # Is there is an attachment and is the file is not readable ?
@@ -2267,13 +2270,23 @@ sadm_send_alert() {
     fi
     NbDaysOld=0                                                         # Default Alert Age in Days
     if [ $aage -ge 86400 ] ;then NbDaysOld=`echo "$aage / 86400" |$SADM_BC` ;fi # Alert age in Days
-
+    if [ "$LIB_DEBUG" -gt 6 ]                                           # Debug Info List what Recv.
+        then sadm_write "Alert Epoch - aepoch=$aepoch \n"
+             sadm_write "Current Epoch - cepoch=$cepoch \n"
+             sadm_write "Age of alert in seconds - aage=$aage \n"
+             sadm_write "Age of alert in days - NbDaysOld=$NbDaysOld \n"
+    fi 
 
     # GREP HISTORY FILE TO SEE IF IT ALREADY EXIST.
-    alertid=`printf "%s;%s;%s;%s;%s" "$adate" "$atype" "$aserver" "$agroup" "$asubject"`
-    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "\nSearch History for \"$alertid\"\n" ; fi
-    grep "$alertid" $SADM_ALERT_HIST  >>/dev/null 2>&1                  # Grep Alert ID in History
+    if [ "$LIB_DEBUG" -gt 4 ] 
+        then sadm_write "grep \"^$aepoch\" $SADM_ALERT_HIST |grep \";$aserver;\" |grep \"$asubject\"\n"
+             grep "^$aepoch" $SADM_ALERT_HIST | grep ";$aserver;" | grep "$asubject" | tee -a $SADM_LOG
+    fi
+    grep "^$aepoch" $SADM_ALERT_HIST | grep ";$aserver;" | grep "$asubject" >>/dev/null 2>&1
     RC=$?                                                               # Save Return Code
+    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Search Return code is $RC\n" ; fi
+
+
 
     # If same alert wasn't found for today and it's not a script alert (it's a SysMon Alert).
     #  - Check if there was the same alert yesterday
@@ -2282,7 +2295,8 @@ sadm_send_alert() {
     #    - If Age of alert is less then 85500 Seconds (23Hrs 45Min) then alert already sent.
     #    - If Age of alert is greater than 85500 Seconds consider it as a new alert.
     if [ "$RC" -ne 0 ] && [ "$atype" != "S" ]
-        then ydate=$(date --date="yesterday" +"%Y.%m.%d")               # Date Day before the event
+        then if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Alert wasn't found and it's a SysMon Alert.\n" ; fi
+             ydate=$(date --date="yesterday" +"%Y.%m.%d")               # Date Day before the event
              yalertid=`printf "%s;%s;%s;%s;%s" "$ydate" "$atype" "$aserver" "$agroup" "$asubject"`
              grep "$yalertid" $SADM_ALERT_HIST  >>/dev/null 2>&1        # Search SameAlert Yesterday
              YRC=$?                                                     # Save Yesterday Return Code
@@ -2306,9 +2320,12 @@ sadm_send_alert() {
     # If Alert is older than 24 hours, 
     if [ $aage -gt 86400 ]                                              # Alert older than 24Hrs ?
         then if [ "$LIB_DEBUG" -gt 4 ]                                  # If Under Debug
-                then sadm_write "Alert older than 24 Hrs ($NbDaysOld days).\n" 
+                then sadm_write "Alert older than 24 Hrs ($aage sec.).\n" 
              fi
              return 3
+        else if [ "$LIB_DEBUG" -gt 4 ]                                  # If Under Debug
+                then sadm_write "Alert issued less than 24 Hrs ($aage sec.) ago.\n" 
+             fi
     fi
 
     # ALERT WASN'T FOUND IN HISTORY FILE - THIS IS A NEW ALERT IF NOT OLDER THAN 24 Hours.
@@ -2395,6 +2412,7 @@ sadm_send_alert() {
         *)   ws="Invalid Alert Type ($atype): ${aserver} ${asubject}"   # Invalid Alert type Message
              ;;
     esac
+    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Alert Subject will be : $ws \n" ; fi
 
     # Construct Body of the Email.
     mdate=`date "+%Y.%m.%d %H:%M"`                                      # Date & Time of Email
@@ -2432,6 +2450,7 @@ sadm_send_alert() {
        then body=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$body0" "$body4" "$body1" "$body2" "$body3" "$body5" "$body6"`
        else body=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$body0" "$body4" "$body1" "$body2" "$body5" "$body6"`
     fi
+    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Alert body will be : $body \n" ; fi
 
 
     # Send the Alert Message using the type of alert requested
@@ -2441,9 +2460,17 @@ sadm_send_alert() {
         m|M )   aemail=`grep -i "^$agroup " $SADM_ALERT_FILE |awk '{ print $3 }'` # Get Emails of Group
                 aemail=`echo $aemail | awk '{$1=$1;print}'`             # Del Leading/Trailing Space
                 # Send the Email using 'mutt'.
+                if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Email alert sent to $aemail \n" ; fi 
                 if [ "$aattach" != "" ]                                 # If Attachment Specified
-                    then printf "%s\n" "$body" | $SADM_MUTT -s "$ws" "$aemail" -a "$aattach"  >>$SADM_LOG 2>&1 
-                    else printf "%s\n" "$body" | $SADM_MUTT -s "$ws" "$aemail"  >>$SADM_LOG 2>&1 
+                    then if [ "$LIB_DEBUG" -gt 4 ] 
+                            then sadm_write "$SADM_MUTT -s \"$ws\" -a \"$aattach\" $aemail \n"
+                         fi 
+                         #printf "%s\n" "$body" | $SADM_MUTT -s "$ws" "$aemail" -a "$aattach"  >>$SADM_LOG 2>&1 
+                         printf "%s\n" "$body" | $SADM_MAIL -s "$ws" -a "$aattach" $aemail >>$SADM_LOG 2>&1 
+                    else if [ "$LIB_DEBUG" -gt 4 ] 
+                            then sadm_write "$SADM_MAIL -s \"$ws\" $aemail \n"
+                         fi
+                         printf "%s\n" "$body" | $SADM_MAIL -s "$ws" $aemail  >>$SADM_LOG 2>&1 
                 fi
                 RC=$?                                                   # Save Error Number
                 if [ $RC -eq 0 ]                                        # If Error Sending Email
@@ -2456,6 +2483,7 @@ sadm_send_alert() {
         # SEND ALERT TO CELLULAR NUMBER ------------------------------------------------------------
         C)  acell=`grep -i "^$agroup " $SADM_ALERT_FILE |awk '{ print $3 }'` # GetGroupMembers Cell#
             acell=`echo $acell | awk '{$1=$1;print}'`                   # Del Leading/Trailing Space
+            if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "SMS alert sent to $acell \n" ; fi 
             # Send the SMS unsing TextBelt
             reponse=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$acell -d "message=$body" -d key=$SADM_TEXTBELT_KEY`
             # Test Cellular Return Code
@@ -2568,6 +2596,7 @@ sadm_send_alert() {
             ;;
     esac
     write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$acounter" "$wstatus"
+    LIB_DEBUG=0                                                        # If Debugging the Library
     return $RC
 
 }
@@ -2616,6 +2645,8 @@ write_alert_history() {
     hline=`printf "%s;%s;%s;%s" "$hline" "$hserver" "$hgroup" "$hsub"`  # Alert Server,Group,Subject
     hline=`printf "%s;%s;%s" "$hline" "$hstat" "$cdatetime"`            # Alert Status,Cur Date/Time
     echo "$hline" >>$SADM_ALERT_HIST                                    # Write Alert History File
+    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Line added to History : $hline \n" ; fi 
+
 }
 
 
