@@ -37,11 +37,12 @@
 # 2019_09_25 Update: v2.7 Page has become starting page and change page Title.
 # 2019_10_01 Update: v2.8 Page Added links to log, rch and script documentation.
 # 2019_10_15 Update: v2.9 Add Architecture, O/S Name, O/S Version to page
-#@2019_11_26 Fix: v2.10 Fix problem with temp files (Change from $SADMIN/tmp to $SADMIN/www/tmp)
-#@2019_11_27 Fix: v2.11 Fix 'open append failed', when no *.rpt exist or are all empty.
-#@2020_01_11 Update: v2.12 Remove Arch,Category and OS Version to make space on Line.
-#@2020_01_13 Fix: v2.13 Bug fix, displaying empty error line.
-#@2020_03_03 Update: v2.14 Server Description displayed when mouse over server name.
+# 2019_11_26 Fix: v2.10 Fix problem with temp files (Change from $SADMIN/tmp to $SADMIN/www/tmp)
+# 2019_11_27 Fix: v2.11 Fix 'open append failed', when no *.rpt exist or are all empty.
+# 2020_01_11 Update: v2.12 Remove Arch,Category and OS Version to make space on Line.
+# 2020_01_13 Fix: v2.13 Bug fix, displaying empty error line.
+# 2020_03_03 Update: v2.14 Server Description displayed when mouse over server name.
+#@2020_05_13 Update: v2.15 Customize message when nothing to report.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -75,7 +76,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.14" ;                                                       # Current version number
+$SVER  = "2.15" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -248,136 +249,127 @@ function display_data($con,$alert_file) {
     $array_sysmon = file($alert_file);                                  # Put Alert file in Array
     rsort($array_sysmon);                                               # Sort Array in Reverse Ord.
 
-    # Display each line of the alert file (Now in $array_sysmon).
-    foreach ($array_sysmon as $line_num => $line) {
-      if ($DEBUG) { echo "\nProcessing Line #{$line_num} : ." .htmlspecialchars($line). ".<br />\n"; }
-      if ($DEBUG) { echo "Length of line #{$line_num} is ". strlen($line) ; }
-      if (strlen($line) > 4095) { continue ; }                          # Empty Line Exceeding 4095
+    if (sizeof($array_sysmon) == 0) {                                   # Array Empty everything OK
+        echo "<tr>\n";                                                  # Start of line
+        echo "\n<td class='dt-center' colspan='7'>";                    # Span the 7 columns
+        echo "Nothing to report" ;                                      # Indicate everything OK
+        echo "</td></tr>\n";                                            # End of table row
+    }else{
+        foreach ($array_sysmon as $line_num => $line) {
+            if ($DEBUG) { echo "\nProcessing Line #{$line_num} : ." .htmlspecialchars($line). ".<br />\n"; }
+            if ($DEBUG) { echo "Length of line #{$line_num} is ". strlen($line) ; }
+            if (strlen($line) > 4095) { continue ; }                    # Empty Line Exceeding 4095
     
-      # Split alert Line (Example below)
-      # Warning;holmes;2019.09.30;10:37;linux;FILESYSTEM;Filesystem /tmp at 89% >= 75%;default;default
-      # Running;holmes;2019.09.30;10:39;SADM;SCRIPT;sadm_fetch_clients;default/1;default/1 
-      list($wstatus,$whost,$wdate,$wtime,$wmod,$wsubmod,$wdesc,$warngrp,$errgrp)=explode(";",$line);
+            # Split alert Line (Example below)
+            # Warning;holmes;2019.09.30;10:37;linux;FILESYSTEM;Filesystem /tmp at 89% >= 75%;default;default
+            # Running;holmes;2019.09.30;10:39;SADM;SCRIPT;sadm_fetch_clients;default/1;default/1 
+            list($wstatus,$whost,$wdate,$wtime,$wmod,$wsubmod,$wdesc,$warngrp,$errgrp)=explode(";",$line);
 
-      # Show Status Icons 
-      echo "<tr>\n";                                                    # Start of line
-      switch (strtoupper($wstatus)) {                                   # Depend on Uppercase Status
-        case 'ERROR' :                                                  # If an Error Line
-            echo "\n<td class='dt-justify'>";
-            echo "<span data-toggle='tooltip' title='Error Reported'>";
-            echo "<img src='/images/sadm_error.png' ";                  # Show error Icon
-            echo "style='width:96px;height:32px;'></span></td>";        # Status Standard Image Size
-            $alert_group=$errgrp;                                       # Set Event Alert Group
-            break;
-        case 'WARNING' :
-            echo "\n<td class='dt-justify'>";
-            echo "<span data-toggle='tooltip' title='Warning Reported'>";
-            echo "<img src='/images/sadm_warning.png' ";                # Show Warning Icon
-            echo "style='width:96px;height:32px;'></span></td>";        # Status Standard Image Size
-            $alert_group=$warngrp;                                      # Set Event Alert Group
-            break;
-        case 'RUNNING' :
-            echo "\n<td class='dt-justify'>";
-            echo "<span data-toggle='tooltip' title='Script currently running'>";
-            echo "<img src='/images/sadm_running.png' ";                # Show Running Icon
-            echo "style='width:96px;height:32px;'></span></td>";        # Status Standard Image Size
-            $alert_group=$errgrp;                                       # Set Event Alert Group
-            break;
-        default:
-            echo "\n<td class='dt-center' vertical-align: center;>";
-            echo "<span data-toggle='tooltip' title='Unknown Status'>";
-            echo "<img src='/images/question_mark.jpg' ";               # Show Question Mark
-            echo "style='width:32px;height:32px;'></span> Unknown</td>";
-            $alert_group="Unknown";                                     # Set Event Alert Group
-            break;
-      }
+            # Show Status Icons 
+            echo "<tr>\n";                                              # Start of line
+            switch (strtoupper($wstatus)) {                             # Depend on Uppercase Status
+                case 'ERROR' :                                          # If an Error Line
+                    echo "\n<td class='dt-justify'>";
+                    echo "<span data-toggle='tooltip' title='Error Reported'>";
+                    echo "<img src='/images/sadm_error.png' ";          # Show error Icon
+                    echo "style='width:96px;height:32px;'></span></td>";# Status Standard Image Size
+                    $alert_group=$errgrp;                               # Set Event Alert Group
+                    break;
+                case 'WARNING' :
+                    echo "\n<td class='dt-justify'>";
+                    echo "<span data-toggle='tooltip' title='Warning Reported'>";
+                    echo "<img src='/images/sadm_warning.png' ";        # Show Warning Icon
+                    echo "style='width:96px;height:32px;'></span></td>";# Status Standard Image Size
+                    $alert_group=$warngrp;                              # Set Event Alert Group
+                    break;
+                case 'RUNNING' :
+                    echo "\n<td class='dt-justify'>";
+                    echo "<span data-toggle='tooltip' title='Script currently running'>";
+                    echo "<img src='/images/sadm_running.png' ";        # Show Running Icon
+                    echo "style='width:96px;height:32px;'></span></td>";# Status Standard Image Size
+                    $alert_group=$errgrp;                               # Set Event Alert Group
+                    break;
+                default:
+                    echo "\n<td class='dt-center' vertical-align: center;>";
+                    echo "<span data-toggle='tooltip' title='Unknown Status'>";
+                    echo "<img src='/images/question_mark.jpg' ";       # Show Question Mark
+                    echo "style='width:32px;height:32px;'></span> Unknown</td>";
+                    $alert_group="Unknown";                             # Set Event Alert Group
+                    break;
+                }
+            # Event Module Name (All lowercase, except first character).
+            echo "<td class='dt-center'>" . ucwords(strtolower($wsubmod)) . "</td>\n";
 
+            # Show Event Description. 
+            $wlog =  $whost . "_" . $wdesc . ".log";                    # Construct Script log Name
+            $log_name = SADM_WWW_DAT_DIR . "/" .$whost. "/log/" .trim($wlog); # Full Path to Script Log
+            $wrch =  $whost . "_" . $wdesc . ".rch";                    # Construct Script rch Name
+            $rch_name = SADM_WWW_DAT_DIR . "/" .$whost. "/rch/" .trim($wrch); # Full Path to Script rch  
+            $wpdf =  $wdesc . ".pdf";                                   # Documentation pdf Name
+            $pdf_name = SADM_WWW_DOC_DIR . "/pdf/scripts/" . trim($wpdf);     # Full Path to Script pdf  
+            echo "<td>";                                                # Start of Cell
+            echo $wdesc ;                                               # Desc. coming from rpt file
+            if ($wsubmod == "SCRIPT") {                                 # Module is a Script ?
+              if ($DEBUG) { 
+                  echo " log: $wlog - $log_name rch: $wrch - $rch_name pdf: $wpdf - $pdf_name";
+              }
+              if (file_exists($log_name)) {
+                   echo str_repeat('&nbsp;', 2) . "\n<a href='" . $URL_VIEW_FILE . "?";
+                   echo "filename=" . $log_name . "' title='View script log - ";
+                   echo $wlog . "'>[log]</a>";
+              }
+              if (file_exists($rch_name)) {
+                  echo str_repeat('&nbsp;', 2) . "\n<a href='" . $URL_VIEW_RCH . "?";
+                  echo "host=" .$whost . "&filename=" . $wrch . "' title='View script history file - ";
+                  echo $wrch . "'>[rch]</a>";
+              }
+              if (file_exists($pdf_name)) {
+                  echo str_repeat('&nbsp;', 2) ."\n<a href='/doc/pdf/scripts/";
+                  echo $wpdf ."' title='View script documentation'>[doc]</a>";
+              }
+            }
+            echo "</td>\n";
 
-      # Event Module Name (All lowercase, except first character).
-      echo "<td class='dt-center'>" . ucwords(strtolower($wsubmod)) . "</td>\n";
-    
-      # Show Event Description. 
-      $wlog =  $whost . "_" . $wdesc . ".log";                          # Construct Script log Name
-      $log_name = SADM_WWW_DAT_DIR . "/" .$whost. "/log/" .trim($wlog); # Full Path to Script Log
-      $wrch =  $whost . "_" . $wdesc . ".rch";                          # Construct Script rch Name
-      $rch_name = SADM_WWW_DAT_DIR . "/" .$whost. "/rch/" .trim($wrch); # Full Path to Script rch  
-      $wpdf =  $wdesc . ".pdf";                                         # Documentation pdf Name
-      $pdf_name = SADM_WWW_DOC_DIR . "/pdf/scripts/" . trim($wpdf);     # Full Path to Script pdf  
-      echo "<td>";                                                      # Start of Cell
-      echo $wdesc ;                                                     # Desc. coming from rpt file
-      if ($wsubmod == "SCRIPT") {                                       # Module is a Script ?
-        if ($DEBUG) { 
-            echo " log: $wlog - $log_name rch: $wrch - $rch_name pdf: $wpdf - $pdf_name";
+            # Event Date and Time
+            echo "<td class='dt-center'>" . $wdate . " " . $wtime . "</td>\n";
+
+            # Get Server Description, O/S and O/S version.
+            $sql = "SELECT * FROM server where srv_name = '". $whost . "';";  # Construct select 
+            if ( ! $result=mysqli_query($con,$sql)) {                   # Execute SQL Select
+                $WDESC = "Server not in Database";                      # Server not found descr.
+                $WOS   = "Unknown";                                     # O/S name is unknown
+                $WVER  = "Unknown";                                     # O/S Version is unknown
+            }else{
+                $row = mysqli_fetch_assoc($result);                     # Fetch server info
+                $WDESC = $row['srv_desc'];                              # Save Server Description
+                $WOS   = $row['srv_osname'];                            # Save Server O/S Name
+                $WVER  = $row['srv_osversion'];                         # Save Server O/S Version
+                mysqli_free_result($result);                            # Free result set 
+            }
+            # Server Name 
+            echo "<td class='dt-center'>";
+            echo "<a href='" . $URL_HOST_INFO . "?sel=" . nl2br($whost) ;
+            echo "' title='$WDESC - $WOS $WVER at " . $row['srv_ip'] . "'>" ;
+            echo "' title='$WDESC at " . $row['srv_ip'] . "'>" ;
+            echo nl2br($whost) . "</a></td>\n";
+          
+            # Show Server Description.
+            #echo "<td>" . $WDESC . "</td>\n";                          # Server Description
+            # Server O/S Name 
+            #echo "<td class='dt-body-center'>" . ucfirst( $row['srv_osname']) . "</td>\n";  
+            # Display Operating System Logo
+            $WOS   = sadm_clean_data($row['srv_osname']);               # Set Server O/S Name
+            sadm_show_logo($WOS);                                       # Show Distribution Logo 
+            # Server O/S Version
+            #echo "<td class='dt-body-center'>" . nl2br( $row['srv_osversion']) . "</td>\n";  
+            # Display Operating System Logo
+            #$WOS   = sadm_clean_data($row['srv_osname']);              # Set Server O/S Name
+            #sadm_show_logo($WOS);                                      # Show Distribution Logo 
+            # Show Event Alert Group
+            echo "<td class='dt-center'>" . $alert_group . "</td>\n";   # Event Alert Group/Type
         }
-        if (file_exists($log_name)) {
-             echo str_repeat('&nbsp;', 2) . "\n<a href='" . $URL_VIEW_FILE . "?";
-             echo "filename=" . $log_name . "' title='View script log - ";
-             echo $wlog . "'>[log]</a>";
-        }
-        if (file_exists($rch_name)) {
-            echo str_repeat('&nbsp;', 2) . "\n<a href='" . $URL_VIEW_RCH . "?";
-            echo "host=" .$whost . "&filename=" . $wrch . "' title='View script history file - ";
-            echo $wrch . "'>[rch]</a>";
-        }
-        if (file_exists($pdf_name)) {
-            echo str_repeat('&nbsp;', 2) ."\n<a href='/doc/pdf/scripts/";
-            echo $wpdf ."' title='View script documentation'>[doc]</a>";
-        }
-      }
-      echo "</td>\n";
-      
-
-      # Event Date and Time
-      echo "<td class='dt-center'>" . $wdate . " " . $wtime . "</td>\n";
-
-      # Get Server information from the Database.
-      $sql = "SELECT * FROM server where srv_name = '". $whost . "';";  # Construct select statement
-      if ( ! $result=mysqli_query($con,$sql)) {                         # Execute SQL Select
-          $WDESC = "Server not in Database";                            # Server not found descr.
-          $WOS   = "Unknown";                                           # O/S name is unknown
-          $WVER  = "Unknown";                                           # O/S Version is unknown
-      }else{
-          $row = mysqli_fetch_assoc($result);                           # Fetch server info
-          $WDESC = $row['srv_desc'];                                    # Save Server Description
-          $WOS   = $row['srv_osname'];                                  # Save Server O/S Name
-          $WVER  = $row['srv_osversion'];                               # Save Server O/S Version
-          mysqli_free_result($result);                                  # Free result set 
-      }
-
-      # Server Name 
-      echo "<td class='dt-center'>";
-      echo "<a href='" . $URL_HOST_INFO . "?sel=" . nl2br($whost) ;
-#      echo "' title='$WDESC - $WOS $WVER at " . $row['srv_ip'] . "'>" ;
-      echo "' title='$WDESC at " . $row['srv_ip'] . "'>" ;
-      echo nl2br($whost) . "</a></td>\n";
-
-      # Show Server Description.
-      #echo "<td>" . $WDESC . "</td>\n";                                 # Server Description
-
-      # Server Category  
-      #echo "<td class='dt-body-left'>" . ucfirst( $row['srv_cat']) . "</td>\n";  
-
-      # Server Architecture  
-      #echo "<td class='dt-body-left'>" . ucfirst( $row['srv_arch']) . "</td>\n";  
-    
-      # Server O/S Name 
-      #echo "<td class='dt-body-center'>" . ucfirst( $row['srv_osname']) . "</td>\n";  
-    
-      # Display Operating System Logo
-      $WOS   = sadm_clean_data($row['srv_osname']);                     # Set Server O/S Name
-      sadm_show_logo($WOS);                                             # Show Distribution Logo 
-
-      # Server O/S Version
-      #echo "<td class='dt-body-center'>" . nl2br( $row['srv_osversion']) . "</td>\n";  
-      
-      # Display Operating System Logo
-      #$WOS   = sadm_clean_data($row['srv_osname']);                     # Set Server O/S Name
-      #sadm_show_logo($WOS);                                             # Show Distribution Logo 
-
-        
-      # Show Event Alert Group
-      echo "<td class='dt-center'>" . $alert_group . "</td>\n";         # Event Alert Group/Type
     }
+
     echo "\n</br>";
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     unlink($alert_file);                                                # Delete Work Alert File
@@ -388,15 +380,12 @@ function display_data($con,$alert_file) {
 # Page start here 
 #===================================================================================================
 #
-    # Display screen heading 
     $title1="Systems Monitor Status";                                   # Page Title
     $title2="Page is refresh every minute.";                            # Be sure user knows
     display_lib_heading("NotHome","$title1"," ",$SVER);                 # Display Content Heading
-    #
     create_alert_file();                                                # Create AlertFile (RPT/RCH)
     sysmon_page_heading();                                              # Show Heading
     display_data($con,$alert_file);                                     # Display SysMOn Array
-    #
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     echo "\n<center>Page will refresh every minute</center><br>\n";
     std_page_footer($con)                                               # Close MySQL & HTML Footer
