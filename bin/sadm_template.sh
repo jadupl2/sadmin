@@ -274,7 +274,7 @@ function cmd_options()
 
 
 #===================================================================================================
-# Script Start HERE
+# MAIN CODE START HERE
 #===================================================================================================
 
     cmd_options "$@"                                                    # Check command-line Options    
@@ -283,17 +283,19 @@ function cmd_options()
 
     # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_write "Only 'root' user can run this script.\n"       # Advise User Message
+        then sadm_write "Script can only be run by the 'root' user, process aborted.\n"
+             sadm_write "Try sudo %s" "${0##*/}\n"                      # Suggest using sudo
              sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
+             exit 1                                                     # Exit To O/S
     fi
 
     # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-        then sadm_write "This script can only be run on the SADMIN server (${SADM_SERVER}).\n"
-             sadm_stop 1                                                # Close/Trim Log & Del PID
-             exit 1                                                     # Exit To O/S with error
+        then sadm_write "Script can only be run on (${SADM_SERVER}), process aborted.\n"
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
     fi
+
     main_process                                                        # Main Process
     #OR                                                                 # Use line below or above
     #process_servers                                                    # Process All Active Servers
