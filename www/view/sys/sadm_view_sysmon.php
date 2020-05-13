@@ -43,6 +43,7 @@
 # 2020_01_13 Fix: v2.13 Bug fix, displaying empty error line.
 # 2020_03_03 Update: v2.14 Server Description displayed when mouse over server name.
 #@2020_05_13 Update: v2.15 Customize message when nothing to report.
+#@2020_05_13 Update: v2.16 server name link was not displayed properly.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -76,7 +77,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.15" ;                                                       # Current version number
+$SVER  = "2.16" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -346,25 +347,17 @@ function display_data($con,$alert_file) {
                 $WVER  = $row['srv_osversion'];                         # Save Server O/S Version
                 mysqli_free_result($result);                            # Free result set 
             }
+
             # Server Name 
             echo "<td class='dt-center'>";
             echo "<a href='" . $URL_HOST_INFO . "?sel=" . nl2br($whost) ;
-            echo "' title='$WDESC - $WOS $WVER at " . $row['srv_ip'] . "'>" ;
             echo "' title='$WDESC at " . $row['srv_ip'] . "'>" ;
             echo nl2br($whost) . "</a></td>\n";
-          
-            # Show Server Description.
-            #echo "<td>" . $WDESC . "</td>\n";                          # Server Description
-            # Server O/S Name 
-            #echo "<td class='dt-body-center'>" . ucfirst( $row['srv_osname']) . "</td>\n";  
+
             # Display Operating System Logo
             $WOS   = sadm_clean_data($row['srv_osname']);               # Set Server O/S Name
             sadm_show_logo($WOS);                                       # Show Distribution Logo 
-            # Server O/S Version
-            #echo "<td class='dt-body-center'>" . nl2br( $row['srv_osversion']) . "</td>\n";  
-            # Display Operating System Logo
-            #$WOS   = sadm_clean_data($row['srv_osname']);              # Set Server O/S Name
-            #sadm_show_logo($WOS);                                      # Show Distribution Logo 
+
             # Show Event Alert Group
             echo "<td class='dt-center'>" . $alert_group . "</td>\n";   # Event Alert Group/Type
         }
