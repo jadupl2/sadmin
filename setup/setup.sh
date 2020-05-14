@@ -53,6 +53,7 @@
 # 2020_04_23 Fix: v3.8a Fix after Re-Tested on CentOS/RedHat 8 
 # 2020_04_27 Update: v3.9 Install 'getmac' python3 module (for subnet scan).
 #@2020_05_05 Update: v3.10 Adjust screen presentation.
+# 2020_05_14 Update: v3.11 Remove line feed after "Installing pip3" 
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -61,7 +62,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.10'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.11'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -258,7 +259,7 @@ install_python3()
 #===================================================================================================
 install_pip3()
 {
-    echo "Installing pip3 " | tee -a $SLOG
+    printf "Installing pip3 " | tee -a $SLOG
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then #echo "Running 'yum --enablerepo=epel -y install python34 python34-setuptools python34-pip'" |tee -a $SLOG
