@@ -1,5 +1,19 @@
 # Changelog
 
+
+## Release v[1.2.6](https://github.com/jadupl2/sadmin/releases) (2020-05-14)
+- Fixes
+	- 2020_05_01 man_sadm_dr_savefs.php (v1.1) - Correct link to IBM mksysb page.
+	- 2020_05_12 sadmlib_std.sh - Fix problem sending attachment file when sending alert by email.
+	- 2020_05_05 setup.sh (v3.10) - Fix problem with installation on Ubuntu 20.04.
+- Update
+	- 2020_05_13 sadm_rear_backup.sh (v2.21) - Remove mount directory before exiting script.
+	- 2020_05_13 sadm_view_sysmon.php (v2.15) - Customize message when nothing to report.
+
+<br>
+
+------
+
 ## Release v[1.2.5](https://github.com/jadupl2/sadmin/releases) (2020-05-01)
 
 ### Web User Interface
