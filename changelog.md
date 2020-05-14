@@ -1,7 +1,7 @@
 # Changelog
 
 
-## Release v[1.2.6](https://github.com/jadupl2/sadmin/releases) (2020-05-14)
+## Release v[1.2.6](https://github.com/jadupl2/sadmin/releases) (2020-05-14) 
 - Fixes
 	- 2020_05_01 man_sadm_dr_savefs.php (v1.1) - Correct link to IBM mksysb page.
 	- 2020_05_12 sadmlib_std.sh - Fix problem sending attachment file when sending alert by email.
