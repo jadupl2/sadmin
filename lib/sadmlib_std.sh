@@ -2417,7 +2417,7 @@ sadm_send_alert() {
     # Construct Body of the Email.
     mdate=`date "+%Y.%m.%d %H:%M"`                                      # Date & Time of Email
     hepoch=$(sadm_date_to_epoch "$mdate")                               # Date/Time of mail to Epoch
-    if [ "$atype" = "S" ] ; then body0="SADM Script Alert" ; else body0="SADM Sysmon Alert" ;fi 
+    if [ "$atype" = "S" ] ; then body0="SADM Script Info" ; else body0="SADM Sysmon Info" ;fi 
     case "$agroup_type" in
         m|M)    body1=`printf "%-15s: %s" "Email date/time" "$mdate"`   # Date/Time of email 
                 body4=`printf "%-15s: %s" "Event Message"  "$amessage"` # Body of the message
