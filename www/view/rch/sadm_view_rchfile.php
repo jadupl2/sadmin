@@ -33,6 +33,7 @@
 #@2020_01_19 Update: v2.6 Remove line counter and some other cosmetics changes.
 #@2020_01_21 Update: v2.7 Display rch date in date reverse order (Recent at the top)
 #@2020_04_05 Fix: v2.8 Fix link problem to show the script log.
+#@2020_04_17 Update: v2.9 Running script are now shown on the page.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -63,7 +64,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.8" ;                                                        # Current version number
+$SVER  = "2.9" ;                                                        # Current version number
 $URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
 
 
@@ -253,7 +254,8 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
     if ($DEBUG) { echo "<br><pre>csv_sorted=$csv_sorted</pre>"; }
 
     # Eliminate line with dotted date & time and Create Sorted RCH file
-    $cmd="grep -v '\.\.\.\.' $RCHFILE | sort -t, -rk 1,1 -k 2,2n > $csv_sorted";
+    #$cmd="grep -v '\.\.\.\.' $RCHFILE | sort -t, -rk 1,1 -k 2,2n > $csv_sorted";
+    $cmd="sort -t, -rk 1,1 -k 2,2n $RCHFILE > $csv_sorted";
     if ($DEBUG) { echo "<br>CMD = $cmd <br>"; }
 
     $rchline = system($cmd, $retval);
