@@ -66,6 +66,7 @@
 # 2020_04_14 Update: v2.19 Some more logging adjustments.
 # 2020_04_16 Update: v2.20 Minor adjustments
 #@2020_05_13 Update: v2.21 Remove mount directory before exiting script.
+#@2020_05_18 Fix: v2.22 Fix /etc/rear/site.conf updating problem.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -97,7 +98,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.21'                              # Your Current Script Version
+    export SADM_VER='2.22'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -160,23 +161,20 @@ show_usage()
 # --------------------------------------------------------------------------------------------------
 update_url_in_rear_site_conf()
 {
-    # if /etc/rear/site.conf is not found, then create initial rear configuration file.
-    if [ ! -f "$REAR_CFGFILE" ] ; then create_etc_rear_site_conf ; fi
-
     # if ReaR Temp. File exist delete it, we will use it below.
-    if [ ! -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi
+    if [ -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi
 
     # Loop through /etc/rear/site.conf and update the BACKUP_URL Line.
     while read wline
 	    do
-        echo $wline | grep -i "^BACKUP_URL" >/dev/null 2>&1
-        if [ $? = 0 ]
+        echo $wline | grep -i "^BACKUP_URL" >/dev/null 2>&1             # Line begin "BACKUP_URL"
+        if [ $? = 0 ]                                                   # If BACKUP_URL line
             then sadm_write "Update backup destination in $REAR_CFGFILE with value from sadmin.cfg.\n" 
-                 echo       "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"" >> $REAR_TMP
+                 echo "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"" >> $REAR_TMP
                  sadm_write "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"\n"
-            else echo "$wline" >> $REAR_TMP
+            else echo "$wline" >> $REAR_TMP                             # Output normal line in TMP
         fi
-        done < $REAR_CFGFILE
+        done < $REAR_CFGFILE                                            # Read /etc/rear/site.conf
 
     # Copy New site.conf ($REAR_TMP) to the official one ($REAR_CFGFILE).
     sadm_write "Update actual $REAR_CFGFILE "
@@ -216,7 +214,7 @@ create_etc_rear_site_conf()
     echo  " " >> $REAR_TMP
     
     echo  "# To backup to NFS disk, use BACKUP_URL=nfs://nfs-server-name/share/path"  >> $REAR_TMP
-    echo  "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}/${SADM_REAR_NFS_MOUNT_POINT}\"" >> $REAR_TMP
+    echo  "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"" >> $REAR_TMP
     echo  " " >> $REAR_TMP
     
     echo  "# Disable SELinux while the backup is running." >> $REAR_TMP
@@ -230,23 +228,19 @@ create_etc_rear_site_conf()
     echo  "# Name of Backup (tar.gz) File" >> $REAR_TMP
     echo  "BACKUP_PROG_ARCHIVE=\"rear_\$HOSTNAME\"" >> $REAR_TMP
     echo  " " >> $REAR_TMP
-    echo  " " >> $REAR_TMP
     
     echo  "# Only include volume groups (opposite of EXCLUDE_VG)." >> $REAR_TMP
     echo  "# ONLY_INCLUDE_VG=( "rootvg"  "vg00" "vg01" ) " >> $REAR_TMP
-    echo  "" >> $REAR_TMP
     echo  "" >> $REAR_TMP
     
     echo  "# Exclude Volume Group (and filesystem they include)." >> $REAR_TMP
     echo  "# EXCLUDE_VG & EXCLUDE_MOUNTPOINTS get automatically populated. " >> $REAR_TMP
     echo  "# EXCLUDE_VG=( datavg ) " >> $REAR_TMP
     echo  "" >> $REAR_TMP
-    echo  "" >> $REAR_TMP
     
     echo  "# Exclude filesystems by specifying their mountpoints. " >> $REAR_TMP
     echo  "# Added automatically to the $BACKUP_PROG_EXCLUDE array. " >> $REAR_TMP
     echo  "# EXCLUDE_MOUNTPOINTS=( /data )" >> $REAR_TMP
-    echo  "" >> $REAR_TMP
     echo  "" >> $REAR_TMP
     
     echo  "# BACKUP_PROG_EXCLUDE is an array of strings that get written into a " >> $REAR_TMP
@@ -257,17 +251,14 @@ create_etc_rear_site_conf()
     echo  "# BACKUP_PROG_EXCLUDE=( "${BACKUP_PROG_EXCLUDE[@]}" '/d1/*' '/d2/*' ) " >> $REAR_TMP
     echo  "# BACKUP_PROG_EXCLUDE=( ${BACKUP_PROG_EXCLUDE[@]} '/tmp/*' "$HOME/.cache" )" >> $REAR_TMP
     echo  "" >> $REAR_TMP
-    echo  "" >> $REAR_TMP
     
     echo  "# Exclude components from being backed up,recreation information is active" >> $REAR_TMP
     echo  "# EXCLUDE_BACKUP=()" >> $REAR_TMP
-    echo  "" >> $REAR_TMP
     echo  "" >> $REAR_TMP
 
     echo  "# Exclude components during the backup restore phase." >> $REAR_TMP
     echo  "# Only used to exclude files from the restore. " >> $REAR_TMP
     echo  "# EXCLUDE_RESTORE=()" >> $REAR_TMP
-    echo  "" >> $REAR_TMP
     echo  "" >> $REAR_TMP
     cat $REAR_TMP | tr -d '\r' > $REAR_CFGFILE                              # Remove CR in file
 }
