@@ -31,9 +31,10 @@
 # 2019_05_07 Update: v1.12 Change send_alert calling parameters
 # 2019_06_07 Update: v1.13 Updated to adapt to the new field (alarm type) in RCH file.
 # 2019_06_11 Update: v1.14 Change screen & email message when an invalid '.rch' format is encountered.
-#@2019_08_13 Update: v1.15 Fix bug when using -m option (Email report), Error not on top of report.
-#@2019_08_25 Update: v1.16 Put running scripts and scripts with error on top of email report.
-#@2020_04_06 Update: v1.17 Allow simultaneous execution of this script.
+# 2019_08_13 Update: v1.15 Fix bug when using -m option (Email report), Error not on top of report.
+# 2019_08_25 Update: v1.16 Put running scripts and scripts with error on top of email report.
+# 2020_04_06 Update: v1.17 Allow simultaneous execution of this script.
+#@2020_05_23 Update: v1.18 Changing the way to get SADMIN variable in /etc/environment 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -51,9 +52,9 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
         then missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
              if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
              missenv="Please set 'SADMIN' environment variable to the install directory."
-             grep "^SADMIN" /etc/environment >/dev/null 2>&1            # SADMIN line in /etc/env.? 
+             grep "SADMIN" /etc/environment >/dev/null 2>&1            # SADMIN line in /etc/env.? 
              if [ $? -eq 0 ]                                            # Yes use SADMIN definition
-                 then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
+                 then export SADMIN=`grep "SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
                       misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
                       missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
                       if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
@@ -79,7 +80,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.17'                              # Your Current Script Version
+    export SADM_VER='1.18'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="N"                          # [Y]=Include Log Header [N]=No log Header
