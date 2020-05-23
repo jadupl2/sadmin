@@ -40,9 +40,10 @@
 # 2018_09_30    V1.5 Reformat error message for alerting system
 # 2019_06_11 Update: v1.6 Alert message change when filesystem increase failed.
 # 2019_07_11 Update: v1.7 Change Email Body when filesystem in increase
-#@2020_03_16 Update: v1.8 Separation Blank Lines added to log.
-#@2020_03_23 Update: v1.9 Minor modifications in log and email.
-#@2020_03_24 Update: v2.0 Script will not generate an rpt file anymore (Remove double error report)
+# 2020_03_16 Update: v1.8 Separation Blank Lines added to log.
+# 2020_03_23 Update: v1.9 Minor modifications in log and email.
+# 2020_03_24 Update: v2.0 Script will not generate an rpt file anymore (Remove double error report)
+#@2020_05_23 Update: v2.1 Changing the way to get SADMIN variable in /etc/environment 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -62,9 +63,9 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
              if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
              # Check if can use SADMIN definition line in /etc/environment to continue
              missenv="Please set 'SADMIN' environment variable to the install directory."
-             grep "^SADMIN" /etc/environment >/dev/null 2>&1             # SADMIN line in /etc/env.? 
+             grep "SADMIN=" /etc/environment >/dev/null 2>&1             # SADMIN line in /etc/env.? 
              if [ $? -eq 0 ]                                             # Yes use SADMIN definition
-                 then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
+                 then export SADMIN=`grep "SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
                       misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
                       missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
                       if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
@@ -90,7 +91,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='2.0'                               # Your Current Script Version
+    export SADM_VER='2.1'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
