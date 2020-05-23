@@ -33,12 +33,13 @@
 # 2019_07_17 Update: v3.14 O/S update script now perform apt-get clean before update start on *.deb
 # 2019_11_21 Update: v3.15 Add 'export DEBIAN_FRONTEND=noninteractive' prior to 'apt-get upgrade'.
 # 2019_11_21 Update: v3.16 Email sent to SysAdmin if some package are kept back from update.
-#@2020_01_18 Update: v3.17 Include everything in script log while running 'apt-get upgrade'. 
-#@2020_01_21 Update: v3.18 Enhance the update checking process.
-#@2020_02_17 Update: v3.19 Add error message when problem getting the list of package to update.
-#@2020_03_03 Update: v3.20 Restructure some code and change help message. 
-#@2020_04_01 Update: v3.21 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-#@2020_04_28 Update: v3.22 Use 'apt-get dist-upgrade' instead of 'apt-get -y upgrade' on deb system.
+# 2020_01_18 Update: v3.17 Include everything in script log while running 'apt-get upgrade'. 
+# 2020_01_21 Update: v3.18 Enhance the update checking process.
+# 2020_02_17 Update: v3.19 Add error message when problem getting the list of package to update.
+# 2020_03_03 Update: v3.20 Restructure some code and change help message. 
+# 2020_04_01 Update: v3.21 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2020_04_28 Update: v3.22 Use 'apt-get dist-upgrade' instead of 'apt-get -y upgrade' on deb system.
+#@2020_05_23 Update: v3.23 Replace 'reboot' instruction with 'shutdown -r' (Problem on some OS).
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -71,7 +72,7 @@
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.22'                              # Your Current Script Version
+    export SADM_VER='3.23'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -106,9 +107,6 @@
 # --------------------------------------------------------------------------------------------------
 #                                   Script Variables definition
 # --------------------------------------------------------------------------------------------------
-
-# Command to issue the shutdown / Reboot after the update if requested
-REBOOT_CMD="/sbin/shutdown -r now"          ; export REBOOT_CMD         # Reboot Command
 
 # Default to no reboot after an update
 WREBOOT="N"                                 ; export WREBOOT            # Def. NoReboot after update
@@ -540,13 +538,11 @@ perform_osupdate()
     # Update the Date & Status of update in Sysinfo File ($SADMIN/dat/dr/`hostname -s`_sysinfo.txt).
     update_sysinfo_file $SADM_EXIT_CODE                                 # Upd. Sysinfo Date & Status
 
-    # If Reboot was requested and update were available and update was successfull, then reboot.
+    # If Reboot was requested and update were available and update was successful, then reboot.
     SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'`         # Need a No FQDN of SADM Srv
     if [ "$WREBOOT" = "Y" ] && [ "$UPDATE_AVAILABLE" = "Y" ] && [ "$SADM_EXIT_CODE" -eq 0 ]     
-        then sadm_write "Update successful, server will reboot in 1 Minute.\n"
-             sadm_write "Running \"${REBOOT_CMD}\" in 1 Minute.\n" 
-             echo "${REBOOT_CMD}" | at now + 1 Minute 
+        then sadm_write "Update successful, system will reboot in 1 Minute.\n"
+             shutdown -r +1 "System will reboot in 1 minute."           # Issue Shutdown & Reboot
     fi
-
     sadm_stop "$SADM_EXIT_CODE"                                         # End Process with exit Code
     exit  "$SADM_EXIT_CODE"                                             # Exit script
