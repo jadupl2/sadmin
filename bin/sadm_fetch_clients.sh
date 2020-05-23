@@ -63,6 +63,7 @@
 # 2020_03_21 Fix: v3.9 SSH error to client were not reported in System Monitor.
 # 2020_05_05 Fix: v3.10 Temp. file was not remove under certain circumstance.
 # 2020_05_13 Update: v3.11 Move processing command line switch to a function.
+#@2020_05_22 Update: v3.12 No longer report an error, if a system is rebooting because of O/S update.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -97,9 +98,9 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
         then missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
              if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
              missenv="Please set 'SADMIN' environment variable to the install directory."
-             grep "^SADMIN" /etc/environment >/dev/null 2>&1            # SADMIN line in /etc/env.? 
+             grep "SADMIN" /etc/environment >/dev/null 2>&1            # SADMIN line in /etc/env.? 
              if [ $? -eq 0 ]                                            # Yes use SADMIN definition
-                 then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
+                 then export SADMIN=`grep "SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
                       misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
                       missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
                       if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
@@ -125,7 +126,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.10'                               # Your Current Script Version
+    export SADM_VER='3.12'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -166,10 +167,11 @@ BA_SCRIPT="sadm_backup.sh"                        ; export BA_SCRIPT    # Backup
 REAR_SCRIPT="sadm_rear_backup.sh"                 ; export REAR_SCRIPT  # ReaR Backup Script 
 REAR_TMP="${SADMIN}/tmp/rear_site.tmp$$"          ; export REAR_TMP     # New ReaR site.conf tmp file
 REAR_CFG="${SADMIN}/tmp/rear_site.cfg$$"          ; export REAR_CFG     # Will be new /etc/site.conf
-export FETCH_RPT="${SADM_RPT_DIR}/${SADM_HOSTNAME}_fetch.rpt"           # RPT for unresponsive host
+FETCH_RPT="${SADM_RPT_DIR}/${SADM_HOSTNAME}_fetch.rpt" ;export FETCH_RPT # RPT for unresponsive host
 #
-REBOOT_SEC=900                                    ; export REBOOT_SEC   # O/S Upd Reboot Nb Sec.wait
-RCH_FIELD=10                                      ; export RCH_FIELD    # Nb. of field on rch file.
+export REBOOT_SEC=900                                                   # O/S Upd Reboot Nb Sec.wait
+export RCH_FIELD=10                                                     # Nb. of field on rch file.
+export OSTIMEOUT=3600                                                   # 3600sec=1Hr to do O/S Upd.
 #
 # Reset Alert Totals Counters
 export total_alert=0  ; export total_duplicate=0 ; export total_ok=0 ; export total_error=0      
@@ -271,7 +273,7 @@ update_osupdate_crontab ()
         then cline="$cline *"                                           # Then use a Star for Month
         else fmth=""                                                    # Clear Final Date of Month
              for i in $(seq 2 13)                                       # Check Each Mth 2-13 = 1-12
-                do                                                      # Get Y or N for the Month                 wchar=`expr substr "$cmonth" $i 1`
+                do                                                      # Get Y or N for the Month 
                 wchar=`expr substr $cmonth $i 1`
                 xmth=`expr $i - 1`                                      # Mth = Index -1 ,Cron Mth
                 if [ "$wchar" = "Y" ]                                   # If Month Set to Yes 
@@ -406,7 +408,7 @@ update_rear_crontab ()
         then cline="$cline *"                                           # Then use a Star for Month
         else fmth=""                                                    # Clear Final Date of Month
              for i in $(seq 2 13)                                       # Check Each Mth 2-13 = 1-12
-                do                                                      # Get Y or N for the Month                 wchar=`expr substr "$cmonth" $i 1`
+                do                                                      # Get Y or N for the Month  
                 wchar=`expr substr $cmonth $i 1`
                 xmth=`expr $i - 1`                                      # Mth = Index -1 ,Cron Mth
                 if [ "$wchar" = "Y" ]                                   # If Month Set to Yes 
@@ -544,7 +546,7 @@ update_backup_crontab ()
     #     then cline="$cline *"                                           # Then use a Star for Month
     #     else fmth=""                                                    # Clear Final Date of Month
     #          for i in $(seq 2 13)                                       # Check Each Mth 2-13 = 1-12
-    #             do                                                      # Get Y or N for the Month                 wchar=`expr substr "$cmonth" $i 1`
+    #             do                                                      # Get Y or N for the Month
     #             wchar=`expr substr $cmonth $i 1`
     #             xmth=`expr $i - 1`                                      # Mth = Index -1 ,Cron Mth
     #             if [ "$wchar" = "Y" ]                                   # If Month Set to Yes 
@@ -634,10 +636,10 @@ rsync_function()
         if [ $RC -ne 0 ]                                                # If Error doing rsync
            then if [ $RETRY -lt 3 ]                                     # If less than 3 retry
                    then sadm_writelog "[ RETRY $RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
-                   else sadm_writelog "[ ERROR $RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+                   else sadm_write "$SADM_ERROR [ $RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}\n"
                         break
                 fi
-           else sadm_writelog "[OK] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+           else sadm_write "$SADM_OK rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}\n"
                 break
         fi
     done
@@ -737,62 +739,81 @@ create_crontab_files_header()
 
 # --------------------------------------------------------------------------------------------------
 # Validate connectivity to server received 
-# 1st Parameter is the server name
-# 2nd Parameter is the fully qualified domain name of the server
+#   1st Parameter is the server name
+#   2nd Parameter is the fully qualified domain name of the server
+#
+# Function Return Code
+#   Return 0 = Server Accessible
+#       Connection to server is working 
+#   Return 1 = Error, go to next server.
+#       Can't SSH to Server, Missing Parameter received, Hostname Unresovable, 
+#   Return 2 = Warning, skip server.
+#       O/S Update Running, Sporadic System, Monitor if OFF
 # --------------------------------------------------------------------------------------------------
 validate_server_connectivity()
 {
-    # Parameters received should always by two - If not write error to log and return to caller
+    # PARAMETERS RECEIVED SHOULD ALWAYS BY TWO - IF NOT WRITE ERROR TO LOG AND RETURN TO CALLER
     if [ $# -ne 2 ]
-        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters."
-             sadm_writelog "Function received $* and this isn't valid."
-             sadm_writelog "Should receive the server name and the fqdn of the server "
+        then sadm_write "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters.\n"
+             sadm_write "Function received $* and this isn't valid.\n"
+             sadm_write "Should receive the server name and the fqdn of the server.\n"
              return 1
     fi
     SNAME=$1                                                            # Server Name
     FQDN_SNAME=$2                                                       # Server Name Full Qualified
+    UPDATE_RUNNING="${SADM_WWW_DAT_DIR}/${SNAME}/osupdate_running"      # OS Update in progress File
 
-
-    # If server name can't be resolved - signal error and continue with next server
+    # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR AND CONTINUE WITH NEXT SERVER
     if ! host  $FQDN_SNAME >/dev/null 2>&1
-           then SMSG="[ERROR] Can't process '$FQDN_SNAME', hostname can't be resolved."
-                sadm_writelog "$SMSG"                                   # Advise user
+           then SMSG="Can't process '$FQDN_SNAME', hostname can't be resolved."
+                sadm_write "${SADM_ERROR} ${SMSG}\n"                    # Advise user
                 return 1                                                # Return Error to Caller
     fi
 
-    # upd_elapse = The Epoch time of the last Modif. to O/S Update RCH file - Current Epoch time
-    # If Problem connecting to Server and O/S update terminated less than 900 Seconds (15 Min) ago,
-    # then don't signal an error yet, just skip the server for now.
-    rch_osupd_name="${SADM_WWW_DAT_DIR}/${SNAME}/rch/${SNAME}_sadm_osupdate.rch"
-    if [ -r "$rch_osupd_name" ] 
-        then rch_epoch=`stat --printf='%Y\n' $rch_osupd_name`           # RCH last modif. Epoch
-             cur_epoch=$(sadm_get_epoch_time)                           # Get Current Epoch
-             upd_elapse=`echo $cur_epoch - $rch_epoch | $SADM_BC`       # Nb. Sec. since last mod.
-             if [ $SADM_DEBUG -gt 0 ]                                   # Show Nb. Sec. Since 
-                then sadm_writelog "Last O/S Update done $upd_elapse sec. ago ($rch_osupd_name)." 
-             fi
-    fi
-
-    # First Test ssh to server
+    # TEST SSH TO SERVER
     $SADM_SSH_CMD $FQDN_SNAME date > /dev/null 2>&1                     # SSH to Server for date
     RC=$?                                                               # Save Error Number
-    if [ $RC -eq 0 ] ; then return 0 ; fi                               # OK SSH Worked the 1st time
+    if [ $RC -eq 0 ]                                                    # If SSH Worked
+        then if [ -f "$UPDATE_RUNNING" ]                                # If O/S Update Running
+               then rm -f $UPDATE_RUNNING > /dev/null 2>&1              # Remove O/S Upd Flag File
+             fi 
+             return 0                                                   # Server Accessible 
+    fi                                                                  # OK SSH Worked the 1st time
 
-    # SSH didn't work, but it's a sporadic server (Can happen, don't report an eror)
-    if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]                   # If Error on Sporadic Host
-        then sadm_writelog "[WARNING] Can't SSH to sporadic server $FQDN_SNAME, skipping it."
+    # SSH DIDN'T WORK AND O/S UPDATE FILE EXIST, THEN AN O/S UPDATE IS RUNNING
+    if [ -f "$UPDATE_RUNNING" ]                                         # If O/S Update running 
+        then FEPOCH=`stat -c %Y $UPDATE_RUNNING`                        # Get File Modif. Epoch Time
+             CEPOCH=$(sadm_get_epoch_time)                              # Get Current Epoch Time
+             FAGE=`expr $CEPOCH - $FEPOCH`                              # Nb. Sec. OSUpdate running
+             if [ "$FAGE" -gt $OSTIMEOUT ]                              # Running more than 1 Hr
+                then msg="${SADM_BOLD}O/S update running for more than $OSTIMEOUT sec.${SADM_RESET}"
+                     sadm_write "${msg}\n"
+                     msg="${SADM_BOLD}Will now start to monitor this system as usual.${SADM_RESET}"
+                     sadm_write "${msg}\n"
+                     rm -f $UPDATE_RUNNING > /dev/null 2>&1             # Remove O/S Upd Flag File
+                else msg="${SADM_WARNING} O/S update is running on '$FQDN_SNAME'."
+                     sadm_write "${msg}\n"
+                     msg="Will resume normal operation once the O/S update is terminated or can SSH to server."
+                     sadm_write "${msg}\n"
+                     return 2
+             fi 
+    fi 
+
+    # SSH DIDN'T WORK, BUT IT'S A SPORADIC SERVER (CAN HAPPEN, DON'T REPORT AN EROR)
+    if [ "$server_sporadic" = "1" ]                                     # If Error on Sporadic Host
+        then sadm_write "${SADM_WARNING}  Can't SSH to ${FQDN_SNAME} (Sporadic System).\n"
              return 2                                                   # Return Skip Code to caller
     fi 
 
-    # SSH didn't work, but monitoring for that server is OFF (don't report an eror)
-    if [ $RC -ne 0 ] &&  [ "$server_monitor" = "0" ]                    # If Error & Monitor is OFF
-        then sadm_writelog "[WARNING] Can't SSH to ${FQDN_SNAME}, monitoring is OFF, skipping it."
+    # SSH DIDN'T WORK, BUT MONITORING FOR THAT SERVER IS OFF (DON'T REPORT AN EROR)
+    if [ "$server_monitor" = "0" ]                                      # If Error & Monitor is OFF
+        then sadm_write "${SADM_WARNING} Can't SSH to ${FQDN_SNAME} (Monitoring is OFF).\n"
              return 2                                                   # Return Skip Code to caller
     fi 
 
-    # SSH didn't work, we will try 3 times before reprting an error (to eliminate false positive).
+    # SSH DIDN'T WORK, WE WILL TRY 3 TIMES BEFORE REPRTING AN ERROR (TO ELIMINATE FALSE POSITIVE).
     RETRY=1                                                             # Set Retry counter to 1
-    sadm_writelog "[ ERROR ] [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date" # 1st SSH didn't work msg
+    sadm_write "$SADM_ERROR [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date\n" # 1st SSH didn't work msg
     while [ $RETRY -lt 3 ]                                              # Retry ssh 3 times 
         do
         RETRY=$(($RETRY+1))                                             # Increase Retry counter
@@ -800,25 +821,20 @@ validate_server_connectivity()
         RC=$?                                                           # Save Error Number
         if [ $RC -ne 0 ]                                                # If Error doing ssh
             then if [ $RETRY -lt 3 ]                                    # If less than 3 retry
-                    then sadm_writelog "[ ERROR ] [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date"
-                    else if [ "$upd_elapse" -gt "$REBOOT_SEC" ]         # O/S Upd more than 900 Sec?
-                            then sadm_writelog "[ ERROR ] [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date"
-                                 SMSG="[ERROR] System '${FQDN_SNAME}' may be down, can't SSH to it."  
-                                 sadm_writelog "$SMSG"                  # Display Error Msg
-                                 ADATE=`date "+%Y.%m.%d;%H:%M"`         # Current Date/Time
-                                 # Create Error Line in Error Report File (rpt)
-                                 RPTLINE="Error;${SNAME};${ADATE};linux;NETWORK"
-                                 RPTLINE="${RPTLINE};System '${FQDN_SNAME}' may be down, can't SSH to it."
-                                 RPTLINE="${RPTLINE};${SADM_ALERT_GROUP};${SADM_ALERT_GROUP}" 
-                                 echo "$RPTLINE" >> $FETCH_RPT          # Create Skip Code to caller                              
-                                 return 2                               # Return Error to caller
-                            else sadm_writelog "[WARNING] Waiting for reboot to finish after O/S Update."
-                                 sadm_writelog "O/S Update RCH file was modified $upd_elapse seconds ago."
-                                 sadm_writelog "Continuing with next server, till we reach $REBOOT_SEC seconds."
-                                 return 2                               # Return Skip Code to caller
-                         fi
+                    then sadm_write "$SADM_ERROR [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date\n"
+                    else sadm_write "$SADM_ERROR [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date\n"
+                         SMSG="$SADM_ERROR Can't SSH to ${FQDN_SNAME}, system may be down."  
+                         sadm_write "${SMSG}\n"                         # Display Error Msg
+
+                         # Create Error Line in Global Error Report File (rpt)
+                         ADATE=`date "+%Y.%m.%d;%H:%M"`                 # Current Date/Time
+                         RPTLINE="Error;${SNAME};${ADATE};linux;NETWORK"
+                         RPTLINE="${RPTLINE};System '${FQDN_SNAME}' may be down, can't SSH to it."
+                         RPTLINE="${RPTLINE};${SADM_ALERT_GROUP};${SADM_ALERT_GROUP}" 
+                         echo "$RPTLINE" >> $FETCH_RPT                  # Create Skip Code to caller                              
+                         return 1                                       # Return Error to caller
                  fi
-            else sadm_writelog "[OK] $SADM_SSH_CMD $FQDN_SNAME date"
+            else sadm_write "$SADM_OK $SADM_SSH_CMD $FQDN_SNAME date\n"
                  return 0                                               # Return SSH is OK to Caller 
         fi
         done
@@ -835,7 +851,7 @@ process_servers()
 {
     WOSTYPE=$1                                                          # Should be aix/linux/darwin
 
-    # Select from Database active systems with selected O/S & output result in $SADM_TMP_FILE1
+    # BUILD THE SELECT STATEMENT FOR ACTIVE SYSTEMS WITH SELECTED O/S 
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir," 
     SQL="${SQL} srv_update_minute,srv_update_hour,srv_update_dom,srv_update_month,srv_update_dow,"
     SQL="${SQL} srv_update_auto,srv_backup,srv_backup_month,srv_backup_dom,srv_backup_dow,"
@@ -845,41 +861,36 @@ process_servers()
     SQL="${SQL} where srv_ostype = '${WOSTYPE}' and srv_active = True "
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
 
-    # Setup connection parameters
+    # SETUP DATABASE CONNECTION PARAMETERS
     WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/,/'" # Build CmdLine
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
 
-    # Test Database Connection
+    # TRY SIMPLE SQL STATEMENT TO TEST CONNECTION TO DATABASE
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST -e "show databases;" > /dev/null 2>&1
     if [ $? -ne 0 ]                                                     # Error Connecting to DB
-        then sadm_writelog "Error connecting to Database"               # Access Denied
+        then sadm_write "Error connecting to Database.\n"               # Access Denied
              return 1                                                   # Return Error to Caller
     fi 
 
-    # Execute SQL to list active servers of the received O/S Type into $SADM_TMP_FILE1
+    # EXECUTE SQL TO LIST ACTIVE SERVERS OF THE RECEIVED O/S TYPE INTO $SADM_TMP_FILE1
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
     
-    # If file wasn't created or has a zero lenght, then no active system is found, return to caller.
+    # IF FILE WASN'T CREATED OR HAS A ZERO LENGHT, THEN NO ACTIVE SYSTEM IS FOUND, RETURN TO CALLER.
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
-        then sadm_writelog " "
-             sadm_writelog "${SADM_TEN_DASH}"                           # Print 10 Dash line
-             sadm_writelog "No Active '$WOSTYPE' system found."         # Not ACtive Server MSG
-             sadm_writelog "${SADM_TEN_DASH}"                           # Print 10 Dash line
+        then sadm_write "\n${SADM_TEN_DASH}\n"                          # Print 10 Dash line
+             sadm_write "No Active '$WOSTYPE' system found.\n"          # Not ACtive Server MSG
+             sadm_write "${SADM_TEN_DASH}\n"                            # Print 10 Dash line
              return 0                                                   # Return Error to Caller
     fi 
 
-    sadm_writelog " "
-    sadm_writelog "=================================================="
-    sadm_writelog "Processing active '$WOSTYPE' server(s)"              # Display/Log O/S type
-    sadm_writelog "=================================================="
-    sadm_writelog " "
-
-    # On Linux, create header of crontab files for the O/S update, Daily backup and ReaR Backup.
-    if [ "$WOSTYPE" = "linux" ] ; then create_crontab_files_header ; fi
-
-    xcount=0; ERROR_COUNT=0;
+    sadm_write "\n"                                                     # Blank Line in log/Screen
+    sadm_write "==================================================\n"
+    sadm_write "Processing active '$WOSTYPE' server(s)\n"               # Display/Log O/S type
+    sadm_write "\n"                                                     # Blank Line in log/Screen
+    if [ "$WOSTYPE" = "linux" ] ; then create_crontab_files_header ; fi # Create crontab Files Headr
+    xcount=0; ERROR_COUNT=0;                                            # Initialize Counter 
     while read wline                                                    # Read Server Data from DB
         do                                                              # Line by Line
         xcount=`expr $xcount + 1`                                       # Incr Server Counter Var.
@@ -912,10 +923,10 @@ process_servers()
         rear_hrs=`      echo $wline|awk -F, '{ print $24 }'`            # Rear Crontab Hrs field
         rear_min=`      echo $wline|awk -F, '{ print $25 }'`            # Rear Crontab Min field
         #
-        sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash line
-        sadm_writelog "Processing [$xcount] ${fqdn_server}"             # Print Counter/Server Name
+        sadm_write "${SADM_TEN_DASH}\n"                                 # Print 10 Dash line
+        sadm_write "${SADM_BOLD}Processing [$xcount] ${fqdn_server}${SADM_RESET}\n" 
 
-        # To Display Database Column we will used, for debugging
+        # TO DISPLAY DATABASE COLUMN WE WILL USED, FOR DEBUGGING
         if [ $SADM_DEBUG -gt 7 ] 
             then sadm_writelog "Column Name and Value before processing them."
                  sadm_writelog "server_name   = $server_name"           # Server Name to run script
@@ -928,13 +939,13 @@ process_servers()
                  sadm_writelog "fqdn_server   = $fqdn_server"           # Name of Output file
         fi
     
-        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Test SSH
+        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # Not on SADMIN Srv Test SSH
             then validate_server_connectivity "$server_name" "$fqdn_server" # Check Access to Server
                  RC=$?                                                  # Save function return code 
-                 if [ $RC -eq 2 ]                                       # Sporadic,Monitor Off Host
+                 if [ $RC -eq 2 ]                                       # Sporadic,Monitor Off,OSUpd
                     then continue                                       # Not accessible, Nxt Server
                  fi 
-                 if [ $RC -eq 1 ]                                       # Error Connecting to Host
+                 if [ $RC -eq 1 ]                                       # Error SSH Connect to Host
                     then ERROR_COUNT=$(($ERROR_COUNT+1))                # Error - Incr Error counter
                          sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
                          continue                                       # Not accessible, Nxt Server
@@ -969,9 +980,9 @@ process_servers()
                 fi
                 RC=$?                                                   # Save Command Return Code
                 if [ $RC -eq 0 ]                                        # If copy to client Worked
-                    then sadm_writelog "[OK] Modified Backup list updated on ${server_name}"
+                    then sadm_write "$SADM_OK Modified Backup list updated on ${server_name}\n"
                          rm -f $LDIR/backup_list.tmp                    # Remove modified Local copy
-                    else sadm_writelog "[ERROR] Syncing backup list with ${server_name}"
+                    else sadm_write "$SADM_ERROR Syncing backup list with ${server_name}\n"
                 fi
         fi
 
@@ -983,9 +994,9 @@ process_servers()
                 fi
                 RC=$?                                                   # Save Command Return Code
                 if [ $RC -eq 0 ]                                        # If copy to client Worked
-                    then sadm_writelog "[OK] Modified Backup Exclude list updated on ${server_name}"
+                    then sadm_write "$SADM_OK Modified Backup Exclude list updated on ${server_name}\n"
                          rm -f $LDIR/backup_exclude.tmp                 # Remove modified Local copy
-                    else sadm_writelog "[ERROR] Syncing Backup Exclude list with ${server_name}"
+                    else sadm_write "$SADM_ERROR Syncing Backup Exclude list with ${server_name}\n"
                 fi
         fi
 
@@ -999,22 +1010,22 @@ process_servers()
                    then #sadm_writelog "rsync -var $REAR_CFG ${server_name}:/etc/rear/site.conf "
                         rsync $REAR_CFG ${server_name}:/etc/rear/site.conf 
                         if [ $? -eq 0 ] 
-                            then sadm_writelog "[OK] /etc/rear/site.conf updated on ${server_name}"
+                            then sadm_write "$SADM_OK /etc/rear/site.conf updated on ${server_name}\n"
                         fi
                         #sadm_writelog "rsync -var $REAR_USER_EXCLUDE ${server_name}:${SADM_CFG_DIR}/rear_exclude.txt" 
                         rsync $REAR_USER_EXCLUDE ${server_name}:${SADM_CFG_DIR}/rear_exclude.txt 
                    else #sadm_writelog "rsync -var $REAR_CFG /etc/rear/site.conf" 
                         rsync $REAR_CFG /etc/rear/site.conf
                         if [ $? -eq 0 ] 
-                            then sadm_writelog "[OK] /etc/rear/site.conf updated on ${server_name}"
+                            then sadm_write "$SADM_OK /etc/rear/site.conf updated on ${server_name}\n"
                         fi
                         rsync $REAR_USER_EXCLUDE ${SADM_CFG_DIR}/rear_exclude.txt
                 fi
                 RC=$?                                                   # Save Command Return Code
                 if [ $RC -eq 0 ]                                        # If copy to client Worked
-                    then sadm_writelog "[OK] Modified ReaR site option file on ${server_name}"
+                    then sadm_write "$SADM_OK Modified ReaR site option file on ${server_name}\n"
                          rm -f $LDIR/backup_exclude.tmp                 # Remove modified Local copy
-                    else sadm_writelog "[ERROR] Syncing ReaR site option file on ${server_name}"
+                    else sadm_write "$SADM_ERROR Syncing ReaR site option file on ${server_name}\n"
                 fi
         fi
 
@@ -1082,15 +1093,16 @@ process_servers()
 # --------------------------------------------------------------------------------------------------
 check_all_rpt()
 {
-    sadm_writelog "Verifying all systems for :"
+    sadm_writelog "Verifying all System Monitor report files (*.rpt) :"
     sadm_writelog "  - 'Sysmon report file' (*.rpt) for Warning, Info and Errors."
     if [ $SADM_DEBUG -gt 0 ] 
         then sadm_writelog "find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \;" 
     fi 
     find $SADM_WWW_DAT_DIR -name *.rpt -exec cat {} \;  > $SADM_TMP_FILE3
     if [ $SADM_DEBUG -gt 0 ] 
-        then sadm_writelog " "
+        then sadm_write "\nFile containing results\n"
              ls -l $SADM_TMP_FILE3
+             sadm_write "Content of the file $SADM_TMP_FILE3 \n" 
              cat  $SADM_TMP_FILE3 | while read wline ; do sadm_writelog "$wline"; done
     fi 
 
@@ -1099,7 +1111,7 @@ check_all_rpt()
     if [ -s "$SADM_TMP_FILE3" ]                                         # If File Not Zero in Size
         then cat $SADM_TMP_FILE3 | while read line                      # Read Each Line of file
                 do
-                if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
+                if [ $SADM_DEBUG -gt 6 ] ; then sadm_writelog "Processing Line=$line" ; fi
                 ehost=`echo $line | awk -F\; '{ print $2 }'`            # Get Hostname for Event
                 emess=`echo $line | awk -F\; '{ print $7 }'`            # Get Event Error Message
                 wdate=`echo $line | awk -F\; '{ print $3 }'`            # Get Event Date
@@ -1123,8 +1135,7 @@ check_all_rpt()
                 if [ $SADM_DEBUG -gt 0 ] 
                     then sadm_writelog "sadm_send_alert $etype $etime $ehost sysmon $egname $esub $emess $eattach"
                 fi
-                sadm_writelog "$etime alert ($etype) from 'SysMon' on ${ehost} :"
-                sadm_writelog "  - $emess"
+                sadm_write "$etime alert ($etype) from 'SysMon' on ${ehost} : ${emess}\n"
                 sadm_send_alert "$etype" "$etime" "$ehost" "SysMon" "$egname" "$esub" "$emess" "$eattach"
                 done 
         else sadm_writelog  "No error reported by SysMon report files (*.rpt)" 
@@ -1144,31 +1155,31 @@ check_all_rpt()
 # --------------------------------------------------------------------------------------------------
 check_all_rch()
 {
-    sadm_writelog " "
-    sadm_writelog "Verifying all systems [R]esult [C]ode [H]istory (*.rch) files."
+    sadm_write "\n"
+    sadm_write "Verifying all scripts systems result files (*.rch).\n"
     find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \; > $SADM_TMP_FILE1 2>&1
     awk 'match($NF,/[0-1]/) { print }' $SADM_TMP_FILE1 >$SADM_TMP_FILE2 # Keep line ending with 0or1
 
-    # If No file to process
+    # IF NO FILE TO PROCESS
     if [ ! -s "$SADM_TMP_FILE2" ]                                       # If File Zero in Size
-        then sadm_writelog  "No error reported by any scripts files (*.rch)" 
-             sadm_writelog "${SADM_TEN_DASH}"                           # Print 10 Dash 
-             sadm_writelog " "                                          # Separation Blank Line
+        then sadm_write "No error reported by any scripts files (*.rch)\n" 
+             sadm_write "${SADM_TEN_DASH}\n"                            # Print 10 Dash 
+             sadm_write "\n"                                            # Separation Blank Line
              return 0                                                   # Return to Caller
     fi
 
-    # Loop through each line in the created file.
+    # LOOP THROUGH EACH LINE IN THE CREATED FILE.
     alert_counter=0                                                     # Init alert counter
     cat $SADM_TMP_FILE2 | { while read line                             # Read Each Line of file
         do                
         NBFIELD=`echo $line | awk '{ print NF }'`                       # How many fields on line ?
 
         # Each line MUST have the right number of field ($NBFIELD) to be process, else skip line.
-        if [ $SADM_DEBUG -gt 5 ] ;then sadm_writelog "Processing Line: ${line} ($NBFIELD)" ;fi
+        if [ $SADM_DEBUG -gt 8 ] ;then sadm_write "Processing Line: ${line} ($NBFIELD)\n" ;fi
         if [ "${NBFIELD}" != "${RCH_FIELD}" ]                           # If abnormal nb. of field
-           then sadm_writelog "Line below have ${NBFIELD} but it should have ${RCH_FIELD}."
-                sadm_writelog "This line is skipped: $line"
-                sadm_writelog " "
+           then sadm_write "Line below have ${NBFIELD} but it should have ${RCH_FIELD}.\n"
+                sadm_write "This line is skipped: ${line}\n"
+                sadm_write "\n"
                 continue 
         fi
 
