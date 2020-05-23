@@ -42,8 +42,9 @@
 # 2020_01_19 Update: v2.14 Add Option -u to sync the $SADMIN/usr/bin of SADMIN server to all clients.
 # 2020_01_20 Update: v2.15 Add Option -s to sync the $SADMIN/sys of SADMIN server to all clients.
 # 2020_01_26 Update: v2.16 Add Option -c [hostname]  to sync of SADMIN server version to one client.
-#@2020_03_04 Update: v2.17 Script was rename from sadm_rsync_sadmin.sh to sadm_push_sadmin.sh
-#@2020_04_23 Update: v2.18 Replace sadm_writelog by sadm_write & enhance log output.
+# 2020_03_04 Update: v2.17 Script was rename from sadm_rsync_sadmin.sh to sadm_push_sadmin.sh
+# 2020_04_23 Update: v2.18 Replace sadm_writelog by sadm_write & enhance log output.
+#@2020_05_23 Update:v2.19 Changing the way to get SADMIN variable in /etc/environment 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -74,7 +75,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.18'                              # Your Current Script Version
+    export SADM_VER='2.19'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -304,7 +305,7 @@ process_servers()
             else cp /etc/environment ${WDIR} >/dev/null 2>&1  
         fi
         if [ $? -eq 0 ]                                                 # If file was transfered
-            then server_dir=`grep "^SADMIN=" $WDIR/environment |awk -F= '{print $2}'` # Set Remote Dir.
+            then server_dir=`grep "SADMIN=" $WDIR/environment |awk -F= '{print $2}'` # Set Remote Dir.
                  if [ "$server_dir" != "" ]                                   # No Remote Dir. Set
                     then sadm_write " - SADMIN is install in ${server_dir}.\n"
                     else sadm_write " - $SADM_ERROR Couldn't get /etc/environment.\n"
