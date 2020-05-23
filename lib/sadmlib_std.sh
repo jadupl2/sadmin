@@ -124,18 +124,19 @@
 # 2020_01_20 Update: v3.23 Place Alert Message on top of Alert Message (SMS,SLACK,EMAIL)
 # 2020_01_21 Update: v3.24 For texto alert, put alert message on top of texto & don't show if 1 of 1
 # 2020_01_21 Update: v3.25 Show the script starting date in the header. 
-#@2020_02_01 Fix: v3.26 If on SADM Server & script don't use 'rch', gave error trying to copy 'rch'.
-#@2020_02_19 Update: v3.27 Added History Archive File Definition
-#@2020_02_25 Update: v3.28 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
-#@2020_03_15 Update: v3.29 Change the way script info (-v) is shown.
-#@2020_03_16 Update: v3.30 If not present, create Alert Group file (alert_group.cfg) from template.
-#@2020_04_01 Update: v3.31 Function sadm_writelog() with N/L depreciated, remplace by sadm_write().
-#@2020_04_01 Update: v3.32 Function sadm_writelog() replaced by sadm_write in Library.
-#@2020_04_04 Update: v3.33 New Variable SADM_OK, SADM_WARNING, SADM_ERROR to Show Status in Color.
-#@2020_04_05 Update: v3.34 New Variable SADM_SUCCESS, SADM_FAILED to Show Status in Color.
-#@2020_04_13 Update: v3.35 Correct Typo Error in SADM_ERROR
-#@2020_04_13 Update: v3.36 Add @@LNT (Log No Time) var. to prevent sadm_write to put Date/Time in Log
-#@2020_05_12 Fix: v3.37 Fix problem sending attachment file when sending alert by email.
+# 2020_02_01 Fix: v3.26 If on SADM Server & script don't use 'rch', gave error trying to copy 'rch'.
+# 2020_02_19 Update: v3.27 Added History Archive File Definition
+# 2020_02_25 Update: v3.28 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
+# 2020_03_15 Update: v3.29 Change the way script info (-v) is shown.
+# 2020_03_16 Update: v3.30 If not present, create Alert Group file (alert_group.cfg) from template.
+# 2020_04_01 Update: v3.31 Function sadm_writelog() with N/L depreciated, remplace by sadm_write().
+# 2020_04_01 Update: v3.32 Function sadm_writelog() replaced by sadm_write in Library.
+# 2020_04_04 Update: v3.33 New Variable SADM_OK, SADM_WARNING, SADM_ERROR to Show Status in Color.
+# 2020_04_05 Update: v3.34 New Variable SADM_SUCCESS, SADM_FAILED to Show Status in Color.
+# 2020_04_13 Update: v3.35 Correct Typo Error in SADM_ERROR
+# 2020_04_13 Update: v3.36 Add @@LNT (Log No Time) var. to prevent sadm_write to put Date/Time in Log
+# 2020_05_12 Fix: v3.37 Fix problem sending attachment file when sending alert by email.
+#@2020_05_23 Fix: v3.38 Fix intermittent problem with 'sadm_write' & alert sent multiples times.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -147,7 +148,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.37"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.38"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -380,22 +381,13 @@ if [ -z $TERM ] || [ "$TERM" = "dumb" ]
          export SADM_BWHITE=$(tput setab 7)     2>/dev/null             # White color
 fi
 
-#
-# If Parameter sent to sadm_write begin with a '@@LNT' (LogNoTime)
-#   - These character are ignored, they will not be part of the message written to log or screen.
-#   - When message begin with "@@LNT", the Date/Time prefix will not be written to the log.
-#
-export SADM_LNT="@@LNT"     # If this prefix $SADM_LNT are the first 5 Chars, receive by sadm_write
-                            #   - The Date/Time prefix are not written to the log (Like usual).
-                            #   - This prefix is remove from message (Won't appear on screen or Log)
-
 
 # Standard Variable to Show ERROR,OK,WARNING status uniformingly.
-export SADM_ERROR="${SADM_LNT}[ ${SADM_RED}ERROR${SADM_RESET} ]"                    # [ ERROR ] Red
-export SADM_FAILED="${SADM_LNT}[ ${SADM_RED}FAILED${SADM_RESET} ]"                  # [ FAILED ] Red
-export SADM_WARNING="${SADM_LNT}[ ${SADM_BOLD}${SADM_YELLOW}WARNING${SADM_RESET} ]" # WARNING Yellow
-export SADM_OK="${SADM_LNT}[ ${SADM_BOLD}${SADM_GREEN}OK${SADM_RESET} ]"            # [ OK ] Green
-export SADM_SUCCESS="${SADM_LNT}[ ${SADM_BOLD}${SADM_GREEN}SUCCESS${SADM_RESET} ]"  # SUCCESS Green
+export SADM_ERROR="[ ${SADM_RED}ERROR${SADM_RESET} ]"                    # [ ERROR ] Red
+export SADM_FAILED="[ ${SADM_RED}FAILED${SADM_RESET} ]"                  # [ FAILED ] Red
+export SADM_WARNING="[ ${SADM_BOLD}${SADM_YELLOW}WARNING${SADM_RESET} ]" # WARNING Yellow
+export SADM_OK="[ ${SADM_BOLD}${SADM_GREEN}OK${SADM_RESET} ]"            # [ OK ] Green
+export SADM_SUCCESS="[ ${SADM_BOLD}${SADM_GREEN}SUCCESS${SADM_RESET} ]"  # SUCCESS Green
 
 
 
@@ -433,19 +425,14 @@ sadm_isnumeric() {
 # --------------------------------------------------------------------------------------------------
 sadm_write() {
     SADM_SMSG="$@"                                                      # Save Received Message
-    if [ "${SADM_SMSG:0:5}" = "$SADM_LNT" ]                             # If 5 first Char. are @@LNT
-        then SADM_LMSG="$@"                                             # Then no Time Prefix in Log
-        else SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"              # Prefix Msg with Date/Time
-    fi 
-    SADM_SMSG=${SADM_SMSG/$SADM_LNT/}                                   # Remove @@LNT from Screen
-    SADM_LMSG=${SADM_LMSG/$SADM_LNT/}                                   # Remove @@LNT from Log Msg
+    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Prefix Msg with Date/Time
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
-        s|S) printf -- "$SADM_SMSG"                                     # Write Msg to Screen
+        s|S) echo -ne "$SADM_SMSG"                                     # Write Msg to Screen
              ;;
-        l|L) printf -- "$SADM_LMSG" >> $SADM_LOG                        # Write Msg to Log File
+        l|L) echo -ne "$SADM_LMSG" >> $SADM_LOG                        # Write Msg to Log File
              ;;
-        b|B) printf -- "$SADM_SMSG"                                     # Write Msg to Screen
-             printf -- "$SADM_LMSG" >> $SADM_LOG                        # Write Msg to Log File
+        b|B) echo -ne "$SADM_SMSG"                                     # Write Msg to Screen
+             echo -ne "$SADM_LMSG" >> $SADM_LOG                        # Write Msg to Log File
              ;;
         *)   printf "\nWrong \$SADM_LOG_TYPE value ($SADM_LOG_TYPE)\n"  # Advise User if Incorrect
              printf -- "%-s\n" "$SADM_LMSG" >> $SADM_LOG                # Write Msg to Log File
@@ -2223,8 +2210,8 @@ sadm_send_alert() {
     amessage="$7"                                                       # Save Alert Message
     aattach="$8"                                                        # Save Attachment FileName
     acounter="01"                                                       # Default alert Counter
-    if [ "$LIB_DEBUG" -gt 6 ]                                           # Debug Info List what Recv.
-       then sadm_write "\n\n${SADM_BOLD}Function '${FUNCNAME}' parameters received :${SADM_RESET}\n"
+    if [ $LIB_DEBUG -gt 4 ]                                             # Debug Info List what Recv.
+       then printf "\n\nFunction '${FUNCNAME}' parameters received :\n"
             sadm_write "atype=$atype \n"                                # Show Alert Type
             sadm_write "atime=$atime \n"                                # Show Event Date & Time
             sadm_write "aserver=$aserver \n"                            # Show Server Name
@@ -2235,7 +2222,7 @@ sadm_send_alert() {
             sadm_write "aattachment=\"$aattach\"\n"                     # Show Alert Attachment File
     fi
 
-    # Is there is an attachment and is the file is not readable ?
+    # Is there is an attachment and if the attachment is not readable ?
     if [ "$aattach" != "" ] && [ ! -r "$aattach" ]                      # Can't read Attachment File
        then sadm_write "Error in ${FUNCNAME} - Can't read attachment file '$aattach'\n"
             return 1                                                    # Return Error to caller
@@ -2270,21 +2257,25 @@ sadm_send_alert() {
     fi
     NbDaysOld=0                                                         # Default Alert Age in Days
     if [ $aage -ge 86400 ] ;then NbDaysOld=`echo "$aage / 86400" |$SADM_BC` ;fi # Alert age in Days
-    if [ "$LIB_DEBUG" -gt 6 ]                                           # Debug Info List what Recv.
-        then sadm_write "Alert Epoch - aepoch=$aepoch \n"
-             sadm_write "Current Epoch - cepoch=$cepoch \n"
-             sadm_write "Age of alert in seconds - aage=$aage \n"
+    if [ "$LIB_DEBUG" -gt 4 ]                                           # Debug Info List what Recv.
+        then sadm_write "Alert Epoch Time     - aepoch=$aepoch \n"
+             sadm_write "Current EpochTime    - cepoch=$cepoch \n"
+             sadm_write "Age of alert in sec. - aage=$aage \n"
              sadm_write "Age of alert in days - NbDaysOld=$NbDaysOld \n"
     fi 
 
-    # GREP HISTORY FILE TO SEE IF IT ALREADY EXIST.
-    if [ "$LIB_DEBUG" -gt 4 ] 
-        then sadm_write "grep \"^$aepoch\" $SADM_ALERT_HIST |grep \";$aserver;\" |grep \"$asubject\"\n"
-             grep "^$aepoch" $SADM_ALERT_HIST | grep ";$aserver;" | grep "$asubject" | tee -a $SADM_LOG
+    # GREP HISTORY FILE TO SEE IF ALERT ALREADY EXIST.
+    if [ "$atype" != "S" ]                                              # If not a Script alert 
+        then asearch=";$adate;$atype;$aserver;$agroup;$asubject;"       # Alert from a Script
+        else asearch=";$ahour;$adate;$atype;$aserver;$agroup;$asubject;" # Alert from Sysmon 
     fi
-    grep "^$aepoch" $SADM_ALERT_HIST | grep ";$aserver;" | grep "$asubject" >>/dev/null 2>&1
-    RC=$?                                                               # Save Return Code
-    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Search Return code is $RC\n" ; fi
+    if [ "$LIB_DEBUG" -gt 4 ]                                           # If under Debug
+        then sadm_write "Search history for \"${asearch}\"\n"           # Show Search String
+             grep "${asearch}" $SADM_ALERT_HIST |tee -a $SADM_LOG       # Show grep result
+    fi 
+    grep "${asearch}" $SADM_ALERT_HIST >>/dev/null 2>&1                 # Grep Alert History file
+    RC=$?                                                               # Save Grep Result
+    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Search Return is $RC\n" ; fi
 
 
 
@@ -2340,8 +2331,7 @@ sadm_send_alert() {
     # ALERT WAS FOUND IN HISTORY FILE 
     if [ $RC -eq 0 ]                                                    # Same Alert was found
         then if [ "$LIB_DEBUG" -gt 4 ] 
-                then sadm_write "Alert exist in history file ($aepoch).\n" 
-                     sadm_write "AlertEpoch:$aepoch  Cur.Epoch:$cepoch - AlertAge:${aage} Sec.\n"
+                then sadm_write "AlertEpoch:$aepoch  Cur.Epoch:$cepoch - AlertAge:${aage} Sec.\n"
              fi
              # Alert were found in history and SADM_ALERT_REPEAT=0 then no need to repeat stop here.
              if [ $SADM_ALERT_REPEAT -eq 0 ]                            # User want no alert repeat
@@ -2666,3 +2656,4 @@ write_alert_history() {
     export SADM_SSH_CMD="${SADM_SSH} -qnp${SADM_SSH_PORT}"              # SSH Command to SSH CLient
     export SADM_USERNAME=$(whoami)                                      # Current User Name
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "Library Loaded,\n" ; fi
+    
