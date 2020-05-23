@@ -43,10 +43,11 @@
 # 2018_09_19  v3.10 Include Alert Group
 # 2018_10_24  v3.11 Adjustment needed to call sadm_osupdate.sh with or without '-r' (reboot) option.
 # 2019_07_14 Update: v3.12 Adjustment for Library Changes.
-#@2019_12_22 Fix: v3.13 Fix problem when using debug (-d) option without specifying level of debug.
+# 2019_12_22 Fix: v3.13 Fix problem when using debug (-d) option without specifying level of debug.
+#@2020_05_23 Update: v3.14 Create 'osupdate_running' file before launching O/S update on remote.
 # --------------------------------------------------------------------------------------------------
 #
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
 
 
@@ -66,9 +67,9 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
              if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
              # Check if can use SADMIN definition line in /etc/environment to continue
              missenv="Please set 'SADMIN' environment variable to the install directory."
-             grep "^SADMIN" /etc/environment >/dev/null 2>&1             # SADMIN line in /etc/env.? 
+             grep "SADMIN" /etc/environment >/dev/null 2>&1             # SADMIN line in /etc/env.? 
              if [ $? -eq 0 ]                                             # Yes use SADMIN definition
-                 then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
+                 then export SADMIN=`grep "SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
                       misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
                       missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
                       if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
@@ -94,7 +95,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.13'                              # Your Current Script Version
+    export SADM_VER='3.14'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -136,6 +137,7 @@ WARNING_COUNT=0                             ; export WARNING_COUNT      # Nb. of
 STAR_LINE=`printf %80s |tr " " "*"`         ; export STAR_LINE          # 80 equals sign line
 ONE_SERVER=""                               ; export ONE_SERVER         # Name If One server to Upd.
 
+
 # Script That is run on every client to update the Operating System
 USCRIPT="sadm_osupdate.sh"                  ; export USCRIPT            # Script to execute on nodes
 
@@ -158,7 +160,7 @@ show_usage()
 
 
 # --------------------------------------------------------------------------------------------------
-#          Update Last Date of Last O/S Update and Result in Server Table in SADMIN Database
+#  Update the O/S Update date and result status in Server Table in SADMIN Database
 # --------------------------------------------------------------------------------------------------
 update_server_db()
 {
@@ -167,7 +169,7 @@ update_server_db()
     WCURDAT=`date "+%C%y.%m.%d %H:%M:%S"`                               # Get & Format Update Date
 
     # Construct SQL Update Statement
-    sadm_writelog "Record O/S Update Status & Date for $WSERVER in DataBase" # Advise user
+    sadm_write "Write O/S Update Status & Date in DataBase "            # Advise user
     SQL1="UPDATE server SET "                                           # SQL Update Statement
     SQL2="srv_date_osupdate = '${WCURDAT}', "                           # Update Date of this Update
     SQL3="srv_update_status = '${WSTATUS}' "                            # [S]uccess [F]ail [R]unning
@@ -181,9 +183,9 @@ update_server_db()
     # Execute SQL to Update Server O/S Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e "$SQL" >>$SADM_LOG 2>&1
     if [ $? -ne 0 ]                                                     # If Error while updating
-        then sadm_writelog "Error updating $WSERVER in Database"        # Inform user of Error 
+        then sadm_write "${SADM_ERROR} Updating $WSERVER in Database\n" # Inform user of Error 
              RCU=1                                                      # Set Error Code
-        else sadm_writelog "Database Update Succeeded"                  # Inform User of success
+        else sadm_write "${SADM_OK}\n"                                  # Inform User of success
              RCU=0                                                      # Set Error Code = Success 
     fi
     return $RCU
@@ -238,23 +240,23 @@ process_servers()
             sadm_writelog "$info_line"
             
             # TRY TO PING SERVER TO VERIFY IF IT'S REACHABLE ---------------------------------------
-            sadm_writelog "Ping host $fqdn_server"
+            sadm_write "Ping host $fqdn_server "
             ping -c2 $fqdn_server >> /dev/null 2>&1
             if [ $? -ne 0 ]
-                then    sadm_writelog "Error trying to ping host $fqdn_server"
+                then    sadm_write "${SADM_ERROR} Trying to ping $fqdn_server \n"
                         if [ "$server_sporadic" = "1" ]
-                            then    sadm_writelog "[WARNING] This host is sporadically online"
-                                    sadm_writelog "Will continue with next server"
+                            then    sadm_write "${SADM_WARNING} Sporadic system now offline.\n"
+                                    sadm_write "Will continue with next server.\n"
                                     WARNING_COUNT=$(($WARNING_COUNT+1))
-                            else    sadm_writelog "Update of server $fqdn_server Aborted"
+                            else    sadm_write "${SADM_ERROR} Update of $fqdn_server Aborted\n"
                                     ERROR_COUNT=$(($ERROR_COUNT+1))
                         fi
                         if [ "$ERROR_COUNT" != "0" ] || [ "$WARNING_COUNT" != "0" ] 
-                            then sadm_writelog "Error at ${ERROR_COUNT}, Warning at $WARNING_COUNT"
+                            then sadm_write "Error at ${ERROR_COUNT}, Warning at ${WARNING_COUNT}\n"
                         fi
                         continue
                 else
-                        sadm_writelog "[OK] Ping worked"
+                        sadm_write "${SADM_OK} Ping worked\n"
             fi
 
 
@@ -270,10 +272,17 @@ process_servers()
                      if [ "$server_update_reboot" = "1" ]               # If Requested in Database
                         then WREBOOT=" -r"                              # Set Reboot flag to ON
                      fi                                                 # This reboot after Update
-                     sadm_writelog "Starting $USCRIPT on ${server_name}.${server_domain}"
+                     #sadm_writelog "Starting $USCRIPT on ${server_name}.${server_domain}"
                      if [ "${server_name}.${server_domain}" != "$SADM_SERVER" ]
-                        then sadm_writelog "$SADM_SSH_CMD ${server_name}.${server_domain} ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT"
-                             $SADM_SSH_CMD ${server_name}.${server_domain} ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
+                        then UPDATE_RUNNING="${SADM_WWW_DAT_DIR}/${server_name}/osupdate_running"
+                             sadm_write "Suspend monitoring - ${UPDATE_RUNNING} file created " 
+                             touch ${UPDATE_RUNNING}                    # Create OSUPDATE Flag File
+                             if [ $? -eq 0 ]                            # If Touch went OK
+                                then sadm_write "${SADM_OK}\n"          # Show [ OK ] and NewLine
+                                else sadm_write "${SADM_ERROR}\n"       # Show [ ERROR ] and NewLine
+                             fi
+                             sadm_write "$SADM_SSH_CMD $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}\n\n"
+                             $SADM_SSH_CMD $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
                         else sadm_writelog "Starting execution of ${server_sadmin_dir}/bin/$USCRIPT"
                              ${server_sadmin_dir}/bin/$USCRIPT 
                      fi                             
@@ -285,69 +294,82 @@ process_servers()
                              update_server_db "${server_name}" "S"  
                      fi
             fi
-            sadm_writelog "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
+            if [ "$ERROR_COUNT" -ne 0 ] || [ "$WARNING_COUNT" -ne 0 ] 
+                then sadm_writelog "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
+            fi 
             sadm_writelog " "
             done < $SADM_TMP_FILE1
     fi
-    #sadm_writelog " "
-    sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
+    if [ "$ERROR_COUNT" -ne 0 ] || [ "$WARNING_COUNT" -ne 0 ] 
+       then sadm_writelog "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
+    fi 
     return $ERROR_COUNT
 }
 
 
 
-# --------------------------------------------------------------------------------------------------
-#                                Script Start HERE
-# --------------------------------------------------------------------------------------------------
-    
-    # If you want this script to be run only by 'root'.
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
-             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
-             printf "\nProcess aborted\n\n"                             # Abort advise message
-             exit 1                                                     # Exit To O/S with error
-    fi
 
-    sadm_start                                                          # Start Using SADM Tools
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
-
+# --------------------------------------------------------------------------------------------------
+# Command line Options functions
+# Evaluate Command Line Switch Options Upfront
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# --------------------------------------------------------------------------------------------------
+function cmd_options()
+{
     ONE_SERVER=""                                                       # Set Switch Default Value
-    while getopts "hvd:s:" opt ; do                                     # Loop to process Switch
+    while getopts "d:hvs:" opt ; do                                     # Loop to process Switch
         case $opt in
-            s) ONE_SERVER="$OPTARG"                                     # Display Only Server Name
-               ;;
-            d) SADM_DEBUG=$OPTARG                                       # Debug Level from 0 to 9 
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
-                       sadm_stop 1                                      # Close/Trim Log & Del PID
-                       exit 1
+                       exit 1                                           # Exit Script with Error
                fi
-               ;;                                                       # No stop after each page 
-            v) sadm_show_version                                        # Show Script Version Info
-               exit 0                                                   # Back to shell
-               ;;
+               printf "Debug Level set to ${SADM_DEBUG}."               # Display Debug Level
+               ;;                    
+            s) ONE_SERVER="$OPTARG"                                     # Display Only Server Name
+               ;;                                                  
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
-           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+            v) sadm_show_version                                        # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -${OPTARG}.\n"                 # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
-        done             
-    if [ $SADM_DEBUG -gt 0 ] ; then printf "Debug activated, Level ${SADM_DEBUG}\n" ; fi
+    done                                                                # End of while
+    return 
+}
 
 
-    # RUN ON THE SADMIN MAIN SERVER ONLY
-    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ] # Only run on SADMIN 
-        then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
+
+#===================================================================================================
+# MAIN CODE START HERE
+#===================================================================================================
+
+    cmd_options "$@"                                                    # Check command-line Options    
+    sadm_start                                                          # Create Dir.,PID,log,rch
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
+
+    # If current user is not 'root', exit to O/S with error code 1 (Optional)
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then sadm_write "Script can only be run by the 'root' user, process aborted.\n"
+             sadm_write "Try sudo %s" "${0##*/}\n"                      # Suggest using sudo
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
+
+    # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+        then sadm_write "Script can only be run on (${SADM_SERVER}), process aborted.\n"
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
+
     process_servers                                                     # Go Update Servers
     SADM_EXIT_CODE=$?                                                   # Save Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
