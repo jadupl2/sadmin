@@ -29,6 +29,7 @@
 # 2018_11_29    v2.3 Restructure for performance and don't delete rch/log files anymore.
 #@2019_05_19 Update: v2.4 Add server crontab file to housekeeping
 #@2020_02_19 Update: v2.5 Restructure & added archiving of old alert history to history archive. 
+#@2020_05_23 Update: v2.6 Minor change about reading /etc/environment and change logging messages.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -44,9 +45,9 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
         then missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
              if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
              missenv="Please set 'SADMIN' environment variable to the install directory."
-             grep "^SADMIN" /etc/environment >/dev/null 2>&1            # SADMIN line in /etc/env.? 
+             grep "SADMIN" /etc/environment >/dev/null 2>&1            # SADMIN line in /etc/env.? 
              if [ $? -eq 0 ]                                            # Yes use SADMIN definition
-                 then export SADMIN=`grep "^SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
+                 then export SADMIN=`grep "SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
                       misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
                       missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
                       if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
@@ -72,7 +73,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.5'                               # Your Current Script Version
+    export SADM_VER='2.6'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -184,7 +185,7 @@ set_dir()
 # --------------------------------------------------------------------------------------------------
 alert_housekeeping()
 {
-    sadm_writelog "${yellow}Archive Alert older than $ARC_DAYS days.${white}"
+    sadm_write "${SADM_BOLD}Archive Alert older than $ARC_DAYS days.${SADM_RESET}\n"
 
     # If History archive doesn't exist, create it.
     if [ ! -f "$SADM_ALERT_ARCHIVE" ]                                   # If Archive don't exist
@@ -219,7 +220,7 @@ alert_housekeeping()
                  ltime=`echo $line | awk -F\; '{ print $3 }'`           # Extract Alert Time
                  lhost=`echo $line | awk -F\; '{ print $6 }'`           # Extract Alert Host
                  lmess=`echo $line | awk -F\; '{ print $8 }'`           # Extract Error Mess
-                 sadm_writelog "Archiving: $ldate $ltime $lhost $lmess"
+                 sadm_write "Archiving Alert: $ldate $ltime $lhost $lmess \n"
             else if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "Alert left in history file." ;fi
                  echo $line >> $SADM_TMP_FILE3
         fi 
@@ -450,8 +451,8 @@ file_housekeeping()
 
     alert_housekeeping                                                  # Prune Alert History File
     if [ $? -eq 0 ]
-       then sadm_writelog "[ OK ] Alert archiving done."
-       else sadm_writelog "[ ERROR ] while archiving alert."
+       then sadm_writelog "$SADM_OK Alert archiving done."
+       else sadm_writelog "$SADM_ERROR While archiving alert."
             ERROR_COUNT=$(($ERROR_COUNT+1))
     fi 
     dir_housekeeping                                                    # Do Dir HouseKeeping
