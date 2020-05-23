@@ -47,6 +47,7 @@
 # 2020_04_21 Update: v3.9 Minor Error Message Alignment,
 # 2020_04_24 Update: v4.0 Show rsync status & solve problem if duplicate entry in /etc/environment.
 # 2020_05_06 Update: v4.1 Modification to log structure
+#@2020_05_23 Update: v4.2 No longer report an error, if a system is rebooting because of O/S update.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -74,7 +75,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='4.1'                               # Your Current Script Version
+    export SADM_VER='4.2'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -116,7 +117,7 @@ TOTAL_AIX=0                                      ; export TOTAL_AIX     # Nb Err
 TOTAL_LINUX=0                                    ; export TOTAL_LINUX   # Nb Error in Linux Function
 SADM_STAR=`printf %80s |tr " " "*"`              ; export SADM_STAR     # 80 * line
 DEBUG_LEVEL=0                                    ; export DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
-
+export OSTIMEOUT=3600                                                   # 3600sec=1Hr to do O/S Upd.
 
 
 # --------------------------------------------------------------------------------------------------
@@ -146,26 +147,28 @@ show_version()
 # --------------------------------------------------------------------------------------------------
 process_servers()
 {
-    sadm_write "Processing All Actives Server(s)\n"
+    sadm_write "${SADM_BOLD}Processing All Actives Server(s)${SADM_RESET}\n"
 
-    # Select Active Server From Database & output result in CSV Format to $SADM_TMP_FILE1 work file
+    # BUILD THE SELECT STATEMENT FOR ACTIVE SERVER & OUTPUT RESULT IN CSV FORMAT TO $SADM_TMP_FILE1
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active"
     SQL="${SQL} from server"                                            # From the Server Table
     SQL="${SQL} where srv_active = True"                                # Select only Active Servers
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
-    CMDLINE1="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL & Use Read Only User  
-    #CMDLINE2="-h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' |tr '/\t/' '/,/'" # Build CmdLine
+
+    # RUN THE SELECT STATEMENT
+    CMDLINE1="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "        # MySQL & Use Read Only User  
     if [ $DEBUG_LEVEL -gt 5 ]                                           # If Debug Level > 5 
         then sadm_write "$CMDLINE1 -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' |tr '/\t/' '/,/'\n"
     fi
     $CMDLINE1 -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
 
-    # If File was not created or has a zero lenght then No Actives Servers were found
+    # IF FILE WAS NOT CREATED OR HAS A ZERO LENGTH THEN NO ACTIVES SERVERS WERE FOUND
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
-        then sadm_write "No Active Server were found.\n" 
+        then sadm_write "${SADM_BOLD}No Active Server were found.${SADM_RESET}\n" 
              return 0 
     fi 
 
+    # PROCESS EACH SYSTEM PRESENT IN THE FILE CREATED BY THE SELECT STATEMENT
     xcount=0; ERROR_COUNT=0;                                            # Reset Server/Error Counter
     while read wline                                                    # Then Read Line by Line
         do
@@ -176,56 +179,63 @@ process_servers()
         server_monitor=` echo $wline|awk -F, '{ print $4 }'`            # Monitor  t=True f=False
         server_sporadic=`echo $wline|awk -F, '{ print $5 }'`            # Sporadic t=True f=False
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
-        #
         sadm_write "\n"
-        #sadm_write "${SADM_TEN_DASH}\n"
-        sadm_write "Processing ($xcount) $fqdn_server \n"               # Show Cur. System 
+        sadm_write "${SADM_BOLD}Processing ($xcount) ${fqdn_server}${SADM_RESET}\n" # Show Cur.Syst.
         
-        if [ $DEBUG_LEVEL -gt 0 ]                                       # If Debug Activated
-            then if [ "$server_monitor" = "1" ]                         # Monitor Flag is at True
-                    then sadm_write "Monitoring is ON for $fqdn_server \n"
-                    else sadm_write "Monitoring is OFF for $fqdn_server \n"
-                 fi
-                 if [ "$server_sporadic" = "1" ]                        # Sporadic Flag is at True
-                    then sadm_write "Sporadic system is ON for $fqdn_server \n"
-                    else sadm_write "Sporadic system is OFF for $fqdn_server \n"
-                 fi
-        fi
-
-        # If Server Name can't be resolved - Signal Error to user and continue with next system.
-        if ! host  $fqdn_server >/dev/null 2>&1
-            then SMSG="[ ERROR ] Can't process '$fqdn_server', hostname can't be resolved"
+        # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR TO USER AND CONTINUE WITH NEXT SYSTEM.
+        if ! host $fqdn_server >/dev/null 2>&1
+            then SMSG="${SADM_ERROR} Can't process '$fqdn_server', hostname can't be resolved."
                  sadm_write "${SMSG}\n"                                 # Advise user
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
                  sadm_write "Error Count is now at $ERROR_COUNT \n"
                  continue                                               # Continue with next Server
         fi
 
-        # Try a Ping to the Server
-        if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_write "ping -c 2 $fqdn_server \n" ; fi 
-        ping -c 2 -W 5 $fqdn_server >/dev/null 2>/dev/null
-        RC=$?
-        if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_write "Return Code is $RC \n" ;fi 
+        # TEST SSH TO SERVER (IF NOT ON SADMIN SERVER)
+        UPDATE_RUNNING="${SADM_WWW_DAT_DIR}/${server_name}/osupdate_running" # OSUpdate progress File
+        RC=0                                                            # Initialize SSH Return Code
+        if [ "${server_name}" != "$SADM_HOSTNAME" ]                     # If not on SADMIN Server 
+            then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1       # Try SSH to Server for date
+                 RC=$?                                                  # Save Error Number
+        fi 
 
-        # If ping failed and it's a Sporadic Server, Show Warning and continue with next system.
-        if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]               # SSH don't work & Sporadic
-            then sadm_write "$SADM_WARNING Can't Ping the sporadic system $fqdn_server\n"
-                 sadm_write "            Continuing with next system.\n"
-                 continue                                               # Go process next system
-        fi
-
-        if [ $RC -ne 0 ]
-            then sadm_write "$SADM_ERROR Ping to server failed - Unable to process system.\n"
+        if [ $RC -eq 0 ]                                                # If SSH Worked
+            then if [ -f "$UPDATE_RUNNING" ]                            # If O/S Update Running
+                   then rm -f $UPDATE_RUNNING > /dev/null 2>&1          # Remove O/S Upd Flag File
+                 fi 
+            else if [ -f "$UPDATE_RUNNING" ]                            # If O/S Update running 
+                    then FEPOCH=`stat -c %Y $UPDATE_RUNNING`            # Get File Modif. Epoch Time
+                         CEPOCH=$(sadm_get_epoch_time)                  # Get Current Epoch Time
+                         FAGE=`expr $CEPOCH - $FEPOCH`                  # Nb. Sec. OSUpdate running
+                         if [ "$FAGE" -gt $OSTIMEOUT ]                  # Running more than 1 Hr
+                            then msg="${SADM_BOLD}O/S update running for more than $OSTIMEOUT sec.${SADM_RESET}"
+                                 sadm_write "${msg}\n"
+                                 msg="${SADM_BOLD}Will now start to monitor this system as usual.${SADM_RESET}"
+                                 sadm_write "${msg}\n"
+                                 rm -f $UPDATE_RUNNING > /dev/null 2>&1 # Remove O/S Upd Flag File
+                            else msg="${SADM_WARNING} O/S update is running on '$fqdn_server'."
+                                 sadm_write "${msg}\n"
+                                 msg="Will resume normal operation once the O/S update is terminated or can SSH to server."
+                                 sadm_write "${msg}\n"
+                                 continue
+                         fi 
+                    else if [ "$server_sporadic" = "1" ]                # If Error on Sporadic Host
+                            then sadm_write "${SADM_WARNING}  Can't SSH to ${fqdn_server} (Sporadic System).\n"
+                                 continue
+                         fi 
+                         if [ "$server_monitor" = "0" ]                 # If Error & Monitor is OFF
+                            then sadm_write "${SADM_WARNING} Can't SSH to ${fqdn_server} (Monitoring is OFF).\n"
+                                 continue
+                         fi 
+                 fi
+                 if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_write "Return Code is $RC \n" ;fi 
+                 sadm_write "$SADM_ERROR Can't SSH to ${fqdn_server} - Unable to process system.\n"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
                  sadm_write "Error Count is now at $ERROR_COUNT \n"
                  continue
-        fi
+        fi                                                              # OK SSH Worked the 1st time
 
-
-        # CREATE LOCAL RECEIVING DIR
-        # Making sure the $SADMIN/dat/$server_name exist on Local SADMIN server
-        #-------------------------------------------------------------------------------------------
-        #sadm_write "Make sure local directory ${SADM_WWW_DAT_DIR}/${server_name} exist\n"
+        # MAKING SURE THE $SADMIN/DAT/$SERVER_NAME EXIST ON LOCAL SADMIN SERVER
         if [ ! -d "${SADM_WWW_DAT_DIR}/${server_name}" ]
             then sadm_write "Creating ${SADM_WWW_DAT_DIR}/${server_name} directory\n"
                  mkdir -p "${SADM_WWW_DAT_DIR}/${server_name}"
