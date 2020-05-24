@@ -61,6 +61,7 @@
 #@2020_04_10 Update: v3.20 If backup_list.txt contains $ at beginning of line, it Var. is resolved
 #@2020_04_11 Update: v3.21 Log output changes.
 #@2020_05_18 Update: v3.22 Backup Structure changed, now group by server instead of backup type.
+#@2020_05_24 Update: v3.23 Move Backup from old structure to the new old and delete empty directory.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -91,7 +92,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.22'                              # Your Current Script Version
+    export SADM_VER='3.23'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -189,6 +190,45 @@ show_usage()
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-n   (Backup with NO compression)"
     printf "\n\n"
+}
+
+
+#===================================================================================================
+# Move Backup from old structure (../daily/hostname/) to new structure (../hostname/daily)
+# Once executed, this function won't be used anymore.
+#===================================================================================================
+backup_move()
+{
+    sadm_write "\n"
+    backup_type=( daily weekly monthly yearly )                         # Backup Type Array
+    for WTYPE in "${backup_type[@]}"                                    # Loop every item in Array
+        do
+        if [ $SADM_DEBUG -gt 0 ] ;then echo "Processing $WTYPE backup." ;fi 
+        WOLD="${LOCAL_MOUNT}/${WTYPE}/${HOSTNAME}"                      # Old Structure Dir. Backup
+        WNEW="${LOCAL_MOUNT}/${HOSTNAME}/${WTYPE}"                      # New Structure Dir. Backup
+        if [ -d "${WOLD}" ]                                             # Old Host Backup Dir Exist
+            then if [ "$(ls -A $WOLD)" ]                                # If backup exist in Old Dir
+                    then sadm_write "Move old $WTYPE backup ${WOLD} to ${WNEW}\n" 
+                         if [ ! -d $WNEW ] ;then mkdir -p $WNEW ;chmod 775 $WNEW ;fi 
+                         cd $WOLD                                       # Change dir to Old Backup
+                         for file in $(ls -1)                           # Process each Backup Dir. 
+                            do 
+                            sadm_write "mv ${WOLD}/$file ${WNEW} "      # Show user what we do
+                            mv ${WOLD}/$file ${WNEW}                    # Move old Backup dir to new
+                            if [ $? -ne 0 ]                             # Test if move worked
+                                then sadm_write "${SADM_ERROR} Moving the directory ${file}.\n"
+                                else sadm_write "${SADM_OK}\n"          # Show user that it worked
+                            fi 
+                            done
+                         cd /tmp                                        # Don't stay in old Backup
+                 fi   
+                 if [ ! "$(ls -A $WOLD)" ]                              # Is Old backup Dir empty
+                    then echo "Delete $WOLD since it's empty"           # Show user we delete it
+                         rm -fr $WOLD > /dev/null 2>&1                  # Delete old backup dir.
+                 fi 
+        fi
+        done 
+
 }
 
 
@@ -612,6 +652,8 @@ function cmd_options()
              exit 1                                                     # Exit To O/S
     fi
     mount_nfs                                                           # Mount NFS Dir.
+    if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
+    backup_move
     if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
     backup_setup                                                        # Create Necessary Dir.
     if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
