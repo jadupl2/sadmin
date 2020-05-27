@@ -205,16 +205,16 @@ function sysmon_page_heading() {
     echo "\n<thead>";
     echo "\n<tr>";
     echo "\n<th class='dt-center'>Status</th>";
-    echo "\n<th class='dt-center'>Module</th>";
+    echo "\n<th class='dt-center'>System</th>";
+    echo "\n<th class='dt-head-center'>O/S</th>";
     echo "\n<th class='dt-center'>Alert Description</th>";
     echo "\n<th class='dt-center'>Event Date/Time</th>";
-    echo "\n<th class='dt-center'>System</th>";
     #echo "\n<th class='dt-center'>Distribution</th>";
     #echo "\n<th class='dt-head-center'>System Description</th>";
-#    echo "\n<th class='dt-head-left'>Cat.</th>";
-#    echo "<th class='dt-head-left'>Arch</th>\n";
-    echo "<th class='dt-head-center'>O/S</th>\n";
-#    echo "<th class='dt-head-left'>O/S Version</th>\n";
+    #    echo "\n<th class='dt-head-left'>Cat.</th>";
+    #    echo "<th class='dt-head-left'>Arch</th>\n";
+    #    echo "<th class='dt-head-left'>O/S Version</th>\n";
+    echo "\n<th class='dt-center'>Module</th>";
     echo "\n<th class='dt-center'>Alert Group/Type</th>";
     echo "\n</tr>";
     echo "\n</thead>\n";
@@ -223,16 +223,16 @@ function sysmon_page_heading() {
     echo "\n<tfoot>";
     echo "\n<tr>";
     echo "\n<th class='dt-center'>Status</th>";
-    echo "\n<th class='dt-center'>Module</th>";
+    echo "\n<th class='dt-center'>System</th>";
+    echo "\n<th class='dt-head-center'>O/S</th>";
     echo "\n<th class='dt-center'>Alert Description</th>";
     echo "\n<th class='dt-center'>Event Date/Time</th>";
-    echo "\n<th class='dt-center'>System</th>";
     #echo "\n<th class='dt-center'>Distribution</th>";
     #echo "\n<th class='dt-head-center'>System Description</th>";
-#    echo "\n<th class='dt-head-left'>Cat.</th>";
-#    echo "<th class='dt-head-left'>Arch</th>\n";
-    echo "<th class='dt-head-center'>O/S</th>\n";
-#    echo "<th class='dt-head-left'>O/S Version</th>\n";
+    #    echo "\n<th class='dt-head-left'>Cat.</th>";
+    #    echo "<th class='dt-head-left'>Arch</th>\n";
+    #    echo "<th class='dt-head-left'>O/S Version</th>\n";
+    echo "\n<th class='dt-center'>Module</th>";
     echo "\n<th class='dt-center'>Alert Group/Type</th>";
     echo "\n</tr>";
     echo "\n</tfoot>\n";
@@ -298,8 +298,31 @@ function display_data($con,$alert_file) {
                     $alert_group="Unknown";                             # Set Event Alert Group
                     break;
                 }
-            # Event Module Name (All lowercase, except first character).
-            echo "<td class='dt-center'>" . ucwords(strtolower($wsubmod)) . "</td>\n";
+
+            # Get Server Description, O/S and O/S version.
+            $sql = "SELECT * FROM server where srv_name = '". $whost . "';";  # Construct select 
+            if ( ! $result=mysqli_query($con,$sql)) {                   # Execute SQL Select
+                $WDESC = "Server not in Database";                      # Server not found descr.
+                $WOS   = "Unknown";                                     # O/S name is unknown
+                $WVER  = "Unknown";                                     # O/S Version is unknown
+            }else{
+                $row = mysqli_fetch_assoc($result);                     # Fetch server info
+                $WDESC = $row['srv_desc'];                              # Save Server Description
+                $WOS   = $row['srv_osname'];                            # Save Server O/S Name
+                $WVER  = $row['srv_osversion'];                         # Save Server O/S Version
+                mysqli_free_result($result);                            # Free result set 
+            }
+
+            # Server Name 
+            echo "<td class='dt-center'>";
+            echo "<a href='" . $URL_HOST_INFO . "?sel=" . nl2br($whost) ;
+            echo "' title='$WDESC at " . $row['srv_ip'] . "'>" ;
+            echo nl2br($whost) . "</a></td>\n";
+
+            # Display Operating System Logo
+            $WOS   = sadm_clean_data($row['srv_osname']);               # Set Server O/S Name
+            sadm_show_logo($WOS);                                       # Show Distribution Logo 
+
 
             # Show Event Description. 
             $wlog =  $whost . "_" . $wdesc . ".log";                    # Construct Script log Name
@@ -334,29 +357,8 @@ function display_data($con,$alert_file) {
             # Event Date and Time
             echo "<td class='dt-center'>" . $wdate . " " . $wtime . "</td>\n";
 
-            # Get Server Description, O/S and O/S version.
-            $sql = "SELECT * FROM server where srv_name = '". $whost . "';";  # Construct select 
-            if ( ! $result=mysqli_query($con,$sql)) {                   # Execute SQL Select
-                $WDESC = "Server not in Database";                      # Server not found descr.
-                $WOS   = "Unknown";                                     # O/S name is unknown
-                $WVER  = "Unknown";                                     # O/S Version is unknown
-            }else{
-                $row = mysqli_fetch_assoc($result);                     # Fetch server info
-                $WDESC = $row['srv_desc'];                              # Save Server Description
-                $WOS   = $row['srv_osname'];                            # Save Server O/S Name
-                $WVER  = $row['srv_osversion'];                         # Save Server O/S Version
-                mysqli_free_result($result);                            # Free result set 
-            }
-
-            # Server Name 
-            echo "<td class='dt-center'>";
-            echo "<a href='" . $URL_HOST_INFO . "?sel=" . nl2br($whost) ;
-            echo "' title='$WDESC at " . $row['srv_ip'] . "'>" ;
-            echo nl2br($whost) . "</a></td>\n";
-
-            # Display Operating System Logo
-            $WOS   = sadm_clean_data($row['srv_osname']);               # Set Server O/S Name
-            sadm_show_logo($WOS);                                       # Show Distribution Logo 
+            # Event Module Name (All lowercase, except first character).
+            echo "<td class='dt-center'>" . ucwords(strtolower($wsubmod)) . "</td>\n";
 
             # Show Event Alert Group
             echo "<td class='dt-center'>" . $alert_group . "</td>\n";   # Event Alert Group/Type
