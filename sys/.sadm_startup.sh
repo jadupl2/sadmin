@@ -30,14 +30,15 @@
 # 2019_03_27 Update: v3.9 If 'ntpdate' report an error, show error message and add cosmetic messages
 # 2019_03_29 Update: v3.10 Get SADMIN Directory Location from /etc/environment
 #@2019_12_07 Update: v3.11 Avoid NTP Server name resolution (DNS not up), use IP Addr. now.
+#@2020_05_27 Fix: v3.12 Force using bash instead of dash & problem setting SADMIN env. variable.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x 
 
-export SADMIN=`grep "^SADMIN=" /etc/environment |awk -F= '{print $2}'`  # Get SADMIN Install Dir
+export SADMIN=`grep "SADMIN=" /etc/environment |sed 's/export //g'|awk -F= '{print $2}'` 
 if [ "$SADMIN" = "" ]                                                   # Couldn't get Install Dir.
-    then printf "Couldn't get SADMIN variable in /etc/environment"      # Advise User What's wrong
-         printf "SADMIN service script aborted."                        # Advise what to fix
+    then printf "Couldn't get SADMIN variable in /etc/environment\n"    # Advise User What's wrong
+         printf "SADMIN service script aborted.\n"                      # Advise what to fix
          exit 1                                                         # Exit Script with error
 fi
 
@@ -59,7 +60,7 @@ fi
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.11'                              # Current Script Version
+    export SADM_VER='3.12'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
