@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # --------------------------------------------------------------------------------------------------
 #   Author:     Jacques Duplessis
 #   Title:      sadm_shutdown.sh
@@ -12,19 +12,21 @@
 # Version 2.5 - Added code to run shutdown command based on Hostname
 # 2017_08_05    V2.6 Send email only on Execution Error
 # 2018_01_31    V2.7 Added execution of /etc/profile.d/sadmin.sh to have SADMIN Env. Var. Defined
-# 2018_09_19    V2.8 Added Alert Group Utilisation
+# 2018_09_19    V2.8 Added Alert Group Utilization
 # 2018_10_18    v2.9 Remove execution of /etc/profile.d/sadmin.sh (Don't need anymore)
 #@2019_03_29 Update: v2.10 Get SADMIN Directory Location from /etc/environment
+#@2020_05_27 Fix: v2.11 Force using bash instead of dash & problem setting SADMIN env. variable.
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 
 
-export SADMIN=`grep "^SADMIN=" /etc/environment |awk -F= '{print $2}'`  # Get SADMIN Install Dir
+export SADMIN=`grep "SADMIN=" /etc/environment |sed 's/export //g'|awk -F= '{print $2}'` 
 if [ "$SADMIN" = "" ]                                                   # Couldn't get Install Dir.
-    then printf "Couldn't get SADMIN variable in /etc/environment"      # Advise User What's wrong
-         printf "SADMIN service script aborted."                        # Advise what to fix
+    then printf "Couldn't get SADMIN variable in /etc/environment\n"    # Advise User What's wrong
+         printf "SADMIN service script aborted.\n"                      # Advise what to fix
          exit 1                                                         # Exit Script with error
 fi
+
 
 
 #===================================================================================================
@@ -44,7 +46,7 @@ fi
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.10'                              # Current Script Version
+    export SADM_VER='2.11'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -63,7 +65,7 @@ fi
 #
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
     # But they can be overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
