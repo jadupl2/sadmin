@@ -43,6 +43,7 @@
 #@2020_03_15 Update: v2.1 Add -t to exclude tmpfs, -n nfs filesystem from the output and total line. 
 #@2020_03_15 Update: v2.2 Modified to work on MacOS
 #@2020_04_05 Update: v2.3 Add hostname and date in heading line.
+#@2020_05_27 Fix: v2.4 fix problem when dealing with TB filesystem.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -51,7 +52,7 @@
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-export SADM_VER='2.3'                                                   # Current Script Version
+export SADM_VER='2.4'                                                   # Current Script Version
 export ostype=`uname -s | tr '[:lower:]' '[:upper:]'`                   # OS Name (AIX/LINUX/DARWIN)
 export SADM_DASH=`printf %100s |tr " " "="`                             # 100 equals sign line
 export SADM_DEBUG=0                                                     # 0=NoDebug Higher=+Verbose
@@ -64,6 +65,7 @@ export NFS=0                                                            # 1=Excl
 export TOTAL_SIZE=0                                                     # df Size column total
 export TOTAL_USED=0                                                     # df Used column total
 export TOTAL_AVAIL=0                                                    # df Available column total
+export TSIZE=0                                                          # Converted Value of Func.
 export SADM_HOSTNAME=`hostname -s`                                      # Host name without Domain
 
 # Screen related variables
@@ -127,6 +129,32 @@ show_version()
 }
 
 
+# --------------------------------------------------------------------------------------------------
+# Print Total Line.
+# --------------------------------------------------------------------------------------------------
+function print_total()
+{
+ # Print Total Line
+    TS=`echo "$TOTAL_SIZE  / 1024" | bc -l` ; TS=`printf "%6.2f" $TS`
+    TU=`echo "$TOTAL_USED  / 1024" | bc -l` ; TU=`printf "%5.2f" $TU`
+    TA=`echo "$TOTAL_AVAIL / 1024" | bc -l` ; TA=`printf "%5.2f" $TA`
+    PC=`echo "($TOTAL_USED / $TOTAL_SIZE) * 100" | bc -l` ; PC=`printf "%3.2f" $PC`
+    TMSG="Total (-t exclude tmpfs, -n exclude nfs)"
+    case "$ostype" in
+        "DARWIN")   
+            total_line=`printf "%-41s %8s %8s %8s %9s\n" "$TMSG" ${TS}G ${TU}G ${TA}G ${PC}%` 
+            ;;
+        "LINUX")    
+            total_line=`printf "%-40s %8s %8s %8s %9s\n" "$TMSG" ${TS}G ${TU}G ${TA}G ${PC}%` 
+            ;;
+        "AIX")      
+            total_line=`printf "%-40s %8s %8s %8s %9s\n" "$TMSG" ${TS}G ${TU}G ${TA}G ${PC}%` 
+            ;;
+    esac    
+    printf "${yellow}${bold}%s${reset}\n" "$total_line"                 # Print total line
+    printf "${magenta}${bold}${SADM_DASH}${reset}\n"                    # Print dash line
+}
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -134,7 +162,7 @@ show_version()
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
-     local OPTIND # Must be local
+    local OPTIND # Must be local
     # Evaluate Command Line Switch Options Upfront
     # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
     while getopts "htnvd:" opt ; do                                      # Loop to process Switch
@@ -146,7 +174,7 @@ function cmd_options()
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "Debug Level set to ${SADM_DEBUG}."               # Display Debug Level
+               printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
                ;;                                                       
             t) TMPFS=1                                                  # Exclude tmpfs filesystem
                ;;
@@ -167,6 +195,52 @@ function cmd_options()
     return 
 }
 
+
+#===================================================================================================
+# Convert size received in MB 
+# Parameter Received example             :  2.3T    , 15.5GB, 567M 
+# Returned value is always express in MB :  2411724 , 15872,  567
+#===================================================================================================
+function convert_in_mb()
+{
+    wsize="$1" 
+    if [ $SADM_DEBUG -gt 4 ] ; then printf "\nSize received $wsize in ${FUNC_NAME}\n" ;fi
+
+
+    size_unit="M" 
+    echo "$wsize" | grep -i "M" >/dev/null 2>&1                         # If Size express in MB
+    if [ $? -eq 0 ] ; then size_unit="M"  ; fi                          # Unit is in MB                        
+    echo "$wsize" | grep -i "G" >/dev/null 2>&1                         # If Size express in GB
+    if [ $? -eq 0 ] ; then size_unit="G"  ; fi                          # Unit is in GB
+    echo "$wsize" | grep -i "T" >/dev/null 2>&1                         # If Size express in TB
+    if [ $? -eq 0 ] ; then size_unit="T"  ; fi                          # Unit is in TB
+
+    case $size_unit in
+        "M")    TSIZE=`echo $wsize | tr -cd [:digit:]`                  # Save MB Value & Del alpha
+                ;;    
+        "G")    echo "$wsize" | grep "\." >/dev/null 2>&1               # Search for Dot in Value
+                if [ $? -eq 0 ]                                         # If Size with fraction(Dot) 
+                    then WSIZE=`echo $wsize | tr -cd [:digit:]`         # Del. Char other than digit
+                         TSIZE=`echo "($WSIZE * 1024) /10" |bc`         # Convert GB Size in MB
+                    else WSIZE=`echo $wsize | tr -cd [:digit:]`         # Del. Char other than digit
+                         TSIZE=`echo "($WSIZE * 1024)" | bc `           # Convert GB Size in MB
+                fi                 
+                ;;
+        "T")    echo "$wsize" | grep "\." >/dev/null 2>&1               # Search for Dot in Value
+                if [ $? -eq 0 ]                                         # If Size with fraction(Dot) 
+                    then WSIZE=`echo $wsize | tr -cd [:digit:]`         # Del. Char other than digit
+                         TSIZE=`echo "($WSIZE * 1024 * 1024) /10" |bc`  # Convert TB Size in MB
+                    else WSIZE=`echo $wsize | tr -cd [:digit:]`         # Del. Char other than digit
+                         TSIZE=`echo "($WSIZE * 1024 * 1024)" | bc `    # Convert TB Size in MB
+                fi                 
+                ;;
+        *   ) 
+            echo "$size_unit is not a valid size unit." 
+            ;;
+    esac
+    if [ $SADM_DEBUG -gt 4 ] ; then printf "\nSize converted fromm ${wsize} to ${TSIZE}\n" ;fi
+    return 
+}
 
 #===================================================================================================
 # Script Start HERE
@@ -211,66 +285,32 @@ function cmd_options()
         size=`  echo "$wline" | awk '{ print $3 }'`                     # Size of Filesystem
         used=`  echo "$wline" | awk '{ print $4 }'`                     # Size Used
         avail=` echo "$wline" | awk '{ print $5 }'`                     # Size Available
-        if [ $SADM_DEBUG -gt 4 ] ; then printf "\nSize: $size - Used: $used - Avail: $avail\n" ; fi
-
-        # Is the Filesystem size in Gb, then convert to MB and add it to column total.
-        if [ "$fname" != "map" ] 
-            then echo "$size" | grep "G" >/dev/null
-                 if [ $? -eq 0 ]                                        # If 'G' was found 
-                    then echo "$size" | grep "\." /dev/null             # Search for Dot in Value
-                         if [ $? -eq 0 ]                                # If Size with fraction(Dot) 
-                            then WSIZE=`echo $size | tr -cd [:digit:]`  # Del. Char other than digit
-                                 TSIZE=`echo "($WSIZE * 1024) /10" |bc` # Convert GB Size in MB
-                            else WSIZE=`echo $size | tr -cd [:digit:]`  # Del. Char other than digit
-                                 TSIZE=`echo "($WSIZE * 1024)" | bc `   # Convert GB Size in MB
-                         fi                 
-                    else TSIZE=`echo $size | tr -cd [:digit:]`          # Save MB Value & Del alpha
-                 fi 
-                 TOTAL_SIZE=$(( $TOTAL_SIZE + $TSIZE ))                 # Add MB value to Col. Total
-                 if [ $SADM_DEBUG -gt 4 ]                               # Under Debug Show Values 
-                    then echo "Initial value is $size & final value is $TSIZE"
-                         echo "Total Size: $TOTAL_SIZE - Used: $TOTAL_USED - Avail: $TOTAL_AVAIL"
-                 fi 
-        fi 
-
-        # Is the Used size in Gb, then convert to MB and add it to column total.
-        echo "$used" | grep "G" >/dev/null
-        if [ $? -eq 0 ]                                                 # If 'G' was found 
-            then echo "$used" | grep "\." /dev/null                     # Search for Dot in Value
-                 if [ $? -eq 0 ]                                        # If Size with fraction(Dot) 
-                    then WSIZE=`echo $used | tr -cd [:digit:]`          # Del. Char other than digit
-                         TSIZE=`echo "($WSIZE * 1024) /10" | bc `       # Convert GB Size in MB
-                    else WSIZE=`echo $used | tr -cd [:digit:]`          # Del. Char other than digit
-                         TSIZE=`echo "($WSIZE * 1024)" | bc `           # Convert GB Size in MB
-                 fi                 
-            else TSIZE=`echo $used | tr -cd [:digit:]`                  # Save MB Value & Del alpha
-        fi 
-        TOTAL_USED=$(( $TOTAL_USED + $TSIZE ))                          # Add MB value to Col. Total
-        if [ $SADM_DEBUG -gt 4 ]                                   
-            then echo "Initial used value is $used & final value is $TSIZE"
-                 echo "Total Size: $TOTAL_SIZE - Used: $TOTAL_USED - Avail: $TOTAL_AVAIL"
+        if [ $SADM_DEBUG -gt 4 ] 
+            then printf "\nName:$fname Size: $size - Used: $used - Avail: $avail\n" 
         fi
 
-        # Is the Available size in Gb, then convert to MB and add it to column total.
-        echo "$avail" | grep "G" >/dev/null
-        if [ $? -eq 0 ]                                                 # If 'G' was found 
-            then echo "$avail" | grep "\." /dev/null                    # Search for Dot in Value
-                 if [ $? -eq 0 ]                                        # If Size with fraction(Dot) 
-                    then WSIZE=`echo $avail | tr -cd [:digit:]`         # Del. Char other than digit
-                         TSIZE=`echo "($WSIZE * 1024) /10" | bc `       # Convert GB Size in MB
-                    else WSIZE=`echo $avail | tr -cd [:digit:]`         # Del. Char other than digit
-                         TSIZE=`echo "($WSIZE * 1024)" | bc `           # Convert GB Size in MB
-                 fi                 
-            else TSIZE=`echo $avail | tr -cd [:digit:]`                 # Save MB Value & Del alpha
+        convert_in_mb "$size"                                           # Convert filesystem size
+        TOTAL_SIZE=$(( $TOTAL_SIZE + $TSIZE ))                          # Add MB value to Col. Total
+        if [ $SADM_DEBUG -gt 4 ]                                        # Under Debug Show Values 
+           then echo "Initial Size value is $size & converted value is ${TSIZE}M"
+                echo "Total Size: ${TOTAL_SIZE}M - Used: ${TOTAL_USED}M - Avail: ${TOTAL_AVAIL}M"
         fi 
+
+        convert_in_mb "$used"                                           # Convert filesystem used
+        TOTAL_USED=$(( $TOTAL_USED + $TSIZE ))                          # Add MB value to Col. Total
+        if [ $SADM_DEBUG -gt 4 ]                                   
+            then echo "Initial Used value is $used & converted value is ${TSIZE}M"
+                 echo "Total Size: ${TOTAL_SIZE}M - Used: ${TOTAL_USED}M - Avail: ${TOTAL_AVAIL}M"
+        fi
+
+        convert_in_mb "$avail"                                           # Convert filesystem used
         TOTAL_AVAIL=$(( $TOTAL_AVAIL + $TSIZE ))                        # Add MB value to Col. Total
         if [ $SADM_DEBUG -gt 4 ]                                   
-            then echo "Initial value is $avail & final value is $TSIZE"
-                 echo "Total Size: $TOTAL_SIZE - Used: $TOTAL_USED - Avail: $TOTAL_AVAIL"
+            then echo "Initial Available value is $avail & converted value is $TSIZE"
+                 echo "Total Size: ${TOTAL_SIZE}M - Used: ${TOTAL_USED}M - Avail: ${TOTAL_AVAIL}M"
         fi    
-    
-    done <$data
 
+    done <$data
 
     # Print DF Information
     printf "${green}${bold}${SADM_PN} v${SADM_VER} - hostname: ${SADM_HOSTNAME} - `date`${reset}\n"
@@ -280,27 +320,7 @@ function cmd_options()
     cat ${data}                                                         # Output df sort by MntPoint
     printf "${magenta}${bold}${SADM_DASH}${reset}\n"                    # Print dash line
 
-    # Print Total Line
-    TS=`echo "$TOTAL_SIZE  / 1024" | bc -l` ; TS=`printf "%6.2f" $TS`
-    TU=`echo "$TOTAL_USED  / 1024" | bc -l` ; TU=`printf "%5.2f" $TU`
-    TA=`echo "$TOTAL_AVAIL / 1024" | bc -l` ; TA=`printf "%5.2f" $TA`
-    PC=`echo "($TOTAL_USED / $TOTAL_SIZE) * 100" | bc -l` ; PC=`printf "%3.2f" $PC`
-    TMSG="Total (-t exclude tmpfs, -n exclude nfs)"
-    case "$ostype" in
-        "DARWIN")   
-            total_line=`printf "%-41s %8s %8s %8s %9s\n" "$TMSG" ${TS}G ${TU}G ${TA}G ${PC}%` 
-            ;;
-        "LINUX")    
-            total_line=`printf "%-40s %8s %8s %8s %9s\n" "$TMSG" ${TS}G ${TU}G ${TA}G ${PC}%` 
-            ;;
-        "AIX")      
-            total_line=`printf "%-40s %8s %8s %8s %9s\n" "$TMSG" ${TS}G ${TU}G ${TA}G ${PC}%` 
-            ;;
-    esac    
-    printf "${yellow}${bold}%s${reset}\n" "$total_line"                 # Print total line
-    printf "${magenta}${bold}${SADM_DASH}${reset}\n"                    # Print dash line
-
-    # Remove work files
+    print_total                                                         # Print total line
     rm -f $file >/dev/null 2>&1                                         # Remove tmp full df file
     rm -f $data >/dev/null 2>&1                                         # Remove tmp formatted file
-    rm -f $F1 >/dev/null 2>&1                                      # Remove tmp file
+    rm -f $F1 >/dev/null 2>&1                                           # Remove tmp file
