@@ -87,36 +87,21 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
-
 #===================================================================================================
 # To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
 # SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
 
-    # Is 'SADMIN' environment variable defined ?. If not try to use /etc/environment SADMIN value.
-    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]                             # If SADMIN EnvVar not right
-        then missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
-             if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
-             missenv="Please set 'SADMIN' environment variable to the install directory."
-             grep "SADMIN" /etc/environment >/dev/null 2>&1            # SADMIN line in /etc/env.? 
-             if [ $? -eq 0 ]                                            # Yes use SADMIN definition
-                 then export SADMIN=`grep "SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
-                      misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
-                      missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
-                      if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
-                      printf "\n${missenv}\n${misstmp}\n\n"
-                 else missvar="Add 'SADMIN=/InstallDir' in /etc/environment to remove this message."
-                      printf "\n${missenv}\n$missvar\n"                 # Recommendation to user    
-                      exit 1                                            # Back to shell with Error
+    # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+    if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
+        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
+             EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
+             if [ $? -eq 0 ]                                            # Yes it is 
+                then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}.\n"
+                else exit 1                                             # No SADMIN Env. Var. Exit
              fi
     fi 
-        
-    # Check if the SADMIN Shell Library is accessible, if not advise user and exit with error.
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                            # Shell Library not readable
-        then missenv="Please set 'SADMIN' environment variable to the install directory."
-             printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
-             exit 1                                                     # Exit to Shell with Error
-    fi
 
     # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
     export SADM_PN=${0##*/}                             # Current Script filename(with extension)
@@ -127,10 +112,10 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
     export SADM_VER='3.12'                              # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
-    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
+    export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
+    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
+    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
     export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
@@ -139,9 +124,9 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
     export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Ok now, load Standard Shell Library
-    export SADM_OS_NAME=$(sadm_get_osname)              # Uppercase, REDHAT,CENTOS,UBUNTU,AIX,DEBIAN
-    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number (ex: 7.6.5)
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library Functions
+    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
     export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
 
 #---------------------------------------------------------------------------------------------------
@@ -151,10 +136,9 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
     export SADM_MAX_LOGLINE=5000                        # When script end Trim log to 500 Lines
-    #export SADM_MAX_RCLINE=60                          # When script end Trim rch file to 60 Lines
+    #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
-
 
 
 

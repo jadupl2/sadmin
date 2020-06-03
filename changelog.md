@@ -1,6 +1,30 @@
 # Changelog
 
 
+
+## Release v[1.2.7](https://github.com/jadupl2/sadmin/releases) (2020-06-03)
+- Fixes
+	- 2020_05_18 sadm_rear_backup.sh (v2.22) - Fix /etc/rear/site.conf auto update problem, prior to starting backup.
+	- 2020_05_23 sadmlib_std.sh (v3.38) - Fix intermittent problem with 'sadm_write' & alert sent multiples times.
+	- 2020_05_27 sadm_df.sh (v2.4) - fix problem when dealing with TB filesystem.
+- Update
+	- 2020_05_17 .sadmin.cfg (v2.4) - Update Rear Backup and backup default Location,
+	- 2020_05_18 sadm_backup.sh (v3.22) - Backup Dir. Structure changed, now group by System instead of backup type
+	- 2020_05_22 sadm_fetch_clients.sh (v3.12) - No longer report an error, if a system is rebooting because of O/S update.
+	- 2020_05_23 sadm_daily_farm_fetch.sh (v4.2) - No longer report an error, if a system is rebooting because of O/S update.
+	- 2020_05_23 sadm_fs_incr.sh (v2.1) - Changing the way to get SADMIN variable in /etc/environment
+	- 2020_05_23 sadm_osupdate_farm.sh (v3.14) - Create 'osupdate_running' file before launching O/S update on remote.
+	- 2020_05_23 sadm_osupdate.sh (v3.23) - Replace 'reboot' instruction with 'shutdown -r' (Problem on some OS).
+	- 2020_05_23 sadm_push_sadmin.sh (v2.19) - Changing the way to get SADMIN variable in /etc/environment
+	- 2020_05_23 sadm_rch_scr_summary.sh (v1.18) - Changing the way to get SADMIN variable in /etc/environment
+	- 2020_05_23 sadm_server_housekeeping.sh (v2.6) - Minor change about reading /etc/environment and change logging messages.
+	- 2020_05_24 sadm_backup.sh (v3.23) - Automatically move backup from old dir. structure to the new.
+  
+<br>
+
+------
+
+
 ## Release v[1.2.6](https://github.com/jadupl2/sadmin/releases) (2020-05-14) 
 - Fixes
 	- 2020_05_01 man_sadm_dr_savefs.php (v1.1) - Correct link to IBM mksysb page.

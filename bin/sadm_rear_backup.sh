@@ -66,7 +66,7 @@
 # 2020_04_14 Update: v2.19 Some more logging adjustments.
 # 2020_04_16 Update: v2.20 Minor adjustments
 #@2020_05_13 Update: v2.21 Remove mount directory before exiting script.
-#@2020_05_18 Fix: v2.22 Fix /etc/rear/site.conf updating problem.
+#@2020_05_18 Fix: v2.22 Fix /etc/rear/site.conf auto update problem, prior to starting backup.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x

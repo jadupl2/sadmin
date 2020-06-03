@@ -60,8 +60,8 @@
 #@2020_04_09 Update: v3.19 Minor logging adjustment.
 #@2020_04_10 Update: v3.20 If backup_list.txt contains $ at beginning of line, it Var. is resolved
 #@2020_04_11 Update: v3.21 Log output changes.
-#@2020_05_18 Update: v3.22 Backup Structure changed, now group by server instead of backup type.
-#@2020_05_24 Update: v3.23 Move Backup from old structure to the new old and delete empty directory.
+#@2020_05_18 Update: v3.22 Backup Dir. Structure changed, now group by System instead of backup type
+#@2020_05_24 Update: v3.23 Automatically move backup from old dir. structure to the new.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

@@ -13,7 +13,7 @@
 # --------------------------------------------------------------------------------------------------
 #
 #   This code was originally written by Jacques Duplessis <jacques.duplessis@sadmin.ca>.
-#   Developer Web Site : http://www.sadmin.ca
+#   Developer Web Site : https://www.sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -29,20 +29,9 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-# 2019_MM_DD New: v1.0 Initial Version
-#@2019_05_19 Update: v2.0 New debug variable, and sadm_show_version function.
-#@2019_05_23 Update: v2.1 Minor Comment Update
-#@2019_07_15 Update: v2.2 If no SADMIN env. var. then use /etc/environment to get SADMIN location.
-#@2019_07_25 Update: v2.3 New variables available (SADM_OS_NAME, SADM_OS_VERSION, SADM_OS_MAJORVER).
-#@2019_09_03 Update: v2.4 Change default value for max line in rch (35) and log (500) file.
-#@2020_02_25 Update: v2.5 Reduce SADMIN Section needed at beginning of script.
-#@2020_02_26 Update: v2.6 Change code to show debug level at the beginning of script.
-#@2020_03_15 Update: v2.7 Command line option code is now in a function.
-#@2020_04_01 Update: v2.8 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
-#@2020_04_13 Update: v2.9 Include some new Screen attribute in code ($SADM_BOLD,$SADM_YELLOW,...) 
-#@2020_04_26 Fix v3.0 Fix problem with server name resolving test.
+# 2020_MM_DD New: v1.0 Initial Version
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
+trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
      
 
@@ -72,10 +61,10 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.0'                               # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
+    export SADM_VER='1.0'                               # Your Current Script Version
+    export SADM_LOG_TYPE="B"                            # Writ#set -x
+     
+Include Log Header  [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
@@ -85,10 +74,8 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
     export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library Functions
-    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
-    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
-    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load#set -x
+     
 
 #---------------------------------------------------------------------------------------------------
 # Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).

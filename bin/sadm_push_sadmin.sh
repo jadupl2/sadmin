@@ -44,7 +44,7 @@
 # 2020_01_26 Update: v2.16 Add Option -c [hostname]  to sync of SADMIN server version to one client.
 # 2020_03_04 Update: v2.17 Script was rename from sadm_rsync_sadmin.sh to sadm_push_sadmin.sh
 # 2020_04_23 Update: v2.18 Replace sadm_writelog by sadm_write & enhance log output.
-#@2020_05_23 Update:v2.19 Changing the way to get SADMIN variable in /etc/environment 
+#@2020_05_23 Update: v2.19 Changing the way to get SADMIN variable in /etc/environment 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
