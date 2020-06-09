@@ -44,9 +44,10 @@
 # 2019_10_13 Update: v3.14 Collect Server Architecture to be store later on in Database.
 # 2019_10_30 Update: v3.15 Remove utilization on 'facter' for collecting info (Not always available)
 # 2019_11_22 Fix: v3.16 Problem with 'nmcli -t' on Ubuntu,Debian corrected.
-#@2020_01_13 Update: v3.17 Collect 'rear' version to show on rear schedule web page.
-#@2020_03_08 Update: v3.18 Collect more information about Disks, Partitions, Network and fix lsblk.
-#@2020_04_05 Update: v3.19 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl
+# 2020_01_13 Update: v3.17 Collect 'rear' version to show on rear schedule web page.
+# 2020_03_08 Update: v3.18 Collect more information about Disks, Partitions, Network and fix lsblk.
+# 2020_04_05 Update: v3.19 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl
+#@2020_06_09 Update: v3.20 Now the script log is not trimmed ($SADM_MAX_LOGLINE=0).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -78,7 +79,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.19'                              # Your Current Script Version
+    export SADM_VER='3.20'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -102,7 +103,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
+    export SADM_MAX_LOGLINE=0                           # When script end Trim log to 500 Lines
     #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
