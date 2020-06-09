@@ -137,6 +137,8 @@
 # 2020_04_13 Update: v3.36 Add @@LNT (Log No Time) var. to prevent sadm_write to put Date/Time in Log
 # 2020_05_12 Fix: v3.37 Fix problem sending attachment file when sending alert by email.
 #@2020_05_23 Fix: v3.38 Fix intermittent problem with 'sadm_write' & alert sent multiples times.
+#@2020_06_09 Update: v3.39 Don't trim the log file, if $SADM_MAX_LOGLINE=0.
+#@2020_06_09 Update: v3.40 Don't trim the RCH file (ResultCodeHistory). if $SADM_MAX_RCLINE=0.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -148,7 +150,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.38"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.40"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -425,7 +427,11 @@ sadm_isnumeric() {
 # --------------------------------------------------------------------------------------------------
 sadm_write() {
     SADM_SMSG="$@"                                                      # Save Received Message
-    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Prefix Msg with Date/Time
+    echo "$SADM_SMSG" | grep -iEq "$SADM_ERROR|$SADM_FAILED|$SADM_WARNING|$SADM_OK|$SADM_SUCCESS"
+    if [ $? -eq 0 ] 
+        then SADM_LMSG="$SADM_SMSG" 
+        else SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"
+    fi 
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
         s|S) echo -ne "$SADM_SMSG"                                     # Write Msg to Screen
              ;;
@@ -2031,7 +2037,10 @@ sadm_stop() {
     if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]        # Want to Produce Log Footer
         then sadm_write "\n"                                            # Blank LIne
              sadm_write "${SADM_FIFTY_DASH}\n"                          # Dash Line
-             sadm_write "Script return code is ${SADM_EXIT_CODE}\n"     # Final Exit Code to log
+             if [ $SADM_EXIT_CODE -eq 0 ]                               # If script succeeded
+                then sadm_write "Script exit code is ${SADM_EXIT_CODE} (Success)\n" # Success 
+                else sadm_write "Script exit code is ${SADM_EXIT_CODE} (Failed)\n"  # Failed 
+             fi 
              sadm_write "Script execution time is ${sadm_elapse}\n"     # Write the Elapse Time
     fi
 
@@ -2051,49 +2060,53 @@ sadm_stop() {
              RCHLINE="$RCHLINE $SADM_EXIT_CODE"                         # Format Part4 of RCH File
              echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
              if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]
-                then sadm_write "Trim History $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines.\n"
+                then if [ "$SADM_MAX_RCLINE" -ne 0 ]                     # MaxRCLine != 0 = Trim 
+                        then sadm_write "Trim History $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines.\n"
+                             sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE" # Trim file to Nb. Line
+                        else sadm_write "User requested not to trim the rch file (\$SADM_MAX_RCLINE=0).\n"
+                     fi
              fi
-             sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE"            # Trim file to Desired Nb.
              [ $(id -u) -eq 0 ] && chmod 664 ${SADM_RCHLOG}             # R/W Owner/Group R by World
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG} # Change RCH Owner
     fi
 
-    # Write Alert Choice & The Log
+    # If log size not at zero and user want to use the log.
     if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]        # Want to Produce Log Footer
         then case $SADM_ALERT_TYPE in
                 0)  sadm_write "User requested no alert to be sent when script end.\n"
                     ;;
                 1)  if [ "$SADM_EXIT_CODE" -ne 0 ]
-                        then sadm_write "Requested alert if script failed (Will send alert).\n"
-                        else sadm_write "Requested alert only if script fail (Won't send alert).\n"
+                        then sadm_write "User requested alert if script failed (\$SADM_ALERT_TYPE=1), will send alert.\n"
+                        else sadm_write "User requested alert only if script fail (\$SADM_ALERT_TYPE=1), won't send alert.\n"
                     fi
                     ;;
                 2)  if [ "$SADM_EXIT_CODE" -eq 0 ]
-                        then sadm_write "Requested alert on Success of script (Will send alert).\n"
-                        else sadm_write "Requested alert only on script Success (Won't send alert).\n"
+                        then sadm_write "User requested alert on Success of script (\$SADM_ALERT_TYPE=2), will send alert.\n"
+                        else sadm_write "User requested alert only on script Success (\$SADM_ALERT_TYPE=2), won't send alert.\n"
                     fi
                     ;;
-                3)  sadm_write "Requested alert at the end of each execution (Will send alert).\n"
+                3)  sadm_write "User requested alert at the end of each execution (\$SADM_ALERT_TYPE=3), will send alert.\n"
                     ;;
                 *)  sadm_write "SADM_ALERT_TYPE isn't set properly, should be between 0 and 3.\n"
-                    sadm_write "It is set to $SADM_ALERT_TYPE changing it to 3.\n"
+                    sadm_write "It's set to $SADM_ALERT_TYPE changing it to 3.\n"
                     SADM_ALERT_TYPE=3
                     ;;
              esac
-             sadm_write "Trim log $SADM_LOG to ${SADM_MAX_LOGLINE} lines.\n" # Inform user trimming
-             sadm_write "`date` - End of ${SADM_PN}.\n"                 # Write End Time To Log
+             if [ $SADM_MAX_LOGLINE -ne 0 ]                             # Max Line in Log Not 0 
+                then sadm_write "Trim log $SADM_LOG to ${SADM_MAX_LOGLINE} lines.\n" 
+                else sadm_write "User requested not to trim the log (\$SADM_MAX_LOGLINE=0).\n"
+             fi 
+             sadm_write "`date` - End of ${SADM_PN}\n"                  # Write End Time To Log
              sadm_write "${SADM_80_DASH}\n\n"                           # Write 80 Dash Line
-
+             cat $SADM_LOG > /dev/null                                  # Force buffer to flush
+             if [ $SADM_MAX_LOGLINE -ne 0 ]                             # Max Line in Log Not 0 
+                then sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"      # Trim the Log
+             fi                                                         # Else no trim of log made
+             chmod 664 ${SADM_LOG} >>/dev/null 2>&1                     # Owner/Group Write Else Read
+             chgrp ${SADM_GROUP} ${SADM_LOG} >>/dev/null 2>&1           # Change Log file Group
+             [ $(id -u) -eq 0 ] && chmod 664 ${SADM_LOG}                # R/W Owner/Group R by World
+             [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}  # Change Log Owner
     fi
-
-
-    # Trim the Log
-    cat $SADM_LOG > /dev/null                                           # Force buffer to flush
-    sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"                       # Trim file to Desired Nb.
-    chmod 664 ${SADM_LOG} >>/dev/null 2>&1                              # Owner/Group Write Else Read
-    chgrp ${SADM_GROUP} ${SADM_LOG} >>/dev/null 2>&1                    # Change Log file Group
-    [ $(id -u) -eq 0 ] && chmod 664 ${SADM_LOG}                         # R/W Owner/Group R by World
-    [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}  # Change Log Owner
 
     # Alert the Unix Admin. based on his selected choice
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "SADM_ALERT_TYPE = ${SADM_ALERT_TYPE}.\n" ; fi
