@@ -138,7 +138,8 @@
 # 2020_05_12 Fix: v3.37 Fix problem sending attachment file when sending alert by email.
 #@2020_05_23 Fix: v3.38 Fix intermittent problem with 'sadm_write' & alert sent multiples times.
 #@2020_06_09 Update: v3.39 Don't trim the log file, if $SADM_MAX_LOGLINE=0.
-#@2020_06_09 Update: v3.40 Don't trim the RCH file (ResultCodeHistory). if $SADM_MAX_RCLINE=0.
+#@2020_06_06 Update: v3.40 When writing to log don't include time when prefix with OK,Warning,Error
+#@2020_06_09 Update: v3.41 Don't trim the RCH file (ResultCodeHistory). if $SADM_MAX_RCLINE=0.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -150,7 +151,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.40"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.41"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
