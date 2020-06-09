@@ -62,6 +62,7 @@
 #@2020_04_11 Update: v3.21 Log output changes.
 #@2020_05_18 Update: v3.22 Backup Dir. Structure changed, now group by System instead of backup type
 #@2020_05_24 Update: v3.23 Automatically move backup from old dir. structure to the new.
+#@2020_06_06 Update: v3.24 When writing to log don't include time when prefix with OK,Warning,Error
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -75,11 +76,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
     # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
     if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
-        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
+        then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
              EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
              if [ $? -eq 0 ]                                            # Yes it is 
                 then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}."
+                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}.\n"
                 else exit 1                                             # No SADMIN Env. Var. Exit
              fi
     fi 
@@ -92,7 +93,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.23'                              # Your Current Script Version
+    export SADM_VER='3.24'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
