@@ -63,8 +63,8 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
     export SADM_VER='1.0'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writ#set -x
-     
-Include Log Header  [N]=No log Header
+    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
+    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
@@ -74,8 +74,10 @@ Include Log Header  [N]=No log Header
     export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
     export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load#set -x
-     
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library Functions
+    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
+    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
 
 #---------------------------------------------------------------------------------------------------
 # Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
@@ -83,8 +85,8 @@ Include Log Header  [N]=No log Header
     #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
-    #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
+    #export SADM_MAX_LOGLINE=500                        # At the end Trim log to 500 Lines(0=NoTrim)
+    #export SADM_MAX_RCLINE=35                          # At the end Trim rch to 35 Lines (0=NoTrim)
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
 
@@ -213,7 +215,6 @@ process_servers()
 main_process()
 {
     sadm_write "${SADM_BOLD}${SADM_YELLOW}Starting Main Process ...${SADM_RESET}\n"
-
     
     # PROCESSING CAN BE PUT HERE
     # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
