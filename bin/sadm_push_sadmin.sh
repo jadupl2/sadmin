@@ -125,7 +125,7 @@ help_usage()
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\t-u   (Also sync $SADMIN/usr/bin to all active clients)" 
-    printf "\n\t-c   (Push SADMIN version to active client specified)" 
+    printf "\n\t-c   (Push SADMIN version only to system specified)" 
     printf "\n\t-s   (Also sync $SADMIN/sys to all active clients)" 
     printf "\n\n" 
 }
