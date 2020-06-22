@@ -361,7 +361,8 @@ set_last_osupdate_date()
     if [ ! -r "$RCHFILE" ]
         then sadm_write "\nMissing O/S Update RCH file ($RCHFILE).\n"
              sadm_write "Can't determine last O/S Update Date/Time & Status.\n"
-             sadm_write "You should run 'sadm_osupdate_farm.sh -s $(sadm_get_hostname)' on $SADM_SERVER to update this server.\n"
+             sadm_write "Situation will resolve by itself, when you run your first O/S update for this system".
+             sadm_write "You can run 'sadm_osupdate_farm.sh -s $(sadm_get_hostname)' on $SADM_SERVER to update the system.\n"
              sadm_write "You will then get a valid 'rch' file.\n\n"
              OSUPDATE_DATE=""
              OSUPDATE_STATUS="U"
@@ -791,9 +792,9 @@ create_summary_file()
     echo "# This file is use to update the SADMIN server inventory."                 >> $HWD_FILE
     echo "#                                                    "                     >> $HWD_FILE
 
-    if [ "$SADM_OS_TYPE"  = "LINUX" ]                                 # O/S Upd RCH Only on Linux
+    if [ "$SADM_OS_TYPE"  = "LINUX" ]                                   # O/S Upd RCH Only on Linux
         then set_last_osupdate_date                                     # Get Last O/S Update Date
-             if [ $? -ne 0 ] ; then SADM_EXIT_CODE=0 ; fi               # Exit Script with Error
+             if [ $? -ne 0 ] ; then SADM_EXIT_CODE=0 ; fi               # Don't signal an error
         else OSUPDATE_DATE=""                                           # For Mac & Aix 
              OSUPDATE_STATUS="U"                                        # Status Unknown
     fi 
