@@ -67,6 +67,7 @@
 # 2020_04_16 Update: v2.20 Minor adjustments
 #@2020_05_13 Update: v2.21 Remove mount directory before exiting script.
 #@2020_05_18 Fix: v2.22 Fix /etc/rear/site.conf auto update problem, prior to starting backup.
+#@2020_06_30 Fix: v2.23 Fix chmod 664 for files in server backup directory
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -98,7 +99,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.22'                              # Your Current Script Version
+    export SADM_VER='2.23'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -515,6 +516,7 @@ create_backup()
              sadm_write "Rear Backup completed ${SADM_SUCCESS}\n"
              sadm_write "\n"
     fi
+    chmod 664 ${REAR_DIR}/*                                             # Give access for Maint.
     return 0                                                            # Return Default return code
 }
 
