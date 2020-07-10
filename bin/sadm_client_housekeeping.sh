@@ -49,6 +49,7 @@
 #@2020_04_04 Update: v1.37 Fix minor bugs & Restructure log presentation
 #@2020_04_28 Update: v1.38 Update readme file permission from 0644 to 0664
 #@2020_05_08 Update: v1.39 Update Change permission change on $SADMIN/usr/bin from 0755 to 775.
+#@2020_07_10 Update: v1.40 If no password have been assigned to 'sadmin' a temporary one is assigned. 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -80,7 +81,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.39'                              # Your Current Script Version
+    export SADM_VER='1.40'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -157,14 +158,14 @@ check_sadmin_account()
     fi
 
     # Check if sadmin account is lock.
-    if [ "$SADM_OS_TYPE"  = "LINUX" ]                                 # On Linux Operating System
+    if [ "$SADM_OS_TYPE"  = "LINUX" ]                                   # On Linux Operating System
         then passwd -S $SADM_USER | grep -i 'locked' > /dev/null 2>&1   # Check if Account is locked
              if [ $? -eq 0 ]                                            # If Account is Lock
                 then upass=`grep "^$SADM_USER" /etc/shadow | awk -F: '{ print $2 }'` # Get pwd hash
                      if [ "$upass" = "!!" ]                             # if passwd is '!!'' = NoPwd
-                        then sadm_write "  - [ERROR] User $SADM_USER has no password.\n" 
-                             sadm_write "  - This is not secure, please assign one !!\n"
-                             lock_error=1                               # Set Error Flag ON
+                        then sadm_write "  - [WARNING] User $SADM_USER has no password.\n" 
+                             echo "47up&wd40!" | passwd --stdin $SADM_USER
+                             sadm_write "  - A temporary password was assigned to ${SADM_USER}, please change it now !!\n"
                         else first2char=`echo $upass | cut -c1-2`       # Get passwd first two Char.
                              if [ "$first2char" = "!!" ]                # First 2 Char are '!!' 
                                 then sadm_write "  - [ERROR] Account $SADM_USER is locked.\n"
