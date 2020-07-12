@@ -140,7 +140,8 @@
 #@2020_06_09 Update: v3.39 Don't trim the log file, if $SADM_MAX_LOGLINE=0.
 #@2020_06_06 Update: v3.40 When writing to log don't include time when prefix with OK,Warning,Error
 #@2020_06_09 Update: v3.41 Don't trim the RCH file (ResultCodeHistory). if $SADM_MAX_RCLINE=0.
-#@2020_07_11 Update: v3.42 Date and time was not include in script log.
+#@2020_07_11 Fixes: v3.42 Date and time was not include in script log.
+#@2020_07_12 Update: v3.43 When virtual system 'sadm_server_model' return (VMWARE,VIRTUALBOX,VM)
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -152,7 +153,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.42"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.43"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -1072,7 +1073,11 @@ sadm_server_type() {
                        then $SADM_DMIDECODE |grep -i vmware >/dev/null 2>&1 # Search vmware
                             if [ $? -eq 0 ]                             # If vmware was found
                                then sadm_server_type="V"                # If VMware Server
-                               else sadm_server_type="P"                # Default Assume Physical
+                               else $SADM_DMIDECODE |grep -i virtualbox >/dev/null 2>&1
+                                    if [ $? -eq 0 ]                     # If VirtualBox was found
+                                        then sadm_server_type="V"       # If VirtualBox Server
+                                        else sadm_server_type="P"       # Default Assume Physical
+                                    fi 
                             fi
                     fi
                     ;;
@@ -1096,14 +1101,20 @@ sadm_server_model() {
                  sadm_sm=`echo ${sadm_sm}| sed 's/ProLiant//'`
                  sadm_sm=`echo ${sadm_sm}|sed -e 's/^[ \t]*//' |sed 's/^[ \t]*//;s/[ \t]*$//' `
                  sadm_server_model="${sadm_sm}"
-                 if [ "$(sadm_server_type)" = "V" ]
-                     then sadm_server_model="VM"
-                     else grep -i '^revision' /proc/cpuinfo > /dev/null 2>&1
-                          if [ $? -eq 0 ]
+                 if [ "$(sadm_server_type)" = "P" ]
+                    then grep -i '^revision' /proc/cpuinfo > /dev/null 2>&1
+                         if [ $? -eq 0 ]
                             then wrev=`grep -i '^revision' /proc/cpuinfo |cut -d ':' -f 2`
                                  wrev=`echo $wrev | sed -e 's/^[ \t]*//'`   # Del Lead Space
                                  sadm_server_model="Raspberry Rev.${wrev}"
-                          fi
+                         fi
+                    else sadm_server_model="VM"                         # Default Virtual Model 
+                         # Are we running under VMWare ?
+                         A=`dmidecode -s system-manufacturer | awk '{ print $1 }' | tr [A-Z] [a-z]`
+                         if [ "$A" = "vmware," ] ; then sadm_server_model="VMWARE" ; fi
+                         # Are we running under VirtualBox ? 
+                         A=`dmidecode -s bios-version | tr [A-Z] [a-z]`     
+                         if [ "$A" = "virtualbox" ] ; then sadm_server_model="VIRTUALBOX" ; fi 
                  fi
                  ;;
         "AIX")   sadm_server_model=`uname -M | sed 's/IBM,//'`
