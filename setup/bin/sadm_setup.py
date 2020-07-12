@@ -76,6 +76,7 @@
 # 2020_04_27 Update: v3.39 Remove 'arp-scan' installation on server (no longer needed).
 #@2020_04_27 Fix: v3.40 Fix problem with typo error.
 #@2020_07_10 Update: v3.41 Assign temporary passwd to sadmin user.
+#@2020_07_11 Update: v3.42 Minor script changes.
 # 
 # ==================================================================================================
 #
@@ -93,7 +94,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.41"                                            # Setup Version Number
+sver                = "3.42"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -2208,9 +2209,9 @@ def run_script(sroot,sname):
     else:                                                               # If Problem with the insert
         writelog("Problem running %s" % (script))                       # Infor User
         writelog("Error No.%d" % (ccode))                               # Show Error#
-        writelog("Standard Output :"                                    # Show Stdout header
+        writelog("Standard Output :")                                   # Show Stdout header
         writelog("%s" % (cstdout))                                      # Show Stdout content
-        writelog("Standard Error :"                                     # Show Stderr header
+        writelog("Standard Error :")                                    # Show Stderr header
         writelog("%s" % (cstderr))                                      # Show Stderr content
     return (run_status)                                                 # Return Insert Status
 
