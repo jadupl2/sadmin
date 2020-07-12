@@ -39,7 +39,8 @@
 # 2019_03_17 Change: v2.10 Volume Group Used & Free Size now show with GB unit.
 # 2019_04_04 Change: v2.11 Adapt for Schedule_text function change in library
 # 2019_07_25 Update: v2.12 Minor code changes
-#@2019_10_15 Update: v2.13 Color change of input fields.
+# 2019_10_15 Update: v2.13 Color change of input fields.
+#@2020_07_12 Update: v2.14 Replace 'CRUD' button with 'Modify' that direct you to CRUD server menu.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -83,7 +84,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.13" ;                                                       # Current version number
+$SVER  = "2.14" ;                                                       # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -553,12 +554,10 @@ function display_top_buttons ($wrow) {
     }
 
     # Display the Update Button
-    #http://sadmin.maison.ca/crud/srv/sadm_server_update.php?sel=debian7&back=/crud/srv/sadm_server_menu.php
-    # 
-    echo "\n<a href='" . $URL_UPDATE . "?sel=" . $wrow['srv_name'] . "&back=" . $URL_VIEW . "'" ;
+    echo "\n<a href='" . $URL_MENU . "?sel=" . $wrow['srv_name'] . "&back=" . $URL_VIEW . "'" ;
     #. "?host=" . $wrow['srv_name'] . "'" ;
-    echo " class='button' data-toggle='tooltip' title='Create, Read, Update, Delete System Static Info'> ";
-    echo "\nC.R.U.D.</a>\n\n<br>";
+    echo " class='button' data-toggle='tooltip' title='Update, Delete System & Update O/S & backup Schedule'> ";
+    echo "\nModify</a>\n\n<br>";
 }
 
 
