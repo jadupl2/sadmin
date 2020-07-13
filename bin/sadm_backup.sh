@@ -62,6 +62,7 @@
 #@2020_04_11 Update: v3.21 Log output changes.
 #@2020_05_18 Update: v3.22 Backup Dir. Structure changed, now group by System instead of backup type
 #@2020_05_24 Update: v3.23 Automatically move backup from old dir. structure to the new.
+#@2020_07_13 Fix: v3.24 New System Main Backup Directory was not created with right permission.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -577,6 +578,21 @@ mount_nfs()
              return 1                                                   # End Function with error
         else sadm_write "[SUCCESS] NFS Mount Succeeded.\n"              # NFS Mount Succeeded Msg
     fi
+
+    # Create System Main Directory
+    F="${LOCAL_MOUNT}/${HOSTNAME}"
+    if [ ! -d ${F} ]                                                    # Check if Server Dir Exist
+        then sadm_write "Making System main backup directory $F \n"
+             mkdir ${F}                                                 # If Not Create it
+             if [ $? -ne 0 ]                                            # If Error trying to mount
+                then sadm_write "[ERROR] Creating Main System Backup Directory ${F} \n"
+                     return 1                                           # End Function with error
+             fi
+        else sadm_write "Backup directory ($F) already exist."
+    fi
+    #chown ${SADM_USER}:${SADM_GROUP} ${BACKUP_DIR}                     # Assign it SADM USer&Group
+    chmod 775 ${F}                                                      # Assign Protection
+
     return 0
 }
 
@@ -653,7 +669,7 @@ function cmd_options()
     fi
     mount_nfs                                                           # Mount NFS Dir.
     if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
-    backup_move
+    backup_move                                                         # Move Old Struct. to New
     if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
     backup_setup                                                        # Create Necessary Dir.
     if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
