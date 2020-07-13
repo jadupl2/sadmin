@@ -557,7 +557,7 @@ function display_top_buttons ($wrow) {
     echo "\n<a href='" . $URL_MENU . "?sel=" . $wrow['srv_name'] . "&back=" . $URL_VIEW . "'" ;
     #. "?host=" . $wrow['srv_name'] . "'" ;
     echo " class='button' data-toggle='tooltip' title='Update, Delete System & Update O/S & backup Schedule'> ";
-    echo "\nModify</a>\n\n<br>";
+    echo "\nModify / Remove</a>\n\n<br>";
 }
 
 
