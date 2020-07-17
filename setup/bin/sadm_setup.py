@@ -77,6 +77,7 @@
 #@2020_04_27 Fix: v3.40 Fix problem with typo error.
 #@2020_07_10 Update: v3.41 Assign temporary passwd to sadmin user.
 #@2020_07_11 Update: v3.42 Minor script changes.
+#@2020_07_11 Update: v3.43 Added rsync package to client installation. 
 # 
 # ==================================================================================================
 #
@@ -94,7 +95,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.42"                                            # Setup Version Number
+sver                = "3.43"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -138,6 +139,8 @@ req_client = {
                     'deb':'syslinux',                       'drepo':'base'},
     'genisoimage':{ 'rpm':'genisoimage',                    'rrepo':'base',  
                     'deb':'genisoimage',                    'drepo':'base'},
+    'rsync'      :{ 'rpm':'rsync',                          'rrepo':'base',  
+                    'deb':'rsync',                          'drepo':'base'},
     'hwinfo'     :{ 'rpm':'hwinfo',                         'rrepo':'epel',  
                     'deb':'hwinfo',                         'drepo':'base'},
     'ifconfig'   :{ 'rpm':'net-tools',                      'rrepo':'base',  
