@@ -143,6 +143,7 @@
 #@2020_07_11 Fixes: v3.42 Date and time was not include in script log.
 #@2020_07_12 Update: v3.43 When virtual system 'sadm_server_model' return (VMWARE,VIRTUALBOX,VM)
 #@2020_07_20 Update: v3.44 File permission for *.log and *.rch are now 666
+#@2020_07_23 New: v3.45 Added function 'sadm_ask', show received msg and wait for y/Y or n/N
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -154,7 +155,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.44"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.45"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -422,6 +423,32 @@ sadm_tolower() {
 sadm_isnumeric() {
     wnum=$1
     if [ "$wnum" -eq "$wnum" ] 2>/dev/null ; then return 0 ; else return 1 ; fi
+}
+
+
+
+# ==================================================================================================
+# Display Question (Receive as $1) and wait for response from user.
+# Y/y (return 1) or N/n (return 0)
+# ==================================================================================================
+function sadm_ask() {
+    wmess="$1 [y,n] ? "                                                 # Add Y/N to Mess. Rcv
+    while :
+        do
+        printf "%s" "$wmess"                                            # Print "Question [Y/N] ?" 
+        read answer                                                     # Read User answer
+        case "$answer" in                                               # Test Answer
+           Y|y ) wreturn=1                                              # Yes = Return Value of 1
+                 break                                                  # Break of the loop
+                 ;;
+           n|N ) wreturn=0                                              # No = Return Value of 0
+                 break                                                  # Break of the loop
+                 ;;
+             * ) echo ""                                                # Blank Line
+                 ;;                                                     # Other stay in the loop
+         esac
+    done
+    return $wreturn                                                     # Return Answer to caller 
 }
 
 
