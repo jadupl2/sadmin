@@ -143,7 +143,7 @@
 #@2020_07_11 Fixes: v3.42 Date and time was not include in script log.
 #@2020_07_12 Update: v3.43 When virtual system 'sadm_server_model' return (VMWARE,VIRTUALBOX,VM)
 #@2020_07_20 Update: v3.44 File permission for *.log and *.rch are now 666
-#@2020_07_23 New: v3.45 Added function 'sadm_ask', show received msg and wait for y/Y or n/N
+#@2020_07_23 New: v3.45 New function 'sadm_ask', show received msg & wait for y/Y (return 1) or n/N (return 0)
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
