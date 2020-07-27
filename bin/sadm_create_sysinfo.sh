@@ -47,7 +47,7 @@
 # 2020_01_13 Update: v3.17 Collect 'rear' version to show on rear schedule web page.
 # 2020_03_08 Update: v3.18 Collect more information about Disks, Partitions, Network and fix lsblk.
 # 2020_04_05 Update: v3.19 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl
-#@2020_06_09 Update: v3.20 Now the script log is not trimmed ($SADM_MAX_LOGLINE=0).
+#@2020_06_09 Update: v3.20 New log at each execution & log not trimmed anymore ($SADM_MAX_LOGLINE=0)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
