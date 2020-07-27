@@ -50,7 +50,7 @@
 #@2020_04_28 Update: v1.38 Update readme file permission from 0644 to 0664
 #@2020_05_08 Update: v1.39 Update Change permission change on $SADMIN/usr/bin from 0755 to 775.
 #@2020_07_10 Update: v1.40 If no password have been assigned to 'sadmin' a temporary one is assigned. 
-#@2020_07_20 Update: v1.41 Set mode to 666 for log and rch to allow normal user to run script.
+#@2020_07_20 Update: v1.41 Change permission of log and rch to allow normal user to run script.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
