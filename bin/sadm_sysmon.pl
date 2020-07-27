@@ -40,6 +40,7 @@
 # 2019_10_25 Update: v2.36 Don't check SNAP filesystem usage (snap filesystem always at 100%).
 #@2020_03_05 Fix: v2.37 Not getting 'SADMIN' variable content from /etc/environment (if export used).
 #@2020_03_28 Fix: v2.38 Fix problem when 'dmidecode' is not available on system.
+#@2020_07_27 Update: v2.39 Used space of CIFS Mounted filesystem are no longer monitored.
 #===================================================================================================
 #
 use English;
@@ -53,7 +54,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.38";                                       # Version Number
+my $VERSION_NUMBER      = "2.39";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -1310,7 +1311,7 @@ sub check_for_new_filesystems  {
     if ($SYSMON_DEBUG >= 5) { print "\nChecking for new filesystems ..." };
 
     # First Get Actual Filesystem Info - Don't check cdrom (/dev/cd0) and NFS Filesystem (:)
-    open (DF_FILE, "/bin/df -hP | grep \"^\/\" | grep -v \"\/mnt\/\"| grep -v \"cdrom\"| grep -v \":\" |");
+    open (DF_FILE, "/bin/df -hP | grep \"^\/\" | grep -v \"\/mnt\/\"| grep -v \"cdrom\"| grep -Ev \":\|//\" |");
 
     # Then Compare Actual value versus Warning & Error Value.
     $newcount = 0 ;                                                     # New filesystem counter
