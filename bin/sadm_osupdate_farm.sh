@@ -45,6 +45,7 @@
 # 2019_07_14 Update: v3.12 Adjustment for Library Changes.
 # 2019_12_22 Fix: v3.13 Fix problem when using debug (-d) option without specifying level of debug.
 #@2020_05_23 Update: v3.14 Create 'osupdate_running' file before launching O/S update on remote.
+#@2020_07_28 Update: v3.15 Minor fixes and improvements.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -95,7 +96,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.14'                              # Your Current Script Version
+    export SADM_VER='3.15'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -169,7 +170,7 @@ update_server_db()
     WCURDAT=`date "+%C%y.%m.%d %H:%M:%S"`                               # Get & Format Update Date
 
     # Construct SQL Update Statement
-    sadm_write "Write O/S Update Status & Date in DataBase "            # Advise user
+    sadm_write "Set O/S update status to 'Running' in Database.\n"      # Advise user
     SQL1="UPDATE server SET "                                           # SQL Update Statement
     SQL2="srv_date_osupdate = '${WCURDAT}', "                           # Update Date of this Update
     SQL3="srv_update_status = '${WSTATUS}' "                            # [S]uccess [F]ail [R]unning
@@ -178,7 +179,7 @@ update_server_db()
     WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -e '$SQL'"           # Build Full Command Line
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
 
     # Execute SQL to Update Server O/S Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e "$SQL" >>$SADM_LOG 2>&1
@@ -200,7 +201,6 @@ update_server_db()
 # --------------------------------------------------------------------------------------------------
 process_servers()
 {
-    #sadm_writelog "PROCESS LINUX SERVERS"
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, "
     SQL2="srv_update_reboot, srv_sporadic, srv_active, srv_sadmin_dir from server "
     if [ "$ONE_SERVER" != "" ] 
@@ -214,7 +214,7 @@ process_servers()
     WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL'"        # Build Full Command Line
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
 
     # Execute SQL to Update Server O/S Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
@@ -233,11 +233,11 @@ process_servers()
             server_sporadic=`           echo $wline|awk -F, '{ print $6 }'`
             server_sadmin_dir=`         echo $wline|awk -F, '{ print $8 }'`
             fqdn_server=`echo ${server_name}.${server_domain}`          # Create FQN Server Name
-            sadm_writelog " "
-            sadm_writelog "${STAR_LINE}"
+            sadm_write "\n"
+            sadm_write "${STAR_LINE}\n"
             info_line="Processing ($xcount) ${server_name}.${server_domain} - "
             info_line="${info_line}os:${server_os}"
-            sadm_writelog "$info_line"
+            sadm_write "${info_line}\n"
             
             # TRY TO PING SERVER TO VERIFY IF IT'S REACHABLE ---------------------------------------
             sadm_write "Ping host $fqdn_server "
@@ -262,46 +262,47 @@ process_servers()
 
             # IF SERVER IS NETWORK REACHABLE, BUT THE O/S UPDATE FIELD IS OFF IN DB SKIP UPDATE
             if [ "$server_update_auto" = "0" ] && [ "$ONE_SERVER" = "" ] 
-                then sadm_writelog "*** O/S UPDATE IS OFF FOR THIS SERVER"
-                     sadm_writelog "*** NO O/S UPDATE WILL BE PERFORM - CONTINUE WITH NEXT SERVER"
+                then sadm_write "*** O/S UPDATE IS OFF FOR THIS SERVER\n"
+                     sadm_write "*** NO O/S UPDATE WILL BE PERFORM - CONTINUE WITH NEXT SERVER\n"
                      if [ "$SADM_ALERT_TYPE" = "3" ]
                          then wsubject="SADM: WARNING O/S Update - Server $server_name (O/S Update OFF)" 
                               echo "Server O/S Update is OFF"  | mail -s "$wsubject" $SADM_MAIL_ADDR
                      fi
                 else WREBOOT=""                                         # Default is no reboot
                      if [ "$server_update_reboot" = "1" ]               # If Requested in Database
-                        then WREBOOT=" -r"                              # Set Reboot flag to ON
+                        then WREBOOT="-r"                               # Add -r to reboot command 
                      fi                                                 # This reboot after Update
-                     #sadm_writelog "Starting $USCRIPT on ${server_name}.${server_domain}"
+                     #sadm_write "Starting $USCRIPT on ${server_name}.${server_domain}\n"
                      if [ "${server_name}.${server_domain}" != "$SADM_SERVER" ]
                         then UPDATE_RUNNING="${SADM_WWW_DAT_DIR}/${server_name}/osupdate_running"
-                             sadm_write "Suspend monitoring - ${UPDATE_RUNNING} file created " 
+                             sadm_write "Suspend monitoring while O/S update is running.\n"
+                             sadm_write "O/S update running indicator file ${UPDATE_RUNNING} created.\n" 
                              touch ${UPDATE_RUNNING}                    # Create OSUPDATE Flag File
                              if [ $? -eq 0 ]                            # If Touch went OK
                                 then sadm_write "${SADM_OK}\n"          # Show [ OK ] and NewLine
                                 else sadm_write "${SADM_ERROR}\n"       # Show [ ERROR ] and NewLine
                              fi
-                             sadm_write "$SADM_SSH_CMD $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}\n\n"
+                             sadm_write "$SADM_SSH_CMD $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'\n\n"
                              $SADM_SSH_CMD $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
-                        else sadm_writelog "Starting execution of ${server_sadmin_dir}/bin/$USCRIPT"
+                        else sadm_write "Starting execution of ${server_sadmin_dir}/bin/$USCRIPT \n"
                              ${server_sadmin_dir}/bin/$USCRIPT 
                      fi                             
                      if [ $? -ne 0 ]
-                        then sadm_writelog "Error starting $USCRIPT on ${server_name}.${server_domain}"
+                        then sadm_write "Error starting $USCRIPT on ${server_name}.${server_domain}\n"
                              ERROR_COUNT=$(($ERROR_COUNT+1))
                              update_server_db "${server_name}" "F"  
-                        else sadm_writelog "Script was submitted with no error."
+                        else sadm_write "Script was submitted with success.\n"
                              update_server_db "${server_name}" "S"  
                      fi
             fi
             if [ "$ERROR_COUNT" -ne 0 ] || [ "$WARNING_COUNT" -ne 0 ] 
-                then sadm_writelog "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
+                then sadm_write "Total Error is $ERROR_COUNT and Warning at ${WARNING_COUNT}\n"
             fi 
-            sadm_writelog " "
+            sadm_write "\n"
             done < $SADM_TMP_FILE1
     fi
     if [ "$ERROR_COUNT" -ne 0 ] || [ "$WARNING_COUNT" -ne 0 ] 
-       then sadm_writelog "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
+       then sadm_write "Total Error is $ERROR_COUNT and Warning at ${WARNING_COUNT}\n"
     fi 
     return $ERROR_COUNT
 }
