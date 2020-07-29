@@ -144,7 +144,7 @@
 #@2020_07_12 Update: v3.43 When virtual system 'sadm_server_model' return (VMWARE,VIRTUALBOX,VM)
 #@2020_07_20 Update: v3.44 Change permission for log and rch to allow normal user to run script.
 #@2020_07_23 New: v3.45 New function 'sadm_ask', show received msg & wait for y/Y (return 1) or n/N (return 0)
-#@2020_07_29 New: v3.46 Fix date not showing in the log under some condition.
+#@2020_07_29 Fix: v3.46 Fix date not showing in the log under some condition.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -391,12 +391,12 @@ fi
 
 
 # Standard Variable to Show ERROR,OK,WARNING status uniformingly.
-export SADM_ERROR="[ ${SADM_RED}ERROR${SADM_RESET} ]"                    # [ ERROR ] Red
-export SADM_FAILED="[ ${SADM_RED}FAILED${SADM_RESET} ]"                  # [ FAILED ] Red
-export SADM_WARNING="[ ${SADM_BOLD}${SADM_YELLOW}WARNING${SADM_RESET} ]" # WARNING Yellow
-export SADM_OK="[ ${SADM_BOLD}${SADM_GREEN}OK${SADM_RESET} ]"            # [ OK ] Green
-export SADM_SUCCESS="[ ${SADM_BOLD}${SADM_GREEN}SUCCESS${SADM_RESET} ]"  # SUCCESS Green
-export SADM_INFO="[ ${SADM_BOLD}${SADM_BLUE}INFO${SADM_RESET} ]"         # INFO Blue
+export SADM_ERROR="::[ ${SADM_RED}ERROR${SADM_RESET} ]"                    # [ ERROR ] Red
+export SADM_FAILED="::[ ${SADM_RED}FAILED${SADM_RESET} ]"                  # [ FAILED ] Red
+export SADM_WARNING="::[ ${SADM_BOLD}${SADM_YELLOW}WARNING${SADM_RESET} ]" # WARNING Yellow
+export SADM_OK="::[ ${SADM_BOLD}${SADM_GREEN}OK${SADM_RESET} ]"            # [ OK ] Green
+export SADM_SUCCESS="::[ ${SADM_BOLD}${SADM_GREEN}SUCCESS${SADM_RESET} ]"  # SUCCESS Green
+export SADM_INFO="::[ ${SADM_BOLD}${SADM_BLUE}INFO${SADM_RESET} ]"         # INFO Blue
 
 
 
@@ -461,7 +461,7 @@ function sadm_ask() {
 sadm_write() {
     SADM_SMSG="$@"                                                      # Save Received Message
     
-    # If two first character of message are '::', then don't include the time stamp in the log.
+    # If two first characters of message are '::', then don't include timestamp in the log.
     if [ ${SADM_SMSG:0:2} = "::" ] 
         then SADM_SMSG=`echo "${SADM_SMSG:2:${#SADM_SMSG}}"`            # Remove '::' in the front
              SADM_LMSG="$SADM_SMSG"                                     # Then Log Mess with no Time
