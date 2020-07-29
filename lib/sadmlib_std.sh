@@ -142,8 +142,9 @@
 # 2020_06_09 Update: v3.41 Don't trim the RCH file (ResultCodeHistory). if $SADM_MAX_RCLINE=0.
 #@2020_07_11 Fixes: v3.42 Date and time was not include in script log.
 #@2020_07_12 Update: v3.43 When virtual system 'sadm_server_model' return (VMWARE,VIRTUALBOX,VM)
-#@2020_07_20 Update: v3.44 File permission for *.log and *.rch are now 666
+#@2020_07_20 Update: v3.44 Change permission for log and rch to allow normal user to run script.
 #@2020_07_23 New: v3.45 New function 'sadm_ask', show received msg & wait for y/Y (return 1) or n/N (return 0)
+#@2020_07_29 New: v3.46 Fix date not showing in the log under some condition.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -155,7 +156,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.45"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.46"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -459,12 +460,14 @@ function sadm_ask() {
 # --------------------------------------------------------------------------------------------------
 sadm_write() {
     SADM_SMSG="$@"                                                      # Save Received Message
-    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"
-    #echo "$SADM_SMSG" | grep -iEq "$SADM_ERROR|$SADM_FAILED|$SADM_WARNING|$SADM_OK|$SADM_SUCCESS"
-    #if [ $? -eq 0 ] 
-    #    then SADM_LMSG="$SADM_SMSG" 
-    #    else SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"
-    #fi 
+    
+    # If two first character of message are '::', then don't include the time stamp in the log.
+    if [ ${SADM_SMSG:0:2} = "::" ] 
+        then SADM_SMSG=`echo "${SADM_SMSG:2:${#SADM_SMSG}}"`            # Remove '::' in the front
+             SADM_LMSG="$SADM_SMSG"                                     # Then Log Mess with no Time
+        else SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"      # For Log Line include Time
+    fi 
+
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
         s|S) echo -ne "$SADM_SMSG"                                     # Write Msg to Screen
              ;;
