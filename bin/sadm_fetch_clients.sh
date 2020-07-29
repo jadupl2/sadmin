@@ -65,6 +65,7 @@
 # 2020_05_13 Update: v3.11 Move processing command line switch to a function.
 # 2020_05_22 Update: v3.12 No longer report an error, if a system is rebooting because of O/S update.
 #@2020_07_20 Update: v3.13 Change email to have success or failure at beginning of subject.
+#@2020_07_29 Update: v3.14 Move location of o/s update is running indicator file to $SADMIN/tmp.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -112,7 +113,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.13'                              # Your Current Script Version
+    export SADM_VER='3.14'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -746,7 +747,7 @@ validate_server_connectivity()
     fi
     SNAME=$1                                                            # Server Name
     FQDN_SNAME=$2                                                       # Server Name Full Qualified
-    UPDATE_RUNNING="${SADM_WWW_DAT_DIR}/${SNAME}/osupdate_running"      # OS Update in progress File
+    UPDATE_RUNNING="${SADM_TMP_DIR}/osupdate_running_${SNAME}"          # OS Update in progress flag
 
     # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR AND CONTINUE WITH NEXT SERVER
     if ! host  $FQDN_SNAME >/dev/null 2>&1
