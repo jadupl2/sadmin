@@ -45,7 +45,7 @@
 # 2019_07_14 Update: v3.12 Adjustment for Library Changes.
 # 2019_12_22 Fix: v3.13 Fix problem when using debug (-d) option without specifying level of debug.
 #@2020_05_23 Update: v3.14 Create 'osupdate_running' file before launching O/S update on remote.
-#@2020_07_28 Update: v3.15 Minor fixes and improvements.
+#@2020_07_28 Update: v3.15 Move location of o/s update is running indicator file to $SADMIN/tmp.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -170,7 +170,10 @@ update_server_db()
     WCURDAT=`date "+%C%y.%m.%d %H:%M:%S"`                               # Get & Format Update Date
 
     # Construct SQL Update Statement
-    sadm_write "Set O/S update status to 'Running' in Database.\n"      # Advise user
+    if [ "$WSTATUS" = "F" ]
+        then sadm_write "Set O/S update status to 'Failed' in Database "   # Advise user of result
+        else sadm_write "Set O/S update status to 'Success' in Database "  # Advise user of result
+    fi
     SQL1="UPDATE server SET "                                           # SQL Update Statement
     SQL2="srv_date_osupdate = '${WCURDAT}', "                           # Update Date of this Update
     SQL3="srv_update_status = '${WSTATUS}' "                            # [S]uccess [F]ail [R]unning
@@ -256,7 +259,7 @@ process_servers()
                         fi
                         continue
                 else
-                        sadm_write "${SADM_OK} Ping worked\n"
+                        sadm_write "${SADM_OK}\n"
             fi
 
 
@@ -274,14 +277,15 @@ process_servers()
                      fi                                                 # This reboot after Update
                      #sadm_write "Starting $USCRIPT on ${server_name}.${server_domain}\n"
                      if [ "${server_name}.${server_domain}" != "$SADM_SERVER" ]
-                        then UPDATE_RUNNING="${SADM_WWW_DAT_DIR}/${server_name}/osupdate_running"
-                             sadm_write "Suspend monitoring while O/S update is running.\n"
-                             sadm_write "O/S update running indicator file ${UPDATE_RUNNING} created.\n" 
-                             touch ${UPDATE_RUNNING}                    # Create OSUPDATE Flag File
+                        then UPDATE_RUNNING="${SADM_TMP_DIR}/osupdate_running_${server_name}"
+                             sadm_write "\nSuspend monitoring while O/S update is running.\n"
+                             sadm_write "Create O/S update running indicator file '${UPDATE_RUNNING}' " 
+                             echo $(date) > ${UPDATE_RUNNING}           # Create OSUPDATE Flag File
                              if [ $? -eq 0 ]                            # If Touch went OK
                                 then sadm_write "${SADM_OK}\n"          # Show [ OK ] and NewLine
                                 else sadm_write "${SADM_ERROR}\n"       # Show [ ERROR ] and NewLine
                              fi
+                             sadm_write "\nStarting the O/S update on '${server_name}'.\n"
                              sadm_write "$SADM_SSH_CMD $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'\n\n"
                              $SADM_SSH_CMD $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
                         else sadm_write "Starting execution of ${server_sadmin_dir}/bin/$USCRIPT \n"
