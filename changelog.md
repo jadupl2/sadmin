@@ -1,6 +1,36 @@
 # Changelog
 
 
+## Release v[1.2.8](https://github.com/jadupl2/sadmin/releases) (2020-07-29)
+- Fixes
+        - 2020_06_30 sadm_rear_backup.sh (v2.23) - Fix chmod 664 for files in server backup directory
+        - 2020_07_11 sadmlib_std.sh (v3.42) - Date and time was not include in script log.
+        - 2020_07_13 sadm_backup.sh (v3.24) - New System Main Backup Directory was not created with right permission.
+        - 2020_07_29 sadmlib_std.sh (v3.46) - Fix date not showing in the log under some condition.
+- New
+        - 2020_07_23 sadmlib_std.sh (v3.45) - New function 'sadm_ask', show received msg & wait for y/Y (return 1) or n/N (return 0)
+- Update
+        - 2020_06_09 sadm_create_sysinfo.sh (v3.20) - New log at each execution & log not trimmed anymore ($SADM_MAX_LOGLINE=0)
+        - 2020_07_10 sadm_client_housekeeping.sh (v1.40) - If no password have been assigned to 'sadmin' a temporary one is assigned.
+        - 2020_07_10 sadm_setup.py (v3.41) - Assign temporary passwd to sadmin user.
+        - 2020_07_11 sadm_setup.py (v3.42) - Minor script changes.
+        - 2020_07_11 sadm_setup.py (v3.43) - Added rsync package to client installation.
+        - 2020_07_12 sadmlib_std.sh (v3.43) - When virtual system 'sadm_server_model' return (VMWARE,VIRTUALBOX,VM)
+        - 2020_07_12 sadm_server_menu.php (v1.6) - Add 'Delete System' as a menu item and change item labelling.
+        - 2020_07_12 sadm_view_server_info.php (v2.14) - Replace 'CRUD' button with 'Modify' that direct you to CRUD server menu.
+        - 2020_07_20 sadm_client_housekeeping.sh (v1.41) - Change permission of log and rch to allow normal user to run script.
+        - 2020_07_20 sadm_fetch_clients.sh (v3.13) - Change email to have success or failure at beginning of subject.
+        - 2020_07_20 sadmlib_std.sh (v3.44) - Change permission for log and rch to allow normal user to run script.
+        - 2020_07_26 sadm_push_sadmin.sh (v2.20) - Add usr/lib to sync process when -u option is used.
+        - 2020_07_27 sadm_sysmon.pl (v2.39) - Used space of CIFS Mounted filesystem are no longer monitored.
+        - 2020_07_28 sadm_osupdate_farm.sh (v3.15) - Move location of o/s update is running indicator file to $SADMIN/tmp.
+        - 2020_07_29 sadm_fetch_clients.sh (v3.14) - Move location of o/s update is running indicator file to $SADMIN/tmp.
+        - 2020_07_29 sadm_osupdate.sh (v3.24) - Minor adjustments to screen and log presentation.
+        - 2020_07_29 sadmPageSideBar.php (v2.13) - Show server attribute counter even if it's zero.
+        - 2020_07_29 sadm_view_rear.php (v1.7) - Remove system description to allow more space on each line.
+
+
+  
 
 ## Release v[1.2.7](https://github.com/jadupl2/sadmin/releases) (2020-06-03)
 - Fixes
