@@ -38,6 +38,7 @@
 # 2019_08-30 New: v2.10 Side Bar re-arrange order.
 # 2019_09-23 Update: v2.11 Change 'Status' for ' Job' in Sidebar.
 #@2019_12_01 Update: v2.12 Shorten label name of sidebar.
+#@2020_07_29 Update: v2.13 Show server attribute counter even if it's zero.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -52,7 +53,7 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.12";                                                        # Current version number
+$SVER  = "2.13";                                                        # Current version number
 $URL_SERVER    = '/view/srv/sadm_view_servers.php';                     # Show Servers List URL
 $URL_OSUPDATE  = "/view/sys/sadm_view_schedule.php";                    # View O/S Update Status URL 
 $URL_BACKUP    = "/view/sys/sadm_view_backup.php";                      # View Backup Status URL 
@@ -397,7 +398,7 @@ function SideBar_OS_Summary() {
 
 
 	# ----------------------------------   EDIT SIDEBAR   ------------------------------------------
-    echo "\n<div class='SideBarTitle'>CRUD Operations</div>";           # SideBar Section Title
+    echo "\n<div class='SideBarTitle'>CRUD Operation</div>";           # SideBar Section Title
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_EDIT_SRV . "'>Server</a></div>";       # URL To Start Edit Server
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
@@ -416,6 +417,9 @@ function SideBar_OS_Summary() {
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_SERVER . "?selection=all_active'>";     # View Active server URL
         echo "${kpart2} Active(s)</a></div>";                           # Print Nb. of Active Server
+    }else{
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "0 Active</div>";                                          # Print Nb. of Active Server
     }
 
     # DISPLAY NUMBER OF INACTIVE SERVERS
@@ -424,6 +428,9 @@ function SideBar_OS_Summary() {
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_SERVER . "?selection=all_inactive'>";   # View Inactive server URL
         echo "${kpart2} Inactive(s)</a></div>";                         # Print Nb. Inactive Server
+    }else{
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "0 Inactive</div>";                                        # Print Nb. Inactive Server
     }
 
     # DISPLAY NUMBER OF VIRTUAL SERVERS
@@ -432,6 +439,9 @@ function SideBar_OS_Summary() {
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_SERVER . "?selection=all_vm'>";         # View Virtual server URL
         echo "${kpart2} Virtual(s)</a></div>";                          # Print Nb. of Virtual Srv. 
+    }else{
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "0 Virtual</div>";                                         # Print Nb. of Virtual Srv. 
     }
 
     # DISPLAY NUMBER OF PHYSICAL SERVERS
@@ -440,6 +450,9 @@ function SideBar_OS_Summary() {
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_SERVER . "?selection=all_physical'>";   # View Physical server URL
         echo "${kpart2} Physical(s)</a></div>";                         # Print Nb. of Physical Srv.
+    }else{
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "0 Physical</div>";                                        # Print Nb. of Physical Srv.
     }
 
     # DISPLAY NUMBER OF SPORADIC SERVERS
@@ -448,6 +461,9 @@ function SideBar_OS_Summary() {
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_SERVER . "?selection=all_sporadic'>";   # View Sporadic server URL
         echo "${kpart2} Sporadic(s)</a></div>";                         # Print Nb. of Sporadic Srv.
+    }else{
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "0 Sporadic</div>";                                        # Print Nb. of Sporadic Srv.
     }
     echo "\n<hr/>";                                                     # Print Horizontal Line
     
