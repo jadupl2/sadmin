@@ -40,6 +40,7 @@
 # 2020_04_01 Update: v3.21 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 # 2020_04_28 Update: v3.22 Use 'apt-get dist-upgrade' instead of 'apt-get -y upgrade' on deb system.
 #@2020_05_23 Update: v3.23 Replace 'reboot' instruction with 'shutdown -r' (Problem on some OS).
+#@2020_07_29 Update: v3.24 Minor adjustments to screen and log presentation.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -72,7 +73,7 @@
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.23'                              # Your Current Script Version
+    export SADM_VER='3.24'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -235,10 +236,10 @@ check_available_update()
                                  sadm_write "[OK] Update available.\n" # Update the log
                                  ;;
                             0)   UpdateStatus=1                         # No Update available
-                                 sadm_write "[OK] No Update available.\n"
+                                 sadm_write "${SADM_OK} No Update available.\n"
                                  ;;
                             *)   UpdateStatus=2                         # Problem Abort Update
-                                 sadm_write "[Error] encountered, update aborted.\n"  
+                                 sadm_write "${SADM_ERROR} encountered, update aborted.\n"  
                                  sadm_write "For more information check the log ${SADM_LOG}.\n"
                                  ;;
                         esac
@@ -248,13 +249,13 @@ check_available_update()
                         rc=$?                                           # Save Exit Code
                         case $rc in
                             100) UpdateStatus=0                         # Update Exist
-                                 sadm_write "[OK] Update available.\n" # Update the log
+                                 sadm_write "${SADM_OK} Update available.\n" # Update the log
                                  ;;
                             0)   UpdateStatus=1                         # No Update available
-                                 sadm_write "[OK] No Update available.\n"
+                                 sadm_write "${SADM_OK} No Update available.\n"
                                  ;;
                             *)   UpdateStatus=2                         # Problem Abort Update
-                                 sadm_write "[Error] encountered, update aborted.\n"  
+                                 sadm_write "${SADM_ERROR} encountered, update aborted.\n"  
                                  sadm_write "For more information check the log ${SADM_LOG}\n"
                                  ;;
                         esac
@@ -268,13 +269,13 @@ check_available_update()
             rc=$?                                                       # Save Exit Code
             case $rc in
                 100) UpdateStatus=0                                     # Update Exist
-                     sadm_write "[OK] Update available.\n"              # Update the log
+                     sadm_write "${SADM_OK} Update available.\n"              # Update the log
                      ;;
                   0) UpdateStatus=1                                     # No Update available
-                     sadm_write "[OK] No Update available.\n"
+                     sadm_write "${SADM_OK} No Update available.\n"
                      ;;
                   *) UpdateStatus=2                                     # Problem Abort Update
-                     sadm_write "[Error] encountered, update aborted.\n" # Update the log
+                     sadm_write "${SADM_ERROR} encountered, update aborted.\n" # Update the log
                      sadm_write "For more information check the log ${SADM_LOG}\n"
                      ;;
             esac
@@ -283,7 +284,7 @@ check_available_update()
         "OPENSUSE"|"SUSE" )
             sadm_write "Not supporting $(sadm_get_osname) yet.\n"
             UpdateStatus=1                                              # No Update available
-            sadm_write "[OK] No Update available.\n"
+            sadm_write "${SADM_OK} No Update available.\n"
             ;;
 
         * ) 
@@ -291,15 +292,15 @@ check_available_update()
             apt-get clean >> $SADM_LOG 2>&1                             # Cleanup /var/cache/apt
             rc=$?                                                       # Save Exit Code
             if [ $rc -ne 0 ] 
-                then sadm_write "[Error] while cleaning apt cache, return code ${rc}\n" 
-                else sadm_write "[OK] APT cache is now cleaned.\n" 
+                then sadm_write "${SADM_ERROR} while cleaning apt cache, return code ${rc}\n" 
+                else sadm_write "${SADM_OK} APT cache is now cleaned.\n" 
             fi
             sadm_write "\nUpdate the APT package repository cache with 'apt-get update'\n" 
             apt-get update  >> $SADM_LOG 2>&1                           # Updating the apt-cache
             rc=$?                                                       # Save Exit Code
             if [ "$rc" -ne 0 ]
                then UpdateStatus=2                                      # 2=Problem checking update
-                    sadm_write "[ERROR] We had problem running the 'apt-get update' command.\n" 
+                    sadm_write "${SADM_ERROR} We had problem running the 'apt-get update' command.\n" 
                     sadm_write "We had a return code of ${rc}.\n" 
                     sadm_write "For more information check the log ${SADM_LOG}.\n\n"
                else sadm_write "[OK] The cache have been updated.\n\n"  # Show  Return Code
@@ -318,7 +319,7 @@ check_available_update()
                                      UpdateStatus=0                     # 0= Update are available
                              fi 
                         else UpdateStatus=1                             # 1= No Update are available
-                             sadm_write "[OK] No Update available.\n"
+                             sadm_write "${SADM_OK} No Update available.\n"
                     fi
                     sadm_write "\n"                                     # White Line
             fi
