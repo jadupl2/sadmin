@@ -50,9 +50,10 @@
 # 2019_08_19 Update: v3.07 Added Global Var. rear_newcron and rear_crontab file location 
 # 2019_10_14 Update: v3.08 Added function 'get_arch' - Return system arch. (x86_64,armv7l,i686,...)
 # 2019_10_30 Update: v3.09 Remove 'facter' utilization (Depreciated).
-#@2020_01_20 Update: v3.10 Better handling & Error message when can't connect to database.
-#@2020_01_20 Fix: v3.11 Fix 'get_osminorversion' function. Crash (raspbian) when no os minor version 
-#@2020_02_25 Update: v3.12 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
+# 2020_01_20 Update: v3.10 Better handling & Error message when can't connect to database.
+# 2020_01_20 Fix: v3.11 Fix 'get_osminorversion' function. Crash (raspbian) when no os minor version 
+# 2020_02_25 Update: v3.12 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
+#@2020_09_10 Update: v3.13 Minor update to date/time module.
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -124,7 +125,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.12"                                # This Library Version
+        self.libver             = "3.13"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -662,14 +663,14 @@ class sadmtools():
 
 
     # ----------------------------------------------------------------------------------------------
-    #                               Return Current Epoch Time
+    # Return Current Epoch Time as an integer
     # ----------------------------------------------------------------------------------------------
     def get_epoch_time(self):
         return int(time.time())
 
 
     # ----------------------------------------------------------------------------------------------
-    #                               Return Current Epoch Time
+    # Return a string with the format 'YYYY.MM.DD HH:MM:SS' based on the Epoch time received.
     # ----------------------------------------------------------------------------------------------
     def epoch_to_date(self,wepoch):
         ws = time.localtime(wepoch)
@@ -678,7 +679,7 @@ class sadmtools():
 
 
     # ----------------------------------------------------------------------------------------------
-    #           Convert Date Received (YYYY.MM.DD HH:MM:SS) to Epoch Time
+    # Return the epoch time of the date received ('YYYY.MM.DD HH:MM:SS')
     # ----------------------------------------------------------------------------------------------
     def date_to_epoch(self,wd):
         pattern = '%Y.%m.%d %H:%M:%S'
@@ -687,16 +688,15 @@ class sadmtools():
 
 
     # ----------------------------------------------------------------------------------------------
-    #    Calculate elapse time between date1 (YYYY.MM.DD HH:MM:SS) and date2 (YYYY.MM.DD HH:MM:SS)
-    #    Date 1 MUST be greater than date 2  (Date 1 = Like End time,  Date 2 = Start Time )
+    # Calculate elapse time between date1 (YYYY.MM.DD HH:MM:SS) and date2 (YYYY.MM.DD HH:MM:SS)
+    # Date 1 MUST be greater than date 2  (Date 1 = Like End time,  Date 2 = Start Time )
+    # Return the elapse time in a string format 'HH:MM:SS'.
     # ----------------------------------------------------------------------------------------------
     def elapse_time(self,wend,wstart):
+        whour=00 ; wmin=00 ; wsec=00                                    # Initialize return value
         epoch_start = self.date_to_epoch(wstart)                        # Get Epoch for Start Time
         epoch_end   = self.date_to_epoch(wend)                          # Get Epoch for End Time
         epoch_elapse = epoch_end - epoch_start                          # Substract End - Start time
-
-        whour=00 ; wmin=00 ; wsec=00
-
         # Calculate number of hours (1 hr = 3600 Seconds)
         if epoch_elapse > 3599 :                                        # If nb Sec Greater than 1Hr
             whour = epoch_elapse / 3600                                 # Calculate nb of Hours
