@@ -145,6 +145,7 @@
 #@2020_07_20 Update: v3.44 Change permission for log and rch to allow normal user to run script.
 #@2020_07_23 New: v3.45 New function 'sadm_ask', show received msg & wait for y/Y (return 1) or n/N (return 0)
 #@2020_07_29 Fix: v3.46 Fix date not showing in the log under some condition.
+#@2020_09_10 New: v3.47 Add module "sadm_sleep", sleep for X seconds with progressing info.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -156,7 +157,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.46"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.47"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -469,12 +470,12 @@ sadm_write() {
     fi 
 
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
-        s|S) echo -ne "$SADM_SMSG"                                     # Write Msg to Screen
+        s|S) echo -ne "$SADM_SMSG"                                      # Write Msg to Screen
              ;;
-        l|L) echo -ne "$SADM_LMSG" >> $SADM_LOG                        # Write Msg to Log File
+        l|L) echo -ne "$SADM_LMSG" >> $SADM_LOG                         # Write Msg to Log File
              ;;
-        b|B) echo -ne "$SADM_SMSG"                                     # Write Msg to Screen
-             echo -ne "$SADM_LMSG" >> $SADM_LOG                        # Write Msg to Log File
+        b|B) echo -ne "$SADM_SMSG"                                      # Write Msg to Screen
+             echo -ne "$SADM_LMSG" >> $SADM_LOG                         # Write Msg to Log File
              ;;
         *)   printf "\nWrong \$SADM_LOG_TYPE value ($SADM_LOG_TYPE)\n"  # Advise User if Incorrect
              printf -- "%-s\n" "$SADM_LMSG" >> $SADM_LOG                # Write Msg to Log File
@@ -601,6 +602,8 @@ sadm_get_packagetype() {
     return 1                                                        # Error - Return code 1
 }
 
+
+
 # --------------------------------------------------------------------------------------------------
 # THIS FUNCTION MAKE SURE THAT ALL SADM SHELL LIBRARIES (LIB/SADM_*) REQUIREMENTS ARE MET BEFORE USE
 # IF THE REQUIRENMENT ARE NOT MET, THEN THE SCRIPT WILL ABORT INFORMING USER TO CORRECT SITUATION
@@ -656,6 +659,25 @@ sadm_check_requirements() {
     SADM_CURL=$(sadm_get_command_path "curl")                           # Get curl cmd path   
     SADM_MYSQL=$(sadm_get_command_path "mysql")                         # Get mysql cmd path  
     return 0
+}
+
+
+# --------------------------------------------------------------------------------------------------
+# Function will Sleep for a number of seconds.
+#   - 1st parameter is the time to sleep in seconds.
+#   - 2nd Parameter is the interval in seconds, user will be showed the elapse number of seconds.
+# --------------------------------------------------------------------------------------------------
+sadm_sleep() {
+    SLEEP_TIME=$1                                                       # Nb. Sec. to Sleep 
+    TIME_INTERVAL=$2                                                    # Interval show user count
+    TIME_SLEPT=0                                                        # Time Slept in Seconds
+    while [ $SLEEP_TIME -gt $TIME_SLEPT ]                               # Loop Sleep time Exhaust
+        do
+        printf "${TIME_SLEPT}..."                                         # Indicate Sec. Slept
+        sleep $TIME_INTERVAL                                            # Sleep Interval Nb. Seconds
+        TIME_SLEPT=$(( $TIME_SLEPT + $TIME_INTERVAL ))                  # Inc Slept Time by Interval
+        done
+    printf "${TIME_SLEPT}\n"
 }
 
 
