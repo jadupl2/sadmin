@@ -51,6 +51,7 @@
 #@2019_03_30 Update: v2.6 Added message when enabling/disabling sadmin service.
 #@2019_04_07 Update: v2.7 Use color variables from SADMIN Library.
 #@2019_12_27 Update: v2.8 Was exiting with error when using options '-h' or '-v'.
+#@2020_09_10 Update: v2.9 Minor code improvement.
 #--------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -59,50 +60,57 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 #===================================================================================================
-#               Setup SADMIN Global Variables and Load SADMIN Shell Library
+# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
-#
-    # Test if 'SADMIN' environment variable is defined
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
 
-    # Test if 'SADMIN' Shell Library is readable 
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
+    # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+    if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
+        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
+             EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
+             if [ $? -eq 0 ]                                            # Yes it is 
+                then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}.\n"
+                else exit 1                                             # No SADMIN Env. Var. Exit
+             fi
+    fi 
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.8'                               # Current Script Version
-    export SADM_LOG_TYPE="L"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="N"                          # Show/Generate Script Footer 
+    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
+    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+
+    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
+    export SADM_VER='2.9'                               # Your Current Script Version
+    export SADM_LOG_TYPE="B"                            # Writ#set -x
+    export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
+    export SADM_LOG_HEADER="N"                          # [Y]=Include Log Header  [N]=No log Header
+    export SADM_LOG_FOOTER="N"                          # [Y]=Include Log Footer  [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
+    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
+    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
+    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
+    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
+    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
 
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-#
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library Functions
+    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
+    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
+
 #---------------------------------------------------------------------------------------------------
-#
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But they can be overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
+# Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
+# They can be overridden here, on a per script basis (if needed).
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
+    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=500                        # At the end Trim log to 500 Lines(0=NoTrim)
+    #export SADM_MAX_RCLINE=35                          # At the end Trim rch to 35 Lines (0=NoTrim)
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#
 #===================================================================================================
-
 
 
 
@@ -160,10 +168,10 @@ command_available() {
     printf "Checking availability of command $CMD ... "
     if which ${CMD} >/dev/null 2>&1                                     # Locate command found ?
         then SPATH=`which ${CMD}`                                       # Save Path of command
-             echo "$SPATH ${SADM_GREEN}[OK]${SADM_RESET}"               # Show Path to user and OK
+             echo "$SPATH ${SADM_OK}"                                   # Show Path to user and OK
              return 0                                                   # Return 0 if cmd found
         else SPATH=""                                                   # PATH empty when Not Avail.
-             echo "Command missing ${SADM_BOLD}${SADM_MAGENTA}[Warning]${SADM_RESET}" 
+             echo "Command missing ${SADM_WARNING}" 
     fi
     return 1
 }
@@ -318,18 +326,17 @@ service_enable()
 service_status()
 {
     if [ $SYSTEMD -eq 1 ]                                               # Using systemd not Sysinit
-        then printf "systemctl status ${1}.service ... "                # write cmd to log
+        then sadm_write "systemctl status ${1}.service ... "            # write cmd to log
              systemctl status ${1}.service >> $SADM_LOG 2>&1            # use systemctl
              if [ $? -eq 0 ] 
-                then printf "[OK]\n" 
-                else printf "[ERROR] Service '$1' may not be enable\n" 
+                then sadm_write "${SADM_OK}\n" 
+                else sadm_write "${SADM_ERROR} Service '$1' may not be enable\n" 
              fi
              systemctl list-unit-files | grep $1                        # Display Service Status
-        else printf "service $1 status ... \n"                          # write cmd to log
-             service $1 status                                          # Show service status
+        else service $1 status                                          # Show service status
              if [ $? -eq 0 ] 
-                then printf "[OK]\n" 
-                else printf "[ERROR] Service '$1' may not be enable\n" 
+                then sadm_write "Service '$1' status ... ${SADM_OK}\n" 
+                else sadm_write "Service '$1' status ... ${SADM_ERROR} Service '$1' not enable\n" 
              fi
     fi
 }
@@ -419,6 +426,14 @@ service_start()
             exit 1                                                      # Exit To O/S
     fi
 
+#
+#    echo "Avant"
+#    sadm_write "Ca write"
+#    sadm_write "Ca writelog"
+#    echo "Apres"
+#    sadm_stop 0 
+#    exit 0
+#
     # Optional Command line switches    
     P_DISABLE="OFF" ; P_ENABLE="OFF" ; P_STATUS="OFF"                   # Set Switch Default Value
     while getopts "devsh " opt ; do                                     # Loop to process Switch
