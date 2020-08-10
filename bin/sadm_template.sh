@@ -105,10 +105,10 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${SADM_PN} usage :"
+    printf "\n$Syntax: {SADM_PN} [-d|-h|-v]"
     printf "\n\t-d   (Debug Level [0-9])"
     printf "\n\t-h   (Display this help message)"
-    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\t-v   (Show script version info)"
     printf "\n\n" 
 }
 
