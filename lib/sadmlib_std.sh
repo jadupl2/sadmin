@@ -146,6 +146,7 @@
 #@2020_07_23 New: v3.45 New function 'sadm_ask', show received msg & wait for y/Y (return 1) or n/N (return 0)
 #@2020_07_29 Fix: v3.46 Fix date not showing in the log under some condition.
 #@2020_09_10 New: v3.47 Add module "sadm_sleep", sleep for X seconds with progressing info.
+#@2020_09_10 Fix: v3.48 Remove improper '::' characters to was inserted im messages.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -157,7 +158,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.47"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.48"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -468,7 +469,9 @@ sadm_write() {
              SADM_LMSG="$SADM_SMSG"                                     # Then Log Mess with no Time
         else SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"      # For Log Line include Time
     fi 
-
+    SADM_SMSG=`echo ${SADM_SMSG/::/}`                                   # Remove :: from Screen Mess
+    SADM_LMSG=`echo ${SADM_LMSG/::/}`                                   # Remove :: from Log Mess
+    
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
         s|S) echo -ne "$SADM_SMSG"                                      # Write Msg to Screen
              ;;
@@ -673,7 +676,7 @@ sadm_sleep() {
     TIME_SLEPT=0                                                        # Time Slept in Seconds
     while [ $SLEEP_TIME -gt $TIME_SLEPT ]                               # Loop Sleep time Exhaust
         do
-        printf "${TIME_SLEPT}..."                                         # Indicate Sec. Slept
+        printf "${TIME_SLEPT}..."                                       # Indicate Sec. Slept
         sleep $TIME_INTERVAL                                            # Sleep Interval Nb. Seconds
         TIME_SLEPT=$(( $TIME_SLEPT + $TIME_INTERVAL ))                  # Inc Slept Time by Interval
         done
@@ -991,6 +994,7 @@ sadm_get_domainname() {
 
     if [ "$wdom" = "" ] ; then wdom="$SADM_DOMAIN" ; fi                 # No Domain = Def DomainName
     echo "$wdom"
+
 }
 
 
