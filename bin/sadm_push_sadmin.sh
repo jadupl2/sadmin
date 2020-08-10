@@ -44,8 +44,9 @@
 # 2020_01_26 Update: v2.16 Add Option -c [hostname]  to sync of SADMIN server version to one client.
 # 2020_03_04 Update: v2.17 Script was rename from sadm_rsync_sadmin.sh to sadm_push_sadmin.sh
 # 2020_04_23 Update: v2.18 Replace sadm_writelog by sadm_write & enhance log output.
-#@2020_05_23 Update: v2.19 Changing the way to get SADMIN variable in /etc/environment 
-#@2020_07_26 Update: v2.20 Add usr/lib to sync process when -u option is used.
+# 2020_05_23 Update: v2.19 Changing the way to get SADMIN variable in /etc/environment 
+# 2020_07_26 Update: v2.20 Add usr/lib to sync process when -u option is used.
+#@2020_00_10 Update: v2.21 Create local processing server data server directory (if don't exist)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -76,7 +77,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.20'                              # Your Current Script Version
+    export SADM_VER='2.21'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -300,7 +301,8 @@ process_servers()
         sadm_write "$SADM_OK SSH to $server_fqdn"                       # Good SSH Work
 
         # Get the remote /etc/environment file to determine where SADMIN is install on remote
-        WDIR="${SADM_WWW_DAT_DIR}/${server_name}"
+        WDIR="${SADM_WWW_DAT_DIR}/${server_name}"                       # Server Dir. on SADM Server
+        if [ ! -d $WDIR ] ; then mkdir $WDIR ; chmod 775 $WDIR ; fi     # Create Dir. if don't exist 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
             then scp -P${SADM_SSH_PORT} ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
             else cp /etc/environment ${WDIR} >/dev/null 2>&1  
