@@ -51,6 +51,7 @@
 #@2020_05_08 Update: v1.39 Update Change permission change on $SADMIN/usr/bin from 0755 to 775.
 #@2020_07_10 Update: v1.40 If no password have been assigned to 'sadmin' a temporary one is assigned. 
 #@2020_07_20 Update: v1.41 Change permission of log and rch to allow normal user to run script.
+#@2020_09_10 Update: v1.42 Make sure permission are ok in user library directory ($SADMIN/usr/lib).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -82,7 +83,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.41'                              # Your Current Script Version
+    export SADM_VER='1.42'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -570,8 +571,8 @@ file_housekeeping()
             #afile="$SADM_CFG_DIR/.alert_history.txt"
             #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
-            #afile="$SADM_CFG_DIR/.rch_conversion_done"
-            #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/.rch_conversion_done"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
             #afile="$SADM_CFG_DIR/alert_history.txt"
             #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
@@ -606,6 +607,9 @@ file_housekeeping()
     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
 
     set_files_recursive "$SADM_UBIN_DIR"       "0775" "${SADM_USER}" "${SADM_GROUP}" 
+    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
+
+    set_files_recursive "$SADM_ULIB_DIR"       "0775" "${SADM_USER}" "${SADM_GROUP}" 
     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
 
     set_files_recursive "$SADM_UMON_DIR"       "0775" "${SADM_USER}" "${SADM_GROUP}" 
