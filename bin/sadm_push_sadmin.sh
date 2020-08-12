@@ -46,7 +46,8 @@
 # 2020_04_23 Update: v2.18 Replace sadm_writelog by sadm_write & enhance log output.
 # 2020_05_23 Update: v2.19 Changing the way to get SADMIN variable in /etc/environment 
 # 2020_07_26 Update: v2.20 Add usr/lib to sync process when -u option is used.
-#@2020_00_10 Update: v2.21 Create local processing server data server directory (if don't exist)
+#@2020_09_10 Update: v2.21 Create local processing server data server directory (if don't exist)
+#@2020_09_12 Update: v2.22 When -u is used, the usr/cfg directory is now also push to client.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -77,7 +78,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.21'                              # Your Current Script Version
+    export SADM_VER='2.22'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -340,7 +341,7 @@ process_servers()
 
         # IF USER CHOOSE TO RSYNC $SADMIN/USR/BIN TO ALL ACTIVES CLIENTS, THEN DO IT HERE.
         if [ "$SYNC_USR" = "Y" ] 
-            then rem_usr_dir_to_rsync=( usr/bin usr/lib )
+            then rem_usr_dir_to_rsync=( usr/bin usr/lib usr/cfg )
                  for WDIR in "${rem_usr_dir_to_rsync[@]}"
                     do
                     if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
