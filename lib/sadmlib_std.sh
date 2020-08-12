@@ -147,6 +147,7 @@
 #@2020_07_29 Fix: v3.46 Fix date not showing in the log under some condition.
 #@2020_09_10 New: v3.47 Add module "sadm_sleep", sleep for X seconds with progressing info.
 #@2020_09_10 Fix: v3.48 Remove improper '::' characters to was inserted im messages.
+#@2020_09_12 New: v3.49 Global Var. $SADM_UCFG_DIR was added to refer $SADMIN/usr/cfg directory.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -192,6 +193,7 @@ SADM_WWW_DIR="$SADM_BASE_DIR/www"           ; export SADM_WWW_DIR       # Web Di
 # SADMIN USER DIRECTORIES
 SADM_USR_DIR="$SADM_BASE_DIR/usr"           ; export SADM_USR_DIR       # Script User directory
 SADM_UBIN_DIR="$SADM_USR_DIR/bin"           ; export SADM_UBIN_DIR      # Script User Bin Dir.
+SADM_UCFG_DIR="$SADM_USR_DIR/cfg"           ; export SADM_UCFG_DIR      # Script User Cfg Dir.
 SADM_ULIB_DIR="$SADM_USR_DIR/lib"           ; export SADM_ULIB_DIR      # Script User Lib Dir.
 SADM_UDOC_DIR="$SADM_USR_DIR/doc"           ; export SADM_UDOC_DIR      # Script User Doc. Dir.
 SADM_UMON_DIR="$SADM_USR_DIR/mon"           ; export SADM_UMON_DIR      # Script User SysMon Scripts
@@ -1894,6 +1896,12 @@ sadm_start() {
     [ ! -d "$SADM_UBIN_DIR" ] && mkdir -p $SADM_UBIN_DIR
     if [ $(id -u) -eq 0 ]
         then chmod 0775 $SADM_UBIN_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UBIN_DIR
+    fi
+
+    # ($SADMIN/usr/cfg) If User cfg Dir doesn't exist, create it.
+    [ ! -d "$SADM_UCFG_DIR" ] && mkdir -p $SADM_UCFG_DIR
+    if [ $(id -u) -eq 0 ]
+        then chmod 0775 $SADM_UCFG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UCFG_DIR
     fi
 
     # ($SADMIN/usr/lib) If User Lib Dir doesn't exist, create it.
