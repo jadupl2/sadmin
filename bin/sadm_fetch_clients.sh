@@ -772,9 +772,9 @@ validate_server_connectivity()
              CEPOCH=$(sadm_get_epoch_time)                              # Get Current Epoch Time
              FAGE=`expr $CEPOCH - $FEPOCH`                              # Nb. Sec. OSUpdate running
              if [ "$FAGE" -gt $OSTIMEOUT ]                              # Running more than 1 Hr
-                then msg="${SADM_BOLD}O/S update running for more than $OSTIMEOUT sec.${SADM_RESET}"
+                then msg="${BOLD}O/S update running for more than $OSTIMEOUT sec.${NORMAL}"
                      sadm_write "${msg}\n"
-                     msg="${SADM_BOLD}Will now start to monitor this system as usual.${SADM_RESET}"
+                     msg="${BOLD}Will now start to monitor this system as usual.${NORMAL}"
                      sadm_write "${msg}\n"
                      rm -f $UPDATE_RUNNING > /dev/null 2>&1             # Remove O/S Upd Flag File
                 else msg="${SADM_WARNING} O/S update is running on '$FQDN_SNAME'."
@@ -910,7 +910,7 @@ process_servers()
         rear_min=`      echo $wline|awk -F, '{ print $25 }'`            # Rear Crontab Min field
         #
         sadm_write "${SADM_TEN_DASH}\n"                                 # Print 10 Dash line
-        sadm_write "${SADM_BOLD}Processing [$xcount] ${fqdn_server}${SADM_RESET}\n" 
+        sadm_write "${BOLD}Processing [$xcount] ${fqdn_server}${NORMAL}\n" 
 
         # TO DISPLAY DATABASE COLUMN WE WILL USED, FOR DEBUGGING
         if [ $SADM_DEBUG -gt 7 ] 
@@ -938,7 +938,7 @@ process_servers()
                  fi 
         fi                            
 
-         # On Linux & O/S AutoUpdate is ON, Generate Crontab entry in O/S Update crontab work file
+        # On Linux & O/S AutoUpdate is ON, Generate Crontab entry in O/S Update crontab work file
         if [ "$WOSTYPE" = "linux" ] && [ "$db_updauto" -eq 1 ]          # If O/S Update Scheduled
             then update_osupdate_crontab "$server_name" "${SADM_BIN_DIR}/$OS_SCRIPT" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
         fi
@@ -1276,8 +1276,8 @@ main_process()
     sadm_writelog " "                                                   # Separation Blank Line
     if [ $(sadm_get_ostype) = "LINUX" ] ; then crontab_update ; fi      # Update crontab if needed
     
-    # To prevent this script from showing very often (This script is run every 5 minutes) on the 
-    # Web interface, we copy the updated .rch file in the web centrail directory. 
+    # To prevent this script from showing very often on the monitor (This script is run every 5 min)
+    # we copy the updated .rch file in the web centrail directory. 
     if [ ! -d ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ]                # Web RCH repo Dir not exist
         then mkdir -p ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch          # Create it
     fi

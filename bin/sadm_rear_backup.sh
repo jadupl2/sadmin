@@ -276,7 +276,7 @@ create_etc_rear_site_conf()
 # --------------------------------------------------------------------------------------------------
 rear_preparation()
 {
-    sadm_write "${SADM_BOLD}Perform ReaR preparation.${SADM_RESET}\n"   # Feed User and Log
+    sadm_write "${BOLD}Perform ReaR preparation.${NORMAL}\n"   # Feed User and Log
     sadm_write "\n"                                                     # Write white line
 
     # Check if REAR is not installed - Abort Process 
@@ -394,7 +394,7 @@ rear_housekeeping()
 {
     FNC_ERROR=0                                                         # Cleanup Error Default 0
     sadm_write "${SADM_FIFTY_DASH}\n"
-    sadm_write "${SADM_BOLD}Perform ReaR housekeeping.${SADM_RESET}\n"
+    sadm_write "${BOLD}Perform ReaR housekeeping.${NORMAL}\n"
                     
     sadm_write "\n"
     sadm_write "SADMIN configuration file indicate to you wish to keep $SADM_REAR_BACKUP_TO_KEEP backup files on the NFS server.\n"
@@ -500,7 +500,7 @@ create_backup()
     # Feed user and log, the what we are about to do.
     sadm_write "\n"                                                     # Write white line
     sadm_write "${SADM_FIFTY_DASH}\n"
-    sadm_write "${SADM_BOLD}Creating the 'ReaR' backup.${SADM_RESET}\n" 
+    sadm_write "${BOLD}Creating the 'ReaR' backup.${NORMAL}\n" 
     sadm_write "\n"                                                     # Write white line
     sadm_write "$REAR mkbackup -v \n"       
 

@@ -62,7 +62,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
     export SADM_VER='1.0'                               # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writ#set -x
+    export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
@@ -82,7 +82,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 #---------------------------------------------------------------------------------------------------
 # Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
 # They can be overridden here, on a per script basis (if needed).
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnError 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
     #export SADM_MAX_LOGLINE=500                        # At the end Trim log to 500 Lines(0=NoTrim)
@@ -105,12 +105,13 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n$Syntax: {SADM_PN} [-d|-h|-v]"
-    printf "\n\t-d   (Debug Level [0-9])"
-    printf "\n\t-h   (Display this help message)"
-    printf "\n\t-v   (Show script version info)"
+    printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\n\t${BOLD}${YELLOW}-d${NORMAL} Set Debug (Verbose) Level [0-9]"
+    printf "\n\t${BOLD}${YELLOW}-h${NORMAL} Display this help message)"
+    printf "\n\t${BOLD}${YELLOW}-v${NORMAL} Show script version info"
     printf "\n\n" 
 }
+
 
 
 
@@ -119,7 +120,7 @@ show_usage()
 #===================================================================================================
 process_servers()
 {
-    sadm_write "${SADM_BOLD}${SADM_YELLOW}Processing All Active(s) Server(s) ...${SADM_RESET}\n"
+    sadm_write "${BOLD}${YELLOW}Processing All Active(s) Server(s) ...${NORMAL}\n"
 
     # Put Rows you want in the select. 
     # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
@@ -155,7 +156,7 @@ process_servers()
 
         # Check if server name can be resolve - If not, we won't be able to SSH to it.
         host  $fqdn_server >/dev/null 2>&1                              # Try to resolve Hostname
-        if [ $? -ne 0 ]                                                 # If hostname not resolvable
+        if (( $? ))                                                     # If hostname not resolvable
             then SMSG="$SADM_ERROR Can't process '$fqdn_server', hostname can't be resolved."
                  sadm_write "${SMSG}\n"                                 # Advise user & Feed log
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
@@ -189,7 +190,7 @@ process_servers()
         fi
 
         # If All SSH test failed, Issue Error Message and continue with next system
-        if [ $RC -ne 0 ]                                                # If SSH to Server Failed
+        if (( $RC ))                                                    # If SSH to Server Failed
             then SMSG="$SADM_ERROR Can't SSH to '${fqdn_server}'"       # Problem with SSH
                  sadm_write "${SMSG}\n"                                 # Show/Log Error Msg
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
@@ -214,12 +215,12 @@ process_servers()
 #===================================================================================================
 main_process()
 {
-    sadm_write "${SADM_BOLD}${SADM_YELLOW}Starting Main Process ...${SADM_RESET}\n"
+    sadm_write "${BOLD}${YELLOW}Starting Main Process ...${NORMAL}\n"   # Starting processing Mess.
     
     # PROCESSING CAN BE PUT HERE
     # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
     # ........
-    # ........
+
     
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
 }
@@ -250,7 +251,7 @@ function cmd_options()
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
-           \?) printf "\nInvalid option: -${OPTARG}.\n"                 # Invalid Option Message
+           \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
                ;;
@@ -265,28 +266,31 @@ function cmd_options()
 # MAIN CODE START HERE
 #===================================================================================================
 
-    cmd_options "$@"                                                    # Check command-line Options    
+    cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
 
-    # If current user is not 'root', exit to O/S with error code 1 (Optional)
+    # If current user is not 'root', exit to O/S with error code 1 (This 'if' is Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
         then sadm_write "Script can only be run by the 'root' user, process aborted.\n"
-             sadm_write "Try sudo %s" "${0##*/}\n"                      # Suggest using sudo
+             sadm_write "Try 'sudo ${SADM_PN}'\n"                       # Suggest using sudo
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
 
-    # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
+    # If we are not on the SADMIN Server, exit to O/S with error code 1 (This 'if' is Optional)
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
         then sadm_write "Script can only be run on (${SADM_SERVER}), process aborted.\n"
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
 
-    main_process                                                        # Main Process
-    #OR                                                                 # Use line below or above
+    # Use 'main_process' for code without interaction with SADMIN Database.
+    #main_process                                                        # Main Process
+    
+    # Or use 'process_server' for code dealing with server in SADMIN Database.
     #process_servers                                                    # Process All Active Servers
+    
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)

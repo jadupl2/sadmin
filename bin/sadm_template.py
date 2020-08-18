@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python3
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Your Name
 #   Script Name :   XXXXXXXX.py

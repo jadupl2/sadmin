@@ -514,9 +514,9 @@ ask_linux_user_vg()
         ls -1 $VGDIR | sort >  $SADM_TMP_FILE2                          # Create VG Lits on System
         grep -v "^#" $DRFILE | awk -F: '{ print $1 }' | sort | uniq > $SADM_TMP_FILE1  # List VG in Data Input file
         sadm_write "\nList of the volume group that are present in $DRFILE \n"
-        sadm_write "${SADM_BOLD}${SADM_GREEN}"
+        sadm_write "${BOLD}${GREEN}"
         sort $SADM_TMP_FILE1 | tee $SADM_LOG                            # List VG in Input File
-        sadm_write "${SADM_RESET}"
+        sadm_write "${NORMAL}"
         sadm_write "\nEnter the volume group name that you want to recreate the filesystems : \n"
         read VG                                                         # Accept Volume Group Name
         grep -i $VG $SADM_TMP_FILE1 > /dev/null ; RC1=$?                # VG in input DAta File ?

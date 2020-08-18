@@ -201,13 +201,13 @@ add_epel_repo()
                      epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm"
                      yum install -y $epel >/dev/null 2>&1
                      if [ $? -ne 0 ]
-                        then echo "${SADM_YELLOW}Couldn't add EPEL repos for version $SADM_OSVERSION${SADM_RESET}" 
+                        then echo "${YELLOW}Couldn't add EPEL repos for version ${SADM_OSVERSION}${NORMAL}" 
                              return 1
                     fi 
-                    echo "${SADM_YELLOW}Disabling EPEL Repository, will activate it only when needed"
+                    echo "${YELLOW}Disabling EPEL Repository, will activate it only when needed"
                     yum-config-manager --disable epel >/dev/null 2>&1
                     if [ $? -ne 0 ]
-                        then echo "${SADM_YELLOW}Couldn't disable EPEL for version $SADM_OSVERSION${SADM_RESET}"
+                        then echo "${YELLOW}Couldn't disable EPEL for version ${SADM_OSVERSION}${NORMAL}"
                              return 1
                     fi 
                     return 0
@@ -222,13 +222,13 @@ add_epel_repo()
                      epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
                      yum install -y $epel >/dev/null 2>&1
                      if [ $? -ne 0 ]
-                        then echo "${SADM_YELLOW}Couldn't add EPEL repository for version $SADM_OSVERSION${SADM_RESET}" 
+                        then echo "${YELLOW}Couldn't add EPEL repository for version ${SADM_OSVERSION}${NORMAL}" 
                              return 1
                      fi 
                      echo "Disabling EPEL Repository, will activate it only when needed" 
                      yum-config-manager --disable epel >/dev/null 2>&1
                      if [ $? -ne 0 ]
-                        then echo "${SADM_YELLOW}Couldn't disable EPEL for version $SADM_OSVERSION" 
+                        then echo "${YELLOW}Couldn't disable EPEL for version ${SADM_OSVERSION}${NORMAL}" 
                              return 1
                      fi 
                      return 0
@@ -243,7 +243,7 @@ add_epel_repo()
                      epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
                      yum install -y $epel 
                      if [ $? -ne 0 ]
-                        then echo "${SADM_YELLOW}Couldn't add EPEL repository for version $SADM_OSVERSION${SADM_RESET}" 
+                        then echo "${YELLOW}Couldn't add EPEL repository for version ${SADM_OSVERSION}${NORMAL}" 
                              return 1
                      fi 
                      #
@@ -256,7 +256,7 @@ add_epel_repo()
                      echo "Disabling EPEL Repository, will activate it only when needed" 
                      dnf config-manager --set-disabled epel >/dev/null 2>&1
                      if [ $? -ne 0 ]
-                        then echo "${SADM_YELLOW}Couldn't disable EPEL for version $SADM_OSVERSION${SADM_RESET}"
+                        then echo "${YELLOW}Couldn't disable EPEL for version ${SADM_OSVERSION}${NORMAL}"
                              return 1
                      fi 
              fi
@@ -274,10 +274,10 @@ command_available() {
     printf "Checking availability of command $CMD ... "
     if ${SADM_WHICH} ${CMD} >/dev/null 2>&1                             # Locate command found ?
         then SPATH=`${SADM_WHICH} ${CMD}`                               # Save Path of command
-             echo "$SPATH ${SADM_GREEN}[OK]${SADM_RESET}"                         # Show Path to user and OK
+             echo "$SPATH ${GREEN}[OK]${NORMAL}"                        # Show Path to user and OK
              return 0                                                   # Return 0 if cmd found
         else SPATH=""                                                   # PATH empty when Not Avail.
-             echo "Command missing ${SADM_BOLD}${SADM_MAGENTA}[Warning]${SADM_RESET}"     # Show user Warning
+             echo "Command missing ${BOLD}${MAGENTA}[Warning]${NORMAL}" # Show user Warning
     fi
     return 1
 }
@@ -295,27 +295,27 @@ package_available() {
     case "$package_type"  in
         "rpm" )     printf "Checking availability of rpm package $RPM_PACK ... " 
                     rpm -q $RPM_PACK >/dev/null 2>&1
-                    if [ $? -eq 0 ] ; then echo "${SADM_GREEN}[OK]${SADM_RESET}" ; return 0 ; fi
-                    echo "Package missing ${SADM_BOLD}${SADM_MAGENTA}[Warning]${SADM_RESET}" 
+                    if [ $? -eq 0 ] ; then echo "${GREEN}[OK]${NORMAL}" ; return 0 ; fi
+                    echo "Package missing ${BOLD}${MAGENTA}[Warning]${NORMAL}" 
                     install_package "$RPM_PACK" "$DEB_PACK" 
                     #
                     printf "Check if install of $RPM_PACK was successful ... " 
                     rpm -q $RPM_PACK >/dev/null 2>&1
-                    if [ $? -eq 0 ] ; then echo "${SADM_GREEN}[OK]${SADM_RESET}" ; return 0 ; fi
-                    echo "Package missing ${SADM_BOLD}${SADM_MAGENTA}[Warning]${SADM_RESET}" 
+                    if [ $? -eq 0 ] ; then echo "${GREEN}[OK]${NORMAL}" ; return 0 ; fi
+                    echo "Package missing ${BOLD}${MAGENTA}[Warning]${NORMAL}" 
                     return 1 
                     ;;
 
         "deb" )     printf "Checking availability of deb package $DEB_PACK ... " 
                     dpkg -s $DEB_PACK >/dev/null 2>&1
-                    if [ $? -eq 0 ] ; then echo "${SADM_GREEN}[OK]${SADM_RESET}" ; return 0 ; fi
-                    echo "Package missing ${SADM_BOLD}${SADM_MAGENTA}[Warning]${SADM_RESET}" 
+                    if [ $? -eq 0 ] ; then echo "${GREEN}[OK]${NORMAL}" ; return 0 ; fi
+                    echo "Package missing ${BOLD}${MAGENTA}[Warning]${NORMAL}" 
                     install_package "$RPM_PACK" "$DEB_PACK" 
                     #
                     printf "Check if install of $DEB_PACK was successful ... " 
                     dpkg -s $DEB_PACK >/dev/null 2>&1
-                    if [ $? -eq 0 ] ; then echo "${SADM_GREEN}[OK]${SADM_RESET}" ; return 0 ; fi
-                    echo "Package missing ${SADM_BOLD}${SADM_MAGENTA}[Warning]${SADM_RESET}" 
+                    if [ $? -eq 0 ] ; then echo "${GREEN}[OK]${NORMAL}" ; return 0 ; fi
+                    echo "Package missing ${BOLD}${MAGENTA}[Warning]${NORMAL}" 
                     return 1 
                     ;;
         *)          printf "Package type $package+type is not supported yet" 
@@ -331,7 +331,7 @@ package_available() {
 # --------------------------------------------------------------------------------------------------
 #
 check_sadmin_requirements() {
-    sadm_write "SADMIN client requirements\n"
+    sadm_write "${WHITE}${BOLD}SADMIN client requirements${NORMAL}\n"
 
     # The 'which' command is needed to determine presence of command - Return Error if not found
     if which which >/dev/null 2>&1                                      # Try the command which
@@ -494,7 +494,7 @@ check_sadmin_requirements() {
 
     # If on the SADMIN Server mysql MUST be present - Check Availibility of the mysql command.
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only Check on SADMIN Srv
-        then sadm_write "\nSADMIN server requirements.\n"
+        then sadm_write "\n${WHITE}${BOLD}SADMIN server requirements.${NORMAL}\n"
              command_available "mysql" ; SADM_MYSQL=$SPATH              # Get mysql cmd path  
              if [ "$SADM_MYSQL" = "" ] && [ "$INSTREQ" -eq 1 ]          # Cmd not found & Inst Req.
                 then install_package "mariadb-server " "mariadb-server mariadb-client"  

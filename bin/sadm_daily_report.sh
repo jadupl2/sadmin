@@ -469,12 +469,12 @@ main_process()
     umount_nfs                                                          # Umounting NFS Drive
 
     tput clear  
-    sadm_write "${SADM_BOLD}${SADM_BLUE}Biggest Backup Files Report${SADM_RESET}\n"
+    sadm_write "${BOLD}${BLUE}Biggest Backup Files Report${NORMAL}\n"
     cat $bb_file
     #echo "Press [ENTER] to continue" ; read dummy
 
     tput clear  
-    sadm_write "${SADM_BOLD}${SADM_BLUE}Biggest Backup Directories Report${SADM_RESET}\n"
+    sadm_write "${BOLD}${BLUE}Biggest Backup Directories Report${NORMAL}\n"
     cat $bb_dir
     #echo "Press [ENTER] to continue" ; read dummy
 

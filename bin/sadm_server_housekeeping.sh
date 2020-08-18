@@ -185,16 +185,17 @@ set_dir()
 # --------------------------------------------------------------------------------------------------
 alert_housekeeping()
 {
-    sadm_write "${SADM_BOLD}Archive Alert older than $ARC_DAYS days.${SADM_RESET}\n"
+    sadm_write "${BOLD}${YELLOW}Move Alert older than $ARC_DAYS days to the alert history file.\n" 
+    sadm_write "They are move from $SADM_ALERT_HIST to $SADM_ALERT_ARC file.${NORMAL}\n"
 
     # If History archive doesn't exist, create it.
-    if [ ! -f "$SADM_ALERT_ARCHIVE" ]                                   # If Archive don't exist
+    if [ ! -f "$SADM_ALERT_ARC" ]                                       # If Archive don't exist
         then cp $SADM_ALERT_ARCINI $SADM_ALERT_ARC                      # Create Initial Archive
              chmod 664 $SADM_ALERT_ARC 
              chown $SADM_USER:$SADM_GROUP $SADM_ALERT_ARC
     fi 
 
-    # Create Initial New Purge History File
+    # Create file that will eventually become the New Alert History File from the template
     cp $SADM_ALERT_HINI $SADM_TMP_FILE3                                 # Create new Initial History
      
     # Alert than happen before Calculate Epoch time (archive_epoch) will be archive.
@@ -239,26 +240,26 @@ alert_housekeeping()
 # --------------------------------------------------------------------------------------------------
 dir_housekeeping()
 {
-    sadm_writelog " "
-    sadm_writelog "${yellow}Server Directories HouseKeeping.${white}"
+    sadm_write "\n"
+    sadm_write "${YELLOW}${BOLD}Server Directories HouseKeeping.${NORMAL}\n"
 
     # Reset privilege on WWW Directory files
     if [ -d "$SADM_WWW_DIR" ]
         then CMD="find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \;"
              find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then sadm_writelog "[ ERROR ] running $CMD"
+                then sadm_writelog "${SADM_ERROR} running ${CMD}\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_writelog "[ OK ] $CMD"
-                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+                else sadm_write "${SADM_OK} ${CMD}\n"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
              fi
              CMD="find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \;"
-             find $SADM_WWW_DIR  -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \; >/dev/null 2>&1
+             find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \;>/dev/null 2>&1
              if [ $? -ne 0 ]
-                then sadm_writelog "[ ERROR ] running $CMD"
+                then sadm_writelog "${SADM_ERROR} running ${CMD}\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_writelog "[ OK ] $CMD"
-                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+                else sadm_write "${SADM_OK} ${CMD}\n"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
              fi
     fi
     return $ERROR_COUNT
@@ -270,8 +271,8 @@ dir_housekeeping()
 # --------------------------------------------------------------------------------------------------
 file_housekeeping()
 {
-    sadm_writelog " "
-    sadm_writelog "${yellow}Server Files HouseKeeping.${white}"
+    sadm_write "\n"
+    sadm_write "${YELLOW}${BOLD}Server Files HouseKeeping.${NORMAL}\n"
 
     # Make sure crontab for SADMIN server have proper permission and owner
     sadm_writelog "Make sure SADMIN crontab file have proper permission and owner"
@@ -280,10 +281,10 @@ file_housekeeping()
         then CMD="chmod 0644 $afile && chown root:root $afile"
              chmod 0644 $afile && chown root:root $afile 
              if [ $? -ne 0 ]
-                then sadm_writelog "[ ERROR ] running $CMD"
+                then sadm_write "${SADM_ERROR} running ${CMD}\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_writelog "[ OK ] running $CMD"
-                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+                else sadm_write "${SADM_OK} running ${CMD}\n"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
              fi
     fi
 
@@ -293,10 +294,10 @@ file_housekeeping()
         then CMD="chmod 0644 $afile && chown root:root $afile"
              chmod 0644 $afile && chown root:root $afile 
              if [ $? -ne 0 ]
-                then sadm_writelog "[ ERROR ] running $CMD"
+                then sadm_write "${SADM_ERROR} running ${CMD}\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_writelog "[ OK ] running $CMD"
-                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+                else sadm_write "${SADM_OK} running ${CMD}\n"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
              fi
     fi
 
@@ -306,42 +307,42 @@ file_housekeeping()
         then CMD="chmod 0644 $afile && chown root:root $afile"
              chmod 0644 $afile && chown root:root $afile 
              if [ $? -ne 0 ]
-                then sadm_writelog "[ ERROR ] running $CMD"
+                then sadm_write "${SADM_ERROR} running ${CMD}\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_writelog "[ OK ] running $CMD"
-                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+                else sadm_write "${SADM_OK} running ${CMD}\n"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
              fi
     fi
 
     # Set Permission on all files in the images directory.
-    sadm_writelog " "
-    sadm_writelog "Setting permissions in the website directories."
+    sadm_write "\n"
+    sadm_write "${YELLOW}${BOLD}Setting permissions in the website directories.${NORMAL}\n"
     CMD="find $SADM_WWW_IMG_DIR -type f -exec chmod 664 {} \;"
     find $SADM_WWW_IMG_DIR -type f -exec chmod 664 {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
-       then sadm_writelog "[ ERROR ] running $CMD"
+       then sadm_write "$SADM_ERROR running $CMD \n"
             ERROR_COUNT=$(($ERROR_COUNT+1))
-       else sadm_writelog "[ OK ] running $CMD"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+       else sadm_write "${SADM_OK} running ${CMD}\n"
+            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
     fi
 
     # Set Permission on all *.php files 
     CMD="find $SADM_WWW_DIR -type f -name *.php -exec chmod 664 {} \;"
     find $SADM_WWW_DIR -type f -name *.php -exec chmod 664 {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
-       then sadm_writelog "[ ERROR ] running $CMD"
+       then sadm_write "$SADM_ERROR running ${CMD}\n"
             ERROR_COUNT=$(($ERROR_COUNT+1))
-       else sadm_writelog "[ OK ] running $CMD"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+       else sadm_write "${SADM_OK} running ${CMD}\n"
+            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
     fi
 
     # Set Permission on all *.css files 
     CMD="find $SADM_WWW_DIR -type f -name *.css -exec chmod 664 {} \;"
     find $SADM_WWW_DIR -type f -name *.css -exec chmod 664 {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
-       then sadm_writelog "[ ERROR ] running $CMD"
+       then sadm_write "$SADM_ERROR running ${CMD}\n"
             ERROR_COUNT=$(($ERROR_COUNT+1))
-       else sadm_writelog "[ OK ] running $CMD"
+       else sadm_write "${SADM_OK} running ${CMD}\n"
             if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
     fi
 
@@ -349,57 +350,55 @@ file_housekeeping()
     CMD="find $SADM_WWW_DIR -type f -name *.js -exec chmod 664 {} \;"
     find $SADM_WWW_DIR -type f -name *.js -exec chmod 664 {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
-       then sadm_writelog "[ ERROR ] running $CMD"
+       then sadm_write "$SADM_ERROR running ${CMD}\n"
             ERROR_COUNT=$(($ERROR_COUNT+1))
-       else sadm_writelog "[ OK ] running $CMD"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+       else sadm_write "${SADM_OK} running $CMD \n"
+            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
     fi
 
     # Set Permission on all *.rrd files 
     CMD="find $SADM_WWW_DIR -type f -name *.rrd -exec chmod 664 {} \;"
     find $SADM_WWW_DIR -type f -name *.rrd -exec chmod 664 {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
-       then sadm_writelog "[ ERROR ] running $CMD"
+       then sadm_write "${SADM_ERROR} running ${CMD}\n"
             ERROR_COUNT=$(($ERROR_COUNT+1))
-       else sadm_writelog "[ OK ] running $CMD"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+       else sadm_write "${SADM_OK} running $CMD \n"
+            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
     fi
 
     # Set Permission on all *.pdf files 
     CMD="find $SADM_WWW_DIR -type f -name *.pdf -exec chmod 664 {} \;"
     find $SADM_WWW_DIR -type f -name *.pdf -exec chmod 664 {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
-       then sadm_writelog "[ ERROR ] running $CMD"
+       then sadm_write "${SADM_ERROR} running ${CMD}\n"
             ERROR_COUNT=$(($ERROR_COUNT+1))
-       else sadm_writelog "[ OK ] running $CMD"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+       else sadm_write "${SADM_OK} running ${CMD}\n"
+            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
     fi
 
     # Set Permission on all files in www/dat directories.
     CMD="find $SADM_WWW_DAT_DIR -type f -exec chmod 664 {} \;"
     find $SADM_WWW_DAT_DIR -type f -exec chmod 664 {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
-       then sadm_writelog "[ ERROR ] running $CMD"
+       then sadm_write "$SADM_ERROR running ${CMD}\n"
             ERROR_COUNT=$(($ERROR_COUNT+1))
-       else sadm_writelog "[ OK ] running $CMD"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+       else sadm_write "${SADM_OK} running ${CMD}\n"
+            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
     fi
 
     # Delete performance graph (*.png) generated by web interface older than 5 days.
     if [ -d "$SADM_WWW_PERF_DIR" ]
-        then sadm_writelog " " 
-             sadm_writelog "Delete any *.png files older than 5 days in ${SADM_WWW_PERF_DIR}."
+        then sadm_write "\n" 
+             sadm_write "${YELLOW}${BOLD}Delete any *.png files older than 5 days in ${SADM_WWW_PERF_DIR}.${NORMAL}\n"
              CMD="find $SADM_WWW_PERF_DIR -type f -mtime +5 -name '*.png' -exec rm -f {} \;"
              find $SADM_WWW_PERF_DIR -type f -mtime +5 -name "*.png" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
-                then sadm_writelog "[ ERROR ] running $CMD"
+                then sadm_write "${SADM_ERROR} running ${CMD}\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_writelog "[ OK ] running $CMD"
-                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+                else sadm_write "${SADM_OK} running ${CMD}\n"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
              fi
     fi
-
-
     return $ERROR_COUNT
 }
 
@@ -435,24 +434,24 @@ file_housekeeping()
 
 # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
+             sadm_write "Process aborted\n "                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S with Error
     fi
 
 # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_write "Script can run only on SADMIN server (${SADM_SERVER})\n."
+             sadm_write "Process aborted\n"                            # Abort advise message
              sadm_stop 1                                                # Close/Trim Log & Del PID
              exit 1                                                     # Exit To O/S with error
     fi
 
     alert_housekeeping                                                  # Prune Alert History File
     if [ $? -eq 0 ]
-       then sadm_writelog "$SADM_OK Alert archiving done."
-       else sadm_writelog "$SADM_ERROR While archiving alert."
+       then sadm_write "$SADM_OK Alert archiving done.\n"
+       else sadm_write "$SADM_ERROR While archiving alert.\n"
             ERROR_COUNT=$(($ERROR_COUNT+1))
     fi 
     dir_housekeeping                                                    # Do Dir HouseKeeping

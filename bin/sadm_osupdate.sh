@@ -124,10 +124,10 @@ HWD_FILE="${HPREFIX}_sysinfo.txt"               ; export HWD_FILE       # Hardwa
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${SADM_PN} usage :"
-    printf "\n\t-d   (Debug Level [0-9])"
-    printf "\n\t-h   (Display this help message)"
-    printf "\n\t-r   (Reboot server after update, if needed and if allowed in Database)"
+    printf "\nUsage: %s%s [options]" "${BOLD}${CYAN}" $(basename "$0")
+    printf "\n\t${BOLD}${YELLOW}-d${NORMAL} Set Debug (Verbose) Level [0-9]"
+    printf "\n\t${BOLD}${YELLOW}-h${NORMAL} Display this help message)"
+    printf "\n\t${BOLD}${YELLOW}-r${NORMAL} Reboot server after update (if needed & config allowed)"
     printf "\n\n" 
 }
 
@@ -163,13 +163,16 @@ function cmd_options()
                fi
                ;;
             h) show_usage                                               # Show Help Usage
+               sadm_stop 0
                exit 0                                                   # Back to shell
                ;;
             v) sadm_show_version                                        # Show Script Version Info
+               sadm_stop 0
                exit 0                                                   # Back to shell
                ;;
            \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
                show_usage                                               # Display Help Usage
+               sadm_stop 1
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case

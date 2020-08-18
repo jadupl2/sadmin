@@ -148,7 +148,7 @@ show_usage()
 check_sadmin_account()
 {
     lock_error=0
-    sadm_write "\n${SADM_BOLD}Check status of account '$SADM_USER' ...${SADM_RESET}\n" 
+    sadm_write "\n${BOLD}Check status of account '$SADM_USER' ...${NORMAL}\n" 
 
     # Make sure sadmin account is not asking for password change and block crontab sudo.
     # So we make sadmin account non-expirable and password non-expire
@@ -370,7 +370,7 @@ set_files_recursive()
 # --------------------------------------------------------------------------------------------------
 dir_housekeeping()
 {
-    sadm_write "${SADM_BOLD}SADMIN Client Directories Housekeeping.${SADM_RESET}\n"
+    sadm_write "${BOLD}SADMIN Client Directories Housekeeping.${NORMAL}\n"
     ERROR_COUNT=0                                                       # Reset Error Count
 
     # Path is needed to perform NFS Backup (It doesn't exist by default on Mac)
@@ -544,7 +544,7 @@ set_file()
 # --------------------------------------------------------------------------------------------------
 file_housekeeping()
 {
-    sadm_write "\n${SADM_BOLD}SADMIN Client Files Housekeeping.${SADM_RESET}\n"
+    sadm_write "\n${BOLD}SADMIN Client Files Housekeeping.${NORMAL}\n"
 
    # Just to make sure .gitkeep file always exist
     if [ ! -f "${SADM_TMP_DIR}/.gitkeep" ]  ; then touch ${SADM_TMP_DIR}/.gitkeep ; fi 
@@ -633,7 +633,7 @@ file_housekeeping()
     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
 
 
-    sadm_write "\n${SADM_BOLD}SADMIN Files Pruning.${SADM_RESET}\n"
+    sadm_write "\n${BOLD}SADMIN Files Pruning.${NORMAL}\n"
 
     # Remove files older than 7 days in SADMIN TMP Directory
     if [ -d "$SADM_TMP_DIR" ]

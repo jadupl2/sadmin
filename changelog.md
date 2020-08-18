@@ -156,7 +156,7 @@
 * Template Shell Script
   * Command line option code is now in a function.
   * Fix problem with server name resolving test.
-  * Include some new Screen attribute in code ($SADM_BOLD,$SADM_YELLOW,...)
+  * Include some new Screen attribute in code ($BOLD,$YELLOW,...)
 * sadm_df.sh
   * Fix problem under RHEL/CentOS older version (4,5,6).
   * To increase portability, Column total are now calculated by script.

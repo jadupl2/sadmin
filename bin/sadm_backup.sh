@@ -379,7 +379,7 @@ backup_setup()
 create_backup()
 {
     sadm_write "\n"
-    sadm_write "${SADM_BOLD}Starting Backup Process${SADM_RESET}\n"     # Advise Backup Begin
+    sadm_write "${BOLD}Starting Backup Process${NORMAL}\n"     # Advise Backup Begin
     CUR_PWD=`pwd`                                                       # Save Current Working Dir.
     TOTAL_ERROR=0                                                       # Make Sure Variable is at 0
 

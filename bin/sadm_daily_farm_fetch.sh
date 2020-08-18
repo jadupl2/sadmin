@@ -147,7 +147,7 @@ show_version()
 # --------------------------------------------------------------------------------------------------
 process_servers()
 {
-    sadm_write "${SADM_BOLD}Processing All Actives Server(s)${SADM_RESET}\n"
+    sadm_write "${BOLD}Processing All Actives Server(s)${NORMAL}\n"
 
     # BUILD THE SELECT STATEMENT FOR ACTIVE SERVER & OUTPUT RESULT IN CSV FORMAT TO $SADM_TMP_FILE1
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active"
@@ -164,7 +164,7 @@ process_servers()
 
     # IF FILE WAS NOT CREATED OR HAS A ZERO LENGTH THEN NO ACTIVES SERVERS WERE FOUND
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
-        then sadm_write "${SADM_BOLD}No Active Server were found.${SADM_RESET}\n" 
+        then sadm_write "${BOLD}No Active Server were found.${NORMAL}\n" 
              return 0 
     fi 
 
@@ -180,7 +180,7 @@ process_servers()
         server_sporadic=`echo $wline|awk -F, '{ print $5 }'`            # Sporadic t=True f=False
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
         sadm_write "\n"
-        sadm_write "${SADM_BOLD}Processing ($xcount) ${fqdn_server}${SADM_RESET}\n" # Show Cur.Syst.
+        sadm_write "${BOLD}Processing ($xcount) ${fqdn_server}${NORMAL}\n" # Show Cur.Syst.
         
         # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR TO USER AND CONTINUE WITH NEXT SYSTEM.
         if ! host $fqdn_server >/dev/null 2>&1
@@ -208,9 +208,9 @@ process_servers()
                          CEPOCH=$(sadm_get_epoch_time)                  # Get Current Epoch Time
                          FAGE=`expr $CEPOCH - $FEPOCH`                  # Nb. Sec. OSUpdate running
                          if [ "$FAGE" -gt $OSTIMEOUT ]                  # Running more than 1 Hr
-                            then msg="${SADM_BOLD}O/S update running for more than $OSTIMEOUT sec.${SADM_RESET}"
+                            then msg="${BOLD}O/S update running for more than $OSTIMEOUT sec.${NORMAL}"
                                  sadm_write "${msg}\n"
-                                 msg="${SADM_BOLD}Will now start to monitor this system as usual.${SADM_RESET}"
+                                 msg="${BOLD}Will now start to monitor this system as usual.${NORMAL}"
                                  sadm_write "${msg}\n"
                                  rm -f $UPDATE_RUNNING > /dev/null 2>&1 # Remove O/S Upd Flag File
                             else msg="${SADM_WARNING} O/S update is running on '$fqdn_server'."
