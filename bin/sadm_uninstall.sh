@@ -191,9 +191,9 @@ main_process()
 {
     # Show what type of SADMIN we are removing 
     if [ "$SADM_HOST_TYPE" = "S" ] 
-        then printf "\n${SADM_BOLD}${SADM_CYAN}Uninstalling a SADMIN server.${SADM_RESET}"
+        then printf "\n${BOLD}${CYAN}Uninstalling a SADMIN server.${NORMAL}"
              validate_root_access
-        else printf "\n${SADM_BOLD}${SADM_CYAN}Uninstalling a SADMIN client.${SADM_RESET}"
+        else printf "\n${BOLD}${CYAN}Uninstalling a SADMIN client.${NORMAL}"
     fi
 
     # Remove Backup crontab file in /etc/cron.d
@@ -318,8 +318,8 @@ main_process()
     fi
 
     if [ "$SADM_HOST_TYPE" = "S" ] 
-        then printf "\n${SADM_BOLD}${SADM_CYAN}Uninstall of SADMIN server completed.${SADM_RESET}"
-        else printf "\n${SADM_BOLD}${SADM_CYAN}Uninstall of SADMIN client completed.${SADM_RESET}"
+        then printf "\n${BOLD}${CYAN}Uninstall of SADMIN server completed.${NORMAL}"
+        else printf "\n${BOLD}${CYAN}Uninstall of SADMIN client completed.${NORMAL}"
     fi
     printf "\n\n"                                                         # Blank line separation
     return 0                                                            # Return ErrorCode to Caller
@@ -372,8 +372,8 @@ main_process()
     fi
 
     if [ $DRYRUN -eq 1 ]                                                # Dry Run Activated
-        then printf "${SADM_BOLD}${SADM_YELLOW}Dry Run activated"       # Inform User
-             printf "\nUse '-y' to really remove 'SADMIN' from this system${SADM_RESET}\n"
+        then printf "${BOLD}${YELLOW}Dry Run activated"       # Inform User
+             printf "\nUse '-y' to really remove 'SADMIN' from this system${NORMAL}\n"
         else if [ "$SADM_HOST_TYPE" = "S" ] ;then STYPE="Server" ;else STYPE="Client" ;fi
              ask_user "This will remove 'SADMIN ${STYPE}' from this system, Are you sure" # Not DryRun
              if [ $? -eq 0 ]                                            # don't want to Del SADMIN

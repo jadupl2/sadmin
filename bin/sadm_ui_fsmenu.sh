@@ -83,8 +83,8 @@ create_filesystem()
         sadm_show_menuitem 10 03 5 "Filesystem Type (ext3,ext4,xfs).......... $CR_FT "
         sadm_show_menuitem 14 03 "P" "Proceed with creation ..................."
         sadm_show_menuitem 15 03 "Q" "Quit this menu..........................."
-        sadm_writexy 21 01 "${SADM_GREEN}${SADM_RVS}${SADM_80_SPACES}\c"      # Line 21 - Rev. Video Line
-        sadm_writexy 21 29 "Option ? ${SADM_RESET}  ${SADM_RIGHT}"                # Display "Option ? "
+        sadm_writexy 21 01 "${GREEN}${REVERSE}${SADM_80_SPACES}\c"      # Line 21 - Rev. Video Line
+        sadm_writexy 21 29 "Option ? ${NORMAL}  ${RIGHT}"                # Display "Option ? "
         sadm_writexy 21 38 " "                                          # Position to accept Choice
         read option
         case $option in       
@@ -181,8 +181,8 @@ filesystem_check()
         sadm_show_menuitem 05 05 1   "Mount Point to check................... $RM_MP "
         sadm_show_menuitem 16 05 "P" "Proceed with the filesystem check......"
         sadm_show_menuitem 17 05 "Q" "Quit this menu........................."
-        sadm_writexy 21 01 "${SADM_GREEN}${SADM_RVS}${SADM_80_SPACES}\c" # Line 21 - Rev. Video Line
-        sadm_writexy 21 29 "Option ? ${SADM_RESET}  ${SADM_RIGHT}"      # Display "Option ? "
+        sadm_writexy 21 01 "${GREEN}${REVERSE}${SADM_80_SPACES}\c" # Line 21 - Rev. Video Line
+        sadm_writexy 21 29 "Option ? ${NORMAL}  ${RIGHT}"      # Display "Option ? "
         sadm_writexy 21 38 " "                                          # Position to accept Choice
         read option
         case $option in
@@ -241,8 +241,8 @@ delete_filesystem()
         sadm_show_menuitem 05 04 01  "Mount Point to delete......... $RM_MP "
         sadm_show_menuitem 16 04 "P" "Proceed with the delete......."
         sadm_show_menuitem 17 04 "Q" "Quit this menu................"
-        sadm_writexy 21 01 "${SADM_GREEN}${SADM_RVS}${SADM_80_SPACES}\c" # Line 21 - Rev. Video Line
-        sadm_writexy 21 29 "Option ? ${SADM_RESET}  ${SADM_RIGHT}"      # Display "Option ? "
+        sadm_writexy 21 01 "${GREEN}${REVERSE}${SADM_80_SPACES}\c" # Line 21 - Rev. Video Line
+        sadm_writexy 21 29 "Option ? ${NORMAL}  ${RIGHT}"      # Display "Option ? "
         sadm_writexy 21 38 " "                                          # Position to accept Choice
         read option
         case $option in
@@ -297,11 +297,11 @@ enlarge_filesystem()
                 sadm_writexy 12 08 "Filesystem Permission ...............: $LVPROT"
         fi
         sadm_show_menuitem 05 03 1 "Filesystem mount point to increase...: $RM_MP "
-        sadm_show_menuitem 15 03 2 "New Filesystem Size in MB............: ${SADM_BOLD}${RM_MB}${SADM_RESET}"
+        sadm_show_menuitem 15 03 2 "New Filesystem Size in MB............: ${BOLD}${RM_MB}${NORMAL}"
         sadm_show_menuitem 17 03 "P" "Proceed with increasing the size......"
         sadm_show_menuitem 18 03 "Q" "Quit this menu........................"
-        sadm_writexy 21 01 "${SADM_GREEN}${SADM_RVS}${SADM_80_SPACES}\c" # Line 21 - Rev. Video Line
-        sadm_writexy 21 29 "Option ? ${SADM_RESET}  ${SADM_RIGHT}"      # Display "Option ? "
+        sadm_writexy 21 01 "${GREEN}${REVERSE}${SADM_80_SPACES}\c" # Line 21 - Rev. Video Line
+        sadm_writexy 21 29 "Option ? ${NORMAL}  ${RIGHT}"      # Display "Option ? "
         sadm_writexy 21 38 " "                                          # Position to accept Choice
         read option
         case $option in
