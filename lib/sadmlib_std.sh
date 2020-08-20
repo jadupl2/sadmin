@@ -149,6 +149,7 @@
 #@2020_09_10 Fix: v3.48 Remove improper '::' characters to was inserted im messages.
 #@2020_09_12 New: v3.49 Global Var. $SADM_UCFG_DIR was added to refer $SADMIN/usr/cfg directory.
 #@2020_09_18 New: v3.50 Change Screen Attribute Variable (Remove 'SADM_', $SADM_RED is NOW $RED).
+#@2020_09_19 Fix: v3.51 Remove some ctrl character from the log (sadm_write()).
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -160,7 +161,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.50"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.51"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -394,14 +395,21 @@ if [ -z $TERM ] || [ "$TERM" = "dumb" ]
          export BWHITE=$(tput setab 7)     2>/dev/null                  # White color
 fi
 
+# Constant Var., if message begin with these constant it's showed with special color by sadm_write()
+export SADM_ERROR="::[ERROR"                                            # [ ERROR ] in Red Trigger 
+export SADM_FAILED="::[FAILED "                                         # [ FAILED ] in Red Trigger 
+export SADM_WARNING="::[WARNING "                                       # [ WARNING ] in Yellow
+export SADM_OK="::[OK"                                                  # [ OK ] in Green Trigger
+export SADM_SUCCESS="::[SUCCESS "                                       # [ SUCCESS ] in Green
+export SADM_INFO="::[INFO "                                             # [ INFO] in Blue Trigger
 
-# Standard Variable to Show ERROR,OK,WARNING status uniformingly.
-export SADM_ERROR="::[ ${RED}ERROR${NORMAL} ]"                          # [ ERROR ] Red
-export SADM_FAILED="::[ ${RED}FAILED${NORMAL} ]"                        # [ FAILED ] Red
-export SADM_WARNING="::[ ${BOLD}${YELLOW}WARNING${NORMAL} ]"            # WARNING Yellow
-export SADM_OK="::[ ${BOLD}${GREEN}OK${NORMAL} ]"                       # [ OK ] Green
-export SADM_SUCCESS="::[ ${BOLD}${GREEN}SUCCESS${NORMAL} ]"             # SUCCESS Green
-export SADM_INFO="::[ ${BOLD}${BLUE}INFO${NORMAL} ]"                    # INFO Blue
+# When mess. begin with constant above they are substituted by the value below in sadm_write().
+export SADM_RERROR="[ ${RED}ERROR${NORMAL} ]"                          # [ ERROR ] Red
+export SADM_RFAILED="[ ${RED}FAILED${NORMAL} ]"                        # [ FAILED ] Red
+export SADM_RWARNING="[ ${BOLD}${YELLOW}WARNING${NORMAL} ]"            # WARNING Yellow
+export SADM_ROK="[ ${BOLD}${GREEN}OK${NORMAL} ]"                       # [ OK ] Green
+export SADM_RSUCCESS="[ ${BOLD}${GREEN}SUCCESS${NORMAL} ]"             # SUCCESS Green
+export SADM_RINFO="[ ${BOLD}${BLUE}INFO${NORMAL} ]"                    # INFO Blue
 
 
 
@@ -459,22 +467,42 @@ function sadm_ask() {
 
 
 
+
 # --------------------------------------------------------------------------------------------------
 # Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE
 # Use sadm_write (No LF at EOL) instead of sadm_writelog (With LF at EOL) which is depreciated.
 # --------------------------------------------------------------------------------------------------
 sadm_write() {
-    SADM_SMSG="$@"                                                      # Save Received Message
-    
-    # If two first characters of message are '::', then don't include timestamp in the log.
-    if [ "${SADM_SMSG:0:2}" = "::" ] 
-        then SADM_SMSG=`echo "${SADM_SMSG:2:${#SADM_SMSG}}"`            # Remove '::' in the front
-             SADM_LMSG="$SADM_SMSG"                                     # Then Log Mess with no Time
-        else SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"      # For Log Line include Time
-    fi 
-    SADM_SMSG=`echo ${SADM_SMSG/::/}`                                   # Remove :: from Screen Mess
-    SADM_LMSG=`echo ${SADM_LMSG/::/}`                                   # Remove :: from Log Mess
-    
+    SAVEMSG="$@"                                                        # Save Message Received
+
+    # If two first characters of message are not '::', no special, write message to screen & in log.
+    if [ "${SAVEMSG:0:2}" != "::" ] 
+       then SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SAVEMSG"         # set Logline with date/time
+            SADM_SMSG="$SAVEMSG"                                        # set Screen message
+       else trigger=$(echo $SAVEMSG | awk '{print $1}')                 # Isolate leading trigger
+            case "$trigger" in 
+                "::[OK" )       SADM_SMSG=`echo "${SAVEMSG/$SADM_OK/$SADM_ROK}"`
+                                SADM_LMSG=`echo "${SAVEMSG/$SADM_OK/[ OK ]}"`
+                                ;;
+                "::[ERROR"    ) SADM_SMSG=`echo "${SAVEMSG/$SADM_ERROR/$SADM_RERROR}"`
+                                SADM_LMSG=`echo "${SAVEMSG/$SADM_ERROR/[ ERROR ]}"`
+                                ;;
+                "::[WARNING"  ) SADM_SMSG=`echo "${SAVEMSG/$SADM_WARNING/$SADM_RWARNING}"`
+                                SADM_LMSG=`echo "${SAVEMSG/$SADM_WARNING/[ WARNING ]}"`
+                                ;;
+                "::[FAILED"   ) SADM_SMSG=`echo "${SAVEMSG/$SADM_FAILED/$SADM_RFAILED}"`
+                                SADM_LMSG=`echo "${SAVEMSG/$SADM_FAILED/[ FAILED ]}"`
+                                ;;
+                "::[SUCCESS"  ) SADM_SMSG=`echo "${SAVEMSG/$SADM_SUCCESS/$SADM_RSUCCESS}"`
+                                SADM_LMSG=`echo "${SAVEMSG/$SADM_SUCCESS/[ SUCCESS ]}"`
+                                ;;
+                "::[INFO  "   ) SADM_SMSG=`echo "${SAVEMSG/$SADM_INFO/$SADM_RINFO}"`
+                                SADM_LMSG=`echo "${SAVEMSG/$SADM_INFO/[ INFO ]}"`
+                                ;;
+            esac  
+            SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_LMSG"       # set Logline with date/time
+    fi  
+
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
         s|S) echo -ne "$SADM_SMSG"                                      # Write Msg to Screen
              ;;
