@@ -425,6 +425,7 @@ create_backup()
         # Backup File
         if [ -f "$backup_line" ] && [ -r "$backup_line" ]               # Line is a File & Readable
             then
+                sadm_write "\n"
                 sadm_write "${SADM_TEN_DASH}\n"                         # Line of 10 Dash in Log
                 sadm_write "Backup File : ${backup_line}\n"             # Show Backup filename                 
                 if [ "$COMPRESS" == "ON" ]                              # If compression ON
