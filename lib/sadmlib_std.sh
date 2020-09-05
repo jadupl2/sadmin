@@ -145,12 +145,13 @@
 #@2020_07_20 Update: v3.44 Change permission for log and rch to allow normal user to run script.
 #@2020_07_23 New: v3.45 New function 'sadm_ask', show received msg & wait for y/Y (return 1) or n/N (return 0)
 #@2020_07_29 Fix: v3.46 Fix date not showing in the log under some condition.
-#@2020_09_10 New: v3.47 Add module "sadm_sleep", sleep for X seconds with progressing info.
-#@2020_09_10 Fix: v3.48 Remove improper '::' characters to was inserted im messages.
-#@2020_09_12 New: v3.49 Global Var. $SADM_UCFG_DIR was added to refer $SADMIN/usr/cfg directory.
-#@2020_09_18 New: v3.50 Change Screen Attribute Variable (Remove 'SADM_', $SADM_RED is NOW $RED).
-#@2020_09_19 Fix: v3.51 Remove some ctrl character from the log (sadm_write()).
-#@2020_09_20 Fix: v3.52 Adjust sadm_write method
+#@2020_08_10 New: v3.47 Add module "sadm_sleep", sleep for X seconds with progressing info.
+#@2020_08_10 Fix: v3.48 Remove improper '::' characters to was inserted im messages.
+#@2020_08_12 New: v3.49 Global Var. $SADM_UCFG_DIR was added to refer $SADMIN/usr/cfg directory.
+#@2020_08_18 New: v3.50 Change Screen Attribute Variable (Remove 'SADM_', $SADM_RED is NOW $RED).
+#@2020_08_19 Fix: v3.51 Remove some ctrl character from the log (sadm_write()).
+#@2020_08_20 Fix: v3.52 Adjust sadm_write method
+#@2020_09_05 Fix: v3.53 Added Start/End/Elapse Time to Script Alert Message.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -162,7 +163,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.52"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.53"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2316,6 +2317,7 @@ sadm_send_alert() {
     amessage="$7"                                                       # Save Alert Message
     aattach="$8"                                                        # Save Attachment FileName
     acounter="01"                                                       # Default alert Counter
+
     if [ $LIB_DEBUG -gt 4 ]                                             # Debug Info List what Recv.
        then printf "\n\nFunction '${FUNCNAME}' parameters received :\n"
             sadm_write "atype=$atype \n"                                # Show Alert Type
@@ -2513,22 +2515,35 @@ sadm_send_alert() {
     # Construct Body of the Email.
     mdate=`date "+%Y.%m.%d %H:%M"`                                      # Date & Time of Email
     hepoch=$(sadm_date_to_epoch "$mdate")                               # Date/Time of mail to Epoch
-    if [ "$atype" = "S" ] ; then body0="SADM Script Info" ; else body0="SADM Sysmon Info" ;fi 
+    #if [ "$atype" = "S" ] ; then body0="SADM Script Info" ; else body0="SADM Sysmon Info" ;fi 
+    if [ "$atype" = "S" ] ; then body0="" ; else body0="SADM Sysmon Info" ;fi 
     case "$agroup_type" in
-        m|M)    body1=`printf "%-15s: %s" "Email date/time" "$mdate"`   # Date/Time of email 
-                body4=`printf "%-15s: %s" "Event Message"  "$amessage"` # Body of the message
+        m|M)    #body1=`printf "%-15s: %s" "Email date/time" "$mdate"`  # Date/Time of email 
+                body1=""                                                 # Reduntent  
+                body2=""  
+                body4=`printf "%-15s: %s" "$amessage"`                    # Body of the message
+                body5=""                                                 
+                body6="" 
                 ;;
-        c|C)    body1=`printf "%-15s: %s" "SMS date/time" "$mdate"`     # Date the Cell Texto Sent
-                body4=`printf "%s" "$amessage"`                         # Body of the message
+        c|C)    body1=`printf "%-15s: %s" "SMS date/time" "$mdate"`       # Date the Cell Texto Sent
+                body2=`printf "%-15s: %s" "Event date/time" "$atime"`     # Date/Time event occured
+                body4=`printf "%s" "$amessage"`                           # Body of the message
+                body5=`printf "%-15s %s" "Event on system : " "$aserver"` # Server where alert occured
+                body6=`printf "%-15s %s" "Script Name     : " "$ascript"` # Script Name
                 ;;
         s|S)    body1=`printf "%-15s: %s" "Slack sent date/time" "$mdate"` # Date/Time Slack Sent 
-                body4=`printf "%-15s: %s" "Event Message" "$amessage"`  # Body of the message
+                body2=`printf "%-15s: %s" "Event date/time" "$atime"`     # Date/Time event occured
+                body4=`printf "%-15s: %s" "Event Message" "$amessage"`    # Body of the message
+                body5=`printf "%-15s %s" "Event on system : " "$aserver"` # Server where alert occured
+                body6=`printf "%-15s %s" "Script Name     : " "$ascript"` # Script Name
                 ;;
         t|T)    body1=`printf "%-15s: %s" "SMS date/time" "$mdate"`     # Date the Texto was Sent
+                body2=`printf "%-15s: %s" "Event date/time" "$atime"`   # Date/Time event occured
                 body4=`printf "%s" "$amessage"`                         # Body of the message
+                body5=`printf "%-15s %s" "Event on system : " "$aserver"` # Server where alert occured
+                body6=`printf "%-15s %s" "Script Name     : " "$ascript"` # Script Name
                 ;;
     esac             
-    body2=`printf "%-15s: %s" "Event date/time" "$atime"`               # Date/Time event occured
     if [ $acounter -eq 1 ] && [ $MaxRepeat -eq 1 ]                      # If Alarm is 1 of 1 bypass
         then body3=""
         else body3=`printf "%-15s: %02d of %02d" "Alert counter" "$acounter" "$MaxRepeat"` 
@@ -2536,12 +2551,6 @@ sadm_send_alert() {
     if [ $SADM_ALERT_REPEAT -ne 0 ] && [ $acounter -ne $MaxRepeat ]     # If Repeat or Not Last
        then body3=`printf "%s, next notification around %s" "$body3" "$NxtAlarmTime"`    # Time NextAlert
     fi
-    #if [ $SADM_ALERT_REPEAT -eq 0 ] || [ $acounter -eq $MaxRepeat ]     # Final Alert Message
-    #   then body3=`printf "%s, final notice." "$body3"`                 # Insert Final Notice
-    #fi
-    #body4=`printf "%-15s: %s" "Event Message"   "$amessage"`            # Body of the message
-    body5=`printf "%-15s: %s" "Event on system" "$aserver"`             # Server where alert occured
-    body6=`printf "%-15s: %s" "Script Name    " "$ascript"`             # Script Name
     if [ "$body3" != "" ] 
        then body=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$body0" "$body4" "$body1" "$body2" "$body3" "$body5" "$body6"`
        else body=`printf "%s\n%s\n%s\n%s\n%s\n%s\n%s" "$body0" "$body4" "$body1" "$body2" "$body5" "$body6"`
