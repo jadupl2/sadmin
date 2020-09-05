@@ -68,6 +68,7 @@
 #@2020_05_13 Update: v2.21 Remove mount directory before exiting script.
 #@2020_05_18 Fix: v2.22 Fix /etc/rear/site.conf auto update problem, prior to starting backup.
 #@2020_06_30 Fix: v2.23 Fix chmod 664 for files in server backup directory
+#@2020_09_05 Fix: v2.24 Minor Changes.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -99,7 +100,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.23'                              # Your Current Script Version
+    export SADM_VER='2.24'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -282,7 +283,7 @@ rear_preparation()
     # Check if REAR is not installed - Abort Process 
     if ${SADM_WHICH} rear >/dev/null 2>&1                               # command is found ?
         then export REAR=`${SADM_WHICH} rear`                           # Store Path of command
-        else sadm_write "The command 'rear' is missing, Job Aborted.\n" # Advise User Aborting
+        else sadm_write "${SADM_ERROR} The command 'rear' is missing, Job Aborted.\n" 
              return 1                                                   # Return Error to Caller 
     fi
 
@@ -397,7 +398,8 @@ rear_housekeeping()
     sadm_write "${BOLD}Perform ReaR housekeeping.${NORMAL}\n"
                     
     sadm_write "\n"
-    sadm_write "SADMIN configuration file indicate to you wish to keep $SADM_REAR_BACKUP_TO_KEEP backup files on the NFS server.\n"
+    sadm_write "SADMIN configuration file indicate that you wish to keep $SADM_REAR_BACKUP_TO_KEEP "  
+    sadm_write "ReaR backup files on '${SADM_REAR_NFS_SERVER}'.\n"
     sadm_write "\n"
     sadm_write "List of ReaR backup and ISO actually on NFS Server for ${SADM_HOSTNAME}\n"
     ls -ltrh ${REAR_NAME}* | while read wline ; do sadm_write "${wline}\n"; done
@@ -593,5 +595,6 @@ function cmd_options()
                 else SADM_EXIT_CODE=0                                   # No Error Exit code = 0
              fi  
     fi 
+    if [ -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi   # Remove Temp File
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
