@@ -1,4 +1,4 @@
-# SADMIN ReaR template exclude options v1.4a
+# SADMIN ReaR template exclude options v1.4b
 
 # Only include volume groups (opposite of EXCLUDE_VG)
 # ONLY_INCLUDE_VG=( "rootvg" "vg01" ) 
