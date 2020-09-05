@@ -371,11 +371,44 @@ send_email_report()
 
 
 
+# ==================================================================================================
+# Mount the NFS Directory where all the ReaR backup files are stored 
+# Produce a list of the latest backup for every systems.
+# ==================================================================================================
+rear_report() 
+{
+
+    # Make sure Local mount point exist.
+    REAR_NFS_MOUNT_POINT="/mnt/rearnfs.$$" 
+    if [ ! -d ${REAR_NFS_MOUNT_POINT} ] 
+        then sadm_write "Create NFS local mount point ReaR directory (${REAR_NFS_MOUNT_POINT}).\n" 
+             mkdir ${REAR_NFS_MOUNT_POINT} ; chmod 775 ${REAR_NFS_MOUNT_POINT} 
+     fi
+
+    # Mount the NFS Mount point 
+    sadm_write "\n" 
+    sadm_write "Mount the NFS share on $SADM_REAR_NFS_SERVER system.\n"
+    umount ${REAR_NFS_MOUNT_POINT} > /dev/null 2>&1                     # Assure not already mounted
+    sadm_write "mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${REAR_NFS_MOUNT_POINT} "
+    mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${REAR_NFS_MOUNT_POINT} >>$SADM_LOG 2>&1
+    if [ $? -ne 0 ]
+        then RC=1
+             sadm_write "$SADM_ERROR NFS Mount failed - Process Aborted.\n"
+             umount ${REAR_NFS_MOUNT_POINT} > /dev/null 2>&1
+             rmdir  ${REAR_NFS_MOUNT_POINT} > /dev/null 2>&1
+             return 1
+    fi
+    sadm_write "$SADM_OK \n"
+    df -h | grep ${REAR_NFS_MOUNT_POINT} | sed 's/%//g' | while read wline ; do sadm_write "${wline}\n"; done
+
+
+}
+
 
 # ==================================================================================================
-# Mount the NFS Directory where all the backup files are stored
+# Mount the NFS Backup Directory where all the backup files are stored
 # ==================================================================================================
-mount_nfs()
+mount_nfs_backup()
 {
     # Make sur the Local Mount Point Exist ---------------------------------------------------------
     if [ ! -d ${LOCAL_MOUNT} ]                                          # Mount Point doesn't exist
@@ -413,7 +446,7 @@ mount_nfs()
 # ==================================================================================================
 # Unmount NFS Backup Directory
 # ==================================================================================================
-umount_nfs()
+umount_nfs_backup()
 {
     sadm_write "Unmounting NFS mount directory ${LOCAL_MOUNT} "
     umount $LOCAL_MOUNT >> $SADM_LOG 2>&1                               # Umount Just to make sure
@@ -441,8 +474,8 @@ main_process()
     fi 
 
     # Mount the NFS Backup Directory (mount batnas.maison.ca:/volume1/backup_linux /mnt/backup)
-    mount_nfs                                                           # Mount NFS Dir.
-    if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
+    mount_nfs_backup                                                           # Mount NFS Dir.
+    if [ $? -ne 0 ] ; then umount_nfs_backup ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
 
     # Generating a list of the biggest backup files.
     SAVE_PWD=$(pwd)                                                     # Save Current Working Dir.
@@ -466,7 +499,7 @@ main_process()
         else sadm_write "${SADM_SUCCESS}\n"                             # Signal Success to User
     fi
     cd $SAVE_PWD                                                        # Return to original Dir.
-    umount_nfs                                                          # Umounting NFS Drive
+    umount_nfs_backup                                                   # Umounting NFS Drive
 
     tput clear  
     sadm_write "${BOLD}${BLUE}Biggest Backup Files Report${NORMAL}\n"
