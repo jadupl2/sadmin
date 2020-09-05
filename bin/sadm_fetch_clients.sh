@@ -66,6 +66,7 @@
 # 2020_05_22 Update: v3.12 No longer report an error, if a system is rebooting because of O/S update.
 #@2020_07_20 Update: v3.13 Change email to have success or failure at beginning of subject.
 #@2020_07_29 Update: v3.14 Move location of o/s update is running indicator file to $SADMIN/tmp.
+#@2020_09_05 Update: v3.15 Minor Bug fix, Alert Msg now include Start/End?Elapse Script time
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -113,7 +114,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.14'                              # Your Current Script Version
+    export SADM_VER='3.15'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -649,11 +650,18 @@ update_rear_site_conf()
     # Build name of the client footer of modified Rear exclude file (Via Web Interface)
     REAR_USER_EXCLUDE="${SADM_WWW_DAT_DIR}/${WSERVER}/cfg/rear_exclude.tmp"     
 
-    # If client did not modified the ReaR Exclude option file, then return to caller.
+    # If client did not modified the ReaR Exclude option file, then do nothing & return to caller.
     if [ ! -r "$REAR_USER_EXCLUDE" ] ; then return 0 ; fi
     
-    # Start creating the header of ReaR site.conf file into a temp. file for now.
-    echo  "# Create a bootable ISO9660 image on disk as rear-$(hostname).iso" > $REAR_TMP
+    # Start creating a new ReaR site.conf file into a temp. file for now.
+    echo  "#${SADM_DASH}" > $REAR_TMP
+    echo  "# This file have generated on `date '+%C%y.%m.%d %H:%M:%S'` by 'sadm_fetch_clients.sh'." >> $REAR_TMP
+    echo  "# Every time you modify the '${WSERVER}' ReaR backup or ReaR backup exclude list, "  >> $REAR_TMP
+    echo  "# your changes are copied from the sadmin server ($SADM_SERVER) to ${WSERVER} shortly after (Max 5min). " >> $REAR_TMP
+    echo  "#${SADM_DASH}" >> $REAR_TMP
+    echo  "# " >> $REAR_TMP
+    echo  "# " >> $REAR_TMP
+    echo  "# Create a bootable ISO9660 image on disk as rear-$(hostname).iso" >> $REAR_TMP
     echo  "OUTPUT=ISO" >> $REAR_TMP
     echo  " " >> $REAR_TMP
     echo  "# Internal backup method used to create a simple backup (tar archive)." >> $REAR_TMP
@@ -674,7 +682,13 @@ update_rear_site_conf()
     echo  "# Name of Backup (tar.gz) File" >> $REAR_TMP
     echo  "BACKUP_PROG_ARCHIVE=\"rear_\${HOSTNAME}\"" >> $REAR_TMP
     echo  " " >> $REAR_TMP
+    echo  "### BACKUP EXCLUDE SECTION " >> $REAR_TMP
+    echo  " " >> $REAR_TMP
+
+    # Create the NEW site.conf from the tmp just create above
     cat $REAR_TMP $REAR_USER_EXCLUDE | tr -d '\r' > $REAR_CFG           # Concat & Remove CR in file
+    #cat $REAR_TMP $REAR_USER_EXCLUDE > $REAR_CFG           # Concat & Remove CR in file
+
     #sadm_writelog "scp -P${SADM_SSH_PORT} $REAR_CFG ${WSERVER}:/etc/rear/site.conf" 
     #scp -P${SADM_SSH_PORT}  $REAR_CFG ${WSERVER}:/etc/rear/site.conf
     #if [ $? -eq 0 ] ; then sadm_writelog "[OK] /etc/rear/site.conf is updated on ${WSERVER}" ;fi
@@ -860,14 +874,13 @@ process_servers()
              return 1                                                   # Return Error to Caller
     fi 
 
-    # EXECUTE SQL TO LIST ACTIVE SERVERS OF THE RECEIVED O/S TYPE INTO $SADM_TMP_FILE1
+    # EXECUTE SQL TO GET A LIST OF ACTIVE SERVERS OF THE RECEIVED O/S TYPE INTO $SADM_TMP_FILE1
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
     
     # IF FILE WASN'T CREATED OR HAS A ZERO LENGHT, THEN NO ACTIVE SYSTEM IS FOUND, RETURN TO CALLER.
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
-        then sadm_write "\n${SADM_TEN_DASH}\n"                          # Print 10 Dash line
+        then sadm_write "${SADM_TEN_DASH}\n"                            # Print 10 Dash line
              sadm_write "No Active '$WOSTYPE' system found.\n"          # Not ACtive Server MSG
-             sadm_write "${SADM_TEN_DASH}\n"                            # Print 10 Dash line
              return 0                                                   # Return Error to Caller
     fi 
 
@@ -997,21 +1010,33 @@ process_servers()
                         rsync $REAR_CFG ${server_name}:/etc/rear/site.conf 
                         if [ $? -eq 0 ] 
                             then sadm_write "$SADM_OK /etc/rear/site.conf updated on ${server_name}\n"
+                            else sadm_write "$SADM_ERROR Trying to update /etc/rear/site.conf on ${server_name}\n"
+                                 if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi  
                         fi
-                        #sadm_writelog "rsync -var $REAR_USER_EXCLUDE ${server_name}:${SADM_CFG_DIR}/rear_exclude.txt" 
-                        rsync $REAR_USER_EXCLUDE ${server_name}:${SADM_CFG_DIR}/rear_exclude.txt 
+                        #
+                        #sadm_writelog "rsync -var $REAR_USER_EXCLUDE ${server_name}:${RDIR}/rear_exclude.txt" 
+                        rsync $REAR_USER_EXCLUDE ${server_name}:${RDIR}/rear_exclude.txt 
+                        if [ $? -eq 0 ] 
+                            then sadm_write "$SADM_OK ${RDIR}/rear_exclude.txt updated on ${server_name}\n"
+                            else sadm_write "$SADM_ERROR Trying to update ${RDIR}/rear_exclude.txt on ${server_name}\n"
+                                 if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi  
+                        fi
                    else #sadm_writelog "rsync -var $REAR_CFG /etc/rear/site.conf" 
                         rsync $REAR_CFG /etc/rear/site.conf
                         if [ $? -eq 0 ] 
                             then sadm_write "$SADM_OK /etc/rear/site.conf updated on ${server_name}\n"
+                            else sadm_write "$SADM_ERROR Trying to update /etc/rear/site.conf on ${server_name}\n"
+                                 if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi  
                         fi
+                        #
+                        #sadm_writelog "rsync $REAR_USER_EXCLUDE ${SADM_CFG_DIR}/rear_exclude.txt" 
                         rsync $REAR_USER_EXCLUDE ${SADM_CFG_DIR}/rear_exclude.txt
-                fi
-                RC=$?                                                   # Save Command Return Code
-                if [ $RC -eq 0 ]                                        # If copy to client Worked
-                    then sadm_write "$SADM_OK Modified ReaR site option file on ${server_name}\n"
-                         rm -f $LDIR/backup_exclude.tmp                 # Remove modified Local copy
-                    else sadm_write "$SADM_ERROR Syncing ReaR site option file on ${server_name}\n"
+                        if [ $? -eq 0 ] 
+                            then sadm_write "$SADM_OK ${SADM_CFG_DIR}/rear_exclude.txt updated on ${server_name}\n"
+                            else sadm_write "$SADM_ERROR Trying to update ${SADM_CFG_DIR}/rear_exclude.txt on ${server_name}\n"
+                                 if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi  
+                        fi
+                        RC=$?
                 fi
         fi
 
@@ -1079,8 +1104,9 @@ process_servers()
 # --------------------------------------------------------------------------------------------------
 check_all_rpt()
 {
-    sadm_writelog "Verifying all System Monitor report files (*.rpt) :"
-    sadm_writelog "  - 'Sysmon report file' (*.rpt) for Warning, Info and Errors."
+    sadm_writelog " " 
+    sadm_writelog "${BOLD}${YELLOW}Verifying all System Monitor report files (*.rpt) :${NORMAL}"
+    sadm_writelog "  - Check 'Sysmon report file' (*.rpt) for Warning, Info and Errors."
     if [ $SADM_DEBUG -gt 0 ] 
         then sadm_writelog "find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \;" 
     fi 
@@ -1124,9 +1150,10 @@ check_all_rpt()
                 sadm_write "$etime alert ($etype) from 'SysMon' on ${ehost} : ${emess}\n"
                 sadm_send_alert "$etype" "$etime" "$ehost" "SysMon" "$egname" "$esub" "$emess" "$eattach"
                 done 
-        else sadm_writelog  "No error reported by SysMon report files (*.rpt)" 
+        else sadm_writelog  "No error reported by any 'SysMon report files' (*.rpt)." 
     fi
-    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
+    #sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
+    sadm_writelog " " 
 
 }
 
@@ -1142,7 +1169,7 @@ check_all_rpt()
 check_all_rch()
 {
     sadm_write "\n"
-    sadm_write "Verifying all scripts systems result files (*.rch).\n"
+    sadm_write "${BOLD}${YELLOW}Verifying all scripts systems result files (*.rch).${NORMAL}\n"
     find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \; > $SADM_TMP_FILE1 2>&1
     awk 'match($NF,/[0-1]/) { print }' $SADM_TMP_FILE1 >$SADM_TMP_FILE2 # Keep line ending with 0or1
 
@@ -1170,11 +1197,17 @@ check_all_rch()
         fi
 
         # Extract each field from the current line and prepare alert content.
+        # Line example: holmes 2018.09.18 11:48:53 2018.09.18 11:48:53 00:00:00 sadm_template default 0 1
         ehost=`echo $line   | awk '{ print $1 }'`                       # Host Name of Event
-        wdate=`echo $line   | awk '{ print $4 }'`                       # Get Script Ending Date 
-        wtime=`echo $line   | awk '{ print $5 }' `                      # Get Script Ending Time 
-        wtime=`echo ${wtime:0:5}`                                       # Eliminate the Seconds
-        etime="${wdate} ${wtime}"                                       # Combine Event Date & Time
+        sdate=`echo $line   | awk '{ print $2 }'`                       # Get Script Ending Date 
+        stime=`echo $line   | awk '{ print $3 }' `                      # Get Script Ending Time 
+        stime=`echo ${stime:0:5}`                                       # Eliminate the Seconds
+        start_time="${sdate} ${stime}"                                  # Combine Event Date & Time
+        edate=`echo $line   | awk '{ print $4 }'`                       # Get Script Ending Date 
+        etime=`echo $line   | awk '{ print $5 }' `                      # Get Script Ending Time 
+        etime=`echo ${etime:0:5}`                                       # Eliminate the Seconds
+        end_time="${edate} ${etime}"                                    # Combine Event Date & Time
+        elapse=`echo $line  | awk '{ print $6 }' `                      # Get Script Elapse time 
         escript=`echo $line | awk '{ print $7 }'`                       # Script Name 
         egname=`echo $line  | awk '{ print $8 }'`                       # Alert Group Name
         egtype=`echo $line  | awk '{ print $9 }'`                       # Alert Group Type [0,1,2,3]
@@ -1183,8 +1216,8 @@ check_all_rch()
         if [ "$ecode" = "1" ]                                           # Script Ended with Error
            then esub="Error with ${escript} on $ehost."                 # Alert Subject
                 emess="Script '$escript' failed on ${ehost}."           # Alert Message
-           else esub="Success of '$escript' on ${ehost}."               # Alert Subject
-                emess="Successfully ran '$escript' on ${ehost}."        # Alert Message
+           else esub="Success of '$escript' on ${ehost}."               # Script Success Alert Subj.
+                emess="Successfully ran '$escript' on ${ehost}."        # Script Success Alert Mess.
         fi
         elogfile="${ehost}_${escript}.log"                              # Build Log File Name
         elogname="${SADM_WWW_DAT_DIR}/${ehost}/log/${elogfile}"         # Build Log Full Path File
@@ -1203,7 +1236,7 @@ check_all_rch()
            [ "$egtype" = "2" -a "$ecode" = "0" ] || [ "$egtype" = "3" ]  
            then total_alert=`expr $total_alert + 1`                     # Incr. Alert counter
                 if [ $SADM_DEBUG -gt 0 ]                                # Under Debug Show Parameter
-                   then dmess="'$etype' '$etime' '$ehost' '$egname'"    # Build Mess to see Param.
+                   then dmess="'$etype' '$start_time' '$end_time' '$ehost' '$egname'"    # Build Mess to see Param.
                         dmess="$dmess '$esub' '$emess' '$eattach'"      # Build Mess to see Param.
                         sadm_writelog "sadm_send_alert $dmess RC=$RC"   # Show User Paramaters sent
                 fi
@@ -1211,7 +1244,11 @@ check_all_rch()
                 #sadm_writelog " " 
                 #sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: "
                 #sadm_writelog "   - $emess"
-                sadm_send_alert "$etype" "$etime" "$ehost" "$escript" "$egname" "$esub" "$emess" "$eattach"
+                emess=$(echo -e "${emess}\nScript start time  : ${start_time}\n")
+                emess=$(echo -e "${emess}\nScript end time    : ${end_time}\n")
+                emess=$(echo -e "${emess}\nScript elapse time : ${elapse}\n")
+                if [ $SADM_DEBUG -gt 0 ] ;then sadm_write "Email Message is:\n${emess}\n" ; fi
+                sadm_send_alert "$etype" "$end_time" "$ehost" "$escript" "$egname" "$esub" "$emess" "$eattach"
                 RC=$?
                 if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "RC=$RC" ;fi # Debug Show ReturnCode
                 case $RC in
@@ -1265,13 +1302,14 @@ main_process()
     MAC_ERROR=$?                                                        # Save Nb. Errors in process
 
     # Print Total Script Errors
+    sadm_writelog " " 
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
     sadm_writelog "System Sync Summary"                                 # Rsync Summary 
     SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR+$MAC_ERROR))              # ExitCode=AIX+Linux+Mac Err
     sadm_writelog " - Total Linux error(s)  : ${LINUX_ERROR}"           # Display Total Linux Errors
     sadm_writelog " - Total Aix error(s)    : ${AIX_ERROR}"             # Display Total Aix Errors
     sadm_writelog " - Total Mac error(s)    : ${MAC_ERROR}"             # Display Total Mac Errors
-    sadm_writelog " - Script Total Error(s) : ${SADM_EXIT_CODE}"        # Display Total Script Error
+    sadm_writelog " Script Total Error(s)   : ${SADM_EXIT_CODE}"        # Display Total Script Error
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
     sadm_writelog " "                                                   # Separation Blank Line
     if [ $(sadm_get_ostype) = "LINUX" ] ; then crontab_update ; fi      # Update crontab if needed
@@ -1313,11 +1351,11 @@ crontab_update()
        then cp ${SADM_CRON_FILE} ${SADM_CRONTAB}                        # Put in place New Crontab
             chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB}   # Set crontab Perm.
             sadm_writelog "O/S Update crontab was updated ..."          # Advise user
-       else sadm_writelog "No need to update O/S Update crontab ..."    # CheckSum Equal no update
+       else sadm_writelog "No change were made on O/S update schedule, no need to update O/S update crontab."
     fi
     rm -f ${SADM_CRON_FILE} >>/dev/null 2>&1                            # Remove crontab work file
-    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
-    sadm_writelog " "                                                   # Separation Blank Line
+    #sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
+    #sadm_writelog " "                                                   # Separation Blank Line
 
 
     # Create New backup crontab sha1sum
@@ -1329,11 +1367,11 @@ crontab_update()
        then cp ${SADM_BACKUP_NEWCRON} ${SADM_BACKUP_CRONTAB}            # Put in place New Crontab
             chmod 644 $SADM_BACKUP_CRONTAB ; chown root:root ${SADM_BACKUP_CRONTAB}
             sadm_writelog "Clients backup schedule crontab was updated" # Advise user
-       else sadm_writelog "No need to update Backup crontab ..."        # CheckSum Equal no update
+       else sadm_writelog "No change were made on Backup schedule, no need to update backup crontab."
     fi
     rm -f ${SADM_BACKUP_NEWCRON} >>/dev/null 2>&1                       # Remove crontab work file
-    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
-    sadm_writelog " "                                                   # Separation Blank Line
+    #sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
+    #sadm_writelog " "                                                   # Separation Blank Line
  
 
     # Create New ReaR crontab sha1sum
@@ -1345,11 +1383,11 @@ crontab_update()
        then cp ${SADM_REAR_NEWCRON} ${SADM_REAR_CRONTAB}                # Put in place New Crontab
             chmod 644 $SADM_REAR_CRONTAB ; chown root:root ${SADM_REAR_CRONTAB}
             sadm_writelog "Clients ReaR backup schedule crontab was updated" # Advise user
-       else sadm_writelog "No need to update ReaR backup crontab ..."   # CheckSum Equal no update
+       else sadm_writelog "No change made to ReaR backup schedule, no need to update ReaR backup crontab."
     fi
     rm -f ${SADM_REAR_NEWCRON} >>/dev/null 2>&1                         # Remove crontab work file
-    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
-    sadm_writelog " "                                                   # Separation Blank Line
+    #sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
+    #sadm_writelog " "                                                   # Separation Blank Line
  
 }
 
