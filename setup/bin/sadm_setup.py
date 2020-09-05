@@ -74,10 +74,11 @@
 # 2020_04_21 Update: v3.37 Add syslinux,genisomage,rear packages req. & hwinfo to EPEL(RHEL/CentOS8)
 # 2020_04_23 Update: v3.38 Fix Renaming Apache config error.
 # 2020_04_27 Update: v3.39 Remove 'arp-scan' installation on server (no longer needed).
-#@2020_04_27 Fix: v3.40 Fix problem with typo error.
-#@2020_07_10 Update: v3.41 Assign temporary passwd to sadmin user.
-#@2020_07_11 Update: v3.42 Minor script changes.
-#@2020_07_11 Update: v3.43 Added rsync package to client installation. 
+# 2020_04_27 Fix: v3.40 Fix problem with typo error.
+# 2020_07_10 Update: v3.41 Assign temporary passwd to sadmin user.
+# 2020_07_11 Update: v3.42 Minor script changes.
+# 2020_07_11 Update: v3.43 Added rsync package to client installation. 
+#@2020_09_05 Update: v3.44 Minor change to sadm_client crontab file.
 # 
 # ==================================================================================================
 #
@@ -95,7 +96,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.43"                                            # Setup Version Number
+sver                = "3.44"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -391,12 +392,19 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("# \n")
     hcron.write ("# \n")
     hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
-    hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
+    hcron.write ("# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
     hcron.write ("# \n")
-    hcron.write ("# Run Daily before midnight\n")
-    hcron.write ("# Housekeeping, Save Filesystem Info, Create SysInfo & Set Files/Dir. Owner\n")
+    #hcron.write ("# Every 30 Min, this script make sure the 'nmon' performance collector is running.\n")
+    #hcron.write ("*/30 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.sh > /dev/null 2>&1\n" % (wuser))
+    #hcron.write ("# \n")
+    hcron.write ("# \n")
+    hcron.write ("# Run these four scripts in sequence, just before midnight every day:\n")
+    hcron.write ("# (1) sadm_housekeeping_client.sh (Make sure files in $SADMIN have proper owner:group & permission)\n")
+    hcron.write ("# (2) sadm_dr_savefs.sh (Save filesystems info in order to recreate them easaly in Disaster Recovery).\n")
+    hcron.write ("# (3) sadm_create_cfg2html.sh (Run cfg2html tool - Produce system configuration web page).\n")
+    hcron.write ("# (4) sadm_create_sysinfo.sh (Collect Hardware & Software info of system to update Database).\n")
     hcron.write ("23 23 * * *  %s sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1\n" % (wuser))
-    hcron.write ("#\n")
+    hcron.write ("# \n")
 
     # Insert line that run System monitor every 5 minutes.
     chostname = socket.gethostname().split('.')[0]
