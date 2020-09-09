@@ -67,6 +67,7 @@
 #@2020_07_20 Update: v3.13 Change email to have success or failure at beginning of subject.
 #@2020_07_29 Update: v3.14 Move location of o/s update is running indicator file to $SADMIN/tmp.
 #@2020_09_05 Update: v3.15 Minor Bug fix, Alert Msg now include Start/End?Elapse Script time
+#@2020_09_09 Update: v3.16 Modify Alert message when client is down.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -114,7 +115,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.15'                              # Your Current Script Version
+    export SADM_VER='3.16'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -823,13 +824,13 @@ validate_server_connectivity()
             then if [ $RETRY -lt 3 ]                                    # If less than 3 retry
                     then sadm_write "$SADM_ERROR [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date\n"
                     else sadm_write "$SADM_ERROR [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date\n"
-                         SMSG="$SADM_ERROR Can't SSH to ${FQDN_SNAME}, system may be down."  
+                         SMSG="$SADM_ERROR ${FQDN_SNAME} unresponsive (Can't SSH to it)."  
                          sadm_write "${SMSG}\n"                         # Display Error Msg
 
                          # Create Error Line in Global Error Report File (rpt)
                          ADATE=`date "+%Y.%m.%d;%H:%M"`                 # Current Date/Time
                          RPTLINE="Error;${SNAME};${ADATE};linux;NETWORK"
-                         RPTLINE="${RPTLINE};System '${FQDN_SNAME}' may be down, can't SSH to it."
+                         RPTLINE="${RPTLINE};${FQDN_SNAME} unresponsive (Can't SSH to it)"
                          RPTLINE="${RPTLINE};${SADM_ALERT_GROUP};${SADM_ALERT_GROUP}" 
                          echo "$RPTLINE" >> $FETCH_RPT                  # Create Skip Code to caller                              
                          return 1                                       # Return Error to caller
