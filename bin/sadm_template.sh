@@ -116,7 +116,7 @@ show_usage()
 
 
 #===================================================================================================
-# Process all your active(s) server(s) in the Database (Used if want to process selected servers)
+# Process all your active(s) server(s) found in Database (Used if want to process selected servers)
 #===================================================================================================
 process_servers()
 {
@@ -125,7 +125,8 @@ process_servers()
     # Put Rows you want in the select. 
     # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir" 
-    
+    SQL="${SQL},srv_backup,srv_img_backup "
+
     # Build SQL to select active server(s) from Database.
     SQL="${SQL} from server"                                            # From the Server Table
     SQL="${SQL} where srv_active = True"                                # Select only Active Servers
@@ -144,25 +145,27 @@ process_servers()
     while read wline                                                    # Read Tmp file Line by Line
         do
         xcount=$(($xcount+1))                                           # Increase Server Counter
-        server_name=`    echo $wline|awk -F, '{ print $1 }'`            # Extract Server Name
-        server_os=`      echo $wline|awk -F, '{ print $2 }'`            # O/S (linux/aix/darwin)
-        server_domain=`  echo $wline|awk -F, '{ print $3 }'`            # Extract Domain of Server
-        server_monitor=` echo $wline|awk -F, '{ print $4 }'`            # Monitor  1=True 0=False
-        server_sporadic=`echo $wline|awk -F, '{ print $5 }'`            # Sporadic 1=True 0=False
-        server_rootdir=` echo $wline|awk -F, '{ print $7 }'`            # Client SADMIN Root Dir.
+        server_name=$(echo $wline|awk -F, '{print $1}')                 # Extract Server Name
+        server_os=$(echo $wline|awk -F, '{print $2}')                   # O/S (linux/aix/darwin)
+        server_domain=$(echo $wline|awk -F, '{print $3}')               # Extract Domain of Server
+        server_monitor=$(echo $wline|awk -F, '{print $4}')              # Monitor  1=True 0=False
+        server_sporadic=$(echo $wline|awk -F, '{print $5}')             # Sporadic 1=True 0=False
+        server_rootdir=$(echo $wline|awk -F, '{print $7}')              # Client SADMIN Root Dir.
+        server_backup=$(echo $wline|awk -F, '{print $8}')               # Backup Schd 1=True 0=False
+        server_img_backup=$(echo $wline|awk -F, '{print $9}')           # ReaR Sched. 1=True 0=False
+        #
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQDN Server Name
-        sadm_write "\n`printf %10s |tr " " "-"` \n"                     # Ten Dashes Line    
+        sadm_write "\n"                                                 # Blank Line
+        sadm_write "${SADM_TEN_DASH}\n"                                 # Ten Dashes Line    
         sadm_write "Processing ($xcount) ${fqdn_server}.\n"             # Server Count & FQDN Name 
 
         # Check if server name can be resolve - If not, we won't be able to SSH to it.
         host  $fqdn_server >/dev/null 2>&1                              # Try to resolve Hostname
         if (( $? ))                                                     # If hostname not resolvable
             then SMSG="$SADM_ERROR Can't process '$fqdn_server', hostname can't be resolved."
-                 sadm_write "${SMSG}\n"                                 # Advise user & Feed log
+                 sadm_writelog "${SMSG}"                                # Advise user & Feed log
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
-                 if [ $ERROR_COUNT -ne 0 ]                              # If Error count not at zero
-                    then sadm_write "Total error(s) : ${ERROR_COUNT}\n" # Show Total Error Count
-                 fi
+                 sadm_write "Total error(s) : ${ERROR_COUNT}\n"         # Show Total Error Count
                  continue                                               # Continue with next Server
         fi
 
@@ -177,14 +180,14 @@ process_servers()
 
         # If SSH failed and it's a Sporadic Server, Show Warning and continue with next system.
         if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]               # SSH don't work & Sporadic
-            then sadm_write "${SADM_WARNING} Can't SSH to sporadic system ${fqdn_server}.\n"
+            then sadm_writelog "${SADM_WARNING} Can't SSH to sporadic system ${fqdn_server}."
                  sadm_write "Continuing with next system\n"             # Not Error if Sporadic Srv. 
                  continue                                               # Continue with next system
         fi
 
         # If SSH Failed & Monitoring is Off, Show Warning and continue with next system.
         if [ $RC -ne 0 ] &&  [ "$server_monitor" = "0" ]                # SSH don't work/Monitor OFF
-            then sadm_write "$SADM_WARNING Can't SSH to $fqdn_server - Monitoring is OFF\n"
+            then sadm_writelog "$SADM_WARNING Can't SSH to $fqdn_server - Monitoring is OFF"
                  sadm_write "Continuing with next system\n"             # Not Error if don't Monitor
                  continue                                               # Continue with next system
         fi
@@ -192,7 +195,7 @@ process_servers()
         # If All SSH test failed, Issue Error Message and continue with next system
         if (( $RC ))                                                    # If SSH to Server Failed
             then SMSG="$SADM_ERROR Can't SSH to '${fqdn_server}'"       # Problem with SSH
-                 sadm_write "${SMSG}\n"                                 # Show/Log Error Msg
+                 sadm_writelog "${SMSG}"                                # Show/Log Error Msg
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
                  continue                                               # Continue with next system
         fi
