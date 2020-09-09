@@ -103,8 +103,8 @@ export bb_dcount=20                                                     # Nb Dir
 
 # Define NFS local mount point
 if [ "$SADM_OS_TYPE" = "DARWIN" ]                                       # If on MacOS
-    then LOCAL_MOUNT="/preserve/nfs"  ; export LOCAL_MOUNT              # NFS Mount Point for OSX
-    else LOCAL_MOUNT="/mnt/backup"    ; export LOCAL_MOUNT              # NFS Mount Point for Linux
+    then export LOCAL_MOUNT="/preserve/daily_report.$$nfs"              # NFS Mount Point for OSX
+    else export LOCAL_MOUNT="/mnt/daily_report.$$"                      # NFS Mount Point for Linux
 fi  
 
 # Previous data for summary script
@@ -362,10 +362,10 @@ send_email_report()
 {
 
     body="Here's the Daily SADMIN Report "
-    ws="Daily SADMIN Report"
+    subject="Daily SADMIN Report"
     if [ "$SADM_OS_NAME" = "REDHAT" ] || [ "$SADM_OS_NAME" = "CENTOS" ] || [ "$SADM_OS_NAME" = "FEDORA" ]
-        then echo "$body" | mail -s "$ws" -a $bb_dir -a $bb_file $SADM_MAIL_ADDR  
-        else echo "$body" | mail -s "$ws" --attach=$bb_dir --attach=$bb_file $SADM_MAIL_ADDR
+        then echo "$body" | mail -s "$subject" -a $bb_dir -a $bb_file $SADM_MAIL_ADDR  
+        else echo "$body" | mail -s "$subject" --attach=$bb_dir --attach=$bb_file $SADM_MAIL_ADDR
     fi 
 }
 
@@ -542,8 +542,122 @@ main_process()
 #    # If Mail Switch is ON - Send what usually displayed to Sysadmin
 #    if [ "$MAIL_ONLY" = "ON" ] ; then mail_report ; fi                  # mail switch ON = Email Rep
 #
+    # Delete NFS Local Mount point
+    if [ -d "$LOCAL_MOUNT" ] ; then rm -f "$LOCAL_MOUNT" >/dev/null 2>&1 ; fi 
 
     return 0                                                            # Return Default return code
+}
+
+
+#===================================================================================================
+# Process all your active(s) server(s) found in Database.
+#===================================================================================================
+process_servers()
+{
+    sadm_write "${BOLD}${YELLOW}Processing All Active(s) Server(s) ...${NORMAL}\n"
+
+    # Put Rows you want in the select. 
+    # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
+    SQL="SELECT srv_name,srv_desc,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active" 
+    SQL="${SQL},srv_sadmin_dir,srv_backup,srv_img_backup "
+
+    # Build SQL to select active server(s) from Database.
+    SQL="${SQL} from server"                                            # From the Server Table
+    SQL="${SQL} where srv_active = True"                                # Select only Active Servers
+    SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
+    
+    # Execute SQL Query to Create CSV in SADM Temporary work file ($SADM_TMP_FILE1)
+    CMDLINE="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL Auth/Read Only User
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug Show Auth cmdline
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
+    if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
+        then sadm_write "$SADM_WARNING No Active Server were found.\n"  # Not Active Server MSG
+             return 0                                                   # Return Status to Caller
+    fi 
+    
+    tput clear 
+    echo "WORK FILE" 
+    cat $SADM_TMP_FILE1
+    return 0 
+#   debian10,Debian 10 - Test Server,linux,maison.ca,1,1,1,/opt/sadmin,1,1
+#   debian9,Debian 9 Test System,linux,maison.ca,1,0,1,/opt/sadmin,1,1
+#   fedora32,Fedora 32 - Test Server,linux,maison.ca,1,0,1,/opt/sadmin,1,1
+#   gumby,Red Hat Enterprise V5,linux,maison.ca,1,0,1,/sadmin,1,1
+#   holmes,sadmin,dns,wiki,history,dhcp..,linux,maison.ca,1,0,1,/sadmin,1,1
+#   lestrade,Ubuntu 20.04 Desktop,linux,maison.ca,1,0,1,/opt/sadmin,1,1
+#   nomad,CentOS 6 Server,linux,maison.ca,1,0,1,/sadmin,1,1
+#   raspi0,Raspberry Pi Model Zero W R1.1,linux,maison.ca,1,0,1,/opt/sadmin,1,0
+#   
+    xcount=0; ERROR_COUNT=0;                                            # Set Server & Error Counter
+    while read wline                                                    # Read Tmp file Line by Line
+        do
+        xcount=$(($xcount+1))                                           # Increase Server Counter
+        server_name=$(echo $wline      |awk -F, '{print $1}')           # Extract Server Name
+        server_desc=$(echo $wline      |awk -F, '{print $2}')           # Extract Server Description
+        server_os=$(echo $wline        |awk -F, '{print $3}')           # O/S (linux/aix/darwin)
+        server_domain=$(echo $wline    |awk -F, '{print $4}')           # Extract Domain of Server
+        server_monitor=$(echo $wline   |awk -F, '{print $5}')           # Monitor  1=True 0=False
+        server_sporadic=$(echo $wline  |awk -F, '{print $6}')           # Sporadic 1=True 0=False
+        server_active=$(echo $wline    |awk -F, '{print $7}')           # Active   1=Yes  0=No
+        server_rootdir=$(echo $wline   |awk -F, '{print $8}')           # Client SADMIN Root Dir.
+        server_backup=$(echo $wline    |awk -F, '{print $9}')           # Backup Schd 1=True 0=False
+        server_img_backup=$(echo $wline|awk -F, '{print $10}')          # ReaR Sched. 1=True 0=False
+        #
+        fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQDN Server Name
+        sadm_write "\n"                                                 # Blank Line
+        sadm_write "${SADM_TEN_DASH}\n"                                 # Ten Dashes Line    
+        sadm_write "Processing ($xcount) ${fqdn_server}.\n"             # Server Count & FQDN Name 
+
+        # Check if server name can be resolve - If not, we won't be able to SSH to it.
+        host  $fqdn_server >/dev/null 2>&1                              # Try to resolve Hostname
+        if (( $? ))                                                     # If hostname not resolvable
+            then SMSG="$SADM_ERROR Can't process '$fqdn_server', hostname can't be resolved."
+                 sadm_writelog "${SMSG}"                                # Advise user & Feed log
+                 ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
+                 sadm_write "Total error(s) : ${ERROR_COUNT}\n"         # Show Total Error Count
+                 continue                                               # Continue with next Server
+        fi
+
+        # Try a SSH to Host Name
+        if [ $SADM_DEBUG -gt 0 ] ;then sadm_write "$SADM_SSH_CMD $fqdn_server date\n" ; fi 
+        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Server
+            then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1       # SSH to Server & Run 'date'
+                 RC=$?                                                  # Save Return Code Number
+            else RC=0                                                   # No SSH to SADMIN Server
+        fi
+        if [ $SADM_DEBUG -gt 0 ] ;then sadm_write "Return Code: ${RC}\n" ;fi # Show SSH Status
+
+        # If SSH failed and it's a Sporadic Server, Show Warning and continue with next system.
+        if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]               # SSH don't work & Sporadic
+            then sadm_writelog "${SADM_WARNING} Can't SSH to sporadic system ${fqdn_server}."
+                 sadm_write "Continuing with next system\n"             # Not Error if Sporadic Srv. 
+                 continue                                               # Continue with next system
+        fi
+
+        # If SSH Failed & Monitoring is Off, Show Warning and continue with next system.
+        if [ $RC -ne 0 ] &&  [ "$server_monitor" = "0" ]                # SSH don't work/Monitor OFF
+            then sadm_writelog "$SADM_WARNING Can't SSH to $fqdn_server - Monitoring is OFF"
+                 sadm_write "Continuing with next system\n"             # Not Error if don't Monitor
+                 continue                                               # Continue with next system
+        fi
+
+        # If All SSH test failed, Issue Error Message and continue with next system
+        if (( $RC ))                                                    # If SSH to Server Failed
+            then SMSG="$SADM_ERROR Can't SSH to '${fqdn_server}'"       # Problem with SSH
+                 sadm_writelog "${SMSG}"                                # Show/Log Error Msg
+                 ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
+                 continue                                               # Continue with next system
+        fi
+        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
+            then sadm_writelog "$SADM_OK SSH to ${fqdn_server} work"     # Good SSH Work on Client
+            else sadm_writelog "$SADM_OK No SSH using 'root' on the SADMIN Server ($SADM_SERVER)"
+        fi
+
+        # PROCESSING CAN BE PUT HERE
+        # ........
+        # ........
+        done < $SADM_TMP_FILE1
+    return $ERROR_COUNT                                                 # Return Err Count to caller
 }
 
 
@@ -618,8 +732,7 @@ function cmd_options()
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-
-    # Get the last line of all rch files in $SADMIN/www, sort results and Display them
+    process_servers
     main_process                                                        # main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
