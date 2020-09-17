@@ -94,6 +94,7 @@ usr/mon/swatch_nmon.log
 doc/odt/*
 usr/cfg/*
 usr/pkg/*
+usr/img/*
 usr/dat/*
 usr/wip/*
 
