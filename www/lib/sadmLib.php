@@ -43,8 +43,9 @@
 # 2019_08_14 Update: v2.12 Add function for new page header look (display_lib_heading).
 # 2019_10_15 Update: v2.13 Reduce Logo size image from 32 to 24 square pixels
 # 2019_10_15 Update: v2.14 Reduce font size on 2nd line of heading in "display_lib_heading".
-#@2020_01_13 Update: v2.15 Reduce Day of the week name returned by SCHEDULE_TO_TEXT to 3 Char.
-#@2020_04_27 Update: v2.16 Change 2019 to 2020 in page footer
+# 2020_01_13 Update: v2.15 Reduce Day of the week name returned by SCHEDULE_TO_TEXT to 3 Char.
+# 2020_04_27 Update: v2.16 Change 2019 to 2020 in page footer
+#@2020_09_22 Update: v2.17 Facilitate going back to previous & Home page by adding button in header.
 # ==================================================================================================
 #
 
@@ -53,7 +54,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.16" ;   
+$LIBVER = "2.17" ;   
     
 
 #===================================================================================================
@@ -64,13 +65,26 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
     $URL_HOME   = '/index.php';                                         # Site Home Page URL
     
     # SHOW HEADING LINE 1
+    echo "\n<div style='float: left;'>";                                # Align Left Link Go Back
+    if (strtoupper($BACK_URL) != "HOME") {                              # Parameter Recv. = home
+        echo "<a href='javascript:history.go(-1)'>";                    # URL Go Back Previous Page
+        echo "<span data-toggle='tooltip' title='Back to previous page'>";  # Show Tooltip 
+        echo "<img src='/images/back_hand.png' ";                       # Show hand pointing left
+        echo "style='width:32px;height:32px;'></span></a>";             # Size Icons 32x32
+    }else{
+        echo "<a href='" . $URL_HOME . "'>";                            # URL to Go Back Home Page
+        echo "<span data-toggle='tooltip' title='Back to Home page'>";  # Show Tooltip 
+        echo "<img src='/images/home.png' ";                            # Show Home Icon
+        echo "style='width:32px;height:32px;'></span></a>";             # Size Icons 32x32
+    }
+    echo "</div>"; 
     echo "\n<div style='";
     echo "text-align: center ; color: #271c1c; ";
     echo "font-size: 1.8em; font-family: Verdana, sans-serif; ";
     echo "font-weight: bold; '>"; 
     echo "\n${TITLE1} " ."- v${WVER}";
     echo "\n</div>";
-
+ 
     # SHOW HEADING LINE 2
     if ($TITLE2 != "") {
         echo "\n<div style='";
@@ -84,13 +98,7 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
     # Space line for separation purpose
     echo "\n<hr/>";                                                     # Print Horizontal Line
 
-    // echo "\n<div style='float: left;'>";                                # Align Left Link Go Back
-    // if (strtoupper($BACK_URL) != "HOME") {                              # Parameter Recv. = home
-    //     echo "<a href='javascript:history.go(-1)'>Previous Page</a>";   # URL Go Back Previous Page
-    // }else{
-    //     echo "<a href='" . $URL_HOME . "'>Home Page</a>";               # URL to Go Back Home Page
-    // }
-    // echo "</div>";    
+   
 }
 
 
@@ -111,6 +119,7 @@ function std_page_footer($wcon="") {
     echo "\n</body>";
     echo "\n</html>";
 }
+
 
 
 # ==================================================================================================
@@ -136,6 +145,8 @@ function netinfo ($ip_address,$ip_nmask) {
     return array (long2ip($ip_net), long2ip($ip_first), long2ip($ip_last), long2ip($ip_broadcast));
 }
 
+
+
 # ==================================================================================================
 # Function to convert a netmask (ex: 255.255.255.240) to a cidr mask (ex: 28):
 # Example: mask2cidr('255.255.255.0') would return 24 
@@ -146,6 +157,8 @@ function mask2cidr($wmask)
     $base = ip2long('255.255.255.255');
     return 32-log(($long ^ $base)+1,2);
 }
+
+
 
 # ==================================================================================================
 # Function to convert a CIDR (Example: 24) to Netmask (Example: 255.255.255.000) 
@@ -160,6 +173,8 @@ function cidr2mask($cidr) {
     $subnet_long = $max_ip << (32 - $cidr);                             # Calculate netmask
     return long2ip($subnet_long);                                       # Return NetMask
 }
+
+
 
 # ==================================================================================================
 # Function getEachIpInRange return an array of ip address in CIDR Received (Ex: '192.168.1.0/24')
@@ -188,6 +203,8 @@ function getEachIpInRange ($cidr) {
     }
     return $ips;
 }
+
+
 
 # ==================================================================================================
 #                      Update the crontab based on the $paction parameter
@@ -367,6 +384,8 @@ function calculate_osupdate_date($W1stMth,$WFreq,$Week1,$Week2,$Week3,$Week4,$WU
     
     return $UPD_DATE;
 }
+
+
 
 # ==================================================================================================
 #               Popup Message received as parameter and wait for OK to be pressed
