@@ -24,9 +24,10 @@
 # ==================================================================================================
 # ChangeLog
 # 2018_01_04 Initial Version v1.0  
-#@2020_03_03 New: v1.1 Shortcut Menu added in page header for fast access within the site.
-#@2020_04_10 Update: v1.2 Add Network link shortcut at the top of each page.
-#@2020_04_25 Update: v1.3 Reduce Menu line in header to fit on Ipad.
+# 2020_03_03 New: v1.1 Shortcut Menu added in page header for fast access within the site.
+# 2020_04_10 Update: v1.2 Add Network link shortcut at the top of each page.
+# 2020_04_25 Update: v1.3 Reduce Menu line in header to fit on Ipad.
+#@2020_09_23 Update: v1.4 Add Tooltips to Shortcut in the page header.
 #
 # ==================================================================================================
 #
@@ -44,7 +45,8 @@
 
     <tr>
         <td bgcolor="#124f44" rowspan="3" align="center" valign="middle" style="width:15%">
-            <a href="/index.php"><img width=90 height=90 src=/images/sadmin_logo.png></a>
+            <span data-toggle='tooltip' title='Home Page'>
+            <a href="/index.php"><img width=90 height=90 src=/images/sadmin_logo.png></span></a>
         </td>
         <td bgcolor="#124f44" align="center" valign="middle">
             <img width=645 height=69 src=/images/sadmin_new_text.png>
@@ -60,23 +62,23 @@
         <td  bgcolor="#124f44" align="center" valign="top">
             <font size="2"><font color="#ffffff"><strong>
         <div id='quick_link'>
-            <a href='/view/srv/sadm_view_servers.php?selection=all_servers'>Servers</a>
+            <a href='/view/srv/sadm_view_servers.php?selection=all_servers'><span data-toggle='tooltip' title='List of all systems'>Systems</span></a>
             &nbsp;&nbsp;&nbsp;
-            <a href='/view/rch/sadm_view_rch_summary.php?sel=all'>Scripts</a>
+            <a href='/view/rch/sadm_view_rch_summary.php?sel=all'><span data-toggle='tooltip' title='Status of all scripts'>Scripts</span></a>
             &nbsp;&nbsp;&nbsp;
-            <a href='/view/sys/sadm_view_schedule.php'>O/S Update</a>
+            <a href='/view/sys/sadm_view_schedule.php'><span data-toggle='tooltip' title='Status of the operating system update schedule'>O/S Update</span></a>
             &nbsp;&nbsp;&nbsp;
-            <a href='/view/sys/sadm_view_sysmon.php'>Monitor</a>
+            <a href='/view/sys/sadm_view_sysmon.php'><span data-toggle='tooltip' title='System Monitor status'>Monitor</span></a>
             &nbsp;&nbsp;&nbsp;
             <?php
-            echo "<a href='/view/net/sadm_view_subnet.php?net=" . SADM_NETWORK1 . "&option=all'>Network</a>"
+            echo "<a href='/view/net/sadm_view_subnet.php?net=" . SADM_NETWORK1 . "&option=all'><span data-toggle='tooltip' title='Network IP/Name utilization'>Network</span></a>"
             ?>
             &nbsp;&nbsp;&nbsp;
-            <a href='/view/sys/sadm_view_backup.php'>Daily Backup</a>
+            <a href='/view/sys/sadm_view_backup.php'><span data-toggle='tooltip' title='Daily Backup Status'>Daily Backup</span></a>
             &nbsp;&nbsp;&nbsp;
-            <a href='/view/sys/sadm_view_rear.php'>ReaR Backup</a>
+            <a href='/view/sys/sadm_view_rear.php'><span data-toggle='tooltip' title='Status of the ReaR Image Backup Schedule'>ReaR Backup</span></a>
             &nbsp;&nbsp;&nbsp;
-            <a href='/view/perf/sadm_server_perf_menu.php'>Performance</a>
+            <a href='/view/perf/sadm_server_perf_menu.php'><span data-toggle='tooltip' title='Show Performance Graph of systems'>Performance</span></a>
         </div>
         </td>
 
