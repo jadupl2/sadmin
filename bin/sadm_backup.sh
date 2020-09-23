@@ -53,16 +53,17 @@
 # 2019_01_10 Changed: v3.12 Changed: Name of Backup List and Exclude file can be change.
 # 2019_01_11 Fixes: v3.13 Fix C/R problem after using the Web UI to change backup & exclude list.
 # 2019_02_01 Improve: v3.14 Reduce Output when no debug is activated.
-#@2019_07_18 Improve: v3.15 Modified to backup MacOS system onto a NFS drive.
-#@2020_04_01 Update: v3.16 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-#@2020_04_06 Update: v3.17 Don't show anymore directories that are skip because they don't exist.
-#@2020_04_08 Fix: v3.18 Fix 'chown' error.
-#@2020_04_09 Update: v3.19 Minor logging adjustment.
-#@2020_04_10 Update: v3.20 If backup_list.txt contains $ at beginning of line, it Var. is resolved
-#@2020_04_11 Update: v3.21 Log output changes.
-#@2020_05_18 Update: v3.22 Backup Dir. Structure changed, now group by System instead of backup type
-#@2020_05_24 Update: v3.23 Automatically move backup from old dir. structure to the new.
-#@2020_07_13 Fix: v3.24 New System Main Backup Directory was not created with right permission.
+# 2019_07_18 Improve: v3.15 Modified to backup MacOS system onto a NFS drive.
+# 2020_04_01 Update: v3.16 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2020_04_06 Update: v3.17 Don't show anymore directories that are skip because they don't exist.
+# 2020_04_08 Fix: v3.18 Fix 'chown' error.
+# 2020_04_09 Update: v3.19 Minor logging adjustment.
+# 2020_04_10 Update: v3.20 If backup_list.txt contains $ at beginning of line, it Var. is resolved
+# 2020_04_11 Update: v3.21 Log output changes.
+# 2020_05_18 Update: v3.22 Backup Dir. Structure changed, now group by System instead of backup type
+# 2020_05_24 Update: v3.23 Automatically move backup from old dir. structure to the new.
+# 2020_07_13 Fix: v3.24 New System Main Backup Directory was not created with right permission.
+#@2020_09_23 Update: v3.25 Modification to log recording.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -93,7 +94,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.24'                              # Your Current Script Version
+    export SADM_VER='3.25'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -354,6 +355,7 @@ backup_setup()
     fi
 
     # Show Backup Preferences
+    sadm_write "\n" 
     sadm_write "You have chosen to : \n"
     if [ "$COMPRESS" = 'ON' ]
         then sadm_write " - Compress the backup file\n"
@@ -443,8 +445,9 @@ create_backup()
         # Backup Directory
         if [ -d ${backup_line} ]                                        # Dir to Backup Exist ?
            then cd $backup_line                                         # Ok then Change Dir into it
+                sadm_writelog " "                                       # Insert Blank Line
                 sadm_write "${SADM_TEN_DASH}\n"                         # Line of 10 Dash in Log
-                sadm_write "Backup Current directory : [`pwd`]\n"       # Print Current Dir.
+                sadm_write "Backup of directory : [`pwd`]\n"            # Print Current Dir.
                 # Build Backup Exclude list
                 find . -type s -print > /tmp/exclude                    # Put all Sockets in exclude
                 while read excl_line                                    # Loop Until EOF Excl. File
@@ -489,10 +492,10 @@ create_backup()
         
         if [ $RC -ne 0 ]                                                # If Error while Backup
             then MESS="[ERROR] ${RC} while creating $BACK_FILE"         # Advise Backup Error
-                 sadm_write "${MESS}\n"                                 # Advise User - Log Info
+                 sadm_writelog "${MESS}"                                # Advise User - Log Info
                  RC=1                                                   # Make Sure Return Code is 0
             else MESS="[SUCCESS] Creating Backup $BACK_FILE"            # Advise Backup Success
-                 sadm_write "${MESS}\n"                                 # Advise User - Log Info
+                 sadm_writelog "${MESS}"                                # Advise User - Log Info
                  RC=0                                                   # Make Sure Return Code is 0
         fi
         TOTAL_ERROR=$(($TOTAL_ERROR+$RC))                               # Total = Cumulate RC Value
@@ -558,7 +561,7 @@ mount_nfs()
         then sadm_write "Create local mount point ${LOCAL_MOUNT}\n"     # Advise user we create Dir.
              mkdir ${LOCAL_MOUNT}                                       # Create if not exist
              if [ $? -ne 0 ]                                            # If Error trying to mount
-                then sadm_write "[ERROR] Creating local mount point - Process aborted.\n"
+                then sadm_writelog "[ERROR] Creating local mount point - Process aborted."
                 return 1                                                # End Function with error
              fi
              chmod 775 ${LOCAL_MOUNT}                                   # Change Protection
@@ -575,9 +578,9 @@ mount_nfs()
              mount ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1         # Mount NFS Drive
     fi
     if [ $? -ne 0 ]                                                     # If Error trying to mount
-        then sadm_write "[ERROR] Mount NFS Failed - Process Aborted.\n" # Error - Advise User
+        then sadm_writelog "[ERROR] Mount NFS Failed - Process Aborted" # Error - Advise User
              return 1                                                   # End Function with error
-        else sadm_write "[SUCCESS] NFS Mount Succeeded.\n"              # NFS Mount Succeeded Msg
+        else sadm_writelog "[SUCCESS] NFS Mount Succeeded."             # NFS Mount Succeeded Msg
     fi
 
     # Create System Main Directory
@@ -586,7 +589,7 @@ mount_nfs()
         then sadm_write "Making System main backup directory $F \n"
              mkdir ${F}                                                 # If Not Create it
              if [ $? -ne 0 ]                                            # If Error trying to mount
-                then sadm_write "[ERROR] Creating Main System Backup Directory ${F} \n"
+                then sadm_writelog "[ERROR] Creating Main System Backup Directory ${F}"
                      return 1                                           # End Function with error
              fi
         else sadm_write "Backup directory ($F) already exist."
@@ -607,9 +610,9 @@ umount_nfs()
     sadm_write "Unmounting NFS mount directory ${LOCAL_MOUNT}.\n"
     umount $LOCAL_MOUNT >> $SADM_LOG 2>&1                               # Umount Just to make sure
     if [ $? -ne 0 ]                                                     # If Error trying to mount
-        then sadm_write "[ERROR] Unmounting NFS Dir. $LOCAL_MOUNT \n"   # Error - Advise User
+        then sadm_writelog "[ERROR] Unmounting NFS Dir. $LOCAL_MOUNT"   # Error - Advise User
              return 1                                                   # End Function with error
-        else sadm_write "[SUCCESS] Unmounting NFS Dir. $LOCAL_MOUNT \n" # Succeeded to Demount NFS
+        else sadm_writelog "[SUCCESS] Unmounting NFS Dir. $LOCAL_MOUNT" # Succeeded to Demount NFS
     fi
     return 0
 }
