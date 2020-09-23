@@ -42,8 +42,9 @@
 # 2020_01_11 Update: v2.12 Remove Arch,Category and OS Version to make space on Line.
 # 2020_01_13 Fix: v2.13 Bug fix, displaying empty error line.
 # 2020_03_03 Update: v2.14 Server Description displayed when mouse over server name.
-#@2020_05_13 Update: v2.15 Customize message when nothing to report.
-#@2020_05_13 Update: v2.16 server name link was not displayed properly.
+# 2020_05_13 Update: v2.15 Customize message when nothing to report.
+# 2020_05_13 Update: v2.16 server name link was not displayed properly.
+#@2020_09_23 Update: v2.17 Add Home button in the page heading.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -77,7 +78,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.16" ;                                                       # Current version number
+$SVER  = "2.17" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -377,7 +378,8 @@ function display_data($con,$alert_file) {
 #
     $title1="Systems Monitor Status";                                   # Page Title
     $title2="Page is refresh every minute.";                            # Be sure user knows
-    display_lib_heading("NotHome","$title1"," ",$SVER);                 # Display Content Heading
+    #display_lib_heading("NotHome","$title1"," ",$SVER);                 # Display Content Heading
+    display_lib_heading("HOME","$title1"," ",$SVER);                 # Display Content Heading
     create_alert_file();                                                # Create AlertFile (RPT/RCH)
     sysmon_page_heading();                                              # Show Heading
     display_data($con,$alert_file);                                     # Display SysMOn Array
