@@ -153,6 +153,7 @@
 #@2020_08_20 Fix: v3.52 Adjust sadm_write method
 #@2020_09_05 Fix: v3.53 Added Start/End/Elapse Time to Script Alert Message.
 #@2020_09_09 Update: v3.54 Remove server name from Alert message (already in subject)
+#@2020_10_01 Update: v3.55 Add Host name in email, when alert come from sysmon.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -164,7 +165,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.54"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.55"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2519,10 +2520,10 @@ sadm_send_alert() {
     hepoch=$(sadm_date_to_epoch "$mdate")                               # Date/Time of mail to Epoch
     if [ "$atype" = "S" ] ; then body0="" ; else body0="SADMIN System Monitor Information." ;fi 
     case "$agroup_type" in
-        m|M)    #body1=`printf "%-15s: %s" "Email date/time" "$mdate"`  # Date/Time of email 
-                body1=""                                                 # Reduntent  
+        m|M)    #body1=`printf "%-15s %s" "Email date/time" "$mdate"`  # Date/Time of email 
+                body1=""                                                # Reduntent  
                 body2=""  
-                body4=`printf "%-15s: %s" "$amessage"`                    # Body of the message
+                body4=`printf "%-s : %-s" "$aserver" "$amessage"`       # Body of the message
                 body5=""                                                 
                 body6="" 
                 ;;
