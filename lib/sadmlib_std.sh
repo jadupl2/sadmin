@@ -154,6 +154,7 @@
 #@2020_09_05 Fix: v3.53 Added Start/End/Elapse Time to Script Alert Message.
 #@2020_09_09 Update: v3.54 Remove server name from Alert message (already in subject)
 #@2020_10_01 Update: v3.55 Add Host name in email, when alert come from sysmon.
+#@2020_10_05 Update: v3.56 Remove export for screen attribute variables.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -165,7 +166,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.55"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.56"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -328,92 +329,92 @@ LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"    ; export LOCAL_TMP          # Local 
 
 # Screen related variables
 if [ -z $TERM ] || [ "$TERM" = "dumb" ]
-    then export CLREOL=""                                               # Clear to End of Line
-         export CLREOS=""                                               # Clear to End of Screen
-         export BOLD=""                                                 # Set Bold Attribute
-         export BELL=""                                                 # Ring the Bell
-         export REVERSE=""                                              # Reverse Video On
-         export UNDERLINE=""                                            # Set UnderLine On
-         export HOME=""                                                 # Home Cursor
-         export UP=""                                                   # Cursor up
-         export DOWN=""                                                 # Cursor down
-         export RIGHT=""                                                # Cursor right
-         export LEFT=""                                                 # Cursor left
-         export CLRSCR=""                                               # Clear Screen
-         export BLINK=""                                                # Blinking on
-         export NORMAL=""                                               # Reset Screen Attribute
-    else export CLREOL=$(tput el)          2>/dev/null                  # Clear to End of Line
-         export CLREOS=$(tput ed)          2>/dev/null                  # Clear to End of Screen
-         export BOLD=$(tput bold)          2>/dev/null                  # Set Bold Attribute On
-         export BELL=$(tput bel)           2>/dev/null                  # Ring the Bell
-         export REVERSE=$(tput rev)            2>/dev/null              # Reverse Video 
-         export UNDERLINE=$(tput sgr 0 1)        2>/dev/null            # UnderLine
-         export HOME=$(tput home)       2>/dev/null                     # Home Cursor
-         export UP=$(tput cuu1)            2>/dev/null                  # Cursor up
-         export DOWN=$(tput cud1)          2>/dev/null                  # Cursor down
-         export RIGHT=$(tput cub1)         2>/dev/null                  # Cursor right
-         export LEFT=$(tput cuf1)          2>/dev/null                  # Cursor left
-         export CLRSCR=$(tput clear)          2>/dev/null               # Clear Screen
-         export BLINK=$(tput blink)        2>/dev/null                  # Blinking on
-         export NORMAL=$(tput sgr0)         2>/dev/null                 # Reset Screen
+    then CLREOL=""                                               # Clear to End of Line
+         CLREOS=""                                               # Clear to End of Screen
+         BOLD=""                                                 # Set Bold Attribute
+         BELL=""                                                 # Ring the Bell
+         REVERSE=""                                              # Reverse Video On
+         UNDERLINE=""                                            # Set UnderLine On
+         HOME_CURSOR=""                                          # Home Cursor
+         UP=""                                                   # Cursor up
+         DOWN=""                                                 # Cursor down
+         RIGHT=""                                                # Cursor right
+         LEFT=""                                                 # Cursor left
+         CLRSCR=""                                               # Clear Screen
+         BLINK=""                                                # Blinking on
+         NORMAL=""                                               # Reset Screen Attribute
+    else CLREOL=$(tput el)          2>/dev/null                  # Clear to End of Line
+         CLREOS=$(tput ed)          2>/dev/null                  # Clear to End of Screen
+         BOLD=$(tput bold)          2>/dev/null                  # Set Bold Attribute On
+         BELL=$(tput bel)           2>/dev/null                  # Ring the Bell
+         REVERSE=$(tput rev)        2>/dev/null              # Reverse Video 
+         UNDERLINE=$(tput sgr 0 1)        2>/dev/null            # UnderLine
+         HOME_CURSOR=$(tput home)       2>/dev/null                     # Home Cursor
+         UP=$(tput cuu1)            2>/dev/null                  # Cursor up
+         DOWN=$(tput cud1)          2>/dev/null                  # Cursor down
+         RIGHT=$(tput cub1)         2>/dev/null                  # Cursor right
+         LEFT=$(tput cuf1)          2>/dev/null                  # Cursor left
+         CLRSCR=$(tput clear)          2>/dev/null               # Clear Screen
+         BLINK=$(tput blink)        2>/dev/null                  # Blinking on
+         NORMAL=$(tput sgr0)         2>/dev/null                 # Reset Screen
 fi    
 
 # Foreground Color
 if [ -z $TERM ] || [ "$TERM" = "dumb" ]
-    then export BLACK=""                                                # Black color
-         export MAGENTA=""                                              # Magenta color
-         export RED=""                                                  # Red color
-         export GREEN=""                                                # Green color
-         export YELLOW=""                                               # Yellow color
-         export BLUE=""                                                 # Blue color
-         export CYAN=""                                                 # Cyan color
-         export WHITE=""                                                # White color
-    else export BLACK=$(tput setaf 0)      2>/dev/null                  # Black color
-         export RED=$(tput setaf 1)        2>/dev/null                  # Red color
-         export GREEN=$(tput setaf 2)      2>/dev/null                  # Green color
-         export YELLOW=$(tput setaf 3)     2>/dev/null                  # Yellow color
-         export BLUE=$(tput setaf 4)       2>/dev/null                  # Blue color
-         export MAGENTA=$(tput setaf 5)    2>/dev/null                  # Magenta color
-         export CYAN=$(tput setaf 6)       2>/dev/null                  # Cyan color
-         export WHITE=$(tput setaf 7)      2>/dev/null                  # White color
+    then BLACK=""                                                # Black color
+         MAGENTA=""                                              # Magenta color
+         RED=""                                                  # Red color
+         GREEN=""                                                # Green color
+         YELLOW=""                                               # Yellow color
+         BLUE=""                                                 # Blue color
+         CYAN=""                                                 # Cyan color
+         WHITE=""                                                # White color
+    else BLACK=$(tput setaf 0)      2>/dev/null                  # Black color
+         RED=$(tput setaf 1)        2>/dev/null                  # Red color
+         GREEN=$(tput setaf 2)      2>/dev/null                  # Green color
+         YELLOW=$(tput setaf 3)     2>/dev/null                  # Yellow color
+         BLUE=$(tput setaf 4)       2>/dev/null                  # Blue color
+         MAGENTA=$(tput setaf 5)    2>/dev/null                  # Magenta color
+         CYAN=$(tput setaf 6)       2>/dev/null                  # Cyan color
+         WHITE=$(tput setaf 7)      2>/dev/null                  # White color
 fi 
 
 # Background Color
 if [ -z $TERM ] || [ "$TERM" = "dumb" ]
-    then export BBLACK=""                                               # Black color
-         export BRED=""                                                 # Red color
-         export BGREEN=""                                               # Green color
-         export BYELLOW=""                                              # Yellow color
-         export BBLUE=""                                                # Blue color
-         export BMAGENTA=""                                             # Magenta color
-         export BCYAN=""                                                # Cyan color
-         export BWHITE=""                                               # White color
+    then BBLACK=""                                               # Black color
+         BRED=""                                                 # Red color
+         BGREEN=""                                               # Green color
+         BYELLOW=""                                              # Yellow color
+         BBLUE=""                                                # Blue color
+         BMAGENTA=""                                             # Magenta color
+         BCYAN=""                                                # Cyan color
+         BWHITE=""                                               # White color
     else     
-         export BBLACK=$(tput setab 0)     2>/dev/null                  # Black color
-         export BRED=$(tput setab 1)       2>/dev/null                  # Red color
-         export BGREEN=$(tput setab 2)     2>/dev/null                  # Green color
-         export BYELLOW=$(tput setab 3)    2>/dev/null                  # Yellow color
-         export BBLUE=$(tput setab 4)      2>/dev/null                  # Blue color
-         export BMAGENTA=$(tput setab 5)   2>/dev/null                  # Magenta color
-         export BCYAN=$(tput setab 6)      2>/dev/null                  # Cyan color
-         export BWHITE=$(tput setab 7)     2>/dev/null                  # White color
+         BBLACK=$(tput setab 0)     2>/dev/null                  # Black color
+         BRED=$(tput setab 1)       2>/dev/null                  # Red color
+         BGREEN=$(tput setab 2)     2>/dev/null                  # Green color
+         BYELLOW=$(tput setab 3)    2>/dev/null                  # Yellow color
+         BBLUE=$(tput setab 4)      2>/dev/null                  # Blue color
+         BMAGENTA=$(tput setab 5)   2>/dev/null                  # Magenta color
+         BCYAN=$(tput setab 6)      2>/dev/null                  # Cyan color
+         BWHITE=$(tput setab 7)     2>/dev/null                  # White color
 fi
 
 # Constant Var., if message begin with these constant it's showed with special color by sadm_write()
-export SADM_ERROR="[ ERROR ]"                                            # [ ERROR ] in Red Trigger 
-export SADM_FAILED="[ FAILED ]"                                         # [ FAILED ] in Red Trigger 
-export SADM_WARNING="[ WARNING ]"                                       # [ WARNING ] in Yellow
-export SADM_OK="[ OK ]"                                                  # [ OK ] in Green Trigger
-export SADM_SUCCESS="[ SUCCESS ]"                                       # [ SUCCESS ] in Green
-export SADM_INFO="[ INFO ]"                                             # [ INFO] in Blue Trigger
+SADM_ERROR="[ ERROR ]"                                            # [ ERROR ] in Red Trigger 
+SADM_FAILED="[ FAILED ]"                                         # [ FAILED ] in Red Trigger 
+SADM_WARNING="[ WARNING ]"                                       # [ WARNING ] in Yellow
+SADM_OK="[ OK ]"                                                  # [ OK ] in Green Trigger
+SADM_SUCCESS="[ SUCCESS ]"                                       # [ SUCCESS ] in Green
+SADM_INFO="[ INFO ]"                                             # [ INFO] in Blue Trigger
 
 # When mess. begin with constant above they are substituted by the value below in sadm_write().
-export SADM_SERROR="[ ${RED}ERROR${NORMAL} ]"                            # [ ERROR ] Red
-export SADM_SFAILED="[ ${RED}FAILED${NORMAL} ]"                          # [ FAILED ] Red
-export SADM_SWARNING="[ ${BOLD}${YELLOW}WARNING${NORMAL} ]"              # WARNING Yellow
-export SADM_SOK="[ ${BOLD}${GREEN}OK${NORMAL} ]"                         # [ OK ] Green
-export SADM_SSUCCESS="[ ${BOLD}${GREEN}SUCCESS${NORMAL} ]"               # SUCCESS Green
-export SADM_SINFO="[ ${BOLD}${BLUE}INFO${NORMAL} ]"                      # INFO Blue
+SADM_SERROR="[ ${RED}ERROR${NORMAL} ]"                            # [ ERROR ] Red
+SADM_SFAILED="[ ${RED}FAILED${NORMAL} ]"                          # [ FAILED ] Red
+SADM_SWARNING="[ ${BOLD}${YELLOW}WARNING${NORMAL} ]"              # WARNING Yellow
+SADM_SOK="[ ${BOLD}${GREEN}OK${NORMAL} ]"                         # [ OK ] Green
+SADM_SSUCCESS="[ ${BOLD}${GREEN}SUCCESS${NORMAL} ]"               # SUCCESS Green
+SADM_SINFO="[ ${BOLD}${BLUE}INFO${NORMAL} ]"                      # INFO Blue
 
 
 
