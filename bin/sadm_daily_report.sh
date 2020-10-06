@@ -20,6 +20,7 @@
 # 2020_09_23 V1.1 In Progress September 
 #@2020_10_01 Update: v1.2 First Release
 #@2020_10_05 Update: v1.3 Daily Backup Report & ReaR Backup Report now available.
+#@2020_10_06 Fix: v1.4 Bug that get Current backup size in yellow, when shouldn't.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -53,7 +54,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.3'                               # Your Current Script Version
+    export SADM_VER='1.4'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -731,7 +732,7 @@ backup_line()
        else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>Yes</font></td>" >>$HTML
     fi
 
-    # Show in Yellow if : 
+    # CUURENT BACKUP SIZE - Show in Yellow if : 
     #   - Today Backup Size is 0
     #   - If Today Backup Size vs Yesterday Backup Size is greater than threshold ($WPCT) go yellow
     if [ $WCUR_TOTAL -eq 0 ]                                            # If Today Backup Size is 0
@@ -752,7 +753,7 @@ backup_line()
                              fi
                         else PCT=`echo "$WPRV_TOTAL / $WCUR_TOTAL" | bc -l` 
                              PCT=`printf "%.2f" $PCT | awk -F. '{print $2}'` # Backup Size Decr. Pct
-                             if [ $PCT -le $WPCT ] && [ $PCT -ne 0 ]         # Decr. less than threshold
+                             if [ $PCT -ge $WPCT ] && [ $PCT -ne 0 ]         # Decr. less than threshold
                                 then echo -n "<td title='Backup ${WPCT}% smaller than yesterday' " >>$HTML
                                      echo "align=center bgcolor='Yellow'> " >> $HTML
                                      echo "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >>$HTML
