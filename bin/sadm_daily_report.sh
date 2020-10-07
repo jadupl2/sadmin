@@ -21,6 +21,7 @@
 #@2020_10_01 Update: v1.2 First Release
 #@2020_10_05 Update: v1.3 Daily Backup Report & ReaR Backup Report now available.
 #@2020_10_06 Fix: v1.4 Bug that get Current backup size in yellow, when shouldn't.
+#@2020_10_06 Update: v1.5 Minor Typo Corrections
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -54,7 +55,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.4'                               # Your Current Script Version
+    export SADM_VER='1.5'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -378,14 +379,14 @@ rear_report()
     mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_RFILE
     SADM_EXIT_CODE=$?                                                   # Save mutt return code
     if [ $SADM_EXIT_CODE -eq 0 ]                                        # If mail sent successfully
-        then sadm_write "Backup Report sent to $SADM_MAIL_ADDR \n"      
-        else sadm_write "Failed to send Backup Report to $SADM_MAIL_ADDR \n"
+        then sadm_write "ReaR Backup Report sent to $SADM_MAIL_ADDR \n"      
+        else sadm_write "Failed to send the ReaR Backup Report to $SADM_MAIL_ADDR \n"
     fi
 
-    sadm_write "${BOLD}${YELLOW}End of Backup Report ...${NORMAL}\n"    # Show user report is finish
-    sadm_write "\n"                                                     # White line in log & Screen
+    sadm_write "${BOLD}${YELLOW}End of the ReaR Backup Report ...${NORMAL}\n" 
+    sadm_write "\n"
 
-    return $rear_backup_error                                                # Return Err Count to caller
+    return $rear_backup_error                                          # Return Err Count to caller
 }
 
 
@@ -399,8 +400,8 @@ backup_report()
     if [ -f "$SADM_TMP_FILE2" ] ; then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1 ; fi 
     if [ -f "$HTML_BFILE" ] ; then rm -f $HTML_BFILE >/dev/null 2>&1 ; fi     
 
-    sadm_write "\n"                                                     # Line Separator
-    sadm_write "${BOLD}${YELLOW}Creating the Backup Report${NORMAL}\n"  # Show user start Function
+    sadm_write "\n"
+    sadm_write "${BOLD}${YELLOW}Creating the Daily Backup Report${NORMAL}\n" 
 
     # Put Rows you want in the select. 
     # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
@@ -552,11 +553,11 @@ backup_report()
     mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_BFILE
     SADM_EXIT_CODE=$?                                                   # Save mutt return code
     if [ $SADM_EXIT_CODE -eq 0 ]                                        # If mail sent successfully
-        then sadm_write "Backup Report sent to $SADM_MAIL_ADDR \n"      
-        else sadm_write "Failed to send Backup Report to $SADM_MAIL_ADDR \n"
+        then sadm_write "Daily Backup Report sent to $SADM_MAIL_ADDR \n"      
+        else sadm_write "Failed to send the Daily Backup Report to $SADM_MAIL_ADDR \n"
     fi
 
-    sadm_write "${BOLD}${YELLOW}End of Backup Report ...${NORMAL}\n"    # Show user report is finish
+    sadm_write "${BOLD}${YELLOW}End of Daily Backup Report ...${NORMAL}\n"   
     sadm_write "\n"                                                     # White line in log & Screen
     return $SADM_EXIT_CODE                                              # Return Err Count to caller
 }
