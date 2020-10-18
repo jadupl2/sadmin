@@ -327,11 +327,11 @@ rear_preparation()
                      return 1 
              fi
     fi
-    chmod 775 ${NFS_MOUNT}/${SADM_HOSTNAME} >> $SADM_LOG 2>&1           # Make sure Dir. is writable
-    if [ $? -ne 0 ]                                                     # If error on chmod command
-       then sadm_write "$SADM_ERROR Can't chmod directory ${NFS_MOUNT}/${SADM_HOSTNAME}\n" 
-            return 1 
-    fi
+    #chmod 775 ${NFS_MOUNT}/${SADM_HOSTNAME} >> $SADM_LOG 2>&1           # Make sure Dir. is writable
+    #if [ $? -ne 0 ]                                                     # If error on chmod command
+    #   then sadm_write "$SADM_ERROR Can't chmod directory ${NFS_MOUNT}/${SADM_HOSTNAME}\n" 
+    #        return 1 
+    #fi
     
     # Write test to NFS Mount Point.
     sadm_write "Write test to NFS mount ... "                           # Feed user and log

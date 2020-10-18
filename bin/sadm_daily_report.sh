@@ -95,6 +95,7 @@ export FIELD_IN_RCH=10                                                  # Nb of 
 export TOTAL_ERROR=0                                                    # Total Error in script
 export HTML_BFILE="${SADM_TMP_DIR}/backup_report.html"                  # Backup Report HTML File 
 export HTML_RFILE="${SADM_TMP_DIR}/rear_report.html"                    # ReaR Backup Rep. HTML File 
+export HTML_SFILE="${SADM_TMP_DIR}/storix_report.html"                  # Storix Rep. HTML File 
 export backup_script_name="sadm_backup"                                 # Name of DailyBackup Script
 export rear_script_name="sadm_rear_backup"                              # Name of ReaR Backup Script
 export REAR_INTERVAL=7                                                  # Day between ReaR Backup
@@ -119,8 +120,14 @@ if [ "$SADM_OS_TYPE" = "DARWIN" ]                                       # If on 
     else export LOCAL_MOUNT="/mnt/daily_report"                         # NFS Mount Point for Linux
 fi  
 
+# Variables for Storix Daily Report
+ISODIR="iso"                                                            # NFS SubDir for Storix ISO 
+IMGDIR="image"                                                          # NFS SubDir for Storix Img
+
+
+
 # Set command line switch default
-BACKUP_REPORT="OFF" ; REAR_REPORT="OFF" ; SCRIPT_REPORT="OFF"       #    Set Switch Default Value
+BACKUP_REPORT="OFF" ; REAR_REPORT="OFF" ; SCRIPT_REPORT="OFF" ; STORIX_REPORT="OFF"     
 
 
 
@@ -137,6 +144,7 @@ show_usage()
     printf "\n\t-b   (Produce the Backup report)"
     printf "\n\t-r   (Produce the ReaR report)"
     printf "\n\t-d   (Produce the Scripts report)"
+#    printf "\n\t-x   (Produce the Storix report)"
     printf "\n\n" 
 }
 
@@ -387,6 +395,426 @@ rear_report()
     sadm_write "\n"
 
     return $rear_backup_error                                          # Return Err Count to caller
+}
+
+
+
+#===================================================================================================
+# Report Heading
+#===================================================================================================
+storix_heading()
+{
+    RTITLE=$1                                                           # Report Title
+    HTML=$2                                                             # HTML Report File Name
+
+    echo -e "<!DOCTYPE html><html>" > $HTML
+    echo -e "<head>" >> $HTML
+    echo -e "\n<meta charset='utf-8' />"            >> $HTML
+    #
+    echo -e "\n<style>" >> $HTML
+    echo -e "th { color: white; background-color: #0000ff; padding: 5px; }" >> $HTML
+    echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }" >> $HTML
+    echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }" >> $HTML
+    echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML
+    echo -e "</style>" >> $HTML
+    #
+    echo -e "\n<title>$RTITLE</title>" >> $HTML
+    echo -e "</head>\n" >> $HTML
+    echo -e "<body>" >> $HTML
+    echo -e "<br>\n<center><h1>${RTITLE}</h1></center>" >> $HTML
+    echo -e "\n<center><table border=0>" >> $HTML
+    #
+    echo -e "\n<thead>" >> $HTML
+    #
+    #echo -e "<tr>" >> $HTML
+    #echo -e "<th colspan=10 dt-head-center>${RTITLE}</th>" >> $HTML
+    #echo -e "</tr>" >> $HTML
+    #
+    echo -e "<tr>" >> $HTML
+    echo -e "<th colspan=1 dt-head-center></th>" >> $HTML
+    echo -e "<th colspan=4 align=center>Last Backup</th>" >> $HTML
+    echo -e "<th align=center>Schedule</th>" >> $HTML
+    echo -e "<th colspan=2></th>" >> $HTML
+    echo -e "<th align=center>System</th>" >> $HTML
+    echo -e "<th align=center>Current</th>" >> $HTML
+    echo -e "<th align=center>Previous</th>" >> $HTML
+    echo -e "</tr>" >> $HTML
+    #
+    echo -e "<tr>" >> $HTML
+    echo -e "<th align=center>No</th>" >> $HTML
+    echo -e "<th align=center>Date</th>" >> $HTML
+    echo -e "<th align=center>Time</th>" >> $HTML
+    echo -e "<th align=center>Elapse</th>" >> $HTML
+    echo -e "<th align=center>Status</th>"  >> $HTML
+    echo -e "<th align=left>Activated</th>" >> $HTML
+    echo -e "<th align=center>System</th>" >> $HTML
+    echo -e "<th align=left>Description</th>" >> $HTML    
+    echo -e "<th align=left>Sporadic</th>" >> $HTML
+    echo -e "<th align=center>Size</th>" >> $HTML
+    echo -e "<th align=center>Size</th>" >> $HTML
+    echo -e "</tr>" >> $HTML
+    #
+    echo -e "</thead>\n" >> $HTML
+    return 0
+}
+
+
+#===================================================================================================
+# Add the receiving line into the Backup report page
+#===================================================================================================
+storix_line()
+{
+    # Extract fields from parameters received.
+    BACKUP_INFO=$*                                                      # Comma Sep. Info Line
+    WDATE1=$(     echo $BACKUP_INFO | awk -F, '{ print $1 }')           # Backup Script RCH Line
+    WTIME1=$(     echo $BACKUP_INFO | awk -F, '{ print $2 }')           # DB System Description
+    WELAPSE=$(    echo $BACKUP_INFO | awk -F, '{ print $3 }')           # DB System Description
+    WSTATUS=$(    echo $BACKUP_INFO | awk -F, '{ print $4 }')           # DB System Description
+    WSERVER=$(    echo $BACKUP_INFO | awk -F, '{ print $5 }')           # DB System Description
+    WDESC=$(      echo $BACKUP_INFO | awk -F, '{ print $6 }')           # DB System Description
+    WACT=$(       echo $BACKUP_INFO | awk -F, '{ print $7 }')           # DB System Description
+    WCUR_TOTAL=$( echo $BACKUP_INFO | awk -F, '{ print $8 }')           # Current Backup Total MB
+    WPRV_TOTAL=$( echo $BACKUP_INFO | awk -F, '{ print $9 }')           # Yesterday Backup Total MB
+    WSPORADIC=$(  echo $BACKUP_INFO | awk -F, '{ print $10 }')          # Sporadic Server=1 else=0
+    WCOUNT=$(     echo $BACKUP_INFO | awk -F, '{ print $11 }')          # Line Counter
+    HTML=$(       echo $BACKUP_INFO | awk -F, '{ print $12 }')          # HTML Output File Name
+    RTYPE=$(      echo $BACKUP_INFO | awk -F, '{ print $13 }')          # R=RearBackup B=DailyBackup
+                                                                        # S=Storix Report
+
+    # Alternate background color at every line
+    if (( $WCOUNT %2 == 0 ))                                            # Modulo on line counter
+       then BCOL="#00FFFF" ; FCOL="#000000"                             # Pair count color
+       else BCOL="#F0FFFF" ; FCOL="#000000"                             # Impar line color
+    fi
+
+    # Beginning to Insert Line in HTML Table
+    echo -e "<tr>"  >> $HTML                                            # Begin backup line
+    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WCOUNT</font></td>"  >> $HTML
+
+    # Storix Backup Date is not today (May be Missed, Sporadic, ...) Show in Yellow Background
+    if [ "$RTYPE" = "S" ]                                               # If Backup Report 
+       then if [ "$TODAY" = "$WDATE1" ]
+               then echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WDATE1</font></td>" >>$HTML
+               else if [ "$WDATE1" = "----------" ] 
+                       then echo -n "<td title='No backup recorded' " >>$HTML 
+                       else backup_date=`echo "$WDATE1" | sed 's/\./\//g'`      # Replace dot by '/' in date
+                            epoch_backup=`date -d "$backup_date" "+%s"`         # Backup Date in Epoch Time
+                            epoch_now=`date "+%s"`                              # Today in Epoch Time
+                            diff=$(($epoch_now - $epoch_backup))                # Nb. Seconds between
+                            days=$(($diff/(60*60*24)))                          # Convert Sec. to Days
+                            echo -n "<td title='Last Backup done $days days ago' " >>$HTML   
+                    fi
+                    echo -n "align=center bgcolor='Yellow'>" >>$HTML      # Yellow Background
+                    echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML  # Show Backup Date
+            fi
+    fi 
+
+    # Backup Date is not today (May be Missed, Sporadic, ...) Show in Yellow Background
+    if [ "$RTYPE" = "B" ]                                               # If Backup Report 
+       then if [ "$TODAY" = "$WDATE1" ]
+               then echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WDATE1</font></td>" >>$HTML
+               else if [ "$WDATE1" = "----------" ] 
+                       then echo -n "<td title='No backup recorded' " >>$HTML 
+                       else backup_date=`echo "$WDATE1" | sed 's/\./\//g'`      # Replace dot by '/' in date
+                            epoch_backup=`date -d "$backup_date" "+%s"`         # Backup Date in Epoch Time
+                            epoch_now=`date "+%s"`                              # Today in Epoch Time
+                            diff=$(($epoch_now - $epoch_backup))                # Nb. Seconds between
+                            days=$(($diff/(60*60*24)))                          # Convert Sec. to Days
+                            echo -n "<td title='Last Backup done $days days ago' " >>$HTML   
+                    fi
+                    echo -n "align=center bgcolor='Yellow'>" >>$HTML      # Yellow Background
+                    echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML  # Show Backup Date
+            fi
+    fi 
+
+    # ReaR Backup Date 
+    if [ "$RTYPE" == "R" ]                                               # If Backup Report 
+       then if [ "$WDATE1" = "----------" ] 
+               then echo -n "<td title='No backup recorded' " >>$HTML 
+                    echo -n "align=center bgcolor='Yellow'>" >>$HTML      # Yellow Background
+               else backup_date=`echo "$WDATE1" | sed 's/\./\//g'`              # Replace dot by '/' in date
+                    epoch_backup=`date -d "$backup_date" "+%s"`                 # Backup Date in Epoch Time
+                    epoch_now=`date "+%s"`                                      # Today in Epoch Time
+                    diff=$(($epoch_now - $epoch_backup))                        # Difference in Nb. Seconds
+                    days=$(($diff/(60*60*24)))                                  # Convert Sec. to Days
+                    if [ $days -gt $REAR_INTERVAL ] 
+                       then echo -n "<td title='Last Backup done $days days ago' " >>$HTML  
+                            echo -n "align=center bgcolor='Yellow'>" >>$HTML      # Yellow Background
+                       else echo "<td align=center bgcolor=$BCOL>" >>$HTML 
+                    fi 
+            fi
+            echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML  # Show Backup Date
+    fi 
+
+    # Backup Time & Elapse time
+    echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WTIME1</font></td>"  >> $HTML
+    echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WELAPSE</font></td>" >> $HTML
+    #echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WSTATUS</font></td>" >> $HTML
+
+    # Server Name - (If you click on it it will show the backup script log.)
+    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>" >> $HTML
+    LOGFILE="${WSERVER}_${WSCRIPT}.log"                                 # Assemble log Script Name
+    LOGNAME="${SADM_WWW_DAT_DIR}/${WSERVER}/log/${LOGFILE}"             # Add Dir. Path to Name
+    LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}"  # Url to View Log
+    if [ -r "$LOGNAME" ]                                                # If log is Readable
+        then echo -n "<a href='$LOGURL 'title='View Backup Log File'>" >>$HTML
+             echo "${WSTATUS}</font></a></td>" >>$HTML 
+        else echo -e "${WSTATUS}</font></td>" >> $HTML                  # No Log = No LInk
+    fi
+
+    # Backup Schedule Status - Activated or Deactivated (show in Yellow background)
+    if [ "$RTYPE" = "B" ]                                               # If Backup Report 
+       then URL_SCHED_UPDATE=$(echo "${URL_UPD_SCHED/SYSTEM/$WSERVER}") # URL To Modify Backup Sched
+       else URL_SCHED_UPDATE=$(echo "${URL_REAR_SCHED/SYSTEM/$WSERVER}")         # URL To Modify Backup Sched
+    fi
+    if [ $WACT -eq 0 ] 
+       then echo "<td align=center bgcolor='Yellow'><font color=$FCOL>"         >>$HTML
+            echo -n "<a href='http://sadmin.${SADM_DOMAIN}/$URL_SCHED_UPDATE "  >>$HTML
+            echo "'title='Schedule Deactivated, click to modify'>No</font></a></td>" >>$HTML
+       else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>"            >>$HTML    
+            echo -n "<a href='http://sadmin.${SADM_DOMAIN}/$URL_SCHED_UPDATE "  >>$HTML
+            echo "'title='Click to modify Backup Schedule'>Yes</font></a></td>"          >>$HTML
+    fi
+
+    # Server Name & Descrition (From DB)
+    echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WSERVER</font></td>" >> $HTML
+    echo "<td align=left bgcolor=$BCOL><font color=$FCOL>$WDESC</font></td>"     >> $HTML
+
+    # Sporadic Server or Not 
+    if [ "$WSPORADIC" =  "0" ] 
+       then echo "<td align=center bgcolor=$BCOL><font color=$FCOL>No</font></td>"  >>$HTML
+       else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>Yes</font></td>" >>$HTML
+    fi
+
+    # CUURENT BACKUP SIZE - Show in Yellow if : 
+    #   - Today Backup Size is 0
+    #   - If Today Backup Size vs Yesterday Backup Size is greater than threshold ($WPCT) go yellow
+    if [ $WCUR_TOTAL -eq 0 ]                                            # If Today Backup Size is 0
+        then echo -en "<td title='No Backup situation' align=center bgcolor='Yellow'>" >>$HTML
+             echo -e "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >> $HTML
+        else if [ $WPRV_TOTAL -eq 0 ]                                   # If Yesterday Backup Size=0
+                then echo -en "<td align=center bgcolor=$BCOL><font color=$FCOL>" >>$HTML
+                     echo -e " ${WCUR_TOTAL} MB</font></td>" >>$HTML
+                else if [ $WCUR_TOTAL -ge $WPRV_TOTAL ]                 # Today Backup >= Yesterday
+                        then PCT=`echo "$WCUR_TOTAL / $WPRV_TOTAL" | bc -l`  
+                             PCT=`printf "%.2f" $PCT | awk -F. '{print $2}'` # Backup Size Incr. Pct
+                             if [ $PCT -ge $WPCT ]                      # Inc Greater than threshold
+                                then echo -en "<td align=center bgcolor='Yellow' " >>$HTML
+                                     echo "title='Backup ${WPCT}% bigger than yesterday'>" >>$HTML
+                                     echo "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >>$HTML
+                                else echo -n "<td align=center bgcolor=$BCOL>" >>$HTML
+                                     echo "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >>$HTML
+                             fi
+                        else PCT=`echo "$WPRV_TOTAL / $WCUR_TOTAL" | bc -l` 
+                             PCT=`printf "%.2f" $PCT | awk -F. '{print $2}'` # Backup Size Decr. Pct
+                             if [ $PCT -ge $WPCT ] && [ $PCT -ne 0 ]         # Decr. less than threshold
+                                then echo -n "<td title='Backup ${WPCT}% smaller than yesterday' " >>$HTML
+                                     echo "align=center bgcolor='Yellow'> " >> $HTML
+                                     echo "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >>$HTML
+                                else echo -n "<td align=center bgcolor=$BCOL>" >>$HTML
+                                     echo "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >>$HTML
+                             fi
+                     fi 
+             fi 
+    fi 
+
+
+    # If Yesterday Backup Size is 0, show it in Yellow.
+    if [ $WPRV_TOTAL -eq 0 ]                                
+        then echo -en "<td title='No Backup situation' align=center bgcolor='Yellow'>" >>$HTML
+             echo -e "<font color=$FCOL>${WPRV_TOTAL} MB</font></td>" >> $HTML
+        else echo -en "<td align=center bgcolor=$BCOL><font color=$FCOL> " >> $HTML
+             echo -e " ${WPRV_TOTAL} MB</font></td>" >> $HTML
+    fi 
+
+    echo -e "</tr>\n" >> $HTML
+    return 
+} 
+
+
+
+#===================================================================================================
+# Produce the Storix Image Backup report and email it to the SADMIN Administrator.
+#===================================================================================================
+storix_report()
+{
+    storix_error=0                                                      # Set to 1 if error in func.
+    if [ -f "$SADM_TMP_FILE2" ] ; then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1 ; fi 
+    if [ -f "$HTML_SFILE" ] ; then rm -f $HTML_SFILE >/dev/null 2>&1 ; fi     
+
+    sadm_write "\n"
+    sadm_write "${BOLD}${YELLOW}Creating the Storix Daily Backup Report${NORMAL}\n" 
+
+    # Put Rows you want in the select. 
+    # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
+    SQL="SELECT srv_name,srv_desc,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active" 
+    SQL="${SQL},srv_sadmin_dir,srv_backup,srv_img_backup "
+
+    # Build SQL to select active server(s) from Database.
+    SQL="${SQL} from server"                                            # From the Server Table
+    SQL="${SQL} where srv_ostype = 'linux'"                             # ReaR Avail. Only on Linux
+    SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
+    
+    # Execute SQL Query to Create CSV in SADM Temporary work file ($SADM_TMP_FILE1)
+    CMDLINE="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL Auth/Read Only User
+    #if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug Show Auth cmdline
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
+    if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
+        then sadm_write "$SADM_WARNING No Active Server were found.\n"  # Not Active Server MSG
+             return 0                                                   # Return Status to Caller
+    fi 
+    if [ "$SADM_DEBUG" -gt 7 ]                                          # If Debug Show SQL Results
+       then sadm_write "\n"                                             # Space line
+            sadm_write "Output of the SQL Query for producing the Backup Report.\n"
+            cat $SADM_TMP_FILE1 | while read wline ; do sadm_write "${wline}\n"; done
+            sadm_write "\n"                                             # Space line
+    fi
+
+    NFSMOUNT="${SADM_STORIX_NFS_SERVER}:${SADM_STORIX_NFS_MOUNT_POINT}" # Remote NFS Mount Point
+    mount_nfs "$NFSMOUNT"                                               # Go and Mount NFS Dir.
+    if [ $? -ne 0 ] ; then return 1 ; fi                                # Can't Mount back to caller
+
+    # Produce the report Heading
+    storix_heading "Storix Backup Report - `date +%a` `date +%d/%m/%Y`" "$HTML_SFILE" 
+
+    xcount=0                                                            # Set Server & Error Counter
+    while read wline                                                    # Read Tmp file Line by Line
+        do
+        server_name=$(echo $wline      |awk -F, '{print $1}')           # Extract Server Name
+        server_desc=$(echo $wline      |awk -F, '{print $2}')           # Extract Server Description
+        server_os=$(echo $wline        |awk -F, '{print $3}')           # O/S (linux/aix/darwin)
+        server_domain=$(echo $wline    |awk -F, '{print $4}')           # Extract Domain of Server
+        server_monitor=$(echo $wline   |awk -F, '{print $5}')           # Monitor  1=True 0=False
+        server_sporadic=$(echo $wline  |awk -F, '{print $6}')           # Sporadic 1=True 0=False
+        server_active=$(echo $wline    |awk -F, '{print $7}')           # Active   1=Yes  0=No
+        server_rootdir=$(echo $wline   |awk -F, '{print $8}')           # Client SADMIN Root Dir.
+        server_backup=$(echo $wline    |awk -F, '{print $9}')           # Backup Schd 1=True 0=False
+        server_img_backup=$(echo $wline|awk -F, '{print $10}')          # ReaR Sched. 1=True 0=False
+        fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQDN Server Name
+        
+        # ReaR Backup only Supported under these Architecture
+        if [ "$server_arch" != "x86_64" ] && [ "$server_arch" != "i686" ] && 
+           [ "$server_arch" != "i386" ]
+           then continue                                                # Storix run Intel Platform
+        fi 
+ 
+        #
+        if [ "$SADM_DEBUG" -gt 4 ]                                      # If Debug Show System name
+           then sadm_write "\n"                                         # Space line
+                sadm_write "${SADM_TEN_DASH}\n"                         # Ten Dashes Line    
+                sadm_write "Processing ${server_name}.\n"               # Server Name
+        fi 
+
+        # Get the date of the most recent ISO produce for the current server
+        if [ -d ${LOCAL_MOUNT}/${ISODIR} ]                              # If Server Backup Dir Exist
+           then ISO_NAME=$(ls -1t ${LOCAL_MOUNT}/${ISODIR}/mksysb_${server_name}*.iso | head -1)
+                ISO_SIZE=$(stat  --format=%s ${ISO_NAME})
+                ISO_DATE=$(stat  --format=%y ${ISO_NAME} | awk '{print $1}')
+                ISO_EPOCH=$(stat --format=%Y ${ISO_NAME} | awk '{print $1}')
+           else sadm_write "${SADM_ERROR} - ISO Directory doesn't exist (${LOCAL_MOUNT}/${ISODIR})\n"
+                sadm_write "Storix report can't be produced - Job Aborted\n"
+                return 1                                                # Return Error to Caller
+        fi
+
+        # Check if at least one TOC file exist for the current server
+        SAVPWD=`pwd`                                                    # Save Current Working Dir.
+        cd ${LOCAL_MOUNT}/${IMGDIR}                                     # Move into Image Directory
+        ls -1tr SB*${server_name}*:TOC:* > /dev/null 2>&1               # At Least 1 TOC For System?
+        if [ $? -ne 0 ]                                                 # Bo TOC = No Backup
+           then sadm_write "${SADM_ERROR} - No Storix TOC file exist for system '${server_name}'\n"
+                sadm_write "Storix report can't be produced - Job Aborted\n"
+                storix_error=1                                          # Func. Return Code now at 1
+                continue 
+        fi 
+
+        # Get the current server latest backup ID (STSEQ)
+        STTOC=$(ls -1tr SB*${server_name}*:TOC:* | tail -1)             # Get lastest TOC FileName
+        STSEQ=$(echo $STTOC | awk -F: '{print $5}')                     # Get Backup ID Number
+        STTOT=$(find . -name '*${STSEQ}*' -exec stat --format=%s {} \; | awk '{sum += $1} END {print sum}')
+        cd ${SAVPWD}                                                    # Move out of NFS Directory
+
+        # Get the last line of the backup RCH file for the system.
+        RCH_FILE="${SADM_WWW_DAT_DIR}/${server_name}/rch/${server_name}_storix_client_post_job.rch"
+        if [ -s $RCH_FILE ]                                             # If System Backup RCH Exist
+            then RCH_LINE=$(tail -1 $RCH_FILE)                          # Get last line in RCH File
+            else #echo "RCH file ${RCH_FILE} not found or is empty."     # Advise user no RCH File
+                 start_end="---------- -------- ---------- -------- --------" # Start/End Date/Time
+                 RCH_LINE="${server_name} ${start_end} ${backup_script_name} default 1 3" 
+        fi 
+
+        # The RCH line should have 10 ($FIELD_IN_RCH) fields, if not set error to 1 & advise user.
+        NBFIELD=`echo $RCH_LINE | awk '{ print NF }'`                   # How many fields on line ?
+        if [ "${NBFIELD}" != "${FIELD_IN_RCH}" ]                        # If abnormal nb. of field
+           then sadm_write "Format error in this RCH file : ${RCH_FILE}\n"
+                sadm_write "Line below have ${NBFIELD} but it should have ${FIELD_IN_RCH}.\n"
+                sadm_write "The backup for this server is skipped: ${RCH_LINE}\n"
+                sadm_write "\n"
+                storix_error=1                                          # Func. Return Code now at 1
+                continue 
+        fi        
+        if [ $SADM_DEBUG -gt 5 ] 
+            then printf "The RCH Filename of ${server_name} backup of is ${RCH_FILE}\n"
+                 printf "The last Line in the file is : ${RCH_LINE}\n"
+        fi 
+
+        # Split the RCH Line 
+        WSERVER=`echo -e $RCH_LINE | awk '{ print $1 }'`                # Extract Server Name
+        WDATE1=` echo -e $RCH_LINE | awk '{ print $2 }'`                # Extract Date Started
+        WTIME1=` echo -e $RCH_LINE | awk '{ print $3 }'`                # Extract Time Started
+        WDATE2=` echo -e $RCH_LINE | awk '{ print $4 }'`                # Extract Date Started
+        WTIME2=` echo -e $RCH_LINE | awk '{ print $5 }'`                # Extract Time Ended
+        WELAPSE=`echo -e $RCH_LINE | awk '{ print $6 }'`                # Extract Time Ended
+        WSCRIPT=`echo -e $RCH_LINE | awk '{ print $7 }'`                # Extract Script Name
+        WALERT=` echo -e $RCH_LINE | awk '{ print $8 }'`                # Extract Alert Group Name
+        WTYPE=`  echo -e $RCH_LINE | awk '{ print $9 }'`                # Extract Alert Group Type
+        WRCODE=` echo -e $RCH_LINE | awk '{ print $10 }'`               # Extract Return Code 
+
+        # Set the backup Status Description
+        case "$WRCODE" in                                               # Case on RCH Return Code
+            0 ) WSTATUS="Success" 
+                ;; 
+            1 ) WSTATUS="Failed"
+                ;;
+            2 ) WSTATUS="Running"
+                ;;
+            3 ) WSTATUS="No Backup"
+                ;;
+            * ) WRDESC="CODE $WRCODE ?"                                 # Illegal Code  Desc
+                ;;                                                          
+        esac
+        
+        # Build backup line to be written to work file (Will be sorted later)
+        BLINE="${WDATE1},${WTIME1},${WELAPSE},${WSTATUS},${server_name}" 
+        BLINE="${BLINE},${server_desc},${server_backup}"
+        BLINE="${BLINE},${STTOT},${ISO_SIZE},${server_sporadic}" 
+        echo "$BLINE" >> $SADM_TMP_FILE2                                # Write Info to work file
+        done < $SADM_TMP_FILE1
+
+    # Umount NFS Mount point, Sort the Work File (By Date/Time) then produce report it HTML format.
+    unmount_nfs                                                         # UnMount NFS Backup Dir.
+    sort $SADM_TMP_FILE2 > $SADM_TMP_FILE1                              # Sort Tmp file by Date/Time
+    while read wline                                                    # Read Tmp file Line by Line
+        do
+        xcount=$(($xcount+1))                                           # Increase Line Counter
+        storix_line "${wline},${xcount},$HTML_SFILE,S"                  # Insert line in HTML Page
+        done < $SADM_TMP_FILE1                                          # Read Sorted file
+
+    echo -e "</table>\n</body>\n</html>" >> $HTML_SFILE                 # End of HTML Page
+
+    # Set Report by Email to SADMIN Administrator
+    subject="Storix Daily Backup Report"                                # Send Backup Report by mail
+    export EMAIL="$SADM_MAIL_ADDR"                                      # Set the FROM Email 
+    mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_SFILE
+    SADM_EXIT_CODE=$?                                                   # Save mutt return code
+    if [ $SADM_EXIT_CODE -eq 0 ]                                        # If mail sent successfully
+        then sadm_write "Daily Backup Report sent to $SADM_MAIL_ADDR \n"      
+        else sadm_write "Failed to send the Daily Backup Report to $SADM_MAIL_ADDR \n"
+    fi
+
+    # End of Storix Report
+    sadm_write "${BOLD}${YELLOW}End of Daily Backup Report ...${NORMAL}\n"   
+    sadm_write "\n"                                                     # White line in log & Screen
+    return $SADM_EXIT_CODE                                              # Return Err Count to caller
 }
 
 
@@ -645,6 +1073,7 @@ backup_line()
     WCOUNT=$(     echo $BACKUP_INFO | awk -F, '{ print $11 }')          # Line Counter
     HTML=$(       echo $BACKUP_INFO | awk -F, '{ print $12 }')          # HTML Output File Name
     RTYPE=$(      echo $BACKUP_INFO | awk -F, '{ print $13 }')          # R=RearBackup B=DailyBackup
+                                                                        # S=Storix Report
 
     # Alternate background color at every line
     if (( $WCOUNT %2 == 0 ))                                            # Modulo on line counter
@@ -655,6 +1084,24 @@ backup_line()
     # Beginning to Insert Line in HTML Table
     echo -e "<tr>"  >> $HTML                                            # Begin backup line
     echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WCOUNT</font></td>"  >> $HTML
+
+    # Storix Backup Date is not today (May be Missed, Sporadic, ...) Show in Yellow Background
+    if [ "$RTYPE" = "S" ]                                               # If Backup Report 
+       then if [ "$TODAY" = "$WDATE1" ]
+               then echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WDATE1</font></td>" >>$HTML
+               else if [ "$WDATE1" = "----------" ] 
+                       then echo -n "<td title='No backup recorded' " >>$HTML 
+                       else backup_date=`echo "$WDATE1" | sed 's/\./\//g'`      # Replace dot by '/' in date
+                            epoch_backup=`date -d "$backup_date" "+%s"`         # Backup Date in Epoch Time
+                            epoch_now=`date "+%s"`                              # Today in Epoch Time
+                            diff=$(($epoch_now - $epoch_backup))                # Nb. Seconds between
+                            days=$(($diff/(60*60*24)))                          # Convert Sec. to Days
+                            echo -n "<td title='Last Backup done $days days ago' " >>$HTML   
+                    fi
+                    echo -n "align=center bgcolor='Yellow'>" >>$HTML      # Yellow Background
+                    echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML  # Show Backup Date
+            fi
+    fi 
 
     # Backup Date is not today (May be Missed, Sporadic, ...) Show in Yellow Background
     if [ "$RTYPE" = "B" ]                                               # If Backup Report 
@@ -706,7 +1153,7 @@ backup_line()
     if [ -r "$LOGNAME" ]                                                # If log is Readable
         then echo -n "<a href='$LOGURL 'title='View Backup Log File'>" >>$HTML
              echo "${WSTATUS}</font></a></td>" >>$HTML 
-        else echo -e "${WSTATUS}</font></td>" >> $HTML            # No Log = No LInk
+        else echo -e "${WSTATUS}</font></td>" >> $HTML                  # No Log = No LInk
     fi
 
     # Backup Schedule Status - Activated or Deactivated (show in Yellow background)
@@ -788,7 +1235,7 @@ backup_line()
 function cmd_options()
 {
     OPTION_SELECTED=0                                                   # Default no option selected
-    while getopts "hvd:brs" opt ; do                                    # Loop to process Switch
+    while getopts "hvd:brsx" opt ; do                                   # Loop to process Switch
         case $opt in
             b) BACKUP_REPORT="ON"                                       # Produce the Backup report
                OPTION_SELECTED=$(($OPTION_SELECTED+1))                  # Incr. Nb. Option Selected
@@ -797,6 +1244,9 @@ function cmd_options()
                OPTION_SELECTED=$(($OPTION_SELECTED+1))                  # Incr. Nb. Option Selected
                ;;
             s) SCRIPT_REPORT="ON"                                       # Produce Scripts Reports
+               OPTION_SELECTED=$(($OPTION_SELECTED+1))                  # Incr. Nb. Option Selected
+               ;;
+            x) STORIX_REPORT="ON"                                       # Produce Storix Reports
                OPTION_SELECTED=$(($OPTION_SELECTED+1))                  # Incr. Nb. Option Selected
                ;;
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
@@ -862,6 +1312,11 @@ function cmd_options()
     fi 
     if [ "$REAR_REPORT" = "ON" ]                                        # If CmdLine -r was used
         then rear_report                                                # Produce ReaR Backup Report 
+             RC=$?                                                      # Save the Return Code
+             SADM_EXIT_CODE=$(($SADM_EXIT_CODE+$RC))                    # Add ReturnCode to ExitCode
+    fi 
+    if [ "$STORIX_REPORT" = "ON" ]                                      # If CmdLine -x was used
+        then storix_report                                              # Produce Storix Backup Rep. 
              RC=$?                                                      # Save the Return Code
              SADM_EXIT_CODE=$(($SADM_EXIT_CODE+$RC))                    # Add ReturnCode to ExitCode
     fi 
