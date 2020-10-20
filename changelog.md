@@ -1,6 +1,49 @@
 # Changelog
 
 
+## Release v[1.2.9](https://github.com/jadupl2/sadmin/releases) (2020-10-20)
+- Fixes
+	- 2020_07_29 sadmlib_std.sh (v3.46) - Fix date not showing in the log under some condition.
+	- 2020_08_10 sadmlib_std.sh (v3.48) - Remove improper '::' characters to was inserted im messages.
+	- 2020_08_19 sadmlib_std.sh (v3.51) - Remove some ctrl character from the log (sadm_write()).
+	- 2020_08_20 sadmlib_std.sh (v3.52) - Adjust sadm_write method
+	- 2020_09_05 sadmlib_std.sh (v3.53) - Added Start/End/Elapse Time to Script Alert Message.
+	- 2020_09_05 sadm_rear_backup.sh (v2.24) - Minor Changes.
+	- 2020_10_06 sadm_daily_report.sh (v1.4) - Bug that get Current backup size in yellow, when shouldn't.
+- New
+	- 2020_08_10 sadmlib_std.sh (v3.47) - Add module "sadm_sleep", sleep for X seconds with progressing info.
+	- 2020_08_12 sadmlib_std.sh (v3.49) - Global Var. $SADM_UCFG_DIR was added to refer $SADMIN/usr/cfg directory.
+	- 2020_08_18 sadmlib_std.sh (v3.50) - Change Screen Attribute Variable (Remove 'SADM_', $SADM_RED is NOW $RED).
+- Update
+	- 2020_07_29 sadm_fetch_clients.sh (v3.14) - Move location of o/s update is running indicator file to $SADMIN/tmp.
+	- 2020_07_29 sadm_osupdate.sh (v3.24) - Minor adjustments to screen and log presentation.
+	- 2020_07_29 sadmPageSideBar.php (v2.13) - Show server attribute counter even if it's zero.
+	- 2020_07_29 sadm_view_rear.php (v1.7) - Remove system description to allow more space on each line.
+	- 2020_09_05 sadm_fetch_clients.sh (v3.15) - Minor Bug fix, Alert Msg now include Start/End?Elapse Script time
+	- 2020_09_05 sadm_osupdate.sh (v3.25) - Minor adjustments.
+	- 2020_09_05 sadm_setup.py (v3.44) - Minor change to sadm_client crontab file.
+	- 2020_09_09 sadm_fetch_clients.sh (v3.16) - Modify Alert message when client is down.
+	- 2020_09_09 sadmlib_std.sh (v3.54) - Remove server name from Alert message (already in subject)
+	- 2020_09_10 sadm_client_housekeeping.sh (v1.42) - Make sure permission are ok in user library directory ($SADMIN/usr/lib).
+	- 2020_09_10 sadmlib_std.py (v3.13) - Minor update to date/time module.
+	- 2020_09_10 sadm_push_sadmin.sh (v2.21) - Create local processing server data server directory (if don't exist)
+	- 2020_09_10 sadm_service_ctrl.sh (v2.9) - Minor code improvement.
+	- 2020_09_12 sadm_client_housekeeping.sh (v1.43) - Make sure that "${SADM_UCFG_DIR}/.gitkeep" exist to be part of git clone.
+	- 2020_09_12 sadm_push_sadmin.sh (v2.22) - When -u is used, the usr/cfg directory is now also push to client.
+	- 2020_09_20 sadm_client_housekeeping.sh (v1.44) - Minor adjustments to log entries.
+	- 2020_09_22 sadmLib.php (v2.17) - Facilitate going back to previous & Home page by adding button in header.
+	- 2020_09_23 sadm_backup.sh (v3.25) - Modification to log recording.
+	- 2020_09_23 sadmPageWrapper.php (v1.4) - Add Tooltips to Shortcut in the page header.
+	- 2020_09_23 sadm_view_sysmon.php (v2.17) - Add Home button in the page heading.
+	- 2020_10_01 sadm_daily_report.sh (v1.2) - First Release
+	- 2020_10_01 sadmlib_std.sh (v3.55) - Add Host name in email, when alert come from sysmon.
+	- 2020_10_01 sadm_sysmon.pl (v2.40) - Write more elaborated email to user when restarting a service.
+	- 2020_10_05 sadm_daily_report.sh (v1.3) - Daily Backup Report & ReaR Backup Report now available.
+	- 2020_10_05 sadmlib_std.sh (v3.56) - Remove export for screen attribute variables.
+	- 2020_10_06 sadm_daily_report.sh (v1.5) - Minor Typo Corrections
+	- 2020_10_18 sadm_push_sadmin.sh (v2.23) - Correct error message when no system are active.
+
+
 ## Release v[1.2.8](https://github.com/jadupl2/sadmin/releases) (2020-07-29)
 - Fixes
         - 2020_06_30 sadm_rear_backup.sh (v2.23) - Fix chmod 664 for files in server backup directory
