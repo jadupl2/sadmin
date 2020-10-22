@@ -44,6 +44,7 @@
 # 2020_03_23 Update: v1.9 Minor modifications in log and email.
 # 2020_03_24 Update: v2.0 Script will not generate an rpt file anymore (Remove double error report)
 #@2020_05_23 Update: v2.1 Changing the way to get SADMIN variable in /etc/environment 
+#@2020_10_22 Update: v2.2 Line Feed added in Email when filesystem is increase
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -91,7 +92,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='2.1'                               # Your Current Script Version
+    export SADM_VER='2.2'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -352,7 +353,7 @@ main_process()
     sadm_writelog ""                                                    # Blank Line
     sadm_writelog "df -hP $FSNAME - Before increase"                    # Show FileSystem Usage
     echo -e "\n${DASH}" >>$MAIL_BODY                                    # Print Dash Line
-    echo -e "`date`Filesystem $FSNAME before increase.\n\n`df -hP $FSNAME` \n" >> $MAIL_BODY
+    echo -e "`date`\nFilesystem $FSNAME before increase.\n\n`df -hP $FSNAME` \n" >> $MAIL_BODY
     df -hP $FSNAME                                                      # Show FS Usage to User  
     sadm_writelog ""                                                    # Blank Line
     extend_fs                                                           # Go Extend Filesystem
