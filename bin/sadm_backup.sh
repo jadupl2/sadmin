@@ -64,6 +64,7 @@
 # 2020_05_24 Update: v3.23 Automatically move backup from old dir. structure to the new.
 # 2020_07_13 Fix: v3.24 New System Main Backup Directory was not created with right permission.
 #@2020_09_23 Update: v3.25 Modification to log recording.
+#@2020_10_26 Fix: v3.26 Suppress 'chmod' error message on backup directory.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -94,7 +95,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.25'                              # Your Current Script Version
+    export SADM_VER='3.26'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -592,10 +593,8 @@ mount_nfs()
                 then sadm_writelog "[ERROR] Creating Main System Backup Directory ${F}"
                      return 1                                           # End Function with error
              fi
-        else sadm_write "Backup directory ($F) already exist."
+            chmod 775 ${F}                                              # Assign Permission
     fi
-    #chown ${SADM_USER}:${SADM_GROUP} ${BACKUP_DIR}                     # Assign it SADM USer&Group
-    chmod 775 ${F}                                                      # Assign Protection
 
     return 0
 }
