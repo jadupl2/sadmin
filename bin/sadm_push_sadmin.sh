@@ -49,6 +49,7 @@
 #@2020_09_10 Update: v2.21 Create local processing server data server directory (if don't exist)
 #@2020_09_12 Update: v2.22 When -u is used, the usr/cfg directory is now also push to client.
 #@2020_10_18 Update: v2.23 Correct error message when no system are active.
+#@2020_10_29 Fix: v2.24 If comma was used in server description, it cause delimiter problem.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -79,7 +80,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.23'                              # Your Current Script Version
+    export SADM_VER='2.24'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -210,7 +211,7 @@ process_servers()
     # Setup Database Authentication
     WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
-    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/,/'" # Build CmdLine
+    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/;/'" # Build CmdLine
     if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
 
     # Execute SQL to Select Active servers Data
@@ -235,12 +236,12 @@ process_servers()
     while read wline                                                    # Then Read Line by Line
         do
         xcount=`expr $xcount + 1`                                       # Server Counter
-        server_name=`    echo $wline|awk -F, '{ print $1 }'`            # Extract Server Name
-        server_os=`      echo $wline|awk -F, '{ print $2 }'`            # Extract O/S (linux/aix)
-        server_domain=`  echo $wline|awk -F, '{ print $3 }'`            # Extract Domain of Server
-        server_monitor=` echo $wline|awk -F, '{ print $4 }'`            # Monitor  t=True f=False
-        server_sporadic=`echo $wline|awk -F, '{ print $5 }'`            # Sporadic t=True f=False
-        server_dir=`     echo $wline|awk -F, '{ print $6 }'`            # Client SADMIN Install Dir.
+        server_name=`    echo $wline|awk -F\; '{ print $1 }'`            # Extract Server Name
+        server_os=`      echo $wline|awk -F\; '{ print $2 }'`            # Extract O/S (linux/aix)
+        server_domain=`  echo $wline|awk -F\; '{ print $3 }'`            # Extract Domain of Server
+        server_monitor=` echo $wline|awk -F\; '{ print $4 }'`            # Monitor  t=True f=False
+        server_sporadic=`echo $wline|awk -F\; '{ print $5 }'`            # Sporadic t=True f=False
+        server_dir=`     echo $wline|awk -F\; '{ print $6 }'`            # Client SADMIN Install Dir.
         server_fqdn=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
         
         sadm_write "\n"                                                 # Blank Line
