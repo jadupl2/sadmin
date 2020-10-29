@@ -48,6 +48,7 @@
 # 2020_04_24 Update: v4.0 Show rsync status & solve problem if duplicate entry in /etc/environment.
 # 2020_05_06 Update: v4.1 Modification to log structure
 #@2020_05_23 Update: v4.2 No longer report an error, if a system is rebooting because of O/S update.
+#@2020_10_29 Fix: v4.3 If comma was used in server description, it cause delimiter problem.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -75,7 +76,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='4.2'                               # Your Current Script Version
+    export SADM_VER='4.3'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -160,7 +161,7 @@ process_servers()
     if [ $DEBUG_LEVEL -gt 5 ]                                           # If Debug Level > 5 
         then sadm_write "$CMDLINE1 -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' |tr '/\t/' '/,/'\n"
     fi
-    $CMDLINE1 -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
+    $CMDLINE1 -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
 
     # IF FILE WAS NOT CREATED OR HAS A ZERO LENGTH THEN NO ACTIVES SERVERS WERE FOUND
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
@@ -173,11 +174,11 @@ process_servers()
     while read wline                                                    # Then Read Line by Line
         do
         xcount=`expr $xcount + 1`                                       # Server Counter
-        server_name=`    echo $wline|awk -F, '{ print $1 }'`            # Extract Server Name
-        server_os=`      echo $wline|awk -F, '{ print $2 }'`            # Extract O/S (linux/aix)
-        server_domain=`  echo $wline|awk -F, '{ print $3 }'`            # Extract Domain of Server
-        server_monitor=` echo $wline|awk -F, '{ print $4 }'`            # Monitor  t=True f=False
-        server_sporadic=`echo $wline|awk -F, '{ print $5 }'`            # Sporadic t=True f=False
+        server_name=`    echo $wline|awk -F\; '{ print $1 }'`           # Extract Server Name
+        server_os=`      echo $wline|awk -F\; '{ print $2 }'`           # Extract O/S (linux/aix)
+        server_domain=`  echo $wline|awk -F\; '{ print $3 }'`           # Extract Domain of Server
+        server_monitor=` echo $wline|awk -F\; '{ print $4 }'`           # Monitor  t=True f=False
+        server_sporadic=`echo $wline|awk -F\; '{ print $5 }'`           # Sporadic t=True f=False
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
         sadm_write "\n"
         sadm_write "${BOLD}Processing ($xcount) ${fqdn_server}${NORMAL}\n" # Show Cur.Syst.
