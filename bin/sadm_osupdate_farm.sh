@@ -46,7 +46,7 @@
 # 2019_12_22 Fix: v3.13 Fix problem when using debug (-d) option without specifying level of debug.
 #@2020_05_23 Update: v3.14 Create 'osupdate_running' file before launching O/S update on remote.
 #@2020_07_28 Update: v3.15 Move location of o/s update is running indicator file to $SADMIN/tmp.
-# --------------------------------------------------------------------------------------------------
+#@2020_10_29 Fix: v3.16 If comma was used in server description, it cause delimiter problem.# --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -96,7 +96,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.15'                              # Your Current Script Version
+    export SADM_VER='3.16'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -220,7 +220,7 @@ process_servers()
     if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
 
     # Execute SQL to Update Server O/S Data
-    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
    
     # LOOP THROUGH ACTIVE SERVERS FILE LIST
     xcount=0; ERROR_COUNT=0;
@@ -228,13 +228,13 @@ process_servers()
        then while read wline
             do
             xcount=`expr $xcount + 1`
-            server_name=`               echo $wline|awk -F, '{ print $1 }'`
-            server_os=`                 echo $wline|awk -F, '{ print $2 }'`
-            server_domain=`             echo $wline|awk -F, '{ print $3 }'`
-            server_update_auto=`        echo $wline|awk -F, '{ print $4 }'`
-            server_update_reboot=`      echo $wline|awk -F, '{ print $5 }'`
-            server_sporadic=`           echo $wline|awk -F, '{ print $6 }'`
-            server_sadmin_dir=`         echo $wline|awk -F, '{ print $8 }'`
+            server_name=`               echo $wline|awk -F\; '{ print $1 }'`
+            server_os=`                 echo $wline|awk -F\; '{ print $2 }'`
+            server_domain=`             echo $wline|awk -F\; '{ print $3 }'`
+            server_update_auto=`        echo $wline|awk -F\; '{ print $4 }'`
+            server_update_reboot=`      echo $wline|awk -F\; '{ print $5 }'`
+            server_sporadic=`           echo $wline|awk -F\; '{ print $6 }'`
+            server_sadmin_dir=`         echo $wline|awk -F\; '{ print $8 }'`
             fqdn_server=`echo ${server_name}.${server_domain}`          # Create FQN Server Name
             sadm_write "\n"
             sadm_write "${STAR_LINE}\n"
