@@ -46,7 +46,8 @@
 # 2019_12_22 Fix: v3.13 Fix problem when using debug (-d) option without specifying level of debug.
 #@2020_05_23 Update: v3.14 Create 'osupdate_running' file before launching O/S update on remote.
 #@2020_07_28 Update: v3.15 Move location of o/s update is running indicator file to $SADMIN/tmp.
-#@2020_10_29 Fix: v3.16 If comma was used in server description, it cause delimiter problem.# --------------------------------------------------------------------------------------------------
+#@2020_10_29 Fix: v3.16 If comma was used in server description, it cause delimiter problem.
+# --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
