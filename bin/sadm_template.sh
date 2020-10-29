@@ -38,53 +38,53 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 
 #===================================================================================================
-# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
 # SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
+# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
 #===================================================================================================
-
+#
     # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
     if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
-        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
+        then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
              EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
              if [ $? -eq 0 ]                                            # Yes it is 
                 then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}.\n"
+                     printf "'SADMIN' Environment variable temporarily set to ${SADMIN}.\n"
                 else exit 1                                             # No SADMIN Env. Var. Exit
              fi
     fi 
 
-    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+    # USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
     export SADM_PN=${0##*/}                             # Current Script filename(with extension)
     export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
-    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_TPID="$$"                               # Current Script Process ID.
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.0'                               # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
+    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
+    export SADM_VER='1.0'                               # Current Script Version
+    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
+    export SADM_LOG_TYPE="B"                            # writelog go to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+    export SADM_USE_RCH="Y"                             # Gen. History Entry in ResultCodeHistory 
     export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
-    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
-    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
-    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
-    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
+    export SADM_TMP_FILE1=""                            # Tmp File1 you can use, Libr. will set name
+    export SADM_TMP_FILE2=""                            # Tmp File2 you can use, Libr. will set name
+    export SADM_TMP_FILE3=""                            # Tmp File3 you can use, Libr. will set name
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library Functions
+    # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+    . ${SADMIN}/lib/sadmlib_std.sh                      # LOAD SADMIN Standard Shell Libr. Functions
     export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
-    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
-    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
+    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 9.0.1)
+    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 9)
 
-#---------------------------------------------------------------------------------------------------
-# Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# They can be overridden here, on a per script basis (if needed).
+    # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/CFG/SADMIN.CFG FILE).
+    # THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
     #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnError 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=500                        # At the end Trim log to 500 Lines(0=NoTrim)
     #export SADM_MAX_RCLINE=35                          # At the end Trim rch to 35 Lines (0=NoTrim)
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
@@ -135,7 +135,7 @@ process_servers()
     # Execute SQL Query to Create CSV in SADM Temporary work file ($SADM_TMP_FILE1)
     CMDLINE="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL Auth/Read Only User
     if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug Show Auth cmdline
-    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
         then sadm_write "$SADM_WARNING No Active Server were found.\n"  # Not Active Server MSG
              return 0                                                   # Return Status to Caller
@@ -145,14 +145,14 @@ process_servers()
     while read wline                                                    # Read Tmp file Line by Line
         do
         xcount=$(($xcount+1))                                           # Increase Server Counter
-        server_name=$(echo $wline|awk -F, '{print $1}')                 # Extract Server Name
-        server_os=$(echo $wline|awk -F, '{print $2}')                   # O/S (linux/aix/darwin)
-        server_domain=$(echo $wline|awk -F, '{print $3}')               # Extract Domain of Server
-        server_monitor=$(echo $wline|awk -F, '{print $4}')              # Monitor  1=True 0=False
-        server_sporadic=$(echo $wline|awk -F, '{print $5}')             # Sporadic 1=True 0=False
-        server_rootdir=$(echo $wline|awk -F, '{print $7}')              # Client SADMIN Root Dir.
-        server_backup=$(echo $wline|awk -F, '{print $8}')               # Backup Schd 1=True 0=False
-        server_img_backup=$(echo $wline|awk -F, '{print $9}')           # ReaR Sched. 1=True 0=False
+        server_name=$(      echo $wline|awk -F\; '{print $1}')          # Extract Server Name
+        server_os=$(        echo $wline|awk -F\; '{print $2}')          # O/S (linux/aix/darwin)
+        server_domain=$(    echo $wline|awk -F\; '{print $3}')          # Extract Domain of Server
+        server_monitor=$(   echo $wline|awk -F\; '{print $4}')          # Monitor  1=True 0=False
+        server_sporadic=$(  echo $wline|awk -F\; '{print $5}')          # Sporadic 1=True 0=False
+        server_rootdir=$(   echo $wline|awk -F\; '{print $7}')          # Client SADMIN Root Dir.
+        server_backup=$(    echo $wline|awk -F\; '{print $8}')          # Backup Schd 1=True 0=False
+        server_img_backup=$(echo $wline|awk -F\; '{print $9}')          # ReaR Sched. 1=True 0=False
         #
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQDN Server Name
         sadm_write "\n"                                                 # Blank Line
