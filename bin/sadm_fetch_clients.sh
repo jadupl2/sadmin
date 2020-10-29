@@ -68,7 +68,7 @@
 #@2020_07_29 Update: v3.14 Move location of o/s update is running indicator file to $SADMIN/tmp.
 #@2020_09_05 Update: v3.15 Minor Bug fix, Alert Msg now include Start/End?Elapse Script time
 #@2020_09_09 Update: v3.16 Modify Alert message when client is down.
-#
+#@2020_10_29 Fix: v3.17 If comma was used in server description, it cause delimiter problem.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -115,7 +115,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.16'                              # Your Current Script Version
+    export SADM_VER='3.17'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -865,7 +865,7 @@ process_servers()
     # SETUP DATABASE CONNECTION PARAMETERS
     WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
-    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/,/'" # Build CmdLine
+    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/;/'" # Build CmdLine
     if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
 
     # TRY SIMPLE SQL STATEMENT TO TEST CONNECTION TO DATABASE
@@ -894,34 +894,34 @@ process_servers()
     while read wline                                                    # Read Server Data from DB
         do                                                              # Line by Line
         xcount=`expr $xcount + 1`                                       # Incr Server Counter Var.
-        server_name=`    echo $wline|awk -F, '{ print $1 }'`            # Extract Server Name
-        server_os=`      echo $wline|awk -F, '{ print $2 }'`            # Extract O/S (linux/aix)
-        server_domain=`  echo $wline|awk -F, '{ print $3 }'`            # Extract Domain of Server
-        server_monitor=` echo $wline|awk -F, '{ print $4 }'`            # Monitor t=True f=False
-        server_sporadic=`echo $wline|awk -F, '{ print $5 }'`            # Sporadic t=True f=False
-        server_dir=`     echo $wline|awk -F, '{ print $7 }'`            # SADMIN Dir on Client 
+        server_name=`    echo $wline|awk -F\; '{ print $1 }'`            # Extract Server Name
+        server_os=`      echo $wline|awk -F\; '{ print $2 }'`            # Extract O/S (linux/aix)
+        server_domain=`  echo $wline|awk -F\; '{ print $3 }'`            # Extract Domain of Server
+        server_monitor=` echo $wline|awk -F\; '{ print $4 }'`            # Monitor t=True f=False
+        server_sporadic=`echo $wline|awk -F\; '{ print $5 }'`            # Sporadic t=True f=False
+        server_dir=`     echo $wline|awk -F\; '{ print $7 }'`            # SADMIN Dir on Client 
         fqdn_server=`    echo ${server_name}.${server_domain}`          # Create FQN Server Name
         #
-        db_updmin=`     echo $wline|awk -F, '{ print $8 }'`             # crontab Update Min field
-        db_updhrs=`     echo $wline|awk -F, '{ print $9 }'`             # crontab Update Hrs field
-        db_upddom=`     echo $wline|awk -F, '{ print $10 }'`            # crontab Update DOM field
-        db_updmth=`     echo $wline|awk -F, '{ print $11 }'`            # crontab Update Mth field
-        db_upddow=`     echo $wline|awk -F, '{ print $12 }'`            # crontab Update DOW field 
-        db_updauto=`    echo $wline|awk -F, '{ print $13 }'`            # crontab Update DOW field 
+        db_updmin=`     echo $wline|awk -F\; '{ print $8 }'`             # crontab Update Min field
+        db_updhrs=`     echo $wline|awk -F\; '{ print $9 }'`             # crontab Update Hrs field
+        db_upddom=`     echo $wline|awk -F\; '{ print $10 }'`            # crontab Update DOM field
+        db_updmth=`     echo $wline|awk -F\; '{ print $11 }'`            # crontab Update Mth field
+        db_upddow=`     echo $wline|awk -F\; '{ print $12 }'`            # crontab Update DOW field 
+        db_updauto=`    echo $wline|awk -F\; '{ print $13 }'`            # crontab Update DOW field 
         #
-        backup_auto=`   echo $wline|awk -F, '{ print $14 }'`            # crontab Backup 1=Yes 0=No 
-        backup_mth=`    echo $wline|awk -F, '{ print $15 }'`            # crontab Backup Mth field
-        backup_dom=`    echo $wline|awk -F, '{ print $16 }'`            # crontab Backup DOM field
-        backup_dow=`    echo $wline|awk -F, '{ print $17 }'`            # crontab Backup DOW field 
-        backup_hrs=`    echo $wline|awk -F, '{ print $18 }'`            # crontab Backup Hrs field
-        backup_min=`    echo $wline|awk -F, '{ print $19 }'`            # crontab Backup Min field
+        backup_auto=`   echo $wline|awk -F\; '{ print $14 }'`            # crontab Backup 1=Yes 0=No 
+        backup_mth=`    echo $wline|awk -F\; '{ print $15 }'`            # crontab Backup Mth field
+        backup_dom=`    echo $wline|awk -F\; '{ print $16 }'`            # crontab Backup DOM field
+        backup_dow=`    echo $wline|awk -F\; '{ print $17 }'`            # crontab Backup DOW field 
+        backup_hrs=`    echo $wline|awk -F\; '{ print $18 }'`            # crontab Backup Hrs field
+        backup_min=`    echo $wline|awk -F\; '{ print $19 }'`            # crontab Backup Min field
         #
-        rear_auto=`     echo $wline|awk -F, '{ print $20 }'`            # Rear Crontab 1=Yes 0=No 
-        rear_mth=`      echo $wline|awk -F, '{ print $21 }'`            # Rear Crontab Mth field
-        rear_dom=`      echo $wline|awk -F, '{ print $22 }'`            # Rear Crontab DOM field
-        rear_dow=`      echo $wline|awk -F, '{ print $23 }'`            # Rear Crontab DOW field 
-        rear_hrs=`      echo $wline|awk -F, '{ print $24 }'`            # Rear Crontab Hrs field
-        rear_min=`      echo $wline|awk -F, '{ print $25 }'`            # Rear Crontab Min field
+        rear_auto=`     echo $wline|awk -F\; '{ print $20 }'`            # Rear Crontab 1=Yes 0=No 
+        rear_mth=`      echo $wline|awk -F\; '{ print $21 }'`            # Rear Crontab Mth field
+        rear_dom=`      echo $wline|awk -F\; '{ print $22 }'`            # Rear Crontab DOM field
+        rear_dow=`      echo $wline|awk -F\; '{ print $23 }'`            # Rear Crontab DOW field 
+        rear_hrs=`      echo $wline|awk -F\; '{ print $24 }'`            # Rear Crontab Hrs field
+        rear_min=`      echo $wline|awk -F\; '{ print $25 }'`            # Rear Crontab Min field
         #
         sadm_write "${SADM_TEN_DASH}\n"                                 # Print 10 Dash line
         sadm_write "${BOLD}Processing [$xcount] ${fqdn_server}${NORMAL}\n" 
