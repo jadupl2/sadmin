@@ -28,6 +28,7 @@
 # Enhancements/Corrections Version Log
 # 2018_02_08    v1.8 Fix Compatibility problem with 'sadh' shell (If statement)
 # 2018_06_06    v1.9 Adapt to New SADMIN Shell Library
+#@2020_10_29 Fix: v1.10 If comma was used in server description, it cause delimiter problem.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -48,7 +49,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.9'                               # Current Script Version
+    export SADM_VER='1.10'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -144,11 +145,11 @@ perform_backup()
     SQL="${SQL} order by srv_name; "
     WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
-    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/,/'" # Build CmdLine
+    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/;/'" # Build CmdLine
     if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
 
     # Execute SQL to Update Server O/S Data
-    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
 
     # Display Execution repartition in time if more than one server
     if [ "$ONE_SERVER" = " " ]
@@ -172,11 +173,11 @@ perform_backup()
     if [ -s "$SADM_TMP_FILE1" ]
        then while read wline
               do
-              server_name=`    echo $wline|awk -F, '{ print $1 }'`      # Extract Server Name
-              server_os=`      echo $wline|awk -F, '{ print $2 }'`      # Extract O/S (linux/aix)
-              server_domain=`  echo $wline|awk -F, '{ print $3 }'`      # Extract Domain of Server
-              server_monitor=` echo $wline|awk -F, '{ print $4 }'`      # Monitor t=True f=False
-              server_sporadic=`echo $wline|awk -F, '{ print $5 }'`      # Sporadic t=True f=False
+              server_name=`    echo $wline|awk -F\; '{ print $1 }'`      # Extract Server Name
+              server_os=`      echo $wline|awk -F\; '{ print $2 }'`      # Extract O/S (linux/aix)
+              server_domain=`  echo $wline|awk -F\; '{ print $3 }'`      # Extract Domain of Server
+              server_monitor=` echo $wline|awk -F\; '{ print $4 }'`      # Monitor t=True f=False
+              server_sporadic=`echo $wline|awk -F\; '{ print $5 }'`      # Sporadic t=True f=False
               fqdn_server=`echo ${server_name}.${server_domain}`        # Create FQN Server Name
                       
               # Display Server Monitoring and Sporadic Options are ON or OFF in Debug Mode
