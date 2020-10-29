@@ -22,6 +22,7 @@
 #@2020_10_05 Update: v1.3 Daily Backup Report & ReaR Backup Report now available.
 #@2020_10_06 Fix: v1.4 Bug that get Current backup size in yellow, when shouldn't.
 #@2020_10_06 Update: v1.5 Minor Typo Corrections
+#@2020_10_29 Update: v1.6 Change CmdLine Switch & Storix Daily report is working
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -54,7 +55,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-    export SADM_VER='1.5'                               # Current Script Version
+    export SADM_VER='1.6'                               # Current Script Version
     export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
     export SADM_LOG_TYPE="B"                            # writelog go to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
