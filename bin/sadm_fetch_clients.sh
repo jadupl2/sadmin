@@ -69,6 +69,7 @@
 #@2020_09_05 Update: v3.15 Minor Bug fix, Alert Msg now include Start/End?Elapse Script time
 #@2020_09_09 Update: v3.16 Modify Alert message when client is down.
 #@2020_10_29 Fix: v3.17 If comma was used in server description, it cause delimiter problem.
+#@2020_11_04 Update: v3.18 Reduce time allowed for O/S update to 1800sec. (30Min) & keep longer log.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -115,9 +116,9 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.17'                              # Your Current Script Version
+    export SADM_VER='3.18'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
+    export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
@@ -139,7 +140,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
-    export SADM_MAX_LOGLINE=5000                        # When script end Trim log to 500 Lines
+    export SADM_MAX_LOGLINE=75000                        # When script end Trim log to 7500 Lines
     #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
@@ -159,7 +160,7 @@ FETCH_RPT="${SADM_RPT_DIR}/${SADM_HOSTNAME}_fetch.rpt" ;export FETCH_RPT # RPT f
 #
 export REBOOT_SEC=900                                                   # O/S Upd Reboot Nb Sec.wait
 export RCH_FIELD=10                                                     # Nb. of field on rch file.
-export OSTIMEOUT=3600                                                   # 3600sec=1Hr to do O/S Upd.
+export OSTIMEOUT=1800                                                   # 1800sec=30Min todo O/S Upd
 #
 # Reset Alert Totals Counters
 export total_alert=0  ; export total_duplicate=0 ; export total_ok=0 ; export total_error=0      
@@ -762,7 +763,7 @@ validate_server_connectivity()
     fi
     SNAME=$1                                                            # Server Name
     FQDN_SNAME=$2                                                       # Server Name Full Qualified
-    UPDATE_RUNNING="${SADM_TMP_DIR}/osupdate_running_${SNAME}"          # OS Update in progress flag
+    UPDATE_RUNNING="${SADM_TMP_DIR}/osupdate_running_${SNAME}"          # OSUpdate running flag file
 
     # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR AND CONTINUE WITH NEXT SERVER
     if ! host  $FQDN_SNAME >/dev/null 2>&1
@@ -771,17 +772,18 @@ validate_server_connectivity()
                 return 1                                                # Return Error to Caller
     fi
 
-    # TEST SSH TO SERVER
-    $SADM_SSH_CMD $FQDN_SNAME date > /dev/null 2>&1                     # SSH to Server for date
-    RC=$?                                                               # Save Error Number
-    if [ $RC -eq 0 ]                                                    # If SSH Worked
-        then if [ -f "$UPDATE_RUNNING" ]                                # If O/S Update Running
-               then rm -f $UPDATE_RUNNING > /dev/null 2>&1              # Remove O/S Upd Flag File
-             fi 
-             return 0                                                   # Server Accessible 
-    fi                                                                  # OK SSH Worked the 1st time
+                                                             # OK SSH Worked the 1st time
 
-    # SSH DIDN'T WORK AND O/S UPDATE FILE EXIST, THEN AN O/S UPDATE IS RUNNING
+    # When we start the O/S Update, a file is created ($UPDATE_RUNNING) to indicate that an O/S
+    # update is running (Done by the sadm_osupdate_farm.sh script).
+    # The O/S Update may need a reboot at the end of the update (Server CRUD Web Page.)
+    # While the system is bring down and back up again, it may alert user saying that server is down
+    #
+    # To disable the monitoring of the server while it is rebooting after an update,the 
+    # $UPDATE_RUNNING file is created when the O/S update start.
+    # When the monitoring script (sadm_fetch_client.sh) see that file, it check the time stamp of it
+    # SADMIN give 30 minutes ($OSTIMEOUT) to update the server, after that the monitoring of the 
+    # server will be resume and the ($UPDATE_RUNNING) file is deleted.    
     if [ -f "$UPDATE_RUNNING" ]                                         # If O/S Update running 
         then FEPOCH=`stat -c %Y $UPDATE_RUNNING`                        # Get File Modif. Epoch Time
              CEPOCH=$(sadm_get_epoch_time)                              # Get Current Epoch Time
@@ -794,11 +796,16 @@ validate_server_connectivity()
                      rm -f $UPDATE_RUNNING > /dev/null 2>&1             # Remove O/S Upd Flag File
                 else msg="${SADM_WARNING} O/S update is running on '$FQDN_SNAME'."
                      sadm_write "${msg}\n"
-                     msg="Will resume normal operation once the O/S update is terminated or can SSH to server."
+                     msg="Will resume monitoring once the O/S update is finished and we can SSH to server."
                      sadm_write "${msg}\n"
                      return 2
              fi 
     fi 
+
+    # TEST SSH TO SERVER
+    $SADM_SSH_CMD $FQDN_SNAME date > /dev/null 2>&1                     # SSH to Server for date
+    RC=$?                                                               # Save Error Number
+    if [ $RC -eq 0 ] ; then return 0 ; fi                               # SSH Work return to caller
 
     # SSH DIDN'T WORK, BUT IT'S A SPORADIC SERVER (CAN HAPPEN, DON'T REPORT AN EROR)
     if [ "$server_sporadic" = "1" ]                                     # If Error on Sporadic Host
@@ -876,7 +883,7 @@ process_servers()
     fi 
 
     # EXECUTE SQL TO GET A LIST OF ACTIVE SERVERS OF THE RECEIVED O/S TYPE INTO $SADM_TMP_FILE1
-    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
     
     # IF FILE WASN'T CREATED OR HAS A ZERO LENGHT, THEN NO ACTIVE SYSTEM IS FOUND, RETURN TO CALLER.
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
