@@ -23,18 +23,18 @@
 # --------------------------------------------------------------------------------------------------
 # Change Log
 # 2016_11_11  v2.6 Insert Logic to Pass a param. (Y/N) to sadm_osupdate_client.sh to Reboot or not
-#                  server after successfull update. Reboot is specified in Database (Web Interface)
+#                  server after successfully update. Reboot is specified in Database (Web Interface)
 #                  on a server by server basis.
 # 2016_11_15  v2.7 Log will now be cumulative (Not clear every time the script in run)
 # 2017_02_03  v2.8 Database Columns were changed
 # 2017_03_15  v2.9 Add Logic for command line switch [-s servername] to update only one server
-#                  Command line swtich [-h]  for help also added
+#                  Command line switch [-h]  for help also added
 # 2017_03_17  v3.0 Not a cumulative log anymore
 # 2017_04_05  v3.1 Allow program to run more than once at same time, to allow simultanious Update
 #                  Put Back cumulative Log, so don't miss anything, when multiple update running
 # 2017_12_10  v3.2 Adapt program to use MySQL instead of PostGres 
 # 2017_12_12  V3.3 Correct Problem connecting to Database
-# 2018_02_08  V3.4 Fix Compatibility problem with 'sadh' shell (If statement)
+# 2018_02_08  V3.4 Fix Compatibility problem with 'dash' shell (If statement)
 # 2018_06_05  v3.5 Add Switch -v to view version, change help message, adapt to new Libr.
 # 2018_06_09  v3.6 Change the name  of the client o/s update script & Change name of this script
 # 2018_06_10  v3.7 Change name to sadm_osupdate_farm.sh - and change client script name
@@ -47,6 +47,7 @@
 #@2020_05_23 Update: v3.14 Create 'osupdate_running' file before launching O/S update on remote.
 #@2020_07_28 Update: v3.15 Move location of o/s update is running indicator file to $SADMIN/tmp.
 #@2020_10_29 Fix: v3.16 If comma was used in server description, it cause delimiter problem.
+#@2020_11_04 Minor: v3.17 Minor code modification.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -207,14 +208,12 @@ process_servers()
 {
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, "
     SQL2="srv_update_reboot, srv_sporadic, srv_active, srv_sadmin_dir from server "
-    if [ "$ONE_SERVER" != "" ] 
-        then SQL3="where srv_ostype = 'linux' and srv_active = True " 
-             SQL4="and srv_name = '$ONE_SERVER' ;"
-        else SQL3="where srv_ostype = 'linux' and srv_active = True "
-             SQL4="order by srv_name; "
+    SQL3="where srv_ostype = 'linux' and srv_active = True "            # Got to Be a Linux & Active
+    if [ "$ONE_SERVER" != "" ]                                          # Update for 1 Server Only
+        then SQL4="and srv_name = '$ONE_SERVER' ;"                      # Select only 1 server
+        else SQL4="order by srv_name; "                                 # Sort by server name
     fi
     SQL="${SQL1}${SQL2}${SQL3}${SQL4}"                                  # Build Final SQL Statement 
-
     WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL'"        # Build Full Command Line
@@ -272,9 +271,9 @@ process_servers()
                          then wsubject="SADM: WARNING O/S Update - Server $server_name (O/S Update OFF)" 
                               echo "Server O/S Update is OFF"  | mail -s "$wsubject" $SADM_MAIL_ADDR
                      fi
-                else WREBOOT=""                                         # Default is no reboot
+                else WREBOOT=""                                         # Def. No Cli Opt for reboot
                      if [ "$server_update_reboot" = "1" ]               # If Requested in Database
-                        then WREBOOT="-r"                               # Add -r to reboot command 
+                        then WREBOOT="-r"                               # Add -r option to reboot  
                      fi                                                 # This reboot after Update
                      #sadm_write "Starting $USCRIPT on ${server_name}.${server_domain}\n"
                      if [ "${server_name}.${server_domain}" != "$SADM_SERVER" ]
