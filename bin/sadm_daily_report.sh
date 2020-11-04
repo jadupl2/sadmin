@@ -23,6 +23,7 @@
 #@2020_10_06 Fix: v1.4 Bug that get Current backup size in yellow, when shouldn't.
 #@2020_10_06 Update: v1.5 Minor Typo Corrections
 #@2020_10_29 Update: v1.6 Change CmdLine Switch & Storix Daily report is working
+#@2020_11_04 Update: v1.7 Added 1st draft of scripts html report.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -30,60 +31,58 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
-
 #===================================================================================================
 # SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 # To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
 #===================================================================================================
-#
-    # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-    if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
-        then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-             EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
-             if [ $? -eq 0 ]                                            # Yes it is 
-                then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                     printf "'SADMIN' Environment variable temporarily set to ${SADMIN}.\n"
-                else exit 1                                             # No SADMIN Env. Var. Exit
-             fi
-    fi 
 
-    # USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
-    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
-    export SADM_TPID="$$"                               # Current Script Process ID.
-    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
-    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+# MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # If SADMIN EnvVar not right
+    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null          # SADMIN in /etc/environment
+         if [ $? -eq 0 ]                                                # Yes it is 
+            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                 printf "'SADMIN' Environment variable temporarily set to ${SADMIN}.\n"
+            else exit 1                                                 # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-    export SADM_VER='1.6'                               # Current Script Version
-    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
-    export SADM_LOG_TYPE="B"                            # writelog go to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
-    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Gen. History Entry in ResultCodeHistory 
-    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
-    export SADM_TMP_FILE1=""                            # Tmp File1 you can use, Libr. will set name
-    export SADM_TMP_FILE2=""                            # Tmp File2 you can use, Libr. will set name
-    export SADM_TMP_FILE3=""                            # Tmp File3 you can use, Libr. will set name
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                 # Current Script filename(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`       # Current Script filename(without extension)
+export SADM_TPID="$$"                                   # Current Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                      # Current Host name without Domain Name
+export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-    . ${SADMIN}/lib/sadmlib_std.sh                      # LOAD SADMIN Standard Shell Libr. Functions
-    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
-    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 9.0.1)
-    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 9)
+# USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
+export SADM_VER='1.7'                                   # Current Script Version
+export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
+export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
+export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
+export SADM_LOG_HEADER="Y"                              # [Y]=Include Log Header  [N]=No log Header
+export SADM_LOG_FOOTER="Y"                              # [Y]=Include Log Footer  [N]=No log Footer
+export SADM_MULTIPLE_EXEC="N"                           # Allow running multiple copy at same time ?
+export SADM_USE_RCH="Y"                                 # Gen. History Entry in ResultCodeHistory 
+export SADM_DEBUG=0                                     # Debug Level - 0=NoDebug Higher=+Verbose
+export SADM_TMP_FILE1=""                                # Tmp File1 you can use, Libr. will set name
+export SADM_TMP_FILE2=""                                # Tmp File2 you can use, Libr. will set name
+export SADM_TMP_FILE3=""                                # Tmp File3 you can use, Libr. will set name
 
-    # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/CFG/SADMIN.CFG FILE).
-    # THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnError 2=AlertOnOK 3=Always
-    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=500                        # At the end Trim log to 500 Lines(0=NoTrim)
-    #export SADM_MAX_RCLINE=35                          # At the end Trim rch to 35 Lines (0=NoTrim)
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                          # LOAD SADMIN Standard Shell Libr. Functions
+export SADM_OS_NAME=$(sadm_get_osname)                  # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
+export SADM_OS_VERSION=$(sadm_get_osversion)            # O/S Full Version Number  (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)      # O/S Major Version Number (ex: 9)
+
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/CFG/SADMIN.CFG FILE).
+# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                               # 0=None 1=AlertOnError 2=AlertOnOK 3=Always
+#export SADM_ALERT_GROUP="default"                      # Alert Group to advise (alert_group.cfg)
+#export SADM_MAIL_ADDR="your_email@domain.com"          # Email to send log (Override sadmin.cfg)
+#export SADM_MAX_LOGLINE=500                            # At the end Trim log to 500 Lines(0=NoTrim)
+#export SADM_MAX_RCLINE=35                              # At the end Trim rch to 35 Lines (0=NoTrim)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
-
 
   
 
@@ -106,10 +105,12 @@ export SCRIPT_REPORT="ON"                                               # Script
 export STORIX_REPORT="OFF"                                              # Storix Report De-Activated
 
 # Output HTML page for each type of report.
-export HTML_BFILE="${SADM_TMP_DIR}/backup_report.html"                  # Backup Report HTML File 
-export HTML_RFILE="${SADM_TMP_DIR}/rear_report.html"                    # ReaR Backup Rep. HTML File 
-export HTML_XFILE="${SADM_TMP_DIR}/storix_report.html"                  # Storix Rep. HTML File 
-export HTML_SFILE="${SADM_TMP_DIR}/scripts_report.html"                 # Scripts Rep. HTML File 
+export HTML_BFILE="${SADM_WWW_DIR}/view/daily_backup_report.html"       # Backup Report HTML File 
+export HTML_RFILE="${SADM_WWW_DIR}/view/daily_rear_report.html"         # ReaR Backup Rep. HTML File 
+export HTML_XFILE="${SADM_WWW_DIR}/view/daily_storix_report.html"       # Storix Rep. HTML File 
+export HTML_SFILE="${SADM_WWW_DIR}/view/daily_scripts_report.html"      # Scripts Rep. HTML File 
+export HTML_SERVER="${SADM_WWW_DIR}/view/daily_scripts_by_server.html"  # Scripts Group by Servers.
+export HTML_SCRIPT="${SADM_WWW_DIR}/view/daily_scripts_by_script.html"  # Scripts Group by Script
 
 # Define NFS local mount point depending of O/S
 if [ "$SADM_OS_TYPE" = "DARWIN" ]                                       # If on MacOS
@@ -136,6 +137,23 @@ export YESTERDAY=$(date --date="yesterday" +"%Y.%m.%d")                 # Yester
 export TOUCH_TODAY=`date "+%Y/%m/%d"`                                   # Today Date YYYY/MM/DD
 export TOUCH_YESTERDAY=$(date --date="yesterday" +"%Y/%m/%d")           # Yesterday Date YYYY/MM/DD
 export UND_YESTERDAY=$(date --date="yesterday" +"%Y_%m_%d")             # Yesterday Date YYYY_MM_DD
+
+# Script Report Variables
+declare -a rch_array                                                    # Lst Line of each rch array 
+RCH_SUMMARY="${SADM_TMP_DIR}/scripts_summary.txt"                       # RCH Summary File
+
+# Script Global variables used when splitting the RCH line 
+export RCH_SERVER=""                                                    # RCH Server Name
+export RCH_DATE1=""                                                     # RCH Date Started
+export RCH_TIME1=""                                                     # RCH Time Started
+export RCH_DATE2=""                                                     # RCH Date Started
+export RCH_TIME2=""                                                     # RCH Time Ended
+export RCH_ELAPSE=""                                                    # RCH Time Ended
+export RCH_SCRIPT=""                                                    # RCH Script Name
+export RCH_ALERT=""                                                     # RCH Alert Group Name
+export RCH_TYPE=""                                                      # RCH Alert Group Type
+export RCH_RCODE=""                                                     # RCH Return Code 
+#
 
 
 
@@ -227,22 +245,114 @@ script_report()
 {
     script_error=0                                                      # Greater than 0 if error 
     if [ -f "$HTML_SFILE" ] ;then rm -f $HTML_SFILE >/dev/null 2>&1 ;fi # Output HTML Report file. 
-
-    sadm_writelog " "                                  
     sadm_writelog "${BOLD}${YELLOW}Creating the Daily Script Report${NORMAL}"  
-
     sadm_writelog "${SADM_OK} Create Script Web Page." 
 
-    # Produce the report heading
-    report_heading "Daily Script Report - `date +%a` `date +%d/%m/%Y`" "$HTML_SFILE"  
+    # Generate the Web Page Heading
+    script_page_heading "SADMIN Daily Script Report - `date +%a` `date +%d/%m/%Y`" 
+
+    # Check if any script are running.
+    if [ $SADM_DEBUG -gt 4 ]; then sadm_writelog "Checking for running script ..." ; fi 
+    FOUND=0                                                             # Script running counter
+    xcount=0                                                            # Running script Counter
+    for RCH_LINE in "${rch_array[@]}"                                   # For every item in array
+        do 
+        RCH_RCODE=` echo -e $RCH_LINE | awk '{ print $10 }'`            # Extract Return Code 
+        if [ $RCH_RCODE -eq 2 ]                                         # If 'Running' Status
+            then split_rchline "$RCH_LINE"                              # Split Line into fields
+                 xcount=$(($xcount+1))                                  # Increase Line Counter
+                 if [ $xcount -eq 1 ] ; then script_table_heading "Script currently running" ; fi
+                 script_line "$xcount"                                  # Show line in Table
+                 sadm_writelog "- Script $RCH_SCRIPT is running on $RCH_SERVER since ${RCH_TIME1}."
+                 FOUND=$(($FOUND+1))                                    # Increment Found Counter
+        fi 
+        done
+    if [ $FOUND -eq 0 ]                                                 # If no running script found
+        then echo -e "\n<p><center>We have no script running.</center>\n" >> $HTML_SFILE
+             sadm_writelog "${SADM_OK} We have no script running."      # Feed Screen & Log
+        else echo -e "</table>\n<br><br>\n" >> $HTML_SFILE              # End of HTML Table
+    fi
+    
+
+    # Check if any script terminated with error.
+    if [ $SADM_DEBUG -gt 4 ]; then sadm_writelog "Checking for script(s) ended with error ..." ; fi 
+    FOUND=0                                                             # Script running counter
+    xcount=0                                                            # Running script Counter
+    for RCH_LINE in "${rch_array[@]}"                                   # For every item in array
+        do 
+        RCH_RCODE=` echo -e $RCH_LINE | awk '{ print $10 }'`            # Extract Return Code 
+        split_rchline "$RCH_LINE"                                       # Split Line into fields
+        if [ $RCH_RCODE -eq 1 ]                                         # If 'Error' Status
+            then split_rchline "$RCH_LINE"                              # Split Line into fields
+                 xcount=$(($xcount+1))                                  # Increase Line Counter
+                 if [ $xcount -eq 1 ] ; then script_table_heading "Script Ended With Error" ; fi
+                 script_line "$xcount"                                  # Show line in Table
+                 sadm_writelog "- Script $RCH_SCRIPT on $RCH_SERVER ended with error at $RCH_TIME2."
+                 FOUND=$(($FOUND+1))                                    # Increment Found Counter
+        fi 
+        done
+    if [ $FOUND -eq 0 ]                                                 # If no running script found
+        then echo -e "\n<p><center>All scripts terminated with success.</center>\n" >> $HTML_SFILE
+             sadm_writelog "${SADM_OK} All scripts terminated with success." # Feed Screen & Log
+        else echo -e "</table>\n<br><br>\n" >> $HTML_SFILE              # End of HTML Table
+    fi
 
 
 
-    echo -e "</table>\n</body>\n</html>" >> $HTML_SFILE                 # End of HTML Page
+    # Start of Script page Group by server name
+    sadm_writelog "Create scripts group by server page"
+    current_server=""
+    sort $RCH_SUMMARY | grep -iv "storix" > $SADM_TMP_FILE1
+    sort $RCH_SUMMARY | grep -iv "storix" > /tmp/sorted.txt
+    while read RCH_LINE                                                 # Read Tmp file Line by Line
+        do
+        split_rchline "$RCH_LINE"                                       # Split Line into fields
+        if [ "$current_server" = "" ]
+           then script_table_heading "$RCH_SERVER Scripts" 
+                current_server=$RCH_SERVER
+                xcount=0
+        fi 
+        if [ "$current_server" != "$RCH_SERVER" ]
+           then xcount=1                                                # Increase Line Counter
+                echo -e "</table>\n<br>\n" >> $HTML_SFILE               # End of HTML Table
+                current_server=$RCH_SERVER
+                script_table_heading "$RCH_SERVER Scripts" 
+           else xcount=$(($xcount+1))                                   # Increase Line Counter
+        fi 
+        script_line "$xcount"                                           # Show line in Table
+        done < $SADM_TMP_FILE1
+    echo -e "</table>\n<br><br>\n" >> $HTML_SFILE                       # End of HTML Table
+
+
+    # Start of Script page Group by script name
+    sadm_writelog "Create scripts group by script page"
+    current_script=""
+    sort -t' ' -k7,7 -k1,1 $RCH_SUMMARY | grep -iv "storix" > $SADM_TMP_FILE1
+    while read RCH_LINE                                                 # Read Tmp file Line by Line
+        do
+        split_rchline "$RCH_LINE"                                       # Split Line into fields
+        if [ "$current_script" = "" ]
+           then script_table_heading "$RCH_SCRIPT Scripts" 
+                current_script=$RCH_SCRIPT
+                xcount=0
+        fi 
+        if [ "$current_script" != "$RCH_SCRIPT" ]
+           then xcount=1                                                # Increase Line Counter
+                echo -e "</table>\n<br>\n" >> $HTML_SFILE               # End of HTML Table
+                current_script=$RCH_SCRIPT
+                script_table_heading "$RCH_SCRIPT Scripts" 
+           else xcount=$(($xcount+1))                                   # Increase Line Counter
+        fi 
+        script_line "$xcount"                                           # Show line in Table
+        done < $SADM_TMP_FILE1
+    echo -e "</table>\n<br><br>\n" >> $HTML_SFILE                       # End of HTML Table
+
+    # End of HTML Page
+    echo -e "</body>\n</html>" >> $HTML_SFILE                           # End of HTML Page
 
 
     # Set Report by Email to SADMIN Administrator
-    subject="Daily Script Report"                                        # Send Backup Report by mail
+    subject="SADMIN Script Report"                                      # Send Backup Report by mail
     export EMAIL="$SADM_MAIL_ADDR"                                      # Set the FROM Email 
     mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_SFILE
     SADM_EXIT_CODE=$?                                                   # Save mutt return code
@@ -257,8 +367,136 @@ script_report()
 }
 
 
+# ==================================================================================================
+# Function used to split a RCH file line into separated global variables
+# ==================================================================================================
+split_rchline() 
+{
+    RLINE="$1"                                                          # RCH Line received
+    RCH_SERVER=`echo -e $RLINE | awk '{ print $1 }'`                    # Extract Server Name
+    RCH_DATE1=` echo -e $RLINE | awk '{ print $2 }'`                    # Extract Date Started
+    RCH_TIME1=` echo -e $RLINE | awk '{ print $3 }'`                    # Extract Time Started
+    RCH_DATE2=` echo -e $RLINE | awk '{ print $4 }'`                    # Extract Date Started
+    RCH_TIME2=` echo -e $RLINE | awk '{ print $5 }'`                    # Extract Time Ended
+    RCH_ELAPSE=`echo -e $RLINE | awk '{ print $6 }'`                    # Extract Time Ended
+    RCH_SCRIPT=`echo -e $RLINE | awk '{ print $7 }'`                    # Extract Script Name
+    RCH_ALERT=` echo -e $RLINE | awk '{ print $8 }'`                    # Extract Alert Group Name
+    RCH_TYPE=`  echo -e $RLINE | awk '{ print $9 }'`                    # Extract Alert Group Type
+    RCH_RCODE=` echo -e $RLINE | awk '{ print $10 }'`                   # Extract Return Code 
+}
 
 
+
+# ==================================================================================================
+# Script Page Heading
+# ==================================================================================================
+script_page_heading()
+{
+    RTITLE="$1"
+    #
+    echo -e "<!DOCTYPE html><html>"         >  $HTML_SFILE
+    echo -e "<head>"                        >> $HTML_SFILE
+    echo -e "<meta charset='utf-8' />"    >> $HTML_SFILE
+    #
+    echo -e "<style>"                                                             >> $HTML_SFILE
+    echo -e "th { color: white; background-color: #0000ff; padding: 0px; }"         >> $HTML_SFILE
+    echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }"     >> $HTML_SFILE
+    echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }"                     >> $HTML_SFILE
+    echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML_SFILE
+    echo -e "</style>"                                                              >> $HTML_SFILE
+    #
+    echo -e "<title>$RTITLE</title>"                        >> $HTML_SFILE
+    echo -e "</head>"                                       >> $HTML_SFILE
+    echo -e "<body>"                                        >> $HTML_SFILE
+    echo -e "<br>\n<center><h1>${RTITLE}</h1></center>"     >> $HTML_SFILE
+    #echo -e "\n<center><img src='/images/pencil2.gif'></center>\n" >> $HTML_SFILE
+    echo -e "<br>" >> $HTML_SFILE
+}
+
+
+
+
+#===================================================================================================
+# Script Report Heading
+#===================================================================================================
+script_table_heading()
+{
+    RTITLE=$1
+    echo -e "\n<center>\n<table border=0>"                    >> $HTML_SFILE
+    echo -e "\n<thead>"                                       >> $HTML_SFILE
+    echo -e "<tr>"                                            >> $HTML_SFILE
+    echo -e "<th colspan=9 dt-head-center>${RTITLE}</th>"     >> $HTML_SFILE
+    echo -e "</tr>"                                           >> $HTML_SFILE
+    echo -e "<tr>"                                            >> $HTML_SFILE
+    echo -e "<th>Count</th>"                                  >> $HTML_SFILE
+    echo -e "<th>Date</th>"                                   >> $HTML_SFILE
+    echo -e "<th>Status</th>"                                 >> $HTML_SFILE
+    echo -e "<th>Server</th>"                                 >> $HTML_SFILE
+    echo -e "<th>Script/Log</th>"                             >> $HTML_SFILE
+    echo -e "<th>Start</th>"                                  >> $HTML_SFILE
+    echo -e "<th>End</th>"                                    >> $HTML_SFILE
+    echo -e "<th>Elapse</th>"                                 >> $HTML_SFILE
+    echo -e "<th>AlertGroup</th>"                             >> $HTML_SFILE
+    echo -e "</tr>"                                           >> $HTML_SFILE
+    echo -e "</thead>\n"                                      >> $HTML_SFILE
+}
+
+
+#===================================================================================================
+# Print RCH line to HTML Table
+#===================================================================================================
+script_line()
+{
+    xcount=$1                                                           # Line Counter  
+        
+    # Set Background Color - Color at https://www.w3schools.com/tags/ref_colornames.asp
+    # Alternate background color at every line
+    if (( $xcount %2 == 0 ))                                            # Modulo on line counter
+       then BCOL="#00FFFF" ; FCOL="#000000"                             # Pair count color
+       else BCOL="#F0FFFF" ; FCOL="#000000"                             # Impair line color
+    fi    
+
+    # Create Status Code Description
+    WRDESC="CODE $RCH_RCODE"                                            # Invalid RCH Code Desc
+    if [ "$RCH_RCODE" = "0" ] ; then WRDESC="✔ Success" ; fi            # Code 0 = Success
+    if [ "$RCH_RCODE" = "1" ] ; then WRDESC="✖ Error  " ; fi            # Code 1 = Error
+    if [ "$RCH_RCODE" = "2" ] ; then WRDESC="➜ Running" ; fi            # Code 2 = Running
+        
+    echo -e "<tr>"  >> $HTML_SFILE
+    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$xcount</font></td>"     >>$HTML_SFILE
+    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$RCH_DATE1</font></td>"  >>$HTML_SFILE
+    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WRDESC</font></td>"     >>$HTML_SFILE
+    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$RCH_SERVER</font></td>" >>$HTML_SFILE
+
+    # Insert Name of the Script with link to log if log is accessible
+    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>" >> $HTML_SFILE
+    LOGFILE="${RCH_SERVER}_${RCH_SCRIPT}.log"                           # Assemble log Script Name
+    LOGNAME="${SADM_WWW_DAT_DIR}/${RCH_SERVER}/log/${LOGFILE}"          # Add Dir. Path to Name
+    LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" # Url to View Log
+    if [ -r "$LOGNAME" ]                                                # If log is Readable
+        then echo "<a href='$LOGURL' "              >> $HTML_SFILE      # Link to Access the Log
+             echo "title='View Script Log File'>"   >> $HTML_SFILE      # ToolTip to Show User
+             echo -e "$RCH_SCRIPT</font></a></td>"  >> $HTML_SFILE      # End of Link Definition
+        else echo -e "$RCH_SCRIPT</font></td>"      >> $HTML_SFILE      # No Log = No LInk
+    fi
+
+    # Start Time
+    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$RCH_TIME1</font></td>"  >>$HTML_SFILE
+
+    # End Time
+    if [ "$RCH_TIME2" = "........" ] ; then RCH_TIME2="Running" ; fi    # Replace Dot with Running
+    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$RCH_TIME2</font></td>"  >>$HTML_SFILE
+    
+    # Elapse Time
+    if [ "$RCH_ELAPSE" = "........" ] ; then RCH_ELAPSE="Running" ; fi  # Replace Dot with Running
+    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$RCH_ELAPSE</font></td>" >>$HTML_SFILE
+    
+    # Alert Group
+    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$RCH_ALERT</font></td>"  >>$HTML_SFILE
+    
+    echo -e "</tr>\n" >> $HTML_SFILE
+    return 
+} 
 
 # ==================================================================================================
 # Mount the NFS Directory where all the ReaR backup files are stored 
@@ -270,7 +508,6 @@ rear_report()
     if [ -f "$SADM_TMP_FILE2" ] ; then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1 ; fi 
     if [ -f "$HTML_RFILE" ] ; then rm -f $HTML_RFILE >/dev/null 2>&1 ; fi 
 
-    sadm_write "\n"                                  
     sadm_write "${BOLD}${YELLOW}Creating the ReaR Backup Report${NORMAL}\n"  
 
     # Put Rows you want in the select. 
@@ -298,7 +535,7 @@ rear_report()
     if [ $? -ne 0 ] ; then return 1 ; fi                                # Can't Mount back to caller
     
     # Produce the report heading
-    report_heading "ReaR Backup Report - `date +%a` `date +%d/%m/%Y`" "$HTML_RFILE"  
+    report_heading "SADMIN ReaR Backup Report - `date +%a` `date +%d/%m/%Y`" "$HTML_RFILE"  
 
     xcount=0                                                            # Set Server & Error Counter
     while read wline                                                    # Read Tmp file Line by Line
@@ -399,9 +636,9 @@ rear_report()
         esac
         
         # Build backup line to be written to work file (Will be sorted later)
-        BLINE="${WDATE1},${WTIME1},${WELAPSE},${WSTATUS},${server_name}" 
-        BLINE="${BLINE},${server_desc},${server_img_backup}"
-        BLINE="${BLINE},${CUR_TOTAL},${PRV_TOTAL},${server_sporadic}" 
+        BLINE="${WDATE1};${WTIME1};${WELAPSE};${WSTATUS};${server_name}" 
+        BLINE="${BLINE};${server_desc};${server_img_backup}"
+        BLINE="${BLINE};${CUR_TOTAL};${PRV_TOTAL};${server_sporadic}" 
         echo "$BLINE" >> $SADM_TMP_FILE2                                # Write Info to work file
         done < $SADM_TMP_FILE1
 
@@ -411,13 +648,13 @@ rear_report()
     while read wline                                                    # Read Tmp file Line by Line
         do
         xcount=$(($xcount+1))                                           # Increase Line Counter
-        backup_line "${wline},${xcount},$HTML_RFILE,R"                  # Insert line in HTML Page
+        backup_line "${wline};${xcount};$HTML_RFILE;R"                  # Insert line in HTML Page
         done < $SADM_TMP_FILE1                                          # Read Sorted file
 
     echo -e "</table>\n</body>\n</html>" >> $HTML_RFILE                 # End of HTML Page
 
     # Set Report by Email to SADMIN Administrator
-    subject="ReaR Backup Report"                                        # Send Backup Report by mail
+    subject="SADMIN ReaR Backup Report"                                 # Send Backup Report by mail
     export EMAIL="$SADM_MAIL_ADDR"                                      # Set the FROM Email 
     mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_RFILE
     SADM_EXIT_CODE=$?                                                   # Save mutt return code
@@ -446,7 +683,7 @@ storix_heading()
     echo -e "\n<meta charset='utf-8' />" >> $HTML_XFILE
     #
     echo -e "\n<style>" >> $HTML_XFILE
-    echo -e "th { color: white; background-color: #0000ff; padding: 5px; }" >> $HTML_XFILE
+    echo -e "th { color: white; background-color: #0000ff; padding: 0px; }" >> $HTML_XFILE
     echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }" >> $HTML_XFILE
     echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }" >> $HTML_XFILE
     echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML_XFILE
@@ -490,7 +727,7 @@ storix_heading()
 
 
 #===================================================================================================
-# Add the receiving line into the Backup report page
+# Add the receiving line into the Storix report page
 #===================================================================================================
 storix_line()
 {
@@ -509,7 +746,6 @@ storix_line()
     ISO_DATE=$(    echo $BACKUP_INFO | awk -F\; '{ print $11 }')        # Date ISO was created
     ST_DATE=$(     echo $BACKUP_INFO | awk -F\; '{ print $12 }')        # Date of Storix TOC File
     WCOUNT=$(      echo $BACKUP_INFO | awk -F\; '{ print $13 }')        # Line Counter
-    #sadm_writelog "ISO_SIZE=$ISO_SIZE for ${WSERVER}"
 
     # Alternate background color at every line
     if (( $WCOUNT %2 == 0 ))                                            # Modulo on line counter
@@ -603,8 +839,6 @@ storix_report()
     storix_error=0                                                      # Set to 1 if error in func.
     if [ -f "$SADM_TMP_FILE2" ] ; then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1 ; fi 
     if [ -f "$HTML_XFILE" ] ; then rm -f $HTML_XFILE >/dev/null 2>&1 ; fi     
-
-    sadm_write "\n"
     sadm_write "${BOLD}${YELLOW}Creating the Storix Daily Backup Report${NORMAL}\n" 
 
     # Put Rows you want in the select. 
@@ -631,39 +865,37 @@ storix_report()
             sadm_writelog " "                                             # Space line
     fi
 
+    # Mount NFS Storix Backup Location
     NFSMOUNT="${SADM_STORIX_NFS_SERVER}:${SADM_STORIX_NFS_MOUNT_POINT}" # Remote NFS Mount Point
     mount_nfs "$NFSMOUNT"                                               # Go and Mount NFS Dir.
     if [ $? -ne 0 ] ; then return 1 ; fi                                # Can't Mount back to caller
 
     # Produce the report Heading
-    storix_heading "Daily Storix Backup Report - `date +%a` `date +%d/%m/%Y`" 
+    storix_heading "SADMIN Storix Report - `date +%a` `date +%d/%m/%Y`" # Produce Page Heading
     xcount=0                                                            # Set Server & Error Counter
     while read wline                                                    # Read Tmp file Line by Line
         do
-        server_name=$(echo $wline      |awk -F\; '{print $1}')           # Extract Server Name
-        server_desc=$(echo $wline      |awk -F\; '{print $2}')           # Extract Server Description
-        server_os=$(echo $wline        |awk -F\; '{print $3}')           # O/S (linux/aix/darwin)
-        server_domain=$(echo $wline    |awk -F\; '{print $4}')           # Extract Domain of Server
-        server_monitor=$(echo $wline   |awk -F\; '{print $5}')           # Monitor  1=True 0=False
-        server_sporadic=$(echo $wline  |awk -F\; '{print $6}')           # Sporadic 1=True 0=False
-        server_active=$(echo $wline    |awk -F\; '{print $7}')           # Active   1=Yes  0=No
-        server_rootdir=$(echo $wline   |awk -F\; '{print $8}')           # Client SADMIN Root Dir.
-        server_backup=$(echo $wline    |awk -F\; '{print $9}')           # Backup Schd 1=True 0=False
-        server_img_backup=$(echo $wline|awk -F\; '{print $10}')          # ReaR Sched. 1=True 0=False
-        server_arch=$(      echo $wline|awk -F\; '{print $11}')          # Server Architecture        
+        server_name=$(echo $wline      |awk -F\; '{print $1}')          # Extract Server Name
+        server_desc=$(echo $wline      |awk -F\; '{print $2}')          # Extract Server Description
+        server_os=$(echo $wline        |awk -F\; '{print $3}')          # O/S (linux/aix/darwin)
+        server_domain=$(echo $wline    |awk -F\; '{print $4}')          # Extract Domain of Server
+        server_monitor=$(echo $wline   |awk -F\; '{print $5}')          # Monitor  1=True 0=False
+        server_sporadic=$(echo $wline  |awk -F\; '{print $6}')          # Sporadic 1=True 0=False
+        server_active=$(echo $wline    |awk -F\; '{print $7}')          # Active   1=Yes  0=No
+        server_rootdir=$(echo $wline   |awk -F\; '{print $8}')          # Client SADMIN Root Dir.
+        server_backup=$(echo $wline    |awk -F\; '{print $9}')          # Backup Schd 1=True 0=False
+        server_img_backup=$(echo $wline|awk -F\; '{print $10}')         # ReaR Sched. 1=True 0=False
+        server_arch=$(      echo $wline|awk -F\; '{print $11}')         # Server Architecture        
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQDN Server Name
         
         if [ "$SADM_DEBUG" -gt 4 ]                                      # If Debug Show System name
-           then sadm_writelog " "                                       # Space line
-                sadm_writelog "${SADM_TEN_DASH}"                        # Ten Dashes Line    
-                sadm_writelog "Handling ${server_name} ${server_arch}"  # Server Name & Architecture
+           then sadm_writelog "Handling ${server_name} ${server_arch}"  # Server Name & Architecture
         fi 
  
         # ReaR Backup only Supported under these Architecture
         if [ "$server_arch" != "x86_64" ] && [ "$server_arch" != "i686" ] && 
            [ "$server_arch" != "i386" ]
-           then #sadm_writelog "${SADM_WARNING} ${server_name} architecture ($server_arch) not supported by Storix."
-                continue                                                # Storix run Intel Platform
+           then continue                                                # Storix run Intel Platform
         fi 
 
         # Get Information about Storix ISO 
@@ -680,8 +912,10 @@ storix_report()
                 fi 
            else sadm_writelog "${SADM_ERROR} - ISO Directory doesn't exist (${LOCAL_MOUNT}/${ISODIR})"
         fi
-        #sadm_writelog "1- ISO_SIZE=$ISO_SIZE for ${server_name}"
-
+        if [ $SADM_DEBUG -gt 0 ] 
+            then sadm_writelog "ISO_NAME=$ISO_NAME  SIZE=$ISO_SIZE  DATE=$ISO_DATE  EPOCH=$ISO_EPOCH"
+        fi 
+        
         # Check if at least one TOC file exist for the current server
         STTOT=0                                                         # Defaut Storix Backup Size
         SAVPWD=`pwd`                                                    # Save Current Working Dir.
@@ -692,11 +926,11 @@ storix_report()
            else STTOC=$(ls -1tr SB*${server_name}*:TOC:* | tail -1)     # Get lastest TOC FileName
                 ST_DATE=$(stat  --format=%y ${STTOC} |awk '{print $1}') # Get TOC Modifcation Date
                 STSEQ=$(echo $STTOC | awk -F: '{print $5}')             # Get Backup ID Number
-                wback_size="${SADM_TMP_DIR}/daily_storix.size"          # WorkFile, Calc Backup Size
-                rm -f $wback_size > /dev/null 2>&1                      # Del. Size Work File
-                find ${LOCAL_MOUNT}/${IMGDIR} -name "SB*" -exec ls -l {} \; | grep "${STSEQ}" > $wback_size
-                if [ -s $wback_size ]                                   # Backup File Not Found or 0
-                   then TOTAL=$(awk '{sum += $5} END {print sum}' $wback_size)  # Add each file size 
+                bsize="${SADM_TMP_DIR}/daily_storix.size"               # WorkFile, Calc Backup Size
+                rm -f $bsize > /dev/null 2>&1                           # Del. Size Work File
+                find ${LOCAL_MOUNT}/${IMGDIR} -name "SB*" -exec ls -l {} \; |grep "${STSEQ}" >$bsize
+                if [ -s $bsize ]                                        # Backup File Not Found or 0
+                   then TOTAL=$(awk '{sum += $5} END {print sum}' $bsize)  # Add each file size 
                         STTOT=$(echo "$TOTAL /1024/1024" | bc)          # Convert Backup Size in MB
                 fi 
         fi 
@@ -774,7 +1008,7 @@ storix_report()
     echo -e "</table>\n</body>\n</html>" >> $HTML_XFILE                 # End of HTML Page
 
     # Set Report by Email to SADMIN Administrator
-    subject="Storix Daily Backup Report"                                # Send Backup Report by mail
+    subject="SADMIN Storix Report"                                      # Send Backup Report by mail
     export EMAIL="$SADM_MAIL_ADDR"                                      # Set the FROM Email 
     mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_XFILE
     SADM_EXIT_CODE=$?                                                   # Save mutt return code
@@ -799,8 +1033,6 @@ backup_report()
     backup_error=0                                                      # Set to 1 if error in func.
     if [ -f "$SADM_TMP_FILE2" ] ; then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1 ; fi 
     if [ -f "$HTML_BFILE" ] ; then rm -f $HTML_BFILE >/dev/null 2>&1 ; fi     
-
-    sadm_write "\n"
     sadm_write "${BOLD}${YELLOW}Creating the Daily Backup Report${NORMAL}\n" 
 
     # Put Rows you want in the select. 
@@ -834,7 +1066,7 @@ backup_report()
 
     # Produce the report Heading
     sadm_writelog "${SADM_OK} Create Backup Web Page." 
-    report_heading "Daily Backup Report - `date +%a` `date +%d/%m/%Y`" "$HTML_BFILE" 
+    report_heading "SADMIN Daily Backup Report - `date +%a` `date +%d/%m/%Y`" "$HTML_BFILE" 
 
     xcount=0                                                            # Set Server & Error Counter
     while read wline                                                    # Read Tmp file Line by Line
@@ -852,9 +1084,7 @@ backup_report()
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQDN Server Name
         #
         if [ "$SADM_DEBUG" -gt 4 ]                                      # If Debug Show System name
-           then sadm_writelog " "                                       # Space line
-                sadm_writelog "${SADM_TEN_DASH}"                        # Ten Dashes Line    
-                sadm_writelog "Processing ${server_name}."              # Server Name
+           then sadm_writelog "Processing ${server_name}."              # Server Name
         fi 
         #
 
@@ -863,19 +1093,19 @@ backup_report()
         PRV_TOTAL=0                                                     # Reset Previous Backup Size
         if [ -d ${LOCAL_MOUNT}/${server_name} ]                         # If Server Backup Dir Exist
            then touch_file="${SADM_TMP_DIR}/daily_report.time"          # Backup Ref Touch File Time
-                wback_size="${SADM_TMP_DIR}/daily_report.size"          # WorkFile, Calc Backup Size
+                bsize="${SADM_TMP_DIR}/daily_report.size"               # WorkFile, Calc Backup Size
                 cd ${LOCAL_MOUNT}/${server_name}                        # CD into Backup Dir.
                 touch -d "$TOUCH_TODAY" $touch_file                     # TouchFile=Today Date/Time 
-                find . -type f -newer $touch_file -exec stat --format=%s {} \; > $wback_size
-                if [ -s $wback_size ]                                   # Backup File Not Found or 0
-                   then TOTAL=$(awk '{sum += $1} END {print sum}' $wback_size) # Add each file size 
+                find . -type f -newer $touch_file -exec stat --format=%s {} \; > $bsize
+                if [ -s $bsize ]                                        # Backup File Not Found or 0
+                   then TOTAL=$(awk '{sum += $1} END {print sum}' $bsize) # Add each file size 
                         CUR_TOTAL=$(echo "$TOTAL /1024/1024" | bc)      # Convert Backup Size in MB
                 fi 
                 touch -d "$TOUCH_YESTERDAY" $touch_file                 # TouchFile=Yesterday  
-                rm -f $wback_size > /dev/null 2>&1                      # Del. Size Work File
-                find . -type f -newer $touch_file -exec ls -l {} \; | grep "$UND_YESTERDAY" > $wback_size
-                if [ -s $wback_size ]                                   # Backup File Not Found or 0
-                   then TOTAL=$(awk '{sum += $5} END {print sum}' $wback_size) # Add each file size 
+                rm -f $bsize > /dev/null 2>&1                           # Del. Size Work File
+                find . -type f -newer $touch_file -exec ls -l {} \; | grep "$UND_YESTERDAY" > $bsize
+                if [ -s $bsize ]                                        # Backup File Not Found or 0
+                   then TOTAL=$(awk '{sum += $5} END {print sum}' $bsize) # Add each file size 
                         PRV_TOTAL=$(echo "$TOTAL /1024/1024" | bc)      # Convert Backup Size in MB
                 fi 
         fi
@@ -931,9 +1161,9 @@ backup_report()
         esac
         
         # Build backup line to be written to work file (Will be sorted later)
-        BLINE="${WDATE1},${WTIME1},${WELAPSE},${WSTATUS},${server_name}" 
-        BLINE="${BLINE},${server_desc},${server_backup}"
-        BLINE="${BLINE},${CUR_TOTAL},${PRV_TOTAL},${server_sporadic}" 
+        BLINE="${WDATE1};${WTIME1};${WELAPSE};${WSTATUS};${server_name}" 
+        BLINE="${BLINE};${server_desc};${server_backup}"
+        BLINE="${BLINE};${CUR_TOTAL};${PRV_TOTAL};${server_sporadic}" 
         echo "$BLINE" >> $SADM_TMP_FILE2                                # Write Info to work file
         done < $SADM_TMP_FILE1
 
@@ -943,13 +1173,13 @@ backup_report()
     while read wline                                                    # Read Tmp file Line by Line
         do
         xcount=$(($xcount+1))                                           # Increase Line Counter
-        backup_line "${wline},${xcount},$HTML_BFILE,B"                  # Insert line in HTML Page
+        backup_line "${wline};${xcount};$HTML_BFILE;B"                  # Insert line in HTML Page
         done < $SADM_TMP_FILE1                                          # Read Sorted file
 
     echo -e "</table>\n</body>\n</html>" >> $HTML_BFILE                 # End of HTML Page
 
     # Set Report by Email to SADMIN Administrator
-    subject="Daily Backup Report"                                       # Send Backup Report by mail
+    subject="SADMIN Backup Report"                                      # Send Backup Report by mail
     export EMAIL="$SADM_MAIL_ADDR"                                      # Set the FROM Email 
     mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_BFILE
     SADM_EXIT_CODE=$?                                                   # Save mutt return code
@@ -978,7 +1208,7 @@ report_heading()
     echo -e "\n<meta charset='utf-8' />"            >> $HTML
     #
     echo -e "\n<style>" >> $HTML
-    echo -e "th { color: white; background-color: #0000ff; padding: 5px; }" >> $HTML
+    echo -e "th { color: white; background-color: #0000ff; padding: 0px; }" >> $HTML
     echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }" >> $HTML
     echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }" >> $HTML
     echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML
@@ -991,10 +1221,6 @@ report_heading()
     echo -e "\n<center><table border=0>" >> $HTML
     #
     echo -e "\n<thead>" >> $HTML
-    #
-    #echo -e "<tr>" >> $HTML
-    #echo -e "<th colspan=10 dt-head-center>${RTITLE}</th>" >> $HTML
-    #echo -e "</tr>" >> $HTML
     #
     echo -e "<tr>" >> $HTML
     echo -e "<th colspan=1 dt-head-center></th>" >> $HTML
@@ -1033,19 +1259,19 @@ backup_line()
 {
     # Extract fields from parameters received.
     BACKUP_INFO=$*                                                      # Comma Sep. Info Line
-    WDATE1=$(     echo $BACKUP_INFO | awk -F, '{ print $1 }')           # Backup Script RCH Line
-    WTIME1=$(     echo $BACKUP_INFO | awk -F, '{ print $2 }')           # DB System Description
-    WELAPSE=$(    echo $BACKUP_INFO | awk -F, '{ print $3 }')           # DB System Description
-    WSTATUS=$(    echo $BACKUP_INFO | awk -F, '{ print $4 }')           # DB System Description
-    WSERVER=$(    echo $BACKUP_INFO | awk -F, '{ print $5 }')           # DB System Description
-    WDESC=$(      echo $BACKUP_INFO | awk -F, '{ print $6 }')           # DB System Description
-    WACT=$(       echo $BACKUP_INFO | awk -F, '{ print $7 }')           # DB System Description
-    WCUR_TOTAL=$( echo $BACKUP_INFO | awk -F, '{ print $8 }')           # Current Backup Total MB
-    WPRV_TOTAL=$( echo $BACKUP_INFO | awk -F, '{ print $9 }')           # Yesterday Backup Total MB
-    WSPORADIC=$(  echo $BACKUP_INFO | awk -F, '{ print $10 }')          # Sporadic Server=1 else=0
-    WCOUNT=$(     echo $BACKUP_INFO | awk -F, '{ print $11 }')          # Line Counter
-    HTML=$(       echo $BACKUP_INFO | awk -F, '{ print $12 }')          # HTML Output File Name
-    RTYPE=$(      echo $BACKUP_INFO | awk -F, '{ print $13 }')          # R=RearBackup B=DailyBackup
+    WDATE1=$(     echo $BACKUP_INFO | awk -F\; '{ print $1 }')           # Backup Script RCH Line
+    WTIME1=$(     echo $BACKUP_INFO | awk -F\; '{ print $2 }')           # DB System Description
+    WELAPSE=$(    echo $BACKUP_INFO | awk -F\; '{ print $3 }')           # DB System Description
+    WSTATUS=$(    echo $BACKUP_INFO | awk -F\; '{ print $4 }')           # DB System Description
+    WSERVER=$(    echo $BACKUP_INFO | awk -F\; '{ print $5 }')           # DB System Description
+    WDESC=$(      echo $BACKUP_INFO | awk -F\; '{ print $6 }')           # DB System Description
+    WACT=$(       echo $BACKUP_INFO | awk -F\; '{ print $7 }')           # DB System Description
+    WCUR_TOTAL=$( echo $BACKUP_INFO | awk -F\; '{ print $8 }')           # Current Backup Total MB
+    WPRV_TOTAL=$( echo $BACKUP_INFO | awk -F\; '{ print $9 }')           # Yesterday Backup Total MB
+    WSPORADIC=$(  echo $BACKUP_INFO | awk -F\; '{ print $10 }')          # Sporadic Server=1 else=0
+    WCOUNT=$(     echo $BACKUP_INFO | awk -F\; '{ print $11 }')          # Line Counter
+    HTML=$(       echo $BACKUP_INFO | awk -F\; '{ print $12 }')          # HTML Output File Name
+    RTYPE=$(      echo $BACKUP_INFO | awk -F\; '{ print $13 }')          # R=RearBackup B=DailyBackup
                                                                         # S=Storix Report
 
     # Alternate background color at every line
@@ -1249,6 +1475,64 @@ function cmd_options()
 
 
 
+#===================================================================================================
+#
+# 1- Create a file containing last line of all *.rch within $SADMIN/wwww/dat in $SADM_TMP_FILE1 
+# 2- Sort it by Return Code in Reverse order then by date , then by server into $SADM_TMP_FILE1 
+# 3- File is loaded into an array.
+# 3- If any line don't have 10 ($FIELD_IN_RCH) fields it's an error message is issued.
+#
+#===================================================================================================
+load_rch_array()
+{
+    # SADMIN Server get ReturnCodeHistory (RCH) files from all clients via "sadm_fetch_clients.sh" 
+    # Creare a tmp file containing the LAST line of each *.rch present in ${SADMIN}/www/dat dir.
+    find $SADM_WWW_DAT_DIR -type f -name "*.rch" -exec tail -1 {} \; > $SADM_TMP_FILE2
+    sort -t' ' -rk10,10 -k2,3 -k7,7 $SADM_TMP_FILE2 > $SADM_TMP_FILE1   # Sort by Return Code & date
+
+    # Check if working file is empty, then nothing to report
+    if [ ! -s "$SADM_TMP_FILE1" ]                                       # No rch file record ??
+       then sadm_writelog "${SADM_WARNING} No RCH File to process."     # Issue message to user
+            return 1                                                    # Exit Function 
+    fi
+    
+    # Now we put the last line of all rch file from the working temp file into an array.
+    index=0 ;                                                           # RCH Array Index
+    if [ -a "$RCH_SUMMARY" ] ; then rm -f $RCH_SUMMARY ; fi             # Remove old file if exist
+    while read wline                                                    # Read Line from TEMP3 file
+        do                                                              # Start of loop
+        WNB_FIELD=`echo $wline | wc -w`                                 # Check Nb. Of field in Line
+        if [ "$WNB_FIELD" -eq 0 ] ; then continue ; fi                  # Ignore Blank Line
+        if [ "$WNB_FIELD" -ne "$FIELD_IN_RCH" ]                         # If NB.Field don't match
+            then echo $wline >> $SADM_TMP_FILE3                         # Faulty Line to TMP3 file
+                 SMESS1="${SADM_ERROR} Lines in RCH file should have ${FIELD_IN_RCH} fields," 
+                 SMESS2="${SMESS1} line below have $WNB_FIELD and is ignore." 
+                 sadm_write "${SMESS2}\n"                               # Advise User Line in Error
+                 sadm_write "'$wline'\n"                                # Show Faulty Line to User
+                 aerror=$(($aerror+1))                                  # Increment Error Counter
+                 continue                                               # Go on and read next line
+        fi
+        rch_array[$index]="$wline"                                      # Put Line in Array
+        index=$(($index+1))                                             # Increment Array Index
+        echo "$wline" >> $RCH_SUMMARY                                   # Add Line>>RCH Summary file
+        done < $SADM_TMP_FILE1                                          # ENd Loop - Input FileName
+
+    # Under Debug Mode Print out the content of the array
+    if [ $SADM_DEBUG -gt 4 ]                                            # Debug Over 4 Activated
+       then sadm_writelog "Content of the working RCH Array"            # Advise what shows below
+            index=0                                                     # Reset Array index to 0
+            for WLINE in "${rch_array[@]}"                              # For every item in array
+                do 
+                sadm_writelog "[$index] $WLINE"                         # Show index and Array Value
+                index=$(($index+1))                                     # Increment Error Counter
+                done
+    fi 
+    
+    return $aerror                                                      # Return ErrCount to caller
+}
+
+
+
 # --------------------------------------------------------------------------------------------------
 #                       S T A R T     O F    T H E    S C R I P T 
 # --------------------------------------------------------------------------------------------------
@@ -1287,6 +1571,10 @@ function cmd_options()
              RC=$?                                                      # Save the Return Code
              SADM_EXIT_CODE=$(($SADM_EXIT_CODE+$RC))                    # Add ReturnCode to ExitCode
     fi 
+
+    # Create an array containing the last line of each '*.rch' files 
+    load_rch_array                                                      # Create rch last line array 
+
     if [ "$SCRIPT_REPORT" = "ON" ]                                      # If CmdLine -s was used
         then script_report                                              # Produce Script Report 
              RC=$?                                                      # Save the Return Code
