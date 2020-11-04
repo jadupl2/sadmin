@@ -98,7 +98,14 @@ usr/img/*
 usr/dat/*
 usr/wip/*
 
+# HTML Report Generated Daily
+www/view/daily_backup_report.html
+www/view/daily_rear_report.html
+www/view/daily_scripts_report.html
+www/view/daily_storix_report.html
+#
 # Want these WebSite directories to be part of project (but empty)
+#
 www/dat/*
 !www/dat/.gitkeep
 www/tmp/*
