@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author:     Jacques Duplessis
 #   Title:      sadm_shutdown.sh
@@ -16,70 +16,72 @@
 # 2018_10_18    v2.9 Remove execution of /etc/profile.d/sadmin.sh (Don't need anymore)
 #@2019_03_29 Update: v2.10 Get SADMIN Directory Location from /etc/environment
 #@2020_05_27 Fix: v2.11 Force using bash instead of dash & problem setting SADMIN env. variable.
+#@2020_11_04 Minor: v2.12 Update SADMIN section & use env cmd to use proper bash shell.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
-#set -x 
-
-export SADMIN=`grep "SADMIN=" /etc/environment |sed 's/export //g'|awk -F= '{print $2}'` 
-if [ "$SADMIN" = "" ]                                                   # Couldn't get Install Dir.
-    then printf "Couldn't get SADMIN variable in /etc/environment\n"    # Advise User What's wrong
-         printf "SADMIN service script aborted.\n"                      # Advise what to fix
-         exit 1                                                         # Exit Script with error
-fi
+#set -x
 
 
 
 #===================================================================================================
-#               Setup SADMIN Global Variables and Load SADMIN Shell Library
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
+# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
 #===================================================================================================
-#
-    # Test if 'SADMIN' environment variable is defined
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
 
-    # Test if 'SADMIN' Shell Library is readable 
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
+# MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # If SADMIN EnvVar not right
+    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null          # SADMIN in /etc/environment
+         if [ $? -eq 0 ]                                                # Yes it is 
+            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                 printf "'SADMIN' Environment variable temporarily set to ${SADMIN}.\n"
+            else exit 1                                                 # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.11'                              # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                 # Current Script filename(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`       # Current Script filename(without extension)
+export SADM_TPID="$$"                                   # Current Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                      # Current Host name without Domain Name
+export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-#
-#---------------------------------------------------------------------------------------------------
-#
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But they can be overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
-    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#
+# USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
+export SADM_VER='2.12'                                  # Current Script Version
+export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
+export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
+export SADM_LOG_APPEND="Y"                              # [Y]=Append Existing Log [N]=Create New One
+export SADM_LOG_HEADER="Y"                              # [Y]=Include Log Header  [N]=No log Header
+export SADM_LOG_FOOTER="Y"                              # [Y]=Include Log Footer  [N]=No log Footer
+export SADM_MULTIPLE_EXEC="N"                           # Allow running multiple copy at same time ?
+export SADM_USE_RCH="N"                                 # Gen. History Entry in ResultCodeHistory 
+export SADM_DEBUG=0                                     # Debug Level - 0=NoDebug Higher=+Verbose
+export SADM_TMP_FILE1=""                                # Tmp File1 you can use, Libr. will set name
+export SADM_TMP_FILE2=""                                # Tmp File2 you can use, Libr. will set name
+export SADM_TMP_FILE3=""                                # Tmp File3 you can use, Libr. will set name
+
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                          # LOAD SADMIN Standard Shell Libr. Functions
+export SADM_OS_NAME=$(sadm_get_osname)                  # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
+export SADM_OS_VERSION=$(sadm_get_osversion)            # O/S Full Version Number  (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)      # O/S Major Version Number (ex: 9)
+
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/CFG/SADMIN.CFG FILE).
+# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                               # 0=None 1=AlertOnError 2=AlertOnOK 3=Always
+#export SADM_ALERT_GROUP="default"                      # Alert Group to advise (alert_group.cfg)
+#export SADM_MAIL_ADDR="your_email@domain.com"          # Email to send log (Override sadmin.cfg)
+#export SADM_MAX_LOGLINE=500                            # At the end Trim log to 500 Lines(0=NoTrim)
+#export SADM_MAX_RCLINE=35                              # At the end Trim rch to 35 Lines (0=NoTrim)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
+
 
 
 
 # --------------------------------------------------------------------------------------------------
 #                                   This Script environment variables
 # --------------------------------------------------------------------------------------------------
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 
 
