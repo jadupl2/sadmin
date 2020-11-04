@@ -50,6 +50,7 @@
 #@2020_09_12 Update: v2.22 When -u is used, the usr/cfg directory is now also push to client.
 #@2020_10_18 Update: v2.23 Correct error message when no system are active.
 #@2020_10_29 Fix: v2.24 If comma was used in server description, it cause delimiter problem.
+#@2020_11_04 Fix: v2.25 Change , to ; if SQL output file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -80,7 +81,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.24'                              # Your Current Script Version
+    export SADM_VER='2.25'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -215,7 +216,7 @@ process_servers()
     if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
 
     # Execute SQL to Select Active servers Data
-    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
     if [ $SADM_DEBUG -gt 5 ] 
         then sadm_write "\n"
              sadm_write "List of actives servers to process.\n" 
