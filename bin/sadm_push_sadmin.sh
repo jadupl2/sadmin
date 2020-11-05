@@ -50,7 +50,8 @@
 #@2020_09_12 Update: v2.22 When -u is used, the usr/cfg directory is now also push to client.
 #@2020_10_18 Update: v2.23 Correct error message when no system are active.
 #@2020_10_29 Fix: v2.24 If comma was used in server description, it cause delimiter problem.
-#@2020_11_04 Fix: v2.25 Change , to ; if SQL output file.
+#@2020_11_04 Fix: v2.25 Change , to ; in SQL output file.
+#@2020_11_05 Update: v2.26 Change msg written to log & no alert while o/s update is running.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -81,7 +82,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.25'                              # Your Current Script Version
+    export SADM_VER='2.26'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -285,24 +286,24 @@ process_servers()
                   if [ $RC -ne 0 ]                                      # If Error doing ssh
                       then if [ $RETRY -lt 3 ]                          # If less than 3 retry
                               then MSG="[ RETRY $RETRY ] $SADM_SSH_CMD $server_fqdn date"
-                                   sadm_write "${MSG}\n"                # Show Retry Count to User
+                                   sadm_writelog "${MSG}"               # Show Retry Count to User
                               else break                                # Break out after 3 attempts
                            fi
-                      else sadm_write "$SADM_OK $SADM_SSH_CMD $server_fqdn date \n" # Finally OK
+                      else sadm_writelog "$SADM_OK $SADM_SSH_CMD $server_fqdn date " # Finally OK
                            break                                        # Break out of loop RC=0
                   fi
                   done
         fi
 
-        # IF THE THREE SSH ATTEMPT FAILED, ISSUE ERROR MESSAGE AND CONTINUE WITH NEXT SERVER
+        # IF THE 3 SSH ATTEMPT FAILED, ISSUE ERROR MESSAGE AND CONTINUE WITH NEXT SERVER
         if [ $RC -ne 0 ]   
-           then SMSG="$SADM_ERROR Can't SSH to server '${server_fqdn}'\n"  
-                sadm_write "${SMSG}\n"                                  # Display Error Msg
+           then SMSG="$SADM_ERROR Can't SSH to server '${server_fqdn}'"  
+                sadm_writelog "${SMSG}"                                 # Display Error Msg
                 ERROR_COUNT=$(($ERROR_COUNT+1))                         # Consider Error -Incr Cntr
-                sadm_write "Total Error(s) now at ${ERROR_COUNT}\n"     # Show Error count
+                sadm_writelog "Total Error(s) now at ${ERROR_COUNT}"    # Show Error count
                 continue                                                # Continue with next server
         fi
-        sadm_write "$SADM_OK SSH to $server_fqdn"                       # Good SSH Work
+        sadm_writelog "$SADM_OK SSH to $server_fqdn"                    # Good SSH Work
 
         # Get the remote /etc/environment file to determine where SADMIN is install on remote
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}"                       # Server Dir. on SADM Server
@@ -314,15 +315,15 @@ process_servers()
         if [ $? -eq 0 ]                                                 # If file was transfered
             then server_dir=`grep "SADMIN=" $WDIR/environment |awk -F= '{print $2}'` # Set Remote Dir.
                  if [ "$server_dir" != "" ]                                   # No Remote Dir. Set
-                    then sadm_write " - SADMIN is install in ${server_dir}.\n"
-                    else sadm_write " - $SADM_ERROR Couldn't get /etc/environment.\n"
+                    then sadm_writelog "$SADM_OK SADMIN is install in ${server_dir}."
+                    else sadm_writelog "$SADM_ERROR Couldn't get /etc/environment."
                          ERROR_COUNT=$(($ERROR_COUNT+1))
                          continue
                  fi 
-            else sadm_write "${SADM_ERROR} - Couldn't get /etc/environment on ${server_name}\n"
+            else sadm_writelog "${SADM_ERROR} - Couldn't get /etc/environment on ${server_name}"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
                  #server_dir="/opt/sadmin" 
-                 sadm_write "Continue with next server.\n"
+                 sadm_writelog "Continue with next server."
         fi
 
 
@@ -331,14 +332,14 @@ process_servers()
         for WDIR in "${rem_std_dir_to_rsync[@]}"
           do
           if [ $SADM_DEBUG -gt 5 ]                                      # If Debug is Activated
-              then sadm_write "rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/\n"
+              then sadm_writelog "rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
           fi
           rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
           RC=$? 
           if [ $RC -ne 0 ]
-             then sadm_write "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/\n"
+             then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
                   ERROR_COUNT=$(($ERROR_COUNT+1))                       # Increase Error Counter
-             else sadm_write "$SADM_OK rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/\n" 
+             else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
           fi
           done             
 
@@ -353,9 +354,9 @@ process_servers()
                     rsync -ar --delete  ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
                     RC=$? 
                     if [ $RC -ne 0 ]
-                        then sadm_write "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/\n"
+                        then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
                              ERROR_COUNT=$(($ERROR_COUNT+1))            # Increase Error Counter
-                        else sadm_write "$SADM_OK rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/\n" 
+                        else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
                     fi
                     done             
         fi
@@ -368,9 +369,9 @@ process_servers()
         rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/
         RC=$? 
         if [ $RC -ne 0 ]
-           then sadm_write "$SADM_ERROR ($RC) doing rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/.??*\n"
+           then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/.??*"
                 ERROR_COUNT=$(($ERROR_COUNT+1))            # Increase Error Counter
-           else sadm_write "$SADM_OK rsync -ar --delete ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/\n" 
+           else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/" 
         fi
 
         # IF USER CHOOSE TO RSYNC $SADMIN/SYS TO ALL ACTIVES CLIENTS, THEN DO IT HERE.
@@ -381,9 +382,9 @@ process_servers()
                  rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/
                  RC=$? 
                  if [ $RC -ne 0 ]
-                    then sadm_write "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/\n"
+                    then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/"
                          ERROR_COUNT=$(($ERROR_COUNT+1))            # Increase Error Counter
-                    else sadm_write "$SADM_OK rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/\n" 
+                    else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/" 
                  fi
 
             else # RSYNC STARTUP/SHUTDOWN TEMPLATE SCRIPT FILES IN $SADMIN/SYS TO ALL ACTIVES CLIENTS
@@ -393,9 +394,9 @@ process_servers()
                  rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/
                  RC=$? 
                  if [ $RC -ne 0 ]
-                    then sadm_write "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/.??*\n"
+                    then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/.??*"
                          ERROR_COUNT=$(($ERROR_COUNT+1))            # Increase Error Counter
-                    else sadm_write "$SADM_OK rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/\n" 
+                    else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/" 
                  fi
         fi
 
@@ -422,9 +423,9 @@ process_servers()
             rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}
             RC=$?
             if [ $RC -ne 0 ]
-                then sadm_write "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}\n"
+                then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_write "$SADM_OK rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}\n" 
+                else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}" 
             fi
           done             
 
