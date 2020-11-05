@@ -70,6 +70,7 @@
 #@2020_09_09 Update: v3.16 Modify Alert message when client is down.
 #@2020_10_29 Fix: v3.17 If comma was used in server description, it cause delimiter problem.
 #@2020_11_04 Update: v3.18 Reduce time allowed for O/S update to 1800sec. (30Min) & keep longer log.
+#@2020_11_05 Update: v3.19 Change msg written to log & no alert while o/s update is running.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -116,7 +117,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.18'                              # Your Current Script Version
+    export SADM_VER='3.19'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -625,10 +626,10 @@ rsync_function()
         if [ $RC -ne 0 ]                                                # If Error doing rsync
            then if [ $RETRY -lt 3 ]                                     # If less than 3 retry
                    then sadm_writelog "[ RETRY $RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
-                   else sadm_write "$SADM_ERROR [ $RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}\n"
+                   else sadm_writelog "$SADM_ERROR [ $RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
                         break
                 fi
-           else sadm_write "$SADM_OK rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}\n"
+           else sadm_writelog "$SADM_OK rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
                 break
         fi
     done
@@ -756,23 +757,20 @@ validate_server_connectivity()
 {
     # PARAMETERS RECEIVED SHOULD ALWAYS BY TWO - IF NOT WRITE ERROR TO LOG AND RETURN TO CALLER
     if [ $# -ne 2 ]
-        then sadm_write "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters.\n"
-             sadm_write "Function received $* and this isn't valid.\n"
-             sadm_write "Should receive the server name and the fqdn of the server.\n"
+        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters."
+             sadm_writelog "Function received $* and this isn't valid."
+             sadm_writelog "Should receive the server name and the fqdn of the server."
              return 1
     fi
     SNAME=$1                                                            # Server Name
     FQDN_SNAME=$2                                                       # Server Name Full Qualified
-    UPDATE_RUNNING="${SADM_TMP_DIR}/osupdate_running_${SNAME}"          # OSUpdate running flag file
 
     # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR AND CONTINUE WITH NEXT SERVER
     if ! host  $FQDN_SNAME >/dev/null 2>&1
            then SMSG="Can't process '$FQDN_SNAME', hostname can't be resolved."
-                sadm_write "${SADM_ERROR} ${SMSG}\n"                    # Advise user
+                sadm_writelog "${SADM_ERROR} ${SMSG}"                   # Advise user
                 return 1                                                # Return Error to Caller
     fi
-
-                                                             # OK SSH Worked the 1st time
 
     # When we start the O/S Update, a file is created ($UPDATE_RUNNING) to indicate that an O/S
     # update is running (Done by the sadm_osupdate_farm.sh script).
@@ -784,22 +782,25 @@ validate_server_connectivity()
     # When the monitoring script (sadm_fetch_client.sh) see that file, it check the time stamp of it
     # SADMIN give 30 minutes ($OSTIMEOUT) to update the server, after that the monitoring of the 
     # server will be resume and the ($UPDATE_RUNNING) file is deleted.    
+    UPDATE_RUNNING="${SADM_TMP_DIR}/osupdate_running_${SNAME}"          # OSUpdate running flag file
     if [ -f "$UPDATE_RUNNING" ]                                         # If O/S Update running 
-        then FEPOCH=`stat -c %Y $UPDATE_RUNNING`                        # Get File Modif. Epoch Time
-             CEPOCH=$(sadm_get_epoch_time)                              # Get Current Epoch Time
-             FAGE=`expr $CEPOCH - $FEPOCH`                              # Nb. Sec. OSUpdate running
-             if [ "$FAGE" -gt $OSTIMEOUT ]                              # Running more than 1 Hr
-                then msg="${BOLD}O/S update running for more than $OSTIMEOUT sec.${NORMAL}"
-                     sadm_write "${msg}\n"
-                     msg="${BOLD}Will now start to monitor this system as usual.${NORMAL}"
-                     sadm_write "${msg}\n"
-                     rm -f $UPDATE_RUNNING > /dev/null 2>&1             # Remove O/S Upd Flag File
-                else msg="${SADM_WARNING} O/S update is running on '$FQDN_SNAME'."
-                     sadm_write "${msg}\n"
-                     msg="Will resume monitoring once the O/S update is finished and we can SSH to server."
-                     sadm_write "${msg}\n"
-                     return 2
-             fi 
+       then FEPOCH=`stat -c %Y $UPDATE_RUNNING`                         # Get File Modif. Epoch Time
+            CEPOCH=$(sadm_get_epoch_time)                               # Get Current Epoch Time
+            FAGE=`expr $CEPOCH - $FEPOCH`                               # Nb. Sec. OSUpdate running
+            SEC_LEFT=`expr $OSTIMEOUT - $FAGE`                          # Sec. left Allow for OSUpd.
+            if [ "$FAGE" -gt $OSTIMEOUT ]                               # Running more than 30Min ?
+               then msg="${BOLD}O/S update running for more than $OSTIMEOUT sec.${NORMAL}"
+                    sadm_writelog "${msg}"
+                    msg="${BOLD}Will now start to monitor this system as usual.${NORMAL}"
+                    sadm_writelog "${msg}"
+                    rm -f $UPDATE_RUNNING > /dev/null 2>&1          # Remove O/S Upd Flag File
+               else msg="${SADM_WARNING} O/S update is running on '$fqdn_server'."
+                    sadm_writelog "${msg}"
+                    msg1="Normal monitoring will resume in ${SEC_LEFT} sec., "
+                    msg2="one time allowed for update (${OSTIMEOUT} sec.) is elapse."
+                    sadm_writelog "${msg1}${msg2}"
+                    return 2                                        # Continue with Nxt Server
+            fi 
     fi 
 
     # TEST SSH TO SERVER
@@ -809,19 +810,19 @@ validate_server_connectivity()
 
     # SSH DIDN'T WORK, BUT IT'S A SPORADIC SERVER (CAN HAPPEN, DON'T REPORT AN EROR)
     if [ "$server_sporadic" = "1" ]                                     # If Error on Sporadic Host
-        then sadm_write "${SADM_WARNING}  Can't SSH to ${FQDN_SNAME} (Sporadic System).\n"
+        then sadm_writelog "${SADM_WARNING}  Can't SSH to ${FQDN_SNAME} (Sporadic System)."
              return 2                                                   # Return Skip Code to caller
     fi 
 
     # SSH DIDN'T WORK, BUT MONITORING FOR THAT SERVER IS OFF (DON'T REPORT AN EROR)
     if [ "$server_monitor" = "0" ]                                      # If Error & Monitor is OFF
-        then sadm_write "${SADM_WARNING} Can't SSH to ${FQDN_SNAME} (Monitoring is OFF).\n"
+        then sadm_writelog "${SADM_WARNING} Can't SSH to ${FQDN_SNAME} (Monitoring is OFF)."
              return 2                                                   # Return Skip Code to caller
     fi 
 
     # SSH DIDN'T WORK, WE WILL TRY 3 TIMES BEFORE REPRTING AN ERROR (TO ELIMINATE FALSE POSITIVE).
     RETRY=1                                                             # Set Retry counter to 1
-    sadm_write "$SADM_ERROR [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date\n" # 1st SSH didn't work msg
+    sadm_writelog "$SADM_ERROR [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date" # 1st SSH didn't work msg
     while [ $RETRY -lt 3 ]                                              # Retry ssh 3 times 
         do
         RETRY=$(($RETRY+1))                                             # Increase Retry counter
@@ -829,10 +830,10 @@ validate_server_connectivity()
         RC=$?                                                           # Save Error Number
         if [ $RC -ne 0 ]                                                # If Error doing ssh
             then if [ $RETRY -lt 3 ]                                    # If less than 3 retry
-                    then sadm_write "$SADM_ERROR [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date\n"
-                    else sadm_write "$SADM_ERROR [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date\n"
+                    then sadm_writelog "$SADM_ERROR [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date"
+                    else sadm_writelog "$SADM_ERROR [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date"
                          SMSG="$SADM_ERROR ${FQDN_SNAME} unresponsive (Can't SSH to it)."  
-                         sadm_write "${SMSG}\n"                         # Display Error Msg
+                         sadm_writelog "${SMSG}"                         # Display Error Msg
 
                          # Create Error Line in Global Error Report File (rpt)
                          ADATE=`date "+%Y.%m.%d;%H:%M"`                 # Current Date/Time
@@ -842,7 +843,7 @@ validate_server_connectivity()
                          echo "$RPTLINE" >> $FETCH_RPT                  # Create Skip Code to caller                              
                          return 1                                       # Return Error to caller
                  fi
-            else sadm_write "$SADM_OK $SADM_SSH_CMD $FQDN_SNAME date\n"
+            else sadm_writelog "$SADM_OK $SADM_SSH_CMD $FQDN_SNAME date"
                  return 0                                               # Return SSH is OK to Caller 
         fi
         done
@@ -1001,9 +1002,9 @@ process_servers()
                 fi
                 RC=$?                                                   # Save Command Return Code
                 if [ $RC -eq 0 ]                                        # If copy to client Worked
-                    then sadm_write "$SADM_OK Modified Backup Exclude list updated on ${server_name}\n"
+                    then sadm_writelog "$SADM_OK Modified Backup Exclude list updated on ${server_name}"
                          rm -f $LDIR/backup_exclude.tmp                 # Remove modified Local copy
-                    else sadm_write "$SADM_ERROR Syncing Backup Exclude list with ${server_name}\n"
+                    else sadm_writelog "$SADM_ERROR Syncing Backup Exclude list with ${server_name}"
                 fi
         fi
 
@@ -1017,31 +1018,31 @@ process_servers()
                    then #sadm_writelog "rsync -var $REAR_CFG ${server_name}:/etc/rear/site.conf "
                         rsync $REAR_CFG ${server_name}:/etc/rear/site.conf 
                         if [ $? -eq 0 ] 
-                            then sadm_write "$SADM_OK /etc/rear/site.conf updated on ${server_name}\n"
-                            else sadm_write "$SADM_ERROR Trying to update /etc/rear/site.conf on ${server_name}\n"
+                            then sadm_writelog "$SADM_OK /etc/rear/site.conf updated on ${server_name}"
+                            else sadm_writelog "$SADM_ERROR Trying to update /etc/rear/site.conf on ${server_name}"
                                  if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi  
                         fi
                         #
                         #sadm_writelog "rsync -var $REAR_USER_EXCLUDE ${server_name}:${RDIR}/rear_exclude.txt" 
                         rsync $REAR_USER_EXCLUDE ${server_name}:${RDIR}/rear_exclude.txt 
                         if [ $? -eq 0 ] 
-                            then sadm_write "$SADM_OK ${RDIR}/rear_exclude.txt updated on ${server_name}\n"
-                            else sadm_write "$SADM_ERROR Trying to update ${RDIR}/rear_exclude.txt on ${server_name}\n"
+                            then sadm_writelog "$SADM_OK ${RDIR}/rear_exclude.txt updated on ${server_name}"
+                            else sadm_writelog "$SADM_ERROR Trying to update ${RDIR}/rear_exclude.txt on ${server_name}"
                                  if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi  
                         fi
                    else #sadm_writelog "rsync -var $REAR_CFG /etc/rear/site.conf" 
                         rsync $REAR_CFG /etc/rear/site.conf
                         if [ $? -eq 0 ] 
-                            then sadm_write "$SADM_OK /etc/rear/site.conf updated on ${server_name}\n"
-                            else sadm_write "$SADM_ERROR Trying to update /etc/rear/site.conf on ${server_name}\n"
+                            then sadm_writelog "$SADM_OK /etc/rear/site.conf updated on ${server_name}"
+                            else sadm_writelog "$SADM_ERROR Trying to update /etc/rear/site.conf on ${server_name}"
                                  if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi  
                         fi
                         #
                         #sadm_writelog "rsync $REAR_USER_EXCLUDE ${SADM_CFG_DIR}/rear_exclude.txt" 
                         rsync $REAR_USER_EXCLUDE ${SADM_CFG_DIR}/rear_exclude.txt
                         if [ $? -eq 0 ] 
-                            then sadm_write "$SADM_OK ${SADM_CFG_DIR}/rear_exclude.txt updated on ${server_name}\n"
-                            else sadm_write "$SADM_ERROR Trying to update ${SADM_CFG_DIR}/rear_exclude.txt on ${server_name}\n"
+                            then sadm_writelog "$SADM_OK ${SADM_CFG_DIR}/rear_exclude.txt updated on ${server_name}"
+                            else sadm_writelog "$SADM_ERROR Trying to update ${SADM_CFG_DIR}/rear_exclude.txt on ${server_name}"
                                  if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi  
                         fi
                         RC=$?
