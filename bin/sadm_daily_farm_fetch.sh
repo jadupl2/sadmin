@@ -49,6 +49,7 @@
 # 2020_05_06 Update: v4.1 Modification to log structure
 #@2020_05_23 Update: v4.2 No longer report an error, if a system is rebooting because of O/S update.
 #@2020_10_29 Fix: v4.3 If comma was used in server description, it cause delimiter problem.
+#@2020_11_05 Update: v4.4 Change msg written to log & no alert while o/s update is running.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -76,7 +77,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='4.3'                               # Your Current Script Version
+    export SADM_VER='4.4'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -118,7 +119,7 @@ TOTAL_AIX=0                                      ; export TOTAL_AIX     # Nb Err
 TOTAL_LINUX=0                                    ; export TOTAL_LINUX   # Nb Error in Linux Function
 SADM_STAR=`printf %80s |tr " " "*"`              ; export SADM_STAR     # 80 * line
 DEBUG_LEVEL=0                                    ; export DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
-export OSTIMEOUT=3600                                                   # 3600sec=1Hr to do O/S Upd.
+export OSTIMEOUT=1800                                                   # 1800Sec=30Min todo O/S Upd
 
 
 # --------------------------------------------------------------------------------------------------
@@ -192,53 +193,57 @@ process_servers()
                  continue                                               # Continue with next Server
         fi
 
+        # O/S Update is running on this server ?
+        # This file exist is created when the O/S update start.
+        # Prevent to return an error if not able to ssh to server (May be rebooting after update)
+        # Will be deleted when the file creation date is older than $OSTIMEOUT (1800 Sec = 30 Min).
+        UPDATE_RUNNING="${SADM_TMP_DIR}/osupdate_running_${server_name}"
+        if [ -f "$UPDATE_RUNNING" ]                                     # If O/S Update running 
+           then FEPOCH=`stat -c %Y $UPDATE_RUNNING`                     # Get File Modif. Epoch Time
+                CEPOCH=$(sadm_get_epoch_time)                           # Get Current Epoch Time
+                FAGE=`expr $CEPOCH - $FEPOCH`                           # Nb. Sec. OSUpdate running
+                SEC_LEFT=`expr $OSTIMEOUT - $FAGE`                      # Sec. left Allow for OSUpd.
+                if [ "$FAGE" -gt $OSTIMEOUT ]                           # Running more than 30Min ?
+                   then msg="${BOLD}O/S update should be terminated, it's running for more than $OSTIMEOUT sec.${NORMAL}"
+                        sadm_write "${msg}\n"
+                        msg="${BOLD}Will now start to monitor this system as usual.${NORMAL}"
+                        sadm_write "${msg}\n"
+                        rm -f $UPDATE_RUNNING > /dev/null 2>&1          # Remove O/S Upd Flag File
+                   else msg="${SADM_WARNING} O/S update is running on '$fqdn_server'."
+                        sadm_write "${msg}\n"
+                        msg1="Normal monitoring will resume in ${SEC_LEFT} sec., "
+                        msg2="one time allowed for update (${OSTIMEOUT} sec.) is elapse."
+                        sadm_write "${msg1}${msg2}\n"
+                        continue                                        # Continue with Nxt Server
+                fi 
+        fi 
+
         # TEST SSH TO SERVER (IF NOT ON SADMIN SERVER)
-        UPDATE_RUNNING="${SADM_WWW_DAT_DIR}/${server_name}/osupdate_running" # OSUpdate progress File
-        RC=0                                                            # Initialize SSH Return Code
         if [ "${server_name}" != "$SADM_HOSTNAME" ]                     # If not on SADMIN Server 
             then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1       # Try SSH to Server for date
                  RC=$?                                                  # Save Error Number
+            else RC=0                                                   # RC=0 no SSH on SADMIN Srv
         fi 
 
-        if [ $RC -eq 0 ]                                                # If SSH Worked
-            then if [ -f "$UPDATE_RUNNING" ]                            # If O/S Update Running
-                   then rm -f $UPDATE_RUNNING > /dev/null 2>&1          # Remove O/S Upd Flag File
-                 fi 
-            else if [ -f "$UPDATE_RUNNING" ]                            # If O/S Update running 
-                    then FEPOCH=`stat -c %Y $UPDATE_RUNNING`            # Get File Modif. Epoch Time
-                         CEPOCH=$(sadm_get_epoch_time)                  # Get Current Epoch Time
-                         FAGE=`expr $CEPOCH - $FEPOCH`                  # Nb. Sec. OSUpdate running
-                         if [ "$FAGE" -gt $OSTIMEOUT ]                  # Running more than 1 Hr
-                            then msg="${BOLD}O/S update running for more than $OSTIMEOUT sec.${NORMAL}"
-                                 sadm_write "${msg}\n"
-                                 msg="${BOLD}Will now start to monitor this system as usual.${NORMAL}"
-                                 sadm_write "${msg}\n"
-                                 rm -f $UPDATE_RUNNING > /dev/null 2>&1 # Remove O/S Upd Flag File
-                            else msg="${SADM_WARNING} O/S update is running on '$fqdn_server'."
-                                 sadm_write "${msg}\n"
-                                 msg="Will resume normal operation once the O/S update is terminated or can SSH to server."
-                                 sadm_write "${msg}\n"
-                                 continue
-                         fi 
-                    else if [ "$server_sporadic" = "1" ]                # If Error on Sporadic Host
-                            then sadm_write "${SADM_WARNING}  Can't SSH to ${fqdn_server} (Sporadic System).\n"
-                                 continue
-                         fi 
-                         if [ "$server_monitor" = "0" ]                 # If Error & Monitor is OFF
-                            then sadm_write "${SADM_WARNING} Can't SSH to ${fqdn_server} (Monitoring is OFF).\n"
-                                 continue
-                         fi 
-                 fi
-                 if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_write "Return Code is $RC \n" ;fi 
-                 sadm_write "$SADM_ERROR Can't SSH to ${fqdn_server} - Unable to process system.\n"
-                 ERROR_COUNT=$(($ERROR_COUNT+1))
-                 sadm_write "Error Count is now at $ERROR_COUNT \n"
-                 continue
+        if [ $RC -ne 0 ]                                                # If SSH didn't worked
+           then if [ "$server_sporadic" = "1" ]                # If Error on Sporadic Host
+                   then sadm_write "${SADM_WARNING}  Can't SSH to ${fqdn_server} (Sporadic System).\n"
+                     continue
+                fi 
+                if [ "$server_monitor" = "0" ]                 # If Error & Monitor is OFF
+                   then sadm_write "${SADM_WARNING} Can't SSH to ${fqdn_server} (Monitoring is OFF).\n"
+                        continue
+                fi 
+                if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_write "Return Code is $RC \n" ;fi 
+                sadm_write "$SADM_ERROR Can't SSH to ${fqdn_server} - Unable to process system.\n"
+                ERROR_COUNT=$(($ERROR_COUNT+1))
+                sadm_write "Error Count is now at $ERROR_COUNT \n"
+                continue
         fi                                                              # OK SSH Worked the 1st time
 
         # MAKING SURE THE $SADMIN/DAT/$SERVER_NAME EXIST ON LOCAL SADMIN SERVER
         if [ ! -d "${SADM_WWW_DAT_DIR}/${server_name}" ]
-            then sadm_write "Creating ${SADM_WWW_DAT_DIR}/${server_name} directory\n"
+            then sadm_writelog "Creating ${SADM_WWW_DAT_DIR}/${server_name} directory"
                  mkdir -p "${SADM_WWW_DAT_DIR}/${server_name}"
                  chmod 2775 "${SADM_WWW_DAT_DIR}/${server_name}"
         fi
@@ -252,20 +257,20 @@ process_servers()
         if [ $? -eq 0 ]                                                 # If file was transferred
             then RDIR=`grep "SADMIN=" $WDIR/environment |sed 's/export //g' |awk -F= '{print $2}'|tail -1`
                  if [ "$RDIR" != "" ]                                   # No Remote Dir. Set
-                    then sadm_write "SADMIN installed in ${RDIR} on ${server_name}.\n"
-                    else sadm_write "$SADM_WARNING Couldn't get /etc/environment.\n"
+                    then sadm_writelog "SADMIN installed in ${RDIR} on ${server_name}."
+                    else sadm_writelog "$SADM_WARNING Couldn't get /etc/environment."
                          if [ "$server_sporadic" = "1" ]               # SSH don't work & Sporadic
-                            then sadm_write "${server_name} is a sporadic system.\n"
+                            then sadm_writelog "${server_name} is a sporadic system."
                             else ERROR_COUNT=$(($ERROR_COUNT+1))       # Add 1 to Error Count
-                                 sadm_write "Error Count is now at $ERROR_COUNT \n"
+                                 sadm_writelog "Error Count is now at $ERROR_COUNT"
                          fi
-                         sadm_write "Continuing with next system.\n"    # Advise we are skipping srv
+                         sadm_writelog "Continuing with next system."   # Advise we are skipping srv
                          continue                                       # Go process next system
                  fi 
-            else sadm_write "$SADM_ERROR Couldn't get /etc/environment on ${server_name}.\n"
+            else sadm_writelog "$SADM_ERROR Couldn't get /etc/environment on ${server_name}."
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Add 1 to Error Count
-                 sadm_write "Error Count is now at $ERROR_COUNT \n"
-                 sadm_write "Continuing with next system.\n"            # Advise we are skipping srv
+                 sadm_writelog "Error Count is now at $ERROR_COUNT "
+                 sadm_writelog "Continuing with next system."           # Advise we are skipping srv
                  continue                                               # Go process next system
         fi
     
@@ -282,17 +287,17 @@ process_servers()
         fi
         REMDIR="${RDIR}/dat/dr" 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then sadm_write "rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ "
+            then rcmd="rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ "
                  rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
-            else sadm_write "rsync -ar --delete  ${REMDIR}/ $WDIR/ "
+            else rcmd="rsync -ar --delete  ${REMDIR}/ $WDIR/ "
                  rsync -ar --delete ${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
         fi
         RC=$?
         if [ $RC -ne 0 ]
-            then sadm_write "$SADM_ERROR ($RC)\n"
+            then sadm_write "$SADM_ERROR ($RC) ${rcmd}\n"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
                  sadm_write "Error Count is now at $ERROR_COUNT \n"
-            else sadm_write "${SADM_OK}\n" 
+            else sadm_write "${SADM_OK} ${rcmd}\n"
         fi
  
 
@@ -307,16 +312,16 @@ process_servers()
         fi
         REMDIR="${RDIR}/dat/nmon" 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then sadm_write "rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ "
+            then rcmd="rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ "
                  rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
-            else sadm_write "rsync -ar --delete ${REMDIR}/ $WDIR/ "
+            else rcmd="rsync -ar --delete ${REMDIR}/ $WDIR/ "
                  rsync -ar --delete ${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
         fi
         RC=$?
         if [ $RC -ne 0 ]
-            then sadm_write "$SADM_ERROR ($RC)\n"
+            then sadm_write "$SADM_ERROR ($RC) ${rcmd}\n"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
-            else sadm_write "${SADM_OK}\n" 
+            else sadm_write "${SADM_OK} ${rcmd}\n" 
         fi
         if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write "Error Count is now at $ERROR_COUNT \n" ;fi
 
