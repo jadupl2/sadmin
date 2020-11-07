@@ -12,8 +12,18 @@ SCRIPTS="sadm_backup sadm_rear_backup sadm_nmon_watcher "
 # If any error encountered in the scripts below, error will be reported by sadm_client_sunset.
 SCRIPTS="$SCRIPTS sadm_dr_savefs sadm_create_sysinfo sadm_cfg2html"
 #
+# Exclude scripts that are executing as part of sadm_server_sunrise.
+# If any error encountered in the scripts below, error will be reported by sadm_server_sunrise.
+SCRIPTS="$SCRIPTS sadm_daily_farm_fetch sadm_database_update sadm_nmon_rrd_update "
+#
 # Exclude System Startup and Shutdown Script for Daily scripts Report
 SCRIPTS="$SCRIPTS sadm_startup sadm_shutdown"
+
+# Exclude template scripts
+SCRIPTS="$SCRIPTS sadm_template"
+
+# Define here your custom scripts you want to exclude fron the script daily report
+SCRIPTS="$SCRIPTS sadm_vm_tools sadm_vm_start sadm_vm_stop"
 
 
 # Server name to be exclude from every Daily Report (Backup, Rear and Scripts)

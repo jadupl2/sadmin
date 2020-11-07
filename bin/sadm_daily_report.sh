@@ -24,6 +24,7 @@
 #@2020_10_06 Update: v1.5 Minor Typo Corrections
 #@2020_10_29 Update: v1.6 Change CmdLine Switch & Storix Daily report is working
 #@2020_11_04 Update: v1.7 Added 1st draft of scripts html report.
+#@2020_11_07 New: v1.8 Exclude file can be use to exclude scripts or servers from daily report.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -55,7 +56,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.7'                                   # Current Script Version
+export SADM_VER='1.8'                                   # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -153,7 +154,14 @@ export RCH_SCRIPT=""                                                    # RCH Sc
 export RCH_ALERT=""                                                     # RCH Alert Group Name
 export RCH_TYPE=""                                                      # RCH Alert Group Type
 export RCH_RCODE=""                                                     # RCH Return Code 
-#
+
+# Daily Report External Exclude file
+EXCLUDE_FILE="$SADMIN/bin/sadm_daily_report_exclude.sh"                 # Exclude from Report file
+if [ -r "$EXCLUDE_FILE" ]                                               # If Exclude File Exist 
+    then source $EXCLUDE_FILE                                           # Sourcing exclude list
+    else SERVERS=""                                                     # Servers list to exclude
+         SCRIPTS=""
+fi 
 
 
 
@@ -243,7 +251,7 @@ unmount_nfs()
 # ==================================================================================================
 script_report() 
 {
-    script_error=0                                                      # Greater than 0 if error 
+    script_error=0                                                      # Nb of Error Encountered
     if [ -f "$HTML_SFILE" ] ;then rm -f $HTML_SFILE >/dev/null 2>&1 ;fi # Output HTML Report file. 
     sadm_writelog "${BOLD}${YELLOW}Creating the Daily Script Report${NORMAL}"  
     sadm_writelog "${SADM_OK} Create Script Web Page." 
@@ -253,8 +261,7 @@ script_report()
 
     # Check if any script are running.
     if [ $SADM_DEBUG -gt 4 ]; then sadm_writelog "Checking for running script ..." ; fi 
-    FOUND=0                                                             # Script running counter
-    xcount=0                                                            # Running script Counter
+    xcount=0                                                            # Nb. of Running script 
     for RCH_LINE in "${rch_array[@]}"                                   # For every item in array
         do 
         RCH_RCODE=` echo -e $RCH_LINE | awk '{ print $10 }'`            # Extract Return Code 
@@ -264,25 +271,23 @@ script_report()
                  if [ $xcount -eq 1 ] ; then script_table_heading "Script currently running" ; fi
                  script_line "$xcount"                                  # Show line in Table
                  sadm_writelog "- Script $RCH_SCRIPT is running on $RCH_SERVER since ${RCH_TIME1}."
-                 FOUND=$(($FOUND+1))                                    # Increment Found Counter
         fi 
         done
-    if [ $FOUND -eq 0 ]                                                 # If no running script found
-        then echo -e "\n<p><center>We have no script running.</center>\n" >> $HTML_SFILE
-             sadm_writelog "${SADM_OK} We have no script running."      # Feed Screen & Log
+    if [ $xcount -eq 0 ]                                                # If no running script found
+        then echo -e "\n<br><center><h3>No script actually running</h3></center>\n" >>$HTML_SFILE
+             sadm_writelog "${SADM_OK} No script actually running."     # Feed Screen & Log
         else echo -e "</table>\n<br><br>\n" >> $HTML_SFILE              # End of HTML Table
     fi
     
 
     # Check if any script terminated with error.
     if [ $SADM_DEBUG -gt 4 ]; then sadm_writelog "Checking for script(s) ended with error ..." ; fi 
-    FOUND=0                                                             # Script running counter
-    xcount=0                                                            # Running script Counter
+    xcount=0                                                            # Nb. of Running script 
     for RCH_LINE in "${rch_array[@]}"                                   # For every item in array
         do 
         RCH_RCODE=` echo -e $RCH_LINE | awk '{ print $10 }'`            # Extract Return Code 
         split_rchline "$RCH_LINE"                                       # Split Line into fields
-        if [ $RCH_RCODE -eq 1 ]                                         # If 'Error' Status
+        if [ $RCH_RCODE -eq 1 ]                                         # If Terminated with 'Error'
             then split_rchline "$RCH_LINE"                              # Split Line into fields
                  xcount=$(($xcount+1))                                  # Increase Line Counter
                  if [ $xcount -eq 1 ] ; then script_table_heading "Script Ended With Error" ; fi
@@ -291,9 +296,10 @@ script_report()
                  FOUND=$(($FOUND+1))                                    # Increment Found Counter
         fi 
         done
-    if [ $FOUND -eq 0 ]                                                 # If no running script found
-        then echo -e "\n<p><center>All scripts terminated with success.</center>\n" >> $HTML_SFILE
-             sadm_writelog "${SADM_OK} All scripts terminated with success." # Feed Screen & Log
+    if [ $xcount -eq 0 ]                                                # If no running script found
+        then msg="All scripts terminated with success." >>$HTML_SFILE   # Message to User
+             echo -e "\n<center><h3>$msg.</h3></center><br>\n" >>$HTML_SFILE
+             sadm_writelog "${SADM_OK} $msg"                            # Feed Screen & Log
         else echo -e "</table>\n<br><br>\n" >> $HTML_SFILE              # End of HTML Table
     fi
 
@@ -302,50 +308,58 @@ script_report()
     # Start of Script page Group by server name
     sadm_writelog "Create scripts group by server page"
     current_server=""
-    sort $RCH_SUMMARY | grep -iv "storix" > $SADM_TMP_FILE1
-    sort $RCH_SUMMARY | grep -iv "storix" > /tmp/sorted.txt
+    sort -t' ' -k1,1 -k2,2r  $RCH_SUMMARY | grep -iv "storix" > $SADM_TMP_FILE1
+    sort -t' ' -k1,1 -k2,2r  $RCH_SUMMARY | grep -iv "storix" > /tmp/sorted.txt
     while read RCH_LINE                                                 # Read Tmp file Line by Line
         do
         split_rchline "$RCH_LINE"                                       # Split Line into fields
-        if [ "$current_server" = "" ]
-           then script_table_heading "$RCH_SERVER Scripts" 
-                current_server=$RCH_SERVER
-                xcount=0
+        echo "$SERVERS" | grep -i "$RCH_SERVER" >>/dev/null 2>&1        # Server in excl. ServerList 
+        if [ $? -eq 0 ] ; then continue ; fi                            # Skip Server in Excl. List
+        echo "$SCRIPTS" | grep -i "$RCH_SCRIPT" >>/dev/null 2>&1        # Script in excl. ServerList 
+        if [ $? -eq 0 ] ; then continue ; fi                            # Skip Script in Excl. List
+        if [ "$current_server" = "" ]                                   # Is it the time loop
+           then script_table_heading "$RCH_SERVER"                      # Yes, then print serverName
+                current_server=$RCH_SERVER                              # Save Actual Server Name
+                xcount=0                                                # Set Server Counter to 0 
         fi 
-        if [ "$current_server" != "$RCH_SERVER" ]
-           then xcount=1                                                # Increase Line Counter
-                echo -e "</table>\n<br>\n" >> $HTML_SFILE               # End of HTML Table
-                current_server=$RCH_SERVER
-                script_table_heading "$RCH_SERVER Scripts" 
+        if [ "$current_server" != "$RCH_SERVER" ]                       # ServerName Different 
+           then echo -e "</table>\n<br>\n" >> $HTML_SFILE               # End of Previous Server 
+                xcount=1                                                # Reset Line Counter to 1
+                current_server=$RCH_SERVER                              # ServerName = Actual Server
+                script_table_heading "$RCH_SERVER Scripts"              # Generate new ServerHeading
            else xcount=$(($xcount+1))                                   # Increase Line Counter
         fi 
-        script_line "$xcount"                                           # Show line in Table
-        done < $SADM_TMP_FILE1
-    echo -e "</table>\n<br><br>\n" >> $HTML_SFILE                       # End of HTML Table
+        script_line "$xcount"                                           # Show RCH line in Table
+        done < $SADM_TMP_FILE1                                          # Read RCH from Sorted File
+    echo -e "</table>\n<br><br>\n" >> $HTML_SFILE                       # End of Server HTML Table
 
 
     # Start of Script page Group by script name
-    sadm_writelog "Create scripts group by script page"
-    current_script=""
-    sort -t' ' -k7,7 -k1,1 $RCH_SUMMARY | grep -iv "storix" > $SADM_TMP_FILE1
-    while read RCH_LINE                                                 # Read Tmp file Line by Line
-        do
-        split_rchline "$RCH_LINE"                                       # Split Line into fields
-        if [ "$current_script" = "" ]
-           then script_table_heading "$RCH_SCRIPT Scripts" 
-                current_script=$RCH_SCRIPT
-                xcount=0
-        fi 
-        if [ "$current_script" != "$RCH_SCRIPT" ]
-           then xcount=1                                                # Increase Line Counter
-                echo -e "</table>\n<br>\n" >> $HTML_SFILE               # End of HTML Table
-                current_script=$RCH_SCRIPT
-                script_table_heading "$RCH_SCRIPT Scripts" 
-           else xcount=$(($xcount+1))                                   # Increase Line Counter
-        fi 
-        script_line "$xcount"                                           # Show line in Table
-        done < $SADM_TMP_FILE1
-    echo -e "</table>\n<br><br>\n" >> $HTML_SFILE                       # End of HTML Table
+    #sadm_writelog "Create scripts group by script page"
+    #current_script=""
+    #sort -t' ' -k7,7 -k1,1 $RCH_SUMMARY | grep -iv "storix" > $SADM_TMP_FILE1
+    #while read RCH_LINE                                                 # Read Tmp file Line by Line
+    #    do
+    #    split_rchline "$RCH_LINE"                                       # Split Line into fields
+    #    echo "$SERVERS" | grep -i "$RCH_SERVER" >>/dev/null 2>&1        # Server in excl. ServerList 
+    #    if [ $? -eq 0 ] ; then continue ; fi                            # Skip Server in Excl. List
+    #    echo "$SCRIPTS" | grep -i "$RCH_SCRIPT" >>/dev/null 2>&1        # Script in excl. ServerList 
+    #    if [ $? -eq 0 ] ; then continue ; fi                            # Skip Script in Excl. List
+    #    if [ "$current_script" = "" ]                                   # Is it the time loop
+    #       then script_table_heading "$RCH_SCRIPT Scripts" 
+    #            current_script=$RCH_SCRIPT
+    #            xcount=0
+    #    fi 
+    #    if [ "$current_script" != "$RCH_SCRIPT" ]
+    #       then xcount=1                                                # Increase Line Counter
+    #            echo -e "</table>\n<br>\n" >> $HTML_SFILE               # End of HTML Table
+    #            current_script=$RCH_SCRIPT
+    #            script_table_heading "$RCH_SCRIPT Scripts" 
+    #       else xcount=$(($xcount+1))                                   # Increase Line Counter
+    #    fi 
+    #    script_line "$xcount"                                           # Show RCH line in Table
+    #    done < $SADM_TMP_FILE1                                          # Read RCH from Sorted File
+    #echo -e "</table>\n<br><br>\n" >> $HTML_SFILE                       # End of Server HTML Table
 
     # End of HTML Page
     echo -e "</body>\n</html>" >> $HTML_SFILE                           # End of HTML Page
@@ -399,9 +413,10 @@ script_page_heading()
     echo -e "<meta charset='utf-8' />"    >> $HTML_SFILE
     #
     echo -e "<style>"                                                             >> $HTML_SFILE
-    echo -e "th { color: white; background-color: #0000ff; padding: 0px; }"         >> $HTML_SFILE
+    #echo -e "th { color: white; background-color: #0000ff; padding: 0px; }"         >> $HTML_SFILE
+    echo -e "th { color: white; background-color: #000000; padding: 0px; }"         >> $HTML_SFILE
     echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }"     >> $HTML_SFILE
-    echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }"                     >> $HTML_SFILE
+    #echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }"                     >> $HTML_SFILE
     echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML_SFILE
     echo -e "</style>"                                                              >> $HTML_SFILE
     #
