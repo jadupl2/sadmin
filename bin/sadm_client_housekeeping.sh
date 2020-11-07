@@ -43,17 +43,18 @@
 # 2019_07_14 Update: v1.31 Add creation of Directory /preserve/mnt if it doesn't exist (Mac Only)
 # 2019_07_23 Update: v1.32 Remove utilization of history sequence number file.
 # 2019_08_19 Update: v1.33 Check /etc/cron.d/sadm_rear_backup permission & remove /etc/cron.d/rear
-#@2019_11_25 Fix: v1.34 Remove deletion of $SADMIN/www on SADMIN client.
-#@2020_01_21 Update: v1.35 Remove alert_group.cfg and alert_slack.cfg, if present in $SADMIN/cfg
-#@2020_04_01 Update: v1.36 Code rewrite for better performance and maintenance. 
-#@2020_04_04 Update: v1.37 Fix minor bugs & Restructure log presentation
-#@2020_04_28 Update: v1.38 Update readme file permission from 0644 to 0664
-#@2020_05_08 Update: v1.39 Update Change permission change on $SADMIN/usr/bin from 0755 to 775.
-#@2020_07_10 Update: v1.40 If no password have been assigned to 'sadmin' a temporary one is assigned. 
-#@2020_07_20 Update: v1.41 Change permission of log and rch to allow normal user to run script.
-#@2020_09_10 Update: v1.42 Make sure permission are ok in user library directory ($SADMIN/usr/lib).
-#@2020_09_12 Update: v1.43 Make sure that "${SADM_UCFG_DIR}/.gitkeep" exist to be part of git clone.
-#@2020_09_20 Update: v1.44 Minor adjustments to log entries.
+# 2019_11_25 Fix: v1.34 Remove deletion of $SADMIN/www on SADMIN client.
+# 2020_01_21 Update: v1.35 Remove alert_group.cfg and alert_slack.cfg, if present in $SADMIN/cfg
+# 2020_04_01 Update: v1.36 Code rewrite for better performance and maintenance. 
+# 2020_04_04 Update: v1.37 Fix minor bugs & Restructure log presentation
+# 2020_04_28 Update: v1.38 Update readme file permission from 0644 to 0664
+# 2020_05_08 Update: v1.39 Update Change permission change on $SADMIN/usr/bin from 0755 to 775.
+# 2020_07_10 Update: v1.40 If no password have been assigned to 'sadmin' a temporary one is assigned. 
+# 2020_07_20 Update: v1.41 Change permission of log and rch to allow normal user to run script.
+# 2020_09_10 Update: v1.42 Make sure permission are ok in user library directory ($SADMIN/usr/lib).
+# 2020_09_12 Update: v1.43 Make sure that "${SADM_UCFG_DIR}/.gitkeep" exist to be part of git clone.
+# 2020_09_20 Update: v1.44 Minor adjustments to log entries.
+#@2020_11_07 Update: v1.45 Remove old rch conversion code execution.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -85,7 +86,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.44'                              # Your Current Script Version
+    export SADM_VER='1.45'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -207,92 +208,6 @@ check_sadmin_account()
     fi
     return $lock_error
 }
-
-
-
-# --------------------------------------------------------------------------------------------------
-# If the RCH files have lines that contains 9 fields the lines are converted to 10 fields.
-# The Extra field added (just before the last one) indicate the alert type (1 will be inserted).
-# 0=No Alert,  1=Alert On Error, 2=Alert On Success, 3=Always Alert.
-#
-# Line Before (9 fields):
-# raspi6 2019.06.02 01:00:07 2019.06.02 01:00:46 00:00:39 sadm_osupdate default 0       
-#
-# Line After (10 fields): 
-# raspi6 2019.06.03 01:00:06 2019.06.03 01:00:49 00:00:43 sadm_osupdate default 1 0     
-#
-# --------------------------------------------------------------------------------------------------
-rch_conversion()
-{
-
-    #sadm_write "\n"
-    if [ ! -f "${SADM_CFG_DIR}/.rch_conversion_done" ]
-        then sadm_write "\nConversion of RCH files need to be done, please wait ...\n" 
-             ls -l ${SADM_CFG_DIR}/.rch_conversion_done
-        else return 0 
-    fi 
-
-    sadm_write "Creating a list of all *.rch files in $SADM_RCH_DIR.\n"
-    find $SADM_RCH_DIR -type f -name '*.rch' >$SADM_TMP_FILE1 2>&1      # Build list all RCH Files
-
-    if [ -s "$SADM_TMP_FILE1" ]                                         # If File Not Zero in Size
-        then cat $SADM_TMP_FILE1 | while read filename                  # Read Each RCH Filename
-                do                
-                if [ $SADM_DEBUG -gt 5 ]                                # Under Debug
-                    then sadm_write "\nProcessing file: ${filename}\n"  # Print Filename in progress
-                fi
-                if [ -e "$SADM_TMP_FILE2" ]                             # If Temp file exist ?
-                    then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1          # Delete it if exist 
-                fi
-                
-                cat $filename | while read rchline                      # Read each line in RCH file
-                    do
-                    nbfield=`echo $rchline | awk '{ print NF }'`        # Get Nb of fields on line
-                    if [ "$nbfield" -ne 9 ]                             # Line don't have 9 fields
-                        then echo "$rchline"  >> $SADM_TMP_FILE2        # Add Actual line to TMP file
-                             continue                                   # Continue with next line
-                    fi       
-                    if [ $SADM_DEBUG -gt 0 ]                            # Under Debug Print Line
-                        then sadm_write "Line Before : $rchline ($nbfield)\n" 
-                    fi
-
-                    # Extract each field on the RCH Line
-                    ehost=`   echo $rchline   | awk '{ print $1 }'`     # Get Hostname for Event
-                    sdate=`   echo $rchline   | awk '{ print $2 }'`     # Get Starting Date 
-                    stime=`   echo $rchline   | awk '{ print $3 }' `    # Get Starting Time 
-                    edate=`   echo $rchline   | awk '{ print $4 }'`     # Get Script Ending Date 
-                    etime=`   echo $rchline   | awk '{ print $5 }' `    # Get Script Ending Time 
-                    elapse=`  echo $rchline   | awk '{ print $6 }' `    # Get Elapse Time 
-                    escript=` echo $rchline   | awk '{ print $7 }'`     # Get Script Name 
-                    egname=`  echo $rchline   | awk '{ print $8 }'`     # Get Alert Group Name
-                    ecode=`   echo $rchline   | awk '{ print $9 }'`     # Get Result Code (0,1,2) 
-                    egtype="1"                                          # Set Alert Group Type
-                    
-                    # Reformat RCH line and output to TMP file
-                    cline="$ehost $sdate $stime $edate $etime" 
-                    cline="$cline $elapse $escript $egname $egtype $ecode"
-                    echo $cline >> $SADM_TMP_FILE2                      # Write converted line
-                    nbf=`echo $cline | awk '{ print NF }'`              # Nb of fields on New line
-                    if [ $SADM_DEBUG -gt 0 ]                            # Under Debug Print Line
-                        then sadm_write "Line After  : $cline ($nbf)\n"
-                    fi
-                    done
-
-                # Replace Actual RCH File with new TMP Converted file.
-                rm -f $filename >/dev/null 2>&1                         # Del original rch file
-                if [ $? -ne 0 ] ; then sadm_write "Error deleting $filename \n" ; fi
-                cp $SADM_TMP_FILE2 $filename                            # Tmp become new rch file
-                if [ $? -ne 0 ] ; then sadm_write "Error copying $SADM_TMP_FILE2 $filename \n" ; fi
-                done 
-
-        else sadm_write  "No error rch files were found.\n" 
-    fi
-
-    sadm_write "Conversion of RCH file is now done.\n\n\n"
-    touch ${SADM_CFG_DIR}/.rch_conversion_done                  # State that conversion done
-    ls -l ${SADM_CFG_DIR}/.rch_conversion_done
-}
-
 
 
 
@@ -798,17 +713,12 @@ function cmd_options()
              fi
     fi
 
-    # Convert all local RCH file from 9 fields to 10 fields (New format), if not already done
-    rch_conversion                                                      # Convert RCH Format to new
-
-    #sadm_write "FQDN = $(sadm_get_fqdn) - SADM_SERVER = ${SADM_SERVER}\n"
     dir_housekeeping                                                    # Do Dir HouseKeeping
     DIR_ERROR=$?                                                        # ReturnCode = Nb. of Errors
     file_housekeeping                                                   # Do File HouseKeeping
     FILE_ERROR=$?                                                       # ReturnCode = Nb. of Errors
     check_sadmin_account                                                # Check sadmin Acc. if Lock
     ACC_ERROR=$?                                                        # Return 1 if Locked 
-
     SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR+$ACC_ERROR))               # Error= DIR+File+Lock Func.
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
