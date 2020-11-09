@@ -25,6 +25,7 @@
 #@2020_10_29 Update: v1.6 Change CmdLine Switch & Storix Daily report is working
 #@2020_11_04 Update: v1.7 Added 1st draft of scripts html report.
 #@2020_11_07 New: v1.8 Exclude file can be use to exclude scripts or servers from daily report.
+#@2020_11_08 Updated: v1.9 Show Alert Group Name on Script Report
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -56,7 +57,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.8'                                   # Current Script Version
+export SADM_VER='1.9'                                   # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -142,6 +143,7 @@ export UND_YESTERDAY=$(date --date="yesterday" +"%Y_%m_%d")             # Yester
 # Script Report Variables
 declare -a rch_array                                                    # Lst Line of each rch array 
 RCH_SUMMARY="${SADM_TMP_DIR}/scripts_summary.txt"                       # RCH Summary File
+SCRIPT_MAX_AGE=30                                                       # Max Script Age Days=Yellow
 
 # Script Global variables used when splitting the RCH line 
 export RCH_SERVER=""                                                    # RCH Server Name
@@ -257,7 +259,8 @@ script_report()
     sadm_writelog "${SADM_OK} Create Script Web Page." 
 
     # Generate the Web Page Heading
-    script_page_heading "SADMIN Daily Script Report - `date +%a` `date +%d/%m/%Y`" 
+    script_page_heading "SADMIN Daily Script Report - `date +%a` `date '+%C%y.%m.%d %H:%M:%S'`" 
+
 
     # Check if any script are running.
     if [ $SADM_DEBUG -gt 4 ]; then sadm_writelog "Checking for running script ..." ; fi 
@@ -268,17 +271,18 @@ script_report()
         if [ $RCH_RCODE -eq 2 ]                                         # If 'Running' Status
             then split_rchline "$RCH_LINE"                              # Split Line into fields
                  xcount=$(($xcount+1))                                  # Increase Line Counter
-                 if [ $xcount -eq 1 ] ; then script_table_heading "Script currently running" ; fi
+                 if [ $xcount -eq 1 ] ; then script_table_heading "Script(s) currently running" ; fi
                  script_line "$xcount"                                  # Show line in Table
                  sadm_writelog "- Script $RCH_SCRIPT is running on $RCH_SERVER since ${RCH_TIME1}."
         fi 
         done
     if [ $xcount -eq 0 ]                                                # If no running script found
-        then echo -e "\n<br><center><h3>No script actually running</h3></center>\n" >>$HTML_SFILE
+        then echo -e "\n<center><h3>No script actually running</h3></center>\n" >>$HTML_SFILE
              sadm_writelog "${SADM_OK} No script actually running."     # Feed Screen & Log
-        else echo -e "</table>\n<br><br>\n" >> $HTML_SFILE              # End of HTML Table
+        else echo -e "</table>\n<br>\n" >> $HTML_SFILE              # End of HTML Table
     fi
-    
+    echo -e "\n<hr class="dash">\n" >> $HTML_SFILE                      # Horizontal Dashed Line
+
 
     # Check if any script terminated with error.
     if [ $SADM_DEBUG -gt 4 ]; then sadm_writelog "Checking for script(s) ended with error ..." ; fi 
@@ -290,26 +294,28 @@ script_report()
         if [ $RCH_RCODE -eq 1 ]                                         # If Terminated with 'Error'
             then split_rchline "$RCH_LINE"                              # Split Line into fields
                  xcount=$(($xcount+1))                                  # Increase Line Counter
-                 if [ $xcount -eq 1 ] ; then script_table_heading "Script Ended With Error" ; fi
+                 if [ $xcount -eq 1 ] 
+                    then echo "\n<br>\n"  >>$HTML_SFILE
+                         script_table_heading "Script Ended With Error" 
+                 fi
                  script_line "$xcount"                                  # Show line in Table
                  sadm_writelog "- Script $RCH_SCRIPT on $RCH_SERVER ended with error at $RCH_TIME2."
                  FOUND=$(($FOUND+1))                                    # Increment Found Counter
         fi 
         done
     if [ $xcount -eq 0 ]                                                # If no running script found
-        then msg="All scripts terminated with success." >>$HTML_SFILE   # Message to User
-             echo -e "\n<center><h3>$msg.</h3></center><br>\n" >>$HTML_SFILE
+        then msg="No script terminated with error." >>$HTML_SFILE       # Message to User
+             echo -e "\n<center><h3>$msg</h3></center>\n" >>$HTML_SFILE
              sadm_writelog "${SADM_OK} $msg"                            # Feed Screen & Log
-        else echo -e "</table>\n<br><br>\n" >> $HTML_SFILE              # End of HTML Table
+        else echo -e "</table>\n<br>\n" >> $HTML_SFILE                  # End of HTML Table
     fi
-
+    echo -e "\n<hr class="dash">\n<br>\n" >> $HTML_SFILE                # Horizontal Dashed Line
 
 
     # Start of Script page Group by server name
-    sadm_writelog "Create scripts group by server page"
     current_server=""
     sort -t' ' -k1,1 -k2,2r  $RCH_SUMMARY | grep -iv "storix" > $SADM_TMP_FILE1
-    sort -t' ' -k1,1 -k2,2r  $RCH_SUMMARY | grep -iv "storix" > /tmp/sorted.txt
+    #sort -t' ' -k1,1 -k2,2r  $RCH_SUMMARY | grep -iv "storix" > /tmp/sorted.txt
     while read RCH_LINE                                                 # Read Tmp file Line by Line
         do
         split_rchline "$RCH_LINE"                                       # Split Line into fields
@@ -318,7 +324,7 @@ script_report()
         echo "$SCRIPTS" | grep -i "$RCH_SCRIPT" >>/dev/null 2>&1        # Script in excl. ServerList 
         if [ $? -eq 0 ] ; then continue ; fi                            # Skip Script in Excl. List
         if [ "$current_server" = "" ]                                   # Is it the time loop
-           then script_table_heading "$RCH_SERVER"                      # Yes, then print serverName
+           then script_table_heading "'$RCH_SERVER' system scripts"     # Generate new ServerHeading
                 current_server=$RCH_SERVER                              # Save Actual Server Name
                 xcount=0                                                # Set Server Counter to 0 
         fi 
@@ -326,12 +332,13 @@ script_report()
            then echo -e "</table>\n<br>\n" >> $HTML_SFILE               # End of Previous Server 
                 xcount=1                                                # Reset Line Counter to 1
                 current_server=$RCH_SERVER                              # ServerName = Actual Server
-                script_table_heading "$RCH_SERVER Scripts"              # Generate new ServerHeading
+                script_table_heading "'$RCH_SERVER' system scripts"     # Generate new ServerHeading
            else xcount=$(($xcount+1))                                   # Increase Line Counter
         fi 
         script_line "$xcount"                                           # Show RCH line in Table
         done < $SADM_TMP_FILE1                                          # Read RCH from Sorted File
     echo -e "</table>\n<br><br>\n" >> $HTML_SFILE                       # End of Server HTML Table
+    sadm_writelog "${SADM_OK} Scripts grouped by server page generated" # Show progress to user
 
 
     # Start of Script page Group by script name
@@ -346,7 +353,7 @@ script_report()
     #    echo "$SCRIPTS" | grep -i "$RCH_SCRIPT" >>/dev/null 2>&1        # Script in excl. ServerList 
     #    if [ $? -eq 0 ] ; then continue ; fi                            # Skip Script in Excl. List
     #    if [ "$current_script" = "" ]                                   # Is it the time loop
-    #       then script_table_heading "$RCH_SCRIPT Scripts" 
+    #       then script_table_heading "'$RCH_SCRIPT' system scripts" 
     #            current_script=$RCH_SCRIPT
     #            xcount=0
     #    fi 
@@ -354,7 +361,7 @@ script_report()
     #       then xcount=1                                                # Increase Line Counter
     #            echo -e "</table>\n<br>\n" >> $HTML_SFILE               # End of HTML Table
     #            current_script=$RCH_SCRIPT
-    #            script_table_heading "$RCH_SCRIPT Scripts" 
+    #            script_table_heading "'$RCH_SCRIPT' system scripts" 
     #       else xcount=$(($xcount+1))                                   # Increase Line Counter
     #    fi 
     #    script_line "$xcount"                                           # Show RCH line in Table
@@ -413,19 +420,23 @@ script_page_heading()
     echo -e "<meta charset='utf-8' />"    >> $HTML_SFILE
     #
     echo -e "<style>"                                                             >> $HTML_SFILE
-    #echo -e "th { color: white; background-color: #0000ff; padding: 0px; }"         >> $HTML_SFILE
     echo -e "th { color: white; background-color: #000000; padding: 0px; }"         >> $HTML_SFILE
     echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }"     >> $HTML_SFILE
     #echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }"                     >> $HTML_SFILE
-    echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML_SFILE
+    echo -e "table, th, td  { border: 1px solid black; border-collapse: collapse; }" >> $HTML_SFILE
+    echo -e "\n/* Dashed red border */" >> $HTML_SFILE
+    echo -e "hr.dash        { border-top: 1px dashed red; }" >> $HTML_SFILE
+    echo -e "/* Large rounded green border */" >> $HTML_SFILE
+    echo -e "hr.large_green { border: 3px solid green; border-radius: 5px; }" >> $HTML_SFILE
     echo -e "</style>"                                                              >> $HTML_SFILE
     #
-    echo -e "<title>$RTITLE</title>"                        >> $HTML_SFILE
-    echo -e "</head>"                                       >> $HTML_SFILE
-    echo -e "<body>"                                        >> $HTML_SFILE
-    echo -e "<br>\n<center><h1>${RTITLE}</h1></center>"     >> $HTML_SFILE
+    echo -e "<title>$RTITLE</title>"                    >> $HTML_SFILE
+    echo -e "</head>"                                   >> $HTML_SFILE
+    echo -e "<body>"                                    >> $HTML_SFILE
+    echo -e "<br>\n<center><h1>${RTITLE}</h1></center>" >> $HTML_SFILE
+    echo -e "\n<hr class="large_green">\n"              >> $HTML_SFILE  # Big Horizontal Green Line
     #echo -e "\n<center><img src='/images/pencil2.gif'></center>\n" >> $HTML_SFILE
-    echo -e "<br>" >> $HTML_SFILE
+    #echo -e "<br>" >> $HTML_SFILE
 }
 
 
@@ -440,18 +451,19 @@ script_table_heading()
     echo -e "\n<center>\n<table border=0>"                    >> $HTML_SFILE
     echo -e "\n<thead>"                                       >> $HTML_SFILE
     echo -e "<tr>"                                            >> $HTML_SFILE
-    echo -e "<th colspan=9 dt-head-center>${RTITLE}</th>"     >> $HTML_SFILE
+    echo -e "<th colspan=10 dt-head-center>${RTITLE}</th>"    >> $HTML_SFILE
     echo -e "</tr>"                                           >> $HTML_SFILE
     echo -e "<tr>"                                            >> $HTML_SFILE
-    echo -e "<th>Count</th>"                                  >> $HTML_SFILE
+    echo -e "<th>No.</th>"                                    >> $HTML_SFILE
     echo -e "<th>Date</th>"                                   >> $HTML_SFILE
     echo -e "<th>Status</th>"                                 >> $HTML_SFILE
     echo -e "<th>Server</th>"                                 >> $HTML_SFILE
     echo -e "<th>Script/Log</th>"                             >> $HTML_SFILE
-    echo -e "<th>Start</th>"                                  >> $HTML_SFILE
-    echo -e "<th>End</th>"                                    >> $HTML_SFILE
+    echo -e "<th>Started</th>"                                >> $HTML_SFILE
+    echo -e "<th>Ended</th>"                                  >> $HTML_SFILE
     echo -e "<th>Elapse</th>"                                 >> $HTML_SFILE
-    echo -e "<th>AlertGroup</th>"                             >> $HTML_SFILE
+    echo -e "<th>Alert Type</th>"                             >> $HTML_SFILE
+    echo -e "<th>Alert Group</th>"                            >> $HTML_SFILE
     echo -e "</tr>"                                           >> $HTML_SFILE
     echo -e "</thead>\n"                                      >> $HTML_SFILE
 }
@@ -471,16 +483,35 @@ script_line()
        else BCOL="#F0FFFF" ; FCOL="#000000"                             # Impair line color
     fi    
 
-    # Create Status Code Description
-    WRDESC="CODE $RCH_RCODE"                                            # Invalid RCH Code Desc
-    if [ "$RCH_RCODE" = "0" ] ; then WRDESC="✔ Success" ; fi            # Code 0 = Success
-    if [ "$RCH_RCODE" = "1" ] ; then WRDESC="✖ Error  " ; fi            # Code 1 = Error
-    if [ "$RCH_RCODE" = "2" ] ; then WRDESC="➜ Running" ; fi            # Code 2 = Running
-        
     echo -e "<tr>"  >> $HTML_SFILE
     echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$xcount</font></td>"     >>$HTML_SFILE
-    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$RCH_DATE1</font></td>"  >>$HTML_SFILE
-    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WRDESC</font></td>"     >>$HTML_SFILE
+
+    # Execution Date
+    epoch_now=`date "+%s"`                                              # Current Date in Epoch Time
+    wdate=`echo "$RCH_DATE1" | sed 's/\./\//g'`                         # Replace dot by '/' in date
+    script_epoch=`date -d "$wdate" "+%s"`                               # Script Date in Epoch Time
+    diff=$(($epoch_now - $script_epoch))                                # Nb. Seconds between
+    days=$(($diff/(60*60*24)))                                          # Convert Sec. to Days
+    if [ $days -eq 0 ]
+        then echo -n "<td title='Script ran today.' " >>$HTML_SFILE     # Insert tooltips
+        else echo -n "<td title='Script ran $days day(s) ago.' " >>$HTML_SFILE  
+    fi 
+    if [ $days -gt $SCRIPT_MAX_AGE ]                                    # Script Age > Max Age
+        then echo -e " align=center bgcolor='Yellow'>" >>$HTML_SFILE    # Show in Yellow
+        else echo -e " align=center bgcolor=$BCOL>"    >>$HTML_SFILE    # Else Normal Color
+    fi
+    echo -e "<font color=$FCOL>$RCH_DATE1</font></td>"  >>$HTML_SFILE   # Script date
+
+    # Script Ending Status
+    SAVCOL=$BCOL                                                        # Save Current Back Color    
+    WSTATUS="CODE $RCH_RCODE"                                           # Invalid RCH Code Desc
+    if [ "$RCH_RCODE" = "0" ] ; then WSTATUS="✔ Success" ; fi           # Code 0 = Success
+    if [ "$RCH_RCODE" = "1" ] ; then WSTATUS="✖ Error  " ; BCOL='Yellow' ; fi  # Code 1 = Error
+    if [ "$RCH_RCODE" = "2" ] ; then WSTATUS="➜ Running" ; BCOL='Yellow' ; fi  # Code 2 = Running      
+    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WSTATUS</font></td>" >>$HTML_SFILE
+    BCOL=$SAVCOL                                                        # Restore Std Back color
+    
+    # Server Name
     echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$RCH_SERVER</font></td>" >>$HTML_SFILE
 
     # Insert Name of the Script with link to log if log is accessible
@@ -506,12 +537,61 @@ script_line()
     if [ "$RCH_ELAPSE" = "........" ] ; then RCH_ELAPSE="Running" ; fi  # Replace Dot with Running
     echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$RCH_ELAPSE</font></td>" >>$HTML_SFILE
     
+    # Alert Type ( 0=None 1=AlertOnError 2=AlertOnOK 3=Always)
+    SAVCOL=$FCOL                                                        # Save Current Line Color
+    SAVBCOL=$BCOL
+    case "$RCH_TYPE" in                                                 # When or Not to alert Code
+        0 ) FCOL='Red' ; BCOL='Yellow' 
+            ALERT_TYPE="Never Alert"                                    # Never Send an Alert 
+            echo -en "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
+            echo -e "<strong><font color=$FCOL>$ALERT_TYPE</font></strong></td>" >>$HTML_SFILE
+            ;; 
+        1 ) ALERT_TYPE="Alert on Error"                                 # If Script ended with Error
+            echo -en "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
+            echo -e "<font color=$FCOL>$ALERT_TYPE</font></td>" >>$HTML_SFILE
+            ;; 
+        2 ) ALERT_TYPE="Alert on Success"                               # Script ended with success
+            FCOL='Blue' ; BCOL='Yellow'
+            echo -en "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
+            echo -e "<strong><font color=$FCOL>$ALERT_TYPE</font></strong></td>" >>$HTML_SFILE
+            ;; 
+        3 ) FCOL='Blue'
+            ALERT_TYPE="Always Alert"  ; BCOL='Yellow'                  # Alert on every execution
+            echo -en "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
+            echo -e "<strong><font color=$FCOL>$ALERT_TYPE</font></strong></td>" >>$HTML_SFILE
+            ;; 
+        * ) FCOL='Red' ; BCOL='Yellow'
+            ALERT_TYPE="Unknown $ $RCH_TYPE ?"                          # Alert Type is invalid
+            echo -en "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
+            echo -e "<strong><font color=$FCOL>$ALERT_TYPE</font></strong></td>" >>$HTML_SFILE
+            ;; 
+    esac
+    #echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$ALERT_TYPE</font></td>" >>$HTML_SFILE
+    FCOL=$SAVCOL                                                        # Restore Std Line color
+    BCOL=$SAVBCOL                                                       # Restore Background color
+
     # Alert Group
-    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$RCH_ALERT</font></td>"  >>$HTML_SFILE
-    
+    GRP_TYPE=$(grep -i "^$RCH_ALERT " $SADM_ALERT_FILE |awk '{print$2}' |tr -d ' ')
+    GRP_NAME=$(grep -i "^$RCH_ALERT " $SADM_ALERT_FILE |awk '{print$3}' |tr -d ' ')
+    case "$GRP_TYPE" in                                                 # Case on Default Alert Group
+        m|M )   GRP_DESC="By Email"                                     # Alert Sent by Email
+                ;; 
+        s|S )   GRP_DESC="Slack $GRP_NAME" 
+                ;; 
+        c|C )   GRP_DESC="Cell. $GRP_NAME" 
+                ;; 
+        t|T )   GRP_DESC="SMS $GRP_NAME" 
+                ;; 
+        *   )   GRP_DESC="Grp. $GRP_TYPE ?"                             # Illegal Code Desc
+                ;;
+    esac
+    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$GRP_DESC</font></td>"  >>$HTML_SFILE
+
     echo -e "</tr>\n" >> $HTML_SFILE
     return 
 } 
+
+
 
 # ==================================================================================================
 # Mount the NFS Directory where all the ReaR backup files are stored 
@@ -550,7 +630,7 @@ rear_report()
     if [ $? -ne 0 ] ; then return 1 ; fi                                # Can't Mount back to caller
     
     # Produce the report heading
-    report_heading "SADMIN ReaR Backup Report - `date +%a` `date +%d/%m/%Y`" "$HTML_RFILE"  
+    report_heading "SADMIN ReaR Backup Report - `date '+%a +%C%y.%m.%d %H:%M:%S'`" "$HTML_RFILE"  
 
     xcount=0                                                            # Set Server & Error Counter
     while read wline                                                    # Read Tmp file Line by Line
@@ -886,7 +966,7 @@ storix_report()
     if [ $? -ne 0 ] ; then return 1 ; fi                                # Can't Mount back to caller
 
     # Produce the report Heading
-    storix_heading "SADMIN Storix Report - `date +%a` `date +%d/%m/%Y`" # Produce Page Heading
+    storix_heading "SADMIN Storix Report - `date '+%a %C%y.%m.%d %H:%M:%S'`" # Produce Page Heading
     xcount=0                                                            # Set Server & Error Counter
     while read wline                                                    # Read Tmp file Line by Line
         do
@@ -1081,7 +1161,7 @@ backup_report()
 
     # Produce the report Heading
     sadm_writelog "${SADM_OK} Create Backup Web Page." 
-    report_heading "SADMIN Daily Backup Report - `date +%a` `date +%d/%m/%Y`" "$HTML_BFILE" 
+    report_heading "SADMIN Daily Backup Report - `date '+%a %C%y.%m.%d %H:%M:%S'`" "$HTML_BFILE" 
 
     xcount=0                                                            # Set Server & Error Counter
     while read wline                                                    # Read Tmp file Line by Line
