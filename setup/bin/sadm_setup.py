@@ -79,6 +79,7 @@
 # 2020_07_11 Update: v3.42 Minor script changes.
 # 2020_07_11 Update: v3.43 Added rsync package to client installation. 
 #@2020_09_05 Update: v3.44 Minor change to sadm_client crontab file.
+#@2020_11_09 New: v3.45 Add Daily Email Report to crontab of sadm_server.
 # 
 # ==================================================================================================
 #
@@ -96,7 +97,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.44"                                            # Setup Version Number
+sver                = "3.45"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -516,14 +517,17 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
         hcron.write ("4,10,16,22,28,34,40,46,52,58 * * * * %s %s\n" % (wuser,cscript))
     else:
         hcron.write ("*/6 * * * * %s %s\n" % (wuser,cscript))
-    hcron.write ("#\n")
     #
-    hcron.write ("# Early morning daily run, Collect Perf data - Update Database, Housekeeping\n")
-    hcron.write ("05 05 * * * %s sudo ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1\n" % (wuser))
+    cscript="sudo ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1"
     hcron.write ("#\n")
-    #hcron.write ("# Morning report sent to Sysadmin by Email\n")
-    #hcron.write ("03 08 * * * ${SADMIN}/bin/sadm_rch_scr_summary.sh -m >/dev/null 2>&1\n")
-    #hcron.write ("#\n")
+    hcron.write ("# Early morning daily run, Collect Perf data - Update Database, Housekeeping\n")
+    hcron.write ("05 05 * * * %s %s\n" % (wuser,cscript))
+    #
+    cscript="sudo ${SADMIN}/bin/sadm_daily_report.sh >/dev/null 2>&1"
+    hcron.write ("#\n")
+    hcron.write ("# Daily SADMIN Report by Email\n")
+    hcron.write ("04 08 * * * %s %s\n" % (wuser,cscript))    
+    hcron.write ("#\n")
     hcron.close()                                                       # Close SADMIN Crontab file
 
     # Change Server Crontab file permission to 644
