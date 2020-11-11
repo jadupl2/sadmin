@@ -26,6 +26,7 @@
 #@2020_11_04 Update: v1.7 Added 1st draft of scripts html report.
 #@2020_11_07 New: v1.8 Exclude file can be use to exclude scripts or servers from daily report.
 #@2020_11_08 Updated: v1.9 Show Alert Group Name on Script Report
+#@2020_11_10 Fix: v1.10 Minor bug fixes.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -57,7 +58,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.9'                                   # Current Script Version
+export SADM_VER='1.10'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -295,7 +296,7 @@ script_report()
             then split_rchline "$RCH_LINE"                              # Split Line into fields
                  xcount=$(($xcount+1))                                  # Increase Line Counter
                  if [ $xcount -eq 1 ] 
-                    then echo "\n<br>\n"  >>$HTML_SFILE
+                    then echo -e "\n<br>\n"  >>$HTML_SFILE
                          script_table_heading "Script Ended With Error" 
                  fi
                  script_line "$xcount"                                  # Show line in Table
@@ -369,7 +370,7 @@ script_report()
     #echo -e "</table>\n<br><br>\n" >> $HTML_SFILE                       # End of Server HTML Table
 
     # End of HTML Page
-    echo -e "</body>\n</html>" >> $HTML_SFILE                           # End of HTML Page
+    echo -e "</body>\n</html>\n\n" >> $HTML_SFILE                           # End of HTML Page
 
 
     # Set Report by Email to SADMIN Administrator
@@ -630,7 +631,7 @@ rear_report()
     if [ $? -ne 0 ] ; then return 1 ; fi                                # Can't Mount back to caller
     
     # Produce the report heading
-    report_heading "SADMIN ReaR Backup Report - `date '+%a +%C%y.%m.%d %H:%M:%S'`" "$HTML_RFILE"  
+    report_heading "SADMIN ReaR Backup Report - `date '+%a %C%y.%m.%d %H:%M:%S'`" "$HTML_RFILE"  
 
     xcount=0                                                            # Set Server & Error Counter
     while read wline                                                    # Read Tmp file Line by Line
