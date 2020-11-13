@@ -113,6 +113,7 @@ www/tmp/*
 !www/tmp/perf/.gitkeep
 www/rrd/*
 !www/rrd/.gitkeep
+www/view/sadm_daily*
 www/test/*
 www/doc/odt/*
 
@@ -135,3 +136,4 @@ cfg/*
 # Setup Directory
 setup/update/*
 !setup/update/.gitkeep
+
