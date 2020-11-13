@@ -27,7 +27,7 @@
 #@2020_11_07 New: v1.8 Exclude file can be use to exclude scripts or servers from daily report.
 #@2020_11_08 Updated: v1.9 Show Alert Group Name on Script Report
 #@2020_11_10 Fix: v1.10 Minor bug fixes.
-#@2020_11_13 New: v1.11 Email of each report now include a pdf of the report.
+#@2020_11_13 New: v1.11 Email of each report now include a pdf of the report(if wkhtmltopdf install)
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -59,7 +59,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.10'                                  # Current Script Version
+export SADM_VER='1.11'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
