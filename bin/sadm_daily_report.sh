@@ -27,6 +27,7 @@
 #@2020_11_07 New: v1.8 Exclude file can be use to exclude scripts or servers from daily report.
 #@2020_11_08 Updated: v1.9 Show Alert Group Name on Script Report
 #@2020_11_10 Fix: v1.10 Minor bug fixes.
+#@2020_11_13 New: v1.11 Email of each report now include a pdf of the report.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -107,13 +108,19 @@ export REAR_REPORT="ON"                                                 # ReaR R
 export SCRIPT_REPORT="ON"                                               # Scripts Report Activated
 export STORIX_REPORT="OFF"                                              # Storix Report De-Activated
 
-# Output HTML page for each type of report.
+# Output HTML and PDF page for each type of report.
 export HTML_BFILE="${SADM_WWW_DIR}/view/daily_backup_report.html"       # Backup Report HTML File 
+export PDF_BFILE="${SADM_WWW_DIR}/view/daily_backup_report.pdf"         # Backup Report PDF File 
+#
 export HTML_RFILE="${SADM_WWW_DIR}/view/daily_rear_report.html"         # ReaR Backup Rep. HTML File 
+export PDF_RFILE="${SADM_WWW_DIR}/view/daily_rear_report.pdf"           # ReaR Backup Rep. PDF File 
+#
 export HTML_XFILE="${SADM_WWW_DIR}/view/daily_storix_report.html"       # Storix Rep. HTML File 
+export PDF_XFILE="${SADM_WWW_DIR}/view/daily_storix_report.pdf"         # Storix Rep. PDF File 
+#
 export HTML_SFILE="${SADM_WWW_DIR}/view/daily_scripts_report.html"      # Scripts Rep. HTML File 
-export HTML_SERVER="${SADM_WWW_DIR}/view/daily_scripts_by_server.html"  # Scripts Group by Servers.
-export HTML_SCRIPT="${SADM_WWW_DIR}/view/daily_scripts_by_script.html"  # Scripts Group by Script
+export PDF_SFILE="${SADM_WWW_DIR}/view/daily_scripts_report.pdf"        # Scripts Rep. PDF File 
+
 
 # Define NFS local mount point depending of O/S
 if [ "$SADM_OS_TYPE" = "DARWIN" ]                                       # If on MacOS
@@ -341,34 +348,6 @@ script_report()
     echo -e "</table>\n<br><br>\n" >> $HTML_SFILE                       # End of Server HTML Table
     sadm_writelog "${SADM_OK} Scripts grouped by server page generated" # Show progress to user
 
-
-    # Start of Script page Group by script name
-    #sadm_writelog "Create scripts group by script page"
-    #current_script=""
-    #sort -t' ' -k7,7 -k1,1 $RCH_SUMMARY | grep -iv "storix" > $SADM_TMP_FILE1
-    #while read RCH_LINE                                                 # Read Tmp file Line by Line
-    #    do
-    #    split_rchline "$RCH_LINE"                                       # Split Line into fields
-    #    echo "$SERVERS" | grep -i "$RCH_SERVER" >>/dev/null 2>&1        # Server in excl. ServerList 
-    #    if [ $? -eq 0 ] ; then continue ; fi                            # Skip Server in Excl. List
-    #    echo "$SCRIPTS" | grep -i "$RCH_SCRIPT" >>/dev/null 2>&1        # Script in excl. ServerList 
-    #    if [ $? -eq 0 ] ; then continue ; fi                            # Skip Script in Excl. List
-    #    if [ "$current_script" = "" ]                                   # Is it the time loop
-    #       then script_table_heading "'$RCH_SCRIPT' system scripts" 
-    #            current_script=$RCH_SCRIPT
-    #            xcount=0
-    #    fi 
-    #    if [ "$current_script" != "$RCH_SCRIPT" ]
-    #       then xcount=1                                                # Increase Line Counter
-    #            echo -e "</table>\n<br>\n" >> $HTML_SFILE               # End of HTML Table
-    #            current_script=$RCH_SCRIPT
-    #            script_table_heading "'$RCH_SCRIPT' system scripts" 
-    #       else xcount=$(($xcount+1))                                   # Increase Line Counter
-    #    fi 
-    #    script_line "$xcount"                                           # Show RCH line in Table
-    #    done < $SADM_TMP_FILE1                                          # Read RCH from Sorted File
-    #echo -e "</table>\n<br><br>\n" >> $HTML_SFILE                       # End of Server HTML Table
-
     # End of HTML Page
     echo -e "</body>\n</html>\n\n" >> $HTML_SFILE                           # End of HTML Page
 
@@ -376,8 +355,13 @@ script_report()
     # Set Report by Email to SADMIN Administrator
     subject="SADMIN Script Report"                                      # Send Backup Report by mail
     export EMAIL="$SADM_MAIL_ADDR"                                      # Set the FROM Email 
-    mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_SFILE
-    SADM_EXIT_CODE=$?                                                   # Save mutt return code
+    if [ "$WKHTMLTOPDF" != "" ]                                         # If wkhtmltopdf on System
+        then $WKHTMLTOPDF $HTML_SFILE $PDF_SFILE > /dev/null 2>&1       # Convert HTML Page to PDF
+             mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR -a $PDF_SFILE < $HTML_SFILE
+             SADM_EXIT_CODE=$?                                          # Save mutt return Code.
+        else mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_SFILE
+             SADM_EXIT_CODE=$?                                          # Save mutt return Code.
+    fi 
     if [ $SADM_EXIT_CODE -eq 0 ]                                        # If mail sent successfully
         then sadm_writelog "${SADM_OK} Script report sent to $SADM_MAIL_ADDR"      
         else sadm_writelog "${SADM_ERROR} Sending script report email to $SADM_MAIL_ADDR"
@@ -506,9 +490,9 @@ script_line()
     # Script Ending Status
     SAVCOL=$BCOL                                                        # Save Current Back Color    
     WSTATUS="CODE $RCH_RCODE"                                           # Invalid RCH Code Desc
-    if [ "$RCH_RCODE" = "0" ] ; then WSTATUS="✔ Success" ; fi           # Code 0 = Success
-    if [ "$RCH_RCODE" = "1" ] ; then WSTATUS="✖ Error  " ; BCOL='Yellow' ; fi  # Code 1 = Error
-    if [ "$RCH_RCODE" = "2" ] ; then WSTATUS="➜ Running" ; BCOL='Yellow' ; fi  # Code 2 = Running      
+    if [ "$RCH_RCODE" = "0" ] ; then WSTATUS="Success" ; fi             # Code 0 = Success
+    if [ "$RCH_RCODE" = "1" ] ; then WSTATUS="Error  " ; BCOL='Yellow' ; fi  # Code 1 = Error
+    if [ "$RCH_RCODE" = "2" ] ; then WSTATUS="Running" ; BCOL='Yellow' ; fi  # Code 2 = Running      
     echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WSTATUS</font></td>" >>$HTML_SFILE
     BCOL=$SAVCOL                                                        # Restore Std Back color
     
@@ -752,8 +736,13 @@ rear_report()
     # Set Report by Email to SADMIN Administrator
     subject="SADMIN ReaR Backup Report"                                 # Send Backup Report by mail
     export EMAIL="$SADM_MAIL_ADDR"                                      # Set the FROM Email 
-    mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_RFILE
-    SADM_EXIT_CODE=$?                                                   # Save mutt return code
+    if [ "$WKHTMLTOPDF" != "" ]                                         # If wkhtmltopdf on System
+        then $WKHTMLTOPDF -O landscape $HTML_RFILE $PDF_RFILE > /dev/null 2>&1 # Convert HTML to PDF
+             mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR -a $PDF_RFILE < $HTML_RFILE
+             SADM_EXIT_CODE=$?                                          # Save mutt return Code.
+        else mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_RFILE
+             SADM_EXIT_CODE=$?                                          # Save mutt return Code.
+    fi 
     if [ $SADM_EXIT_CODE -eq 0 ]                                        # If mail sent successfully
         then sadm_writelog "${SADM_OK} ReaR Backup Report sent to $SADM_MAIL_ADDR"      
         else sadm_writelog "${SADM_ERROR} Failed to send the ReaR Backup Report to $SADM_MAIL_ADDR"
@@ -1106,8 +1095,13 @@ storix_report()
     # Set Report by Email to SADMIN Administrator
     subject="SADMIN Storix Report"                                      # Send Backup Report by mail
     export EMAIL="$SADM_MAIL_ADDR"                                      # Set the FROM Email 
-    mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_XFILE
-    SADM_EXIT_CODE=$?                                                   # Save mutt return code
+    if [ "$WKHTMLTOPDF" != "" ]                                         # If wkhtmltopdf on System
+        then $WKHTMLTOPDF -O landscape $HTML_XFILE $PDF_XFILE > /dev/null 2>&1 # Convert HTML to PDF
+             mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR -a $PDF_XFILE < $HTML_XFILE
+             SADM_EXIT_CODE=$?                                          # Save mutt return Code.
+        else mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_XFILE
+             SADM_EXIT_CODE=$?                                          # Save mutt return Code.
+    fi 
     if [ $SADM_EXIT_CODE -eq 0 ]                                        # If mail sent successfully
         then sadm_writelog "${SADM_OK} Daily Backup Report sent to $SADM_MAIL_ADDR"      
         else sadm_writelog "${SADM_ERROR} Failed to send the Daily Backup Report to $SADM_MAIL_ADDR"
@@ -1277,8 +1271,13 @@ backup_report()
     # Set Report by Email to SADMIN Administrator
     subject="SADMIN Backup Report"                                      # Send Backup Report by mail
     export EMAIL="$SADM_MAIL_ADDR"                                      # Set the FROM Email 
-    mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_BFILE
-    SADM_EXIT_CODE=$?                                                   # Save mutt return code
+    if [ "$WKHTMLTOPDF" != "" ]                                         # If wkhtmltopdf on System
+        then $WKHTMLTOPDF -O landscape $HTML_BFILE $PDF_BFILE > /dev/null 2>&1 # Convert HTML to PDF
+             mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR -a $PDF_BFILE < $HTML_BFILE
+             SADM_EXIT_CODE=$?                                          # Save mutt return Code.
+        else mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_BFILE
+             SADM_EXIT_CODE=$?                                          # Save mutt return Code.
+    fi 
     if [ $SADM_EXIT_CODE -eq 0 ]                                        # If mail sent successfully
         then sadm_writelog "${SADM_OK} Daily Backup Report sent to $SADM_MAIL_ADDR"      
         else sadm_writelog "${SADM_ERROR} Failed to send the Daily Backup Report to $SADM_MAIL_ADDR"
@@ -1651,6 +1650,9 @@ load_rch_array()
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
+    
+    # Get Path to wkhtmltopdf (If Exist on System) else will be blank
+    WKHTMLTOPDF=$(sadm_get_command_path "wkhtmltopdf")                  # Get wkhtmltopdf cmd path 
 
     if [ "$BACKUP_REPORT" = "ON" ]                                      # If CmdLine -b was used
         then backup_report                                              # Produce Backup Report 
