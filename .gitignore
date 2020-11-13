@@ -113,7 +113,7 @@ www/tmp/*
 !www/tmp/perf/.gitkeep
 www/rrd/*
 !www/rrd/.gitkeep
-www/view/sadm_daily*
+www/view/daily*
 www/test/*
 www/doc/odt/*
 
