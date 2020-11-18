@@ -65,6 +65,7 @@
 # 2020_07_13 Fix: v3.24 New System Main Backup Directory was not created with right permission.
 #@2020_09_23 Update: v3.25 Modification to log recording.
 #@2020_10_26 Fix: v3.26 Suppress 'chmod' error message on backup directory.
+#@2020_11_18 Update: v3.27 Don't trim the log after each execution.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -95,7 +96,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.26'                              # Your Current Script Version
+    export SADM_VER='3.27'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -119,7 +120,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
+    export SADM_MAX_LOGLINE=0                        # When script end Trim log to 500 Lines
     #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
