@@ -42,6 +42,7 @@
 #@2020_03_28 Fix: v2.38 Fix problem when 'dmidecode' is not available on system.
 #@2020_07_27 Update: v2.39 Used space of CIFS Mounted filesystem are no longer monitored.
 #@2020_10_01 Update: v2.40 Write more elaborated email to user when restarting a service.
+#@2020_11_18 Update: v2.41 Fix: Fix problem with iostat on MacOS.
 #===================================================================================================
 #
 use English;
@@ -55,7 +56,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.40";                                       # Version Number
+my $VERSION_NUMBER      = "2.41";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -132,18 +133,10 @@ my $CMD_TAIL            = `which tail`       ;chomp($CMD_TAIL);         # Locati
 my $CMD_HEAD            = `which head`       ;chomp($CMD_HEAD);         # Location of head command
 my $CMD_UPTIME          = `which uptime`     ;chomp($CMD_UPTIME);       # Location of uptime command
 my $CMD_VMSTAT          = `which vmstat`     ;chomp($CMD_VMSTAT);       # Location of vmstat command
-#my $CMD_IOSTAT          = `which iostat`     ;chomp($CMD_IOSTAT);       # Location of iostat command
+my $CMD_IOSTAT          = `which iostat`     ;chomp($CMD_IOSTAT);       # Location of iostat command
 #my $CMD_MPATHD          = `which multipathd` ;chomp($CMD_MPATHD);       # Location of multipathd cmd
 #my $CMD_DMIDECODE       = `which dmidecode`  ;chomp($CMD_DMIDECODE);    # To check if we are in a VM
 my $CMD_TOUCH           = `which touch`      ;chomp($CMD_TOUCH);        # Location of touch command
-
-# Determine if 'iostat' command is available on system
-system ("which iostat >/dev/null 2>&1"); 
-if ( $? != 0 ) { 
-    my $CMD_IOSTAT = ""; 
-}else{ 
-    my $CMD_IOSTAT = `which iostat 2>/dev/null`; chomp($CMD_IOSTAT);
-}
 
 # Determine if 'dmidecode' command is available on system
 system ("which dmidecode >/dev/null 2>&1"); 
@@ -217,6 +210,7 @@ my $SCP_CON       = "$CMD_SCP -rP${SADM_SSH_PORT} ${SADM_USER}\@${SADM_SERVER}";
 my $MINIMUM_SEC=86400;                 # 1 Day=86400 Sec. = Minimum between Filesystem Incr.
 my $MAX_FS_INCR=2;                     # Number of filesystem increase allowed per Day.
 my $SCRIPT_MIN_SEC_BETWEEN_EXEC=86400; # Restart script didn't run for more than value then ok 2 run
+
 
 
 #---------------------------------------------------------------------------------------------------
@@ -1038,7 +1032,7 @@ sub check_cpu_usage {
         open (DB_FILE, "$CMD_VMSTAT 1 2 | $CMD_TAIL -1 |");             # Linux/Aix vmstat last line
     }
     $cpu_use = <DB_FILE> ;                                              # Open Stdout last Line
-    printf "\nCPU Usage line:  %s" , $cpu_use;                          # Show User that last Line
+    printf "\nCPU Usage line:  %s\n" , $cpu_use;                        # Show User that last Line
     @ligne = split ' ',$cpu_use;                                        # Split Line based on space
     if ( $OSNAME eq "linux" ) {                                         # Under Linux
         $cpu_user   = int $ligne[12];                                   # Linux Get User CPU Usage
@@ -1077,7 +1071,7 @@ sub check_cpu_usage {
     $SMOD = "CPU"                       ;                               # Sub-Module Category
     $STAT = $CVAL                       ;                               # Current Value Returned
     if ($SYSMON_DEBUG >= 5) {                                           # Debug Level at least 5
-        printf "CPU User: %3d - System: %3d  - Total: %3d" ,$cpu_user,$cpu_system,$cpu_total;
+        printf "CPU User: %3d - System: %3d  - Total: %3d\n" ,$cpu_user,$cpu_system,$cpu_total;
         printf " - Warning Level:%3d - Error Level:%3d",$WVAL,$EVAL;
     }
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
