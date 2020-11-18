@@ -28,6 +28,7 @@
 #@2020_11_08 Updated: v1.9 Show Alert Group Name on Script Report
 #@2020_11_10 Fix: v1.10 Minor bug fixes.
 #@2020_11_13 New: v1.11 Email of each report now include a pdf of the report(if wkhtmltopdf install)
+#@2020_11_12 Updated v1.12 Warning in Yellow when backup outdated, bug fixes.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -59,7 +60,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.11'                                  # Current Script Version
+export SADM_VER='1.12'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -99,7 +100,7 @@ export TOTAL_ERROR=0                                                    # Total 
 export URL_VIEW_FILE='/view/log/sadm_view_file.php'                     # View log File Content URL
 
 # If the size of Today & Yesterday Backup/ReaR this percentage, it will highlight in yellow
-export WPCT=50                                                          # Size PCT Diff.Threshold
+export WPCT=50                                                          # If BackupSize is 50% Larger
 
 
 # Set command line switch default
@@ -152,6 +153,12 @@ export UND_YESTERDAY=$(date --date="yesterday" +"%Y_%m_%d")             # Yester
 declare -a rch_array                                                    # Lst Line of each rch array 
 RCH_SUMMARY="${SADM_TMP_DIR}/scripts_summary.txt"                       # RCH Summary File
 SCRIPT_MAX_AGE=30                                                       # Max Script Age Days=Yellow
+
+# DataBase extracted Information for one server
+export DB_SERVER=""                                                     # Server Name
+export DB_DESC=""                                                       # Server Description
+export DB_OSNAME=""                                                     # Server O/S Name
+export DB_OSVERSION=""                                                  # Server O/S Version
 
 # Script Global variables used when splitting the RCH line 
 export RCH_SERVER=""                                                    # RCH Server Name
@@ -253,6 +260,109 @@ unmount_nfs()
 
 
 
+# ==================================================================================================
+# Read Server information from the Database
+# ==================================================================================================
+read_server_column()
+{
+    WSERVER=$1                                                          # Server to Read Info
+
+    # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
+    SQL="SELECT srv_name,srv_desc,srv_osname,srv_osversion,srv_ostype,srv_domain"  
+    SQL="${SQL},srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir "
+    SQL="${SQL} from server"                                            # From the Server Table
+    SQL="${SQL} where srv_name = '$WSERVER' ;"                          # Read Selected server
+    CMDLINE="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL Auth/Read Only User
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE3
+
+    if [ ! -s "$SADM_TMP_FILE3" ] || [ ! -r "$SADM_TMP_FILE3" ]         # File not readable or 0 len
+        then sadm_write "$SADM_WARNING System '$WSERVER' was not found in Database.\n"
+             DB_SERVER=""                                               # Server Name
+             DB_DESC=""                                                 # Server Description
+             DB_OSNAME=""                                               # Server O/S Name
+             DB_OSVERSION=""                                            # Server O/S Version
+             return 1                                                   # Return Status to Caller
+        else DB_LINE=$(head -1 $SADM_TMP_FILE3)                         # Get First (Only) Line 
+             if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "DB_LINE=$DB_LINE" ; fi 
+             DB_SERVER=$(echo "$DB_LINE"   | awk -F\; '{print $1}')     # Server Name
+             DB_DESC=$(echo "$DB_LINE"     | awk -F\; '{print $2}')     # Server Description
+             DB_OSNAME=$(echo "$DB_LINE"   | awk -F\; '{print $3}')     # Server O/S Name
+             DB_OSVERSION=$(echo "$DB_LINE"| awk -F\; '{print $4}')     # Server O/S Version
+    fi 
+    return 0
+}
+
+
+# ==================================================================================================
+# Show Distribution Logo as a cell in a table
+# ==================================================================================================
+insert_logo() 
+{
+    whost=$1                                                            # Host Name
+    WHTML=$2                                                            # HTML File Name to write to
+    read_server_column "$whost"                                         # Read Server Info in DB
+    if [ $SADM_DEBUG -gt 5 ]
+        then sadm_writelog "In insert_logo whost=$whost - WHTML=$WHTML - DB_OSNAME=$DB_OSNAME $DB_DESC"
+    fi         
+
+    echo -n "<th class='dt-center' rowspan=2>" >> $WHTML 
+    case $DB_OSNAME in 
+        'redhat')       echo -n "<a href='http://www.redhat.com' " >> $WHTML 
+                        echo -n "title='Server $whost is a RedHat server - Visit redhat.com'>" >> $WHTML
+                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_redhat.png' " >> $WHTML
+                        echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
+                        ;;
+        'fedora')       echo -n "<a href='https://getfedora.org' " >> $WHTML
+                        echo -n "title='Server $whost is a Fedora server - Visit getfedora.org'>" >> $WHTML
+                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_fedora.png' " >> $WHTML
+                        echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
+                        ;;
+        'macosx')       echo -n "<a href='https://apple.com' " >> $WHTML
+                        echo -n "title='Server $whost is an Apple System - Visit apple.com'>" >> $WHTML
+                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_apple.png' " >> $WHTML
+                        echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
+                        ;;
+        'centos')       echo -n "<a href='https://www.centos.org' " >> $WHTML
+                        echo -n "title='Server $whost is a CentOS server - Visit centos.org'>" >> $WHTML
+                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_centos.png' " >> $WHTML
+                        echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
+                        ;;
+        'ubuntu')       echo -n "<a href='https://www.ubuntu.com/' " >> $WHTML
+                        echo -n "title='Server $whost is a Ubuntu server - Visit ubuntu.com'>" >> $WHTML
+                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_ubuntu.png' " >> $WHTML
+                        echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
+                        ;;
+        'linuxmint')    echo -n "<a href='https://linuxmint.com/' " >> $WHTML
+                        echo -n "title='Server $whost is a LinuxMint server - Visit linuxmint.com'>" >> $WHTML
+                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_linuxmint.png' " >> $WHTML
+                        echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
+                        ;;
+        'debian')       echo -n "<a href='https://www.debian.org/' " >> $WHTML
+                        echo -n "title='Server $whost is a Debian server - Visit debian.org'>" >> $WHTML
+                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_debian.png' " >> $WHTML
+                        echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
+                        ;;
+        'raspbian')     echo -n "<a href='https://www.raspbian.org/' " >> $WHTML
+                        echo -n "title='Server $whost is a Raspbian server - Visit raspian.org'>" >> $WHTML
+                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_raspbian.png' " >> $WHTML
+                        echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
+                        ;;
+        'suse')         echo -n "<a href='https://www.opensuse.org/' " >> $WHTML
+                        echo -n "title='Server $whost is a OpenSUSE server - Visit opensuse.org'>" >> $WHTML
+                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_suse.png' " >> $WHTML
+                        echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
+                        ;;
+        'aix')          echo -n "<a href='http://www-03.ibm.com/systems/power/software/aix/' " >> $WHTML
+                        echo -n "title='Server $whost is an AIX server - Visit Aix Home Page'>" >> $WHTML
+                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_aix.png' " >> $WHTML
+                        echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
+                        ;;
+        *)              echo "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_linux.png' style='width:32px;height:32px;'>" >> $WHTML
+                        echo "${WOS}</th>\n" >> $WHTML
+                        ;;
+    esac
+}
+
 
 
 # ==================================================================================================
@@ -279,7 +389,9 @@ script_report()
         if [ $RCH_RCODE -eq 2 ]                                         # If 'Running' Status
             then split_rchline "$RCH_LINE"                              # Split Line into fields
                  xcount=$(($xcount+1))                                  # Increase Line Counter
-                 if [ $xcount -eq 1 ] ; then script_table_heading "Script(s) currently running" ; fi
+                 if [ $xcount -eq 1 ] 
+                    then script_table_heading "Script(s) currently running" "$RCH_SERVER"
+                 fi
                  script_line "$xcount"                                  # Show line in Table
                  sadm_writelog "- Script $RCH_SCRIPT is running on $RCH_SERVER since ${RCH_TIME1}."
         fi 
@@ -304,7 +416,7 @@ script_report()
                  xcount=$(($xcount+1))                                  # Increase Line Counter
                  if [ $xcount -eq 1 ] 
                     then echo -e "\n<br>\n"  >>$HTML_SFILE
-                         script_table_heading "Script Ended With Error" 
+                         script_table_heading "Script Ended With Error" "$RCH_SERVER"
                  fi
                  script_line "$xcount"                                  # Show line in Table
                  sadm_writelog "- Script $RCH_SCRIPT on $RCH_SERVER ended with error at $RCH_TIME2."
@@ -312,7 +424,7 @@ script_report()
         fi 
         done
     if [ $xcount -eq 0 ]                                                # If no running script found
-        then msg="No script terminated with error." >>$HTML_SFILE       # Message to User
+        then msg="No script terminated with error" >>$HTML_SFILE        # Message to User
              echo -e "\n<center><h3>$msg</h3></center>\n" >>$HTML_SFILE
              sadm_writelog "${SADM_OK} $msg"                            # Feed Screen & Log
         else echo -e "</table>\n<br>\n" >> $HTML_SFILE                  # End of HTML Table
@@ -332,7 +444,7 @@ script_report()
         echo "$SCRIPTS" | grep -i "$RCH_SCRIPT" >>/dev/null 2>&1        # Script in excl. ServerList 
         if [ $? -eq 0 ] ; then continue ; fi                            # Skip Script in Excl. List
         if [ "$current_server" = "" ]                                   # Is it the time loop
-           then script_table_heading "'$RCH_SERVER' system scripts"     # Generate new ServerHeading
+           then script_table_heading "'$RCH_SERVER' system scripts" "$RCH_SERVER"
                 current_server=$RCH_SERVER                              # Save Actual Server Name
                 xcount=0                                                # Set Server Counter to 0 
         fi 
@@ -340,7 +452,7 @@ script_report()
            then echo -e "</table>\n<br>\n" >> $HTML_SFILE               # End of Previous Server 
                 xcount=1                                                # Reset Line Counter to 1
                 current_server=$RCH_SERVER                              # ServerName = Actual Server
-                script_table_heading "'$RCH_SERVER' system scripts"     # Generate new ServerHeading
+                script_table_heading "'$RCH_SERVER' system scripts" "$RCH_SERVER"
            else xcount=$(($xcount+1))                                   # Increase Line Counter
         fi 
         script_line "$xcount"                                           # Show RCH line in Table
@@ -405,7 +517,8 @@ script_page_heading()
     echo -e "<meta charset='utf-8' />"    >> $HTML_SFILE
     #
     echo -e "<style>"                                                             >> $HTML_SFILE
-    echo -e "th { color: white; background-color: #000000; padding: 0px; }"         >> $HTML_SFILE
+    #echo -e "th { color: white; background-color: #000000; padding: 0px; }"         >> $HTML_SFILE
+    echo -e "th { color: black; background-color: #f1f1f1; padding: 5px; }"         >> $HTML_SFILE
     echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }"     >> $HTML_SFILE
     #echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }"                     >> $HTML_SFILE
     echo -e "table, th, td  { border: 1px solid black; border-collapse: collapse; }" >> $HTML_SFILE
@@ -432,14 +545,25 @@ script_page_heading()
 #===================================================================================================
 script_table_heading()
 {
-    RTITLE=$1
+    RTITLE=$1                                                           # Table Heading Title
+    RSERVER=$2                                                          # Name Of Server
+    ROS=$3                                                              # O/S Name of the server
+
     echo -e "\n<center>\n<table border=0>"                    >> $HTML_SFILE
     echo -e "\n<thead>"                                       >> $HTML_SFILE
+
     echo -e "<tr>"                                            >> $HTML_SFILE
-    echo -e "<th colspan=10 dt-head-center>${RTITLE}</th>"    >> $HTML_SFILE
+    insert_logo "$RSERVER" "$HTML_SFILE"
+    echo -e "<th colspan=9>System '${RSERVER}' - $DB_DESC</th>" >> $HTML_SFILE
     echo -e "</tr>"                                           >> $HTML_SFILE
+
     echo -e "<tr>"                                            >> $HTML_SFILE
-    echo -e "<th>No.</th>"                                    >> $HTML_SFILE
+    #echo -e "<th colspan=10 dt-head-center>${RTITLE}</th>"    >> $HTML_SFILE
+    echo -e "<th colspan=10>System ${DB_OSNAME} v${DB_OSVERSION}</th>"    >> $HTML_SFILE
+    echo -e "</tr>"                                           >> $HTML_SFILE
+
+    echo -e "<tr>"                                            >> $HTML_SFILE
+    echo -e "<th>No</th>"                                     >> $HTML_SFILE
     echo -e "<th>Date</th>"                                   >> $HTML_SFILE
     echo -e "<th>Status</th>"                                 >> $HTML_SFILE
     echo -e "<th>Server</th>"                                 >> $HTML_SFILE
@@ -450,7 +574,9 @@ script_table_heading()
     echo -e "<th>Alert Type</th>"                             >> $HTML_SFILE
     echo -e "<th>Alert Group</th>"                            >> $HTML_SFILE
     echo -e "</tr>"                                           >> $HTML_SFILE
-    echo -e "</thead>\n"                                      >> $HTML_SFILE
+
+    echo -e "</thead>"                                        >> $HTML_SFILE
+    echo -e " "                                               >> $HTML_SFILE
 }
 
 
@@ -464,8 +590,8 @@ script_line()
     # Set Background Color - Color at https://www.w3schools.com/tags/ref_colornames.asp
     # Alternate background color at every line
     if (( $xcount %2 == 0 ))                                            # Modulo on line counter
-       then BCOL="#00FFFF" ; FCOL="#000000"                             # Pair count color
-       else BCOL="#F0FFFF" ; FCOL="#000000"                             # Impair line color
+       then BCOL="#FFFFE0" ; FCOL="#000000"                             # LightYellow Pair color
+       else BCOL="#FAF0E6" ; FCOL="#000000"                             # Linen Impair color
     fi    
 
     echo -e "<tr>"  >> $HTML_SFILE
@@ -477,38 +603,41 @@ script_line()
     script_epoch=`date -d "$wdate" "+%s"`                               # Script Date in Epoch Time
     diff=$(($epoch_now - $script_epoch))                                # Nb. Seconds between
     days=$(($diff/(60*60*24)))                                          # Convert Sec. to Days
-    if [ $days -eq 0 ]
+    if [ $days -eq 0 ]                                                  # Script was ran today
         then echo -n "<td title='Script ran today.' " >>$HTML_SFILE     # Insert tooltips
-        else echo -n "<td title='Script ran $days day(s) ago.' " >>$HTML_SFILE  
+        else echo -n "<td title='Script ran $days day(s) ago, warning is set to ${SCRIPT_MAX_AGE} days.' " >>$HTML_SFILE  
     fi 
     if [ $days -gt $SCRIPT_MAX_AGE ]                                    # Script Age > Max Age
-        then echo -e " align=center bgcolor='Yellow'>" >>$HTML_SFILE    # Show in Yellow
-        else echo -e " align=center bgcolor=$BCOL>"    >>$HTML_SFILE    # Else Normal Color
+        then echo -n " align=center bgcolor='Yellow'>" >>$HTML_SFILE    # Show in Yellow
+        else echo -n " align=center bgcolor=$BCOL>"    >>$HTML_SFILE    # Else Normal Color
     fi
-    echo -e "<font color=$FCOL>$RCH_DATE1</font></td>"  >>$HTML_SFILE   # Script date
+    echo "<font color=$FCOL>$RCH_DATE1</font></td>"    >>$HTML_SFILE    # Script date
 
     # Script Ending Status
     SAVCOL=$BCOL                                                        # Save Current Back Color    
     WSTATUS="CODE $RCH_RCODE"                                           # Invalid RCH Code Desc
     if [ "$RCH_RCODE" = "0" ] ; then WSTATUS="Success" ; fi             # Code 0 = Success
     if [ "$RCH_RCODE" = "1" ] ; then WSTATUS="Error  " ; BCOL='Yellow' ; fi  # Code 1 = Error
-    if [ "$RCH_RCODE" = "2" ] ; then WSTATUS="Running" ; BCOL='Yellow' ; fi  # Code 2 = Running      
-    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WSTATUS</font></td>" >>$HTML_SFILE
+    if [ "$RCH_RCODE" = "2" ] ; then WSTATUS="Running" ; BCOL='Yellow' ; fi  # Code 2 = Running 
+    if [ "$WSTATUS" != "Success" ]
+       then echo "<td align=center bgcolor='Yellow'><font color=$FCOL>$WSTATUS</font></td>" >>$HTML_SFILE
+       else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WSTATUS</font></td>"    >>$HTML_SFILE
+    fi 
     BCOL=$SAVCOL                                                        # Restore Std Back color
     
     # Server Name
-    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$RCH_SERVER</font></td>" >>$HTML_SFILE
+    echo  "<td align=center bgcolor=$BCOL><font color=$FCOL>$RCH_SERVER</font></td>" >>$HTML_SFILE
 
     # Insert Name of the Script with link to log if log is accessible
-    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>" >> $HTML_SFILE
+    echo -n "<td align=center bgcolor=$BCOL><font color=$FCOL>" >> $HTML_SFILE
     LOGFILE="${RCH_SERVER}_${RCH_SCRIPT}.log"                           # Assemble log Script Name
     LOGNAME="${SADM_WWW_DAT_DIR}/${RCH_SERVER}/log/${LOGFILE}"          # Add Dir. Path to Name
     LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" # Url to View Log
     if [ -r "$LOGNAME" ]                                                # If log is Readable
-        then echo "<a href='$LOGURL' "              >> $HTML_SFILE      # Link to Access the Log
-             echo "title='View Script Log File'>"   >> $HTML_SFILE      # ToolTip to Show User
-             echo -e "$RCH_SCRIPT</font></a></td>"  >> $HTML_SFILE      # End of Link Definition
-        else echo -e "$RCH_SCRIPT</font></td>"      >> $HTML_SFILE      # No Log = No LInk
+        then echo -n "<a href='$LOGURL' "              >> $HTML_SFILE   # Link to Access the Log
+             echo -n "title='View Script Log File'>"   >> $HTML_SFILE   # ToolTip to Show User
+             echo "$RCH_SCRIPT</font></a></td>"        >> $HTML_SFILE   # End of Link Definition
+        else echo "$RCH_SCRIPT</font></td>"            >> $HTML_SFILE   # No Log = No LInk
     fi
 
     # Start Time
@@ -528,26 +657,26 @@ script_line()
     case "$RCH_TYPE" in                                                 # When or Not to alert Code
         0 ) FCOL='Red' ; BCOL='Yellow' 
             ALERT_TYPE="Never Alert"                                    # Never Send an Alert 
-            echo -en "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
+            echo -n "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
             echo -e "<strong><font color=$FCOL>$ALERT_TYPE</font></strong></td>" >>$HTML_SFILE
             ;; 
         1 ) ALERT_TYPE="Alert on Error"                                 # If Script ended with Error
-            echo -en "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
+            echo -n "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
             echo -e "<font color=$FCOL>$ALERT_TYPE</font></td>" >>$HTML_SFILE
             ;; 
         2 ) ALERT_TYPE="Alert on Success"                               # Script ended with success
             FCOL='Blue' ; BCOL='Yellow'
-            echo -en "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
+            echo -n "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
             echo -e "<strong><font color=$FCOL>$ALERT_TYPE</font></strong></td>" >>$HTML_SFILE
             ;; 
         3 ) FCOL='Blue'
             ALERT_TYPE="Always Alert"  ; BCOL='Yellow'                  # Alert on every execution
-            echo -en "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
+            echo -n "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
             echo -e "<strong><font color=$FCOL>$ALERT_TYPE</font></strong></td>" >>$HTML_SFILE
             ;; 
         * ) FCOL='Red' ; BCOL='Yellow'
             ALERT_TYPE="Unknown $ $RCH_TYPE ?"                          # Alert Type is invalid
-            echo -en "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
+            echo -n "<td align=center bgcolor=$BCOL>"  >>$HTML_SFILE
             echo -e "<strong><font color=$FCOL>$ALERT_TYPE</font></strong></td>" >>$HTML_SFILE
             ;; 
     esac
@@ -850,14 +979,15 @@ storix_line()
     diff=$(($epoch_now - $epoch_backup))                                # Nb. Seconds between
     days=$(($diff/(60*60*24)))                                          # Convert Sec. to Days
     if [ $days -gt $STWARN ]                                            # Backup taken too far away
-       then echo -n "<td title='Last Backup done $days days ago' " >>$HTML_XFILE 
+       then echo -n "<td title='Storix backup done $days days ago, warning at $STWARN days.' " >>$HTML_XFILE 
             echo -n "align=center bgcolor='Yellow'>" >>$HTML_XFILE      # Yellow Background
             echo "<font color=$FCOL>$backup_date</font></td>" >>$HTML_XFILE
        else if [ "$backup_date" != "$ST_DATE" ] ||  [ "$backup_date" != "$ISO_DATE" ] 
-               then echo -n "<td title='Backup Date different than ISO or Image date' " >>$HTML_XFILE 
+               then echo -n "<td title='Storix backup date different than ISO or image date' " >>$HTML_XFILE 
                     echo -n "align=center bgcolor='Yellow'>" >>$HTML_XFILE      # Yellow Background
                     echo "<font color=$FCOL>$backup_date</font></td>" >>$HTML_XFILE  # Show Backup Date
-               else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$backup_date</font></td>" >>$HTML_XFILE
+               else echo -n "<td title='Storix backup done $days days ago, warning at $STWARN days.' " >>$HTML_XFILE 
+                    echo "align=center bgcolor=$BCOL><font color=$FCOL>$backup_date</font></td>" >>$HTML_XFILE
             fi
     fi 
 
@@ -866,7 +996,10 @@ storix_line()
     echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WELAPSE</font></td>" >> $HTML_XFILE
 
     # Backup Status
-    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>" >> $HTML_XFILE
+    if [ "$WSTATUS" != "Success" ]
+        then echo -e "<td align=center bgcolor='Yellow'><font color=$FCOL>" >> $HTML_XFILE
+        else echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>"    >> $HTML_XFILE
+    fi 
     LOGFILE="${WSERVER}_${WSCRIPT}.log"                                 # Assemble log Script Name
     LOGNAME="${SADM_WWW_DAT_DIR}/${WSERVER}/log/${LOGFILE}"             # Add Dir. Path to Name
     LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}"  # Url to View Log
@@ -1367,7 +1500,6 @@ backup_line()
     WCOUNT=$(     echo $BACKUP_INFO | awk -F\; '{ print $11 }')          # Line Counter
     HTML=$(       echo $BACKUP_INFO | awk -F\; '{ print $12 }')          # HTML Output File Name
     RTYPE=$(      echo $BACKUP_INFO | awk -F\; '{ print $13 }')          # R=RearBackup B=DailyBackup
-                                                                        # S=Storix Report
 
     # Alternate background color at every line
     if (( $WCOUNT %2 == 0 ))                                            # Modulo on line counter
@@ -1379,36 +1511,21 @@ backup_line()
     echo -e "<tr>"  >> $HTML                                            # Begin backup line
     echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WCOUNT</font></td>"  >> $HTML
 
-    # Storix Backup Date is not today (May be Missed, Sporadic, ...) Show in Yellow Background
-    if [ "$RTYPE" = "S" ]                                               # If Backup Report 
-       then if [ "$TODAY" = "$WDATE1" ]
-               then echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WDATE1</font></td>" >>$HTML
-               else if [ "$WDATE1" = "----------" ] 
-                       then echo -n "<td title='No backup recorded' " >>$HTML 
-                       else backup_date=`echo "$WDATE1" | sed 's/\./\//g'`      # Replace dot by '/' in date
-                            epoch_backup=`date -d "$backup_date" "+%s"`         # Backup Date in Epoch Time
-                            epoch_now=`date "+%s"`                              # Today in Epoch Time
-                            diff=$(($epoch_now - $epoch_backup))                # Nb. Seconds between
-                            days=$(($diff/(60*60*24)))                          # Convert Sec. to Days
-                            echo -n "<td title='Last Backup done $days days ago' " >>$HTML   
-                    fi
-                    echo -n "align=center bgcolor='Yellow'>" >>$HTML      # Yellow Background
-                    echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML  # Show Backup Date
-            fi
-    fi 
+    # Calculate number of days between now and the backup date
+    backup_date=`echo "$WDATE1" | sed 's/\./\//g'`                      # Replace dot by '/' in date
+    epoch_backup=`date -d "$backup_date" "+%s"`                         # Backup Date in Epoch Time
+    epoch_now=`date "+%s"`                                              # Today in Epoch Time
+    diff=$(($epoch_now - $epoch_backup))                                # Nb. Seconds between
+    days=$(($diff/(60*60*24)))                                          # Convert Sec. to Days
 
     # Backup Date is not today (May be Missed, Sporadic, ...) Show in Yellow Background
     if [ "$RTYPE" = "B" ]                                               # If Backup Report 
-       then if [ "$TODAY" = "$WDATE1" ]
-               then echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WDATE1</font></td>" >>$HTML
-               else if [ "$WDATE1" = "----------" ] 
+       then if [ "$TODAY" = "$WDATE1" ]                                 # Backup done today
+               then echo -n "<td title='Backup was done today'" >>$HTML # Tooltip 
+                    echo " align=center bgcolor=$BCOL><font color=$FCOL>$WDATE1</font></td>" >>$HTML
+               else if [ "$WDATE1" = "----------" ]                     # backup running or NoBackup
                        then echo -n "<td title='No backup recorded' " >>$HTML 
-                       else backup_date=`echo "$WDATE1" | sed 's/\./\//g'`      # Replace dot by '/' in date
-                            epoch_backup=`date -d "$backup_date" "+%s"`         # Backup Date in Epoch Time
-                            epoch_now=`date "+%s"`                              # Today in Epoch Time
-                            diff=$(($epoch_now - $epoch_backup))                # Nb. Seconds between
-                            days=$(($diff/(60*60*24)))                          # Convert Sec. to Days
-                            echo -n "<td title='Last Backup done $days days ago' " >>$HTML   
+                       else echo -n "<td title='Last Backup done $days days ago' " >>$HTML   
                     fi
                     echo -n "align=center bgcolor='Yellow'>" >>$HTML      # Yellow Background
                     echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML  # Show Backup Date
@@ -1416,22 +1533,21 @@ backup_line()
     fi 
 
     # ReaR Backup Date 
-    if [ "$RTYPE" == "R" ]                                               # If Backup Report 
-       then if [ "$WDATE1" = "----------" ] 
-               then echo -n "<td title='No backup recorded' " >>$HTML 
-                    echo -n "align=center bgcolor='Yellow'>" >>$HTML      # Yellow Background
-               else backup_date=`echo "$WDATE1" | sed 's/\./\//g'`              # Replace dot by '/' in date
-                    epoch_backup=`date -d "$backup_date" "+%s"`                 # Backup Date in Epoch Time
-                    epoch_now=`date "+%s"`                                      # Today in Epoch Time
-                    diff=$(($epoch_now - $epoch_backup))                        # Difference in Nb. Seconds
-                    days=$(($diff/(60*60*24)))                                  # Convert Sec. to Days
-                    if [ $days -gt $REAR_INTERVAL ] 
-                       then echo -n "<td title='Last Backup done $days days ago' " >>$HTML  
-                            echo -n "align=center bgcolor='Yellow'>" >>$HTML      # Yellow Background
-                       else echo "<td align=center bgcolor=$BCOL>" >>$HTML 
-                    fi 
-            fi
-            echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML  # Show Backup Date
+    if [ "$RTYPE" = "R" ]                                               # If Backup Report 
+       then if [ "$TODAY" = "$WDATE1" ]                                 # Backup done today
+               then echo -n "<td title='Rear Image was done today'" >>$HTML # Tooltip 
+                    echo " align=center bgcolor=$BCOL><font color=$FCOL>$WDATE1</font></td>" >>$HTML
+               else if [ "$WDATE1" = "----------" ]                     # Date=Dashes=No Backup Yet
+                       then echo -n "<td title='No ReaR backup recorded' " >>$HTML   
+                            echo -n "align=center bgcolor='Yellow'>" >>$HTML
+                       else echo -n "<td title='Backup was done $days days ago, warning at $REAR_INTERVAL days.'" >>$HTML  
+                            if [ $days -gt $REAR_INTERVAL ]             # RearBackupDate > WarnDays
+                                then echo -n "align=center bgcolor='Yellow'>" >>$HTML 
+                                else echo -n "align=center bgcolor=$BCOL>" >>$HTML 
+                            fi 
+                    fi
+                    echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML        # Show Backup Date
+            fi 
     fi 
 
     # Backup Time & Elapse time
@@ -1439,8 +1555,11 @@ backup_line()
     echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WELAPSE</font></td>" >> $HTML
     #echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WSTATUS</font></td>" >> $HTML
 
-    # Server Name - (If you click on it it will show the backup script log.)
-    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>" >> $HTML
+    # Backup Status - (If you click on it it will show the backup script log.)
+    if [ "$WSTATUS" = "Success" ]                                       # Not Success Backgrd Yellow 
+        then echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>"    >> $HTML
+        else echo -e "<td align=center bgcolor='Yellow'><font color=$FCOL>" >> $HTML
+    fi 
     LOGFILE="${WSERVER}_${WSCRIPT}.log"                                 # Assemble log Script Name
     LOGNAME="${SADM_WWW_DAT_DIR}/${WSERVER}/log/${LOGFILE}"             # Add Dir. Path to Name
     LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}"  # Url to View Log
@@ -1451,9 +1570,9 @@ backup_line()
     fi
 
     # Backup Schedule Status - Activated or Deactivated (show in Yellow background)
-    if [ "$RTYPE" = "B" ]                                               # If Backup Report 
-       then URL_SCHED_UPDATE=$(echo "${URL_UPD_SCHED/SYSTEM/$WSERVER}") # URL To Modify Backup Sched
-       else URL_SCHED_UPDATE=$(echo "${URL_REAR_SCHED/SYSTEM/$WSERVER}")         # URL To Modify Backup Sched
+    if [ "$RTYPE" = "B" ]                                                # If Backup Report 
+       then URL_SCHED_UPDATE=$(echo "${URL_UPD_SCHED/SYSTEM/$WSERVER}")  # URL To Modify Backup Schd
+       else URL_SCHED_UPDATE=$(echo "${URL_REAR_SCHED/SYSTEM/$WSERVER}") # URL To Modify Backup Schd
     fi
     if [ $WACT -eq 0 ] 
        then echo "<td align=center bgcolor='Yellow'><font color=$FCOL>"         >>$HTML
@@ -1474,9 +1593,10 @@ backup_line()
        else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>Yes</font></td>" >>$HTML
     fi
 
-    # CUURENT BACKUP SIZE - Show in Yellow if : 
-    #   - Today Backup Size is 0
-    #   - If Today Backup Size vs Yesterday Backup Size is greater than threshold ($WPCT) go yellow
+    # CURRENT BACKUP SIZE - Show in Yellow if : 
+    #   - Today Backup Size ($WCUR_TOTAL) is 0
+    #   - Today Backup Size ($WCUR_TOTAL) vs Yesterday ($WPRV_TOTAL) is greater than threshold $WPCT
+    #
     if [ $WCUR_TOTAL -eq 0 ]                                            # If Today Backup Size is 0
         then echo -en "<td title='No Backup situation' align=center bgcolor='Yellow'>" >>$HTML
              echo -e "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >> $HTML
@@ -1484,19 +1604,20 @@ backup_line()
                 then echo -en "<td align=center bgcolor=$BCOL><font color=$FCOL>" >>$HTML
                      echo -e " ${WCUR_TOTAL} MB</font></td>" >>$HTML
                 else if [ $WCUR_TOTAL -ge $WPRV_TOTAL ]                 # Today Backup >= Yesterday
-                        then PCT=`echo "$WCUR_TOTAL / $WPRV_TOTAL" | bc -l`  
-                             PCT=`printf "%.2f" $PCT | awk -F. '{print $2}'` # Backup Size Incr. Pct
+                        then PCT=`echo "(($WCUR_TOTAL - $WPRV_TOTAL) / $WPRV_TOTAL) * 100" | bc -l`
+                             PCT=$(printf "%.f" $PCT) 
                              if [ $PCT -ge $WPCT ]                      # Inc Greater than threshold
                                 then echo -en "<td align=center bgcolor='Yellow' " >>$HTML
-                                     echo "title='Backup ${WPCT}% bigger than yesterday'>" >>$HTML
+                                     echo "title='Backup is ${PCT}% bigger than yesterday'>" >>$HTML
                                      echo "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >>$HTML
                                 else echo -n "<td align=center bgcolor=$BCOL>" >>$HTML
                                      echo "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >>$HTML
                              fi
-                        else PCT=`echo "$WPRV_TOTAL / $WCUR_TOTAL" | bc -l` 
-                             PCT=`printf "%.2f" $PCT | awk -F. '{print $2}'` # Backup Size Decr. Pct
+                        else PCT=`echo "(($WPRV_TOTAL - $WCUR_TOTAL) / $WCUR_TOTAL) * 100" | bc -l`
+                             #PCT=`echo "($WCUR_TOTAL / $WPRV_TOTAL) * 100" | bc -l` 
+                             PCT=$(printf "%.f" $PCT)
                              if [ $PCT -ge $WPCT ] && [ $PCT -ne 0 ]         # Decr. less than threshold
-                                then echo -n "<td title='Backup ${WPCT}% smaller than yesterday' " >>$HTML
+                                then echo -n "<td title='Backup is ${PCT}% smaller than yesterday' " >>$HTML
                                      echo "align=center bgcolor='Yellow'> " >> $HTML
                                      echo "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >>$HTML
                                 else echo -n "<td align=center bgcolor=$BCOL>" >>$HTML
@@ -1507,7 +1628,7 @@ backup_line()
     fi 
 
 
-    # If Yesterday Backup Size is 0, show it in Yellow.
+    # Yesterday Backup Size - If Size is 0, show it in Yellow.
     if [ $WPRV_TOTAL -eq 0 ]                                
         then echo -en "<td title='No Backup situation' align=center bgcolor='Yellow'>" >>$HTML
              echo -e "<font color=$FCOL>${WPRV_TOTAL} MB</font></td>" >> $HTML
@@ -1652,7 +1773,16 @@ load_rch_array()
     fi
     
     # Get Path to wkhtmltopdf (If Exist on System) else will be blank
-    WKHTMLTOPDF=$(sadm_get_command_path "wkhtmltopdf")                  # Get wkhtmltopdf cmd path 
+    export WKHTMLTOPDF=$(sadm_get_command_path "wkhtmltopdf")           # Get wkhtmltopdf cmd path 
+    if [ "$WKHTMLTOPDF" = "" ]
+        then sadm_write "$SADM_WARNING Please consider installing package 'wkhtmltopdf'.\n"
+             sadm_write "   - For Debian,Ubuntu,Raspbian,... : sudo apt-get install wkhtmltopdf \n"
+             sadm_write "   - For CentOS and RHEL v7 ...     : sudo dnf install $SADMIN/pkg/wkhtmltopdf/*centos7* \n"
+             sadm_write "   - For CentOS and RHEL v8 ...     : sudo dnf install $SADMIN/pkg/wkhtmltopdf/*centos8* \n"
+             sadm_write "   - For Fedora (included in pkg)   : sudo dnf install wkhtmltopdf \n"
+             sadm_write "You can also download the latest version of 'wkhtmltopdf' at https://wkhtmltopdf.org \n"
+             sadm_write "After doing so, a pdf copy of the reports will be attached to the emails.\n\n"
+    fi 
 
     if [ "$BACKUP_REPORT" = "ON" ]                                      # If CmdLine -b was used
         then backup_report                                              # Produce Backup Report 
