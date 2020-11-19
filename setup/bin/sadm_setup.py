@@ -80,6 +80,7 @@
 # 2020_07_11 Update: v3.43 Added rsync package to client installation. 
 #@2020_09_05 Update: v3.44 Minor change to sadm_client crontab file.
 #@2020_11_09 New: v3.45 Add Daily Email Report to crontab of sadm_server.
+#@2020_11_15 Update: v3.46 'wkhtmltopdf' package was added to server installation.
 # 
 # ==================================================================================================
 #
@@ -97,7 +98,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.45"                                            # Setup Version Number
+sver                = "3.46"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -169,8 +170,6 @@ req_client = {
                     'deb':'openssh-client',                 'drepo':'base'},
     'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
                     'deb':'dmidecode',                      'drepo':'base'},
-    # 'pymsql'     :{ 'rpm':'python34-pip python3-pip',       'rrepo':'epel',
-    #                 'deb':'python3-pip',                    'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
     'iostat'     :{ 'rpm':'sysstat',                        'rrepo':'base',  
@@ -186,19 +185,21 @@ req_client = {
 # Command and package require by SADMIN Server to work correctly
 req_server = {}                                                         # Require Packages Dict.
 req_server = { 
-    'httpd'      :{ 'rpm':'httpd httpd-tools',                              'rrepo':'base',
-                    'deb':'apache2 apache2-utils libapache2-mod-php',       'drepo':'base'},
-    'rrdtool'    :{ 'rpm':'rrdtool',                                        'rrepo':'base',
-                    'deb':'rrdtool',                                        'drepo':'base'},
-    'fping'      :{ 'rpm':'fping',                                          'rrepo':'epel',
-                    'deb':'fping monitoring-plugins-standard',              'drepo':'base'},
-#    'arp-scan'   :{ 'rpm':'arp-scan',                                       'rrepo':'epel',
-#                    'deb':'arp-scan',                                       'drepo':'base'},
-    'php'        :{ 'rpm':'php php-common php-cli php-mysqlnd php-mbstring','rrepo':'base', 
-                    'deb':'php php-mysql php-common php-cli ',              'drepo':'base'},
-#    'mysql'      :{ 'rpm':'mariadb-server MySQL-python',                    'rrepo':'base',
-    'mysql'      :{ 'rpm':'mariadb-server ',                                'rrepo':'base',
-                    'deb':'mariadb-server mariadb-client',                  'drepo':'base'}
+    'httpd'         :{ 'rpm':'httpd httpd-tools',                              'rrepo':'base',
+                       'deb':'apache2 apache2-utils libapache2-mod-php',       'drepo':'base'},
+    'rrdtool'       :{ 'rpm':'rrdtool',                                        'rrepo':'base',
+                       'deb':'rrdtool',                                        'drepo':'base'},
+    'fping'         :{ 'rpm':'fping',                                          'rrepo':'epel',
+                       'deb':'fping monitoring-plugins-standard',              'drepo':'base'},
+#    'arp-scan'      :{ 'rpm':'arp-scan',                                       'rrepo':'epel',
+#                       'deb':'arp-scan',                                       'drepo':'base'},
+    'wkhtmltopdf'   :{ 'rpm':'wkhtmltopdf',                                    'rrepo':'epel',  
+                       'deb':'wkhtmltopdf',                                    'drepo':'base'},
+    'php'           :{ 'rpm':'php php-common php-cli php-mysqlnd php-mbstring','rrepo':'base', 
+                       'deb':'php php-mysql php-common php-cli ',              'drepo':'base'},
+#    'mysql'         :{ 'rpm':'mariadb-server MySQL-python',                    'rrepo':'base',
+    'mysql'         :{ 'rpm':'mariadb-server ',                                'rrepo':'base',
+                       'deb':'mariadb-server mariadb-client',                  'drepo':'base'}
 }
 
 #===================================================================================================
@@ -732,6 +733,10 @@ def locate_command(lcmd) :
 
 #===================================================================================================
 #       This function verify if the Package Received in parameter is available on the server 
+# 
+# Parameters : 
+#   lpacktype = Package Type rpm, deb or cus (Custom from local directory)
+#   lpackages = Package Name
 #===================================================================================================
 def locate_package(lpackages,lpacktype) :
 
@@ -796,7 +801,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits):
             else:                                                       # If we had error 
                 writelog ("Error Code is %d" % (ccode))                 # Advise user of error
 
-    # Under Debug Mode, Display the working dictionnary we will be processing below
+    # Under Debug Mode, Display the working dictionnary that we will be processing below
     if (DEBUG):                                                         # Under Debug Show Req Dict.
         for cmd,pkginfo in req_work.items():                            # For all items in Work Dict
             writelog("\nFor command '{0}' we need package :" .format(cmd)) # Show Command name
@@ -833,11 +838,19 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits):
                 icmd = "yum install --enablerepo=epel -y %s >>%s 2>&1" % (needed_packages,logfile)
             else:
                 icmd = "yum install -y %s >>%s 2>&1" % (needed_packages,logfile)
+
+        # wkhtmltopdf package available for all version except CentOS,Redhat Version 8 
+        # Install it from SADMIN package directory
+        if (needed_packages == "wkhtmltopdf") :
+            if ( (sosname == "REDHAT" or sosname == "CENTOS") and sosver == 8):
+                icmd = "dnf install $SADMIN/pkg/wkhtmltopdf/*centos8* >>%s 2>&1" % (logfile)
+
         writelog ("-----------------------",'log')
         writelog (icmd,'log')
         writelog ("-----------------------",'log')
         
         # Execute install Command 
+            
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
             writelog (" Done ")
@@ -2293,8 +2306,8 @@ def mainflow(sroot):
     # Create initial $SADMIN/cfg/sadmin.cfg from template ($SADMIN/cfg/.sadmin.cfg)
     create_sadmin_config_file(sroot,wostype)                            # Create Initial sadmin.cfg
 
-    # Get the Distribution Package Type (rpm,deb,aix,dmg), O/S Name (REDHAT,CENTOS,UBUNTU,...) 
-    # O/S Major version number and the running kernel bit mode (32 or 64).
+    # Get the Distribution Package Type (rpm,deb,aix,dmg), O/S Name (REDHAT,CENTOS,UBUNTU,...), 
+    # O/S Major version number and finally the running kernel bit mode (32 or 64).
     (packtype,sosname,sosver,sosbits) = getpacktype(sroot,wostype)      # Type(deb,rpm),OSName,OSVer
     if (DEBUG) : writelog("Package type on system is %s" % (packtype))  # Debug, Show Packaging Type 
     if (DEBUG) : writelog("O/S Name detected is %s" % (sosname))        # Debug, Show O/S Name
@@ -2303,9 +2316,9 @@ def mainflow(sroot):
 
     # Go and Ask Setup Question to user 
     # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, sadmin User and Group).
-    (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype) # Ask Config questions
+    (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype) # Ask questions
 
-    # On Client Apache web server is not installed
+    # On SADMIN Client, Apache web server is not installed, 
     # But we need to set the WebUser and the WebGroup to some default value (SADMIN user and Group)
     update_sadmin_cfg(sroot,"SADM_WWW_USER",uuser,False)                # Update Value in sadmin.cfg
     update_sadmin_cfg(sroot,"SADM_WWW_GROUP",ugroup,False)              # Update Value in sadmin.cfg
