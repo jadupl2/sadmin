@@ -1,4 +1,4 @@
-# Daily Report Exclude List - v1.0
+# Daily Report Exclude List - v1.1
 # This file is source by the script sadm_daily_report.sh,
 # to exclude some servers or some script from reports.
 # No Scripts or Server name should include spaces.
@@ -27,4 +27,4 @@ SCRIPTS="$SCRIPTS sadm_vm_tools sadm_vm_start sadm_vm_stop"
 
 
 # Server name to be exclude from every Daily Report (Backup, Rear and Scripts)
-SERVERS="raspi2 "
+SERVERS="YourServerName "
