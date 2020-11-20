@@ -38,6 +38,7 @@
 #@2019_12_02 Fix: v1.6 Fix Mac OS crash.
 #@2020_04_01 Update: v1.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 #@2020_04_29 Update: v1.8 Remove arp-scan from the SADMIN server requirement list.
+#@2020_11_20 Update: v1.9 Added package 'wkhtmltopdf' installation to server requirement.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -66,7 +67,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.8'                               # Your Current Script Version
+    export SADM_VER='1.9'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -95,6 +96,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 SPATH=""                                    ; export SPATH              # Full Path of Command 
 INSTREQ=0                                   ; export INSTREQ            # Install Mode default OFF
+CHK_SERVER="N"                              ; export CHK_SERVER         # Check Server Req. if "Y"
 
 package_type="$(sadm_get_packagetype)"      ; export package_type       # System Pack Type (rpm,deb)
 #
@@ -114,6 +116,7 @@ show_usage()
     printf "\n\t-d   (Debug Level [0-9])"
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\t-s   (Check SADMIN server requirement)"
     printf "\n\n" 
 }
 
@@ -136,31 +139,37 @@ install_package()
     PACKAGE_DEB=$2                                                       # Ubuntu/Debian/Raspian Deb
 
     case "$package_type"  in
-        "rpm" )
-                lmess="Starting installation of ${PACKAGE_RPM} under $(sadm_get_osname)"
-                lmess="${lmess} Version $(sadm_get_osmajorversion)"
-                sadm_write "${lmess}\n"
-                case "$(sadm_get_osmajorversion)" in
-                    [567])  sadm_write "Running \"yum -y install ${PACKAGE_RPM}\"\n" # Install Command
-                            yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
-                            rc=$?                                            # Save Exit Code
-                            sadm_write "Return Code after in installation of ${PACKAGE_RPM} is ${rc}.\n"
-                            break
-                            ;;
-                    [8])    sadm_write "Running \"yum -y install ${PACKAGE_RPM}\"\n" # Install Command
-                            yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
-                            rc=$?                                            # Save Exit Code
-                            sadm_write "Return Code after in installation of ${PACKAGE_RPM} is ${rc}.\n"
-                            break
-                            ;;
-                    *)      lmess="The version $(sadm_get_osmajorversion) of"
-                            lmess="${lmess} $(sadm_get_osname) isn't supported at the moment"
-                            sadm_write "${lmess}.\n"
-                            rc=1                                             # Save Exit Code
-                            break
-                            ;;
-                esac
-                break
+        "rpm" ) if [ "$(sadm_get_osname)" = "FEDORA" ] 
+                   then sadm_write "Running \"yum -y install ${PACKAGE_RPM}\"\n" # Install Command
+                        yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
+                        rc=$?                                            # Save Exit Code
+                        sadm_write "Return Code after in installation of ${PACKAGE_RPM} is ${rc}.\n"
+                   else lmess="Starting installation of ${PACKAGE_RPM} under $(sadm_get_osname)"
+                        lmess="${lmess} Version $(sadm_get_osmajorversion)"
+                        sadm_write "${lmess}\n"
+                        case "$(sadm_get_osmajorversion)" in
+                            [567])  sadm_write "Running \"yum -y install ${PACKAGE_RPM}\"\n" # Install Command
+                                    yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
+                                    rc=$?                                            # Save Exit Code
+                                    sadm_write "Return Code after in installation of ${PACKAGE_RPM} is ${rc}.\n"
+                                    ;;
+                            [89])   sadm_write "Running \"dnf -y install ${PACKAGE_RPM}\"\n" 
+                                    yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List update
+                                    rc=$?                                            # Save ExitCode
+                                    if [ $rc -ne 0 ] && [ "$PACKAGE_RPM" = "wkhtmltopdf" ]
+                                       then sadm_write "Running \"dnf -y install $SADMIN/pkg/wkhtmltopdf/*centos8*\"\n" 
+                                            dnf -y install $SADMIN/pkg/wkhtmltopdf/*centos8* >> $SADM_LOG 2>&1
+                                            rc=$?
+                                    fi 
+                                    sadm_write "Return Code after in installation of ${PACKAGE_RPM} is ${rc}.\n"
+                                    ;;
+                            *)      lmess="The version $(sadm_get_osmajorversion) of"
+                                    lmess="${lmess} $(sadm_get_osname) isn't supported at the moment"
+                                    sadm_write "${lmess}.\n"
+                                    rc=1                                             # Save Exit Code
+                                    ;;
+                        esac
+                fi
                 ;;
         "deb" )
                 sadm_write "Synchronize package index files.\n"
@@ -277,7 +286,7 @@ command_available() {
              echo "$SPATH ${GREEN}[OK]${NORMAL}"                        # Show Path to user and OK
              return 0                                                   # Return 0 if cmd found
         else SPATH=""                                                   # PATH empty when Not Avail.
-             echo "Command missing ${BOLD}${MAGENTA}[Warning]${NORMAL}" # Show user Warning
+             echo "Missing ${BOLD}${MAGENTA}[Warning]${NORMAL}"         # Show user Warning
     fi
     return 1
 }
@@ -493,7 +502,7 @@ check_sadmin_requirements() {
     fi    
 
     # If on the SADMIN Server mysql MUST be present - Check Availibility of the mysql command.
-    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only Check on SADMIN Srv
+    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] || [ "$CHK_SERVER" = "Y" ] # Check Server Req.
         then sadm_write "\n${WHITE}${BOLD}SADMIN server requirements.${NORMAL}\n"
              command_available "mysql" ; SADM_MYSQL=$SPATH              # Get mysql cmd path  
              if [ "$SADM_MYSQL" = "" ] && [ "$INSTREQ" -eq 1 ]          # Cmd not found & Inst Req.
@@ -510,23 +519,33 @@ check_sadmin_requirements() {
                 then install_package "--enablerepo=epel fping" "fping monitoring-plugins-standard" 
                      command_available "fping" ; SADM_FPING=$SPATH      # Recheck Should be install
              fi    
-             #command_available "arp-scan" ; SADM_ARPSCAN=$SPATH         # Get  cmd path  
-             #if [ "$SADM_ARPSCAN" = "" ] && [ "$INSTREQ" -eq 1 ]        # Cmd not found & Inst Req.
+             #command_available "arp-scan" ; SADM_ARPSCAN=$SPATH        # Get  cmd path  
+             #if [ "$SADM_ARPSCAN" = "" ] && [ "$INSTREQ" -eq 1 ]       # Cmd not found & Inst Req.
              #   then install_package "--enablerepo=epel arp-scan" "arp-scan" # Install package
              #        command_available "arp-scan" ; SADM_ARPSCAN=$SPATH # Recheck Should be install
              #fi    
-             command_available "pip3" ; SADM_PIP3=$SPATH                # Get  cmd path  
+             command_available "pip3" ; SADM_PIP3=$SPATH                # Get cmd path  
              if [ "$SADM_PIP3" = "" ] && [ "$INSTREQ" -eq 1 ]           # Cmd not found & Inst Req.
                 then install_package "python3-pip" "python3-pip"        # Install package
-                     install_package "--enablerepo=epel python34-pip" "python3-pip" # Install pkg.
+                     if [ $? -ne 0 ]                                    # Normal Install not working
+                        then install_package "--enablerepo=epel python34-pip" "python3-pip" 
+                     fi 
                      command_available "pip3" ; SADM_PIP3=$SPATH        # Recheck Should be install
              fi    
-             command_available "php" ; SADM_PHP=$SPATH                # Get  cmd path  
-             if [ "$SADM_PHP" = "" ] && [ "$INSTREQ" -eq 1 ]           # Cmd not found & Inst Req.
+             command_available "wkhtmltopdf" ; SADM_WKHTMLTOPDF=$SPATH  # Get cmd path  
+             if [ "$SADM_WKHTMLTOPDF" = "" ] && [ "$INSTREQ" -eq 1 ]    # Cmd not found & Inst Req.
+                then install_package "wkhtmltopdf" "wkhtmltopdf"        # Install package (rpm,deb)
+                     if [ $? -ne 0 ] 
+                        then install_package "--enablerepo=epel wkhtmltopdf" "wkhtmltopdf"
+                     fi 
+                     command_available "wkhtmltopdf" ; SADM_WKHTMLTOPDF=$SPATH # Recheck if install
+             fi    
+             command_available "php" ; SADM_PHP=$SPATH                  # Get  cmd path  
+             if [ "$SADM_PHP" = "" ] && [ "$INSTREQ" -eq 1 ]            # Cmd not found & Inst Req.
                 then rpmpkg="php php-common php-cli php-mysqlnd php-mbstring"
                      debpkg="php php-mysql php-common php-cli"
                      install_package  "$rpmpkg" "$debpkg"
-                     command_available "php" ; SADM_PHP=$SPATH        # Recheck Should be install
+                     command_available "php" ; SADM_PHP=$SPATH          # Recheck Should be install
              fi    
              if [ "$(sadm_get_packagetype)" = "rpm" ]                   # Check HTTPD RPM
                 then command_available "httpd" ; SADM_HTTPD=$SPATH      # Get  cmd path  
@@ -567,7 +586,7 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
-    while getopts "hivd:" opt ; do                                      # Loop to process Switch
+    while getopts "hivsd:" opt ; do                                      # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
@@ -585,6 +604,8 @@ function cmd_options()
                if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ]
                    then add_epel_repo
                fi 
+               ;;                                                       # No stop after each page
+            s) CHK_SERVER="Y"                                           # Check Server Requirement
                ;;                                                       # No stop after each page
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
