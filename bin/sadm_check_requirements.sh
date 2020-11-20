@@ -140,8 +140,8 @@ install_package()
 
     case "$package_type"  in
         "rpm" ) if [ "$(sadm_get_osname)" = "FEDORA" ] 
-                   then sadm_write "Running \"yum -y install ${PACKAGE_RPM}\"\n" # Install Command
-                        yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
+                   then sadm_write "Running \"dnf -y install ${PACKAGE_RPM}\"\n" # Install Command
+                        dnf -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
                         rc=$?                                            # Save Exit Code
                         sadm_write "Return Code after in installation of ${PACKAGE_RPM} is ${rc}.\n"
                    else lmess="Starting installation of ${PACKAGE_RPM} under $(sadm_get_osname)"
