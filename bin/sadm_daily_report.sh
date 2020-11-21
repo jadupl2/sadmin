@@ -29,6 +29,7 @@
 #@2020_11_10 Fix: v1.10 Minor bug fixes.
 #@2020_11_13 New: v1.11 Email of each report now include a pdf of the report(if wkhtmltopdf install)
 #@2020_11_12 Updated v1.12 Warning in Yellow when backup outdated, bug fixes.
+#@2020_11_21 Updated v1.13 Insert Script execution Title.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -60,7 +61,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.12'                                  # Current Script Version
+export SADM_VER='1.13'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -380,7 +381,7 @@ script_report()
     script_page_heading "SADMIN Daily Script Report - `date +%a` `date '+%C%y.%m.%d %H:%M:%S'`" 
 
 
-    # Check if any script are running.
+    # SCRIPTS THAT ARE CURRENTLY RUNNING SECTION
     if [ $SADM_DEBUG -gt 4 ]; then sadm_writelog "Checking for running script ..." ; fi 
     xcount=0                                                            # Nb. of Running script 
     for RCH_LINE in "${rch_array[@]}"                                   # For every item in array
@@ -404,7 +405,7 @@ script_report()
     echo -e "\n<hr class="dash">\n" >> $HTML_SFILE                      # Horizontal Dashed Line
 
 
-    # Check if any script terminated with error.
+    # SCRIPT THAT TERMINATED WITH ERROR SECTION
     if [ $SADM_DEBUG -gt 4 ]; then sadm_writelog "Checking for script(s) ended with error ..." ; fi 
     xcount=0                                                            # Nb. of Running script 
     for RCH_LINE in "${rch_array[@]}"                                   # For every item in array
@@ -429,11 +430,14 @@ script_report()
              sadm_writelog "${SADM_OK} $msg"                            # Feed Screen & Log
         else echo -e "</table>\n<br>\n" >> $HTML_SFILE                  # End of HTML Table
     fi
-    echo -e "\n<hr class="dash">\n<br>\n" >> $HTML_SFILE                # Horizontal Dashed Line
+    echo -e "\n<hr class="dash">\n\n" >> $HTML_SFILE                    # Horizontal Dashed Line
 
 
-    # Start of Script page Group by server name
-    current_server=""
+    # SCRIPT EXECUTION HISTORY SECTION
+    msg="Scripts execution history by system name" >>$HTML_SFILE        # Section Title Header
+    echo -e "\n<center><h3>$msg</h3></center>\n<br>" >>$HTML_SFILE      # Insert Header on Page
+    current_server=""                                                   # Clear Current Server Name
+    # Sort by server name and by reverse execution date.
     sort -t' ' -k1,1 -k2,2r  $RCH_SUMMARY | grep -iv "storix" > $SADM_TMP_FILE1
     #sort -t' ' -k1,1 -k2,2r  $RCH_SUMMARY | grep -iv "storix" > /tmp/sorted.txt
     while read RCH_LINE                                                 # Read Tmp file Line by Line
@@ -1749,37 +1753,23 @@ load_rch_array()
 
 
 
-# --------------------------------------------------------------------------------------------------
-#                       S T A R T     O F    T H E    S C R I P T 
-# --------------------------------------------------------------------------------------------------
 
-    cmd_options "$@"                                                    # Check command-line Options    
-    sadm_start                                                          # Create Dir.,PID,log,rch
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-
-    # If current user is not 'root', exit to O/S with error code 1 (Optional)
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_write "Script can only be run by the 'root' user, process aborted.\n"
-             sadm_write "Try sudo %s" "${0##*/}\n"                      # Suggest using sudo
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
-    # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-        then sadm_write "Script can only be run on (${SADM_SERVER}), process aborted.\n"
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
+#===================================================================================================
+# Main Function of this script.
+# It Genenerate every web page and pdf and send them by email to the sadmin main user.
+#===================================================================================================
+main_process()
+{
     
     # Get Path to wkhtmltopdf (If Exist on System) else will be blank
     export WKHTMLTOPDF=$(sadm_get_command_path "wkhtmltopdf")           # Get wkhtmltopdf cmd path 
     if [ "$WKHTMLTOPDF" = "" ]
         then sadm_write "$SADM_WARNING Please consider installing package 'wkhtmltopdf'.\n"
+             sadm_write "With this package, we will be able generate pdf from the generate html pages."
              sadm_write "   - For Debian,Ubuntu,Raspbian,... : sudo apt-get install wkhtmltopdf \n"
-             sadm_write "   - For CentOS and RHEL v7 ...     : sudo dnf install $SADMIN/pkg/wkhtmltopdf/*centos7* \n"
-             sadm_write "   - For CentOS and RHEL v8 ...     : sudo dnf install $SADMIN/pkg/wkhtmltopdf/*centos8* \n"
-             sadm_write "   - For Fedora (included in pkg)   : sudo dnf install wkhtmltopdf \n"
+             sadm_write "   - For CentOS and RHEL v7 ...     : sudo dnf -y install $SADMIN/pkg/wkhtmltopdf/*centos7* \n"
+             sadm_write "   - For CentOS and RHEL v8 ...     : sudo dnf -y install $SADMIN/pkg/wkhtmltopdf/*centos8* \n"
+             sadm_write "   - For Fedora (included in repo)  : sudo dnf -y install wkhtmltopdf \n"
              sadm_write "You can also download the latest version of 'wkhtmltopdf' at https://wkhtmltopdf.org \n"
              sadm_write "After doing so, a pdf copy of the reports will be attached to the emails.\n\n"
     fi 
@@ -1809,6 +1799,34 @@ load_rch_array()
              SADM_EXIT_CODE=$(($SADM_EXIT_CODE+$RC))                    # Add ReturnCode to ExitCode
     fi 
 
+    return $SADM_EXIT_CODE
+
+}
+
+# --------------------------------------------------------------------------------------------------
+#                       S T A R T     O F    T H E    S C R I P T 
+# --------------------------------------------------------------------------------------------------
+
+    cmd_options "$@"                                                    # Check command-line Options    
+    sadm_start                                                          # Create Dir.,PID,log,rch
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
+
+    # If current user is not 'root', exit to O/S with error code 1 (Optional)
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then sadm_write "Script can only be run by the 'root' user, process aborted.\n"
+             sadm_write "Try sudo %s" "${0##*/}\n"                      # Suggest using sudo
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
+
+    # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+        then sadm_write "Script can only be run on (${SADM_SERVER}), process aborted.\n"
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
+
+    main_process                                                        # Execute Main Function
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
     
