@@ -48,7 +48,7 @@
 #@2020_07_28 Update: v3.15 Move location of o/s update is running indicator file to $SADMIN/tmp.
 #@2020_10_29 Fix: v3.16 If comma was used in server description, it cause delimiter problem.
 #@2020_11_04 Minor: v3.17 Minor code modification.
-#@2020_11_20 Update: v4.0 Rename sadm_osupdate_farm to sadm_osupdate_starter & restructure Code
+#@2020_11_20 Update: v4.0 Restructure & rename from sadm_osupdate_farm to sadm_osupdate_starter.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -153,10 +153,10 @@ update_server_db()
     WCURDAT=`date "+%C%y.%m.%d %H:%M:%S"`                               # Get & Format Update Date
 
     # Construct SQL Update Statement
-    if [ "$WSTATUS" = "F" ]
-        then sadm_write "Set O/S update status to 'Failed' in Database "   # Advise user of result
-        else sadm_write "Set O/S update status to 'Success' in Database "  # Advise user of result
-    fi
+    #if [ "$WSTATUS" = "F" ]
+    #    then sadm_write "Set O/S update status to 'Failed' in Database "   # Advise user of result
+    #    else sadm_write "Set O/S update status to 'Success' in Database "  # Advise user of result
+    #fi
     SQL1="UPDATE server SET "                                           # SQL Update Statement
     SQL2="srv_date_osupdate = '${WCURDAT}', "                           # Update Date of this Update
     SQL3="srv_update_status = '${WSTATUS}' "                            # [S]uccess [F]ail [R]unning
@@ -170,9 +170,9 @@ update_server_db()
     # Execute SQL to Update Server O/S Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e "$SQL" >>$SADM_LOG 2>&1
     if [ $? -ne 0 ]                                                     # If Error while updating
-        then sadm_write "${SADM_ERROR} Updating $WSERVER in Database\n" # Inform user of Error 
+        then sadm_write "${SADM_ERROR} O/S update status changed to 'Failed' in Database. \n"
              RCU=1                                                      # Set Error Code
-        else sadm_write "${SADM_OK}\n"                                  # Inform User of success
+        else sadm_write "${SADM_OK} O/S update status changed to 'Success' in Database.\n"
              RCU=0                                                      # Set Error Code = Success 
     fi
     return $RCU
@@ -204,6 +204,7 @@ rcmd_osupdate()
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
         then sadm_write "${SADM_ERROR} The system '$ONE_SERVER' was not found is the Database.\n"
              return 1                                                   # Return Error to Caller
+        else sadm_write "${SADM_OK} Information about '$ONE_SERVER' found in Database.\n"
     fi 
     
 
@@ -230,12 +231,12 @@ rcmd_osupdate()
                              ERROR_COUNT=$(($ERROR_COUNT+1))
                  fi
                  return $ERROR_COUNT                                    # Return to Caller
-            else sadm_write "${SADM_OK} Ping host $fqdn_server "
+            else sadm_write "${SADM_OK} Ping host $fqdn_server \n"
         fi
 
         # IF SERVER O/S UPDATE FIELD IS OFF IN DATABASE, SKIP UPDATE
         if [ "$server_update_auto" = "0" ]
-            then sadm_write "${SADM_WARNING} O/S Update for '${fqdn_server}' is not activated.\n"
+            then sadm_write "${SADM_WARNING} O/S Update for '${fqdn_server}' isn't activated.\n"
                  sadm_write "No O/S Update will be perform.\n"
                  return 1
         fi 
@@ -249,29 +250,28 @@ rcmd_osupdate()
 
         # Create a file name $UPDATE_RUNNING while O/S Update is running (this turn off monitoring)
         UPDATE_RUNNING="${SADM_TMP_DIR}/osupdate_running_${server_name}"
-        sadm_write "\nSuspend monitoring while O/S update is running.\n"
-        sadm_write "Create O/S update running indicator file '${UPDATE_RUNNING}' " 
         echo $(date) > ${UPDATE_RUNNING}                                # Create OSUPDATE Flag File
         if [ $? -eq 0 ]                                                 # If Touch went OK
-           then sadm_write "${SADM_OK}\n"                               # Show [ OK ] and NewLine
-           else sadm_write "${SADM_ERROR}\n"                            # Show [ ERROR ] and NewLine
+           then sadm_write "${SADM_OK} Suspend monitoring while O/S update is running.\n"  
+           else sadm_write "${SADM_ERROR} Creating O/S update indicator file '${UPDATE_RUNNING}' \n" 
         fi
         
         
         #sadm_write "Starting $USCRIPT on ${server_name}.${server_domain}\n"
         sadm_write "\nStarting the O/S update on '${server_name}'.\n"
-
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
             then sadm_write "$SADM_SSH_CMD $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'\n\n"
                  $SADM_SSH_CMD $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
+                 RC=$? 
             else sadm_write "Starting execution of ${server_sadmin_dir}/bin/$USCRIPT \n"
-                ${server_sadmin_dir}/bin/$USCRIPT                       # Run Locally when on SADMIN
+                 ${server_sadmin_dir}/bin/$USCRIPT                       # Run Locally when on SADMIN
+                 RC=$?
         fi                             
-        if [ $? -ne 0 ]
-           then sadm_write "${SADM_ERROR} Starting $USCRIPT on ${server_name}.${server_domain}\n"
+        if [ $RC -ne 0 ]                                                # Update went Successfully ?
+           then sadm_write "${SADM_ERROR} O/S Update completed with error on '${server_name}'.\n"
                 ERROR_COUNT=$(($ERROR_COUNT+1))                         # Increment Error Counter
                 update_server_db "${server_name}" "F"                   # Update Status False in DB
-           else sadm_write "${SADM_OK} Script was submitted with success.\n"
+           else sadm_write "${SADM_OK} O/S Update completed successfully on '${server_name}'.\n"
                 update_server_db "${server_name}" "S"                   # Update Status Success in DB
         fi
         done < $SADM_TMP_FILE1
