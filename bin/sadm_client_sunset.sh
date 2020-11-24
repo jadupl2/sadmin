@@ -36,10 +36,11 @@
 # 2018_06_09    v2.3 Change & Standardize scripts name called by this script & Change Startup Order
 # 2018_09_16    v2.4 Added Default Alert Group
 # 2018_11_13    v2.5 Adapted for MacOS (Don't run Aix/Linux scripts)
-#@2020_02_23 Update: v2.6 Produce an alert only if one of the executed scripts isn't executable.
-#@2020_04_01 Update: v2.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-#@2020_04_05 Update: v2.8 Remove one call to sadm_start (Was there twice)
+# 2020_02_23 Update: v2.6 Produce an alert only if one of the executed scripts isn't executable.
+# 2020_04_01 Update: v2.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2020_04_05 Update: v2.8 Remove one call to sadm_start (Was there twice)
 # 2020_05_08 Update: v2.9 Minor Comment changes.
+# 2020_11_24 Update: v2.10 Minor log adjustment.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -71,7 +72,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.9'                               # Your Current Script Version
+    export SADM_VER='2.10'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -141,14 +142,15 @@ run_command()
              return 1                                                   # Return Error to Caller
     fi 
 
-    sadm_write "Running $SCMD ..."                                      # Show Command about to run
-    $SCMD >/dev/null 2>&1                                               # Run the Script
+    $SCMD  >>$SADM_LOG 2>&1                                             # Run the Script
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_write " [ WARNING ] Encounter while running ${SCRIPT}.\n"   
+        then sadm_write "${SADM_ERROR} Encounter while running ${SCRIPT}.\n"   
              sadm_write "Check the log file : ${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SCRIPT}.log\n"  
-        else sadm_write " [ SUCCESS ] \n"                               # Advise user it's OK
+        else sadm_write "${SADM_OK} $SCMD \n"                               # Advise user it's OK
     fi
 
+    # Return code different than zero would give an Error/Alert for this script and the 
+    # called script. 
     return 0                                                            # Return Success to Caller
 }
 
