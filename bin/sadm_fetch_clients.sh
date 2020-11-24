@@ -64,13 +64,14 @@
 # 2020_05_05 Fix: v3.10 Temp. file was not remove under certain circumstance.
 # 2020_05_13 Update: v3.11 Move processing command line switch to a function.
 # 2020_05_22 Update: v3.12 No longer report an error, if a system is rebooting because of O/S update.
-#@2020_07_20 Update: v3.13 Change email to have success or failure at beginning of subject.
-#@2020_07_29 Update: v3.14 Move location of o/s update is running indicator file to $SADMIN/tmp.
-#@2020_09_05 Update: v3.15 Minor Bug fix, Alert Msg now include Start/End?Elapse Script time
-#@2020_09_09 Update: v3.16 Modify Alert message when client is down.
-#@2020_10_29 Fix: v3.17 If comma was used in server description, it cause delimiter problem.
+# 2020_07_20 Update: v3.13 Change email to have success or failure at beginning of subject.
+# 2020_07_29 Update: v3.14 Move location of o/s update is running indicator file to $SADMIN/tmp.
+# 2020_09_05 Update: v3.15 Minor Bug fix, Alert Msg now include Start/End?Elapse Script time
+# 2020_09_09 Update: v3.16 Modify Alert message when client is down.
+# 2020_10_29 Fix: v3.17 If comma was used in server description, it cause delimiter problem.
 #@2020_11_04 Update: v3.18 Reduce time allowed for O/S update to 1800sec. (30Min) & keep longer log.
 #@2020_11_05 Update: v3.19 Change msg written to log & no alert while o/s update is running.
+#@2020_11_24 Update: v3.20 Optimize code & Now calling new 'sadm_osupdate_starter' for o/s update.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -117,7 +118,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.19'                              # Your Current Script Version
+    export SADM_VER='3.20'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -152,13 +153,12 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-OS_SCRIPT="sadm_osupdate_farm.sh"                 ; export OS_SCRIPT    # OSUpdate Script in crontab
-BA_SCRIPT="sadm_backup.sh"                        ; export BA_SCRIPT    # Backup Script 
-REAR_SCRIPT="sadm_rear_backup.sh"                 ; export REAR_SCRIPT  # ReaR Backup Script 
-REAR_TMP="${SADMIN}/tmp/rear_site.tmp$$"          ; export REAR_TMP     # New ReaR site.conf tmp file
-REAR_CFG="${SADMIN}/tmp/rear_site.cfg$$"          ; export REAR_CFG     # Will be new /etc/site.conf
-FETCH_RPT="${SADM_RPT_DIR}/${SADM_HOSTNAME}_fetch.rpt" ;export FETCH_RPT # RPT for unresponsive host
-#
+export OS_SCRIPT="sadm_osupdate_starter.sh"                             # OSUpdate Script in crontab
+export BA_SCRIPT="sadm_backup.sh"                                       # Backup Script 
+export REAR_SCRIPT="sadm_rear_backup.sh"                                # ReaR Backup Script 
+export REAR_TMP="${SADMIN}/tmp/rear_site.tmp$$"                         # New ReaR site.conf tmp file
+export REAR_CFG="${SADMIN}/tmp/rear_site.cfg$$"                         # Will be new /etc/site.conf
+export FETCH_RPT="${SADM_RPT_DIR}/${SADM_HOSTNAME}_fetch.rpt"           # RPT for unresponsive host
 export REBOOT_SEC=900                                                   # O/S Upd Reboot Nb Sec.wait
 export RCH_FIELD=10                                                     # Nb. of field on rch file.
 export OSTIMEOUT=1800                                                   # 1800sec=30Min todo O/S Upd
@@ -309,7 +309,7 @@ update_osupdate_crontab ()
     # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN 
     # $SADM_TMP_DIR
     #cline="$cline root $cscript -s $cserver >/dev/null 2>&1";   
-    cline="$cline $SADM_USER sudo $cscript -s $cserver >/dev/null 2>&1";   
+    cline="$cline $SADM_USER sudo $cscript $cserver >/dev/null 2>&1";   
     #cline="$cline root $cscript -s $cserver > ${SADM_TMP_DIR}/sadm_osupdate_${cserver}.log 2>&1";   
     if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
@@ -459,7 +459,7 @@ update_rear_crontab ()
 # ==================================================================================================
 # Update the crontab work file based on the parameters received
 #
-# (1) cserver   Name odf server to update the o/s/
+# (1) cserver   Name odf server to backup
 # (2) cscript   The name of the script to executed
 # (3) cmin      Minute when the update will begin (00-59)
 # (4) chour     Hour when the update should begin (00-23)
@@ -488,105 +488,13 @@ update_backup_crontab ()
     cdom=$6                                                             # Crontab DOM (YNNNN) Format
     cdow=$7                                                             # Crontab DOW (YNNNN) Format
 
-    # To Display Parameters received - Used for Debugging Purpose ----------------------------------
-    if [ $SADM_DEBUG -gt 5 ] 
-        then sadm_writelog "I'm in update crontab"
-             sadm_writelog "cserver  = $cserver"                        # Server to run script
-             sadm_writelog "cscript  = $cscript"                        # Script to execute
-             sadm_writelog "cmonth   = $cmonth"                         # Month String YNYNYNYNYNY..
-             sadm_writelog "cdom     = $cdom"                           # Day of MOnth String YNYN..
-             sadm_writelog "cdow     = $cdow"                           # Day of Week String YNYN...
-             sadm_writelog "chour    = $chour"                          # Hour to run script
-             sadm_writelog "cmin     = $cmin"                           # Min. to run Script
-             sadm_writelog "cronfile = $SADM_CRON_FILE"                 # Name of Output file
-    fi
-    
-    # Begin constructing our crontab line ($cline) - Based on Hour and Min. Received ---------------
     cline=`printf "%02d %02d" "$cmin" "$chour"`                         # Hour & Min. of Execution
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi   # Show Cron Line Now
     cline="$cline * * * "
-
-    # Construct DATE of the month (1-31) to run and add it to crontab line ($cline) ----------------
-    # flag_dom=0
-    # if [ "$cdom" = "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN" ]                 # If it's to run every Date
-    #     then cline="$cline *"                                           # Then use a Star for Date
-    #     else fdom=""                                                    # Clear Final Date of Month
-    #          for i in $(seq 2 32)
-    #             do    
-    #             wchar=`expr substr $cdom $i 1`
-    #             if [ $SADM_DEBUG -gt 5 ] ; then echo "cdom[$i] = $wchar" ; fi
-    #             xmth=`expr $i - 1`                                      # Date = Index -1 ,Cron Mth
-    #             if [ "$wchar" = "Y" ]                                   # If Date Set to Yes 
-    #                 then if [ $flag_dom -eq 0 ]                         # If First Date to Run 
-    #                         then fdom=`printf "%02d" "$xmth"`           # Add Date to Final DOM
-    #                              flag_dom=1                             # No Longer the first date
-    #                         else wdom=`printf "%02d" "$xmth"`           # Format the Date number
-    #                              fdom=`echo "${fdom},${wdom}"`          # Combine Final+New Date
-    #                      fi
-    #             fi                                                      # If Date is set to No
-    #             done                                                    # End of For Loop
-    #          cline="$cline $fdom"                                       # Add DOM in Crontab Line
-    # fi
-    # if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
-# 
-
-    # Construct the month(s) (1-12) to run the script and add it to crontab line ($cline) ----------
-    # flag_mth=0
-    # if [ "$cmonth" = "YNNNNNNNNNNNN" ]                                  # 1st Char=Y = run every Mth
-    #     then cline="$cline *"                                           # Then use a Star for Month
-    #     else fmth=""                                                    # Clear Final Date of Month
-    #          for i in $(seq 2 13)                                       # Check Each Mth 2-13 = 1-12
-    #             do                                                      # Get Y or N for the Month
-    #             wchar=`expr substr $cmonth $i 1`
-    #             xmth=`expr $i - 1`                                      # Mth = Index -1 ,Cron Mth
-    #             if [ "$wchar" = "Y" ]                                   # If Month Set to Yes 
-    #                 then if [ $flag_mth -eq 0 ]                         # If 1st Insert in Cron Line
-    #                         then fmth=`printf "%02d" "$xmth"`           # Add Month to Final Months
-    #                              flag_mth=1                             # No Longer the first Month
-    #                         else wmth=`printf "%02d" "$xmth"`           # Format the Month number
-    #                              fmth=`echo "${fmth},${wmth}"`          # Combine Final+New Months
-    #                      fi
-    #             fi                                                      # If Month is set to No
-    #             done                                                    # End of For Loop
-    #          cline="$cline $fmth"                                       # Add Month in Crontab Line
-    # fi
-    # if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
-
-
-    # # Construct the day of the week (0-6) to run the script and add it to crontab line ($cline) ----
-    # flag_dow=0
-    # if [ "$cdow" = "YNNNNNNN" ]                                         # 1st Char=Y Run all dayWeek
-    #     then cline="$cline *"                                           # Then use Star for All Week
-    #     else fdow=""                                                    # Final Day of Week Flag
-    #          for i in $(seq 2 8)                                        # Check Each Day 2-8 = 0-6
-    #             do                                                      # Day of the week (dow)
-    #             wchar=`expr substr "$cdow" $i 1`                        # Get Char of loop
-    #             if [ $SADM_DEBUG -gt 5 ] ; then echo "cdow[$i] = $wchar" ; fi
-    #             if [ "$wchar" = "Y" ]                                   # If Day is Yes 
-    #                 then xday=`expr $i - 2`                             # Adjust Indx to Crontab Day
-    #                      if [ $SADM_DEBUG -gt 5 ] ; then echo "xday = $xday" ; fi
-    #                      if [ $flag_dow -eq 0 ]                         # If First Day to Insert
-    #                         then fdow=`printf "%02d" "$xday"`           # Add day to Final Day
-    #                              flag_dow=1                             # No Longer the first Insert
-    #                         else wdow=`printf "%02d" "$xday"`           # Format the day number
-    #                              fdow=`echo "${fdow},${wdow}"`          # Combine Final+New Day
-    #                      fi
-    #             fi                                                      # If DOW is set to No
-    #             done                                                    # End of For Loop
-    #          cline="$cline $fdow"                                       # Add DOW in Crontab Line
-    # fi
-    # if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
-    # 
-    
-    # Add User, script name and script parameter to crontab line -----------------------------------
-    # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN 
-    # $SADM_TMP_DIR
     if [ "$SADM_HOSTNAME" != "$cserver" ]  
         then cline="$cline $SADM_USER sudo $SADM_SSH_CMD $cserver \"$cscript\" >/dev/null 2>&1";
         else cline="$cline $SADM_USER sudo \"$cscript\" >/dev/null 2>&1"; 
     fi 
-    if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
-
     echo "$cline" >> $SADM_BACKUP_NEWCRON                               # Output Line to Crontab cfg
 }
 
