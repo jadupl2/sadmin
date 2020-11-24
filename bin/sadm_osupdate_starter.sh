@@ -132,11 +132,10 @@ USCRIPT="sadm_osupdate.sh"                  ; export USCRIPT            # Script
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${SADM_PN} usage :"
-    printf "\n\t-d   (Debug Level [0-9])"
-    printf "\n\t-h   (Display this help message)"
-    printf "\n\t-s   [ServerName]"
-    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n${BOLD}${SADM_PN} [-d Level] [-h] [-v] hostname${NORMAL}" 
+    printf "\n\t${BOLD}-d${NORMAL}   (Debug Level [0-9])"
+    printf "\n\t${BOLD}-h${NORMAL}   (Display this help message)"
+    printf "\n\t${BOLD}-v${NORMAL}   (Show Script Version Info)"
     printf "\n\n" 
 }
 
