@@ -611,7 +611,7 @@ script_line()
         then echo -n "<td title='Script ran today.' " >>$HTML_SFILE     # Insert tooltips
         else echo -n "<td title='Script ran $days day(s) ago, warning is set to ${SCRIPT_MAX_AGE} days.' " >>$HTML_SFILE  
     fi 
-    if [ $days -gt $SCRIPT_MAX_AGE ]                                    # Script Age > Max Age
+    if [ $days -ge $SCRIPT_MAX_AGE ]                                    # Script Age > Max Age
         then echo -n " align=center bgcolor='Yellow'>" >>$HTML_SFILE    # Show in Yellow
         else echo -n " align=center bgcolor=$BCOL>"    >>$HTML_SFILE    # Else Normal Color
     fi
