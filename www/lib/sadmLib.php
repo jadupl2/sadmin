@@ -462,7 +462,7 @@ function mysql_date_2_DDMMYYYY( $mysql_date ) {
 
 
 # ==================================================================================================
-# Show Distribution Logo as a celle in a table
+# Show Distribution Logo as a cell in a table
 # ==================================================================================================
 function sadm_show_logo($WOS) {
 
