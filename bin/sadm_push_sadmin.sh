@@ -52,6 +52,7 @@
 #@2020_10_29 Fix: v2.24 If comma was used in server description, it cause delimiter problem.
 #@2020_11_04 Fix: v2.25 Change , to ; in SQL output file.
 #@2020_11_05 Update: v2.26 Change msg written to log & no alert while o/s update is running.
+#@2020_11_27 Update: v2.27 For command line uniformity , option '-c' changed to '-n'
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -82,7 +83,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.26'                              # Your Current Script Version
+    export SADM_VER='2.27'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -117,22 +118,22 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
-export SADM_DEBUG=0                                                    # 0=NoDebug Higher=+Verbose
 export SYNC_USR="N"                                                     # -u Don't sync usr/bin
 export SYNC_SYS="N"                                                     # -s Don't sync sys Dir
 export SYNC_CLIENT=""                                                   # -c SADMIN client to sync
 
+
 # --------------------------------------------------------------------------------------------------
 #                H E L P       U S A G E    D I S P L A Y    F U N C T I O N
 # --------------------------------------------------------------------------------------------------
-help_usage()
+show_usage()
 {
-    printf "\n${SADM_PN} usage : -d[0-9] -c[hostname] -u -v -s -h "
+    printf "\n${SADM_PN} usage : -d[0-9] -n[hostname] -u -v -s -h "
     printf "\n\t-d   (Debug Level [0-9])"
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\t-u   (Also sync $SADMIN/usr/bin to all active clients)" 
-    printf "\n\t-c   (Push SADMIN version only to system specified)" 
+    printf "\n\t-n   (Push SADMIN version only to system specified)" 
     printf "\n\t-s   (Also sync $SADMIN/sys to all active clients)" 
     printf "\n\n" 
 }
@@ -443,8 +444,59 @@ process_servers()
 
 
 # --------------------------------------------------------------------------------------------------
+# Command line Options functions
+# Evaluate Command Line Switch Options Upfront
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+#   -u rsync $SADMIN/usr/bin to clients
+#   -s rsync $SADMIN/sys to clients
+#   -n rsync Clients Hostname Name to update (Comma separated, no space between them: host1,host2)
+# --------------------------------------------------------------------------------------------------
+function cmd_options()
+{
+
+    # Switch for Help Usage (-h), Activate Debug Level (-d[1-9]), 
+    # -u rsync $SADMIN/usr/bin to clients
+    # -s rsync $SADMIN/sys to clients
+    # -c rsync Clients Hostname Name to update (Comma separated, no space between them: host1,host2)
+    while getopts "hsun:d:" opt ; do                                   # Loop to process Switch
+        case $opt in
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 1                                           # Exit Script with Error
+               fi
+               printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               ;;                                                      
+            n) SYNC_CLIENT=$OPTARG                                      # Gather host name to Update
+               ;;                                                       # No stop after each page
+            u) SYNC_USR="Y"                                             # Sync $SADMIN/usr/bin Dir.
+               ;;
+            s) SYNC_SYS="Y"                                             # Sync $SADMIN/sys Dir.
+               ;;
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) sadm_show_version                                        # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                               
+    return 
+}
+
+
+
+
+# --------------------------------------------------------------------------------------------------
 #                                       Script Start HERE
 # --------------------------------------------------------------------------------------------------
+    cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Init Env. Dir. & RC/Log
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
@@ -461,41 +513,7 @@ process_servers()
              sadm_stop 1                                                # Close/Trim Log & Upd. RCH
              exit 1                                                     # Exit To O/S
     fi
-    
 
-    # Switch for Help Usage (-h), Activate Debug Level (-d[1-9]), 
-    # -u rsync $SADMIN/usr/bin to clients
-    # -s rsync $SADMIN/sys to clients
-    # -c rsync Clients Hostname Name to update (Comma separated, no space between them: host1,host2)
-    while getopts "hsuc:d:" opt ; do                                   # Loop to process Switch
-        case $opt in
-            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
-               if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
-                       show_usage                                       # Display Help Usage
-                       sadm_stop 1                                      # Close/Trim Log & Del PID
-                       exit 1
-               fi
-               sadm_write "Debug Level ${SADM_DEBUG} activated.\n"      # Display Debug Level
-               ;;                                                       
-            c) SYNC_CLIENT=$OPTARG                                      # Gather host name to Update
-               ;;                                                       # No stop after each page
-            h) help_usage                                               # Display Help Usage
-               sadm_stop 0                                              # Close the shop
-               exit 0                                                   # Back to shell
-               ;;
-            u) SYNC_USR="Y"                                             # Sync $SADMIN/usr/bin Dir.
-               ;;
-            s) SYNC_SYS="Y"                                             # Sync $SADMIN/sys Dir.
-               ;;
-           \?) sadm_write "Invalid option: -${OPTARG}\n"                # Invalid Option Message
-               help_usage                                               # Display Help Usage
-               sadm_stop 1                                              # Close the shop
-               exit 1                                                   # Exit with Error
-               ;;
-        esac                                                            # End of case
-    done                                                                # End of while
     process_servers                                                     # Process Active Servers
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
