@@ -64,7 +64,7 @@ export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,D
 export SADM_VER='1.0'                                   # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
-export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
+export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New Log
 export SADM_LOG_HEADER="Y"                              # [Y]=Include Log Header  [N]=No log Header
 export SADM_LOG_FOOTER="Y"                              # [Y]=Include Log Footer  [N]=No log Footer
 export SADM_MULTIPLE_EXEC="N"                           # Allow running multiple copy at same time ?
