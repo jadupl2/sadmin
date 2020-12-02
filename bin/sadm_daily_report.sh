@@ -563,7 +563,7 @@ script_table_heading()
 
     echo -e "<tr>"                                            >> $HTML_SFILE
     #echo -e "<th colspan=10 dt-head-center>${RTITLE}</th>"    >> $HTML_SFILE
-    echo -e "<th colspan=10>System ${DB_OSNAME} v${DB_OSVERSION}</th>"    >> $HTML_SFILE
+    echo -e "<th colspan=10>${DB_OSNAME} v${DB_OSVERSION}</th>"    >> $HTML_SFILE
     echo -e "</tr>"                                           >> $HTML_SFILE
 
     echo -e "<tr>"                                            >> $HTML_SFILE
