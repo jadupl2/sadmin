@@ -49,6 +49,7 @@
 #@2020_10_29 Fix: v3.16 If comma was used in server description, it cause delimiter problem.
 #@2020_11_04 Minor: v3.17 Minor code modification.
 #@2020_11_20 Update: v4.0 Restructure & rename from sadm_osupdate_farm to sadm_osupdate_starter.
+#@2020_12_02 Update: v4.1 Log is now in appending mode and can grow up to 5000 lines.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -81,13 +82,13 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='4.0'                                   # Current Script Version
+export SADM_VER='4.1'                                   # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
-export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
+export SADM_LOG_APPEND="Y"                              # [Y]=Append Existing Log [N]=Create New One
 export SADM_LOG_HEADER="Y"                              # [Y]=Include Log Header  [N]=No log Header
 export SADM_LOG_FOOTER="Y"                              # [Y]=Include Log Footer  [N]=No log Footer
-export SADM_MULTIPLE_EXEC="N"                           # Allow running multiple copy at same time ?
+export SADM_MULTIPLE_EXEC="Y"                           # Allow running multiple copy at same time ?
 export SADM_USE_RCH="Y"                                 # Gen. History Entry in ResultCodeHistory 
 export SADM_DEBUG=0                                     # Debug Level - 0=NoDebug Higher=+Verbose
 export SADM_TMP_FILE1=""                                # Tmp File1 you can use, Libr. will set name
@@ -105,8 +106,8 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)      # O/S Major Version Numb
 #export SADM_ALERT_TYPE=1                               # 0=None 1=AlertOnError 2=AlertOnOK 3=Always
 #export SADM_ALERT_GROUP="default"                      # Alert Group to advise (alert_group.cfg)
 #export SADM_MAIL_ADDR="your_email@domain.com"          # Email to send log (Override sadmin.cfg)
-#export SADM_MAX_LOGLINE=500                            # At the end Trim log to 500 Lines(0=NoTrim)
-#export SADM_MAX_RCLINE=35                              # At the end Trim rch to 35 Lines (0=NoTrim)
+export SADM_MAX_LOGLINE=5000                           # At the end Trim log to 500 Lines(0=NoTrim)
+export SADM_MAX_RCLINE=60                              # At the end Trim rch to 35 Lines (0=NoTrim)
 #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
 
@@ -203,7 +204,6 @@ rcmd_osupdate()
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
         then sadm_write "${SADM_ERROR} The system '$ONE_SERVER' was not found is the Database.\n"
              return 1                                                   # Return Error to Caller
-        else sadm_write "${SADM_OK} Information about '$ONE_SERVER' found in Database.\n"
     fi 
     
 
