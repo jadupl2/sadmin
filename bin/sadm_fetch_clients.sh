@@ -72,6 +72,7 @@
 #@2020_11_04 Update: v3.18 Reduce time allowed for O/S update to 1800sec. (30Min) & keep longer log.
 #@2020_11_05 Update: v3.19 Change msg written to log & no alert while o/s update is running.
 #@2020_11_24 Update: v3.20 Optimize code & Now calling new 'sadm_osupdate_starter' for o/s update.
+#@2020_12_02 Update: v3.21 New summary added to the log and Misc. fix.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -118,7 +119,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.20'                              # Your Current Script Version
+    export SADM_VER='3.21'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -143,7 +144,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
     export SADM_MAX_LOGLINE=75000                        # When script end Trim log to 7500 Lines
-    #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
+    export SADM_MAX_RCLINE=150                           # When script end Trim rch file to 35 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
 
@@ -166,7 +167,9 @@ export OSTIMEOUT=1800                                                   # 1800se
 # Reset Alert Totals Counters
 export total_alert=0  ; export total_duplicate=0 ; export total_ok=0 ; export total_error=0      
 export total_oldies=0
-
+#
+# Reset Alert Totals Counters
+export t_alert=0  ; export t_duplicate=0 ; export t_ok=0 ; export t_error=0 ; export t_oldies=0
 
 
 # --------------------------------------------------------------------------------------------------
@@ -803,7 +806,7 @@ process_servers()
 
     sadm_write "\n"                                                     # Blank Line in log/Screen
     sadm_write "==================================================\n"
-    sadm_write "Processing active '$WOSTYPE' server(s)\n"               # Display/Log O/S type
+    sadm_write "${BOLD}${YELLOW}Processing active '$WOSTYPE' server(s)${NORMAL}\n" 
     sadm_write "\n"                                                     # Blank Line in log/Screen
     if [ "$WOSTYPE" = "linux" ] ; then create_crontab_files_header ; fi # Create crontab Files Headr
     xcount=0; ERROR_COUNT=0;                                            # Initialize Counter 
@@ -839,7 +842,7 @@ process_servers()
         rear_hrs=`      echo $wline|awk -F\; '{ print $24 }'`            # Rear Crontab Hrs field
         rear_min=`      echo $wline|awk -F\; '{ print $25 }'`            # Rear Crontab Min field
         #
-        sadm_write "${SADM_TEN_DASH}\n"                                 # Print 10 Dash line
+        #sadm_write "${SADM_TEN_DASH}\n"                                 # Print 10 Dash line
         sadm_write "${BOLD}Processing [$xcount] ${fqdn_server}${NORMAL}\n" 
 
         # TO DISPLAY DATABASE COLUMN WE WILL USED, FOR DEBUGGING
@@ -858,9 +861,7 @@ process_servers()
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # Not on SADMIN Srv Test SSH
             then validate_server_connectivity "$server_name" "$fqdn_server" # Check Access to Server
                  RC=$?                                                  # Save function return code 
-                 if [ $RC -eq 2 ]                                       # Sporadic,Monitor Off,OSUpd
-                    then continue                                       # Not accessible, Nxt Server
-                 fi 
+                 if [ $RC -eq 2 ] ; then continue ; fi                  # Sporadic,Monitor Off,OSUpd
                  if [ $RC -eq 1 ]                                       # Error SSH Connect to Host
                     then ERROR_COUNT=$(($ERROR_COUNT+1))                # Error - Incr Error counter
                          sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
@@ -1021,9 +1022,8 @@ process_servers()
 # --------------------------------------------------------------------------------------------------
 check_all_rpt()
 {
-    sadm_writelog " " 
-    sadm_writelog "${BOLD}${YELLOW}Verifying all System Monitor report files (*.rpt) :${NORMAL}"
-    sadm_writelog "  - Check 'Sysmon report file' (*.rpt) for Warning, Info and Errors."
+    sadm_writelog "${BOLD}${YELLOW}Verifying all Systems Monitors reports files (*.rpt) :${NORMAL}"
+    #sadm_writelog "  - Check 'Sysmon report file' (*.rpt) for Warning, Info and Errors."
     if [ $SADM_DEBUG -gt 0 ] 
         then sadm_writelog "find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \;" 
     fi 
@@ -1038,7 +1038,8 @@ check_all_rpt()
 
     # Process the file containing all *.rpt content (if any).
     if [ -s "$SADM_TMP_FILE3" ]                                         # If File Not Zero in Size
-        then cat $SADM_TMP_FILE3 | while read line                      # Read Each Line of file
+#        then cat $SADM_TMP_FILE3 | while read line                      # Read Each Line of file
+        then while read line                      # Read Each Line of file
                 do
                 if [ $SADM_DEBUG -gt 6 ] ; then sadm_writelog "Processing Line=$line" ; fi
                 ehost=`echo $line | awk -F\; '{ print $2 }'`            # Get Hostname for Event
@@ -1061,16 +1062,47 @@ check_all_rpt()
                          egname=`echo $line | awk -F\; '{ print $9 }'`  # Get Error Alert Group
                          esub="$emess"                                  # Specify it is a Error
                 fi
+                emess2=`echo -e "${emess}\nEvent Date/Time : ${etime}\n"` 
                 if [ $SADM_DEBUG -gt 0 ] 
                     then sadm_writelog "sadm_send_alert $etype $etime $ehost sysmon $egname $esub $emess $eattach"
                 fi
-                sadm_write "$etime alert ($etype) from 'SysMon' on ${ehost} : ${emess}\n"
-                sadm_send_alert "$etype" "$etime" "$ehost" "SysMon" "$egname" "$esub" "$emess" "$eattach"
-                done 
-        else sadm_writelog  "No error reported by any 'SysMon report files' (*.rpt)." 
+                #sadm_write "$etime SysMon alert ($etype) on ${ehost} : ${emess}\n"
+                alert_counter=`expr $alert_counter + 1`                 # Increase Submit AlertCount
+                umess="${alert_counter}) $etime SysMon alert ($etype) on ${ehost} : ${emess} -"
+                t_alert=`expr $t_alert + 1`                     # Incr. Alert counter
+                sadm_send_alert "$etype" "$etime" "$ehost" "SysMon" "$egname" "$esub" "$emess2" "$eattach"
+                RC=$?
+                case $RC in
+                    0)  t_ok=`expr $t_ok + 1`
+                        sadm_writelog "${umess} Alert sent successfully."
+                        ;;
+                    1)  t_error=`expr $t_error + 1`
+                        sadm_writelog "${umess} Error submitting alert."
+                        ;;
+                    2)  t_duplicate=`expr $t_duplicate + 1`
+                        sadm_writelog "${umess} Alert already sent."
+                        ;;
+                    3)  t_oldies=`expr $t_oldies + 1`
+                        sadm_writelog "${umess} Alert is older than 24 hrs."
+                        ;;
+                    *)  if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "   - ERROR: Unknown return code $RC"; fi
+                        ;;
+                esac                                                    # End of case
+                done < $SADM_TMP_FILE3 
+        else sadm_writelog "${BOLD}No error reported by any 'SysMon report files' (*.rpt).${NORMAL}" 
     fi
-    #sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
-    sadm_writelog " " 
+
+    # Print Alert submitted Summary
+    sadm_writelog " "                                               # Separation Blank Line
+    if [ $t_alert -ne 0 ]    
+        then sadm_writelog "${BOLD}$t_alert System Monitor Alert(s) submitted${NORMAL}"
+        else sadm_writelog "${BOLD}No System Monitor Alert(s) submitted${NORMAL}"
+    fi
+    sadm_writelog "   - New alert sent successfully : $t_ok" 
+    sadm_writelog "   - Alert error trying to send  : $t_error"
+    sadm_writelog "   - Alert older than 24 Hrs     : $t_oldies"
+    sadm_writelog "   - Alert already sent          : $t_duplicate"
+    sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
 
 }
 
@@ -1086,7 +1118,8 @@ check_all_rpt()
 check_all_rch()
 {
     sadm_write "\n"
-    sadm_write "${BOLD}${YELLOW}Verifying all scripts systems result files (*.rch).${NORMAL}\n"
+    sadm_write "${BOLD}${YELLOW}Verifying all systems scripts results files (*.rch) :${NORMAL}\n"
+    total_ok=0 ; total_error=0 ; total_oldies=0 ; total_duplicate=0     # Clear Function Totals
     find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \; > $SADM_TMP_FILE1 2>&1
     awk 'match($NF,/[0-1]/) { print }' $SADM_TMP_FILE1 >$SADM_TMP_FILE2 # Keep line ending with 0or1
 
@@ -1170,17 +1203,16 @@ check_all_rch()
                 if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "RC=$RC" ;fi # Debug Show ReturnCode
                 case $RC in
                     0)  total_ok=`expr $total_ok + 1`
-                        sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: Alert was sent successfully."
+                        sadm_writelog "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Alert was sent successfully."
                         ;;
                     1)  total_error=`expr $total_error + 1`
-                        sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: Error submitting the alert."
+                        sadm_writelog "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Error submitting the alert."
                         ;;
                     2)  total_duplicate=`expr $total_duplicate + 1`
-                        sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: Alert already sent."
-                        if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "   - Alert already sent." ; fi
+                        sadm_writelog "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Alert already sent."
                         ;;
                     3)  total_oldies=`expr $total_oldies + 1`
-                        sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: Alert is older than 24 hrs."
+                        sadm_writelog "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Alert is older than 24 hrs."
                         ;;
                     *)  if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "   - ERROR: Unknown return code $RC"; fi
                         ;;
@@ -1190,8 +1222,7 @@ check_all_rch()
 
         # Print Alert submitted Summary
         sadm_writelog " "                                               # Separation Blank Line
-        sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
-        sadm_writelog "$total_alert Alert(s) submitted"
+        sadm_writelog "${BOLD}$total_alert Script(s) Alert(s) submitted${NORMAL}"
         sadm_writelog "   - New alert sent successfully : $total_ok"
         sadm_writelog "   - Alert error trying to send  : $total_error"
         sadm_writelog "   - Alert older than 24 Hrs     : $total_oldies"
@@ -1219,14 +1250,12 @@ main_process()
     MAC_ERROR=$?                                                        # Save Nb. Errors in process
 
     # Print Total Script Errors
-    sadm_writelog " " 
-    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
-    sadm_writelog "System Sync Summary"                                 # Rsync Summary 
+    sadm_writelog "${BOLD}${YELLOW}Systems Rsync Summary${NORMAL}"      # Rsync Summary 
     SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR+$MAC_ERROR))              # ExitCode=AIX+Linux+Mac Err
     sadm_writelog " - Total Linux error(s)  : ${LINUX_ERROR}"           # Display Total Linux Errors
     sadm_writelog " - Total Aix error(s)    : ${AIX_ERROR}"             # Display Total Aix Errors
     sadm_writelog " - Total Mac error(s)    : ${MAC_ERROR}"             # Display Total Mac Errors
-    sadm_writelog " Script Total Error(s)   : ${SADM_EXIT_CODE}"        # Display Total Script Error
+    sadm_writelog "${BOLD}Rsync Total Error(s)     : ${SADM_EXIT_CODE}${NORMAL}"
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
     sadm_writelog " "                                                   # Separation Blank Line
     if [ $(sadm_get_ostype) = "LINUX" ] ; then crontab_update ; fi      # Update crontab if needed
@@ -1257,55 +1286,46 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 crontab_update()
 {
+    sadm_writelog "${BOLD}${YELLOW}Crontab Update Summary${NORMAL}"
 
-    # Create New O/S Update crontab sha1sum
+    # Create sha1sum on newly and actual backup crontab.
+    # Compare the two sha1sum and if they are different, then the new crontab become the actual.
     if [ -f ${SADM_CRON_FILE} ] ; then work_sha1=`sha1sum ${SADM_CRON_FILE} |awk '{print $1}'` ;fi 
-
-    # Create Actual O/S Update crontab sha1sum
     if [ -f ${SADM_CRONTAB} ]   ; then real_sha1=`sha1sum ${SADM_CRONTAB}   |awk '{print $1}'` ;fi 
-
     if [ "$work_sha1" != "$real_sha1" ]                                 # New Different than Actual?
        then cp ${SADM_CRON_FILE} ${SADM_CRONTAB}                        # Put in place New Crontab
             chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB}   # Set crontab Perm.
-            sadm_writelog "O/S Update crontab was updated ..."          # Advise user
-       else sadm_writelog "No change were made on O/S update schedule, no need to update O/S update crontab."
+            sadm_writelog "  - O/S update schedule crontab ($SADM_CRONTAB) was updated." 
+       else sadm_writelog "  - No need to update the O/S update schedule crontab ($SADM_CRONTAB)."
     fi
     rm -f ${SADM_CRON_FILE} >>/dev/null 2>&1                            # Remove crontab work file
-    #sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
-    #sadm_writelog " "                                                   # Separation Blank Line
 
-
-    # Create New backup crontab sha1sum
+    # Create sha1sum on newly and actual backup crontab.
+    # Compare the two sha1sum and if they are different, then the new crontab become the actual.
     if [ -f ${SADM_BACKUP_NEWCRON} ] ; then nsha1=`sha1sum ${SADM_BACKUP_NEWCRON} |awk '{print $1}'` ;fi
-    # Create Actual backup crontab sha1sum
     if [ -f ${SADM_BACKUP_CRONTAB} ] ; then asha1=`sha1sum ${SADM_BACKUP_CRONTAB} |awk '{print $1}'` ;fi 
-
     if [ "$nsha1" != "$asha1" ]                                         # New Different than Actual?
        then cp ${SADM_BACKUP_NEWCRON} ${SADM_BACKUP_CRONTAB}            # Put in place New Crontab
             chmod 644 $SADM_BACKUP_CRONTAB ; chown root:root ${SADM_BACKUP_CRONTAB}
-            sadm_writelog "Clients backup schedule crontab was updated" # Advise user
-       else sadm_writelog "No change were made on Backup schedule, no need to update backup crontab."
+            sadm_writelog "  - Clients backup schedule crontab ($SADM_BACKUP_CRONTAB) was updated." 
+       else sadm_writelog "  - No need to update the backup crontab ($SADM_BACKUP_CRONTAB)."
     fi
     rm -f ${SADM_BACKUP_NEWCRON} >>/dev/null 2>&1                       # Remove crontab work file
-    #sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
-    #sadm_writelog " "                                                   # Separation Blank Line
- 
 
-    # Create New ReaR crontab sha1sum
+    # Create sha1sum on newly and actual ReaR backup crontab.
+    # Compare the two sha1sum and if they are different, then the new crontab become the actual.
     if [ -f ${SADM_REAR_NEWCRON} ] ; then nsha1=`sha1sum ${SADM_REAR_NEWCRON} |awk '{print $1}'` ;fi
-    # Create Actual backup crontab sha1sum
     if [ -f ${SADM_REAR_CRONTAB} ] ; then asha1=`sha1sum ${SADM_REAR_CRONTAB} |awk '{print $1}'` ;fi 
-
     if [ "$nsha1" != "$asha1" ]                                         # New Different than Actual?
        then cp ${SADM_REAR_NEWCRON} ${SADM_REAR_CRONTAB}                # Put in place New Crontab
             chmod 644 $SADM_REAR_CRONTAB ; chown root:root ${SADM_REAR_CRONTAB}
-            sadm_writelog "Clients ReaR backup schedule crontab was updated" # Advise user
-       else sadm_writelog "No change made to ReaR backup schedule, no need to update ReaR backup crontab."
+            sadm_writelog "  - Clients ReaR backup schedule crontab ($SADM_REAR_CRONTAB) was updated."
+       else sadm_writelog "  - No need to update the ReaR backup crontab ($SADM_REAR_CRONTAB)."
     fi
     rm -f ${SADM_REAR_NEWCRON} >>/dev/null 2>&1                         # Remove crontab work file
-    #sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
-    #sadm_writelog " "                                                   # Separation Blank Line
- 
+
+    sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog " "
 }
 
 
