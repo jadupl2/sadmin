@@ -86,7 +86,7 @@
 	- 2020_05_22 sadm_fetch_clients.sh (v3.12) - No longer report an error, if a system is rebooting because of O/S update.
 	- 2020_05_23 sadm_daily_farm_fetch.sh (v4.2) - No longer report an error, if a system is rebooting because of O/S update.
 	- 2020_05_23 sadm_fs_incr.sh (v2.1) - Changing the way to get SADMIN variable in /etc/environment
-	- 2020_05_23 sadm_osupdate_farm.sh (v3.14) - Create 'osupdate_running' file before launching O/S update on remote.
+	- 2020_05_23 sadm_osupdate_farm.sh (v3.14) - Create 'LOCK_FILE' file before launching O/S update on remote.
 	- 2020_05_23 sadm_osupdate.sh (v3.23) - Replace 'reboot' instruction with 'shutdown -r' (Problem on some OS).
 	- 2020_05_23 sadm_push_sadmin.sh (v2.19) - Changing the way to get SADMIN variable in /etc/environment
 	- 2020_05_23 sadm_rch_scr_summary.sh (v1.18) - Changing the way to get SADMIN variable in /etc/environment
