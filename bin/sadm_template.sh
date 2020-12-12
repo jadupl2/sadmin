@@ -42,11 +42,11 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 # To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
 #===================================================================================================
 
-# MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
 if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # If SADMIN EnvVar not right
     then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
          EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null          # SADMIN in /etc/environment
-         if [ $? -eq 0 ]                                                # Yes it is 
+         if [ $? -eq 0 ]                                                # Found SADMIN in /etc/env..
             then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
                  printf "'SADMIN' Environment variable temporarily set to ${SADMIN}.\n"
             else exit 1                                                 # No SADMIN Env. Var. Exit
@@ -68,6 +68,8 @@ export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Lo
 export SADM_LOG_HEADER="Y"                              # [Y]=Include Log Header  [N]=No log Header
 export SADM_LOG_FOOTER="Y"                              # [Y]=Include Log Footer  [N]=No log Footer
 export SADM_MULTIPLE_EXEC="N"                           # Allow running multiple copy at same time ?
+export SADM_PID_TIMEOUT=7200                            # Nb. Sec. a PID can block script execution
+export SADM_LOCK_TIMEOUT=3600                           # Sec. before Server Lock File get deleted
 export SADM_USE_RCH="Y"                                 # Gen. History Entry in ResultCodeHistory 
 export SADM_DEBUG=0                                     # Debug Level - 0=NoDebug Higher=+Verbose
 export SADM_TMP_FILE1=""                                # Tmp File1 you can use, Libr. will set name
@@ -88,6 +90,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)      # O/S Major Version Numb
 #export SADM_MAX_LOGLINE=500                            # At the end Trim log to 500 Lines(0=NoTrim)
 #export SADM_MAX_RCLINE=35                              # At the end Trim rch to 35 Lines (0=NoTrim)
 #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+
 #===================================================================================================
 
 
@@ -273,15 +276,22 @@ function cmd_options()
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
 
-    # If current user is not 'root', exit to O/S with error code 1 (This 'if' is Optional)
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+    # If current user is not 'root', exit to O/S with error code 1 (Optional)
+    if [ $(id -u) -ne 0 ]                                               # If Cur. user is not root 
         then sadm_write "Script can only be run by the 'root' user, process aborted.\n"
              sadm_write "Try 'sudo ${SADM_PN}'\n"                       # Suggest using sudo
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
 
-    # If we are not on the SADMIN Server, exit to O/S with error code 1 (This 'if' is Optional)
+    # If current user is not part of the 'SADM_GROUP', exit to O/S with error code 1 (Optional)
+    if [ id -nG "$USER" | grep -qw "$SADM_GROUP" ]                      # User not part of SADM Grp 
+        then sadm_write "To run this script, user $USER must be a member of group ${SADM_GROUP}\n"
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
+
+    # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
         then sadm_write "Script can only be run on (${SADM_SERVER}), process aborted.\n"
              sadm_stop 1                                                # Close and Trim Log
