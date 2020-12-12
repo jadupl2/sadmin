@@ -50,6 +50,7 @@
 #@2020_05_23 Update: v4.2 No longer report an error, if a system is rebooting because of O/S update.
 #@2020_10_29 Fix: v4.3 If comma was used in server description, it cause delimiter problem.
 #@2020_11_05 Update: v4.4 Change msg written to log & no alert while o/s update is running.
+#@2020_12_12 Update: v4.5 Add and use SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -77,12 +78,14 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='4.4'                               # Your Current Script Version
+    export SADM_VER='4.5'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_PID_TIMEOUT=7200                        # Nb. Sec. a PID can block script execution
+    export SADM_LOCK_TIMEOUT=3600                       # Sec. before Server Lock File get deleted
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
     export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
     export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
@@ -119,7 +122,6 @@ TOTAL_AIX=0                                      ; export TOTAL_AIX     # Nb Err
 TOTAL_LINUX=0                                    ; export TOTAL_LINUX   # Nb Error in Linux Function
 SADM_STAR=`printf %80s |tr " " "*"`              ; export SADM_STAR     # 80 * line
 DEBUG_LEVEL=0                                    ; export DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
-export OSTIMEOUT=1800                                                   # 1800Sec=30Min todo O/S Upd
 
 
 # --------------------------------------------------------------------------------------------------
@@ -193,26 +195,25 @@ process_servers()
                  continue                                               # Continue with next Server
         fi
 
-        # O/S Update is running on this server ?
-        # This file exist is created when the O/S update start.
+        # Lock File is created when the remote O/S update start.
         # Prevent to return an error if not able to ssh to server (May be rebooting after update)
-        # Will be deleted when the file creation date is older than $OSTIMEOUT (1800 Sec = 30 Min).
-        UPDATE_RUNNING="${SADM_TMP_DIR}/osupdate_running_${server_name}"
-        if [ -f "$UPDATE_RUNNING" ]                                     # If O/S Update running 
-           then FEPOCH=`stat -c %Y $UPDATE_RUNNING`                     # Get File Modif. Epoch Time
+        # Lock file will be deleted when the file creation date is older than $SADM_LOCK_TIMEOUT.
+        LOCK_FILE="${SADM_TMP_DIR}/${server_name}.lock"                 # Prevent Monitor lock file
+        if [ -f "$LOCK_FILE" ]                                          # If O/S Update running 
+           then FEPOCH=`stat -c %Y $LOCK_FILE`                          # Get File Modif. Epoch Time
                 CEPOCH=$(sadm_get_epoch_time)                           # Get Current Epoch Time
                 FAGE=`expr $CEPOCH - $FEPOCH`                           # Nb. Sec. OSUpdate running
-                SEC_LEFT=`expr $OSTIMEOUT - $FAGE`                      # Sec. left Allow for OSUpd.
-                if [ "$FAGE" -gt $OSTIMEOUT ]                           # Running more than 30Min ?
-                   then msg="${BOLD}O/S update should be terminated, it's running for more than $OSTIMEOUT sec.${NORMAL}"
+                SEC_LEFT=`expr $SADM_LOCK_TIMEOUT - $FAGE`              # Sec left before delete lck
+                if [ $FAGE -gt $SADM_LOCK_TIMEOUT ]                     # Running more than 90Min ?
+                   then msg="${BOLD}Server is lock for more than $SADM_LOCK_TIMEOUT seconds.${NORMAL}"
                         sadm_write "${msg}\n"
                         msg="${BOLD}Will now start to monitor this system as usual.${NORMAL}"
                         sadm_write "${msg}\n"
-                        rm -f $UPDATE_RUNNING > /dev/null 2>&1          # Remove O/S Upd Flag File
-                   else msg="${SADM_WARNING} O/S update is running on '$fqdn_server'."
+                        rm -f LOCK_FILE > /dev/null 2>&1                # Remove O/S Upd Flag File
+                   else msg="${SADM_WARNING} '$fqdn_server' server is lock."
                         sadm_write "${msg}\n"
-                        msg1="Normal monitoring will resume in ${SEC_LEFT} sec., "
-                        msg2="one time allowed for update (${OSTIMEOUT} sec.) is elapse."
+                        msg1="Normal monitoring will resume in ${SEC_LEFT} seconds, "
+                        msg2="time allowed to keep a server lock is ${SADM_LOCK_TIMEOUT} sec."
                         sadm_write "${msg1}${msg2}\n"
                         continue                                        # Continue with Nxt Server
                 fi 
