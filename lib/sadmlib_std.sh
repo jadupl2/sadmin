@@ -157,6 +157,7 @@
 #@2020_10_05 Update: v3.56 Remove export for screen attribute variables.
 #@2020_11_24 Update: v3.57 Revisit and Optimize 'send_alert' function.
 #@2020_12_02 Update: v3.58 Optimize and fix some problem with Slack ans SMS alerting function.
+#@2020_12_12 Update: v3.59 Add 'sadm_capitalize"function, add PID TimeOut, enhance script footer.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -168,7 +169,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.58"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.59"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -272,7 +273,7 @@ SADM_MYSQL=""                               ; export SADM_MYSQL         # Defaul
 
 # SADMIN CONFIG FILE VARIABLES (Default Values here will be overridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export SADM_MAIL_ADDR     # Default is in sadmin.cfg
-SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE    # 0=No 1=Err 2=Succes 3=All
+SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE    # 0=No 1=Err 2=Success 3=All
 SADM_ALERT_GROUP="default"                  ; export SADM_ALERT_GROUP   # Define in alert_group.cfg
 SADM_ALERT_REPEAT=43200                     ; export SADM_ALERT_REPEAT  # Repeat Alarm wait time Sec
 SADM_TEXTBELT_KEY="textbelt"                ; export SADM_TEXTBELT_KEY  # Textbelt.com API Key
@@ -330,7 +331,7 @@ SADM_MKSYSB_NFS_TO_KEEP=2                   ; export SADM_MKSYSB_NFS_TO_KEEP    
 LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"    ; export LOCAL_TMP          # Local Temp File
 
 # Screen related variables
-if [ -z $TERM ] || [ "$TERM" = "dumb" ]
+if [ -z "$TERM" ] || [ "$TERM" = "dumb" ]
     then CLREOL=""                                               # Clear to End of Line
          CLREOS=""                                               # Clear to End of Screen
          BOLD=""                                                 # Set Bold Attribute
@@ -362,7 +363,7 @@ if [ -z $TERM ] || [ "$TERM" = "dumb" ]
 fi    
 
 # Foreground Color
-if [ -z $TERM ] || [ "$TERM" = "dumb" ]
+if [ -z "$TERM" ] || [ "$TERM" = "dumb" ]
     then BLACK=""                                                # Black color
          MAGENTA=""                                              # Magenta color
          RED=""                                                  # Red color
@@ -382,7 +383,7 @@ if [ -z $TERM ] || [ "$TERM" = "dumb" ]
 fi 
 
 # Background Color
-if [ -z $TERM ] || [ "$TERM" = "dumb" ]
+if [ ! -z "$TERM" ] || [ "$TERM" = "dumb" ]
     then BBLACK=""                                               # Black color
          BRED=""                                                 # Red color
          BGREEN=""                                               # Green color
@@ -431,11 +432,12 @@ sadm_toupper() {
 
 
 # --------------------------------------------------------------------------------------------------
-#                       THIS FUNCTION RETURN THE STRING RECEIVED TO LOWERCASE
+# THIS FUNCTION RETURN THE STRING RECEIVED TO WITH THE FIRST CHARACTER IN UPPERCASE
 # --------------------------------------------------------------------------------------------------
-sadm_tolower() {
-    echo $1 | tr  "[:upper:]" "[:lower:]"
+sadm_capitalize() {
+    echo "${1^}"
 }
+
 
 
 
@@ -483,7 +485,7 @@ function sadm_ask() {
 sadm_write() {
     SADM_SMSG="$@"                                                      # Screen Mess. = Mess. Rcvd
     SADM_LMSG="$SADM_SMSG"                                              # Log Mess. = Screen Mess.
-    SADM_SMSG=`echo "${SADM_SMSG//'[ OK ]'/$SADM_SOK}"`                 # Replace OK with Green OK
+    SADM_SMSG=`echo "${SADM_SMSG//'[ OK ]'/$SADM_SOK}"`                 # Put OK in Green 
     SADM_SMSG=`echo "${SADM_SMSG//'[ ERROR ]'/$SADM_SERROR}"`           # Put ERROR in Red
     SADM_SMSG=`echo "${SADM_SMSG//'[ WARNING ]'/$SADM_SWARNING}"`       # Put WARNING in Yellow
     SADM_SMSG=`echo "${SADM_SMSG//'[ FAILED '/$SADM_SFAILED}"`          # Put FAILED in Red
@@ -1820,30 +1822,25 @@ sadm_load_config_file() {
 # mkdir -p ${SADMIN}/{etc/x1,lib,usr/{x2,x3},bin,tmp/{Y1,Y2,Y3/z},opt,var}
 sadm_start() {
 
-    # ($SADMIN/log) If log Directory doesn't exist, create it.
-    [ ! -d "$SADM_LOG_DIR" ] && mkdir -p $SADM_LOG_DIR
-    if [ $(id -u) -eq 0 ]
+    # First thing, Log File & Directory consideration
+    [ ! -d "$SADM_LOG_DIR" ] && mkdir -p $SADM_LOG_DIR                  # If Log Dir. don't Exist
+    if [ $(id -u) -eq 0 ]                                               # Sure got good permission
         then chmod 0775 $SADM_LOG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR
     fi
-
-    # ($SADMIN/log/`hostname -s`_SCRIPT.log) If LOG File doesn't exist, Create it & Make it writable
-    [ ! -e "$SADM_LOG" ] && touch $SADM_LOG
-    if [ $(id -u) -eq 0 ]
+    [ ! -e "$SADM_LOG" ] && touch $SADM_LOG                             # If Log File don't exist
+    if [ $(id -u) -eq 0 ]                                               # Sure got good permission
         then chmod 666 $SADM_LOG ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}
     fi
-
-    # If user don't want to append to existing log - Clear it - Else we will append to it.
-    [ "$SADM_LOG_APPEND" != "Y" ] && echo " " > $SADM_LOG
+    [ "$SADM_LOG_APPEND" != "Y" ] && echo " " > $SADM_LOG               # No Append log, create new
 
     # Write Starting Info in the Log
-    if [ -z "$SADM_LOG_HEADER" ] || [ "$SADM_LOG_HEADER" = "Y" ]        # Want to Produce Log Header
-        then #echo " " >>$SADM_LOG                                      # Blank line at beginning
-             sadm_write "${SADM_80_DASH}\n"                             # Write 80 Dashes Line
-             sadm_write "`date` - ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}\n"
-             sadm_write "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)\n"
-             sadm_write "$(sadm_get_osname) $(sadm_get_osversion) Kernel $(sadm_get_kernel_version)\n"
-             sadm_write "${SADM_FIFTY_DASH}\n"                          # Write 50 Dashes Line
-             sadm_write "\n"
+    if [ ! -z "$SADM_LOG_HEADER" ] || [ "$SADM_LOG_HEADER" = "Y" ]      # Script Want Log Header
+        then sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
+             sadm_writelog "`date` - ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
+             sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)"
+             sadm_writelog "$(sadm_get_osname) $(sadm_get_osversion) Kernel $(sadm_get_kernel_version)"
+             sadm_writelog "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
+             sadm_writelog " "                                          # White space line
     fi
 
     # ($SADMIN/tmp) If TMP Directory doesn't exist, create it.
@@ -2087,7 +2084,7 @@ sadm_start() {
 
     # Feed the (RCH) Return Code History File stating the script is Running (Code 2)
     #SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME      # Statup Time of Script
-    if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
+    if [ ! -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]            # Want to Produce RCH File
         then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
              [ $(id -u) -eq 0 ] && chmod 664 $SADM_RCHLOG               # Change protection on RCH
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}
@@ -2095,22 +2092,41 @@ sadm_start() {
              RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST"    # Format Part1 of RCH File
              RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE 2"    # Format Part2 of RCH File
              echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
-#             echo "${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST $SADM_ALERT_GROUP $SADM_ALERT_TYPE 2" >>$SADM_RCHLOG
     fi
 
     # If PID File exist and User want to run only 1 copy of the script - Abort Script
-    if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" != "Y" ]    # PIP Exist - Run One Copy
-       then sadm_write "$SADM_PN is already running ... \n"            # Script already running
-            sadm_write "PID File ${BOLD}${SADM_PID_FILE}${NORMAL} exist ...\n"  # Show PID File Name
-            sadm_write "Not allowed to launch a second copy (\$SADM_MULTIPLE_EXEC='N').\n"  
-            sadm_write "Unless you remove the PID File or set SADM_MULTIPLE_EXEC='Y' in the script.\n"
-            DELETE_PID="N"                                              # No Del PID Since running
-            sadm_stop 1                                                 # Call SADM Close Function
-            exit 1                                                      # Exit with Error
+    if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]     # PIP Exist - Run One Copy
+       then sadm_write "$SADM_PN is already running ... \n"             # Script already running
+            pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Last Modify Date of PID
+            cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
+            pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
+            sadm_write "${BOLD}PID File ${SADM_PID_FILE} exist, created $pelapse seconds ago.${NORMAL}\n"
+            sadm_write "Not allowed to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N').\n" 
+            sadm_writelog " "
+            sadm_write "Script will not be executed, unless one of the following thing is done :\n"
+            sadm_write "  - Remove the PID File (${SADM_PID_FILE}).\n"
+            sadm_write "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in the script.\n"
+            if [ ! -z "$SADM_PID_TIMEOUT" ] 
+                then sadm_write "  - You wait till PID timeout ('\$SADM_PID_TIMEOUT') is reach.\n"
+                     sadm_write "    The PID file was created $pelapse seconds ago.\n"
+                     sadm_write "    The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n"
+                     if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
+                        then sadm_write "\n${BOLD}${GREEN}PID File exceeded it time to live.\n"
+                             sadm_write "Assuming script was aborted anormally, "
+                             sadm_write "Script execution re-enable, PID file updated.${NORMAL}\n\n"
+                             touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
+                             DELETE_PID="Y"                             # Del PID Since running
+                        else DELETE_PID="N"                             # No Del PID Since running
+                             sadm_stop 1                                # Call SADM Stop Function
+                             exit 1                                     # Exit with Error
+                     fi
+                else DELETE_PID="N"                                     # No Del PID Since running
+                     sadm_stop 1                                        # Call SADM Stop Function
+                     exit 1                                             # Exit with Error
+            fi 
        else echo "$TPID" > $SADM_PID_FILE                               # Create the PID File
             DELETE_PID="Y"                                              # Del PID Since running
     fi
-
     return 0
 }
 
@@ -2146,7 +2162,7 @@ sadm_stop() {
     sadm_elapse=$(sadm_elapse "$sadm_end_time" "$SADM_STIME")           # Go Calculate Elapse Time
 
     # Write script exit code and execution time to log (If user ask for a log footer) 
-    if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]        # Want to Produce Log Footer
+    if [ ! -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]      # Want to Produce Log Footer
         then sadm_write "\n"                                            # Blank LIne
              sadm_write "${SADM_FIFTY_DASH}\n"                          # Dash Line
              if [ $SADM_EXIT_CODE -eq 0 ]                               # If script succeeded
@@ -2157,7 +2173,7 @@ sadm_stop() {
     fi
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
-    if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File ?
+    if [ ! -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]            # Want to Produce RCH File ?
         then XCODE=`tail -1 ${SADM_RCHLOG}| awk '{ print $NF }'`        # Get RCH Code on last line
              if [ "$XCODE" -eq 2 ]                                      # If last Line code is 2
                 then XLINE=`wc -l ${SADM_RCHLOG} | awk '{print $1}'`    # Count Nb. Line in RCH File
@@ -2171,38 +2187,42 @@ sadm_stop() {
              RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE"      # Format Part3 of RCH File
              RCHLINE="$RCHLINE $SADM_EXIT_CODE"                         # Format Part4 of RCH File
              echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
-             if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ] 
-                then if [ "$SADM_MAX_RCLINE" -ne 0 ]  
-                        then sadm_write "History ($SADM_RCHLOG) trim to ${SADM_MAX_RCLINE} lines (\$SADM_MAX_RCLINE=$SADM_MAX_RCLINE).\n"
+             if [ ! -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ] # If User want Log Footer
+                then if [ "$SADM_MAX_RCLINE" -ne 0 ]                    # User want to trim rch file
+                        then mtmp1="History ($SADM_RCHLOG) trim to ${SADM_MAX_RCLINE} lines "
+                             mtmp2="(\$SADM_MAX_RCLINE=$SADM_MAX_RCLINE)"
+                             sadm_write "${mtmp1}${mtmp2}.\n"           # Write rch trim context 
                              sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE" # Trim file to Nb. Line
-                        else sadm_write "Script is set not to trim history file (\$SADM_MAX_RCLINE=0).\n"
+                        else mtmp="Script is set not to trim history file (\$SADM_MAX_RCLINE=0)"
+                             sadm_write "${mtmp}.\n" 
                      fi
              fi
              [ $(id -u) -eq 0 ] && chmod 664 ${SADM_RCHLOG}             # R/W Owner/Group R by World
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG} # Change RCH Owner
-    fi
+    fi 
 
     # If log size not at zero and user want to use the log.
-    if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]        # Want to Produce Log Footer
+    if [ ! -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]      # User Want the Log Footer
         then GRP_TYPE=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$2}' |tr -d ' ')
              GRP_NAME=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$3}' |tr -d ' ')
-             if [ "$SADM_ALERT_GROUP" = "default" ]
+             ORG_NAME=$GRP_NAME                                         # Save Original Group Name
+             if [ "$SADM_ALERT_GROUP" = "default" ]                     # Get Real Default GroupName
                 then GRP_NAME=$(grep -i "^$GRP_NAME " $SADM_ALERT_FILE |awk '{print$3}' |tr -d ' ')
              fi
              case "$GRP_TYPE" in                                        # Case on Default Alert Group
-                m|M )   GRP_DESC="by email to '$GRP_NAME'"                # Alert Sent by Email
+                m|M )   GRP_DESC="by email to '$GRP_NAME'"              # Alert Sent by Email
                         ;; 
-                s|S )   GRP_DESC="(Slack '$GRP_NAME' channel)" 
+                s|S )   GRP_DESC="(Slack '$GRP_NAME' channel)"          # Alert Send using Slack App
                         ;; 
-                c|C )   GRP_DESC="to Cell. '$GRP_NAME'" 
+                c|C )   GRP_DESC="to Cell. '$GRP_NAME'"                 # Alert send to Cell. Number
                         ;; 
-                t|T )   GRP_DESC="by SMS to '$GRP_NAME'" 
+                t|T )   GRP_DESC="by SMS to '$GRP_NAME'"                # Alert send to SMS Group
                         ;; 
-                *   )   GRP_DESC="Grp. $GRP_TYPE ?"                             # Illegal Code Desc
+                *   )   GRP_DESC="Grp. $GRP_TYPE ?"                     # Illegal Code Desc
                         ;;
              esac
              case $SADM_ALERT_TYPE in
-                0)  sadm_write "Script won't send any alert (\$SADM_ALERT_TYPE=0) whether the script fail or succeeded.\n"
+                0)  sadm_write "Script instructed to not send any alert (\$SADM_ALERT_TYPE=0).\n"
                     ;;
                 1)  sadm_write "Script will send an alert only when it terminate with error (\$SADM_ALERT_TYPE=1).\n"
                     if [ "$SADM_EXIT_CODE" -ne 0 ]
@@ -2244,8 +2264,9 @@ sadm_stop() {
     fi
 
     # Normally we Delete the PID File when exiting the script.
-    # But when script is already running, we are the second instance of the script
-    # (DELETE_PID is set to "N"), we don't want to delete PID file
+    # But when script is already running, then we are the second instance of the script
+    # we don't want to delete PID file. 
+    # When this situation happend (DELETE_PID is set to "N") in sadm_start function. 
     if ( [ -e "$SADM_PID_FILE"  ] && [ "$DELETE_PID" = "Y" ] )          # PID Exist & Only Running 1
         then rm -f $SADM_PID_FILE  >/dev/null 2>&1                      # Delete the PID File
     fi
@@ -2259,12 +2280,14 @@ sadm_stop() {
     # If we don't do that, log look incomplete & script seem to be always running on web interface.
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                         # Only run on SADMIN 
        then cp $SADM_LOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log
-            if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]     # Want to Produce RCH File
+            if [ ! -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]   # Want to Produce RCH File
                then cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
             fi 
     fi
     return $SADM_EXIT_CODE
 }
+
+
 
 
 # --------------------------------------------------------------------------------------------------
