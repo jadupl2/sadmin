@@ -44,10 +44,11 @@
 # 2018_10_24  v3.11 Adjustment needed to call sadm_osupdate.sh with or without '-r' (reboot) option.
 # 2019_07_14 Update: v3.12 Adjustment for Library Changes.
 # 2019_12_22 Fix: v3.13 Fix problem when using debug (-d) option without specifying level of debug.
-#@2020_05_23 Update: v3.14 Create 'osupdate_running' file before launching O/S update on remote.
+#@2020_05_23 Update: v3.14 Create 'LOCK_FILE' file before launching O/S update on remote.
 #@2020_07_28 Update: v3.15 Move location of o/s update is running indicator file to $SADMIN/tmp.
 #@2020_10_29 Fix: v3.16 If comma was used in server description, it cause delimiter problem.
 #@2020_11_04 Minor: v3.17 Minor code modification.
+#@2020_12_12 Fix: v3.18 LOCK_FILE bug fix.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -98,7 +99,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='3.16'                              # Your Current Script Version
+    export SADM_VER='3.18'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -277,13 +278,11 @@ process_servers()
                      fi                                                 # This reboot after Update
                      #sadm_write "Starting $USCRIPT on ${server_name}.${server_domain}\n"
                      if [ "${server_name}.${server_domain}" != "$SADM_SERVER" ]
-                        then UPDATE_RUNNING="${SADM_TMP_DIR}/osupdate_running_${server_name}"
-                             sadm_write "\nSuspend monitoring while O/S update is running.\n"
-                             sadm_write "Create O/S update running indicator file '${UPDATE_RUNNING}' " 
-                             echo $(date) > ${UPDATE_RUNNING}           # Create OSUPDATE Flag File
+                        then LOCK_FILE="${SADM_TMP_DIR}/${server_name}.lock" # Prevent Monitor lock
+                             echo "$SADM_INST - $(date)" > ${LOCK_FILE} # Create Lock File
                              if [ $? -eq 0 ]                            # If Touch went OK
-                                then sadm_write "${SADM_OK}\n"          # Show [ OK ] and NewLine
-                                else sadm_write "${SADM_ERROR}\n"       # Show [ ERROR ] and NewLine
+                                then sadm_write "${SADM_OK} Suspend monitoring while O/S update is running.\n"  
+                                else sadm_write "${SADM_ERROR} Creating O/S update indicator file '${LOCK_FILE}'\n" 
                              fi
                              sadm_write "\nStarting the O/S update on '${server_name}'.\n"
                              sadm_write "$SADM_SSH_CMD $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'\n\n"
@@ -298,6 +297,7 @@ process_servers()
                         else sadm_write "Script was submitted with success.\n"
                              update_server_db "${server_name}" "S"  
                      fi
+                     if [ -f "$LOCK_FILE" ] ;then rm -f $LOCK_FILE >/dev/null 2>&1 ;fi
             fi
             if [ "$ERROR_COUNT" -ne 0 ] || [ "$WARNING_COUNT" -ne 0 ] 
                 then sadm_write "Total Error is $ERROR_COUNT and Warning at ${WARNING_COUNT}\n"
