@@ -53,6 +53,7 @@
 #@2020_11_04 Fix: v2.25 Change , to ; in SQL output file.
 #@2020_11_05 Update: v2.26 Change msg written to log & no alert while o/s update is running.
 #@2020_11_27 Update: v2.27 For command line uniformity , option '-c' changed to '-n'
+#@2020_12_12 Update: v2.28 Add pushing of alert_group.cfg alert_slack.cfg to client
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -83,7 +84,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.27'                              # Your Current Script Version
+    export SADM_VER='2.28'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -313,7 +314,7 @@ process_servers()
             then scp -P${SADM_SSH_PORT} ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
             else cp /etc/environment ${WDIR} >/dev/null 2>&1  
         fi
-        if [ $? -eq 0 ]                                                 # If file was transfered
+        if [ $? -eq 0 ]                                                 # If file was transferred
             then server_dir=`grep "SADMIN=" $WDIR/environment |awk -F= '{print $2}'` # Set Remote Dir.
                  if [ "$server_dir" != "" ]                                   # No Remote Dir. Set
                     then sadm_writelog "$SADM_OK SADMIN is install in ${server_dir}."
@@ -343,6 +344,26 @@ process_servers()
              else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
           fi
           done             
+
+
+        # Copy Site Common configuration files to client
+        rem_cfg_files=( alert_group.cfg alert_slack.cfg )
+        for WFILE in "${rem_cfg_files[@]}"
+          do
+          CFG_SRC="${SADM_CFG_DIR}/${WFILE}"
+          CFG_DST="${server_fqdn}:${server_dir}/cfg/${WFILE}"
+          CFG_CMD="rsync -a ${CFG_SRC} ${CFG_DST}"
+          if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CFG_CMD" ; fi 
+          #scp ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
+          rsync -a ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
+          RC=$? 
+          if [ $RC -ne 0 ]
+             then sadm_writelog "$SADM_ERROR ($RC) doing ${CFG_CMD}"
+                  ERROR_COUNT=$(($ERROR_COUNT+1))
+             else sadm_writelog "$SADM_OK ${CFG_CMD}" 
+          fi
+          done             
+
 
         # IF USER CHOOSE TO RSYNC $SADMIN/USR/BIN TO ALL ACTIVES CLIENTS, THEN DO IT HERE.
         if [ "$SYNC_USR" = "Y" ] 
