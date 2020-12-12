@@ -73,6 +73,7 @@
 #@2020_11_05 Update: v3.19 Change msg written to log & no alert while o/s update is running.
 #@2020_11_24 Update: v3.20 Optimize code & Now calling new 'sadm_osupdate_starter' for o/s update.
 #@2020_12_02 Update: v3.21 New summary added to the log and Misc. fix.
+#@2020_12_12 Update: v3.22 Copy Site Common alert group and slack configuration files to client
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -119,12 +120,14 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.21'                              # Your Current Script Version
+    export SADM_VER='3.22'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_PID_TIMEOUT=7200                        # Nb. Sec. a PID can block script execution
+    export SADM_LOCK_TIMEOUT=3600                       # Sec. before Server Lock File get deleted
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
     export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
     export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
@@ -165,11 +168,10 @@ export RCH_FIELD=10                                                     # Nb. of
 export OSTIMEOUT=1800                                                   # 1800sec=30Min todo O/S Upd
 #
 # Reset Alert Totals Counters
-export total_alert=0  ; export total_duplicate=0 ; export total_ok=0 ; export total_error=0      
-export total_oldies=0
+export total_alert=0 total_duplicate=0 total_ok=0 total_error=0 total_oldies=0
 #
 # Reset Alert Totals Counters
-export t_alert=0  ; export t_duplicate=0 ; export t_ok=0 ; export t_error=0 ; export t_oldies=0
+export t_alert=0 t_duplicate=0 t_ok=0 t_error=0 t_oldies=0
 
 
 # --------------------------------------------------------------------------------------------------
@@ -683,32 +685,34 @@ validate_server_connectivity()
                 return 1                                                # Return Error to Caller
     fi
 
-    # When we start the O/S Update, a file is created ($UPDATE_RUNNING) to indicate that an O/S
-    # update is running (Done by the sadm_osupdate_farm.sh script).
+    # When we start the O/S Update, or a script is started on a remote system and we want to stop
+    # monitoring of that server while the script is running, we can create a file ($LOCK_FILE). 
+    # This suspend monitoring of the server while the script is running.
+    # Example :
     # The O/S Update may need a reboot at the end of the update (Server CRUD Web Page.)
     # While the system is bring down and back up again, it may alert user saying that server is down
     #
-    # To disable the monitoring of the server while it is rebooting after an update,the 
-    # $UPDATE_RUNNING file is created when the O/S update start.
+    # To disable the monitoring of the server while the o/s update is runinng, the $LOCK_FILE file 
+    # is created when the O/S update start.
     # When the monitoring script (sadm_fetch_client.sh) see that file, it check the time stamp of it
-    # SADMIN give 30 minutes ($OSTIMEOUT) to update the server, after that the monitoring of the 
-    # server will be resume and the ($UPDATE_RUNNING) file is deleted.    
-    UPDATE_RUNNING="${SADM_TMP_DIR}/osupdate_running_${SNAME}"          # OSUpdate running flag file
-    if [ -f "$UPDATE_RUNNING" ]                                         # If O/S Update running 
-       then FEPOCH=`stat -c %Y $UPDATE_RUNNING`                         # Get File Modif. Epoch Time
+    # SADMIN give ($SADM_LOCK_TIMEOUT) seconds to update the server, after that period the 
+    # monitoring of the server will be resume and the ($LOCK_FILE) file is deleted.
+    LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # Prevent Monitor lock file    
+    if [ -f "$LOCK_FILE" ]                                              # O/S running lockfile exist
+       then FEPOCH=`stat -c %Y $LOCK_FILE`                              # Get File Modif. Epoch Time
             CEPOCH=$(sadm_get_epoch_time)                               # Get Current Epoch Time
             FAGE=`expr $CEPOCH - $FEPOCH`                               # Nb. Sec. OSUpdate running
             SEC_LEFT=`expr $OSTIMEOUT - $FAGE`                          # Sec. left Allow for OSUpd.
-            if [ "$FAGE" -gt $OSTIMEOUT ]                               # Running more than 30Min ?
-               then msg="${BOLD}O/S update running for more than $OSTIMEOUT sec.${NORMAL}"
+            if [ $FAGE -gt $SADM_LOCK_TIMEOUT ]                         # Running more than 60Min ?
+               then msg="Server was lock for more than $SADM_LOCK_TIMEOUT seconds."
+                    sadm_write "${BOLD}${msg}${NORMAL}\n"
+                    msg="${BOLD}We will now start to monitor this system as usual.${NORMAL}"
+                    sadm_write "${msg}\n"
+                    rm -f $LOCK_FILE > /dev/null 2>&1                   # Remove Lock File
+               else msg="${SADM_WARNING} Server '${SNAME}' is currently lock."
                     sadm_writelog "${msg}"
-                    msg="${BOLD}Will now start to monitor this system as usual.${NORMAL}"
-                    sadm_writelog "${msg}"
-                    rm -f $UPDATE_RUNNING > /dev/null 2>&1          # Remove O/S Upd Flag File
-               else msg="${SADM_WARNING} O/S update is running on '$fqdn_server'."
-                    sadm_writelog "${msg}"
-                    msg1="Normal monitoring will resume in ${SEC_LEFT} sec., "
-                    msg2="one time allowed for update (${OSTIMEOUT} sec.) is elapse."
+                    msg1="Server normal monitoring will resume in ${SEC_LEFT} seconds, "
+                    msg2="maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
                     sadm_writelog "${msg1}${msg2}"
                     return 2                                        # Continue with Nxt Server
             fi 
@@ -958,6 +962,25 @@ process_servers()
                 fi
         fi
 
+        # Copy Site Common configuration files to client
+        rem_cfg_files=( alert_group.cfg alert_slack.cfg )
+        for WFILE in "${rem_cfg_files[@]}"
+          do
+          CFG_SRC="${SADM_CFG_DIR}/${WFILE}" 
+          CFG_DST="${fqdn_server}:${server_dir}/cfg/${WFILE}"
+          CFG_CMD="rsync -va ${CFG_SRC} ${CFG_DST}"
+          if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CFG_CMD" ; fi 
+          #scp ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
+          rsync -va ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
+          RC=$? 
+          if [ $RC -ne 0 ]
+             then sadm_writelog "$SADM_ERROR ($RC) doing ${CFG_CMD}"
+                  ERROR_COUNT=$(($ERROR_COUNT+1))
+             else sadm_writelog "$SADM_OK ${CFG_CMD}" 
+          fi
+          done  
+
+
         # Get remote $SADMIN/cfg Dir. and update local www/dat/${server_name}/cfg directory.
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
             then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
@@ -1038,7 +1061,6 @@ check_all_rpt()
 
     # Process the file containing all *.rpt content (if any).
     if [ -s "$SADM_TMP_FILE3" ]                                         # If File Not Zero in Size
-#        then cat $SADM_TMP_FILE3 | while read line                      # Read Each Line of file
         then while read line                      # Read Each Line of file
                 do
                 if [ $SADM_DEBUG -gt 6 ] ; then sadm_writelog "Processing Line=$line" ; fi
