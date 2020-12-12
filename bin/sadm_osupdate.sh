@@ -41,7 +41,7 @@
 # 2020_04_28 Update: v3.22 Use 'apt-get dist-upgrade' instead of 'apt-get -y upgrade' on deb system.
 #@2020_05_23 Update: v3.23 Replace 'reboot' instruction with 'shutdown -r' (Problem on some OS).
 #@2020_07_29 Update: v3.24 Minor adjustments to screen and log presentation.
-#@2020_09_05 Update: v3.25 Minor adjustments.
+#@2020_12_12 Update: v3.25 Minor adjustments.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -57,11 +57,11 @@
 
     # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
     if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
-        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
+        then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
              EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
              if [ $? -eq 0 ]                                            # Yes it is 
                 then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}."
+                     printf "'SADMIN' Environment variable temporarily set to ${SADMIN}.\n"
                 else exit 1                                             # No SADMIN Env. Var. Exit
              fi
     fi 
@@ -291,6 +291,7 @@ check_available_update()
             sadm_write "${SADM_OK} No Update available.\n"
             ;;
 
+        # Ubuntu, Debian, Raspian, Linux MInt, ...
         * ) 
             sadm_write "\nStart with a clean of APT cache, running 'apt-get clean'\n" 
             apt-get clean >> $SADM_LOG 2>&1                             # Cleanup /var/cache/apt
@@ -307,19 +308,20 @@ check_available_update()
                     sadm_write "${SADM_ERROR} We had problem running the 'apt-get update' command.\n" 
                     sadm_write "We had a return code of ${rc}.\n" 
                     sadm_write "For more information check the log ${SADM_LOG}.\n\n"
-               else sadm_write "[OK] The cache have been updated.\n\n"  # Show  Return Code
+               else sadm_write "${SADM_OK} The cache have been updated.\n\n"  # Show  Return Code
                     sadm_write "Retrieving list of upgradable packages.\n" 
                     sadm_write "Running 'apt list --upgradable'.\n"
                     NB_UPD=`apt list --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l`
                     if [ "$NB_UPD" -ne 0 ]
                         then sadm_write "There are ${NB_UPD} update available.\n"
-                             apt list --upgradable 2>/dev/null |grep -v 'Listing...' >$SADM_TMP_FILE3 
+                             apt list --upgradable 2>/dev/null |grep -iv "listing"  >$SADM_TMP_FILE3 
                              if [ $? -ne 0 ] 
                                 then sadm_write "Error getting list of packages to update.\n"
                                      sadm_write "Script aborted ...\n" 
                                      sadm_stop 1
                                      exit 1
-                                else nl $SADM_TMP_FILE3
+                                else sadm_write "${BOLD}Packages that will be updated.${NORMAL}\n"
+                                     nl $SADM_TMP_FILE3
                                      UpdateStatus=0                     # 0= Update are available
                              fi 
                         else UpdateStatus=1                             # 1= No Update are available
