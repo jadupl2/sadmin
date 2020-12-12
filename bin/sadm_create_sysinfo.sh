@@ -48,6 +48,7 @@
 # 2020_03_08 Update: v3.18 Collect more information about Disks, Partitions, Network and fix lsblk.
 # 2020_04_05 Update: v3.19 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl
 #@2020_06_09 Update: v3.20 New log at each execution & log not trimmed anymore ($SADM_MAX_LOGLINE=0)
+#@2020_12_12 Update: v3.21 Add SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -79,12 +80,14 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.20'                              # Your Current Script Version
+    export SADM_VER='3.21'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_PID_TIMEOUT=7200                        # Nb. Sec. a PID can block script execution
+    export SADM_LOCK_TIMEOUT=3600                       # Sec. before Server Lock File get deleted
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
     export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
     export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
