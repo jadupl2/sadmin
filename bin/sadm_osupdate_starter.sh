@@ -44,12 +44,13 @@
 # 2018_10_24  v3.11 Adjustment needed to call sadm_osupdate.sh with or without '-r' (reboot) option.
 # 2019_07_14 Update: v3.12 Adjustment for Library Changes.
 # 2019_12_22 Fix: v3.13 Fix problem when using debug (-d) option without specifying level of debug.
-#@2020_05_23 Update: v3.14 Create 'osupdate_running' file before launching O/S update on remote.
+#@2020_05_23 Update: v3.14 Create 'LOCK_FILE' file before launching O/S update on remote.
 #@2020_07_28 Update: v3.15 Move location of o/s update is running indicator file to $SADMIN/tmp.
 #@2020_10_29 Fix: v3.16 If comma was used in server description, it cause delimiter problem.
 #@2020_11_04 Minor: v3.17 Minor code modification.
 #@2020_11_20 Update: v4.0 Restructure & rename from sadm_osupdate_farm to sadm_osupdate_starter.
 #@2020_12_02 Update: v4.1 Log is now in appending mode and can grow up to 5000 lines.
+#@2020_12_12 Update: v4.2 Use new LOCK_FILE & Add and use SADM_PID_TIMEOUT & SADM_LOCK_TIMEOUT Var.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -82,7 +83,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='4.1'                                   # Current Script Version
+export SADM_VER='4.2'                                   # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="Y"                              # [Y]=Append Existing Log [N]=Create New One
@@ -117,13 +118,8 @@ export SADM_MAX_RCLINE=60                              # At the end Trim rch to 
 # --------------------------------------------------------------------------------------------------
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
-ERROR_COUNT=0                               ; export ERROR_COUNT        # Nb. of update failed
-WARNING_COUNT=0                             ; export WARNING_COUNT      # Nb. of warning failed
-STAR_LINE=`printf %80s |tr " " "*"`         ; export STAR_LINE          # 80 equals sign line
-ONE_SERVER=""                               ; export ONE_SERVER         # Name If One server to Upd.
-
-# Script That is to be run on remote client to update the Operating System
-USCRIPT="sadm_osupdate.sh"                  ; export USCRIPT            # Script to execute on nodes
+export ONE_SERVER=""                                                    # Name of server to update
+export USCRIPT="sadm_osupdate.sh"                                       # Script to execute on nodes
 
 
 
@@ -206,79 +202,86 @@ rcmd_osupdate()
              return 1                                                   # Return Error to Caller
     fi 
     
-
-    while read wline
-        do
-        server_name=`               echo $wline|awk -F\; '{ print $1 }'`
-        server_os=`                 echo $wline|awk -F\; '{ print $2 }'`
-        server_domain=`             echo $wline|awk -F\; '{ print $3 }'`
-        server_update_auto=`        echo $wline|awk -F\; '{ print $4 }'`
-        server_update_reboot=`      echo $wline|awk -F\; '{ print $5 }'`
-        server_sporadic=`           echo $wline|awk -F\; '{ print $6 }'`
-        server_sadmin_dir=`         echo $wline|awk -F\; '{ print $8 }'`
-        fqdn_server=`echo ${server_name}.${server_domain}`          # Create FQN Server Name
-            
-        # Ping to server 
-        ping -c2 $fqdn_server >> /dev/null 2>&1
-        if [ $? -ne 0 ]
-            then sadm_write "${SADM_ERROR} Trying to ping $fqdn_server \n"
-                 if [ "$server_sporadic" = "1" ]
-                     then    sadm_write "${SADM_WARNING} Sporadic system now offline.\n"
-                             WARNING_COUNT=$(($WARNING_COUNT+1))
-                     else    sadm_write "${SADM_ERROR} Could not ping ${fqdn_server}.\n"
-                             sadm_write "Update is not possible, process aborted.\n"
-                             ERROR_COUNT=$(($ERROR_COUNT+1))
-                 fi
-                 return $ERROR_COUNT                                    # Return to Caller
-            else sadm_write "${SADM_OK} Ping host $fqdn_server \n"
-        fi
-
-        # IF SERVER O/S UPDATE FIELD IS OFF IN DATABASE, SKIP UPDATE
-        if [ "$server_update_auto" = "0" ]
-            then sadm_write "${SADM_WARNING} O/S Update for '${fqdn_server}' isn't activated.\n"
-                 sadm_write "No O/S Update will be perform.\n"
-                 return 1
-        fi 
-
-
-        # Activate or not the reboot at the end of the O/S Update.
-        WREBOOT=""                                                      # Def. Action = NO reboot
-        if [ "$server_update_reboot" = "1" ]                            # If Requested in Database
-            then WREBOOT="-r"                                           # Add -r option to reboot  
-        fi                                                              # This reboot after Update
-
-        # Create a file name $UPDATE_RUNNING while O/S Update is running (this turn off monitoring)
-        UPDATE_RUNNING="${SADM_TMP_DIR}/osupdate_running_${server_name}"
-        echo $(date) > ${UPDATE_RUNNING}                                # Create OSUPDATE Flag File
-        if [ $? -eq 0 ]                                                 # If Touch went OK
-           then sadm_write "${SADM_OK} Suspend monitoring while O/S update is running.\n"  
-           else sadm_write "${SADM_ERROR} Creating O/S update indicator file '${UPDATE_RUNNING}' \n" 
-        fi
+    wline=$(head -1 $SADM_TMP_FILE1)                                    # Read Server Info Line 
+    server_name=`               echo $wline|awk -F\; '{ print $1 }'`    # Get Server Name
+    server_os=`                 echo $wline|awk -F\; '{ print $2 }'`    # Server O/S
+    server_domain=`             echo $wline|awk -F\; '{ print $3 }'`    # Server Domain
+    server_update_auto=`        echo $wline|awk -F\; '{ print $4 }'`    # Update Auto 1=Yes 0=No
+    server_update_reboot=`      echo $wline|awk -F\; '{ print $5 }'`    # RebootAfter Upd 1=Yes 0=No
+    server_sporadic=`           echo $wline|awk -F\; '{ print $6 }'`    # SporadicServer 1=Yes 0=No
+    server_sadmin_dir=`         echo $wline|awk -F\; '{ print $8 }'`    # $SADMIN on remote Server
+    fqdn_server=`echo ${server_name}.${server_domain}`                  # Create FQN Server Name
         
-        
-        #sadm_write "Starting $USCRIPT on ${server_name}.${server_domain}\n"
-        sadm_write "\nStarting the O/S update on '${server_name}'.\n"
-        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
-            then sadm_write "$SADM_SSH_CMD $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'\n\n"
-                 $SADM_SSH_CMD $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
-                 RC=$? 
-            else sadm_write "Starting execution of ${server_sadmin_dir}/bin/$USCRIPT \n"
-                 ${server_sadmin_dir}/bin/$USCRIPT                       # Run Locally when on SADMIN
-                 RC=$?
-        fi                             
-        if [ $RC -ne 0 ]                                                # Update went Successfully ?
-           then sadm_write "${SADM_ERROR} O/S Update completed with error on '${server_name}'.\n"
-                ERROR_COUNT=$(($ERROR_COUNT+1))                         # Increment Error Counter
-                update_server_db "${server_name}" "F"                   # Update Status False in DB
-           else sadm_write "${SADM_OK} O/S Update completed successfully on '${server_name}'.\n"
-                update_server_db "${server_name}" "S"                   # Update Status Success in DB
-        fi
-        done < $SADM_TMP_FILE1
+    # Ping to server 
+    ping -c2 $fqdn_server >> /dev/null 2>&1
+    if [ $? -ne 0 ]
+        then if [ "$server_sporadic" = "1" ]
+                 then    sadm_write "${SADM_WARNING} Sporadic system now offline.\n"
+                         return 0 
+                 else    sadm_write "${SADM_ERROR} Could not ping ${fqdn_server}.\n"
+                         sadm_write "Update is not possible, process aborted.\n"
+                         return 1 
+             fi
+        else sadm_write "${SADM_OK} Ping host $fqdn_server.\n"
+    fi
 
-    if [ "$ERROR_COUNT" -ne 0 ] || [ "$WARNING_COUNT" -ne 0 ] 
-       then sadm_write "Total Error is $ERROR_COUNT and Warning at ${WARNING_COUNT}\n"
+    # If 'srv_update_auto' = 0 in Database for that server, it means no update allowed for server
+    if [ "$server_update_auto" = "0" ]
+        then sadm_write "${SADM_WARNING} O/S Update for '${fqdn_server}' isn't activated.\n"
+             sadm_write "No O/S Update will be performed.\n"
+             sadm_write "Unless you check field 'Activate O/S Update Schedule' in the schedule.\n"
+             return 1
     fi 
-    return $ERROR_COUNT
+
+    # Check existence of script on remote server and that it is executable.
+    pgm="${server_sadmin_dir}/bin/$USCRIPT"                         # Path To o/s update script
+    response=$($SADM_SSH_CMD $fqdn_server "if [ -x $pgm ] ;then echo 'ok' ;else echo 'error' ;fi")
+    if [ "$response" != "ok" ]
+        then sadm_write "${SADM_ERROR} '$pgm' don't exist or not executable on $fqdn_server.\n"
+             sadm_write "No O/S Update will be perform.\n"
+             return 1
+        else sadm_write "${SADM_OK} '$pgm' exist & executable on $fqdn_server.\n"
+    fi 
+
+    # Activate or not the reboot at the end of the O/S Update.
+    WREBOOT=""                                                      # Def. Action = NO reboot
+    if [ "$server_update_reboot" = "1" ]                            # If Requested in Database
+        then WREBOOT="-r"                                           # Add -r option to reboot  
+    fi                                                              # This reboot after Update
+    
+    # Create lock file ($LOCK_FILE) while O/S Update is running (this turn off monitoring)
+    LOCK_FILE="${SADM_TMP_DIR}/${server_name}.lock"                 # Prevent Monitor,lock file Name
+    echo "$SADM_INST - $(date)" > ${LOCK_FILE}                      # Create Lock File
+    if [ $? -eq 0 ]                                                 # If Creation went OK
+       then sadm_write "${SADM_OK} Monitoring suspended while O/S update is running.\n"  
+       else sadm_write "${SADM_ERROR} While creating the server lock file '${LOCK_FILE}'\n" 
+    fi
+    
+    #sadm_write "Starting $USCRIPT on ${server_name}.${server_domain}\n"
+    sadm_writelog " "
+    sadm_writelog "Starting the O/S update on '${server_name}'."
+    if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
+        then sadm_write "$SADM_SSH_CMD $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'\n\n"
+             $SADM_SSH_CMD $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
+             RC=$? 
+        else sadm_write "Starting execution of ${server_sadmin_dir}/bin/$USCRIPT \n"
+             ${server_sadmin_dir}/bin/$USCRIPT                       # Run Locally when on SADMIN
+             RC=$?
+    fi      
+
+    # Ignore if return an error.
+    # Cause if script failed on remote, an alert has been generated for it, 
+    # and we want only one alert for a failed update.
+    #if [ $RC -ne 0 ]                                                    # Update went Successfully?
+    #   then sadm_write "${SADM_ERROR} O/S Update completed with error on '${server_name}'.\n"
+    #        update_server_db "${server_name}" "F"                       # Update Status False in DB
+    #   else sadm_write "${SADM_OK} O/S Update completed successfully on '${server_name}'.\n"
+    #        update_server_db "${server_name}" "S"                       # Update Status Success 
+    #fi
+    
+    sadm_write "O/S Update completed on '${server_name}'.\n"            # Advise User were back .
+    if [ -f "$LOCK_FILE" ] ;then rm -f $LOCK_FILE >/dev/null 2>&1 ;fi   # Remove host Lock File    
+    return 0
 }
 
 
@@ -345,7 +348,7 @@ function cmd_options()
 
     # Get the server Name to Update, Else exit with Error.
     if [ $# -ne 1 ]
-        then sadm_write "\n${SADM_ERROR} You need to specify the server name you wish to update.\n"
+        then sadm_write "\n${SADM_ERROR} Please specify the system name.\n"
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
         else ONE_SERVER=$1                                              # Save Server Name to Update
@@ -353,5 +356,6 @@ function cmd_options()
 
     rcmd_osupdate                                                       # Go Update Server
     SADM_EXIT_CODE=$?                                                   # Save Exit Code
+    if [ -f "$LOCK_FILE" ] ; then rm -f $LOCK_FILE > /dev/null 2>&1 ;fi # Remove Server Lock File    
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
