@@ -18,11 +18,11 @@
 #
 # 2015_12_14 V1.0 Initial Version
 # 2020_09_23 V1.1 In Progress September 
-#@2020_10_01 Update: v1.2 First Release
-#@2020_10_05 Update: v1.3 Daily Backup Report & ReaR Backup Report now available.
-#@2020_10_06 Fix: v1.4 Bug that get Current backup size in yellow, when shouldn't.
-#@2020_10_06 Update: v1.5 Minor Typo Corrections
-#@2020_10_29 Update: v1.6 Change CmdLine Switch & Storix Daily report is working
+# 2020_10_01 Update: v1.2 First Release
+# 2020_10_05 Update: v1.3 Daily Backup Report & ReaR Backup Report now available.
+# 2020_10_06 Fix: v1.4 Bug that get Current backup size in yellow, when shouldn't.
+# 2020_10_06 Update: v1.5 Minor Typo Corrections
+# 2020_10_29 Update: v1.6 Change CmdLine Switch & Storix Daily report is working
 #@2020_11_04 Update: v1.7 Added 1st draft of scripts html report.
 #@2020_11_07 New: v1.8 Exclude file can be use to exclude scripts or servers from daily report.
 #@2020_11_08 Updated: v1.9 Show Alert Group Name on Script Report
@@ -31,6 +31,7 @@
 #@2020_11_12 Updated v1.12 Warning in Yellow when backup outdated, bug fixes.
 #@2020_11_21 Updated v1.13 Insert Script execution Title.
 #@2020_12_12 Updated v1.14 Major revamp of HTML and PDF Report that are send via email to sysadmin.
+#@2020_12_15 Updated v1.15 Cosmetic changes to Daily Report.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -62,7 +63,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.14'                                  # Current Script Version
+export SADM_VER='1.15'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -466,6 +467,7 @@ script_report()
     sadm_writelog "${SADM_OK} Scripts grouped by server page generated" # Show progress to user
 
     # End of HTML Page
+    echo -e "\n<hr class="large_green">\n"              >> $HTML_SFILE  # Big Horizontal Green Line
     echo -e "</body>\n</html>\n\n" >> $HTML_SFILE                           # End of HTML Page
 
 
@@ -519,7 +521,7 @@ script_page_heading()
     #
     echo -e "<!DOCTYPE html><html>"         >  $HTML_SFILE
     echo -e "<head>"                        >> $HTML_SFILE
-    echo -e "<meta charset='utf-8' />"    >> $HTML_SFILE
+    echo -e "<meta charset='utf-8' />"      >> $HTML_SFILE
     #
     echo -e "<style>"                                                             >> $HTML_SFILE
     #echo -e "th { color: white; background-color: #000000; padding: 0px; }"         >> $HTML_SFILE
@@ -910,12 +912,18 @@ rear_heading()
     echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }" >> $HTML
     echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }" >> $HTML
     echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML
+    echo -e "\n/* Dashed red border */" >> $HTML
+    echo -e "hr.dash        { border-top: 1px dashed red; }" >> $HTML
+    echo -e "/* Large rounded green border */" >> $HTML
+    echo -e "hr.large_green { border: 3px solid green; border-radius: 5px; }" >> $HTML
     echo -e "</style>" >> $HTML
     #
     echo -e "\n<title>$RTITLE</title>" >> $HTML
     echo -e "</head>\n" >> $HTML
     echo -e "<body>" >> $HTML
-    echo -e "<br>\n<center><h1>${RTITLE}</h1></center>" >> $HTML
+    echo -e "\n<center><h1>${RTITLE}</h1></center>" >> $HTML
+    echo -e "\n<hr class="large_green">\n<br>"              >> $HTML        # Big Horizontal Green Line
+
     echo -e "\n<center><table border=0>" >> $HTML
     #
     echo -e "\n<thead>" >> $HTML
@@ -1101,7 +1109,8 @@ rear_line()
 #===================================================================================================
 rear_legend()
 {
-    echo -e "\n\n<br><table cellspacing="0" cellpadding="0" border=0>\n"  >> $HTML_RFILE                # Begin Legend Row
+    echo -e "\n<br>\n<hr class="dash">\n" >> $HTML_RFILE                # Horizontal Dashed Line
+    echo -e "\n\n<br><table cellspacing="0" cellpadding="0" border=0>\n"  >> $HTML_RFILE 
     BCOL="#ffffff"                                                      # Background color (White)
     FCOL="#000000"                                                      # Font Color (Black)
 
@@ -1146,7 +1155,7 @@ rear_legend()
     echo -e "<td align=left colspan=8 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_RFILE
     echo -e "</tr>"  >> $HTML_RFILE 
 
-    echo -e "</table>\n" >> $HTML_RFILE                                 # End of Legend Section
+    echo -e "</table><br><br>\n" >> $HTML_RFILE                         # End of Legend Section
 }
 
 
@@ -1364,12 +1373,17 @@ storix_heading()
     echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }" >> $HTML_XFILE
     echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }" >> $HTML_XFILE
     echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML_XFILE
+    echo -e "\n/* Dashed red border */" >> $HTML_XFILE
+    echo -e "hr.dash        { border-top: 1px dashed red; }" >> $HTML_XFILE
+    echo -e "/* Large rounded green border */" >> $HTML_XFILE
+    echo -e "hr.large_green { border: 3px solid green; border-radius: 5px; }" >> $HTML_XFILE
     echo -e "</style>" >> $HTML_XFILE
     #
     echo -e "\n<title>$RTITLE</title>" >> $HTML_XFILE
     echo -e "</head>\n" >> $HTML_XFILE
     echo -e "<body>" >> $HTML_XFILE
-    echo -e "<br>\n<center><h1>${RTITLE}</h1></center>" >> $HTML_XFILE
+    echo -e "\n<center><h1>${RTITLE}</h1></center>" >> $HTML_XFILE
+    echo -e "\n<hr class="large_green">\n"              >> $HTML_XFILE
     echo -e "\n<center><table border=0>" >> $HTML_XFILE
     #
     echo -e "\n<thead>" >> $HTML_XFILE
@@ -1517,7 +1531,8 @@ storix_line()
 #===================================================================================================
 storix_legend()
 {
-    echo -e "\n\n<br><table cellspacing="0" cellpadding="0" border=0>\n"  >> $HTML_XFILE                # Begin Legend Row
+    echo -e "\n<br>\n<hr class="dash">\n" >> $HTML_XFILE                # Horizontal Dashed Line
+    echo -e "\n\n<br><table cellspacing="0" cellpadding="0" border=0>\n"  >> $HTML_XFILE 
     BCOL="#ffffff"                                                      # Background color (White)
     FCOL="#000000"                                                      # Font Color (Black)
 
@@ -1568,7 +1583,7 @@ storix_legend()
     DATA="The size of the ISO file is zero."
     echo -e "<td align=left colspan=8 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
     echo -e "</tr>"  >> $HTML_XFILE 
-    echo -e "</table>\n" >> $HTML_XFILE                                 # End of Legend Section
+    echo -e "</table>\n<br><br>\n" >> $HTML_XFILE                       # End of Legend Section
 }
 
 
@@ -1781,12 +1796,17 @@ backup_heading()
     echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }" >> $HTML
     echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }" >> $HTML
     echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML
+    echo -e "\n/* Dashed red border */" >> $HTML
+    echo -e "hr.dash        { border-top: 1px dashed red; }" >> $HTML
+    echo -e "/* Large rounded green border */" >> $HTML
+    echo -e "hr.large_green { border: 3px solid green; border-radius: 5px; }" >> $HTML
     echo -e "</style>" >> $HTML
     #
     echo -e "\n<title>$RTITLE</title>" >> $HTML
     echo -e "</head>\n" >> $HTML
     echo -e "<body>" >> $HTML
-    echo -e "<br>\n<center><h1>${RTITLE}</h1></center>" >> $HTML
+    echo -e "\n<center><h1>${RTITLE}</h1></center>" >> $HTML
+    echo -e "\n<hr class="large_green">\n"              >> $HTML
     echo -e "\n<center><table border=0>" >> $HTML
     #
     echo -e "\n<thead>" >> $HTML
@@ -1965,6 +1985,7 @@ backup_line()
 #===================================================================================================
 backup_legend()
 {
+    echo -e "\n<br>\n<hr class="dash">\n" >> $HTML_BFILE                # Horizontal Dashed Line
     echo -e "\n\n<br><table cellspacing="0" cellpadding="0" border=0>\n"  >> $HTML_BFILE 
     BCOL="#ffffff"                                                      # Background color (White)
     FCOL="#000000"                                                      # Font Color (Black)
@@ -2009,8 +2030,7 @@ backup_legend()
     DATA="The backup size is zero or ${WPCT}% bigger or smaller than the current backup."
     echo -e "<td align=left colspan=6 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
     echo -e "</tr>"  >> $HTML_BFILE 
-
-    echo -e "</table>\n" >> $HTML_BFILE                                 # End of Legend Section
+    echo -e "</table>\n<br><br>\n" >> $HTML_BFILE                       # End of Legend Section
 }
 
 
