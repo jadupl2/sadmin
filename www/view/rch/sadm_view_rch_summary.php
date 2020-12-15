@@ -28,9 +28,10 @@
 #   2018_05_06 JDuplessis
 #       2.1 Change to use sadm_view_file instead of sadm_view_log 
 # 2018_07_21  v2.2 Screen disposition adjustments
-#@2018_09_16  v2.3 Added Alert group Display 
-#@2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
-#@2019_09_20 Update v2.5 Show History (RCH) content using same uniform way.
+# 2018_09_16  v2.3 Added Alert group Display 
+# 2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
+# 2019_09_20 Update v2.5 Show History (RCH) content using same uniform way.
+#@2020_12_13 Update v2.6 Add link in the heading to view the Daily Scripts Report, if HTML exist.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -59,13 +60,16 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.5" ;                                                        # Current version number
-$CREATE_BUTTON = False ;                                                # Yes Display Create Button
-$URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
-$URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View RCH File Content URL
-$URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
-
+$DEBUG              = False ;                                           # Debug Activated True/False
+$SVER               = "2.6" ;                                           # Current version number
+$CREATE_BUTTON      = False ;                                           # Yes Display Create Button
+$URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
+$URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
+$URL_VIEW_FILE      = '/view/log/sadm_view_file.php';                   # View File Content URL
+$URL_REAR_REPORT    = "/view/daily_rear_report.html";                   # Rear Daily Report Page
+$URL_BACKUP_REPORT  = "/view/daily_backup_report.html";                 # Backup Daily Report Page
+$URL_STORIX_REPORT  = "/view/daily_storix_report.html";                 # Storix Daily Report Page
+$URL_SCRIPTS_REPORT = "/view/daily_scripts_report.html";                # Scripts Daily Report Page
 
 
 # ==================================================================================================
@@ -273,7 +277,12 @@ function display_script_array($con,$wpage_type,$script_array) {
     }
 
     # DISPLAY HEADING AND EACH LINES REQUESTED FROM THE ARRAY JUST BUILT ---------------------------
-    display_lib_heading("NotHome","$HDESC","",$SVER);                   # Display Standard Heading 
+    $title1="$HDESC";
+    $title2="";
+    if (file_exists(SADM_WWW_DIR . "/view/daily_scripts_report.html")) {
+        $title2="<a href='" . $URL_SCRIPTS_REPORT . "'>View the Daily Scripts Report</a>"; 
+    }       
+    display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
     display_script_array($con,$SELECTION,$script_array);                # Go Display Script Array
