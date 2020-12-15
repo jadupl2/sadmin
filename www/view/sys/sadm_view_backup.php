@@ -24,7 +24,8 @@
 # 2019_07_06 New: v1.0 Initial version of backup Status Page
 # 2019_08_14 New: v1.1 Allow to return to this page when backup schedule is updated (Send BACKURL)
 # 2019_09_20 Update v1.3 Show History (RCH) content using same uniform way.
-#@2019_12_01 Update v1.4 Change Layout to align with daily backup schedule.
+# 2019_12_01 Update v1.4 Change Layout to align with daily backup schedule.
+#@2020_12_13 Update v1.5 Added link in Heading to view the Daily Backup Report, if HTML file exist.
 #
 # ==================================================================================================
 #
@@ -53,23 +54,27 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
-$DEBUG           = False ;                                              # Debug Activated True/False
-$WVER            = "1.4" ;                                              # Current version number
-$URL_CREATE      = '/crud/srv/sadm_server_create.php';                  # Create Page URL
-$URL_UPDATE      = '/crud/srv/sadm_server_update.php';                  # Update Page URL
-$URL_DELETE      = '/crud/srv/sadm_server_delete.php';                  # Delete Page URL
-$URL_MAIN        = '/crud/srv/sadm_server_main.php';                    # Maintenance Main Page URL
-$URL_HOME        = '/index.php';                                        # Site Main Page
-$URL_SERVER      = '/view/srv/sadm_view_servers.php';                   # View Servers List
-$URL_OSUPDATE    = '/crud/srv/sadm_server_osupdate.php';                # O/S Schedule Update URL
-$URL_BACKUP      = '/crud/srv/sadm_server_backup.php';                  # Backup Schedule Update URL
-$URL_VIEW_FILE   = '/view/log/sadm_view_file.php';                      # View File Content URL
-$URL_VIEW_RCH    = '/view/rch/sadm_view_rchfile.php';                   # View RCH File Content URL
-$URL_HOST_INFO   = '/view/srv/sadm_view_server_info.php';               # Display Host Info URL
-$URL_VIEW_BACKUP = "/view/sys/sadm_view_backup.php";                    # CRUD Server Menu URL
-$CREATE_BUTTON   = False ;                                              # Yes Display Create Button
-$BACKUP_RCH      = 'sadm_backup.rch';                                   # Backup RCH Suffix name
-$BACKUP_LOG      = 'sadm_backup.log';                                   # Backup LOG Suffix name
+$DEBUG              = False ;                                           # Debug Activated True/False
+$WVER               = "1.5" ;                                           # Current version number
+$URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
+$URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
+$URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
+$URL_MAIN           = '/crud/srv/sadm_server_main.php';                 # Maintenance Main Page URL
+$URL_HOME           = '/index.php';                                     # Site Main Page
+$URL_SERVER         = '/view/srv/sadm_view_servers.php';                # View Servers List
+$URL_OSUPDATE       = '/crud/srv/sadm_server_osupdate.php';             # O/S Schedule Update URL
+$URL_BACKUP         = '/crud/srv/sadm_server_backup.php';               # Backup Schedule Update URL
+$URL_VIEW_FILE      = '/view/log/sadm_view_file.php';                   # View File Content URL
+$URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
+$URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
+$URL_VIEW_BACKUP    = "/view/sys/sadm_view_backup.php";                 # CRUD Server Menu URL
+$URL_REAR_REPORT    = "/view/daily_rear_report.html";                   # Rear Daily Report Page
+$URL_BACKUP_REPORT  = "/view/daily_backup_report.html";                 # Backup Daily Report Page
+$URL_STORIX_REPORT  = "/view/daily_storix_report.html";                 # Storix Daily Report Page
+$URL_SCRIPTS_REPORT = "/view/daily_scripts_report.html";                # Scripts Daily Report Page
+$CREATE_BUTTON      = False ;                                           # Yes Display Create Button
+$BACKUP_RCH         = 'sadm_backup.rch';                                # Backup RCH Suffix name
+$BACKUP_LOG         = 'sadm_backup.log';                                # Backup LOG Suffix name
 
 
 #===================================================================================================
@@ -273,6 +278,9 @@ function display_data($count, $row) {
     # DISPLAY SCREEN HEADING    
     $title1="Daily Backup Status";
     $title2="";
+    if (file_exists(SADM_WWW_DIR . "/view/daily_backup_report.html")) {
+       $title2="<a href='" . $URL_BACKUP_REPORT . "'>View the Backup Daily Report</a>"; 
+    } 
     display_lib_heading("NotHome","$title1","$title2",$WVER);           # Display Content Heading
 
     setup_table();                                                      # Create Table & Heading
