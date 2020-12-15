@@ -28,7 +28,8 @@
 # 2020_01_13 Update: v1.4 Change column disposition and show ReaR version no. of systems.
 # 2020_01_14 Update: v1.5 Don't show MacOS System on page (Not supported by ReaR).
 # 2020_03_05 Update: v1.6 When mouse over server name (Show more information).
-#@2020_07_29 Update: v1.7 Remove system description to allow more space on each line.
+# 2020_07_29 Update: v1.7 Remove system description to allow more space on each line.
+#@2020_13_13 Update: v1.8 Add link in heading to view ReaR Daily Report.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -56,23 +57,27 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
-$DEBUG           = False ;                                              # Debug Activated True/False
-$WVER            = "1.7" ;                                              # Current version number
-$URL_CREATE      = '/crud/srv/sadm_server_create.php';                  # Create Page URL
-$URL_UPDATE      = '/crud/srv/sadm_server_update.php';                  # Update Page URL
-$URL_DELETE      = '/crud/srv/sadm_server_delete.php';                  # Delete Page URL
-$URL_MAIN        = '/crud/srv/sadm_server_main.php';                    # Maintenance Main Page URL
-$URL_HOME        = '/index.php';                                        # Site Main Page
-$URL_SERVER      = '/view/srv/sadm_view_servers.php';                   # View Servers List
-$URL_OSUPDATE    = '/crud/srv/sadm_server_osupdate.php';                # O/S Schedule Update URL
-$URL_BACKUP      = '/crud/srv/sadm_server_rear_backup.php';             # Rear Schedule Update URL
-$URL_VIEW_FILE   = '/view/log/sadm_view_file.php';                      # View File Content URL
-$URL_VIEW_RCH    = '/view/rch/sadm_view_rchfile.php';                   # View RCH File Content URL
-$URL_HOST_INFO   = '/view/srv/sadm_view_server_info.php';               # Display Host Info URL
-$URL_VIEW_BACKUP = "/view/sys/sadm_view_rear.php";                      # Rear Back Status Page
-$CREATE_BUTTON   = False ;                                              # Yes Display Create Button
-$BACKUP_RCH      = 'sadm_rear_backup.rch';                              # Rear BackupRCH Suffix name
-$BACKUP_LOG      = 'sadm_rear_backup.log';                              # Rear BackupLog Suffix name
+$DEBUG              = False ;                                           # Debug Activated True/False
+$WVER               = "1.8" ;                                           # Current version number
+$URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
+$URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
+$URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
+$URL_MAIN           = '/crud/srv/sadm_server_main.php';                 # Maintenance Main Page URL
+$URL_HOME           = '/index.php';                                     # Site Main Page
+$URL_SERVER         = '/view/srv/sadm_view_servers.php';                # View Servers List
+$URL_OSUPDATE       = '/crud/srv/sadm_server_osupdate.php';             # O/S Schedule Update URL
+$URL_BACKUP         = '/crud/srv/sadm_server_rear_backup.php';          # Rear Schedule Update URL
+$URL_VIEW_FILE      = '/view/log/sadm_view_file.php';                   # View File Content URL
+$URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
+$URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
+$URL_VIEW_BACKUP    = "/view/sys/sadm_view_rear.php";                   # Rear Back Status Page
+$URL_REAR_REPORT    = "/view/daily_rear_report.html";                   # Rear Daily Report Page
+$URL_BACKUP_REPORT  = "/view/daily_backup_report.html";                 # Backup Daily Report Page
+$URL_STORIX_REPORT  = "/view/daily_storix_report.html";                 # Storix Daily Report Page
+$URL_SCRIPTS_REPORT = "/view/daily_scripts_report.html";                # Scripts Daily Report Page
+$CREATE_BUTTON      = False ;                                           # Yes Display Create Button
+$BACKUP_RCH         = 'sadm_rear_backup.rch';                           # Rear BackupRCH Suffix name
+$BACKUP_LOG         = 'sadm_rear_backup.log';                           # Rear BackupLog Suffix name
 
 
 #===================================================================================================
@@ -275,7 +280,10 @@ function display_data($count, $row) {
         exit();  
     }
     $title1="ReaR Backup Schedule Status";                              # Page Title 1
-    $title2="ReaR only available on x86_64 and i686 architecture";                                                         # Page Title 2
+    $title2="";
+    if (file_exists(SADM_WWW_DIR . "/view/daily_rear_report.html")) {
+        $title2="<a href='" . $URL_REAR_REPORT . "'>View the ReaR Daily Report</a>"; 
+    }     
     display_lib_heading("NotHome","$title1","$title2",$WVER);           # Display Heading
     setup_table();                                                      # Create Table & Heading
     
