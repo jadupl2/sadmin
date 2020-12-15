@@ -27,10 +27,15 @@
 # 2020_03_03 New: v1.1 Shortcut Menu added in page header for fast access within the site.
 # 2020_04_10 Update: v1.2 Add Network link shortcut at the top of each page.
 # 2020_04_25 Update: v1.3 Reduce Menu line in header to fit on Ipad.
-#@2020_09_23 Update: v1.4 Add Tooltips to Shortcut in the page header.
+# 2020_09_23 Update: v1.4 Add Tooltips to Shortcut in the page header.
+#@2020_12_15 Update: v1.5 Add Storix Report Link in Header, only if Storix html file exist.
 #
 # ==================================================================================================
 #
+$URL_STORIX_REPORT  = "/view/daily_storix_report.html";                 # Storix Daily Report Page
+
+
+
     echo "</head>";
     #echo "\n<body vlink='red'>\n";
     echo "\n<body>\n";
@@ -79,6 +84,12 @@
             <a href='/view/sys/sadm_view_rear.php'><span data-toggle='tooltip' title='Status of the ReaR Image Backup Schedule'>ReaR Backup</span></a>
             &nbsp;&nbsp;&nbsp;
             <a href='/view/perf/sadm_server_perf_menu.php'><span data-toggle='tooltip' title='Show Performance Graph of systems'>Performance</span></a>
+            &nbsp;&nbsp;&nbsp;
+            <?php
+            if (file_exists(SADM_WWW_DIR . "/view/daily_storix_report.html")) {
+                echo "<a href='/view/daily_storix_report.html'><span data-toggle='tooltip' title='Show Storix Daily Report'>Storix</span></a>";
+            }                
+            ?>
         </div>
         </td>
 
