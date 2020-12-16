@@ -55,65 +55,70 @@
 # 2020_09_12 Update: v1.43 Make sure that "${SADM_UCFG_DIR}/.gitkeep" exist to be part of git clone.
 # 2020_09_20 Update: v1.44 Minor adjustments to log entries.
 #@2020_11_07 Update: v1.45 Remove old rch conversion code execution.
+#@2020_12_16 Update: v1.46 Minor code change (Isolate the check for sadmin user and group)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
-     
+
 
 
 
 #===================================================================================================
-# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
 # SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
+# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
 #===================================================================================================
 
-    # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-    if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
-        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
-             EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
-             if [ $? -eq 0 ]                                            # Yes it is 
-                then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}."
-                else exit 1                                             # No SADMIN Env. Var. Exit
-             fi
-    fi 
+# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # If SADMIN EnvVar not right
+    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null          # SADMIN in /etc/environment
+         if [ $? -eq 0 ]                                                # Found SADMIN in /etc/env..
+            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                 printf "'SADMIN' Environment variable temporarily set to ${SADMIN}.\n"
+            else exit 1                                                 # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
-    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
-    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                 # Current Script filename(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`       # Current Script filename(without extension)
+export SADM_TPID="$$"                                   # Current Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                      # Current Host name without Domain Name
+export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.45'                              # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
-    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
-    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
-    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
-    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
-    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
-    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
+# USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
+export SADM_VER='1.46'                                  # Current Script Version
+export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
+export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
+export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New Log
+export SADM_LOG_HEADER="Y"                              # [Y]=Include Log Header  [N]=No log Header
+export SADM_LOG_FOOTER="Y"                              # [Y]=Include Log Footer  [N]=No log Footer
+export SADM_MULTIPLE_EXEC="N"                           # Allow running multiple copy at same time ?
+export SADM_PID_TIMEOUT=7200                            # Nb. Sec. a PID can block script execution
+export SADM_LOCK_TIMEOUT=3600                           # Sec. before Server Lock File get deleted
+export SADM_USE_RCH="Y"                                 # Gen. History Entry in ResultCodeHistory 
+export SADM_DEBUG=0                                     # Debug Level - 0=NoDebug Higher=+Verbose
+export SADM_TMP_FILE1=""                                # Tmp File1 you can use, Libr. will set name
+export SADM_TMP_FILE2=""                                # Tmp File2 you can use, Libr. will set name
+export SADM_TMP_FILE3=""                                # Tmp File3 you can use, Libr. will set name
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library Functions
-    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
-    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
-    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                          # LOAD SADMIN Standard Shell Libr. Functions
+export SADM_OS_NAME=$(sadm_get_osname)                  # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
+export SADM_OS_VERSION=$(sadm_get_osversion)            # O/S Full Version Number  (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)      # O/S Major Version Number (ex: 9)
 
-#---------------------------------------------------------------------------------------------------
-# Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# They can be overridden here, on a per script basis (if needed).
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
-    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
-    #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/CFG/SADMIN.CFG FILE).
+# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                               # 0=None 1=AlertOnError 2=AlertOnOK 3=Always
+#export SADM_ALERT_GROUP="default"                      # Alert Group to advise (alert_group.cfg)
+#export SADM_MAIL_ADDR="your_email@domain.com"          # Email to send log (Override sadmin.cfg)
+#export SADM_MAX_LOGLINE=500                            # At the end Trim log to 500 Lines(0=NoTrim)
+#export SADM_MAX_RCLINE=35                              # At the end Trim rch to 35 Lines (0=NoTrim)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+
 #===================================================================================================
+
 
 
 
@@ -633,6 +638,41 @@ file_housekeeping()
 
 
 # --------------------------------------------------------------------------------------------------
+# This function check if the SADMIN group ($SADM_GROUP) and user ($SADM_USER) exist on system.
+# If not the advise user about what to do and abort script execution & return error to O/S/
+# --------------------------------------------------------------------------------------------------
+function check_sadmin_user()
+{
+    # The '$SADM_GROUP' (Define in sadmin.cfg) group should exist - If not advise user & abort
+    if [ "$SADM_OS_TYPE" != "DARWIN" ]                                  # If not on MacOS
+        then grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1         # $SADMIN Group Defined ?
+             if [ $? -ne 0 ]                                            # SADM_GROUP not Defined
+                then sadm_write "Group ${SADM_GROUP} not present.\n"    # Advise user will create
+                     sadm_write "Create group or change 'SADM_GROUP' value in $SADMIN/sadmin.cfg.\n"
+                     sadm_write "Process Aborted.\n"                    # Abort got be created
+                     sadm_stop 1                                        # Terminate Gracefully
+                     exit 1                                             # Exit with Error
+             fi
+    fi
+
+    # The '$SADM_USER' user exist user - if not create it and make it part of 'sadmin' group.
+    if [ "$SADM_OS_TYPE" != "DARWIN" ]                                  # If not on MacOS
+        then grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1          # $SADMIN User Defined ?
+             if [ $? -ne 0 ]                                            # NO Not There
+                then sadm_write "User $SADM_USER not present.\n"        # usr in sadmin.cfg not found
+                     sadm_write "Create user or change 'SADM_USER' value in $SADMIN/sadmin.cfg\n"
+                     sadm_write "Process Aborted.\n"                    # Abort got be created
+                     sadm_stop 1                                        # Terminate Gracefully
+                     exit 1                                             # Exit with Error
+             fi
+    fi
+    return 0                                                            # Return OK to Caller
+}
+
+
+
+
+# --------------------------------------------------------------------------------------------------
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
 # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
@@ -681,44 +721,14 @@ function cmd_options()
              exit 1                                                     # Exit To O/S with Error
     fi
 
-    # Check if 'sadmin' group exist - If not create it.
-    if [ "$SADM_OS_TYPE" != "DARWIN" ]                                  # If not on MacOS
-        then grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1         # $SADMIN Group Defined ?
-             if [ $? -ne 0 ]                                            # SADM_GROUP not Defined
-                then sadm_write "Group ${SADM_GROUP} not present.\."    # Advise user will create
-                     sadm_write "Create group or change 'SADM_GROUP' value in $SADMIN/sadmin.cfg\m"
-                     #sadm_write "Creating the ${SADM_GROUP} group\n"   # Advise user will create
-                     #groupadd ${SADM_GROUP}                            # Create SADM_GROUP
-                     #if [ $? -ne 0 ]                                   # Error creating Group
-                     #   then sadm_write "Error when creating group ${SADM_GROUP}.\n"
-                     sadm_write "Process Aborted.\n"                    # Abort got be created
-                     sadm_stop 1                                        # Terminate Gracefully
-                    #fi
-             fi
-    fi
-
-    # Check is 'sadmin' user exist user - if not create it and make it part of 'sadmin' group.
-    if [ "$SADM_OS_TYPE" != "DARWIN" ]                                  # If not on MacOS
-        then grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1          # $SADMIN User Defined ?
-             if [ $? -ne 0 ]                                            # NO Not There
-                then sadm_write "User $SADM_USER not present.\n"        # usr in sadmin.cfg not found
-                     sadm_write "Create user or change 'SADM_USER' value in $SADMIN/sadmin.cfg\n"
-                     #sadm_write"The user will now be created.\n"       # Advise user will create
-                     #useradd -d '/sadmin' -c 'SADMIN user' -g $SADM_GROUP -e '' $SADM_USER
-                     #if [ $? -ne 0 ]                                   # Error creating user
-                     #   then sadm_write "Error when creating user ${SADM_USER}.\n"
-                     sadm_write "Process Aborted.\n"                    # Abort got be created
-                     sadm_stop 1                                        # Terminate Gracefully
-                     #fi
-             fi
-    fi
-
+    check_sadmin_user                                                   # Check SADMIN Usr & Grp
     dir_housekeeping                                                    # Do Dir HouseKeeping
     DIR_ERROR=$?                                                        # ReturnCode = Nb. of Errors
     file_housekeeping                                                   # Do File HouseKeeping
     FILE_ERROR=$?                                                       # ReturnCode = Nb. of Errors
-    check_sadmin_account                                                # Check sadmin Acc. if Lock
+    check_sadmin_account                                                # SADMIN User Account Lock ?
     ACC_ERROR=$?                                                        # Return 1 if Locked 
+
     SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR+$ACC_ERROR))               # Error= DIR+File+Lock Func.
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
