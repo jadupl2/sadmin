@@ -30,78 +30,69 @@
 #@2019_05_19 Update: v2.4 Add server crontab file to housekeeping
 #@2020_02_19 Update: v2.5 Restructure & added archiving of old alert history to history archive. 
 #@2020_05_23 Update: v2.6 Minor change about reading /etc/environment and change logging messages.
+#@2020_12_16 Update: v2.7 Include code to include in SADMIN server crontab the daily report email.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
 
+
+
 #===================================================================================================
-# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
 # SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
+# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
 #===================================================================================================
 
-    # Is 'SADMIN' environment variable defined ?. If not try to use /etc/environment SADMIN value.
-    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]                             # If SADMIN EnvVar not right
-        then missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
-             if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
-             missenv="Please set 'SADMIN' environment variable to the install directory."
-             grep "SADMIN" /etc/environment >/dev/null 2>&1            # SADMIN line in /etc/env.? 
-             if [ $? -eq 0 ]                                            # Yes use SADMIN definition
-                 then export SADMIN=`grep "SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
-                      misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
-                      missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
-                      if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
-                      printf "\n${missenv}\n${misstmp}\n\n"
-                 else missvar="Add 'SADMIN=/InstallDir' in /etc/environment to remove this message."
-                      printf "\n${missenv}\n$missvar\n"                 # Recommendation to user    
-                      exit 1                                            # Back to shell with Error
-             fi
-    fi 
-        
-    # Check if the SADMIN Shell Library is accessible, if not advise user and exit with error.
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                            # Shell Library not readable
-        then missenv="Please set 'SADMIN' environment variable to the install directory."
-             printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
-             exit 1                                                     # Exit to Shell with Error
-    fi
+# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # If SADMIN EnvVar not right
+    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null          # SADMIN in /etc/environment
+         if [ $? -eq 0 ]                                                # Found SADMIN in /etc/env..
+            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                 printf "'SADMIN' Environment variable temporarily set to ${SADMIN}.\n"
+            else exit 1                                                 # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
-    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
-    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                 # Current Script filename(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`       # Current Script filename(without extension)
+export SADM_TPID="$$"                                   # Current Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                      # Current Host name without Domain Name
+export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.6'                               # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
-    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
-    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
-    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
-    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
-    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
-    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
+# USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
+export SADM_VER='2.7'                                   # Current Script Version
+export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
+export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
+export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New Log
+export SADM_LOG_HEADER="Y"                              # [Y]=Include Log Header  [N]=No log Header
+export SADM_LOG_FOOTER="Y"                              # [Y]=Include Log Footer  [N]=No log Footer
+export SADM_MULTIPLE_EXEC="N"                           # Allow running multiple copy at same time ?
+export SADM_PID_TIMEOUT=7200                            # Nb. Sec. a PID can block script execution
+export SADM_LOCK_TIMEOUT=3600                           # Sec. before Server Lock File get deleted
+export SADM_USE_RCH="Y"                                 # Gen. History Entry in ResultCodeHistory 
+export SADM_DEBUG=0                                     # Debug Level - 0=NoDebug Higher=+Verbose
+export SADM_TMP_FILE1=""                                # Tmp File1 you can use, Libr. will set name
+export SADM_TMP_FILE2=""                                # Tmp File2 you can use, Libr. will set name
+export SADM_TMP_FILE3=""                                # Tmp File3 you can use, Libr. will set name
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library
-    export SADM_OS_NAME=$(sadm_get_osname)              # Uppercase, REDHAT,CENTOS,UBUNTU,AIX,DEBIAN
-    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
-    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                          # LOAD SADMIN Standard Shell Libr. Functions
+export SADM_OS_NAME=$(sadm_get_osname)                  # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
+export SADM_OS_VERSION=$(sadm_get_osversion)            # O/S Full Version Number  (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)      # O/S Major Version Number (ex: 9)
 
-#---------------------------------------------------------------------------------------------------
-# Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# They can be overridden here, on a per script basis (if needed).
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
-    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
-    #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/CFG/SADMIN.CFG FILE).
+# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                               # 0=None 1=AlertOnError 2=AlertOnOK 3=Always
+#export SADM_ALERT_GROUP="default"                      # Alert Group to advise (alert_group.cfg)
+#export SADM_MAIL_ADDR="your_email@domain.com"          # Email to send log (Override sadmin.cfg)
+#export SADM_MAX_LOGLINE=500                            # At the end Trim log to 500 Lines(0=NoTrim)
+#export SADM_MAX_RCLINE=35                              # At the end Trim rch to 35 Lines (0=NoTrim)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+
 #===================================================================================================
-
 
 
 
@@ -114,6 +105,7 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL            # Se
 yellow=$(tput setaf 3)                      ; export yellow                 # Yellow color
 white=$(tput setaf 7)                       ; export white                  # White color
 ARC_DAYS=7                                  ; export ARC_DAYS               # ALert Age to move
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -405,6 +397,39 @@ file_housekeeping()
 
 
 # --------------------------------------------------------------------------------------------------
+# This function make sure that the SADMIN server contains latest scripts version that was added.
+# --------------------------------------------------------------------------------------------------
+function adjust_server_crontab()
+{
+    # Make sure the Daily Email Report is in the SADMIN server crontab.
+    F="/etc/cron.d/sadm_server"
+    if ! grep -q 'sadm_daily_report.sh' $F 
+       then echo "#" >> $F 
+            echo "# SADMIN Daily Email Report about Scripts, ReaR and Daily Backup" >> $F 
+            echo "04 07 * * * root $SADMIN/bin/sadm_daily_report.sh > /dev/null 2>&1" >> $F 
+            echo "#" >> $F  
+            sadm_write "${BOLD}${YELLOW}Daily Email Report added to ${F}${NORMAL}.\n" 
+    fi 
+
+    # Push SERVER $SADMIN/bin $SADMIN/lib $SADMIN/.*.cfg to all actives clients.
+    # -s To include push of $SADMIN/sys
+    # -u To include push of $SADMIN/(usr/bin usr/lib usr/cfg) 
+    F="/etc/cron.d/sadm_server"
+    if ! grep -q 'sadm_push_sadmin.sh' $F 
+       then echo "#" >> $F 
+            echo "# Daily push of $SADMIN/(lib,bin,/cfg/.*) to all active servers (Optional)" >>$F 
+            echo "#   -s To include push of $SADMIN/sys" >> $F
+            echo "#   -u To include push of $SADMIN/(usr/bin usr/lib usr/cfg)" >> $F 
+            echo "#30 11,20 * * * root ${SADMIN}/bin/sadm_push_sadmin.sh > /dev/null 2>&1" >>$F 
+            echo "#" >> $F  
+            sadm_write "${BOLD}${YELLOW}Daily Push of SADMIN Scripts added to ${F}${NORMAL}.\n" 
+    fi 
+    sadm_write "\n" 
+    return 0                                                            # Return OK to Caller
+}
+
+
+# --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
 
@@ -448,6 +473,7 @@ file_housekeeping()
              exit 1                                                     # Exit To O/S with error
     fi
 
+    adjust_server_crontab                                               # Check sadm_server crontab
     alert_housekeeping                                                  # Prune Alert History File
     if [ $? -eq 0 ]
        then sadm_write "$SADM_OK Alert archiving done.\n"
