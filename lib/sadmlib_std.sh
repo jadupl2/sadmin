@@ -158,6 +158,7 @@
 #@2020_11_24 Update: v3.57 Revisit and Optimize 'send_alert' function.
 #@2020_12_02 Update: v3.58 Optimize and fix some problem with Slack ans SMS alerting function.
 #@2020_12_12 Update: v3.59 Add 'sadm_capitalize"function, add PID TimeOut, enhance script footer.
+#@2020_12_17 Update: v3.60 sadm_get_osname() on 'CentOSStream' now return 'CENTOS'.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -169,7 +170,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.59"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.60"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -955,6 +956,7 @@ sadm_get_osname() {
                     if [ "$wosname" = "REDHATENTERPRISESERVER" ] ; then wosname="REDHAT" ; fi
                     if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT" ; fi
                     if [ "$wosname" = "REDHATENTERPRISE" ]       ; then wosname="REDHAT" ; fi
+                    if [ "$wosname" = "CENTOSSTREAM" ]           ; then wosname="CENTOS" ; fi
                     ;;
         "AIX")      wosname="AIX"
                     ;;
