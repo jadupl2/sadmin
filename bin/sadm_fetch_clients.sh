@@ -74,6 +74,7 @@
 #@2020_11_24 Update: v3.20 Optimize code & Now calling new 'sadm_osupdate_starter' for o/s update.
 #@2020_12_02 Update: v3.21 New summary added to the log and Misc. fix.
 #@2020_12_12 Update: v3.22 Copy Site Common alert group and slack configuration files to client
+#@2020_12_19 Fix: v3.23 Don't copy alert group and slack configuration files, when on SADMIN Server.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -120,7 +121,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.22'                              # Your Current Script Version
+    export SADM_VER='3.23'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -962,24 +963,24 @@ process_servers()
                 fi
         fi
 
-        # Copy Site Common configuration files to client
-        rem_cfg_files=( alert_group.cfg alert_slack.cfg )
-        for WFILE in "${rem_cfg_files[@]}"
-          do
-          CFG_SRC="${SADM_CFG_DIR}/${WFILE}" 
-          CFG_DST="${fqdn_server}:${server_dir}/cfg/${WFILE}"
-          CFG_CMD="rsync -va ${CFG_SRC} ${CFG_DST}"
-          if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CFG_CMD" ; fi 
-          #scp ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
-          rsync -va ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
-          RC=$? 
-          if [ $RC -ne 0 ]
-             then sadm_writelog "$SADM_ERROR ($RC) doing ${CFG_CMD}"
-                  ERROR_COUNT=$(($ERROR_COUNT+1))
-             else sadm_writelog "$SADM_OK ${CFG_CMD}" 
-          fi
-          done  
-
+        # Copy Site Common configuration files to client (If not on server)
+        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Server
+            then rem_cfg_files=( alert_group.cfg alert_slack.cfg )
+                 for WFILE in "${rem_cfg_files[@]}"
+                   do
+                   CFG_SRC="${SADM_CFG_DIR}/${WFILE}" 
+                   CFG_DST="${fqdn_server}:${server_dir}/cfg/${WFILE}"
+                   CFG_CMD="rsync -va ${CFG_SRC} ${CFG_DST}"
+                   if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CFG_CMD" ; fi 
+                   rsync -va ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
+                   RC=$? 
+                   if [ $RC -ne 0 ]
+                      then sadm_writelog "$SADM_ERROR ($RC) doing ${CFG_CMD}"
+                           ERROR_COUNT=$(($ERROR_COUNT+1))
+                      else sadm_writelog "$SADM_OK ${CFG_CMD}" 
+                   fi
+                   done  
+        fi 
 
         # Get remote $SADMIN/cfg Dir. and update local www/dat/${server_name}/cfg directory.
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
