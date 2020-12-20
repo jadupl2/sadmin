@@ -36,7 +36,8 @@
 # 2019_10_14 Update: v3.7 Check if Architecture column is present in server Table, if not add it.
 # 2019_10_16 Update: v3.8 Don't update anymore the domain column in the Database (Change with CRUD)
 # 2020_01_13 Update: v3.9 'ReaR' backup version is now updated in DB with info collect on systems.
-#===================================================================================================
+# 2020_12_19 Fix: v3.10 Fix Typo error that cause a crash when updating server database.
+# ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
@@ -78,7 +79,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.9"                 # Current Script Version
+    st.ver              = "3.10"                # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = False                 # Append Existing Log or Create New One
@@ -305,7 +306,7 @@ def process_servers(wconn,wcur,st):
                 if "SADM_SERVER_MODEL"      in CFG_NAME: wdict['srv_model']             = CFG_VALUE
                 if "SADM_SERVER_SERIAL"     in CFG_NAME: wdict['srv_serial']            = CFG_VALUE
                 if "SADM_SERVER_IPS"        in CFG_NAME: wdict['srv_ips_info']          = CFG_VALUE
-                if "UPDATE_DATE"       in CFG_NAME: wdict['srv_date_update']       = CFG_VALUE
+                if "SADM_UPDATE_DATE"       in CFG_NAME: wdict['srv_date_update']       = CFG_VALUE
                 if "SADM_OSUPDATE_DATE"     in CFG_NAME: wdict['srv_date_osupdate']     = CFG_VALUE
                 if "SADM_OSUPDATE_STATUS"   in CFG_NAME: wdict['srv_update_status']     = CFG_VALUE
                 if "SADM_ROOT_DIRECTORY"    in CFG_NAME: wdict['srv_sadmin_dir']        = CFG_VALUE
