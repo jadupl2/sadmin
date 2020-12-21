@@ -78,9 +78,10 @@
 # 2020_07_10 Update: v3.41 Assign temporary passwd to sadmin user.
 # 2020_07_11 Update: v3.42 Minor script changes.
 # 2020_07_11 Update: v3.43 Added rsync package to client installation. 
-#@2020_09_05 Update: v3.44 Minor change to sadm_client crontab file.
+# 2020_09_05 Update: v3.44 Minor change to sadm_client crontab file.
 #@2020_11_09 New: v3.45 Add Daily Email Report to crontab of sadm_server.
 #@2020_11_15 Update: v3.46 'wkhtmltopdf' package was added to server installation.
+#@2020_12_21 Update: v3.47 Bypass installation of 'ReaR' on Arm platform (Not available).
 # 
 # ==================================================================================================
 #
@@ -98,7 +99,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.46"                                            # Setup Version Number
+sver                = "3.47"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -126,6 +127,7 @@ class color:
     UNDERLINE   = '\033[4m'
     END         = '\033[0m'
 
+rear_supported_architecture = ["i686","i386","X86_64","amd64"] 
 
 # Command and package require by SADMIN Client to work correctly
 req_client = {}                                                         # Require Packages Dict.
@@ -774,7 +776,7 @@ def locate_package(lpackages,lpacktype) :
 #                       S A T I S F Y    R E Q U I R E M E N T   F U N C T I O N 
 #===================================================================================================
 #
-def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits):
+def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosarch):
     global fhlog
 
     # Based on installation Type (Client or Server), Move client or server dict. in Work Dict.
@@ -821,6 +823,12 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits):
         # Verify if needed package is installed
         pline = "Checking for %s ... " % (needed_packages)		        # Show What were looking for
         writelog (pline,'nonl')                                         # Show What were looking for
+
+        # Rear Only available on Intel platform Architecture
+        if needed_packages == "rear" and sosarch not in rear_supported_architecture :
+              writelog (" Ok, not supported on this platform (sosarch))") # Show User Check Result
+              continue                                                  # Proceed with Next Package
+
         if locate_package(needed_packages,packtype) :                   # If Package is installed
             writelog (" Ok ")                                           # Show User Check Result
             continue                                                    # Proceed with Next Package
@@ -2162,8 +2170,16 @@ def setup_sadmin_config_file(sroot,wostype):
     return(wcfg_server,SADM_IP,wcfg_domain,wcfg_mail_addr,wcfg_user,wcfg_group) # Return to Caller
 
 
+
 #===================================================================================================
 # DETERMINE THE INSTALLATION PACKAGE TYPE OF CURRENT O/S AND OPEN THE SCRIPT LOG FILE 
+#
+# Return :
+#   Package Type (deb,rpm,dmg,aix)
+#   O/S Name (AIX/CENTOS/REDHAT,UBUNTU,DEBIAN,RASPBIAN,...)
+#   O/S Major Version Number
+#   O/S Running in 32 or 64 bits (32,64)
+#   O/S Architecture (Aarch64,Armv6l,Armv7l,I686,X86_64)
 #===================================================================================================
 #
 def getpacktype(sroot,sostype):
@@ -2187,7 +2203,8 @@ def getpacktype(sroot,sostype):
         osname = cstdout.upper()
         if (cstdout.upper() == "REDHATENTERPRISESERVER"): osname="REDHAT" 
         if (cstdout.upper() == "REDHATENTERPRISEAS")    : osname="REDHAT" 
-        if (cstdout.upper() == "REDHATENTERPRISE")      : osname="REDHAT"   
+        if (cstdout.upper() == "REDHATENTERPRISE")      : osname="REDHAT"
+        if (cstdout.upper() == "CentOSStream")          : osname="CENTOS"
     else:                                                               # If Problem with the cmd
         writelog("Problem running %s" % (cmd))                          # Infor User
         writelog("Error %d - %s " % (ccode,cstderr))                    # Show Error# and Stderror
@@ -2213,12 +2230,21 @@ def getpacktype(sroot,sostype):
         ccode, cstdout, cstderr = oscommand("getconf KERNEL_BITMODE")
     osbits=cstdout
 
+    # Get the O/S Architecture (Aarch64,Armv6l,Armv7l,I686,X86_64)
+    if sostype == "LINUX" or sostype == "DARWIN"
+        ccode, cstdout, cstderr = oscommand("arch")
+        osarch=cstdout
+    if sostype == "AIX" :
+        ccode, cstdout, cstderr = oscommand("uname -p")
+        osarch=cstdout
+
     # Return :
     # Package Type (deb,rpm,dmg,aix)
     # O/S Name (AIX/CENTOS/REDHAT,UBUNTU,DEBIAN,RASPBIAN,...)
     # O/S Major Version Number
     # O/S Running in 32 or 64 bits (32,64)
-    return (packtype,osname,osver,osbits)                               # Return Packtype & O/S Name
+    # O/S Architecture (Aarch64,Armv6l,Armv7l,I686,i386,X86_64,amd64)
+    return (packtype,osname,osver,osbits,osarch)                        # Return Packtype & O/S Name
 
 
 
@@ -2307,12 +2333,14 @@ def mainflow(sroot):
     create_sadmin_config_file(sroot,wostype)                            # Create Initial sadmin.cfg
 
     # Get the Distribution Package Type (rpm,deb,aix,dmg), O/S Name (REDHAT,CENTOS,UBUNTU,...), 
-    # O/S Major version number and finally the running kernel bit mode (32 or 64).
-    (packtype,sosname,sosver,sosbits) = getpacktype(sroot,wostype)      # Type(deb,rpm),OSName,OSVer
+    # O/S Major version number, the running kernel bit mode (32 or 64) and the system architecture
+    # (Aarch64,Armv6l,Armv7l,I686,X86_64,...)
+    (packtype,sosname,sosver,sosbits,sosarch) = getpacktype(sroot,wostype)
     if (DEBUG) : writelog("Package type on system is %s" % (packtype))  # Debug, Show Packaging Type 
     if (DEBUG) : writelog("O/S Name detected is %s" % (sosname))        # Debug, Show O/S Name
     if (DEBUG) : writelog("O/S Major version number is %s" % (sosver))  # Debug, Show O/S Version
     if (DEBUG) : writelog("O/S is running in %sBits mode." % (sosbits)) # Debug, Show O/S Bits MOde
+    if (DEBUG) : writelog("O/S architecture is %s" % (sosarch))         # Debug, Show O/S Arch
 
     # Go and Ask Setup Question to user 
     # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, sadmin User and Group).
@@ -2324,7 +2352,7 @@ def mainflow(sroot):
     update_sadmin_cfg(sroot,"SADM_WWW_GROUP",ugroup,False)              # Update Value in sadmin.cfg
 
     # Check and if needed install missing packages require.
-    satisfy_requirement('C',sroot,packtype,logfile,sosname,sosver,sosbits) # Chk/Install Client Req.
+    satisfy_requirement('C',sroot,packtype,logfile,sosname,sosver,sosbits,sosarch) 
     # special_install(packtype,sosname,logfile)                           # Install pymysql module
 
     # Create SADMIN user sudo file
@@ -2336,7 +2364,7 @@ def mainflow(sroot):
     # Functions excuted if only installing a SADMIN Server .
     if (stype == 'S') :                                                 # If install SADMIN Server
         update_host_file(udomain,uip)                                   # Update /etc/hosts file
-        satisfy_requirement('S',sroot,packtype,logfile,sosname,sosver,sosbits)  # Verify/Install Server Req.
+        satisfy_requirement('S',sroot,packtype,logfile,sosname,sosver,sosbits,sosarch) 
         firewall_rule()                                                 # Open Port 80 for HTTP
         setup_mysql(sroot,userver,udomain,sosname)                      # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
