@@ -82,6 +82,7 @@
 #@2020_11_09 New: v3.45 Add Daily Email Report to crontab of sadm_server.
 #@2020_11_15 Update: v3.46 'wkhtmltopdf' package was added to server installation.
 #@2020_12_21 Update: v3.47 Bypass installation of 'ReaR' on Arm platform (Not available).
+#@2020_12_21 Update: v3.48 Bypass installation of 'syslinux' on Arm platform (Not available).
 # 
 # ==================================================================================================
 #
@@ -99,7 +100,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.47"                                            # Setup Version Number
+sver                = "3.48"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -127,7 +128,9 @@ class color:
     UNDERLINE   = '\033[4m'
     END         = '\033[0m'
 
-rear_supported_architecture = ["i686","i386","X86_64","amd64"] 
+# Some package are only available on these platform
+rear_supported_architecture     = ["i686","i386","X86_64","amd64"] 
+syslinux_supported_architecture = ["i686","i386","X86_64","amd64"] 
 
 # Command and package require by SADMIN Client to work correctly
 req_client = {}                                                         # Require Packages Dict.
@@ -826,6 +829,11 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
 
         # Rear Only available on Intel platform Architecture
         if needed_packages == "rear" and sosarch not in rear_supported_architecture :
+              writelog (" Ok, not supported on this platform (sosarch))") # Show User Check Result
+              continue                                                  # Proceed with Next Package
+
+        # Syslinux Only available on Intel platform Architecture
+        if needed_packages == "syslinux" and sosarch not in syslinux_supported_architecture :
               writelog (" Ok, not supported on this platform (sosarch))") # Show User Check Result
               continue                                                  # Proceed with Next Package
 
