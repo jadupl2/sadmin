@@ -159,6 +159,7 @@
 #@2020_12_02 Update: v3.58 Optimize and fix some problem with Slack ans SMS alerting function.
 #@2020_12_12 Update: v3.59 Add 'sadm_capitalize"function, add PID TimeOut, enhance script footer.
 #@2020_12_17 Update: v3.60 sadm_get_osname() on 'CentOSStream' now return 'CENTOS'.
+#@2020_12_23 Fix: v3.61 Log Header (SADM_LOG_HEADER) & Footer (SADM_LOG_FOOTER) were always produce.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -170,7 +171,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.60"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.61"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -331,94 +332,86 @@ SADM_MKSYSB_NFS_TO_KEEP=2                   ; export SADM_MKSYSB_NFS_TO_KEEP    
 # Local to Library Variable - Can't be use elsewhere outside this script
 LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"    ; export LOCAL_TMP          # Local Temp File
 
-# Screen related variables
-if [ -z "$TERM" ] || [ "$TERM" = "dumb" ]
-    then CLREOL=""                                               # Clear to End of Line
-         CLREOS=""                                               # Clear to End of Screen
-         BOLD=""                                                 # Set Bold Attribute
-         BELL=""                                                 # Ring the Bell
-         REVERSE=""                                              # Reverse Video On
-         UNDERLINE=""                                            # Set UnderLine On
-         HOME_CURSOR=""                                          # Home Cursor
-         UP=""                                                   # Cursor up
-         DOWN=""                                                 # Cursor down
-         RIGHT=""                                                # Cursor right
-         LEFT=""                                                 # Cursor left
-         CLRSCR=""                                               # Clear Screen
-         BLINK=""                                                # Blinking on
-         NORMAL=""                                               # Reset Screen Attribute
-    else CLREOL=$(tput el)          2>/dev/null                  # Clear to End of Line
-         CLREOS=$(tput ed)          2>/dev/null                  # Clear to End of Screen
-         BOLD=$(tput bold)          2>/dev/null                  # Set Bold Attribute On
-         BELL=$(tput bel)           2>/dev/null                  # Ring the Bell
-         REVERSE=$(tput rev)        2>/dev/null              # Reverse Video 
-         UNDERLINE=$(tput sgr 0 1)        2>/dev/null            # UnderLine
-         HOME_CURSOR=$(tput home)       2>/dev/null                     # Home Cursor
-         UP=$(tput cuu1)            2>/dev/null                  # Cursor up
-         DOWN=$(tput cud1)          2>/dev/null                  # Cursor down
-         RIGHT=$(tput cub1)         2>/dev/null                  # Cursor right
-         LEFT=$(tput cuf1)          2>/dev/null                  # Cursor left
-         CLRSCR=$(tput clear)          2>/dev/null               # Clear Screen
-         BLINK=$(tput blink)        2>/dev/null                  # Blinking on
-         NORMAL=$(tput sgr0)         2>/dev/null                 # Reset Screen
-fi    
-
-# Foreground Color
-if [ -z "$TERM" ] || [ "$TERM" = "dumb" ]
-    then BLACK=""                                                # Black color
-         MAGENTA=""                                              # Magenta color
-         RED=""                                                  # Red color
-         GREEN=""                                                # Green color
-         YELLOW=""                                               # Yellow color
-         BLUE=""                                                 # Blue color
-         CYAN=""                                                 # Cyan color
-         WHITE=""                                                # White color
-    else BLACK=$(tput setaf 0)      2>/dev/null                  # Black color
-         RED=$(tput setaf 1)        2>/dev/null                  # Red color
-         GREEN=$(tput setaf 2)      2>/dev/null                  # Green color
-         YELLOW=$(tput setaf 3)     2>/dev/null                  # Yellow color
-         BLUE=$(tput setaf 4)       2>/dev/null                  # Blue color
-         MAGENTA=$(tput setaf 5)    2>/dev/null                  # Magenta color
-         CYAN=$(tput setaf 6)       2>/dev/null                  # Cyan color
-         WHITE=$(tput setaf 7)      2>/dev/null                  # White color
+# Misc. Screen Attribute
+if [ -z "$TERM" ] || [ "$TERM" = "dumb" ] || [ "$TERM" = "unknown" ]
+    then export CLREOL=""                                               # Clear to End of Line
+         export CLREOS=""                                               # Clear to End of Screen
+         export BOLD=""                                                 # Set Bold Attribute
+         export BELL=""                                                 # Ring the Bell
+         export REVERSE=""                                              # Reverse Video On
+         export UNDERLINE=""                                            # Set UnderLine On
+         export HOME_CURSOR=""                                          # Home Cursor
+         export UP=""                                                   # Cursor up
+         export DOWN=""                                                 # Cursor down
+         export RIGHT=""                                                # Cursor right
+         export LEFT=""                                                 # Cursor left
+         export CLRSCR=""                                               # Clear Screen
+         export BLINK=""                                                # Blinking on
+         export NORMAL=""                                               # Reset Screen Attribute
+         export BLACK=""                                                # Foreground Color Black
+         export MAGENTA=""                                              # Foreground Color Magenta
+         export RED=""                                                  # Foreground Color Red
+         export GREEN=""                                                # Foreground Color Green
+         export YELLOW=""                                               # Foreground Color Yellow
+         export BLUE=""                                                 # Foreground Color Blue
+         export CYAN=""                                                 # Foreground Color Cyan
+         export WHITE=""                                                # Foreground Color White
+         export BBLACK=""                                               # Background Color Black
+         export BRED=""                                                 # Background Color Red
+         export BGREEN=""                                               # Background Color Green
+         export BYELLOW=""                                              # Background Color Yellow
+         export BBLUE=""                                                # Background Color Blue
+         export BMAGENTA=""                                             # Background Color Magenta
+         export BCYAN=""                                                # Background Color Cyan
+         export BWHITE=""                                               # Background Color White
+    else export CLREOL=$(tput el)          2>/dev/null                  # Clear to End of Line
+         export CLREOS=$(tput ed)          2>/dev/null                  # Clear to End of Screen
+         export BOLD=$(tput bold)          2>/dev/null                  # Set Bold Attribute On
+         export BELL=$(tput bel)           2>/dev/null                  # Ring the Bell
+         export REVERSE=$(tput rev)        2>/dev/null                  # Reverse Video 
+         export UNDERLINE=$(tput sgr 0 1)  2>/dev/null                  # UnderLine
+         export HOME_CURSOR=$(tput home)   2>/dev/null                  # Home Cursor
+         export UP=$(tput cuu1)            2>/dev/null                  # Cursor up
+         export DOWN=$(tput cud1)          2>/dev/null                  # Cursor down
+         export RIGHT=$(tput cub1)         2>/dev/null                  # Cursor right
+         export LEFT=$(tput cuf1)          2>/dev/null                  # Cursor left
+         export CLRSCR=$(tput clear)       2>/dev/null                  # Clear Screen
+         export BLINK=$(tput blink)        2>/dev/null                  # Blinking on
+         export NORMAL=$(tput sgr0)        2>/dev/null                  # Reset Screen
+         export BLACK=$(tput setaf 0)      2>/dev/null                  # Foreground Color Black
+         export RED=$(tput setaf 1)        2>/dev/null                  # Foreground Color Red
+         export GREEN=$(tput setaf 2)      2>/dev/null                  # Foreground Color Green
+         export YELLOW=$(tput setaf 3)     2>/dev/null                  # Foreground Color Yellow
+         export BLUE=$(tput setaf 4)       2>/dev/null                  # Foreground Color Blue
+         export MAGENTA=$(tput setaf 5)    2>/dev/null                  # Foreground Color Magenta
+         export CYAN=$(tput setaf 6)       2>/dev/null                  # Foreground Color Cyan
+         export WHITE=$(tput setaf 7)      2>/dev/null                  # Foreground Color White
+         export BBLACK=$(tput setab 0)     2>/dev/null                  # Background Color Black
+         export BRED=$(tput setab 1)       2>/dev/null                  # Background Color Red
+         export BGREEN=$(tput setab 2)     2>/dev/null                  # Background Color Green
+         export BYELLOW=$(tput setab 3)    2>/dev/null                  # Background Color Yellow
+         export BBLUE=$(tput setab 4)      2>/dev/null                  # Background Color Blue
+         export BMAGENTA=$(tput setab 5)   2>/dev/null                  # Background Color Magenta
+         export BCYAN=$(tput setab 6)      2>/dev/null                  # Background Color Cyan
+         export BWHITE=$(tput setab 7)     2>/dev/null                  # Background Color White
 fi 
 
-# Background Color
-if [ ! -z "$TERM" ] || [ "$TERM" = "dumb" ]
-    then BBLACK=""                                               # Black color
-         BRED=""                                                 # Red color
-         BGREEN=""                                               # Green color
-         BYELLOW=""                                              # Yellow color
-         BBLUE=""                                                # Blue color
-         BMAGENTA=""                                             # Magenta color
-         BCYAN=""                                                # Cyan color
-         BWHITE=""                                               # White color
-    else     
-         BBLACK=$(tput setab 0)     2>/dev/null                  # Black color
-         BRED=$(tput setab 1)       2>/dev/null                  # Red color
-         BGREEN=$(tput setab 2)     2>/dev/null                  # Green color
-         BYELLOW=$(tput setab 3)    2>/dev/null                  # Yellow color
-         BBLUE=$(tput setab 4)      2>/dev/null                  # Blue color
-         BMAGENTA=$(tput setab 5)   2>/dev/null                  # Magenta color
-         BCYAN=$(tput setab 6)      2>/dev/null                  # Cyan color
-         BWHITE=$(tput setab 7)     2>/dev/null                  # White color
-fi
 
 # Constant Var., if message begin with these constant it's showed with special color by sadm_write()
-SADM_ERROR="[ ERROR ]"                                            # [ ERROR ] in Red Trigger 
-SADM_FAILED="[ FAILED ]"                                         # [ FAILED ] in Red Trigger 
-SADM_WARNING="[ WARNING ]"                                       # [ WARNING ] in Yellow
-SADM_OK="[ OK ]"                                                  # [ OK ] in Green Trigger
-SADM_SUCCESS="[ SUCCESS ]"                                       # [ SUCCESS ] in Green
-SADM_INFO="[ INFO ]"                                             # [ INFO] in Blue Trigger
+SADM_ERROR="[ ERROR ]"                                                  # [ ERROR ] in Red Trigger 
+SADM_FAILED="[ FAILED ]"                                                # [ FAILED ] in Red Trigger 
+SADM_WARNING="[ WARNING ]"                                              # [ WARNING ] in Yellow
+SADM_OK="[ OK ]"                                                        # [ OK ] in Green Trigger
+SADM_SUCCESS="[ SUCCESS ]"                                              # [ SUCCESS ] in Green
+SADM_INFO="[ INFO ]"                                                    # [ INFO] in Blue Trigger
 
 # When mess. begin with constant above they are substituted by the value below in sadm_write().
-SADM_SERROR="[ ${RED}ERROR${NORMAL} ]"                            # [ ERROR ] Red
-SADM_SFAILED="[ ${RED}FAILED${NORMAL} ]"                          # [ FAILED ] Red
-SADM_SWARNING="[ ${BOLD}${YELLOW}WARNING${NORMAL} ]"              # WARNING Yellow
-SADM_SOK="[ ${BOLD}${GREEN}OK${NORMAL} ]"                         # [ OK ] Green
-SADM_SSUCCESS="[ ${BOLD}${GREEN}SUCCESS${NORMAL} ]"               # SUCCESS Green
-SADM_SINFO="[ ${BOLD}${BLUE}INFO${NORMAL} ]"                      # INFO Blue
+SADM_SERROR="[ ${RED}ERROR${NORMAL} ]"                                  # [ ERROR ] Red
+SADM_SFAILED="[ ${RED}FAILED${NORMAL} ]"                                # [ FAILED ] Red
+SADM_SWARNING="[ ${BOLD}${YELLOW}WARNING${NORMAL} ]"                    # WARNING Yellow
+SADM_SOK="[ ${BOLD}${GREEN}OK${NORMAL} ]"                               # [ OK ] Green
+SADM_SSUCCESS="[ ${BOLD}${GREEN}SUCCESS${NORMAL} ]"                     # SUCCESS Green
+SADM_SINFO="[ ${BOLD}${BLUE}INFO${NORMAL} ]"                            # INFO Blue
 
 
 
@@ -428,6 +421,13 @@ SADM_SINFO="[ ${BOLD}${BLUE}INFO${NORMAL} ]"                      # INFO Blue
 # --------------------------------------------------------------------------------------------------
 sadm_toupper() {
     echo $1 | tr  "[:lower:]" "[:upper:]"
+}
+
+# --------------------------------------------------------------------------------------------------
+#                     THIS FUNCTION RETURN THE STRING RECEIVED TO UPPERCASE
+# --------------------------------------------------------------------------------------------------
+sadm_tolower() {
+    echo $1 | tr "[:upper:]" "[:lower:]" 
 }
 
 
@@ -1270,7 +1270,8 @@ sadm_server_memory() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_arch() {
     case "$(sadm_get_ostype)" in
-        "LINUX")    warch=`uname -m`
+        "LINUX")    #warch=`uname -m`
+                    warch=$(arch)
                     ;;
         "AIX")      warch=`uname -p`  
                     ;;
@@ -1836,7 +1837,7 @@ sadm_start() {
     [ "$SADM_LOG_APPEND" != "Y" ] && echo " " > $SADM_LOG               # No Append log, create new
 
     # Write Starting Info in the Log
-    if [ ! -z "$SADM_LOG_HEADER" ] || [ "$SADM_LOG_HEADER" = "Y" ]      # Script Want Log Header
+    if [ -v "$SADM_LOG_HEADER" ] || [ "$SADM_LOG_HEADER" = "Y" ]        # Script Want Log Header
         then sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
              sadm_writelog "`date` - ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
              sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)"
@@ -2086,7 +2087,7 @@ sadm_start() {
 
     # Feed the (RCH) Return Code History File stating the script is Running (Code 2)
     #SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME      # Statup Time of Script
-    if [ ! -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]            # Want to Produce RCH File
+    if [ -v "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
         then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
              [ $(id -u) -eq 0 ] && chmod 664 $SADM_RCHLOG               # Change protection on RCH
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}
@@ -2164,7 +2165,7 @@ sadm_stop() {
     sadm_elapse=$(sadm_elapse "$sadm_end_time" "$SADM_STIME")           # Go Calculate Elapse Time
 
     # Write script exit code and execution time to log (If user ask for a log footer) 
-    if [ ! -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]      # Want to Produce Log Footer
+    if [ -v "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]      # Want to Produce Log Footer
         then sadm_write "\n"                                            # Blank LIne
              sadm_write "${SADM_FIFTY_DASH}\n"                          # Dash Line
              if [ $SADM_EXIT_CODE -eq 0 ]                               # If script succeeded
@@ -2175,7 +2176,7 @@ sadm_stop() {
     fi
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
-    if [ ! -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]            # Want to Produce RCH File ?
+    if [ -v "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File ?
         then XCODE=`tail -1 ${SADM_RCHLOG}| awk '{ print $NF }'`        # Get RCH Code on last line
              if [ "$XCODE" -eq 2 ]                                      # If last Line code is 2
                 then XLINE=`wc -l ${SADM_RCHLOG} | awk '{print $1}'`    # Count Nb. Line in RCH File
@@ -2189,7 +2190,7 @@ sadm_stop() {
              RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE"      # Format Part3 of RCH File
              RCHLINE="$RCHLINE $SADM_EXIT_CODE"                         # Format Part4 of RCH File
              echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
-             if [ ! -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ] # If User want Log Footer
+             if [ -v "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ] # If User want Log Footer
                 then if [ "$SADM_MAX_RCLINE" -ne 0 ]                    # User want to trim rch file
                         then mtmp1="History ($SADM_RCHLOG) trim to ${SADM_MAX_RCLINE} lines "
                              mtmp2="(\$SADM_MAX_RCLINE=$SADM_MAX_RCLINE)"
@@ -2204,7 +2205,7 @@ sadm_stop() {
     fi 
 
     # If log size not at zero and user want to use the log.
-    if [ ! -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]      # User Want the Log Footer
+    if [ -v "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]        # User Want the Log Footer
         then GRP_TYPE=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$2}' |tr -d ' ')
              GRP_NAME=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$3}' |tr -d ' ')
              ORG_NAME=$GRP_NAME                                         # Save Original Group Name
@@ -2280,9 +2281,9 @@ sadm_stop() {
 
     # If script is running on the SADMIN server, copy script final log and rch to web data section.
     # If we don't do that, log look incomplete & script seem to be always running on web interface.
-    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                         # Only run on SADMIN 
+    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only run on SADMIN 
        then cp $SADM_LOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log
-            if [ ! -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]   # Want to Produce RCH File
+            if [ -v "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]      # Want to Produce RCH File
                then cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
             fi 
     fi
