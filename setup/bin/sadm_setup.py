@@ -84,6 +84,7 @@
 #@2020_12_21 Update: v3.47 Bypass installation of 'ReaR' on Arm platform (Not available).
 #@2020_12_21 Update: v3.48 Bypass installation of 'syslinux' on Arm platform (Not available).
 #@2020_12_23 Fix: v3.49 Fix typo error.
+#@2020_12_24 Update: v3.50 CentOSStream return CENTOS.
 # 
 # ==================================================================================================
 #
@@ -101,7 +102,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.49"                                            # Setup Version Number
+sver                = "3.50"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -991,6 +992,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     if osdist == "REDHATENTERPRISESERVER" : osdist="REDHAT"
     if osdist == "REDHATENTERPRISEAS"     : osdist="REDHAT"
     if osdist == "REDHATENTERPRISE"       : osdist="REDHAT"
+    if osdist == "CENTOSSTREAM"           : osdist="CENTOS"
     #
     wcmd = "%s %s" % ("lsb_release","-sr")
     ccode, cstdout, cstderr = oscommand(wcmd)
@@ -2213,7 +2215,7 @@ def getpacktype(sroot,sostype):
         if (cstdout.upper() == "REDHATENTERPRISESERVER"): osname="REDHAT" 
         if (cstdout.upper() == "REDHATENTERPRISEAS")    : osname="REDHAT" 
         if (cstdout.upper() == "REDHATENTERPRISE")      : osname="REDHAT"
-        if (cstdout.upper() == "CentOSStream")          : osname="CENTOS"
+        if (cstdout.upper() == "CENTOSSTREAM")          : osname="CENTOS"
     else:                                                               # If Problem with the cmd
         writelog("Problem running %s" % (cmd))                          # Infor User
         writelog("Error %d - %s " % (ccode,cstderr))                    # Show Error# and Stderror
