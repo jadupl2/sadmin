@@ -54,6 +54,7 @@
 # 2020_04_27 Update: v3.9 Install 'getmac' python3 module (for subnet scan).
 #@2020_05_05 Update: v3.10 Adjust screen presentation.
 # 2020_05_14 Update: v3.11 Remove line feed after "Installing pip3" 
+# 2020_12_24 Update: v3.12 CentOSStream return CENTOS.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -62,7 +63,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.11'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.12'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -444,6 +445,8 @@ get_sysinfo()
     if [ "$SADM_OSNAME" = "REDHATENTERPRISESERVER" ] ; then SADM_OSNAME="REDHAT" ; fi
     if [ "$SADM_OSNAME" = "REDHATENTERPRISEAS" ]     ; then SADM_OSNAME="REDHAT" ; fi
     if [ "$SADM_OSNAME" = "REDHATENTERPRISE" ]       ; then SADM_OSNAME="REDHAT" ; fi
+    if [ "$SADM_OSNAME" = "CENTOSSTREAM" ]           ; then SADM_OSNAME="CENTOS" ; fi
+
 
     SADM_OSFULLVER=`lsb_release -sr| tr -d ' '`                         # Get O/S Full Version No.
     SADM_OSVERSION=`lsb_release -sr |awk -F. '{ print $1 }'| tr -d ' '` # Use lsb_release 2 Get Ver
