@@ -35,6 +35,7 @@
 #@2019_11_25 Update: v3.17 Change printing format of Database table at the end of execution.
 #@2020_04_01 Update: v3.18 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 #@2020_11_24 Update: v3.19 Don't show DB password file on client
+#@2020_12_24 Update: v3.20 Include output of capitalize function.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -56,7 +57,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.19'                              # Current Script Version
+    export SADM_VER='3.20'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -419,6 +420,11 @@ print_bash_functions()
     pexample="sadm_tolower STRING"                                      # Example Calling Function
     pdesc="Return string lowercase"                                     # Function Description
     presult=`sadm_tolower STRING`                                       # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+    
+    pexample="sadm_capitalize STRING"                                   # Example Calling Function
+    pdesc="Return string capitalize"                                    # Function Description
+    presult=`sadm_capitalize String`                                    # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
     
 }
