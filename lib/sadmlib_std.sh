@@ -160,6 +160,7 @@
 #@2020_12_12 Update: v3.59 Add 'sadm_capitalize"function, add PID TimeOut, enhance script footer.
 #@2020_12_17 Update: v3.60 sadm_get_osname() on 'CentOSStream' now return 'CENTOS'.
 #@2020_12_23 Fix: v3.61 Log Header (SADM_LOG_HEADER) & Footer (SADM_LOG_FOOTER) were always produce.
+#@2020_12_24 Fix: v3.62 Fix problem with capitalize function.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -171,7 +172,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.61"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.62"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -436,7 +437,8 @@ sadm_tolower() {
 # THIS FUNCTION RETURN THE STRING RECEIVED TO WITH THE FIRST CHARACTER IN UPPERCASE
 # --------------------------------------------------------------------------------------------------
 sadm_capitalize() {
-    echo "${1^}"
+    C=`echo $1 | tr "[:upper:]" "[:lower:]"`
+    echo "${C^}"
 }
 
 
