@@ -83,6 +83,7 @@
 #@2020_11_15 Update: v3.46 'wkhtmltopdf' package was added to server installation.
 #@2020_12_21 Update: v3.47 Bypass installation of 'ReaR' on Arm platform (Not available).
 #@2020_12_21 Update: v3.48 Bypass installation of 'syslinux' on Arm platform (Not available).
+#@2020_12_23 Fix: v3.49 Fix typo error.
 # 
 # ==================================================================================================
 #
@@ -100,7 +101,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.48"                                            # Setup Version Number
+sver                = "3.49"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -330,7 +331,7 @@ def update_host_file(wdomain,wip) :
 
     writelog('')
     writelog('----------')
-    writelog ("Adding 'sadmin..%s to /etc/hosts file" % (wdomain),'bold')
+    writelog ("Adding 'sadmin.%s to /etc/hosts file" % (wdomain),'bold')
     try : 
         hf = open('/etc/hosts','r+')                                    # Open /etc/hosts file
     except :
@@ -859,7 +860,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
         # Install it from SADMIN package directory
         if (needed_packages == "wkhtmltopdf") :
             if ( (sosname == "REDHAT" or sosname == "CENTOS") and sosver == 8):
-                icmd = "dnf install $SADMIN/pkg/wkhtmltopdf/*centos8* >>%s 2>&1" % (logfile)
+                icmd = "dnf -y install $SADMIN/pkg/wkhtmltopdf/*centos8* >>%s 2>&1" % (logfile)
 
         writelog ("-----------------------",'log')
         writelog (icmd,'log')
@@ -2239,7 +2240,7 @@ def getpacktype(sroot,sostype):
     osbits=cstdout
 
     # Get the O/S Architecture (Aarch64,Armv6l,Armv7l,I686,X86_64)
-    if sostype == "LINUX" or sostype == "DARWIN"
+    if sostype == "LINUX" or sostype == "DARWIN" :
         ccode, cstdout, cstderr = oscommand("arch")
         osarch=cstdout
     if sostype == "AIX" :
