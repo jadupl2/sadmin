@@ -75,6 +75,7 @@
 #@2020_12_02 Update: v3.21 New summary added to the log and Misc. fix.
 #@2020_12_12 Update: v3.22 Copy Site Common alert group and slack configuration files to client
 #@2020_12_19 Fix: v3.23 Don't copy alert group and slack configuration files, when on SADMIN Server.
+# 2020_12_19 Update: v3.24 Remove verbose on rsync
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -121,7 +122,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.23'                              # Your Current Script Version
+    export SADM_VER='3.24'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -970,9 +971,9 @@ process_servers()
                    do
                    CFG_SRC="${SADM_CFG_DIR}/${WFILE}" 
                    CFG_DST="${fqdn_server}:${server_dir}/cfg/${WFILE}"
-                   CFG_CMD="rsync -va ${CFG_SRC} ${CFG_DST}"
+                   CFG_CMD="rsync ${CFG_SRC} ${CFG_DST}"
                    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CFG_CMD" ; fi 
-                   rsync -va ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
+                   rsync ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
                    RC=$? 
                    if [ $RC -ne 0 ]
                       then sadm_writelog "$SADM_ERROR ($RC) doing ${CFG_CMD}"
@@ -1404,6 +1405,7 @@ function cmd_options()
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
+    echo "TERM=..${TERM}.." >> $SADM_LOG 2>&1
     main_process                                                        # rsync from all clients
     SADM_EXIT_CODE=$?                                                   # Save Function Result Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Upd. RCH
