@@ -54,6 +54,7 @@
 # 2020_01_20 Fix: v3.11 Fix 'get_osminorversion' function. Crash (raspbian) when no os minor version 
 # 2020_02_25 Update: v3.12 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
 #@2020_09_10 Update: v3.13 Minor update to date/time module.
+#@2020_12_24 Update: v3.14 CentOSStream is CENTOS
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -125,7 +126,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.13"                                # This Library Version
+        self.libver             = "3.14"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -779,6 +780,7 @@ class sadmtools():
             if osname.upper() == "REDHATENTERPRISESERVER" : osname="REDHAT"
             if osname.upper() == "REDHATENTERPRISEAS"     : osname="REDHAT"
             if osname.upper() == "REDHATENTERPRISE"       : osname="REDHAT"
+            if osname.upper() == "CENTOSSTREAM"           : osname="CENTOS"
         if self.os_type == "AIX" :
             osname="AIX"
         return osname
