@@ -32,6 +32,7 @@
 #@2020_11_21 Updated v1.13 Insert Script execution Title.
 #@2020_12_12 Updated v1.14 Major revamp of HTML and PDF Report that are send via email to sysadmin.
 #@2020_12_15 Updated v1.15 Cosmetic changes to Daily Report.
+#@2020_12_26 Updated v1.16 Include link to web page in email.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -63,7 +64,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.15'                                  # Current Script Version
+export SADM_VER='1.16'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -378,11 +379,11 @@ script_report()
     sadm_writelog "${SADM_OK} Create Script Web Page." 
 
     # Generate the Web Page Heading
-    script_page_heading "SADMIN Daily Script Report - `date +%a` `date '+%C%y.%m.%d %H:%M:%S'`" 
+    script_page_heading "SADMIN Daily Scripts Report - `date +%a` `date '+%C%y.%m.%d %H:%M:%S'`" 
 
 
     # SCRIPTS THAT ARE CURRENTLY RUNNING SECTION
-    echo -e "\n<center><h3>List of running script(s)</h3></center>\n" >>$HTML_SFILE
+    #echo -e "\n<center><h3>List of running script(s)</h3></center>\n" >>$HTML_SFILE
     if [ $SADM_DEBUG -gt 4 ]; then sadm_writelog "Checking for running script ..." ; fi 
     xcount=0                                                            # Nb. of Running script 
     for RCH_LINE in "${rch_array[@]}"                                   # For every item in array
@@ -392,7 +393,8 @@ script_report()
             then split_rchline "$RCH_LINE"                              # Split Line into fields
                  xcount=$(($xcount+1))                                  # Increase Line Counter
                  if [ $xcount -eq 1 ] 
-                    then script_table_heading "Script(s) currently running" "$RCH_SERVER"
+                    then echo -e "<br>"  >> $HTML_SFILE                 # Space line before heading
+                         script_table_heading "Script(s) currently running" "$RCH_SERVER"
                  fi
                  script_line "$xcount"                                  # Show line in Table
                  sadm_writelog "- Script $RCH_SCRIPT is running on $RCH_SERVER since ${RCH_TIME1}."
@@ -401,13 +403,13 @@ script_report()
     if [ $xcount -eq 0 ]                                                # If no running script found
         then echo -e "\n<center><h3>No script actually running</h3></center>\n" >>$HTML_SFILE
              sadm_writelog "${SADM_OK} No script actually running."     # Feed Screen & Log
-        else echo -e "</table>\n<br>\n" >> $HTML_SFILE              # End of HTML Table
+        else echo -e "</table>\n<br>\n" >> $HTML_SFILE                  # End of HTML Table
     fi
     echo -e "\n<hr class="dash">\n" >> $HTML_SFILE                      # Horizontal Dashed Line
 
 
     # SCRIPT THAT TERMINATED WITH ERROR SECTION
-    echo -e "\n<center><h3>List of script(s) terminated with error(s)</h3></center>\n" >>$HTML_SFILE
+    #echo -e "\n<center><h3>List of script(s) terminated with error(s)</h3></center>\n" >>$HTML_SFILE
     if [ $SADM_DEBUG -gt 4 ]; then sadm_writelog "Checking for script(s) ended with error ..." ; fi 
     xcount=0                                                            # Nb. of Running script 
     for RCH_LINE in "${rch_array[@]}"                                   # For every item in array
@@ -418,7 +420,7 @@ script_report()
             then split_rchline "$RCH_LINE"                              # Split Line into fields
                  xcount=$(($xcount+1))                                  # Increase Line Counter
                  if [ $xcount -eq 1 ] 
-                    then echo -e "\n<br>\n"  >>$HTML_SFILE
+                    then echo -e "\n<br>\n"  >> $HTML_SFILE             # Space line before heading
                          script_table_heading "Script Ended With Error" "$RCH_SERVER"
                  fi
                  script_line "$xcount"                                  # Show line in Table
@@ -437,7 +439,7 @@ script_report()
 
     # SCRIPT EXECUTION HISTORY SECTION
     msg="Scripts execution history by system name" >>$HTML_SFILE        # Section Title Header
-    echo -e "\n<center><h3>$msg</h3></center>\n<br>" >>$HTML_SFILE      # Insert Header on Page
+    echo -e "\n<center><h3>$msg</h3></center>\n" >>$HTML_SFILE          # Insert Header on Page
     current_server=""                                                   # Clear Current Server Name
     # Sort by server name and by reverse execution date.
     sort -t' ' -k1,1 -k2,2r  $RCH_SUMMARY | grep -iv "storix" > $SADM_TMP_FILE1
@@ -517,30 +519,37 @@ split_rchline()
 # ==================================================================================================
 script_page_heading()
 {
-    RTITLE="$1"
+    RTITLE="$1"                                                         # Set Page Title
     #
     echo -e "<!DOCTYPE html><html>"         >  $HTML_SFILE
     echo -e "<head>"                        >> $HTML_SFILE
     echo -e "<meta charset='utf-8' />"      >> $HTML_SFILE
-    #
-    echo -e "<style>"                                                             >> $HTML_SFILE
+
+    echo -e "<style>"                                                               >> $HTML_SFILE
     #echo -e "th { color: white; background-color: #000000; padding: 0px; }"         >> $HTML_SFILE
     echo -e "th { color: black; background-color: #f1f1f1; padding: 5px; }"         >> $HTML_SFILE
     echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }"     >> $HTML_SFILE
-    #echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }"                     >> $HTML_SFILE
-    echo -e "table, th, td  { border: 1px solid black; border-collapse: collapse; }" >> $HTML_SFILE
-    echo -e "\n/* Dashed red border */" >> $HTML_SFILE
-    echo -e "hr.dash        { border-top: 1px dashed red; }" >> $HTML_SFILE
-    echo -e "/* Large rounded green border */" >> $HTML_SFILE
-    echo -e "hr.large_green { border: 3px solid green; border-radius: 5px; }" >> $HTML_SFILE
+    echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML_SFILE
+    echo -e "div.fs150   { font-size: 150%; }"                  >> $HTML_SFILE
+    echo -e "div.fs13px  { text-align: left; font-size: 13px; }"                  >> $HTML_SFILE
+    echo -e "\n/* Dashed red border */"                         >> $HTML_SFILE
+    echo -e "hr.dash        { border-top: 1px dashed red; }"    >> $HTML_SFILE
+    echo -e "/* Large rounded green border */"                  >> $HTML_SFILE
+    echo -e "hr.large_green { border: 2px solid green; border-radius: 5px; }"       >> $HTML_SFILE
     echo -e "</style>"                                                              >> $HTML_SFILE
-    #
-    echo -e "<title>$RTITLE</title>"                    >> $HTML_SFILE
-    echo -e "</head>"                                   >> $HTML_SFILE
-    echo -e "<body>"                                    >> $HTML_SFILE
-    echo -e "<br>\n<center><h1>${RTITLE}</h1></center>" >> $HTML_SFILE
+    echo -e "<title>$RTITLE</title>\n"                          >> $HTML_SFILE
+    echo -e "</head>"                                           >> $HTML_SFILE
+    echo -e "<body>"                                            >> $HTML_SFILE
+
+    echo -e "<center>" >> $HTML_SFILE                                   # Center what's coming
+    echo -e "<div class='fs150'>${RTITLE}</div>" >> $HTML_SFILE         # Show Page Title
+    URL_SCRIPTS_REPORT="/view/daily_scripts_report.html"                # Scripts Daily Report Page
+    RURL="http://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
+    TITLE2="View the web version of this report"                        # Link Description
+    echo -e "</center>" >> $HTML_SFILE                                  # End Text Center
+    echo -e "<div class='fs13px'><a href='${RURL}'>${TITLE2}</a></div>" >>$HTML_SFILE    # Insert Link on Page
+
     echo -e "\n<hr class="large_green">\n"              >> $HTML_SFILE  # Big Horizontal Green Line
-    #echo -e "\n<center><img src='/images/pencil2.gif'></center>\n" >> $HTML_SFILE
     #echo -e "<br>" >> $HTML_SFILE
 }
 
@@ -554,19 +563,18 @@ script_table_heading()
 {
     RTITLE=$1                                                           # Table Heading Title
     RSERVER=$2                                                          # Name Of Server
-    ROS=$3                                                              # O/S Name of the server
 
     echo -e "\n<center>\n<table border=0>"                    >> $HTML_SFILE
     echo -e "\n<thead>"                                       >> $HTML_SFILE
 
     echo -e "<tr>"                                            >> $HTML_SFILE
     insert_logo "$RSERVER" "$HTML_SFILE"
+    ROS=$(sadm_capitalize $DB_OSNAME)
     echo -e "<th colspan=9>System '${RSERVER}' - $DB_DESC</th>" >> $HTML_SFILE
     echo -e "</tr>"                                           >> $HTML_SFILE
-
     echo -e "<tr>"                                            >> $HTML_SFILE
     #echo -e "<th colspan=10 dt-head-center>${RTITLE}</th>"    >> $HTML_SFILE
-    echo -e "<th colspan=10>${DB_OSNAME} v${DB_OSVERSION}</th>"    >> $HTML_SFILE
+    echo -e "<th colspan=10>${ROS} - Version ${DB_OSVERSION}</th>"    >> $HTML_SFILE
     echo -e "</tr>"                                           >> $HTML_SFILE
 
     echo -e "<tr>"                                            >> $HTML_SFILE
@@ -912,22 +920,28 @@ rear_heading()
     echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }" >> $HTML
     echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }" >> $HTML
     echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML
+    echo -e "div.fs150   { font-size: 150%; }"                  >> $HTML
+    echo -e "div.fs13px  { text-align: left; font-size: 13px; }"                  >> $HTML
     echo -e "\n/* Dashed red border */" >> $HTML
     echo -e "hr.dash        { border-top: 1px dashed red; }" >> $HTML
     echo -e "/* Large rounded green border */" >> $HTML
     echo -e "hr.large_green { border: 3px solid green; border-radius: 5px; }" >> $HTML
     echo -e "</style>" >> $HTML
-    #
     echo -e "\n<title>$RTITLE</title>" >> $HTML
     echo -e "</head>\n" >> $HTML
     echo -e "<body>" >> $HTML
-    echo -e "\n<center><h1>${RTITLE}</h1></center>" >> $HTML
-    echo -e "\n<hr class="large_green">\n<br>"              >> $HTML        # Big Horizontal Green Line
+    
+    echo -e "<center>" >> $HTML                                         # Center what's coming
+    echo -e "<div class='fs150'>${RTITLE}</div>" >> $HTML               # Show Page Title
+    URL_SCRIPTS_REPORT="/view/daily_rear_report.html"                   # Scripts Daily Report Page
+    RURL="http://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
+    TITLE2="View the web version of this report"                        # Link Description
+    echo -e "</center>" >> $HTML                                        # End Text Center
+    echo -e "<div class='fs13px'><a href='${RURL}'>${TITLE2}</a></div>" >>$HTML # Insert Link on Page
+    echo -e "\n<hr class="large_green">\n<br>"              >> $HTML    # Big Horizontal Green Line
 
     echo -e "\n<center><table border=0>" >> $HTML
-    #
     echo -e "\n<thead>" >> $HTML
-    #
     echo -e "<tr>" >> $HTML
     echo -e "<th colspan=1 dt-head-center></th>" >> $HTML
     echo -e "<th colspan=4 align=center>Last Backup</th>" >> $HTML
@@ -1373,6 +1387,8 @@ storix_heading()
     echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }" >> $HTML_XFILE
     echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }" >> $HTML_XFILE
     echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML_XFILE
+    echo -e "div.fs150   { font-size: 150%; }"                  >> $HTML_XFILE
+    echo -e "div.fs13px  { text-align: left; font-size: 13px; }"                  >> $HTML_XFILE
     echo -e "\n/* Dashed red border */" >> $HTML_XFILE
     echo -e "hr.dash        { border-top: 1px dashed red; }" >> $HTML_XFILE
     echo -e "/* Large rounded green border */" >> $HTML_XFILE
@@ -1382,7 +1398,14 @@ storix_heading()
     echo -e "\n<title>$RTITLE</title>" >> $HTML_XFILE
     echo -e "</head>\n" >> $HTML_XFILE
     echo -e "<body>" >> $HTML_XFILE
-    echo -e "\n<center><h1>${RTITLE}</h1></center>" >> $HTML_XFILE
+
+    echo -e "<center>" >> $HTML_XFILE                                   # Center what's coming
+    echo -e "<div class='fs150'>${RTITLE}</div>" >> $HTML_XFILE         # Show Page Title
+    URL_SCRIPTS_REPORT="/view/daily_storix_report.html"                 # Scripts Daily Report Page
+    RURL="http://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
+    TITLE2="View the web version of this report"                        # Link Description
+    echo -e "</center>" >> $HTML_XFILE                                  # End Text Center
+    echo -e "<div class='fs13px'><a href='${RURL}'>${TITLE2}</a></div>" >>$HTML_XFILE    # Insert Link on Page
     echo -e "\n<hr class="large_green">\n"              >> $HTML_XFILE
     echo -e "\n<center><table border=0>" >> $HTML_XFILE
     #
@@ -1787,55 +1810,61 @@ backup_heading()
     RTITLE=$1                                                           # Report Title
     HTML=$2                                                             # HTML Report File Name
 
-    echo -e "<!DOCTYPE html><html>" > $HTML
-    echo -e "<head>" >> $HTML
-    echo -e "\n<meta charset='utf-8' />"            >> $HTML
-    #
-    echo -e "\n<style>" >> $HTML
-    echo -e "th { color: white; background-color: #0000ff; padding: 0px; }" >> $HTML
-    echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }" >> $HTML
-    echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }" >> $HTML
+    echo -e "<!DOCTYPE html><html>"                          > $HTML
+    echo -e "<head>"                                        >> $HTML
+    echo -e "\n<meta charset='utf-8' />"                    >> $HTML
+    echo -e "\n<style>"                                     >> $HTML
+    echo -e "th { color: white; background-color: #0000ff; padding: 0px; }"         >> $HTML
+    echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }"     >> $HTML
+    echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }"                     >> $HTML
     echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML
-    echo -e "\n/* Dashed red border */" >> $HTML
-    echo -e "hr.dash        { border-top: 1px dashed red; }" >> $HTML
-    echo -e "/* Large rounded green border */" >> $HTML
-    echo -e "hr.large_green { border: 3px solid green; border-radius: 5px; }" >> $HTML
-    echo -e "</style>" >> $HTML
+    echo -e "div.fs150   { font-size: 150%; }"                                      >> $HTML
+    echo -e "div.fs13px  { text-align: left; font-size: 13px; }"                    >> $HTML
+    echo -e "\n/* Dashed red border */"                     >> $HTML
+    echo -e "hr.dash        { border-top: 1px dashed red;}" >> $HTML
+    echo -e "/* Large rounded green border */"              >> $HTML
+    echo -e "hr.large_green { border: 3px solid green; border-radius: 5px; }"       >> $HTML
+    echo -e "</style>"                                      >> $HTML
+    echo -e "\n<title>$RTITLE</title>"                      >> $HTML
+    echo -e "</head>\n"                                     >> $HTML
+    echo -e "<body>"                                        >> $HTML
+
+    echo -e "<center>" >> $HTML                                         # Center what's coming
+    echo -e "<div class='fs150'>${RTITLE}</div>" >> $HTML               # Show Page Title
+    URL_SCRIPTS_REPORT="/view/daily_backup_report.html"                 # Scripts Daily Report Page
+    RURL="http://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
+    TITLE2="View the web version of this report"                        # Link Description
+    echo -e "</center>" >> $HTML                                        # End Text Center
+    echo "<div class='fs13px'><a href='${RURL}'>${TITLE2}</a></div>" >>$HTML # Insert Link on Page
+    echo -e "\n<hr class="large_green">\n"                  >> $HTML
+    echo -e "\n<br>\n<center>\n<table border=0>"            >> $HTML
     #
-    echo -e "\n<title>$RTITLE</title>" >> $HTML
-    echo -e "</head>\n" >> $HTML
-    echo -e "<body>" >> $HTML
-    echo -e "\n<center><h1>${RTITLE}</h1></center>" >> $HTML
-    echo -e "\n<hr class="large_green">\n"              >> $HTML
-    echo -e "\n<center><table border=0>" >> $HTML
+    echo -e "\n<thead>"                                     >> $HTML
     #
-    echo -e "\n<thead>" >> $HTML
+    echo -e "<tr>"                                          >> $HTML
+    echo -e "<th colspan=1 dt-head-center></th>"            >> $HTML
+    echo -e "<th colspan=4 align=center>Last Backup</th>"   >> $HTML
+    echo -e "<th align=center>Schedule</th>"                >> $HTML
+    echo -e "<th colspan=2></th>"                           >> $HTML
+    echo -e "<th align=center>System</th>"                  >> $HTML
+    echo -e "<th align=center>Current</th>"                 >> $HTML
+    echo -e "<th align=center>Previous</th>"                >> $HTML
+    echo -e "</tr>"                                         >> $HTML
     #
-    echo -e "<tr>" >> $HTML
-    echo -e "<th colspan=1 dt-head-center></th>" >> $HTML
-    echo -e "<th colspan=4 align=center>Last Backup</th>" >> $HTML
-    echo -e "<th align=center>Schedule</th>" >> $HTML
-    echo -e "<th colspan=2></th>" >> $HTML
-    echo -e "<th align=center>System</th>" >> $HTML
-    echo -e "<th align=center>Current</th>" >> $HTML
-    echo -e "<th align=center>Previous</th>" >> $HTML
-    echo -e "</tr>" >> $HTML
-    #
-    echo -e "<tr>" >> $HTML
-    echo -e "<th align=center>No</th>" >> $HTML
-    echo -e "<th align=center>Date</th>" >> $HTML
-    echo -e "<th align=center>Time</th>" >> $HTML
-    echo -e "<th align=center>Elapse</th>" >> $HTML
-    echo -e "<th align=center>Status</th>"  >> $HTML
-    echo -e "<th align=left>Activated</th>" >> $HTML
-    echo -e "<th align=center>System</th>" >> $HTML
-    echo -e "<th align=left>Description</th>" >> $HTML    
-    echo -e "<th align=left>Sporadic</th>" >> $HTML
-    echo -e "<th align=center>Size</th>" >> $HTML
-    echo -e "<th align=center>Size</th>" >> $HTML
-    echo -e "</tr>" >> $HTML
-    #
-    echo -e "</thead>\n" >> $HTML
+    echo -e "<tr>"                              >> $HTML
+    echo -e "<th align=center>No</th>"          >> $HTML
+    echo -e "<th align=center>Date</th>"        >> $HTML
+    echo -e "<th align=center>Time</th>"        >> $HTML
+    echo -e "<th align=center>Elapse</th>"      >> $HTML
+    echo -e "<th align=center>Status</th>"      >> $HTML
+    echo -e "<th align=left>Activated</th>"     >> $HTML
+    echo -e "<th align=center>System</th>"      >> $HTML
+    echo -e "<th align=left>Description</th>"   >> $HTML    
+    echo -e "<th align=left>Sporadic</th>"      >> $HTML
+    echo -e "<th align=center>Size</th>"        >> $HTML
+    echo -e "<th align=center>Size</th>"        >> $HTML
+    echo -e "</tr>"                             >> $HTML
+    echo -e "</thead>\n"                        >> $HTML
     return 0
 }
 
