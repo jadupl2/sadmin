@@ -26,11 +26,13 @@
 #@2019_07_16  Update: Remove repeating error message when not connecting to Database.
 #@2019_08_16  Update: v3.5 Correct Typo for number of rear backup to keep
 #@2019_08_19 Update: v3.6 Added Global Var. SADM_REAR_EXCLUDE_INIT for Rear Initial Options file.
+#@2020_12_26 Update: v3.7 Added Global Var. SADM_WWW_ARC_DIR for Server archive when deleted.
+
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
     # Set SADMIN PHP Library Version NUmber
-    define("SADM_PHP_LIBVER","3.6");
+    define("SADM_PHP_LIBVER","3.7");
 
     # Setting the HOSTNAME Variable
     list($HOSTNAME) = explode ('.', gethostname());                     # HOSTNAME without domain
@@ -99,6 +101,7 @@ define("SADM_WWW_DIR"      , SADM_BASE_DIR . "/www");                   # Web Si
 define("SADM_WWW_DOC_DIR"  , SADM_WWW_DIR  . "/doc");                   # Web server Doc Dir
 define("SADM_WWW_CFG_DIR"  , SADM_WWW_DIR  . "/cfg");                   # Web Server CFG Dir
 define("SADM_WWW_DAT_DIR"  , SADM_WWW_DIR  . "/dat");                   # Web Server Data Dir
+define("SADM_WWW_ARC_DIR"  , SADM_WWW_DAT_DIR  . "/archive");           # Web Server Archive Dir
 define("SADM_WWW_LIB_DIR"  , SADM_WWW_DIR  . "/lib");                   # Web Server Library Dir
 define("SADM_WWW_RRD_DIR"  , SADM_WWW_DIR  . "/rrd");                   # Web servers RRD Dir
 define("SADM_WWW_TMP_DIR"  , SADM_WWW_DIR  . "/tmp");                   # Web Server Temp Dir
