@@ -176,6 +176,7 @@ class sadmtools():
         # SADM Web Site Directories Structure
         self.www_dir            = os.path.join(self.base_dir,'www')     # SADM WebSite Dir Structure
         self.www_dat_dir        = os.path.join(self.www_dir,'dat')      # SADM Web Site Data Dir
+        self.www_arc_dir        = os.path.join(self.www_dat_dir,'archive') # SADM WebSite ArchiveDir
         self.www_doc_dir        = os.path.join(self.www_dir,'doc')      # SADM Web Site Doc Dir
         self.www_lib_dir        = os.path.join(self.www_dir,'lib')      # SADM Web Site Lib Dir
         self.www_tmp_dir        = os.path.join(self.www_dir,'tmp')      # SADM Web Site Tmp Dir
@@ -1195,6 +1196,9 @@ class sadmtools():
             #
             if not os.path.exists(self.www_dat_dir)  : os.mkdir(self.www_dat_dir,0o0775) # DAT  Dir.
             os.chown(self.www_dat_dir, wuid, wgid)                      # Change owner of dat file
+            #
+            if not os.path.exists(self.www_arc_dir)  : os.mkdir(self.www_arc_dir,0o0775) # DAT  Dir.
+            os.chown(self.www_arc_dir, wuid, wgid)                      # Change owner of dat file
             #
             if not os.path.exists(self.www_lib_dir)  : os.mkdir(self.www_lib_dir,0o0775) # Lib  Dir.
             os.chown(self.www_lib_dir, wuid, wgid)                      # Change owner of lib file
