@@ -161,6 +161,7 @@
 #@2020_12_17 Update: v3.60 sadm_get_osname() on 'CentOSStream' now return 'CENTOS'.
 #@2020_12_23 Fix: v3.61 Log Header (SADM_LOG_HEADER) & Footer (SADM_LOG_FOOTER) were always produce.
 #@2020_12_24 Fix: v3.62 Fix problem with capitalize function.
+#@2020_12_26 Update: v3.63 Add Global Variable SADM_WWW_ARC_DIR for Server Archive when deleted
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -172,7 +173,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.62"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.63"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -214,6 +215,7 @@ SADM_UMON_DIR="$SADM_USR_DIR/mon"           ; export SADM_UMON_DIR      # Script
 # SADMIN SERVER WEB SITE DIRECTORIES DEFINITION
 SADM_WWW_DOC_DIR="$SADM_WWW_DIR/doc"                        ; export SADM_WWW_DOC_DIR  # www Doc Dir
 SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                        ; export SADM_WWW_DAT_DIR  # www Dat Dir
+SADM_WWW_ARC_DIR="$SADM_WWW_DIR/dat/archive"                ; export SADM_WWW_ARC_DIR  # www Dat Dir
 SADM_WWW_RRD_DIR="$SADM_WWW_DIR/rrd"                        ; export SADM_WWW_RRD_DIR  # www RRD Dir
 SADM_WWW_CFG_DIR="$SADM_WWW_DIR/cfg"                        ; export SADM_WWW_CFG_DIR  # www CFG Dir
 SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                        ; export SADM_WWW_LIB_DIR  # www Lib Dir
@@ -1998,6 +2000,16 @@ sadm_start() {
             if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
                 then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR
                 else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR
+            fi
+    fi
+
+    # $SADMIN/www/dat/archive Dir.
+    [ ! -d "$SADM_WWW_ARC_DIR" ] && mkdir -p $SADM_WWW_ARC_DIR
+    if [ $(id -u) -eq 0 ]
+       then chmod 0775 $SADM_WWW_ARC_DIR
+            if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
+                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_ARC_DIR
+                else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_ARC_DIR
             fi
     fi
 
