@@ -29,6 +29,7 @@
 # ChangeLog
 #@2019_01_15 New: sadm_server_delete.php v2.1 Create server data archive before deleting it.
 #@2019_08_17 Update: v1.1 New Heading and return to Maintenance Server List
+#@2019_12_26 Update: v1.2 Update: Deleted server now place in www/dat/archive directory.
 #
 # ==================================================================================================
 #
@@ -45,7 +46,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.1" ;                                                        # Current version number
+$SVER  = "1.2" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -79,10 +80,12 @@ $CREATE_BUTTON = False ;                                                # Don't 
             # If Archive don't already exist and Server Data Directory exist then create Archive
             $server_dir = SADM_WWW_DAT_DIR."/".$_POST['server_name'];
             $server_tgz = $_POST['archive'];
-
+            if ($DEBUG) { echo "<br>server_dir=".$server_dir ;}       
+            if ($DEBUG) { echo "<br>server_tgz=".$server_tgz ;}       
             if (file_exists($server_dir)) {                             # Data Dir. Exist for server
                 if (! file_exists($server_tgz)) {                       # No Archive already exist ?
                     $CMD = "cd " . $server_dir . " ; tar -cvzf " .$server_tgz. " .";
+                    if ($DEBUG) { echo "<br>CMD=$CMD" ;}       
                     exec($CMD,$output,$rc);
                     if ($rc <> 0) {
                         sadm_alert("Error ".$rc." while creating archive.");
@@ -91,8 +94,10 @@ $CREATE_BUTTON = False ;                                                # Don't 
                 $CMD = "rm -fr " . $server_dir ;
                 exec($CMD,$output,$rc);
                 if ($rc <> 0) { 
-                    sadm_alert("Error ".$rc." while removing server data directory.");
+                    sadm_alert("Error ".$rc." while removing system data directory $server_dir ");
                 }
+            }else{
+                sadm_alert("Error system directory '$server_dir' doesn't exist.");
             }
         }
 
@@ -146,7 +151,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
     # Set the Submitted Flag On - We are done with the Form Data
     echo "<input type='hidden' value='1'   name='submitted' />";        # hidden use On Nxt Page Exe
     echo "<input type='hidden' value=$wkey name='server_name' />";      # Save Server Name (Key)
-    $archive_name = SADM_WWW_DAT_DIR . "/" . $wkey . '.tgz';            # Archive File Name
+    $archive_name = SADM_WWW_ARC_DIR . "/" . $wkey . '.tgz';            # Archive File Name
     echo "<input type='hidden' value=$archive_name name='archive' />";  # Archive tgz File Name
     
     # Ask for Final Confirmation
@@ -167,9 +172,12 @@ $CREATE_BUTTON = False ;                                                # Don't 
 
     # Display Note to user
     echo "<br><br>";
-    if (file_exists(SADM_WWW_DAT_DIR . "/" . $wkey )) {
-        if (! file_exists($archive_name)) {                             # No Archive already exist ?
-            echo "Note: An archive of server data will be created in '" .SADM_WWW_DAT_DIR. "' directory";
+    #echo "Archive name is $archive_name" ;
+    #echo "<br>";
+    #echo SADM_WWW_DAT_DIR . "/" . $wkey ;
+        if (file_exists(SADM_WWW_DAT_DIR . "/" . $wkey )) {
+            if (! file_exists($archive_name)) {                             # No Archive already exist ?
+            echo "Note: An archive of server data will be created in '" .SADM_WWW_ARC_DIR. "/' directory";
             echo "<br>      The name of the archive will be '" .$wkey. ".tgz'";
         }else{
             echo "<br>An archive already exist for that server and it won't be overwritten.";
