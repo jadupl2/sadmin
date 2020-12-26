@@ -56,6 +56,7 @@
 # 2020_09_20 Update: v1.44 Minor adjustments to log entries.
 #@2020_11_07 Update: v1.45 Remove old rch conversion code execution.
 #@2020_12_16 Update: v1.46 Minor code change (Isolate the check for sadmin user and group)
+#@2020_12_26 Fix: v1.47 Doesn't delete Database Password File, cause problem during server setup.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -87,7 +88,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.46'                                  # Current Script Version
+export SADM_VER='1.47'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New Log
@@ -492,8 +493,8 @@ file_housekeeping()
             #afile="$SADM_CFG_DIR/alert_slack.cfg"
             #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
-            afile="$SADM_CFG_DIR/.dbpass"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #afile="$SADM_CFG_DIR/.dbpass"
+            #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
             #afile="$SADM_CFG_DIR/.alert_history.txt"
             #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
