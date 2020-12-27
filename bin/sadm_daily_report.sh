@@ -34,6 +34,7 @@
 #@2020_12_15 Updated v1.15 Cosmetic changes to Daily Report.
 #@2020_12_26 Updated v1.16 Include link to web page in email.
 #@2020_12_26 Updated v1.17 Insert Header when reporting script error(s).
+#@2020_12_27 Updated v1.18 Insert Header when reporting script running.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -65,7 +66,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.17'                                  # Current Script Version
+export SADM_VER='1.18'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -384,7 +385,7 @@ script_report()
 
 
     # SCRIPTS THAT ARE CURRENTLY RUNNING SECTION
-    #echo -e "\n<center><h3>List of running script(s)</h3></center>\n" >>$HTML_SFILE
+    #
     if [ $SADM_DEBUG -gt 4 ]; then sadm_writelog "Checking for running script ..." ; fi 
     xcount=0                                                            # Nb. of Running script 
     for RCH_LINE in "${rch_array[@]}"                                   # For every item in array
@@ -394,7 +395,8 @@ script_report()
             then split_rchline "$RCH_LINE"                              # Split Line into fields
                  xcount=$(($xcount+1))                                  # Increase Line Counter
                  if [ $xcount -eq 1 ] 
-                    then echo -e "<br>"  >> $HTML_SFILE                 # Space line before heading
+                    then hline="List of running script(s)"
+                         echo -e "\n<center><h3>$hline</h3></center>\n" >>$HTML_SFILE
                          script_table_heading "Script(s) currently running" "$RCH_SERVER"
                  fi
                  script_line "$xcount"                                  # Show line in Table
@@ -423,7 +425,6 @@ script_report()
                  if [ $xcount -eq 1 ] 
                     then hline="List of script(s) terminated with error(s)"
                          echo -e "\n<center><h3>$hline</h3></center>\n" >>$HTML_SFILE
-                         #echo -e "\n<br>\n"  >> $HTML_SFILE             # Space line before heading
                          script_table_heading "Script Ended With Error" "$RCH_SERVER"
                  fi
                  script_line "$xcount"                                  # Show line in Table
