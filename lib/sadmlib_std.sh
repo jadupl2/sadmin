@@ -2244,7 +2244,7 @@ sadm_stop() {
                 1)  sadm_write "Script will send an alert only when it terminate with error (\$SADM_ALERT_TYPE=1).\n"
                     if [ "$SADM_EXIT_CODE" -ne 0 ]
                         then sadm_write "Script failed, alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}.\n"
-                        else sadm_write "Script succeeded, no alert send to '$SADM_ALERT_GROUP' alert group.\n"
+                        else sadm_write "Script succeeded, no alert will be send to '$SADM_ALERT_GROUP' alert group.\n"
                     fi
                     ;;
                 2)  sadm_write "Script will send an alert only when it terminate with success (\$SADM_ALERT_TYPE=2).\n"
