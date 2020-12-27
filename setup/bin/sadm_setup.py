@@ -85,6 +85,7 @@
 #@2020_12_21 Update: v3.48 Bypass installation of 'syslinux' on Arm platform (Not available).
 #@2020_12_23 Fix: v3.49 Fix typo error.
 #@2020_12_24 Update: v3.50 CentOSStream return CENTOS.
+#@2020_12_27 Fix: v3.51 Fix problem with 'rear' & 'syslinux' when installing SADMIN server.
 # 
 # ==================================================================================================
 #
@@ -102,7 +103,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.50"                                            # Setup Version Number
+sver                = "3.51"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -131,8 +132,8 @@ class color:
     END         = '\033[0m'
 
 # Some package are only available on these platform
-rear_supported_architecture     = ["i686","i386","X86_64","amd64"] 
-syslinux_supported_architecture = ["i686","i386","X86_64","amd64"] 
+rear_supported_architecture     = ["i686","i386","x86_64","amd64"] 
+syslinux_supported_architecture = ["i686","i386","x86_64","amd64"] 
 
 # Command and package require by SADMIN Client to work correctly
 req_client = {}                                                         # Require Packages Dict.
@@ -831,12 +832,12 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
 
         # Rear Only available on Intel platform Architecture
         if needed_packages == "rear" and sosarch not in rear_supported_architecture :
-              writelog (" Ok, not supported on this platform (sosarch))") # Show User Check Result
+              writelog (" Ok, 'rear' isn't supported on this platform (%s)" % (sosarch)) 
               continue                                                  # Proceed with Next Package
 
         # Syslinux Only available on Intel platform Architecture
         if needed_packages == "syslinux" and sosarch not in syslinux_supported_architecture :
-              writelog (" Ok, not supported on this platform (sosarch))") # Show User Check Result
+              writelog (" Ok, 'syslinux' isn't supported on this platform (%s)" % (sosarch)) 
               continue                                                  # Proceed with Next Package
 
         if locate_package(needed_packages,packtype) :                   # If Package is installed
@@ -2249,12 +2250,6 @@ def getpacktype(sroot,sostype):
         ccode, cstdout, cstderr = oscommand("uname -p")
         osarch=cstdout
 
-    # Return :
-    # Package Type (deb,rpm,dmg,aix)
-    # O/S Name (AIX/CENTOS/REDHAT,UBUNTU,DEBIAN,RASPBIAN,...)
-    # O/S Major Version Number
-    # O/S Running in 32 or 64 bits (32,64)
-    # O/S Architecture (Aarch64,Armv6l,Armv7l,I686,i386,X86_64,amd64)
     return (packtype,osname,osver,osbits,osarch)                        # Return Packtype & O/S Name
 
 
