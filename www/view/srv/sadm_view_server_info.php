@@ -40,7 +40,8 @@
 # 2019_04_04 Change: v2.11 Adapt for Schedule_text function change in library
 # 2019_07_25 Update: v2.12 Minor code changes
 # 2019_10_15 Update: v2.13 Color change of input fields.
-#@2020_07_12 Update: v2.14 Replace 'CRUD' button with 'Modify' that direct you to CRUD server menu.
+# 2020_07_12 Update: v2.14 Replace 'CRUD' button with 'Modify' that direct you to CRUD server menu.
+#@2020_12_29 Update: v2.15 Date for starting & ending maintenance mode was not show properly.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -84,7 +85,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.14" ;                                                       # Current version number
+$SVER  = "2.15" ;                                                       # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -308,7 +309,7 @@ function display_right_side ($wrow) {
     echo "</div>";
 
     # Server NB of CPU and CPU Speed
-    echo "\n\n<div class='server_right_label'>Server CPU</div>";
+    echo "\n\n<div class='server_right_label'>Nb. Physical CPU</div>";
     echo "\n<div class='server_right_data'>";
     if (empty($wrow['srv_nb_cpu'])) { echo "&nbsp" ; }else{ echo $wrow['srv_nb_cpu']  ; }
     if (empty($wrow['srv_cpu_speed'])) { 
@@ -400,8 +401,8 @@ function display_right_side ($wrow) {
     }
     echo "</div>";
 
-    # Last O/S Update Date 
-    echo "\n\n<div class='server_right_label'>Last O/S Update</div>";
+    # Last O/S Update Date & Status
+    echo "\n\n<div class='server_right_label'>Last O/S update date</div>";
     echo "\n<div class='server_right_data'>";
     if ($wrow['srv_date_osupdate'] == "0000-00-00 00:00:00") { 
         echo "No Update Yet" ; 
@@ -423,18 +424,24 @@ function display_right_side ($wrow) {
     if ($wrow['srv_maintenance'] == True)  { echo "Active" ; }else{ echo "Inactive" ; }
     echo "</div>";
 
-    # Maintenance Mode Start and Stop TimeStamp
-    echo "\n\n<div class='server_right_label'>Maint. Period Start</div>";
-    echo "\n<div class='server_right_data'>";
-    echo $wrow['srv_maint_date_start'] ;
-    echo "\n</div>";
-    echo "\n\n<div class='server_right_label'>Maint. Period End</div>";
-    echo "\n<div class='server_right_data'>";
-    echo $wrow['srv_maint_date_end'] ;
-    echo "\n</div>";    
+    # Date et Heure du debut de la maintenance
+    echo "\n<div class='server_right_label'>Start of maintenance period</div>";
+    if (is_null($wrow['srv_maint_date_start']) )
+        { 
+        $wrow['srv_maint_date_start'] = "0000-00-00 00:00:00"; 
+        }
+    echo "\n<div class='server_right_data'>" . $wrow['srv_maint_date_start'] . "</div>";
 
-    # Server Backup Schedule
-    echo "\n\n<div class='server_right_label'>Backup Schedule</div>";
+    # Date et Heure de la fin de la maintenance
+    echo "\n<div class='server_right_label'>End of maintenance period</div>";
+    if (is_null($wrow['srv_maint_date_end']) )
+        { 
+        $wrow['srv_maint_date_end'] = "0000-00-00 00:00:00"; 
+        }
+    echo "\n<div class='server_right_data'>" . $wrow['srv_maint_date_end'] . "</div>";
+
+
+    echo "\n\n<div class='server_right_label'>Daily backup time</div>";
     echo "\n<div class='server_right_data'>\n";
     if ($wrow['srv_backup']) {
         list ($STR_SCHEDULE, $DATE_SCHED) = SCHEDULE_TO_TEXT($wrow['srv_backup_dom'], $wrow['srv_backup_month'],
@@ -448,7 +455,7 @@ function display_right_side ($wrow) {
 
        
     # Creation Date 
-    echo "\n\n<div class='server_right_label'>Creation Date</div>";
+    echo "\n\n<div class='server_right_label'>System creation date</div>";
     echo "\n<div class='server_right_data'>";
     if (empty($wrow['srv_date_creation'])) { 
         echo "&nbsp" ; 
@@ -458,7 +465,7 @@ function display_right_side ($wrow) {
     echo "</div>";
     
     # Last Edit Date 
-    echo "\n\n<div class='server_right_label'>Last Edit Date</div>";
+    echo "\n\n<div class='server_right_label'>System modification date</div>";
     echo "\n<div class='server_right_data'>";
     if (empty($wrow['srv_date_edit'])) { 
         echo "&nbsp" ; 
@@ -468,7 +475,7 @@ function display_right_side ($wrow) {
     echo "</div>";
 
     # Last Update Date 
-    echo "\n\n<div class='server_right_label'>Last Daily Update</div>";
+    echo "\n\n<div class='server_right_label'>Last information collection date</div>";
     echo "\n<div class='server_right_data'>";
     if (empty($wrow['srv_date_update'])) { 
         echo "&nbsp" ; 
