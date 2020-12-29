@@ -36,6 +36,7 @@
 # 2019_07_12 Update v2.9 Don't show MacOS and Aix status (Not applicable).
 #@2019_09_20 Update v2.10 Show History (RCH) content using same uniform way.
 #@2019_09_23 Update v2.11 When initiating Schedule change from here, return to this page when done.
+#@2019_12_29 Fix: v2.12 Bottom titles was different that the heading.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -44,7 +45,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load P
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
-# DataTable Initialisation Function
+# DataTable Initialization Function
 ?>
 <script>
     $(document).ready(function() {
@@ -64,7 +65,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.11" ;                                               # Current version number
+$WVER          = "2.12" ;                                               # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
@@ -109,9 +110,9 @@ function setup_table() {
     echo "<tfoot>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
-    echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
     echo "<th class='dt-head-center'>O/S</th>\n";                       # Center Header Only
     echo "<th class='dt-head-center'>Version</th>\n";                   # Center Header Only
+    echo "<th class='text-center'>Last Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Next Update</th>\n";
     echo "<th class='text-center'>Update Occurrence</th>\n";
