@@ -1097,7 +1097,7 @@ rear_line()
                              #PCT=`echo "($WCUR_TOTAL / $WPRV_TOTAL) * 100" | bc -l` 
                              PCT=$(printf "%.f" $PCT)
                              if [ $PCT -ge $WPCT ] && [ $PCT -ne 0 ]         # Decr. less than threshold
-                                then echo -n "<td title='Backup is ${PCT}% smaller than yesterday' " >>$HTML
+                                then echo -n "<td title='Backup is ${PCT}% smaller than previous' " >>$HTML
                                      echo "align=center bgcolor='Yellow'> " >> $HTML
                                      echo "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >>$HTML
                                 else echo -n "<td align=center bgcolor=$BCOL>" >>$HTML
