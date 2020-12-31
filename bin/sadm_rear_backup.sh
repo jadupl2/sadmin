@@ -440,15 +440,15 @@ rear_housekeeping()
              sadm_write "Don't need to delete any old ISO file(s) ${SADM_OK}\n"
     fi
         
-    # Make sure Host Directory permission and files below are ok
-    sadm_write "\n"
-    sadm_write "Make sure backup are readable.\n"
-    sadm_write "chmod 644 ${REAR_NAME}* "
-    chmod 644 ${REAR_NAME}* >> /dev/null 2>&1
-    if [ $? -ne 0 ] 
-       then sadm_write "$SADM_ERROR Problem running 'chmod'.\n"
-       else sadm_write "$SADM_OK \n" 
-    fi       
+    # Make sure Host Directory permission and files below are ok(Can't change the permission on NAS)
+    #sadm_write "\n"
+    #sadm_write "Make sure backup are readable.\n"
+    #sadm_write "chmod 644 ${REAR_NAME}* "
+    #chmod 644 ${REAR_NAME}* >> /dev/null 2>&1
+    #if [ $? -ne 0 ] 
+    #   then sadm_write "$SADM_ERROR Problem running 'chmod'.\n"
+    #   else sadm_write "$SADM_OK \n" 
+    #fi       
 
     # List Backup Directory to user after cleanup
     sadm_write "\n"
