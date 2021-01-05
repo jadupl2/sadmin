@@ -65,7 +65,7 @@
 # 2020_07_13 Fix: v3.24 New System Main Backup Directory was not created with right permission.
 #@2020_09_23 Update: v3.25 Modification to log recording.
 #@2020_10_26 Fix: v3.26 Suppress 'chmod' error message on backup directory.
-#@2020_11_18 Update: v3.27 Don't trim the log after each execution.
+#@2021_01_05 Update: v3.27 List backup directory content at the end of backup.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -396,7 +396,7 @@ create_backup()
             then continue                                               # Skip, Go read Next Line
         fi  
         
-        if [ "$FC" = "$" ]                                              # If Environment Variable
+        if [ "$FC" = "$" ]                                              # If 1st Char. is a variable
             then if [ $SADM_DEBUG -gt 0 ] 
                      then sadm_write "Before Processing line $backup_line \n"
                  fi
@@ -506,10 +506,18 @@ create_backup()
         done < $SADM_BACKUP_LIST                                        # For Loop Read Backup List
 
 
+
     # End of Backup
     cd $CUR_PWD                                                         # Restore Previous Cur Dir.
     sadm_write "\n"
     sadm_write "Total error(s) while creating backup is ${TOTAL_ERROR}.\n"
+
+    # List Backup Directory
+    sadm_write "\n"
+    sadm_write "Content of today backup directory (${BACKUP_DIR}):\n"
+    ls -l ${BACKUP_DIR}
+    sadm_write "\n"
+
     return $TOTAL_ERROR                                                 # Return Total of Error
 }
 
