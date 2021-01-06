@@ -86,6 +86,7 @@
 #@2020_12_23 Fix: v3.49 Fix typo error.
 #@2020_12_24 Update: v3.50 CentOSStream return CENTOS.
 #@2020_12_27 Fix: v3.51 Fix problem with 'rear' & 'syslinux' when installing SADMIN server.
+#@2021_01_06 Update: v3.52 Ensure that package util-linux is installed on client & server.
 # 
 # ==================================================================================================
 #
@@ -103,7 +104,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.51"                                            # Setup Version Number
+sver                = "3.52"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -160,6 +161,8 @@ req_client = {
                     'deb':'sudo',                           'drepo':'base'},
     'lshw'       :{ 'rpm':'lshw',                           'rrepo':'base',  
                     'deb':'lshw',                           'drepo':'base'},
+    'lsblk'      :{ 'rpm':'util-linux-ng',                  'rrepo':'base',  
+                    'deb':'util-linux',                     'drepo':'base'},
     'parted'     :{ 'rpm':'parted',                         'rrepo':'base',  
                     'deb':'parted',                         'drepo':'base'},
     'mail'       :{ 'rpm':'mailx',                          'rrepo':'base',
