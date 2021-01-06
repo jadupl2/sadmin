@@ -848,7 +848,7 @@ process_servers()
         rear_hrs=`      echo $wline|awk -F\; '{ print $24 }'`            # Rear Crontab Hrs field
         rear_min=`      echo $wline|awk -F\; '{ print $25 }'`            # Rear Crontab Min field
         #
-        #sadm_write "${SADM_TEN_DASH}\n"                                 # Print 10 Dash line
+        sadm_write "\n"
         sadm_write "${BOLD}Processing [$xcount] ${fqdn_server}${NORMAL}\n" 
 
         # TO DISPLAY DATABASE COLUMN WE WILL USED, FOR DEBUGGING
