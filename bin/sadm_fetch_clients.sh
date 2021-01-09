@@ -148,7 +148,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
     #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
-    export SADM_MAX_LOGLINE=75000                        # When script end Trim log to 7500 Lines
+    export SADM_MAX_LOGLINE=25000                        # When script end Trim log to 7500 Lines
     export SADM_MAX_RCLINE=150                           # When script end Trim rch file to 35 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
@@ -1405,7 +1405,6 @@ function cmd_options()
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-    echo "TERM=..${TERM}.." >> $SADM_LOG 2>&1
     main_process                                                        # rsync from all clients
     SADM_EXIT_CODE=$?                                                   # Save Function Result Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Upd. RCH
