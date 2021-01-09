@@ -173,13 +173,13 @@ update_url_in_rear_site_conf()
         if [ $? = 0 ]                                                   # If BACKUP_URL line
             then sadm_write "Update backup destination in $REAR_CFGFILE with value from sadmin.cfg.\n" 
                  echo "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"" >> $REAR_TMP
-                 sadm_write "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"\n"
+                 sadm_write "  - BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"\n"
             else echo "$wline" >> $REAR_TMP                             # Output normal line in TMP
         fi
         done < $REAR_CFGFILE                                            # Read /etc/rear/site.conf
 
     # Copy New site.conf ($REAR_TMP) to the official one ($REAR_CFGFILE).
-    sadm_write "Update actual $REAR_CFGFILE "
+    sadm_write "  - Update actual $REAR_CFGFILE "
     cp $REAR_TMP $REAR_CFGFILE                                              # Replace ReaR site.conf
     if [ $? -ne 0 ]
        then sadm_write "$SADM_ERROR replacing actual ${REAR_CFGFILE}.\n"
@@ -299,7 +299,7 @@ rear_preparation()
 
     # Make sure Local mount point exist.
     if [ ! -d ${NFS_MOUNT} ] 
-        then sadm_write "Create local mount point directory (${NFS_MOUNT}).\n" 
+        then sadm_write "Create local temporary mount point directory (${NFS_MOUNT}).\n" 
              mkdir ${NFS_MOUNT} ; chmod 775 ${NFS_MOUNT} 
      fi
 
