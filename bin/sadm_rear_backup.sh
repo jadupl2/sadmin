@@ -69,6 +69,7 @@
 #@2020_05_18 Fix: v2.22 Fix /etc/rear/site.conf auto update problem, prior to starting backup.
 #@2020_06_30 Fix: v2.23 Fix chmod 664 for files in server backup directory
 #@2020_09_05 Fix: v2.24 Minor Changes.
+#@2021_01_11 Fix: v2.25 NFS drive was not unmounted when the backup failed.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -100,7 +101,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.24'                              # Your Current Script Version
+    export SADM_VER='2.25'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -440,16 +441,6 @@ rear_housekeeping()
              sadm_write "Don't need to delete any old ISO file(s) ${SADM_OK}\n"
     fi
         
-    # Make sure Host Directory permission and files below are ok(Can't change the permission on NAS)
-    #sadm_write "\n"
-    #sadm_write "Make sure backup are readable.\n"
-    #sadm_write "chmod 644 ${REAR_NAME}* "
-    #chmod 644 ${REAR_NAME}* >> /dev/null 2>&1
-    #if [ $? -ne 0 ] 
-    #   then sadm_write "$SADM_ERROR Problem running 'chmod'.\n"
-    #   else sadm_write "$SADM_OK \n" 
-    #fi       
-
     # List Backup Directory to user after cleanup
     sadm_write "\n"
     sadm_write "Content of ${SADM_HOSTNAME} ReaR backup directory after housekeeping.\n"
@@ -513,12 +504,14 @@ create_backup()
     if [ $RC -ne 0 ]
         then sadm_write "See the error message in ${SADM_LOG} ${SADM_ERROR}.\n" 
              sadm_write "***** Rear Backup completed with Error - Aborting Script *****\n"
+             sadm_write "Unmount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT}\n" 
+             umount  ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} > /dev/null 2>&1
              return 1                                                   # Back to caller with error
         else sadm_write "More info in the log ${SADM_LOG}.\n"
              sadm_write "Rear Backup completed ${SADM_SUCCESS}\n"
              sadm_write "\n"
     fi
-    chmod 664 ${REAR_DIR}/*                                             # Give access for Maint.
+    #chmod 664 ${REAR_DIR}/*                                             # Give access for Maint.
     return 0                                                            # Return Default return code
 }
 
