@@ -35,6 +35,7 @@
 #@2020_12_26 Updated v1.16 Include link to web page in email.
 #@2020_12_26 Updated v1.17 Insert Header when reporting script error(s).
 #@2020_12_27 Updated v1.18 Insert Header when reporting script running.
+#@2021_01_13 Updated v1.19 Change reports heading color and font style.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -66,7 +67,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.18'                                  # Current Script Version
+export SADM_VER='1.19'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -297,6 +298,7 @@ read_server_column()
 }
 
 
+
 # ==================================================================================================
 # Show Distribution Logo as a cell in a table
 # ==================================================================================================
@@ -395,8 +397,10 @@ script_report()
             then split_rchline "$RCH_LINE"                              # Split Line into fields
                  xcount=$(($xcount+1))                                  # Increase Line Counter
                  if [ $xcount -eq 1 ] 
-                    then hline="List of running script(s)"
-                         echo -e "\n<center><h3>$hline</h3></center>\n" >>$HTML_SFILE
+                    then msg="List of running script(s)"
+                         echo -e "<center>\n"  >>$HTML_SFILE
+                         echo -e "\n<p class='report_subtitle'>$msg</p>\n" >>$HTML_SFILE 
+                         echo -e "<center>\n"  >>$HTML_SFILE
                          script_table_heading "Script(s) currently running" "$RCH_SERVER"
                  fi
                  script_line "$xcount"                                  # Show line in Table
@@ -404,7 +408,11 @@ script_report()
         fi 
         done
     if [ $xcount -eq 0 ]                                                # If no running script found
-        then echo -e "\n<center><h3>No script actually running</h3></center>\n" >>$HTML_SFILE
+        then echo "<p style='color:blue;'>" >>$HTML_SFILE
+             msg="No script actually running" >>$HTML_SFILE        # Section Title Header
+             echo -e "\n<center>" >> $HTML_SFILE
+             echo -e "<p class='report_subtitle'>$msg</p>\n" >>$HTML_SFILE
+             echo -e "\n</center>" >> $HTML_SFILE
              sadm_writelog "${SADM_OK} No script actually running."     # Feed Screen & Log
         else echo -e "</table>\n<br>\n" >> $HTML_SFILE                  # End of HTML Table
     fi
@@ -423,8 +431,8 @@ script_report()
             then split_rchline "$RCH_LINE"                              # Split Line into fields
                  xcount=$(($xcount+1))                                  # Increase Line Counter
                  if [ $xcount -eq 1 ] 
-                    then hline="List of script(s) terminated with error(s)"
-                         echo -e "\n<center><h3>$hline</h3></center>\n" >>$HTML_SFILE
+                    then msg="List of script(s) terminated with error(s)"
+                         echo -e "\n<center><p class='report_subtitle'>$msg</p></center>\n" >>$HTML_SFILE
                          script_table_heading "Script Ended With Error" "$RCH_SERVER"
                  fi
                  script_line "$xcount"                                  # Show line in Table
@@ -434,7 +442,7 @@ script_report()
         done
     if [ $xcount -eq 0 ]                                                # If no running script found
         then msg="No script terminated with error" >>$HTML_SFILE        # Message to User
-             echo -e "\n<center><h3>$msg</h3></center>\n" >>$HTML_SFILE
+             echo -e "\n<center><p class='report_subtitle'>$msg</p></center>\n" >>$HTML_SFILE  
              sadm_writelog "${SADM_OK} $msg"                            # Feed Screen & Log
         else echo -e "</table>\n<br>\n" >> $HTML_SFILE                  # End of HTML Table
     fi
@@ -443,7 +451,7 @@ script_report()
 
     # SCRIPT EXECUTION HISTORY SECTION
     msg="Scripts execution history by system name" >>$HTML_SFILE        # Section Title Header
-    echo -e "\n<center><h3>$msg</h3></center>\n" >>$HTML_SFILE          # Insert Header on Page
+    echo -e "\n<p class='report_subtitle'>$msg</p>\n" >>$HTML_SFILE     # Insert Header on Page
     current_server=""                                                   # Clear Current Server Name
     # Sort by server name and by reverse execution date.
     sort -t' ' -k1,1 -k2,2r  $RCH_SUMMARY | grep -iv "storix" > $SADM_TMP_FILE1
@@ -540,13 +548,20 @@ script_page_heading()
     echo -e "hr.dash        { border-top: 1px dashed red; }"    >> $HTML_SFILE
     echo -e "/* Large rounded green border */"                  >> $HTML_SFILE
     echo -e "hr.large_green { border: 2px solid green; border-radius: 5px; }"       >> $HTML_SFILE
+    echo -e "p.report_title {" >> $HTML_SFILE
+    echo -e "   font-family:Helvetica,Arial;color:blue;font-size:25px;font-weight:bold;" >> $HTML_SFILE
+    echo -e "}" >> $HTML_SFILE    
+    echo -e "p.report_subtitle {" >> $HTML_SFILE
+    echo -e "   font-family:Helvetica,Arial;color:brown;font-size:18px;font-weight:bold;" >> $HTML_SFILE
+    echo -e "}" >> $HTML_SFILE    
     echo -e "</style>"                                                              >> $HTML_SFILE
     echo -e "<title>$RTITLE</title>\n"                          >> $HTML_SFILE
     echo -e "</head>"                                           >> $HTML_SFILE
     echo -e "<body>"                                            >> $HTML_SFILE
 
     echo -e "<center>" >> $HTML_SFILE                                   # Center what's coming
-    echo -e "<div class='fs150'>${RTITLE}</div>" >> $HTML_SFILE         # Show Page Title
+    echo -e "<p class='report_title'>${RTITLE}</p>" >> $HTML_SFILE      # Report Title
+    #
     URL_SCRIPTS_REPORT="/view/daily_scripts_report.html"                # Scripts Daily Report Page
     RURL="http://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
     TITLE2="View the web version of this report"                        # Link Description
@@ -930,13 +945,16 @@ rear_heading()
     echo -e "hr.dash        { border-top: 1px dashed red; }" >> $HTML
     echo -e "/* Large rounded green border */" >> $HTML
     echo -e "hr.large_green { border: 3px solid green; border-radius: 5px; }" >> $HTML
+    echo -e "p.report_title {" >> $HTML
+    echo -e "   font-family:Helvetica,Arial;color:blue;font-size:25px;font-weight:bold;" >> $HTML
+    echo -e "}" >> $HTML    
     echo -e "</style>" >> $HTML
     echo -e "\n<title>$RTITLE</title>" >> $HTML
     echo -e "</head>\n" >> $HTML
     echo -e "<body>" >> $HTML
     
     echo -e "<center>" >> $HTML                                         # Center what's coming
-    echo -e "<div class='fs150'>${RTITLE}</div>" >> $HTML               # Show Page Title
+    echo -e "<p class='report_title'>${RTITLE}</p>" >> $HTML            # Report Title    
     URL_SCRIPTS_REPORT="/view/daily_rear_report.html"                   # Scripts Daily Report Page
     RURL="http://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
     TITLE2="View the web version of this report"                        # Link Description
@@ -1397,6 +1415,9 @@ storix_heading()
     echo -e "hr.dash        { border-top: 1px dashed red; }" >> $HTML_XFILE
     echo -e "/* Large rounded green border */" >> $HTML_XFILE
     echo -e "hr.large_green { border: 3px solid green; border-radius: 5px; }" >> $HTML_XFILE
+    echo -e "p.report_title {" >> $HTML_XFILE
+    echo -e "   font-family:Helvetica,Arial;color:blue;font-size:25px;font-weight:bold;" >> $HTML_XFILE
+    echo -e "}" >> $HTML_XFILE
     echo -e "</style>" >> $HTML_XFILE
     #
     echo -e "\n<title>$RTITLE</title>" >> $HTML_XFILE
@@ -1404,7 +1425,7 @@ storix_heading()
     echo -e "<body>" >> $HTML_XFILE
 
     echo -e "<center>" >> $HTML_XFILE                                   # Center what's coming
-    echo -e "<div class='fs150'>${RTITLE}</div>" >> $HTML_XFILE         # Show Page Title
+    echo -e "<p class='report_title'>${RTITLE}</p>" >> $HTML            # Report Title
     URL_SCRIPTS_REPORT="/view/daily_storix_report.html"                 # Scripts Daily Report Page
     RURL="http://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
     TITLE2="View the web version of this report"                        # Link Description
@@ -1828,13 +1849,16 @@ backup_heading()
     echo -e "hr.dash        { border-top: 1px dashed red;}" >> $HTML
     echo -e "/* Large rounded green border */"              >> $HTML
     echo -e "hr.large_green { border: 3px solid green; border-radius: 5px; }"       >> $HTML
+    echo -e "p.report_title {" >> $HTML
+    echo -e "   font-family:Helvetica,Arial;color:blue;font-size:25px;font-weight:bold;" >> $HTML
+    echo -e "}" >> $HTML
     echo -e "</style>"                                      >> $HTML
     echo -e "\n<title>$RTITLE</title>"                      >> $HTML
     echo -e "</head>\n"                                     >> $HTML
     echo -e "<body>"                                        >> $HTML
 
     echo -e "<center>" >> $HTML                                         # Center what's coming
-    echo -e "<div class='fs150'>${RTITLE}</div>" >> $HTML               # Show Page Title
+    echo -e "<p class='report_title'>${RTITLE}</p>" >> $HTML            # Report Title
     URL_SCRIPTS_REPORT="/view/daily_backup_report.html"                 # Scripts Daily Report Page
     RURL="http://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
     TITLE2="View the web version of this report"                        # Link Description
