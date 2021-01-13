@@ -162,6 +162,7 @@
 #@2020_12_23 Fix: v3.61 Log Header (SADM_LOG_HEADER) & Footer (SADM_LOG_FOOTER) were always produce.
 #@2020_12_24 Fix: v3.62 Fix problem with capitalize function.
 #@2020_12_26 Update: v3.63 Add Global Variable SADM_WWW_ARC_DIR for Server Archive when deleted
+#@2021_01_13 Update: v3.64 Code Optimization (in Progress)
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -172,168 +173,169 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 #
-SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.63"                         ; export SADM_LIB_VER       # This Library Version
-SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
-SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
-SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
-SADM_80_SPACES=`printf %80s  " "`           ; export SADM_80_SPACES     # 80 spaces 
-SADM_TEN_DASH=`printf %10s |tr " " "-"`     ; export SADM_TEN_DASH      # 10 dashes line
-SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
-SADM_DEBUG=0                                ; export SADM_DEBUG         # 0=NoDebug Higher=+Verbose
-DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-LIB_DEBUG=0                                 ; export LIB_DEBUG          # This Library Debug Level
+export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
+export SADM_LIB_VER="3.64"                                              # This Library Version
+export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
+export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
+export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
+export SADM_80_SPACES=`printf %80s  " "`                                # 80 spaces 
+export SADM_TEN_DASH=`printf %10s |tr " " "-"`                          # 10 dashes line
+export SADM_STIME=""                                                    # Store Script Start Time
+export SADM_DEBUG=0                                                     # 0=NoDebug Higher=+Verbose
+export DELETE_PID="Y"                                                   # Default Delete PID On Exit
+export LIB_DEBUG=0                                                      # This Library Debug Level
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
-SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
-SADM_BIN_DIR="$SADM_BASE_DIR/bin"           ; export SADM_BIN_DIR       # Script Root binary Dir.
-SADM_TMP_DIR="$SADM_BASE_DIR/tmp"           ; export SADM_TMP_DIR       # Script Temp  directory
-SADM_LIB_DIR="$SADM_BASE_DIR/lib"           ; export SADM_LIB_DIR       # Script Lib directory
-SADM_LOG_DIR="$SADM_BASE_DIR/log"           ; export SADM_LOG_DIR       # Script log directory
-SADM_CFG_DIR="$SADM_BASE_DIR/cfg"           ; export SADM_CFG_DIR       # Configuration Directory
-SADM_SYS_DIR="$SADM_BASE_DIR/sys"           ; export SADM_SYS_DIR       # System related scripts
-SADM_DAT_DIR="$SADM_BASE_DIR/dat"           ; export SADM_DAT_DIR       # Data directory
-SADM_DOC_DIR="$SADM_BASE_DIR/doc"           ; export SADM_DOC_DIR       # Documentation directory
-SADM_PKG_DIR="$SADM_BASE_DIR/pkg"           ; export SADM_PKG_DIR       # Package rpm,deb  directory
-SADM_SETUP_DIR="$SADM_BASE_DIR/setup"       ; export SADM_SETUP_DIR     # Package rpm,deb  directory
-SADM_NMON_DIR="$SADM_DAT_DIR/nmon"          ; export SADM_NMON_DIR      # Where nmon file reside
-SADM_DR_DIR="$SADM_DAT_DIR/dr"              ; export SADM_DR_DIR        # Disaster Recovery  files
-SADM_RCH_DIR="$SADM_DAT_DIR/rch"            ; export SADM_RCH_DIR       # Result Code History Dir
-SADM_NET_DIR="$SADM_DAT_DIR/net"            ; export SADM_NET_DIR       # Network SubNet Info Dir
-SADM_RPT_DIR="$SADM_DAT_DIR/rpt"            ; export SADM_RPT_DIR       # SADM Sysmon Report Dir
-SADM_DBB_DIR="$SADM_DAT_DIR/dbb"            ; export SADM_DBB_DIR       # Database Backup Directory
-SADM_WWW_DIR="$SADM_BASE_DIR/www"           ; export SADM_WWW_DIR       # Web Dir
+export SADM_BASE_DIR=${SADMIN:="/sadmin"}                               # Script Root Base Dir.
+export SADM_BIN_DIR="$SADM_BASE_DIR/bin"                                # Script Root binary Dir.
+export SADM_TMP_DIR="$SADM_BASE_DIR/tmp"                                # Script Temp  directory
+export SADM_LIB_DIR="$SADM_BASE_DIR/lib"                                # Script Lib directory
+export SADM_LOG_DIR="$SADM_BASE_DIR/log"                                # Script log directory
+export SADM_CFG_DIR="$SADM_BASE_DIR/cfg"                                # Configuration Directory
+export SADM_SYS_DIR="$SADM_BASE_DIR/sys"                                # System related scripts
+export SADM_DAT_DIR="$SADM_BASE_DIR/dat"                                # Data directory
+export SADM_DOC_DIR="$SADM_BASE_DIR/doc"                                # Documentation directory
+export SADM_PKG_DIR="$SADM_BASE_DIR/pkg"                                # Package rpm,deb  directory
+export SADM_SETUP_DIR="$SADM_BASE_DIR/setup"                            # Package rpm,deb  directory
+export SADM_NMON_DIR="$SADM_DAT_DIR/nmon"                               # Where nmon file reside
+export SADM_DR_DIR="$SADM_DAT_DIR/dr"                                   # Disaster Recovery  files
+export SADM_RCH_DIR="$SADM_DAT_DIR/rch"                                 # Result Code History Dir
+export SADM_NET_DIR="$SADM_DAT_DIR/net"                                 # Network SubNet Info Dir
+export SADM_RPT_DIR="$SADM_DAT_DIR/rpt"                                 # SADM Sysmon Report Dir
+export SADM_DBB_DIR="$SADM_DAT_DIR/dbb"                                 # Database Backup Directory
+export SADM_WWW_DIR="$SADM_BASE_DIR/www"                                # Web Dir
 
 # SADMIN USER DIRECTORIES
-SADM_USR_DIR="$SADM_BASE_DIR/usr"           ; export SADM_USR_DIR       # Script User directory
-SADM_UBIN_DIR="$SADM_USR_DIR/bin"           ; export SADM_UBIN_DIR      # Script User Bin Dir.
-SADM_UCFG_DIR="$SADM_USR_DIR/cfg"           ; export SADM_UCFG_DIR      # Script User Cfg Dir.
-SADM_ULIB_DIR="$SADM_USR_DIR/lib"           ; export SADM_ULIB_DIR      # Script User Lib Dir.
-SADM_UDOC_DIR="$SADM_USR_DIR/doc"           ; export SADM_UDOC_DIR      # Script User Doc. Dir.
-SADM_UMON_DIR="$SADM_USR_DIR/mon"           ; export SADM_UMON_DIR      # Script User SysMon Scripts
+export SADM_USR_DIR="$SADM_BASE_DIR/usr"                                # Script User directory
+export SADM_UBIN_DIR="$SADM_USR_DIR/bin"                                # Script User Bin Dir.
+export SADM_UCFG_DIR="$SADM_USR_DIR/cfg"                                # Script User Cfg Dir.
+export SADM_ULIB_DIR="$SADM_USR_DIR/lib"                                # Script User Lib Dir.
+export SADM_UDOC_DIR="$SADM_USR_DIR/doc"                                # Script User Doc. Dir.
+export SADM_UMON_DIR="$SADM_USR_DIR/mon"                                # Script User SysMon Scripts
 
 # SADMIN SERVER WEB SITE DIRECTORIES DEFINITION
-SADM_WWW_DOC_DIR="$SADM_WWW_DIR/doc"                        ; export SADM_WWW_DOC_DIR  # www Doc Dir
-SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                        ; export SADM_WWW_DAT_DIR  # www Dat Dir
-SADM_WWW_ARC_DIR="$SADM_WWW_DIR/dat/archive"                ; export SADM_WWW_ARC_DIR  # www Dat Dir
-SADM_WWW_RRD_DIR="$SADM_WWW_DIR/rrd"                        ; export SADM_WWW_RRD_DIR  # www RRD Dir
-SADM_WWW_CFG_DIR="$SADM_WWW_DIR/cfg"                        ; export SADM_WWW_CFG_DIR  # www CFG Dir
-SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                        ; export SADM_WWW_LIB_DIR  # www Lib Dir
-SADM_WWW_IMG_DIR="$SADM_WWW_DIR/images"                     ; export SADM_WWW_IMG_DIR  # www Img Dir
-SADM_WWW_NET_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/net"   ; export SADM_WWW_NET_DIR  # web net dir
-SADM_WWW_TMP_DIR="$SADM_WWW_DIR/tmp"                        ; export SADM_WWW_TMP_DIR  # web tmp dir
-SADM_WWW_PERF_DIR="$SADM_WWW_TMP_DIR/perf"                  ; export SADM_WWW_PERF_DIR # web perf dir
+export SADM_WWW_DOC_DIR="$SADM_WWW_DIR/doc"                             # www Doc Dir
+export SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                             # www Dat Dir
+export SADM_WWW_ARC_DIR="$SADM_WWW_DIR/dat/archive"                     # www Dat Dir
+export SADM_WWW_RRD_DIR="$SADM_WWW_DIR/rrd"                             # www RRD Dir
+export SADM_WWW_CFG_DIR="$SADM_WWW_DIR/cfg"                             # www CFG Dir
+export SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                             # www Lib Dir
+export SADM_WWW_IMG_DIR="$SADM_WWW_DIR/images"                          # www Img Dir
+export SADM_WWW_NET_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/net"        # web net dir
+export SADM_WWW_TMP_DIR="$SADM_WWW_DIR/tmp"                             # web tmp dir
+export SADM_WWW_PERF_DIR="$SADM_WWW_TMP_DIR/perf"                       # web perf dir
 
 # SADM CONFIG FILES, LOGS AND TEMP FILES USER CAN USE
-SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.pid"            ; export SADM_PID_FILE   # PID file name
-SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"                    ; export SADM_CFG_FILE   # Cfg file name
-SADM_ALERT_FILE="$SADM_CFG_DIR/alert_group.cfg"             ; export SADM_ALERT_FILE # AlertGrp File
-SADM_ALERT_INIT="$SADM_CFG_DIR/.alert_group.cfg"            ; export SADM_ALERT_INIT # Initial Alert
-SADM_SLACK_FILE="$SADM_CFG_DIR/alert_slack.cfg"             ; export SADM_SLACK_FILE # Slack WebHook
-SADM_SLACK_INIT="$SADM_CFG_DIR/.alert_slack.cfg"            ; export SADM_SLACK_INIT # Slack Init WH
-SADM_ALERT_HIST="$SADM_CFG_DIR/alert_history.txt"           ; export SADM_ALERT_HIST # Alert History
-SADM_ALERT_HINI="$SADM_CFG_DIR/.alert_history.txt"          ; export SADM_ALERT_HINI # History Init
-SADM_ALERT_ARC="$SADM_CFG_DIR/alert_archive.txt"            ; export SADM_ALERT_ARC  # Alert Archive
-SADM_ALERT_ARCINI="$SADM_CFG_DIR/.alert_archive.txt"        ; export SADM_ALERT_ARCINI # Init Archive
-SADM_REL_FILE="$SADM_CFG_DIR/.release"                      ; export SADM_REL_FILE   # Release Ver.
-SADM_SYS_STARTUP="$SADM_SYS_DIR/sadm_startup.sh"            ; export SADM_SYS_STARTUP # Startup File
-SADM_SYS_START="$SADM_SYS_DIR/.sadm_startup.sh"             ; export SADM_SYS_START  # Startup Template
-SADM_SYS_SHUTDOWN="$SADM_SYS_DIR/sadm_shutdown.sh"          ; export SADM_SYS_SHUTDOWN # Shutdown 
-SADM_SYS_SHUT="$SADM_SYS_DIR/.sadm_shutdown.sh"             ; export SADM_SYS_SHUT   # Shutdown Template
-SADM_CRON_FILE="$SADM_CFG_DIR/.sadm_osupdate"               ; export SADM_CRON_FILE  # Work crontab
-SADM_CRONTAB="/etc/cron.d/sadm_osupdate"                    ; export SADM_CRONTAB    # Final crontab
-SADM_BACKUP_NEWCRON="$SADM_CFG_DIR/.sadm_backup"            ; export SADM_BACKUP_NEWCRON # Tmp Cron
-SADM_BACKUP_CRONTAB="/etc/cron.d/sadm_backup"               ; export SADM_BACKUP_CRONTAB # Act Cron
-SADM_REAR_NEWCRON="$SADM_CFG_DIR/.sadm_rear_backup"         ; export SADM_REAR_NEWCRON # Tmp Cron
-SADM_REAR_CRONTAB="/etc/cron.d/sadm_rear_backup"            ; export SADM_REAR_CRONTAB # Real Cron
-SADM_BACKUP_LIST="$SADM_CFG_DIR/backup_list.txt"            ; export SADM_BACKUP_LIST
-SADM_BACKUP_LIST_INIT="$SADM_CFG_DIR/.backup_list.txt"      ; export SADM_BACKUP_LIST_INIT
-SADM_BACKUP_EXCLUDE="$SADM_CFG_DIR/backup_exclude.txt"      ; export SADM_BACKUP_EXCLUDE
-SADM_REAR_EXCLUDE_INIT="$SADM_CFG_DIR/.rear_exclude.txt"    ; export SADM_REAR_EXCLUDE_INIT
-SADM_BACKUP_EXCLUDE_INIT="$SADM_CFG_DIR/.backup_exclude.txt" ;export SADM_BACKUP_EXCLUDE_INIT
-SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                 ; export SADM_CFG_HIDDEN # Cfg file name
-SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"          ; export SADM_TMP_FILE1  # Temp File 1
-SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"          ; export SADM_TMP_FILE2  # Temp File 2
-SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"          ; export SADM_TMP_FILE3  # Temp File 3
-SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"    ; export LOG         # Output LOG
-SADM_RCHLOG="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch" ; export SADM_RCHLOG # Return Code
-SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt"        ; export SADM_RPT_FILE   # RPT FileName
+export SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.pid"                 # PID file name
+export SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"                         # Cfg file name
+export SADM_ALERT_FILE="$SADM_CFG_DIR/alert_group.cfg"                  # AlertGrp File
+export SADM_ALERT_INIT="$SADM_CFG_DIR/.alert_group.cfg"                 # Initial Alert
+export SADM_SLACK_FILE="$SADM_CFG_DIR/alert_slack.cfg"                  # Slack WebHook
+export SADM_SLACK_INIT="$SADM_CFG_DIR/.alert_slack.cfg"                 # Slack Init WH
+export SADM_ALERT_HIST="$SADM_CFG_DIR/alert_history.txt"                # Alert History
+export SADM_ALERT_HINI="$SADM_CFG_DIR/.alert_history.txt"               # History Init
+export SADM_ALERT_ARC="$SADM_CFG_DIR/alert_archive.txt"                 # Alert Archive
+export SADM_ALERT_ARCINI="$SADM_CFG_DIR/.alert_archive.txt"             # Init Archive
+export SADM_REL_FILE="$SADM_CFG_DIR/.release"                           # Release Ver.
+export SADM_SYS_STARTUP="$SADM_SYS_DIR/sadm_startup.sh"                 # Startup File
+export SADM_SYS_START="$SADM_SYS_DIR/.sadm_startup.sh"                  # Startup Template
+export SADM_SYS_SHUTDOWN="$SADM_SYS_DIR/sadm_shutdown.sh"               # Shutdown 
+export SADM_SYS_SHUT="$SADM_SYS_DIR/.sadm_shutdown.sh"                  # Shutdown Template
+export SADM_CRON_FILE="$SADM_CFG_DIR/.sadm_osupdate"                    # Work crontab
+export SADM_CRONTAB="/etc/cron.d/sadm_osupdate"                         # Final crontab
+export SADM_BACKUP_NEWCRON="$SADM_CFG_DIR/.sadm_backup"                 # Tmp Cron
+export SADM_BACKUP_CRONTAB="/etc/cron.d/sadm_backup"                    # Act Cron
+export SADM_REAR_NEWCRON="$SADM_CFG_DIR/.sadm_rear_backup"              # Tmp Cron
+export SADM_REAR_CRONTAB="/etc/cron.d/sadm_rear_backup"                 # Real Cron
+export SADM_BACKUP_LIST="$SADM_CFG_DIR/backup_list.txt"                 # List of file to Backup
+export SADM_BACKUP_LIST_INIT="$SADM_CFG_DIR/.backup_list.txt"           # Default files to Backup
+export SADM_BACKUP_EXCLUDE="$SADM_CFG_DIR/backup_exclude.txt"           # files Exclude from Backup
+export SADM_REAR_EXCLUDE_INIT="$SADM_CFG_DIR/.rear_exclude.txt"         # Default Rear Files Excl.
+export SADM_BACKUP_EXCLUDE_INIT="$SADM_CFG_DIR/.backup_exclude.txt"     # Default Files to Exclude
+export SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                      # Default SADMIN Cfg File
+export SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"               # Temp File 1
+export SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"               # Temp File 2
+export SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"               # Temp File 3
+export SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"     # Script Output LOG
+export SADM_ERRLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}_err.log" # Script Error Output LOG
+export SADM_RCHLOG="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"  # Return Code
+export SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt"             # RPT FileName
 
 # COMMAND PATH REQUIRE THAT SADMIN USE
-SADM_LSB_RELEASE=""                         ; export SADM_LSB_RELEASE   # Command lsb_release Path
-SADM_DMIDECODE=""                           ; export SADM_DMIDECODE     # Command dmidecode Path
-SADM_BC=""                                  ; export SADM_BC            # Command bc (Do Some Math)
-SADM_FDISK=""                               ; export SADM_FDISK         # fdisk (Read Disk Capacity)
-SADM_WHICH=""                               ; export SADM_WHICH         # which Path - Required
-SADM_PERL=""                                ; export SADM_PERL          # perl Path (for epoch time)
-SADM_MAIL=""                                ; export SADM_MAIL          # mail Pgm Path
-SADM_MUTT=""                                ; export SADM_MUTT          # mutt Pgm Path
-SADM_CURL=""                                ; export SADM_CURL          # curl Pgm Path
-SADM_LSCPU=""                               ; export SADM_LSCPU         # Path to lscpu Command
-SADM_NMON=""                                ; export SADM_NMON          # Path to nmon Command
-SADM_PARTED=""                              ; export SADM_PARTED        # Path to parted Command
-SADM_ETHTOOL=""                             ; export SADM_ETHTOOL       # Path to ethtool Command
-SADM_SSH=""                                 ; export SADM_SSH           # Path to ssh Exec.
-SADM_MYSQL=""                               ; export SADM_MYSQL         # Default mysql FQDN
+export SADM_LSB_RELEASE=""                                              # Command lsb_release Path
+export SADM_DMIDECODE=""                                                # Command dmidecode Path
+export SADM_BC=""                                                       # Command bc (Do Some Math)
+export SADM_FDISK=""                                                    # fdisk (Read Disk Capacity)
+export SADM_WHICH=""                                                    # which Path - Required
+export SADM_PERL=""                                                     # perl Path (for epoch time)
+export SADM_MAIL=""                                                     # mail Pgm Path
+export SADM_MUTT=""                                                     # mutt Pgm Path
+export SADM_CURL=""                                                     # curl Pgm Path
+export SADM_LSCPU=""                                                    # Path to lscpu Command
+export SADM_NMON=""                                                     # Path to nmon Command
+export SADM_PARTED=""                                                   # Path to parted Command
+export SADM_ETHTOOL=""                                                  # Path to ethtool Command
+export SADM_SSH=""                                                      # Path to ssh Exec.
+export SADM_MYSQL=""                                                    # Default mysql FQDN
 
 # SADMIN CONFIG FILE VARIABLES (Default Values here will be overridden by SADM CONFIG FILE Content)
-SADM_MAIL_ADDR="your_email@domain.com"      ; export SADM_MAIL_ADDR     # Default is in sadmin.cfg
-SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE    # 0=No 1=Err 2=Success 3=All
-SADM_ALERT_GROUP="default"                  ; export SADM_ALERT_GROUP   # Define in alert_group.cfg
-SADM_ALERT_REPEAT=43200                     ; export SADM_ALERT_REPEAT  # Repeat Alarm wait time Sec
-SADM_TEXTBELT_KEY="textbelt"                ; export SADM_TEXTBELT_KEY  # Textbelt.com API Key
-SADM_TEXTBELT_URL="https://textbelt.com/text" ;export SADM_TEXTBELT_URL # Textbelt.com API URL
-SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
-SADM_HOST_TYPE=""                           ; export SADM_HOST_TYPE     # [S]erver/[C]lient/[D]ev.
-SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
-SADM_GROUP="sadmin"                         ; export SADM_GROUP         # sadmin group account
-SADM_WWW_USER="apache"                      ; export SADM_WWW_USER      # /sadmin/www owner
-SADM_WWW_GROUP="apache"                     ; export SADM_WWW_GROUP     # /sadmin/www group
-SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG
-SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
-SADM_NMON_KEEPDAYS=60                       ; export SADM_NMON_KEEPDAYS # Days to keep old *.nmon
-SADM_RCH_KEEPDAYS=60                        ; export SADM_RCH_KEEPDAYS  # Days to keep old *.rch
-SADM_LOG_KEEPDAYS=60                        ; export SADM_LOG_KEEPDAYS  # Days to keep old *.log
-SADM_DBNAME="sadmin"                        ; export SADM_DBNAME        # MySQL DataBase Name
-SADM_DBHOST="sadmin.maison.ca"              ; export SADM_DBHOST        # MySQL DataBase Host
-SADM_DBPORT=3306                            ; export SADM_DBPORT        # MySQL Listening Port
-SADM_RW_DBUSER=""                           ; export SADM_RW_DBUSER     # MySQL Read/Write User
-SADM_RW_DBPWD=""                            ; export SADM_RW_DBPWD      # MySQL Read/Write Passwd
-SADM_RO_DBUSER=""                           ; export SADM_RO_DBUSER     # MySQL Read Only User
-SADM_RO_DBPWD=""                            ; export SADM_RO_DBPWD      # MySQL Read Only Passwd
-SADM_SERVER=""                              ; export SADM_SERVER        # Server FQDN Name
-SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
-SADM_NETWORK1=""                            ; export SADM_NETWORK1      # Network 1 to Scan
-SADM_NETWORK2=""                            ; export SADM_NETWORK2      # Network 2 to Scan
-SADM_NETWORK3=""                            ; export SADM_NETWORK3      # Network 3 to Scan
-SADM_NETWORK4=""                            ; export SADM_NETWORK4      # Network 4 to Scan
-SADM_NETWORK5=""                            ; export SADM_NETWORK5      # Network 5 to Scan
-DBPASSFILE="${SADM_CFG_DIR}/.dbpass"        ; export DBPASSFILE         # MySQL Passwd File
-SADM_RELEASE=`cat $SADM_REL_FILE`           ; export SADM_RELEASE       # SADM Release Ver. Number
-SADM_SSH_PORT=""                            ; export SADM_SSH_PORT      # Default SSH Port
-SADM_RRDTOOL=""                             ; export SADM_RRDTOOL       # RRDTool Location
-SADM_REAR_NFS_SERVER=""                     ; export SADM_REAR_NFS_SERVER        # ReaR NFS Server
-SADM_REAR_NFS_MOUNT_POINT=""                ; export SADM_REAR_NFS_MOUNT_POINT   # ReaR Mount Point
-SADM_REAR_BACKUP_TO_KEEP=3                  ; export SADM_REAR_BACKUP_TO_KEEP    # Rear Nb.Copy
-SADM_STORIX_NFS_SERVER=""                   ; export SADM_STORIX_NFS_SERVER      # Storix NFS Server
-SADM_STORIX_NFS_MOUNT_POINT=""              ; export SADM_STORIX_NFS_MOUNT_POINT # Storix Mnt Point
-SADM_STORIX_BACKUP_TO_KEEP=3                ; export SADM_STORIX_BACKUP_TO_KEEP  # Storix Nb. Copy
-SADM_BACKUP_NFS_SERVER=""                   ; export SADM_BACKUP_NFS_SERVER      # Backup NFS Server
-SADM_BACKUP_NFS_MOUNT_POINT=""              ; export SADM_BACKUP_NFS_MOUNT_POINT # Backup Mnt Point
-SADM_DAILY_BACKUP_TO_KEEP=3                 ; export SADM_DAILY_BACKUP_TO_KEEP   # Daily to Keep
-SADM_WEEKLY_BACKUP_TO_KEEP=3                ; export SADM_WEEKLY_BACKUP_TO_KEEP  # Weekly to Keep
-SADM_MONTHLY_BACKUP_TO_KEEP=2               ; export SADM_MONTHLY_BACKUP_TO_KEEP # Monthly to Keep
-SADM_YEARLY_BACKUP_TO_KEEP=1                ; export SADM_YEARLY_BACKUP_TO_KEEP  # Yearly to Keep
-SADM_WEEKLY_BACKUP_DAY=5                    ; export SADM_WEEKLY_BACKUP_DAY      # 1=Mon, ... ,7=Sun
-SADM_MONTHLY_BACKUP_DATE=1                  ; export SADM_MONTHLY_BACKUP_DATE    # Monthly Back Date
-SADM_YEARLY_BACKUP_MONTH=12                 ; export SADM_YEARLY_BACKUP_MONTH    # Yearly Backup Mth
-SADM_YEARLY_BACKUP_DATE=31                  ; export SADM_YEARLY_BACKUP_DATE     # Yearly Backup Day
-SADM_MKSYSB_NFS_SERVER=""                   ; export SADM_MKSYSB_NFS_SERVER      # Mksysb NFS Server
-SADM_MKSYSB_NFS_MOUNT_POINT=""              ; export SADM_MKSYSB_NFS_MOUNT_POINT # Mksysb Mnt Point
-SADM_MKSYSB_NFS_TO_KEEP=2                   ; export SADM_MKSYSB_NFS_TO_KEEP     # Mksysb Bb. Copy
+export SADM_MAIL_ADDR="your_email@domain.com"                           # Default is in sadmin.cfg
+export SADM_ALERT_TYPE=1                                                # 0=No 1=Err 2=Success 3=All
+export SADM_ALERT_GROUP="default"                                       # Define in alert_group.cfg
+export SADM_ALERT_REPEAT=43200                                          # Repeat Alarm wait time Sec
+export SADM_TEXTBELT_KEY="textbelt"                                     # Textbelt.com API Key
+export SADM_TEXTBELT_URL="https://textbelt.com/text"                    # Textbelt.com API URL
+export SADM_CIE_NAME="Your Company Name"                                # Company Name
+export SADM_HOST_TYPE=""                                                # [S]erver/[C]lient/[D]ev.
+export SADM_USER="sadmin"                                               # sadmin user account
+export SADM_GROUP="sadmin"                                              # sadmin group account
+export SADM_WWW_USER="apache"                                           # /sadmin/www owner
+export SADM_WWW_GROUP="apache"                                          # /sadmin/www group
+export SADM_MAX_LOGLINE=5000                                            # Max Nb. Lines in LOG
+export SADM_MAX_RCLINE=100                                              # Max Nb. Lines in RCH file
+export SADM_NMON_KEEPDAYS=60                                            # Days to keep old *.nmon
+export SADM_RCH_KEEPDAYS=60                                             # Days to keep old *.rch
+export SADM_LOG_KEEPDAYS=60                                             # Days to keep old *.log
+export SADM_DBNAME="sadmin"                                             # MySQL DataBase Name
+export SADM_DBHOST="sadmin.maison.ca"                                   # MySQL DataBase Host
+export SADM_DBPORT=3306                                                 # MySQL Listening Port
+export SADM_RW_DBUSER=""                                                # MySQL Read/Write User
+export SADM_RW_DBPWD=""                                                 # MySQL Read/Write Passwd
+export SADM_RO_DBUSER=""                                                # MySQL Read Only User
+export SADM_RO_DBPWD=""                                                 # MySQL Read Only Passwd
+export SADM_SERVER=""                                                   # Server FQDN Name
+export SADM_DOMAIN=""                                                   # Default Domain Name
+export SADM_NETWORK1=""                                                 # Network 1 to Scan
+export SADM_NETWORK2=""                                                 # Network 2 to Scan
+export SADM_NETWORK3=""                                                 # Network 3 to Scan
+export SADM_NETWORK4=""                                                 # Network 4 to Scan
+export SADM_NETWORK5=""                                                 # Network 5 to Scan
+export DBPASSFILE="${SADM_CFG_DIR}/.dbpass"                             # MySQL Passwd File
+export SADM_RELEASE=`cat $SADM_REL_FILE`                                # SADM Release Ver. Number
+export SADM_SSH_PORT=""                                                 # Default SSH Port
+export SADM_RRDTOOL=""                                                  # RRDTool Location
+export SADM_REAR_NFS_SERVER=""                                          # ReaR NFS Server
+export SADM_REAR_NFS_MOUNT_POINT=""                                     # ReaR Mount Point
+export SADM_REAR_BACKUP_TO_KEEP=3                                       # Rear Nb.Copy
+export SADM_STORIX_NFS_SERVER=""                                        # Storix NFS Server
+export SADM_STORIX_NFS_MOUNT_POINT=""                                   # Storix Mnt Point
+export SADM_STORIX_BACKUP_TO_KEEP=3                                     # Storix Nb. Copy
+export SADM_BACKUP_NFS_SERVER=""                                        # Backup NFS Server
+export SADM_BACKUP_NFS_MOUNT_POINT=""                                   # Backup Mnt Point
+export SADM_DAILY_BACKUP_TO_KEEP=3                                      # Daily to Keep
+export SADM_WEEKLY_BACKUP_TO_KEEP=3                                     # Weekly to Keep
+export SADM_MONTHLY_BACKUP_TO_KEEP=2                                    # Monthly to Keep
+export SADM_YEARLY_BACKUP_TO_KEEP=1                                     # Yearly to Keep
+export SADM_WEEKLY_BACKUP_DAY=5                                         # 1=Mon, ... ,7=Sun
+export SADM_MONTHLY_BACKUP_DATE=1                                       # Monthly Back Date
+export SADM_YEARLY_BACKUP_MONTH=12                                      # Yearly Backup Mth
+export SADM_YEARLY_BACKUP_DATE=31                                       # Yearly Backup Day
+export SADM_MKSYSB_NFS_SERVER=""                                        # Mksysb NFS Server
+export SADM_MKSYSB_NFS_MOUNT_POINT=""                                   # Mksysb Mnt Point
+export SADM_MKSYSB_NFS_TO_KEEP=2                                        # Mksysb Bb. Copy
 
 # Local to Library Variable - Can't be use elsewhere outside this script
-LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"    ; export LOCAL_TMP          # Local Temp File
+export LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"                         # Local Temp File
 
 # Misc. Screen Attribute
 if [ -z "$TERM" ] || [ "$TERM" = "dumb" ] || [ "$TERM" = "unknown" ]
@@ -419,25 +421,21 @@ SADM_SINFO="[ ${BOLD}${BLUE}INFO${NORMAL} ]"                            # INFO B
 
 
 
-# --------------------------------------------------------------------------------------------------
-#                     THIS FUNCTION RETURN THE STRING RECEIVED TO UPPERCASE
-# --------------------------------------------------------------------------------------------------
+# Function return the string received to uppercase
 sadm_toupper() {
     echo $1 | tr  "[:lower:]" "[:upper:]"
 }
 
-# --------------------------------------------------------------------------------------------------
-#                     THIS FUNCTION RETURN THE STRING RECEIVED TO UPPERCASE
-# --------------------------------------------------------------------------------------------------
+
+
+# Function return the string received to uppercase
 sadm_tolower() {
     echo $1 | tr "[:upper:]" "[:lower:]" 
 }
 
 
 
-# --------------------------------------------------------------------------------------------------
-# THIS FUNCTION RETURN THE STRING RECEIVED TO WITH THE FIRST CHARACTER IN UPPERCASE
-# --------------------------------------------------------------------------------------------------
+# Function return the string received to with the first character in uppercase
 sadm_capitalize() {
     C=`echo $1 | tr "[:upper:]" "[:lower:]"`
     echo "${C^}"
@@ -445,10 +443,7 @@ sadm_capitalize() {
 
 
 
-
-# --------------------------------------------------------------------------------------------------
-# Check if variable is an integer - Return 1, if not an intener - Return 0 if it is an integer
-# --------------------------------------------------------------------------------------------------
+# Check if variable is an integer - Return 1, if not an integer - Return 0 if it is an integer
 sadm_isnumeric() {
     wnum=$1
     if [ "$wnum" -eq "$wnum" ] 2>/dev/null ; then return 0 ; else return 1 ; fi
@@ -456,13 +451,10 @@ sadm_isnumeric() {
 
 
 
-# ==================================================================================================
-# Display Question (Receive as $1) and wait for response from user.
-# Y/y (return 1) or N/n (return 0)
-# ==================================================================================================
+# Display Question (Receive as $1) and wait for response from user, Y/y (return 1) or N/n (return 0)
 function sadm_ask() {
     wmess="$1 [y,n] ? "                                                 # Add Y/N to Mess. Rcv
-    while :
+    while :                                                             # While until good answer
         do
         printf "%s" "$wmess"                                            # Print "Question [Y/N] ?" 
         read answer                                                     # Read User answer
@@ -483,13 +475,13 @@ function sadm_ask() {
 
 
 
-# --------------------------------------------------------------------------------------------------
-# Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE
-# Use sadm_write (No LF at EOL) instead of sadm_writelog (With LF at EOL) which is depreciated.
-# --------------------------------------------------------------------------------------------------
+# Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE variable.
+# Use sadm_write (No LF at EOL) instead of sadm_writelog (With LF at EOL).
 sadm_write() {
-    SADM_SMSG="$@"                                                      # Screen Mess. = Mess. Rcvd
-    SADM_LMSG="$SADM_SMSG"                                              # Log Mess. = Screen Mess.
+    SADM_SMSG="$@"                                                      # Screen Msg = Msg Received
+    SADM_LMSG="$SADM_SMSG"                                              # Log Mess. = Screen Mess
+
+    # Replace special status andput them in color.
     SADM_SMSG=`echo "${SADM_SMSG//'[ OK ]'/$SADM_SOK}"`                 # Put OK in Green 
     SADM_SMSG=`echo "${SADM_SMSG//'[ ERROR ]'/$SADM_SERROR}"`           # Put ERROR in Red
     SADM_SMSG=`echo "${SADM_SMSG//'[ WARNING ]'/$SADM_SWARNING}"`       # Put WARNING in Yellow
@@ -497,16 +489,17 @@ sadm_write() {
     SADM_SMSG=`echo "${SADM_SMSG//'[ SUCCESS ]'/$SADM_SSUCCESS}"`       # Put Success in Green
     SADM_SMSG=`echo "${SADM_SMSG//'[ INFO ]'/$SADM_SINFO}"`             # Put INFO in Blue
     if [ "${SADM_SMSG:0:1}" != "[" ]                                    # 1st Char. of Mess. Not [
-        then SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_LMSG"      # Insert Date/Time With Mess
+        then SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_LMSG"      # Insert Date/Time in Log
     fi 
     
+    # Write Message received to either [S]creen, [L]og or [B]oth.
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
-        s|S) echo -ne "$SADM_SMSG"                                      # Write Msg to Screen
+        s|S) echo -ne "$SADM_SMSG"                                      # Write Msg to [S]creen
              ;;
-        l|L) echo -ne "$SADM_LMSG" >> $SADM_LOG                         # Write Msg to Log File
+        l|L) echo -ne "$SADM_LMSG" >> $SADM_LOG                         # Write Msg to [L]og File
              ;;
-        b|B) echo -ne "$SADM_SMSG"                                      # Write Msg to Screen
-             echo -ne "$SADM_LMSG" >> $SADM_LOG                         # Write Msg to Log File
+        b|B) echo -ne "$SADM_SMSG"                                      # Write Msg to [S]creen
+             echo -ne "$SADM_LMSG" >> $SADM_LOG                         # Write Msg to [L]og File
              ;;
         *)   printf "\nWrong \$SADM_LOG_TYPE value ($SADM_LOG_TYPE)\n"  # Advise User if Incorrect
              printf -- "%-s\n" "$SADM_LMSG" >> $SADM_LOG                # Write Msg to Log File
@@ -516,10 +509,9 @@ sadm_write() {
 
 
 
-# --------------------------------------------------------------------------------------------------
-#     WRITE INFORMATION TO THE LOG (L) , TO SCREEN (S)  OR BOTH (B) DEPENDING ON $SADM_LOG_TYPE
-# Use sadm_write instead of sadm_writelog which is depreciated.
-# --------------------------------------------------------------------------------------------------
+
+# Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE variable.
+# Just write the message received as is, with a new line at the end.
 sadm_writelog() {
     SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
     SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Log Message with Date/Time
@@ -538,9 +530,8 @@ sadm_writelog() {
 }
 
 
-# --------------------------------------------------------------------------------------------------
+
 # Show Script Name, version, Library Version, O/S Name/Version and Kernel version.
-# --------------------------------------------------------------------------------------------------
 sadm_show_version()
 {
     printf "\n${SADM_PN} v${SADM_VER} - Hostname ${SADM_HOSTNAME}"
@@ -1829,7 +1820,7 @@ sadm_load_config_file() {
 # mkdir -p ${SADMIN}/{etc/x1,lib,usr/{x2,x3},bin,tmp/{Y1,Y2,Y3/z},opt,var}
 sadm_start() {
 
-    # First thing, Log File & Directory consideration
+    # 1st thing inititialize log directory and file.
     [ ! -d "$SADM_LOG_DIR" ] && mkdir -p $SADM_LOG_DIR                  # If Log Dir. don't Exist
     if [ $(id -u) -eq 0 ]                                               # Sure got good permission
         then chmod 0775 $SADM_LOG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR
@@ -2695,11 +2686,9 @@ write_alert_history() {
 }
 
 
-# --------------------------------------------------------------------------------------------------
-# THINGS TO DO WHEN FIRST CALLED
-# --------------------------------------------------------------------------------------------------
-    SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Save Script Startup Time
 
+# Things to do when first called
+    SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Save Script Startup Time
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "main: grepping /etc/environment\n" ; fi
     grep "SADMIN=" /etc/environment >/dev/null 2>&1                     # Do Env.File include SADMIN
     if [ $? -ne 0 ]                                                     # SADMIN missing in /etc/env
