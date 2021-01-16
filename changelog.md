@@ -1,5 +1,86 @@
 # Changelog
 
+## Release v[1.3.0](https://github.com/jadupl2/sadmin/releases) (2021-01-16)
+- Fixes
+	- 2020_10_26 sadm_backup.sh (v3.26) - Suppress 'chmod' error message on backup directory.
+	- 2020_10_29 sadm_daily_farm_fetch.sh (v4.3) - If comma was used in server description, it cause delimiter problem.
+	- 2020_10_29 sadm_osupdate_farm.sh (v3.16) - If comma was used in server description, it cause delimiter problem.
+	- 2020_10_29 sadm_osupdate_starter.sh (v3.16) - If comma was used in server description, it cause delimiter problem.
+	- 2020_10_29 sadm_push_sadmin.sh (v2.24) - If comma was used in server description, it cause delimiter problem.
+	- 2020_10_29 sadm_rear_initiator.sh (v1.10) - If comma was used in server description, it cause delimiter problem.
+	- 2020_11_04 sadm_push_sadmin.sh (v2.25) - Change , to 
+	- 2020_11_10 sadm_daily_report.sh (v1.10) - Minor bug fixes.
+	- 2020_12_12 sadm_osupdate_farm.sh (v3.18) - LOCK_FILE bug fix.
+	- 2020_12_19 sadm_fetch_clients.sh (v3.23) - Don't copy alert group and slack configuration files, when on SADMIN Server.
+	- 2020_12_23 sadmlib_std.sh (v3.61) - Log Header (SADM_LOG_HEADER) & Footer (SADM_LOG_FOOTER) were always produce.
+	- 2020_12_23 sadm_setup.py (v3.49) - Fix typo error.
+	- 2020_12_24 sadmlib_std.sh (v3.62) - Fix problem with capitalize function.
+	- 2020_12_26 sadm_client_housekeeping.sh (v1.47) - Doesn't delete Database Password File, cause problem during server setup.
+	- 2020_12_27 sadm_setup.py (v3.51) - Fix problem with 'rear' & 'syslinux' when installing SADMIN server.
+	- 2021_01_11 sadm_rear_backup.sh (v2.25) - NFS drive was not unmounted when the backup failed.
+- Minor
+	- 2020_11_04 sadm_osupdate_farm.sh (v3.17) - Minor code modification.
+	- 2020_11_04 sadm_osupdate_starter.sh (v3.17) - Minor code modification.
+- New
+	- 2020_11_07 sadm_daily_report.sh (v1.8) - Exclude file can be use to exclude scripts or servers from daily report.
+	- 2020_11_09 sadm_setup.py (v3.45) - Add Daily Email Report to crontab of sadm_server.
+	- 2020_11_13 sadm_daily_report.sh (v1.11) - Email of each report now include a pdf of the report(if wkhtmltopdf install)
+- Update
+	- 2020_10_22 sadm_fs_incr.sh (v2.2) - Line Feed added in Email when filesystem is increase
+	- 2020_11_04 sadm_daily_report.sh (v1.7) - Added 1st draft of scripts html report.
+	- 2020_11_04 sadm_fetch_clients.sh (v3.18) - Reduce time allowed for O/S update to 1800sec. (30Min) & keep longer log.
+	- 2020_11_05 sadm_daily_farm_fetch.sh (v4.4) - Change msg written to log & no alert while o/s update is running.
+	- 2020_11_05 sadm_fetch_clients.sh (v3.19) - Change msg written to log & no alert while o/s update is running.
+	- 2020_11_05 sadm_push_sadmin.sh (v2.26) - Change msg written to log & no alert while o/s update is running.
+	- 2020_11_07 sadm_client_housekeeping.sh (v1.45) - Remove old rch conversion code execution.
+	- 2020_11_08 sadm_daily_report.sh (v1.9) - Show Alert Group Name on Script Report
+	- 2020_11_12 sadm_daily_report.sh (v1.12) - Warning in Yellow when backup outdated, bug fixes.
+	- 2020_11_15 sadm_setup.py (v3.46) - 'wkhtmltopdf' package was added to server installation.
+	- 2020_11_18 sadm_sysmon.pl (v2.41) - Fix: Fix problem with iostat on MacOS.
+	- 2020_11_20 sadm_check_requirements.sh (v1.9) - Added package 'wkhtmltopdf' installation to server requirement.
+	- 2020_11_20 sadm_osupdate_starter.sh (v4.0) - Restructure & rename from sadm_osupdate_farm to sadm_osupdate_starter.
+	- 2020_11_21 sadm_daily_report.sh (v1.13) - Insert Script execution Title.
+	- 2020_11_24 sadm_fetch_clients.sh (v3.20) - Optimize code & Now calling new 'sadm_osupdate_starter' for o/s update.
+	- 2020_11_24 sadmlib_std_demo.sh (v3.19) - Don't show DB password file on client
+	- 2020_11_24 sadmlib_std.sh (v3.57) - Revisit and Optimize 'send_alert' function.
+	- 2020_11_27 sadm_push_sadmin.sh (v2.27) - For command line uniformity , option '-c' changed to '-n'
+	- 2020_11_30 sadm_sysmon.pl (v2.42) - Fix: Fix problem reading SADMIN variable in /etc/environment.
+	- 2020_12_02 sadm_fetch_clients.sh (v3.21) - New summary added to the log and Misc. fix.
+	- 2020_12_02 sadmlib_std.sh (v3.58) - Optimize and fix some problem with Slack ans SMS alerting function.
+	- 2020_12_02 sadm_osupdate_starter.sh (v4.1) - Log is now in appending mode and can grow up to 5000 lines.
+	- 2020_12_12 sadm_create_sysinfo.sh (v3.21) - Add SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
+	- 2020_12_12 sadm_daily_farm_fetch.sh (v4.5) - Add and use SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
+	- 2020_12_12 sadm_daily_report.sh (v1.14) - Major revamp of HTML and PDF Report that are send via email to sysadmin.
+	- 2020_12_12 sadm_fetch_clients.sh (v3.22) - Copy Site Common alert group and slack configuration files to client
+	- 2020_12_12 sadmlib_std.sh (v3.59) - Add 'sadm_capitalize"function, add PID TimeOut, enhance script footer.
+	- 2020_12_12 sadm_osupdate.sh (v3.25) - Minor adjustments.
+	- 2020_12_12 sadm_osupdate_starter.sh (v4.2) - Use new LOCK_FILE & Add and use SADM_PID_TIMEOUT & SADM_LOCK_TIMEOUT Var.
+	- 2020_12_12 sadm_push_sadmin.sh (v2.28) - Add pushing of alert_group.cfg alert_slack.cfg to client
+	- 2020_12_13 sadm_view_backup.php (v1.5) - Added link in Heading to view the Daily Backup Report, if HTML file exist.
+	- 2020_12_13 sadm_view_rch_summary.php (v2.6) - Add link in the heading to view the Daily Scripts Report, if HTML exist.
+	- 2020_12_15 sadm_daily_report.sh (v1.15) - Cosmetic changes to Daily Report.
+	- 2020_12_15 sadmPageWrapper.php (v1.5) - Add Storix Report Link in Header, only if Storix html file exist.
+	- 2020_12_16 sadm_client_housekeeping.sh (v1.46) - Minor code change (Isolate the check for sadmin user and group)
+	- 2020_12_16 sadm_server_housekeeping.sh (v2.7) - Include code to include in SADMIN server crontab the daily report email.
+	- 2020_12_17 sadmlib_std.sh (v3.60) - sadm_get_osname() on 'CentOSStream' now return 'CENTOS'.
+	- 2020_12_21 sadm_setup.py (v3.47) - Bypass installation of 'ReaR' on Arm platform (Not available).
+	- 2020_12_21 sadm_setup.py (v3.48) - Bypass installation of 'syslinux' on Arm platform (Not available).
+	- 2020_12_24 sadmlib_std_demo.sh (v3.20) - Include output of capitalize function.
+	- 2020_12_24 sadmlib_std.py (v3.14) - CentOSStream is CENTOS
+	- 2020_12_24 sadm_setup.py (v3.50) - CentOSStream return CENTOS.
+	- 2020_12_26 sadm_daily_report.sh (v1.16) - Include link to web page in email.
+	- 2020_12_26 sadm_daily_report.sh (v1.17) - Insert Header when reporting script error(s).
+	- 2020_12_26 sadmInit.php (v3.7) - Added Global Var. SADM_WWW_ARC_DIR for Server archive when deleted.
+	- 2020_12_26 sadmlib_std.sh (v3.63) - Add Global Variable SADM_WWW_ARC_DIR for Server Archive when deleted
+	- 2020_12_27 sadm_daily_report.sh (v1.18) - Insert Header when reporting script running.
+	- 2020_12_29 sadm_view_server_info.php (v2.15) - Date for starting & ending maintenance mode was not show properly.
+	- 2020_12_29 sadm_view_servers.php (v2.10) - Show Architecture un-capitalize.
+	- 2020_13_13 sadm_view_rear.php (v1.8) - Add link in heading to view ReaR Daily Report.
+	- 2021_01_05 sadm_backup.sh (v3.27) - List backup directory content at the end of backup.
+	- 2021_01_06 sadm_setup.py (v3.52) - Ensure that package util-linux is installed on client & server.
+	- 2021_01_13 sadm_daily_report.sh (v1.19) - Change reports heading color and font style.
+	- 2021_01_13 sadmlib_std.sh (v3.64) - Code Optimization (in Progress)
+
 
 ## Release v[1.2.9](https://github.com/jadupl2/sadmin/releases) (2020-10-20)
 - Fixes

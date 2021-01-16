@@ -409,7 +409,7 @@ script_report()
         done
     if [ $xcount -eq 0 ]                                                # If no running script found
         then echo "<p style='color:blue;'>" >>$HTML_SFILE
-             msg="No script actually running" >>$HTML_SFILE        # Section Title Header
+             msg="No script actually running" >>$HTML_SFILE             # Section Title Header
              echo -e "\n<center>" >> $HTML_SFILE
              echo -e "<p class='report_subtitle'>$msg</p>\n" >>$HTML_SFILE
              echo -e "\n</center>" >> $HTML_SFILE

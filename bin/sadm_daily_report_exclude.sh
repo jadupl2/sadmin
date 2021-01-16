@@ -20,7 +20,7 @@ SCRIPTS="$SCRIPTS sadm_daily_farm_fetch sadm_database_update sadm_nmon_rrd_updat
 SCRIPTS="$SCRIPTS sadm_startup sadm_shutdown"
 
 # Exclude template scripts
-SCRIPTS="$SCRIPTS sadm_template"
+SCRIPTS="$SCRIPTS sadm_template sadmlib_std_demo"
 
 # Define here your custom scripts you want to exclude fron the script daily report
 SCRIPTS="$SCRIPTS sadm_vm_tools sadm_vm_start sadm_vm_stop"
