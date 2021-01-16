@@ -4,7 +4,7 @@
 #   Script name :  sadm_daily_report.sh
 #   Synopsis    :  Produce reports of the last 24 hrs activities and email it to the sysadmin.
 #   Version     :  1.0
-#   Date        :  30 Juillet 2020
+#   Date        :  30 July 2020
 #   Requires    :  sh
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
