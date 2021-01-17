@@ -36,6 +36,7 @@
 #@2020_12_26 Updated v1.17 Insert Header when reporting script error(s).
 #@2020_12_27 Updated v1.18 Insert Header when reporting script running.
 #@2021_01_13 Updated v1.19 Change reports heading color and font style.
+#@2021_01_17 Updated v1.20 Center Heading of scripts report.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -67,7 +68,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.19'                                  # Current Script Version
+export SADM_VER='1.20'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -451,7 +452,7 @@ script_report()
 
     # SCRIPT EXECUTION HISTORY SECTION
     msg="Scripts execution history by system name" >>$HTML_SFILE        # Section Title Header
-    echo -e "\n<p class='report_subtitle'>$msg</p>\n" >>$HTML_SFILE     # Insert Header on Page
+    echo -e "\n<center><p class='report_subtitle'>$msg</p></center>\n" >>$HTML_SFILE     # Insert Header on Page
     current_server=""                                                   # Clear Current Server Name
     # Sort by server name and by reverse execution date.
     sort -t' ' -k1,1 -k2,2r  $RCH_SUMMARY | grep -iv "storix" > $SADM_TMP_FILE1
