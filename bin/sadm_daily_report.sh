@@ -1142,7 +1142,7 @@ rear_line()
 
 
 #===================================================================================================
-# Add legend at the bottom of the Storix report page
+# Add legend at the bottom of the ReaR report page
 #===================================================================================================
 rear_legend()
 {
@@ -1426,7 +1426,7 @@ storix_heading()
     echo -e "<body>" >> $HTML_XFILE
 
     echo -e "<center>" >> $HTML_XFILE                                   # Center what's coming
-    echo -e "<p class='report_title'>${RTITLE}</p>" >> $HTML            # Report Title
+    echo -e "<p class='report_title'>${RTITLE}</p>" >> $HTML_XFILE      # Report Title
     URL_SCRIPTS_REPORT="/view/daily_storix_report.html"                 # Scripts Daily Report Page
     RURL="http://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
     TITLE2="View the web version of this report"                        # Link Description
