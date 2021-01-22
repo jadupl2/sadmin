@@ -96,7 +96,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)      # O/S Major Version Numb
 # --------------------------------------------------------------------------------------------------
 #                                   This Script environment variables
 # --------------------------------------------------------------------------------------------------
-NTP_SERVER="68.69.221.61 162.159.200.1 205.206.70.2" ;export NTP_SERVER # Canada NTP Pool
+export NTP_SERVER="68.69.221.61 162.159.200.1 205.206.70.2"             # Canada NTP Pool
 
 
 
