@@ -37,6 +37,7 @@
 #@2020_12_27 Updated v1.18 Insert Header when reporting script running.
 #@2021_01_13 Updated v1.19 Change reports heading color and font style.
 #@2021_01_17 Updated v1.20 Center Heading of scripts report.
+#@2021_01_23 Updated v1.21 SCRIPTS & SERVERS variables no longer in "sadm_daily_report_exclude.sh"
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -68,7 +69,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.20'                                  # Current Script Version
+export SADM_VER='1.21'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -99,6 +100,43 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)      # O/S Major Version Numb
 
   
 
+# -----------------------------------------------------------------------------
+# Daily Report Exclude List
+# The SCRIPTS variable is used to specify some scripts to be excluded from 
+# the web scripts report. Script name are specify without extension.
+#
+# The SERVERS variable should contain the system hostname (Without Domain Name)
+# to be excluded from the reports (ALL the reports).
+# -----------------------------------------------------------------------------
+
+# SCRIPTS variable declare the script names you don't want to see in the
+# daily script web report.
+SCRIPTS="sadm_backup sadm_rear_backup sadm_nmon_watcher " 
+
+# Exclude scripts that are executing as part of sadm_client_sunset script.
+# Any error encountered by the scripts below, will be reported by sadm_client_sunset.
+SCRIPTS="$SCRIPTS sadm_dr_savefs sadm_create_sysinfo sadm_cfg2html"
+
+# Exclude scripts that are executing as part of sadm_server_sunrise script.
+# Any error encountered by the scripts below, will be reported by sadm_server_sunrise.
+SCRIPTS="$SCRIPTS sadm_daily_farm_fetch sadm_database_update sadm_nmon_rrd_update "
+
+# Exclude System Startup and Shutdown Script for Daily scripts Report
+# This one is optional
+#SCRIPTS="$SCRIPTS sadm_startup sadm_shutdown"
+
+# Exclude template scripts and demo scripts.
+SCRIPTS="$SCRIPTS sadm_template sadmlib_std_demo"
+
+# Define here your custom scripts you want to exclude from the script daily report
+SCRIPTS="$SCRIPTS sadm_vm_tools sadm_vm_start sadm_vm_stop"
+
+# Server name to be exclude from every Daily Report (Backup, Rear and Scripts)
+SERVERS=""
+
+
+
+
 #===================================================================================================
 # Global Scripts Variables 
 #===================================================================================================
@@ -110,8 +148,41 @@ export URL_VIEW_FILE='/view/log/sadm_view_file.php'                     # View l
 # If the size of Today & Yesterday Backup/ReaR this percentage, it will highlight in yellow
 export WPCT=50                                                          # If BackupSize is 50% Larger
 
+# -----------------------------------------------------------------------------
+# Daily Report Exclude List
+# The SCRIPTS variable is used to specify some scripts to be excluded from 
+# the web scripts report. Script name are specify without extension.
+#
+# The SERVERS variable should contain the system hostname (Without Domain Name)
+# to be excluded from the reports (ALL the reports).
+# -----------------------------------------------------------------------------
 
-# Set command line switch default
+# SCRIPTS variable declare the script names you don't want to see in the
+# daily script web report.
+SCRIPTS="sadm_backup sadm_rear_backup sadm_nmon_watcher " 
+
+# Exclude scripts that are executing as part of sadm_client_sunset script.
+# Any error encountered by the scripts below, will be reported by sadm_client_sunset.
+SCRIPTS="$SCRIPTS sadm_dr_savefs sadm_create_sysinfo sadm_cfg2html"
+
+# Exclude scripts that are executing as part of sadm_server_sunrise script.
+# Any error encountered by the scripts below, will be reported by sadm_server_sunrise.
+SCRIPTS="$SCRIPTS sadm_daily_farm_fetch sadm_database_update sadm_nmon_rrd_update "
+
+# Exclude System Startup and Shutdown Script for Daily scripts Report
+# This one is optional
+SCRIPTS="$SCRIPTS sadm_startup sadm_shutdown"
+
+# Exclude template scripts and demo scripts.
+SCRIPTS="$SCRIPTS sadm_template sadmlib_std_demo"
+
+# Define here your custom scripts you want to exclude from the script daily report
+SCRIPTS="$SCRIPTS sadm_vm_tools sadm_vm_start sadm_vm_stop"
+
+# Server name to be exclude from every Daily Report (Backup, Rear and Scripts)
+SERVERS=""
+
+
 export BACKUP_REPORT="ON"                                               # Backup Report Activated
 export REAR_REPORT="ON"                                                 # ReaR Report Activated
 export SCRIPT_REPORT="ON"                                               # Scripts Report Activated
@@ -178,13 +249,6 @@ export RCH_ALERT=""                                                     # RCH Al
 export RCH_TYPE=""                                                      # RCH Alert Group Type
 export RCH_RCODE=""                                                     # RCH Return Code 
 
-# Daily Report External Exclude file
-EXCLUDE_FILE="$SADMIN/bin/sadm_daily_report_exclude.sh"                 # Exclude from Report file
-if [ -r "$EXCLUDE_FILE" ]                                               # If Exclude File Exist 
-    then source $EXCLUDE_FILE                                           # Sourcing exclude list
-    else SERVERS=""                                                     # Servers list to exclude
-         SCRIPTS=""
-fi 
 
 
 
@@ -460,8 +524,17 @@ script_report()
     while read RCH_LINE                                                 # Read Tmp file Line by Line
         do
         split_rchline "$RCH_LINE"                                       # Split Line into fields
-        echo "$SERVERS" | grep -i "$RCH_SERVER" >>/dev/null 2>&1        # Server in excl. ServerList 
-        if [ $? -eq 0 ] ; then continue ; fi                            # Skip Server in Excl. List
+
+        # Check if server is in the Exclude list
+        #echo "$SERVERS" | grep -i "$RCH_SERVER" >>/dev/null 2>&1        # Server in excl. ServerList 
+        #if [ $? -eq 0 ] ; then continue ; fi                            # Skip Server in Excl. List
+        lfound=0                                                        # Default not in excl. list
+        for lserver in $SERVERS                                         # Loop exclude server list
+            do
+            if [ "$lserver" = "$RCH_SERVER" ] ; then lfound=1 ; fi      # Server in Exclude LIst
+            done
+        if [ $lfound -eq 1 ] ; then continue ; fi                       # Skip Server in Excl. List
+
         echo "$SCRIPTS" | grep -i "$RCH_SCRIPT" >>/dev/null 2>&1        # Script in excl. ServerList 
         if [ $? -eq 0 ] ; then continue ; fi                            # Skip Script in Excl. List
         if [ "$current_server" = "" ]                                   # Is it the time loop
@@ -772,6 +845,17 @@ rear_report()
         then sadm_write "$SADM_WARNING No Active Server were found.\n"  # Not Active Server MSG
              return 0                                                   # Return Status to Caller
     fi 
+
+    # Exclude the servers specify in sadmin.cfg from the report
+    for server in $SERVERS                                              # For All in Exclude List
+    	do 
+        grep -iq "^${server};" $SADM_TMP_FILE1
+        if [ $? -eq 0 ]                                                 # Server in Exclude List 
+            then grep -iv "^$server" $SADM_TMP_FILE1 > $SADM_TMP_FILE2  # Remove it from file
+                 mv $SADM_TMP_FILE2 $SADM_TMP_FILE1                     # Copy work to Server List
+    	fi
+	done
+    chmod 664 $SADM_TMP_FILE1                                           # So everybody can read it.
 
     # Mount NFS Rear Backup Directory
     NFSMOUNT="${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT}"     # Remote NFS Mount Point
@@ -1226,16 +1310,27 @@ storix_report()
              return 0                                                   # Return Status to Caller
     fi 
     if [ "$SADM_DEBUG" -gt 4 ]                                          # If Debug Show SQL Results
-       then sadm_writelog " "                                             # Space line
+       then sadm_writelog " "                                           # Space line
             sadm_writelog "Output of the SQL Query for producing the Backup Report."
             cat $SADM_TMP_FILE1 | while read wline ; do sadm_writelog "${wline}"; done
-            sadm_writelog " "                                             # Space line
+            sadm_writelog " "                                           # Space line
     fi
 
     # Mount NFS Storix Backup Location
     NFSMOUNT="${SADM_STORIX_NFS_SERVER}:${SADM_STORIX_NFS_MOUNT_POINT}" # Remote NFS Mount Point
     mount_nfs "$NFSMOUNT"                                               # Go and Mount NFS Dir.
     if [ $? -ne 0 ] ; then return 1 ; fi                                # Can't Mount back to caller
+
+    # Exclude the servers to exclude specify in sadmin.cfg from the report
+    for server in $SERVERS                                              # For All in Exclude List
+    	do 
+        grep -iq "^${server};" $SADM_TMP_FILE1
+        if [ $? -eq 0 ]                                                 # Server in Exclude List 
+            then grep -iv "^$server" $SADM_TMP_FILE1 > $SADM_TMP_FILE2  # Remove it from file
+                 mv $SADM_TMP_FILE2 $SADM_TMP_FILE1                     # Copy work to Server List
+    	fi
+	done
+    chmod 664 $SADM_TMP_FILE1                                           # So everybody can read it.
 
     # Produce the report Heading
     storix_heading "SADMIN Storix Report - `date '+%a %C%y.%m.%d %H:%M:%S'`" # Produce Page Heading
@@ -1655,7 +1750,7 @@ backup_report()
 
     # Build SQL to select active server(s) from Database.
     SQL="${SQL} from server"                                            # From the Server Table
-    #SQL="${SQL} where srv_active = True"                                # Select only Active Servers
+    SQL="${SQL} where srv_active = True"                                # Select only Active Servers
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
     
     # Execute SQL Query to Create CSV in SADM Temporary work file ($SADM_TMP_FILE1)
@@ -1668,13 +1763,24 @@ backup_report()
     if [ "$SADM_DEBUG" -gt 7 ]                                          # If Debug Show SQL Results
        then sadm_writelog " "                                             # Space line
             sadm_writelog "Output of the SQL Query for producing the Backup Report."
-            cat $SADM_TMP_FILE1 | while read wline ; do sadm_write "${wline}"; done
+            cat $SADM_TMP_FILE1 | while read wline ; do sadm_writelog "${wline}"; done
             sadm_writelog " "                                             # Space line
     fi
 
     NFSMOUNT="${SADM_BACKUP_NFS_SERVER}:${SADM_BACKUP_NFS_MOUNT_POINT}" # Remote NFS Mount Point
     mount_nfs "$NFSMOUNT"                                               # Go and Mount NFS Dir.
     if [ $? -ne 0 ] ; then return 1 ; fi                                # Can't Mount back to caller
+
+    # Exclude the servers to exclude specify in sadmin.cfg from the report
+    for server in $SERVERS                                              # For All in Exclude List
+    	do 
+        grep -iq "^${server};" $SADM_TMP_FILE1
+        if [ $? -eq 0 ]                                                 # Server in Exclude List 
+            then grep -iv "^$server" $SADM_TMP_FILE1 > $SADM_TMP_FILE2  # Remove it from file
+                 mv $SADM_TMP_FILE2 $SADM_TMP_FILE1                     # Copy work to Server List
+    	fi
+	done
+    chmod 664 $SADM_TMP_FILE1                                           # So everybody can read it.
 
     # Produce the report Heading
     sadm_writelog "${SADM_OK} Create Backup Web Page." 
