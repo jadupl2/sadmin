@@ -104,9 +104,9 @@ table {
 /* Table Heading Line CSS */
 th {
     font-family     :   arial;
-    /* padding         :   0px;
+    padding         :   1px;
     margin-top      :   0px;
-    margin-bottom   :   0px; */
+    margin-bottom   :   0px; 
     background-color:   #006456; 
     color           :   #fff;
     /* text-transform  :   uppercase; */
