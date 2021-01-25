@@ -452,7 +452,7 @@ sadm_isnumeric() {
 
 
 # Display Question (Receive as $1) and wait for response from user, Y/y (return 1) or N/n (return 0)
-function sadm_ask() {
+sadm_ask() {
     wmess="$1 [y,n] ? "                                                 # Add Y/N to Mess. Rcv
     while :                                                             # While until good answer
         do
