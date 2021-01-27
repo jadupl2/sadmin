@@ -29,11 +29,7 @@
 *.org
 *.tmp
 
-# Ignore Python Related files and directories
-__pycache__/
-**/__pycache__/
-*.pyc
-
+# Ignore Python Related files andEnsure that package util-linux is installed on client & server.
 # Ignore MacOS related custom attributes of its containing folder
 .DS_Store
 .DS_Store?
@@ -108,16 +104,20 @@ www/view/daily_storix_report.html
 #
 www/dat/*
 !www/dat/.gitkeep
+#
 www/tmp/*
 !www/tmp/.gitkeep
 !www/tmp/perf/.gitkeep
+#
 www/rrd/*
 !www/rrd/.gitkeep
+#
 www/view/daily*
 www/test/*
+# 
 www/doc/odt/*
 www/doc/md/*
-www/doc/man/*
+
 
 # Template Configuration Files to be included
 cfg/*
