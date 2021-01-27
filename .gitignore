@@ -50,12 +50,13 @@ bitbucket-pipelines.yml
 
 # --------------------------------------
 # SADMIN PROJECT 
-# --------------------------------------
+# -------------------------------------- 
 
 # Exclude the SADMIN System monitor lock file.
 sysmon.lock
 readme.html
 readme.pdf
+lib/__pycache__/
 
 # Want theses directories to be part of the project (but empty)
 dat/*
