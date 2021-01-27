@@ -87,6 +87,7 @@
 #@2020_12_24 Update: v3.50 CentOSStream return CENTOS.
 #@2020_12_27 Fix: v3.51 Fix problem with 'rear' & 'syslinux' when installing SADMIN server.
 #@2021_01_06 Update: v3.52 Ensure that package util-linux is installed on client & server.
+#@2021_01_27 Update: v3.53 Activate Startup and Shutdown Script (SADMIN Service)
 # 
 # ==================================================================================================
 #
@@ -104,7 +105,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.52"                                            # Setup Version Number
+sver                = "3.53"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -2323,6 +2324,26 @@ def end_message(sroot,sdomain,sserver,stype):
 
 
 #===================================================================================================
+# Activate SADMIN Service 
+#   - Startup Script ($SADMIN/sys/sadm_startup.sh) 
+#   - Shutdown Script ($SADMIN/sys/sadm_shutdown.sh) 
+#===================================================================================================
+#
+def sadmin_service(sroot):
+    cmd = "%s/sys/sadm_service_ctrl.sh -e" % (sroot)                    # Enable SADMIN Service 
+    writelog ("Enabling SADMIN Service - %s ... " % (cmd),"nonl")       # Inform User
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Enable MariaDB Server
+    if (ccode != 0):                                                    # Problem Enabling Service
+        writelog ("Problem with enabling SADMIN Service.")              # Advise User
+        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+    else:
+        writelog (' Done ')
+
+
+
+#===================================================================================================
 # Main Flow of Setup Script
 #===================================================================================================
 def mainflow(sroot):
@@ -2353,7 +2374,7 @@ def mainflow(sroot):
 
     # Go and Ask Setup Question to user 
     # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, sadmin User and Group).
-    (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype) # Ask questions
+    (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype) # Ask User
 
     # On SADMIN Client, Apache web server is not installed, 
     # But we need to set the WebUser and the WebGroup to some default value (SADMIN user and Group)
@@ -2410,6 +2431,7 @@ def mainflow(sroot):
         run_script(sroot,"sadm_database_update.py")                     # Update DB with info collec
         
     # End of Setup
+    sadmin_service(sroot)                                               # Startup/Shutdown Script ON
     end_message(sroot,udomain,userver,stype)                            # Last Message to User
     fhlog.close()                                                       # Close Script Log
 
