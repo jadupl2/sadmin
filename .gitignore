@@ -117,7 +117,7 @@ www/view/daily*
 www/test/*
 # 
 www/doc/odt/*
-www/doc/md/*
+www/doc/md/
 
 
 # Template Configuration Files to be included
