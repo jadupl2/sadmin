@@ -1,10 +1,10 @@
 #! /usr/bin/env bash
 #---------------------------------------------------------------------------------------------------
-#   Author      :   Jacques Duplessis
+#   Author      :   Your Name 
 #   Script Name :   XXXXXXXX.sh
 #   Date        :   2020/MM/DD
 #   Requires    :   sh and SADMIN Shell Library
-#   Description :
+#   Description :   Template for starting a new shell script
 #
 # Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
 #        have and use a 100 characters per line. Comments in script always begin at column 73. 
@@ -72,9 +72,9 @@ export SADM_PID_TIMEOUT=7200                            # Nb. Sec. a PID can blo
 export SADM_LOCK_TIMEOUT=3600                           # Sec. before Server Lock File get deleted
 export SADM_USE_RCH="Y"                                 # Gen. History Entry in ResultCodeHistory 
 export SADM_DEBUG=0                                     # Debug Level - 0=NoDebug Higher=+Verbose
-export SADM_TMP_FILE1=""                                # Tmp File1 you can use, Libr. will set name
-export SADM_TMP_FILE2=""                                # Tmp File2 you can use, Libr. will set name
-export SADM_TMP_FILE3=""                                # Tmp File3 you can use, Libr. will set name
+export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$" # Temp File Name 1 available for you to use
+export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$" # Temp File Name 2 available for you to use
+export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$" # Temp File Name 3 available for you to use
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . ${SADMIN}/lib/sadmlib_std.sh                          # LOAD SADMIN Standard Shell Libr. Functions
