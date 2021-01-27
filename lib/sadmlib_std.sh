@@ -163,6 +163,7 @@
 #@2020_12_24 Fix: v3.62 Fix problem with capitalize function.
 #@2020_12_26 Update: v3.63 Add Global Variable SADM_WWW_ARC_DIR for Server Archive when deleted
 #@2021_01_13 Update: v3.64 Code Optimization (in Progress)
+#@2021_01_27 Update: v3.65 By default Temp files declaration done in caller
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -174,7 +175,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.64"                                              # This Library Version
+export SADM_LIB_VER="3.65"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -253,13 +254,24 @@ export SADM_BACKUP_EXCLUDE="$SADM_CFG_DIR/backup_exclude.txt"           # files 
 export SADM_REAR_EXCLUDE_INIT="$SADM_CFG_DIR/.rear_exclude.txt"         # Default Rear Files Excl.
 export SADM_BACKUP_EXCLUDE_INIT="$SADM_CFG_DIR/.backup_exclude.txt"     # Default Files to Exclude
 export SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                      # Default SADMIN Cfg File
-export SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"               # Temp File 1
-export SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"               # Temp File 2
-export SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"               # Temp File 3
+
+# Define 3 temporaries file name, that can be use by the user.
+# They are deleted automatically by the sadm_stop() function (If they exist).
+if [ -v $SADM_TMP_FILE1 ] || [ -z "$SADM_TMP_FILE1" ]                   # Var blank or don't exist
+   then export SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"       # Temp File 1 for you to use
+fi 
+if [ -v $SADM_TMP_FILE2 ] || [ -z "$SADM_TMP_FILE2" ]                   # Var blank or don't exist
+   then export SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"       # Temp File 1 for you to use
+fi 
+if [ -v $SADM_TMP_FILE3 ] || [ -z "$SADM_TMP_FILE3" ]                   # Var blank or don't exist
+   then export SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"       # Temp File 1 for you to use
+fi 
+
+# Definition of SADMIN log, error log, Result Code  History (.rch) and Monitor report file (*.rpt).
 export SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"     # Script Output LOG
 export SADM_ERRLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}_err.log" # Script Error Output LOG
-export SADM_RCHLOG="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"  # Return Code
-export SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt"             # RPT FileName
+export SADM_RCHLOG="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"  # Result Code History File
+export SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt"             # Monitor Report file (rpt)
 
 # COMMAND PATH REQUIRE THAT SADMIN USE
 export SADM_LSB_RELEASE=""                                              # Command lsb_release Path
