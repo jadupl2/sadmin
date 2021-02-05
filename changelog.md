@@ -1,6 +1,8 @@
 # Changelog
 
-## Release v[1.3.0](https://github.com/jadupl2/sadmin/releases) (2021-01-16)
+
+## Release v[1.3.1](https://github.com/jadupl2/sadmin/releases) (2021-02-06)
+
 - Fixes
 	- 2020_10_26 sadm_backup.sh (v3.26) - Suppress 'chmod' error message on backup directory.
 	- 2020_10_29 sadm_daily_farm_fetch.sh (v4.3) - If comma was used in server description, it cause delimiter problem.
@@ -80,6 +82,11 @@
 	- 2021_01_06 sadm_setup.py (v3.52) - Ensure that package util-linux is installed on client & server.
 	- 2021_01_13 sadm_daily_report.sh (v1.19) - Change reports heading color and font style.
 	- 2021_01_13 sadmlib_std.sh (v3.64) - Code Optimization (in Progress)
+	- 2021_01_17 sadm_daily_report.sh (v1.20) - Center Heading of scripts report.
+	- 2021_01_23 sadm_daily_report.sh (v1.21) - SCRIPTS & SERVERS variables no longer in "sadm_daily_report_exclude.sh"
+	- 2021_01_27 sadmlib_std.sh (v3.65) - By default Temp files declaration done in caller
+	- 2021_01_27 sadm_setup.py (v3.53) - Activate Startup and Shutdown Script (SADMIN Service)
+
 
 
 ## Release v[1.2.9](https://github.com/jadupl2/sadmin/releases) (2020-10-20)
