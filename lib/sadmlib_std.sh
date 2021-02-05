@@ -1624,11 +1624,12 @@ sadm_load_config_file() {
     if [ ! -r "$SADM_CFG_FILE" ]                                        # If $SADMIN/cfg/sadmin.cfg
         then if [ ! -r "$SADM_CFG_HIDDEN" ]                             # Initial Cfg file not exist
                 then echo "****************************************************************"
-                     echo "SADMIN Configuration file not found - $SADM_CFG_FILE "
+                     echo "SADMIN configuration file $SADM_CFG_FILE doesn't exist."
                      echo "Even the config template file can't be found - $SADM_CFG_HIDDEN"
                      echo "Copy both files from another system to this server"
                      echo "Or restore the files from a backup"
                      echo "Don't forget to review the file content."
+                     echo "Job aborted."
                      echo "****************************************************************"
                      sadm_stop 1                                        # Exit to O/S with Error
                 else echo "****************************************************************"
@@ -1830,6 +1831,7 @@ sadm_load_config_file() {
 #   6) Write HostName - Script name and version - O/S Name and version to the Log file ($SADM_LOG)
 # --------------------------------------------------------------------------------------------------
 # mkdir -p ${SADMIN}/{etc/x1,lib,usr/{x2,x3},bin,tmp/{Y1,Y2,Y3/z},opt,var}
+#$ mkdir {bananas,apples,oranges,peaches, kiwis}
 sadm_start() {
 
     # 1st thing inititialize log directory and file.
@@ -2698,7 +2700,7 @@ write_alert_history() {
 }
 
 
-
+# --------------------------------------------------------------------------------------------------
 # Things to do when first called
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Save Script Startup Time
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "main: grepping /etc/environment\n" ; fi

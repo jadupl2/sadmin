@@ -195,7 +195,7 @@ process_servers()
                  continue                                               # Continue with next Server
         fi
 
-        # Lock File is created when the remote O/S update start.
+        # Lock File is created when the remote O/S update start (or for Maintenance Period).
         # Prevent to return an error if not able to ssh to server (May be rebooting after update)
         # Lock file will be deleted when the file creation date is older than $SADM_LOCK_TIMEOUT.
         LOCK_FILE="${SADM_TMP_DIR}/${server_name}.lock"                 # Prevent Monitor lock file
