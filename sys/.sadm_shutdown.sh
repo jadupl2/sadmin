@@ -54,7 +54,7 @@ export SADM_LOG_APPEND="Y"                              # [Y]=Append Existing Lo
 export SADM_LOG_HEADER="Y"                              # [Y]=Include Log Header  [N]=No log Header
 export SADM_LOG_FOOTER="Y"                              # [Y]=Include Log Footer  [N]=No log Footer
 export SADM_MULTIPLE_EXEC="N"                           # Allow running multiple copy at same time ?
-export SADM_USE_RCH="N"                                 # Gen. History Entry in ResultCodeHistory 
+export SADM_USE_RCH="Y"                                 # Gen. History Entry in ResultCodeHistory 
 export SADM_DEBUG=0                                     # Debug Level - 0=NoDebug Higher=+Verbose
 export SADM_TMP_FILE1=""                                # Tmp File1 you can use, Libr. will set name
 export SADM_TMP_FILE2=""                                # Tmp File2 you can use, Libr. will set name
