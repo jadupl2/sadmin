@@ -51,6 +51,7 @@
 #@2020_11_20 Update: v4.0 Restructure & rename from sadm_osupdate_farm to sadm_osupdate_starter.
 #@2020_12_02 Update: v4.1 Log is now in appending mode and can grow up to 5000 lines.
 #@2020_12_12 Update: v4.2 Use new LOCK_FILE & Add and use SADM_PID_TIMEOUT & SADM_LOCK_TIMEOUT Var.
+#@2021_02_13 Minor: v4.2 Change for log appearance.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -198,7 +199,7 @@ rcmd_osupdate()
    
     # Result file not readable or is empty = Server Name not found in Database
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
-        then sadm_write "${SADM_ERROR} The system '$ONE_SERVER' was not found is the Database.\n"
+        then sadm_writelog "${SADM_ERROR} The system '$ONE_SERVER' was not found is the Database."
              return 1                                                   # Return Error to Caller
     fi 
     
@@ -216,20 +217,20 @@ rcmd_osupdate()
     ping -c2 $fqdn_server >> /dev/null 2>&1
     if [ $? -ne 0 ]
         then if [ "$server_sporadic" = "1" ]
-                 then    sadm_write "${SADM_WARNING} Sporadic system now offline.\n"
+                 then    sadm_writelog "${SADM_WARNING} Sporadic system now offline."
                          return 0 
-                 else    sadm_write "${SADM_ERROR} Could not ping ${fqdn_server}.\n"
-                         sadm_write "Update is not possible, process aborted.\n"
+                 else    sadm_writelog "${SADM_ERROR} Could not ping ${fqdn_server}."
+                         sadm_writelog "Update is not possible, process aborted."
                          return 1 
              fi
-        else sadm_write "${SADM_OK} Ping host $fqdn_server.\n"
+        else sadm_writelog "${SADM_OK} Ping host $fqdn_server."
     fi
 
     # If 'srv_update_auto' = 0 in Database for that server, it means no update allowed for server
     if [ "$server_update_auto" = "0" ]
-        then sadm_write "${SADM_WARNING} O/S Update for '${fqdn_server}' isn't activated.\n"
-             sadm_write "No O/S Update will be performed.\n"
-             sadm_write "Unless you check field 'Activate O/S Update Schedule' in the schedule.\n"
+        then sadm_writelog "${SADM_WARNING} O/S Update for '${fqdn_server}' isn't activated."
+             sadm_writelog "No O/S Update will be performed."
+             sadm_writelog "Unless you check field 'Activate O/S Update Schedule' in the schedule."
              return 1
     fi 
 
@@ -237,10 +238,10 @@ rcmd_osupdate()
     pgm="${server_sadmin_dir}/bin/$USCRIPT"                         # Path To o/s update script
     response=$($SADM_SSH_CMD $fqdn_server "if [ -x $pgm ] ;then echo 'ok' ;else echo 'error' ;fi")
     if [ "$response" != "ok" ]
-        then sadm_write "${SADM_ERROR} '$pgm' don't exist or not executable on $fqdn_server.\n"
-             sadm_write "No O/S Update will be perform.\n"
+        then sadm_writelog "${SADM_ERROR} '$pgm' don't exist or not executable on $fqdn_server."
+             sadm_writelog "No O/S Update will be perform."
              return 1
-        else sadm_write "${SADM_OK} '$pgm' exist & executable on $fqdn_server.\n"
+        else sadm_writelog "${SADM_OK} '$pgm' exist & executable on $fqdn_server."
     fi 
 
     # Activate or not the reboot at the end of the O/S Update.
@@ -253,18 +254,18 @@ rcmd_osupdate()
     LOCK_FILE="${SADM_TMP_DIR}/${server_name}.lock"                 # Prevent Monitor,lock file Name
     echo "$SADM_INST - $(date)" > ${LOCK_FILE}                      # Create Lock File
     if [ $? -eq 0 ]                                                 # If Creation went OK
-       then sadm_write "${SADM_OK} Monitoring suspended while O/S update is running.\n"  
-       else sadm_write "${SADM_ERROR} While creating the server lock file '${LOCK_FILE}'\n" 
+       then sadm_writelog "${SADM_OK} Lock File ($LOCK_FILE) created, Monitoring suspended."  
+       else sadm_writelog "${SADM_ERROR} While creating the server lock file '${LOCK_FILE}'" 
     fi
     
     #sadm_write "Starting $USCRIPT on ${server_name}.${server_domain}\n"
     sadm_writelog " "
     sadm_writelog "Starting the O/S update on '${server_name}'."
     if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
-        then sadm_write "$SADM_SSH_CMD $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'\n\n"
+        then sadm_writelog "$SADM_SSH_CMD $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'"
              $SADM_SSH_CMD $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
              RC=$? 
-        else sadm_write "Starting execution of ${server_sadmin_dir}/bin/$USCRIPT \n"
+        else sadm_writelog "Starting execution of ${server_sadmin_dir}/bin/$USCRIPT "
              ${server_sadmin_dir}/bin/$USCRIPT                       # Run Locally when on SADMIN
              RC=$?
     fi      
@@ -280,7 +281,10 @@ rcmd_osupdate()
     #fi
     
     sadm_write "O/S Update completed on '${server_name}'.\n"            # Advise User were back .
-    if [ -f "$LOCK_FILE" ] ;then rm -f $LOCK_FILE >/dev/null 2>&1 ;fi   # Remove host Lock File    
+    if [ -f "$LOCK_FILE" ]                                              # If Lock FIle Exist
+        then rm -f $LOCK_FILE >/dev/null 2>&1                           # Remove host Lock File    
+             sadm_writelog "${SADM_OK} Lock File ($LOCK_FILE) removed."  
+    fi
     return 0
 }
 
