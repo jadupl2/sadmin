@@ -38,7 +38,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 
 #===================================================================================================
-# SADMIN SECTION - Setup SADMIN Global Variables and Load SADMIN Shell Library
+# SADMIN SECTION v1.5 - Setup SADMIN Global Variables and Load SADMIN Shell Library
 # To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
 #===================================================================================================
 
@@ -90,7 +90,6 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)      # O/S Major Version Numb
 #export SADM_MAX_LOGLINE=500                            # At the end Trim log to 500 Lines(0=NoTrim)
 #export SADM_MAX_RCLINE=35                              # At the end Trim rch to 35 Lines (0=NoTrim)
 #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-
 #===================================================================================================
 
 
