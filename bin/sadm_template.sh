@@ -2,7 +2,7 @@
 #---------------------------------------------------------------------------------------------------
 #   Author      :   Your Name 
 #   Script Name :   XXXXXXXX.sh
-#   Date        :   2020/MM/DD
+#   Date        :   2021/MM/DD
 #   Requires    :   sh and SADMIN Shell Library
 #   Description :   Template for starting a new shell script
 #
@@ -29,7 +29,7 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-# 2020_MM_DD New: v1.0 Initial Version
+# 2021_MM_DD New: v1.0 Initial Version
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -38,7 +38,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 
 #===================================================================================================
-# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
+# SADMIN SECTION - Setup SADMIN Global Variables and Load SADMIN Shell Library
 # To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
 #===================================================================================================
 
@@ -48,7 +48,7 @@ if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # If SAD
          EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null          # SADMIN in /etc/environment
          if [ $? -eq 0 ]                                                # Found SADMIN in /etc/env..
             then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                 printf "'SADMIN' Environment variable temporarily set to ${SADMIN}.\n"
+                 printf "'SADMIN' environment variable temporarily set to ${SADMIN}.\n"
             else exit 1                                                 # No SADMIN Env. Var. Exit
          fi
 fi 
@@ -60,17 +60,17 @@ export SADM_TPID="$$"                                   # Current Script Process
 export SADM_HOSTNAME=`hostname -s`                      # Current Host name without Domain Name
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-# USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
+# USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Library).
 export SADM_VER='1.0'                                   # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
-export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
+export SADM_LOG_TYPE="B"                                # Write log to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New Log
 export SADM_LOG_HEADER="Y"                              # [Y]=Include Log Header  [N]=No log Header
 export SADM_LOG_FOOTER="Y"                              # [Y]=Include Log Footer  [N]=No log Footer
 export SADM_MULTIPLE_EXEC="N"                           # Allow running multiple copy at same time ?
-export SADM_PID_TIMEOUT=7200                            # Nb. Sec. a PID can block script execution
-export SADM_LOCK_TIMEOUT=3600                           # Sec. before Server Lock File get deleted
-export SADM_USE_RCH="Y"                                 # Gen. History Entry in ResultCodeHistory 
+export SADM_PID_TIMEOUT=7200                            # Nb Sec PID file can block script execution
+export SADM_LOCK_TIMEOUT=3600                           # Nb Sec before System Lock File get deleted
+export SADM_USE_RCH="Y"                                 # Update HistoryFile [R]esult[C]ode[H]istory 
 export SADM_DEBUG=0                                     # Debug Level - 0=NoDebug Higher=+Verbose
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$" # Temp File Name 1 available for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$" # Temp File Name 2 available for you to use
