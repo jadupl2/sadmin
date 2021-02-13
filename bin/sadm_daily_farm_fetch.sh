@@ -51,6 +51,7 @@
 #@2020_10_29 Fix: v4.3 If comma was used in server description, it cause delimiter problem.
 #@2020_11_05 Update: v4.4 Change msg written to log & no alert while o/s update is running.
 #@2020_12_12 Update: v4.5 Add and use SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
+#@2021_02_13 Minor: v4.5 Change for log appearance.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -206,15 +207,15 @@ process_servers()
                 SEC_LEFT=`expr $SADM_LOCK_TIMEOUT - $FAGE`              # Sec left before delete lck
                 if [ $FAGE -gt $SADM_LOCK_TIMEOUT ]                     # Running more than 90Min ?
                    then msg="${BOLD}Server is lock for more than $SADM_LOCK_TIMEOUT seconds.${NORMAL}"
-                        sadm_write "${msg}\n"
+                        sadm_writelog "${msg}"
                         msg="${BOLD}Will now start to monitor this system as usual.${NORMAL}"
-                        sadm_write "${msg}\n"
+                        sadm_writelog "${msg}"
                         rm -f LOCK_FILE > /dev/null 2>&1                # Remove O/S Upd Flag File
                    else msg="${SADM_WARNING} '$fqdn_server' server is lock."
-                        sadm_write "${msg}\n"
+                        sadm_writelog "${msg}"
                         msg1="Normal monitoring will resume in ${SEC_LEFT} seconds, "
                         msg2="time allowed to keep a server lock is ${SADM_LOCK_TIMEOUT} sec."
-                        sadm_write "${msg1}${msg2}\n"
+                        sadm_writelog "${msg1}${msg2}"
                         continue                                        # Continue with Nxt Server
                 fi 
         fi 
@@ -295,10 +296,10 @@ process_servers()
         fi
         RC=$?
         if [ $RC -ne 0 ]
-            then sadm_write "$SADM_ERROR ($RC) ${rcmd}\n"
+            then sadm_writelog "$SADM_ERROR ($RC) ${rcmd}"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
-                 sadm_write "Error Count is now at $ERROR_COUNT \n"
-            else sadm_write "${SADM_OK} ${rcmd}\n"
+                 sadm_writelog "Error Count is now at $ERROR_COUNT"
+            else sadm_writelog "${SADM_OK} ${rcmd}"
         fi
  
 
@@ -320,11 +321,11 @@ process_servers()
         fi
         RC=$?
         if [ $RC -ne 0 ]
-            then sadm_write "$SADM_ERROR ($RC) ${rcmd}\n"
+            then sadm_writelog "$SADM_ERROR ($RC) ${rcmd}"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
-            else sadm_write "${SADM_OK} ${rcmd}\n" 
+            else sadm_writelog "${SADM_OK} ${rcmd}" 
         fi
-        if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write "Error Count is now at $ERROR_COUNT \n" ;fi
+        if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count is now at $ERROR_COUNT" ;fi
 
         done < $SADM_TMP_FILE1
 
