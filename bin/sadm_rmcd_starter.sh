@@ -29,6 +29,7 @@
 # Change Log
 # 2020_12_12 New: v1.0 Initial version.
 # 2021_02_13 Update: v1.1 First production release, added some command line option.
+# 2021_02_18 Update: v1.2 Lock FileName now created with remote node name.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -61,7 +62,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Library).
-export SADM_VER='1.0'                                   # Current Script Version
+export SADM_VER='1.2'                                   # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # Write log to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New Log
@@ -194,11 +195,11 @@ rcmd_osupdate()
 
         # If requested (-l), created a server lock file, to prevent generation monitoring error.
         if [ "$LOCK" = "Y" ]
-           then LOCK_FILE="${SADM_TMP_DIR}/${SERVER}.lock"              # Prevent Monitor lock file    
+           then LOCK_FILE="${SADM_TMP_DIR}/${server_name}.lock"         # Prevent Monitor lock file    
                 echo "$SADM_INST - $(date)" > ${LOCK_FILE}              # Create Lock File
                 if [ $? -eq 0 ]                                         # If Touch went OK
-                   then sadm_writelog "${SADM_OK} System '$SERVER' lock file (${LOCK_FILE}) created."  
-                   else sadm_writelog "${SADM_ERROR} Creating '$SERVER' lock file '${LOCK_FILE}'" 
+                   then sadm_writelog "${SADM_OK} System '${server_name}' lock file (${LOCK_FILE}) created."  
+                   else sadm_writelog "${SADM_ERROR} Creating '${server_name}' lock file '${LOCK_FILE}'" 
                 fi
         fi
         
@@ -224,6 +225,7 @@ rcmd_osupdate()
     if [ "$ERROR_COUNT" -ne 0 ]
        then sadm_writelog "Total Error count is ${ERROR_COUNT}."
     fi 
+
     return $ERROR_COUNT
 }
 
