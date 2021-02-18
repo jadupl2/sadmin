@@ -38,6 +38,7 @@
 #@2021_01_13 Updated v1.19 Change reports heading color and font style.
 #@2021_01_17 Updated v1.20 Center Heading of scripts report.
 #@2021_01_23 Updated v1.21 SCRIPTS & SERVERS variables no longer in "sadm_daily_report_exclude.sh"
+#@2021_02_18 Updated v1.22 Added example to 'SERVERS' varaible of system to be ignored from Report.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -69,7 +70,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.21'                                  # Current Script Version
+export SADM_VER='1.22'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -180,7 +181,7 @@ SCRIPTS="$SCRIPTS sadm_template sadmlib_std_demo"
 SCRIPTS="$SCRIPTS sadm_vm_tools sadm_vm_start sadm_vm_stop"
 
 # Server name to be exclude from every Daily Report (Backup, Rear and Scripts)
-SERVERS=""
+SERVERS="rhel3 rhel4"
 
 
 export BACKUP_REPORT="ON"                                               # Backup Report Activated
