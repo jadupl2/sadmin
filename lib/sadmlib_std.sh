@@ -164,6 +164,7 @@
 #@2020_12_26 Update: v3.63 Add Global Variable SADM_WWW_ARC_DIR for Server Archive when deleted
 #@2021_01_13 Update: v3.64 Code Optimization (in Progress)
 #@2021_01_27 Update: v3.65 By default Temp files declaration done in caller
+#@2021_02_27 Update: v3.66 Abort if user not part of '$SADM_GROUP' & fix permission denied message.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -175,7 +176,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.65"                                              # This Library Version
+export SADM_LIB_VER="3.66"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -1855,6 +1856,19 @@ sadm_start() {
              sadm_writelog " "                                          # White space line
     fi
 
+    # Libraries/Scripts can be run by 'root' or by user that are part of $SADM_GROUP group.
+    if [ $(id -u) -ne 0 ]                                               # If user is not 'root' user
+       then usrname=$(id -un)                                           # Get Current User Name
+            if ! id -nG "$usrname" | grep -qw "$SADM_GROUP"             # User part of sadmin group?
+               then sadm_writelog "User '$(id -un)' doesn't belong to '$SADM_GROUP' group."   
+                    sadm_writelog "Non 'root' user MUST be part of the '$SADM_GROUP' group."
+                    sadm_writelog "The '$SADM_GROUP' group is specified in $SADM_CFG_FILE file."
+                    sadm_writelog "Script aborted...."
+                    sadm_stop 1                                         # Call SADM Stop Function
+                    exit 1                                              # Exit with Error
+            fi
+    fi 
+
     # ($SADMIN/tmp) If TMP Directory doesn't exist, create it.
     [ ! -d "$SADM_TMP_DIR" ] && mkdir -p $SADM_TMP_DIR
     if [ $(id -u) -eq 0 ]
@@ -2090,6 +2104,7 @@ sadm_start() {
                             sadm_write "Don't forget to review the file content.\n"
                             sadm_write "********************************************************\n"
                             sadm_stop 1                                 # Exit to O/S with Error
+                            exit 1
                        else cp $SADM_SLACK_INIT $SADM_SLACK_FILE        # Copy Template as initial
                             chmod 664 $SADM_SLACK_FILE
                      fi
@@ -2118,14 +2133,14 @@ sadm_start() {
 
     # If PID File exist and User want to run only 1 copy of the script - Abort Script
     if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]     # PIP Exist - Run One Copy
-       then sadm_write "$SADM_PN is already running ... \n"             # Script already running
-            pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Last Modify Date of PID
+       then pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Last Modify Date of PID
             cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
             sadm_write "${BOLD}PID File ${SADM_PID_FILE} exist, created $pelapse seconds ago.${NORMAL}\n"
+            sadm_write "$SADM_PN may be already running ... \n"         # Script already running
             sadm_write "Not allowed to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N').\n" 
             sadm_writelog " "
-            sadm_write "Script will not be executed, unless one of the following thing is done :\n"
+            sadm_write "Script can't execute unless one of the following thing is done :\n"
             sadm_write "  - Remove the PID File (${SADM_PID_FILE}).\n"
             sadm_write "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in the script.\n"
             if [ ! -z "$SADM_PID_TIMEOUT" ] 
@@ -2208,13 +2223,18 @@ sadm_stop() {
              RCHLINE="$RCHLINE $sadm_elapse $SADM_INST"                 # Format Part2 of RCH File
              RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE"      # Format Part3 of RCH File
              RCHLINE="$RCHLINE $SADM_EXIT_CODE"                         # Format Part4 of RCH File
-             echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
+             if [ -w $SADM_RCHLOG ] 
+                then echo "$RCHLINE" >>$SADM_RCHLOG                     # Append to RCH File
+                else sadm_writelog "Permission denied to write to $SADM_RCHLOG"
+             fi
              if [ -v "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ] # If User want Log Footer
                 then if [ "$SADM_MAX_RCLINE" -ne 0 ]                    # User want to trim rch file
-                        then mtmp1="History ($SADM_RCHLOG) trim to ${SADM_MAX_RCLINE} lines "
-                             mtmp2="(\$SADM_MAX_RCLINE=$SADM_MAX_RCLINE)"
-                             sadm_write "${mtmp1}${mtmp2}.\n"           # Write rch trim context 
-                             sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE" # Trim file to Nb. Line
+                        then if [ -w $SADM_RCHLOG ]                     # If History RCH Writable
+                                then mtmp1="History ($SADM_RCHLOG) trim to ${SADM_MAX_RCLINE} lines "
+                                     mtmp2="(\$SADM_MAX_RCLINE=$SADM_MAX_RCLINE)"
+                                     sadm_write "${mtmp1}${mtmp2}.\n"           # Write rch trim context 
+                                     sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE" 
+                             fi
                         else mtmp="Script is set not to trim history file (\$SADM_MAX_RCLINE=0)"
                              sadm_write "${mtmp}.\n" 
                      fi
@@ -2301,9 +2321,13 @@ sadm_stop() {
     # If script is running on the SADMIN server, copy script final log and rch to web data section.
     # If we don't do that, log look incomplete & script seem to be always running on web interface.
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only run on SADMIN 
-       then cp $SADM_LOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log
+       then if [ -w ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log ] 
+               then cp $SADM_LOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log
+            fi 
             if [ -v "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]      # Want to Produce RCH File
-               then cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
+               then if [ -w  ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ] 
+                       then cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
+                    fi
             fi 
     fi
     return $SADM_EXIT_CODE
