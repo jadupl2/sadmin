@@ -451,7 +451,9 @@ update_sysinfo_file()
 {
     FINAL_CODE=$1                                                       # Exit code of O/S Update
 
-    if [ $SADM_DEBUG -gt 0 ] ; then sadm_write "Updating 'O/S Update' date in ${HWD_FILE}.\n" ; fi
+    if [ $SADM_DEBUG -gt 0 ] 
+        then sadm_write "Updating 'O/S Update' date & status in ${HWD_FILE}.\n"
+    fi
     grep -vi "SADM_OSUPDATE_" $HWD_FILE > $SADM_TMP_FILE1               # Remove lines to update
     if [ "$SADM_EXIT_CODE" -eq 0 ]                                      # O/S Update was a success
         then echo "SADM_OSUPDATE_STATUS                  = S"  >> $SADM_TMP_FILE1   # Success
@@ -513,7 +515,7 @@ perform_osupdate()
 # S T A R T   O F   M A I N    P R O G R A M
 # --------------------------------------------------------------------------------------------------
 #
-    sadm_start                                                          # SADMIN Initialisation Proc
+    sadm_start                                                          # SADMIN Initialization
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Init went wrong
     cmd_options "$@"                                                    # Check command-line Options
 
