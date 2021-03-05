@@ -52,6 +52,7 @@
 #@2020_12_02 Update: v4.1 Log is now in appending mode and can grow up to 5000 lines.
 #@2020_12_12 Update: v4.2 Use new LOCK_FILE & Add and use SADM_PID_TIMEOUT & SADM_LOCK_TIMEOUT Var.
 #@2021_02_13 Minor: v4.2 Change for log appearance.
+#@2021_03_05 Update: v4.3 Add a sleep time after update to give system to reboot & become available.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -84,7 +85,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='4.2'                                   # Current Script Version
+export SADM_VER='4.3'                                   # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="Y"                              # [Y]=Append Existing Log [N]=Create New One
@@ -121,7 +122,7 @@ export SADM_MAX_RCLINE=60                              # At the end Trim rch to 
 # --------------------------------------------------------------------------------------------------
 export ONE_SERVER=""                                                    # Name of server to update
 export USCRIPT="sadm_osupdate.sh"                                       # Script to execute on nodes
-
+export REBOOT_TIME=480                                                  # Sec given for system reboot
 
 
 
@@ -258,7 +259,7 @@ rcmd_osupdate()
        else sadm_writelog "${SADM_ERROR} While creating the server lock file '${LOCK_FILE}'" 
     fi
     
-    #sadm_write "Starting $USCRIPT on ${server_name}.${server_domain}\n"
+    # Go and Script the O/S Update on the selected system.
     sadm_writelog " "
     sadm_writelog "Starting the O/S update on '${server_name}'."
     if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
@@ -269,6 +270,14 @@ rcmd_osupdate()
              ${server_sadmin_dir}/bin/$USCRIPT                       # Run Locally when on SADMIN
              RC=$?
     fi      
+
+    # After the O/S update is terminated, a reboot will be done on some occasion.
+    # If user requested a reboot after each update, see reboot option when scheduling the O/S Update
+    # We need to wait a moment to give the selected system time to reboot and become available again.
+    # We will sleep 480 seconds (8 Min.) to give system time to restart and start it's app.
+    sadm_writelog "Sleep $REBOOT_TIME seconds to give '${server_name}' the time to become available."
+    sadm_sleep $REBOOT_TIME 30
+
 
     # Ignore if return an error.
     # Cause if script failed on remote, an alert has been generated for it, 
