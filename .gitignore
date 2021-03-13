@@ -140,5 +140,4 @@ cfg/*
 setup/update/*
 !setup/update/.gitkeep
 
-# Old
-docs/
+docs/*
