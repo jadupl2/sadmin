@@ -1,4 +1,3 @@
-<a name="top_of_page"></a> 
 
 ![sadm_text](https://sadmin.ca/assets/img/logo/sadmin_logo_88x88.png "SADMIN Logo")
 ![sadm_logo](https://sadmin.ca/assets/img/logo/sadmin_text_343x93.png "SADMIN Text Logo")
