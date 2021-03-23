@@ -255,7 +255,7 @@ rcmd_osupdate()
     LOCK_FILE="${SADM_TMP_DIR}/${server_name}.lock"                 # Prevent Monitor,lock file Name
     echo "$SADM_INST - $(date)" > ${LOCK_FILE}                      # Create Lock File
     if [ $? -eq 0 ]                                                 # If Creation went OK
-       then sadm_writelog "${SADM_OK} Lock File ($LOCK_FILE) created, Monitoring suspended."  
+       then sadm_writelog "${SADM_OK} Lock File ($LOCK_FILE) created, monitoring suspended."  
        else sadm_writelog "${SADM_ERROR} While creating the server lock file '${LOCK_FILE}'" 
     fi
     
