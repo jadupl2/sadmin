@@ -16,8 +16,6 @@ For more information visit the SADMIN web site at <https://www.sadmin.ca>.
 After running the [setup script](https://sadmin.ca/_pages/man/sadm-setup-sh), impatient user may want to read the 
 [Quick start guide](https://sadmin.ca/_pages/quickstart/) first.
 
-<br>
-
 ---
 
 ## Some of the features
@@ -41,35 +39,35 @@ templates to create new scripts and benefit of SADMIN tools.
 
 
 **Create an inventory of your systems (Linux,Aix,MacOS)**  
-  * Add, [update](https://www.sadmin.ca/img/sadm_server_update.png) or delete system in your inventory.  
-  * It collect [system configuration](https://www.sadmin.ca/img/sadmin_web_interface.png)and [performance data](https://www.sadmin.ca/img/sadm_nmon_rrd_update_cpu_graph.png) of your systems.  
-  * Access all this information from a [Web interface](https://www.sadmin.ca/img/sadmin_main_screen.png) or from the command line.  
-  * View your servers farm [subnet utilization](https://www.sadmin.ca/img/sadm_view_subnet.png) and see what IP are free to use.  
+* Add, [update](https://www.sadmin.ca/img/sadm_server_update.png) or delete system in your inventory.  
+* It collect [system configuration](https://www.sadmin.ca/img/sadmin_web_interface.png)and [performance data](https://www.sadmin.ca/img/sadm_nmon_rrd_update_cpu_graph.png) of your systems.  
+* Access all this information from a [Web interface](https://www.sadmin.ca/img/sadmin_main_screen.png) or from the command line.  
+* View your servers farm [subnet utilization](https://www.sadmin.ca/img/sadm_view_subnet.png) and see what IP are free to use.  
 
 ![SubnetInfo](https://sadmin.ca/assets/img/webui/view_subnet.png "SADMIN Subnet Information")
 
 
 **Help you keeping up to date with O/S update**  
-  * Choose what system get updated automatically.  
-  * Choose [date and time to perform the update](https://www.sadmin.ca/img/sadm_osupdate_screen.png).  
-  * Choose to reboot or not your system after the update.  
-  * Choose to be [notify by 'Slack'](https://www.sadmin.ca/img/slack_warning.png) or by [email](https://www.sadmin.ca/img/mail_notification.png), if something goes wrong.  
+* Choose what system get updated automatically.  
+* Choose [date and time to perform the update](https://www.sadmin.ca/img/sadm_osupdate_screen.png).  
+* Choose to reboot or not your system after the update.  
+* Choose to be [notify by 'Slack'](https://www.sadmin.ca/img/slack_warning.png) or by [email](https://www.sadmin.ca/img/mail_notification.png), if something goes wrong.  
 
 
 **Backup your important directories and files to a NFS server**  
-  * Create a daily, weekly, monthly and yearly backup.  
-  * Choose how many backups you wish to keep for each type.  
-  * [Decide at what time you wish to perform the backup](https://sadmin.ca/img/sadm_server_backup.png).  
-  * Backup are kept based upon the retention period you choose.  
+* Create a daily, weekly, monthly and yearly backup.  
+* Choose how many backups you wish to keep for each type.  
+* [Decide at what time you wish to perform the backup](https://sadmin.ca/img/sadm_server_backup.png).  
+* Backup are kept based upon the retention period you choose.  
 
 
 **Easy installation**  
-  * Untar the download file into the directory of your choice (We recommend /opt/sadmin).  
-  * Run the [setup.sh](https://sadmin.ca/_pages/man/install_guide) script, answer a few questions and that's it.  
-    * Once the installation is finish, just type 'http://sadmin' in your web browser.  
-    * Server installation install/configure the Apache Web server and MariaDB server.  
-    * See the SADMIN requirements on this [page](https://sadmin.ca/_pages/requirements).  
-    * Cron jobs (/etc/cron.d) will take care of keeping SADMIN healthy.
+* Untar the download file into the directory of your choice (We recommend /opt/sadmin).  
+* Run the [setup.sh](https://sadmin.ca/_pages/man/install_guide) script, answer a few questions and that's it.  
+* Once the installation is finish, just type 'http://sadmin' in your web browser.  
+* Server installation install/configure the Apache Web server and MariaDB server.  
+* See the SADMIN requirements on this [page](https://sadmin.ca/_pages/requirements).  
+* Cron jobs (/etc/cron.d) will take care of keeping SADMIN healthy.
 
 
 
