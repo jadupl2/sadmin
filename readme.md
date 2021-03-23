@@ -38,7 +38,8 @@ templates to create new scripts and benefit of SADMIN tools.
 [history file](https://sadmin.ca/assets/img/files/rch_file_format.png). 
 
 
-**Create an inventory of your systems (Linux,Aix,MacOS)**  
+**Create an inventory of your systems (Linux,Aix,MacOS)**   
+
 * Add, [update](https://www.sadmin.ca/img/sadm_server_update.png) or delete system in your inventory.  
 * It collect [system configuration](https://www.sadmin.ca/img/sadmin_web_interface.png)and [performance data](https://www.sadmin.ca/img/sadm_nmon_rrd_update_cpu_graph.png) of your systems.  
 * Access all this information from a [Web interface](https://www.sadmin.ca/img/sadmin_main_screen.png) or from the command line.  
@@ -48,6 +49,7 @@ templates to create new scripts and benefit of SADMIN tools.
 
 
 **Help you keeping up to date with O/S update**  
+
 * Choose what system get updated automatically.  
 * Choose [date and time to perform the update](https://www.sadmin.ca/img/sadm_osupdate_screen.png).  
 * Choose to reboot or not your system after the update.  
@@ -55,6 +57,7 @@ templates to create new scripts and benefit of SADMIN tools.
 
 
 **Backup your important directories and files to a NFS server**  
+
 * Create a daily, weekly, monthly and yearly backup.  
 * Choose how many backups you wish to keep for each type.  
 * [Decide at what time you wish to perform the backup](https://sadmin.ca/img/sadm_server_backup.png).  
@@ -62,6 +65,7 @@ templates to create new scripts and benefit of SADMIN tools.
 
 
 **Easy installation**  
+
 * Untar the download file into the directory of your choice (We recommend /opt/sadmin).  
 * Run the [setup.sh](https://sadmin.ca/_pages/man/install_guide) script, answer a few questions and that's it.  
 * Once the installation is finish, just type 'http://sadmin' in your web browser.  
@@ -144,6 +148,7 @@ Visit our [installation page](https://sadmin.ca/_pages/install/) for more info.
 ---
 
 ## SADMIN Support
+
 Should you ran into problem while installing or running the SADMIN tools, please run the 
 support request script :
 
@@ -159,10 +164,9 @@ We will get back to you as soon as possible.
 
 ---
 
-## Copyright and license
-The SADMIN is a collection of free software: you can redistribute it and/or modify it under the 
-terms of the GNU General Public License as published by the Free Software Foundation, either 
-version 3 of the License, or (at your option) any later version. 
+## Copyright and license  
+
+The SADMIN is a collection of free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. 
 
 The SADMIN Tools is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
 without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
