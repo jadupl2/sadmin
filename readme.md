@@ -1,9 +1,7 @@
-![SADMIN Tools][1] 
-**SADMIN Tools v1.3.1**
-
-
 <a name="top_of_page"></a> 
-![monitor](https://sadmin.ca/assets/img/index_monitor.png "SADMIN monitor page")
+
+![sadm_text](https://sadmin.ca/assets/img/logo/sadmin_logo_88x88.png "SADMIN Logo")
+![sadm_logo](https://sadmin.ca/assets/img/logo/sadmin_text_343x93.png "SADMIN Text Logo")
 
 If you're a Unix system administrator who is taking care of multiple servers, you probably 
 created some scripts to help you keeping your environment stable. 
@@ -12,10 +10,11 @@ know that your script ran with success. You can received these alerts via email,
 Slack application. 
 SADMIN can surely help you improve and standardize the administration of your server farm.
 
-For more information visit the SADMIN web site at <https://www.sadmin.ca>.  
-Impatient user may want to read the [Quick start guide](https://sadmin.ca/quickstart) first.
+![monitor](https://sadmin.ca/assets/img/index_monitor.png "SADMIN monitor page")
 
-[Back To The Top](#top_of_page)
+For more information visit the SADMIN web site at <https://www.sadmin.ca>.  
+After running the [setup script](https://sadmin.ca/_pages/man/sadm-setup-sh), impatient user may want to read the 
+[Quick start guide](https://sadmin.ca/_pages/quickstart/) first.
 
 <br>
 
@@ -47,25 +46,34 @@ templates to create new scripts and benefit of SADMIN tools.
   * It collect [system configuration](https://www.sadmin.ca/img/sadmin_web_interface.png)and [performance data](https://www.sadmin.ca/img/sadm_nmon_rrd_update_cpu_graph.png) of your systems.
   * Access all this information from a [Web interface](https://www.sadmin.ca/img/sadmin_main_screen.png) or from the command line.
   * View your servers farm [subnet utilization](https://www.sadmin.ca/img/sadm_view_subnet.png) and see what IP are free to use.
-* **Help you keeping up to date with O/S update**.
+
+![SubnetInfo](https://sadmin.ca/assets/img/webui/view_subnet.png "SADMIN Subnet Information")
+
+<br>
+
+**Help you keeping up to date with O/S update**.
   * Choose what system get updated automatically.
   * Choose [date and time to perform the update](https://www.sadmin.ca/img/sadm_osupdate_screen.png).
   * Choose to reboot or not your system after the update.
   * Choose to be [notify by 'Slack'](https://www.sadmin.ca/img/slack_warning.png) or by [email](https://www.sadmin.ca/img/mail_notification.png), if something goes wrong.
-* **Backup your important directories and files to a NFS server**.
+
+<br>
+
+**Backup your important directories and files to a NFS server**.
   * Create a daily, weekly, monthly and yearly backup.
   * Choose how many backups you wish to keep for each type.
   * [Decide at what time you wish to perform the backup](https://sadmin.ca/img/sadm_server_backup.png).
   * Backup are kept based upon the retention period you choose.
-* **Easy installation**
+
+<br>
+
+**Easy installation**
   * Untar the download file into the directory of your choice (We recommend /opt/sadmin).
   * Run the [setup.sh](https://sadmin.ca/_pages/man/install_guide) script, answer a few questions and that's it.
     * Once the installation is finish, just type 'http://sadmin' in your web browser.
     * Server installation install/configure the Apache Web server and MariaDB server.
     * See the SADMIN requirements on this [page](https://sadmin.ca/_pages/requirements).
     * Cron jobs (/etc/cron.d) will take care of keeping SADMIN healthy.
-
-
 
 
 <br>
@@ -90,34 +98,11 @@ templates to create new scripts and benefit of SADMIN tools.
 ## Download
 
 * Download the latest version of the SADMIN Project from our [Download page](https://sadmin.ca/_pages/download/).
-* Have a look at our [changelog](https://sadmin.ca/_pages/changelog/) and see the latest features.
 * You can also clone the project from [GitHub](https://github.com/jadupl2/sadmin)
     * `git clone https://github.com/jadupl2/sadmin.git`  
+* Have a look at our [latest changelog](https://sadmin.ca/_pages/changelog/) and see the latest features.
 
 [Back To The Top](#top_of_page)
-
-<br>
-
----
-
-## Before you install
-
-* [SADMIN tools reside in one directory](https://sadmin.ca/assets/pdf/sadmin_directory_structure.pdf) (recommend '/opt/sadmin'), but you can install it in the directory of your choice.
-* We recommend 5Gb of free space for the SADMIN server and 400Mb for each client.
-* The 'SADMIN' environment variable is critical for the SADMIN tools and contain the installation directory name.
-* The setup script will make sure that this environment variable is defined and persistent after a reboot.
-  * It create a script "[/etc/profile.d/sadmin.sh](https://sadmin.ca/assets/img/files/etc_profile_d_sadmin_sh.png)" that's executed every time you login.
-    * To ease the use of the SADMIN tools, directories '$SADMIN/bin' & $SADMIN/usr/bin are added to the PATH.
-  * It also modify the "[/etc/environment](https://sadmin.ca/assets/img/files/etc_environment.png)" so it contain SADMIN install directory.
-* The installation process MUST be executed by the 'root' user.
-* **IMPORTANT : You need to have an internet access on the system you are installing.**  
-  * The setup script, may need to download and install some [packages needed by SADMIN](https://sadmin.ca/_pages/requirements).
-    * On Redhat and CentOS the "EPEL repository" is activated only for the installation time.
-    * On other distributions the packages needed are available in the distribution repository.
-* Instructions below assume you have chosen to install SADMIN tools in '/opt/sadmin' directory..
-
-[Back To The Top](#top_of_page)
-
 
 <br>
 
@@ -164,37 +149,24 @@ templates to create new scripts and benefit of SADMIN tools.
     # /opt/sadmin/setup/setup.sh
 ```
 
+Visit our [installation page](https://sadmin.ca/_pages/install/) for more info.
+
 [Back To The Top](#top_of_page)   
 
 <br>
 
 ---
 
-### Running the setup script
-* Setup ask several questions regarding your environment and store answers in the SADMIN configuration file ($SADMIN/cfg/sadmin.cfg).  
-* Here's the [output running the setup script](https://sadmin.ca/assets//pdf/setup_centos7.pdf) to install a SADMIN client on a CentOS 7 system.
-* This file is used by the web interface, the SADMIN scripts, libraries and the new scripts you will create.  
-* This configuration can be modified when ever you need to.  
-* The setup script can be run more than once, so don't worry if you made a mistake, just run it again.
-* If there are missing packages, the setup program will download and install them for you.
-* You will be asked what type of installation you want, a 'SADM server' or a 'SADMIN client'.
-* If you are installing a 'SADMIN server', the 'Mariadb' (Database) and the Apache Web Server will be installed and configure for you.  
-* When installation is finished you will have a working Web SADMIN environment at 'http://sadmin'.
-
-After running the setup script, you need to log out and log back in before using SADMIN Tools or type the command below.  
-
-    `sudo . /etc/profile.d/sadmin.sh`   
-This will make sure "SADMIN" environment variable is define (The dot and the space are important).  
-
-[Back To The Top](#top_of_page)
-
-<br>
-
----
-
 ## SADMIN Support
-Should you ran into problem while installing or running the SADMIN tools, please run the 'sadm_support_request.sh', attach the resulting file to an email with a description of your
-problem or question and sent it to <sadmlinux@gmail.com>.
+Should you ran into problem while installing or running the SADMIN tools, please run the 
+support request script :
+
+```
+# $SADMIN/bin/sadm_support_request.sh
+```
+
+Attach the resulting log to an email with a description of your problem or question and sent to 
+[sadmlinux@gmail.com](mailto:sadmlinux@gmail.com).
 We will get back to you as soon as possible.
 
 [Back To The Top](#top_of_page)
@@ -203,19 +175,13 @@ We will get back to you as soon as possible.
 
 ---
 
-## Authors
-[Jacques Duplessis](mailto:sadmlinux@gmail.com) 
-
-[Back To The Top](#top_of_page)
-
-<br>
-
----
-
 ## Copyright and license
-The SADMIN is a collection of free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. 
+The SADMIN is a collection of free software: you can redistribute it and/or modify it under the 
+terms of the GNU General Public License as published by the Free Software Foundation, either 
+version 3 of the License, or (at your option) any later version. 
 
-The SADMIN Tools is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+The SADMIN Tools is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
 
 See the [LICENSE](LICENSE) file for details.
 
@@ -223,4 +189,3 @@ See the [LICENSE](LICENSE) file for details.
 
 ---
 
-[1]: https://sadmin.ca/assets/img/logo/sadmin_small_logo.png
