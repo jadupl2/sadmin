@@ -30,6 +30,7 @@
 # Version Change Log 
 #
 # 2021_MM_DD New: v1.0 Initial Version
+
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -275,30 +276,15 @@ function cmd_options()
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
 
-    # If current user is not 'root', exit to O/S with error code 1 (Optional)
-    if [ $(id -u) -ne 0 ]                                               # If Cur. user is not root 
-        then sadm_write "Script can only be run by the 'root' user, process aborted.\n"
-             sadm_write "Try 'sudo ${SADM_PN}'\n"                       # Suggest using sudo
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
-    # If current user is not part of the 'SADM_GROUP', exit to O/S with error code 1 (Optional)
-    if [ id -nG "$USER" | grep -qw "$SADM_GROUP" ]                      # User not part of SADM Grp 
-        then sadm_write "To run this script, user $USER must be a member of group ${SADM_GROUP}\n"
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
-    # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-        then sadm_write "Script can only be run on (${SADM_SERVER}), process aborted.\n"
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
+    # If you want this script to be run only on the SADMIN server, uncomment the lines below.
+    #if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+    #    then sadm_write "Script can only be run on (${SADM_SERVER}), process aborted.\n"
+    #         sadm_stop 1                                                # Close and Trim Log
+    #         exit 1                                                     # Exit To O/S
+    #fi
 
     # Use 'main_process' for code without interaction with SADMIN Database.
-    #main_process                                                        # Main Process
+    main_process                                                        # Main Process
     
     # Or use 'process_server' for code dealing with server in SADMIN Database.
     #process_servers                                                    # Process All Active Servers

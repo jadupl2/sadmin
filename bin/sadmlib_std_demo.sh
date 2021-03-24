@@ -173,10 +173,10 @@ print_user_variables()
     presult="$SADM_INST"                                                # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_USERNAME"                                          # Variable Name
-    pdesc="Current User Name"                                           # Description
-    presult="$SADM_USERNAME"                                            # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    #pexample="\$SADM_USERNAME"                                          # Variable Name
+    #pdesc="Current User Name"                                           # Description
+    #presult="$SADM_USERNAME"                                            # Actual Content of Variable
+    #printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_TPID"                                              # Variable Name
     pdesc="Current Process ID"                                          # Description
