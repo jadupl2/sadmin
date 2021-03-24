@@ -165,6 +165,7 @@
 #@2021_01_13 Update: v3.64 Code Optimization (in Progress)
 #@2021_01_27 Update: v3.65 By default Temp files declaration done in caller
 #@2021_02_27 Update: v3.66 Abort if user not part of '$SADM_GROUP' & fix permission denied message.
+#@2021_03_24 Update: v3.67 Non root user MUST be part of 'sadmin' group to use SADMIN library.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -176,7 +177,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.66"                                              # This Library Version
+export SADM_LIB_VER="3.67"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -1856,18 +1857,7 @@ sadm_start() {
              sadm_writelog " "                                          # White space line
     fi
 
-    # Libraries/Scripts can be run by 'root' or by user that are part of $SADM_GROUP group.
-    if [ $(id -u) -ne 0 ]                                               # If user is not 'root' user
-       then usrname=$(id -un)                                           # Get Current User Name
-            if ! id -nG "$usrname" | grep -qw "$SADM_GROUP"             # User part of sadmin group?
-               then sadm_writelog "User '$(id -un)' doesn't belong to '$SADM_GROUP' group."   
-                    sadm_writelog "Non 'root' user MUST be part of the '$SADM_GROUP' group."
-                    sadm_writelog "The '$SADM_GROUP' group is specified in $SADM_CFG_FILE file."
-                    sadm_writelog "Script aborted...."
-                    sadm_stop 1                                         # Call SADM Stop Function
-                    exit 1                                              # Exit with Error
-            fi
-    fi 
+
 
     # ($SADMIN/tmp) If TMP Directory doesn't exist, create it.
     [ ! -d "$SADM_TMP_DIR" ] && mkdir -p $SADM_TMP_DIR
@@ -2726,16 +2716,41 @@ write_alert_history() {
 
 # --------------------------------------------------------------------------------------------------
 # Things to do when first called
+# --------------------------------------------------------------------------------------------------
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Save Script Startup Time
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "main: grepping /etc/environment\n" ; fi
+    
+    # Get SADMIN Installation Directory
     grep "SADMIN=" /etc/environment >/dev/null 2>&1                     # Do Env.File include SADMIN
     if [ $? -ne 0 ]                                                     # SADMIN missing in /etc/env
         then echo "export SADMIN=$SADMIN" >> /etc/environment           # Then add it to the file
     fi
+    
+    # User got to be root or be part of the SADMIN Group specified in $SADMIN/cfg/sadmin.cfg
+    if [ -r $SADMIN/cfg/sadmin.cfg ]
+       then SADM_GROUP=`awk -F= '/^SADM_GROUP/ {print $2}' $SADMIN/cfg/sadmin.cfg | tr -d ' '` 
+            if [ $(id -u) -ne 0 ]                                       # If user is not 'root' user
+               then usrname=$(id -un)                                   # Get Current User Name
+                    if ! id -nG "$usrname" | grep -qw "$SADM_GROUP"     # User part of sadmin group?
+                       then echo " "
+                            echo "User '$(id -un)' doesn't belong to the '$SADM_GROUP' group."   
+                            echo "Non 'root' user MUST be part of the '$SADM_GROUP' group."
+                            echo "The '$SADM_GROUP' group is specified in $SADM_CFG_FILE file."
+                            echo "Script aborted ..."
+                            echo " "
+                            exit 1                                      # Exit with Error
+                    fi 
+            fi
+    fi 
+
+    # Read SADMIN Confiuration file and put value in Global Variables.
     sadm_load_config_file                                               # Load sadmin.cfg file
+    
+    # Check SADMIN requirements
     sadm_check_requirements                                             # Check Lib Requirements
     if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement are not met
+    
     export SADM_SSH_CMD="${SADM_SSH} -qnp${SADM_SSH_PORT}"              # SSH Command to SSH CLient
-    export SADM_USERNAME=$(whoami)                                      # Current User Name
+    #export SADM_USERNAME=$(whoami)                                      # Current User Name
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "Library Loaded,\n" ; fi
     
