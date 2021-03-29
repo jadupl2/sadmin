@@ -1,16 +1,22 @@
 #! /usr/bin/env bash 
 # --------------------------------------------------------------------------------------------------
-#   Author:     Jacques Duplessis
-#   Title:      Backup & optionally compress directories or files specified in the backup list file
-#               ($SADMIN/cfg/backup_list.txt) as tar files (tar or tgz)
-#   Date:       28 August 2015
-#   Synopsis:   This script is used to create Backups files of all directories specified in the
-#               backup list file ($SADMIN/cfg/backup_list.txt) to the NFS server specified
-#               in $SADMIN/cfg/sadmin.cfg .
-#               Only the number of copies specified in the backup section of SADMIN configuration
-#               file ($SADMIN/cfg/sadmin.cfg) will be kept, old backup are deleted at the end of
-#               each backup.
-#               Should be run Daily (Recommended) .
+# Title:        sadm_backup.sh
+# Author:       Jacques Duplessis
+# Date:         2015-08-28 
+# Updated:      2021-03-29 
+# Tag:          man sadm_backup 
+# Category:     backup 
+# Description:
+# Backup files and directories are specified in the backup list file ${SADMIN}/cfg/backup_list.txt.
+# Files & directories specified in the exclude list ${SADMIN}/cfg/backup_exclude.txt are excluded.
+# Backup is compress by default, unless you specify not to (-n).
+# Destination of the backup (NFS Server & Directory) is specified within the SADMIN configuration
+# file ($SADMIN/cfg/sadmin.cfg) with the fields 'SADM_BACKUP_NFS_SERVER' and 
+# 'SADM_BACKUP_NFS_MOUNT_POINT'.
+# Only the number of copies specified in the backup section of SADMIN configuration
+# file ($SADMIN/cfg/sadmin.cfg) will be kept, old backup are deleted at the end of each backup.
+# Should be run Daily (Recommended).
+#
 # --------------------------------------------------------------------------------------------------
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
 #
@@ -24,6 +30,7 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
+#
 # 2017_01_02  V1.2 Exclude *.iso added to tar command
 # 2017_10_02  V2.1 Added /wsadmin in the backup
 # 2017_12_27  V2.2 Adapt to new Library and Take NFS Server From SADMIN Config file Now
@@ -63,9 +70,12 @@
 # 2020_05_18 Update: v3.22 Backup Dir. Structure changed, now group by System instead of backup type
 # 2020_05_24 Update: v3.23 Automatically move backup from old dir. structure to the new.
 # 2020_07_13 Fix: v3.24 New System Main Backup Directory was not created with right permission.
-#@2020_09_23 Update: v3.25 Modification to log recording.
-#@2020_10_26 Fix: v3.26 Suppress 'chmod' error message on backup directory.
-#@2021_01_05 Update: v3.27 List backup directory content at the end of backup.
+#2020_09_23 Update: v3.25 Modification to log recording.
+#2020_10_26 Fix: v3.26 Suppress 'chmod' error message on backup directory.
+#2021_01_05 Update: v3.27 List backup directory content at the end of backup.
+#@2021_03_29 Update: v3.28 Exclude list is shown before each backup (tar) begin.
+#@2021_03_29 Update: v3.29 Log of each backup (tar) recorded and place in backup directory.
+
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -96,7 +106,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.27'                              # Your Current Script Version
+    export SADM_VER='3.29'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -432,14 +442,15 @@ create_backup()
                 sadm_write "\n"
                 sadm_write "${SADM_TEN_DASH}\n"                         # Line of 10 Dash in Log
                 sadm_write "Backup File : ${backup_line}\n"             # Show Backup filename                 
+                BACK_LOG="${BACKUP_DIR}/${TIME_STAMP}_${BASE_NAME}.log" 
                 if [ "$COMPRESS" == "ON" ]                              # If compression ON
                     then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"     # Final tgz Backup file name
                          sadm_write "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} $backup_line \n"
-                         tar -cvzf ${BACKUP_DIR}/${BACK_FILE} $backup_line >/dev/null 2>>$SADM_LOG
+                         tar -cvzf ${BACKUP_DIR}/${BACK_FILE} $backup_line >>$BACK_LOG 2>&1
                          RC=$?                                          # Save Return Code
                     else BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"     # Final tar Backup file name
                          sadm_write "tar -cvf ${BACKUP_DIR}/${BACK_FILE} $backup_line \n"
-                         tar -cvf ${BACKUP_DIR}/${BACK_FILE} $backup_line >/dev/null 2>>$SADM_LOG
+                         tar -cvf ${BACKUP_DIR}/${BACK_FILE} $backup_line >>$BACK_LOG 2>&1
                          RC=$?                                          # Save Return Code
                 fi
         fi
@@ -449,7 +460,7 @@ create_backup()
            then cd $backup_line                                         # Ok then Change Dir into it
                 sadm_writelog " "                                       # Insert Blank Line
                 sadm_write "${SADM_TEN_DASH}\n"                         # Line of 10 Dash in Log
-                sadm_write "Backup of directory : [`pwd`]\n"            # Print Current Dir.
+                sadm_write "Current directory is : [`pwd`]\n"           # Print Current Dir.
                 # Build Backup Exclude list
                 find . -type s -print > /tmp/exclude                    # Put all Sockets in exclude
                 while read excl_line                                    # Loop Until EOF Excl. File
@@ -460,19 +471,17 @@ create_backup()
                     fi
                     echo "$excl_line" >> /tmp/exclude                   # Add Line to Exclude List
                     done < $SADM_BACKUP_EXCLUDE                         # Read Backup Exclude File
-                if [ $SADM_DEBUG -gt 0 ]                                # If Debug Show Exclude List
-                    then sadm_write "Content of exclude file\n"        # Show User what's coming
-                         cat /tmp/exclude| while read ln ;do sadm_write "${ln}\n" ;done # Show Excl.
-                fi
-                # Perform the Backup using tar command
+                sadm_write "Content of exclude file\n"                  # Will list Exclude List
+                cat /tmp/exclude| while read ln ;do sadm_writelog "${ln}" ;done 
+                BACK_LOG="${BACKUP_DIR}/${TIME_STAMP}_${BASE_NAME}.log" 
                 if [ "$COMPRESS" == "ON" ]
                     then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"     # Final tgz Backup file name
                          sadm_write "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .\n"
-                         tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude . >/dev/null 2>>$SADM_LOG
+                         tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude . >$BACK_LOG 2>&1
                          RC=$?                                          # Save Return Code
                     else BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"     # Final tar Backup file name
                          sadm_write "tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .\n"
-                         tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude . >/dev/null 2>>$SADM_LOG
+                         tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude . >>$BACK_LOG 2>&1
                          RC=$?                                          # Save Return Code
                 fi
         fi
