@@ -23,22 +23,23 @@
 # 2020_10_06 Fix: v1.4 Bug that get Current backup size in yellow, when shouldn't.
 # 2020_10_06 Update: v1.5 Minor Typo Corrections
 # 2020_10_29 Update: v1.6 Change CmdLine Switch & Storix Daily report is working
-#@2020_11_04 Update: v1.7 Added 1st draft of scripts html report.
-#@2020_11_07 New: v1.8 Exclude file can be use to exclude scripts or servers from daily report.
-#@2020_11_08 Updated: v1.9 Show Alert Group Name on Script Report
-#@2020_11_10 Fix: v1.10 Minor bug fixes.
-#@2020_11_13 New: v1.11 Email of each report now include a pdf of the report(if wkhtmltopdf install)
-#@2020_11_12 Updated v1.12 Warning in Yellow when backup outdated, bug fixes.
-#@2020_11_21 Updated v1.13 Insert Script execution Title.
-#@2020_12_12 Updated v1.14 Major revamp of HTML and PDF Report that are send via email to sysadmin.
-#@2020_12_15 Updated v1.15 Cosmetic changes to Daily Report.
-#@2020_12_26 Updated v1.16 Include link to web page in email.
-#@2020_12_26 Updated v1.17 Insert Header when reporting script error(s).
-#@2020_12_27 Updated v1.18 Insert Header when reporting script running.
-#@2021_01_13 Updated v1.19 Change reports heading color and font style.
-#@2021_01_17 Updated v1.20 Center Heading of scripts report.
-#@2021_01_23 Updated v1.21 SCRIPTS & SERVERS variables no longer in "sadm_daily_report_exclude.sh"
-#@2021_02_18 Updated v1.22 Added example to 'SERVERS' varaible of system to be ignored from Report.
+# 2020_11_04 Update: v1.7 Added 1st draft of scripts html report.
+# 2020_11_07 New: v1.8 Exclude file can be use to exclude scripts or servers from daily report.
+# 2020_11_08 Updated: v1.9 Show Alert Group Name on Script Report
+# 2020_11_10 Fix: v1.10 Minor bug fixes.
+# 2020_11_13 New: v1.11 Email of each report now include a pdf of the report(if wkhtmltopdf install)
+# 2020_11_12 Updated v1.12 Warning in Yellow when backup outdated, bug fixes.
+# 2020_11_21 Updated v1.13 Insert Script execution Title.
+# 2020_12_12 Updated v1.14 Major revamp of HTML and PDF Report that are send via email to sysadmin.
+# 2020_12_15 Updated v1.15 Cosmetic changes to Daily Report.
+# 2020_12_26 Updated v1.16 Include link to web page in email.
+# 2020_12_26 Updated v1.17 Insert Header when reporting script error(s).
+# 2020_12_27 Updated v1.18 Insert Header when reporting script running.
+# 2021_01_13 Updated v1.19 Change reports heading color and font style.
+# 2021_01_17 Updated v1.20 Center Heading of scripts report.
+# 2021_01_23 Updated v1.21 SCRIPTS & SERVERS variables no longer in "sadm_daily_report_exclude.sh"
+# 2021_02_18 Updated v1.22 Added example to 'SERVERS' variable of system to be ignored from Report.
+#@2021_04_01 Fix: v1.23 Fix problem when the last line of *.rch was a blank line.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -70,7 +71,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.22'                                  # Current Script Version
+export SADM_VER='1.23'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -918,8 +919,8 @@ rear_report()
         # Get the last line of the backup RCH file for the system.
         RCH_FILE="${SADM_WWW_DAT_DIR}/${server_name}/rch/${server_name}_${rear_script_name}.rch"
         if [ -s $RCH_FILE ]                                             # If System Backup RCH Exist
-            then RCH_LINE=$(tail -1 $RCH_FILE)                          # Get last line in RCH File
-            else #echo "RCH file ${RCH_FILE} not found or is empty."     # Advise user no RCH File
+            then RCH_LINE=$(tail -3 $RCH_FILE | sort | tail -1)         # Get last line in RCH File
+            else #echo "RCH file ${RCH_FILE} not found or is empty."    # Advise user no RCH File
                  start_end="---------- -------- ---------- -------- --------" # Start/End Date/Time
                  RCH_LINE="${server_name} ${start_end} ${rear_script_name} default 1 3" 
         fi 
@@ -1402,8 +1403,8 @@ storix_report()
         # Get the last line of the backup RCH file for the system.
         RCH_FILE="${SADM_WWW_DAT_DIR}/${server_name}/rch/${server_name}_storix_client_post_job.rch"
         if [ -s $RCH_FILE ]                                             # If System Backup RCH Exist
-            then RCH_LINE=$(tail -1 $RCH_FILE)                          # Get last line in RCH File
-            else #echo "RCH file ${RCH_FILE} not found or is empty."     # Advise user no RCH File
+            then RCH_LINE=$(tail -3 $RCH_FILE | sort | tail -1)         # Get last line in RCH File
+            else #echo "RCH file ${RCH_FILE} not found or is empty."    # Advise user no RCH File
                  start_end="---------- -------- ---------- -------- --------" # Start/End Date/Time
                  RCH_LINE="${server_name} ${start_end} ${backup_script_name} default 1 3" 
         fi 
@@ -1846,8 +1847,8 @@ backup_report()
         # Get the last line of the backup RCH file for the system.
         RCH_FILE="${SADM_WWW_DAT_DIR}/${server_name}/rch/${server_name}_${backup_script_name}.rch"
         if [ -s $RCH_FILE ]                                             # If System Backup RCH Exist
-            then RCH_LINE=$(tail -1 $RCH_FILE)                          # Get last line in RCH File
-            else #echo "RCH file ${RCH_FILE} not found or is empty."     # Advise user no RCH File
+            then RCH_LINE=$(tail -3 $RCH_FILE | sort | tail -1)         # Get last line in RCH File
+            else #echo "RCH file ${RCH_FILE} not found or is empty."    # Advise user no RCH File
                  start_end="---------- -------- ---------- -------- --------" # Start/End Date/Time
                  RCH_LINE="${server_name} ${start_end} ${backup_script_name} default 1 3" 
         fi 
