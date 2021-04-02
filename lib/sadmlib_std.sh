@@ -140,32 +140,33 @@
 # 2020_06_09 Update: v3.39 Don't trim the log file, if $SADM_MAX_LOGLINE=0.
 # 2020_06_06 Update: v3.40 When writing to log don't include time when prefix with OK,Warning,Error
 # 2020_06_09 Update: v3.41 Don't trim the RCH file (ResultCodeHistory). if $SADM_MAX_RCLINE=0.
-#@2020_07_11 Fixes: v3.42 Date and time was not include in script log.
-#@2020_07_12 Update: v3.43 When virtual system 'sadm_server_model' return (VMWARE,VIRTUALBOX,VM)
-#@2020_07_20 Update: v3.44 Change permission for log and rch to allow normal user to run script.
-#@2020_07_23 New: v3.45 New function 'sadm_ask', show received msg & wait for y/Y (return 1) or n/N (return 0)
-#@2020_07_29 Fix: v3.46 Fix date not showing in the log under some condition.
-#@2020_08_10 New: v3.47 Add module "sadm_sleep", sleep for X seconds with progressing info.
-#@2020_08_10 Fix: v3.48 Remove improper '::' characters to was inserted im messages.
-#@2020_08_12 New: v3.49 Global Var. $SADM_UCFG_DIR was added to refer $SADMIN/usr/cfg directory.
-#@2020_08_18 New: v3.50 Change Screen Attribute Variable (Remove 'SADM_', $SADM_RED is NOW $RED).
-#@2020_08_19 Fix: v3.51 Remove some ctrl character from the log (sadm_write()).
-#@2020_08_20 Fix: v3.52 Adjust sadm_write method
-#@2020_09_05 Fix: v3.53 Added Start/End/Elapse Time to Script Alert Message.
-#@2020_09_09 Update: v3.54 Remove server name from Alert message (already in subject)
-#@2020_10_01 Update: v3.55 Add Host name in email, when alert come from sysmon.
-#@2020_10_05 Update: v3.56 Remove export for screen attribute variables.
-#@2020_11_24 Update: v3.57 Revisit and Optimize 'send_alert' function.
-#@2020_12_02 Update: v3.58 Optimize and fix some problem with Slack ans SMS alerting function.
-#@2020_12_12 Update: v3.59 Add 'sadm_capitalize"function, add PID TimeOut, enhance script footer.
-#@2020_12_17 Update: v3.60 sadm_get_osname() on 'CentOSStream' now return 'CENTOS'.
-#@2020_12_23 Fix: v3.61 Log Header (SADM_LOG_HEADER) & Footer (SADM_LOG_FOOTER) were always produce.
-#@2020_12_24 Fix: v3.62 Fix problem with capitalize function.
-#@2020_12_26 Update: v3.63 Add Global Variable SADM_WWW_ARC_DIR for Server Archive when deleted
-#@2021_01_13 Update: v3.64 Code Optimization (in Progress)
-#@2021_01_27 Update: v3.65 By default Temp files declaration done in caller
-#@2021_02_27 Update: v3.66 Abort if user not part of '$SADM_GROUP' & fix permission denied message.
+# 2020_07_11 Fixes: v3.42 Date and time was not include in script log.
+# 2020_07_12 Update: v3.43 When virtual system 'sadm_server_model' return (VMWARE,VIRTUALBOX,VM)
+# 2020_07_20 Update: v3.44 Change permission for log and rch to allow normal user to run script.
+# 2020_07_23 New: v3.45 New function 'sadm_ask', show received msg & wait for y/Y (return 1) or n/N (return 0)
+# 2020_07_29 Fix: v3.46 Fix date not showing in the log under some condition.
+# 2020_08_10 New: v3.47 Add module "sadm_sleep", sleep for X seconds with progressing info.
+# 2020_08_10 Fix: v3.48 Remove improper '::' characters to was inserted im messages.
+# 2020_08_12 New: v3.49 Global Var. $SADM_UCFG_DIR was added to refer $SADMIN/usr/cfg directory.
+# 2020_08_18 New: v3.50 Change Screen Attribute Variable (Remove 'SADM_', $SADM_RED is NOW $RED).
+# 2020_08_19 Fix: v3.51 Remove some ctrl character from the log (sadm_write()).
+# 2020_08_20 Fix: v3.52 Adjust sadm_write method
+# 2020_09_05 Fix: v3.53 Added Start/End/Elapse Time to Script Alert Message.
+# 2020_09_09 Update: v3.54 Remove server name from Alert message (already in subject)
+# 2020_10_01 Update: v3.55 Add Host name in email, when alert come from sysmon.
+# 2020_10_05 Update: v3.56 Remove export for screen attribute variables.
+# 2020_11_24 Update: v3.57 Revisit and Optimize 'send_alert' function.
+# 2020_12_02 Update: v3.58 Optimize and fix some problem with Slack ans SMS alerting function.
+# 2020_12_12 Update: v3.59 Add 'sadm_capitalize"function, add PID TimeOut, enhance script footer.
+# 2020_12_17 Update: v3.60 sadm_get_osname() on 'CentOSStream' now return 'CENTOS'.
+# 2020_12_23 Fix: v3.61 Log Header (SADM_LOG_HEADER) & Footer (SADM_LOG_FOOTER) were always produce.
+# 2020_12_24 Fix: v3.62 Fix problem with capitalize function.
+# 2020_12_26 Update: v3.63 Add Global Variable SADM_WWW_ARC_DIR for Server Archive when deleted
+# 2021_01_13 Update: v3.64 Code Optimization (in Progress)
+# 2021_01_27 Update: v3.65 By default Temp files declaration done in caller
+# 2021_02_27 Update: v3.66 Abort if user not part of '$SADM_GROUP' & fix permission denied message.
 #@2021_03_24 Update: v3.67 Non root user MUST be part of 'sadmin' group to use SADMIN library.
+#@2021_04_02 Fix: v3.68 Replace test using '-v' with '! -z' on variable.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -177,7 +178,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.67"                                              # This Library Version
+export SADM_LIB_VER="3.68"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -259,13 +260,13 @@ export SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                      # Defaul
 
 # Define 3 temporaries file name, that can be use by the user.
 # They are deleted automatically by the sadm_stop() function (If they exist).
-if [ -v $SADM_TMP_FILE1 ] || [ -z "$SADM_TMP_FILE1" ]                   # Var blank or don't exist
+if [ ! -z $SADM_TMP_FILE1 ] || [ -z "$SADM_TMP_FILE1" ]                 # Var blank or don't exist
    then export SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"       # Temp File 1 for you to use
 fi 
-if [ -v $SADM_TMP_FILE2 ] || [ -z "$SADM_TMP_FILE2" ]                   # Var blank or don't exist
+if [ ! -z $SADM_TMP_FILE2 ] || [ -z "$SADM_TMP_FILE2" ]                 # Var blank or don't exist
    then export SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"       # Temp File 1 for you to use
 fi 
-if [ -v $SADM_TMP_FILE3 ] || [ -z "$SADM_TMP_FILE3" ]                   # Var blank or don't exist
+if [ ! -z $SADM_TMP_FILE3 ] || [ -z "$SADM_TMP_FILE3" ]                 # Var blank or don't exist
    then export SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"       # Temp File 1 for you to use
 fi 
 
@@ -1848,7 +1849,7 @@ sadm_start() {
     [ "$SADM_LOG_APPEND" != "Y" ] && echo " " > $SADM_LOG               # No Append log, create new
 
     # Write Starting Info in the Log
-    if [ -v "$SADM_LOG_HEADER" ] || [ "$SADM_LOG_HEADER" = "Y" ]        # Script Want Log Header
+    if [ ! -z "$SADM_LOG_HEADER" ] || [ "$SADM_LOG_HEADER" = "Y" ]      # Script Want Log Header
         then sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
              sadm_writelog "`date` - ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
              sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)"
@@ -2111,7 +2112,7 @@ sadm_start() {
 
     # Feed the (RCH) Return Code History File stating the script is Running (Code 2)
     #SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME      # Statup Time of Script
-    if [ -v "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
+    if [ ! -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]            # Want to Produce RCH File
         then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
              [ $(id -u) -eq 0 ] && chmod 664 $SADM_RCHLOG               # Change protection on RCH
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}
@@ -2189,7 +2190,7 @@ sadm_stop() {
     sadm_elapse=$(sadm_elapse "$sadm_end_time" "$SADM_STIME")           # Go Calculate Elapse Time
 
     # Write script exit code and execution time to log (If user ask for a log footer) 
-    if [ -v "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]      # Want to Produce Log Footer
+    if [ ! -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]      # Want to Produce Log Footer
         then sadm_write "\n"                                            # Blank LIne
              sadm_write "${SADM_FIFTY_DASH}\n"                          # Dash Line
              if [ $SADM_EXIT_CODE -eq 0 ]                               # If script succeeded
@@ -2200,7 +2201,7 @@ sadm_stop() {
     fi
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
-    if [ -v "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File ?
+    if [ ! -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File ?
         then XCODE=`tail -1 ${SADM_RCHLOG}| awk '{ print $NF }'`        # Get RCH Code on last line
              if [ "$XCODE" -eq 2 ]                                      # If last Line code is 2
                 then XLINE=`wc -l ${SADM_RCHLOG} | awk '{print $1}'`    # Count Nb. Line in RCH File
@@ -2217,7 +2218,7 @@ sadm_stop() {
                 then echo "$RCHLINE" >>$SADM_RCHLOG                     # Append to RCH File
                 else sadm_writelog "Permission denied to write to $SADM_RCHLOG"
              fi
-             if [ -v "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ] # If User want Log Footer
+             if [ ! -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ] # If User want Log Footer
                 then if [ "$SADM_MAX_RCLINE" -ne 0 ]                    # User want to trim rch file
                         then if [ -w $SADM_RCHLOG ]                     # If History RCH Writable
                                 then mtmp1="History ($SADM_RCHLOG) trim to ${SADM_MAX_RCLINE} lines "
@@ -2234,7 +2235,7 @@ sadm_stop() {
     fi 
 
     # If log size not at zero and user want to use the log.
-    if [ -v "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]        # User Want the Log Footer
+    if [ ! -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]      # User Want the Log Footer
         then GRP_TYPE=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$2}' |tr -d ' ')
              GRP_NAME=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$3}' |tr -d ' ')
              ORG_NAME=$GRP_NAME                                         # Save Original Group Name
@@ -2314,7 +2315,7 @@ sadm_stop() {
        then if [ -w ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log ] 
                then cp $SADM_LOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log
             fi 
-            if [ -v "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]      # Want to Produce RCH File
+            if [ ! -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]    # Want to Produce RCH File
                then if [ -w  ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ] 
                        then cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
                     fi
