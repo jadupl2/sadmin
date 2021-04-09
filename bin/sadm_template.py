@@ -61,10 +61,10 @@ def show_usage():
     print ("\n")
 
 
-
-# --------------------------------------------------------------------------------------------------
-# Setup SADMIN Global Variables and Load SADMIN Python Library
-# --------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------
+# SADMIN section - Setup for Global Variables and import SADMIN Python module
+# To use SADMIN tools module, this section MUST be present near the top of your code.    
+# ---------------------------------------------------------------------------------------
 def setup_sadmin():
 
     # Load SADMIN Standard Python Library Module ($SADMIN/lib/sadmlib_std.py).
@@ -76,10 +76,10 @@ def setup_sadmin():
         print ("Error Importing SADMIN Module: %s " % e)                # Advise User of Error
         sys.exit(1)                                                     # Go Back to O/S with Error
     
-    # Create Instance of SADMIN Tool
-    st = sadm.sadmtools()                       # Create [S]ADMIN [T]ools instance (Setup Dir.,Var.)
+    # Create [S]ADMIN [T]ools instance (Setup Dir.,Var.)
+    st = sadm.sadmtools()                       
 
-    # You can use variable below BUT DON'T CHANGE THEM - They are used by SADMIN Standard Library.
+    # You can use variable below BUT DON'T CHANGE THEM - They are used by SADMIN Module.
     st.pn               = os.path.basename(sys.argv[0])                 # Script name with extension
     st.inst             = os.path.basename(sys.argv[0]).split('.')[0]   # Script name without Ext
     st.tpid             = str(os.getpid())                              # Get Current Process ID.
