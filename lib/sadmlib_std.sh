@@ -167,6 +167,7 @@
 # 2021_02_27 Update: v3.66 Abort if user not part of '$SADM_GROUP' & fix permission denied message.
 #@2021_03_24 Update: v3.67 Non root user MUST be part of 'sadmin' group to use SADMIN library.
 #@2021_04_02 Fix: v3.68 Replace test using '-v' with '! -z' on variable.
+#@2021_04_09 Fix: v3.69 Fix problem with disabling log header, log footer and rch file.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -178,7 +179,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.68"                                              # This Library Version
+export SADM_LIB_VER="3.69"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -1849,7 +1850,7 @@ sadm_start() {
     [ "$SADM_LOG_APPEND" != "Y" ] && echo " " > $SADM_LOG               # No Append log, create new
 
     # Write Starting Info in the Log
-    if [ ! -z "$SADM_LOG_HEADER" ] || [ "$SADM_LOG_HEADER" = "Y" ]      # Script Want Log Header
+    if [ ! -z "$SADM_LOG_HEADER" ] && [ "$SADM_LOG_HEADER" = "Y" ]      # Script Want Log Header
         then sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
              sadm_writelog "`date` - ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
              sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)"
@@ -2112,7 +2113,7 @@ sadm_start() {
 
     # Feed the (RCH) Return Code History File stating the script is Running (Code 2)
     #SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME      # Statup Time of Script
-    if [ ! -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]            # Want to Produce RCH File
+    if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]            # Want to Produce RCH File
         then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
              [ $(id -u) -eq 0 ] && chmod 664 $SADM_RCHLOG               # Change protection on RCH
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}
@@ -2190,7 +2191,7 @@ sadm_stop() {
     sadm_elapse=$(sadm_elapse "$sadm_end_time" "$SADM_STIME")           # Go Calculate Elapse Time
 
     # Write script exit code and execution time to log (If user ask for a log footer) 
-    if [ ! -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]      # Want to Produce Log Footer
+    if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ]      # Want to Produce Log Footer
         then sadm_write "\n"                                            # Blank LIne
              sadm_write "${SADM_FIFTY_DASH}\n"                          # Dash Line
              if [ $SADM_EXIT_CODE -eq 0 ]                               # If script succeeded
@@ -2201,7 +2202,7 @@ sadm_stop() {
     fi
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
-    if [ ! -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File ?
+    if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File ?
         then XCODE=`tail -1 ${SADM_RCHLOG}| awk '{ print $NF }'`        # Get RCH Code on last line
              if [ "$XCODE" -eq 2 ]                                      # If last Line code is 2
                 then XLINE=`wc -l ${SADM_RCHLOG} | awk '{print $1}'`    # Count Nb. Line in RCH File
@@ -2218,7 +2219,7 @@ sadm_stop() {
                 then echo "$RCHLINE" >>$SADM_RCHLOG                     # Append to RCH File
                 else sadm_writelog "Permission denied to write to $SADM_RCHLOG"
              fi
-             if [ ! -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ] # If User want Log Footer
+             if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ] # If User want Log Footer
                 then if [ "$SADM_MAX_RCLINE" -ne 0 ]                    # User want to trim rch file
                         then if [ -w $SADM_RCHLOG ]                     # If History RCH Writable
                                 then mtmp1="History ($SADM_RCHLOG) trim to ${SADM_MAX_RCLINE} lines "
@@ -2235,7 +2236,7 @@ sadm_stop() {
     fi 
 
     # If log size not at zero and user want to use the log.
-    if [ ! -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]      # User Want the Log Footer
+    if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ]      # User Want the Log Footer
         then GRP_TYPE=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$2}' |tr -d ' ')
              GRP_NAME=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$3}' |tr -d ' ')
              ORG_NAME=$GRP_NAME                                         # Save Original Group Name
@@ -2315,7 +2316,7 @@ sadm_stop() {
        then if [ -w ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log ] 
                then cp $SADM_LOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log
             fi 
-            if [ ! -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]    # Want to Produce RCH File
+            if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]    # Want to Produce RCH File
                then if [ -w  ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ] 
                        then cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
                     fi
