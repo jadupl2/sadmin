@@ -221,7 +221,7 @@ process_servers()
 #===================================================================================================
 main_process()
 {
-    sadm_write "${BOLD}${YELLOW}Starting Main Process ...${NORMAL}\n"   # Starting processing Mess.
+    sadm_write "Starting Main Process ...\n"                            # Starting processing Mess.
     
     # PROCESSING CAN BE PUT HERE
     # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
