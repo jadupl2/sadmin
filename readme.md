@@ -16,35 +16,35 @@ SADMIN can surely help you improve and standardize the administration of your se
 ![monitor](https://sadmin.ca/assets/img/index_monitor.png "SADMIN monitor page")
 
 ## Monitor your scripts from just one place
-* View the [status of all your scripts]( https://sadmin.ca/assets/img/webui/scripts_status.png) that run in your server farm.
-* View your script log directly from the [web interface]( https://sadmin.ca/assets/img/webui/view_logs.png) or from the [command line]( https://sadmin.ca/assets/img/cmdline/cat_log.png).
-* When a script fail or succeed, can receive a notification by ['SMS/Texto']( https://sadmin.ca/assets/img/sms/textbelt_step10_sms_receive.png), ['Slack']( https://sadmin.ca/assets/img/slack/slack_warning.png) or by [email]( https://sadmin.ca/assets/img/mail/sysmon_mail_notification.png).
+* View the [status of all your scripts](https://sadmin.ca/assets/img/webui/scripts_status.png) that run in your server farm.
+* View your script log directly from the [web interface](https://sadmin.ca/assets/img/webui/view_logs.png) or from the [command line](https://sadmin.ca/assets/img/cmdline/cat_log.png).
+* When a script fail or succeed, can receive a notification by ['SMS/Texto'](https://sadmin.ca/assets/img/sms/textbelt_step10_sms_receive.png), ['Slack'](https://sadmin.ca/assets/img/slack/slack_warning.png) or by [email](https://sadmin.ca/assets/img/mail/sysmon_mail_notification.png).
 
 
 
 ## Using our templates 
-* Use our [Shell]( https://sadmin.ca/_pages/man/sadm-template-sh) and [Python](_pages/man/sadm-template-py) 
+* Use our [Shell](https://sadmin.ca/_pages/man/sadm-template-sh) and [Python](https://_pages/man/sadm-template-py) 
 templates to create new scripts and benefit of SADMIN tools.  
-* Use [SADMIN wrapper]( https://sadmin.ca/_pages/man/sadm-wrapper) and *run your existing scripts using the SADMIN tools*.  
+* Use [SADMIN wrapper](https://sadmin.ca/_pages/man/sadm-wrapper) and *run your existing scripts using the SADMIN tools*.  
   `sadm_wrapper.sh $SADMIN/usr/bin/yourscript.sh`  
 * Starting and ending time of each script along with the exit status is recorded in a 
-[history file]( https://sadmin.ca/assets/img/files/rch_file_format.png). 
+[history file](https://sadmin.ca/assets/img/files/rch_file_format.png). 
 
 
 
 ## Inventory of your systems
-* Add, [update]( https://sadmin.ca/assets/img/webui/server_static_info.png) or delete system in your inventory.
-* It collect [system configuration]( https://sadmin.ca/assets/img/webui/server_information.png) and [performance data]( https://sadmin.ca/assets/img/perfo/rrd_update_cpu_graph.png) of your systems.
-* Access all this information from a [web interface]( https://sadmin.ca/assets/img/webui/main_screen.png) or from the command line.
-* View your systems farm [subnet utilization]( https://sadmin.ca/assets/img/webui/view_subnet.png) and see what IP are free to use.  
+* Add, [update](https://sadmin.ca/assets/img/webui/server_static_info.png) or delete system in your inventory.
+* It collect [system configuration](https://sadmin.ca/assets/img/webui/server_information.png) and [performance data](https://sadmin.ca/assets/img/perfo/rrd_update_cpu_graph.png) of your systems.
+* Access all this information from a [web interface](https://sadmin.ca/assets/img/webui/main_screen.png) or from the command line.
+* View your systems farm [subnet utilization](https://sadmin.ca/assets/img/webui/view_subnet.png) and see what IP are free to use.  
 
-![SubnetInfo]( https://sadmin.ca/assets/img/webui/view_subnet.png "SADMIN Subnet Information")
+![SubnetInfo](https://sadmin.ca/assets/img/webui/view_subnet.png "SADMIN Subnet Information")
 
 
 
 ## Web Interface to administrate your systems
 * Use it to add, update and delete server in your server farm.
-* View [performance graph of your servers up to two years in the past](assets/img/perfo/sadm_perf_adhoc.png).
+* View [performance graph of your servers up to two years in the past](https://sadmin.ca/assets/img/perfo/sadm_perf_adhoc.png).
 * Have your systems configuration on hand, useful in case of a Disaster Recovery.
 * View all your scripts logs and history files from the web interface.
 
@@ -52,18 +52,18 @@ templates to create new scripts and benefit of SADMIN tools.
 
 ## Automate your system update
 * Choose when and what system are updated.
-* Choose [date and time to perform the update]( https://sadmin.ca/assets/img/webui/osupdate_screen.png).
+* Choose [date and time to perform the update](https://sadmin.ca/assets/img/webui/osupdate_screen.png).
 * Choose to reboot or not your system after the update.
-* Choose to be notify by ['SMS/Texto']( https://sadmin.ca/assets/img/sms/textbelt_step10_sms_receive.png), 
-['Slack']( https://sadmin.ca/assets/img/slack/slack_warning.png) or by 
-[email]( https://sadmin.ca/assets/img/mail/sysmon_mail_notification.png) if something goes wrong.
+* Choose to be notify by ['SMS/Texto'](https://sadmin.ca/assets/img/sms/textbelt_step10_sms_receive.png), 
+['Slack'](https://sadmin.ca/assets/img/slack/slack_warning.png) or by 
+[email](https://sadmin.ca/assets/img/mail/sysmon_mail_notification.png) if something goes wrong.
 
 
 
 ## Backup to a NFS server
-Choose what to backup, what to exclude and [how many copies to keep]( https://sadmin.ca/assets/img/backup/backup_options.png).
-Backup directory structure automatically [daily, weekly, monthly and yearly]( https://sadmin.ca/assets/img/backup/backup_tree.png) created.
-Decide when is [the right time to perform the daily backup]( https://sadmin.ca/assets/img/backup/backup_screen.png).
+Choose what to backup, what to exclude and [how many copies to keep](https://sadmin.ca/assets/img/backup/backup_options.png).
+Backup directory structure automatically [daily, weekly, monthly and yearly](https://sadmin.ca/assets/img/backup/backup_tree.png) created.
+Decide when is [the right time to perform the daily backup](https://sadmin.ca/assets/img/backup/backup_screen.png).
    
 
 
@@ -85,9 +85,9 @@ We recommend cloning the SADMIN repository and then run the setup script.
     * `cd /opt/`    
     * `git clone https://github.com/jadupl2/sadmin.git`    
     * `sudo sadmin/setup/setup.sh`  
-Another way is to download the latest version from our [download page]( https://sadmin.ca/_pages/download) and have 
-a look at our [changelog]( https://sadmin.ca/_pages/changelog) and see the latest features. For more information 
-about the installation process, view our [install guide]( https://sadmin.ca/_pages/install/)
+Another way is to download the latest version from our [download page](https://sadmin.ca/_pages/download) and have 
+a look at our [changelog](https://sadmin.ca/_pages/changelog) and see the latest features. For more information 
+about the installation process, view our [install guide](https://sadmin.ca/_pages/install/)
  
 
 [Back To The Top](#top_of_page)
@@ -111,10 +111,9 @@ terms of the GNU General Public License as published by the Free Software Founda
 version 3 of the License, or (at your option) any later version. 
 The SADMIN Tools is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
 without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-See the [LICENSE]( https://sadmin.ca/_pages/license) file for details.  
+See the [LICENSE](https://sadmin.ca/_pages/license) file for details.  
  
 
 [Back To The Top](#top_of_page)
-
 
 [1]: https://www.sadmin.ca/img/logo/sadmin_small_logo.png
