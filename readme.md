@@ -1,8 +1,7 @@
-<a name="top_of_page"></a> 
-
 ![sadm_text](https://sadmin.ca/assets/img/logo/sadmin_logo_88x88.png "SADMIN Logo")
 ![sadm_logo](https://sadmin.ca/assets/img/logo/sadmin_text_343x93.png "SADMIN Text Logo")
 
+# Tools for SysAdmin
 
 If you're a Unix system administrator who is taking care of multiple servers, you probably 
 created some scripts to help you keeping your environment stable and under control. SADMIN can 
@@ -15,11 +14,16 @@ SADMIN can surely help you improve and standardize the administration of your se
 
 ![monitor](https://sadmin.ca/assets/img/index_monitor.png "SADMIN monitor page")
 
+---
+
 ## Monitor your scripts from just one place
 * View the [status of all your scripts](https://sadmin.ca/assets/img/webui/scripts_status.png) that run in your server farm.
 * View your script log directly from the [web interface](https://sadmin.ca/assets/img/webui/view_logs.png) or from the [command line](https://sadmin.ca/assets/img/cmdline/cat_log.png).
 * When a script fail or succeed, can receive a notification by ['SMS/Texto'](https://sadmin.ca/assets/img/sms/textbelt_step10_sms_receive.png), ['Slack'](https://sadmin.ca/assets/img/slack/slack_warning.png) or by [email](https://sadmin.ca/assets/img/mail/sysmon_mail_notification.png).
 
+[Back To The Top](#Tools-for-SysAdmin)
+
+---
 
 
 ## Using our templates 
@@ -30,7 +34,9 @@ templates to create new scripts and benefit of SADMIN tools.
 * Starting and ending time of each script along with the exit status is recorded in a 
 [history file](https://sadmin.ca/assets/img/files/rch_file_format.png). 
 
+[Back To The Top](#Tools-for-SysAdmin)
 
+---
 
 ## Inventory of your systems
 * Add, [update](https://sadmin.ca/assets/img/webui/server_static_info.png) or delete system in your inventory.
@@ -40,7 +46,9 @@ templates to create new scripts and benefit of SADMIN tools.
 
 ![SubnetInfo](https://sadmin.ca/assets/img/webui/view_subnet.png "SADMIN Subnet Information")
 
+[Back To The Top](#Tools-for-SysAdmin)
 
+---
 
 ## Web Interface to administrate your systems
 * Use it to add, update and delete server in your server farm.
@@ -48,7 +56,9 @@ templates to create new scripts and benefit of SADMIN tools.
 * Have your systems configuration on hand, useful in case of a Disaster Recovery.
 * View all your scripts logs and history files from the web interface.
 
+[Back To The Top](#Tools-for-SysAdmin)
 
+---
 
 ## Automate your system update
 * Choose when and what system are updated.
@@ -58,14 +68,18 @@ templates to create new scripts and benefit of SADMIN tools.
 ['Slack'](https://sadmin.ca/assets/img/slack/slack_warning.png) or by 
 [email](https://sadmin.ca/assets/img/mail/sysmon_mail_notification.png) if something goes wrong.
 
+[Back To The Top](#Tools-for-SysAdmin)
 
+---
 
 ## Backup to a NFS server
 Choose what to backup, what to exclude and [how many copies to keep](https://sadmin.ca/assets/img/backup/backup_options.png).
 Backup directory structure automatically [daily, weekly, monthly and yearly](https://sadmin.ca/assets/img/backup/backup_tree.png) created.
 Decide when is [the right time to perform the daily backup](https://sadmin.ca/assets/img/backup/backup_screen.png).
    
+[Back To The Top](#Tools-for-SysAdmin)
 
+---
 
 ## Run on popular Linux distributions
 
@@ -75,10 +89,9 @@ Redhat, CentOS, Debian, Ubuntu and Raspbian. The installation can normally done 
 We have been working for more than four years on these tools and it's getting pretty stable. We 
 will continue to add and enhance the SADMIN tools over the years to come.  
  
+[Back To The Top](#Tools-for-SysAdmin)
 
-[Back To The Top](#top_of_page)
-
-
+---
 
 ## Downloading SADMIN Tools
 We recommend cloning the SADMIN repository and then run the setup script.  
@@ -90,9 +103,9 @@ a look at our [changelog](https://sadmin.ca/_pages/changelog) and see the latest
 about the installation process, view our [install guide](https://sadmin.ca/_pages/install/)
  
 
-[Back To The Top](#top_of_page)
+[Back To The Top](#Tools-for-SysAdmin)
 
-
+---
 
 ## SADMIN Support
 Should you ran into problem while installing or running the SADMIN tools, please run the 
@@ -100,10 +113,9 @@ Should you ran into problem while installing or running the SADMIN tools, please
 problem or question and sent it to <sadmlinux@gmail.com>.
 We will get back to you as soon as possible.
  
+[Back To The Top](#Tools-for-SysAdmin)
 
-[Back To The Top](#top_of_page)
-
-
+---
 
 ## Copyright and license
 The SADMIN is a collection of free software: you can redistribute it and/or modify it under the 
@@ -113,7 +125,8 @@ The SADMIN Tools is distributed in the hope that it will be useful, but WITHOUT 
 without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
 See the [LICENSE](https://sadmin.ca/_pages/license) file for details.  
  
+[Back To The Top](#Tools-for-SysAdmin)
 
-[Back To The Top](#top_of_page)
+---
 
 [1]: https://www.sadmin.ca/img/logo/sadmin_small_logo.png
