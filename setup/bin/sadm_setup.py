@@ -79,16 +79,16 @@
 # 2020_07_11 Update: v3.42 Minor script changes.
 # 2020_07_11 Update: v3.43 Added rsync package to client installation. 
 # 2020_09_05 Update: v3.44 Minor change to sadm_client crontab file.
-#@2020_11_09 New: v3.45 Add Daily Email Report to crontab of sadm_server.
-#@2020_11_15 Update: v3.46 'wkhtmltopdf' package was added to server installation.
-#@2020_12_21 Update: v3.47 Bypass installation of 'ReaR' on Arm platform (Not available).
-#@2020_12_21 Update: v3.48 Bypass installation of 'syslinux' on Arm platform (Not available).
-#@2020_12_23 Fix: v3.49 Fix typo error.
-#@2020_12_24 Update: v3.50 CentOSStream return CENTOS.
-#@2020_12_27 Fix: v3.51 Fix problem with 'rear' & 'syslinux' when installing SADMIN server.
-#@2021_01_06 Update: v3.52 Ensure that package util-linux is installed on client & server.
-#@2021_01_27 Update: v3.53 Activate Startup and Shutdown Script (SADMIN Service)
-# 
+# 2020_11_09 New: v3.45 Add Daily Email Report to crontab of sadm_server.
+# 2020_11_15 Update: v3.46 'wkhtmltopdf' package was added to server installation.
+# 2020_12_21 Update: v3.47 Bypass installation of 'ReaR' on Arm platform (Not available).
+# 2020_12_21 Update: v3.48 Bypass installation of 'syslinux' on Arm platform (Not available).
+# 2020_12_23 Fix: v3.49 Fix typo error.
+# 2020_12_24 Update: v3.50 CentOSStream return CENTOS.
+# 2020_12_27 Fix: v3.51 Fix problem with 'rear' & 'syslinux' when installing SADMIN server.
+# 2021_01_06 Update: v3.52 Ensure that package util-linux is installed on client & server.
+# 2021_01_27 Update: v3.53 Activate Startup and Shutdown Script (SADMIN Service)
+#@2021_04_19 Update: v3.54 Fix Path to sadm_service_ctrl.sh
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -105,7 +105,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.53"                                            # Setup Version Number
+sver                = "3.54"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -2330,7 +2330,7 @@ def end_message(sroot,sdomain,sserver,stype):
 #===================================================================================================
 #
 def sadmin_service(sroot):
-    cmd = "%s/sys/sadm_service_ctrl.sh -e" % (sroot)                    # Enable SADMIN Service 
+    cmd = "%s/bin/sadm_service_ctrl.sh -e" % (sroot)                    # Enable SADMIN Service 
     writelog ("Enabling SADMIN Service - %s ... " % (cmd),"nonl")       # Inform User
     ccode,cstdout,cstderr = oscommand(cmd)                              # Enable MariaDB Server
     if (ccode != 0):                                                    # Problem Enabling Service
