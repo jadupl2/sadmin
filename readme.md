@@ -27,9 +27,9 @@ SADMIN can surely help you improve and standardize the administration of your se
 
 
 ## Using our templates 
-* Use our [Shell](https://sadmin.ca/_pages/man/sadm-template-sh) and [Python](https://sadmin.ca/_pages/man/sadm-template-py) 
+* Use our [Shell](https://sadmin.ca/templates/sadm-template-sh) and [Python](https://sadmin.ca/templates/sadm-template-py) 
 templates to create new scripts and benefit of SADMIN tools.  
-* Use [SADMIN wrapper](https://sadmin.ca/_pages/man/sadm-wrapper) and *run your existing scripts using the SADMIN tools*.  
+* Use [SADMIN wrapper](https://sadmin.ca/utilities/sadm-wrapper) and *run your existing scripts using the SADMIN tools*.  
   `sadm_wrapper.sh $SADMIN/usr/bin/yourscript.sh`  
 * Starting and ending time of each script along with the exit status is recorded in a 
 [history file](https://sadmin.ca/assets/img/files/rch_file_format.png). 
