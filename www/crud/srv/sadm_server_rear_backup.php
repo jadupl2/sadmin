@@ -22,10 +22,11 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-#@2019_08_18 New: v1.0 Initial Beta version - Allow to define ReaR Backup schedule.
-#@2019_08_19 Update: v1.1 Initial working version.
-#@2020_01_13 Update: v1.2 Enhance Web Page Appearance and color. 
-#@2020_04_16 Update: v1.3 Small page adjustments.
+# 2019_08_18 New: v1.0 Initial Beta version - Allow to define ReaR Backup schedule.
+# 2019_08_19 Update: v1.1 Initial working version.
+# 2020_01_13 Update: v1.2 Enhance Web Page Appearance and color. 
+# 2020_04_16 Update: v1.3 Small page adjustments.
+#@2021_04_19 Update: v1.4 Change "Exclude" to "Include/Exclude" Label on file config
 # ==================================================================================================
 #
 #
@@ -100,7 +101,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.3" ;                                                        # Current version number
+$SVER  = "1.4" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -424,7 +425,7 @@ function display_right_side($con,$wrow,$mode) {
     $smode = strtoupper($mode);                                         # Make Sure Mode is Upcase
     
     # Files and Directories to Exclude from Backup
-    echo "\n\n<div class='right_label'>ReaR variables use to exclude data from backup</div>";
+    echo "\n\n<div class='right_label'>ReaR variables use to include/exclude data from backup</div>";
     echo "\n<div class='right_input'>";
     echo "  <textarea rows='24' cols='60' name='rearexclude' form='backup'>";
     $BEHASH = Read_RearExclude($wrow);
