@@ -69,13 +69,14 @@
 # 2020_09_05 Update: v3.15 Minor Bug fix, Alert Msg now include Start/End?Elapse Script time
 # 2020_09_09 Update: v3.16 Modify Alert message when client is down.
 # 2020_10_29 Fix: v3.17 If comma was used in server description, it cause delimiter problem.
-#@2020_11_04 Update: v3.18 Reduce time allowed for O/S update to 1800sec. (30Min) & keep longer log.
-#@2020_11_05 Update: v3.19 Change msg written to log & no alert while o/s update is running.
-#@2020_11_24 Update: v3.20 Optimize code & Now calling new 'sadm_osupdate_starter' for o/s update.
-#@2020_12_02 Update: v3.21 New summary added to the log and Misc. fix.
-#@2020_12_12 Update: v3.22 Copy Site Common alert group and slack configuration files to client
-#@2020_12_19 Fix: v3.23 Don't copy alert group and slack configuration files, when on SADMIN Server.
+# 2020_11_04 Update: v3.18 Reduce time allowed for O/S update to 1800sec. (30Min) & keep longer log.
+# 2020_11_05 Update: v3.19 Change msg written to log & no alert while o/s update is running.
+# 2020_11_24 Update: v3.20 Optimize code & Now calling new 'sadm_osupdate_starter' for o/s update.
+# 2020_12_02 Update: v3.21 New summary added to the log and Misc. fix.
+# 2020_12_12 Update: v3.22 Copy Site Common alert group and slack configuration files to client
+# 2020_12_19 Fix: v3.23 Don't copy alert group and slack configuration files, when on SADMIN Server.
 # 2020_12_19 Update: v3.24 Remove verbose on rsync
+# 2021_04_19 Update: v3.25 Change Include text in ReaR Config file.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -122,7 +123,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.24'                              # Your Current Script Version
+    export SADM_VER='3.25'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -600,7 +601,7 @@ update_rear_site_conf()
     echo  "# Name of Backup (tar.gz) File" >> $REAR_TMP
     echo  "BACKUP_PROG_ARCHIVE=\"rear_\${HOSTNAME}\"" >> $REAR_TMP
     echo  " " >> $REAR_TMP
-    echo  "### BACKUP EXCLUDE SECTION " >> $REAR_TMP
+    echo  "### BACKUP INCLUDE/EXCLUDE SECTION " >> $REAR_TMP
     echo  " " >> $REAR_TMP
 
     # Create the NEW site.conf from the tmp just create above
