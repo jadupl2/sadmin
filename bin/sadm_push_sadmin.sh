@@ -46,14 +46,15 @@
 # 2020_04_23 Update: v2.18 Replace sadm_writelog by sadm_write & enhance log output.
 # 2020_05_23 Update: v2.19 Changing the way to get SADMIN variable in /etc/environment 
 # 2020_07_26 Update: v2.20 Add usr/lib to sync process when -u option is used.
-#@2020_09_10 Update: v2.21 Create local processing server data server directory (if don't exist)
-#@2020_09_12 Update: v2.22 When -u is used, the usr/cfg directory is now also push to client.
-#@2020_10_18 Update: v2.23 Correct error message when no system are active.
-#@2020_10_29 Fix: v2.24 If comma was used in server description, it cause delimiter problem.
-#@2020_11_04 Fix: v2.25 Change , to ; in SQL output file.
-#@2020_11_05 Update: v2.26 Change msg written to log & no alert while o/s update is running.
-#@2020_11_27 Update: v2.27 For command line uniformity , option '-c' changed to '-n'
-#@2020_12_12 Update: v2.28 Add pushing of alert_group.cfg alert_slack.cfg to client
+# 2020_09_10 Update: v2.21 Create local processing server data server directory (if don't exist)
+# 2020_09_12 Update: v2.22 When -u is used, the usr/cfg directory is now also push to client.
+# 2020_10_18 Update: v2.23 Correct error message when no system are active.
+# 2020_10_29 Fix: v2.24 If comma was used in server description, it cause delimiter problem.
+# 2020_11_04 Fix: v2.25 Change , to ; in SQL output file.
+# 2020_11_05 Update: v2.26 Change msg written to log & no alert while o/s update is running.
+# 2020_11_27 Update: v2.27 For command line uniformity , option '-c' changed to '-n'
+# 2020_12_12 Update: v2.28 Add pushing of alert_group.cfg alert_slack.cfg to client
+# 2021_04_24 Fix: v2.29 Correct typo in error message.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -84,7 +85,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.28'                              # Your Current Script Version
+    export SADM_VER='2.29'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -391,7 +392,7 @@ process_servers()
         rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/
         RC=$? 
         if [ $RC -ne 0 ]
-           then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/.??*"
+           then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/"
                 ERROR_COUNT=$(($ERROR_COUNT+1))            # Increase Error Counter
            else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/" 
         fi
@@ -416,7 +417,7 @@ process_servers()
                  rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/
                  RC=$? 
                  if [ $RC -ne 0 ]
-                    then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/.??*"
+                    then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/"
                          ERROR_COUNT=$(($ERROR_COUNT+1))            # Increase Error Counter
                     else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/" 
                  fi
