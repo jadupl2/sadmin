@@ -7,7 +7,7 @@
 #   Date        :  6 July 2019
 #   Description :  List active servers and associated backup schedule status (if any).
 #   
-#   Copyright (C) 2019 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2019 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either

@@ -7,7 +7,7 @@
     <meta http-equiv="Content-Type"     content="text/html; charset=ISO-8859-1" />
     <meta name="viewport"               content="width=device-width, initial-scale=1">
     <meta name="description"            content="SADMIN - Unix System Administration">
-    <meta name="author"                 content="Jacques Duplessis (jacques.duplessis@sadmin.ca)">
+    <meta name="author"                 content="Jacques Duplessis (sadmlinux@gmail.com)">
     <meta name="generator"              content="sadmin"/>
 
     <script type="text/javascript"      charset="utf8" 	    src="/js/jquery.min.js"></script>

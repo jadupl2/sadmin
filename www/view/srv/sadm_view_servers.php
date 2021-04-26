@@ -1,7 +1,7 @@
 <?php
 # ==================================================================================================
 #   Author      :  Jacques Duplessis
-#   Email       :  jacques.duplessis@sadmin.ca
+#   Email       :  sadmlinux@gmail.com
 #   Title       :  sadm_server_main.php
 #   Version     :  1.0
 #   Date        :  13 June 2016
@@ -9,7 +9,7 @@
 #   Description :  Web Page used to present list of  Server that can be edited/deleted.
 #                  Option a the top of the list is used to create a new  group
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 # Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
 #        have and use a 100 characters per line. Comments in script always begin at column 73. 

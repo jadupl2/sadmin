@@ -2,16 +2,16 @@
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
 #   Title       :   sadm_support_request.sh
-#   Synopsis    :   Run this script to create a log file used to submit problem.
+#   Synopsis    :   Create a log file used to submit problem.
 #   Version     :   1.0
 #   Date        :   30 March 2018 
 #   Requires    :   sh 
 #   Description :   Collect logs, and files modified during installation for debugging.
-#                   If problem detectied during installation, run this script an send the
-#                   resulting log (setup_result.log) to support at support@sadmin.ca
+#                   If problem detected during installation, run this script an send the
+#                   resulting log (setup_result.log) to support at sadmlinux@gmail.com
 #
-#   This code was originally written by Jacques Duplessis <jacques.duplessis@sadmin.ca>,
-#   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca> - http://www.sadmin.ca
+#   This code was originally written by Jacques Duplessis <sadmlinux@gmail.com>,
+#   Copyright (C) 2016-2018 Jacques Duplessis <sadmlinux@gmail.com> - https://www.sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -238,13 +238,13 @@ main_process()
     which tree >/dev/null 2>&1
     if [ $? -eq 0 ] 
         then TLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_sadm_support_tree.log"
-             sadm_write "\nRecording $SADMIN tree structure list in $TLOG ...\n"
+             sadm_write "Recording $SADMIN tree structure list in $TLOG ...\n"
              tree > $TLOG
     fi
     
     # List of files in SADMIN
     LLOG="$SADM_LOG_DIR/${SADM_HOSTNAME}_sadm_support_files_list.log" 
-    sadm_write "\nCreating a listing of all files in $SADMIN to $LLOG ...\n"
+    sadm_write "Creating a listing of all files in $SADMIN to $LLOG ...\n"
     find $SADMIN -ls > $LLOG
 
     return 0
@@ -307,7 +307,7 @@ main_process()
         then echo "tar -cvzf ${SADM_TMP_DIR}/${SADM_INST}.tgz ${SADM_LOG}"
     fi
     tar -cvzf $SRQ_FILE log >/dev/null 2>&1
-    echo "Please send the file '$SRQ_FILE' to support@sadmin.ca."
+    echo "Please send the file '$SRQ_FILE' to sadmlinux@gmail.com."
     echo "We will get back to you as soon as possible."
     echo " "                                                            # Insert Blank Line
     cd $BACDIR
