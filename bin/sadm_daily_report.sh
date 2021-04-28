@@ -40,6 +40,7 @@
 # 2021_01_23 Updated v1.21 SCRIPTS & SERVERS variables no longer in "sadm_daily_report_exclude.sh"
 # 2021_02_18 Updated v1.22 Added example to 'SERVERS' variable of system to be ignored from Report.
 #@2021_04_01 Fix: v1.23 Fix problem when the last line of *.rch was a blank line.
+#@2021_04_28 Fix: v1.24 Fix problem with the report servers exclude list.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -71,7 +72,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.23'                                  # Current Script Version
+export SADM_VER='1.24'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -101,6 +102,8 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)      # O/S Major Version Numb
 #===================================================================================================
 
   
+
+
 
 # -----------------------------------------------------------------------------
 # Daily Report Exclude List
@@ -134,8 +137,7 @@ SCRIPTS="$SCRIPTS sadm_template sadmlib_std_demo"
 SCRIPTS="$SCRIPTS sadm_vm_tools sadm_vm_start sadm_vm_stop"
 
 # Server name to be exclude from every Daily Report (Backup, Rear and Scripts)
-SERVERS="server1 server2"
-
+SERVERS="centos6 debian9 ubuntu1804"
 
 
 
@@ -149,41 +151,6 @@ export URL_VIEW_FILE='/view/log/sadm_view_file.php'                     # View l
 
 # If the size of Today & Yesterday Backup/ReaR this percentage, it will highlight in yellow
 export WPCT=50                                                          # If BackupSize is 50% Larger
-
-# -----------------------------------------------------------------------------
-# Daily Report Exclude List
-# The SCRIPTS variable is used to specify some scripts to be excluded from 
-# the web scripts report. Script name are specify without extension.
-#
-# The SERVERS variable should contain the system hostname (Without Domain Name)
-# to be excluded from the reports (ALL the reports).
-# -----------------------------------------------------------------------------
-
-# SCRIPTS variable declare the script names you don't want to see in the
-# daily script web report.
-SCRIPTS="sadm_backup sadm_rear_backup sadm_nmon_watcher " 
-
-# Exclude scripts that are executing as part of sadm_client_sunset script.
-# Any error encountered by the scripts below, will be reported by sadm_client_sunset.
-SCRIPTS="$SCRIPTS sadm_dr_savefs sadm_create_sysinfo sadm_cfg2html"
-
-# Exclude scripts that are executing as part of sadm_server_sunrise script.
-# Any error encountered by the scripts below, will be reported by sadm_server_sunrise.
-SCRIPTS="$SCRIPTS sadm_daily_farm_fetch sadm_database_update sadm_nmon_rrd_update "
-
-# Exclude System Startup and Shutdown Script for Daily scripts Report
-# This one is optional
-SCRIPTS="$SCRIPTS sadm_startup sadm_shutdown"
-
-# Exclude template scripts and demo scripts.
-SCRIPTS="$SCRIPTS sadm_template sadmlib_std_demo"
-
-# Define here your custom scripts you want to exclude from the script daily report
-SCRIPTS="$SCRIPTS sadm_vm_tools sadm_vm_start sadm_vm_stop"
-
-# Server name to be exclude from every Daily Report (Backup, Rear and Scripts)
-SERVERS="rhel3 rhel4"
-
 
 export BACKUP_REPORT="ON"                                               # Backup Report Activated
 export REAR_REPORT="ON"                                                 # ReaR Report Activated
@@ -1331,7 +1298,7 @@ storix_report()
             then grep -iv "^$server" $SADM_TMP_FILE1 > $SADM_TMP_FILE2  # Remove it from file
                  mv $SADM_TMP_FILE2 $SADM_TMP_FILE1                     # Copy work to Server List
     	fi
-	done
+	    done
     chmod 664 $SADM_TMP_FILE1                                           # So everybody can read it.
 
     # Produce the report Heading
