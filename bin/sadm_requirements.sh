@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 #---------------------------------------------------------------------------------------------------
 #   Author      :   Your Name
-#   Script Name :   sadm_check_requirements.sh
+#   Script Name :   sadm_requirements.sh
 #   Date        :   2019//03/17
 #   Requires    :   sh and SADMIN Shell Library
 #   Description :   Check if all SADMIN Tools requirement are met (-i install missing package)

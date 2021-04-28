@@ -252,7 +252,7 @@ check_nmon()
              MSG4="To run the 'nmon' watcher, run the command below :\n"
              MSG5="# $SADMIN/usr/mon/swatch_nmon.sh\n\n" 
              MSG6="If it's not installed, please install it by running the command below :\n"
-             MSG7="# $SADM_BIN_DIR/sadm_check_requirements.sh -i\n\n"
+             MSG7="# $SADM_BIN_DIR/sadm_requirements.sh -i\n\n"
              MSG8="Have a good day"
              MSG="${MSG0}${MSG1}${MSG2}${MSG3}${MSG4}${MSG5}${MSG6}${MSG7}${MSG8}"
              echo -e "Not able to start the performance collector 'nmon' on '${HOSTNAME}'." >${SADM_UMON_DIR}/${INST}.txt         

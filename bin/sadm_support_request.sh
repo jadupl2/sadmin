@@ -218,7 +218,7 @@ main_process()
 
     # Run the check requirement script.
     sadm_write "\n"                                                     # Blank LIne
-    CMD="sadm_check_requirements.sh"                                    # Script Name to execute
+    CMD="sadm_requirements.sh"                                          # Script Name to execute
     CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${CMD}.log"                # Script Log file Name
     run_command "${CMD}" "$CMDLOG"                                      # Run Check Requirement
     print_file "${CMDLOG}"                                              # Print tmp log 
