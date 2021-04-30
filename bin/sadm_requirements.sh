@@ -1,8 +1,8 @@
 #! /usr/bin/env bash
 #---------------------------------------------------------------------------------------------------
-#   Author      :   Your Name
+#   Author      :   Jacques Duplessis
 #   Script Name :   sadm_requirements.sh
-#   Date        :   2019//03/17
+#   Date        :   2019/03/17
 #   Requires    :   sh and SADMIN Shell Library
 #   Description :   Check if all SADMIN Tools requirement are met (-i install missing package)
 #
@@ -35,10 +35,10 @@
 # 2019_04_07 Update: v1.3 Use color variables from SADMIN Library.
 # 2019_05_16 Update: v1.4 Don't generate the RCH file & allow running multiple instance of script.
 # 2019_10_30 Update: v1.5 Remove 'facter' requirement.
-#@2019_12_02 Fix: v1.6 Fix Mac OS crash.
-#@2020_04_01 Update: v1.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-#@2020_04_29 Update: v1.8 Remove arp-scan from the SADMIN server requirement list.
-#@2020_11_20 Update: v1.9 Added package 'wkhtmltopdf' installation to server requirement.
+# 2019_12_02 Fix: v1.6 Fix Mac OS crash.
+# 2020_04_01 Update: v1.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2020_04_29 Update: v1.8 Remove arp-scan from the SADMIN server requirement list.
+# 2020_11_20 Update: v1.9 Added package 'wkhtmltopdf' installation to server requirement.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
 #set -x
