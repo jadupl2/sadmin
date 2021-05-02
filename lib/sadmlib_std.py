@@ -55,6 +55,7 @@
 # 2020_02_25 Update: v3.12 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
 # 2020_09_10 Update: v3.13 Minor update to date/time module.
 # 2020_12_24 Update: v3.14 CentOSStream is CENTOS
+#@2021_05_02 Fix: v3.15 Fix typo error in 'locate_command' method.
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -126,7 +127,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.14"                                # This Library Version
+        self.libver             = "3.15"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -1007,7 +1008,7 @@ class sadmtools():
     # ----------------------------------------------------------------------------------------------
     def locate_command(self,cmd) :
         ccode,cstdout,cstderr = self.oscommand("%s %s" % (self.which,cmd))  # Try to Locate Command
-        if ccode is not 0 :                                             # Command was not Found
+        if ccode != 0 :                                                 # Command was not Found
             cmd_path=""                                                 # Cmd Path Null when Not fnd
         else :                                                          # If command Path is Found
             cmd_path = cstdout                                          # Save command Path
@@ -1028,7 +1029,7 @@ class sadmtools():
 
         # Get the location of the which command
         ccode,cstdout,cstderr = self.oscommand("which which")           # We will use which cmd
-        if ccode is not 0 :                                             # to determine if a command
+        if ccode != 0 :                                                 # to determine if a command
             print("[ERROR] The command 'which' couldn't be found")      # is available
             print("        This command is needed by the SADMIN tools") # If which is not available
             print("        Please install it and re-run this script")   # We will ask the user to
@@ -1262,7 +1263,7 @@ class sadmtools():
         global FH_LOG_FILE, start_time, start_epoch
 
         self.exit_code = return_code                                    # Save Param.Recv Code
-        if self.exit_code is not 0 :                                    # If Return code is not 0
+        if self.exit_code != 0 :                                        # If Return code is not 0
             self.exit_code=1                                            # Making Sure code is 1 or 0
 
         # Write the Script Exit code of the script to the log
