@@ -39,6 +39,7 @@
 # 2020_04_01 Update: v1.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 # 2020_04_29 Update: v1.8 Remove arp-scan from the SADMIN server requirement list.
 # 2020_11_20 Update: v1.9 Added package 'wkhtmltopdf' installation to server requirement.
+#@2021_04_02 Fix: v1.10 Fix crash when trying to install missing package.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -67,7 +68,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.9'                               # Your Current Script Version
+    export SADM_VER='1.10'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -186,7 +187,6 @@ install_package()
                          rc=$?                                          # Save Exit Code
                          sadm_write "Return Code after installation of ${PACKAGE_DEB} is $rc \n"
                 fi
-                break
                 ;;
     esac
 
