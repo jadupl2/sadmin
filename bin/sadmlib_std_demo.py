@@ -41,9 +41,10 @@
 # 2019_04_25 Update: v3.5 Add Alert_Repeat, Textbelt API Key and URL Variable in Output
 # 2019_05_17 Update: v3.6 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
 # 2019_08_19 update: v3.7 Remove printing of st.alert_seq (not used anymore)
-#@2019_10_14 Update: v3.8 Add demo for calling sadm_server_arch function & show result.
-#@2019_10_18 Update: v3.9 Print SADMIN Database Tables and columns at the end of report.
-#@2019_10_30 Update: v3.10 Remove Utilization of 'facter' (Depreciated).
+# 2019_10_14 Update: v3.8 Add demo for calling sadm_server_arch function & show result.
+# 2019_10_18 Update: v3.9 Print SADMIN Database Tables and columns at the end of report.
+# 2019_10_30 Update: v3.10 Remove Utilization of 'facter' (Depreciated).
+#@2021_05_03 Update: v3.11 Rewrote "Overview of setup_admin(), st.start() & st.stop()" section.
 #===================================================================================================
 #
 try :
@@ -90,7 +91,7 @@ def setup_sadmin():
     st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
-    st.ver              = "3.10"                # Current Script Version
+    st.ver              = "3.11"                # Current Script Version
     st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
     st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
     st.log_header       = False                 # Show/Generate Header in script log (.log)
@@ -998,41 +999,48 @@ def print_command_path(st):
 # Print sadm_start and sadm_stop Function Used by SADMIN Tools
 #===================================================================================================
 def print_start_stop(st):
-    printheader (st,"Overview of st.start() & st.stop() function"," "," ")
+    printheader (st,"Overview of setup_admin(), st.start() & st.stop() functions"," "," ")
      
-    print ("")
-    print ("----------")
-    print ("st = setup_sadmin()")
-    print ("Example : st = setup_sadmin()    # Setup Var, Load Libr, Create instance, call st.start()")
-    print ("----------")
-    print ("    Setup User Var., Load Module, Create Instance, call st.start() and return instance object")
-    print ("    It make sure the SADMIN Environment variable is set to proper dir.")
-    print ("    The module 'setup_sadmin()', need to be called  when your script is starting.")
-    print ("    What this function will do for us :") 
-    print ("        1) Make sure all directories & sub-directories exist and have proper permissions.")
-    print ("        2) Make sure log file exist with proper permission (st.log_file)")
-    print ("        3) Make sure Return Code History (.rch) exist and have the right permission")
-    print ("        4) If PID file exist, show error message and abort.") 
-    print ("           Unless user allow more than one copy to run simultaneously (st.multiple_exec = 'Y')")
-    print ("        5) Add line in the [R]eturn [C]ode [H]istory file stating script is started (Code 2)")
-    print ("        6) Write HostName - Script name and version - O/S Name and version to the Log file (st.log_file)")
-    print ("")
-    print ("----------")
-    print ("st.stop()")
-    print ("Example : st.stop(st.exit_code)   # Close SADM Environment")
-    print ("          sys.exit(st.exit_code)  # Exit To O/S")
-    print ("----------")
-    print ("    Accept one parameter - Either 0 (Successful) or non-zero (Error Encountered)")
-    print ("    Please call this function just before your script end.")
-    print ("    What this function do.")
-    print ("        1) If Exit Code is not zero, change it to 1.")
-    print ("        2) Get Actual Time and Calculate the Execution Time.")
-    print ("        3) Writing the Script Footer in the Log (Script Return code, Execution Time, ...)")
-    print ("        4) Update the RCH File (Start/End/Elapse Time and the Result Code)")
-    print ("        5) Trim The RCH File Based on User choice in sadmin.cfg")
-    print ("        6) Trim the Log based on user selection in sadmin.cfg")
-    print ("        7) Delete the PID File of the script (st.pid_file)")
-    print ("        8) Delete the User 3 TMP Files (st.tmp_file1, st.tmp_file2, st.tmp_file3)")
+    print ("") 
+    print ("Extract of SADMIN Section") 
+    print ("def setup_sadmin():") 
+    print ("    # Create SADMIN Tools Instance (Create Directories,Load sadmin.cfg,Assign Variables)") 
+    print ("    st = sadm.sadmtools()      ") 
+    print ("    # Start SADMIN Tools - Initialize SADMIN Env. (Create dir.,Log,RCH, Open DB..)") 
+    print ("    st.start()                                  # Init. ") 
+    print ("") 
+    print ("- The function 'setup_sadmin()', need to be called  when your script is starting.") 
+    print ("    1) It make sure the SADMIN environment variable is set to the proper directory.") 
+    print ("    2) Setup global variables, load modules, create instance.") 
+    print ("    3) Load SADMIN configuration file ($SADMIN/cfg/sadmin.cfg).") 
+    print ("    4) Check Library requirements") 
+    print ("    5) Call the 'st.start()' function below.") 
+    print ("    6) And finally it return an object of the instance.") 
+    print ("") 
+    print ("- Function 'st.start()' (Included in the 'setup_sadmin()')") 
+    print ("  What this function does:") 
+    print ("    1) Make sure all directories & sub-directories exist and have proper permissions.") 
+    print ("    2) Make sure log file exist with proper permission (st.log_file)") 
+    print ("       Write the log header (if 'st.log_header = True').") 
+    print ("    3) Record the start Date/Time and Status Code 2(Running) to RCH file.") 
+    print ("    4) If PID file exist, show error message and abort.") 
+    print ("       Unless user allow more than one copy to run simultaneously (st.multiple_exec = 'Y').") 
+    print ("    5) Add line in the [R]eturn [C]ode [H]istory file stating script is started (Code 2).") 
+    print ("") 
+    print ("- Function 'st.stop()'") 
+    print ("  This function should be called near the end of your script.") 
+    print ("    Example : st.stop(st.exit_code)   # Close SADMIN Environment") 
+    print ("              sys.exit(st.exit_code)  # Exit To O/S") 
+    print ("  It accept one parameter - Either 0 (Successful) or non-zero (Error Encountered).") 
+    print ("  What this function does:") 
+    print ("    1) Get Actual Time and Calculate the Execution Time.") 
+    print ("    2) It check if the Exit Code is not zero, change it to 1.") 
+    print ("    3) If 'st.log_footer = True', write the log footer.") 
+    print ("    4) If 'st.use_rch = True', append (Start/End/Elapse Time ...) in RCH File.") 
+    print ("    5) Trim The RCH File according to user choice in sadmin.cfg (SADM_MAX_RCHLINE).") 
+    print ("    6) Trim the log according to user choice in sadmin.cfg (SADM_MAX_LOGLINE).") 
+    print ("    7) Delete the PID File of the script (st.pid_file).") 
+    print ("    8) Delete the user 3 TMP Files (st.tmp_file1, st.tmp_file2, st.tmp_file3).") 
     print (" ")
 
 
