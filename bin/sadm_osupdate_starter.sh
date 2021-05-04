@@ -44,15 +44,16 @@
 # 2018_10_24  v3.11 Adjustment needed to call sadm_osupdate.sh with or without '-r' (reboot) option.
 # 2019_07_14 Update: v3.12 Adjustment for Library Changes.
 # 2019_12_22 Fix: v3.13 Fix problem when using debug (-d) option without specifying level of debug.
-#@2020_05_23 Update: v3.14 Create 'LOCK_FILE' file before launching O/S update on remote.
-#@2020_07_28 Update: v3.15 Move location of o/s update is running indicator file to $SADMIN/tmp.
-#@2020_10_29 Fix: v3.16 If comma was used in server description, it cause delimiter problem.
-#@2020_11_04 Minor: v3.17 Minor code modification.
-#@2020_11_20 Update: v4.0 Restructure & rename from sadm_osupdate_farm to sadm_osupdate_starter.
-#@2020_12_02 Update: v4.1 Log is now in appending mode and can grow up to 5000 lines.
-#@2020_12_12 Update: v4.2 Use new LOCK_FILE & Add and use SADM_PID_TIMEOUT & SADM_LOCK_TIMEOUT Var.
-#@2021_02_13 Minor: v4.2 Change for log appearance.
-#@2021_03_05 Update: v4.3 Add a sleep time after update to give system to reboot & become available.
+# 2020_05_23 Update: v3.14 Create 'LOCK_FILE' file before launching O/S update on remote.
+# 2020_07_28 Update: v3.15 Move location of o/s update is running indicator file to $SADMIN/tmp.
+# 2020_10_29 Fix: v3.16 If comma was used in server description, it cause delimiter problem.
+# 2020_11_04 Minor: v3.17 Minor code modification.
+# 2020_11_20 Update: v4.0 Restructure & rename from sadm_osupdate_farm to sadm_osupdate_starter.
+# 2020_12_02 Update: v4.1 Log is now in appending mode and can grow up to 5000 lines.
+# 2020_12_12 Update: v4.2 Use new LOCK_FILE & Add and use SADM_PID_TIMEOUT & SADM_LOCK_TIMEOUT Var.
+# 2021_02_13 Minor: v4.2 Change for log appearance.
+# 2021_03_05 Update: v4.3 Add a sleep time after update to give system to reboot & become available.
+# 2021_05_04 Update: v4.4 Don't sleep after updating a server if a reboot wasn't requested.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -85,7 +86,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='4.3'                                   # Current Script Version
+export SADM_VER='4.4'                                   # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="Y"                              # [Y]=Append Existing Log [N]=Create New One
@@ -122,7 +123,9 @@ export SADM_MAX_RCLINE=60                              # At the end Trim rch to 
 # --------------------------------------------------------------------------------------------------
 export ONE_SERVER=""                                                    # Name of server to update
 export USCRIPT="sadm_osupdate.sh"                                       # Script to execute on nodes
-export REBOOT_TIME=480                                                  # Sec given for system reboot
+
+# Seconds given for system reboot and to start applications.
+export REBOOT_TIME=480                                                  
 
 
 
@@ -275,8 +278,11 @@ rcmd_osupdate()
     # If user requested a reboot after each update, see reboot option when scheduling the O/S Update
     # We need to wait a moment to give the selected system time to reboot and become available again.
     # We will sleep 480 seconds (8 Min.) to give system time to restart and start it's app.
-    sadm_writelog "Sleep $REBOOT_TIME seconds to give '${server_name}' the time to become available."
-    sadm_sleep $REBOOT_TIME 30
+    if [ "$WREBOOT" != "" ]                                         # if Reboot requested
+        then sadm_writelog "Sleep $REBOOT_TIME seconds, give time to '${server_name}' to become available."
+             # Sleep for $REBOOT_TIME seconds and update progress bar every 30 seconds.
+             sadm_sleep $REBOOT_TIME 30 
+    fi 
 
 
     # Ignore if return an error.
