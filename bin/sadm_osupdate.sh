@@ -39,9 +39,10 @@
 # 2020_03_03 Update: v3.20 Restructure some code and change help message. 
 # 2020_04_01 Update: v3.21 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 # 2020_04_28 Update: v3.22 Use 'apt-get dist-upgrade' instead of 'apt-get -y upgrade' on deb system.
-#@2020_05_23 Update: v3.23 Replace 'reboot' instruction with 'shutdown -r' (Problem on some OS).
-#@2020_07_29 Update: v3.24 Minor adjustments to screen and log presentation.
-#@2020_12_12 Update: v3.25 Minor adjustments.
+# 2020_05_23 Update: v3.23 Replace 'reboot' instruction with 'shutdown -r' (Problem on some OS).
+# 2020_07_29 Update: v3.24 Minor adjustments to screen and log presentation.
+# 2020_12_12 Update: v3.25 Minor adjustments.
+# 2021_05_04 Update: v3.26 Adjust some message format of the log.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -74,7 +75,7 @@
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.25'                              # Your Current Script Version
+    export SADM_VER='3.26'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -222,7 +223,7 @@ run_command()
 check_available_update()
 {
     x_version="$(sadm_get_osmajorversion).$(sadm_get_osminorversion)"
-    sadm_write "Verifying update availability for $(sadm_get_osname) v$(sadm_get_osversion)\n"
+    sadm_writelog "Verifying update availability for $(sadm_get_osname) v$(sadm_get_osversion)"
     
     case "$(sadm_get_osname)" in
 
@@ -293,41 +294,44 @@ check_available_update()
 
         # Ubuntu, Debian, Raspian, Linux MInt, ...
         * ) 
-            sadm_write "\nStart with a clean of APT cache, running 'apt-get clean'\n" 
+            sadm_writelog "Start with a clean of APT cache, running 'apt-get clean'" 
             apt-get clean >> $SADM_LOG 2>&1                             # Cleanup /var/cache/apt
             rc=$?                                                       # Save Exit Code
             if [ $rc -ne 0 ] 
-                then sadm_write "${SADM_ERROR} while cleaning apt cache, return code ${rc}\n" 
-                else sadm_write "${SADM_OK} APT cache is now cleaned.\n" 
+                then sadm_writelog "[ ERROR ] while cleaning apt cache, return code ${rc}" 
+                else sadm_writelog "[ OK ] APT cache is now cleaned." 
             fi
-            sadm_write "\nUpdate the APT package repository cache with 'apt-get update'\n" 
+            sadm_writelog " "
+            sadm_writelog "Update the APT package repository cache with 'apt-get update'" 
             apt-get update  >> $SADM_LOG 2>&1                           # Updating the apt-cache
             rc=$?                                                       # Save Exit Code
             if [ "$rc" -ne 0 ]
                then UpdateStatus=2                                      # 2=Problem checking update
-                    sadm_write "${SADM_ERROR} We had problem running the 'apt-get update' command.\n" 
-                    sadm_write "We had a return code of ${rc}.\n" 
-                    sadm_write "For more information check the log ${SADM_LOG}.\n\n"
-               else sadm_write "${SADM_OK} The cache have been updated.\n\n"  # Show  Return Code
-                    sadm_write "Retrieving list of upgradable packages.\n" 
-                    sadm_write "Running 'apt list --upgradable'.\n"
+                    sadm_writelog "[ ERROR ] We had problem running the 'apt-get update' command." 
+                    sadm_writelog "We had a return code of ${rc}." 
+                    sadm_writelog "For more information check the log ${SADM_LOG}."
+                    sadm_writelog " " ; sadm_writelog " "
+               else sadm_writelog "[ OK ] The cache have been updated."
+                    sadm_writelog " " ; sadm_writelog " "
+                    sadm_writelog "Retrieving list of upgradable packages." 
+                    sadm_writelog "Running 'apt list --upgradable'."
                     NB_UPD=`apt list --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l`
                     if [ "$NB_UPD" -ne 0 ]
-                        then sadm_write "There are ${NB_UPD} update available.\n"
+                        then sadm_writelog "There are ${NB_UPD} update available."
                              apt list --upgradable 2>/dev/null |grep -iv "listing"  >$SADM_TMP_FILE3 
                              if [ $? -ne 0 ] 
-                                then sadm_write "Error getting list of packages to update.\n"
-                                     sadm_write "Script aborted ...\n" 
+                                then sadm_writelog "Error getting list of packages to update."
+                                     sadm_writelog "Script aborted ..." 
                                      sadm_stop 1
                                      exit 1
-                                else sadm_write "${BOLD}Packages that will be updated.${NORMAL}\n"
+                                else sadm_writelog "Packages that will be updated."
                                      nl $SADM_TMP_FILE3
                                      UpdateStatus=0                     # 0= Update are available
                              fi 
                         else UpdateStatus=1                             # 1= No Update are available
-                             sadm_write "${SADM_OK} No Update available.\n"
+                             sadm_writelog "[ OK ] No Update available."
                     fi
-                    sadm_write "\n"                                     # White Line
+                    sadm_writelog " " 
             fi
             ;;
     esac 
