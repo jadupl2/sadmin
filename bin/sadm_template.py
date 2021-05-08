@@ -62,8 +62,9 @@ def show_usage():
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN section - Setup for Global Variables and import SADMIN Python module
-# To use SADMIN tools module, this section MUST be present near the top of your code.    
+# SADMIN CODE SECTION
+# Setup for Global Variables and import SADMIN Python module
+# To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
 def setup_sadmin():
 
@@ -100,7 +101,7 @@ def setup_sadmin():
                                                 # But Error Code always returned (0=ok else error)
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
-    #st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSuccess 3=Allways
+    st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSuccess 3=Always
     #st.cfg_alert_group  = "default"            # Valid Alert Group are defined in alert_group.cfg
     #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg

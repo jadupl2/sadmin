@@ -99,7 +99,7 @@ We recommend cloning the SADMIN repository and then run the setup script.
     * `git clone https://github.com/jadupl2/sadmin.git`    
     * `sudo sadmin/setup/setup.sh`  
 Another way is to download the latest version from our [download page](https://sadmin.ca/_pages/download) and have 
-a look at our [changelog](https://sadmin.ca/_pages/changelog) and see the latest features. For more information 
+a look at our [changelog](https://github.com/jadupl2/sadmin/releases/) and see the latest features. For more information 
 about the installation process, view our [install guide](https://sadmin.ca/_pages/install/)
  
 
