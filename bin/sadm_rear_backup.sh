@@ -65,11 +65,12 @@
 # 2020_04_13 Update: v2.18 Lot of little adjustments.
 # 2020_04_14 Update: v2.19 Some more logging adjustments.
 # 2020_04_16 Update: v2.20 Minor adjustments
-#@2020_05_13 Update: v2.21 Remove mount directory before exiting script.
-#@2020_05_18 Fix: v2.22 Fix /etc/rear/site.conf auto update problem, prior to starting backup.
-#@2020_06_30 Fix: v2.23 Fix chmod 664 for files in server backup directory
-#@2020_09_05 Fix: v2.24 Minor Changes.
-#@2021_01_11 Fix: v2.25 NFS drive was not unmounted when the backup failed.
+# 2020_05_13 Update: v2.21 Remove mount directory before exiting script.
+# 2020_05_18 Fix: v2.22 Fix /etc/rear/site.conf auto update problem, prior to starting backup.
+# 2020_06_30 Fix: v2.23 Fix chmod 664 for files in server backup directory
+# 2020_09_05 Fix: v2.24 Minor Changes.
+# 2021_01_11 Fix: v2.25 NFS drive was not unmounted when the backup failed.
+# 2021_05_11 Fix: v2.26 Correct 'rear' command missing false error message 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -101,7 +102,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.25'                              # Your Current Script Version
+    export SADM_VER='2.26'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -278,13 +279,14 @@ create_etc_rear_site_conf()
 # --------------------------------------------------------------------------------------------------
 rear_preparation()
 {
-    sadm_write "${BOLD}Perform ReaR preparation.${NORMAL}\n"   # Feed User and Log
+    sadm_write "${BOLD}Perform ReaR preparation.${NORMAL}\n"            # Feed User and Log
     sadm_write "\n"                                                     # Write white line
 
     # Check if REAR is not installed - Abort Process 
-    if ${SADM_WHICH} rear >/dev/null 2>&1                               # command is found ?
+    ${SADM_WHICH} rear >/dev/null 2>&1                                  # rear command is found ?
+    if [ $? -eq 0 ]                                                     # Yes it is on system                 
         then export REAR=`${SADM_WHICH} rear`                           # Store Path of command
-        else sadm_write "${SADM_ERROR} The command 'rear' is missing, Job Aborted.\n" 
+        else sadm_write "${SADM_ERROR} The 'rear' command is missing, Job Aborted.\n" 
              return 1                                                   # Return Error to Caller 
     fi
 
