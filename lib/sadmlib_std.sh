@@ -165,9 +165,10 @@
 # 2021_01_13 Update: v3.64 Code Optimization (in Progress)
 # 2021_01_27 Update: v3.65 By default Temp files declaration done in caller
 # 2021_02_27 Update: v3.66 Abort if user not part of '$SADM_GROUP' & fix permission denied message.
-#@2021_03_24 Update: v3.67 Non root user MUST be part of 'sadmin' group to use SADMIN library.
+# 2021_03_24 Update: v3.67 Non root user MUST be part of 'sadmin' group to use SADMIN library.
 #@2021_04_02 Fix: v3.68 Replace test using '-v' with '! -z' on variable.
 #@2021_04_09 Fix: v3.69 Fix problem with disabling log header, log footer and rch file.
+#@2021_04_10 Fix: v3.70 Fix Path to which command was not set properly because of defined alias.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -179,7 +180,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.69"                                              # This Library Version
+export SADM_LIB_VER="3.70"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -653,7 +654,8 @@ sadm_check_requirements() {
 
     # The 'which' command is needed to determine presence of command - Return Error if not found
     if which which >/dev/null 2>&1                                      # Try the command which
-        then SADM_WHICH=`which which`  ; export SADM_WHICH              # Save Path of Which Command
+#        then SADM_WHICH=`which which`  ; export SADM_WHICH             # Save Path of Which Command
+        then SADM_WHICH="/usr/bin/which"; export SADM_WHICH             # Save Path of Which Command
         else sadm_write "${SADM_ERROR} The command 'which' couldn't be found\n"
              sadm_write "        This program is often used by the SADMIN tools\n"
              sadm_write "        Please install it and re-run this script\n"
