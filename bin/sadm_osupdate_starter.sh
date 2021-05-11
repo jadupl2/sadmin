@@ -6,7 +6,7 @@
 #   Version  :  1.0
 #   Date     :  9 March 2015 
 #   Requires :  sh
-#   SCCS-Id. :  @(#) sadm_osupdate_farm.sh 1.0 2015/03/10
+#   SCCS-Id. :  @(#) sadm_osupdate_starter.sh 1.0 2015/03/10
 # --------------------------------------------------------------------------------------------------
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
@@ -37,7 +37,7 @@
 # 2018_02_08  V3.4 Fix Compatibility problem with 'dash' shell (If statement)
 # 2018_06_05  v3.5 Add Switch -v to view version, change help message, adapt to new Libr.
 # 2018_06_09  v3.6 Change the name  of the client o/s update script & Change name of this script
-# 2018_06_10  v3.7 Change name to sadm_osupdate_farm.sh - and change client script name
+# 2018_06_10  v3.7 Change name to sadm_osupdate_starter.sh - and change client script name
 # 2018_07_01  v3.8 Use SADMIN dir. of client from DB & allow running multiple instance at once
 # 2018_07_11  v3.9 Solve problem when running update on SADMIN server (Won't start)
 # 2018_09_19  v3.10 Include Alert Group
@@ -54,6 +54,7 @@
 # 2021_02_13 Minor: v4.2 Change for log appearance.
 # 2021_03_05 Update: v4.3 Add a sleep time after update to give system to reboot & become available.
 # 2021_05_04 Update: v4.4 Don't sleep after updating a server if a reboot wasn't requested.
+# 2021_05_10 nolog: v4.5 Error message change "sadm_osupdate_farm.sh" to "sadm_osupdate_starter"
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -86,7 +87,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='4.4'                                   # Current Script Version
+export SADM_VER='4.5'                                   # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="Y"                              # [Y]=Append Existing Log [N]=Create New One
@@ -134,7 +135,7 @@ export REBOOT_TIME=480
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${BOLD}${SADM_PN} [-d Level] [-h] [-v] hostname${NORMAL}" 
+    printf "\n${BOLD}${SADM_PN} [ -d 0-9 ] [ -h ] [ -v ]   hostname${NORMAL}" 
     printf "\n\t${BOLD}-d${NORMAL}   (Debug Level [0-9])"
     printf "\n\t${BOLD}-h${NORMAL}   (Display this help message)"
     printf "\n\t${BOLD}-v${NORMAL}   (Show Script Version Info)"
