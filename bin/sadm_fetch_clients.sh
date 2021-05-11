@@ -77,6 +77,7 @@
 # 2020_12_19 Fix: v3.23 Don't copy alert group and slack configuration files, when on SADMIN Server.
 # 2020_12_19 Update: v3.24 Remove verbose on rsync
 # 2021_04_19 Update: v3.25 Change Include text in ReaR Config file.
+#@2021_05_10 nolog: v3.26 Error message change "sadm_osupdate_farm.sh" to "sadm_osupdate_starter"
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
@@ -123,7 +124,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.25'                              # Your Current Script Version
+    export SADM_VER='3.26'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -211,7 +212,7 @@ show_usage()
 #               Default is all Week (YNNNNNNN)
 # ---------
 # Example of line generated
-# 15 04 * * 06 root /sadmin/bin/sadm_osupdate_farm.sh -s nano >/dev/null 2>&1
+# 15 04 * * 06 root /sadmin/bin/sadm_osupdate_starter.sh nano >/dev/null 2>&1
 # ==================================================================================================
 update_osupdate_crontab () 
 {
@@ -346,7 +347,7 @@ update_osupdate_crontab ()
 #               Default is all Week (YNNNNNNN)
 # ---------
 # Example of line generated
-# 15 04 * * 06 root /sadmin/bin/sadm_osupdate_farm.sh -s nano >/dev/null 2>&1
+# 15 04 * * 06 root /sadmin/bin/sadm_osupdate_starter.sh nano >/dev/null 2>&1
 # ==================================================================================================
 update_rear_crontab () 
 {
@@ -484,7 +485,7 @@ update_rear_crontab ()
 #               Default is all Week (YNNNNNNN)
 # ---------
 # Example of line generated
-# 15 04 * * 06 root /sadmin/bin/sadm_osupdate_farm.sh -s nano >/dev/null 2>&1
+# 15 04 * * 06 root /sadmin/bin/sadm_osupdate_starter.sh nano >/dev/null 2>&1
 # ==================================================================================================
 update_backup_crontab () 
 {
