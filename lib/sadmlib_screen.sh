@@ -19,6 +19,7 @@
 # 2019_11_12 Update: v2.0 Add comments and minor corrections.
 # 2019_11_18 Update: v2.1 Bug corrections and change heading colors.
 # 2019_11_22 Update: v2.2 Change Menu color to fit with white and black background color.
+#@2021-05-10 Update: v2.3 Align script version number on the heading second line.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
@@ -29,7 +30,7 @@
 # L O C A L    V A R I A B L E S    
 # --------------------------------------------------------------------------------------------------
 #
-export lib_screen_ver=2.2                                               # This Library Version
+export lib_screen_ver=2.3                                               # This Library Version
 export MAXCOL=80                                                        # Maximum NB Char. on a line
 
 
@@ -87,7 +88,6 @@ sadm_messok() {
 #---------------------------------------------------------------------------------------------------
 sadm_mess() {
    sadm_writexy 22 01 "${CLREOS}${BOLD}${RED}${1}${NORMAL}${BELL}" 
-#   sadm_writexy 23 01 "${BOLD}${WHITE}Press [ENTER] to continue${NORMAL}"
    sadm_writexy 23 01 "${BOLD}${RED}Press [ENTER] to continue${NORMAL}"
    read sadm_dummy                                                      # Wait for  [RETURN]
    sadm_writexy 22 01 "${CLREOS}"                                  # Clear from lines 22 to EOS
@@ -191,26 +191,28 @@ sadm_display_heading()
     eighty_spaces=`printf %80s " "`                                     # 80 white space
 
     # Clear screen and display two blank lines in reverse video on line 1 and 2 
-    sadm_writexy 01 01 "${CLRSCR}"                                   # Clear the Screen
+    sadm_writexy 01 01 "${CLRSCR}"                                      # Clear the Screen
     sadm_writexy 02 01 "${UNDERLINE}${GREEN}${eighty_spaces}${NORMAL}" 
 
-    # Display Line 1 (Hostname + Menu Name + Date)
-    sadm_writexy 01 01 "${GREEN}${BOLD}$(sadm_get_fqdn)"      # Top Left  HostName 
+    # Display Line 1 (FQDN Hostname + Menu Name + Date)
+    sadm_writexy 01 01 "${GREEN}${BOLD}$(sadm_get_fqdn)"                # Top Left  HostName 
     let wpos="(((80 - ${#titre}) / 2) + 1)"                             # Calc. Center Pos for Name
-    sadm_writexy 01 $wpos "${BLUE}${BOLD}${titre}${NORMAL}"    # Display Title Centered
-    sadm_writexy 01 65 "${GREEN}${BOLD}`date '+%Y/%m/%d %H:%M'`" # Top Right Show Cur Date 
+    sadm_writexy 01 $wpos "${BLUE}${BOLD}${titre}${NORMAL}"             # Display Title Centered
+    sadm_writexy 01 65 "${GREEN}${BOLD}`date '+%Y/%m/%d %H:%M'`"        # Top Right Show Cur Date 
 
     # Display Line 2 - (OS Name and version + Cie Name and SADM Release No.
-    hosname=`echo "$(sadm_get_osname)" | tr '[A-Z]' '[a-z]'`            # Transform OSNAME lowcase
-    hosname=`echo ${hosname:0:1} | tr  '[a-z]' '[A-Z]'`${hosname:1}     # Upcase 1st Letter
+    hosname=`echo "$(sadm_get_osname)" | tr '[A-Z]' '[a-z]'`            # Transform OSNAME lowercase
+    hosname=`echo ${hosname:0:1} | tr  '[a-z]' '[A-Z]'`${hosname:1}     # Upper case 1st Letter
     sadm_writexy 02 01 "${UNDERLINE}${GREEN}${BOLD}$hosname $(sadm_get_osversion)" 
-    #
+    
+    # Show Company Name, centered on the second line
     let wpos="(((80 - ${#SADM_CIE_NAME}) / 2) + 1)"                     # Calc. Center Pos for Name
     sadm_writexy 02 $wpos "${UNDERLINE}${MAGENTA}${BOLD}$SADM_CIE_NAME"  
-    #
-    let wpos="72 - ${#SADM_VERSION}"                                    # Calc. Pos. Line 2 on Right
-    sadm_writexy 02 $wpos "${UNDERLINE}${GREEN}${BOLD}Ver $tver"  # Display Script Version
-    sadm_writexy 04 01 "${NORMAL}"                                  # Reset to Normal & Pos. Cur
+    
+    # Show the script version to the left of second line
+    let wpos="77 - ${#tver}"                                            # Calc. Pos. Line 2 on Right
+    sadm_writexy 02 $wpos "${UNDERLINE}${GREEN}${BOLD}Ver $tver"        # Display Script "Ver $tver"
+    sadm_writexy 04 01 "${NORMAL}"                                      # Reset Screen Attribute
 }
 
 
@@ -219,22 +221,16 @@ sadm_display_heading()
 #---------------------------------------------------------------------------------------------------
 sadm_ask_password()
 {
-    MPASSE=`date +%d%m%y`       ; MPASSE=`expr $MPASSE + 444 `
-    MPASSE=`expr $MPASSE \* 2 `	    ; export MPASSE
-    echo "`date +%d`+`date +%m`+`date +%y`" | bc > /tmp/SAMPAS$$ 
-    MPASSE2=`cat /tmp/SAMPAS$$`         ; export MPASSE2
-    rm /tmp/SAMPAS$$
-
-    MPASSE=`date +%d%m%y` ; MPASSE=`echo "($MPASSE + 666) * 2" | bc `   # Construct Passwd
-    sadm_writexy 22 01 "${CLREOS}${BELL}${BELL}"         # Clear Line 22 + Ring Bell
-    sadm_writexy 22 01 "Please enter the SADMIN password ...  ? "       # Inform user for Password
+    MPASSE=`date +%d%m%y%H%M`                                           # Get Date/Time ddmmyyHHMM
+    MPASSE=`echo "$MPASSE / 824" | bc `                                 # Construct Passwd
+    sadm_writexy 23 01 "${CLREOS}${BELL}${BELL}"                        # Clear Line 22 + Ring Bell
+    sadm_writexy 23 01 "Please enter the password ...  ? "              # Inform user for Password
     stty -echo                                                          # Turn OFF Char. echo
     read REPONSE                                                        # Accept Password
     stty echo                                                           # Turn Back echo ON
     if [ "$REPONSE" != "$MPASSE" ]                                      # Validate Password
-        then sadm_mess "Invalid password"                               # Advise User Wrong Password
-             return 0                                                   # 0 = Wrong Password
-        else return 1                                                   # 1 = Good Password
+        then return 1                                                   # 0 = Wrong Password
+        else return 0                                                   # 1 = Good Password
     fi
 }
 
@@ -283,7 +279,7 @@ sadm_print_status()
             printf "${BOLD}${GREEN}[${RED}ERROR${GREEN}]${NORMAL} %s\n" "$wmsg"
             ;;      
         "Warning"|"WARNING"|"warning")   
-            printf "${BOLD}${GREEN}[${YELLOW}WARNING${GREEN}]${NORMAL} %s\n" "$mwsg"
+            printf "${BOLD}${GREEN}[${YELLOW}WARNING${GREEN}]${NORMAL} %s\n" "$wmsg"
             ;;
         *)  printf "${BOLD}${GREEN}[${MAGENTA}%s${GREEN}]${NORMAL} %s\n" "$wst" "$wmsg" 
             ;;
@@ -406,6 +402,7 @@ sadm_display_menu()
 
 # --------------------------------------------------------------------------------------------------
 # Accept Menu Choice
+# One parameter accepted - number of items in the menu
 # --------------------------------------------------------------------------------------------------
 sadm_accept_choice()
 {
