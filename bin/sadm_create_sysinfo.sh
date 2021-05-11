@@ -47,8 +47,9 @@
 # 2020_01_13 Update: v3.17 Collect 'rear' version to show on rear schedule web page.
 # 2020_03_08 Update: v3.18 Collect more information about Disks, Partitions, Network and fix lsblk.
 # 2020_04_05 Update: v3.19 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl
-#@2020_06_09 Update: v3.20 New log at each execution & log not trimmed anymore ($SADM_MAX_LOGLINE=0)
-#@2020_12_12 Update: v3.21 Add SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
+# 2020_06_09 Update: v3.20 New log at each execution & log not trimmed anymore ($SADM_MAX_LOGLINE=0)
+# 2020_12_12 Update: v3.21 Add SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
+#@2021_05_10 nolog: v3.22 Error message change "sadm_osupdate_farm.sh" to "sadm_osupdate_starter"
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -80,7 +81,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.21'                              # Your Current Script Version
+    export SADM_VER='3.22'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -365,7 +366,7 @@ set_last_osupdate_date()
         then sadm_write "\nMissing O/S Update RCH file ($RCHFILE).\n"
              sadm_write "Can't determine last O/S Update Date/Time & Status.\n"
              sadm_write "Situation will resolve by itself, when you run your first O/S update for this system\n."
-             sadm_write "You can run 'sadm_osupdate_farm.sh -s $(sadm_get_hostname)' on $SADM_SERVER to update this system.\n"
+             sadm_write "You can run 'sadm_osupdate_starter.sh $(sadm_get_hostname)' on $SADM_SERVER to update this system.\n"
              sadm_write "You will then get a valid 'rch' file.\n\n"
              OSUPDATE_DATE=""
              OSUPDATE_STATUS="U"
@@ -377,7 +378,7 @@ set_last_osupdate_date()
     OSUPDATE_DATE=`tail -1 ${RCHFILE} |awk '{printf "%s %s", $4,$5}'`
     if [ $? -ne 0 ]
         then sadm_write "Can't determine last O/S Update Date ...\n"
-             sadm_write "You should run 'sadm_osupdate_farm.sh -s $(sadm_get_hostname)' on $SADM_SERVER to update this server.\n"
+             sadm_write "You should run 'sadm_osupdate_starter.sh $(sadm_get_hostname)' on $SADM_SERVER to update this server.\n"
              sadm_write "You will then get a valid 'rch' file ${RCHFILE}.\n\n"
              return 1
     fi
