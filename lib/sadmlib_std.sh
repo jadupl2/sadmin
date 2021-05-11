@@ -1281,8 +1281,8 @@ sadm_server_memory() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_arch() {
     case "$(sadm_get_ostype)" in
-        "LINUX")    #warch=`uname -m`
-                    warch=$(arch)
+        "LINUX")    warch=`uname -m`
+                    #warch=$(arch)
                     ;;
         "AIX")      warch=`uname -p`  
                     ;;
