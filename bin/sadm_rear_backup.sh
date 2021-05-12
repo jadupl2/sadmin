@@ -70,7 +70,8 @@
 # 2020_06_30 Fix: v2.23 Fix chmod 664 for files in server backup directory
 # 2020_09_05 Fix: v2.24 Minor Changes.
 # 2021_01_11 Fix: v2.25 NFS drive was not unmounted when the backup failed.
-# 2021_05_11 Fix: v2.26 Correct 'rear' command missing false error message 
+#@2021_05_11 Fix: v2.26 Correct 'rear' command missing false error message 
+#@2021_05_12 Update: v2.27 Write more information about ReaR sadmin.cfg in the log.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -102,7 +103,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.26'                              # Your Current Script Version
+    export SADM_VER='2.27'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -400,11 +401,11 @@ rear_housekeeping()
     sadm_write "${SADM_FIFTY_DASH}\n"
     sadm_write "${BOLD}Perform ReaR housekeeping.${NORMAL}\n"
                     
-    sadm_write "\n"
-    sadm_write "SADMIN configuration file indicate that you wish to keep $SADM_REAR_BACKUP_TO_KEEP "  
-    sadm_write "ReaR backup files on '${SADM_REAR_NFS_SERVER}'.\n"
-    sadm_write "\n"
-    sadm_write "List of ReaR backup and ISO actually on NFS Server for ${SADM_HOSTNAME}\n"
+    sadm_writelog " "
+    sadm_writelog "Information coming from ${SADM_CFG_FILE}:"
+    sadm_writelog " - Always keep last $SADM_REAR_BACKUP_TO_KEEP backup on '${SADM_REAR_NFS_SERVER}'"  
+    sadm_writelog " "
+    sadm_writelog "List of ReaR backup and ISO actually on NFS Server for ${SADM_HOSTNAME}"
     ls -ltrh ${REAR_NAME}* | while read wline ; do sadm_write "${wline}\n"; done
 
     # Delete backup that are over the number we want to keep.
@@ -478,8 +479,8 @@ rear_housekeeping()
     # Delete TMP work file before retuning to caller 
     if [ ! -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi
     
-    sadm_write "\n"
-    sadm_write "ReaR Backup Housekeeping ${SADM_SUCCESS}\n"
+    sadm_writelog " "
+    sadm_writelog "ReaR Backup Housekeeping ${SADM_SUCCESS}"
     return $FNC_ERROR
 }
 
