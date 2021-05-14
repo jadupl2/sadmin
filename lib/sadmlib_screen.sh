@@ -464,9 +464,9 @@ sadm_accept_data()
               WMASK="${WMASK} "                                         # Add Space to Mask
               a=$(($a+1))                                               # Incr Counter by 1
               done                                                      # Next iteration
-        if [ "$WDEFAULT" = "NULL" ] ; then WDEFAULT="" ; fi             # Default is Clear if NULL 
-        sadm_writexy $WLINE $WCOL "${REVERSE}${WMASK}"                 # Display Mask in Rvs Video
-        sadm_writexy $WLINE $WCOL "${WDEFAULT}${NORMAL}"            # Display Default Value
+        #if [ "$WDEFAULT" = "NULL" ] ; then WDEFAULT="" ; fi             # Default is Clear if NULL 
+        sadm_writexy $WLINE $WCOL "${REVERSE}${WMASK}"                  # Display Mask in Rvs Video
+        sadm_writexy $WLINE $WCOL "${WDEFAULT}${NORMAL}"                # Display Default Value
 
         # Accept the Data
         sadm_writexy $WLINE $WCOL ""                                    # Pos. Cursor Ready to Input
