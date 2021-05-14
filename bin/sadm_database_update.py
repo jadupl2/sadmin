@@ -37,6 +37,7 @@
 # 2019_10_16 Update: v3.8 Don't update anymore the domain column in the Database (Change with CRUD)
 # 2020_01_13 Update: v3.9 'ReaR' backup version is now updated in DB with info collect on systems.
 # 2020_12_19 Fix: v3.10 Fix Typo error that cause a crash when updating server database.
+#@2021_05_14 Update: v3.11 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -79,7 +80,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.10"                # Current Script Version
+    st.ver              = "3.11"                # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = False                 # Append Existing Log or Create New One
@@ -188,37 +189,37 @@ def process_servers(wconn,wcur,st):
     st.writelog ("PROCESSING ALL ACTIVES SERVERS")
 
     # Check If architecture column is defines in database, if not add the column definition
-    sql = "SHOW COLUMNS FROM server LIKE 'srv_arch%';";                 # Select that show Arch Col.
-    try:
-        wcur.execute(sql);                                              # Execute the Select SQL
-        rows = wcur.fetchall()                                          # FetchAll Result.
-        rc = wcur.rowcount                                              # How many rows returned
-        if rc < 1 :                                                     # If row is less than 1
-            sql  = "ALTER TABLE `server` ADD `srv_arch` VARCHAR(12) "   # Insert Col. Definition SQL
-            sql += "NOT NULL COMMENT 'System Architecture' "            # Insert Col. Definition SQL
-            sql += "AFTER `srv_uptime`;"                                # Insert Col. Definition SQL
-            wcur.execute(sql);                                          # Insert new column in table
-    except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
-        self.enum, self.emsg = error.args                               # Get Error No. & Message
-        print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
-        return (1)                                                      # Return Error to caller
-   
-    # Check If Rear Version column is defines in database, if not add the column definition
-    sql = "SHOW COLUMNS FROM server LIKE 'srv_rear_ver%';";             # Select show Rear Ver Col.
-    try:
-        wcur.execute(sql);                                              # Execute the Select SQL
-        rows = wcur.fetchall()                                          # FetchAll Result.
-        rc = wcur.rowcount                                              # How many rows returned
-        if rc < 1 :                                                     # If row is less than 1
-            sql  = "ALTER TABLE `server` ADD `srv_rear_ver` VARCHAR(7) "   # Insert Col. Definition SQL
-            sql += "NOT NULL COMMENT 'Rear Version' "                   # Insert Col. Definition SQL
-            sql += "AFTER `srv_arch`;"                                  # Insert Col. Definition SQL
-            wcur.execute(sql);                                          # Insert new column in table
-    except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
-        self.enum, self.emsg = error.args                               # Get Error No. & Message
-        print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
-        return (1)                                                      # Return Error to caller
-   
+    #sql = "SHOW COLUMNS FROM server LIKE 'srv_arch%';";                 # Select that show Arch Col.
+    #try:
+    #    wcur.execute(sql);                                              # Execute the Select SQL
+    #    rows = wcur.fetchall()                                          # FetchAll Result.
+    #    rc = wcur.rowcount                                              # How many rows returned
+    #    if rc < 1 :                                                     # If row is less than 1
+    #        sql  = "ALTER TABLE `server` ADD `srv_arch` VARCHAR(12) "   # Insert Col. Definition SQL
+    #        sql += "NOT NULL COMMENT 'System Architecture' "            # Insert Col. Definition SQL
+    #        sql += "AFTER `srv_uptime`;"                                # Insert Col. Definition SQL
+    #        wcur.execute(sql);                                          # Insert new column in table
+    #except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
+    #    self.enum, self.emsg = error.args                               # Get Error No. & Message
+    #    print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
+    #    return (1)                                                      # Return Error to caller
+   #
+    ## Check If Rear Version column is defines in database, if not add the column definition
+    #sql = "SHOW COLUMNS FROM server LIKE 'srv_rear_ver%';";             # Select show Rear Ver Col.
+    #try:
+    #    wcur.execute(sql);                                              # Execute the Select SQL
+    #    rows = wcur.fetchall()                                          # FetchAll Result.
+    #    rc = wcur.rowcount                                              # How many rows returned
+    #    if rc < 1 :                                                     # If row is less than 1
+    #        sql  = "ALTER TABLE `server` ADD `srv_rear_ver` VARCHAR(7) "   # Insert Col. Definition SQL
+    #        sql += "NOT NULL COMMENT 'Rear Version' "                   # Insert Col. Definition SQL
+    #        sql += "AFTER `srv_arch`;"                                  # Insert Col. Definition SQL
+    #        wcur.execute(sql);                                          # Insert new column in table
+    #except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
+    #    self.enum, self.emsg = error.args                               # Get Error No. & Message
+    #    print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
+    #    return (1)                                                      # Return Error to caller
+   #
     # Read All Actives Servers
     sql  = "SELECT srv_name, srv_desc, srv_domain, srv_osname  "
     sql += " FROM server WHERE srv_active = %s " % ('True')
@@ -230,17 +231,36 @@ def process_servers(wconn,wcur,st):
         self.enum, self.emsg = error.args                               # Get Error No. & Message
         print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
         return (1)
+    except:
+        print ("Error: unable to fetch data")
+
+    for row in rows:
+        #wname = row[0]
+        #wdesc = row[1]
+        #wdomain = row[2]
+        #wos = row[3]
+        wname = row['srv_name']
+        wdesc = row['srv_desc'] 
+        wdomain = row['srv_domain']
+        wos = row['srv_osname']
+        print ("wname = %s,wdesc = %s,wdomain = %s,wos = %s" % (wname, wdesc, wdomain, wos ))
+
+
+
 
     # Process each server
     lineno = 1
     total_error = 0
     for row in rows:
-        #st.writelog ("%02d %s" % (lineno, row))
-        wname       = row[0]                                            # Extract Server Name
-        wdesc       = row[1]                                            # Extract Server Desc.
-        wdomain     = row[2]                                            # Extract Server Domain Name
-        wos         = row[3]                                            # Extract Server O/S Name
-        #wsadmin_dir = row[4]                                            # Extract SADMIN Root Dir.
+        st.writelog ("%02d %s" % (lineno, row))
+        #wname = row[0]
+        #wdesc = row[1]
+        #wdomain = row[2]
+        #wos = row[3]
+        wname = row['srv_name']
+        wdesc = row['srv_desc'] 
+        wdomain = row['srv_domain']
+        wos = row['srv_osname']
         st.writelog("")                                                 # Insert Blank Line
         st.writelog (('-' * 40))                                        # Insert Dash Line
         st.writelog ("Processing (%d) %-15s - os:%s" % (lineno,wname+"."+wdomain,wos))
