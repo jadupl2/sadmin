@@ -57,6 +57,7 @@
 # 2020_12_24 Update: v3.14 CentOSStream is CENTOS
 #@2021_05_02 Fix: v3.15 Fix typo error in 'locate_command' method.
 #@2021_05_11 Fix: v3.16 Fix Path to which command was not set properly because of defined alias.
+#@2021_05_14 Update: v3.17 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -128,7 +129,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.16"                                # This Library Version
+        self.libver             = "3.17"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -313,7 +314,7 @@ class sadmtools():
 
         # No Connection to Database is possible if not on the SADMIN Server
         if self.get_fqdn() != self.cfg_server :                         # Only on SADMIN
-           print ("You are trying to connect to Database and aren't on SADMIN Server %s " % (self.cfg_server))
+           print ("Can't connect to database if you aren't on SADMIN Server %s " % (self.cfg_server))
            sys.exit(1)                                                 # Exit Pgm with Error Code 1
 
         # No Connection to DAtabase if user decided not to use it.
@@ -331,10 +332,17 @@ class sadmtools():
 
         # Try to connect to Database
         try :
-            self.conn=pymysql.connect(self.cfg_dbhost,self.cfg_rw_dbuser,self.cfg_rw_dbpwd,self.cfg_dbname)
+            self.conn = pymysql.connect(host=self.cfg_dbhost,
+                             user=self.cfg_rw_dbuser,
+                             password=self.cfg_rw_dbpwd,
+                             database=self.cfg_dbname,
+#                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+
+            #self.conn=pymysql.connect(self.cfg_dbhost,self.cfg_rw_dbuser,self.cfg_rw_dbpwd,self.cfg_dbname)
         except pymysql.err.OperationalError as error : 
             self.enum, self.emsg = error.args                           # Get Error No. & Message
-            self.writelog("Error connecting to Database '%s'" % (self.cfg_dbname))
+            self.writelog("Error connecting to database '%s'" % (self.cfg_dbname))
             errmsg  = ">>>>>>>>>>>>>"                                   # Error Message Part 1    
             errmsg += "'%s' " % (self.enum)                             # Error Message Part 2
             errmsg += "'%s' " % (self.emsg)                             # Error Message Part 3
@@ -647,8 +655,8 @@ class sadmtools():
     #                                 RETURN THE SERVER FQDN
     # ----------------------------------------------------------------------------------------------
     def get_fqdn(self):
-        #return (socket.getfqdn())
-        return ("%s.%s" % (self.hostname,self.get_domainname()))
+        return (socket.getfqdn())
+        #return ("%s.%s" % (self.hostname,self.get_domainname()))
 
     # ----------------------------------------------------------------------------------------------
     #                              RETURN THE IP OF THE CURRENT HOSTNAME
