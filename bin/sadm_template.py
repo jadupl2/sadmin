@@ -28,6 +28,7 @@
 # 2016_05_18 New: v1.0 Initial Version
 #@2019_05_19 Refactoring: v2.0 Major revamp, include getopt option, new debug variable.
 #@2019_09_03 Update: v2.1 Change default value for max line in rch (35) and log (500) file.
+#@2021_05_14 Fix: v2.2 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -88,7 +89,7 @@ def setup_sadmin():
     st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
-    st.ver              = "2.1"                 # Current Script Version
+    st.ver              = "2.2"                 # Current Script Version
     st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
     st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
     st.log_header       = True                  # Show/Generate Header in script log (.log)
@@ -141,21 +142,21 @@ def process_servers(wconn,wcur,st):
     lineno = 1                                                          # Server Counter Start at 1
     error_count = 0                                                     # Error Counter
     for row in rows:                                                    # Process each server row
-        wname       = row[0]                                            # Extract Server Name
-        wdesc       = row[1]                                            # Extract Server Desc.
-        wdomain     = row[2]                                            # Extract Server Domain Name
-        wos         = row[3]                                            # Extract Server O/S Name
-        wostype     = row[4]                                            # Extract Server O/S Type
-        wsporadic   = row[5]                                            # Extract Server Sporadic ?
-        wmonitor    = row[6]                                            # Extract Server Monitored ?
-        wosversion  = row[7]                                            # Extract Server O/S Version
+        wname       = row['srv_name']                                   # Extract Server Name
+        wdesc       = row['srv_desc']                                   # Extract Server Desc.
+        wdomain     = row['srv_domain']                                 # Extract Server Domain Name
+        wos         = row['srv_osname']                                 # Extract Server O/S Name
+        wostype     = row['srv_ostype']                                 # Extract Server O/S Type
+        wsporadic   = row['srv_sporadic']                               # Extract Server Sporadic ?
+        wmonitor    = row['srv_monitor']                                # Extract Server Monitored ?
+        wosversion  = row['srv_osversion']                              # Extract Server O/S Version
         wfqdn   = "%s.%s" % (wname,wdomain)                             # Construct FQDN 
         st.writelog("")                                                 # Insert Blank Line
         st.writelog (('-' * 40))                                        # Insert Dash Line
         st.writelog ("Processing (%d) %-15s - %s %s" % (lineno,wfqdn,wos,wosversion)) # Server Info
 
         # If Debug is activated - Display Monitoring & Sporadic Status of Server.
-        if sadm_debug > 4 :                                             # If Debug Level > 4 
+        if st.debug > 4 :                                               # If Debug Level > 4 
             if wmonitor :                                               # Monitor Collumn is at True
                 st.writelog ("Monitoring is ON for %s" % (wfqdn))       # Show That Monitoring is ON
             else :
@@ -266,7 +267,7 @@ def main(argv):
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
 
     # Main Processing
-    #st.exit_code = process_servers(conn,cur,st)                        # Process All Active Servers 
+    st.exit_code = process_servers(conn,cur,st)                        # Process All Active Servers 
     # OR 
     st.exit_code = main_process(st)                                     # Process Not Using Database
  
