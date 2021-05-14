@@ -24,11 +24,12 @@
 # 2018-09_22 v2.0 Fix Problem with Updating Last Ping Date
 # 2018-11_09 v2.1 DataBase Connect/Disconnect revised.
 # 2019_03_30 Fix: v2.2 Fix problem reading the fping result, database update fix.
-#@2019_11_05 Update: v2.3 Restructure code for performance.
-#@2019_11_06 Fix: v2.4 Ping response was not recorded properly
-#@2020_04_25 New: v3.0 Major update, more portable, No longer use arp-scan.
-#@2020_04_27 New: v3.1 Show full Ping and change Date/Time.
-#@2020_04_30 Update: v3.2 Install module 'getmac', if it's not installed.
+# 2019_11_05 Update: v2.3 Restructure code for performance.
+# 2019_11_06 Fix: v2.4 Ping response was not recorded properly
+# 2020_04_25 New: v3.0 Major update, more portable, No longer use arp-scan.
+# 2020_04_27 New: v3.1 Show full Ping and change Date/Time.
+# 2020_04_30 Update: v3.2 Install module 'getmac', if it's not installed.
+# 2021_05_14 Fix: v3.3 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -96,7 +97,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.2"                 # Current Script Version
+    st.ver              = "3.3"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = False                 # Append Existing Log or Create New One
@@ -108,7 +109,7 @@ def setup_sadmin():
     st.exit_code        = 0                     # Script Exit Code for you to use
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
-    #st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    #st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSuccess 3=Allways
     #st.cfg_alert_group  = "default"            # Valid Alert Group are defined in alert_group.cfg
     #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
@@ -389,16 +390,23 @@ def scan_network(st,snet,wconn,wcur) :
             if (dberr != 0) :                                           # Did the insert went well ?
                 st.writelog("[ Error ] %d adding '%s' to database" % (dberr,hip))  # Show Error & Mess.
             else :
-                st.writelog("[ OK ] Inserted in DB = IP=%s Hostname:.%s. Mac:.%s. Vendor=.%s. Active=.%d.\n" % (hip,hname,hmac,hmanu,hactive ))
+                st.writelog("[ OK ] Inserted in DB = IP=%s Hostname:.%s. Mac:.%s. Vendor=.%s. Active=.%d." % (hip,hname,hmac,hmanu,hactive ))
             continue                                                    # Continue with next IP
 
         # RECORD WAS FOUND - SAVE ACTUAL ROW INFORMATION
-        row_hostname    = dbrow[2]                                      # Save DB Hostname
-        row_mac         = dbrow[3]                                      # Save DB Mac Adress
-        row_manu        = dbrow[4]                                      # Save DB Vendor
-        row_ping        = dbrow[5]                                      # Save Last Ping Result(0,1)
-        row_pingdate    = dbrow[6]                                      # Save Last Ping Date
-        row_datechg     = dbrow[7]                                      # Save Last Mac/Name Chg Date
+        #pdb.set_trace()                                                        # Activate Python Debugging
+        row_hostname = dbrow['net_hostname']                             # Save Hostname
+        row_mac      = dbrow['net_mac']                                  # Save DB Mac Adress
+        row_manu     = dbrow['net_man']                                  # Save DB Vendor
+        row_ping     = dbrow['net_ping']                                 # Save Last Ping Result(0,1)
+        row_pingdate = dbrow['net_date_ping']                            # Save Last Ping Date
+        row_datechg  = dbrow['net_date_update']                          # Save Last Mac/Name Chg Date
+        #row_hostname    = dbrow[2]                                      # Save DB Hostname
+        #row_mac         = dbrow[3]                                      # Save DB Mac Adress
+        #row_manu        = dbrow[4]                                      # Save DB Vendor
+        #row_ping        = dbrow[5]                                      # Save Last Ping Result(0,1)
+        #row_pingdate    = dbrow[6]                                      # Save Last Ping Date
+        #row_datechg     = dbrow[7]                                      # Save Last Mac/Name Chg Date
         if (DEBUG) :
             st.writelog("DB Row Found: hostname %s, Mac %s, Ping %s, DatePing %s, DateUpdate %s" 
             % (row_hostname,row_mac,row_ping,row_pingdate,row_datechg))
