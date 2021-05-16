@@ -109,17 +109,22 @@ start_epoch         = ""                                                # Script
 #                                   SADM Python Tools Library
 #===================================================================================================
 class sadmtools():
-
-    #-----------------------------------------------------------------------------------------------
-    #  INITIALIZATION OF SADM TOOLS------------------------------------------------------
-    #-----------------------------------------------------------------------------------------------
-    def __init__(self):
-        """ Class sadmtools: Series of method to that can be used to administer a Linux/Aix Farm.
+    """ Series of method to that can be used to administer a Linux/Aix Farm.
 
         Requirements : 
             - You MUST have an environment variable named "SADMIN" that contain name of the root
               install directory (SADMIN="/opt/sadmin") of the SADMIN tools.
-            - You 
+            - You MUST include the Global variables of the "SADMIN Section" in your script. 
+    """
+
+    # SADMIN Tools Initialization
+    def __init__(self):
+        """ __init__ : Series of method to that can be used to administer a Linux/Aix Farm.
+
+        Requirements : 
+            - You MUST have an environment variable named "SADMIN" that contain name of the root
+              install directory (SADMIN="/opt/sadmin") of the SADMIN tools.
+            - You MUST include the Global variables of the "SADMIN Section" in your script. 
         """
 
         # Making Sure SADMIN Environment Variable is Define & import 'sadmlib_std.py' if can be found.
