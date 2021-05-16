@@ -59,6 +59,7 @@
 #@2021_05_11 Fix: v3.16 Fix Path to which command was not set properly because of defined alias.
 #@2021_05_14 Update: v3.17 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
 #@2021_05_16 Update: v3.18 Adjustment for MacOS Big Sur
+# Starting a new version of this library
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
