@@ -48,10 +48,13 @@
 #===================================================================================================
 #
 try :
-    import os,time,sys,pdb,socket,datetime,glob,getopt,fnmatch      # Import Std Python3 Modules
+    import os, time, sys, pdb, socket, datetime, glob, getopt, fnmatch
+    import sadmlib_std as sadm
 except ImportError as e:                                            
     print ("Import Error : %s " % e)
     sys.exit(1)
+
+
 #pdb.set_trace()                                                    # Activate Python Debugging
 
 
@@ -66,22 +69,16 @@ show_password       = "N"                                               # Don't 
 show_storix         = "N"                                               # Don't show Storix Info
 show_textbelt       = "N"                                               # Don't show TextBelt Key
 
+
+
 # --------------------------------------------------------------------------------------------------
+# SADMIN SECTION
 # Setup SADMIN Global Variables and Load SADMIN Python Library
 # --------------------------------------------------------------------------------------------------
 def setup_sadmin():
 
-    # Load SADMIN Standard Python Library Module ($SADMIN/lib/sadmlib_std.py).
-    try :
-        SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir.
-        sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
-        import sadmlib_std as sadm                                      # Import SADMIN Python Libr.
-    except ImportError as e:                                            # If Error importing SADMIN 
-        print ("Error Importing SADMIN Module: %s " % e)                # Advise User of Error
-        sys.exit(1)                                                     # Go Back to O/S with Error
-    
     # Create Instance of SADMIN Tool
-    st = sadm.sadmtools()                       # Create [S]ADMIN [T]ools instance (Setup Dir.,Var.)
+    #st = sadm.sadmtools()                       # Create [S]ADMIN [T]ools instance (Setup Dir.,Var.)
 
     # You can use variable below BUT DON'T CHANGE THEM - They are used by SADMIN Standard Library.
     st.pn               = os.path.basename(sys.argv[0])                 # Script name with extension
@@ -1133,6 +1130,7 @@ def main(argv):
        print ("Process aborted")                                        # Process Aborted Msg
        sys.exit(1)                                                      # Exit with Error Code
 
+    st = sadm.sadmtools()                                               # [S]ADMIN [T]ools Instance 
     st = setup_sadmin()                                                 # Setup SADMIN Tool Instance
 
     # Evaluate Command Line Switch Options Upfront

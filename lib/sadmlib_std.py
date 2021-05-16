@@ -114,7 +114,12 @@ class sadmtools():
     #  INITIALIZATION OF SADM TOOLS------------------------------------------------------
     #-----------------------------------------------------------------------------------------------
     def __init__(self):
-        """ Class sadmtool: Series of function to that can be used to administer a Linux/Aix Farm.
+        """ Class sadmtools: Series of method to that can be used to administer a Linux/Aix Farm.
+
+        Requirements : 
+            - You MUST have an environment variable named "SADMIN" that contain name of the root
+              install directory (SADMIN="/opt/sadmin") of the SADMIN tools.
+            - You 
         """
 
         # Making Sure SADMIN Environment Variable is Define & import 'sadmlib_std.py' if can be found.
@@ -538,8 +543,9 @@ class sadmtools():
 
     # ----------------------------------------------------------------------------------------------
     #                         Write Log to Log File, Screen or Both
-    # ----------------------------------------------------------------------------------------------
+  
     def writelog(self,sline,stype="normal"):
+    
         global FH_LOG_FILE
         now = datetime.datetime.now()
         part1 = now.strftime("%Y.%m.%d %H:%M:%S") + " - "
@@ -836,6 +842,10 @@ class sadmtools():
             if (self.get_osmajorversion() == "10.12") : oscodename="Sierra"
             if (self.get_osmajorversion() == "10.13") : oscodename="High Sierra"
             if (self.get_osmajorversion() == "10.14") : oscodename="Mojave"
+            #if (self.get_osmajorversion() == "11.02") : oscodename="Big Sur"
+            xstr = '/SOFTWARE LICENSE AGREEMENT FOR macOS/'
+            xfile='/System/Library/CoreServices/Setup Assistant.app/Contents/Resources/en.lproj/OSXSoftwareLicense.rtf'
+            wcmd="awk $xstr $xfile |awk -F 'macOS ' '{print $NF}' |awk '{print substr($0, 0, length($0)-1)}'"
         if self.os_type == "LINUX":
             wcmd = "%s %s" % (self.lsb_release,"-sc")
             ccode, cstdout, cstderr = self.oscommand(wcmd)
