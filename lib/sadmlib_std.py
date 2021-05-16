@@ -58,6 +58,7 @@
 #@2021_05_02 Fix: v3.15 Fix typo error in 'locate_command' method.
 #@2021_05_11 Fix: v3.16 Fix Path to which command was not set properly because of defined alias.
 #@2021_05_14 Update: v3.17 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
+#@2021_05_16 Update: v3.18 Adjustment for MacOS Big Sur
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -139,7 +140,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.17"                                # This Library Version
+        self.libver             = "3.18"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -847,10 +848,12 @@ class sadmtools():
             if (self.get_osmajorversion() == "10.12") : oscodename="Sierra"
             if (self.get_osmajorversion() == "10.13") : oscodename="High Sierra"
             if (self.get_osmajorversion() == "10.14") : oscodename="Mojave"
-            #if (self.get_osmajorversion() == "11.02") : oscodename="Big Sur"
-            xstr = '/SOFTWARE LICENSE AGREEMENT FOR macOS/'
-            xfile='/System/Library/CoreServices/Setup Assistant.app/Contents/Resources/en.lproj/OSXSoftwareLicense.rtf'
-            wcmd="awk $xstr $xfile |awk -F 'macOS ' '{print $NF}' |awk '{print substr($0, 0, length($0)-1)}'"
+            if (self.get_osmajorversion() == "10.15") : oscodename="Catalina"
+            if (self.get_osmajorversion() == "11.2")  : oscodename="Big Sur"
+            #xstr='SOFTWARE LICENSE AGREEMENT FOR macOS'
+            #xfile='/System/Library/CoreServices/Setup Assistant.app/Contents/Resources/en.lproj/OSXSoftwareLicense.rtf'
+            #wcmd='grep  "$xstr" "$xfile" | awk -F "macOS "  { print $NF} '
+            #ccode, oscodename, cstderr = self.oscommand(wcmd)
         if self.os_type == "LINUX":
             wcmd = "%s %s" % (self.lsb_release,"-sc")
             ccode, cstdout, cstderr = self.oscommand(wcmd)
