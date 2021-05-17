@@ -405,7 +405,7 @@ class sadmtools():
                 #print (">>>>>>>>>>>>>",e.message,e.args)               # Print Error No. & Message
                 print (">>>>>>>>>>>>>",e.args)                          # Print Error No. & Message
                 return (1)                                              # return (1) to Show Error
-        return (0)
+        return(0)
 
 
     # ----------------------------------------------------------------------------------------------
@@ -578,7 +578,7 @@ class sadmtools():
 
 
     # ----------------------------------------------------------------------------------------------
-    #                RETURN THE OS TYPE (LINUX, AIX) -- ALWAYS RETURNED IN UPPERCASE
+    #  EXECUTE the command received 
     # ----------------------------------------------------------------------------------------------
     def oscommand(self,command) :
         if self.lib_debug > 8 : self.writelog ("In sadm_oscommand function to run command : %s" % (command))
@@ -628,7 +628,7 @@ class sadmtools():
         packtype=""                                                     # Initial Packaging is None
         if (self.locate_command('rpm')   != "") : packtype="rpm"        # Is rpm command on system ?
         if (self.locate_command('dpkg')  != "") : packtype="deb"        # is deb command on system ?
-        if (self.locate_command('lslpp') != "") : packtype="aix"        # Is lslpp cmd on system ?
+        if (self.locate_command('lslpp') != "") : packtype="lpp"        # Is lslpp cmd on system ?
         if (self.locate_command('launchctl') != "") : packtype="dmg"    # launchctl MacOS on system?
         if (packtype == ""):                                            # If unknow/unsupported O/S
             self.writelog ('None of these commands are found (rpm, pkg, dmg or lslpp absent)')
