@@ -78,7 +78,7 @@ show_textbelt       = "N"                                               # Don't 
 def setup_sadmin():
 
     # Create Instance of SADMIN Tool
-    #st = sadm.sadmtools()                       # Create [S]ADMIN [T]ools instance (Setup Dir.,Var.)
+    st = sadm.sadmtools()                       # Create [S]ADMIN [T]ools instance (Setup Dir.,Var.)
 
     # You can use variable below BUT DON'T CHANGE THEM - They are used by SADMIN Standard Library.
     st.pn               = os.path.basename(sys.argv[0])                 # Script name with extension
