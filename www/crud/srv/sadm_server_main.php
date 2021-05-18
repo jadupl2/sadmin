@@ -21,7 +21,7 @@
 #
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
-# ==================================================================================================
+# =======================server===========================================================================
 # ChangeLog
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
@@ -196,7 +196,7 @@ function display_data($con,$row) {
 #
    
     # DISPLAY PAGE HEADING
-    $title1="System Maintenance";                                       # Heading 1 Line
+    $title1="SADMIN Client C.R.U.D.";                                       # Heading 1 Line
     $title2="[C]reate [R]ead [U]pdate [D]elete";                        # Heading 2 Line
     display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
 

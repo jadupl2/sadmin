@@ -103,7 +103,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
 # ==================================================================================================
     
     # START OF FORM - DISPLAY FORM READY TO ACCEPT DATA
-    display_lib_heading("NotHome","Create server page","",$SVER);       # Display Content Heading
+    display_lib_heading("NotHome","Create SADMIN Client","",$SVER);       # Display Content Heading
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_srv_form ($con,$row,"Create");                              # Display Form Default Value
     echo "<input type='hidden' value='1' name='submitted' />";          # Set submitted var. to 1
