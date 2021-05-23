@@ -277,6 +277,13 @@ function cmd_options()
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
 
+    #if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root
+    #    then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
+    #         sadm_write "Process aborted.\n"                            # Abort advise message
+    #         sadm_stop 1                                                # Close and Trim Log
+    #         exit 1                                                     # Exit To O/S with Error
+    #fi
+
     # If you want this script to be run only on the SADMIN server, uncomment the lines below.
     #if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
     #    then sadm_write "Script can only be run on (${SADM_SERVER}), process aborted.\n"
