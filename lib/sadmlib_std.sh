@@ -262,6 +262,8 @@ export SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                      # Defaul
 
 # Define 3 temporaries file name, that can be use by the user.
 # They are deleted automatically by the sadm_stop() function (If they exist).
+#TMP_FILE1="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE1  # Temp File 1
+#TMP_FILE2="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE2  # Temp File 2
 if [ ! -z $SADM_TMP_FILE1 ] || [ -z "$SADM_TMP_FILE1" ]                 # Var blank or don't exist
    then export SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"       # Temp File 1 for you to use
 fi 
@@ -2757,4 +2759,3 @@ write_alert_history() {
     export SADM_SSH_CMD="${SADM_SSH} -qnp${SADM_SSH_PORT}"              # SSH Command to SSH CLient
     #export SADM_USERNAME=$(whoami)                                      # Current User Name
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "Library Loaded,\n" ; fi
-    
