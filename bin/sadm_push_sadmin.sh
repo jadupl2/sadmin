@@ -44,75 +44,72 @@
 # 2020_01_26 Update: v2.16 Add Option -c [hostname]  to sync of SADMIN server version to one client.
 # 2020_03_04 Update: v2.17 Script was rename from sadm_rsync_sadmin.sh to sadm_push_sadmin.sh
 # 2020_04_23 Update: v2.18 Replace sadm_writelog by sadm_write & enhance log output.
-# 2020_05_23 Update: v2.19 Changing the way to get SADMIN variable in /etc/environment 
-# 2020_07_26 Update: v2.20 Add usr/lib to sync process when -u option is used.
-# 2020_09_10 Update: v2.21 Create local processing server data server directory (if don't exist)
-# 2020_09_12 Update: v2.22 When -u is used, the usr/cfg directory is now also push to client.
-# 2020_10_18 Update: v2.23 Correct error message when no system are active.
-# 2020_10_29 Fix: v2.24 If comma was used in server description, it cause delimiter problem.
-# 2020_11_04 Fix: v2.25 Change , to ; in SQL output file.
-# 2020_11_05 Update: v2.26 Change msg written to log & no alert while o/s update is running.
-# 2020_11_27 Update: v2.27 For command line uniformity , option '-c' changed to '-n'
+# 2020_05_23 Update: v2.19 Changing the way sadm_show_version uniformity , option '-c' changed to '-n'
 # 2020_12_12 Update: v2.28 Add pushing of alert_group.cfg alert_slack.cfg to client
 # 2021_04_24 Fix: v2.29 Correct typo in error message.
+#@2021_05_22 Update: v2.30 Update code section, 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
 
-#===================================================================================================
-# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
-# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
+# ---------------------------------------------------------------------------------------
+# SADMIN CODE SECTION 1.50
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
+# ---------------------------------------------------------------------------------------
 
-    # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-    if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
-        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
-             EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
-             if [ $? -eq 0 ]                                            # Yes it is 
-                then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                     printf "'SADMIN' Environment variable was temporarily set to ${SADMIN}."
-                else exit 1                                             # No SADMIN Env. Var. Exit
-             fi
-    fi 
+# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    
+    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null 
+         if [ $? -eq 0 ]                                   # Found SADMIN in /etc/env.
+            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                 printf "'SADMIN' environment variable temporarily set to ${SADMIN}.\n"
+            else exit 1                                    # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
-    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
-    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
+export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.29'                              # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
-    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
-    export SADM_DEBUG=6                                 # Debug Level - 0=NoDebug Higher=+Verbose
-    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
-    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
-    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
-    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
+# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='2.30'                                     # Script Version
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy ?
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. LockFile
+export SADM_USE_RCH="Y"                                    # Update RCH HistoryFile 
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
+export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
+export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library Functions
-    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
-    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
-    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
 
-#---------------------------------------------------------------------------------------------------
-# Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# They can be overridden here, on a per script basis (if needed).
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
-    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
-    #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#===================================================================================================
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Server
+# ---------------------------------------------------------------------------------------
+
 
 
 
@@ -130,13 +127,13 @@ export SYNC_CLIENT=""                                                   # -c SAD
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${SADM_PN} usage : -d[0-9] -n[hostname] -u -v -s -h "
+    printf "\n${SADM_PN} usage : [-d 0-9] [-n hostname] [-u] [-v] [-s] [-h] "
     printf "\n\t-d   (Debug Level [0-9])"
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-v   (Show Script Version Info)"
-    printf "\n\t-u   (Also sync $SADMIN/usr/bin to all active clients)" 
+    printf "\n\t-u   (Also sync \$SADMIN/usr/bin to all active clients)" 
     printf "\n\t-n   (Push SADMIN version only to system specified)" 
-    printf "\n\t-s   (Also sync $SADMIN/sys to all active clients)" 
+    printf "\n\t-s   (Also sync \$SADMIN/sys to all active clients)" 
     printf "\n\n" 
 }
 
@@ -331,7 +328,7 @@ process_servers()
 
 
         # RSYNC ARRAY OF IMPORTANT DIRECTORIES TO SADM CLIENT
-        rem_std_dir_to_rsync=( bin sys pkg lib )                        # Directories array to sync
+        rem_std_dir_to_rsync=( bin pkg lib )                        # Directories array to sync
         for WDIR in "${rem_std_dir_to_rsync[@]}"
           do
           if [ $SADM_DEBUG -gt 5 ]                                      # If Debug is Activated
@@ -385,7 +382,7 @@ process_servers()
         fi
 
         # RSYNC ALL DOT CONFIGURATION(TEMPLATE) FILES IN $SADMIN/CFG TO ALL ACTIVES CLIENTS
-        CFG_EXCL="--exclude .dbpass --exclude .rch_conversion_done "
+        CFG_EXCL="--exclude .dbpass "
         if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
             then sadm_write "rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/\n"
         fi
@@ -476,11 +473,11 @@ process_servers()
 function cmd_options()
 {
 
-    # Switch for Help Usage (-h), Activate Debug Level (-d[1-9]), 
-    # -u rsync $SADMIN/usr/bin to clients
-    # -s rsync $SADMIN/sys to clients
-    # -c rsync Clients Hostname Name to update (Comma separated, no space between them: host1,host2)
-    while getopts "hsun:d:" opt ; do                                   # Loop to process Switch
+    # Switch for Help Usage (-h), Activate Debug Level (-d[1-9]), -v show version
+    # -u rsync $SADMIN/usr/bin to clients, 
+    # -s rsync $SADMIN/sys to clients, 
+    # -n rsync Clients Hostname Name to update (Comma separated, no space between them: host1,host2)
+    while getopts "hvsun:d:" opt ; do                                   # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
