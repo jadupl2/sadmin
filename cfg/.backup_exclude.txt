@@ -1,4 +1,4 @@
-# V1.5 Initial Backup List 
+# V1.5 Initial Backup Exclude List 
 # Exclude these files & directories from Backup
 # -----------------------------------------------
 *.iso 
