@@ -109,9 +109,9 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
-    printf "\n\t${BOLD}${YELLOW}-d${NORMAL} Set Debug (Verbose) Level [0-9]"
-    printf "\n\t${BOLD}${YELLOW}-h${NORMAL} Display this help message)"
+    printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0" "${NORMAL}"
+    printf "\n\t${BOLD}${YELLOW}-d${NORMAL} Set Debug (verbose) Level [0-9]"
+    printf "\n\t${BOLD}${YELLOW}-h${NORMAL} Display this help message"
     printf "\n\t${BOLD}${YELLOW}-v${NORMAL} Show script version info"
     printf "\n\n" 
 }
