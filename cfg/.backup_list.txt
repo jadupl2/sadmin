@@ -1,9 +1,10 @@
-# V1.4 Template - Initial Backup List 
+# v1.5 Initial Backup List - template
 # Notes: Socket Files are automatically excluded
+# One file or directory per line
 # -----------------------------------------------
 #
 $SADMIN
 /home 
 /etc 
 /root
-/var/spool/cron
+/var
