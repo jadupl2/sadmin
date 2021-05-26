@@ -30,9 +30,10 @@
 # 2019_08_19 Update: v1.6 Some typo error and show 'Backup isn't activated' when no schedule define.
 # 2019_12_01 Update: v1.7 Backup will run daily (Remove entry fields for specify day of backup)
 #       If not run every day, they could miss the day of weekly & monthly and date of Yearly backup.
-#@2020_01_03 Update: v1.8 Web Page disposition and input was changed.
-#@2020_01_13 Update: v1.9 Enhance Web Appearance and color. 
-#@2020_01_18 Update: v2.0 Reduce width of text-area for include,exclude list to fit on Ipad.
+# 2020_01_03 Update: v1.8 Web Page disposition and input was changed.
+# 2020_01_13 Update: v1.9 Enhance Web Appearance and color. 
+# 2020_01_18 Update: v2.0 Reduce width of text-area for include,exclude list to fit on Ipad.
+#@2021_05_25 Update: v2.1 Fix depreciated function eregi_replace warning message
 # ==================================================================================================
 #
 #
@@ -109,7 +110,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -192,12 +193,15 @@ function Write_BackupList($server_name, $oldFileHash) {
     $newFileHash = sha1($_POST["backuplist"]);                          # Calc. Edited File Hash
     if ($newFileHash != $oldFileHash) {                                 # Sha1 Before and After
         $fp = fopen($SADM_BACKUP_LIST, "w");                            # File Modified 
-        $data = $_POST["backuplist"];                                   # Put TextArea in data
+        #$data = $_POST["backuplist"];                                   # Put TextArea in data
+        #$data = eregi_replace("\r","",$_POST["backuplist"]);
+        $data = str_replace("\r", '', $_POST["backuplist"]);
+        #$data = preg_replace("\r","",$data);
         fwrite($fp, $data);                                             # Write Data
         fclose($fp);                                                    # Close backup_list.tmp
     }else{
         if (file_exists($SADM_BACKUP_LIST)) {                           # If Modified version exist
-            unlink($SADM_BACKUP_LIST);                                  # Not Modifed then Delete it
+            unlink($SADM_BACKUP_LIST);                                  # Not Modified then Delete it
         }
     }
 }
@@ -211,7 +215,10 @@ function Write_BackupExclude($server_name, $oldFileHash) {
     $newFileHash = sha1($_POST["backupexclude"]);                       # Calc. Edited File Hash
     if ($newFileHash != $oldFileHash) {                                 # Sha1 Before and After
         $fp = fopen($SADM_BACKUP_EXCLUDE, "w");                         # Create backup_exclude.tmp
-        $data = $_POST["backupexclude"];                                # Put TextArea in data
+        #$data = $_POST["backupexclude"];                                # Put TextArea in data
+        #$data = eregi_replace("\r","",$_POST["backupexclude"]);
+        #$data = preg_replace("\r","",$_POST["backupexclude"]);
+        $data = str_replace("\r", '', $_POST["backupexclude"]);
         fwrite($fp, $data);                                             # Write data to disk
         fclose($fp);                                                    # Close backup_exclude.tmp
     }else{
