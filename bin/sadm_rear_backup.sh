@@ -72,6 +72,7 @@
 # 2021_01_11 Fix: v2.25 NFS drive was not unmounted when the backup failed.
 #@2021_05_11 Fix: v2.26 Correct 'rear' command missing false error message 
 #@2021_05_12 Update: v2.27 Write more information about ReaR sadmin.cfg in the log.
+#@2021_06_02 Update: v2.28 Reformat section of the log
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -103,7 +104,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.27'                              # Your Current Script Version
+    export SADM_VER='2.28'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -269,6 +270,8 @@ create_etc_rear_site_conf()
 }
 
 
+
+
 # --------------------------------------------------------------------------------------------------
 # Rear Backup preparation 
 #   - Test if rear executable exist, if not return error to caller.
@@ -280,8 +283,7 @@ create_etc_rear_site_conf()
 # --------------------------------------------------------------------------------------------------
 rear_preparation()
 {
-    sadm_write "${BOLD}Perform ReaR preparation.${NORMAL}\n"            # Feed User and Log
-    sadm_write "\n"                                                     # Write white line
+    sadm_write "${BOLD}STARTING ReaR PREPARATIONs${NORMAL}\n"            # Feed User and Log
 
     # Check if REAR is not installed - Abort Process 
     ${SADM_WHICH} rear >/dev/null 2>&1                                  # rear command is found ?
@@ -308,7 +310,6 @@ rear_preparation()
      fi
 
     # Mount the NFS Mount point 
-    sadm_write "\n" 
     sadm_write "Mount the NFS share on $SADM_REAR_NFS_SERVER system.\n"
     umount ${NFS_MOUNT} > /dev/null 2>&1                                # Make sure not already mount
     sadm_write "mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} "
@@ -361,9 +362,9 @@ rear_preparation()
                  then sadm_write "$SADM_ERROR trying to move $REAR_CUR_ISO to $REAR_NEW_ISO \n"
                       sadm_write "***** Rear Backup Abort *****\n"
                       return 1                                          # Back to caller with error
-                 else sadm_write "$SADM_OK \n"
+                 else sadm_writelog "Rename previous ISO `basename $REAR_CUR_ISO` to `basename $REAR_NEW_ISO` $SADM_OK" 
              fi
-        else sadm_write "New ISO will be created under the name of ${REAR_CUR_ISO}.\n"
+        else sadm_writelog "New ISO will be created under the name of ${REAR_CUR_ISO}."
     fi
     
     # If Last Backup tar.gz Exist, rename it to 'read_hostname_last modification date_time'.tar.gz
@@ -372,20 +373,18 @@ rear_preparation()
         then FDATE=`stat --printf='%y\n' $REAR_CUR_BAC |awk '{ print $1 }'`
              FTIME=`stat --printf='%y\n' $REAR_CUR_BAC |awk '{ print $2 }' |awk -F\. '{ print $1 }'`
              REAR_NEW_BAC="${REAR_NAME}_${FDATE}_${FTIME}.tar.gz"
-             sadm_write "Rename previous backup `basename ${REAR_CUR_BAC}` to `basename ${REAR_NEW_BAC}` "
              mv ${REAR_CUR_BAC} ${REAR_NEW_BAC} >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
                  then sadm_write "Tried to move ${REAR_CUR_BAC} to ${REAR_NEW_BAC} ${SADM_ERROR}\n"
                       sadm_write "***** Rear Backup Abort *****\n"
                       return 1                                          # Back to caller with error
-                 else sadm_write "$SADM_OK \n"
+                 else sadm_writelog "Rename previous backup `basename ${REAR_CUR_BAC}` to `basename ${REAR_NEW_BAC}`$SADM_OK "
              fi
         else sadm_write "New Backup will be created under the name of ${REAR_CUR_BAC}.\n"
     fi
 
-    sadm_write "\n" 
-    sadm_write "ReaR preparation ${SADM_SUCCESS}\n"
-    sadm_write "\n" 
+    sadm_writelog "END OF ReaR PREPARATION ${SADM_SUCCESS}"
+    sadm_writelog " " 
     return 0
 }
 
@@ -496,7 +495,7 @@ create_backup()
     # Feed user and log, the what we are about to do.
     sadm_write "\n"                                                     # Write white line
     sadm_write "${SADM_FIFTY_DASH}\n"
-    sadm_write "${BOLD}Creating the 'ReaR' backup.${NORMAL}\n" 
+    sadm_write "${BOLD}CREATING THE 'ReaR' BACKUP${NORMAL}\n" 
     sadm_write "\n"                                                     # Write white line
     sadm_write "$REAR mkbackup -v \n"       
 
