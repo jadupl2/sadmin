@@ -38,11 +38,13 @@
 # 2020_01_13 Update: v3.9 'ReaR' backup version is now updated in DB with info collect on systems.
 # 2020_12_19 Fix: v3.10 Fix Typo error that cause a crash when updating server database.
 #@2021_05_14 Update: v3.11 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
+#@2021_05_30 Fix: v3.12 Enlarge column 'srv_model' & 'srv_kernel_version' column wasn't big enough
+#@2021_06_01 Update: v3.13 Bug fixes and Command line option -v, -h and -d are now functional. 
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os,time,sys,pdb,socket,datetime,glob,pymysql,fnmatch     # Import Std Python3 Modules
+    import os,time,sys,argparse,pdb,socket,datetime,glob,pymysql,fnmatch 
     SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir. Name
     sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
     import sadmlib_std as sadm                                      # Import SADMIN Python Library
@@ -62,48 +64,58 @@ wdict           = {}                                                    # Dict f
 
 
 
-#===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Python Library
-#===================================================================================================
+# ---------------------------------------------------------------------------------------
+# SADMIN CODE SECTION 1.49 
+# Setup for Global Variables and import SADMIN Python module
+# To use SADMIN tools, this section MUST be present near the top of your code.    
+# ---------------------------------------------------------------------------------------
 def setup_sadmin():
 
-    # Load SADMIN Standard Python Library
+    # Load SADMIN Standard Python Library Module ($SADMIN/lib/sadmlib_std.py).
     try :
-        SADM = os.environ.get('SADMIN')                     # Getting SADMIN Root Dir.
-        sys.path.insert(0,os.path.join(SADM,'lib'))         # Add SADMIN to sys.path
-        import sadmlib_std as sadm                          # Import SADMIN Python Libr.
-    except ImportError as e:                                # If Error importing SADMIN
-        print ("Error Importing SADMIN Module: %s " % e)    # Advise USer of Error
-        sys.exit(1)                                         # Go Back to O/S with Error
+        SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir.
+        sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
+        import sadmlib_std as sadm                                      # Import SADMIN Python Libr.
+    except ImportError as e:                                            # If Error importing SADMIN 
+        print ("Error Importing SADMIN Module: %s " % e)                # Advise User of Error
+        sys.exit(1)                                                     # Go Back to O/S with Error
+    
+    # Create [S]ADMIN [T]ools instance (Setup Dir.,Var.)
+    st = sadm.sadmtools()                       
 
-    # Create Instance of SADMIN Tool
-    st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
+    # You can use variable below BUT DON'T CHANGE THEM - They are used by SADMIN Module.
+    st.pn               = os.path.basename(sys.argv[0])                 # Script name with extension
+    st.inst             = os.path.basename(sys.argv[0]).split('.')[0]   # Script name without Ext
+    st.tpid             = str(os.getpid())                              # Get Current Process ID.
+    st.exit_code        = 0                                             # Script Exit Code (Use it)
+    st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
 
-    # Change these values to your script needs.
-    st.ver              = "3.11"                # Current Script Version
-    st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
-    st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
-    st.log_append       = False                 # Append Existing Log or Create New One
-    st.use_rch          = True                  # Generate entry in Return Code History (.rch)
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
+    st.ver              = "3.13"                # Current Script Version
+    st.pdesc            = "SADMIN Daily database update v%s" % st.ver
+    st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
+    st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
     st.log_header       = True                  # Show/Generate Header in script log (.log)
     st.log_footer       = True                  # Show/Generate Footer in script log (.log)
-    st.usedb            = True                  # True=Open/Use Database,False=Don't Need to Open DB
-    st.dbsilent         = False                 # Return Error Code & False=ShowErrMsg True=NoErrMsg
-    st.exit_code        = 0                     # Script Exit Code for you to use
-    st.debug            = 0                     # Increase verbosity 0 to 9
+    st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
+    st.use_rch          = True                  # Generate entry in Result Code History (.rch) 
+    st.debug            = 0                     # Increase Verbose from 0 to 9 
+    st.usedb            = True                  # Open/Use Database(True) or Don't Need DB(False)
+    st.dbsilent         = False                 # When DB Error, False=ShowErrMsg and True=NoErrMsg 
+                                                # But Error Code always returned (0=ok else error)
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
-    #st.cfg_alert_type    = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    #st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSuccess 3=Always
+    #st.cfg_alert_group  = "default"            # Valid Alert Group are defined in alert_group.cfg
     #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
-    #st.cfg_max_logline  = 5000                 # When Script End Trim log file to 5000 Lines
-    #st.cfg_max_rchline  = 100                  # When Script End Trim rch file to 100 Lines
-    #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server
+    #st.cfg_max_logline  = 500                  # When Script End Trim log file to 500 Lines
+    #st.cfg_max_rchline  = 35                   # When Script End Trim rch file to 35 Lines
+    #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server 
 
-    # Start SADMIN Tools - Initialize
-    st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
-    return(st)                                  # Return Instance Obj. To Caller
-
+    # Start SADMIN Tools - Initialize 
+    st.start()                                  # Init. SADMIN Env. (Create dir.,Log,RCH, Open DB..)
+    return(st)                                  # Return Instance Object To Caller
 
 
 
@@ -113,6 +125,26 @@ def setup_sadmin():
 #
 def update_row(st,wconn, wcur, wdict):
     st.writelog ("Updating %s.%s data in Database" % (wdict['srv_name'],wdict['srv_domain']))
+
+
+    # Enlarge col 'srv_kernel_version' to 40char. for '2.6.32-754.35.1.el6.centos.plus.i686'
+    # Enlarge column 'srv_model' to 30 Characters to accommodate 'Precision WorkStation T3500'
+    if st.get_release() < "1.3.4" :                                         # Change made in 1.3.3
+        sql="ALTER TABLE server MODIFY COLUMN srv_kernel_version VARCHAR(40);"
+        try:
+            wcur.execute(sql);                                              # Execute the Select SQL
+        except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
+            self.enum, self.emsg = error.args                               # Get Error No. & Message
+            print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
+            return (1)                                                      # Return Error to caller
+        sql="ALTER TABLE server MODIFY COLUMN srv_model VARCHAR(30);"
+        try:
+            wcur.execute(sql);                                              # Execute the Select SQL
+        except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
+            self.enum, self.emsg = error.args                               # Get Error No. & Message
+            print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
+            return (1)                                                      # Return Error to caller
+    
 
     # Update Server Row With Info collected from the sysinfo.txt file
     try:
@@ -164,18 +196,41 @@ def update_row(st,wconn, wcur, wdict):
         wconn.commit()                                                  # Commit the transaction
         st.writelog("[OK] %s update Succeeded" % (wdict['srv_name']))   # Advise User Update is OK
         return (0)                                                      # return (0) Insert Worked
-    except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
-        enum, emsg = error.args                                         # Get Error No. & Message
-        st.writelog("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
-        if st.debug > 4: st.writelog("sql=%s" % (sql))
-        wconn.rollback()                                                # RollBack Transaction
-        return (1)                                                      # return (1) to indicate Err
-    except Exception as error:
-        enum, emsg = error.args                                         # Get Error No. & Message
-        st.writelog("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
-        if st.debug > 4: st.writelog("sql=%s" % (sql))
-        wconn.rollback()                                                # RollBack Transaction
-        return (1)                                                      # return (1) to indicate Err
+
+
+    except pymysql.DataError as e:
+        print("DataError")
+        print(e)
+    except pymysql.InternalError as e:
+        print("InternalError")
+        print(e)
+    except pymysql.IntegrityError as e:
+        print("IntegrityError")
+        print(e)
+    except pymysql.OperationalError as e:
+        print("OperationalError")
+        print(e)
+    except pymysql.NotSupportedError as e:
+        print("NotSupportedError")
+        print(e)
+    except pymysql.ProgrammingError as e:
+        print("ProgrammingError")
+        print(e)
+    except :
+        print("Unknown error occurred")
+
+    #except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
+    #    enum, emsg = error.args                                         # Get Error No. & Message
+    #    st.writelog("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
+    #    if st.debug > 4: st.writelog("sql=%s" % (sql))
+    #    wconn.rollback()                                                # RollBack Transaction
+    #    return (1)                                                      # return (1) to indicate Err
+    #except Exception as error:
+    #    enum, emsg = error.args                                         # Get Error No. & Message
+    #    st.writelog("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
+    #    if st.debug > 4: st.writelog("sql=%s" % (sql))
+    #    wconn.rollback()                                                # RollBack Transaction
+    #    return (1)                                                      # return (1) to indicate Err
     return(0)                                                           # Return 0 = update went OK
 
 
@@ -185,42 +240,9 @@ def update_row(st,wconn, wcur, wdict):
 #===================================================================================================
 #
 def process_servers(wconn,wcur,st):
-    st.writelog (('-' * 40))
-    st.writelog ("PROCESSING ALL ACTIVES SERVERS")
+    st.writelog ("Processing all actives systems")
 
-    # Check If architecture column is defines in database, if not add the column definition
-    #sql = "SHOW COLUMNS FROM server LIKE 'srv_arch%';";                 # Select that show Arch Col.
-    #try:
-    #    wcur.execute(sql);                                              # Execute the Select SQL
-    #    rows = wcur.fetchall()                                          # FetchAll Result.
-    #    rc = wcur.rowcount                                              # How many rows returned
-    #    if rc < 1 :                                                     # If row is less than 1
-    #        sql  = "ALTER TABLE `server` ADD `srv_arch` VARCHAR(12) "   # Insert Col. Definition SQL
-    #        sql += "NOT NULL COMMENT 'System Architecture' "            # Insert Col. Definition SQL
-    #        sql += "AFTER `srv_uptime`;"                                # Insert Col. Definition SQL
-    #        wcur.execute(sql);                                          # Insert new column in table
-    #except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
-    #    self.enum, self.emsg = error.args                               # Get Error No. & Message
-    #    print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
-    #    return (1)                                                      # Return Error to caller
-   #
-    ## Check If Rear Version column is defines in database, if not add the column definition
-    #sql = "SHOW COLUMNS FROM server LIKE 'srv_rear_ver%';";             # Select show Rear Ver Col.
-    #try:
-    #    wcur.execute(sql);                                              # Execute the Select SQL
-    #    rows = wcur.fetchall()                                          # FetchAll Result.
-    #    rc = wcur.rowcount                                              # How many rows returned
-    #    if rc < 1 :                                                     # If row is less than 1
-    #        sql  = "ALTER TABLE `server` ADD `srv_rear_ver` VARCHAR(7) "   # Insert Col. Definition SQL
-    #        sql += "NOT NULL COMMENT 'Rear Version' "                   # Insert Col. Definition SQL
-    #        sql += "AFTER `srv_arch`;"                                  # Insert Col. Definition SQL
-    #        wcur.execute(sql);                                          # Insert new column in table
-    #except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
-    #    self.enum, self.emsg = error.args                               # Get Error No. & Message
-    #    print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
-    #    return (1)                                                      # Return Error to caller
-   #
-    # Read All Actives Servers
+    # Fetch all actives Systems
     sql  = "SELECT srv_name, srv_desc, srv_domain, srv_osname  "
     sql += " FROM server WHERE srv_active = %s " % ('True')
     sql += " order by srv_name;"
@@ -233,30 +255,22 @@ def process_servers(wconn,wcur,st):
         return (1)
     except:
         print ("Error: unable to fetch data")
-
-    for row in rows:
-        #wname = row[0]
-        #wdesc = row[1]
-        #wdomain = row[2]
-        #wos = row[3]
-        wname = row['srv_name']
-        wdesc = row['srv_desc'] 
-        wdomain = row['srv_domain']
-        wos = row['srv_osname']
-        print ("wname = %s,wdesc = %s,wdomain = %s,wos = %s" % (wname, wdesc, wdomain, wos ))
-
-
-
+        return (1)
+    
+    # Under debug show all actives systems that was fetch
+    if st.debug > 4:
+        for row in rows:
+            wname = row['srv_name']
+            wdesc = row['srv_desc'] 
+            wdomain = row['srv_domain']
+            wos = row['srv_osname']
+            print ("wname = %s,wdesc = %s,wdomain = %s,wos = %s" % (wname, wdesc, wdomain, wos ))
 
     # Process each server
     lineno = 1
     total_error = 0
     for row in rows:
-        st.writelog ("%02d %s" % (lineno, row))
-        #wname = row[0]
-        #wdesc = row[1]
-        #wdomain = row[2]
-        #wos = row[3]
+        if st.debug > 4: st.writelog ("%02d %s" % (lineno, row))
         wname = row['srv_name']
         wdesc = row['srv_desc'] 
         wdomain = row['srv_domain']
@@ -265,15 +279,17 @@ def process_servers(wconn,wcur,st):
         st.writelog (('-' * 40))                                        # Insert Dash Line
         st.writelog ("Processing (%d) %-15s - os:%s" % (lineno,wname+"."+wdomain,wos))
 
+        # Construct the name of the sysinfo file for that system
         sysfile = st.www_dat_dir + "/" + wname + "/dr/" + wname + "_sysinfo.txt"
-        st.writelog("Processing file : " + sysfile)                     # Display Sysinfo File
+        st.writelog("Reading sysinfo file : " + sysfile)                # Display Sysinfo File
 
         # Open sysinfo.txt file for the current server ---------------------------------------------
         if st.debug > 4: st.writelog("Opening %s" % (sysfile))          # Opened Sysinfo file Msg
         try:
             FH = open(sysfile, 'r')                                     # Open Sysinfo File
         except FileNotFoundError as e:
-            st.writelog("Sysinfo file not found %s" % (sysfile))
+            st.writelog("[ERROR] Sysinfo file could not be found %s" % (sysfile))
+            total_error = total_error + 1                           # Add 1 To Total Error
             continue
         except IOError as e:                                            # If Can't open file
             st.writelog ("Error opening file %s \r\n" % sysfile)        # Print FileName
@@ -452,11 +468,53 @@ def process_servers(wconn,wcur,st):
 
 
 
+# --------------------------------------------------------------------------------------------------
+# Command line Options functions
+# Evaluate Command Line Switch Options Upfront
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# --------------------------------------------------------------------------------------------------
+def cmd_options(st,argv):
+
+    # Evaluate Command Line Switch Options Upfront
+    # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d [0-9]) Set Debug Level     
+    parser = argparse.ArgumentParser(description=st.pdesc)              # Desc. is the script name
+    #
+    parser.add_argument("-v", 
+        action="store_true", 
+        dest='version',
+        help="show script version")
+    parser.add_argument("-d",
+        metavar="0-9",  
+        type=int, 
+        dest='debuglevel',
+        help="debug/verbose level from 0 to 9",
+        default=0)
+    #
+    args=parser.parse_args()                                            # Parse the Arguments
+
+    if args.version:                                                    # If -v specified
+        st.show_version()                                               # Show Custom Show Version
+        st.stop (0)                                                     # Close/TrimLog/Del tmpfiles
+        sys.exit(0)                                                     # Exit with code 0
+        
+    if args.debuglevel:                                                 # Debug Level -d specified 
+        st.debug=args.debuglevel                                        # Save Debug Level
+        print ("Debug Level is now set at %d" % (st.debug))             # SHow user debug Level
+
+    return()                                                            # Return To Caller
+
+
+
+
 #===================================================================================================
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
-def main():
+def main(argv):
+
+    # Create [S]ADMIN [T]ool Instance and call the start() function.
+    st = setup_sadmin()                                                 # Sadm Tools class instance
+    cmd_options (st,argv)                                               # Check command-line Options
 
     # Script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not root
@@ -464,9 +522,6 @@ def main():
        print ("Try sudo %s" % (os.path.basename(sys.argv[0])))          # Suggest to use 'sudo'
        print ("Process aborted")                                        # Process Aborted Msg
        sys.exit(1)                                                      # Exit with Error Code
-
-    # Import SADMIN Module, Create SADMIN Tool Instance, Initialize Log and rch file.
-    st = setup_sadmin()                                                 # Setup Var. & Load SADM Lib
 
     # If Script should only be run on the SADMIN Server
     if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
@@ -480,12 +535,11 @@ def main():
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
 
     st.exit_code = process_servers(conn,cur,st)                         # Process Actives Servers
-
+    
     if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
         st.dbclose()                                                    # Close the Database
     st.stop(st.exit_code)                                               # Close SADM Environment
     sys.exit(st.exit_code)                                              # Exit To O/S
 
-
 # This idiom means the below code only runs when executed from command line
-if __name__ == '__main__':  main()
+if __name__ == "__main__": main(sys.argv)
