@@ -313,7 +313,7 @@ class sadmtools():
         print ("SADMIN Shell Library Version",self.libver)
         print ("O/S is",self.get_osname(),"- Version ",self.get_osversion())
         print ("Kernel Version ",self.get_kernel_version())
-        print ("\n")
+        #print ("\n")
 
 
     #-----------------------------------------------------------------------------------------------
