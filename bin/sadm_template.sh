@@ -103,16 +103,15 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 
 
-
 # --------------------------------------------------------------------------------------------------
-# Show Script command line option
+# Show Script command line options
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0" "${NORMAL}"
-    printf "\n\t${BOLD}${YELLOW}-d${NORMAL} Set Debug (verbose) Level [0-9]"
-    printf "\n\t${BOLD}${YELLOW}-h${NORMAL} Display this help message"
-    printf "\n\t${BOLD}${YELLOW}-v${NORMAL} Show script version info"
+    printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
+    printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
+    printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
     printf "\n\n" 
 }
 
@@ -277,8 +276,10 @@ function cmd_options()
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
 
-    #if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root
+    # If you want this script to be run only by root user, uncomment the lines below.
+    #if [ $(id -u) -ne 0 ]                                               # If Cur. user is not root
     #    then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
+    #         sadm_writelog "Try 'sudo ${0##*/}'."                       # Suggest using sudo
     #         sadm_write "Process aborted.\n"                            # Abort advise message
     #         sadm_stop 1                                                # Close and Trim Log
     #         exit 1                                                     # Exit To O/S with Error
@@ -287,6 +288,7 @@ function cmd_options()
     # If you want this script to be run only on the SADMIN server, uncomment the lines below.
     #if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
     #    then sadm_write "Script can only be run on (${SADM_SERVER}), process aborted.\n"
+    #         sadm_write "Process aborted\n"                             # Abort advise message
     #         sadm_stop 1                                                # Close and Trim Log
     #         exit 1                                                     # Exit To O/S
     #fi
