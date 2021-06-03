@@ -392,8 +392,8 @@ dir_housekeeping()
     # Taking care of lost+found directory (If present) in AIX and Linux.
     if [ -d "$SADM_BASE_DIR/lost+found" ]
         then if [ "$SADM_OS_TYPE" = "AIX" ]
-                then set_dir "$SADM_BASE_DIR/lost+found" "4775" "root" "system"     # set SADMIN Network Dir
-                else set_dir "$SADM_BASE_DIR/lost+found" "4775" "root" "root"     # set SADMIN Network Dir
+                then set_dir "$SADM_BASE_DIR/lost+found" "4775" "root" "system" 
+                else set_dir "$SADM_BASE_DIR/lost+found" "4775" "root" "root"   
              fi
     fi
 
