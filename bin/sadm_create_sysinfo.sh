@@ -51,6 +51,7 @@
 # 2020_12_12 Update: v3.21 Add SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
 #@2021_05_10 nolog: v3.22 Error message change "sadm_osupdate_farm.sh" to "sadm_osupdate_starter"
 #@2021_05_22 Update: v3.23 Standardize command line options & Update SADMIN code section
+#@2021_06_03 Update: v3.24 Include script version in sysinfo text file generated
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -83,7 +84,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.23'                                     # Script Version
+export SADM_VER='3.24'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -794,8 +795,8 @@ create_summary_file()
 {
 
     sadm_write "Creating $HWD_FILE ...\n"
-    echo "# $SADM_CIE_NAME - SysInfo Report File - `date`"                           >  $HWD_FILE
-    echo "# This file is use to update the SADMIN server inventory."                 >> $HWD_FILE
+    echo "# $SADM_CIE_NAME - SysInfo Report File v${SADM_VER} - `date`"              >  $HWD_FILE
+    echo "# This file is use by 'sadm_database_update.py' to update the SADMIN database." >> $HWD_FILE
     echo "#                                                    "                     >> $HWD_FILE
 
     if [ "$SADM_OS_TYPE"  = "LINUX" ]                                   # O/S Upd RCH Only on Linux
