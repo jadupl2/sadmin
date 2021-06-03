@@ -1082,8 +1082,8 @@ sadm_server_ips() {
         "LINUX")    ip addr |grep 'inet ' |grep -v '127.0.0' |awk '{ printf "%s %s\n",$2,$NF }'>$xfile
                     while read sadm_wip                                 # Read IP one per line
                         do
-                        if [ "$index" -ne 0 ]                           # Don't add ; for 1st IP
-                            then sadm_servers_ips="${sadm_servers_ips}," # For others IP add ";"
+                        if [ "$index" -ne 0 ]                            # Don't add , for 1st IP
+                            then sadm_servers_ips="${sadm_servers_ips}," # For others IP add ","
                         fi
                         SADM_IP=`echo $sadm_wip |awk -F/ '{ print $1 }'` # Get IP Address
                         SADM_MASK_NUM=`echo $sadm_wip |awk -F/ '{ print $2 }' |awk '{ print $1 }'`
