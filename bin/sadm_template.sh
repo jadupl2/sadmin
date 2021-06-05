@@ -226,7 +226,6 @@ main_process()
     # PROCESSING CAN BE PUT HERE
     # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
     # ........
-    sadm_write "Hello World\n" 
     
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
 }
