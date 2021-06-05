@@ -76,6 +76,8 @@
 # 2021_03_29 Update: v3.28 Exclude list is shown before each backup (tar) begin.
 # 2021_03_29 Update: v3.29 Log of each backup (tar) recorded and place in backup directory.
 #@2021_05_24 Update: v3.30 Update cmdline option -v & -h,  
+#@2021_06_04 Fix: v3.31 Fix problem with exclude list 
+#@2021_06_05 Update: v3.32 Include backup date & exclude list in each backup log on NFS Drive
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -107,7 +109,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.30'                                     # Script Version
+export SADM_VER='3.32'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -414,7 +416,7 @@ create_backup()
                  fi
             else if [ -f "$backup_line" ] && [ -r "$backup_line" ]      # If File to Backup Readable
                     then if [ $SADM_DEBUG -gt 0 ] 
-                            then sadm_write "File to Backup : ${backup_line}.\n" # Print Current File
+                            then sadm_write "File to Backup : [${backup_line}]\n" 
                          fi
                     else sadm_write "\n"
                          sadm_write "${SADM_TEN_DASH}\n"                # Line of 10 Dash in Log
@@ -433,28 +435,40 @@ create_backup()
             then
                 sadm_write "\n"
                 sadm_write "${SADM_TEN_DASH}\n"                         # Line of 10 Dash in Log
-                sadm_write "Backup file: ${backup_line}\n"              # Show Backup filename                 
-                BACK_LOG="${BACKUP_DIR}/${TIME_STAMP}_${BASE_NAME}.log" 
+                sadm_write "Backup file: [${backup_line}]\n"            # Show Backup filename                 
+                BACK_LOG="${BACKUP_DIR}/${TIME_STAMP}_${BASE_NAME}.log" # Backup log file name
+                cd /                                                    # Be sure we are on /
                 if [ "$COMPRESS" == "ON" ]                              # If compression ON
                     then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"     # Final tgz Backup file name
-                         sadm_write "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} $backup_line \n"
-                         tar -cvzf ${BACKUP_DIR}/${BACK_FILE} $backup_line >>$BACK_LOG 2>&1
+                         echo "# Backup of .$backup_line started at `date`" >>$BACK_LOG 2>&1
+                         echo "#"  >>$BACK_LOG 2>&1
+                         echo "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} .$backup_line" >>$BACK_LOG 2>&1
+                         echo "#"  >>$BACK_LOG 2>&1
+                         sadm_write "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} .$backup_line \n"
+                         tar -cvzf ${BACKUP_DIR}/${BACK_FILE} .$backup_line >>$BACK_LOG 2>&1
                          RC=$?                                          # Save Return Code
+                         echo "Backup ended at `date` with exit code of $RC"  >>$BACK_LOG 2>&1
                     else BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"     # Final tar Backup file name
-                         sadm_write "tar -cvf ${BACKUP_DIR}/${BACK_FILE} $backup_line \n"
-                         tar -cvf ${BACKUP_DIR}/${BACK_FILE} $backup_line >>$BACK_LOG 2>&1
+                         echo "# Backup of .$backup_line started at `date`" >>$BACK_LOG 2>&1
+                         echo "#"  >>$BACK_LOG 2>&1
+                         echo "tar -cvf ${BACKUP_DIR}/${BACK_FILE} .$backup_line" >>$BACK_LOG 2>&1
+                         echo "#"  >>$BACK_LOG 2>&1
+                         sadm_write "tar -cvf ${BACKUP_DIR}/${BACK_FILE} .$backup_line \n"
+                         tar -cvf ${BACKUP_DIR}/${BACK_FILE} .$backup_line >>$BACK_LOG 2>&1
                          RC=$?                                          # Save Return Code
+                         echo "Backup ended at `date` with exit code of $RC"  >>$BACK_LOG 2>&1
                 fi
         fi
 
         # Backup Directory
         if [ -d ${backup_line} ]                                        # Dir to Backup Exist ?
-           then cd $backup_line                                         # Ok then Change Dir into it
+           then cd /                                                    # Make sure we are on /
                 sadm_writelog " "                                       # Insert Blank Line
                 sadm_write "${SADM_TEN_DASH}\n"                         # Line of 10 Dash in Log
-                sadm_write "Current directory: [`pwd`]\n"               # Print Current Dir.
-                # Build Backup Exclude list
-                find . -type s -print > /tmp/exclude                    # Put all Sockets in exclude
+                sadm_write "Starting backup of [$backup_line]\n"        # Print Current Dir.
+
+                # Build Backup Exclude list to include Dir. Sockets file (Prevent false error)
+                find .$backup_line -type s -print > /tmp/exclude        # Put Dir Sockets in exclude
                 while read excl_line                                    # Loop Until EOF Excl. File
                     do
                     FC=`echo $excl_line | cut -c1`                      # Get First Char. of Line
@@ -474,13 +488,29 @@ create_backup()
                 BACK_LOG="${BACKUP_DIR}/${TIME_STAMP}_${BASE_NAME}.log" 
                 if [ "$COMPRESS" == "ON" ]
                     then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"     # Final tgz Backup file name
-                         sadm_write "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .\n"
-                         tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude . >$BACK_LOG 2>&1
+                         sadm_write "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line\n"
+                         echo "# Backup of .$backup_line started at `date`" >>$BACK_LOG 2>&1
+                         echo "#"  >>$BACK_LOG 2>&1
+                         echo "# Exclude list content (/tmp/exclude) :" >>$BACK_LOG 2>&1
+                         cat /tmp/exclude >>$BACK_LOG 2>&1
+                         echo "#"  >>$BACK_LOG 2>&1
+                         echo "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line" >>$BACK_LOG 2>&1
+                         echo "#"  >>$BACK_LOG 2>&1
+                         tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line >>$BACK_LOG 2>&1
                          RC=$?                                          # Save Return Code
+                         echo "Backup ended at `date` with exit code of $RC"  >>$BACK_LOG 2>&1
                     else BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"     # Final tar Backup file name
-                         sadm_write "tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .\n"
-                         tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude . >>$BACK_LOG 2>&1
+                         sadm_write "tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line\n"
+                         echo "# Backup of .$backup_line started at `date`" >>$BACK_LOG 2>&1
+                         echo "#"  >>$BACK_LOG 2>&1
+                         echo "# Exclude list content (/tmp/exclude) :" >>$BACK_LOG 2>&1
+                         cat /tmp/exclude >>$BACK_LOG 2>&1
+                         echo "#"  >>$BACK_LOG 2>&1
+                         echo "tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line " >>$BACK_LOG 2>&1
+                         echo "#"  >>$BACK_LOG 2>&1
+                         tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line >>$BACK_LOG 2>&1
                          RC=$?                                          # Save Return Code
+                         echo "Backup ended at `date` with exit code of $RC"  >>$BACK_LOG 2>&1
                 fi
         fi
 
