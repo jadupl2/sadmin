@@ -77,7 +77,7 @@
 # 2021_03_29 Update: v3.29 Log of each backup (tar) recorded and place in backup directory.
 #@2021_05_24 Update: v3.30 Update cmdline option -v & -h,  
 #@2021_06_04 Fix: v3.31 Fix problem with exclude list 
-#@2021_06_05 Update: v3.32 Include backup date & exclude list in each backup log on NFS Drive
+#@2021_06_05 Update: v3.32 Include backup and system information in each backup log on NFS Drive
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -437,6 +437,7 @@ create_backup()
                 sadm_write "${SADM_TEN_DASH}\n"                         # Line of 10 Dash in Log
                 sadm_write "Backup file: [${backup_line}]\n"            # Show Backup filename                 
                 BACK_LOG="${BACKUP_DIR}/${TIME_STAMP}_${BASE_NAME}.log" # Backup log file name
+                echo "# $SADM_PN v$SADM_VER - $SADM_HOSTNAME - $(sadm_capitalize $SADM_OS_NAME) v$SADM_OS_VERSION " >>$BACK_LOG 2>&1
                 cd /                                                    # Be sure we are on /
                 if [ "$COMPRESS" == "ON" ]                              # If compression ON
                     then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"     # Final tgz Backup file name
@@ -486,6 +487,7 @@ create_backup()
                 fi 
 
                 BACK_LOG="${BACKUP_DIR}/${TIME_STAMP}_${BASE_NAME}.log" 
+                echo "# $SADM_PN v$SADM_VER - $SADM_HOSTNAME - $(sadm_capitalize $SADM_OS_NAME) v$SADM_OS_VERSION " >>$BACK_LOG 2>&1
                 if [ "$COMPRESS" == "ON" ]
                     then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"     # Final tgz Backup file name
                          sadm_write "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line\n"
