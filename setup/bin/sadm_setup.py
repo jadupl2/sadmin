@@ -89,6 +89,7 @@
 # 2021_01_06 Update: v3.52 Ensure that package util-linux is installed on client & server.
 # 2021_01_27 Update: v3.53 Activate Startup and Shutdown Script (SADMIN Service)
 #@2021_04_19 Update: v3.54 Fix Path to sadm_service_ctrl.sh
+#@2021_06_06 Update: v3.55 Add to sadm_client crontab, script to make sure 'nmon' is running
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -105,7 +106,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.54"                                            # Setup Version Number
+sver                = "3.55"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -408,9 +409,9 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
     hcron.write ("# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
     hcron.write ("# \n")
-    #hcron.write ("# Every 30 Min, this script make sure the 'nmon' performance collector is running.\n")
-    #hcron.write ("*/30 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.sh > /dev/null 2>&1\n" % (wuser))
-    #hcron.write ("# \n")
+    hcron.write ("# Every 45 Min, this script make sure the 'nmon' performance collector is running.\n")
+    hcron.write ("*/45 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.sh > /dev/null 2>&1\n" % (wuser))
+    hcron.write ("# \n")
     hcron.write ("# \n")
     hcron.write ("# Run these four scripts in sequence, just before midnight every day:\n")
     hcron.write ("# (1) sadm_housekeeping_client.sh (Make sure files in $SADMIN have proper owner:group & permission)\n")
