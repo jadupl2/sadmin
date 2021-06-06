@@ -58,6 +58,8 @@
 # 2020_12_16 Update: v1.46 Minor code change (Isolate the check for sadmin user and group)
 # 2020_12_26 Fix: v1.47 Doesn't delete Database Password File, cause problem during server setup.
 #@2021_05_23 Update: v1.48 Remove the conversion of old history file (not needed anymore)
+#@2021_06_06 Update: v2.00 Make sure that sadm_client crontab run 'sadm_nmon_watcher.sh' regularly.
+#@2021_06_06 Update: v2.01 Remove script that run 'swatch_nmon.sh' from system monitor config file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -90,7 +92,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.48'                                     # Script Version
+export SADM_VER='2.01'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -672,6 +674,85 @@ function check_sadmin_user()
 
 
 # --------------------------------------------------------------------------------------------------
+# Inspect sadm_client crontab to make sure that this line is in it. 
+# "*/45 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.sh > /dev/null 2>&1"
+# The script check if 'nmon. is running, if isn't the script will start it with the right parameters
+# --------------------------------------------------------------------------------------------------
+function check_sadm_client_crontab()
+{
+    sadm_write "\n"
+    sadm_write "${BOLD}Check SADMIN client '$SADM_USER' crontab & System monitor config file ...${NORMAL}\n"     
+
+    # Setup crontab filename under linux
+    if [ "$(sadm_get_ostype)" == "LINUX" ]                              # Under Linux
+       then ccron_file="/etc/cron.d/sadm_client"                        # Client Crontab File Name
+            if [ ! -d "/etc/cron.d" ]                                   # Test if Dir. Exist
+                then sadm_writelog "  - Crontab Directory /etc/cron.d doesn't exist ?"
+                     sadm_writelog "  - Send log ($SADM_LOG) and submit problem to support@sadmin.ca"
+                     return 1                                           # Return to Caller with Err.
+            fi 
+    fi
+    # Setup crontab filename under Aix    
+    if [ "$(sadm_get_ostype)" == "AIX" ]                                # Under Aix
+       then ccron_file = "/var/spool/cron/crontabs/${SADM_USER}"        # Client Crontab File Name
+            if [ ! -d "/var/spool/cron/crontabs" ]                      # Test if Dir. Exist
+                then sadm_writelog "  - Crontab Directory /var/spool/cron/crontabs doesn't exist ?"
+                     sadm_writelog "  - Send log ($SADM_LOG) and submit problem to support@sadmin.ca"
+                     return 1                                           # Return to Caller with Err.
+            fi
+    fi
+    # Setup crontab filename under MacOS
+    if [ "$(sadm_get_ostype)" == "DARWIN" ]                             # Under MacOS
+       then ccron_file = "/var/at/tabs/${SADM_USER}"                    # Client Crontab Name
+            if [ ! -d "/var/at/tabs" ]                                  # Test if Dir. Exist
+                then sadm_writelog "  - Crontab Directory /var/spool/cron/crontabs doesn't exist ?"
+                     sadm_writelog "  - Send log ($SADM_LOG) and submit problem to support@sadmin.ca"
+                     return 1                                           # Return to Caller with Err.
+            fi
+    fi
+
+    # Grep crontab for nmon watcher script
+    sadm_writelog "  - Make sure sadm_client crontab ($ccron_file) have 'sadm_nmon_watcher.sh' line."
+    if [ -f "$ccron_file" ]                                             # Do we have crontab file ?
+       then grep -q "sadm_nmon_watcher.sh" $ccron_file                  # grep for watcher script
+            if [ $? -ne 0 ]                                             # If watcher not there
+               then echo "# " >> $ccron_file                          # Add to crontab
+                    echo "# Every 45 Min, make sure 'nmon' performance collector is running." >> $ccron_file
+                    echo "*/45 * * * *  $SADM_USER sudo \${SADMIN}/bin/sadm_nmon_watcher.sh >/dev/null 2>&1" >> $ccron_file
+                    echo "# " >> $ccron_file
+                    echo "# " >> $ccron_file 
+                    sadm_writelog "  - Crontab ($ccron_file) was updated with 'sadm_nmon_watcher.sh' line." 
+               else sadm_writelog "  - Yes, crontab ($ccron_file) already got 'sadm_nmon_watcher.sh' line." 
+            fi
+       else sadm_writelog "  - There were no crontab file ($ccron_file) present on system ?" 
+            return 1
+    fi
+
+    # Remove line in System monitor file, that ran a script 'swatch_nmon.sh' to check/restart nmon
+    nmon_file="${SADMIN}/cfg/${SADM_HOSTNAME}.smon"
+    sadm_writelog "  - Making sure that "script:swatch_nmon.sh" is no longer in $nmon_file" 
+    if [ -f "${SADM_HOSTNAME}.smon" ] 
+       then grep -q "^script:swatch_nmon.sh" $nmon_file
+            if [ $? -eq 0 ] 
+                then sed -i '/^script:swatch_nmon.sh/d' $nmon_file
+                     sadm_writelog "  - Line with 'script:swatch_nmon.sh' removed from $nmon_file."
+                else sadm_writelog "  - Yes, the 'script:swatch_nmon.sh' is no longer in $nmon_file." 
+            fi
+            grep -q "^# SADMIN Script Don" $nmon_file
+            if [ $? -eq 0 ] 
+                then sed -i '/^# SADMIN Script Don/d' $nmon_file
+                     sadm_writelog "  - Line with '# SADMIN Script Don' removed from $nmon_file."
+            fi            
+       else sadm_writelog "  - [ ERROR ] There is no System Monitor config file ($nmon_file) ?."
+            return 1 
+    fi 
+    return 0
+}
+
+
+
+
+# --------------------------------------------------------------------------------------------------
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
 # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
@@ -727,7 +808,9 @@ function cmd_options()
     FILE_ERROR=$?                                                       # ReturnCode = Nb. of Errors
     check_sadmin_account                                                # SADMIN User Account Lock ?
     ACC_ERROR=$?                                                        # Return 1 if Locked 
+    check_sadm_client_crontab                                           # crontab have nmon watcher
+    CRON_ERROR=$?                                                       # Return 1 if crontab error 
 
-    SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR+$ACC_ERROR))               # Error= DIR+File+Lock Func.
+    SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR+$ACC_ERROR+$CRON_ERROR))   # Error= DIR+File+Lock Func.
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
