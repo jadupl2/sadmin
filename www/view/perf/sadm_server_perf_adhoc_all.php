@@ -5,8 +5,8 @@
 #   Version  :  1.0
 #   Date     :  25 January 2018
 #   Requires :  php
-#   Synopsis :  Show Performance Graphics of ALL Server(s) of certain Catagory.
-#               Usefull to look at all servers on one page & spot problem on some server.
+#   Synopsis :  Show Performance Graphics of ALL Server(s) of certain Category.
+#               Useful to look at all servers on one page & spot problem on some server.
 #
 #   Copyright (C) 2018 Jacques Duplessis <sadmlinux@gmail.com>
 #
@@ -184,7 +184,7 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
         echo "<img src=${WEBFILE}></a>";                                # Show PNG 
     }else{                                                              # If file not there
         echo "<center><a href=${URL}?host=$WHOST>";                     # Center Msg to User
-        echo "No data for $WPERIOD - Server '${WHOST}'";                # Show Host & Period instead
+        echo "No data ($OSFILE) for $WPERIOD - Server '${WHOST}'";      # Show Host & Period instead
         echo "</a></center>";                                           # Finish File not found msg
     }
     echo "</td>";                                                       # End Table Data Line
