@@ -14,6 +14,7 @@
 # 2018_09_14 Update: v2.6 - Change Default Warning and Error Alert Group 
 #@2019_10_08 Update: v2.7 - Turn off (Comment line) syslog service check.
 #@2019_10_25 Update: v2.8 - Turn off (Comment line) ping test lines.
+#@2021_06_06 Update: v2.9 - Remove execution script to check if 'nmon' is running, move to crontab
 ##
 #---------------------------------------------------------------------------------------------------
 # Col   Name            Description
@@ -206,9 +207,6 @@
 # Example 
 #script:stemplate.sh       1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 default default -
 #
-# SADMIN Script Don't remove - This script make sure 'nmon' performance collector is running
-script:swatch_nmon.sh            0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 default default -
-#
 #
 # ----- Aix/Linux/MacOS CPU Load, Server Load Average and Swap Space usage Monitoring
 load_average                     0  >  20  35 120 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 default default -
@@ -221,7 +219,7 @@ service_chronyd                  0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 2018
 service_ssh,sshd                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 service_postfix                  1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 service_at,atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-service_systemd-resolved         1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+#service_systemd-resolved         1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #
 #service_sendmail                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #service_ntp,ntpd               0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
