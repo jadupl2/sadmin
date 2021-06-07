@@ -5,7 +5,7 @@
 #   Title       :  sadm_view_schedule.php
 #   Version     :  1.5
 #   Date        :  18 February 2017
-#   Requires    :  secure.php.net, postgresql.org, getbootstrap.com, DataTables.net
+#   Requires    :  secure.php.net, mariadb, DataTables.net
 #   Description :  This page allow to view the servers O/S Update schedule and results.
 #   
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
