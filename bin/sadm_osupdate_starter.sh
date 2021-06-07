@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_osupdate_starter.sh
-#   Synopsis :  Apply O/S update to selected selected servers
+#   Synopsis :  Run the O/S update to selected remote system
 #   Version  :  1.0
 #   Date     :  9 March 2015 
 #   Requires :  sh
@@ -347,7 +347,6 @@ function cmd_options()
 #===================================================================================================
 #
     cmd_options "$@"                                                    # Check command-line Options
-
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
 
