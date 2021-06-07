@@ -60,6 +60,7 @@
 #@2021_05_23 Update: v1.48 Remove the conversion of old history file (not needed anymore)
 #@2021_06_06 Update: v2.00 Make sure that sadm_client crontab run 'sadm_nmon_watcher.sh' regularly.
 #@2021_06_06 Update: v2.01 Remove script that run 'swatch_nmon.sh' from system monitor config file.
+#@2021_06_06 Fix: v2.02 Fix problem related to system monitor file update
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -92,7 +93,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.01'                                     # Script Version
+export SADM_VER='2.02'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -731,7 +732,7 @@ function check_sadm_client_crontab()
     # Remove line in System monitor file, that ran a script 'swatch_nmon.sh' to check/restart nmon
     nmon_file="${SADMIN}/cfg/${SADM_HOSTNAME}.smon"
     sadm_writelog "  - Making sure that "script:swatch_nmon.sh" is no longer in $nmon_file" 
-    if [ -f "${SADM_HOSTNAME}.smon" ] 
+    if [ -f "$nmon_file" ] 
        then grep -q "^script:swatch_nmon.sh" $nmon_file
             if [ $? -eq 0 ] 
                 then sed -i '/^script:swatch_nmon.sh/d' $nmon_file
@@ -743,7 +744,7 @@ function check_sadm_client_crontab()
                 then sed -i '/^# SADMIN Script Don/d' $nmon_file
                      sadm_writelog "  - Line with '# SADMIN Script Don' removed from $nmon_file."
             fi            
-       else sadm_writelog "  - [ ERROR ] There is no System Monitor config file ($nmon_file) ?."
+       else sadm_writelog "  - [ ERROR ] There is no System Monitor config file ($nmon_file) ?"
             return 1 
     fi 
     return 0
