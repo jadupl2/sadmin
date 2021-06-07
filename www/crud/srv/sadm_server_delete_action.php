@@ -30,6 +30,7 @@
 #@2019_01_15 New: sadm_server_delete.php v2.1 Create server data archive before deleting it.
 #@2019_08_17 Update: v1.1 New Heading and return to Maintenance Server List
 #@2019_12_26 Update: v1.2 Update: Deleted server now place in www/dat/archive directory.
+#@2021_06_07 Fix: v1.3 Remove faulty error message when a system was delete just after creating it.
 #
 # ==================================================================================================
 #
@@ -46,7 +47,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.2" ;                                                        # Current version number
+$SVER  = "1.3" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -82,6 +83,8 @@ $CREATE_BUTTON = False ;                                                # Don't 
             $server_tgz = $_POST['archive'];
             if ($DEBUG) { echo "<br>server_dir=".$server_dir ;}       
             if ($DEBUG) { echo "<br>server_tgz=".$server_tgz ;}       
+
+            # Does Data Directory exist ($SADMIN/www/dat/$HOSTNAME)
             if (file_exists($server_dir)) {                             # Data Dir. Exist for server
                 if (! file_exists($server_tgz)) {                       # No Archive already exist ?
                     $CMD = "cd " . $server_dir . " ; tar -cvzf " .$server_tgz. " .";
@@ -96,8 +99,6 @@ $CREATE_BUTTON = False ;                                                # Don't 
                 if ($rc <> 0) { 
                     sadm_alert("Error ".$rc." while removing system data directory $server_dir ");
                 }
-            }else{
-                sadm_alert("Error system directory '$server_dir' doesn't exist.");
             }
         }
 
