@@ -41,6 +41,8 @@
 # 2021_02_18 Updated v1.22 Added example to 'SERVERS' variable of system to be ignored from Report.
 #@2021_04_01 Fix: v1.23 Fix problem when the last line of *.rch was a blank line.
 #@2021_04_28 Fix: v1.24 Fix problem with the report servers exclude list.
+#@2021_06_08 Updated: v1.25 Remove from daily backup report system that the daily backup is disable.
+#@2021_06_08 Updated: v1.26 Remove from daily ReaR backup report system that the backup is disable.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -72,7 +74,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.24'                                  # Current Script Version
+export SADM_VER='1.26'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -803,7 +805,8 @@ rear_report()
 
     # Build SQL to select active server(s) from Database.
     SQL="${SQL} from server"                                            # From the Server Table
-    SQL="${SQL} where srv_ostype = 'linux'"                             # ReaR Avail. Only on Linux
+    #SQL="${SQL} where srv_ostype = 'linux'"                             # ReaR Avail. Only on Linux
+    SQL="${SQL} where srv_ostype = 'linux' and srv_active = True and srv_img_backup = True "   
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
     
     # Execute SQL Query to Create CSV in SADM Temporary work file ($SADM_TMP_FILE1)
@@ -1719,7 +1722,8 @@ backup_report()
 
     # Build SQL to select active server(s) from Database.
     SQL="${SQL} from server"                                            # From the Server Table
-    SQL="${SQL} where srv_active = True"                                # Select only Active Servers
+    #SQL="${SQL} where srv_active = True"                                # Select only Active Servers
+    SQL="${SQL} where srv_active = True and srv_backup = True "         # Active Server & Backup Yes
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
     
     # Execute SQL Query to Create CSV in SADM Temporary work file ($SADM_TMP_FILE1)
