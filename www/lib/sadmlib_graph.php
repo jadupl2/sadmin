@@ -23,7 +23,7 @@
 # ChangeLog
 #   2018_01_31 JDuplessis
 #       V 1.0 Initial WIP
-#
+#@2021_06_08 Fix: v1.1 Fix intermittent unlink error when showing all systems graph.
 # ==================================================================================================
 #
 
@@ -34,7 +34,7 @@
 #===================================================================================================
 #
 $DEBUG  = False  ;                                                      # Debug Activated True/False
-$SVER   = "1.0" ;                                                       # Current version number
+$SVER   = "1.1" ;                                                       # Current version number
 
 
 
@@ -48,7 +48,7 @@ $SVER   = "1.0" ;                                                       # Curren
 # ==================================================================================================
 function create_cpu_graph($WHOST_NAME,$RRDTOOL,$WRRD,$WSTART,$WEND,$WTITLE,$WPNG,$WSIZE,$DEBUG)
 {
-    if (file_exists($WPNG)) { unlink($WPNG); }                          # Make sure png don't exist
+    if (file_exists($WPNG)) { @unlink($WPNG); }                          # Make sure png don't exist
     $CMD     = "$RRDTOOL graph $WPNG -s \"$WSTART\" -e \"$WEND\"";      # rrdtool gph filename 
     $CMD    .= " --title \"$WTITLE\" ";                                 # Insert Title in Command
     $CMD    .= "--vertical-label \"percentage(%)\" ";                   # Set Vertical Legend
