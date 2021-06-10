@@ -43,7 +43,7 @@
 #@2021_04_28 Fix: v1.24 Fix problem with the report servers exclude list.
 #@2021_06_08 Updated: v1.25 Remove from daily backup report system that the daily backup is disable.
 #@2021_06_08 Updated: v1.26 Remove from daily ReaR backup report system that the backup is disable.
-#
+#@2021_06_10 Update: v1.27 Re-Insert disable backup in report, not in yellow background but in Bold
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -74,7 +74,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.26'                                  # Current Script Version
+export SADM_VER='1.27'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -139,7 +139,7 @@ SCRIPTS="$SCRIPTS sadm_template sadmlib_std_demo"
 SCRIPTS="$SCRIPTS sadm_vm_tools sadm_vm_start sadm_vm_stop"
 
 # Server name to be exclude from every Daily Report (Backup, Rear and Scripts)
-SERVERS="centos6 debian9 ubuntu1804"
+SERVERS="SomeHostname"
 
 
 
@@ -805,8 +805,8 @@ rear_report()
 
     # Build SQL to select active server(s) from Database.
     SQL="${SQL} from server"                                            # From the Server Table
-    #SQL="${SQL} where srv_ostype = 'linux'"                             # ReaR Avail. Only on Linux
-    SQL="${SQL} where srv_ostype = 'linux' and srv_active = True and srv_img_backup = True "   
+    SQL="${SQL} where srv_ostype = 'linux'"                             # ReaR Avail. Only on Linux
+    #SQL="${SQL} where srv_ostype = 'linux' and srv_active = True and srv_img_backup = True "   
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
     
     # Execute SQL Query to Create CSV in SADM Temporary work file ($SADM_TMP_FILE1)
@@ -1058,7 +1058,7 @@ rear_heading()
 rear_line()
 {
     # Extract fields from parameters received.
-    BACKUP_INFO=$*                                                      # Comma Sep. Info Line
+    BACKUP_INFO=$*                                                       # Comma Sep. Info Line
     WDATE1=$(     echo $BACKUP_INFO | awk -F\; '{ print $1 }')           # Backup Script RCH Line
     WTIME1=$(     echo $BACKUP_INFO | awk -F\; '{ print $2 }')           # DB System Description
     WELAPSE=$(    echo $BACKUP_INFO | awk -F\; '{ print $3 }')           # DB System Description
@@ -1092,19 +1092,26 @@ rear_line()
     days=$(($diff/(60*60*24)))                                          # Convert Sec. to Days
 
     # ReaR Backup Date 
-    if [ "$TODAY" = "$WDATE1" ]                                 # Backup done today
-       then echo -n "<td title='Rear Image was done today'" >>$HTML # Tooltip 
+    if [ "$TODAY" = "$WDATE1" ]                                         # Backup done today
+       then echo -n "<td title='Rear Image was done today'" >>$HTML     # Tooltip 
             echo " align=center bgcolor=$BCOL><font color=$FCOL>$WDATE1</font></td>" >>$HTML
-       else if [ "$WDATE1" = "----------" ]                     # Date=Dashes=No Backup Yet
+            #echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML        # Show Backup Date
+       else if [ "$WDATE1" = "----------" ]                             # Date=Dashes=No Backup Yet
                then echo -n "<td title='No ReaR backup recorded' " >>$HTML   
                     echo -n "align=center bgcolor='Yellow'>" >>$HTML
+                    echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML        # Show Backup Date
                else echo -n "<td title='Backup was done $days days ago, warning at $REAR_INTERVAL days.'" >>$HTML  
-                    if [ $days -gt $REAR_INTERVAL ]             # RearBackupDate > WarnDays
-                        then echo -n "align=center bgcolor='Yellow'>" >>$HTML 
+                    if [ $days -gt $REAR_INTERVAL ]                     # RearBackupDate > WarnDays
+                        then if [ $WACT -eq 0 ]                         # If Backup Disable
+                                then echo -n "align=center bgcolor=$BCOL>" >>$HTML 
+                                     echo "<font color=$FCOL><strong>$WDATE1</strong></font></td>" >>$HTML
+                                else echo -n "align=center bgcolor='Yellow'>" >>$HTML 
+                                     echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML
+                             fi
                         else echo -n "align=center bgcolor=$BCOL>" >>$HTML 
+                             echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML # Show Backup Date
                     fi 
             fi
-            echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML        # Show Backup Date
     fi 
 
     # Backup Time & Elapse time
@@ -1128,10 +1135,10 @@ rear_line()
 
     # Backup Schedule Status - Activated or Deactivated (show in Yellow background)
     URL_SCHED_UPDATE=$(echo "${URL_REAR_SCHED/SYSTEM/$WSERVER}") # URL To Modify Backup Schd
-    if [ $WACT -eq 0 ] 
-       then echo "<td align=center bgcolor='Yellow'><font color=$FCOL>"         >>$HTML
+    if [ $WACT -eq 0 ]                                                  # If Backup Disable
+       then echo "<td align=center bgcolor=$BCOL><font color=$FCOL>"         >>$HTML
             echo -n "<a href='http://sadmin.${SADM_DOMAIN}/$URL_SCHED_UPDATE "  >>$HTML
-            echo "'title='Schedule Deactivated, click to modify'>No</font></a></td>" >>$HTML
+            echo "'title='Schedule Deactivated, click to modify'><strong>No</strong></font></a></td>" >>$HTML
        else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>"            >>$HTML    
             echo -n "<a href='http://sadmin.${SADM_DOMAIN}/$URL_SCHED_UPDATE "  >>$HTML
             echo "'title='Click to modify Backup Schedule'>Yes</font></a></td>"          >>$HTML
@@ -1153,8 +1160,12 @@ rear_line()
     #   - Today Backup Size ($WCUR_TOTAL) vs Yesterday ($WPRV_TOTAL) is greater than threshold $WPCT
     #
     if [ $WCUR_TOTAL -eq 0 ]                                            # If Today Backup Size is 0
-        then echo -en "<td title='No Backup situation' align=center bgcolor='Yellow'>" >>$HTML
-             echo -e "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >> $HTML
+        then if [ $WACT -eq 0 ]                                         # If Backup Disable
+                then echo -en "<td title='No Backup situation' align=center bgcolor=$BCOL>" >>$HTML
+                     echo -e "<font color=$FCOL><strong>${WCUR_TOTAL} MB</strong></font></td>" >>$HTML
+                else echo -en "<td title='No Backup situation' align=center bgcolor='Yellow'>" >>$HTML
+                     echo -e "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >> $HTML
+             fi
         else if [ $WPRV_TOTAL -eq 0 ]                                   # If Yesterday Backup Size=0
                 then echo -en "<td align=center bgcolor=$BCOL><font color=$FCOL>" >>$HTML
                      echo -e " ${WCUR_TOTAL} MB</font></td>" >>$HTML
@@ -1722,8 +1733,8 @@ backup_report()
 
     # Build SQL to select active server(s) from Database.
     SQL="${SQL} from server"                                            # From the Server Table
-    #SQL="${SQL} where srv_active = True"                                # Select only Active Servers
-    SQL="${SQL} where srv_active = True and srv_backup = True "         # Active Server & Backup Yes
+    SQL="${SQL} where srv_active = True"                                # Select only Active Servers
+    #SQL="${SQL} where srv_active = True and srv_backup = True "         # Active Server & Backup Yes
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
     
     # Execute SQL Query to Create CSV in SADM Temporary work file ($SADM_TMP_FILE1)
@@ -2025,8 +2036,12 @@ backup_line()
                then echo -n "<td title='No backup recorded' " >>$HTML 
                else echo -n "<td title='Last Backup done $days days ago' " >>$HTML   
             fi
-            echo -n "align=center bgcolor='Yellow'>" >>$HTML            # Yellow Background
-            echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML        # Show Backup Date
+            if [ $WACT -eq 0 ]                                                  # If Backup Inactive
+                then echo -n "align=center bgcolor=$BCOL>" >>$HTML               # Normal Backup
+                     echo "<font color=$FCOL><strong>$WDATE1</strong></font></td>" >>$HTML # Date in Bold
+                else echo -n "align=center bgcolor='Yellow'>" >>$HTML            # Yellow Background
+                     echo "<font color=$FCOL>$WDATE1</font></td>" >>$HTML        # Show Backup Date
+            fi
     fi
 
     # Backup Time & Elapse time
@@ -2051,9 +2066,10 @@ backup_line()
     # Backup Schedule Status - Activated or Deactivated (show in Yellow background)
     URL_SCHED_UPDATE=$(echo "${URL_UPD_SCHED/SYSTEM/$WSERVER}")  # URL To Modify Backup Schd
     if [ $WACT -eq 0 ] 
-       then echo "<td align=center bgcolor='Yellow'><font color=$FCOL>"         >>$HTML
+       #then echo "<td align=center bgcolor='Yellow'><font color=$FCOL>"         >>$HTML
+       then echo "<td align=center bgcolor=$BCOL><font color=$FCOL>"         >>$HTML
             echo -n "<a href='http://sadmin.${SADM_DOMAIN}/$URL_SCHED_UPDATE "  >>$HTML
-            echo "'title='Schedule Deactivated, click to modify'>No</font></a></td>" >>$HTML
+            echo "'title='Schedule Deactivated, click to modify'><strong>No</strong></font></a></td>" >>$HTML
        else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>"            >>$HTML    
             echo -n "<a href='http://sadmin.${SADM_DOMAIN}/$URL_SCHED_UPDATE "  >>$HTML
             echo "'title='Click to modify Backup Schedule'>Yes</font></a></td>"          >>$HTML
@@ -2074,8 +2090,12 @@ backup_line()
     #   - Today Backup Size ($WCUR_TOTAL) vs Yesterday ($WPRV_TOTAL) is greater than threshold $WPCT
     #
     if [ $WCUR_TOTAL -eq 0 ]                                            # If Today Backup Size is 0
-        then echo -en "<td title='No Backup situation' align=center bgcolor='Yellow'>" >>$HTML
-             echo -e "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >> $HTML
+        then if [ $WACT -eq 0 ]                                         # If Backup Inactive
+                then echo -en "<td title='No Backup situation' align=center bgcolor=$BCOL>" >>$HTML
+                     echo -e "<font color=$FCOL><strong>${WCUR_TOTAL} MB</strong></font></td>" >> $HTML
+                else echo -en "<td title='No Backup situation' align=center bgcolor='Yellow'>" >>$HTML
+                     echo -e "<font color=$FCOL>${WCUR_TOTAL} MB</font></td>" >> $HTML
+             fi
         else if [ $WPRV_TOTAL -eq 0 ]                                   # If Yesterday Backup Size=0
                 then echo -en "<td align=center bgcolor=$BCOL><font color=$FCOL>" >>$HTML
                      echo -e " ${WCUR_TOTAL} MB</font></td>" >>$HTML
@@ -2106,8 +2126,12 @@ backup_line()
 
     # Yesterday Backup Size - If Size is 0, show it in Yellow.
     if [ $WPRV_TOTAL -eq 0 ]                                
-        then echo -en "<td title='No Backup situation' align=center bgcolor='Yellow'>" >>$HTML
-             echo -e "<font color=$FCOL>${WPRV_TOTAL} MB</font></td>" >> $HTML
+        then if [ $WACT -eq 0 ]                                         # If Backup Inactive
+                then echo -en "<td title='No Backup situation' align=center bgcolor=$BCOL>" >>$HTML
+                     echo -e "<font color=$FCOL><strong>${WPRV_TOTAL} MB</strong></font></td>" >> $HTML
+                else echo -en "<td title='No Backup situation' align=center bgcolor='Yellow'>" >>$HTML
+                     echo -e "<font color=$FCOL>${WPRV_TOTAL} MB</font></td>" >> $HTML
+             fi
         else echo -en "<td align=center bgcolor=$BCOL><font color=$FCOL> " >> $HTML
              echo -e " ${WPRV_TOTAL} MB</font></td>" >> $HTML
     fi 
@@ -2290,9 +2314,9 @@ main_process()
     export WKHTMLTOPDF=$(sadm_get_command_path "wkhtmltopdf")           # Get wkhtmltopdf cmd path 
     if [ "$WKHTMLTOPDF" = "" ]
         then sadm_write "$SADM_WARNING Please consider installing package 'wkhtmltopdf'.\n"
-             sadm_write "With this package, we will be able generate pdf from the generate html pages."
+             sadm_write "With this package, we will be able generate pdf from the generate html pages.\n"
              sadm_write "   - For Debian,Ubuntu,Raspbian,... : sudo apt-get install wkhtmltopdf \n"
-             sadm_write "   - For CentOS and RHEL v7 ...     : sudo dnf -y install $SADMIN/pkg/wkhtmltopdf/*centos7* \n"
+             sadm_write "   - For CentOS and RHEL v7 ...     : sudo yum -y install $SADMIN/pkg/wkhtmltopdf/*centos7* \n"
              sadm_write "   - For CentOS and RHEL v8 ...     : sudo dnf -y install $SADMIN/pkg/wkhtmltopdf/*centos8* \n"
              sadm_write "   - For Fedora (included in repo)  : sudo dnf -y install wkhtmltopdf \n"
              sadm_write "You can also download the latest version of 'wkhtmltopdf' at https://wkhtmltopdf.org \n"
