@@ -150,7 +150,7 @@ function display_data($count, $row) {
         #echo $STR_SCHEDULE ;
         echo sprintf("%02d",$row['srv_backup_hour']) .":". sprintf("%02d",$row['srv_backup_minute']); 
     }else{
-        echo "Not scheduled";
+        echo "Deactivated";
     }
     echo "</td>\n";  
 
