@@ -20,7 +20,8 @@
 # 2017_02_04    V2.3 Snapshot will be taken every 2 minutes instead of 5.
 # 2017_02_08    V2.4 Fix Compatibility problem with 'sadh' shell (If statement) 
 # 2018_06_04    V2.5 Adapt to new Libr.
-#@2018_09_19    V2.6 Added Alert Group
+# 2018_09_19    V2.6 Added Alert Group
+#@2021_06_12    V2.7 Update SADMIN Section, add std command line option and fix minor comments typo 
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -29,50 +30,77 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
-#===================================================================================================
-#               Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
-#
-    # Test if 'SADMIN' environment variable is defined
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
+# ---------------------------------------------------------------------------------------
+# SADMIN CODE SECTION 1.50
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
+# ---------------------------------------------------------------------------------------
 
-    # Test if 'SADMIN' Shell Library is readable 
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
+# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    
+    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null 
+         if [ $? -eq 0 ]                                   # Found SADMIN in /etc/env.
+            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                 printf "'SADMIN' environment variable temporarily set to ${SADMIN}.\n"
+            else exit 1                                    # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.6'                               # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
+export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-#
-#---------------------------------------------------------------------------------------------------
-#
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But they can be overridden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
-    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#
-#===================================================================================================
+# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='2.7'                                      # Script Version
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy ?
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. LockFile
+export SADM_USE_RCH="Y"                                    # Update RCH HistoryFile 
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
+export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
+export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Server
+# ---------------------------------------------------------------------------------------
+
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Show Script command line options
+# --------------------------------------------------------------------------------------------------
+show_usage()
+{
+    printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
+    printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
+    printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
+    printf "\n\n" 
+}
 
 
 
@@ -96,7 +124,7 @@ TOT_SNAPSHOT=`echo "${TOT_MIN}/2"| bc`                              # Nb. of 2 M
 
     
 # --------------------------------------------------------------------------------------------------
-# Check availibility of 'nmon' and permmission and 
+# Check availability of 'nmon' and permission and 
 # Deactivate nmon cron file 
 #   - If nmon is not running, for any reason SADMIN will restart it, with proper parameters to 
 #       run until 23:55 (sadm_nmon_watcher.sh) 
@@ -105,6 +133,21 @@ TOT_SNAPSHOT=`echo "${TOT_MIN}/2"| bc`                              # Nb. of 2 M
 # --------------------------------------------------------------------------------------------------
 pre_validation()
 {
+
+    if [ $SADM_DEBUG -gt 0 ] 
+        then sadm_writelog "----------------------"
+             sadm_writelog "CURRENT EPOCH               = $EPOCH_NOW"
+             sadm_writelog "CURRENT DATE/TIME           = `date +"%Y.%m.%d %H:%M:%S"`"
+             sadm_writelog "END EPOCH                   = $EPOCH_END" 
+             sadm_writelog "END DATE/TIME               = $NOW"
+             sadm_writelog "SECONDS TILL 23:59:58       = $TOT_SEC" 
+             sadm_writelog "MINUTES TILL 23:59:58       = $TOT_MIN"
+             sadm_writelog "SECONDS BETWEEN SNAPSHOT    = 120"
+             sadm_writelog "Nb. SnapShot till 23:59:58  = $TOT_SNAPSHOT" 
+             sadm_writelog "----------------------"
+             sadm_writelog " "
+    fi
+    
     NMON=`which nmon >/dev/null 2>&1`                                   # Is nmon executable Avail.?
     if [ $? -eq 0 ]                                                     # If it is, Save Full Path 
         then NMON=`which nmon`                                          # Save 'nmon' location 
@@ -144,7 +187,7 @@ check_nmon()
 
     # On Aix we might be running 'nmon' (older aix) or 'topas_nmon' (latest Aix)
     if [ $(sadm_get_ostype) = "AIX" ]                                   # If Server is running Aix
-        then ${SADM_WHICH} topas_nmon >/dev/null 2>&1                   # Lastest Aix use topas_nmon
+        then ${SADM_WHICH} topas_nmon >/dev/null 2>&1                   # Latest Aix use topas_nmon
              if [ $? -eq 0 ]                                            # topas_nmon on system ?
                 then TOPAS_NMON=`${SADM_WHICH} topas_nmon`              # Save Path to topas_nmon
                      WSEARCH="${SADM_NMON}|${TOPAS_NMON}"               # Will search for both nmon
@@ -176,7 +219,7 @@ check_nmon()
 
     # nmon_count = 0 = Not running - Then we start it 
     # nmon_count = 1 = Running - Then OK
-    # nmon_count = * = More than one runing ? Kill them and then we start a fresh one
+    # nmon_count = * = More than one running ? Kill them and then we start a fresh one
     # not running nmon, start it
     sadm_writelog " "
     case $nmon_count in
@@ -229,27 +272,56 @@ check_nmon()
 
 
 
+
+# --------------------------------------------------------------------------------------------------
+# Command line Options functions
+# Evaluate Command Line Switch Options Upfront
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# --------------------------------------------------------------------------------------------------
+function cmd_options()
+{
+    while getopts "d:hv" opt ; do                                       # Loop to process Switch
+        case $opt in
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 1                                           # Exit Script with Error
+               fi
+               printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               ;;                                                       
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) sadm_show_version                                        # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    return 
+}
+
+
+
+
 # --------------------------------------------------------------------------------------------------
 #                                     Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    sadm_start                                                          # Init Env. Dir & RC/Log File
+    cmd_options "$@"                                                    # Check command-line Options
+    sadm_start                                                          # Create Dir.,PID,log,rch
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
+
     if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # nmon not available on OSX
         then sadm_writelog "The command nmon is not available on MacOS" # Advise user that won't run
              sadm_writelog "Script can't continue"                      # Process can't continue
              sadm_stop 0                                                # Close Everything Cleanly
              exit 0                                                     # Exit back to bash
     fi
-
-    sadm_writelog "----------------------"
-    sadm_writelog "CURRENT EPOCH               = $EPOCH_NOW"
-    sadm_writelog "CURRENT DATE/TIME           = `date +"%Y.%m.%d %H:%M:%S"`"
-    sadm_writelog "END EPOCH                   = $EPOCH_END" 
-    sadm_writelog "END DATE/TIME               = $NOW"
-    sadm_writelog "SECONDS TILL 23:59:58       = $TOT_SEC" 
-    sadm_writelog "MINUTES TILL 23:59:58       = $TOT_MIN"
-    sadm_writelog "SECONDS BETWEEN SNAPSHOT    = 120"
-    sadm_writelog "Nb. SnapShot till 23:59:58  = $TOT_SNAPSHOT" 
-    sadm_writelog "----------------------"
 
     pre_validation                                                      # Does 'nmon' cmd present ?
     if [ $? -ne 0 ]                                                     # If not there
@@ -260,7 +332,7 @@ check_nmon()
     # Check if nmon is running
     check_nmon                                                          # nmon not running start it
     SADM_EXIT_CODE=$?                                                   # Recuperate error code
-    if [ $SADM_EXIT_CODE -ne 0 ]                                        # if error occured
+    if [ $SADM_EXIT_CODE -ne 0 ]                                        # if error occurred
         then sadm_writelog "Problem starting nmon ...."                 # Advise User
     fi
     
