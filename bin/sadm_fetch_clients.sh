@@ -33,7 +33,7 @@
 # 2018_09_14  v2.19 Alert are now send to Production Alert Group (sprod-->Slack Channel sadm_prod)
 # 2018_09_18  v2.20 Alert Minors fixes
 # 2018_09_26  v2.21 Include Subject Field in Alert and Add Info field from SysMon
-# 2018_09_26  v2.22 Reformat Error message for alerting systsem
+# 2018_09_26  v2.22 Reformat Error message for alerting system
 # 2018_10_04  v2.23 Supplemental message about o/s update crontab modification
 # 2018_11_28  v2.24 Added Fetch to MacOS Client 
 # 2018_12_30  Fixed: v2.25 Problem updating O/S Update crontab when some MacOS clients were used.
@@ -79,6 +79,7 @@
 # 2021_04_19 Update: v3.25 Change Include text in ReaR Config file.
 #@2021_05_10 nolog: v3.26 Error message change "sadm_osupdate_farm.sh" to "sadm_osupdate_starter"
 #@2021_06_06 Update: v3.27 Use $SADMIN variable in /etc/cron.d/sadm_osupdate 
+#@2021_06_11 Update: v3.28 Collect system uptime and store it in DB and update SADMIN section 
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
@@ -101,60 +102,62 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
-#===================================================================================================
-# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
-# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
+# ---------------------------------------------------------------------------------------
+# SADMIN CODE SECTION 1.50
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
+# ---------------------------------------------------------------------------------------
 
-    # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-    if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
-        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
-             EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
-             if [ $? -eq 0 ]                                            # Yes it is 
-                then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}.\n"
-                else exit 1                                             # No SADMIN Env. Var. Exit
-             fi
-    fi 
+# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    
+    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null 
+         if [ $? -eq 0 ]                                   # Found SADMIN in /etc/env.
+            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                 printf "'SADMIN' environment variable temporarily set to ${SADMIN}.\n"
+            else exit 1                                    # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
-    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
-    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
+export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.27'                              # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="Y"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
-    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_PID_TIMEOUT=7200                        # Nb. Sec. a PID can block script execution
-    export SADM_LOCK_TIMEOUT=3600                       # Sec. before Server Lock File get deleted
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
-    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
-    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
-    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
-    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
-    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
+# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='3.28'                                     # Script Version
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy ?
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. LockFile
+export SADM_USE_RCH="Y"                                    # Update RCH HistoryFile 
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
+export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
+export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library Functions
-    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
-    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
-    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
 
-#---------------------------------------------------------------------------------------------------
-# Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# They can be overridden here, on a per script basis (if needed).
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
-    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
-    export SADM_MAX_LOGLINE=25000                        # When script end Trim log to 7500 Lines
-    export SADM_MAX_RCLINE=150                           # When script end Trim rch file to 35 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#===================================================================================================
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+export SADM_MAX_LOGLINE=25000                               # Nb Lines to trim(0=NoTrim)
+export SADM_MAX_RCLINE=150                                  # Nb Lines to trim(0=NoTrim)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Server
+# ---------------------------------------------------------------------------------------
+
 
 
 
@@ -162,21 +165,28 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-export OS_SCRIPT="sadm_osupdate_starter.sh"                             # OSUpdate Script in crontab
-export BA_SCRIPT="sadm_backup.sh"                                       # Backup Script 
-export REAR_SCRIPT="sadm_rear_backup.sh"                                # ReaR Backup Script 
+#
 export REAR_TMP="${SADMIN}/tmp/rear_site.tmp$$"                         # New ReaR site.conf tmp file
 export REAR_CFG="${SADMIN}/tmp/rear_site.cfg$$"                         # Will be new /etc/site.conf
 export FETCH_RPT="${SADM_RPT_DIR}/${SADM_HOSTNAME}_fetch.rpt"           # RPT for unresponsive host
 export REBOOT_SEC=900                                                   # O/S Upd Reboot Nb Sec.wait
 export RCH_FIELD=10                                                     # Nb. of field on rch file.
 export OSTIMEOUT=1800                                                   # 1800sec=30Min todo O/S Upd
+export GLOB_UPTIME=""                                                   # Global Server uptime value 
+export BOOT_DATE=""                                                     # Server Last Boot Date/Time
+#
+# Variables used to insert in /etc/cron.d/sadm* crontab files.
+export OS_SCRIPT="sadm_osupdate_starter.sh"                             # OSUpdate Script in crontab
+export BA_SCRIPT="sadm_backup.sh"                                       # Backup Script 
+export REAR_SCRIPT="sadm_rear_backup.sh"                                # ReaR Backup Script 
 #
 # Reset Alert Totals Counters
 export total_alert=0 total_duplicate=0 total_ok=0 total_error=0 total_oldies=0
 #
 # Reset Alert Totals Counters
 export t_alert=0 t_duplicate=0 t_ok=0 t_error=0 t_oldies=0
+
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -659,43 +669,39 @@ create_crontab_files_header()
 
 
 # --------------------------------------------------------------------------------------------------
-# Validate connectivity to server received 
-#   1st Parameter is the server name
-#   2nd Parameter is the fully qualified domain name of the server
-#
-# Function Return Code
-#   Return 0 = Server Accessible
-#       Connection to server is working 
-#   Return 1 = Error, go to next server.
-#       Can't SSH to Server, Missing Parameter received, Hostname Unresovable, 
-#   Return 2 = Warning, skip server.
-#       O/S Update Running, Sporadic System, Monitor if OFF
+# Validate SSH Server Connectivity 
+#  Parameters:
+#   1) Fully qualified domain name of the server to connect with SSH
+#  Return Value:
+#   0) Server Accessible
+#   1) Error, go to next server (Can't SSH to Server, Missing Parameter rcv, Hostname Unresovable)
+#   2) Warning, skip server (O/S Update Running, Sporadic System or Monitor if OFF)
+#   3) Was not able to update uptime of server in Database
 # --------------------------------------------------------------------------------------------------
 validate_server_connectivity()
 {
-    # PARAMETERS RECEIVED SHOULD ALWAYS BY TWO - IF NOT WRITE ERROR TO LOG AND RETURN TO CALLER
-    if [ $# -ne 2 ]
-        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters."
+    # Validate number of parameter received
+    if [ $# -ne 1 ]
+        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 1 parameter."
              sadm_writelog "Function received $* and this isn't valid."
-             sadm_writelog "Should receive the server name and the fqdn of the server."
+             sadm_writelog "Should receive the fqdn of the server."
              return 1
     fi
-    SNAME=$1                                                            # Server Name
-    FQDN_SNAME=$2                                                       # Server Name Full Qualified
 
-    # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR AND CONTINUE WITH NEXT SERVER
-    if ! host  $FQDN_SNAME >/dev/null 2>&1
+    FQDN_SNAME=$1                                                       # Server Name Full Qualified
+
+    # Can we resolve the hostname ?
+    if ! host $FQDN_SNAME >/dev/null 2>&1                               # Name is resolvable ? 
            then SMSG="Can't process '$FQDN_SNAME', hostname can't be resolved."
                 sadm_writelog "${SADM_ERROR} ${SMSG}"                   # Advise user
                 return 1                                                # Return Error to Caller
     fi
+    SNAME=$(echo "$FQDN_SNAME" | awk -F\. '{print $1}')                 # ServerName without Domain
+
 
     # When we start the O/S Update, or a script is started on a remote system and we want to stop
     # monitoring of that server while the script is running, we can create a file ($LOCK_FILE). 
     # This suspend monitoring of the server while the script is running.
-    # Example :
-    # The O/S Update may need a reboot at the end of the update (Server CRUD Web Page.)
-    # While the system is bring down and back up again, it may alert user saying that server is down
     #
     # To disable the monitoring of the server while the o/s update is runinng, the $LOCK_FILE file 
     # is created when the O/S update start.
@@ -724,9 +730,17 @@ validate_server_connectivity()
     fi 
 
     # TEST SSH TO SERVER
-    $SADM_SSH_CMD $FQDN_SNAME date > /dev/null 2>&1                     # SSH to Server for date
+    wuptime=$($SADM_SSH_CMD $FQDN_SNAME uptime 2>/dev/null) # SSH to Server for date
     RC=$?                                                               # Save Error Number
-    if [ $RC -eq 0 ] ; then return 0 ; fi                               # SSH Work return to caller
+    if [ $RC -eq 0 ]                                                    # If SSH Worked
+        then #GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}')
+             GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
+             #upos=$((${#wuptime} - 20 ))                                # Extract LastBoot Date Pos
+             #BOOT_DATE=$(echo "${wuptime:$upos:20}"| grep -v "^$")      # Extract LastBoot Date/Time
+             #update_server_uptime "$SNAME" "$GLOB_UPTIME" "$BOOT_DATE"  # Update Server Uptime in DB
+             update_server_uptime "$SNAME" "$GLOB_UPTIME"               # Update Server Uptime in DB
+             if [ $? -eq 0 ] ; then return 0 ; else return 3 ; fi       # Return ErrorCode to caller
+    fi                               
 
     # SSH DIDN'T WORK, BUT IT'S A SPORADIC SERVER (CAN HAPPEN, DON'T REPORT AN EROR)
     if [ "$server_sporadic" = "1" ]                                     # If Error on Sporadic Host
@@ -746,7 +760,9 @@ validate_server_connectivity()
     while [ $RETRY -lt 3 ]                                              # Retry ssh 3 times 
         do
         RETRY=$(($RETRY+1))                                             # Increase Retry counter
-        $SADM_SSH_CMD $FQDN_SNAME date > /dev/null 2>&1                 # SSH to Server for date
+        #$SADM_SSH_CMD $FQDN_SNAME date > /dev/null 2>&1                 # SSH to Server for date
+        #wuptime=$($SADM_SSH_CMD $FQDN_SNAME uptime 2>/dev/null)         # SSH to Server for date
+        wuptime=$($SADM_SSH_CMD $FQDN_SNAME uptime ; uptime -s 2>/dev/null) # SSH to Server for date
         RC=$?                                                           # Save Error Number
         if [ $RC -ne 0 ]                                                # If Error doing ssh
             then if [ $RETRY -lt 3 ]                                    # If less than 3 retry
@@ -763,8 +779,13 @@ validate_server_connectivity()
                          echo "$RPTLINE" >> $FETCH_RPT                  # Create Skip Code to caller                              
                          return 1                                       # Return Error to caller
                  fi
-            else sadm_writelog "$SADM_OK $SADM_SSH_CMD $FQDN_SNAME date"
-                 return 0                                               # Return SSH is OK to Caller 
+            else sadm_writelog "$SADM_OK $SADM_SSH_CMD $FQDN_SNAME uptime"
+                 GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
+                 #upos=$((${#wuptime} - 20 ))                            # Extract LastBoot Date Pos
+                 #BOOT_DATE=$(echo "${wuptime:$upos:20}"| grep -v "^$")  # Extract LastBoot Date/Time
+                 #update_server_uptime "$SNAME" "$GLOB_UPTIME" "$BOOT_DATE" # Update Srv Uptime in DB
+                 update_server_uptime "$SNAME" "$GLOB_UPTIME"           # Update Srv Uptime in DB
+                 if [ $? -eq 0 ] ; then return 0 ; else return 3 ; fi   # Return ErrorCode to caller
         fi
         done
 }
@@ -822,34 +843,34 @@ process_servers()
     while read wline                                                    # Read Server Data from DB
         do                                                              # Line by Line
         xcount=`expr $xcount + 1`                                       # Incr Server Counter Var.
-        server_name=`    echo $wline|awk -F\; '{ print $1 }'`            # Extract Server Name
-        server_os=`      echo $wline|awk -F\; '{ print $2 }'`            # Extract O/S (linux/aix)
-        server_domain=`  echo $wline|awk -F\; '{ print $3 }'`            # Extract Domain of Server
-        server_monitor=` echo $wline|awk -F\; '{ print $4 }'`            # Monitor t=True f=False
-        server_sporadic=`echo $wline|awk -F\; '{ print $5 }'`            # Sporadic t=True f=False
-        server_dir=`     echo $wline|awk -F\; '{ print $7 }'`            # SADMIN Dir on Client 
+        server_name=`    echo $wline|awk -F\; '{ print $1 }'`           # Extract Server Name
+        server_os=`      echo $wline|awk -F\; '{ print $2 }'`           # Extract O/S (linux/aix)
+        server_domain=`  echo $wline|awk -F\; '{ print $3 }'`           # Extract Domain of Server
+        server_monitor=` echo $wline|awk -F\; '{ print $4 }'`           # Monitor t=True f=False
+        server_sporadic=`echo $wline|awk -F\; '{ print $5 }'`           # Sporadic t=True f=False
+        server_dir=`     echo $wline|awk -F\; '{ print $7 }'`           # SADMIN Dir on Client 
         fqdn_server=`    echo ${server_name}.${server_domain}`          # Create FQN Server Name
         #
-        db_updmin=`     echo $wline|awk -F\; '{ print $8 }'`             # crontab Update Min field
-        db_updhrs=`     echo $wline|awk -F\; '{ print $9 }'`             # crontab Update Hrs field
-        db_upddom=`     echo $wline|awk -F\; '{ print $10 }'`            # crontab Update DOM field
-        db_updmth=`     echo $wline|awk -F\; '{ print $11 }'`            # crontab Update Mth field
-        db_upddow=`     echo $wline|awk -F\; '{ print $12 }'`            # crontab Update DOW field 
-        db_updauto=`    echo $wline|awk -F\; '{ print $13 }'`            # crontab Update DOW field 
+        db_updmin=`     echo $wline|awk -F\; '{ print $8 }'`            # crontab Update Min field
+        db_updhrs=`     echo $wline|awk -F\; '{ print $9 }'`            # crontab Update Hrs field
+        db_upddom=`     echo $wline|awk -F\; '{ print $10 }'`           # crontab Update DOM field
+        db_updmth=`     echo $wline|awk -F\; '{ print $11 }'`           # crontab Update Mth field
+        db_upddow=`     echo $wline|awk -F\; '{ print $12 }'`           # crontab Update DOW field 
+        db_updauto=`    echo $wline|awk -F\; '{ print $13 }'`           # crontab Update DOW field 
         #
-        backup_auto=`   echo $wline|awk -F\; '{ print $14 }'`            # crontab Backup 1=Yes 0=No 
-        backup_mth=`    echo $wline|awk -F\; '{ print $15 }'`            # crontab Backup Mth field
-        backup_dom=`    echo $wline|awk -F\; '{ print $16 }'`            # crontab Backup DOM field
-        backup_dow=`    echo $wline|awk -F\; '{ print $17 }'`            # crontab Backup DOW field 
-        backup_hrs=`    echo $wline|awk -F\; '{ print $18 }'`            # crontab Backup Hrs field
-        backup_min=`    echo $wline|awk -F\; '{ print $19 }'`            # crontab Backup Min field
+        backup_auto=`   echo $wline|awk -F\; '{ print $14 }'`           # crontab Backup 1=Yes 0=No 
+        backup_mth=`    echo $wline|awk -F\; '{ print $15 }'`           # crontab Backup Mth field
+        backup_dom=`    echo $wline|awk -F\; '{ print $16 }'`           # crontab Backup DOM field
+        backup_dow=`    echo $wline|awk -F\; '{ print $17 }'`           # crontab Backup DOW field 
+        backup_hrs=`    echo $wline|awk -F\; '{ print $18 }'`           # crontab Backup Hrs field
+        backup_min=`    echo $wline|awk -F\; '{ print $19 }'`           # crontab Backup Min field
         #
-        rear_auto=`     echo $wline|awk -F\; '{ print $20 }'`            # Rear Crontab 1=Yes 0=No 
-        rear_mth=`      echo $wline|awk -F\; '{ print $21 }'`            # Rear Crontab Mth field
-        rear_dom=`      echo $wline|awk -F\; '{ print $22 }'`            # Rear Crontab DOM field
-        rear_dow=`      echo $wline|awk -F\; '{ print $23 }'`            # Rear Crontab DOW field 
-        rear_hrs=`      echo $wline|awk -F\; '{ print $24 }'`            # Rear Crontab Hrs field
-        rear_min=`      echo $wline|awk -F\; '{ print $25 }'`            # Rear Crontab Min field
+        rear_auto=`     echo $wline|awk -F\; '{ print $20 }'`           # Rear Crontab 1=Yes 0=No 
+        rear_mth=`      echo $wline|awk -F\; '{ print $21 }'`           # Rear Crontab Mth field
+        rear_dom=`      echo $wline|awk -F\; '{ print $22 }'`           # Rear Crontab DOM field
+        rear_dow=`      echo $wline|awk -F\; '{ print $23 }'`           # Rear Crontab DOW field 
+        rear_hrs=`      echo $wline|awk -F\; '{ print $24 }'`           # Rear Crontab Hrs field
+        rear_min=`      echo $wline|awk -F\; '{ print $25 }'`           # Rear Crontab Min field
         #
         sadm_write "\n"
         sadm_write "${BOLD}Processing [$xcount] ${fqdn_server}${NORMAL}\n" 
@@ -867,15 +888,18 @@ process_servers()
                  sadm_writelog "fqdn_server   = $fqdn_server"           # Name of Output file
         fi
     
+        # Validate server SSH connectivity, hostname resolved ?,
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # Not on SADMIN Srv Test SSH
-            then validate_server_connectivity "$server_name" "$fqdn_server" # Check Access to Server
+            then validate_server_connectivity "$fqdn_server"            # Validate Server Access
                  RC=$?                                                  # Save function return code 
                  if [ $RC -eq 2 ] ; then continue ; fi                  # Sporadic,Monitor Off,OSUpd
-                 if [ $RC -eq 1 ]                                       # Error SSH Connect to Host
+                 if [ $RC -eq 1 ] || [ $RC -eq 3 ]                      # Error SSH or Update Uptime
                     then ERROR_COUNT=$(($ERROR_COUNT+1))                # Error - Incr Error counter
                          sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
                          continue                                       # Not accessible, Nxt Server
                  fi 
+            else GLOB_UPTIME=$(uptime |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
+                 update_server_uptime "$SNAME" "$GLOB_UPTIME"           # Update Server Uptime in DB
         fi                            
 
         # On Linux & O/S AutoUpdate is ON, Generate Crontab entry in O/S Update crontab work file
@@ -1260,52 +1284,6 @@ check_all_rch()
 }
 
 
-  
-
-# --------------------------------------------------------------------------------------------------
-# Get from all actives servers the new hostname.rpt file and all the new or updated *.rch files.
-# --------------------------------------------------------------------------------------------------
-main_process()
-{
-    # Process All Active Linux/Aix servers
-    > $FETCH_RPT                                                        # Create Empty Fetch RPT
-    LINUX_ERROR=0; AIX_ERROR=0 ; MAC_ERROR=0                            # Init. Error count to 0
-    process_servers "linux"                                             # Process Active Linux
-    LINUX_ERROR=$?                                                      # Save Nb. Errors in process
-    process_servers "aix"                                               # Process Active Aix
-    AIX_ERROR=$?                                                        # Save Nb. Errors in process
-    process_servers "darwin"                                            # Process Active MacOS
-    MAC_ERROR=$?                                                        # Save Nb. Errors in process
-
-    # Print Total Script Errors
-    sadm_writelog "${BOLD}${YELLOW}Systems Rsync Summary${NORMAL}"      # Rsync Summary 
-    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR+$MAC_ERROR))              # ExitCode=AIX+Linux+Mac Err
-    sadm_writelog " - Total Linux error(s)  : ${LINUX_ERROR}"           # Display Total Linux Errors
-    sadm_writelog " - Total Aix error(s)    : ${AIX_ERROR}"             # Display Total Aix Errors
-    sadm_writelog " - Total Mac error(s)    : ${MAC_ERROR}"             # Display Total Mac Errors
-    sadm_writelog "${BOLD}Rsync Total Error(s)     : ${SADM_EXIT_CODE}${NORMAL}"
-    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
-    sadm_writelog " "                                                   # Separation Blank Line
-    if [ $(sadm_get_ostype) = "LINUX" ] ; then crontab_update ; fi      # Update crontab if needed
-    
-    # To prevent this script from showing very often on the monitor (This script is run every 5 min)
-    # we copy the updated .rch file in the web centrail directory. 
-    if [ ! -d ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ]                # Web RCH repo Dir not exist
-        then mkdir -p ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch          # Create it
-    fi
-    cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch            # cp rch for instant Status
-    cp ${SADM_RPT_DIR}/*.rpt ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt   # cp rpt for instant Status
-
-    # Check for Error or Alert to submit
-    check_all_rpt                                                       # Check all *.rpt for Alert
-    check_all_rch                                                       # Check all *.rch for Alert
-
-    # Delete TMP work file before retuning to caller 
-    if [ ! -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi
-    
-    return $SADM_EXIT_CODE
-}
-
 
 
 # --------------------------------------------------------------------------------------------------
@@ -1354,6 +1332,100 @@ crontab_update()
 
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog " "
+}
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Get from all actives servers the new hostname.rpt file and all the new or updated *.rch files.
+# --------------------------------------------------------------------------------------------------
+main_process()
+{
+    # Process All Active Linux/Aix servers
+    > $FETCH_RPT                                                        # Create Empty Fetch RPT
+    LINUX_ERROR=0; AIX_ERROR=0 ; MAC_ERROR=0                            # Init. Error count to 0
+    process_servers "linux"                                             # Process Active Linux
+    LINUX_ERROR=$?                                                      # Save Nb. Errors in process
+    process_servers "aix"                                               # Process Active Aix
+    AIX_ERROR=$?                                                        # Save Nb. Errors in process
+    process_servers "darwin"                                            # Process Active MacOS
+    MAC_ERROR=$?                                                        # Save Nb. Errors in process
+
+    # Print Total Script Errors
+    sadm_writelog " "                                                   # Separation Blank Line
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
+    sadm_writelog "${BOLD}${YELLOW}Systems Rsync Summary${NORMAL}"      # Rsync Summary 
+    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR+$MAC_ERROR))              # ExitCode=AIX+Linux+Mac Err
+    sadm_writelog " - Total Linux error(s)  : ${LINUX_ERROR}"           # Display Total Linux Errors
+    sadm_writelog " - Total Aix error(s)    : ${AIX_ERROR}"             # Display Total Aix Errors
+    sadm_writelog " - Total Mac error(s)    : ${MAC_ERROR}"             # Display Total Mac Errors
+    sadm_writelog "${BOLD}Rsync Total Error(s)     : ${SADM_EXIT_CODE}${NORMAL}"
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
+    sadm_writelog " "                                                   # Separation Blank Line
+    if [ $(sadm_get_ostype) = "LINUX" ] ; then crontab_update ; fi      # Update crontab if needed
+    
+    # To prevent this script from showing very often on the monitor (This script is run every 5 min)
+    # we copy the updated .rch file in the web centrail directory. 
+    if [ ! -d ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ]                # Web RCH repo Dir not exist
+        then mkdir -p ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch          # Create it
+    fi
+    cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch            # cp rch for instant Status
+    cp ${SADM_RPT_DIR}/*.rpt ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt   # cp rpt for instant Status
+
+    # Check for Error or Alert to submit
+    check_all_rpt                                                       # Check all *.rpt for Alert
+    check_all_rch                                                       # Check all *.rch for Alert
+
+    # Delete TMP work file before retuning to caller 
+    if [ ! -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi
+    
+    return $SADM_EXIT_CODE
+}
+
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+#  Update the system uptime in Server Table in SADMIN Database
+#  Parameters:
+#   1) server hostname to update (without domain name)
+#   2) uptime value to store in Database
+#  Return Value:
+#   0) Successful update
+#   1) Error when trying to record uptime
+# --------------------------------------------------------------------------------------------------
+update_server_uptime()
+{
+    WSERVER=$1                                                          # Server Name to Update
+    WUPTIME=$2                                                          # Uptime value to store
+    #WBDATE=$3                                                           # Boot Date and Time
+    WCURDAT=`date "+%C%y.%m.%d %H:%M:%S"`                               # Get & Format Update Date
+
+    SQL1="UPDATE server SET "                                           # SQL Update Statement
+    SQL2="srv_uptime = '$WUPTIME', "                                    # System uptime value
+    SQL3="srv_date_update = '${WCURDAT}' "                             # Last Update Date
+    #SQL3="srv_date_update = '${WCURDAT}', "                             # Last Update Date
+    #SQL4="srv_boot_date = '${WBDATE}' "                                 # Last Boot Date
+    SQL4=" "                                                            # Last Boot Date
+    SQL5="where srv_name = '${WSERVER}' ;"                              # Server name to update
+    SQL="${SQL1}${SQL2}${SQL3}${SQL4}${SQL5}"                           # Create final SQL Statement
+
+    WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
+    CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
+    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -e '$SQL'"           # Build Full Command Line
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
+
+    # Execute SQL to Update Server O/S Data
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e "$SQL" >>$SADM_LOG 2>&1
+    if [ $? -ne 0 ]                                                     # If Error while updating
+        then sadm_writelog "${SADM_ERROR} Failed to update database 'uptime' ($WUPTIME) of $WSERVER"
+             RCU=1                                                      # Set Error Code = 1
+        else sadm_writelog "${SADM_OK} Success updating database 'uptime' ($WUPTIME) of $WSERVER"
+             RCU=0                                                      # Set Code = Success =0
+    fi
+    return $RCU
 }
 
 
