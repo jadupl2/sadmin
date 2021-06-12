@@ -41,6 +41,8 @@
 #@2021_05_30 Fix: v3.12 Enlarge column 'srv_model' & 'srv_kernel_version' column wasn't big enough
 #@2021_06_01 Update: v3.13 Bug fixes and Command line option -v, -h and -d are now functional. 
 #@2021_06_10 Update: v3.14 Enlarge column 'srv_uptime' from 20 to 25 Char 
+#@2021_06_11 Update: v3.15 Add 'srv_boot_date' that contain last boot date & Fix error message.
+# 
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -92,7 +94,7 @@ def setup_sadmin():
     st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
-    st.ver              = "3.14"                # Current Script Version
+    st.ver              = "3.15"                # Current Script Version
     st.pdesc            = "SADMIN Daily database update v%s" % st.ver
     st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
     st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
@@ -131,31 +133,40 @@ def update_row(st,wconn, wcur, wdict):
     # Enlarge col 'srv_kernel_version' to 40char. for '2.6.32-754.35.1.el6.centos.plus.i686'
     # Enlarge column 'srv_model' to 30 Characters to accommodate 'Precision WorkStation T3500'
     # Enlarge column 'srv_uptime' from 20 to 25 Char to accommodate largest runtime string
+    # Add Last Boot Date Column 
     if st.get_release() < "1.3.4" :                                         # Change made in 1.3.3
         sql="ALTER TABLE server MODIFY COLUMN srv_kernel_version VARCHAR(40);"
         try:
             wcur.execute(sql);                                              # Execute the Select SQL
         except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
-            self.enum, self.emsg = error.args                               # Get Error No. & Msg
-            print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Msg
+            enum, emsg = error.args                                         # Get Error No. & Msg
+            print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Msg
             return (1)                                                      # Return Error to caller
         #
         sql="ALTER TABLE server MODIFY COLUMN srv_model VARCHAR(30);"
         try:
             wcur.execute(sql);                                              # Execute the Select SQL
         except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
-            self.enum, self.emsg = error.args                               # Get Error No. & Msg
-            print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Msg
+            enum, emsg = error.args                                         # Get Error No. & Msg
+            print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Msg
             return (1)                                                      # Return Error to caller
         #
         sql="ALTER TABLE server MODIFY COLUMN srv_uptime VARCHAR(25);"      # Modify from 20 to 25Ch
         try:
             wcur.execute(sql);                                              # Execute the Select SQL
         except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
-            self.enum, self.emsg = error.args                               # Get Error No. & Msg
-            print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Mess
+            enum, emsg = error.args                                         # Get Error No. & Msg
+            print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Msg
             return (1)                                                      # Return Error to caller
-    
+        #
+        sql="ALTER TABLE server ADD COLUMN srv_boot_date datetime AFTER srv_rear_ver;"
+        try:
+            wcur.execute(sql);                                              # Execute the Select SQL
+        except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
+            pass                                                            # Skip duplicate error
+            #enum, emsg = error.args                                         # Get Error No. & Msg
+            #print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Msg
+            #return (1)                                                      # Return Error to caller
 
     # Update Server Row With Info collected from the sysinfo.txt file
     try:
