@@ -38,12 +38,13 @@
 # 2019_07_07 Update: v2.34 Update Filesystem Increase Message & verification.
 # 2019_07_25 Update: v2.35 Now using a tmp rpt file and real rpt is replace at the end of execution.
 # 2019_10_25 Update: v2.36 Don't check SNAP filesystem usage (snap filesystem always at 100%).
-#@2020_03_05 Fix: v2.37 Not getting 'SADMIN' variable content from /etc/environment (if export used).
-#@2020_03_28 Fix: v2.38 Fix problem when 'dmidecode' is not available on system.
-#@2020_07_27 Update: v2.39 Used space of CIFS Mounted filesystem are no longer monitored.
-#@2020_10_01 Update: v2.40 Write more elaborated email to user when restarting a service.
-#@2020_11_18 Update: v2.41 Fix: Fix problem with iostat on MacOS.
-#@2020_11_30 Update: v2.42 Fix: Fix problem reading SADMIN variable in /etc/environment.
+# 2020_03_05 Fix: v2.37 Not getting 'SADMIN' variable content from /etc/environment (if export used).
+# 2020_03_28 Fix: v2.38 Fix problem when 'dmidecode' is not available on system.
+# 2020_07_27 Update: v2.39 Used space of CIFS Mounted filesystem are no longer monitored.
+# 2020_10_01 Update: v2.40 Write more elaborated email to user when restarting a service.
+# 2020_11_18 Update: v2.41 Fix: Fix problem with iostat on MacOS.
+# 2020_11_30 Update: v2.42 Fix: Fix problem reading SADMIN variable in /etc/environment.
+#@2021_06_12 Update: v2.43 Update: Add Date & Time of last boot on last line of hostname.smon file.
 #===================================================================================================
 #
 use English;
@@ -57,7 +58,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.42";                                       # Version Number
+my $VERSION_NUMBER      = "2.43";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -372,9 +373,12 @@ sub unload_smon_file {
     # GET ENDING TIME & WRITE SADM STATISTIC LINE AT THE EOF
     $end_time = time;                                                   # Get current time
     $xline1 = sprintf ("#SYSMON $VERSION_NUMBER $HOSTNAME - ");
-    $xline2 = sprintf ("%s" , scalar localtime(time));
-    $xline3 = sprintf (" - Execution Time %2.2f seconds\n" ,$end_time - $start_time);
-    printf (SADMTMP "${xline1}${xline2}${xline3}");
+    my $uptime = `uptime -s`;
+    chomp $uptime; 
+    $xline2 = sprintf ("Last Boot: %s - " , $uptime);
+    $xline3 = sprintf ("%s" , scalar localtime(time));
+    $xline4 = sprintf (" - Execution Time %2.2f seconds\n" ,$end_time - $start_time);
+    printf (SADMTMP "${xline1}${xline2}${xline3}${xline4}");
     close SADMTMP ;                                                     # Close temporary file
 
     # DELETE OLD SYSMON CONFIG FILE AND RENAME THE TEMP FILE TO SADM SYSMON FILE
@@ -1868,9 +1872,12 @@ sub end_of_sysmon {
     if ($SYSMON_DEBUG >= 5) {
         $end_time = time;                                                   # Get current time
         $xline1 = sprintf ("#SYSMON $VERSION_NUMBER $HOSTNAME - ");         # Version & Hostname
-        $xline2 = sprintf ("%s" , scalar localtime(time));                  # Print Current Time
-        $xline3 = sprintf (" - Execution Time %2.2f seconds", ($end_time - $start_time));
-        printf ("\n${xline1}${xline2}${xline3}\n\n");                       # SADM Stat Line
+        my $uptime = `uptime -s`;
+        chomp $uptime; 
+        $xline2 = sprintf ("Last Boot: %s - " , $uptime);
+        $xline3 = sprintf ("%s" , scalar localtime(time));                  # Print Current Time
+        $xline4 = sprintf (" - Execution Time %2.2f seconds", ($end_time - $start_time));
+        printf ("\n${xline1}${xline2}${xline3}${xline4}\n\n");              # SADM Stat Line
     }
 }
 
