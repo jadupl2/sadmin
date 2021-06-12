@@ -33,6 +33,7 @@
 # 2020_05_27 Fix: v3.12 Force using bash instead of dash & problem setting SADMIN env. variable.
 # 2020_11_04 Minor: v3.13 Update SADMIN section & use env cmd to use proper bash shell.
 #@2021_05_13 Update: v3.14 Check if ntpdate is present before syncing time.
+#@2021_06_11 Update: v3.15 When syncing time with atomic clock redirect output to script log.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 
@@ -41,7 +42,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION
+# SADMIN CODE SECTION 1.50
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
@@ -65,7 +66,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.14'                                     # Script Version
+export SADM_VER='3.15'                                      # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -98,7 +99,6 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 
 
-
 # --------------------------------------------------------------------------------------------------
 #                                   This Script environment variables
 # --------------------------------------------------------------------------------------------------
@@ -123,11 +123,11 @@ main_process()
     rm -f ${SADM_BASE_DIR}/sysmon.lock >> $SADM_LOG 2>&1
 
     if which ntpdate >/dev/null 2>&1
-       then sadm_writelog "  Synchronize System Clock with NTP server $NTP_SERVER"
-            ntpdate -u $NTP_SERVER > $SADM_TMP_FILE1 2>&1
+       then sleep 5                                                     # Wait network to come up
+            sadm_writelog "  Synchronize System Clock with NTP server $NTP_SERVER"
+            ntpdate -u $NTP_SERVER 2>&1 | tee -a $SADM_LOG
             if [ $? -ne 0 ] 
                then sadm_writelog "  NTP Error Synchronizing Time with $NTP_SERVER" 
-                    cat $SADM_TMP_FILE1 | while read wline ; do sadm_writelog "$wline"; done
                     ERROR_COUNT=$(($ERROR_COUNT+1))
             fi
     fi 
