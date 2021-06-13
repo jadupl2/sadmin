@@ -3,7 +3,7 @@
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_service.sh
 #   Version  :  1.6
-#   Date     :  7 Juin 2017
+#   Date     :  7 June 2017
 #   Requires :  sh
 #   Synopsis :  Script to enable/disable/status SADM Service
 #               If SADM Service is enable, at system startup/shutdown above scripts are executed
@@ -53,6 +53,7 @@
 # 2019_12_27 Update: v2.8 Was exiting with error when using options '-h' or '-v'.
 # 2020_09_10 Update: v2.9 Minor code improvement.
 #@2021_05_23 Update: v2.10 Change switch from -d (disable) to -u (unset) and -s(status) to -l (List)
+#@2021_06_13 Fix: v2.11 When using an invalid command line option the PID file wasn't removed.
 #--------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -85,7 +86,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.10'                                     # Script Version
+export SADM_VER='2.11'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -119,9 +120,8 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 
 # --------------------------------------------------------------------------------------------------
-#                               This Script environment variables
+# Global Environment Variables 
 # --------------------------------------------------------------------------------------------------
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 #
 command -v systemctl > /dev/null 2>&1                                   # Using sysinit or systemd ?
 if [ $? -eq 0 ] ; then SYSTEMD=1 ; else SYSTEMD=0 ; fi                  # Set SYSTEMD Accordingly
@@ -373,15 +373,21 @@ service_start()
 }
 
 
+
+
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    sadm_start                                                          # Init Env Dir & RC/Log File
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
+    sadm_start                                                          # Create Dir.,PID,log,rch
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
+
+    # If you want this script to be run only by root user, uncomment the lines below.
+    if [ $(id -u) -ne 0 ]                                               # If Cur. user is not root
+        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
+             sadm_writelog "Try 'sudo ${0##*/}'."                       # Suggest using sudo
+             sadm_write "Process aborted.\n"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
+             exit 1                                                     # Exit To O/S with Error
     fi
 
     # Script can only run under Linux
@@ -407,7 +413,7 @@ service_start()
              fi
     fi 
 
-    # For Systemd - Check existance of service file in $SADMIN/sys directory
+    # For Systemd - Check existence of service file in $SADMIN/sys directory
     if [ $SYSTEMD -eq 1 ] && [ ! "${SADM_SRV_IFILE}" ]                  # Using systemd not Sysinit
        then sadm_writelog "File $SADM_SRV_IFILE is missing"             # Inform user
             sadm_writelog "Cannot enable/disable SADM service"          # Abort Msg
@@ -415,7 +421,7 @@ service_start()
             exit 1                                                      # Exit To O/S
     fi
 
-    # For SysV Init - Check existance of service file in $SADMIN/sys directory
+    # For SysV Init - Check existence of service file in $SADMIN/sys directory
     if [ $SYSTEMD -eq 0 ] && [ ! "${SADM_INI_IFILE}" ]                  # Using Sysinit
        then sadm_writelog "File $SADM_INI_IFILE is missing"             # Inform user
             sadm_writelog "Cannot enable/disable SADM service"          # Abort Msg
@@ -432,6 +438,7 @@ service_start()
                if [ "$num" = "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
+                       sadm_stop 0                                      # Close the shop
                        exit 1                                           # Exit Script with Error
                fi
                printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
@@ -457,8 +464,7 @@ service_start()
                ;;                                                      
             l) P_STATUS="ON"                                            # Status Option Selected
                service_status sadmin                                    # Status of sadmin Service
-               ;;                                                      
-            h) show_usage                                               # Display Help Usage
+               ;;                                        h) show_usage                                               # Display Help Usage
                sadm_stop 0                                              # Close and Trim Log
                exit 0                                                   # Exit To O/S
                ;;
@@ -468,11 +474,13 @@ service_start()
                ;;
            \?) echo "Invalid option: -$OPTARG" >&2                      # Invalid Option Message
                show_usage                                               # Display Help Usage
+               sadm_stop 1                                              # Close the shop
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
     done  
 
+    # If no Action to perform
     if [ "$P_DISABLE" = "OFF" ] && [ "$P_ENABLE" = "OFF" ] && [ "$P_STATUS" = "OFF" ] 
        then show_usage
     fi 
