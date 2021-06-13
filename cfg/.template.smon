@@ -12,10 +12,10 @@
 #     - At execution each line is evaluated based on the test requested by the first column.
 #         - The result of the operation is reflected in the second column.
 # 2018_09_14 Update: v2.6 - Change Default Warning and Error Alert Group 
-#@2019_10_08 Update: v2.7 - Turn off (Comment line) syslog service check.
-#@2019_10_25 Update: v2.8 - Turn off (Comment line) ping test lines.
-#@2021_06_06 Update: v2.9 - Remove execution script to check if 'nmon' is running, move to crontab
-##
+# 2019_10_08 Update: v2.7 - Turn off (Comment line) syslog service check.
+# 2019_10_25 Update: v2.8 - Turn off (Comment line) ping test lines.
+# 2021_06_06 Update: v2.9 - Remove execution script to check if 'nmon' is running, move to crontab
+#@2021_06_10 Update: v2.10 - Remove script execution of 'swatch_nmon.sh' now in sadm_client crontab.
 #---------------------------------------------------------------------------------------------------
 # Col   Name            Description
 #---------------------------------------------------------------------------------------------------
@@ -33,7 +33,7 @@
 #               Actual value is returned in column 2 of the line.
 #       cpu_level
 #               Return cpu usage using 'vmstat' command (Linux/Aix) and 'iostat' on MacOS. 
-#               The 'usr'added to the 'sys' value is returned in column 2 of the line.
+#               The 'usr' added to the 'sys' value is returned in column 2 of the line.
 #       swap_space
 #               Return the percentage of the Swap/Paging Space used.
 #               On Linux we use 'free | grep -i swap', on Aix 'lsps -a' and on MacOS 
@@ -84,15 +84,15 @@
 #                       
 #       http_   
 #               Test the web site respond (1=Up 0=NoResponse)
-#               Example : http_sysinfo.maison.ca
+#               Example : http_google.com
 #
 #       ping_
-#               Everytime Sysmon is run is will ping the name or the IP your have specified after 
+#               Each time Sysmon is run is will ping the name or the IP your have specified after 
 #               the prefix 'ping_'.
 #               Example : ping_www.google.com
 #               This will ping the 'www.google.com' web site and return a 0 is it ping, if not a 1.
 #
-#       FS      Everytime Sysmon is run the server smon configuration file is loaded in memory,
+#       FS      Every time Sysmon is run the server smon configuration file is loaded in memory,
 #               updated in memory during execution and then unloaded to disk when terminated.
 #               So SysMon is able to know when a new filesystem is created on the system and it is
 #               added automatically to his configuration file. 
@@ -126,7 +126,7 @@
 #                                       column to 120 so an error would be trigger only when the cpu
 #                                       level exceed 80% for at least 120 continuous minutes. If you
 #                                       leave it 0, is sysmon is run at the cpu_level exceed 80% an
-#                                       error will be trigger immediatly.
+#                                       error will be trigger immediately.
 #                           - For Service (service_) and Filesystem (FS) lines it represented the
 #                             number of time the service was restarted or the filesystem was
 #                             increased in the last 24 Hours. You don't need to change this field,
@@ -168,7 +168,7 @@
 #---------------------------------------------------------------------------------------------------
 #  G    Active/Inactive If this value is set to 'Y', the line will always be evaluated (Default)
 #                       If this column is set to 'N', the line will never be evaluated.
-#                       This is used, when you want temporarely deactivate a line.
+#                       This is used, when you want temporarily deactivate a line.
 #---------------------------------------------------------------------------------------------------
 #  H    Last Event Date This column contain the date of the last event (script execution, cpu_level
 #                       exceeded, swap_space exceeded, filesystem increase, service restarted,..)
@@ -253,4 +253,4 @@ check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 0000
 # IDENTIFIER - COLUMN 1          2  3   4   5   6  7    8   9 A B C D E F G     H     I   J    K   L
 #---------------------------------------------------------------------------------------------------
 #
-#SADMSTAT 2.5 holmes - Sat Feb  4 09:56:10 2017 - Execution Time 5.00 seconds
+#SYSMON 2.43 holmes - Last Boot: 2021-05-28 07:16:27 - Sun Jun 13 10:37:04 2021 - Execution Time 1.00 seconds
