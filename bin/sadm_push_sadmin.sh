@@ -120,7 +120,8 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 export SYNC_USR="N"                                                     # -u Don't sync usr/bin
 export SYNC_SYS="N"                                                     # -s Don't sync sys Dir
 export SYNC_CLIENT=""                                                   # -c SADMIN client to sync
-
+export ERROR_COUNT=0                                                    # Script Error Count
+export WARNING_COUNT=0                                                  # Script Warning count
 
 # --------------------------------------------------------------------------------------------------
 #                H E L P       U S A G E    D I S P L A Y    F U N C T I O N
@@ -250,14 +251,6 @@ process_servers()
         sadm_write "${SADM_TEN_DASH}\n"
         sadm_write "Processing ($xcount) $server_fqdn \n"               # Show ServerName Processing
         
-        # In Debug Mode Display if the server is defined as Sporadic.
-        if [ $SADM_DEBUG -gt 3 ]                                        # If Debug is Activated
-          then if [ "$server_sporadic" == "1" ]                         # If it's a Sporadic System
-                    then sadm_write "Server defined as sporadically available.\n"
-                    else sadm_write "Server always available (Not Sporadic).\n"
-               fi
-        fi
-
         # if Can't resolve server name (Get IP of server), signal Error and proceed with next server
         if ! host $server_fqdn >/dev/null 2>&1
            then SMSG="[ ERROR ] Can't process '$server_fqdn', hostname can't be resolved."
@@ -272,6 +265,8 @@ process_servers()
         RC=$?                                                           # Save Error Number
         if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "1" ]              # SSH don't work & Sporadic
            then sadm_write "$SADM_WARNING Can't SSH to sporadic server ${server_fqdn}\n"
+                WARNING_COUNT=$(($WARNING_COUNT+1))                     # Increase Warning Counter
+                sadm_writelog "$SADM_WARNING at ${WARNING_COUNT} - $SADM_ERROR at ${ERROR_COUNT}"
                 continue                                                # Go process next server
         fi
 
@@ -328,8 +323,8 @@ process_servers()
 
 
         # RSYNC ARRAY OF IMPORTANT DIRECTORIES TO SADM CLIENT
-        rem_std_dir_to_rsync=( bin pkg lib )                        # Directories array to sync
-        for WDIR in "${rem_std_dir_to_rsync[@]}"
+        rem_std_dir_to_rsync=( bin pkg lib )                            # Directories array to sync
+        for WDIR in "${rem_std_dir_to_rsync[@]}"                        # Loop through Array
           do
           if [ $SADM_DEBUG -gt 5 ]                                      # If Debug is Activated
               then sadm_writelog "rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
@@ -337,30 +332,39 @@ process_servers()
           rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
           RC=$? 
           if [ $RC -ne 0 ]
-             then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
-                  ERROR_COUNT=$(($ERROR_COUNT+1))                       # Increase Error Counter
+             then if [ $RC -eq 23 ] 
+                     then sadm_writelog "[ WARNING ] Error code 23 denotes a partial transfer ..." 
+                          WARNING_COUNT=$(($WARNING_COUNT+1))           # Increase Warning Counter
+                     else sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
+                          ERROR_COUNT=$(($ERROR_COUNT+1))               # Increase Error Counter
+                  fi 
              else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
           fi
           done             
 
 
         # Copy Site Common configuration files to client
-        rem_cfg_files=( alert_group.cfg alert_slack.cfg )
+        rem_cfg_files=(alert_group.cfg alert_slack.cfg )
         for WFILE in "${rem_cfg_files[@]}"
           do
           CFG_SRC="${SADM_CFG_DIR}/${WFILE}"
           CFG_DST="${server_fqdn}:${server_dir}/cfg/${WFILE}"
-          CFG_CMD="rsync -a ${CFG_SRC} ${CFG_DST}"
+          #CFG_CMD="rsync -a ${CFG_SRC} ${CFG_DST}"
+          CFG_CMD="scp ${CFG_SRC} ${CFG_DST}"
           if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CFG_CMD" ; fi 
-          #scp ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
-          rsync -a ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
+          scp ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
+          #rsync -a ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
           RC=$? 
           if [ $RC -ne 0 ]
-             then sadm_writelog "$SADM_ERROR ($RC) doing ${CFG_CMD}"
-                  ERROR_COUNT=$(($ERROR_COUNT+1))
+             then if [ $RC -eq 23 ] 
+                     then sadm_writelog "[ WARNING ] Error code 23 denotes a partial transfer ..." 
+                          WARNING_COUNT=$(($WARNING_COUNT+1))           # Increase Warning Counter
+                     else sadm_writelog "$SADM_ERROR ($RC) doing ${CFG_CMD}"
+                          ERROR_COUNT=$(($ERROR_COUNT+1))
+                  fi 
              else sadm_writelog "$SADM_OK ${CFG_CMD}" 
           fi
-          done             
+          done
 
 
         # IF USER CHOOSE TO RSYNC $SADMIN/USR/BIN TO ALL ACTIVES CLIENTS, THEN DO IT HERE.
@@ -374,8 +378,12 @@ process_servers()
                     rsync -ar --delete  ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
                     RC=$? 
                     if [ $RC -ne 0 ]
-                        then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
-                             ERROR_COUNT=$(($ERROR_COUNT+1))            # Increase Error Counter
+                        then if [ $RC -eq 23 ] 
+                                then sadm_writelog "[ WARNING ] Error 23 - Partial rsync ..." 
+                                     WARNING_COUNT=$(($WARNING_COUNT+1)) # Increase Warning Counter
+                                else sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
+                                     ERROR_COUNT=$(($ERROR_COUNT+1))    # Increase Error Counter
+                             fi 
                         else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
                     fi
                     done             
@@ -383,82 +391,85 @@ process_servers()
 
         # RSYNC ALL DOT CONFIGURATION(TEMPLATE) FILES IN $SADMIN/CFG TO ALL ACTIVES CLIENTS
         CFG_EXCL="--exclude .dbpass "
-        if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
+        if [ $SADM_DEBUG -gt 5 ]                                        # If Debug is Activated
             then sadm_write "rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/\n"
         fi
         rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/
         RC=$? 
         if [ $RC -ne 0 ]
-           then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/"
-                ERROR_COUNT=$(($ERROR_COUNT+1))            # Increase Error Counter
+            then if [ $RC -eq 23 ] 
+                    then sadm_writelog "[ WARNING ] Error 23 - Partial rsync ..." 
+                         WARNING_COUNT=$(($WARNING_COUNT+1))            # Increase Warning Counter
+                    else sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/"
+                         ERROR_COUNT=$(($ERROR_COUNT+1))                # Increase Error Counter
+                 fi
            else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/" 
         fi
 
         # IF USER CHOOSE TO RSYNC $SADMIN/SYS TO ALL ACTIVES CLIENTS, THEN DO IT HERE.
         if [ "$SYNC_SYS" = "Y" ] 
-            then if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
+            then if [ $SADM_DEBUG -gt 5 ]                               # If Debug is Activated
                     then sadm_write "rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/\n"
                  fi
                  rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/
                  RC=$? 
                  if [ $RC -ne 0 ]
-                    then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/"
-                         ERROR_COUNT=$(($ERROR_COUNT+1))            # Increase Error Counter
+                    then if [ $RC -eq 23 ] 
+                            then sadm_writelog "[ WARNING ] Error 23 - Partial rsync ..." 
+                                 WARNING_COUNT=$(($WARNING_COUNT+1))    # Increase Warning Counter
+                            else sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/"
+                                 ERROR_COUNT=$(($ERROR_COUNT+1))        # Increase Error Counter
+                         fi
                     else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/" 
                  fi
 
             else # RSYNC STARTUP/SHUTDOWN TEMPLATE SCRIPT FILES IN $SADMIN/SYS TO ALL ACTIVES CLIENTS
-                 if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
+                 if [ $SADM_DEBUG -gt 5 ]                               # If Debug is Activated
                     then sadm_write "rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/\n"
                  fi
                  rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/
                  RC=$? 
                  if [ $RC -ne 0 ]
-                    then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/"
-                         ERROR_COUNT=$(($ERROR_COUNT+1))            # Increase Error Counter
+                    then if [ $RC -eq 23 ] 
+                            then sadm_writelog "[ WARNING ] Error 23 - Partial rsync ..." 
+                                 WARNING_COUNT=$(($WARNING_COUNT+1))    # Increase Warning Counter
+                            else sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/"
+                                 ERROR_COUNT=$(($ERROR_COUNT+1))        # Increase Error Counter
+                         fi
                     else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/" 
                  fi
         fi
 
-
-        # ARRAY OF TEMPLATE FILES AND SCRIPTS TO RSYNC TO CLIENT
-        #rem_files_to_rsync=(cfg/.template.smon  cfg/.release cfg/.sadmin.cfg  cfg/.sadmin.rc 
-        #                    cfg/.sadmin.service cfg/.alert_group.cfg  cfg/.alert_slack.cfg 
-        #                    cfg/alert_group.cfg  cfg/alert_slack.cfg 
-        #                    cfg/.backup_exclude.txt cfg/.backup_list.txt cfg/.rear_exclude.txt
-        #                    sys/.sadm_startup.sh sys/.sadm_shutdown.sh 
-        #                    usr/mon/swatch_nmon.sh usr/mon/stemplate.sh 
-        #                    usr/mon/swatch_nmon.txt 
-        #                    usr/mon/srestart.sh )
-
-
         # RSYNC NMON WATCHER, SADMIN_MONITOR TEMPLATE SCRIPT, SERVICE RESTART SCRIPT
-#        rem_files_to_rsync=(usr/mon/swatch_nmon.sh usr/mon/swatch_nmon.txt 
-#                            usr/mon/stemplate.sh   usr/mon/srestart.sh ) 
-        rem_files_to_rsync=(usr/mon/stemplate.sh   usr/mon/srestart.sh ) 
+        rem_files_to_rsync=(usr/mon/stemplate.sh usr/mon/srestart.sh ) 
         for WFILE in "${rem_files_to_rsync[@]}"                         # Loop to sync template file
           do
-            if [ $SADM_DEBUG -gt 5 ]                                   # If Debug is Activated
-                  then sadm_write "rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}\n"
-            fi
-            rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}
+            CFG_SRC="${SADM_BASE_DIR}/${WFILE}"
+            CFG_DST="${server_fqdn}:${server_dir}/${WFILE}"
+            CFG_CMD="scp ${CFG_SRC} ${CFG_DST}"
+            scp ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
             RC=$?
             if [ $RC -ne 0 ]
-                then sadm_writelog "$SADM_ERROR ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}"
+                then sadm_writelog "$SADM_ERROR ($RC) doing $CFG_CMD"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_writelog "$SADM_OK rsync -ar --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}" 
+                else sadm_writelog "$SADM_OK $CFG_CMD"  
             fi
           done             
 
-        # SHOW TOTAL ERROR COUNT AFTER PROCESSING EACH SERVER
-        if [ "$ERROR_COUNT" -ne 0 ] 
-           then sadm_writelog "$SADM_ERROR count at ${ERROR_COUNT}."
+        # Show Cumulative Warning and Error
+        if [ "$ERROR_COUNT" -ne 0 ] || [ "$WARNING_COUNT" -ne 0 ]
+           then sadm_writelog "$SADM_WARNING at ${WARNING_COUNT} - $SADM_ERROR at ${ERROR_COUNT}"
         fi
 
         done < $SADM_TMP_FILE1
 
-    sadm_write "${SADM_TEN_DASH}\n"
-    sadm_write "\n"
+    # SHOW TOTAL ERROR COUNT AFTER PROCESSING EACH SERVER
+    sadm_writelog " "
+    sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "Total Error(s) count   : ${ERROR_COUNT}"
+    sadm_writelog "Total Warning(s) count : ${WARNING_COUNT}"
+    sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog " "
     return $ERROR_COUNT
 }
 
