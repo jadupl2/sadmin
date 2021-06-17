@@ -102,7 +102,7 @@ main_process()
         "myhost" )      sadm_writelog "Stop MyApp Web Server ..."
                         /myapp/bin/stop_httpd.sh >> $SADM_LOG 2>&1
                         ;;
-                *)      sadm_writelog "  No particular procedure needed for $SADM_HOSTNAME"
+                *)      sadm_writelog "  No particular shutdown procedure needed for $SADM_HOSTNAME"
                         ;;
     esac
 
