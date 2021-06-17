@@ -42,6 +42,7 @@
 #@2021_06_01 Update: v3.13 Bug fixes and Command line option -v, -h and -d are now functional. 
 #@2021_06_10 Update: v3.14 Enlarge column 'srv_uptime' from 20 to 25 Char 
 #@2021_06_11 Update: v3.15 Add 'srv_boot_date' that contain last boot date & Fix error message.
+#@2021_06_17 Fix: v3.16 Fix Duplicate column name 'srv_boot_date'
 # 
 # ==================================================================================================
 #
@@ -94,7 +95,7 @@ def setup_sadmin():
     st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
-    st.ver              = "3.15"                # Current Script Version
+    st.ver              = "3.16"                # Current Script Version
     st.pdesc            = "SADMIN Daily database update v%s" % st.ver
     st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
     st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
@@ -162,7 +163,8 @@ def update_row(st,wconn, wcur, wdict):
         sql="ALTER TABLE server ADD COLUMN srv_boot_date datetime AFTER srv_rear_ver;"
         try:
             wcur.execute(sql);                                              # Execute the Select SQL
-        except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
+        except(pymysql.err.OperationalError,pymysql.err.InternalError,
+            pymysql.err.IntegrityError,pymysql.err.DataError) as error:
             pass                                                            # Skip duplicate error
             #enum, emsg = error.args                                         # Get Error No. & Msg
             #print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Msg
