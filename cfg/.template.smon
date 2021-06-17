@@ -1,24 +1,17 @@
-#---------------------------------------------------------------------------------------------------
-# SADMin System Monitor Configuration file
-#   The file need to be place in ${SADMIN}/cfg and name `hostname`.smon
-#   This file is read and updated by SADMIN System Monitor (sadm_sysmon.pl) every time it run.
-#
-#     - New Filesystem line will be added automatically to this file when detected.
-#     - Filesystem can be increase automatically by 10% two times within 24 Hrs
-#         - If the last field (Script to Run Field) of the filesystem line contain "sadm_fs_incr.sh"
-#
-#     - Comments lines must always begin with a "#" (Column 1)
-#     - Column are delimited by space(s) and/or tabulation.
-#     - At execution each line is evaluated based on the test requested by the first column.
-#         - The result of the operation is reflected in the second column.
-# 2018_09_14 Update: v2.6 - Change Default Warning and Error Alert Group 
-# 2019_10_08 Update: v2.7 - Turn off (Comment line) syslog service check.
-# 2019_10_25 Update: v2.8 - Turn off (Comment line) ping test lines.
-# 2021_06_06 Update: v2.9 - Remove execution script to check if 'nmon' is running, move to crontab
-#@2021_06_10 Update: v2.10 - Remove script execution of 'swatch_nmon.sh' now in sadm_client crontab.
-#---------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+# SADMIN SYStem MONitor configuration file (3.0)
+#  - The file MUST reside in ${SADMIN}/cfg (filename `hostname`.smon).
+#  - It is read when the SADMIN System Monitor start (sadm_sysmon.pl).
+#  - Before exiting SysMon write the updated version of this file.
+#  - Updated value (or resulting status) is recorded in the second column of each line
+#  - New Filesystem are added automatically to this file when detected.
+#  - Sysmon is run every 5 minutes from the sadm_server crontab (/etc/cron.d/sadm_server)
+#  - Comments lines must always begin with a "#" (Column 1)
+#  - Column are delimited by space(s) and/or tabulation.
+#  - At execution each line is evaluated based on the test requested in the first column
+#----------------------------------------------------------------------------------------
 # Col   Name            Description
-#---------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
 #  1    IDENTIFIER      This name specify the test we want to run.
 #                       These are the one presently supported :
 #
