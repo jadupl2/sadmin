@@ -181,7 +181,7 @@ fi
 
 # Variable used for the Rear Report.
 export rear_script_name="sadm_rear_backup"                              # Name of ReaR Backup Script
-export REAR_INTERVAL=7                                                  # Day between ReaR Backup
+export REAR_INTERVAL=14                                                 # Day between ReaR Backup
 URL_REAR_SCHED='/crud/srv/sadm_server_rear_backup.php?sel=SYSTEM&back=/view/sys/sadm_view_rear.php' 
 
 # Variables fused for the Storix Daily Report
