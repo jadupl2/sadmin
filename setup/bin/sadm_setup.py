@@ -90,6 +90,7 @@
 # 2021_01_27 Update: v3.53 Activate Startup and Shutdown Script (SADMIN Service)
 #@2021_04_19 Update: v3.54 Fix Path to sadm_service_ctrl.sh
 #@2021_06_06 Update: v3.55 Add to sadm_client crontab, script to make sure 'nmon' is running
+#@2021_06_30 Update: v3.56 Adjust Client, Server crontab with documentation
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -106,7 +107,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.55"                                            # Setup Version Number
+sver                = "3.56"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -527,21 +528,30 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("# Rsync all *.rch,*.log,*.rpt files from all actives clients.\n")
     cscript="sudo ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1"
     if wostype == "AIX" : 
-        hcron.write ("# */6 don't work on Aix.\n")
+        hcron.write ("# */5 don't work on Aix.\n")
         hcron.write ("4,10,16,22,28,34,40,46,52,58 * * * * %s %s\n" % (wuser,cscript))
     else:
-        hcron.write ("*/6 * * * * %s %s\n" % (wuser,cscript))
+        hcron.write ("*/5 * * * * %s %s\n" % (wuser,cscript))
     #
     cscript="sudo ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1"
     hcron.write ("#\n")
     hcron.write ("# Early morning daily run, Collect Perf data - Update Database, Housekeeping\n")
-    hcron.write ("05 05 * * * %s %s\n" % (wuser,cscript))
+    hcron.write ("08 05 * * * %s %s\n" % (wuser,cscript))
     #
     cscript="sudo ${SADMIN}/bin/sadm_daily_report.sh >/dev/null 2>&1"
     hcron.write ("#\n")
     hcron.write ("# Daily SADMIN Report by Email\n")
-    hcron.write ("04 08 * * * %s %s\n" % (wuser,cscript))    
+    hcron.write ("07 07 * * * %s %s\n" % (wuser,cscript))    
     hcron.write ("#\n")
+    #
+    cscript="sudo ${SADMIN}/bin/sadm_push_sadmin.sh >/dev/null 2>&1"
+    hcron.write ("#\n")
+    hcron.write ("# Daily push of /opt/sadmin/(lib,bin,cfg/.*) to all active servers (Optional)\n")
+    hcron.write ("#   -s To include push of /opt/sadmin/sys\n")
+    hcron.write ("#   -u To include push of /opt/sadmin/(usr/bin usr/lib usr/cfg)\n")
+    hcron.write ("#30 15 * * * %s %s\n" % (wuser,cscript))
+    hcron.write ("#\n")
+    #
     hcron.close()                                                       # Close SADMIN Crontab file
 
     # Change Server Crontab file permission to 644
