@@ -12,7 +12,7 @@ notification via email, SMS or the Slack application.
 SADMIN can surely help you improve and standardize the administration of your server farm.
  
 
-![monitor](https://sadmin.ca/assets/img/index_monitor.png "SADMIN monitor page")
+![monitor](https://sadmin.ca/assets/img/sadm_sysmon/sadm_view_sysmon.png  "SADMIN monitor page")
 
 ---
 
