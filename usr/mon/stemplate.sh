@@ -50,26 +50,29 @@ SADM_UMON_DIR="${SADMIN}/usr/mon"           ; export SADM_UMON_DIR      # SysMon
 main_process()
 {
     # Show Script Name, Version and starting Date/Time.
-    echo -e "\n\n${DASH}\nStarting script $PN on ${HOSTNAME} `date`"    # Print Script Header
+    echo " " 
+    echo "${DASH}" 
+    echo "Starting script $PN on ${HOSTNAME} `date`"                    # Print Script Header
 
     # Check if file exist
     echo -e "\nTest if file $FILENAME exist ..."
     if [ -r $FILENAME ] 
-        then echo -e "File $FILENAME exist"
+        then echo "File $FILENAME exist"
              RC=0
-        else echo -e "File $FILENAME doesn't exist"
+        else echo "File $FILENAME doesn't exist"
              RC=1
     fi
 
+    # Script Error message file
+    export EFILE="${SADM_UMON_DIR}/${INST}.txt"                         # Script Error Mess File
+
+    # You can leave Error file as it is (The one you put in) or create a custom one like below.
     # You can Put a customize message when an error occur.
-    # Putting the error on one line in the error text file (EFILE).
-    EFILE="${SADM_UMON_DIR}/${INST}.txt"  ; export EFILE                # Script Error Mess File
     if [ $RC != 0 ]                                                     # If Error occurred
-        then RC=1                                                       # Error Return Code is 1
+        then RC=1                                                       # Making sure Exit is 1 or 0
              EMSG="File $FILENAME doesn't exist - Running $PN."         # Error Message file Test
-             echo "$EMSG" > $EFILE                                      # Write to Error Msg File
-        else RC=0                                                       # OK Return Code is 0
-             rm -f $EFILE >/dev/null 2>&1                               # Remove Error FIle when OK
+             echo "$EMSG" > $EFILE                                      # Custom Error Msg File
+        else rm -f $EFILE >/dev/null 2>&1                               # Remove Error File when OK
     fi 
     return $RC                                                          # Return Status to Caller
 }
@@ -80,6 +83,8 @@ main_process()
 #===================================================================================================
     main_process                                                        # Call Main Process Function
     EXIT_CODE=$?                                                        # Save Return Code 
-    echo -e "\nReturn code : $EXIT_CODE"                                # Print Script return code
-    echo -e "End of script $PN on ${HOSTNAME} `date`\n${DASH}\n"        # Print Script Footer
+    echo "Return code : $EXIT_CODE"                                     # Print Script return code
+    echo " " 
+    echo "End of script $PN on ${HOSTNAME} `date`"                      # Print End Dat & Time
+    echo "${DASH}"                                                      # Print Dash Line
     exit $EXIT_CODE                                                     # Exit With Return Code                                             # Exit With Global Error code (0/1)
