@@ -45,6 +45,7 @@
 # 2020_11_18 Update: v2.41 Fix: Fix problem with iostat on MacOS.
 # 2020_11_30 Update: v2.42 Fix: Fix problem reading SADMIN variable in /etc/environment.
 #@2021_06_12 Update: v2.43 Update: Add Date & Time of last boot on last line of hostname.smon file.
+#@2021_07_03 Fix: v2.44 Fix problem when using custom script  
 #===================================================================================================
 #
 use English;
@@ -58,7 +59,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.43";                                       # Version Number
+my $VERSION_NUMBER      = "2.44";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -1262,7 +1263,8 @@ sub run_script {
         $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                           # Warning Threshold Value
         $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                           # Error Threshold Value
         $TEST = $SADM_RECORD->{SADM_TEST}   ;                           # Test Operator (=,<=,!=,..)
-        $MOD  = "$OSNAME"                   ;                           # Module Category
+#        $MOD  = "$OSNAME"                   ;                           # Module Category
+        $MOD  = "SCRIPT"                    ;                           # Module Category
         $SMOD = "SCRIPT"                    ;                           # Sub-Module Category
         $STAT = $sfile_name                 ;                           # Current Value Returned
         print "Script $sname is not valid ..." ;                        # Show Usr not script specify
@@ -1297,7 +1299,8 @@ sub run_script {
     $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                               # Warning Threshold Value
     $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                               # Error Threshold Value
     $TEST = $SADM_RECORD->{SADM_TEST}   ;                               # Test Operator (=,<=,!=,..)
-    $MOD  = "$OSNAME"                   ;                               # Module Category
+    #$MOD  = "$OSNAME"                   ;                               # Module Category
+    $MOD  = "SCRIPT"                    ;                               # Module Category
     $SMOD = "SCRIPT"                    ;                               # Sub-Module Category
     $STAT = $sfile_name                 ;                               # Current Value Returned
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
