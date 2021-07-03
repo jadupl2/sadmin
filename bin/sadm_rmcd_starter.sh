@@ -8,11 +8,24 @@
 #   Requires :  sh
 #   SCCS-Id. :  @(#) sadm_rmcmd_starter.sh 1.0 2020/12/08
 #   
+# sadm_rmcd_starter.sh [-d Level] [-h] [-v] [-s scriptName] [-n systemName]
+#   -d   (Debug Level [0-9])
+#   -h   (Display this help message)
+#   -v   (Show Script Version Info)
+#   -n   (System Name where script reside)
+#   -l   (Lock System (no monitoring) while script is running)
+#   -s   (Script Name to execute)
+#   -u   (User Name use to ssh on remote system)
+#   -p   (Prefix script Name with path of /sadmin on remote system)
+#
+#
 # Example of line to put in crontab to start remote bcakup of a VM
 # SADMIN=/sadmin
 # BSCRIPT=/opt/sa/bin/virtualbox/sadm_vm_backup.sh
+#
 # 0 14 6,21 * * root $SADMIN/bin/sadm_rmcd_starter.sh -lu 'jacques' -n borg -s "$BSCRIPT -yn rhel8"
 # --------------------------------------------------------------------------------------------------
+#
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
