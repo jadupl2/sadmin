@@ -75,9 +75,10 @@
 #               A value of 1 is returned if everything is ok or 0 when an error is detected. 
 #               Line will only be evaluated if the command 'multipathd' is present on system.
 #                       
-#       http_   
+#       http_ or https_  
 #               Test the web site respond (1=Up 0=NoResponse)
 #               Example : http_google.com
+#                         https_redhat.com
 #
 #       ping_
 #               Each time Sysmon is run is will ping the name or the IP your have specified after 
@@ -236,6 +237,12 @@ check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 0000
 
 # Ping server (Return 0=Ok 1=Error) Line below raise an Error if site doesn't respond to ping.
 #ping_www.ibm.com                 0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+#
+#
+# Test web site responsiveness (0=OK 1=NoResponse)
+#http_linux.com                   0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+#https_sadmin.ca                  0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+#https_linternux.com              0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 #
 #
 #
