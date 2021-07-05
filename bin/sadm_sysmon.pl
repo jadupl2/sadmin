@@ -46,6 +46,7 @@
 # 2020_11_30 Update: v2.42 Fix: Fix problem reading SADMIN variable in /etc/environment.
 #@2021_06_12 Update: v2.43 Update: Add Date & Time of last boot on last line of hostname.smon file.
 #@2021_07_03 Fix: v2.44 Fix problem when using custom script  
+#@2021_07_05 Update: v2.45 Test web site responsiveness with https:// and http://
 #===================================================================================================
 #
 use English;
@@ -59,7 +60,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.44";                                       # Version Number
+my $VERSION_NUMBER      = "2.45";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -789,6 +790,12 @@ sub check_for_error {
       write_rpt_file($alert_type ,"HTTP", "WEBSITE", $ERR_MESS );       # Go write ALert to rpt file
    } # End of HTTP Module
 
+   #---------- Error detected for the Module HTTPS
+   if ($MODULE eq "HTTPS")   {                                          # Error WebSite no Response
+      $ERR_MESS = "Web Site $WID isn't responding" ;                    # Prepare Mess. to rpt file
+      write_rpt_file($alert_type ,"HTTPS", "WEBSITE", $ERR_MESS );      # Go write ALert to rpt file
+   } # End of HTTP Module
+
    #---------- Error detected - A Daemon was suppose to be running and it is not
    if ($MODULE eq "DAEMON") {                                           # If Daemon Error
       if ($SUBMODULE eq "PROCESS") {                                    # Process Sub-Module
@@ -809,7 +816,7 @@ sub check_for_error {
 
 
 #---------------------------------------------------------------------------------------------------
-# Check if we have a response from the web site
+# Check if we have a http response from the web site
 #---------------------------------------------------------------------------------------------------
 sub check_http {
 
@@ -817,23 +824,19 @@ sub check_http {
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split Current line ID
     $HTTP = $dummy[1];                                                  # Get URL from dummy array
     my $url="http://${HTTP}";                                           # Build URL to check
-    print "\n\nChecking response from $url ... ";                       # Show User what we check
+    print "\nChecking response from $url ... ";                         # Show User what we check
 
-    # Get document headers.
-    # Returns the following 5 values if successful:
-    #   - ($content_type, $document_length, $modified_time, $expires, $server)
-    # Returns an empty list if it fails. In scalar context returns TRUE if successful.
-    $ua->timeout(3);                                                    # Timeout if not responding
-    if (! head($url)) { $http_status=0; }else{ $http_status=1; }        # Status based on response
-    if ($http_status == 0) {                                            # If no response for URL
-        printf "\n[ERROR] Web site not responding" ;                    # Show error to user
+    $PCMD = "curl $url -I >/dev/null 2>&1" ;                            # Build curl command
+    @args = ("$PCMD"); system(@args) ;                                  # Test connect with curl
+    $src = $? >> 8;                                                     # Get curl Result code
+    if ($src == 0) {                                                    # If no response for URL
+        print "\n[OK] Web site is responding\n";                        # Show URL responded
+        $SADM_RECORD->{SADM_CURVAL}=0;                                  # 0= Web Site is UP
     }else{                                                              # If URL Response
-        #printf "\n[OK] Web site is responding";                         # Show URL responded
-        print BOLD, GREEN, "\n[OK] ", RESET, "Web site is responding";
+        print "\n[ ERROR ] ($src) Web site not responding\n" ;          # Show error to user
+        if ($src == 6) { print "Error #6 : Could not resolve host name\n" } 
+        $SADM_RECORD->{SADM_CURVAL}=1;                                  # 1= Web Site is Down
     }
-
-    #----- Put current value in sadm array and check for error.
-    $SADM_RECORD->{SADM_CURVAL} = $http_status ;                        # Put Status in SADM_RECORD
     $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                               # Current Value
     $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                               # Warning Threshold Value
     $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                               # Error Threshold Value
@@ -844,6 +847,43 @@ sub check_http {
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
     return;                                                             # Return to Caller
 }
+
+
+
+
+#---------------------------------------------------------------------------------------------------
+# Check if we have a https response from the web site
+#---------------------------------------------------------------------------------------------------
+sub check_https {
+
+    # From the sysmon_array extract the application name
+    @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split Current line ID
+    $HTTP = $dummy[1];                                                  # Get URL from dummy array
+    my $url="https://${HTTP}";                                          # Build URL to check
+    print "\nChecking response from $url ... ";                         # Show User what we check
+
+    $PCMD = "curl $url -I >/dev/null 2>&1" ;                            # Build curl command
+    @args = ("$PCMD"); system(@args) ;                                  # Test connect with curl
+    $src = $? >> 8;                                                     # Get curl Result code
+    if ($src == 0) {                                                    # If no response for URL
+        print "\n[OK] Web site is responding\n";                        # Show URL responded
+        $SADM_RECORD->{SADM_CURVAL}=0;                                  # 0= Web Site is UP
+    }else{                                                              # If URL Response
+        print "\n[ ERROR ] ($src) Web site not responding\n" ;          # Show error to user
+        if ($src == 6) { print "Error #6 : Could not resolve host name\n" } 
+        $SADM_RECORD->{SADM_CURVAL}=1;                                  # 1= Web Site is Down
+    }
+    $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                               # Current Value
+    $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                               # Warning Threshold Value
+    $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                               # Error Threshold Value
+    $TEST = $SADM_RECORD->{SADM_TEST}   ;                               # Test Operator (=,<=,!=,..)
+    $MOD  = "HTTPS"                     ;                               # Module Category
+    $SMOD = "WEBSITE"                   ;                               # Sub-Module Category
+    $STAT = $HTTP                       ;                               # URL of Web Site
+    check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
+    return;                                                             # Return to Caller
+}
+
 
 
 
@@ -1454,7 +1494,7 @@ sub check_multipath {
     $SMOD = "MUTIPATH"                  ;                               # Sub-Module Category
     $STAT = $mstatus                    ;                               # Current Status Returned
     if ($SYSMON_DEBUG >= 5) {                                           # Debug Level at least 5
-        printf "\nMultipath status is %s - Code = (%d) (1=ok 0=Error)",$STAT,$CVAL; # Show User
+        printf "\nMultipath status is %s - Code = (%d) (1=ok 0=Error)\n",$STAT,$CVAL; # Show User
     }
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
 }
@@ -1845,7 +1885,10 @@ sub loop_through_array {
         if ($SADM_RECORD->{SADM_ID} =~ /^daemon_/ ) {check_daemon; }
 
         # Check HTTP
-        if ($SADM_RECORD->{SADM_ID} =~ /^http/ ) {check_http;    }
+        if ($SADM_RECORD->{SADM_ID} =~ /^http_/ ) {check_http; }
+
+        # Check HTTPS
+        if ($SADM_RECORD->{SADM_ID} =~ /^https_/ ) {check_https ;}
 
         # Check Running Script
         if ($SADM_RECORD->{SADM_ID} =~ /^script/  ) {run_script ;}
