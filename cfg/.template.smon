@@ -216,8 +216,9 @@ service_at,atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 2018
 #service_systemd-resolved         1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #
 #service_sendmail                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-#service_ntp,ntpd               0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-#service_syslog,rsyslog,syslogd   0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+#service_ntp,ntpd                 0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+#service_syslog,syslogd           0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+#service_rsyslog                  0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #
 # DNS Service
 #service_named                    0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
@@ -239,7 +240,7 @@ check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 0000
 #ping_www.ibm.com                 0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 #
 #
-# Test web site responsiveness (0=OK 1=NoResponse)
+Test web site responsiveness (0=Up 1=NoResponse)
 #http_linux.com                   0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 #https_sadmin.ca                  0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 #https_linternux.com              0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
