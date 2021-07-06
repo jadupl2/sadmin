@@ -47,6 +47,7 @@
 #@2021_06_12 Update: v2.43 Update: Add Date & Time of last boot on last line of hostname.smon file.
 #@2021_07_03 Fix: v2.44 Fix problem when using custom script  
 #@2021_07_05 Update: v2.45 Test web site responsiveness with https:// and http://
+#@2021_07_06 Update: v2.46 Change some error messages
 #===================================================================================================
 #
 use English;
@@ -60,7 +61,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.45";                                       # Version Number
+my $VERSION_NUMBER      = "2.46";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -799,7 +800,7 @@ sub check_for_error {
    #---------- Error detected - A Daemon was suppose to be running and it is not
    if ($MODULE eq "DAEMON") {                                           # If Daemon Error
       if ($SUBMODULE eq "PROCESS") {                                    # Process Sub-Module
-         $ERR_MESS = "Daemon $WID not running !";                       # Prepare Mess. to rpt file
+         $ERR_MESS = "Daemon $WID isn't running !";                     # Prepare Mess. to rpt file
          write_rpt_file($alert_type,"DAEMON","PROCESS",$ERR_MESS );     # Go write ALert to rpt file
       }
    } # End of Daemon Module
@@ -807,7 +808,7 @@ sub check_for_error {
    #---------- Error detected - A service was suppose to be running and it is not
    if ($MODULE eq "SERVICE") {                                          # If Service not Running
       if ($SUBMODULE eq "DAEMON") {                                     # And Daemon as a Sub-Module
-         $ERR_MESS = "Service $WID not running !";                      # Prepare Mess. to rpt file
+         $ERR_MESS = "Service $WID isn't running !";                    # Prepare Mess. to rpt file
          write_rpt_file($alert_type,"SERVICE","DAEMON",$ERR_MESS );     # Go write ALert to rpt file
       }
    } # End of Service Module
