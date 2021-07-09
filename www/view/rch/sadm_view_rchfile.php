@@ -27,13 +27,13 @@
 #   2018_02_01 J.Duplessis
 #       V2.1 Correct Bug - Not showing last line of RCH when it was a running state (dot Date/Time)
 # 2018_07_21  v2.2 Make screen more compact
-#@2018_09_16  v2.3 Added Alert Group Display on Page
-#@2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
-#@2020_01_14 Update: v2.5 Add link to allow to view script log on the page.
-#@2020_01_19 Update: v2.6 Remove line counter and some other cosmetics changes.
-#@2020_01_21 Update: v2.7 Display rch date in date reverse order (Recent at the top)
-#@2020_04_05 Fix: v2.8 Fix link problem to show the script log.
-#@2020_04_17 Update: v2.9 Running script are now shown on the page.
+# 2018_09_16  v2.3 Added Alert Group Display on Page
+# 2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
+# 2020_01_14 Update: v2.5 Add link to allow to view script log on the page.
+# 2020_01_19 Update: v2.6 Remove line counter and some other cosmetics changes.
+# 2020_01_21 Update: v2.7 Display rch date in date reverse order (Recent at the top)
+# 2020_04_05 Fix: v2.8 Fix link problem to show the script log.
+# 2020_04_17 Update: v2.9 Running script are now shown on the page.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

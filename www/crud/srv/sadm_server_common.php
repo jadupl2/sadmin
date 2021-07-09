@@ -28,7 +28,7 @@
 #       V2.1 Added Column to specify if performance graph are to be displayed (Sporadic Server...)
 # 2018_10_01 v2.2 Remove Alert Group Field
 # 2018_12_15 v2.3 Add 'Darwin' as a choice for Operating System Type.
-#@2018_08_18 v2.4 Reduce screen size to 40 for the install directory field
+# 2018_08_18 update: v2.4 Reduce screen size to 40 for the install directory field
 # ==================================================================================================
  
 

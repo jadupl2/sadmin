@@ -26,7 +26,7 @@
 #       V 1.2 Performance & Restructure 
 #   2018_02_06 JDuplessis
 #       V 1.3 Enhance look and feel of the page
-#@ 2019_02_17 Change: v1.4 Convert date recv. YYYY-MM-DD to DD.MM.YYYY so we use HTML5 date input.
+#@2019_02_17 Change: v1.4 Convert date recv. YYYY-MM-DD to DD.MM.YYYY so we use HTML5 date input.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

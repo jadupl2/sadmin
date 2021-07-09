@@ -27,7 +27,9 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # 
 # --------------------------------------------------------------------------------------------------
-# Version Change Log 
+# Version Change Log Format: 
+# Col 1: '#', Col 2: '@' or ' '
+# 2021_MM_DD New: v1.0 Initial Version
 #
 # 2021_MM_DD New: v1.0 Initial Version
 
