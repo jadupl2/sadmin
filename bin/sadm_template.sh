@@ -26,14 +26,33 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # 
-# --------------------------------------------------------------------------------------------------
-# Version Change Log Format: 
-# Col 1: '#', Col 2: '@' or ' '
-# 2021_MM_DD New: v1.0 Initial Version
+#---------------------------------------------------------------------------------------------------
+# Change log, comment line comma separated fields
+# Field 1: Date of change (YYY_MM_DD) prefix by '@' 
+#          - "sadm_gen_relnotes.sh" utility
+#            - The '@' will be used to identify source modified to be added to "changelog.md".
+#            - The '@' will be removed automatically when new version is release.
+# Field 2: Types of changes (Ignore case)
+#          - "Added" or "New" for new features.
+#          - "Changed" for changes in existing functionality.
+#          - "Removed" for now removed features.
+#          - "Fixed" for any bug fixes.
+#          - "Security" in case of vulnerabilities.
+#          - "Doc" in case we modify code comments(documentation).
+#          - "Minor" in case of minor modification.
+#          - "Nolog" cosmetic change, won't appear in change log.
+# Field 3: Version number 'v99.99'
+# Field 4: Description of change (Max 60 Characters)
 #
-# 2021_MM_DD New: v1.0 Initial Version
-
-# --------------------------------------------------------------------------------------------------
+#@YYYY_MM_DD, Type,     vxx.xx, 123456789012345678901234567890123456789012345678901234567890--------
+#---------------------------------------------------------------------------------------------------
+#
+#@2021_MM_DD, New,      v1.0,   Initial Beta Version
+#
+#---------------------------------------------------------------------------------------------------
+#@YYYY_MM_DD, Type,     vxx.xx, 123456789012345678901234567890123456789012345678901234567890--------
+#---------------------------------------------------------------------------------------------------
+#
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
      
@@ -65,16 +84,16 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.0'                                      # Script Version
+export SADM_VER='1.0'                                      # Script version number
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy ?
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. LockFile
-export SADM_USE_RCH="Y"                                    # Update RCH HistoryFile 
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
@@ -100,13 +119,16 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
   
 
 #===================================================================================================
-# Global Scripts Variables 
+# Script global variables definitions
 #===================================================================================================
+#
+
+
 
 
 
 # --------------------------------------------------------------------------------------------------
-# Show Script command line options
+# Show script command line options
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
@@ -272,7 +294,6 @@ function cmd_options()
 #===================================================================================================
 # MAIN CODE START HERE
 #===================================================================================================
-
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
