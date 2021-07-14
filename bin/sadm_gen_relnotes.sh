@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
 #---------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
-#   Script Name :   sadm_create_relnotes.sh
+#   Script Name :   sadm_gen_relnotes.sh
 #   Date        :   2018_07_28
 #   Requires    :   sh and SADMIN Shell Library
 #   Description :   Grep source for line beginning with "#@" that contain release notes of 
@@ -28,37 +28,50 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # 
 # --------------------------------------------------------------------------------------------------
-# Change log, comment line comma separated fields
+# Change log, comment line semicolon separated fields (So don't use ';' in description)
 # Field 1: Date of change (YYY_MM_DD) prefix by '@' 
 #          - "sadm_gen_relnotes.sh" utility
-#            - The '@' will be used to identify source modified to be added to "changelog.md".
+#            - The '@' identify changes to be include in next release (To Create Change log).
 #            - The '@' will be removed automatically when new version is release.
-# Field 2: Types of changes (Ignore case)
-#          - "Added" or "New" for new features.
-#          - "Changed" for changes in existing functionality.
-#          - "Removed" for now removed features.
-#          - "Fixed" for any bug fixes.
-#          - "Security" in case of vulnerabilities.
-#          - "Doc" in case we modify code comments(documentation).
-#          - "Minor" in case of minor modification.
-#          - "Nolog" cosmetic change, won't appear in change log.
+# Field 2: Standard Types of changes (Ignore case)
+#           - "Added" or "New" for new features.
+#           - "Changed" for changes in existing functionality.
+#           - "Remove" for now removed features.
+#           - "Fix" for any bug fixes.
+#           - "Security" in case of vulnerabilities.
+#           - "Doc" in case we modify code comments(documentation).
+#           - "Minor" in case of minor modification.
+#           - "Nolog" cosmetic change, won't appear in change log.
+#           - "perf" Optimize for better performance
+#          SADMIN related Changes
+#           - "Web"         Web Interface modification
+#           - "install"     Install, Uninstall & Update modification or fixes.
+#           - "cmdline"     command line tools modification or fixes.
+#           - "template"    Library, Templates, Alerts, Libr demo modification & fixes.
+#           - "mon"         Sadmin monitor modification or fixes.
+#           - "backup"      Backup related modification or fixes.
+#           - "config"      Configuration files modification or fixes.
+#           - "server"      Server related modification or fixes.
+#           - "client"      Server related modification or fixes.
+#           - "Nolog"       cosmetic change, won't appear in change log.
+#           - "osupdate"    O/S Update modification or fixes.
 # Field 3: Version number 'v99.99'
 # Field 4: Description of change (Max 60 Characters)
 #
-#@YYYY_MM_DD, Type,     vxx.xx, 123456789012345678901234567890123456789012345678901234567890--------
+#@YYYY_MM_DD; Type;    vxx.xx; 123456789012345678901234567890123456789012345678901234567890---------
 #---------------------------------------------------------------------------------------------------
 # 2018_07_16    V1.0 Initial Version
 # 2018_08_16    V1.1 With HTML Output
 # 2018_10_15    V1.2 Change HTML Output to fit new design of download page.
 # 2019_03_15 Improvement: v1.3 Reformat Changelog HTML Code and add Markdown code to change log.
 # 2019_03_20 Feature: v1.4 If comment prefix is "nolog", in won't appear in changelog.
-#@2019_06_11 New: v1.5 Comma can be included in change description without being drop.
-#@2019_06_12 New: v1.6 Now include link to documentation for HTML change log.
+# 2019_06_11 New: v1.5 Comma can be included in change description without being drop.
+# 2019_06_12 New: v1.6 Now include link to documentation for HTML change log.
 #@2021_07_08 Update: v1.7 Adapt to the SADMIN web Site.
 #@2021_07_09 Update: v1.8 remove old SADM section, Remove hard code working directory
 #
 #---------------------------------------------------------------------------------------------------
-#@YYYY_MM_DD, Type,     vxx.xx, 123456789012345678901234567890123456789012345678901234567890--------
+#@YYYY_MM_DD; Type;    vxx.xx; 123456789012345678901234567890123456789012345678901234567890---------
 #---------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -108,7 +121,7 @@ export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you t
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
+source ${SADMIN}/lib/sadmlib_std.sh                        # LOAD SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
@@ -133,6 +146,37 @@ export SADM_ALERT_TYPE=0                                   # 0=No 1=OnError 2=On
 export CUR_DATE=`date "+%C%y-%m-%d"`                                    # GitHub Cur. Release Date 
 export LAST_DATE=""                                                     # GitHub Last Release Date
 export CHANGELOG="${SADM_TMP_DIR}/changelog.md"                         # New Release MD Changelog 
+export DEL_AT_SIGN="N"                                                  # Replace '^#@' by "^# "
+#
+export error_count=0                                                    # Error Count While Validate
+export warning_count=0                                                  # Warn. Count While Validate
+export valid_count=0                                                    # Valid Count While Validate
+
+# Directories to search for "#@" at the beginning of lines
+declare -a SEARCH_DIR
+export SEARCH_DIR=( $SADM_BIN_DIR $SADM_CFG_DIR $SADM_LIB_DIR $SADM_SETUP_DIR $SADM_WWW_DIR )
+
+# Array for section name & description
+declare -A section_array
+section_array=( [web]="Web interface" 
+                [install]="Install, Uninstall & Update project" 
+                [cmdline]="Command line tools"
+                [template]="Scripts Templates, Libraries, Demo"
+                [mon]="System Monitor"
+                [backup]="Backup related"
+                [config]="Configuration files"
+                [server]="SADMIN Server related"
+                [client]="SADMIN Client related"
+                [nolog]="Cosmetic change won't appear in change log"
+                [osupdate]="Operating System Update"
+                [added]="New Features"
+                [update]="Update"
+                [removed]="Removal"
+                [fix]="Bug Fixes"
+                [security]="Security"
+                [doc]="Documentation Update"
+                [minor]="Minor modification"
+            )
 
 
 
@@ -147,7 +191,169 @@ show_usage()
     printf "\n\t-h              (Display this help message)"
     printf "\n\t-v              (Show Script Version Info)"
     printf "\n\t-s YYYY_MM_DD   (Last release date, skip change before this date)"
+    printf "\n\t-u              (Replace '^#@' by '^# ' in all sources)"
     printf "\n\n" 
+}
+
+
+
+
+
+
+#===================================================================================================
+# Validate input file - Reject invalid formatted line - Deleted from file.
+#
+# Input Parameters :
+#   - 1st Filename containing line to validate
+#   - 2nd "E"= Print Error line, "A"= Print all lines 
+# Return value :
+#   - 0= No error detected
+#   - 1= Invalid line were detected
+#===================================================================================================
+validate_input_file() 
+{
+    if [ $# -ne 2 ]
+        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters."
+             sadm_writelog "Function received $* and this isn't valid."
+             sadm_writelog "Should receive a filename and "E" or "A"." 
+             return 1
+    fi
+
+    # Save parameters received
+    FILE=$1                                                             # Save Source file name
+    KEY=$(sadm_toupper $2)                                              # Should be "E" or "A"
+
+    # Check if the source file exist and readable.
+    if [ ! -r "$FILE" ]
+        then sadm_writelog "Error: Function ${FUNCNAME[0]} File ($FILE) don't exist."
+             return 1
+    fi    
+
+    # Check for a valid report type (E or A)
+    if [ "$KEY" != "A" ] && [ "$KEY" != "E" ] 
+        then sadm_writelog "Error: ${FUNCNAME[0]} Invalid report type ($KEY) should be 'A' or 'E'."
+             return 1
+    fi    
+    
+
+    # Make sure output file exist and is empty
+    if [ -f "$SADM_TMP_FILE3" ] ; then rm -f $SADM_TMP_FILE3 ; touch $SADM_TMP_FILE3 ; fi
+
+    sadm_writelog " "
+    sadm_writelog "-----"
+    sadm_writelog "Validating all changes lines collected."
+    sadm_writelog "-----"
+    sadm_writelog " "
+
+    cat $FILE | while read wline                                        # Read each line collected
+        do
+        sadm_writelog " "
+        sadm_writelog "-----" 
+        sadm_writelog "Inspecting: ${wline}"
+        
+        SCRIPT_WITH_PATH=`echo $wline | awk -F: '{ print $1 }'`         # Extract ScriptName + Path
+        PNAME=`basename $SCRIPT_WITH_PATH`                              # Extract ScriptName No Path
+        PDATE=`echo $wline  |awk '{ print $1 }' |awk -F: '{print $2 }'` # Date of Modification
+        PSECNAME=`echo $wline |awk '{ print $2 }' |tr -d ':'`           # Isolate Section Name
+        PSECNAME=$(sadm_tolower $PSECNAME)                              # Lowercase of Section Name
+        PVER=`echo $wline   |awk '{ print $3 }'`                        # Get Script version No.
+        PDESC=`echo $wline  |cut  -f 4- -d" " `                         # Description of the change
+        PSECDESC="Section $PSECNAME"                                    # Default Section Title
+        if [ "$PDATE" = "YYYY_MM_DD;" ]                                 # Skip template lines
+           then sadm_writelog "[ WARNING ] Skipping template line ($PDATE)"
+                warning_count=$((warning_count+1))
+                continue 
+        fi                                                              # Skip template lines
+
+        # Skip "nolog" section name and template code example 
+        if [ "$PSECNAME" = "nolog" ] || [ "${wline:2:10}" = "YYYY_MM_DD" ] 
+           then sadm_writelog "[ WARNING ] Line rejected ($PNAME - $UPDATE_DATE - $PSECNAME)"   
+                sadm_writelog "Section = 'nolog' or template line."
+                sadm_writelog "Continue with next line."
+                warning_count=$((warning_count+1))
+                continue
+        fi
+
+        # Transform last release date from YYYY_MM_DD to YYYYMMDD format
+        LAST_REL_DATE=$(echo "$LAST_DATE" | tr -d '_')                  # Last Rel. Date without '_'
+
+        # Transform date of change from YYYY_MM_DD to YYYYMMDD format and validate if numeric.
+        UPDATE_DATE=$(echo "$PDATE" | tr -d '_')                        # Cur. Line Date without '_'
+        num=`echo "$UPDATE_DATE" | grep -E ^\-?[0-9]?\.?[0-9]+$`        # Valid if Numeric Value
+        if [ "$num" = "" ]                                              # No it's not numeric 
+           then sadm_writelog "[ ERROR ] Line rejected ($PNAME) - Invalid Change Date ($UPDATE_DATE)"   
+                sadm_writelog "Continue with next line."
+                error_count=$((error_count+1))
+                continue
+        fi
+
+        # If change were made after last release date we select it, else skip the line.
+        # If Change Date prior than last release , continue read next line
+        if [ $UPDATE_DATE -le $LAST_REL_DATE ]                          
+            then sadm_writelog "[ WARNING ] Rejected date too old ($PNAME $UPDATE_DATE)"
+                 warning_count=$((warning_count+1))
+                 deactivate_line "$SCRIPT_WITH_PATH" "#@${PDATE}"
+                 continue
+#            else if [ $SADM_DEBUG -gt 4 ]
+#                    then printf "\n%03d %-30s %-08d %-08d %-8s" $count "$PNAME" $UPDATE_DATE $LAST_REL_DATE "Selected" 
+#                 fi 
+        fi 
+
+        # Make Section Title Uniform.
+        if [ "$PSECNAME" = "feature" ]  || [ "$PSECNAME" = "features" ]  ; then PSECNAME="new"      ;fi
+        if [ "$PSECNAME" = "add" ]      || [ "$PSECNAME" = "added" ]     ; then PSECNAME="new"      ;fi
+        if [ "$PSECNAME" = "secure" ]                                    ; then PSECNAME="security" ;fi
+        if [ "$PSECNAME" = "change" ]                                    ; then PSECNAME="update"   ;fi
+        if [ "$PSECNAME" = "changed" ]  || [ "$PSECNAME" = "updated" ]   ; then PSECNAME="update"   ;fi
+        if [ "$PSECNAME" = "secure" ]   || [ "$PSECNAME" = "threat" ]    ; then PSECNAME="security" ;fi
+        if [ "$PSECNAME" = "remove" ]   || [ "$PSECNAME" = "delete" ]    ; then PSECNAME="removed"  ;fi
+        if [ "$PSECNAME" = "fixed" ]    || [ "$PSECNAME" = "fixes" ]     ; then PSECNAME="fix"      ;fi
+        if [ "$PSECNAME" = "bugfix" ]   || [ "$PSECNAME" = "bugfixes" ]  ; then PSECNAME="fix"      ;fi
+        if [ "$PSECNAME" = "documentation" ] || [ "$PSECNAME" = "docs" ] ; then PSECNAME="doc"      ;fi
+        if [ "$PSECNAME" = "performance" ] || [ "$PSECNAME" = "speed" ]  ; then PSECNAME="perf"     ;fi
+
+        for key in "${!section_array[@]}"                               # Loop through title array
+            do 
+            if [ "$PSECNAME" = "$key" ]                                 # Found section in array
+                then PSECDESC=${section_array[$key]}                    # Get Section Title in Array
+            fi
+            done
+
+        # Check if we have a valid section name
+        if [ "$PSECDESC" = "Section $PSECNAME" ] 
+            then sadm_writelog "Section $PSECNAME is not a valid section."
+                 error_count=$((error_count+1))
+                 if [ "$KEY" = "E" ] 
+                    then sadm_writelog " "
+                         if [ $SADM_DEBUG -gt 4 ] 
+                            then sadm_writelog "ERROR -${error_count}- LINE DETECTED:"
+                                 sadm_writelog "Script Path   :${SCRIPT_WITH_PATH}"
+                                 sadm_writelog "Script Name   :${PNAME}"
+                                 sadm_writelog "ChangeDate    :${PDATE}"
+                                 sadm_writelog "Section       :${PSECNAME}"
+                                 sadm_writelog "Section Title :${PSECDESC}"
+                                 sadm_writelog "Version       :${PVER}"
+                                 sadm_writelog "Description   :${PDESC}"
+                                 sadm_writelog " "
+                            else sadm_writelog "[ERROR] NAME=$PNAME PDATE=$PDATE PSECTION=$PSECTION PVER=$PVER"
+                                 sadm_writelog " "
+                         fi
+                 fi 
+                 continue
+        fi 
+        sadm_writelog "[OK] NAME=$PNAME PDATE=$PDATE PSECTION=$PSECNAME PVER=$PVER"
+        echo "${PSECNAME}; ${PNAME}; ${PDATE}; ${PVER}; ${PDESC}" >> $SADM_TMP_FILE3
+        valid_count=$((valid_count+1))
+        done
+
+    sadm_writelog "-----"
+    sadm_writelog "End of validation."
+    sadm_writelog "   - Total warning : $warning_count" 
+    sadm_writelog "   - Total error   : $error_count" 
+    sadm_writelog "   - Total valid   : $valid_count" 
+    sadm_writelog "-----"
+    sadm_writelog " "
+    return $error_count
 }
 
 
@@ -159,115 +365,135 @@ show_usage()
 #===================================================================================================
 main_process()
 {
-    # Build a file that contains filenames that we want to search for lines beginning with '#@'.
-    find $SADM_BIN_DIR   -type f -regex '.*\(sh\|pl\|php\|py\)$' -exec grep -H "^#@" {} \;   >$SADM_TMP_FILE1
-    find $SADM_CFG_DIR   -type f -regex '.*$' -exec grep -H "^#@" {} \;                     >>$SADM_TMP_FILE1
-    find $SADM_LIB_DIR   -type f -regex '.*\(sh\|pl\|php\|py\)$' -exec grep -H "^#@" {} \;  >>$SADM_TMP_FILE1
-    find $SADM_SETUP_DIR -type f -regex '.*\(sh\|php\|py\)$' -exec grep -H "^#@" {} \;      >>$SADM_TMP_FILE1
-    find $SADM_WWW_DIR   -type f -regex '.*\(sh\|php\|py\)$' -exec grep -H "^#@" {} \;      >>$SADM_TMP_FILE1
 
-    # Sort by Date (Ascending Order)
-    #cp $SADM_TMP_FILE1 /tmp/relnotes1.txt                               # Save Unsorted Rel. Notes
-    sort -t':' -k2,2 $SADM_TMP_FILE1 > $SADM_TMP_FILE2                  # Sorted Rel. Notes
-    #cp $SADM_TMP_FILE2 /tmp/relnotes2.txt                               # Save Rel Notes Sorted
-    if [ "$SADM_DEBUG" -gt 4 ]                                          # For debugging purpose
-        then sadm_writelog "Lines that we will be processing ..."       # Message to user
-             nl $SADM_TMP_FILE2                                         # List lines selected
-    fi
-    sed -i 's/\#@//g' $SADM_TMP_FILE2                                   # Remove #@ from every lines
+    # Make sure work file exist and are empty
+    if [ -f "$SADM_TMP_FILE1" ] ; then rm -f $SADM_TMP_FILE1 ; touch $SADM_TMP_FILE1 ; fi
 
-
-    # Example of format of lines we will process
-    # /sadmin/bin/sadm_client_housekeeping.sh:#@2019_06_03 Update: v1.30 Include RCH format conversion, will do conversion only once.
-    # /sadmin/bin/sadm_fetch_clients.sh:#@2019_06_06  Fix: v2.37 Fix problem sending alert when SADM_ALERT_TYPE was set 2 or 3.
-    # /sadmin/bin/sadm_fetch_clients.sh:#@2019_06_07  New: v2.38 We now have et the end a alert status summary of all systems.
-    # ----------------------------------------------------------------------------------------------
-    rm -f $SADM_TMP_FILE1 >> /dev/null 2>&1                             # Clear new work output file
-    cat $SADM_TMP_FILE2 | while read wline                              # Read each line in file
+    # Search for '^#@' in source and config files within every Directories selected 
+    for WDIR in "${SEARCH_DIR[@]}"                                 
         do
-        if [ $SADM_DEBUG -gt 4 ] ; then printf "\n-----\nProcessing Line : ${wline}" ; fi
-
-        # Extract each field on the line.
-        SCRIPT_WITH_PATH=`echo $wline | awk -F: '{ print $1 }'`         # Extract ScriptName + Path
-        PNAME=`basename $SCRIPT_WITH_PATH`                              # Extract ScriptName No Path
-        PDATE=`echo $wline  |awk '{ print $1 }' |awk -F: '{print $2 }'` # Date of Modification
-        PSECTION=`echo $wline |awk '{ print $2 }' |tr -d ':'`           # Isolate Section Name
-        PVER=`echo $wline   |awk '{ print $3 }'`                        # Get Script version No.
-        PDESC=`echo $wline  |cut  -f 4- -d" " `                         # Description of the change
-        PSECTION=$(sadm_capitalize $PSECTION)                           # Capitalize Section Name
-
-        # Show Script name, Modification and Last Release Date.
-        LAST_REL_DATE=$(echo "$LAST_DATE" | tr -d '_')
-        UPDATE_DATE=$(echo "$PDATE" | tr -d '_')
-
-        # If change were made before the start date, then skip the line and proceed with next one.
-        if [ $UPDATE_DATE -gt $LAST_REL_DATE ] 
-           then printf "\n %-30s %-08d %-08d %-8s" "$PNAME" $UPDATE_DATE $LAST_REL_DATE "Selected" 
-           else printf "\n %-30s %-08d %-08d %-8s" "$PNAME" $UPDATE_DATE $LAST_REL_DATE "Rejected" 
-                continue
-        fi 
-
-        # Under Debug Show Information about the change
-        if [ $SADM_DEBUG -gt 4 ]
-           then printf "\nScript Path :..${SCRIPT_WITH_PATH}.."
-                printf "\nScript Name :..${PNAME}.."
-                printf "\nChangeDate  :..${PDATE}.."
-                printf "\nSection     :..${PSECTION}.."
-                printf "\nVersion     :..${PVER}.."
-                printf "\nDescription :..${PDESC}.." 
-        fi 
-
-        # When title is 'Nolog', ignore it (Don't want it to appears in changelog)
-        if [ "$PSECTION" = "Nolog" ]    ; then continue ; fi 
-
-        # Make Section Title Uniform.
-        if [ "$PSECTION" = "Deprecate" ]  ; then PSECTION="Deprecated"  ; fi
-        if [ "$PSECTION" = "Feature" ]    ; then PSECTION="Features"    ; fi
-        if [ "$PSECTION" = "secure" ]     ; then PSECTION="Security"    ; fi
-        if [ "$PSECTION" = "Change" ]     ; then PSECTION="Update"      ; fi
-        if [ "$PSECTION" = "Changed" ]  || [ "$PSECTION" = "Updated" ]   ; then PSECTION="Update" ;fi
-        if [ "$PSECTION" = "Added" ]    || [ "$PSECTION" = "Add" ]       ; then PSECTION="New" ;fi
-        if [ "$PSECTION" = "Optimize" ] || [ "$PSECTION" = "Improve" ]   ; then PSECTION="Improvement" ;fi
-        if [ "$PSECTION" = "Remove" ]   || [ "$PSECTION" = "Delete" ]    ; then PSECTION="Removed" ;fi
-        if [ "$PSECTION" = "Fixed" ]    || [ "$PSECTION" = "Fix" ]       ; then PSECTION="Fixes" ;fi
-        if [ "$PSECTION" = "Bugfix" ]   || [ "$PSECTION" = "Bugfixes" ]  ; then PSECTION="Fixes" ;fi
-        if [ "$PSECTION" = "Doc" ]      || [ "$PSECTION" = "Docs" ]      ; then PSECTION="Documentation" ;fi
-        if [ "$PSECTION" = "Redesign" ] || [ "$PSECTION" = "Rewritten" ] ; then PSECTION="Refactoring" ;fi
-
-        # Show user what is written to output file
-        if [ $SADM_DEBUG -gt 4 ]
-           then printf "\nInfo just before writing to output file."
-                printf "\nScript Path :..${SCRIPT_WITH_PATH}.."
-                printf "\nScript Name :..${PNAME}.."
-                printf "\nChangeDate  :..${PDATE}.."
-                printf "\nSection     :..${PSECTION}.."
-                printf "\nVersion     :..${PVER}.."
-                printf "\nDescription :..${PDESC}.." 
-        fi 
-
-        printf "%s;%s;%s;%s;%s\n" "$PSECTION" "$PNAME" "$PDATE" "$PVER" "$PDESC"  >>$SADM_TMP_FILE1
+        sadm_writelog "Searching in $WDIR for '^#@' ..."
+        find $WDIR -type f -regex '.*\(sh\|pl\|php\|py|cfg|txt\)$' -exec grep -H "^#@" {} \; >>$SADM_TMP_FILE1
         done
     
+    # Eliminate template line example and sort by Type of changes and version number
+    grep -v "#@YYYY_MM_DD" $SADM_TMP_FILE1 | sort -t':' -k2,2 >$SADM_TMP_FILE2 
 
+    # Remove #@ from every lines
+    sed -i 's/\#@//g' $SADM_TMP_FILE2                                   # Remove #@ from every lines
+ 
+    validate_input_file "$SADM_TMP_FILE2" "E" 
+
+#    # Example of format of lines we will process
+#    # /sadmin/bin/sadm_client_housekeeping.sh:#@2019_06_03 Update: v1.30 Include RCH format conversion, will do conversion only once.
+#    # /sadmin/bin/sadm_fetch_clients.sh:#@2019_06_06  Fix: v2.37 Fix problem sending alert when SADM_ALERT_TYPE was set 2 or 3.
+#    # /sadmin/bin/sadm_fetch_clients.sh:#@2019_06_07  New: v2.38 We now have et the end a alert status summary of all systems.
+#    # ----------------------------------------------------------------------------------------------
+#    cat $SADM_TMP_FILE2 | while read wline                              # Read each line in file
+#        do
+#        if [ $SADM_DEBUG -gt 4 ] ; then printf "\n-----\nProcessing Line : ${wline}" ; fi
+#
+#        # Extract each field of line.
+#        SCRIPT_WITH_PATH=`echo $wline | awk -F: '{ print $1 }'`         # Extract ScriptName + Path
+#        PNAME=`basename $SCRIPT_WITH_PATH`                              # Extract ScriptName No Path
+#        PDATE=`echo $wline  |awk '{ print $1 }' |awk -F: '{print $2 }'` # Date of Modification
+#        PSECNAME=`echo $wline |awk '{ print $2 }' |tr -d ':'`           # Isolate Section Name
+#        PVER=`echo $wline   |awk '{ print $3 }'`                        # Get Script version No.
+#        PDESC=`echo $wline  |cut  -f 4- -d" " `                         # Description of the change
+#        PSECNAME=$(sadm_tolower $PSECNAME)                              # Lowercase of Section Name
+#        PSECDESC="Section $PSECNAME"                                    # Default Section Title
+#
+#        # Skip "nolog" section name and template code example 
+#        if [ "$PSECNAME" = "nolog" ] || [ "${wline:1:12}" = "YYYY_MM_DD" ] ; then continue ; fi
+#
+#        # Show Script name, Modification and Last Release Date.
+#        LAST_REL_DATE=$(echo "$LAST_DATE" | tr -d '_')                  # Last Rel. Date without '_'
+#        UPDATE_DATE=$(echo "$PDATE" | tr -d '_')                        # Cur. Line Date without '_'
+#
+#        # If change were made after last release date we select it, else skip the line.
+#        count=$((count+1))
+#        if [ $UPDATE_DATE -gt $LAST_REL_DATE ] 
+#           then if [ $SADM_DEBUG -gt 4 ]
+#                    then printf "\n%03d %-30s %-08d %-08d %-8s" $count "$PNAME" $UPDATE_DATE $LAST_REL_DATE "Selected" 
+#                fi 
+#           else if [ $SADM_DEBUG -gt 4 ]
+#                    then printf "\n%03d %-30s %-08d %-08d %-8s" $count "$PNAME" $UPDATE_DATE $LAST_REL_DATE "Rejected" 
+#                fi 
+#                continue
+#        fi 
+#
+#        # Under Debug Show Information about the selected change
+#        if [ $SADM_DEBUG -gt 4 ]
+#           then sadm_writelog " "
+#                sadm_writelog "INFO AFTER SPLITTING THE LINE :"
+#                sadm_writelog "Script Path   :${SCRIPT_WITH_PATH}"
+#                sadm_writelog "Script Name   :${PNAME}"
+#                sadm_writelog "ChangeDate    :${PDATE}"
+#                sadm_writelog "Section       :${PSECNAME}"
+#                sadm_writelog "Section Title :${PSECDESC}"
+#                sadm_writelog "Version       :${PVER}"
+#                sadm_writelog "Description   :${PDESC}." 
+#                sadm_writelog " "
+#        fi 
+#
+#        # Get Section Title from the Section Array
+#        for key in "${!section_array[@]}"                               # Loop through title array
+#            do 
+#            if [ "$PSECNAME" = "$key" ]                                 # Found section in array
+#                then #echo "$key is an abbreviation for ${section_array[$key]}"
+#                     PSECDESC=${section_array[$key]}                    # Get Section Title in Array
+#            fi
+#            done
+#
+#        # Show user what is written to output file
+#        if [ $SADM_DEBUG -gt 4 ]
+#           then sadm_writelog " "
+#                sadm_writelog "INFO AFTER SPLITTING THE LINE :"
+#                sadm_writelog "Script Path   :${SCRIPT_WITH_PATH}"
+#                sadm_writelog "Script Name   :${PNAME}"
+#                sadm_writelog "ChangeDate    :${PDATE}"
+#                sadm_writelog "Section       :${PSECNAME}"
+#                sadm_writelog "Section Title :${PSECDESC}"
+#                sadm_writelog "Version       :${PVER}"
+#                sadm_writelog "Description   :${PDESC}"
+#                sadm_writelog " "
+#        fi 
+#
+#        printf "%s;%s;%s;%s;%s\n" "$PSECNAME" "$PNAME" "$PDATE" "$PVER" "$PDESC"  >>$SADM_TMP_FILE1
+#        done
+#    
+#
     # Write Markdown Change to the screen ready to include in changelog.md
     wrel=$(sadm_get_release)                                            # Get Release Number
     printf "\n\n## Release v[${wrel}](https://github.com/jadupl2/sadmin/releases) (${CUR_DATE})" > $CHANGELOG
     SECTION=""
-    sort $SADM_TMP_FILE1 | while read wline                              # Read each line in file
+    sort $SADM_TMP_FILE3 | while read wline                              # Read each line in file
         do
-        if [ $SADM_DEBUG -gt 4 ] ; then printf "\nChangelog Pass Line : ${wline}\n" ; fi
-        PSECTION=`echo $wline | awk -F ';' '{ print $1 }'`
+        #if [ $SADM_DEBUG -gt 4 ] ; then printf "\nInfo Changelog Pass Line : ${wline}" ; fi
+        PSECNAME=`echo $wline | awk -F ';' '{ print $1 }'`
         PDATE=` echo $wline   | awk -F ';' '{ print $2 }'`
         PNAME=` echo $wline   | awk -F ';' '{ print $3 }'`
         PVER=`  echo $wline   | awk -F ';' '{ print $4 }'`
         PDESC=` echo $wline   | awk -F ';' '{ print $5 }'`
-        if [ "$PSECTION" != "$SECTION" ]
-            then printf "\n- $PSECTION" >> $CHANGELOG
-                 SECTION=$PSECTION
+        SECTION_DESC=""
+        if [ "$PSECNAME" != "$SECTION" ]                                # If Section Name change
+            then PSECDESC="Section $PSECNAME"                           # Default Section Title
+                 for key in "${!section_array[@]}"                      # Loop through title array
+                    do 
+                    if [ "$PSECNAME" = "$key" ]                         # Found section in array
+                        then PSECDESC=${section_array[$key]}            # Get Section Title in Array
+                    fi
+                    done
+            printf "\n- $PSECDESC" >> $CHANGELOG                        # Write Section Desc in log
+            SECTION=$PSECNAME                                           # Save new section name
+        fi 
+        if [ $SADM_DEBUG -gt 4 ] 
+            then sadm_writelog "Line written to changelog : ..$PDATE.. ..${PNAME}.. ..${PSECDESC}.. ..$PVER.. ..$PDESC.."
         fi 
         printf "\n\t- %s %s (%s) - %s"  "$PDATE" "$PNAME" "$PVER" "$PDESC"  >> $CHANGELOG
         done
     #sort -k2 $SADM_TMP_FILE2 | uniq
+    
     printf "\n\n" >> $CHANGELOG
     printf "\n\n----- Start of Markdown changelog ($CHANGELOG)"
     chmod 664 $CHANGELOG
@@ -278,6 +504,62 @@ main_process()
 }
 
 
+
+
+# --------------------------------------------------------------------------------------------------
+# Function is used to remove the "@" in the comment line describing a change in the source.
+# Normally the recent change change have a line similar to "#@2021_08_23".
+# Function change that line to "# 2021_08_23" (removing the '@') in filename received.
+#
+# Parameters to receive:
+#   1- Name of the source (with full path) that we need to change the line.
+#   2- String to replace, normally something like this (#@2021_12_25) 
+# Return value: 
+#   0- Changed with success the source.
+#   1- Error trying to make the change. 
+# --------------------------------------------------------------------------------------------------
+function deactivate_line()
+{
+    if [ $# -ne 2 ]
+        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters."
+             sadm_writelog "Function received $* and this isn't valid."
+             sadm_writelog "Should receive a filename and string to change." 
+             return 1
+    fi
+
+    # Save parameters received
+    FILE=$1                                                             # Save Source file name
+    KEY=$2                                                              # Key to change
+
+    # Check if the source file exist and readable.
+    if [ ! -r "$FILE" ]
+        then sadm_writelog "Error: Function ${FUNCNAME[0]} File ($FILE) don't exist."
+             return 1
+    fi    
+
+    # Minimum test on the key received must begin with "#@20"
+    if [ "${KEY:0:4}" != "#@20" ] 
+        then sadm_writelog "Error: Function ${FUNCNAME[0]} Invalid key received '${KEY:0:4}'."
+             return 1
+    fi    
+
+    # Replace $KEY by $NEW in file.
+
+    NEW=$(echo $KEY | tr '@' ' ')                                       # Replace '@' by ' '
+    sadm_writelog "Replacing '$KEY' by '$NEW' in $FILE."
+    #sed -i "s/$KEY/$NEW/" $FILE                                         # Replace $KEY without '@'
+    #RC=$?                                                               # Save return code 
+    #if [ $RC -ne 0 ]
+    #    then sadm_writelog "Error: Function ${FUNCNAME[0]} Couldn't remove '@' with 'sed' command."
+    #         return 1
+    #fi    
+    return 0 
+}
+
+
+
+
+
 # --------------------------------------------------------------------------------------------------
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
@@ -286,8 +568,7 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
-
-    while getopts "s:d:hv" opt ; do                                       # Loop to process Switch
+    while getopts "s:d:hvu" opt ; do                                    # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
@@ -305,7 +586,15 @@ function cmd_options()
                exit 0                                                   # Back to shell
                ;;
             s) LAST_DATE=$OPTARG                                        # Get Last Release date
+               num=`echo "$LAST_DATE" | tr -d '_' | grep -E ^\-?[0-9]?\.?[0-9]+$`  
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                    then sadm_writelog "[ ERROR ] Date not in valid format, should be YYYY_MM_DD."   
+                         show_usage                                     # Display Help Usage
+                         exit 1                                         # Exit Script with Error
+               fi
                ;;                                                       # No stop after each page
+            u) DEL_AT_SIGN="Y"                                          # Yes Replace '^#@' by "^# "
+               ;; 
            \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
@@ -319,6 +608,12 @@ function cmd_options()
              show_usage
              exit 1
     fi  
+
+    # Ask for a confirmation before replace "^#@" by "^# " in source files
+    if [ "$DEL_AT_SIGN" = "Y" ] 
+        then sadm_ask "Are you sure you want to replace '#@' by '# ' in all sources" 
+             if [ $? -eq 0 ] ; then printf "\nProcess aborted !\n" ; exit 0 ; fi 
+    fi 
     return 
 }
 
