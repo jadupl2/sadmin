@@ -34,12 +34,12 @@
 #                   can compress backup.
 # 2018_06_03    V1.6 Small Ameliorations and corrections
 # 2018_06_11    V1.7 Change name to sadm_backupsd.sh
-# 2018_06_19    V1.8 Default option is to Compress Backup - Add -u to do uncompress backup
+# 2018_06_19    V1.8 Default option is to Compress Backup - Add -u to do uncompressed backup
 # 2018_07_14    v1.9 Switch to Bash Shell instead of sh (Causing Problem with Dash on Debian/Ubuntu)
 # 2018_08_19    v2.0 Add '-b' to specify backup directory, enhance log verbose. 
-# 2018_09_16 v2.1 Insert Aler Group Default
+# 2018_09_16 v2.1 Insert Alert Group Default
 # 2020_04_01 Update: v2.2 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-#@2021_05_26 Update: v2.3 major code revamp & command line options added
+#@2021_05_26 backup: v2.3 Added command line option option [-b backup_dir] [-n dbname].
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

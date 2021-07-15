@@ -39,11 +39,11 @@
 # 2021_01_17 Updated v1.20 Center Heading of scripts report.
 # 2021_01_23 Updated v1.21 SCRIPTS & SERVERS variables no longer in "sadm_daily_report_exclude.sh"
 # 2021_02_18 Updated v1.22 Added example to 'SERVERS' variable of system to be ignored from Report.
-#@2021_04_01 Fix: v1.23 Fix problem when the last line of *.rch was a blank line.
-#@2021_04_28 Fix: v1.24 Fix problem with the report servers exclude list.
-#@2021_06_08 Updated: v1.25 Remove from daily backup report system that the daily backup is disable.
-#@2021_06_08 Updated: v1.26 Remove from daily ReaR backup report system that the backup is disable.
-#@2021_06_10 Update: v1.27 Re-Insert disable backup in report, not in yellow background but in Bold
+# 2021_04_01 Fix: v1.23 Fix problem when the last line of *.rch was a blank line.
+# 2021_04_28 Fix: v1.24 Fix problem with the report servers exclude list.
+#@2021_06_08 nolog: v1.25 Remove from daily backup report system that the daily backup is disable.
+#@2021_06_08 nolog: v1.26 Remove from daily ReaR backup report system that the backup is disable.
+#@2021_06_10 server: v1.27 Show system backup in bold instead of having a yellow background.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

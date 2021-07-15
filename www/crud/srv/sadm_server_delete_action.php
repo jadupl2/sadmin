@@ -27,10 +27,10 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-#@2019_01_15 New: sadm_server_delete.php v2.1 Create server data archive before deleting it.
-#@2019_08_17 Update: v1.1 New Heading and return to Maintenance Server List
-#@2019_12_26 Update: v1.2 Update: Deleted server now place in www/dat/archive directory.
-#@2021_06_07 Fix: v1.3 Remove faulty error message when a system was delete just after creating it.
+# 2019_01_15 New: sadm_server_delete.php v2.1 Create server data archive before deleting it.
+# 2019_08_17 Update: v1.1 New Heading and return to Maintenance Server List
+# 2019_12_26 Update: v1.2 Update: Deleted server now place in www/dat/archive directory.
+#@2021_06_07 web: v1.3 Remove faulty error message when a client was delete just after creating it.
 #
 # ==================================================================================================
 #

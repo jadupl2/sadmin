@@ -17,7 +17,7 @@
 # 2019_03_17 Fix: v1.7 Wasn't reporting error coming from result code history (rch) file.
 # 2019_04_25 Update: v1.8 Was showing 'Nothing to report' althought there was info displayed.
 # 2019_06_07 Update: v1.9 Include the alarm type in the screen output.
-#@2020_04_08 Fix: v2.0 Correct alignment error.
+#@2020_04_08 mon: v2.0 Correct alignment error.
 #
 #===================================================================================================
 use English;

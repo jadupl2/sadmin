@@ -19,7 +19,7 @@
 # 2019_11_12 Update: v2.0 Add comments and minor corrections.
 # 2019_11_18 Update: v2.1 Bug corrections and change heading colors.
 # 2019_11_22 Update: v2.2 Change Menu color to fit with white and black background color.
-#@2021_05_10 Update: v2.3 Align script version number on the heading second line.
+#@2021_05_10 lib: v2.3 Version no. in 'sadm_display_heading' now align with first line.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 

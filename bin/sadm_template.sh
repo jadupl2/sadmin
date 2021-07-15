@@ -27,30 +27,44 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # 
 #---------------------------------------------------------------------------------------------------
-# Change log, comment line comma separated fields
+# Change log, comment line semicolon separated fields (So don't use ';' in description)
+# Info will be used by sadm_gen_relnotes.sh to generate the change log.
 # Field 1: Date of change (YYY_MM_DD) prefix by '@' 
 #          - "sadm_gen_relnotes.sh" utility
-#            - The '@' will be used to identify source modified to be added to "changelog.md".
+#            - The '@' identify changes to be include in next release (To Create Change log).
 #            - The '@' will be removed automatically when new version is release.
-# Field 2: Types of changes (Ignore case)
-#          - "Added" or "New" for new features.
-#          - "Changed" for changes in existing functionality.
-#          - "Removed" for now removed features.
-#          - "Fixed" for any bug fixes.
-#          - "Security" in case of vulnerabilities.
-#          - "Doc" in case we modify code comments(documentation).
-#          - "Minor" in case of minor modification.
-#          - "Nolog" cosmetic change, won't appear in change log.
+# Field 2: Standard Types of changes (Ignore case)
+#           - "Added" or "New" for new features.
+#           - "Changed" for changes in existing functionality.
+#           - "Remove" for now removed features.
+#           - "Fix" for any bug fixes.
+#           - "Security" in case of vulnerabilities.
+#           - "Doc" in case we modify code comments(documentation).
+#           - "Minor" in case of minor modification.
+#           - "Nolog" cosmetic change, won't appear in change log.
+#           - "perf" Optimize for better performance
+#          SADMIN related Changes
+#           - "Web"         Web Interface modification
+#           - "install"     Install, Uninstall & Update modification or fixes.
+#           - "cmdline"     command line tools modification or fixes.
+#           - "template"    Library, Templates, Alerts, Libr demo modification & fixes.
+#           - "mon"         Sadmin monitor modification or fixes.
+#           - "backup"      Backup related modification or fixes.
+#           - "config"      Configuration files modification or fixes.
+#           - "server"      Server related modification or fixes.
+#           - "client"      Server related modification or fixes.
+#           - "Nolog"       cosmetic change, won't appear in change log.
+#           - "osupdate"    O/S Update modification or fixes.
 # Field 3: Version number 'v99.99'
 # Field 4: Description of change (Max 60 Characters)
 #
-#@YYYY_MM_DD, Type,     vxx.xx, 123456789012345678901234567890123456789012345678901234567890--------
+#@YYYY_MM_DD; Type;    vxx.xx; 123456789012345678901234567890123456789012345678901234567890---------
 #---------------------------------------------------------------------------------------------------
 #
-#@2021_MM_DD, New,      v1.0,   Initial Beta Version
+# 2015_01_01, New,      v1.0,   Initial Beta Version
 #
 #---------------------------------------------------------------------------------------------------
-#@YYYY_MM_DD, Type,     vxx.xx, 123456789012345678901234567890123456789012345678901234567890--------
+#@YYYY_MM_DD; Type;    vxx.xx; 123456789012345678901234567890123456789012345678901234567890---------
 #---------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
@@ -100,7 +114,7 @@ export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you t
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
+source ${SADMIN}/lib/sadmlib_std.sh                        # LOAD SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)

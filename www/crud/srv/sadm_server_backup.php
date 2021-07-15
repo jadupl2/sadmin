@@ -33,7 +33,7 @@
 # 2020_01_03 Update: v1.8 Web Page disposition and input was changed.
 # 2020_01_13 Update: v1.9 Enhance Web Appearance and color. 
 # 2020_01_18 Update: v2.0 Reduce width of text-area for include,exclude list to fit on Ipad.
-#@2021_05_25 Update: v2.1 Fix depreciated function eregi_replace warning message
+#@2021_05_25 web: v2.1 Replace php depreciated function 'eregi_replace' warning message.
 # ==================================================================================================
 #
 #

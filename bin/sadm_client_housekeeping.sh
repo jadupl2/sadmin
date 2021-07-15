@@ -57,11 +57,11 @@
 # 2020_11_07 Update: v1.45 Remove old rch conversion code execution.
 # 2020_12_16 Update: v1.46 Minor code change (Isolate the check for sadmin user and group)
 # 2020_12_26 Fix: v1.47 Doesn't delete Database Password File, cause problem during server setup.
-#@2021_05_23 Update: v1.48 Remove the conversion of old history file (not needed anymore)
-#@2021_06_06 Update: v2.00 Make sure that sadm_client crontab run 'sadm_nmon_watcher.sh' regularly.
-#@2021_06_06 Update: v2.01 Remove script that run 'swatch_nmon.sh' from system monitor config file.
-#@2021_06_06 Fix: v2.02 Fix problem related to system monitor file update
-#@2021_06_10 Fix: v2.03 Fix Typo Error and problem removing nmon watcher from monitor file
+#@2021_05_23 client: v1.48 Remove conversion of old history file format (not needed anymore).
+#@2021_06_06 client: v2.00 Make sure that sadm_client crontab run 'sadm_nmon_watcher.sh' regularly.
+#@2021_06_06 mon: v2.01 Remove script that run 'swatch_nmon.sh' from system monitor config file.
+#@2021_06_06 client: v2.02 Fix problem related to system monitor file update.
+#@2021_06_10 client: v2.03 Fix problem removing 'nmon' watcher from monitor file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x

@@ -70,9 +70,9 @@
 # 2020_06_30 Fix: v2.23 Fix chmod 664 for files in server backup directory
 # 2020_09_05 Fix: v2.24 Minor Changes.
 # 2021_01_11 Fix: v2.25 NFS drive was not unmounted when the backup failed.
-#@2021_05_11 Fix: v2.26 Correct 'rear' command missing false error message 
-#@2021_05_12 Update: v2.27 Write more information about ReaR sadmin.cfg in the log.
-#@2021_06_02 Update: v2.28 Reformat section of the log
+#@2021_05_11 backup: v2.26 Fix 'rear' command missing false error message 
+#@2021_05_12 backup: v2.27 Write more information about ReaR sadmin.cfg in the log.
+#@2021_06_02 backup: v2.28 Added more information in the script log.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x

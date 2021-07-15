@@ -50,8 +50,8 @@
 #                   - THe Filesystem (and Raw) within VG are recreated automatically,with proper perm
 #                   - You need to restore the content of the filesystems from your usual backup.
 # 2018_06_04    v2.1 Correction for new Library
-#@2018_12_08    v2.2 Fix bug with Debugging Level. 
-#@2020_04_06 Update: v2.3 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
+# 2018_12_08    v2.2 Fix bug with Debugging Level. 
+# 2020_04_06 Update: v2.3 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
 #            
 #
 #===================================================================================================

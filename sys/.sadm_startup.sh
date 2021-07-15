@@ -133,7 +133,7 @@ main_process()
     fi 
              
     sadm_writelog "  Start 'nmon' performance system monitor tool"
-    ${SADM_BIN_DIR}/sadm_nmon_watcher.sh > /dev/null 2>&1
+    ${SADM_BIN_DIR}/sadm_nmon_watcher.sh | tee -a $SADM_LOG
     if [ $? -ne 0 ] 
         then sadm_writelog "  Error starting 'nmon' System Monitor." 
              ERROR_COUNT=$(($ERROR_COUNT+1))

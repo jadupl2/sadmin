@@ -21,7 +21,7 @@
 # 2017_02_08    V2.4 Fix Compatibility problem with 'sadh' shell (If statement) 
 # 2018_06_04    V2.5 Adapt to new Libr.
 # 2018_09_19    V2.6 Added Alert Group
-#@2021_06_12 Update V2.7 Update SADMIN Section, add std command line option 
+#@2021_06_12 nolog: V2.7 Update SADMIN Section, add std command line option 
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C

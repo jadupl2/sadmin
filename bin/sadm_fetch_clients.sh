@@ -78,8 +78,8 @@
 # 2020_12_19 Update: v3.24 Remove verbose on rsync
 # 2021_04_19 Update: v3.25 Change Include text in ReaR Config file.
 #@2021_05_10 nolog: v3.26 Error message change "sadm_osupdate_farm.sh" to "sadm_osupdate_starter"
-#@2021_06_06 Update: v3.27 Use $SADMIN variable in /etc/cron.d/sadm_osupdate 
-#@2021_06_11 Update: v3.28 Collect system uptime and store it in DB and update SADMIN section 
+#@2021_06_06 server: v3.27 Change generation of /etc/cron.d/sadm_osupdate to use $SADMIN variable.
+#@2021_06_11 server: v3.28 Collect system uptime and store it in DB and update SADMIN section 
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>

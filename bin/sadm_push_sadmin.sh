@@ -47,7 +47,7 @@
 # 2020_05_23 Update: v2.19 Changing the way sadm_show_version uniformity , option '-c' changed to '-n'
 # 2020_12_12 Update: v2.28 Add pushing of alert_group.cfg alert_slack.cfg to client
 # 2021_04_24 Fix: v2.29 Correct typo in error message.
-#@2021_05_22 Update: v2.30 Update code section, remove sync of depreciated usr/mon/swatch_nmon* 
+#@2021_05_22 server: v2.30 Remove sync depreciated $SADMIN/usr/mon/swatch_nmon* script and files.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
