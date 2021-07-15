@@ -44,7 +44,7 @@
 # 2020_03_03 Update: v2.14 Server Description displayed when mouse over server name.
 # 2020_05_13 Update: v2.15 Customize message when nothing to report.
 # 2020_05_13 Update: v2.16 server name link was not displayed properly.
-#@2020_09_23 Update: v2.17 Add Home button in the page heading.
+# 2020_09_23 Update: v2.17 Add Home button in the page heading.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

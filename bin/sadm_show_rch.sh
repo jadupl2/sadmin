@@ -34,7 +34,7 @@
 # 2019_08_13 Update: v1.15 Fix bug when using -m option (Email report), Error not on top of report.
 # 2019_08_25 Update: v1.16 Put running scripts and scripts with error on top of email report.
 # 2020_04_06 Update: v1.17 Allow simultaneous execution of this script.
-#@2020_05_23 Update: v1.18 Changing the way to get SADMIN variable in /etc/environment 
+# 2020_05_23 Update: v1.18 Changing the way to get SADMIN variable in /etc/environment 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

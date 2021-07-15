@@ -45,7 +45,7 @@
 # Changelog
 # 2018_01_09 V1.5 New Version - Script Restructure, Usage Instructions & Work with new Library
 # 2018_09_19 V1.6 Update for Alert Group and new LIbrary
-#@2020_04_02 Update: v1.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2020_04_02 Update: v1.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 # ==================================================================================================
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C

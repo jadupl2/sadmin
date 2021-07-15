@@ -28,7 +28,7 @@
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
 #   2018_02_03 - Jacques Duplessis
 #       V2.1 Added Server Graph Display Option
-#@2019_08_17 Update: v2.2 Use new heading function, return to caller screen when exiting.
+# 2019_08_17 Update: v2.2 Use new heading function, return to caller screen when exiting.
 # ==================================================================================================
 #
 #

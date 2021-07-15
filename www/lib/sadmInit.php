@@ -23,10 +23,10 @@
 # 2018_11_22  v3.2 Read SADMIN root directory from /etc/environment on all platform now.
 # 2019_01_11  Added: v3.3 Definitions of Backup List & Backup Exclude file.
 # 2019_02_11  Added: v3.4 Add $SADMIN/www to PHP Path
-#@2019_07_16  Update: Remove repeating error message when not connecting to Database.
-#@2019_08_16  Update: v3.5 Correct Typo for number of rear backup to keep
-#@2019_08_19 Update: v3.6 Added Global Var. SADM_REAR_EXCLUDE_INIT for Rear Initial Options file.
-#@2020_12_26 Update: v3.7 Added Global Var. SADM_WWW_ARC_DIR for Server archive when deleted.
+# 2019_07_16  Update: Remove repeating error message when not connecting to Database.
+# 2019_08_16  Update: v3.5 Correct Typo for number of rear backup to keep
+# 2019_08_19 Update: v3.6 Added Global Var. SADM_REAR_EXCLUDE_INIT for Rear Initial Options file.
+# 2020_12_26 Update: v3.7 Added Global Var. SADM_WWW_ARC_DIR for Server archive when deleted.
 
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  

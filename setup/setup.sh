@@ -52,7 +52,7 @@
 # 2020_04_23 Update: v3.7 Added some more error checking.
 # 2020_04_23 Fix: v3.8a Fix after Re-Tested on CentOS/RedHat 8 
 # 2020_04_27 Update: v3.9 Install 'getmac' python3 module (for subnet scan).
-#@2020_05_05 Update: v3.10 Adjust screen presentation.
+# 2020_05_05 Update: v3.10 Adjust screen presentation.
 # 2020_05_14 Update: v3.11 Remove line feed after "Installing pip3" 
 # 2020_12_24 Update: v3.12 CentOSStream return CENTOS.
 # --------------------------------------------------------------------------------------------------

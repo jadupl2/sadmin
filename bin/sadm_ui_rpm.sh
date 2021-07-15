@@ -13,10 +13,10 @@
 #
 #===================================================================================================
 # History    :
-#@2019_11_06 Added: v1.0 Initial version
-#@2019_11_11 Updated: v1.1 Revamp the RPM question & display of results.
-#@2019_11_11 Updated: v1.2 Fix problem with List of repositories.
-#@2019_11_12 Updated: v1.3 Production version
+# 2019_11_06 Added: v1.0 Initial version
+# 2019_11_11 Updated: v1.1 Revamp the RPM question & display of results.
+# 2019_11_11 Updated: v1.2 Fix problem with List of repositories.
+# 2019_11_12 Updated: v1.3 Production version
 #
 #===================================================================================================
 trap 'exec $SADMIN/sadm' 2                                                # INTERCEPT  ^C

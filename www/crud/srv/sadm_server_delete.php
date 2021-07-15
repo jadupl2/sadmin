@@ -29,8 +29,8 @@
 # 2017_03_09 Documentation: sadm_server_delete.php v1.8 Comments code and enhance code performance.
 # 2017_11_15 Improve: sadm_server_delete.php v2.0 Restructure & modify web interface & MySQL DB.
 # 2019_01_15 New: sadm_server_delete.php v2.1 Option to create server data archive before delete.
-#@2019_08_17 Update: v2.2 New parameter, the URL where to go back after update.
-#@2019_12_26 Update: v2.3 Deleted server now place in www/dat/archive directory.
+# 2019_08_17 Update: v2.2 New parameter, the URL where to go back after update.
+# 2019_12_26 Update: v2.3 Deleted server now place in www/dat/archive directory.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.

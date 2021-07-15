@@ -146,11 +146,18 @@ export SADM_ALERT_TYPE=0                                   # 0=No 1=OnError 2=On
 export CUR_DATE=`date "+%C%y-%m-%d"`                                    # GitHub Cur. Release Date 
 export LAST_DATE=""                                                     # GitHub Last Release Date
 export CHANGELOG="${SADM_TMP_DIR}/changelog.md"                         # New Release MD Changelog 
-export DEL_AT_SIGN="N"                                                  # Replace '^#@' by "^# "
+
+# Command line option (-u) 
+# Untag only new sources with tag date after last release date
+export OPTION_U="N"                                                     
 #
-export error_count=0                                                    # Error Count While Validate
-export warning_count=0                                                  # Warn. Count While Validate
-export valid_count=0                                                    # Valid Count While Validate
+# Command line option (-o) 
+# Untag only old sources with tag date before last release date
+export OPTION_O="N"                                                     
+#
+# Command line option (-r) 
+# Release the new version - It include -u -o)
+export OPTION_R="N"                                                     
 
 # Directories to search for "#@" at the beginning of lines
 declare -a SEARCH_DIR
@@ -191,7 +198,9 @@ show_usage()
     printf "\n\t-h              (Display this help message)"
     printf "\n\t-v              (Show Script Version Info)"
     printf "\n\t-s YYYY_MM_DD   (Last release date, skip change before this date)"
-    printf "\n\t-u              (Replace '^#@' by '^# ' in all sources)"
+    printf "\n\t-u              (Untag only new sources with tag date after last release date)"
+    printf "\n\t-o              (Untag only old sources with tag date before last release date)"
+    printf "\n\t-r              (Release the new version - It include -u -o)"
     printf "\n\n" 
 }
 
@@ -238,14 +247,19 @@ validate_input_file()
     # Make sure output file exist and is empty
     if [ -f "$SADM_TMP_FILE3" ] ; then rm -f $SADM_TMP_FILE3 ; touch $SADM_TMP_FILE3 ; fi
 
+    # Reset counter variables
+    error_count=0                                                       # Error Count While Validate
+    warning_count=0                                                     # Warn. Count While Validate
+    valid_count=0                                                       # Valid Count While Validate
+
     sadm_writelog " "
     sadm_writelog "-----"
     sadm_writelog "Validating all changes lines collected."
     sadm_writelog "-----"
     sadm_writelog " "
-
+    
     # Loop through all modified lines flagged (#@) 
-     while read wline                                        # Read each line collected
+     while read wline                                                   # Read each line collected
         do
         sadm_writelog " "
         sadm_writelog "-----" 
@@ -293,11 +307,15 @@ validate_input_file()
         if [ $UPDATE_DATE -le $LAST_REL_DATE ]                          
             then sadm_writelog "[ WARNING ] Rejected date too old ($PNAME $UPDATE_DATE)"
                  warning_count=$((warning_count+1))
-                 deactivate_line "$SCRIPT_WITH_PATH" "#@${PDATE}"
+                 # (-o) (Untag only old sources with tag date before last release date)"
+                 if [ "$OPTION_O" = "Y" ] 
+                    then deactivate_line "$SCRIPT_WITH_PATH" "#@${PDATE}" 
+                 fi
                  continue
-#            else if [ $SADM_DEBUG -gt 4 ]
-#                    then printf "\n%03d %-30s %-08d %-08d %-8s" $count "$PNAME" $UPDATE_DATE $LAST_REL_DATE "Selected" 
-#                 fi 
+            else # (-u) (Untag only new sources with tag date after last release date)"
+                 if [ "$OPTION_U" = "Y" ] 
+                    then deactivate_line "$SCRIPT_WITH_PATH" "#@${PDATE}" 
+                 fi 
         fi 
 
         # Make Section Title Uniform.
@@ -470,14 +488,15 @@ function deactivate_line()
 
     # Replace $KEY by $NEW in file.
 
+    sadm_writelog "Untag '$KEY' in $FILE."
     NEW=$(echo $KEY | tr '@' ' ')                                       # Replace '@' by ' '
     sadm_writelog "Replacing '$KEY' by '$NEW' in $FILE."
-    #sed -i "s/$KEY/$NEW/" $FILE                                         # Replace $KEY without '@'
-    #RC=$?                                                               # Save return code 
-    #if [ $RC -ne 0 ]
-    #    then sadm_writelog "Error: Function ${FUNCNAME[0]} Couldn't remove '@' with 'sed' command."
-    #         return 1
-    #fi    
+    sed -i "s/$KEY/$NEW/" $FILE                                         # Replace $KEY without '@'
+    RC=$?                                                               # Save return code 
+    if [ $RC -ne 0 ]
+        then sadm_writelog "Error: Function ${FUNCNAME[0]} Couldn't remove '@' with 'sed' command."
+             return 1
+    fi    
     return 0 
 }
 
@@ -490,11 +509,22 @@ function deactivate_line()
 # Evaluate Command Line Switch Options Upfront
 # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
 # (-s) Start Date
+# (-u) (Untag only new sources with tag date after last release date)"
+# (-o) (Untag only old sources with tag date before last release date)"
+# (-r) (Release the new version - It include -u -o)"
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
-    while getopts "s:d:hvu" opt ; do                                    # Loop to process Switch
+    while getopts "s:d:hvuor" opt ; do                                  # Loop to process Switch
         case $opt in
+            u) OPTION_U="Y"                                             # Untag only new sources
+               ;; 
+            o) OPTION_O="Y"                                             # Untag only old sources
+               ;; 
+            r) OPTION_U="Y"                                             # Untag only new sources
+               OPTION_O="Y"                                             # Untag only old sources
+               OPTION_R="Y"                                             # Untag and Release process
+               ;; 
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
@@ -518,8 +548,7 @@ function cmd_options()
                          exit 1                                         # Exit Script with Error
                fi
                ;;                                                       # No stop after each page
-            u) DEL_AT_SIGN="Y"                                          # Yes Replace '^#@' by "^# "
-               ;; 
+
            \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
@@ -535,7 +564,7 @@ function cmd_options()
     fi  
 
     # Ask for a confirmation before replace "^#@" by "^# " in source files
-    if [ "$DEL_AT_SIGN" = "Y" ] 
+    if [ "$OPTION_U" = "Y" ] 
         then sadm_ask "Are you sure you want to replace '#@' by '# ' in all sources" 
              if [ $? -eq 0 ] ; then printf "\nProcess aborted !\n" ; exit 0 ; fi 
     fi 

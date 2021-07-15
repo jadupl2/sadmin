@@ -28,7 +28,7 @@
 # 2020_04_10 Update: v1.2 Add Network link shortcut at the top of each page.
 # 2020_04_25 Update: v1.3 Reduce Menu line in header to fit on Ipad.
 # 2020_09_23 Update: v1.4 Add Tooltips to Shortcut in the page header.
-#@2020_12_15 Update: v1.5 Add Storix Report Link in Header, only if Storix html file exist.
+# 2020_12_15 Update: v1.5 Add Storix Report Link in Header, only if Storix html file exist.
 #
 # ==================================================================================================
 #

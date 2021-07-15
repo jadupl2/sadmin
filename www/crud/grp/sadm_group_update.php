@@ -26,7 +26,7 @@
 #       V1.8 Add lot of comments in code and enhance code performance 
 #   2017_11_15 - Jacques Duplessis
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
-#@2019_08_17 Update: v2.2 Use new heading function, return to caller screen when exiting.
+# 2019_08_17 Update: v2.2 Use new heading function, return to caller screen when exiting.
 #
 # ==================================================================================================
 #

@@ -19,8 +19,8 @@
 # 2018_09_16    v3.2 Added Alert Group Script default
 # 2018_09_16    v3.3 Added prefix 'cfg2html_' to files produced by cfg2html in $SADMIN/dat/dr.
 # 2018_11_13    v3.4 Chown & Chmod of cfh2html produced files.
-#@2019_03_18 Fix: v3.5 Fix problem that prevent running on Fedora.
-#@2020_04_01 Update: v3.6 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2019_03_18 Fix: v3.5 Fix problem that prevent running on Fedora.
+# 2020_04_01 Update: v3.6 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------

@@ -26,7 +26,7 @@
 # 2019_08_19 Update: v1.1 Initial working version.
 # 2020_01_13 Update: v1.2 Enhance Web Page Appearance and color. 
 # 2020_04_16 Update: v1.3 Small page adjustments.
-#@2021_04_19 Update: v1.4 Change "Exclude" to "Include/Exclude" Label on file config
+# 2021_04_19 Update: v1.4 Change "Exclude" to "Include/Exclude" Label on file config
 # ==================================================================================================
 #
 #

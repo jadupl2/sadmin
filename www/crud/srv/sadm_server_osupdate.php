@@ -35,7 +35,7 @@
 # 2019_04_04 Update: v2.6 If a Date is used to schedule O/S Update then the day specify is not used.
 # 2019_05_04 Update: v2.7 When specific date(s) specified for update, day of week change to 'All'.
 # 2019_08_17 Update: v2.8 Use new heading function, New parameter (URL) to get back to caller page.
-#@2020_01_12 Update: v2.9 Enhance appearance and color of form. 
+# 2020_01_12 Update: v2.9 Enhance appearance and color of form. 
 #
 # ==================================================================================================
 #

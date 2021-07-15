@@ -45,7 +45,7 @@
 # 2019_10_15 Update: v2.14 Reduce font size on 2nd line of heading in "display_lib_heading".
 # 2020_01_13 Update: v2.15 Reduce Day of the week name returned by SCHEDULE_TO_TEXT to 3 Char.
 # 2020_04_27 Update: v2.16 Change 2019 to 2020 in page footer
-#@2020_09_22 Update: v2.17 Facilitate going back to previous & Home page by adding button in header.
+# 2020_09_22 Update: v2.17 Facilitate going back to previous & Home page by adding button in header.
 # ==================================================================================================
 #
 

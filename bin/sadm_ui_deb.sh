@@ -13,10 +13,10 @@
 #
 #===================================================================================================
 # History    :
-#@2019_11_12 Added: v1.0 Initial version
-#@2019_11_14 Added: v1.1 Test Phase
-#@2019_11_18 Added: v1.2 First functional release
-#@2019_11_21 Added: v1.3 Change Deb search method, now using 'apt-cache search'.
+# 2019_11_12 Added: v1.0 Initial version
+# 2019_11_14 Added: v1.1 Test Phase
+# 2019_11_18 Added: v1.2 First functional release
+# 2019_11_21 Added: v1.3 Change Deb search method, now using 'apt-cache search'.
 #
 #===================================================================================================
 trap 'exec $SADMIN/sadm' 2                                                # INTERCEPT  ^C

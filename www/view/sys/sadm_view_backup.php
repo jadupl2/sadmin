@@ -25,7 +25,7 @@
 # 2019_08_14 New: v1.1 Allow to return to this page when backup schedule is updated (Send BACKURL)
 # 2019_09_20 Update v1.3 Show History (RCH) content using same uniform way.
 # 2019_12_01 Update v1.4 Change Layout to align with daily backup schedule.
-#@2020_12_13 Update v1.5 Added link in Heading to view the Daily Backup Report, if HTML file exist.
+# 2020_12_13 Update v1.5 Added link in Heading to view the Daily Backup Report, if HTML file exist.
 #
 # ==================================================================================================
 #

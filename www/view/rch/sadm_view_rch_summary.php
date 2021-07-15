@@ -31,7 +31,7 @@
 # 2018_09_16  v2.3 Added Alert group Display 
 # 2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
 # 2019_09_20 Update v2.5 Show History (RCH) content using same uniform way.
-#@2020_12_13 Update v2.6 Add link in the heading to view the Daily Scripts Report, if HTML exist.
+# 2020_12_13 Update v2.6 Add link in the heading to view the Daily Scripts Report, if HTML exist.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.

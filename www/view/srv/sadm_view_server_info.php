@@ -41,7 +41,7 @@
 # 2019_07_25 Update: v2.12 Minor code changes
 # 2019_10_15 Update: v2.13 Color change of input fields.
 # 2020_07_12 Update: v2.14 Replace 'CRUD' button with 'Modify' that direct you to CRUD server menu.
-#@2020_12_29 Update: v2.15 Date for starting & ending maintenance mode was not show properly.
+# 2020_12_29 Update: v2.15 Date for starting & ending maintenance mode was not show properly.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

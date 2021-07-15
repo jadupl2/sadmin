@@ -38,8 +38,8 @@
 # 2019_08_18 Update: v2.6 Change page heading and some text fields.
 # 2019_09_23 Update: v2.7 Add Distribution logo and Version for each servers.
 # 2019_10_13 Update: v2.8 Add System Architecture to page.
-#@2020_01_13 Update: v2.9 Minor Appearance page change (Nb.Cpu and page width).
-#@2020_12_29 Update: v2.10 Show Architecture un-capitalize.
+# 2020_01_13 Update: v2.9 Minor Appearance page change (Nb.Cpu and page width).
+# 2020_12_29 Update: v2.10 Show Architecture un-capitalize.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.

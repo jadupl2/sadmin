@@ -28,7 +28,7 @@
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
 #   2018_02_03 - Jacques Duplessis
 #       V2.1 Added Server Graph Display Option
-#@2019_08_29 Update: v2.2 New page heading, using the library heading function.
+# 2019_08_29 Update: v2.2 New page heading, using the library heading function.
 #
 # ==================================================================================================
 #

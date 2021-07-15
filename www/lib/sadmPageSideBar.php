@@ -37,8 +37,8 @@
 # 2019_08-26 New: v2.9 Add 'Rear Backup Status Page' 
 # 2019_08-30 New: v2.10 Side Bar re-arrange order.
 # 2019_09-23 Update: v2.11 Change 'Status' for ' Job' in Sidebar.
-#@2019_12_01 Update: v2.12 Shorten label name of sidebar.
-#@2020_07_29 Update: v2.13 Show server attribute counter even if it's zero.
+# 2019_12_01 Update: v2.12 Shorten label name of sidebar.
+# 2020_07_29 Update: v2.13 Show server attribute counter even if it's zero.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library

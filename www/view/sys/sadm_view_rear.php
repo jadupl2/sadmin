@@ -29,7 +29,7 @@
 # 2020_01_14 Update: v1.5 Don't show MacOS System on page (Not supported by ReaR).
 # 2020_03_05 Update: v1.6 When mouse over server name (Show more information).
 # 2020_07_29 Update: v1.7 Remove system description to allow more space on each line.
-#@2020_13_13 Update: v1.8 Add link in heading to view ReaR Daily Report.
+# 2020_13_13 Update: v1.8 Add link in heading to view ReaR Daily Report.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

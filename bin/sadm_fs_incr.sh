@@ -43,8 +43,8 @@
 # 2020_03_16 Update: v1.8 Separation Blank Lines added to log.
 # 2020_03_23 Update: v1.9 Minor modifications in log and email.
 # 2020_03_24 Update: v2.0 Script will not generate an rpt file anymore (Remove double error report)
-#@2020_05_23 Update: v2.1 Changing the way to get SADMIN variable in /etc/environment 
-#@2020_10_22 Update: v2.2 Line Feed added in Email when filesystem is increase
+# 2020_05_23 Update: v2.1 Changing the way to get SADMIN variable in /etc/environment 
+# 2020_10_22 Update: v2.2 Line Feed added in Email when filesystem is increase
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

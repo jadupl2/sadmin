@@ -38,12 +38,12 @@
 # 2018_09_24 v1.6 Corrected Total Display Problem under Linux
 # 2019_03_17 Update: v1.7 No background color change, using brighter color.
 # 2019_06_30 Update: v1.8 Remove tmpfs from output on Linux (useless)
-#@2020_03_12 Fix: v1.9 Correct problem under RHEL/CentOS older version (4,5,6).
-#@2020_03_14 Update: v2.0 To increase portability, Column total are now calculated by script.
-#@2020_03_15 Update: v2.1 Add -t to exclude tmpfs, -n nfs filesystem from the output and total line. 
-#@2020_03_15 Update: v2.2 Modified to work on MacOS
-#@2020_04_05 Update: v2.3 Add hostname and date in heading line.
-#@2020_05_27 Fix: v2.4 fix problem when dealing with TB filesystem.
+# 2020_03_12 Fix: v1.9 Correct problem under RHEL/CentOS older version (4,5,6).
+# 2020_03_14 Update: v2.0 To increase portability, Column total are now calculated by script.
+# 2020_03_15 Update: v2.1 Add -t to exclude tmpfs, -n nfs filesystem from the output and total line. 
+# 2020_03_15 Update: v2.2 Modified to work on MacOS
+# 2020_04_05 Update: v2.3 Add hostname and date in heading line.
+# 2020_05_27 Fix: v2.4 fix problem when dealing with TB filesystem.
 # --------------------------------------------------------------------------------------------------
 #set -x
 

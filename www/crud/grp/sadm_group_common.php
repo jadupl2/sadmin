@@ -24,8 +24,8 @@
 # ChangeLog
 #   2017_11_15 - Jacques Duplessis
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
-#@2019_01_22 update: v2.1 New Design & New Dark Theme.
-#@2020_01_07 update: v2.2 Change web page for a lighter look.
+# 2019_01_22 update: v2.1 New Design & New Dark Theme.
+# 2020_01_07 update: v2.2 Change web page for a lighter look.
 # ==================================================================================================
  
 

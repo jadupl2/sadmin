@@ -26,7 +26,7 @@
 #       V1.9 Add lot of comments in code and enhance code performance 
 #   2017_11_15 - Jacques Duplessis
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
-#@2019_08_29 Update: v2.1 New page heading, using the library heading function. 
+# 2019_08_29 Update: v2.1 New page heading, using the library heading function. 
 #
 # ==================================================================================================
 #

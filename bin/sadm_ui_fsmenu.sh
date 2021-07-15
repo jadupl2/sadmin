@@ -21,8 +21,8 @@
 #   2.1      Revisited to work with LinuxMint - April 2017 - Jacques Duplessis
 #   2.2      Correct cannot change filesystem type (always goes back to xfs)
 #   2.3      Fix problem with filesystem increase
-#@2019_02_25 Improvement: v2.4 SysAdmin Menu - (sadm command) Code revamp and add color to menu.
-#@2019_04_07 Update: v2.5 Use color variables from SADMIN Libr.
+# 2019_02_25 Improvement: v2.4 SysAdmin Menu - (sadm command) Code revamp and add color to menu.
+# 2019_04_07 Update: v2.5 Use color variables from SADMIN Libr.
 #===================================================================================================
 
 # Load Filesystem Library Tools

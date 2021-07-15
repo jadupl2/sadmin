@@ -34,9 +34,9 @@
 # 2019_04_17 Update v2.7 Minor code cleanup and show "Manual, no schedule" when not in auto update.
 # 2019_05_04 Update v2.8 Added link to view rch file content for each server.
 # 2019_07_12 Update v2.9 Don't show MacOS and Aix status (Not applicable).
-#@2019_09_20 Update v2.10 Show History (RCH) content using same uniform way.
-#@2019_09_23 Update v2.11 When initiating Schedule change from here, return to this page when done.
-#@2019_12_29 Fix: v2.12 Bottom titles was different that the heading.
+# 2019_09_20 Update v2.10 Show History (RCH) content using same uniform way.
+# 2019_09_23 Update v2.11 When initiating Schedule change from here, return to this page when done.
+# 2019_12_29 Fix: v2.12 Bottom titles was different that the heading.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

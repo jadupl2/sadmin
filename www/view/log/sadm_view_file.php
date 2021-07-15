@@ -25,9 +25,9 @@
 # 2018_01_04 JDuplessis V1.0 Initial Version 
 # 2018_05_06 JDuplessis V1.1 Change the look of the web page (Simplify code)
 # 2019_01_20 Improvement v1.2 Web Page revamp - New Dark Look
-#@2019_01_20 Update v1.3 Customize file not found message 
-#@2019_07_25 Update: v1.4 File is displayed using monospace character.
-#@2020_01_13 Update: v1.5 Enhance Web Page Appearance and color. 
+# 2019_01_20 Update v1.3 Customize file not found message 
+# 2019_07_25 Update: v1.4 File is displayed using monospace character.
+# 2020_01_13 Update: v1.5 Enhance Web Page Appearance and color. 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.

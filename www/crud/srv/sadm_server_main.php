@@ -27,8 +27,8 @@
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 # 2019_01_11 Added: v2.1 Add Model and Serial No. in bubble while on server name.
-#@2019_08_17 Update: v2.2 New page heading and Logo of distribution inserted.
-#@2019_08_17 Fix: v2.3 Return to caller URL wasn't set properly.
+# 2019_08_17 Update: v2.2 New page heading and Logo of distribution inserted.
+# 2019_08_17 Fix: v2.3 Return to caller URL wasn't set properly.
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.

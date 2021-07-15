@@ -46,7 +46,7 @@
 # 2019_05_01 Update: v2.5 Log name now showed to help user diagnostic problem when an error occurs.
 # 2019_05_23 Update: v2.6 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
 # 2020_02_23 Update: v2.7 Produce an alert only if one of the executed scripts isn't executable.
-#@2020_06_03 Update: v2.8 Update code section and minor update while writing new documentation
+# 2020_06_03 Update: v2.8 Update code section and minor update while writing new documentation
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTS LE ^C

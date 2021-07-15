@@ -94,8 +94,8 @@
 # 2018_09_16    v2.4 Added Default Alert Group
 # 2018_10_28    v2.5 Change reference to script use for re-creating filesystem.
 # 2018_11_13    v2.6 Debug is now OFF by default
-#@2018_11_20 Fix v2.7 Bug fix, make copy of fstab, restructure code, remove support for RHEL3,RHEL4.
-#@2018_12_08 Fix v2.8 Fix bug with Debuging Level.
+# 2018_11_20 Fix v2.7 Bug fix, make copy of fstab, restructure code, remove support for RHEL3,RHEL4.
+# 2018_12_08 Fix v2.8 Fix bug with Debuging Level.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

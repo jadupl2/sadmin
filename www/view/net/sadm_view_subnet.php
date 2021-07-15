@@ -26,9 +26,9 @@
 # 2018_04_19 v1.2  Release Version 
 # 2018_09_21 v1.3  Compact Page Layout  
 #@2019_03_30 nolog: v1.4  Small heading change
-#@2019_04_07 Update: v1.5 Show Card Manufacturer when available.
-#@2019_04_25 Update: v1.6 Remove Manufacturer since arp-scan is not used anymore (more portable).
-#@2019_04_27 Update: v1.7 Show Full Date & Time for Ping Date and Changed Date.
+# 2019_04_07 Update: v1.5 Show Card Manufacturer when available.
+# 2019_04_25 Update: v1.6 Remove Manufacturer since arp-scan is not used anymore (more portable).
+# 2019_04_27 Update: v1.7 Show Full Date & Time for Ping Date and Changed Date.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
