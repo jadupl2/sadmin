@@ -27,44 +27,34 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # 
 #---------------------------------------------------------------------------------------------------
-# Change log, comment line semicolon separated fields (So don't use ';' in description)
-# Info will be used by sadm_gen_relnotes.sh to generate the change log.
-# Field 1: Date of change (YYY_MM_DD) prefix by '@' 
-#          - "sadm_gen_relnotes.sh" utility
-#            - The '@' identify changes to be include in next release (To Create Change log).
-#            - The '@' will be removed automatically when new version is release.
-# Field 2: Standard Types of changes (Ignore case)
-#           - "Added" or "New" for new features.
-#           - "Changed" for changes in existing functionality.
-#           - "Remove" for now removed features.
-#           - "Fix" for any bug fixes.
-#           - "Security" in case of vulnerabilities.
-#           - "Doc" in case we modify code comments(documentation).
-#           - "Minor" in case of minor modification.
-#           - "Nolog" cosmetic change, won't appear in change log.
-#           - "perf" Optimize for better performance
-#          SADMIN related Changes
-#           - "Web"         Web Interface modification
-#           - "install"     Install, Uninstall & Update modification or fixes.
-#           - "cmdline"     command line tools modification or fixes.
-#           - "template"    Library, Templates, Alerts, Libr demo modification & fixes.
-#           - "mon"         Sadmin monitor modification or fixes.
-#           - "backup"      Backup related modification or fixes.
-#           - "config"      Configuration files modification or fixes.
-#           - "server"      Server related modification or fixes.
-#           - "client"      Server related modification or fixes.
-#           - "Nolog"       cosmetic change, won't appear in change log.
-#           - "osupdate"    O/S Update modification or fixes.
-# Field 3: Version number 'v99.99'
+# Format on change log line : 
+# Field 1: 
+#   Date of change (YYY_MM_DD) prefix by '@' when you are adding change log line.
+#   - The '@' identify changes to be include in next release (To Create Change log).
+#   - The '@' will be removed automatically when new version is release.
+# Field 2: 
+#   STANDARD TYPES OF CHANGES (IGNORE CASE)
+#   - "Added/New" for new features              - "Update" Changes of existing functionality.
+#   - "Remove"    for now removed features      - "Fix"    for any bug fixes.
+#   - "Security"  in case of vulnerabilities    - "Doc"    Modify code comments or documentation.
+#   - "Minor"     in case of minor modification - "Nolog"  Minor change, won't appear in log.
+#   - "perf"      Optimize, better performance 
+#   SADMIN RELATED CHANGES
+#   - "Web"     Web Interface modification      - "install"  Install,Uninstall & Update changes.
+#   - "cmdline" Command line tools changes.     - "template" Library,Templates,Libr demo. 
+#   - "mon"     System Monitor related.         - "backup"   Backup related modification or fixes.
+#   - "config"  Config files modification.      - "server"   Server related modification or fixes.
+#   - "client"  Server related modifications.   - "osupdate" O/S Update modification or fixes.
+# Field 3: Version number '999.999' (Max 7 Char., No spaces)
 # Field 4: Description of change (Max 60 Characters)
 #
-#@YYYY_MM_DD; Type;    vxx.xx; 123456789012345678901234567890123456789012345678901234567890---------
+#@YYYY_MM_DD Type    xx.xx 123456789*123456789*123456789*123456789*123456789*123456789*-------------
 #---------------------------------------------------------------------------------------------------
-#
-# 2015_01_01, New,      v1.0,   Initial Beta Version
+# CHANGE LOG
+# 2015_01_01 New      1.0  Initial Beta Version
 #
 #---------------------------------------------------------------------------------------------------
-#@YYYY_MM_DD; Type;    vxx.xx; 123456789012345678901234567890123456789012345678901234567890---------
+#@YYYY_MM_DD Type    xx.xx 123456789*123456789*123456789*123456789*123456789*123456789*-------------
 #---------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
@@ -314,17 +304,17 @@ function cmd_options()
 
     # If you want this script to be run only by root user, uncomment the lines below.
     #if [ $(id -u) -ne 0 ]                                               # If Cur. user is not root
-    #    then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
+    #    then sadm_writelog "Script can only be run by the 'root' user." # Advise User Message
     #         sadm_writelog "Try 'sudo ${0##*/}'."                       # Suggest using sudo
-    #         sadm_write "Process aborted.\n"                            # Abort advise message
+    #         sadm_writelog "Process aborted."                           # Abort advise message
     #         sadm_stop 1                                                # Close and Trim Log
     #         exit 1                                                     # Exit To O/S with Error
     #fi
 
     # If you want this script to be run only on the SADMIN server, uncomment the lines below.
     #if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-    #    then sadm_write "Script can only be run on (${SADM_SERVER}), process aborted.\n"
-    #         sadm_write "Process aborted\n"                             # Abort advise message
+    #    then sadm_writelog "Script can only be run on (${SADM_SERVER}), process aborted."
+    #         sadm_writelog "Process aborted"                            # Abort advise message
     #         sadm_stop 1                                                # Close and Trim Log
     #         exit 1                                                     # Exit To O/S
     #fi

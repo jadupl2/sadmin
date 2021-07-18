@@ -442,6 +442,7 @@ SADM_SINFO="[ ${BOLD}${BLUE}INFO${NORMAL} ]"                            # INFO B
 
 
 # Function return the string received to uppercase
+# --------------------------------------------------------------------------------------------------
 sadm_toupper() {
     echo $1 | tr  "[:lower:]" "[:upper:]"
 }
@@ -449,6 +450,7 @@ sadm_toupper() {
 
 
 # Function return the string received to uppercase
+# --------------------------------------------------------------------------------------------------
 sadm_tolower() {
     echo $1 | tr "[:upper:]" "[:lower:]" 
 }
@@ -456,6 +458,7 @@ sadm_tolower() {
 
 
 # Function return the string received to with the first character in uppercase
+# --------------------------------------------------------------------------------------------------
 sadm_capitalize() {
     C=`echo $1 | tr "[:upper:]" "[:lower:]"`
     echo "${C^}"
@@ -464,6 +467,7 @@ sadm_capitalize() {
 
 
 # Check if variable is an integer - Return 1, if not an integer - Return 0 if it is an integer
+# --------------------------------------------------------------------------------------------------
 sadm_isnumeric() {
     wnum=$1
     if [ "$wnum" -eq "$wnum" ] 2>/dev/null ; then return 0 ; else return 1 ; fi
@@ -472,6 +476,7 @@ sadm_isnumeric() {
 
 
 # Display Question (Receive as $1) and wait for response from user, Y/y (return 1) or N/n (return 0)
+# --------------------------------------------------------------------------------------------------
 sadm_ask() {
     wmess="$1 [y,n] ? "                                                 # Add Y/N to Mess. Rcv
     while :                                                             # While until good answer
@@ -497,6 +502,7 @@ sadm_ask() {
 
 # Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE variable.
 # Use sadm_write (No LF at EOL) instead of sadm_writelog (With LF at EOL).
+# --------------------------------------------------------------------------------------------------
 sadm_write() {
     SADM_SMSG="$@"                                                      # Screen Msg = Msg Received
     SADM_LMSG="$SADM_SMSG"                                              # Log Mess. = Screen Mess
@@ -532,6 +538,7 @@ sadm_write() {
 
 # Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE variable.
 # Just write the message received as is, with a new line at the end.
+# --------------------------------------------------------------------------------------------------
 sadm_writelog() {
     SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
     SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Log Message with Date/Time
@@ -552,6 +559,7 @@ sadm_writelog() {
 
 
 # Show Script Name, version, Library Version, O/S Name/Version and Kernel version.
+# --------------------------------------------------------------------------------------------------
 sadm_show_version()
 {
     printf "\n${SADM_PN} v${SADM_VER} - Hostname ${SADM_HOSTNAME}"
@@ -562,8 +570,8 @@ sadm_show_version()
 }
 
 
-# --------------------------------------------------------------------------------------------------
-# TRIM THE FILE RECEIVED AS FIRST PARAMETER (MAX LINES IN LOG AS 2ND PARAMATER)
+
+# Trim the file received as first parameter (max lines in log as 2nd paramater)
 # --------------------------------------------------------------------------------------------------
 sadm_trimfile() {
     wfile=$1 ; maxline=$2                                               # Save FileName et Nb Lines
@@ -1281,17 +1289,16 @@ sadm_server_memory() {
 
 
 
-# --------------------------------------------------------------------------------------------------
-#                             RETURN THE SYSTEM ARCHITECTURE 
+# Return system Architecture string
+# x86_64 | ia64 | s390x | ppc64 | ppc64le | armv7l | i386 | armv6l | i686 | aarch64
 # --------------------------------------------------------------------------------------------------
 sadm_server_arch() {
     case "$(sadm_get_ostype)" in
-        "LINUX")    warch=`uname -m`
-                    #warch=$(arch)
+        "LINUX")    warch=$(arch)
                     ;;
         "AIX")      warch=`uname -p`  
                     ;;
-        "DARWIN")   warch=`uname -m` 
+        "DARWIN")   warch=$(arch)
                     ;;
     esac
     echo "$warch"
