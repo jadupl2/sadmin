@@ -313,7 +313,7 @@ function cmd_options()
 
     # If you want this script to be run only on the SADMIN server, uncomment the lines below.
     #if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-    #    then sadm_writelog "Script can only be run on (${SADM_SERVER}), process aborted."
+    #    then sadm_writelog "Script can only be run on (${SADM_SERVER})" # Advise User Message
     #         sadm_writelog "Process aborted"                            # Abort advise message
     #         sadm_stop 1                                                # Close and Trim Log
     #         exit 1                                                     # Exit To O/S
