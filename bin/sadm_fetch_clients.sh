@@ -80,6 +80,7 @@
 #@2021_05_10 nolog: v3.26 Error message change "sadm_osupdate_farm.sh" to "sadm_osupdate_starter"
 #@2021_06_06 server: v3.27 Change generation of /etc/cron.d/sadm_osupdate to use $SADMIN variable.
 #@2021_06_11 server: v3.28 Collect system uptime and store it in DB and update SADMIN section 
+#@2021_07_19 server: v3.29 Sleep 5 seconds between rsync retries, if first failed.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
@@ -127,7 +128,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.28'                                     # Script Version
+export SADM_VER='3.29'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -553,7 +554,8 @@ rsync_function()
 
         if [ $RC -ne 0 ]                                                # If Error doing rsync
            then if [ $RETRY -lt 3 ]                                     # If less than 3 retry
-                   then sadm_writelog "[ RETRY $RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+                   then sleep 5                                        # Sleep 5Sec. between retries
+                        sadm_writelog "[ RETRY $RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
                    else sadm_writelog "$SADM_ERROR [ $RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
                         break
                 fi
