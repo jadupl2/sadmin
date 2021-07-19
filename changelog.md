@@ -1,5 +1,55 @@
 # SADMIN Tools Changelog
 
+## Release [1.3.4](https://github.com/jadupl2/sadmin/releases) (2021-07-19)
+   
+
+### Backup related
+  - sadm_backupdb.sh (v2.3 2021/05/26) - Added command line option option [-b backup_dir] [-n dbname].
+  - sadm_backup.sh (v3.30 2021/05/24) - Optimize code & update command line options [-v] & [-h].
+  - sadm_backup.sh (v3.31 2021/06/04) - Fix sporadic problem with exclude list.
+  - sadm_backup.sh (v3.32 2021/06/05) - Include backup & system information in each backup log.
+  - sadm_rear_backup.sh (v2.26 2021/05/11) - Fix 'rear' command missing false error message
+  - sadm_rear_backup.sh (v2.27 2021/05/12) - Write more information about ReaR sadmin.cfg in the log.
+  - sadm_rear_backup.sh (v2.28 2021/06/02) - Added more information in the script log.
+
+### SADMIN Client related
+  - sadm_client_housekeeping.sh (v1.48 2021/05/23) - Remove conversion of old history file format (not needed anymore).
+  - sadm_client_housekeeping.sh (v2.00 2021/06/06) - Make sure that sadm_client crontab run 'sadm_nmon_watcher.sh' regularly.
+  - sadm_client_housekeeping.sh (v2.02 2021/06/06) - Fix problem related to system monitor file update.
+  - sadm_client_housekeeping.sh (v2.03 2021/06/10) - Fix problem removing 'nmon' watcher from monitor file.
+  - sadm_create_sysinfo.sh (v3.24 2021/06/03) - Include script version in sysinfo text file generated
+
+### Command line tools
+  - sadm_service_ctrl.sh (v2.11 2021/06/13) - When using an invalid command line option, PID file wasn't removed.
+
+### Libraries, Scripts Templates, Demo
+  - sadmlib_screen.sh (v2.3 2021/05/10) - Version no. in 'sadm_display_heading' now align with first line.
+  - sadmlib_std.sh (v3.71 2021/06/30) - To be more succinct global variables were removed from log footer.
+
+### System Monitor
+  - sadm_client_housekeeping.sh (v2.01 2021/06/06) - Remove script that run 'swatch_nmon.sh' from system monitor config file.
+  - sadm_sysmon.pl (v2.43 2021/06/12) - Add Date & Time of last boot on last line of hostname.smon file.
+  - sadm_sysmon.pl (v2.44 2021/07/03) - Fix problem when trying to run custom script.
+  - sadm_sysmon.pl (v2.45 2021/07/05) - Added support to monitor 'http' and 'https' web site responsiveness.
+  - sadm_sysmon.pl (v2.46 2021/07/06) - Change error messages syntax to be more descriptive.
+
+### SADMIN Server related
+  - sadm_daily_report.sh (v1.27 2021/06/10) - Show system backup in bold instead of having a yellow background.
+  - sadm_fetch_clients.sh (v3.27 2021/06/06) - Change generation of /etc/cron.d/sadm_osupdate to use $SADMIN variable.
+  - sadm_fetch_clients.sh (v3.28 2021/06/11) - Collect system uptime and store it in DB and update SADMIN section
+  - sadm_fetch_clients.sh (v3.29 2021/07/19) - Sleep 5 seconds between rsync retries, if first failed.
+  - sadm_push_sadmin.sh (v2.30 2021/05/22) - Remove sync depreciated $SADMIN/usr/mon/swatch_nmon* script and files.
+  - sadm_server_housekeeping.sh (v2.8 2021/05/29) - Code optimization, update SADMIN section and Help screen.
+
+### Web interface
+  - sadmlib_graph.php (v1.1 2021/06/08) - Fix intermittent unlink error when showing all systems graph.
+  - sadm_server_backup.php (v2.1 2021/05/25) - Replace php depreciated function 'eregi_replace' warning message.
+  - sadm_server_delete_action.php (v1.3 2021/06/07) - Remove faulty error message when a client was delete just after creating it.
+   
+
+
+
+
 ## Release v[1.3.2](https://github.com/jadupl2/sadmin/releases) (2021-04-30)
 
 ### Enhancements
