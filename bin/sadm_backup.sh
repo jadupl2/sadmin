@@ -75,9 +75,9 @@
 # 2021_01_05 Update: v3.27 List backup directory content at the end of backup.
 # 2021_03_29 Update: v3.28 Exclude list is shown before each backup (tar) begin.
 # 2021_03_29 Update: v3.29 Log of each backup (tar) recorded and place in backup directory.
-#@2021_05_24 backup: v3.30 Optimize code & update command line options [-v] & [-h]. 
-#@2021_06_04 backup: v3.31 Fix sporadic problem with exclude list. 
-#@2021_06_05 backup: v3.32 Include backup & system information in each backup log.
+# 2021_05_24 backup: v3.30 Optimize code & update command line options [-v] & [-h]. 
+# 2021_06_04 backup: v3.31 Fix sporadic problem with exclude list. 
+# 2021_06_05 backup: v3.32 Include backup & system information in each backup log.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

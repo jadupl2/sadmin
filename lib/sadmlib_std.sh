@@ -169,7 +169,7 @@
 # 2021_04_02 Fix: v3.68 Replace test using '-v' with '! -z' on variable.
 # 2021_04_09 Fix: v3.69 Fix problem with disabling log header, log footer and rch file.
 # 2021_04_10 Fix: v3.70 Fix Path to which command was not set properly because of defined alias.
-#@2021_06_30 lib: v3.71 To be more succinct global variables were removed from log footer.
+# 2021_06_30 lib: v3.71 To be more succinct global variables were removed from log footer.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x

@@ -44,10 +44,10 @@
 # 2020_10_01 Update: v2.40 Write more elaborated email to user when restarting a service.
 # 2020_11_18 Update: v2.41 Fix: Fix problem with iostat on MacOS.
 # 2020_11_30 Update: v2.42 Fix: Fix problem reading SADMIN variable in /etc/environment.
-#@2021_06_12 mon: v2.43 Add Date & Time of last boot on last line of hostname.smon file.
-#@2021_07_03 mon: v2.44 Fix problem when trying to run custom script.
-#@2021_07_05 mon: v2.45 Added support to monitor 'http' and 'https' web site responsiveness.
-#@2021_07_06 mon: v2.46 Change error messages syntax to be more descriptive.
+# 2021_06_12 mon: v2.43 Add Date & Time of last boot on last line of hostname.smon file.
+# 2021_07_03 mon: v2.44 Fix problem when trying to run custom script.
+# 2021_07_05 mon: v2.45 Added support to monitor 'http' and 'https' web site responsiveness.
+# 2021_07_06 mon: v2.46 Change error messages syntax to be more descriptive.
 #===================================================================================================
 #
 use English;

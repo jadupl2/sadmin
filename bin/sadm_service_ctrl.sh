@@ -53,7 +53,7 @@
 # 2019_12_27 Update: v2.8 Was exiting with error when using options '-h' or '-v'.
 # 2020_09_10 Update: v2.9 Minor code improvement.
 # 2021_05_23 Update: v2.10 Change switch from -d (disable) to -u (unset) and -s(status) to -l (List)
-#@2021_06_13 cmdline: v2.11 When using an invalid command line option, PID file wasn't removed.
+# 2021_06_13 cmdline: v2.11 When using an invalid command line option, PID file wasn't removed.
 #--------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x

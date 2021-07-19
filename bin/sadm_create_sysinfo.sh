@@ -51,7 +51,7 @@
 # 2020_12_12 Update: v3.21 Add SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
 #@2021_05_10 nolog: v3.22 Change error message "sadm_osupdate_farm.sh" to "sadm_osupdate_starter".
 #@2021_05_22 nolog: v3.23 Standardize command line options & Update SADMIN code section
-#@2021_06_03 client: v3.24 Include script version in sysinfo text file generated
+# 2021_06_03 client: v3.24 Include script version in sysinfo text file generated
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
