@@ -31,7 +31,7 @@
 # 2020_02_19 Update: v2.5 Restructure & added archiving of old alert history to history archive. 
 # 2020_05_23 Update: v2.6 Minor change about reading /etc/environment and change logging messages.
 # 2020_12_16 Update: v2.7 Include code to include in SADMIN server crontab the daily report email.
-#@2021_05_29 server: v2.8 Code revamp, update SADMIN section and Help screen.
+#@2021_05_29 server: v2.8 Code optimization, update SADMIN section and Help screen.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
