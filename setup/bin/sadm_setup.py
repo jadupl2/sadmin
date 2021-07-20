@@ -92,6 +92,7 @@
 #@2021_06_06 Update: v3.55 Add to sadm_client crontab, script to make sure 'nmon' is running
 #@2021_06_30 Update: v3.56 Adjust Client, Server crontab with documentation
 #@2021_07_19 install: v3.57 Fix, sadm_service wrong cmdline options & .version missing.
+#@2021_07_19 install: v3.58 Fix typo error with mysql when install SADMIN server
 # 
 # ==================================================================================================
 #
@@ -109,7 +110,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.57"                                            # Setup Version Number
+sver                = "3.58"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -211,7 +212,7 @@ req_server = {
 #                       'deb':'arp-scan',                                       'drepo':'base'},
     'wkhtmltopdf'   :{ 'rpm':'wkhtmltopdf',                                    'rrepo':'epel',  
                        'deb':'wkhtmltopdf',                                    'drepo':'base'},
-    'php'           :{ 'rpm':'php php-common php-cli php-mysqlnd php-mbstring','rrepo':'base', 
+    'php'           :{ 'rpm':'php php-common php-cli php-mysql php-mbstring',  'rrepo':'base', 
                        'deb':'php php-mysql php-common php-cli ',              'drepo':'base'},
 #    'mysql'         :{ 'rpm':'mariadb-server MySQL-python',                    'rrepo':'base',
     'mysql'         :{ 'rpm':'mariadb-server ',                                'rrepo':'base',
