@@ -91,8 +91,9 @@
 #@2021_04_19 Update: v3.54 Fix Path to sadm_service_ctrl.sh
 #@2021_06_06 Update: v3.55 Add to sadm_client crontab, script to make sure 'nmon' is running
 #@2021_06_30 Update: v3.56 Adjust Client, Server crontab with documentation
-#@2021_07_19 install: v3.57 Fix, sadm_service wrong cmdline options & .version missing.
-#@2021_07_19 install: v3.58 Fix typo error with mysql when install SADMIN server
+#@2021_07_20 install: v3.57 Fix, sadm_service wrong cmdline options & .version missing.
+#@2021_07_20 install: v3.58 Fix typo error with mysql when install SADMIN server
+#@2021_07_20 install: v3.59 Fix alert group file default now assigned to 'mail_sysadmin' group.
 # 
 # ==================================================================================================
 #
@@ -110,7 +111,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.58"                                            # Setup Version Number
+sver                = "3.59"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1707,19 +1708,23 @@ def create_sadmin_config_file(sroot,sostype):
 
 
 #===================================================================================================
-#             Replace default line - Put the Sadmin Email as the default value for alert
-#  1st = Root Dir. of SADMIN, 2nd = Name of setting, 3rd = Value of the setting, 4th = Show Upd. line
+# Replace default line - Put the Sadmin Email as the default value for alert
+#
+# Parameters: 
+#  1st = Root Dir. of SADMIN
+#  2nd = Email of Sysadmin entered previously
+#
 # ===================================================================================================
 #
 def update_alert_group_default(sroot,semail):
     """
-    Create $SADMIN/.alert_group.cfg & alert_group.cfg based on $SADMIN/setup/etc/alert_group.def file
-    Change the default group value to be the sysadmin email address.
+    Create $SADMIN/alert_group.cfg from $SADMIN/cfg/.alert_group.cfg template file
+    Change the email address of 'mail_sysadmin' group to sysadmin entered previously.
     Arguments:
     sroot  {[string]}   --  [SADMIN root install directory]
-    sname  {[string]}   --  [Name of variable in sadmin.cfg to change value]
-    semail {[string]}   --  [New value of the variable]
+    semail {[string]}   --  [Sysadmin email Address]
     """    
+
     winput  = "%s/cfg/.alert_group.cfg" % (sroot)                       # AlertGroup Base Def. File
     woutput = "%s/cfg/alert_group.cfg" % (sroot)                        # AlertGroup New Default File
     if (DEBUG) :
@@ -1728,12 +1733,12 @@ def update_alert_group_default(sroot,semail):
 
     fi = open(winput,'r')                                               # Open Base AlertGroup File
     fo = open(woutput,'w')                                              # AlertGroup New Default File
-    lineNotFound=True                                                   # Assume '^default ' != in file
-    cline = "default    m %s\n" % (semail)                              # Line to Insert in AlertGrp
+    cline = "mail_sysadmin       m   %s\n" % (semail)                   # Line to Insert in AlertGrp
 
     # Replace Line Starting with default with a new one with sysadmin email.
+    lineNotFound=True                                                   # 'mail_sysadmin' != in file
     for line in fi:                                                     # Read sadmin.cfg until EOF
-        if line.startswith("%s" % ('default')) :                        # Line Start with default ?
+        if line.startswith("%s" % ('mail_sysadmin')) :                  # 'mail_sysadmin' at BOL ?
            line = "%s" % (cline)                                        # Change Line with new one
            lineNotFound=False                                           # Line was found in file
         fo.write (line)                                                 # Write line to output file
