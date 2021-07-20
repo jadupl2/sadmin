@@ -21,6 +21,7 @@
 # 2018_11_13    v3.4 Chown & Chmod of cfh2html produced files.
 # 2019_03_18 Fix: v3.5 Fix problem that prevent running on Fedora.
 # 2020_04_01 Update: v3.6 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+#@2020_07_20 client: v3.7 Update version of cfg2html to fix problem on Fedora 34 (freeze).
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------
@@ -53,7 +54,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.6'                               # Your Current Script Version
+    export SADM_VER='3.7'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -149,15 +150,16 @@ function cmd_options()
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
 
-# If current user is not 'root', exit to O/S with error code 1 (Optional)
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
-             sadm_write "Process aborted.\n"                            # Abort advise message
+    # If you want this script to be run only by root user, uncomment the lines below.
+    if [ $(id -u) -ne 0 ]                                               # If Cur. user is not root
+        then sadm_writelog "Script can only be run by the 'root' user." # Advise User Message
+             sadm_writelog "Try 'sudo ${0##*/}'."                       # Suggest using sudo
+             sadm_writelog "Process aborted."                           # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S with Error
-    fi    
+    fi
 
-# Script not supported on MacOS
+    # Script not supported on MacOS
     if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # If on MacOS 
        then sadm_write "This script is not supported on MacOS.\n"       # Advise User
             sadm_stop 0                                                 # Close and Trim Log
@@ -174,8 +176,10 @@ function cmd_options()
                else sadm_write "Command 'cfg2html' was not found.\n"    # Not Found inform user
                     sadm_write "We will install it now.\n"              # Not Found inform user
                     if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] ||
-                       [ "$(sadm_get_osname)" = "FEDORA" ]
                        then rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm
+                    fi 
+                    if [ "$(sadm_get_osname)" = "FEDORA" ]
+                       then dnf -y install ${SADM_PKG_DIR}/cfg2html/cfg2html_fedora.rpm
                     fi
                     if [ "$(sadm_get_osname)" = "UBUNTU" ]   ||
                        [ "$(sadm_get_osname)" = "DEBIAN" ]   ||
