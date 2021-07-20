@@ -94,6 +94,7 @@
 #@2021_07_20 install: v3.57 Fix, sadm_service wrong cmdline options & .version missing.
 #@2021_07_20 install: v3.58 Fix typo error with mysql when install SADMIN server
 #@2021_07_20 install: v3.59 Fix alert group file default now assigned to 'mail_sysadmin' group.
+#@2021_07_20 install: v3.60 Client package to install changed from 'util-linux-ng' to 'util-linux'
 # 
 # ==================================================================================================
 #
@@ -111,7 +112,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.59"                                            # Setup Version Number
+sver                = "3.60"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -168,7 +169,7 @@ req_client = {
                     'deb':'sudo',                           'drepo':'base'},
     'lshw'       :{ 'rpm':'lshw',                           'rrepo':'base',  
                     'deb':'lshw',                           'drepo':'base'},
-    'lsblk'      :{ 'rpm':'util-linux-ng',                  'rrepo':'base',  
+    'lsblk'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
                     'deb':'util-linux',                     'drepo':'base'},
     'parted'     :{ 'rpm':'parted',                         'rrepo':'base',  
                     'deb':'parted',                         'drepo':'base'},
