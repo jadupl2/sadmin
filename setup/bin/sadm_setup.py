@@ -91,6 +91,8 @@
 #@2021_04_19 Update: v3.54 Fix Path to sadm_service_ctrl.sh
 #@2021_06_06 Update: v3.55 Add to sadm_client crontab, script to make sure 'nmon' is running
 #@2021_06_30 Update: v3.56 Adjust Client, Server crontab with documentation
+#@2021_07_19 install: v3.57 Fix, sadm_service wrong cmdline options & .version missing.
+# 
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -107,7 +109,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.56"                                            # Setup Version Number
+sver                = "3.57"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1490,14 +1492,6 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         writelog ("Problem enabling Web Server Service",'bold')
         writelog ("%s - %s" % (cstdout,cstderr))        
  
-#===================================================================================================
-# Read the SADMIN version file and return the current version number
-#===================================================================================================
-#
-def get_sadmin_version(sroot):
-    vfile = "%s/cfg/.version" % (sroot)                                 # Current Version File Name
-    sversion = open(vfile).readline()                                   # Open,Read 1st line,Close
-    return (sversion.rstrip())                                          # Return Version Number
 
 
 #===================================================================================================
@@ -2296,7 +2290,6 @@ def run_script(sroot,sname):
 #===================================================================================================
 #
 def end_message(sroot,sdomain,sserver,stype):
-    sversion = get_sadmin_version(sroot)
     writelog ("\n\n\n\n\n")
     writelog ("SADMIN TOOLS Successfully Installed")
     writelog ("===========================================================================")
@@ -2341,7 +2334,7 @@ def end_message(sroot,sdomain,sserver,stype):
 #===================================================================================================
 #
 def sadmin_service(sroot):
-    cmd = "%s/bin/sadm_service_ctrl.sh -e" % (sroot)                    # Enable SADMIN Service 
+    cmd = "%s/bin/sadm_service_ctrl.sh -s" % (sroot)                    # Enable SADMIN Service 
     writelog ("Enabling SADMIN Service - %s ... " % (cmd),"nonl")       # Inform User
     ccode,cstdout,cstderr = oscommand(cmd)                              # Enable MariaDB Server
     if (ccode != 0):                                                    # Problem Enabling Service
