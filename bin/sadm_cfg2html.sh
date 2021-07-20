@@ -175,7 +175,7 @@ function cmd_options()
                then CFG2HTML="$SADM_PKG_DIR/cfg2html/cfg2html"          # Use then one in /sadmin
                else sadm_write "Command 'cfg2html' was not found.\n"    # Not Found inform user
                     sadm_write "We will install it now.\n"              # Not Found inform user
-                    if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] ||
+                    if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ]
                        then rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm
                     fi 
                     if [ "$(sadm_get_osname)" = "FEDORA" ]
