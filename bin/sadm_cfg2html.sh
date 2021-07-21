@@ -21,8 +21,9 @@
 # 2018_11_13    v3.4 Chown & Chmod of cfh2html produced files.
 # 2019_03_18 Fix: v3.5 Fix problem that prevent running on Fedora.
 # 2020_04_01 Update: v3.6 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-#@2021_07_20 client: v3.7 Fix problem with cfg2html on Fedora 34.
-#@2021_07_21 client: v3.8 cfg2html hang on Fedora 34, had to use -n to make it complete.
+# 2021_07_20 client: v3.7 Fix problem with cfg2html on Fedora 34.
+# 2021_07_21 client: v3.7a cfg2html hang on Fedora 34, had to use -n to make it complete.
+#@2021_07_21 client: v3.8 Fix problem with cfg2html on Fedora 34.
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------
