@@ -2342,6 +2342,7 @@ def end_message(sroot,sdomain,sserver,stype):
 #
 def sadmin_service(sroot):
     cmd = "%s/bin/sadm_service_ctrl.sh -s" % (sroot)                    # Enable SADMIN Service 
+    writelog (" ") 
     writelog ("Enabling SADMIN Service - %s ... " % (cmd),"nonl")       # Inform User
     ccode,cstdout,cstderr = oscommand(cmd)                              # Enable MariaDB Server
     if (ccode != 0):                                                    # Problem Enabling Service

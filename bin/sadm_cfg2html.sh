@@ -22,6 +22,7 @@
 # 2019_03_18 Fix: v3.5 Fix problem that prevent running on Fedora.
 # 2020_04_01 Update: v3.6 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 #@2021_07_20 client: v3.7 Fix problem with cfg2html on Fedora 34.
+#@2021_07_21 client: v3.8 cfg2html hang on Fedora 34, had to use -n to make it complete.
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------
@@ -54,7 +55,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.7'                               # Your Current Script Version
+    export SADM_VER='3.8'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -179,7 +180,7 @@ function cmd_options()
                        then rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm
                     fi 
                     if [ "$(sadm_get_osname)" = "FEDORA" ]
-                       then dnf -y install ${SADM_PKG_DIR}/cfg2html/cfg2html_fedora.rpm
+                       then rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm
                     fi
                     if [ "$(sadm_get_osname)" = "UBUNTU" ]   ||
                        [ "$(sadm_get_osname)" = "DEBIAN" ]   ||
@@ -207,9 +208,14 @@ function cmd_options()
 
     # Run CFG2HTML
     CFG2VER=`$CFG2HTML -v | tr -d '\n'`
-    sadm_write "${CFG2VER}\nRunning : $CFG2HTML -H -o ${SADM_DR_DIR}.\n"
-    $CFG2HTML -H -o $SADM_DR_DIR >>$SADM_LOG 2>&1
-    SADM_EXIT_CODE=$?
+    if [ "$(sadm_get_osname)" = "FEDORA" ]
+        then sadm_write "${CFG2VER}\nRunning : $CFG2HTML -n -H -o ${SADM_DR_DIR}.\n"
+             $CFG2HTML -n -H -o $SADM_DR_DIR >>$SADM_LOG 2>&1
+             SADM_EXIT_CODE=$?
+        else sadm_write "${CFG2VER}\nRunning : $CFG2HTML -H -o ${SADM_DR_DIR}.\n"
+             $CFG2HTML -H -o $SADM_DR_DIR >>$SADM_LOG 2>&1
+             SADM_EXIT_CODE=$?
+    fi 
     sadm_write "Return code of the command is ${SADM_EXIT_CODE}.\n"
 
     # Uniformize name of cfg2html output files so that the domain name is not include in the name.
