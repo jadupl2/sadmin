@@ -95,6 +95,7 @@
 #@2021_07_20 install: v3.58 Fix typo error with mysql when install SADMIN server
 #@2021_07_20 install: v3.59 Fix alert group file default now assigned to 'mail_sysadmin' group.
 #@2021_07_20 install: v3.60 Client package to install changed from 'util-linux-ng' to 'util-linux'
+#@2021_07_21 install: v3.61 Fix server install problem on rpm system with package 'php-mysqlnd' 
 # 
 # ==================================================================================================
 #
@@ -112,7 +113,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.60"                                            # Setup Version Number
+sver                = "3.61"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -169,8 +170,6 @@ req_client = {
                     'deb':'sudo',                           'drepo':'base'},
     'lshw'       :{ 'rpm':'lshw',                           'rrepo':'base',  
                     'deb':'lshw',                           'drepo':'base'},
-    'lsblk'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
-                    'deb':'util-linux',                     'drepo':'base'},
     'parted'     :{ 'rpm':'parted',                         'rrepo':'base',  
                     'deb':'parted',                         'drepo':'base'},
     'mail'       :{ 'rpm':'mailx',                          'rrepo':'base',
@@ -179,8 +178,6 @@ req_client = {
                     'deb':'mutt',                           'drepo':'base'},
     'gawk'       :{ 'rpm':'gawk',                           'rrepo':'base',
                     'deb':'gawk',                           'drepo':'base'},
-#    'ruby-libs'  :{ 'rpm':'ruby-libs',                      'rrepo':'epel',  
-#                    'deb':'ruby-full',                      'drepo':'base'},
     'bc'         :{ 'rpm':'bc',                             'rrepo':'base',  
                     'deb':'bc',                             'drepo':'base'},
     'curl'       :{ 'rpm':'curl',                           'rrepo':'base',  
@@ -193,8 +190,6 @@ req_client = {
                     'deb':'perl-base',                      'drepo':'base'},
     'iostat'     :{ 'rpm':'sysstat',                        'rrepo':'base',  
                     'deb':'sysstat',                        'drepo':'base'},
-    #'datetime'   :{ 'rpm':'perl-DateTime ',                 'rrepo':'base',
-    #                'deb':'libdatetime-perl ',              'drepo':'base'},
     'libwww'     :{ 'rpm':'perl-libwww-perl ',              'rrepo':'base',
                     'deb':'libwww-perl ',                   'drepo':'base'},
     'lscpu'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
@@ -214,9 +209,8 @@ req_server = {
 #                       'deb':'arp-scan',                                       'drepo':'base'},
     'wkhtmltopdf'   :{ 'rpm':'wkhtmltopdf',                                    'rrepo':'epel',  
                        'deb':'wkhtmltopdf',                                    'drepo':'base'},
-    'php'           :{ 'rpm':'php php-common php-cli php-mysql php-mbstring',  'rrepo':'base', 
-                       'deb':'php php-mysql php-common php-cli ',              'drepo':'base'},
-#    'mysql'         :{ 'rpm':'mariadb-server MySQL-python',                    'rrepo':'base',
+    'php'           :{ 'rpm':'php php-common php-cli php-mysqlnd php-mbstring','rrepo':'base', 
+                       'deb':'php php-common php-cli php-mysql php-mbstring',  'drepo':'base'},
     'mysql'         :{ 'rpm':'mariadb-server ',                                'rrepo':'base',
                        'deb':'mariadb-server mariadb-client',                  'drepo':'base'}
 }
@@ -730,6 +724,12 @@ def firewall_rule() :
     # Open TCP Port 80 on Firewall
     writelog("  - Adding rules to allow incoming connection on port 80")
     COMMAND="firewall-cmd --zone=public --add-port=80/tcp --permanent"  # Allow port 80 for HTTP 
+    if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
+    ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
+
+    # Open TCP Port 443 on Firewall
+    writelog("  - Adding rules to allow incoming connection on port 443")
+    COMMAND="firewall-cmd --zone=public --add-port=443/tcp --permanent"  # Allow port 80 for HTTP 
     if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
     ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
 
