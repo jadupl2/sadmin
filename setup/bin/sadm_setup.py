@@ -96,7 +96,7 @@
 #@2021_07_20 install: v3.59 Update alert group file, default now assigned to 'mail_sysadmin' group.
 #@2021_07_20 install: v3.60 Client package to install changed from 'util-linux-ng' to 'util-linux'.
 #@2021_07_21 install: v3.61 Fix server install problem on rpm system with package 'php-mysqlnd'.
-# 
+#@2021_07_21 install: v3.62 Fix 'srv_rear_ver' field didn't have a default value in Database.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -113,7 +113,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.61"                                            # Setup Version Number
+sver                = "3.62"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1037,7 +1037,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     sql += " srv_arch='%s'  ," % (warch) 
     sql += " srv_osversion='%s'," % (osver)
     sql += " srv_ostype='linux', srv_graph='1', srv_note='', srv_kernel_version='', srv_model='',"
-    sql += " srv_serial='', srv_memory='0', srv_cpu_speed='0' ;"
+    sql += " srv_serial='', srv_memory='0', srv_rear_ver='unknown', srv_cpu_speed='0' ;"
     #
     # Execute the Insert New Server Statement
     cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
