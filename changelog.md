@@ -1,5 +1,24 @@
 # SADMIN Tools Changelog
 
+## Release [1.3.4a](https://github.com/jadupl2/sadmin/releases) (2021-07-22)
+
+
+### SADMIN Client related
+  - sadm_cfg2html.sh (v3.8 2021/07/21) - Fix problem with cfg2html on Fedora 34.
+
+### Configuration files
+  - .alert_group.cfg (v2.5 2021/07/20) - Default alert group now assigned to 'mail_sysadmin' group.
+
+### Install, Uninstall & Update project
+  - sadm_setup.py (v3.57 2021/07/20) - Fix sadmin.service configuration problem.
+  - sadm_setup.py (v3.58 2021/07/20) - Bug fix when installing SADMIN server 'mysql' packages.
+  - sadm_setup.py (v3.59 2021/07/20) - Update alert group file, default now assigned to 'mail_sysadmin' group.
+  - sadm_setup.py (v3.60 2021/07/20) - Client package to install changed from 'util-linux-ng' to 'util-linux'.
+  - sadm_setup.py (v3.61 2021/07/21) - Fix server install problem on rpm system with package 'php-mysqlnd'.
+  - sadm_setup.py (v3.62 2021/07/21) - Fix 'srv_rear_ver' field didn't have a default value in Database.
+
+
+
 ## Release [1.3.4](https://github.com/jadupl2/sadmin/releases) (2021-07-19)
    
 
