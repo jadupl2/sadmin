@@ -62,6 +62,7 @@
 # 2021_06_06 mon: v2.01 Remove script that run 'swatch_nmon.sh' from system monitor config file.
 # 2021_06_06 client: v2.02 Fix problem related to system monitor file update.
 # 2021_06_10 client: v2.03 Fix problem removing 'nmon' watcher from monitor file.
+# 2021_07_22 client: v2.04 Fix problem when run the 1st time during setup script.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -94,7 +95,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.03'                                     # Script Version
+export SADM_VER='2.04'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -751,8 +752,6 @@ function check_sadm_client_crontab()
                      fi 
                      #sadm_writelog "  - Line with '# SADMIN Script Don' removed from $nmon_file."
             fi            
-       else sadm_writelog "  - [ ERROR ] There is no System Monitor config file ($nmon_file) ?"
-            return 1 
     fi 
     return 0
 }
