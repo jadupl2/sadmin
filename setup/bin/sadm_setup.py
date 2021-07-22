@@ -88,15 +88,15 @@
 # 2020_12_27 Fix: v3.51 Fix problem with 'rear' & 'syslinux' when installing SADMIN server.
 # 2021_01_06 Update: v3.52 Ensure that package util-linux is installed on client & server.
 # 2021_01_27 Update: v3.53 Activate Startup and Shutdown Script (SADMIN Service)
-#@2021_04_19 Update: v3.54 Fix Path to sadm_service_ctrl.sh
-#@2021_06_06 Update: v3.55 Add to sadm_client crontab, script to make sure 'nmon' is running
-#@2021_06_30 Update: v3.56 Adjust Client, Server crontab with documentation
-#@2021_07_20 install: v3.57 Fix sadmin.service configuration problem.
-#@2021_07_20 install: v3.58 Bug fix when installing SADMIN server 'mysql' packages.
-#@2021_07_20 install: v3.59 Update alert group file, default now assigned to 'mail_sysadmin' group.
-#@2021_07_20 install: v3.60 Client package to install changed from 'util-linux-ng' to 'util-linux'.
-#@2021_07_21 install: v3.61 Fix server install problem on rpm system with package 'php-mysqlnd'.
-#@2021_07_21 install: v3.62 Fix 'srv_rear_ver' field didn't have a default value in Database.
+# 2021_04_19 Update: v3.54 Fix Path to sadm_service_ctrl.sh
+# 2021_06_06 Update: v3.55 Add to sadm_client crontab, script to make sure 'nmon' is running
+# 2021_06_30 Update: v3.56 Adjust Client, Server crontab with documentation
+# 2021_07_20 install: v3.57 Fix sadmin.service configuration problem.
+# 2021_07_20 install: v3.58 Bug fix when installing SADMIN server 'mysql' packages.
+# 2021_07_20 install: v3.59 Update alert group file, default now assigned to 'mail_sysadmin' group.
+# 2021_07_20 install: v3.60 Client package to install changed from 'util-linux-ng' to 'util-linux'.
+# 2021_07_21 install: v3.61 Fix server install problem on rpm system with package 'php-mysqlnd'.
+# 2021_07_21 install: v3.62 Fix 'srv_rear_ver' field didn't have a default value in Database.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
