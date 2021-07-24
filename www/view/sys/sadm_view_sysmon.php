@@ -45,6 +45,7 @@
 # 2020_05_13 Update: v2.15 Customize message when nothing to report.
 # 2020_05_13 Update: v2.16 server name link was not displayed properly.
 # 2020_09_23 Update: v2.17 Add Home button in the page heading.
+#@2021_07_24 web v2.18 Each alert now show group name (not default) and alert type description.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -78,7 +79,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.17" ;                                                       # Current version number
+$SVER  = "2.18" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -107,8 +108,10 @@ $alert_file = SADM_WWW_TMP_DIR . "/www_sysmon_file_" . getmypid() ;     # File B
 function create_alert_file() {
     global $DEBUG, $tmp_file1, $tmp_file2, $alert_file ;
 
-    # Create the Alert file from all System Monitor report file (*.rpt). 
+    # Create the Alert file from all SYSTEM MONITOR REPORT FILE (*.RPT) in $SADM_WWW_DAT_DIR. 
     # Get content of all *.rpt file (Contain Error,Warning,Info reported by System Monitor)
+    # Example of rpt line below : 
+    # Warning;holmes;2021.07.24;10:15;linux;FILESYSTEM;Filesystem /wsadmin at 82% >= 80%;default;default
     $CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rpt' -exec cat {} \; > $alert_file";
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }        # Show Cmd that we execute
     $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute the find command
@@ -122,8 +125,10 @@ function create_alert_file() {
         echo '</pre></code>';                                           # End of code display
     }
 
-    # Get last line of all script result files (*.rch) that finished with error or that are running.
-    # Results with go in $tmp_file2 file.
+    # Get last line of ALL SCRIPT RESULT FILES (*.RCH) that finished with error or that are running.
+    # Results will go into $tmp_file2 file.
+    # Example of a rch line below :
+    # ubuntu2104 2021.07.05 05:11:23 2021.07.05 05:11:32 00:00:09 sadm_backupdb default 1 0
     $CMD_PART1="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \;" ;
     $CMD_PART2=" | awk 'match($10,/[1-2]/) { print }' > $tmp_file2 ";
     $CMD="$CMD_PART1 $CMD_PART2";                                       # Combine 2 long commands
@@ -139,13 +144,13 @@ function create_alert_file() {
         echo '</pre></code>';                                           # End of code display
     }
 
+
     # Convert the global rch file just created ($tmp_file2), RCH kind of lines 
     # raspi2 2018.09.29 23:25:00 2018.09.29 23:25:17 00:00:17 sadm_client_housekeeping default 1 1
     #   1        2         3         4        5        6               7                  8    9 10
     # To this type of lines (RPT)
-    # Error;nano;2017.02.08;17:00;SERVICE;PROCESS;Service syslogd not running !;sadm;sadm;
+    # Error;raspi2;2018.09.29;23:25;SADM;SCRIPT;sadm_client_housekeeping;sadm/1;sadm/1;
     #   1    2       3        4      5       6             7                     8     9
-    $lines = file($tmp_file2);                                          # Load RCH Line into Array
     if ( file_exists ($alert_file) and (filesize($alert_file) > 0) ) 
     {
         if ($DEBUG) { echo "\n<br>Opening alert file in append mode"; }        
@@ -154,7 +159,9 @@ function create_alert_file() {
         if ($DEBUG) { echo "\n<br>Opening alert file in write mode"; }        
         $afile = fopen("$alert_file","w") or die("can't open in write mode file " . $alert_file );
     }
-    foreach ($lines as $line_num => $line) { 
+
+    $lines = file($tmp_file2);                                          # Load RCH Line into Array
+    foreach ($lines as $line_num => $line) {                            # Process Each line in array
         if ($DEBUG) { echo "\n<br>RCH Before conversion :<code><pre>" .$line. '</pre></code>'; }
         list($whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$walert,$gtype,$wcode) = explode(" ",$line);
         $rdate = trim($wdate2);                                         # Event Date = Finish Date
@@ -174,10 +181,12 @@ function create_alert_file() {
         $rhost      = trim($whost);                                     # Host Name
         $rmod       = "SADM";                                           # Event Module name = SADM
         $rsubmod    = "SCRIPT";                                         # Event Sub-Module = SCRIPT
+        $ragroup    = "${walert}";                                      # Alert Group 
+        $ratype     = "${gtype}";                                       # Alert Type
         $ralert     = "${walert}/${gtype}";                             # Alert Group & Alert Type
         $rdesc      = $wscript ;                                        # Script Name 
         $LINE="${rtype};${rhost};${rdate};${rtime};${rmod};${rsubmod};${rdesc};${ralert};${ralert}\n";
-        if ($DEBUG) { echo "\n<br>RCH Before conversion :<code><pre>" .$LINE. '</pre></code>'; }
+        if ($DEBUG) { echo "\n<br>RCH After conversion :<code><pre>" .$LINE. '</pre></code>'; }
         fwrite($afile,$LINE);                                           # Write reformatted line
     }
     fclose($afile);                                                     # Close the ALert File
@@ -216,7 +225,8 @@ function sysmon_page_heading() {
     #    echo "<th class='dt-head-left'>Arch</th>\n";
     #    echo "<th class='dt-head-left'>O/S Version</th>\n";
     echo "\n<th class='dt-center'>Module</th>";
-    echo "\n<th class='dt-center'>Alert Group/Type</th>";
+    echo "\n<th class='dt-center'>Alert Group</th>";
+    echo "\n<th class='dt-center'>Alert Type</th>";
     echo "\n</tr>";
     echo "\n</thead>\n";
 
@@ -234,7 +244,8 @@ function sysmon_page_heading() {
     #    echo "<th class='dt-head-left'>Arch</th>\n";
     #    echo "<th class='dt-head-left'>O/S Version</th>\n";
     echo "\n<th class='dt-center'>Module</th>";
-    echo "\n<th class='dt-center'>Alert Group/Type</th>";
+    echo "\n<th class='dt-center'>Alert Group</th>";
+    echo "\n<th class='dt-center'>Alert Type</th>";
     echo "\n</tr>";
     echo "\n</tfoot>\n";
 }
@@ -284,19 +295,19 @@ function display_data($con,$alert_file) {
                     echo "style='width:96px;height:32px;'></span></td>";# Status Standard Image Size
                     $alert_group=$warngrp;                              # Set Event Alert Group
                     break;
-                case 'RUNNING' :
+                case 'RUNNING' :                                        # Running Status = Script
                     echo "\n<td class='dt-justify'>";
                     echo "<span data-toggle='tooltip' title='Script currently running'>";
                     echo "<img src='/images/sadm_running.png' ";        # Show Running Icon
                     echo "style='width:96px;height:32px;'></span></td>";# Status Standard Image Size
-                    $alert_group=$errgrp;                               # Set Event Alert Group
+                    $alert_group=$errgrp;                               # Script group 
                     break;
                 default:
                     echo "\n<td class='dt-center' vertical-align: center;>";
                     echo "<span data-toggle='tooltip' title='Unknown Status'>";
                     echo "<img src='/images/question_mark.jpg' ";       # Show Question Mark
                     echo "style='width:32px;height:32px;'></span> Unknown</td>";
-                    $alert_group="Unknown";                             # Set Event Alert Group
+                    $alert_group="default";                             # Set Event Alert Group
                     break;
                 }
 
@@ -323,7 +334,6 @@ function display_data($con,$alert_file) {
             # Display Operating System Logo
             $WOS   = sadm_clean_data($row['srv_osname']);               # Set Server O/S Name
             sadm_show_logo($WOS);                                       # Show Distribution Logo 
-
 
             # Show Event Description. 
             $wlog =  $whost . "_" . $wdesc . ".log";                    # Construct Script log Name
@@ -361,8 +371,81 @@ function display_data($con,$alert_file) {
             # Event Module Name (All lowercase, except first character).
             echo "<td class='dt-center'>" . ucwords(strtolower($wsubmod)) . "</td>\n";
 
+
             # Show Event Alert Group
-            echo "<td class='dt-center'>" . $alert_group . "</td>\n";   # Event Alert Group/Type
+            $pieces = explode("/", $alert_group);
+            if ($DEBUG) { echo $pieces[0]; echo $pieces[1]; }           # Isolate Alert Type
+            $alert_group = $pieces[0];                                  # Isolate Alert Grp Name
+            $org_alert_group = $pieces[0];                              # Save Original AlertGrpName
+            $alert_type  = $pieces[1];                                  # Isolate Alert Type
+            if ( $alert_type == "" ) { $alert_type=1 ; }                # Default Alert Type
+
+            # If 'default' alert group is used, get the real alert group name used.
+            if ($alert_group == "default") {                            # If Alert Group is default
+                $CMD="grep -i \"^" . $alert_group . "\" " . SADM_ALERT_FILE . "|awk '{print$3}' |tr -d ' '";
+                if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; } 
+                unset($output_array);                                   # Clear output Array
+                exec ( $CMD , $output_array, $RCODE);                   # Execute command
+                if ($DEBUG) {                                           # If in Debug Mode
+                    echo "\n<br>Return code of command : " . $RCODE ;   # Command ReturnCode
+                    echo "\n<br>Content of output array:";              # Show what's next
+                    echo '<code><pre>';                                 # Code to Show
+                    print_r($output_array);                             # Show Cmd output
+                    echo '</pre></code>';                               # End of code 
+                }
+                $alert_group=$output_array[0];                          # Alert Grp Name
+            }
+
+            # Get the group Alert Type (M=Mail, S=SLack, T=Texto, C=Cellular)
+            $CMD="grep -i \"^" . $org_alert_group . "\" " . SADM_ALERT_FILE . "|awk '{print$2}' |tr -d ' '";
+            if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ;} # Cmd we execute
+            unset($output_array);                                       # Clear output Array
+            exec ( $CMD , $output_array, $RCODE);                       # Execute command
+            if ($DEBUG) {                                               # If in Debug Mode
+                echo "\n<br>Return code of command is : " . $RCODE ;    # Command ReturnCode
+                echo "\n<br>Content of output array :";                 # Show what's next
+                echo '<code><pre>';                                     # Code to Show
+                print_r($output_array);                                 # Show Cmd output
+                echo '</pre></code>';                                   # End of code 
+            }
+            $alert_group_type=$output_array[0];                         # GrpType t,m,s,c
+            echo "<td class='dt-center'>" . $alert_group . "(" . $alert_group_type . ")</td>\n"; 
+
+            # Show Alert type Meaning
+            switch ($alert_type) {                                      # 0=No 1=Err 2=Success 3=All
+                case 0 :                                                # 0=Don't send any Alert
+                    $alert_type_msg="No alert" ;                        # Mess to show on page
+                    break;
+                case 1 :                                                # 1=Send Alert on Error
+                    if (strtoupper($wstatus) == "ERROR") {
+                        $alert_type_msg="Alert on error" ;              # Mess to show on page
+                    }else{
+                        $alert_type_msg="Alert on warning" ;            # Mess to show on page
+                    }   
+                    break;
+                case 2 :                                                # 2=Send Alert on Success
+                    $alert_type_msg="Alert on success" ;                # Mess to show on page
+                    break;
+                case 3 :                                                # 3=Always Send Alert
+                    $alert_type_msg="Always alert" ;                    # Mess to show on page
+                    break;
+                default:
+                    $alert_type_msg="Code $alert_type" ;                # Invalid Alert Group Type
+                    break;
+            }                    
+            #case "$GRP_TYPE" in                                        # Case on Default Alert Group
+            #   m|M )   GRP_DESC="by email to '$GRP_NAME'"              # Alert Sent by Email
+            #           ;; 
+            #   s|S )   GRP_DESC="(Slack '$GRP_NAME' channel)"          # Alert Send using Slack App
+            #           ;; 
+            #   c|C )   GRP_DESC="to Cell. '$GRP_NAME'"                 # Alert send to Cell. Number
+            #           ;; 
+            #   t|T )   GRP_DESC="by SMS to '$GRP_NAME'"                # Alert send to SMS Group
+            #           ;; 
+            #   *   )   GRP_DESC="Grp. $GRP_TYPE ?"                     # Illegal Code Desc
+            #           ;;
+            #esac
+            echo "<td class='dt-center'>" . $alert_type_msg . "</td>\n";   # Event Alert Group/Type
         }
     }
 
@@ -378,8 +461,7 @@ function display_data($con,$alert_file) {
 #
     $title1="Systems Monitor Status";                                   # Page Title
     $title2="Page is refresh every minute.";                            # Be sure user knows
-    #display_lib_heading("NotHome","$title1"," ",$SVER);                 # Display Content Heading
-    display_lib_heading("HOME","$title1"," ",$SVER);                 # Display Content Heading
+    display_lib_heading("HOME","$title1"," ",$SVER);                    # Display Content Heading
     create_alert_file();                                                # Create AlertFile (RPT/RCH)
     sysmon_page_heading();                                              # Show Heading
     display_data($con,$alert_file);                                     # Display SysMOn Array
