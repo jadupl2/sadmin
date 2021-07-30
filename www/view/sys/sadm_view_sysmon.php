@@ -74,9 +74,8 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 
 
 
-#===================================================================================================
-#                                       Local Variables
-#===================================================================================================
+# Local Variables
+#---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
 $SVER  = "2.18" ;                                                       # Current version number
@@ -90,7 +89,7 @@ $URL_CURRENT= '/view/sys/sadm_view_sysmon.php';                         # This p
 $URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
 $URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View RCH File Content URL
 $URL_DOC_DIR   = '/doc/pdf/scripts/';                                   # URL Location of pdf 
-
+$URL_WEB       = "https://sadmin.ca/";                                  # Main Site URL 
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 $tmp_file1          = tempnam (SADM_WWW_TMP_DIR . "/", 'sysmon_tmp1_');
 $tmp_file2          = tempnam (SADM_WWW_TMP_DIR . "/", 'sysmon_tmp2_');
@@ -99,11 +98,10 @@ $alert_file = SADM_WWW_TMP_DIR . "/www_sysmon_file_" . getmypid() ;     # File B
 
 
 
-#===================================================================================================
 # Create one output file ($alert_file) that contain scripts errors & system monitor alerts.
 # 1- Create alert file containing all *.rpt in $SADMIN/www/dat directories.
 # 2- Then add last line of all to the *.rch in $SADMIN/dat that Failed (Code 1) or Running (Code 2).
-#===================================================================================================
+#---------------------------------------------------------------------------------------------------
 #
 function create_alert_file() {
     global $DEBUG, $tmp_file1, $tmp_file2, $alert_file ;
@@ -201,9 +199,9 @@ function create_alert_file() {
 
 
 
-#===================================================================================================
+
 # Display System Monitor Status Heading
-#===================================================================================================
+#---------------------------------------------------------------------------------------------------
 #
 function sysmon_page_heading() {
 
@@ -252,11 +250,11 @@ function sysmon_page_heading() {
 
 
 
-#===================================================================================================
-#                     Display Main Page Data from the row received in parameter
-#===================================================================================================
+
+# Display Main Page Data from the row received in parameter
+#---------------------------------------------------------------------------------------------------
 function display_data($con,$alert_file) {
-    global $DEBUG, $URL_HOST_INFO, $URL_VIEW_FILE, $URL_VIEW_RCH, $URL_DOC_DIR;
+    global $DEBUG, $URL_HOST_INFO, $URL_VIEW_FILE, $URL_WEB, $URL_VIEW_RCH, $URL_DOC_DIR;
 
     echo "\n<tbody>\n";                                                 # Start of Table Body
     $array_sysmon = file($alert_file);                                  # Put Alert file in Array
@@ -325,17 +323,17 @@ function display_data($con,$alert_file) {
                 mysqli_free_result($result);                            # Free result set 
             }
 
-            # Server Name 
+            #-----Server Name -----
             echo "<td class='dt-center'>";
             echo "<a href='" . $URL_HOST_INFO . "?sel=" . nl2br($whost) ;
             echo "' title='$WDESC at " . $row['srv_ip'] . "'>" ;
             echo nl2br($whost) . "</a></td>\n";
 
-            # Display Operating System Logo
+            #----- Display Operating System Logo -----
             $WOS   = sadm_clean_data($row['srv_osname']);               # Set Server O/S Name
             sadm_show_logo($WOS);                                       # Show Distribution Logo 
 
-            # Show Event Description. 
+            #----- Show Event Description -----
             $wlog =  $whost . "_" . $wdesc . ".log";                    # Construct Script log Name
             $log_name = SADM_WWW_DAT_DIR . "/" .$whost. "/log/" .trim($wlog); # Full Path to Script Log
             $wrch =  $whost . "_" . $wdesc . ".rch";                    # Construct Script rch Name
@@ -358,9 +356,14 @@ function display_data($con,$alert_file) {
                   echo "host=" .$whost . "&filename=" . $wrch . "' title='View script history file - ";
                   echo $wrch . "'>[rch]</a>";
               }
-              if (file_exists($pdf_name)) {
-                  echo str_repeat('&nbsp;', 2) ."\n<a href='/doc/pdf/scripts/";
-                  echo $wpdf ."' title='View script documentation'>[doc]</a>";
+              if (file_exists($log_name)) {
+#                if (file_exists($pdf_name)) {
+#                  echo str_repeat('&nbsp;', 2) ."\n<a href='/doc/pdf/scripts/";
+#                  echo $wpdf ."' title='View script documentation'>[doc]</a>";
+                  $webpage = str_replace('_', '-', $wdesc);
+                  echo str_repeat('&nbsp;', 2) . "\n<a href='" . $URL_WEB . $webpage ;
+                  echo "' title='View script documentation - ";
+                  echo $wrch . "'>[doc]</a>";
               }
             }
             echo "</td>\n";
@@ -397,7 +400,8 @@ function display_data($con,$alert_file) {
             }
 
             # Get the group Alert Type (M=Mail, S=SLack, T=Texto, C=Cellular)
-            $CMD="grep -i \"^" . $org_alert_group . "\" " . SADM_ALERT_FILE . "|awk '{print$2}' |tr -d ' '";
+            #$CMD="grep -i \"^" . $org_alert_group . "\" " . SADM_ALERT_FILE . "|awk '{print$2}' |tr -d ' '";
+            $CMD="grep -i \"^" . $alert_group . "\" " . SADM_ALERT_FILE . "|awk '{print$2}' |tr -d ' '";
             if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ;} # Cmd we execute
             unset($output_array);                                       # Clear output Array
             exec ( $CMD , $output_array, $RCODE);                       # Execute command
@@ -409,19 +413,75 @@ function display_data($con,$alert_file) {
                 echo '</pre></code>';                                   # End of code 
             }
             $alert_group_type=$output_array[0];                         # GrpType t,m,s,c
-            echo "<td class='dt-center'>" . $alert_group . "(" . $alert_group_type . ")</td>\n"; 
+
+            # Get content (email address, cell no, slack ID, Texto member) of the alert group.
+            $CMD="grep -i \"^" . $alert_group . "\" " . SADM_ALERT_FILE . "|awk '{print$3}' |tr -d ' '";
+            if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ;} # Cmd we execute
+            unset($output_array);                                       # Clear output Array
+            exec ( $CMD , $output_array, $RCODE);                       # Execute command
+            if ($DEBUG) {                                               # If in Debug Mode
+                echo "\n<br>Return code of command is : " . $RCODE ;    # Command ReturnCode
+                echo "\n<br>Content of output array :";                 # Show what's next
+                echo '<code><pre>';                                     # Code to Show
+                print_r($output_array);                                 # Show Cmd output
+                echo '</pre></code>';                                   # End of code 
+            }
+            $alert_member=$output_array[0];                             # Alert Group Member
+
+            # Build to tooltip for the alert group 
+            switch (strtoupper($alert_group_type)) {
+                case 'M' :  $stooltip="Alert send by email to " . $alert_member ;  # Alert Sent by Email
+                            break;
+                            ;; 
+                case 'C' :  $stooltip="Alert send by SMS to " . $alert_member ;      # Alert Sent by SMS
+                            break;
+                            ;; 
+                case 'T' :  $stooltip="Alert send by SMS to " . $alert_member ;      # Alert Sent by SMS
+                            break;
+                            ;; 
+                case 'S' :  $stooltip="Alert send with Slack to " . $alert_member ;    # Alert Sent by SMS
+                            break;
+                            ;; 
+                default  :  $stooltip="Invalid Alert type(" . $alert_type .")";
+                            break;
+                            ;;
+            }                    
+
+            # Show Alert Group with Tooltip
+            echo "<td class='dt-center'>" ;
+            echo "<span data-toggle='tooltip' title='" . $stooltip . "'>"; 
+            echo $alert_group . "</span>(" . $alert_group_type . ")</td>\n"; 
+
 
             # Show Alert type Meaning
             switch ($alert_type) {                                      # 0=No 1=Err 2=Success 3=All
                 case 0 :                                                # 0=Don't send any Alert
                     $alert_type_msg="No alert" ;                        # Mess to show on page
+                    if (strtoupper($wstatus) == "WARNING") { 
+                        $etooltip="Column 'J' is blank in \$SADMIN/cfg/". $whost . ".smon.";
+                    }else{
+                        $etooltip="Column 'K' is blank in \$SADMIN/cfg/". $whost . ".smon.";
+                    }
+                    if (strtolower($wsubmod) == "SCRIPT") { 
+                        $etooltip="SADM_ALERT is to 0 in script " . $wdesc ;
+                    }
                     break;
                 case 1 :                                                # 1=Send Alert on Error
                     if (strtoupper($wstatus) == "ERROR") {
                         $alert_type_msg="Alert on error" ;              # Mess to show on page
+                        $etooltip="Error alert group (Col. K) is " . $org_alert_group . " in \$SADMIN/cfg/". $whost . ".smon.";
                     }else{
-                        $alert_type_msg="Alert on warning" ;            # Mess to show on page
+                        if (strtoupper($wstatus) == "RUNNING") {
+                            $alert_type_msg="Alert on error" ;          # Mess to show on page
+                            $etooltip="Error alert group (Col. K) is " . $org_alert_group . " in \$SADMIN/cfg/". $whost . ".smon.";
+                        }else{
+                            $alert_type_msg="Alert on warning" ;        # Mess to show on page
+                            $etooltip="Warning alert group (Col. J) is " . $org_alert_group . " in \$SADMIN/cfg/". $whost . ".smon.";
+                        }
                     }   
+                    if (strtoupper($wsubmod) == "SCRIPT") { 
+                        $etooltip="SADM_ALERT set to 1 in script " . $wdesc ;
+                    }
                     break;
                 case 2 :                                                # 2=Send Alert on Success
                     $alert_type_msg="Alert on success" ;                # Mess to show on page
@@ -432,20 +492,10 @@ function display_data($con,$alert_file) {
                 default:
                     $alert_type_msg="Code $alert_type" ;                # Invalid Alert Group Type
                     break;
-            }                    
-            #case "$GRP_TYPE" in                                        # Case on Default Alert Group
-            #   m|M )   GRP_DESC="by email to '$GRP_NAME'"              # Alert Sent by Email
-            #           ;; 
-            #   s|S )   GRP_DESC="(Slack '$GRP_NAME' channel)"          # Alert Send using Slack App
-            #           ;; 
-            #   c|C )   GRP_DESC="to Cell. '$GRP_NAME'"                 # Alert send to Cell. Number
-            #           ;; 
-            #   t|T )   GRP_DESC="by SMS to '$GRP_NAME'"                # Alert send to SMS Group
-            #           ;; 
-            #   *   )   GRP_DESC="Grp. $GRP_TYPE ?"                     # Illegal Code Desc
-            #           ;;
-            #esac
-            echo "<td class='dt-center'>" . $alert_type_msg . "</td>\n";   # Event Alert Group/Type
+            }        
+            echo "<td class='dt-center'>" ;
+            echo "<span data-toggle='tooltip' title='" . $etooltip . "'>"; 
+            echo $alert_type_msg . "</span></td>\n"; 
         }
     }
 
@@ -455,9 +505,10 @@ function display_data($con,$alert_file) {
 }
 
 
-#===================================================================================================
+
+
 # Page start here 
-#===================================================================================================
+#---------------------------------------------------------------------------------------------------
 #
     $title1="Systems Monitor Status";                                   # Page Title
     $title2="Page is refresh every minute.";                            # Be sure user knows
