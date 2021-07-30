@@ -32,8 +32,9 @@
 # 2020_05_23 Update: v2.6 Minor change about reading /etc/environment and change logging messages.
 # 2020_12_16 Update: v2.7 Include code to include in SADMIN server crontab the daily report email.
 # 2021_05_29 server: v2.8 Code optimization, update SADMIN section and Help screen.
+#@2021_07_30 server: v2.9 Solve intermittent problem with monitor page refresh error.
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
 
 
@@ -64,7 +65,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.8'                                      # Script Version
+export SADM_VER='2.9'                                      # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -379,6 +380,9 @@ file_housekeeping()
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
              fi
     fi
+
+    # $SADMIN/www/tmp writable by everyone (If not cause intermittent problem with monitor page refresh)
+    chmod 6777 $SADM_WWW_TMP_DIR            
     return $ERROR_COUNT
 }
 
