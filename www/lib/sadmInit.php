@@ -27,12 +27,12 @@
 # 2019_08_16  Update: v3.5 Correct Typo for number of rear backup to keep
 # 2019_08_19 Update: v3.6 Added Global Var. SADM_REAR_EXCLUDE_INIT for Rear Initial Options file.
 # 2020_12_26 Update: v3.7 Added Global Var. SADM_WWW_ARC_DIR for Server archive when deleted.
-
+#@2021_08_02 web: v3.8 Added 'SADM_PGM2DOC' for Doc to Links file definition.
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
     # Set SADMIN PHP Library Version NUmber
-    define("SADM_PHP_LIBVER","3.7");
+    define("SADM_PHP_LIBVER","3.8");
 
     # Setting the HOSTNAME Variable
     list($HOSTNAME) = explode ('.', gethostname());                     # HOSTNAME without domain
@@ -110,7 +110,8 @@ define("SADM_WWW_NET_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/net");    # Web ne
 
 
 # SADMIN FILES DEFINITION
-define("SADM_CFG_FILE"            , SADM_CFG_DIR     . "/sadmin.cfg");          # Config File
+define("SADM_CFG_FILE"            , SADM_CFG_DIR     . "/sadmin.cfg");          # SADMIN Config File
+define("SADM_PGM2DOC"             , SADM_WWW_DOC_DIR . "/pgm2doc_link.cfg");    # PGM to Doc link
 define("SADM_BACKUP_LIST_INIT"    , SADM_CFG_DIR     . "/.backup_list.txt");    # BackupList Init
 define("SADM_BACKUP_EXCLUDE_INIT" , SADM_CFG_DIR     . "/.backup_exclude.txt"); # Backup Exclude Init
 define("SADM_REAR_EXCLUDE_INIT"   , SADM_CFG_DIR     . "/.rear_exclude.txt");   # ReaR Exclude Init
