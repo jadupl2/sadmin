@@ -46,7 +46,7 @@
 # 2020_05_13 Update: v2.16 server name link was not displayed properly.
 # 2020_09_23 Update: v2.17 Add Home button in the page heading.
 #@2021_07_24 web v2.18 On System Monitor page, each alert now show group name (not default).
-#@2021_08_06 web v2.19 On System Monitor page, alert type code now show description.
+#@2021_08_06 web v2.19 On System Monitor page, notification type code now show description.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
