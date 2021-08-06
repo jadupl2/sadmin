@@ -45,7 +45,8 @@
 # 2020_05_13 Update: v2.15 Customize message when nothing to report.
 # 2020_05_13 Update: v2.16 server name link was not displayed properly.
 # 2020_09_23 Update: v2.17 Add Home button in the page heading.
-#@2021_07_24 web v2.18 Each alert now show group name (not default) and alert type description.
+#@2021_07_24 web v2.18 On System Monitor page, each alert now show group name (not default).
+#@2021_08_06 web v2.19 On System Monitor page, alert type code now show description.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -78,7 +79,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.18" ;                                                       # Current version number
+$SVER  = "2.19" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -224,7 +225,7 @@ function sysmon_page_heading() {
     #    echo "<th class='dt-head-left'>O/S Version</th>\n";
     echo "\n<th class='dt-center'>Module</th>";
     echo "\n<th class='dt-center'>Alert Group</th>";
-    echo "\n<th class='dt-center'>Alert Type</th>";
+    echo "\n<th class='dt-center'>Notification Type</th>";
     echo "\n</tr>";
     echo "\n</thead>\n";
 
@@ -243,7 +244,7 @@ function sysmon_page_heading() {
     #    echo "<th class='dt-head-left'>O/S Version</th>\n";
     echo "\n<th class='dt-center'>Module</th>";
     echo "\n<th class='dt-center'>Alert Group</th>";
-    echo "\n<th class='dt-center'>Alert Type</th>";
+    echo "\n<th class='dt-center'>Notification Type</th>";
     echo "\n</tr>";
     echo "\n</tfoot>\n";
 }
@@ -342,30 +343,35 @@ function display_data($con,$alert_file) {
             $pdf_name = SADM_WWW_DOC_DIR . "/pdf/scripts/" . trim($wpdf);     # Full Path to Script pdf  
             echo "<td>";                                                # Start of Cell
             echo $wdesc ;                                               # Desc. coming from rpt file
+
+            # If a script produce link to log and history file if exist.
             if ($wsubmod == "SCRIPT") {                                 # Module is a Script ?
-              if ($DEBUG) { 
-                  echo " log: $wlog - $log_name rch: $wrch - $rch_name pdf: $wpdf - $pdf_name";
-              }
-              if (file_exists($log_name)) {
+              if (file_exists($log_name)) {                             # Log File Exist ?
                    echo str_repeat('&nbsp;', 2) . "\n<a href='" . $URL_VIEW_FILE . "?";
                    echo "filename=" . $log_name . "' title='View script log - ";
-                   echo $wlog . "'>[log]</a>";
+                   echo $wlog . "'>[log]</a>";                          # Create link to view log
               }
-              if (file_exists($rch_name)) {
+              if (file_exists($rch_name)) {                             # History file RCH exist ?
                   echo str_repeat('&nbsp;', 2) . "\n<a href='" . $URL_VIEW_RCH . "?";
                   echo "host=" .$whost . "&filename=" . $wrch . "' title='View script history file - ";
-                  echo $wrch . "'>[rch]</a>";
+                  echo $wrch . "'>[rch]</a>";                           # Create link to view rch
               }
-              if (file_exists($log_name)) {
-#                if (file_exists($pdf_name)) {
-#                  echo str_repeat('&nbsp;', 2) ."\n<a href='/doc/pdf/scripts/";
-#                  echo $wpdf ."' title='View script documentation'>[doc]</a>";
-                  $webpage = str_replace('_', '-', $wdesc);
-                  echo str_repeat('&nbsp;', 2) . "\n<a href='" . $URL_WEB . $webpage ;
-                  echo "' title='View script documentation - ";
-                  echo $wrch . "'>[doc]</a>";
-              }
-            }
+            } 
+
+            # Produce Link to documentation if module exist in pgm2doc cfg file
+            if ($wsubmod == "SCRIPT") {                                 # Module is a Script ?
+                $doc_link = getdocurl("$wdesc") ;                       # Get Script Name Link
+                if ( $doc_link != "" ) {                                # We have a valid link ?
+                    echo str_repeat('&nbsp;', 2) . "\n<a href='" . $URL_WEB . $doc_link ;
+                    echo "' title='View script documentation ($doc_link)'>[doc]</a>";
+                }
+            }else{
+                $doc_link = getdocurl("$wsubmod") ;                     # Get Module link to Doc
+                if ( $doc_link != "" ) {                                # We have a valid link
+                    echo str_repeat('&nbsp;', 2) . "\n<a href='" . $URL_WEB . $doc_link ;
+                    echo "' title='View module documentation ($doc_link)'>[doc]</a>";
+                }
+            }       
             echo "</td>\n";
 
             # Event Date and Time
@@ -373,7 +379,6 @@ function display_data($con,$alert_file) {
 
             # Event Module Name (All lowercase, except first character).
             echo "<td class='dt-center'>" . ucwords(strtolower($wsubmod)) . "</td>\n";
-
 
             # Show Event Alert Group
             $pieces = explode("/", $alert_group);
