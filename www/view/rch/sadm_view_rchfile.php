@@ -34,6 +34,7 @@
 # 2020_01_21 Update: v2.7 Display rch date in date reverse order (Recent at the top)
 # 2020_04_05 Fix: v2.8 Fix link problem to show the script log.
 # 2020_04_17 Update: v2.9 Running script are now shown on the page.
+#@2021_08_06 web v2.10 Link to log is remove & "Alert type" is replace with "Notification type".
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -64,7 +65,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.9" ;                                                        # Current version number
+$SVER  = "2.10" ;                                                        # Current version number
 $URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
 
 
@@ -87,9 +88,9 @@ function setup_table() {
     echo "\n<th>End Time</th>";
     echo "\n<th>Elapse Time</th>";
     echo "\n<th>Alert Group</th>";
-    echo "\n<th>Alert Type</th>";
+    echo "\n<th>Notification Type</th>";
     echo "\n<th>Status</th>";
-    echo "\n<th>Log</th>";
+#    echo "\n<th>Log</th>";
     echo "\n</tr>";
     echo "\n</thead>\n";
 
@@ -103,9 +104,9 @@ function setup_table() {
     echo "\n<th>End Time</th>";
     echo "\n<th>Elapse Time</th>";
     echo "\n<th>Alert Group</th>";
-    echo "\n<th>Alert Type</th>";
+    echo "\n<th>Notification Type</th>";
     echo "\n<th>Status</th>";
-    echo "\n<th>Log</th>";
+#    echo "\n<th>Log</th>";
     echo "\n</tr>";
     echo "\n</tfoot>\n\n";
 }
@@ -172,18 +173,18 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
             }       
             
             # Display Log Link
-            echo "\n<td class='dt-center'>" ;
-            $x = basename($WNAME, '.rch');                              # Remove RCH file extension
-            $xhost = explode("_", $x);                                  # Get the Host Name
-            $LOGFILE = $x . ".log";                                     # Add .log to Script Name
-            $log_name = SADM_WWW_DAT_DIR ."/$xhost[0]/log/". $LOGFILE ; # Full Path to Script Log
-            if (file_exists($log_name)) {                               # If log exist on Disk
-                echo "<a href='" . $URL_VIEW_FILE . "?filename=" . 
-                $log_name .  "' data-toggle='tooltip' title='View script log file.'>[log]</a>&nbsp;&nbsp;&nbsp";
-            }else{
-                echo "No Log";                                          # If No log exist for script
-            }
-            echo "</td>";
+            #echo "\n<td class='dt-center'>" ;
+            #$x = basename($WNAME, '.rch');                              # Remove RCH file extension
+            #$xhost = explode("_", $x);                                  # Get the Host Name
+            #$LOGFILE = $x . ".log";                                     # Add .log to Script Name
+            #$log_name = SADM_WWW_DAT_DIR ."/$xhost[0]/log/". $LOGFILE ; # Full Path to Script Log
+            #if (file_exists($log_name)) {                               # If log exist on Disk
+            #    echo "<a href='" . $URL_VIEW_FILE . "?filename=" . 
+            #    $log_name .  "' data-toggle='tooltip' title='View script log file.'>[log]</a>&nbsp;&nbsp;&nbsp";
+            #}else{
+            #    echo "No Log";                                          # If No log exist for script
+            #}
+            #echo "</td>";
 
             echo "\n</tr>\n";
         }
