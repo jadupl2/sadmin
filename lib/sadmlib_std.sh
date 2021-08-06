@@ -170,6 +170,7 @@
 # 2021_04_09 Fix: v3.69 Fix problem with disabling log header, log footer and rch file.
 # 2021_04_10 Fix: v3.70 Fix Path to which command was not set properly because of defined alias.
 # 2021_06_30 lib: v3.71 To be more succinct global variables were removed from log footer.
+#@2021_08_06 nolog v3.72 $SADMIN/www/tmp directory default permission now set to 777 
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -181,7 +182,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.71"                                              # This Library Version
+export SADM_LIB_VER="3.72"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -2069,7 +2070,7 @@ sadm_start() {
     # $SADMIN/www/tmp Dir.
     [ ! -d "$SADM_WWW_TMP_DIR" ] && mkdir -p $SADM_WWW_TMP_DIR
     if [ $(id -u) -eq 0 ]
-       then chmod 0775 $SADM_WWW_TMP_DIR
+       then chmod 6777 $SADM_WWW_TMP_DIR
             if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
                 then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR
                 else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR
