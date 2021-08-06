@@ -46,6 +46,8 @@
 # 2020_01_13 Update: v2.15 Reduce Day of the week name returned by SCHEDULE_TO_TEXT to 3 Char.
 # 2020_04_27 Update: v2.16 Change 2019 to 2020 in page footer
 # 2020_09_22 Update: v2.17 Facilitate going back to previous & Home page by adding button in header.
+#@2021_08_05 web: v2.18 Add function "getdocurl($RefString)" to allow link from script to doc
+#
 # ==================================================================================================
 #
 
@@ -54,7 +56,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.17" ;   
+$LIBVER = "2.18" ;   
     
 
 #===================================================================================================
@@ -887,6 +889,64 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
 function StartsWith($MainString, $searchString) {
     return strpos($MainString, $searchString) === 0;
 }
+
+
+
+
+# ==================================================================================================
+# This function receive a string the has to be in ($SADMIN/www/doc/pgm2doc.cfg) first column.
+# It return the second column of the same file, which is the documentation link of string received.
+# If RefString received isn't found in the pgm2doc file or file don't exist, return an empty string.
+#
+# Example of $SADMIN/www/doc/pgm2doc.cfg content : 
+#   alert_group_cfg                ,  alert-group-cfg
+#   how_to_sms                     ,  how-to-sms
+#   sadm_backup                    ,  sadm-backup
+#   sadm_cfg2html                  ,  sadm-cfg2html
+#   sysmon_filesystem              ,  sysmon-filesystem
+#   sysmon_https                   ,  sysmon-https
+#   sysmon_load_average            ,  sysmon-load-average
+#
+# ==================================================================================================
+function getdocurl($RefString) {
+    global $DEBUG ;
+
+    $RefString = strtolower($RefString); 
+
+    # Open Documentation Link File ($SADMIN/www/doc/pgm2doc.cfg)
+    try {
+      if ( !file_exists(SADM_PGM2DOC) ) { 
+          throw new Exception("File not found (" . SADM_PGM2DOC . ")."); 
+      }
+      $fh = fopen(SADM_PGM2DOC, "r");                                   # Open pgm2doc file
+      if ( !$fh ) { 
+          throw new Exception("File open failed (" . SADM_PGM2DOC . ")."); 
+      } 
+    }
+    catch ( Exception $e ) {
+        sadm_fatal_error ("Unable to open file (" . SADM_PGM2DOC . ").");
+        return ("");
+    }
+
+    # Read file until RefString is found or End of file
+    $RefURL = "" ;                                                      # Default return value
+    while(!feof($fh)) {                                                 # Read till End Of File
+      $wline = fgets($fh);                                              # Read Line By Line    
+      if (strlen($wline) > 0) {                                         # Don't process empty Line
+          if (startsWith($wline, '#'))   { continue; }                  # Skip comment line
+          list($keyname,$doc_link) = explode(",", $wline);          # SPlit Line Key & URL
+          $keyname = str_replace(' ', '', $keyname);            # Remove Spaces
+          if ($keyname == $RefString) {                             # Key we seach for ?
+            $RefURL = str_replace(' ', '', $doc_link);                  # Remove Spaces of URL 
+            break ; 
+          } 
+      } 
+    }
+    fclose($fh);                                                        # Close File
+    return ($RefURL) ;                                                  # Return URL or empty string
+}
+
+
 
 
 
