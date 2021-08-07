@@ -44,6 +44,7 @@
 #@2021_06_08 nolog: v1.25 Remove from daily backup report system that the daily backup is disable.
 #@2021_06_08 nolog: v1.26 Remove from daily ReaR backup report system that the backup is disable.
 # 2021_06_10 server: v1.27 Show system backup in bold instead of having a yellow background.
+# 2021_08_07 server: v1.28 Help message was showing wrong command line options.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -74,7 +75,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.27'                                  # Current Script Version
+export SADM_VER='1.28'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -130,7 +131,7 @@ SCRIPTS="$SCRIPTS sadm_daily_farm_fetch sadm_database_update sadm_nmon_rrd_updat
 
 # Exclude System Startup and Shutdown Script for Daily scripts Report
 # This one is optional
-#SCRIPTS="$SCRIPTS sadm_startup sadm_shutdown"
+SCRIPTS="$SCRIPTS sadm_startup sadm_shutdown"
 
 # Exclude template scripts and demo scripts.
 SCRIPTS="$SCRIPTS sadm_template sadmlib_std_demo"
@@ -230,14 +231,14 @@ export RCH_RCODE=""                                                     # RCH Re
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n$Syntax: {SADM_PN} [-d|-h|-v|-b|-r|-s]"
+    printf "\nUsage : ${SADM_PN} [-d|-h|-v|-b|-r|-s]"
     printf "\n\t-d   (Debug Level [0-9])"
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\t-b   (Don't produce and email the Backup report)"
     printf "\n\t-r   (Don't produce and email the ReaR report)"
-    printf "\n\t-d   (Don't produce and email the Scripts report)"
-    printf "\n\t-s   (Produce and email the Storix report (If installed))"
+    printf "\n\t-s   (Don't produce and email the Scripts report)"
+    printf "\n\t-x   (Produce and email the Storix report (If installed))"
     printf "\n\n" 
 }
 
