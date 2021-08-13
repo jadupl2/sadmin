@@ -171,6 +171,7 @@
 # 2021_04_10 Fix: v3.70 Fix Path to which command was not set properly because of defined alias.
 # 2021_06_30 lib: v3.71 To be more succinct global variables were removed from log footer.
 #@2021_08_06 nolog v3.72 $SADMIN/www/tmp directory default permission now set to 777 
+#@2021_08_13 lib v3.73 New func. see Doc sadm_create_lockfile  sadm_remove_lockfile sadm_is_system_lock
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -182,7 +183,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.72"                                              # This Library Version
+export SADM_LIB_VER="3.73"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -2070,7 +2071,7 @@ sadm_start() {
     # $SADMIN/www/tmp Dir.
     [ ! -d "$SADM_WWW_TMP_DIR" ] && mkdir -p $SADM_WWW_TMP_DIR
     if [ $(id -u) -eq 0 ]
-       then chmod 6777 $SADM_WWW_TMP_DIR
+       then chmod 1777 $SADM_WWW_TMP_DIR
             if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
                 then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR
                 else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR
@@ -2138,7 +2139,7 @@ sadm_start() {
 
     # If PID File exist and User want to run only 1 copy of the script - Abort Script
     if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]     # PIP Exist - Run One Copy
-       then pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Last Modify Date of PID
+       then pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Epoch time of PID File
             cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
             sadm_write "${BOLD}PID File ${SADM_PID_FILE} exist, created $pelapse seconds ago.${NORMAL}\n"
@@ -2726,6 +2727,136 @@ write_alert_history() {
     echo "$hline" >>$SADM_ALERT_HIST                                    # Write Alert History File
     if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Line added to History : $hline \n" ; fi 
 }
+
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Create a system lock file for the received system name.
+# This function is used to create a ($LOCK_FILE) for the system received as a parameter.
+# When the lock file exist "${SADMIN}/tmp/$(hostname -s).lock" for a system, no error or warning is 
+# reported (No alert, No notification) to the user (on monitor screen) until the lock file is 
+# deleted, either by calling the "sadm_remove_lockfile" function or if the lock file time stamp 
+# exceed the number of seconds set by $SADM_LOCK_TIMEOUT then then ($LOCK_FILE) would be 
+# automatically by "sadm_check_lockfile" function.
+#
+# Input Parameters :
+#   1) Name of the system to lock (Creating the lock file for it) 
+#
+# Return Value : 
+#   0) System Lock file was created successfully
+#   1) System Lock file could not be created or updated
+# --------------------------------------------------------------------------------------------------
+sadm_create_lockfile()
+{
+    SNAME=$1                                                            # Save System Name to verify
+    RC=0                                                                # Default Return Code
+    LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # System Lock file name
+    if [ -r "$LOCK_FILE" ]                                              # Lock file already exist ?
+        then sadm_writelog "Lock file already exist ($LOCK_FILE)."      # Advise User 
+             echo "$SADM_INST - $(date +%Y%m%d%H%M%S)" > ${LOCK_FILE}   # Update TimeStamp & Content
+             if [ $? -eq 0 ]                                            # no error while updating
+               then sadm_writelog "Lock file time stamp updated."       # Advise user
+               else sadm_writelog "[ ERROR ] Updating '${SNAME}' lock file '${LOCK_FILE}'" 
+                    RC=1                                                # Set Return Value (Error)
+             fi
+             
+        else echo "$SADM_INST - $(date +%Y%m%d%H%M%S)" > ${LOCK_FILE}   # Create Lock File 
+             if [ $? -eq 0 ]                                            # Lock file created [ OK ]
+               then sadm_writelog "System '${SNAME}' lock file (${LOCK_FILE}) created."  
+               else sadm_writelog "[ ERROR ] Creating '${SNAME}' lock file '${LOCK_FILE}'" 
+                    RC=1                                                # Set Return Value (Error)
+             fi
+    fi
+    return $RC                                                          # Return to caller 
+} 
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Remove the lock file for the received system name.
+# This function is used to remove a ($LOCK_FILE) for the system received as a parameter.
+# When the lock file exist "${SADMIN}/tmp/$(hostname -s).lock" for a system, no error or warning is 
+# reported (No alert, No notification) to the user (on monitor screen) until the lock file is 
+# deleted, either by calling the "sadm_remove_lockfile" function or if the lock file time stamp 
+# exceed the number of seconds set by $SADM_LOCK_TIMEOUT then then ($LOCK_FILE) would be 
+# automatically by "sadm_check_lockfile" function.
+#
+# Input Parameters :
+#   1) Name of the system to remove the lock file ("${SADMIN}/tmp/$(hostname -s).lock") 
+#
+# Return Value : 
+#   0) System Lock file was remove successfully
+#   1) System Lock file could not be removed 
+# --------------------------------------------------------------------------------------------------
+sadm_remove_lockfile()
+{
+    SNAME=$1                                                            # Save System Name to verify
+    RC=0                                                                # Default Return Code
+    LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # System Lock file name
+    if [ -w "$LOCK_FILE" ]                                              # Lock file exist ?
+        then rm -f ${LOCK_FILE} >/dev/null 2>&1                         # Delete Lock file 
+             if [ $? -eq 0 ]                                            # no error while updating
+               then sadm_writelog "Lock file ($LOCK_FILE) removed."     # Advise User 
+               else sadm_writelog "[ ERROR ] Removing '${SNAME}' lock file '${LOCK_FILE}'" 
+                    RC=1                                                # Set Return Value (Error)
+             fi
+        else sadm_writelog "There were no lock file to remove '${LOCK_FILE}'."             
+    fi 
+    return $RC                                                          # Return to caller 
+} 
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+#
+# This function is used to check if a ($LOCK_FILE) exist for the system received as a parameter.
+# When the lock file exist "${SADMIN}/tmp/$(hostname -s).lock" for a system, no monitoring error 
+# or warning is reported (No alert, No notification) to the user (on monitor screen) until the 
+# lock file is deleted.
+# 
+# If the lock file exist, this function also check the creation date & time of it.
+# SADMIN Global variable ($SADM_LOCK_TIMEOUT) set the maximum number of seconds a lock file can 
+# exist. If the lock file time stamp exceed the number of seconds set by $SADM_LOCK_TIMEOUT the 
+# ($LOCK_FILE) is deleted and a return value of 0 is returned to the caller.
+#
+# When we start the O/S Update is started on a remote system and we want to 
+# stop monitoring that server while the script is running (It could reboot), we create a 
+# ($LOCK_FILE) on the SADMIN Server. 
+# This suspend monitoring of the system while the O/S update is running.
+#
+# Input Parameters :
+#   1) Name of the system to verify 
+#
+# Return Value : 
+#   0) System is not lock
+#   1) System is Lock
+# --------------------------------------------------------------------------------------------------
+sadm_is_system_lock()
+{
+    SNAME=$1                                                            # Save System NAme to verify
+    LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # Prevent Monitor lock file    
+    if [ -f "$LOCK_FILE" ]                                              # If lockfile exist
+       then FEPOCH=`stat -c %Y $LOCK_FILE`                              # Get Lock File Epoch Time
+            CEPOCH=$(sadm_get_epoch_time)                               # Get Current Epoch Time
+            FAGE=`expr $CEPOCH - $FEPOCH`                               # Sec. Since lock created
+            SEC_LEFT=`expr $OSTIMEOUT - $FAGE`                          # Sec. before lock expire
+            if [ $FAGE -gt $SADM_LOCK_TIMEOUT ]                         # Running more than 60Min ?
+               then sadm_writelog "Server is lock for more than $SADM_LOCK_TIMEOUT seconds."
+                    sadm_writelog "We now restart to monitor this system as usual."
+                    rm -f $LOCK_FILE > /dev/null 2>&1                   # Remove Lock File
+               else sadm_writelog "System '${SNAME}' is currently lock."
+                    sadm_writelog "System normal monitoring will resume in ${SEC_LEFT} seconds."
+                    sadm_writelog "Maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
+                    return 1                                            # System Lock Return 1
+            fi 
+    fi 
+    return 0 
+}
+
+
 
 
 # --------------------------------------------------------------------------------------------------
