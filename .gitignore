@@ -17,6 +17,7 @@
 *.jar
 *.rar
 *.tar
+*.xcf
 # Allow zip (have some in package directory pkg)
 #*.zip
 
