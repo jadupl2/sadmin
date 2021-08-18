@@ -55,6 +55,7 @@
 # 2021_03_05 Update: v4.3 Add a sleep time after update to give system to reboot & become available.
 # 2021_05_04 Update: v4.4 Don't sleep after updating a server if a reboot wasn't requested.
 # 2021_05_10 nolog: v4.5 Error message change "sadm_osupdate_farm.sh" to "sadm_osupdate_starter"
+# 2021_08_17 nolog: v4.6 Change to use the library lock file function. 
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -87,7 +88,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='4.5'                                   # Current Script Version
+export SADM_VER='4.6'                                   # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="Y"                              # [Y]=Append Existing Log [N]=Create New One
@@ -255,12 +256,11 @@ rcmd_osupdate()
         then WREBOOT="-r"                                           # Add -r option to reboot  
     fi                                                              # This reboot after Update
     
-    # Create lock file ($LOCK_FILE) while O/S Update is running (this turn off monitoring)
-    LOCK_FILE="${SADM_TMP_DIR}/${server_name}.lock"                 # Prevent Monitor,lock file Name
-    echo "$SADM_INST - $(date)" > ${LOCK_FILE}                      # Create Lock File
-    if [ $? -eq 0 ]                                                 # If Creation went OK
-       then sadm_writelog "${SADM_OK} Lock File ($LOCK_FILE) created, monitoring suspended."  
-       else sadm_writelog "${SADM_ERROR} While creating the server lock file '${LOCK_FILE}'" 
+    # Create lock file while O/S Update is running (this turn off monitoring)
+    sadm_create_lockfile "${server_name}"                           # Stop monitoring server
+    if [ $? -ne 0 ]                                                 # If Creation went OK
+       then sadm_writelog "Update of '${server_name}' cancelled."   # Couldn't create lock file
+            return 1 
     fi
     
     # Go and Script the O/S Update on the selected system.
@@ -297,10 +297,6 @@ rcmd_osupdate()
     #fi
     
     sadm_write "O/S Update completed on '${server_name}'.\n"            # Advise User were back .
-    if [ -f "$LOCK_FILE" ]                                              # If Lock FIle Exist
-        then rm -f $LOCK_FILE >/dev/null 2>&1                           # Remove host Lock File    
-             sadm_writelog "${SADM_OK} Lock File ($LOCK_FILE) removed."  
-    fi
     return 0
 }
 
@@ -375,6 +371,6 @@ function cmd_options()
 
     rcmd_osupdate                                                       # Go Update Server
     SADM_EXIT_CODE=$?                                                   # Save Exit Code
-    if [ -f "$LOCK_FILE" ] ; then rm -f $LOCK_FILE > /dev/null 2>&1 ;fi # Remove Server Lock File    
+    sadm_remove_lockfile "${ONE_SERVER}"                                # Go remove the lock file
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
