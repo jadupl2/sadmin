@@ -59,7 +59,8 @@
 #@2021_05_11 Fix: v3.16 Fix Path to which command was not set properly because of defined alias.
 #@2021_05_14 Update: v3.17 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
 #@2021_05_16 Update: v3.18 Adjustment for MacOS Big Sur
-# Starting a new version of this library
+#@2021_08_17 library v3.19 Add 'SADM_MONITOR_UPDATE_INTERVAL'variable that control refresh rate. 
+#  Starting a new version of this library
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -141,7 +142,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.18"                                # This Library Version
+        self.libver             = "3.19"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -281,6 +282,7 @@ class sadmtools():
         self.cfg_network3               = ""                            # Network Subnet 3 to report
         self.cfg_network4               = ""                            # Network Subnet 4 to report
         self.cfg_network5               = ""                            # Network Subnet 5 to report
+        self.cfg_monitor_update_interval = 60                           # Monitor Page Upd Interval
 
         # O/S Path to various commands used by SADM Tools
         self.lsb_release        = ""                                    # Command lsb_release Path
@@ -521,6 +523,7 @@ class sadmtools():
             if "SADM_NETWORK3"               in CFG_NAME: self.cfg_network3        = CFG_VALUE
             if "SADM_NETWORK4"               in CFG_NAME: self.cfg_network4        = CFG_VALUE
             if "SADM_NETWORK5"               in CFG_NAME: self.cfg_network5        = CFG_VALUE
+            if "SADM_MONITOR_UPDATE_INTERVAL" in CFG_NAME: self.cfg_monitor_update_interval = CFG_VALUE
         FH_CFG_FILE.close()                                                 # Close Config File
 
         # Get Database User Password get .dbpass file (Read 'sadmin' and 'squery' user pwd)
