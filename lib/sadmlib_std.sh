@@ -59,7 +59,7 @@
 # 2018_09_25 v2.41 Enhance Email Standard Alert Message
 # 2018_09_26 v2.42 Send Alert Include Message Subject now
 # 2018_09_27 v2.43 Now Script log can be sent to Slack Alert
-# 2018_09_30 v2.44 Some Alert Message was too long (Corrupting history file), have shorthen them.
+# 2018_09_30 v2.44 Some Alert Message was too long (Corrupting history file), have shorten them.
 # 2018_10_04 v2.45 Error reported by scripts, issue multiple alert within same day (now once a day)
 # 2018_10_15 v2.46 Remove repetitive lines in Slack Message and Email Alert
 # 2018_10_20 v2.47 Alert not sent by client anymore,all alert are send by SADMIN Server(Avoid Dedup)
@@ -172,6 +172,7 @@
 # 2021_06_30 lib: v3.71 To be more succinct global variables were removed from log footer.
 #@2021_08_06 nolog v3.72 $SADMIN/www/tmp directory default permission now set to 777 
 #@2021_08_13 lib v3.73 New func. see Doc sadm_create_lockfile  sadm_remove_lockfile sadm_is_system_lock
+#@2021_08_17 lib v3.74 Performance improvement.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -183,7 +184,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.73"                                              # This Library Version
+export SADM_LIB_VER="3.74"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -332,6 +333,7 @@ export SADM_NETWORK2=""                                                 # Networ
 export SADM_NETWORK3=""                                                 # Network 3 to Scan
 export SADM_NETWORK4=""                                                 # Network 4 to Scan
 export SADM_NETWORK5=""                                                 # Network 5 to Scan
+export SADM_MONITOR_UPDATE_INTERVAL=60                                 # Monitor page upd interval
 export DBPASSFILE="${SADM_CFG_DIR}/.dbpass"                             # MySQL Passwd File
 export SADM_RELEASE=`cat $SADM_REL_FILE`                                # SADM Release Ver. Number
 export SADM_SSH_PORT=""                                                 # Default SSH Port
@@ -1823,6 +1825,9 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_NETWORK5" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_NETWORK5=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
+        echo "$wline" |grep -i "^SADM_MONITOR_UPDATE_INTERVAL" > /dev/null 2>&1
+        if [ $? -eq 0 ] ;then SADM_MONITOR_UPDATE_INTERVAL=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        #
         done < $SADM_CFG_FILE
 
     # Get Tead/Write and Read/Only User Password from pasword file (If on SADMIN Server)
@@ -1866,8 +1871,8 @@ sadm_start() {
     # Write Starting Info in the Log
     if [ ! -z "$SADM_LOG_HEADER" ] && [ "$SADM_LOG_HEADER" = "Y" ]      # Script Want Log Header
         then sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
-             sadm_writelog "`date` - ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
-             sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)"
+             sadm_writelog "$(date +"%a %d %B %Y %T") - ${SADM_PN} v${SADM_VER} - Libr. v${SADM_LIB_VER}"
+             sadm_writelog "System: $(sadm_get_fqdn) - User: $(whoami) - Type: $(sadm_get_ostype)"
              sadm_writelog "$(sadm_get_osname) $(sadm_get_osversion) Kernel $(sadm_get_kernel_version)"
              sadm_writelog "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
              sadm_writelog " "                                          # White space line
@@ -2381,8 +2386,8 @@ sadm_send_alert()
 {
     LIB_DEBUG=0                                                         # Debug Library Level
     if [ $# -ne 8 ]                                                     # Invalid No. of Parameter
-        then sadm_write "Invalid number of argument received by function ${FUNCNAME}.\n"
-             sadm_write "Should be 8 we received $# : $* \n"            # Show what received
+        then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}."
+             sadm_writelog "Should be 8 we received $# : $* "           # Show what received
              return 1                                                   # Return Error to caller
     fi
 
@@ -2399,38 +2404,36 @@ sadm_send_alert()
     aattach="$8"                                                        # Save Attachment FileName
     acounter="01"                                                       # Default alert Counter
 
-    # If the Alert group received is 'default' replace it with group specified in alert_group.cfg
+    # If Alert group received is 'default', replace it with group specified in alert_group.cfg
     if [ "$agroup" = "default" ] 
-       then galias=`grep -i "^$agroup " $SADM_ALERT_FILE | head -1 | awk '{ print $3 }'` 
+       then galias=`grep -i "^default " $SADM_ALERT_FILE | head -1 | awk '{ print $3 }'` 
             agroup=`echo $galias | awk '{$1=$1;print}'`                 # Del Leading/Trailing Space
+       else grep -i "^$agroup " $SADM_ALERT_FILE >/dev/null 2>&1        # Search in Alert Group File
+            if [ $? -ne 0 ]                                             # Group Missing in GrpFile
+                then sadm_writelog "[ ERROR ] Alert group '$agroup' missing from ${SADM_ALERT_FILE}"
+                     sadm_writelog "  - Alert date/time : $atime"       # Show Event Date & Time
+                     sadm_writelog "  - Alert subject   : $asubject"    # Show Event Subject
+                     return 1                                           # Return Error to caller
+            fi
     fi 
 
     # Display Values received and we will use in this function.
     if [ $LIB_DEBUG -gt 4 ]                                             # Debug Info List what Recv.
        then printf "\n\nFunction '${FUNCNAME}' parameters received :\n" # Print Function Name
-            sadm_write "atype=$atype \n"                                # Show Alert Type
-            sadm_write "atime=$atime \n"                                # Show Event Date & Time
-            sadm_write "aserver=$aserver \n"                            # Show Server Name
-            sadm_write "ascript=$ascript \n"                            # Show Script Name
-            sadm_write "agroup=$agroup \n"                              # Show Alert Group
-            sadm_write "asubject=\"$asubject\"\n"                       # Show Alert Subject/Title
-            sadm_write "amessage=\"$amessage\"\n"                       # Show Alert Message
-            sadm_write "aattachment=\"$aattach\"\n"                     # Show Alert Attachment File
+            sadm_writelog "atype=$atype"                                # Show Alert Type
+            sadm_writelog "atime=$atime"                                # Show Event Date & Time
+            sadm_writelog "aserver=$aserver"                            # Show Server Name
+            sadm_writelog "ascript=$ascript"                            # Show Script Name
+            sadm_writelog "agroup=$agroup"                              # Show Alert Group
+            sadm_writelog "asubject=\"$asubject\""                      # Show Alert Subject/Title
+            sadm_writelog "amessage=\"$amessage\""                      # Show Alert Message
+            sadm_writelog "aattachment=\"$aattach\""                    # Show Alert Attachment File
     fi
 
     # Is there is an attachment specified & the attachment is not readable ?
     if [ "$aattach" != "" ] && [ ! -r "$aattach" ]                      # Can't read Attachment File
-       then sadm_write "Error in ${FUNCNAME} - Can't read attachment file '$aattach'\n"
+       then sadm_writelog "Error in ${FUNCNAME} - Can't read attachment file '$aattach'"
             return 1                                                    # Return Error to caller
-    fi
-
-    # Validate if the Alert group name in the group alert File.
-    grep -i "^$agroup " $SADM_ALERT_FILE >/dev/null 2>&1                # Search in Alert Group File
-    if [ $? -ne 0 ]                                                     # Group Missing in GrpFile
-        then sadm_write "\n[ ERROR ] Alert group '$agroup' missing from ${SADM_ALERT_FILE}\n"
-             sadm_write "  - Alert date/time : $atime \n"               # Show Event Date & Time
-             sadm_write "  - Alert subject   : $asubject \n"            # Show Event Subject
-             return 1                                                   # Return Error to caller
     fi
 
     # Validate the Alert type from alert group file ([M]ail, [S]lack, [T]exto or [C]ellular)
@@ -2798,7 +2801,7 @@ sadm_remove_lockfile()
     if [ -w "$LOCK_FILE" ]                                              # Lock file exist ?
         then rm -f ${LOCK_FILE} >/dev/null 2>&1                         # Delete Lock file 
              if [ $? -eq 0 ]                                            # no error while updating
-               then sadm_writelog "Lock file ($LOCK_FILE) removed."     # Advise User 
+               then sadm_writelog "'$SNAME' lock file ($LOCK_FILE) removed."  # Advise User 
                else sadm_writelog "[ ERROR ] Removing '${SNAME}' lock file '${LOCK_FILE}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
