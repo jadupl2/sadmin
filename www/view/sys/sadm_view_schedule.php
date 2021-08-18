@@ -110,8 +110,8 @@ function setup_table() {
     echo "<tfoot>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
-    echo "<th class='dt-head-center'>O/S</th>\n";                       # Center Header Only
-    echo "<th class='dt-head-center'>Version</th>\n";                   # Center Header Only
+    echo "<th class='dt-head-center'>O/S</th>\n"; 
+    echo "<th class='dt-head-center'>Version</th>\n";  
     echo "<th class='text-center'>Last Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Next Update</th>\n";
@@ -145,7 +145,7 @@ function display_data($count, $row) {
 
     # Display Operating System Logo
     $WOS   = sadm_clean_data($row['srv_osname']);
-    sadm_show_logo($WOS);                                               # Show Distribution Logo
+    sadm_show_logo($WOS);                                  
     
     # Display O/S Version
     echo "\n<td class='dt-center'>" . $row['srv_osversion'] . "</td>";
