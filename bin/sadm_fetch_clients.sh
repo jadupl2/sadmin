@@ -81,6 +81,7 @@
 # 2021_06_06 server: v3.27 Change generation of /etc/cron.d/sadm_osupdate to use $SADMIN variable.
 # 2021_06_11 server: v3.28 Collect system uptime and store it in DB and update SADMIN section 
 # 2021_07_19 server: v3.29 Sleep 5 seconds between rsync retries, if first failed.
+# 2021_08_17 server: v3.30 Performance improvement et code restructure
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
@@ -128,7 +129,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.29'                                     # Script Version
+export SADM_VER='3.30'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -169,12 +170,15 @@ export SADM_MAX_RCLINE=150                                  # Nb Lines to trim(0
 #
 export REAR_TMP="${SADMIN}/tmp/rear_site.tmp$$"                         # New ReaR site.conf tmp file
 export REAR_CFG="${SADMIN}/tmp/rear_site.cfg$$"                         # Will be new /etc/site.conf
-export FETCH_RPT="${SADM_RPT_DIR}/${SADM_HOSTNAME}_fetch.rpt"           # RPT for unresponsive host
+export FETCH_RPT_LOCAL="${SADM_RPT_DIR}/${SADM_HOSTNAME}_fetch.rpt"     # SADMIN Server Local RPT
+export FETCH_RPT_GLOBAL="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt/${SADM_HOSTNAME}_fetch.rpt" 
 export REBOOT_SEC=900                                                   # O/S Upd Reboot Nb Sec.wait
 export RCH_FIELD=10                                                     # Nb. of field on rch file.
 export OSTIMEOUT=1800                                                   # 1800sec=30Min todo O/S Upd
 export GLOB_UPTIME=""                                                   # Global Server uptime value 
 export BOOT_DATE=""                                                     # Server Last Boot Date/Time
+export ERROR_COUNT=0                                                    # Rsync Error Count
+#
 #
 # Variables used to insert in /etc/cron.d/sadm* crontab files.
 export OS_SCRIPT="sadm_osupdate_starter.sh"                             # OSUpdate Script in crontab
@@ -522,6 +526,16 @@ update_backup_crontab ()
 #===================================================================================================
 # Generic rsync function, use to collect client files (*.rpt,*.log,*.rch,) 
 # rsync remote SADM client with local directories
+# 
+# Input Parameters :
+#   1) Remote Directory to sync with 
+#       Format : "${fqdn_server}:${RDIR}/"  
+#   2) Local Destination directory
+#       Format : "${LDIR}/"
+#
+# Return Value : 
+#   0) Rsync with Success
+#   1) Rsync failed.
 #===================================================================================================
 rsync_function()
 {
@@ -668,8 +682,6 @@ create_crontab_files_header()
 }
 
 
-
-
 # --------------------------------------------------------------------------------------------------
 # Validate SSH Server Connectivity 
 #  Parameters:
@@ -677,7 +689,7 @@ create_crontab_files_header()
 #  Return Value:
 #   0) Server Accessible
 #   1) Error, go to next server (Can't SSH to Server, Missing Parameter rcv, Hostname Unresovable)
-#   2) Warning, skip server (O/S Update Running, Sporadic System or Monitor if OFF)
+#   2) Warning, skip server (server lock, O/S Update Running, Sporadic System or Monitor if OFF)
 #   3) Was not able to update uptime of server in Database
 # --------------------------------------------------------------------------------------------------
 validate_server_connectivity()
@@ -698,100 +710,96 @@ validate_server_connectivity()
                 sadm_writelog "${SADM_ERROR} ${SMSG}"                   # Advise user
                 return 1                                                # Return Error to Caller
     fi
-    SNAME=$(echo "$FQDN_SNAME" | awk -F\. '{print $1}')                 # ServerName without Domain
+    SNAME=$(echo "$FQDN_SNAME" | awk -F\. '{print $1}')                 # System Name without Domain
 
+    # Check if System is Locked.
+    sadm_is_system_lock "$SNAME"                                        # Check lock file status
+    if [ $? -eq 1 ] ; then return 2 ; fi                                # System Lock, Nxt Server
 
-    # When we start the O/S Update, or a script is started on a remote system and we want to stop
-    # monitoring of that server while the script is running, we can create a file ($LOCK_FILE). 
-    # This suspend monitoring of the server while the script is running.
-    #
-    # To disable the monitoring of the server while the o/s update is runinng, the $LOCK_FILE file 
-    # is created when the O/S update start.
-    # When the monitoring script (sadm_fetch_clients.sh) see that file, it check the time stamp of it
-    # SADMIN give ($SADM_LOCK_TIMEOUT) seconds to update the server, after that period the 
-    # monitoring of the server will be resume and the ($LOCK_FILE) file is deleted.
-    LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # Prevent Monitor lock file    
-    if [ -f "$LOCK_FILE" ]                                              # O/S running lockfile exist
-       then FEPOCH=`stat -c %Y $LOCK_FILE`                              # Get File Modif. Epoch Time
-            CEPOCH=$(sadm_get_epoch_time)                               # Get Current Epoch Time
-            FAGE=`expr $CEPOCH - $FEPOCH`                               # Nb. Sec. OSUpdate running
-            SEC_LEFT=`expr $OSTIMEOUT - $FAGE`                          # Sec. left Allow for OSUpd.
-            if [ $FAGE -gt $SADM_LOCK_TIMEOUT ]                         # Running more than 60Min ?
-               then msg="Server was lock for more than $SADM_LOCK_TIMEOUT seconds."
-                    sadm_write "${BOLD}${msg}${NORMAL}\n"
-                    msg="${BOLD}We will now start to monitor this system as usual.${NORMAL}"
-                    sadm_write "${msg}\n"
-                    rm -f $LOCK_FILE > /dev/null 2>&1                   # Remove Lock File
-               else msg="${SADM_WARNING} Server '${SNAME}' is currently lock."
-                    sadm_writelog "${msg}"
-                    msg1="Server normal monitoring will resume in ${SEC_LEFT} seconds, "
-                    msg2="maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
-                    sadm_writelog "${msg1}${msg2}"
-                    return 2                                        # Continue with Nxt Server
-            fi 
-    fi 
-
-    # TEST SSH TO SERVER
-    wuptime=$($SADM_SSH_CMD $FQDN_SNAME uptime 2>/dev/null) # SSH to Server for date
+    # Try to get uptime from system to test if ssh to system is working
+    # -o ConnectTimeout=1 -o ConnectionAttempts=1 
+    wuptime=$($SADM_SSH_CMD -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
     RC=$?                                                               # Save Error Number
     if [ $RC -eq 0 ]                                                    # If SSH Worked
-        then #GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}')
-             GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
-             #upos=$((${#wuptime} - 20 ))                                # Extract LastBoot Date Pos
-             #BOOT_DATE=$(echo "${wuptime:$upos:20}"| grep -v "^$")      # Extract LastBoot Date/Time
-             #update_server_uptime "$SNAME" "$GLOB_UPTIME" "$BOOT_DATE"  # Update Server Uptime in DB
+        then GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
              update_server_uptime "$SNAME" "$GLOB_UPTIME"               # Update Server Uptime in DB
              if [ $? -eq 0 ] ; then return 0 ; else return 3 ; fi       # Return ErrorCode to caller
     fi                               
 
-    # SSH DIDN'T WORK, BUT IT'S A SPORADIC SERVER (CAN HAPPEN, DON'T REPORT AN EROR)
+    # SSH didn't work, but it's a sporadic system (Laptop or Tmp Server, don't report an error)
     if [ "$server_sporadic" = "1" ]                                     # If Error on Sporadic Host
         then sadm_writelog "${SADM_WARNING}  Can't SSH to ${FQDN_SNAME} (Sporadic System)."
              return 2                                                   # Return Skip Code to caller
     fi 
 
-    # SSH DIDN'T WORK, BUT MONITORING FOR THAT SERVER IS OFF (DON'T REPORT AN EROR)
+    # SSH didn't work, but monitoring for that system is off (don't report an error)
     if [ "$server_monitor" = "0" ]                                      # If Error & Monitor is OFF
         then sadm_writelog "${SADM_WARNING} Can't SSH to ${FQDN_SNAME} (Monitoring is OFF)."
              return 2                                                   # Return Skip Code to caller
     fi 
 
-    # SSH DIDN'T WORK, WE WILL TRY 3 TIMES BEFORE REPRTING AN ERROR (TO ELIMINATE FALSE POSITIVE).
-    RETRY=1                                                             # Set Retry counter to 1
-    sadm_writelog "$SADM_ERROR [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date" # 1st SSH didn't work msg
-    while [ $RETRY -lt 3 ]                                              # Retry ssh 3 times 
-        do
-        RETRY=$(($RETRY+1))                                             # Increase Retry counter
-        #$SADM_SSH_CMD $FQDN_SNAME date > /dev/null 2>&1                 # SSH to Server for date
-        #wuptime=$($SADM_SSH_CMD $FQDN_SNAME uptime 2>/dev/null)         # SSH to Server for date
-        wuptime=$($SADM_SSH_CMD $FQDN_SNAME uptime ; uptime -s 2>/dev/null) # SSH to Server for date
-        RC=$?                                                           # Save Error Number
-        if [ $RC -ne 0 ]                                                # If Error doing ssh
-            then if [ $RETRY -lt 3 ]                                    # If less than 3 retry
-                    then sadm_writelog "$SADM_ERROR [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date"
-                    else sadm_writelog "$SADM_ERROR [ $RETRY ] $SADM_SSH_CMD $FQDN_SNAME date"
-                         SMSG="$SADM_ERROR ${FQDN_SNAME} unresponsive (Can't SSH to it)."  
-                         sadm_writelog "${SMSG}"                         # Display Error Msg
-
-                         # Create Error Line in Global Error Report File (rpt)
-                         ADATE=`date "+%Y.%m.%d;%H:%M"`                 # Current Date/Time
-                         RPTLINE="Error;${SNAME};${ADATE};linux;NETWORK"
-                         RPTLINE="${RPTLINE};${FQDN_SNAME} unresponsive (Can't SSH to it)"
-                         RPTLINE="${RPTLINE};${SADM_ALERT_GROUP};${SADM_ALERT_GROUP}" 
-                         echo "$RPTLINE" >> $FETCH_RPT                  # Create Skip Code to caller                              
-                         return 1                                       # Return Error to caller
-                 fi
-            else sadm_writelog "$SADM_OK $SADM_SSH_CMD $FQDN_SNAME uptime"
-                 GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
-                 #upos=$((${#wuptime} - 20 ))                            # Extract LastBoot Date Pos
-                 #BOOT_DATE=$(echo "${wuptime:$upos:20}"| grep -v "^$")  # Extract LastBoot Date/Time
-                 #update_server_uptime "$SNAME" "$GLOB_UPTIME" "$BOOT_DATE" # Update Srv Uptime in DB
-                 update_server_uptime "$SNAME" "$GLOB_UPTIME"           # Update Srv Uptime in DB
-                 if [ $? -eq 0 ] ; then return 0 ; else return 3 ; fi   # Return ErrorCode to caller
-        fi
-        done
+    # SSH is not working and it should be 
+    sadm_writelog "$SADM_ERROR ${FQDN_SNAME} unresponsive (Can't SSH to it)." 
+    
+    # Create Error Line in Global Error Report File (rpt)
+    ADATE=`date "+%Y.%m.%d;%H:%M"`                                      # Current Date/Time
+    RPTLINE="Error;${SNAME};${ADATE};linux;NETWORK"                     # Date/Time,Module,SubModule
+    RPTLINE="${RPTLINE};${FQDN_SNAME} unresponsive (Can't SSH to it)"   # Monitor Error Message
+    RPTLINE="${RPTLINE};${SADM_ALERT_GROUP};${SADM_ALERT_GROUP}"        # Set Alert group to notify
+    echo "$RPTLINE" >> $FETCH_RPT_LOCAL                                 # SADMIN Server Monitor RPT
+    echo "$RPTLINE" >> $FETCH_RPT_GLOBAL                                # SADMIN All System rpt 
+    return 1    
 }
 
+
+
+# --------------------------------------------------------------------------------------------------
+#  Build a system list of the O/S type (aix/linux,darwin) received.
+#
+# Input Parameters :
+#   1)  Operating System Type
+# 
+# Output resultant :
+#  File $SADM_TMP_FILE1 contains system list for wanted O/S type with fields neened for processing.
+#  Fields in this file are ';' delimited.
+# --------------------------------------------------------------------------------------------------
+build_server_list()
+{ 
+    WOSTYPE=$1                                                          # O/S Type Linux,aix,darwin
+    
+    # Build the SQL select statement for active systems with selected o/s 
+    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir," 
+    SQL="${SQL} srv_update_minute,srv_update_hour,srv_update_dom,srv_update_month,srv_update_dow,"
+    SQL="${SQL} srv_update_auto,srv_backup,srv_backup_month,srv_backup_dom,srv_backup_dow,"
+    SQL="${SQL} srv_backup_hour,srv_backup_minute,"
+    SQL="${SQL} srv_img_backup,srv_img_month,srv_img_dom,srv_img_dow,srv_img_hour,srv_img_minute "
+    SQL="${SQL} from server"
+    SQL="${SQL} where srv_ostype = '${WOSTYPE}' and srv_active = True "
+    SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
+
+    # Setup database connection parameters
+    WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
+    CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
+    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/;/'" # Build CmdLine
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
+
+    # Try simple sql statement to test connection to database
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST -e "show databases;" > /dev/null 2>&1
+    if [ $? -ne 0 ]                                                     # Error Connecting to DB
+        then sadm_write "Error connecting to Database.\n"               # Access Denied
+             return 1                                                   # Return Error to Caller
+    fi 
+
+    # Execute sql to get a list of active servers of the received o/s type into $sadm_tmp_file1
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
+    
+    # If file wasn't created or has a zero lenght, then no active system is found, return to caller.
+    if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
+        then sadm_write "${SADM_TEN_DASH}\n"                            # Print 10 Dash line
+             sadm_write "No Active '$WOSTYPE' system found.\n"          # Not ACtive Server MSG
+             return 0                                                   # Return Error to Caller
+    fi 
+}
 
 
 
@@ -803,45 +811,19 @@ process_servers()
 {
     WOSTYPE=$1                                                          # Should be aix/linux/darwin
 
-    # BUILD THE SELECT STATEMENT FOR ACTIVE SYSTEMS WITH SELECTED O/S 
-    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir," 
-    SQL="${SQL} srv_update_minute,srv_update_hour,srv_update_dom,srv_update_month,srv_update_dow,"
-    SQL="${SQL} srv_update_auto,srv_backup,srv_backup_month,srv_backup_dom,srv_backup_dow,"
-    SQL="${SQL} srv_backup_hour,srv_backup_minute,"
-    SQL="${SQL} srv_img_backup,srv_img_month,srv_img_dom,srv_img_dow,srv_img_hour,srv_img_minute "
-    SQL="${SQL} from server"
-    SQL="${SQL} where srv_ostype = '${WOSTYPE}' and srv_active = True "
-    SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
-
-    # SETUP DATABASE CONNECTION PARAMETERS
-    WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
-    CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
-    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/;/'" # Build CmdLine
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
-
-    # TRY SIMPLE SQL STATEMENT TO TEST CONNECTION TO DATABASE
-    $SADM_MYSQL $WAUTH -h $SADM_DBHOST -e "show databases;" > /dev/null 2>&1
-    if [ $? -ne 0 ]                                                     # Error Connecting to DB
-        then sadm_write "Error connecting to Database.\n"               # Access Denied
-             return 1                                                   # Return Error to Caller
-    fi 
-
-    # EXECUTE SQL TO GET A LIST OF ACTIVE SERVERS OF THE RECEIVED O/S TYPE INTO $SADM_TMP_FILE1
-    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
+    build_server_list "$WOSTYPE"
+    if [ $? -ne 0 ] ; then return 1 ; fi
     
-    # IF FILE WASN'T CREATED OR HAS A ZERO LENGHT, THEN NO ACTIVE SYSTEM IS FOUND, RETURN TO CALLER.
-    if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
-        then sadm_write "${SADM_TEN_DASH}\n"                            # Print 10 Dash line
-             sadm_write "No Active '$WOSTYPE' system found.\n"          # Not ACtive Server MSG
-             return 0                                                   # Return Error to Caller
-    fi 
+    sadm_writelog " "                                                   # Blank Line in log/Screen
+    sadm_writelog "=================================================="
+    sadm_writelog "Processing active '$WOSTYPE' server(s)" 
+    sadm_writelog " "                                                   # Blank Line in log/Screen
 
-    sadm_write "\n"                                                     # Blank Line in log/Screen
-    sadm_write "==================================================\n"
-    sadm_write "${BOLD}${YELLOW}Processing active '$WOSTYPE' server(s)${NORMAL}\n" 
-    sadm_write "\n"                                                     # Blank Line in log/Screen
+    # Create Standard SADMIN header for cron files (sadm_backup, sadm_osupdate, sadm_rear_backup)
     if [ "$WOSTYPE" = "linux" ] ; then create_crontab_files_header ; fi # Create crontab Files Headr
-    xcount=0; ERROR_COUNT=0;                                            # Initialize Counter 
+
+    # Process each servers included in $SADM_TMP_FILE1 created previously by build_server_list()
+    xcount=0; ERROR_COUNT=0;                                            # Initialize Counters 
     while read wline                                                    # Read Server Data from DB
         do                                                              # Line by Line
         xcount=`expr $xcount + 1`                                       # Incr Server Counter Var.
@@ -874,8 +856,8 @@ process_servers()
         rear_hrs=`      echo $wline|awk -F\; '{ print $24 }'`           # Rear Crontab Hrs field
         rear_min=`      echo $wline|awk -F\; '{ print $25 }'`           # Rear Crontab Min field
         #
-        sadm_write "\n"
-        sadm_write "${BOLD}Processing [$xcount] ${fqdn_server}${NORMAL}\n" 
+        sadm_writelog " "                                               # White Line
+        sadm_writelog "----- [$xcount] ${fqdn_server} -----"            # SHown count & Server Name
 
         # TO DISPLAY DATABASE COLUMN WE WILL USED, FOR DEBUGGING
         if [ $SADM_DEBUG -gt 7 ] 
@@ -890,9 +872,9 @@ process_servers()
                  sadm_writelog "fqdn_server   = $fqdn_server"           # Name of Output file
         fi
     
-        # Validate server SSH connectivity, hostname resolved ?,
+        # Test SSH connectivity and update uptime in Database 
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # Not on SADMIN Srv Test SSH
-            then validate_server_connectivity "$fqdn_server"            # Validate Server Access
+            then validate_server_connectivity "$fqdn_server"            # Test SSH, Upd uptime in DB
                  RC=$?                                                  # Save function return code 
                  if [ $RC -eq 2 ] ; then continue ; fi                  # Sporadic,Monitor Off,OSUpd
                  if [ $RC -eq 1 ] || [ $RC -eq 3 ]                      # Error SSH or Update Uptime
@@ -906,12 +888,10 @@ process_servers()
 
         # On Linux & O/S AutoUpdate is ON, Generate Crontab entry in O/S Update crontab work file
         if [ "$WOSTYPE" = "linux" ] && [ "$db_updauto" -eq 1 ]          # If O/S Update Scheduled
-#            then update_osupdate_crontab "$server_name" "${SADM_BIN_DIR}/$OS_SCRIPT" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
             then update_osupdate_crontab "$server_name" "\${SADMIN}/bin/$OS_SCRIPT" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
         fi
 
         # Generate Crontab Entry for this server in Backup crontab work file
-        #if [ "$WOSTYPE" = "linux" ] && [ $backup_auto -eq 1 ]          # If Backup set to Yes 
         if [ $backup_auto -eq 1 ]                                       # If Backup set to Yes 
             then update_backup_crontab "$server_name" "${server_dir}/bin/$BA_SCRIPT" "$backup_min" "$backup_hrs" "$backup_mth" "$backup_dom" "$backup_dow"
         fi
@@ -1077,11 +1057,7 @@ process_servers()
 # --------------------------------------------------------------------------------------------------
 check_all_rpt()
 {
-    sadm_writelog "${BOLD}${YELLOW}Verifying all Systems Monitors reports files (*.rpt) :${NORMAL}"
-    #sadm_writelog "  - Check 'Sysmon report file' (*.rpt) for Warning, Info and Errors."
-    if [ $SADM_DEBUG -gt 0 ] 
-        then sadm_writelog "find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \;" 
-    fi 
+    sadm_writelog "Verifying all Systems Monitors reports files (*.rpt) :"
     find $SADM_WWW_DAT_DIR -name *.rpt -exec cat {} \;  > $SADM_TMP_FILE3
     if [ $SADM_DEBUG -gt 0 ] 
         then sadm_write "\nFile containing results\n"
@@ -1345,7 +1321,8 @@ crontab_update()
 main_process()
 {
     # Process All Active Linux/Aix servers
-    > $FETCH_RPT                                                        # Create Empty Fetch RPT
+    > $FETCH_RPT_LOCAL                                                  # Create Monitor Empty RPT
+    > $FETCH_RPT_GLOBAL                                                 # Create Mon. in Glocal Dir
     LINUX_ERROR=0; AIX_ERROR=0 ; MAC_ERROR=0                            # Init. Error count to 0
     process_servers "linux"                                             # Process Active Linux
     LINUX_ERROR=$?                                                      # Save Nb. Errors in process
@@ -1354,21 +1331,23 @@ main_process()
     process_servers "darwin"                                            # Process Active MacOS
     MAC_ERROR=$?                                                        # Save Nb. Errors in process
 
-    # Print Total Script Errors
+    # Print Total Scripts Errors
     sadm_writelog " "                                                   # Separation Blank Line
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
-    sadm_writelog "${BOLD}${YELLOW}Systems Rsync Summary${NORMAL}"      # Rsync Summary 
+    sadm_writelog "Systems Rsync Summary"                               # Rsync Summary 
     SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR+$MAC_ERROR))              # ExitCode=AIX+Linux+Mac Err
     sadm_writelog " - Total Linux error(s)  : ${LINUX_ERROR}"           # Display Total Linux Errors
     sadm_writelog " - Total Aix error(s)    : ${AIX_ERROR}"             # Display Total Aix Errors
     sadm_writelog " - Total Mac error(s)    : ${MAC_ERROR}"             # Display Total Mac Errors
-    sadm_writelog "${BOLD}Rsync Total Error(s)     : ${SADM_EXIT_CODE}${NORMAL}"
+    sadm_writelog "Rsync Total Error(s)     : ${SADM_EXIT_CODE}"
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
     sadm_writelog " "                                                   # Separation Blank Line
+
+    # Go and check if crontabs need to be updated (sadm_backup, sadm_osupdate, sadm_rear_backup)
     if [ $(sadm_get_ostype) = "LINUX" ] ; then crontab_update ; fi      # Update crontab if needed
     
     # To prevent this script from showing very often on the monitor (This script is run every 5 min)
-    # we copy the updated .rch file in the web centrail directory. 
+    # we copy the updated .rch file in the SADMIN main web central directory. 
     if [ ! -d ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ]                # Web RCH repo Dir not exist
         then mkdir -p ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch          # Create it
     fi
@@ -1402,14 +1381,11 @@ update_server_uptime()
 {
     WSERVER=$1                                                          # Server Name to Update
     WUPTIME=$2                                                          # Uptime value to store
-    #WBDATE=$3                                                           # Boot Date and Time
     WCURDAT=`date "+%C%y.%m.%d %H:%M:%S"`                               # Get & Format Update Date
 
     SQL1="UPDATE server SET "                                           # SQL Update Statement
     SQL2="srv_uptime = '$WUPTIME', "                                    # System uptime value
     SQL3="srv_date_update = '${WCURDAT}' "                             # Last Update Date
-    #SQL3="srv_date_update = '${WCURDAT}', "                             # Last Update Date
-    #SQL4="srv_boot_date = '${WBDATE}' "                                 # Last Boot Date
     SQL4=" "                                                            # Last Boot Date
     SQL5="where srv_name = '${WSERVER}' ;"                              # Server name to update
     SQL="${SQL1}${SQL2}${SQL3}${SQL4}${SQL5}"                           # Create final SQL Statement
@@ -1438,6 +1414,7 @@ update_server_uptime()
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
+    echo -e "\nALL = $@ \n\n"
     while getopts "d:hv" opt ; do                                       # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
