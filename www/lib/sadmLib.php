@@ -541,7 +541,7 @@ function sadm_show_logo($WOS) {
             break;
         default:
             echo "<td class='dt-center'>";
-            echo "<img src='/images/logo_linux.png' style='width:32px;height:32px;'>";
+            echo "<img src='/images/logo_linux.png' style='width:24px;height:24px;'>";
             echo "${WOS}</td>\n";
             break;
     }
