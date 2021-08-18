@@ -28,6 +28,7 @@
 # 2019_08_19 Update: v3.6 Added Global Var. SADM_REAR_EXCLUDE_INIT for Rear Initial Options file.
 # 2020_12_26 Update: v3.7 Added Global Var. SADM_WWW_ARC_DIR for Server archive when deleted.
 #@2021_08_02 web: v3.8 Added 'SADM_PGM2DOC' for Doc to Links file definition.
+#@2021_08_17 web v3.9 Added "SADM_MONITOR_UPDATE_INTERVAL" 
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
@@ -190,6 +191,7 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_REAR_NFS_SERVER")        { define("SADM_REAR_NFS_SERVER"        , trim($fvalue));}
           if (trim($fname) == "SADM_REAR_NFS_MOUNT_POINT")   { define("SADM_REAR_NFS_MOUNT_POINT"   , trim($fvalue));}
           if (trim($fname) == "SADM_REAR_BACKUP_TO_KEEP")    { define("SADM_REAR_BACKUP_TO_KEEP"    , trim($fvalue));}
+          if (trim($fname) == "SADM_MONITOR_UPDATE_INTERVAL") {define("SADM_MONITOR_UPDATE_INTERVAL", trim($fvalue));}
     }
     fclose($handle);
 } else {
