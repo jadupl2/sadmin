@@ -44,6 +44,7 @@
 # 2021_02_13 Update: v1.1 First production release, added some command line option.
 # 2021_02_18 Update: v1.2 Lock FileName now created with remote node name.
 # 2021_02_19 Fix: v1.3 Add -l to Lock proper system name.
+# 2021_08_17 osupdate: v1.4  Change to use Library System Lock 
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -76,7 +77,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Library).
-export SADM_VER='1.3'                                   # Current Script Version
+export SADM_VER='1.4'                                   # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # Write log to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New Log
@@ -119,7 +120,7 @@ STAR_LINE=`printf %80s |tr " " "*"`         ; export STAR_LINE          # 80 equ
 export SCRIPT=""                                                        # Script to execute 
 export SERVER=""                                                        # Server Where script reside
 export LOCK="N"                                                         # Lock=No Monitor during run
-export LOCKNODE=""                                                      # System Name to Lock
+export LOCKNODE=""                                                      # Server name to Lock
 export SUSER=""                                                         # UserName Used to SSH Remote
 
 
@@ -131,7 +132,7 @@ export SUSER=""                                                         # UserNa
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${BOLD}${SADM_PN} [-d Level] [-h] [-v] [-s scriptName] [-n systemName]${NORMAL}" 
+    printf "\n${BOLD}${SADM_PN} [-d Level] [-h] [-v] [-l systemName ] [-u username] [-s scriptName] [-n systemName]${NORMAL}" 
     printf "\n\t${BOLD}-d${NORMAL}   (Debug Level [0-9])"
     printf "\n\t${BOLD}-h${NORMAL}   (Display this help message)"
     printf "\n\t${BOLD}-v${NORMAL}   (Show Script Version Info)"
@@ -144,14 +145,10 @@ show_usage()
 }
 
 
-
-
-
-
 # --------------------------------------------------------------------------------------------------
 #                      Process Linux servers selected by the SQL
 # --------------------------------------------------------------------------------------------------
-rcmd_osupdate()
+rmcd_start()
 {
 
     # Get info about server in Database
@@ -198,23 +195,13 @@ rcmd_osupdate()
                 sadm_write "${SADM_OK} SADMIN Path added to script name, now changed to $SCRIPT'.\n" 
         fi
 
-        # Check Existence of script on remote server and that it is executable.
-        #pgm="${SCRIPT}"
-        #response=$($SADM_SSH_CMD $fqdn_server "if [ -x $pgm ] ;then echo 'ok' ;else echo 'error' ;fi")
-        #if [ "$response" != "ok" ]
-        #    then sadm_write "${SADM_ERROR} '$pgm' don't exist or not executable on $fqdn_server.\n"
-        #         sadm_write "Couldn't start the remote script.\n"
-        #         return 1
-        #    else sadm_write "${SADM_OK} '$pgm' exist & executable on $fqdn_server.\n"
-        #fi 
-
         # If requested (-l), created a server lock file, to prevent generation monitoring error.
-        if [ "$LOCK" = "Y" ]
-           then LOCK_FILE="${SADM_TMP_DIR}/${LOCKNODE}.lock"         # Prevent Monitor lock file    
-                echo "$SADM_INST - $(date)" > ${LOCK_FILE}              # Create Lock File
-                if [ $? -eq 0 ]                                         # If Touch went OK
-                   then sadm_writelog "${SADM_OK} System '${LOCKNODE}' lock file (${LOCK_FILE}) created."  
-                   else sadm_writelog "${SADM_ERROR} Creating '${LOCKNODE}' lock file '${LOCK_FILE}'" 
+        if [ "$LOCK" = "Y" ]                                            # cmdline option lock system
+           then sadm_create_lockfile "${LOCKNODE}"                      # Create System Lock File
+                if [ $? -ne 0 ]                                         # If Touch went OK
+                   then ERROR_COUNT=$(($ERROR_COUNT+1))                 # Increment Error Counter
+                        sadm_writelog "${SADM_ERROR} Aborting process for '${SERVER}'."
+                        return 1                                        # Return Error to caller 
                 fi
         fi
         
@@ -231,10 +218,7 @@ rcmd_osupdate()
         fi
 
         # If the lock file exist, then time to remove it.
-        if [ -f "$LOCK_FILE" ]                                          # If Lock FIle Exist
-            then rm -f $LOCK_FILE >/dev/null 2>&1                       # Remove host Lock File    
-                 sadm_writelog "${SADM_OK} Lock File ($LOCK_FILE) removed."  
-        fi         
+        if [ "$LOCK" = "Y" ] ; then sadm_remove_lockfile "$LOCKNODE" ; fi # Go remove the lock file
         done < $SADM_TMP_FILE1
 
     if [ "$ERROR_COUNT" -ne 0 ]
@@ -255,9 +239,10 @@ rcmd_osupdate()
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
-    while getopts "d:hvs:n:u:l:p" opt ; do                               # Loop to process Switch
-        case $opt in
+    while getopts ":u:l:n:s:hd:vp" opt; do 
+        case "${opt}" in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               echo -e "\nDEBUG\n"
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
@@ -272,14 +257,15 @@ function cmd_options()
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
-            s) SCRIPT=$OPTARG                                           # Script to execute on system
+            n) SERVER=$OPTARG                                           # Server where script reside 
+               ;;
+            s) 
+               SCRIPT=$OPTARG                                           # Script to execute on system
                ;;
             u) SUSER=$OPTARG                                            # User use to SSH to system
                ;;
-            n) SERVER=$OPTARG                                           # Server where script reside 
-               ;;
-            l) LOCK="Y"                                                 # No Monitor while running
-               LOCKNODE=$OPTARG                                         # System Name to LOck
+            l) LOCKNODE=$OPTARG                                         # Save System Name to Lock
+               LOCK="Y"                                                 # No Monitor while running
                ;;                                                       # the script.
             p) PREFIX="Y"                                               # Prefix the ScriptName with 
                ;;                                                       # $SADMIN Path on RemoteSys.
@@ -312,7 +298,7 @@ function cmd_options()
              exit 1                                                     # Exit To O/S
     fi
 
-    rcmd_osupdate                                                       # Go Update Server
+    rmcd_start                                                       # Go Update Server
     SADM_EXIT_CODE=$?                                                   # Save Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
