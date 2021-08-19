@@ -3,7 +3,6 @@
 #   Title    : sadm_nmon_watcher.sh 
 #   Author   : Jacques Duplessis 
 #   Synopsis : Restart nmon daemon, if it's not already running (with end time at 23:58:58)
-#               Only use in the Startup Script now, because nom Watcher is now part of SysMon.
 #   Version  : 1.5
 #   Date     : November 2015 
 #   Requires : sh
@@ -22,7 +21,6 @@
 # 2018_06_04    V2.5 Adapt to new Libr.
 # 2018_09_19    V2.6 Added Alert Group
 #@2021_06_12 nolog: V2.7 Update SADMIN Section, add std command line option 
-#
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
