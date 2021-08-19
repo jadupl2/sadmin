@@ -49,6 +49,7 @@
 #@2021_08_06 web v2.19 On System Monitor page, notification type code now show description.
 #@2021_08_07 web v2.20 New page redesign, Warning, Error, Info now have separate section.
 #@2021_08_17 web v2.21 Use the refresh interval from SADMIN configuration file. 
+#@2021_08_18 web v2.22 Make Bold section title
 #
 #Why not include last script that ran up to 2 hours ago ?
 #
@@ -88,7 +89,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.21" ;                                                       # Current version number
+$SVER  = "2.22" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -228,19 +229,19 @@ function sysmon_page_heading($HEAD_TYPE)
 
     # Display Section Heading and Prefix Section with Environment
     switch (strtoupper($HEAD_TYPE)) {
-        case 'E' :  echo "\n<br><H3>Critical ALert</H3>" ;
+        case 'E' :  echo "\n<br><H3><strong>Critical ALert</strong></H3>" ;
                     $HCOLOR = "Red";
                     break;
-        case 'W' :  echo "\n<br><H3>Warning Alert</H3>" ;
+        case 'W' :  echo "\n<br><H3><strong>Warning Alert</strong></H3>" ;
                     $HCOLOR = "Yellow";
                     break;
-        case 'R' :  echo "\n<br><H3>Running Processes</H3>" ;
+        case 'R' :  echo "\n<br><H3><strong>Running Processes</strong></H3>" ;
                     $HCOLOR = "Lime";
                     break;
-        case 'I' :  echo "\n<br><H3>Information Section</H3>" ;
+        case 'I' :  echo "\n<br><H3><strong>Information Section</strong></H3>" ;
                     $HCOLOR = "SkyBlue";
                     break;
-        case 'X' :  echo "\n<br><H3>Unknown Section</H3>" ;
+        case 'X' :  echo "\n<br><H3><strong>Unknown Section</strong></H3>" ;
                     $HCOLOR = "Lavender";
                     break;
     }
@@ -401,8 +402,6 @@ function display_line($line,$BGCOLOR,$con)
     $log_name = SADM_WWW_DAT_DIR . "/" .$whost. "/log/" .trim($wlog); # Full Path to Script Log
     $wrch =  $whost . "_" . $wdesc . ".rch";                        # Construct Script rch Name
     $rch_name = SADM_WWW_DAT_DIR . "/" .$whost. "/rch/" .trim($wrch); # Full Path to Script rch  
-    $wpdf =  $wdesc . ".pdf";                                       # Documentation pdf Name
-    $pdf_name = SADM_WWW_DOC_DIR . "/pdf/scripts/" . trim($wpdf);   # Full Path to Script pdf  
     echo "<td bgcolor=$BGCOLOR>";                                   # Start of Cell
     echo $wdesc ;                                                   # Desc. coming from rpt file
 
