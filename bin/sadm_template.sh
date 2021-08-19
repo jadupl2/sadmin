@@ -33,18 +33,18 @@
 #   - The '@' identify changes to be include in next release (To Create Change log).
 #   - The '@' will be removed automatically when new version is release.
 # Field 2: 
-#   STANDARD TYPES OF CHANGES (IGNORE CASE)
-#   - "Added/New" for new features              - "Update" Changes of existing functionality.
-#   - "Remove"    for now removed features      - "Fix"    for any bug fixes.
-#   - "Security"  in case of vulnerabilities    - "Doc"    Modify code comments or documentation.
-#   - "Minor"     in case of minor modification - "Nolog"  Minor change, won't appear in log.
-#   - "perf"      Optimize, better performance 
-#   SADMIN RELATED CHANGES
-#   - "Web"     Web Interface modification      - "install"  Install,Uninstall & Update changes.
-#   - "cmdline" Command line tools changes.     - "template" Library,Templates,Libr demo. 
-#   - "mon"     System Monitor related.         - "backup"   Backup related modification or fixes.
-#   - "config"  Config files modification.      - "server"   Server related modification or fixes.
-#   - "client"  Server related modifications.   - "osupdate" O/S Update modification or fixes.
+#   | Section   | Description                           | 
+#   |:---       | :---                                  |
+#   | Web       | Web Interface modification            | 
+#   | install   | Install,Uninstall & Update changes    | 
+#   | cmdline   | Command line tools changes            | 
+#   | template  | Library,Templates,Libr demo           | 
+#   | mon       | System Monitor related                | 
+#   | backup    | Backup related modification or fixes  | 
+#   | config    | Config files modification             | 
+#   | server    | Server related modification or fixes  | 
+#   | client    | Server related modifications          | 
+#   | osupdate  | O/S Update modification or fixes      |  
 # Field 3: Version number '999.999' (Max 7 Char., No spaces)
 # Field 4: Description of change (Max 60 Characters)
 #
@@ -52,9 +52,6 @@
 #---------------------------------------------------------------------------------------------------
 # CHANGE LOG
 # 2021_07_01 New     v1.0  Initial Beta Version
-#
-#---------------------------------------------------------------------------------------------------
-#@YYYY_MM_DD Type    vxx.xx 123456789*123456789*123456789*123456789*123456789*123456789*-------------
 #---------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
