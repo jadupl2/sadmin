@@ -43,6 +43,7 @@
 # 2020_07_29 Update: v3.24 Minor adjustments to screen and log presentation.
 # 2020_12_12 Update: v3.25 Minor adjustments.
 # 2021_05_04 Update: v3.26 Adjust some message format of the log.
+#@2021_08_19 osupdate v3.27 Fix prompting issue in .deb distributions.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -75,7 +76,7 @@
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.26'                              # Your Current Script Version
+    export SADM_VER='3.27'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -128,59 +129,13 @@ show_usage()
 {
     printf "\nUsage: %s%s [options]" "${BOLD}${CYAN}" $(basename "$0")
     printf "\n\t${BOLD}${YELLOW}-d${NORMAL} Set Debug (Verbose) Level [0-9]"
-    printf "\n\t${BOLD}${YELLOW}-h${NORMAL} Display this help message)"
+    printf "\n\t${BOLD}${YELLOW}-h${NORMAL} Display this help message"
+    printf "\n\t${BOLD}${YELLOW}-v${NORMAL} Show Script Version Info"
     printf "\n\t${BOLD}${YELLOW}-r${NORMAL} Reboot server after update (if needed & config allowed)"
     printf "\n\n" 
 }
 
 
-
-# --------------------------------------------------------------------------------------------------
-# Command line Options functions
-# Evaluate Command Line Switch Options Upfront
-# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
-# --------------------------------------------------------------------------------------------------
-function cmd_options()
-{
-    while getopts "hrvd:" opt ; do                                      # Loop to process Switch
-        case $opt in
-            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
-               if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
-                       show_usage                                       # Display Help Usage
-                       sadm_stop 1                                      # Close/Trim Log & Del PID
-                       exit 1                                           # Exit Script with Error
-               fi
-               sadm_write "Debug Level set to ${SADM_DEBUG}.\n"         # Display Debug Level
-               ;;                                                       
-            r) WREBOOT="Y"                                              # Reboot after Upd. if allow
-               SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'` # SADMIN Hostname
-               if [ "$HOSTNAME" = "$SADM_SRV_NAME" ]                    # We are on SADM Master Srv
-                  then  sadm_write "No Automatic reboot on the SADMIN Main server - $SADM_SERVER \n"
-                        sadm_write "Automatic reboot cancelled for this server.\n"
-                        sadm_write "You will need to reboot system at your choosen time.\n\n"
-                        WREBOOT="N"                                     # No Auto Reboot on SADM Srv
-                  else  sadm_write "Reboot requested after successfull update.\n"  
-               fi
-               ;;
-            h) show_usage                                               # Show Help Usage
-               sadm_stop 0
-               exit 0                                                   # Back to shell
-               ;;
-            v) sadm_show_version                                        # Show Script Version Info
-               sadm_stop 0
-               exit 0                                                   # Back to shell
-               ;;
-           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
-               show_usage                                               # Display Help Usage
-               sadm_stop 1
-               exit 1                                                   # Exit with Error
-               ;;
-        esac                                                            # End of case
-    done                                                                # End of while
-    return 
-}
 
 
 
@@ -396,21 +351,34 @@ run_dnf()
 
 
 
+
+
+
 # --------------------------------------------------------------------------------------------------
 #                 Function to update the server with apt-get command
 # --------------------------------------------------------------------------------------------------
 run_apt_get()
 {
     sadm_write "Starting $(sadm_get_osname) update process ...\n"
-    #sadm_write "Updating O/S, running 'export DEBIAN_FRONTEND=noninteractive ; apt-get -y upgrade'\n"
-    #export DEBIAN_FRONTEND=noninteractive ; apt-get -y upgrade >>$SADM_LOG 2>&1
-    sadm_write "Updating O/S, running 'export DEBIAN_FRONTEND=noninteractive ; apt-get -y dist-upgrade'\n"
-    export DEBIAN_FRONTEND=noninteractive ; apt-get -y dist-upgrade >>$SADM_LOG 2>&1
+    
+    CMD="DEBIAN_FRONTEND='noninteractive' apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade"
+    sadm_writelog "Running: $CMD"
+    DEBIAN_FRONTEND='noninteractive' apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade
     RC=$?
     if [ "$RC" -ne 0 ]
-       then sadm_write "Return Code of \"apt-get -y upgrade\" is ${RC}.\n"
+       then sadm_writelog "Return Code of \"apt-get -y upgrade\" is ${RC}."
             return $RC
-       else sadm_write "[OK] Update done with success, return code is ${RC}.\n"
+       else sadm_writelog "[OK] \"apt-get -y upgrade\" done with success."
+    fi
+
+    CMD="DEBIAN_FRONTEND='noninteractive' apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade"
+    sadm_writelog "Running: $CMD"
+    DEBIAN_FRONTEND='noninteractive' apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade
+    RC=$?
+    if [ "$RC" -ne 0 ]
+       then sadm_writelog "Return Code of \"apt-get -y dist-upgrade\" is ${RC}."
+            return $RC
+       else sadm_writelog "[OK] \"apt-get -y dist-upgrade\" ran with success."
     fi
     
     sadm_write "\nRemove orphaned packages, running 'apt-get autoremove'.\n"
@@ -509,29 +477,16 @@ perform_osupdate()
             SADM_EXIT_CODE=$?
             ;;
     esac
-
     return $SADM_EXIT_CODE
 }
 
 
-
 # --------------------------------------------------------------------------------------------------
-# S T A R T   O F   M A I N    P R O G R A M
+# Main Process 
 # --------------------------------------------------------------------------------------------------
 #
-    sadm_start                                                          # SADMIN Initialization
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Init went wrong
-    cmd_options "$@"                                                    # Check command-line Options
-
-    # If you want this script to be run only by root user, uncomment the lines below.
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root
-        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
-             sadm_writelog "Try 'sudo ${0##*/}'."                       # Suggest using sudo
-             sadm_write "Process aborted.\n"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
-
+main_process()
+{
     # Check for Automatic Update
     UPDATE_AVAILABLE="N"                                                # Assume No Upd. Available
     check_available_update                                              # Update Avail./apt-get upd
@@ -559,5 +514,74 @@ perform_osupdate()
         then sadm_write "Update successful, system will reboot in 1 Minute.\n"
              shutdown -r +1 "System will reboot in 1 minute."           # Issue Shutdown & Reboot
     fi
+
+    return $SADM_EXIST_CODE
+}
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Command line Options functions
+# Evaluate Command Line Switch Options Upfront
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# --------------------------------------------------------------------------------------------------
+function cmd_options()
+{
+    while getopts "hrvd:" opt ; do                                      # Loop to process Switch
+        case $opt in
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 1                                           # Exit Script with Error
+               fi
+               printf "Debug Level set to ${SADM_DEBUG}."               # Display Debug Level
+               ;;                                                       
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) sadm_show_version                                        # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -${OPTARG}.\n"                 # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+            r) WREBOOT="Y"                                              # Reboot after Upd. if allow
+               SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'` # SADMIN Hostname
+               if [ "$HOSTNAME" = "$SADM_SRV_NAME" ]                    # We are on SADM Master Srv
+                  then  printf "No Automatic reboot on the SADMIN Main server - $SADM_SERVER \n"
+                        printf "Automatic reboot cancelled for this server.\n"
+                        printf "You will need to reboot system at your chosen time.\n\n"
+                        WREBOOT="N"                                     # No Auto Reboot on SADM Srv
+                  else  printf "Reboot requested after successfull update.\n"  
+               fi
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    return 
+}
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+# S T A R T   O F   M A I N    P R O G R A M
+# --------------------------------------------------------------------------------------------------
+#
+    cmd_options "$@"                                                    # Check command-line Options
+    sadm_start                                                          # SADMIN Initialization
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Init went wrong
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root
+        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
+             sadm_writelog "Try 'sudo ${0##*/}'."                       # Suggest using sudo
+             sadm_write "Process aborted.\n"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
+    fi
+    main_process                                                        # Check/Perform O/S Update
+    SADM_EXIT_CODE=$?                                                   # Save Status returned 
     sadm_stop "$SADM_EXIT_CODE"                                         # End Process with exit Code
     exit  "$SADM_EXIT_CODE"                                             # Exit script
