@@ -81,7 +81,8 @@
 # 2021_06_06 server: v3.27 Change generation of /etc/cron.d/sadm_osupdate to use $SADMIN variable.
 # 2021_06_11 server: v3.28 Collect system uptime and store it in DB and update SADMIN section 
 # 2021_07_19 server: v3.29 Sleep 5 seconds between rsync retries, if first failed.
-# 2021_08_17 server: v3.30 Performance improvement et code restructure
+#@2021_08_17 server: v3.30 Performance improvement et code restructure
+#@2021_08_27 server v3.31 Increase ssh connection Timeout "-o ConnectTimeout=3".
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
@@ -129,7 +130,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.30'                                     # Script Version
+export SADM_VER='3.31'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -718,7 +719,7 @@ validate_server_connectivity()
 
     # Try to get uptime from system to test if ssh to system is working
     # -o ConnectTimeout=1 -o ConnectionAttempts=1 
-    wuptime=$($SADM_SSH_CMD -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
+    wuptime=$($SADM_SSH_CMD -o ConnectTimeout=3 -o ConnectionAttempts=3 $FQDN_SNAME uptime 2>/dev/null)
     RC=$?                                                               # Save Error Number
     if [ $RC -eq 0 ]                                                    # If SSH Worked
         then GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
