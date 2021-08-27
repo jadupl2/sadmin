@@ -33,6 +33,7 @@
 # 2019_09_20 Update v2.5 Show History (RCH) content using same uniform way.
 # 2020_12_13 Update v2.6 Add link in the heading to view the Daily Scripts Report, if HTML exist.
 #@2021_08_18 web 2.7 Add link to Script documentation, no show alert group name & Members.
+#@2021_08_27 web 2.8 Fix link to History file (RCH).
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -62,7 +63,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG              = False ;                                           # Debug Activated True/False
-$SVER               = "2.7" ;                                           # Current version number
+$SVER               = "2.8" ;                                           # Current version number
 $CREATE_BUTTON      = False ;                                           # Yes Display Create Button
 $URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
 $URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
@@ -155,23 +156,23 @@ function display_script_array($con,$wpage_type,$script_array) {
             echo "\n<td class='dt-left'>"   . $cname ;                  # Server Name Cell
 
             # Display links to access the log file (If exist)
-            $LOGFILE = trim("$cserver_${cname}.log");                         # Add .log to Script Name
+            $LOGFILE = trim("${cserver}_${cname}.log");                 # Add .log to Script Name
             $log_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $cserver . "_" . $LOGFILE ;
             if (file_exists($log_name)) {
                 echo "\n<a href='" . $URL_VIEW_FILE . "?filename=" . 
                 $log_name . "' data-toggle='tooltip' title='View script log file'>&nbsp; [log]</a>";
             }else{
-                echo "&nbsp;[No Log]";                                          # If No log exist for script
+                echo "&nbsp;[No Log]";                                  # If No log exist for script
             }
  
             # Display links to access history (rch) file (If exist)
-            $RCHFILE = "$cserver_${cname}.rch";                         # Add .log to Script Name
-            $rch_name  = SADM_WWW_DAT_DIR . "/" . $cserver . "/rch/" . $cserver . "_" . trim($RCHFILE) ;
+            $RCHFILE = trim("${cserver}_${cname}.rch");                 # Add .rch to Script Name
+            $rch_name  = SADM_WWW_DAT_DIR . "/" . $cserver . "/rch/" . $RCHFILE ;
             if (file_exists($rch_name)) {
                 echo "\n<a href='" . $URL_VIEW_RCH . "?host=". $cserver ."&filename=". $RCHFILE . 
                    "' data-toggle='tooltip' title='View History (rch) file'>&nbsp; [rch]</a>";
             }else{
-                echo "&nbsp;[No RCH]";                                         # If no RCH Exist
+                echo "&nbsp;[No RCH]";                                  # If no RCH Exist
             }
             
             # Display links to view script documentation (If exist)
