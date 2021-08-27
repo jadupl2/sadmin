@@ -37,6 +37,7 @@
 # 2019_09_20 Update v2.10 Show History (RCH) content using same uniform way.
 # 2019_09_23 Update v2.11 When initiating Schedule change from here, return to this page when done.
 # 2019_12_29 Fix: v2.12 Bottom titles was different that the heading.
+# 2019_12_29 web v2.13 Heading modified and now on two rows.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -48,24 +49,31 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 # DataTable Initialization Function
 ?>
 <script>
-    $(document).ready(function() {
-        $('#sadmTable').DataTable( {
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "bJQueryUI" : true,
-            "paging"    : true,
-            "ordering"  : true,
-            "info"      : true
-        } );
-    } );
+$(document).ready(function() {
+   $('#sadmTable').DataTable( {
+    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+    "paging"    : true
+   } );
+} );
 </script>
 <?php
-
+#<script>
+#$(document).ready(function() {
+#    $('#sadmTable').DataTable( {
+#        "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+#        "bJQueryUI" : true,
+#        "paging"    : true,
+#        "ordering"  : true,
+#        "info"      : true
+#    } );
+#} );
+#</script>
 
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.12" ;                                               # Current version number
+$WVER          = "2.13" ;                                               # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
@@ -87,38 +95,57 @@ $CREATE_BUTTON = False ;                                                # Yes Di
 function setup_table() {
 
     # Table creation
-    echo "<div id='SimpleTable'>"; 
-    echo '<table id="sadmTable" class="display" row-border width="100%">';   
+    #echo "<div id='SimpleTable'>"; 
+    #echo '<table id="sadmTable" class="display"  cell-border width="90%">';   
+    echo '<table id="sadmTable" class="display compact" width="90%">';   
+    #echo '<table id="sadmTable" class="display compact"  class="cell-border compact stripe" width="90%">';   
+#row-border class="display compact" class="cell-border compact stripe">
 
     # Table Heading
     echo "<thead>\n";
     echo "<tr>\n";
-    echo "<th>Server</th>\n";
+    echo "<th>System</th>\n";
+    echo "<th class='text-center' colspan='5'>&nbsp;</th>\n";
+    echo "<th class='text-center'>Update</th>\n";
+    echo "<th class='text-center'>Log</th>\n";
+    echo "<th class='text-center'>Schedule</th>\n";
+    echo "<th class='text-center'>Reboot</th>\n";
+    echo "</tr>\n"; 
+    echo "<tr>\n";
+    echo "<th>Name</th>\n";
     echo "<th class='dt-head-center'>O/S</th>\n";                       # Center Header Only
     echo "<th class='dt-head-center'>Version</th>\n";                   # Center Header Only
     echo "<th class='text-center'>Last Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Next Update</th>\n";
-    echo "<th class='text-center'>Update Occurrence</th>\n";
-    echo "<th class='text-center'>Log / History</th>\n";
-    echo "<th class='text-center'>Auto Update</th>\n";
-    echo "<th class='text-center'>Reboot</th>\n";
+    echo "<th class='text-center'>Occurrence</th>\n";
+    echo "<th class='text-center'>History</th>\n";
+    echo "<th class='text-center'>Active</th>\n";
+    echo "<th class='text-center'>After Update</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
 
     # Table Footer
     echo "<tfoot>\n";
     echo "<tr>\n";
-    echo "<th>Server</th>\n";
-    echo "<th class='dt-head-center'>O/S</th>\n"; 
-    echo "<th class='dt-head-center'>Version</th>\n";  
+    echo "<th>System</th>\n";
+    echo "<th class='text-center' colspan='5'>&nbsp;</th>\n";
+    echo "<th class='text-center'>Update</th>\n";
+    echo "<th class='text-center'>Log</th>\n";
+    echo "<th class='text-center'>Schedule</th>\n";
+    echo "<th class='text-center'>Reboot</th>\n";
+    echo "</tr>\n"; 
+    echo "<tr>\n";
+    echo "<th>Name</th>\n";
+    echo "<th class='dt-head-center'>O/S</th>\n";                       # Center Header Only
+    echo "<th class='dt-head-center'>Version</th>\n";                   # Center Header Only
     echo "<th class='text-center'>Last Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Next Update</th>\n";
-    echo "<th class='text-center'>Update Occurrence</th>\n";
-    echo "<th class='text-center'>Log / History</th>\n";
-    echo "<th class='text-center'>Auto Update</th>\n";
-    echo "<th class='text-center'>Reboot</th>\n";
+    echo "<th class='text-center'>Occurrence</th>\n";
+    echo "<th class='text-center'>History</th>\n";
+    echo "<th class='text-center'>Active</th>\n";
+    echo "<th class='text-center'>After Update</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
  
@@ -288,6 +315,6 @@ function display_data($count, $row) {
         display_data($count, $row);                                     # Display Next Server
     }
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
-    echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
+    #echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
