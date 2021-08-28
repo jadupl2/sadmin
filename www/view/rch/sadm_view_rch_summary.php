@@ -33,7 +33,8 @@
 # 2019_09_20 Update v2.5 Show History (RCH) content using same uniform way.
 # 2020_12_13 Update v2.6 Add link in the heading to view the Daily Scripts Report, if HTML exist.
 #@2021_08_18 web 2.7 Add link to Script documentation, no show alert group name & Members.
-#@2021_08_27 web 2.8 Fix link to History file (RCH).
+#@2021_08_27 web 2.8 Fix link to History file (*.rch).
+#@2021_08_28 web 2.9 Fix link to log file (*.log).
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -41,7 +42,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load P
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript</Head>
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
  
-# DataTable Initialisation Function
+# DataTable Initialization Function
 ?>
 <script>
     $(document).ready(function() {
@@ -63,7 +64,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG              = False ;                                           # Debug Activated True/False
-$SVER               = "2.8" ;                                           # Current version number
+$SVER               = "2.9" ;                                           # Current version number
 $CREATE_BUTTON      = False ;                                           # Yes Display Create Button
 $URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
 $URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
@@ -150,14 +151,12 @@ function display_script_array($con,$wpage_type,$script_array) {
             echo "<a href='" . $URL_HOST_INFO . "?sel=" . $cserver . 
                  "' data-toggle='tooltip' title='" . $wdesc . "'>" . $cserver . "</a></td>";
             
-                 
-
             # DISPLAY SCRIPT NAME
             echo "\n<td class='dt-left'>"   . $cname ;                  # Server Name Cell
 
             # Display links to access the log file (If exist)
             $LOGFILE = trim("${cserver}_${cname}.log");                 # Add .log to Script Name
-            $log_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $cserver . "_" . $LOGFILE ;
+            $log_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $LOGFILE ;
             if (file_exists($log_name)) {
                 echo "\n<a href='" . $URL_VIEW_FILE . "?filename=" . 
                 $log_name . "' data-toggle='tooltip' title='View script log file'>&nbsp; [log]</a>";
