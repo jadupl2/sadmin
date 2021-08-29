@@ -32,9 +32,10 @@
 # 2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
 # 2019_09_20 Update v2.5 Show History (RCH) content using same uniform way.
 # 2020_12_13 Update v2.6 Add link in the heading to view the Daily Scripts Report, if HTML exist.
-#@2021_08_18 web 2.7 Add link to Script documentation, no show alert group name & Members.
-#@2021_08_27 web 2.8 Fix link to History file (*.rch).
-#@2021_08_28 web 2.9 Fix link to log file (*.log).
+#@2021_08_18 web v2.7 Add link to Script documentation, no show alert group name & Members.
+#@2021_08_27 web v2.8 Fix link to History file (*.rch).
+#@2021_08_28 web v2.9 Fix link to log file (*.log).
+#@2021_08_29 web v2.10 Show effective alert group name instead of 'default' and member as tooltip.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -64,7 +65,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG              = False ;                                           # Debug Activated True/False
-$SVER               = "2.9" ;                                           # Current version number
+$SVER               = "2.10" ;                                           # Current version number
 $CREATE_BUTTON      = False ;                                           # Yes Display Create Button
 $URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
 $URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
@@ -184,111 +185,47 @@ function display_script_array($con,$wpage_type,$script_array) {
             echo "</td>" ;
 
 
-
-
             # DISPLAY START DATE, START TIME
-            echo "\n<td class='dt-center'>" . $cdate1  . "&nbsp;" . $ctime1 . "</td>";       # Start Date Cell
+            echo "\n<td class='dt-center'>" . $cdate1  . "&nbsp;" . $ctime1 . "</td>"; 
 
             # DISPLAY END DATE, END TIME AND ELAPSE SCRIPT TIME
             if ($ccode == 2) {
                 echo "\n<td class='dt-center'>............</td>";       # Running - No End date Yet
-                echo "\n<td class='dt-center'>............</td>";       # Running - No End date Yet
+                echo "\n<td class='dt-center'>............</td>";       # Running - No End time Yet
             }else{
-                echo "\n<td class='dt-center'>" . $cdate2 . "&nbsp;" . $ctime2 . "</td>";  # Script Ending Time
+                echo "\n<td class='dt-center'>" . $cdate2 . "&nbsp;" . $ctime2 . "</td>";  
                 echo "\n<td class='dt-center'>" . $celapsed . "</td>";  # Script Elapse Time
             }
 
-            # If 'default' alert group is used, get the real alert group name used.
-            if ($calert == "default") {                            # If Alert Group is default
-                $CMD="grep -i \"^default\" " . SADM_ALERT_FILE . " |awk '{print$3}' |tr -d ' '";
-                if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; } 
-                unset($output_array);                                       # Clear output Array
-                exec ( $CMD , $output_array, $RCODE);                       # Execute command
-                if ($DEBUG) {                                               # If in Debug Mode
-                    echo "\n<br>Return code of command : " . $RCODE ;       # Command ReturnCode
-                    echo "\n<br>Content of output array:";                  # Show what's next
-                    echo '<code><pre>';                                     # Code to Show
-                    print_r($output_array);                                 # Show Cmd output
-                    echo '</pre></code>';                                   # End of code 
-                }
-                $calert=$output_array[0];                                   # Real Alert Grp Name
-            }
-
-            # Get the group Alert Type (M=Mail, S=SLack, T=Texto, C=Cellular)
-            $CMD="grep -i \"^" . $calert . "\" " . SADM_ALERT_FILE . " |awk '{print$2}' |tr -d ' '";
-            if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ;}     # Cmd we execute
-            unset($output_array);                                           # Clear output Array
-            exec ( $CMD , $output_array, $RCODE);                           # Execute command
-            if ($DEBUG) {                                                   # If in Debug Mode
-                echo "\n<br>Return code of command is : " . $RCODE ;        # Command ReturnCode
-                echo "\n<br>Content of output array :";                     # Show what's next
-                echo '<code><pre>';                                         # Code to Show
-                print_r($output_array);                                     # Show Cmd output
-                echo '</pre></code>';                                       # End of code 
-            }
-            $alert_group_type=$output_array[0];                             # GrpType t,m,s,c
-            if ($DEBUG) { echo "3) alert_group=..$alert_group.. alert_type=..$alert_type.."; }               
-
-            # Get Alert group members for tooltip
-            $CMD="grep -i \"^" . $calert . "\" " . SADM_ALERT_FILE . " |awk '{print$3}' |tr -d ' '";
-            if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ;}     # Cmd we execute
-            unset($output_array);                                           # Clear output Array
-            exec ( $CMD , $output_array, $RCODE);                           # Execute command
-            if ($DEBUG) {                                                   # If in Debug Mode
-                echo "\n<br>Return code of command is : " . $RCODE ;        # Command ReturnCode
-                echo "\n<br>Content of output array :";                     # Show what's next
-                echo '<code><pre>';                                         # Code to Show
-                print_r($output_array);                                     # Show Cmd output
-                echo '</pre></code>';                                       # End of code 
-            }
-            $alert_member=$output_array[0];                                 # Alert Group Member
-
-            # Build to tooltip for the alert group 
-            switch (strtoupper($alert_group_type)) {
-                case 'M' :  $stooltip="Alert send by email to " . $alert_member ;  # Alert Sent by Email
-                            break;
-                            ;; 
-                case 'C' :  $stooltip="Alert send by SMS to " . $alert_member ;    # Alert Sent by SMS
-                            break;
-                            ;; 
-                case 'T' :  $stooltip="Alert send by SMS to " . $alert_member ;    # Alert Sent by SMS
-                            break;
-                            ;; 
-                case 'S' :  $stooltip="Alert send with Slack to " . $alert_member ;# Alert Sent by SMS
-                            break;
-                            ;; 
-                default  :  $stooltip="Invalid Alert type(" . $alert_type .")";
-                            break;
-                            ;;
-            }                    
-
+            list($calert, $alert_group_type, $stooltip) = get_alert_group_data ($calert) ;
+            
             # Show Alert Group with Tooltip
             echo "\n<td class='dt-center'>";
             echo "<span data-toggle='tooltip' title='" . $stooltip . "'>"; 
             echo $calert . "</span>(" . $alert_group_type . ")</td>"; 
 
-            # Display the alert group type (0=none, 1=alert onerror, 2=alert on ok, 3=always)
 
+            # Display the alert group type (0=none, 1=alert onerror, 2=alert on ok, 3=always)
             # Show Alert type Meaning
-            switch ($ctype) {                                                   # 0=No 1=Err 2=Success 3=All
-                case 0 :                                                        # 0=Don't send any Alert
-                    $alert_type_msg="No alert(0)" ;                             # Mess to show on page
+            switch ($ctype) {                                           # 0=No 1=Err 2=Success 3=All
+                case 0 :                                                # 0=Don't send any Alert
+                    $alert_type_msg="No alert(0)" ;                     # Mess to show on page
                     $etooltip="SADM_ALERT is to 0 in script " . $cname ;
                     break;
-                case 1 :                                                        # 1=Send Alert on Error
-                    $alert_type_msg="Alert on error(1)" ;                   # Mess to show on page
+                case 1 :                                                # 1=Send Alert on Error
+                    $alert_type_msg="Alert on error(1)" ;               # Mess to show on page
                     $etooltip="SADM_ALERT set to 1 in script " . $cname ;
                     break;
-                case 2 :                                                        # 2=Send Alert on Success
-                    $alert_type_msg="Alert on success(2)" ;                     # Mess to show on page
+                case 2 :                                                # 2=Send Alert on Success
+                    $alert_type_msg="Alert on success(2)" ;             # Mess to show on page
                     $etooltip="SADM_ALERT set to 2 in script " . $cname ;
                     break;
-                case 3 :                                                        # 3=Always Send Alert
-                    $alert_type_msg="Always alert(3)" ;                         # Mess to show on page
+                case 3 :                                                # 3=Always Send Alert
+                    $alert_type_msg="Always alert(3)" ;                 # Mess to show on page
                     $etooltip="SADM_ALERT set to 3 in script " . $cname ;
                     break;
                 default:
-                    $alert_type_msg="Unknown code($alert_type)" ;               # Invalid Alert Group Type
+                    $alert_type_msg="Unknown code($alert_type)" ;       # Invalid Alert Group Type
                     $etooltip="SADM_ALERT set to ($alert_type) in script " . $cname ;
                     break;
             }        
