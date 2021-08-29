@@ -50,7 +50,7 @@
 #@2021_08_07 web v2.20 New page redesign, Warning, Error, Info now have separate section.
 #@2021_08_17 web v2.21 Use the refresh interval from SADMIN configuration file. 
 #@2021_08_18 web v2.22 Make Bold section title
-#
+#@2021_08_29 web v2.23 Show effective alert group name instead of 'default' and member as tooltip.
 #Why not include last script that ran up to 2 hours ago ?
 #
 # ==================================================================================================
@@ -89,7 +89,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.22" ;                                                       # Current version number
+$SVER  = "2.23" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -451,73 +451,7 @@ function display_line($line,$BGCOLOR,$con)
     if ( $alert_type == "" ) { $alert_type=1 ; }                    # Default Alert Type
     if ($DEBUG) { echo "1) alert_group=..$alert_group.. alert_type=..$alert_type.."; }               
 
-    # If 'default' alert group is used, get the real alert group name used.
-    if ($alert_group == "default") {                            # If Alert Group is default
-        $CMD="grep -i \"^default\" " . SADM_ALERT_FILE . " |awk '{print$3}' |tr -d ' '";
-        if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; } 
-        unset($output_array);                                       # Clear output Array
-        exec ( $CMD , $output_array, $RCODE);                       # Execute command
-        if ($DEBUG) {                                               # If in Debug Mode
-            echo "\n<br>Return code of command : " . $RCODE ;       # Command ReturnCode
-            echo "\n<br>Content of output array:";                  # Show what's next
-            echo '<code><pre>';                                     # Code to Show
-            print_r($output_array);                                 # Show Cmd output
-            echo '</pre></code>';                                   # End of code 
-        }
-        $alert_group=$output_array[0];                              # Alert Grp Name
-        if ($DEBUG) { echo "2) alert_group=..$alert_group.. alert_type=..$alert_type.."; }               
-    }
-
-    # Get the group Alert Type (M=Mail, S=SLack, T=Texto, C=Cellular)
-    #$CMD="grep -i \"^" . $org_alert_group . "\" " . SADM_ALERT_FILE . "|awk '{print$2}' |tr -d ' '";
-    $CMD="grep -i \"^" . $alert_group . "\" " . SADM_ALERT_FILE . " |awk '{print$2}' |tr -d ' '";
-    if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ;}     # Cmd we execute
-    unset($output_array);                                           # Clear output Array
-    exec ( $CMD , $output_array, $RCODE);                           # Execute command
-    if ($DEBUG) {                                                   # If in Debug Mode
-        echo "\n<br>Return code of command is : " . $RCODE ;        # Command ReturnCode
-        echo "\n<br>Content of output array :";                     # Show what's next
-        echo '<code><pre>';                                         # Code to Show
-        print_r($output_array);                                     # Show Cmd output
-        echo '</pre></code>';                                       # End of code 
-    }
-    $alert_group_type=$output_array[0];                             # GrpType t,m,s,c
-    if ($DEBUG) { echo "3) alert_group=..$alert_group.. alert_type=..$alert_type.."; }               
-
-    # Get content (email address, cell no, slack ID, Texto member) of the alert group.
-    $CMD="grep -i \"^" . $alert_group . "\" " . SADM_ALERT_FILE . " |awk '{print$3}' |tr -d ' '";
-    if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ;}     # Cmd we execute
-    unset($output_array);                                           # Clear output Array
-    exec ( $CMD , $output_array, $RCODE);                           # Execute command
-    if ($DEBUG) {                                                   # If in Debug Mode
-        echo "\n<br>Return code of command is : " . $RCODE ;        # Command ReturnCode
-        echo "\n<br>Content of output array :";                     # Show what's next
-        echo '<code><pre>';                                         # Code to Show
-        print_r($output_array);                                     # Show Cmd output
-        echo '</pre></code>';                                       # End of code 
-    }
-    $alert_member=$output_array[0];                                 # Alert Group Member
-
-    # Build to tooltip for the alert group 
-    switch (strtoupper($alert_group_type)) {
-        case 'M' :  $stooltip="Alert send by email to " . $alert_member ;  # Alert Sent by Email
-                    break;
-                    ;; 
-        case 'C' :  $stooltip="Alert send by SMS to " . $alert_member ;    # Alert Sent by SMS
-                    break;
-                    ;; 
-        case 'T' :  $stooltip="Alert send by SMS to " . $alert_member ;    # Alert Sent by SMS
-                    break;
-                    ;; 
-        case 'S' :  $stooltip="Alert send with Slack to " . $alert_member ;# Alert Sent by SMS
-                    break;
-                    ;; 
-        default  :  $stooltip="Invalid Alert type(" . $alert_type .")";
-                    break;
-                    ;;
-    }                    
-
-    # Show Alert Group with Tooltip
+    list($alert_group, $alert_group_type, $stooltip) = get_alert_group_data ($alert_group) ;
     echo "\n<td bgcolor=$BGCOLOR align='center'>" ;
     echo "<span data-toggle='tooltip' title='" . $stooltip . "'>"; 
     echo $alert_group . "</span>(" . $alert_group_type . ")</td>"; 
