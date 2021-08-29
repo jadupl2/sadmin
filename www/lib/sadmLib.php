@@ -46,8 +46,8 @@
 # 2020_01_13 Update: v2.15 Reduce Day of the week name returned by SCHEDULE_TO_TEXT to 3 Char.
 # 2020_04_27 Update: v2.16 Change 2019 to 2020 in page footer
 # 2020_09_22 Update: v2.17 Facilitate going back to previous & Home page by adding button in header.
-#@2021_08_05 web: v2.18 Add function "getdocurl($RefString)" to allow link from script to doc
-#
+#@2021_08_05 web v2.18 New function "getdocurl($RefString)" to allow link from script to doc
+#@2021_08_29 web v2.19 New function "get_alert_group_data" Return used alert grp name,type,tooltip.
 # ==================================================================================================
 #
 
@@ -56,7 +56,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.18" ;   
+$LIBVER = "2.19" ;   
     
 
 #===================================================================================================
@@ -99,8 +99,6 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
 
     # Space line for separation purpose
     echo "\n<hr/>";                                                     # Print Horizontal Line
-
-   
 }
 
 
@@ -146,6 +144,88 @@ function netinfo ($ip_address,$ip_nmask) {
 
     return array (long2ip($ip_net), long2ip($ip_first), long2ip($ip_last), long2ip($ip_broadcast));
 }
+
+
+
+
+
+# ==================================================================================================
+# Function accept a valid alert group name (like default and defined in alert_group.fg file) 
+# Return :
+#   - The real group name (in case this function receive 'default' as the group name)
+#   - The group type (M=Mail, S=SLack, T=Texto, C=Cellular)
+#   - The Tool tip (Used when mouse is over the link, indicate the members of the alert group)
+# ==================================================================================================
+function get_alert_group_data ($calert) {
+
+    # If 'default' alert group is used, get the real effective alert group name.
+    if ($calert == "default") {                                 # If Alert Group is default
+        $CMD="grep -i \"^default\" " . SADM_ALERT_FILE . " |awk '{print$3}' |tr -d ' '";
+        if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; } 
+        unset($output_array);                                   # Clear output Array
+        exec ( $CMD , $output_array, $RCODE);                   # Execute command
+        if ($DEBUG) {                                           # If in Debug Mode
+            echo "\n<br>Return code of command : " . $RCODE ;   # Command ReturnCode
+            echo "\n<br>Content of output array:";              # Show what's next
+            echo '<code><pre>';                                 # Code to Show
+            print_r($output_array);                             # Show Cmd output
+            echo '</pre></code>';                               # End of code 
+        }
+        $calert=$output_array[0];                               # Real Alert Grp Name
+    }
+
+    # Get the group Alert Type (M=Mail, S=SLack, T=Texto, C=Cellular)
+    $CMD="grep -i \"^" . $calert . "\" " . SADM_ALERT_FILE . " |awk '{print$2}' |tr -d ' '";
+    if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ;}     # Cmd we execute
+    unset($output_array);                                           # Clear output Array
+    exec ( $CMD , $output_array, $RCODE);                           # Execute command
+    if ($DEBUG) {                                                   # If in Debug Mode
+        echo "\n<br>Return code of command is : " . $RCODE ;        # Command ReturnCode
+        echo "\n<br>Content of output array :";                     # Show what's next
+        echo '<code><pre>';                                         # Code to Show
+        print_r($output_array);                                     # Show Cmd output
+        echo '</pre></code>';                                       # End of code 
+    }
+    $alert_group_type=$output_array[0];                             # GrpType t,m,s,c              
+
+    # Get Alert group members for tooltip
+    $CMD="grep -i \"^" . $calert . "\" " . SADM_ALERT_FILE . " |awk '{print$3}' |tr -d ' '";
+    if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ;}     # Cmd we execute
+    unset($output_array);                                           # Clear output Array
+    exec ( $CMD , $output_array, $RCODE);                           # Execute command
+    if ($DEBUG) {                                                   # If in Debug Mode
+        echo "\n<br>Return code of command is : " . $RCODE ;        # Command ReturnCode
+        echo "\n<br>Content of output array :";                     # Show what's next
+        echo '<code><pre>';                                         # Code to Show
+        print_r($output_array);                                     # Show Cmd output
+        echo '</pre></code>';                                       # End of code 
+    }
+    $alert_member=$output_array[0];                                 # Alert Group Member
+
+    # Build to tooltip for the alert group 
+    switch (strtoupper($alert_group_type)) {
+        case 'M' :  $stooltip="Alert send by email to " . $alert_member ;  
+                    break;
+                    ;; 
+        case 'C' :  $stooltip="Alert send by SMS to " . $alert_member ;   
+                    break;
+                    ;; 
+        case 'T' :  $stooltip="Alert send by SMS to " . $alert_member ;
+                    break;
+                    ;; 
+        case 'S' :  $stooltip="Alert send with Slack to " . $alert_member ;
+                    break;
+                    ;; 
+        default  :  $stooltip="Invalid Alert type(" . $alert_type .")";
+                    break;
+                    ;;
+    }                    
+
+    return array ($calert, $alert_group_type, $stooltip) ; 
+}
+
+
+
 
 
 
