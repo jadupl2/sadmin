@@ -34,7 +34,8 @@
 # 2020_01_21 Update: v2.7 Display rch date in date reverse order (Recent at the top)
 # 2020_04_05 Fix: v2.8 Fix link problem to show the script log.
 # 2020_04_17 Update: v2.9 Running script are now shown on the page.
-#@2021_08_06 web v2.10 Link to log is remove & "Alert type" is replace with "Notification type".
+#@2021_08_06 web v2.10 Remove repetitive link to log.
+#@2021_08_29 web v2.11 Show effective alert group name instead of 'default' and member as tooltip.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -43,7 +44,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load P
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript</Head>
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
-# DataTable Initialisation Function
+# DataTable Initialization Function
 ?>
 <script>
     $(document).ready(function() {
@@ -65,7 +66,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.10" ;                                                        # Current version number
+$SVER  = "2.11" ;                                                       # Current version number
 $URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
 
 
@@ -76,37 +77,35 @@ function setup_table() {
     
     # TABLE CREATION
     echo "\n<div id='SimpleTable'>";                                      # Width Given to Table
-    echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='90%'>";
+    echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='85%'>";
     
     # PAGE TABLE HEADING 
     echo "\n<thead>";
     echo "\n<tr>" ;
-    #echo "\n<th>No.</th>";
-    echo "\n<th class='dt-head-left'>Start Date</th>";
-    echo "\n<th class='dt-center'>Start Time</th>";
+    echo "\n<th>No.</th>";
+    echo "\n<th>Start Date</th>";
+    echo "\n<th>Start Time</th>";
     echo "\n<th>End Date</th>";
     echo "\n<th>End Time</th>";
     echo "\n<th>Elapse Time</th>";
     echo "\n<th>Alert Group</th>";
-    echo "\n<th>Notification Type</th>";
+    echo "\n<th>Alert Type</th>";
     echo "\n<th>Status</th>";
-#    echo "\n<th>Log</th>";
     echo "\n</tr>";
     echo "\n</thead>\n";
 
     # PAGE TABLE FOOTER 
     echo "\n<tfoot>";
     echo "\n<tr>" ;
-    #echo "\n<th>No.</th>";
-    echo "\n<th class='dt-head-left'>Start Date</th>";
-    echo "\n<th class='dt-center'>Start Time</th>";
+    echo "\n<th>No.</th>";
+    echo "\n<th>Start Date</th>";
+    echo "\n<th>Start Time</th>";
     echo "\n<th>End Date</th>";
     echo "\n<th>End Time</th>";
     echo "\n<th>Elapse Time</th>";
     echo "\n<th>Alert Group</th>";
-    echo "\n<th>Notification Type</th>";
+    echo "\n<th>Alert Type</th>";
     echo "\n<th>Status</th>";
-#    echo "\n<th>Log</th>";
     echo "\n</tr>";
     echo "\n</tfoot>\n\n";
 }
@@ -132,33 +131,71 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
             echo "\n<tr>";
             $BGCOLOR = "lavender";
             if ($count % 2 == 0) { $BGCOLOR="#FFF8C6" ; }else{ $BGCOLOR="#FAAFBE" ;}
-            #echo "\n<td class='dt-center'>" . $count   . "</td>";
-            echo "\n<td class='dt-left'>"   . $cdate1  . "</td>";
+            echo "\n<td class='dt-center'>" . $count   . "</td>";
+            echo "\n<td class='dt-center'>" . $cdate1  . "</td>";
             echo "\n<td class='dt-center'>" . $ctime1  . "</td>";
             echo "\n<td class='dt-center'>" . $cdate2  . "</td>";
             echo "\n<td class='dt-center'>" . $ctime2  . "</td>";
             echo "\n<td class='dt-center'>" . $celapse . "</td>";
-            echo "\n<td class='dt-center'>" . $calert  . "</td>";
 
-            # DISPLAY THE ALERT GROUP TYPE (0=None 1=AlertOnErr 2=AlertOnOK 3=Always)
-             echo "\n<td class='dt-center'>";
-             switch ($ctype) {
-                 case 0:  
-                     echo "0 (No alert)</td>";
-                     break;
-                 case 1:  
-                     echo "1 (Alert on error)</td>";
-                     break;
-                 case 2:  
-                     echo "2 (Alert on Success)</td>";
-                     break;
-                 case 3:  
-                     echo "3 (Always alert)</td>";
-                     break;
-                 default: 
-                     echo "<font color='red'>Wront type " .$ctype. "</font></td>";
-                     break;;
-             }           
+
+            list($calert, $alert_group_type, $stooltip) = get_alert_group_data ($calert) ;
+            
+            # Show Alert Group with Tooltip
+            echo "\n<td class='dt-center'>";
+            echo "<span data-toggle='tooltip' title='" . $stooltip . "'>"; 
+            echo $calert . "</span>(" . $alert_group_type . ")</td>";             
+            #echo "\n<td class='dt-center'>" . $calert  . "</td>";
+
+#            # DISPLAY THE ALERT GROUP TYPE (0=None 1=AlertOnErr 2=AlertOnOK 3=Always)
+#             echo "\n<td class='dt-center'>";
+#             switch ($ctype) {
+#                 case 0:  
+#                     echo "0 (No alert)</td>";
+#                     break;
+#                 case 1:  
+#                     echo "1 (Alert on error)</td>";
+#                     break;
+#                 case 2:  
+#                     echo "2 (Alert on Success)</td>";
+#                     break;
+#                 case 3:  
+#                     echo "3 (Always alert)</td>";
+#                     break;
+#                 default: 
+#                     echo "<font color='red'>Wront type " .$ctype. "</font></td>";
+#                     break;;
+#             }           
+
+            # Display the alert group type (0=none, 1=alert onerror, 2=alert on ok, 3=always)
+            # Show Alert type Meaning
+            switch ($ctype) {                                           # 0=No 1=Err 2=Success 3=All
+                case 0 :                                                # 0=Don't send any Alert
+                    $alert_type_msg="No alert(0)" ;                     # Mess to show on page
+                    $etooltip="SADM_ALERT is to 0 in script " . $cname ;
+                    break;
+                case 1 :                                                # 1=Send Alert on Error
+                    $alert_type_msg="Alert on error(1)" ;               # Mess to show on page
+                    $etooltip="SADM_ALERT set to 1 in script " . $cname ;
+                    break;
+                case 2 :                                                # 2=Send Alert on Success
+                    $alert_type_msg="Alert on success(2)" ;             # Mess to show on page
+                    $etooltip="SADM_ALERT set to 2 in script " . $cname ;
+                    break;
+                case 3 :                                                # 3=Always Send Alert
+                    $alert_type_msg="Always alert(3)" ;                 # Mess to show on page
+                    $etooltip="SADM_ALERT set to 3 in script " . $cname ;
+                    break;
+                default:
+                    $alert_type_msg="Unknown code($alert_type)" ;       # Invalid Alert Group Type
+                    $etooltip="SADM_ALERT set to ($alert_type) in script " . $cname ;
+                    break;
+            }        
+            echo "\n<td class='dt-center'>";
+            echo "<span data-toggle='tooltip' title='" . $etooltip . "'>"; 
+            echo $alert_type_msg . "</span></td>"; 
+            
+            
 
             # DISPLAY THE RESULT CODE 
             switch ($ccode) {
@@ -208,7 +245,7 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
         $sql = "SELECT * FROM server where srv_name = '$HOSTNAME' ;";
         if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug Display SQL Stat.
         if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
-            $err_line = (__LINE__ -1) ;                                 # Error on preceeding line
+            $err_line = (__LINE__ -1) ;                                 # Error on preceding line
             $err_msg1 = "Category (" . $wkey . ") not found.\n";        # Row was not found Msg.
             $err_msg2 = strval(mysqli_errno($con)) . ") " ;             # Insert Err No. in Message
             $err_msg3 = mysqli_error($con) . "\nAt line "  ;            # Insert Err Msg and Line No 
@@ -232,14 +269,14 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
     $DIR = $_SERVER['DOCUMENT_ROOT'] . "/dat/" . $HOSTNAME . "/rch/";   # RCH Host Directory Name
     if ($DEBUG)  { echo "<br>Directory of the RCH file is $DIR"; }      # Debug display Dir. of RCH
 
-    # IF THE RCH DIRECTORY DOES NOT EXIST THEN ABORT AFTER ADIVISING USER --------------------------
+    # IF THE RCH DIRECTORY DOES NOT EXIST THEN ABORT AFTER ADVISING USER --------------------------
     if (! is_dir($DIR))  {                                              # If RCH Dir.do not exist
         $msg = "The Web RCH Directory " . $DIR . " does not exist.\n";  # Display Dir. name
         $msg = $msg . "Correct the situation and retry request";        # Needed to proceed
         sadm_fatal_error($msg);                                         # MsgBox to user
     }
 
-    # IF THE RCH FILE DOES NOT EXIST THEN ABORT AFTER ADIVISING USER -------------------------------
+    # IF THE RCH FILE DOES NOT EXIST THEN ABORT AFTER ADVISING USER -------------------------------
     if ($DEBUG)  { echo "<br>FILENAME Received is $RCV_FILENAME "; }    # Debug display Rcv Filename
     $RCHFILE = $DIR . $RCV_FILENAME ;                                   # Construct Full Path to RCH
     if ($DEBUG)  { echo "<br>Name of the RCH file is $RCHFILE"; }       # Debug print full path RCH
