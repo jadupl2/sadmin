@@ -48,7 +48,8 @@
 # 2020_09_22 Update: v2.17 Facilitate going back to previous & Home page by adding button in header.
 #@2021_08_05 web v2.18 New function "getdocurl($RefString)" to allow link from script to doc
 #@2021_08_29 web v2.19 New function "get_alert_group_data" Return used alert grp name,type,tooltip.
-# ==================================================================================================
+#@2021_08_31 web v2.20 New function "sadm_return_logo(OSNAME)" return image path, doc url & tooltip
+==================================================================================================
 #
 
 #===================================================================================================
@@ -56,7 +57,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.19" ;   
+$LIBVER = "2.20" ;   
     
 
 #===================================================================================================
@@ -542,89 +543,84 @@ function mysql_date_2_DDMMYYYY( $mysql_date ) {
 }
 
 
+# ==================================================================================================
+# Function: 
+#   - Return the path to the linux distribution logo.
+# Parameter : 
+#   - Name of the distribution
+# Return :
+#   - Path to the image (logo) file.
+#   - The url to the distribution web page
+# ==================================================================================================
+function sadm_return_logo($WOS) {
+
+    $ititle = ucfirst($WOS) . " documentation";
+    
+    switch (strtoupper($WOS)) {
+        case 'REDHAT' :
+            $iurl='https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux' ;
+            $ipath='/images/logo_redhat.png';
+            break;
+        case 'FEDORA' :
+            $iurl='https://docs.fedoraproject.org/en-US/docs/' ;
+            $ipath='/images/logo_fedora.png';
+            break;
+        case 'MACOSX' :
+            $iurl='https://support.apple.com/guide/mac-help/welcome/mac' ;
+            $ipath='/images/logo_apple.png';
+            break;
+        case 'CENTOS' :
+            $iurl='https://docs.centos.org/en-US/docs/' ;
+            $ipath='/images/logo_centos.png';
+            break;
+        case 'UBUNTU' :
+            $iurl='https://help.ubuntu.com/' ;
+            $ipath='/images/logo_ubuntu.png';
+            break;
+        case 'LINUXMINT' :
+            $iurl='https://linuxmint.com/documentation.php' ;
+            $ipath='/images/logo_linuxmint.png';
+            break;
+        case 'DEBIAN' :
+            $iurl='https://www.debian.org/doc/' ;
+            $ipath='/images/logo_debian.png';
+            break;
+        case 'RASPBIAN' :
+            $iurl='https://www.raspbian.org/RaspbianDocumentation' ;
+            $ipath='/images/logo_raspbian.png';
+            break;
+        case 'SUSE' :
+            $iurl='https://doc.opensuse.org/' ;
+            $ipath='/images/logo_suse.png';
+            break;
+        case 'AIX' :
+            $iurl='https://www.ibm.com/docs/en/aix/7.2?topic=aix-pdfs' ;
+            $ipath='/images/logo_aix.png';
+            break;
+        default:
+            $iurl='https://en.wikipedia.org/wiki/Linux' ;
+            $ipath='/images/logo_linux.png';
+            break;
+    }
+
+    return array ($ipath, $iurl, $ititle) ; 
+}
+
+
 
 # ==================================================================================================
 # Show Distribution Logo as a cell in a table
 # ==================================================================================================
 function sadm_show_logo($WOS) {
 
-    switch (strtoupper($WOS)) {
-        case 'REDHAT' :
-            echo "<td class='dt-center'>";
-            echo "<a href='http://www.redhat.com' ";
-            echo "title='Server $whost is a RedHat server - Visit redhat.com'>";
-            echo "<img src='/images/logo_redhat.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'FEDORA' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://getfedora.org' ";
-            echo "title='Server $whost is a Fedora server - Visit getfedora.org'>";
-            echo "<img src='/images/logo_fedora.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'MACOSX' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://apple.com' ";
-            echo "title='Server $whost is an Apple System - Visit apple.com'>";
-            echo "<img src='/images/logo_apple.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'CENTOS' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://www.centos.org' ";
-            echo "title='Server $whost is a CentOS server - Visit centos.org'>";
-            echo "<img src='/images/logo_centos.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'UBUNTU' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://www.ubuntu.com/' ";
-            echo "title='Server $whost is a Ubuntu server - Visit ubuntu.com'>";
-            echo "<img src='/images/logo_ubuntu.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'LINUXMINT' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://linuxmint.com/' ";
-            echo "title='Server $whost is a LinuxMint server - Visit linuxmint.com'>";
-            echo "<img src='/images/logo_linuxmint.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'DEBIAN' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://www.debian.org/' ";
-            echo "title='Server $whost is a Debian server - Visit debian.org'>";
-            echo "<img src='/images/logo_debian.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'RASPBIAN' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://www.raspbian.org/' ";
-            echo "title='Server $whost is a Raspbian server - Visit raspian.org'>";
-            echo "<img src='/images/logo_raspbian.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'SUSE' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://www.opensuse.org/' ";
-            echo "title='Server $whost is a OpenSUSE server - Visit opensuse.org'>";
-            echo "<img src='/images/logo_suse.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'AIX' :
-            echo "<td class='dt-center'>";
-            echo "<a href='http://www-03.ibm.com/systems/power/software/aix/' ";
-            echo "title='Server $whost is an AIX server - Visit Aix Home Page'>";
-            echo "<img src='/images/logo_aix.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        default:
-            echo "<td class='dt-center'>";
-            echo "<img src='/images/logo_linux.png' style='width:24px;height:24px;'>";
-            echo "${WOS}</td>\n";
-            break;
-    }
+    list($ipath, $iurl, $ititle) = sadm_return_logo ($WOS) ;
+
+    echo "<td class='dt-center'>";
+    echo "<a href='". $iurl . "' ";
+    echo "title='" . $ititle . "'>";
+    echo "<img src='" . $ipath . "' ";
+    echo "style='width:24px;height:24px;'>"; 
+    echo "</a></td>\n";
 }
 
 
