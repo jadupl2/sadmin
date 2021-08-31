@@ -250,7 +250,7 @@ function sysmon_page_heading($HEAD_TYPE)
     echo "\n<table align=center border=0 cellspacing=0>";
     echo "\n<tr>";
     echo "\n<td colspan='1' bgcolor=$HCOLOR>&nbsp;&nbsp;</td>";
-    echo "\n<td width=80  align='left'   bgcolor=$HCOLOR><b>System</b></td>";
+    echo "\n<td width=80  align='center'   bgcolor=$HCOLOR><b>System</b></td>";
     echo "\n<td colspan='3' bgcolor=$HCOLOR>&nbsp;&nbsp;</td>";
     echo "\n<td width=90  align='center' bgcolor=$HCOLOR><b>Event</td>";
     echo "\n<td width=90  align='center' bgcolor=$HCOLOR><b>Module</td>";
@@ -258,8 +258,8 @@ function sysmon_page_heading($HEAD_TYPE)
     echo "\n<td width=110 align='center' bgcolor=$HCOLOR><b>Alert Type</td>";
     echo "\n</tr>";
     echo "\n<tr>";
-    echo "\n<td width=90  align='left'   bgcolor=$HCOLOR><b>&nbsp;Status</b></td>";
-    echo "\n<td width=80  align='left'   bgcolor=$HCOLOR><b>Name</b></td>";
+    echo "\n<td width=90  align='center' bgcolor=$HCOLOR><b>Status</b></td>";
+    echo "\n<td width=80  align='center' bgcolor=$HCOLOR><b>Name</b></td>";
     echo "\n<td width=35  align='left'   bgcolor=$HCOLOR><b>O/S</b></td>";
     echo "\n<td width=30  align='center' bgcolor=$HCOLOR><b>Category</b></td>";
     echo "\n<td width=270 align='left'   bgcolor=$HCOLOR><b>Alert Description</b></td>";
@@ -337,60 +337,20 @@ function display_line($line,$BGCOLOR,$con)
     }
 
     #-----Server Name -----
-    echo "\n<td  bgcolor=$BGCOLOR align='left'>";
+    echo "\n<td  bgcolor=$BGCOLOR align='center'>";
     echo "<a href='" . $URL_HOST_INFO . "?sel=" . nl2br($whost) ;
     echo "' title='$WDESC at " . $row['srv_ip'] . "'>" ;
     echo nl2br($whost) . "</a></td>\n";
 
     #----- Display Operating System Logo -----
     $WOS   = sadm_clean_data($row['srv_osname']);                   # Set Server O/S Name
-    switch (strtoupper($WOS)) {
-        case 'REDHAT' :
-            echo "<td bgcolor=$BGCOLOR><img src='/images/logo_redhat.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'FEDORA' :
-            echo "<td bgcolor=$BGCOLOR><img src='/images/logo_fedora.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'MACOSX' :
-            echo "<td bgcolor=$BGCOLOR><img src='/images/logo_apple.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'CENTOS' :
-            echo "<td bgcolor=$BGCOLOR><img src='/images/logo_centos.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'UBUNTU' :
-            echo "<td bgcolor=$BGCOLOR><img src='/images/logo_ubuntu.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'LINUXMINT' :
-            echo "<td bgcolor=$BGCOLOR><img src='/images/logo_linuxmint.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'DEBIAN' :
-            echo "<td bgcolor=$BGCOLOR><img src='/images/logo_debian.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'RASPBIAN' :
-            echo "<td bgcolor=$BGCOLOR><img src='/images/logo_raspbian.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'SUSE' :
-            echo "<td bgcolor=$BGCOLOR><img src='/images/logo_suse.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'AIX' :
-            echo "<td bgcolor=$BGCOLOR><img src='/images/logo_aix.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        default:
-            echo "<td bgcolor=$BGCOLOR><img src='/images/logo_linux.png' ";
-            echo "style='width:24px;height:24px;'>";
-            echo "${WOS}</td>\n";
-            break;
-    }
+    list($ipath, $iurl, $ititle) = sadm_return_logo ($WOS) ;
+    echo "<td bgcolor=$BGCOLOR>";
+    echo "<a href='". $iurl . "' ";
+    echo "title='" . $ititle . "'>";
+    echo "<img src='" . $ipath . "' ";
+    echo "style='width:32px;height:32px;'>"; 
+    echo "</a></td>\n";
 
 
     #-----Server Category Name -----
