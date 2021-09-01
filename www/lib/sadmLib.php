@@ -49,7 +49,7 @@
 #@2021_08_05 web v2.18 New function "getdocurl($RefString)" to allow link from script to doc
 #@2021_08_29 web v2.19 New function "get_alert_group_data" Return used alert grp name,type,tooltip.
 #@2021_08_31 web v2.20 New function "sadm_return_logo(OSNAME)" return image path, doc url & tooltip
-==================================================================================================
+#===================================================================================================
 #
 
 #===================================================================================================
