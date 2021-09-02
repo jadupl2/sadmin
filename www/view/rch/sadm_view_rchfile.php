@@ -73,7 +73,7 @@ $URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View F
 # ==================================================================================================
 # SETUP TABLE HEADER AND FOOTER
 # ==================================================================================================
-function setup_table() {
+function display_heading() {
     
     # TABLE CREATION
     echo "\n<div id='SimpleTable'>";                                      # Width Given to Table
@@ -82,7 +82,7 @@ function setup_table() {
     # PAGE TABLE HEADING 
     echo "\n<thead>";
     echo "\n<tr>" ;
-    echo "\n<th>No.</th>";
+    #echo "\n<th>No.</th>";
     echo "\n<th>Start Date</th>";
     echo "\n<th>Start Time</th>";
     echo "\n<th>End Date</th>";
@@ -97,7 +97,7 @@ function setup_table() {
     # PAGE TABLE FOOTER 
     echo "\n<tfoot>";
     echo "\n<tr>" ;
-    echo "\n<th>No.</th>";
+    #echo "\n<th>No.</th>";
     echo "\n<th>Start Date</th>";
     echo "\n<th>Start Time</th>";
     echo "\n<th>End Date</th>";
@@ -131,7 +131,7 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
             echo "\n<tr>";
             $BGCOLOR = "lavender";
             if ($count % 2 == 0) { $BGCOLOR="#FFF8C6" ; }else{ $BGCOLOR="#FAAFBE" ;}
-            echo "\n<td class='dt-center'>" . $count   . "</td>";
+            #echo "\n<td class='dt-center'>" . $count   . "</td>";
             echo "\n<td class='dt-center'>" . $cdate1  . "</td>";
             echo "\n<td class='dt-center'>" . $ctime1  . "</td>";
             echo "\n<td class='dt-center'>" . $cdate2  . "</td>";
@@ -246,9 +246,7 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
         if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug Display SQL Stat.
         if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
             $err_line = (__LINE__ -1) ;                                 # Error on preceding line
-            $err_msg1 = "Category (" . $wkey . ") not found.\n";        # Row was not found Msg.
-            $err_msg2 = strval(mysqli_errno($con)) . ") " ;             # Insert Err No. in Message
-            $err_msg3 = mysqli_error($con) . "\nAt line "  ;            # Insert Err Msg and Line No 
+            $err_msg1 = "System (" . $HOSTNAME . "\nAt line "  ;          # Insert Err Msg and Line No 
             $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
             sadm_fatal_error($err_msg1.$err_msg2.$err_msg3.$err_msg4);  # Display Msg. Box for User
         }else{                                                          # If row was found
@@ -300,7 +298,7 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
     if ($DEBUG) { echo "<br><pre>cmd=$cmd rchline=$rchline retval=$retval</pre>"; }
 
     display_lib_heading("NotHome","[R]esult [C]ode [H]istory file viewer",$RCHFILE,$SVER);      
-    setup_table();                                                      # Create Table & Heading
+    display_heading();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
     display_rch_file ($HOSTNAME, $HOSTDESC, $csv_sorted, $RCV_FILENAME);# Go Display RCH File
     if ($DEBUG) { echo "<br>Final File " . $csv_sorted ; }              # Name of filename sorted
