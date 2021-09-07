@@ -170,9 +170,9 @@
 # 2021_04_09 Fix: v3.69 Fix problem with disabling log header, log footer and rch file.
 # 2021_04_10 Fix: v3.70 Fix Path to which command was not set properly because of defined alias.
 # 2021_06_30 lib: v3.71 To be more succinct global variables were removed from log footer.
-#@2021_08_06 nolog v3.72 $SADMIN/www/tmp directory default permission now set to 777 
-#@2021_08_13 lib v3.73 New func. see Doc sadm_create_lockfile  sadm_remove_lockfile sadm_is_system_lock
-#@2021_08_17 lib v3.74 Performance improvement.
+# 2021_08_06 nolog v3.72 $SADMIN/www/tmp directory default permission now set to 777 
+# 2021_08_13 lib v3.73 New func. see Doc sadm_create_lockfile  sadm_remove_lockfile sadm_is_system_lock
+# 2021_08_17 lib v3.74 Performance improvement.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x

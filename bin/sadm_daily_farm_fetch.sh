@@ -52,7 +52,7 @@
 # 2020_11_05 Update: v4.4 Change msg written to log & no alert while o/s update is running.
 # 2020_12_12 Update: v4.5 Add and use SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
 # 2021_02_13 Minor: v4.5 Change for log appearance.
-#@2021_06_03 nolog: v4.6 Update SADMIN section and minor code update
+# 2021_06_03 nolog: v4.6 Update SADMIN section and minor code update
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C

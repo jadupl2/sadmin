@@ -41,8 +41,8 @@
 # 2021_02_18 Updated v1.22 Added example to 'SERVERS' variable of system to be ignored from Report.
 # 2021_04_01 Fix: v1.23 Fix problem when the last line of *.rch was a blank line.
 # 2021_04_28 Fix: v1.24 Fix problem with the report servers exclude list.
-#@2021_06_08 nolog: v1.25 Remove from daily backup report system that the daily backup is disable.
-#@2021_06_08 nolog: v1.26 Remove from daily ReaR backup report system that the backup is disable.
+# 2021_06_08 nolog: v1.25 Remove from daily backup report system that the daily backup is disable.
+# 2021_06_08 nolog: v1.26 Remove from daily ReaR backup report system that the backup is disable.
 # 2021_06_10 server: v1.27 Show system backup in bold instead of having a yellow background.
 # 2021_08_07 server: v1.28 Help message was showing wrong command line options.
 # --------------------------------------------------------------------------------------------------

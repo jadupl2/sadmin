@@ -34,9 +34,9 @@
 # 2020_01_21 Update: v2.7 Display rch date in date reverse order (Recent at the top)
 # 2020_04_05 Fix: v2.8 Fix link problem to show the script log.
 # 2020_04_17 Update: v2.9 Running script are now shown on the page.
-#@2021_08_06 nolog v2.10 Remove repetitive link to log.
-#@2021_08_29 web v2.11 Result Code History viewer, show effective alert group instead of 'default.'
-#@2021_08_29 web v2.12 Result Code History viewer, show member(s) of alert group as tooltip. 
+# 2021_08_06 nolog v2.10 Remove repetitive link to log.
+# 2021_08_29 web v2.11 Result Code History viewer, show effective alert group instead of 'default.'
+# 2021_08_29 web v2.12 Result Code History viewer, show member(s) of alert group as tooltip. 
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

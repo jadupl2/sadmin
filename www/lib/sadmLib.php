@@ -46,9 +46,9 @@
 # 2020_01_13 Update: v2.15 Reduce Day of the week name returned by SCHEDULE_TO_TEXT to 3 Char.
 # 2020_04_27 Update: v2.16 Change 2019 to 2020 in page footer
 # 2020_09_22 Update: v2.17 Facilitate going back to previous & Home page by adding button in header.
-#@2021_08_05 nolog v2.18 New function "getdocurl($RefString)" to allow link from script to doc
-#@2021_08_29 nolog v2.19 New function "get_alert_group_data" Return used alert grp name,type,tooltip.
-#@2021_08_31 nolog v2.20 New function "sadm_return_logo(OSNAME)" return image path, doc url & tooltip
+# 2021_08_05 nolog v2.18 New function "getdocurl($RefString)" to allow link from script to doc
+# 2021_08_29 nolog v2.19 New function "get_alert_group_data" Return used alert grp name,type,tooltip.
+# 2021_08_31 nolog v2.20 New function "sadm_return_logo(OSNAME)" return image path, doc url & tooltip
 #===================================================================================================
 #
 

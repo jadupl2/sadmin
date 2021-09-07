@@ -1,5 +1,40 @@
 # SADMIN Tools Changelog
+ 
+## Release [1.3.6](https://github.com/jadupl2/sadmin/releases) (2021-09-07)
 
+### Configuration files
+  - [.sadmin.cfg](https://sadmin.ca/sadmin-cfg) (v2.6 2021/08/16) - Monitor page refresh rate can now be set via 'SADM_MONITOR_UPDATE_INTERVAL'
+
+### Libraries, Scripts Templates, Demo
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.73 2021/08/13) - New func. see Doc sadm_create_lockfile sadm_remove_lockfile sadm_is_system_lock
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.74 2021/08/17) - Performance improvement.
+
+### Operating System Update
+  - [sadm_osupdate.sh](https://sadmin.ca/sadm-osupdate) (v3.27 2021/08/19) - Fix prompting issue on '.deb' distributions.
+
+### SADMIN Server related
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) (v3.30 2021/08/17) - Performance improvement et code restructure
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) (v3.31 2021/08/27) - Increase ssh connection Timeout "-o ConnectTimeout=3".
+  - [sadm_server_housekeeping.sh](https://sadmin.ca/sadm-server-housekeeping) (v2.9 2021/07/30) - Solve intermittent error on monitor page.
+
+### Web interface
+  - Result Code History viewer, show effective alert group instead of 'default.'
+  - Result Code History viewer, show member(s) of alert group as tooltip.
+  - Status of all Scripts - Add link to Script documentation.
+  - Status of all Scripts - Show effective alert group name & members as tooltip
+  - Status of all Scripts - Fix link to log & History file (*.rch).
+  - Status of all Scripts - Show effective alert group name instead of 'default'.
+  - Status of all Scripts - Show member(s) of alert group as tooltip.
+  - System Monitor page - Each alert now show effective group name (not 'default').
+  - System Monitor page - Alert type now show description and tooltip.
+  - System Monitor page - Warning, Error, Info now have separate section.
+  - System Monitor page - Use the refresh interval from SADMIN configuration file.
+  - System Monitor page - Section heading are spread on two lines.
+  - System Monitor page - Show alert group member(s) as tooltip.
+   
+   
+  
+  
 ## Release [1.3.4a](https://github.com/jadupl2/sadmin/releases) (2021-07-22)
 
 

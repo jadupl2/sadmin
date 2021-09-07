@@ -45,12 +45,12 @@
 # 2020_05_13 Update: v2.15 Customize message when nothing to report.
 # 2020_05_13 Update: v2.16 server name link was not displayed properly.
 # 2020_09_23 Update: v2.17 Add Home button in the page heading.
-#@2021_07_24 web v2.18 System Monitor page - Each alert now show effective group name (not 'default').
-#@2021_08_06 web v2.19 System Monitor page - Alert type now show description and tooltip.
-#@2021_08_07 web v2.20 System Monitor page - Warning, Error, Info now have separate section.
-#@2021_08_17 web v2.21 System Monitor page - Use the refresh interval from SADMIN configuration file. 
-#@2021_08_18 web v2.22 System Monitor page - Section heading are spread on two lines.
-#@2021_08_29 web v2.23 System Monitor page - Show alert group member(s) as tooltip.
+# 2021_07_24 web v2.18 System Monitor page - Each alert now show effective group name (not 'default').
+# 2021_08_06 web v2.19 System Monitor page - Alert type now show description and tooltip.
+# 2021_08_07 web v2.20 System Monitor page - Warning, Error, Info now have separate section.
+# 2021_08_17 web v2.21 System Monitor page - Use the refresh interval from SADMIN configuration file. 
+# 2021_08_18 web v2.22 System Monitor page - Section heading are spread on two lines.
+# 2021_08_29 web v2.23 System Monitor page - Show alert group member(s) as tooltip.
 #Why not include last script that ran up to 2 hours ago ?
 #
 # ==================================================================================================
