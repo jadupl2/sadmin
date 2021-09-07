@@ -32,7 +32,7 @@
 # 2020_05_23 Update: v2.6 Minor change about reading /etc/environment and change logging messages.
 # 2020_12_16 Update: v2.7 Include code to include in SADMIN server crontab the daily report email.
 # 2021_05_29 server: v2.8 Code optimization, update SADMIN section and Help screen.
-#@2021_07_30 server: v2.9 Solve intermittent problem with monitor page refresh error.
+#@2021_07_30 server: v2.9 Solve intermittent error on monitor page.
 #@2021_08_17 nolog  v2.10 chmod 1777 $SADM_WWW_TMP_DIR 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
