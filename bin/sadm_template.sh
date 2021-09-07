@@ -101,7 +101,7 @@ export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you t
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-source ${SADMIN}/lib/sadmlib_std.sh                        # LOAD SADMIN Shell Library
+. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)

@@ -43,7 +43,7 @@
 # 2020_07_29 Update: v3.24 Minor adjustments to screen and log presentation.
 # 2020_12_12 Update: v3.25 Minor adjustments.
 # 2021_05_04 Update: v3.26 Adjust some message format of the log.
-#@2021_08_19 osupdate v3.27 Fix prompting issue in .deb distributions.
+#@2021_08_19 osupdate v3.27 Fix prompting issue on '.deb' distributions.
 # --------------------------------------------------------------------------------------------------
 #set -x
 

@@ -27,8 +27,8 @@
 # 2019_08_16  Update: v3.5 Correct Typo for number of rear backup to keep
 # 2019_08_19 Update: v3.6 Added Global Var. SADM_REAR_EXCLUDE_INIT for Rear Initial Options file.
 # 2020_12_26 Update: v3.7 Added Global Var. SADM_WWW_ARC_DIR for Server archive when deleted.
-#@2021_08_02 web: v3.8 Added 'SADM_PGM2DOC' for Doc to Links file definition.
-#@2021_08_17 web v3.9 Added "SADM_MONITOR_UPDATE_INTERVAL" 
+#@2021_08_02 nolog v3.8 Added 'SADM_PGM2DOC' for Doc to Links file definition.
+#@2021_08_17 nolog v3.9 Added "SADM_MONITOR_UPDATE_INTERVAL" 
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #

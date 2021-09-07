@@ -32,10 +32,11 @@
 # 2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
 # 2019_09_20 Update v2.5 Show History (RCH) content using same uniform way.
 # 2020_12_13 Update v2.6 Add link in the heading to view the Daily Scripts Report, if HTML exist.
-#@2021_08_18 web v2.7 Add link to Script documentation, no show alert group name & Members.
-#@2021_08_27 web v2.8 Fix link to History file (*.rch).
-#@2021_08_28 web v2.9 Fix link to log file (*.log).
-#@2021_08_29 web v2.10 Show effective alert group name instead of 'default' and member as tooltip.
+#@2021_08_18 web v2.7 Status of all Scripts - Add link to Script documentation.
+#@2021_08_18 web v2.8 Status of all Scripts - Show effective alert group name & members as tooltip
+#@2021_08_27 web v2.9 Status of all Scripts - Fix link to log & History file (*.rch).
+#@2021_08_29 web v2.10 Status of all Scripts - Show effective alert group name instead of 'default'.
+#@2021_08_29 web v2.11 Status of all Scripts - Show member(s) of alert group as tooltip. 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -65,7 +66,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG              = False ;                                           # Debug Activated True/False
-$SVER               = "2.10" ;                                           # Current version number
+$SVER               = "2.11" ;                                           # Current version number
 $CREATE_BUTTON      = False ;                                           # Yes Display Create Button
 $URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
 $URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
