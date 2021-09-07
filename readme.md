@@ -12,8 +12,7 @@ notification via email, SMS or the Slack application.
 SADMIN can surely help you improve and standardize the administration of your server farm.
  
 
-![monitor](https://sadmin.ca/assets/img/sadm_sysmon/sadm_view_sysmon.png  "SADMIN monitor page")
-
+[![monitor](/assets/img/sadm_sysmon/sadm_view_sysmon.png)](/assets/img/sadm_sysmon/sadm_view_sysmon.png  "SADMIN monitor page")
 ---
 
 ## Monitor your scripts from just one place
@@ -44,7 +43,7 @@ templates to create new scripts and benefit of SADMIN tools.
 * Access all this information from a [web interface](https://sadmin.ca/assets/img/webui/main_screen.png) or from the command line.
 * View your systems farm [subnet utilization](https://sadmin.ca/assets/img/webui/view_subnet.png) and see what IP are free to use.  
 
-![SubnetInfo](https://sadmin.ca/assets/img/webui/view_subnet.png "SADMIN Subnet Information")
+[![SubnetInfo](/assets/img/webui/view_subnet.png)](/assets/img/webui/view_subnet.png "SADMIN Subnet Information")
 
 [Back To The Top](#Tools-for-SysAdmin)
 
