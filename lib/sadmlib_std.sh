@@ -187,7 +187,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.76"                                              # This Library Version
+export SADM_LIB_VER="3.77"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -1924,8 +1924,8 @@ sadm_start() {
     if [ ! -z "$SADM_LOG_HEADER" ] && [ "$SADM_LOG_HEADER" = "Y" ]      # Script Want Log Header
         then sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
              sadm_writelog "$(date +"%a %d %b %Y %T") - ${SADM_PN} v${SADM_VER} - Library v${SADM_LIB_VER}"
-             if [ "$SADM_PDESC" ] 
-                then sadm_writelog "Desc.: $SADM_PDESC" 
+             if [ "$SADM_PDESC" ]                                       # If Script Desc. Not empty
+                then sadm_writelog "Desc.: $SADM_PDESC"                 # Include it in log Header
              fi
              sadm_writelog "$(sadm_get_fqdn) - User: $(whoami) - Arch: $(arch) - SADMIN: $SADMIN"
              hline3="$(sadm_get_osname) $(sadm_capitalize $(sadm_get_ostype))"
