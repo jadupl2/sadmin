@@ -173,6 +173,9 @@
 # 2021_08_06 nolog v3.72 $SADMIN/www/tmp directory default permission now set to 777 
 # 2021_08_13 lib v3.73 New func. see Doc sadm_create_lockfile  sadm_remove_lockfile sadm_is_system_lock
 # 2021_08_17 lib v3.74 Performance improvement.
+#@2021_09_09 lib v3.75 'sadm_write_err $msg' function added to write to log and error log.
+#@2021_09_13 lib v3.76 Enhance script log header to be more concise, yet have more information.
+#@2021_09_14 lib v3.77 If script desc. "SADM_PDESC" var. exist & not empty, include in log header.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -184,7 +187,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.74"                                              # This Library Version
+export SADM_LIB_VER="3.76"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -282,7 +285,7 @@ fi
 
 # Definition of SADMIN log, error log, Result Code  History (.rch) and Monitor report file (*.rpt).
 export SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"     # Script Output LOG
-export SADM_ERRLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}_err.log" # Script Error Output LOG
+export SADM_ELOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}_e.log"  # Script Error LOG
 export SADM_RCHLOG="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"  # Result Code History File
 export SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt"             # Monitor Report file (rpt)
 
@@ -302,6 +305,7 @@ export SADM_PARTED=""                                                   # Path t
 export SADM_ETHTOOL=""                                                  # Path to ethtool Command
 export SADM_SSH=""                                                      # Path to ssh Exec.
 export SADM_MYSQL=""                                                    # Default mysql FQDN
+export SADM_SED=""                                                      # Path to sed Command
 
 # SADMIN CONFIG FILE VARIABLES (Default Values here will be overridden by SADM CONFIG FILE Content)
 export SADM_MAIL_ADDR="your_email@domain.com"                           # Default is in sadmin.cfg
@@ -335,7 +339,9 @@ export SADM_NETWORK2=""                                                 # Networ
 export SADM_NETWORK3=""                                                 # Network 3 to Scan
 export SADM_NETWORK4=""                                                 # Network 4 to Scan
 export SADM_NETWORK5=""                                                 # Network 5 to Scan
-export SADM_MONITOR_UPDATE_INTERVAL=60                                 # Monitor page upd interval
+export SADM_MONITOR_UPDATE_INTERVAL=60                                  # Monitor page upd interval
+export SADM_MONITOR_RECENT_COUNT=10                                   # Sysmon Nb. Recent Scripts 
+export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"                  # Exclude from SysMon Recent
 export DBPASSFILE="${SADM_CFG_DIR}/.dbpass"                             # MySQL Passwd File
 export SADM_RELEASE=`cat $SADM_REL_FILE`                                # SADM Release Ver. Number
 export SADM_SSH_PORT=""                                                 # Default SSH Port
@@ -508,12 +514,13 @@ sadm_ask() {
 
 # Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE variable.
 # Use sadm_write (No LF at EOL) instead of sadm_writelog (With LF at EOL).
+# Replace '[ OK ]' By a Green '[ OK ]', add color to ERROR WARNING, FAILED, SUCCESS, and INFO.
 # --------------------------------------------------------------------------------------------------
 sadm_write() {
     SADM_SMSG="$@"                                                      # Screen Msg = Msg Received
     SADM_LMSG="$SADM_SMSG"                                              # Log Mess. = Screen Mess
 
-    # Replace special status andput them in color.
+    # Replace special status and put them in color.
     SADM_SMSG=`echo "${SADM_SMSG//'[ OK ]'/$SADM_SOK}"`                 # Put OK in Green 
     SADM_SMSG=`echo "${SADM_SMSG//'[ ERROR ]'/$SADM_SERROR}"`           # Put ERROR in Red
     SADM_SMSG=`echo "${SADM_SMSG//'[ WARNING ]'/$SADM_SWARNING}"`       # Put WARNING in Yellow
@@ -543,7 +550,7 @@ sadm_write() {
 
 
 # Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE variable.
-# Just write the message received as is, with a new line at the end.
+# A newLine is added at the end of each file written.
 # --------------------------------------------------------------------------------------------------
 sadm_writelog() {
     SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
@@ -562,9 +569,30 @@ sadm_writelog() {
     esac
 }
 
+# This function call sadm_writelog, it's is declare for uniformity with sadm_write_err.
+# --------------------------------------------------------------------------------------------------
+sadm_write_log() {
+    SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
+    sadm_writelog "$SADM_SMSG"                                          # Go write to script log
+}
 
 
-# Show Script Name, version, Library Version, O/S Name/Version and Kernel version.
+
+
+# Write String received to log ($SADM_LOG) & script error log ($SADM_ELOG)
+# --------------------------------------------------------------------------------------------------
+sadm_write_err() {
+    SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
+    sadm_writelog "$SADM_SMSG"                                          # Go write to script log
+    SADM_EMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"               # Log Message with Date/Time
+    printf "%-s\n" "$SADM_EMSG" >> $SADM_ELOG                           # Write mess. to error log.
+}
+
+
+
+# Purpose : 
+#   Show Script Name, version, Library Version, O/S Name/Version and Kernel version.
+#   Use for '-v' arguments of a script
 # --------------------------------------------------------------------------------------------------
 sadm_show_version()
 {
@@ -576,85 +604,93 @@ sadm_show_version()
 }
 
 
-
-# Trim the file received as first parameter (max lines in log as 2nd paramater)
+# Purpose : 
+#   Trim a file.
+#
+# Parameter(s)  : 
+#   1) File name to trim.
+#   2) Number of lines to keep - Keep the last X number of lines  
+#
+# Return Value : 
+#   0 - if the trim done with success 
+#   1 - if problem occured while trimming the file
 # --------------------------------------------------------------------------------------------------
 sadm_trimfile() {
-    wfile=$1 ; maxline=$2                                               # Save FileName et Nb Lines
-    wreturn_code=0                                                      # Return Code of function
-
-    # Test Number of parameters received
+    wfile=$1 ; maxline=$2                                               # Save FileName & Trim Num.
+    wreturn_code=0                                                      # Default Return Code 
     if [ $# -ne 2 ]                                                     # Should have rcv 1 Param
-        then sadm_write "sadm_trimfile: Should receive 2 Parameters\n"  # Show User Info on Error
+        then sadm_write "${FUNCNAME}: Should receive 2 Parameters\n"    # Show User Info on Error
              sadm_write "Have received $# parameters ($*)\n"            # Advise User to Correct
              return 1                                                   # Return Error to Caller
     fi
 
-    # Test if filename received exist
     if [ ! -r "$wfile" ]                                                # Check if File Rcvd Exist
-        then sadm_write "sadm_trimfile : Can't read file $1\n"          # Advise user
+        then sadm_write "sadm_trimfile : Can't read file $wfile\n"      # Advise user
              return 1                                                   # Return Error to Caller
     fi
 
-    # Test if Second Parameter Received is an integer
     sadm_isnumeric "$maxline"                                           # Test if an Integer
     if [ $? -ne 0 ]                                                     # If not an Integer
         then wreturn_code=1                                             # Return Code report error
-             sadm_write "sadm_trimfile: Nb of line invalid ($2)\n"      # Advise User
+             sadm_write "${FUNCNAME}: Nb of line invalid ($maxline)\n"  # Advise User
              return 1                                                   # Return Error to Caller
     fi
 
-    #tmpfile=`mktemp --tmpdir=${SADM_TMP_DIR}`                          # Problem in RHEL4
-    tmpfile="${SADM_TMP_DIR}/${SADM_INST}.$$"                           # Create Temp Work FileName
-    if [ $? -ne 0 ] ; then wreturn_code=1 ; fi                          # Return Code report error
-    tail -${maxline} $wfile > $tmpfile                                  # Trim file to Desired Nb.
-    if [ $? -ne 0 ] ; then wreturn_code=1 ; fi                          # Return Code report error
-    rm -f ${wfile} > /dev/null                                          # Remove Original Log
-    if [ $? -ne 0 ] ; then wreturn_code=1 ; fi                          # Return Code report error
-    mv ${tmpfile} ${wfile}                                              # Move Tmp to original
-    if [ $? -ne 0 ] ; then wreturn_code=1 ; fi                          # Return Code report error
-    chmod 664 ${wfile}                                                  # Make permission to 664
-    if [ $? -ne 0 ] ; then wreturn_code=1 ; fi                          # Return Code report error
-    rm -f ${tmpfile} >/dev/null 2>&1                                    # Remove Temp Work File
+    nbline=$(wc -l $wfile | awk '{print $1}')                           # How many lines in the file
+    if [ $nbline -le $maxline ] ; then return 0 ; fi                    # If no need to trim file
+    nbdel=$(( $nbline - $maxline ))                                     # Number of lines to delete
+    $SADM_SED -i "1,${nbdel}d" $wfile                                   # Delete lines in the file
     if [ $? -ne 0 ] ; then wreturn_code=1 ; fi                          # Return Code report error
     return ${wreturn_code}                                              # Return to Caller
 }
 
 
-# --------------------------------------------------------------------------------------------------
-# THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SYSTEM
-# IF THE COMMAND EXIST, RETURN 0  -  IF IT DOESN'T EXIST, RETURN 1
+
+
+# Purpose : 
+#   Verify existence a command and return the full path of command or blank.
+#
+# Parameter(s)  : 
+#   1) Name of the command ('cal' for example)
+#
+# Return Value : 
+#   0) If command exist & the full command path is returned (/usr/bin/cal).
+#   1) If command doesn't exist & an empty string is returned ("")
 # --------------------------------------------------------------------------------------------------
 sadm_get_command_path() {
     SADM_CMD=$1                                                         # Save Parameter received
     if ${SADM_WHICH} ${SADM_CMD} >/dev/null 2>&1                        # Command is found ?
         then CMD_PATH=`${SADM_WHICH} ${SADM_CMD}`                       # Store Path in Cmd path
-             echo "$CMD_PATH"                                           # Return Command Path 
+             echo "$CMD_PATH"                                           # echo the Command Path 
              return 0                                                   # Return 0 if Cmd found
-        else CMD_PATH=""                                                # Clear Command Path 
-             echo "$CMD_PATH"                                           # Return empty str as path
     fi
+    echo ""                                                             # Return empty str as path
     return 1                                                            # Return 1 if Cmd not Found
 }
 
 
-# ----------------------------------------------------------------------------------------------
-# DETERMINE THE INSTALLATION PACKAGE TYPE OF CURRENT O/S 
+
+# Purpose : 
+#   Determine The Installation Package Type Of Current O/S 
+#
+# Parameter(s)  : 
+#   1) None
+#
+# Return Value : 
+#   0) If package type was determine and echo rpm (Redhat,CentOS,Suse,...), 
+#      deb(Ubuntu,Debian,Raspbian,...), lslpp(Aix), launchctl(MacOS)
+#   1) If couldn't determine package type and echo empty strinng
 # ----------------------------------------------------------------------------------------------
 sadm_get_packagetype() {
     packtype=""                                                     # Initial Package None
-    found=$(sadm_get_command_path 'rpm')                            # Is command rpm available 
+    found=$(sadm_get_command_path 'rpm')                            # Is command rpm available ?
     if [ "$found" != "" ] ; then packtype="rpm"  ; echo "$packtype" ; return 0 ; fi 
-    
-    found=$(sadm_get_command_path 'dpkg')                           # Is command dpkg available 
+    found=$(sadm_get_command_path 'dpkg')                           # Is command dpkg available ?
     if [ "$found" != "" ] ; then packtype="deb"  ; echo "$packtype" ; return 0 ; fi 
-    
-    found=$(sadm_get_command_path 'lslpp')                          # Is command lslpp available 
+    found=$(sadm_get_command_path 'lslpp')                          # Is command lslpp available ?
     if [ "$found" != "" ] ; then packtype="aix"  ; echo "$packtype" ; return 0 ; fi 
-
-    found=$(sadm_get_command_path 'launchctl')                      # Is command lslpp available 
+    found=$(sadm_get_command_path 'launchctl')                      # Is command launchctl available 
     if [ "$found" != "" ] ; then packtype="dmg"  ; echo "$packtype" ; return 0 ; fi 
-    
     echo "$packtype"                                                # Return Package Type
     return 1                                                        # Error - Return code 1
 }
@@ -716,6 +752,7 @@ sadm_check_requirements() {
     SADM_MAIL=$(sadm_get_command_path "mail")                           # Get mail cmd path   
     SADM_CURL=$(sadm_get_command_path "curl")                           # Get curl cmd path   
     SADM_MYSQL=$(sadm_get_command_path "mysql")                         # Get mysql cmd path  
+    SADM_SED=$(sadm_get_command_path "sed")                             # Get sed cmd path  
     return 0
 }
 
@@ -1830,6 +1867,12 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_MONITOR_UPDATE_INTERVAL" > /dev/null 2>&1
         if [ $? -eq 0 ] ;then SADM_MONITOR_UPDATE_INTERVAL=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
         #
+        echo "$wline" |grep -i "^SADM_MONITOR_RECENT_COUNT" > /dev/null 2>&1
+        if [ $? -eq 0 ] ;then SADM_MONITOR_RECENT_COUNT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_MONITOR_RECENT_EXCLUDE" > /dev/null 2>&1
+        if [ $? -eq 0 ] ;then SADM_MONITOR_RECENT_EXCLUDE=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        #
         done < $SADM_CFG_FILE
 
     # Get Tead/Write and Read/Only User Password from pasword file (If on SADMIN Server)
@@ -1864,18 +1907,30 @@ sadm_start() {
     if [ $(id -u) -eq 0 ]                                               # Sure got good permission
         then chmod 0775 $SADM_LOG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR
     fi
-    [ ! -e "$SADM_LOG" ] && touch $SADM_LOG                             # If Log File don't exist
-    if [ $(id -u) -eq 0 ]                                               # Sure got good permission
-        then chmod 666 $SADM_LOG ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}
+
+    # Initialize script log and error log
+    if [ "$SADM_LOG_APPEND" != "Y" ]                                    # Don't want to append Log
+        then if [ -e "$SADM_LOG" ]  ; then rm -f $SADM_LOG  > /dev/null 2>&1 ; fi
+             if [ -e "$SADM_ELOG" ] ; then rm -f $SADM_ELOG > /dev/null 2>&1 ; fi
     fi
-    [ "$SADM_LOG_APPEND" != "Y" ] && echo " " > $SADM_LOG               # No Append log, create new
+    [ ! -e "$SADM_LOG"  ] && touch $SADM_LOG                            # If Log File don't exist
+    [ ! -e "$SADM_ELOG" ] && touch $SADM_ELOG                           # If Error Log don't exist
+    if [ $(id -u) -eq 0 ]                                               # Sure got good permission
+        then chmod 666 $SADM_LOG  ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}
+             chmod 666 $SADM_ELOG ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_ELOG}
+    fi
 
     # Write Starting Info in the Log
     if [ ! -z "$SADM_LOG_HEADER" ] && [ "$SADM_LOG_HEADER" = "Y" ]      # Script Want Log Header
         then sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
-             sadm_writelog "$(date +"%a %d %B %Y %T") - ${SADM_PN} v${SADM_VER} - Libr. v${SADM_LIB_VER}"
-             sadm_writelog "System: $(sadm_get_fqdn) - User: $(whoami) - Type: $(sadm_get_ostype)"
-             sadm_writelog "$(sadm_get_osname) $(sadm_get_osversion) Kernel $(sadm_get_kernel_version)"
+             sadm_writelog "$(date +"%a %d %b %Y %T") - ${SADM_PN} v${SADM_VER} - Library v${SADM_LIB_VER}"
+             if [ "$SADM_PDESC" ] 
+                then sadm_writelog "Desc.: $SADM_PDESC" 
+             fi
+             sadm_writelog "$(sadm_get_fqdn) - User: $(whoami) - Arch: $(arch) - SADMIN: $SADMIN"
+             hline3="$(sadm_get_osname) $(sadm_capitalize $(sadm_get_ostype))"
+             hline3="${hline3} release $(sadm_get_osversion) - Kernel $(sadm_get_kernel_version)"
+             sadm_writelog "$hline3"
              sadm_writelog "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
              sadm_writelog " "                                          # White space line
     fi
@@ -2329,6 +2384,9 @@ sadm_stop() {
     if [ -e "$SADM_TMP_FILE1" ] ; then rm -f $SADM_TMP_FILE1 >/dev/null 2>&1 ; fi
     if [ -e "$SADM_TMP_FILE2" ] ; then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1 ; fi
     if [ -e "$SADM_TMP_FILE3" ] ; then rm -f $SADM_TMP_FILE3 >/dev/null 2>&1 ; fi
+
+    # If error log is empty, we can delete it
+    if [ ! -s "$SADM_ELOG" ] ; then rm -f $SADM_ELOG >/dev/null 2>&1 ; fi
 
     # If script is running on the SADMIN server, copy script final log and rch to web data section.
     # If we don't do that, log look incomplete & script seem to be always running on web interface.
