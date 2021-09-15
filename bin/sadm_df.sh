@@ -14,7 +14,7 @@
 # --------------------------------------------------------------------------------------------------
 #
 #   This code was originally written by Jacques Duplessis <sadmlinux@gmail.com>.
-#   Developer Web Site : http://www.sadmin.ca
+#   Developer Web Site : http://sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either

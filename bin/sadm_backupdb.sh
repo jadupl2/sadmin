@@ -10,7 +10,7 @@
 #                   Backup are created in the choosen directory (BACKUP_DIR)
 #                   
 #
-#   Copyright (C) 2016-2018 Jacques Duplessis <sadmlinux@gmail.com> - http://www.sadmin.ca
+#   Copyright (C) 2016-2018 Jacques Duplessis <sadmlinux@gmail.com> - http://sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
