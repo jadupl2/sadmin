@@ -51,7 +51,8 @@
 # 2021_08_17 web v2.21 System Monitor page - Use the refresh interval from SADMIN configuration file. 
 # 2021_08_18 web v2.22 System Monitor page - Section heading are spread on two lines.
 # 2021_08_29 web v2.23 System Monitor page - Show alert group member(s) as tooltip.
-#@2021_09_14 web v2.24 System Monitor page - New section that list recent scripts execution.
+#@2021_09_14 web v2.24 SysMon page - New section that list recent scripts execution.
+#@2021_09_15 web v2.25 SysMon page - Recent scripts section won't show if SADM_MONITOR_RECENT_COUNT=0
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -89,7 +90,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.24" ;                                                       # Current version number
+$SVER  = "2.25" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -766,8 +767,9 @@ function display_data($con,$alert_file) {
     if ($iheading) { echo "\n</table>\n" ; }                     # If data Shown,End of Table
 
     # Show History of recent scripts activity
-    show_activity($con,$alert_file);
-
+    if (SADM_MONITOR_RECENT_COUNT != 0) {
+        show_activity($con,$alert_file);
+    }
     echo "\n</table>\n" ;
     echo "\n</tbody>\n";                                                # End of tbody
     unlink($alert_file);                                                # Delete Work Alert File
