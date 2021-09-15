@@ -176,7 +176,10 @@
 #@2021_09_09 lib v3.75 'sadm_write_err $msg' function added to write to log and error log.
 #@2021_09_13 lib v3.76 Enhance script log header to be more concise, yet have more information.
 #@2021_09_14 lib v3.77 If script desc. "SADM_PDESC" var. exist & not empty, include in log header.
+#@2021_09_15 lib v3.78 Function "sadm_show_version" will show Script Desc. ($SADM_PDESC) if Avail.
 #===================================================================================================
+sadm_show_version
+
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
  
@@ -597,6 +600,7 @@ sadm_write_err() {
 sadm_show_version()
 {
     printf "\n${SADM_PN} v${SADM_VER} - Hostname ${SADM_HOSTNAME}"
+    if [ "$SADM_PDESC" ] ; then printf "\n${SADM_PDESC}" ; fi 
     printf "\nSADMIN Shell Library v${SADM_LIB_VER}"
     printf "\n$(sadm_get_osname) v$(sadm_get_osversion)"
     printf " - Kernel $(sadm_get_kernel_version)"
