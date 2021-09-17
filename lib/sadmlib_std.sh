@@ -178,7 +178,7 @@
 #@2021_09_14 lib v3.77 If script desc. "SADM_PDESC" var. exist & not empty, include in log header.
 #@2021_09_15 lib v3.78 Function "sadm_show_version" will show Script Desc. ($SADM_PDESC) if Avail.
 #===================================================================================================
-sadm_show_version
+
 
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
