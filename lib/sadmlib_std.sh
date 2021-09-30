@@ -177,6 +177,7 @@
 #@2021_09_13 lib v3.76 Enhance script log header to be more concise, yet have more information.
 #@2021_09_14 lib v3.77 If script desc. "SADM_PDESC" var. exist & not empty, include in log header.
 #@2021_09_15 lib v3.78 Function "sadm_show_version" will show Script Desc. ($SADM_PDESC) if Avail.
+#@2021_09_30 lib v3.79 Various little corrections.
 #===================================================================================================
 
 
@@ -190,7 +191,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.78"                                              # This Library Version
+export SADM_LIB_VER="3.79"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -1932,7 +1933,7 @@ sadm_start() {
                 then sadm_writelog "Desc.: $SADM_PDESC"                 # Include it in log Header
              fi
              sadm_writelog "$(sadm_get_fqdn) - User: $(whoami) - Arch: $(arch) - SADMIN: $SADMIN"
-             hline3="$(sadm_get_osname) $(sadm_capitalize $(sadm_get_ostype))"
+             hline3="$(sadm_get_osname) ($(sadm_get_oscodename)) $(sadm_capitalize $(sadm_get_ostype))"
              hline3="${hline3} release $(sadm_get_osversion) - Kernel $(sadm_get_kernel_version)"
              sadm_writelog "$hline3"
              sadm_writelog "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
@@ -2221,7 +2222,7 @@ sadm_start() {
                      sadm_write "    The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n"
                      if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
                         then sadm_write "\n${BOLD}${GREEN}PID File exceeded it time to live.\n"
-                             sadm_write "Assuming script was aborted anormally, "
+                             sadm_write "Assuming script was aborted abnormally, "
                              sadm_write "Script execution re-enable, PID file updated.${NORMAL}\n\n"
                              touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
                              DELETE_PID="Y"                             # Del PID Since running
@@ -2302,7 +2303,7 @@ sadm_stop() {
              if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ] # If User want Log Footer
                 then if [ "$SADM_MAX_RCLINE" -ne 0 ]                    # User want to trim rch file
                         then if [ -w $SADM_RCHLOG ]                     # If History RCH Writable
-                                then mtmp1="History ($SADM_RCHLOG) trim to ${SADM_MAX_RCLINE} lines."
+                                then mtmp1="History file ($SADM_RCHLOG) trim to ${SADM_MAX_RCLINE} lines."
                                      sadm_write "${mtmp1}\n"            # Write rch trim context 
                                      sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE" 
                              fi
@@ -2337,19 +2338,19 @@ sadm_stop() {
              case $SADM_ALERT_TYPE in
                 0)  sadm_write "Script instructed to not send any alert (\$SADM_ALERT_TYPE=0).\n"
                     ;;
-                1)  sadm_write "Script will send an alert only when it terminate with error.\n"
+                1)  sadm_write "Script send an alert only when it terminate with error (\$SADM_ALERT_TYPE=1).\n"
                     if [ "$SADM_EXIT_CODE" -ne 0 ]
                         then sadm_write "Script failed, alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}.\n"
-                        else sadm_write "Script succeeded, no alert will be send to '$SADM_ALERT_GROUP' alert group.\n"
+                        else sadm_write "Script succeeded, no alert will be send (\$SADM_ALERT_TYPE=1).\n"
                     fi
                     ;;
-                2)  sadm_write "Script will send an alert only when it terminate with success.\n"
+                2)  sadm_write "Script will send an alert only when it terminate with success (\$SADM_ALERT_TYPE=2).\n"
                     if [ "$SADM_EXIT_CODE" -eq 0 ]
                         then sadm_write "Script succeeded, alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}.\n"
                         else sadm_write "Script failed, no alert will be send to '$SADM_ALERT_GROUP' alert group.\n"
                     fi
                     ;;
-                3)  sadm_write "Script will send an alert at the end of every execution.\n"
+                3)  sadm_write "Script will send an alert at the end of every execution (\$SADM_ALERT_TYPE=3).\n"
                     sadm_write "Alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}.\n"
                     ;;
                 *)  sadm_write "'\$SADM_ALERT_TYPE' code isn't set properly, should be between 0 and 3.\n"
@@ -2358,7 +2359,7 @@ sadm_stop() {
                     ;;
              esac
              if [ "$SADM_LOG_APPEND" = "N" ]                            # If New log Every Execution
-                then sadm_write "New log ($SADM_LOG) created.\n"
+                then sadm_write "New log created ($SADM_LOG).\n"
                 else if [ $SADM_MAX_LOGLINE -eq 0 ]                     # MaxTrimLog=0 then no Trim
                         then sadm_write "Log $SADM_LOG is not trimmed (\$SADM_MAX_LOGLINE=0).\n"
                         else sadm_write "Log $SADM_LOG trim to ${SADM_MAX_LOGLINE} lines.\n" 
