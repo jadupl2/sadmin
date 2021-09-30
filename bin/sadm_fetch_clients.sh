@@ -719,7 +719,7 @@ validate_server_connectivity()
 
     # Try to get uptime from system to test if ssh to system is working
     # -o ConnectTimeout=1 -o ConnectionAttempts=1 
-    wuptime=$($SADM_SSH_CMD -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
+    wuptime=$($SADM_SSH_CMD -o ConnectTimeout=1 -o ConnectionAttempts=4 $FQDN_SNAME uptime 2>/dev/null)
     RC=$?                                                               # Save Error Number
     if [ $RC -eq 0 ]                                                    # If SSH Worked
         then GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
