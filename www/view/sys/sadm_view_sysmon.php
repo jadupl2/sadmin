@@ -53,7 +53,7 @@
 # 2021_08_29 web v2.23 System Monitor page - Show alert group member(s) as tooltip.
 #@2021_09_14 web v2.24 SysMon page - New section that list recent scripts execution.
 #@2021_09_15 web v2.25 SysMon page - Recent scripts section won't show if SADM_MONITOR_RECENT_COUNT=0
-#
+#@2021_09_30 web v2.26 Sysmon page - Show recent activities even when no alert to report
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -90,7 +90,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.25" ;                                                       # Current version number
+$SVER  = "2.26" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -493,9 +493,9 @@ function show_activity($con,$alert_file) {
     
     echo "\n<br><br><H3><strong>". SADM_MONITOR_RECENT_COUNT ;
     echo " Most Recent Scripts Execution</strong></H3>\n" ;
-    echo "\n<table align=center border=0 cellspacing=0>" ;
-    $HCOLOR='cyan';
-    echo "<tr style='background-color:$HCOLOR'>\n";
+    echo "\n<table  align=center border=0 cellspacing=0>" ;
+    $HCOLOR='#0e8420';
+    echo "<tr style='background-color:$HCOLOR ; color:white ; padding:0px 10px 0px 10px;'>\n";
     echo "\n<td>&nbsp;&nbsp;</td>";
     echo "\n<td><b>System</td>";
     echo "\n<td>&nbsp;&nbsp;</td>";
@@ -508,7 +508,7 @@ function show_activity($con,$alert_file) {
     echo "</tr>\n";
     #echo "\n<td colspan='1' bgcolor=$HCOLOR>&nbsp;&nbsp;</td>";
 
-    echo "<tr style='background-color:$HCOLOR'>\n";
+    echo "<tr style='background-color:$HCOLOR ; color:white'>\n";
     echo "<td width=35 align='center'><b>No</td>\n";    
     echo "<td widtd=90 align='left'><b>Name</td>\n";
     echo "<td align='left'><b>Script Name</td>\n";
@@ -557,7 +557,12 @@ function show_activity($con,$alert_file) {
         $row = mysqli_fetch_assoc($result);                             # Get Column Row Array 
         if ($row) {$wdesc = $row['srv_desc']; } else { $wdesc = "Unknown";} #Get Srv Desc.
 
-        echo "\n<tr>";
+        if ($lcount % 2 == 0) {                                         # If even lines count
+            echo "\n<tr style='background-color:#cccccc ; color:black'>\n";
+        }else{
+            echo "\n<tr style='background-color:#ffffff ; color:black'>\n";
+        }
+    
         echo "\n<td align='center'>". $lcount . "</td>";                # Line counter
         echo "\n<td align='left'><a href='" . $URL_HOST_INFO . "?sel=" . $cserver ;
         echo "' data-toggle='tooltip' title='" . $wdesc . "'>" . $cserver . "</a></td>";
@@ -671,12 +676,13 @@ function display_data($con,$alert_file) {
 
     # If nothing to report
     if (sizeof($array_sysmon) == 0) {                                   # Array Empty everything OK
-        echo "<tr>\n";                                                  # Start of line
-        echo "\n<td class='dt-center' colspan='7'>";                    # Span the 7 columns
-        echo "Nothing to report" ;                                      # Indicate everything OK
-        echo "\n</td>\n</tr>\n<br>";                                    # End of table row
-        echo "\n</table>\n</tbody>\n";                                  # End of tbody,table
+        echo "<center><strong>For the moment, no error or warning to report</strong></center>" ;
         unlink($alert_file);                                            # Delete Work Alert File
+        if (SADM_MONITOR_RECENT_COUNT != 0) {                           # History of script activity
+            show_activity($con,$alert_file);
+        }
+        echo "\n</table>\n" ;
+        echo "\n</tbody>\n";                                            # End of tbody
         return;                                                         # Return to Caller 
     }
     
