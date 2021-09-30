@@ -60,6 +60,8 @@
 #@2021_05_14 Update: v3.17 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
 #@2021_05_16 Update: v3.18 Adjustment for MacOS Big Sur
 #@2021_08_17 library v3.19 Add 'SADM_MONITOR_UPDATE_INTERVAL'variable that control refresh rate. 
+#@2021_09_30 library v3.20 Various little bug corrections
+# Add 'SADM_MONITOR_UPDATE_INTERVAL'variable that control refresh rate. 
 #  Starting a new version of this library
 #==================================================================================================
 try :
@@ -142,7 +144,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.19"                                # This Library Version
+        self.libver             = "3.20"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -884,7 +886,7 @@ class sadmtools():
             maj_ver=cstdout
             ccode, cstdout, cstderr = self.oscommand("uname -r")
             min_ver=cstdout
-            osversion="%s.%s" % (maj.version,min.version)
+            osversion="%s.%s" % (maj_ver,min_ver)
         return osversion
 
 
@@ -1020,7 +1022,7 @@ class sadmtools():
         try:
             shutil.move (self.tmpfile,fname)                                # Rename tmp to original
         except OSError as e:
-            print ("[ ERROR ] in %s function - Error renaming %s to %s" % (fcname,tmpfile,fname))
+            print ("[ ERROR ] in %s function - Error renaming %s to %s" % (fcname,self.tmpfile,fname))
             print ("Rename Error: %s - %s." % (e.fname,e.strerror))
             return 1
 
@@ -1155,7 +1157,7 @@ class sadmtools():
         # Validate the Log Type
         self.log_type = self.log_type.upper()
         if ((self.log_type != 'S') and (self.log_type != "B") and (self.log_type != 'L')):
-            print ("Acceptable log_type are 'S','L','B' - Can't set log_type to %s" % (wlogtype))
+            print ("Acceptable log_type are 'S','L','B' - Can't set log_type to %s" % (self.log_type))
             sys.exit(1)                                                 # Exit with Error
 
         # Validate Log Append (True or False)
@@ -1172,9 +1174,9 @@ class sadmtools():
             else:                                                       # User Want Fresh New Log
                 FH_LOG_FILE=open(self.log_file,'w')                     # Open Log in a new log
         except IOError as e:                                            # If Can't Create or open
-            print ("Error open file %s \r\n" % self.log_file)           # Print Log FileName
-            print ("Error Number : {0}\r\n.format(e.errno)")            # Print Error Number
-            print ("Error Text   : {0}\r\n.format(e.strerror)")         # Print Error Message
+            print ("Error opening file %s" % self.log_file)             # Print Log FileName
+            print ("Error Number : %d" % (e.errno))                     # Print Error Number
+            print ("Error Text   : %s" % (e.strerror))                  # Print Error Message
             sys.exit(1)                                                 # Exit with Error
 
 
@@ -1217,8 +1219,8 @@ class sadmtools():
             wgid = grp.getgrnam(self.cfg_www_group).gr_gid              # Get GID User of Web Group
             wuid = pwd.getpwnam(self.cfg_www_user).pw_uid               # Get UID User of Web User
             #
-            if not os.path.exists(www_dat_net_dir) : os.mkdir(www_dat_net_dir,0o0775) # Web Net Dir.
-            os.chown(self.www_dat_net_dir, wuid, wgid)                  # Change owner of Net Dir
+            if not os.path.exists(self.www_net_dir) : os.mkdir(self.www_net_dir,0o0775) # Web Net Dir.
+            os.chown(self.www_net_dir, wuid, wgid)                  # Change owner of Net Dir
             #
             if not os.path.exists(self.www_dir)      : os.mkdir(self.www_dir,0o0775)     # WWW  Dir.
             os.chown(self.www_dir, wuid, wgid)                          # Change owner of log file
@@ -1275,7 +1277,7 @@ class sadmtools():
             try:
                 FH_RCH_FILE=open(self.rch_file,'a')                     # Open RC Log in append mode
             except IOError as e:                                        # If Can't Create or open
-                print ("Error open file %s \r\n" % rch_file)            # Print Log FileName
+                print ("Error open file %s \r\n" % self.rch_file)            # Print Log FileName
                 print ("Error Number : {0}\r\n.format(e.errno)")        # Print Error Number
                 print ("Error Text   : {0}\r\n.format(e.strerror)")     # Print Error Message
                 sys.exit(1)
@@ -1356,7 +1358,7 @@ class sadmtools():
             MailMess="Alert requested on Success or Error."             # Message User Email Choice
 
         if self.cfg_alert_type > 3 or self.cfg_alert_type < 0 :         # User Email Choice Invalid
-            MailMess="SADM_ALERT_TYPE is not set properly [0-3] Now at %s",(str(cfg_alert_type))
+            MailMess="SADM_ALERT_TYPE is not set properly [0-3] Now at %s",(str(self.cfg_alert_type))
 
 #        if self.mail == "" :                                            # If Mail Program not found
 #            MailMess="No Mail can be send - Until mail command is install"  # Msg User Email Choice
