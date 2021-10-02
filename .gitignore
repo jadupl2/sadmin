@@ -61,6 +61,10 @@ sysmon.lock
 readme.html
 readme.pdf
 
+# Exclude old stuff Directories
+old2keep/*
+
+
 # Want theses directories to be part of the project (but empty)
 dat/*
 !dat/.gitkeep
