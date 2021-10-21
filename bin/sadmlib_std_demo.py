@@ -560,16 +560,6 @@ def print_file_variable(st):
     presult=st.alert_init                                               # Actual Content of Variable
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.slack_file"                                            # Name of Variable
-    pdesc="Alert - Slack Channel File"                                  # Variable Description
-    presult=st.slack_file                                               # Actual Content of Variable
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
-
-    pexample="st.slack_init"                                            # Name of Variable
-    pdesc="Alert - Slack Channel (Template)"                            # Variable Description
-    presult=st.slack_init                                               # Actual Content of Variable
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
-
     pexample="st.alert_hist"                                            # Name of Variable
     pdesc="Alert - History File"                                        # Variable Description
     presult=st.alert_hist                                               # Actual Content of Variable

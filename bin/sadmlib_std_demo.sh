@@ -625,16 +625,6 @@ print_file_variable()
     presult="$SADM_ALERT_INIT"                                          # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
-    pexample="\$SADM_SLACK_FILE"                                        # Variable Name
-    pdesc="SADMIN Slack Channel WebHook File"                           # Description
-    presult="$SADM_SLACK_FILE"                                          # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-
-    pexample="\$SADM_SLACK_INIT"                                        # Variable Name
-    pdesc="SADMIN Initial Slack WebHook File"                           # Description
-    presult="$SADM_SLACK_INIT"                                          # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-
     pexample="\$SADM_ALERT_HIST"                                        # Variable Name
     pdesc="SADMIN Alert History File"                                   # Description
     presult="$SADM_ALERT_HIST"                                          # Actual Content of Variable

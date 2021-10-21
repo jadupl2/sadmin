@@ -209,10 +209,8 @@ class sadmtools():
         self.cfg_hidden         = self.cfg_dir + '/.sadmin.cfg'         # Hidden Config Filename
         self.alert_file         = self.cfg_dir + '/alert_group.cfg'     # AlertGroup Definition File
         self.alert_init         = self.cfg_dir + '/.alert_group.cfg'    # AlertGroup Initial File
-        self.slack_file         = self.cfg_dir + '/alert_slack.cfg'     # Alert Slack Channel File
-        self.slack_init         = self.cfg_dir + '/.alert_slack.cfg'    # Alert Slack Channel Init
-        self.alert_hist         = self.cfg_dir + '/alert_history.cfg'   # Alert History Text File
-        self.alert_hini         = self.cfg_dir + '/.alert_history.cfg'  # Alert History Initial File
+        self.alert_hist         = self.cfg_dir + '/alert_history.txt'   # Alert History Text File
+        self.alert_hini         = self.cfg_dir + '/.alert_history.txt'  # Alert History Initial File
         #self.crontab_work       = self.www_lib_dir + '/.crontab.txt'   # Work crontab
         #self.crontab_file       = '/etc/cron.d/sadmin'                 # Final crontab
         self.rear_newcron       = self.cfg_dir + '.sadm_rear_backup'    # Tmp Cron for Rear Backup
