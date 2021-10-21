@@ -496,9 +496,6 @@ file_housekeeping()
             #afile="$SADM_CFG_DIR/alert_group.cfg"
             #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
-            #afile="$SADM_CFG_DIR/alert_slack.cfg"
-            #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            #
             #afile="$SADM_CFG_DIR/.dbpass"
             #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             #
