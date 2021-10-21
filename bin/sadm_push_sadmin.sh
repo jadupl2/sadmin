@@ -48,6 +48,7 @@
 # 2020_12_12 Update: v2.28 Add pushing of alert_group.cfg alert_slack.cfg to client
 # 2021_04_24 Fix: v2.29 Correct typo in error message.
 # 2021_05_22 server: v2.30 Remove sync depreciated $SADMIN/usr/mon/swatch_nmon* script and files.
+# 2021_10_20 server: v2.31 Remove sync depreciated slac_channel.cfg file
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -79,7 +80,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.30'                                     # Script Version
+export SADM_VER='2.31'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -344,7 +345,7 @@ process_servers()
 
 
         # Copy Site Common configuration files to client
-        rem_cfg_files=(alert_group.cfg alert_slack.cfg )
+        rem_cfg_files=(alert_group.cfg )
         for WFILE in "${rem_cfg_files[@]}"
           do
           CFG_SRC="${SADM_CFG_DIR}/${WFILE}"
