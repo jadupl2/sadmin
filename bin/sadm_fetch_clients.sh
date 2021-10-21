@@ -83,7 +83,8 @@
 # 2021_07_19 server: v3.29 Sleep 5 seconds between rsync retries, if first failed.
 # 2021_08_17 server: v3.30 Performance improvement et code restructure
 # 2021_08_27 server v3.31 Increase ssh connection Timeout "-o ConnectTimeout=3".
-# --------------------------------------------------------------------------------------------------
+# 2021_10_20 server v3.32 Remove syncing of depreciated file 'alert_slack.cfg'. 
+--------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
@@ -130,7 +131,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.31'                                     # Script Version
+export SADM_VER='3.32'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -977,7 +978,7 @@ process_servers()
 
         # Copy Site Common configuration files to client (If not on server)
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Server
-            then rem_cfg_files=( alert_group.cfg alert_slack.cfg )
+            then rem_cfg_files=( alert_group.cfg )
                  for WFILE in "${rem_cfg_files[@]}"
                    do
                    CFG_SRC="${SADM_CFG_DIR}/${WFILE}" 
