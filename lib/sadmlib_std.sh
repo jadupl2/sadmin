@@ -19,14 +19,14 @@
 # 2016_04_17 V2.1 Added Support for Linux Mint
 # 2016_04_19 V2.2 Minor Modifications concerning Trimming the Log File
 # 2017_07_03 V2.3 Cosmetic change (Use only 50 Dash line at start & end of script)
-# 2017_07_17 V2.4 Split Second line of log header into two lines/ Change Timming Line
+# 2017_07_17 V2.4 Split Second line of log header into two lines/ Change Timing Line
 # 2017_08_12 V2.5 Print FQDN instead of hostname and SADM Lib Ver. in header of the log
 # 2017_08_27 V2.6 If Log not in Append Mode, then no need to Trim - Change Log footer message accordingly
 # 2017_09_23 V2.7 Add SQLite3 Dir & Name Plus Correct Typo Error in sadm_stop when testing for log trimming or not
 # 2017_09_29 V2.8 Correct chown on ${SADMIN}/dat/net and Test creation and chown on www directories
 # 2017_12_18 V2.9 Function were changed to run on MacOS and Some Restructuration was done
 # 2017_12_23 V2.10 SSH Command line construction added at the end of script
-# 2017_12_30 V2.11 Combine sadmlib_server into sadmlib_std , so onle library from then on.
+# 2017_12_30 V2.11 Combine sadmlib_server into sadmlib_std , so one library from then on.
 # 2018_01_03 V2.12 Added Check for facter command , if present use it get get hardware info
 # 2018_01_05 V2.13 Remove Warning when command can't be found for compatibility
 # 2018_01_23 V2.14 Add arc directory in $SADMIN/www for archiving purpose
@@ -178,6 +178,7 @@
 #@2021_09_14 lib v3.77 If script desc. "SADM_PDESC" var. exist & not empty, include in log header.
 #@2021_09_15 lib v3.78 Function "sadm_show_version" will show Script Desc. ($SADM_PDESC) if Avail.
 #@2021_09_30 lib v3.79 Various little corrections.
+#@2021_10_20 lib v3.80 Merge slack channel file with alert group & change log footer
 #===================================================================================================
 
 
@@ -191,7 +192,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.79"                                              # This Library Version
+export SADM_LIB_VER="3.80"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -246,9 +247,9 @@ export SADM_WWW_PERF_DIR="$SADM_WWW_TMP_DIR/perf"                       # web pe
 export SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.pid"                 # PID file name
 export SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"                         # Cfg file name
 export SADM_ALERT_FILE="$SADM_CFG_DIR/alert_group.cfg"                  # AlertGrp File
+export SADM_SLACK_FILE="$SADM_CFG_DIR/alert_slack.cfg"                  # Old Slack Alert File
+export SADM_SLACK_INIT="$SADM_CFG_DIR/.alert_slack.cfg"                 # Old Slack Alert Init File
 export SADM_ALERT_INIT="$SADM_CFG_DIR/.alert_group.cfg"                 # Initial Alert
-export SADM_SLACK_FILE="$SADM_CFG_DIR/alert_slack.cfg"                  # Slack WebHook
-export SADM_SLACK_INIT="$SADM_CFG_DIR/.alert_slack.cfg"                 # Slack Init WH
 export SADM_ALERT_HIST="$SADM_CFG_DIR/alert_history.txt"                # Alert History
 export SADM_ALERT_HINI="$SADM_CFG_DIR/.alert_history.txt"               # History Init
 export SADM_ALERT_ARC="$SADM_CFG_DIR/alert_archive.txt"                 # Alert Archive
@@ -1908,8 +1909,8 @@ sadm_load_config_file() {
 sadm_start() {
 
     # 1st thing inititialize log directory and file.
-    [ ! -d "$SADM_LOG_DIR" ] && mkdir -p $SADM_LOG_DIR                  # If Log Dir. don't Exist
-    if [ $(id -u) -eq 0 ]                                               # Sure got good permission
+    [ ! -d "$SADM_LOG_DIR" ] && mkdir -p $SADM_LOG_DIR                  # Log Dir. Got to exist
+    if [ $(id -u) -eq 0 ]                                               # Need good permission
         then chmod 0775 $SADM_LOG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR
     fi
 
@@ -1920,7 +1921,7 @@ sadm_start() {
     fi
     [ ! -e "$SADM_LOG"  ] && touch $SADM_LOG                            # If Log File don't exist
     [ ! -e "$SADM_ELOG" ] && touch $SADM_ELOG                           # If Error Log don't exist
-    if [ $(id -u) -eq 0 ]                                               # Sure got good permission
+    if [ $(id -u) -eq 0 ]                                               # Need good permission
         then chmod 666 $SADM_LOG  ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}
              chmod 666 $SADM_ELOG ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_ELOG}
     fi
@@ -1939,8 +1940,6 @@ sadm_start() {
              sadm_writelog "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
              sadm_writelog " "                                          # White space line
     fi
-
-
 
     # ($SADMIN/tmp) If TMP Directory doesn't exist, create it.
     [ ! -d "$SADM_TMP_DIR" ] && mkdir -p $SADM_TMP_DIR
@@ -2164,26 +2163,8 @@ sadm_start() {
     fi
 
     # Check Files that are present ONLY ON SADMIN SERVER
-    # Slack Channel File ($SADMIN/cfg/slackchannel.cfg) MUST be present.
-    # If it doesn't exist create it from initial file ($SADMIN/cfg/.slackchannel.cfg)
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-        then if [ ! -r "$SADM_SLACK_FILE" ]                             # If AlertGrp not Exist
-                then if [ ! -r "$SADM_SLACK_INIT" ]                     # If AlertInit File not Fnd
-                       then sadm_write "********************************************************"
-                            sadm_write "SADMIN Slack Channel file is missing - ${SADM_SLACK_FILE}\n"
-                            sadm_write "Even Slack Channel template file is missing - $SADM_SLACK_INIT\n"
-                            sadm_write "Copy both files from another system to this server\n"
-                            sadm_write "Or restore them from a backup\n"
-                            sadm_write "Don't forget to review the file content.\n"
-                            sadm_write "********************************************************\n"
-                            sadm_stop 1                                 # Exit to O/S with Error
-                            exit 1
-                       else cp $SADM_SLACK_INIT $SADM_SLACK_FILE        # Copy Template as initial
-                            chmod 664 $SADM_SLACK_FILE
-                     fi
-             fi
-             # Alert History File ($SADMIN/cfg/alert_history.txt) MUST be present.
-             if [ ! -r "$SADM_ALERT_HIST" ]                             # If Alert History Missing
+        then if [ ! -r "$SADM_ALERT_HIST" ]                             # If Alert History Missing
                 then if [ ! -r "$SADM_ALERT_HINI" ]                     # If Alert Init File not Fnd
                         then touch $SADM_ALERT_HIST                     # Create a Blank One
                         else cp $SADM_ALERT_HINI $SADM_ALERT_HIST       # Copy Initial Hist. File
@@ -2336,24 +2317,24 @@ sadm_stop() {
                         ;;
              esac
              case $SADM_ALERT_TYPE in
-                0)  sadm_write "Script instructed to not send any alert (\$SADM_ALERT_TYPE=0).\n"
+                0)  sadm_write "Regardless of it termination status, this script is set to never send alert.\n"
                     ;;
-                1)  sadm_write "Script send an alert only when it terminate with error (\$SADM_ALERT_TYPE=1).\n"
+                1)  sadm_write "Script is set to send an alert only when it terminate with error.\n"
                     if [ "$SADM_EXIT_CODE" -ne 0 ]
                         then sadm_write "Script failed, alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}.\n"
                         else sadm_write "Script succeeded, no alert will be send (\$SADM_ALERT_TYPE=1).\n"
                     fi
                     ;;
-                2)  sadm_write "Script will send an alert only when it terminate with success (\$SADM_ALERT_TYPE=2).\n"
+                2)  sadm_write "Script is set to send an alert only when it terminate with success.\n"
                     if [ "$SADM_EXIT_CODE" -eq 0 ]
                         then sadm_write "Script succeeded, alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}.\n"
                         else sadm_write "Script failed, no alert will be send to '$SADM_ALERT_GROUP' alert group.\n"
                     fi
                     ;;
-                3)  sadm_write "Script will send an alert at the end of every execution (\$SADM_ALERT_TYPE=3).\n"
+                3)  sadm_write "This script is set to always send an alert with termination status.\n"
                     sadm_write "Alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}.\n"
                     ;;
-                *)  sadm_write "'\$SADM_ALERT_TYPE' code isn't set properly, should be between 0 and 3.\n"
+                *)  sadm_write "Invalid '\$SADM_ALERT_TYPE' value, should be between 0 and 3.\n"
                     sadm_write "It's set to '$SADM_ALERT_TYPE', changing it to 3.\n"
                     SADM_ALERT_TYPE=3
                     ;;
@@ -2376,7 +2357,7 @@ sadm_stop() {
              [ $(id -u) -eq 0 ] && chmod 664 ${SADM_LOG}                # R/W Owner/Group R by World
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}  # Change Log Owner
     fi
-
+ 
     # Normally we Delete the PID File when exiting the script.
     # But when script is already running, then we are the second instance of the script
     # we don't want to delete PID file. 
@@ -2672,13 +2653,8 @@ sadm_send_alert()
        # SEND SLACK ALERT 
        S) s_channel=`grep -i "^$agroup " $SADM_ALERT_FILE | head -1 | awk '{ print $3 }'` 
           s_channel=`echo $s_channel | awk '{$1=$1;print}'`             # Del Leading/Trailing Space
-          grep -i "^$s_channel " $SADM_SLACK_FILE >/dev/null 2>&1       # Search Channel in SlackFile
-          if [ $? -ne 0 ]                                               # Channel not in Slack File
-              then sadm_write "[ ERROR ] Missing Channel '$s_channel' in ${SADM_SLACK_FILE}\n"
-                   return 1                                             # Return Error to caller
-          fi
-          # Get the WebHook for the selected Channel
-          slack_hook_url=`grep -i "^$s_channel " $SADM_SLACK_FILE |awk '{ print $2 }'`
+          slack_hook_url=`grep -i "^$agroup " $SADM_ALERT_FILE | head -1 | awk '{ print $4 }'` 
+          slack_hook_url=`echo $s_channel | awk '{$1=$1;print}'`        # Del Leading/Trailing Space
           if [ "$LIB_DEBUG" -gt 4 ]                                     # Library Debugging ON 
               then sadm_write "Slack Channel=$s_channel got Webhook=${slack_hook_url}\n"
           fi
@@ -2753,7 +2729,63 @@ sadm_send_alert()
     return $RC
 }
 
- 
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Merge alert_group.cfg and alert_slack.cfg into alert_group.cfg
+# This function should be executed on when these two files exists.
+# After the merge the alert_slack.cfg file will be deleted (Won't be sed anymore)
+# --------------------------------------------------------------------------------------------------
+merge_alert_files() {
+
+    if [ ! -r "$SADM_ALERT_FILE" ] ; then return 1 ; fi 
+    if [ ! -r "$SADM_SLACK_FILE" ] ; then return 1 ; fi 
+    tmp_merge="${SADM_TMP_DIR}/tmp_merge.$$"                            # Name tmp File for merge
+    if [ -a "$tmp_merge" ] ; then rm -f "$tmp_merge" ; fi               # If tmp exist, delete it.
+
+    while read aline
+        do
+        FC=`echo $aline | cut -c1`
+        if [ "$FC" = "#" ] || [ ${#aline} -eq 0 ] 
+            then echo "$aline" >> $tmp_merge                            # Write line as it is
+                 continue    
+        fi
+        echo "$aline" | grep -iq " s "                                  # Is it a Slack Alert Line
+        if [ $? -ne 0 ]                                                 # No it's not a Slack Line
+            then echo "$aline" >> $tmp_merge                            # Write line as it is
+                 continue                                               # Continue with next line
+        fi 
+        #
+        nbfield=$(echo $aline | awk -F' ' '{print NF}')
+        #sadm_writelog "Selected : $aline we have $nbfield fields."
+        slchannel=$(echo $aline | awk -F' ' '{print $3}')
+        #sadm_writelog "Searching for $slchannel in $SADM_SLACK_FILE"
+        grep -iq "^${slchannel} " $SADM_SLACK_FILE 
+        if [ $? -ne 0 ] 
+            then sadm_writelog "Channel $slchannel in $SADM_ALERT_FILE isn't found in $SADM_SLACK_FILE"
+                 sadm_writelog "Cannot merge this entry, correct the situation please" 
+            else httphook=$(grep -i "^${slchannel} " $SADM_SLACK_FILE | awk '{print $2 }')
+                 echo "$aline  $httphook"  >> $tmp_merge
+        fi
+        done < $SADM_ALERT_FILE   
+        echo " " >> $tmp_merge                                           # Blank Line at the EOF
+
+    # Put in place the new alert goup file
+    cp $tmp_merge $SADM_ALERT_FILE
+    if [ $? -eq 0 ] 
+        then if [ -r "$SADM_SLACK_FILE" ] ; then rm -f "$SADM_SLACK_FILE" > /dev/null 2>&1 ; fi
+             if [ -r "$SADM_SLACK_INIT" ] ; then rm -f "$SADM_SLACK_INIT" > /dev/null 2>&1 ; fi
+             if [ -r "$tmp_merge" ]       ; then rm -f "$tmp_merge" > /dev/null 2>&1 ; fi
+             if [ $(id -u) -eq 0 ]        ; then chmod 664 $SADM_ALERT_FILE ; fi
+             sadm_writelog "Slack config file ($SADM_SLACK_FILE) merged into alert group file ($SADM_ALERT_FILE)"
+    fi 
+    return
+}
+
+
+
+
 # --------------------------------------------------------------------------------------------------
 # Write Alert History File
 # Parameters:
@@ -2958,7 +2990,10 @@ sadm_is_system_lock()
 
     # Read SADMIN Confiuration file and put value in Global Variables.
     sadm_load_config_file                                               # Load sadmin.cfg file
-    
+
+    # If old slack file exist, Merge it with alert group file
+    if [ -r "$SADM_SLACK_FILE" ] ; then merge_alert_files ; fi     
+
     # Check SADMIN requirements
     sadm_check_requirements                                             # Check Lib Requirements
     if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement are not met
