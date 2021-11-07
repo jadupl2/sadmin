@@ -179,6 +179,7 @@
 #@2021_09_15 lib v3.78 Function "sadm_show_version" will show Script Desc. ($SADM_PDESC) if Avail.
 #@2021_09_30 lib v3.79 Various little corrections.
 #@2021_10_20 lib v3.80 Merge slack channel file with alert group & change log footer
+#@2021_11_07 lib v3.81 Set new SADM_RRDTOOL variable that contain location of rrdtool
 #===================================================================================================
 
 
@@ -192,7 +193,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.80"                                              # This Library Version
+export SADM_LIB_VER="3.81"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -311,6 +312,7 @@ export SADM_ETHTOOL=""                                                  # Path t
 export SADM_SSH=""                                                      # Path to ssh Exec.
 export SADM_MYSQL=""                                                    # Default mysql FQDN
 export SADM_SED=""                                                      # Path to sed Command
+export SADM_RRDTOOL=""                                                  # Path to rrdtool
 
 # SADMIN CONFIG FILE VARIABLES (Default Values here will be overridden by SADM CONFIG FILE Content)
 export SADM_MAIL_ADDR="your_email@domain.com"                           # Default is in sadmin.cfg
@@ -350,7 +352,6 @@ export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"                  # Exclud
 export DBPASSFILE="${SADM_CFG_DIR}/.dbpass"                             # MySQL Passwd File
 export SADM_RELEASE=`cat $SADM_REL_FILE`                                # SADM Release Ver. Number
 export SADM_SSH_PORT=""                                                 # Default SSH Port
-export SADM_RRDTOOL=""                                                  # RRDTool Location
 export SADM_REAR_NFS_SERVER=""                                          # ReaR NFS Server
 export SADM_REAR_NFS_MOUNT_POINT=""                                     # ReaR Mount Point
 export SADM_REAR_BACKUP_TO_KEEP=3                                       # Rear Nb.Copy
@@ -759,6 +760,7 @@ sadm_check_requirements() {
     SADM_CURL=$(sadm_get_command_path "curl")                           # Get curl cmd path   
     SADM_MYSQL=$(sadm_get_command_path "mysql")                         # Get mysql cmd path  
     SADM_SED=$(sadm_get_command_path "sed")                             # Get sed cmd path  
+    SADM_RRDTOOL=$(sadm_get_command_path "rrdtool")                     # Get rrdtool cmd path  
     return 0
 }
 
@@ -1794,9 +1796,6 @@ sadm_load_config_file() {
         #
         echo "$wline" |grep -i "^SADM_SSH_PORT" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_SSH_PORT=`echo "$wline"      |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_RRDTOOL" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RRDTOOL=`echo "$wline"       |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_BACKUP_NFS_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_BACKUP_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
@@ -2945,6 +2944,7 @@ sadm_is_system_lock()
             SEC_LEFT=`expr $OSTIMEOUT - $FAGE`                          # Sec. before lock expire
             if [ $FAGE -gt $SADM_LOCK_TIMEOUT ]                         # Running more than 60Min ?
                then sadm_writelog "Server is lock for more than $SADM_LOCK_TIMEOUT seconds."
+                    sadm_writelog "Removing the lock file ($LOCK_FILE)."
                     sadm_writelog "We now restart to monitor this system as usual."
                     rm -f $LOCK_FILE > /dev/null 2>&1                   # Remove Lock File
                else sadm_writelog "System '${SNAME}' is currently lock."
