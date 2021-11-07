@@ -172,7 +172,8 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_NETWORK4")      { define("SADM_NETWORK4"      , trim($fvalue));}
           if (trim($fname) == "SADM_NETWORK5")      { define("SADM_NETWORK5"      , trim($fvalue));}
           if (trim($fname) == "SADM_SSH_PORT")      { define("SADM_SSH_PORT"      , trim($fvalue));}
-          if (trim($fname) == "SADM_RRDTOOL")       { define("SADM_RRDTOOL"       , trim($fvalue));}
+          #if (trim($fname) == "SADM_RRDTOOL")       { define("SADM_RRDTOOL"       , trim($fvalue));}
+          define ("SADM_RRDTOOL" , '/usr/bin/rrdtool') ;
           if (trim($fname) == "SADM_BACKUP_NFS_SERVER")      { define("SADM_BACKUP_NFS_SERVER"      , trim($fvalue));}
           if (trim($fname) == "SADM_BACKUP_NFS_MOUNT_POINT") { define("SADM_BACKUP_NFS_MOUNT_POINT" , trim($fvalue));}
           if (trim($fname) == "SADM_DAILY_BACKUP_TO_KEEP")   { define("SADM_DAILY_BACKUP_TO_KEEP"   , trim($fvalue));}
