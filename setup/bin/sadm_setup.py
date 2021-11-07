@@ -97,6 +97,7 @@
 # 2021_07_20 install: v3.60 Client package to install changed from 'util-linux-ng' to 'util-linux'.
 # 2021_07_21 install: v3.61 Fix server install problem on rpm system with package 'php-mysqlnd'.
 # 2021_07_21 install: v3.62 Fix 'srv_rear_ver' field didn't have a default value in Database.
+# 2021_11_07 install: v3.63 Remove SADM_RRDTOOL variable from sadmin.cfg (depreciated).
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -113,7 +114,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.62"                                            # Setup Version Number
+sver                = "3.63"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -2411,8 +2412,8 @@ def mainflow(sroot):
         setup_mysql(sroot,userver,udomain,sosname)                      # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
         update_server_crontab_file(logfile,sroot,wostype,uuser)         # Create Server Crontab File 
-        rrdtool_path = locate_command("rrdtool")                        # Get rrdtool path
-        update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path,False)      # Update Value in sadmin.cfg
+        #rrdtool_path = locate_command("rrdtool")                        # Get rrdtool path
+        #update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path,False)      # Update Value in sadmin.cfg
 
     # Run First SADM Client Script to feed Web interface and Database
     writelog ('  ')
