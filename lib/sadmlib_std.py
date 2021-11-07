@@ -61,6 +61,7 @@
 #@2021_05_16 Update: v3.18 Adjustment for MacOS Big Sur
 #@2021_08_17 library v3.19 Add 'SADM_MONITOR_UPDATE_INTERVAL'variable that control refresh rate. 
 #@2021_09_30 library v3.20 Various little bug corrections
+#@2021_11_07 library v3.21 Locate 'rrd_tool'executable.
 # Add 'SADM_MONITOR_UPDATE_INTERVAL'variable that control refresh rate. 
 #  Starting a new version of this library
 #==================================================================================================
@@ -144,7 +145,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.20"                                # This Library Version
+        self.libver             = "3.21"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -300,6 +301,7 @@ class sadmtools():
         self.ethtool            = ""                                    # ethtool command path
         self.curl               = ""                                    # curl command path
         self.mutt               = ""                                    # mutt command path
+        self.rrdtool            = ""                                    # rrdtool command path
 
         self.load_config_file(self.cfg_file)                            # Load sadmin.cfg in cfg var
         self.check_requirements()                                       # Check SADM Requirement Met
@@ -480,7 +482,6 @@ class sadmtools():
             if "SADM_GROUP"                  in CFG_NAME:  self.cfg_group          = CFG_VALUE
             if "SADM_WWW_USER"               in CFG_NAME:  self.cfg_www_user       = CFG_VALUE
             if "SADM_WWW_GROUP"              in CFG_NAME:  self.cfg_www_group      = CFG_VALUE
-            if "SADM_RRDTOOL"                in CFG_NAME:  self.cfg_rrdtool        = CFG_VALUE
             if "SADM_SSH_PORT"               in CFG_NAME:  self.cfg_ssh_port       = int(CFG_VALUE)
             if "SADM_MAX_LOGLINE"            in CFG_NAME:  self.cfg_max_logline    = int(CFG_VALUE)
             if "SADM_MAX_RCHLINE"            in CFG_NAME:  self.cfg_max_rchline    = int(CFG_VALUE)
@@ -1054,7 +1055,7 @@ class sadmtools():
     # ----------------------------------------------------------------------------------------------
     def check_requirements(self):
         global which,lsb_release,uname,bc,fdisk,mail,ssh,dmidecode,perl
-        global nmon,lscpu,ethtool,parted,curl,mutt
+        global nmon,lscpu,ethtool,parted,curl,mutt,rrdtool
 
         requisites_status=True                                          # Assume Requirement all Met
 
@@ -1126,6 +1127,11 @@ class sadmtools():
         if (self.os_type == "LINUX"):                                   # On Linux
             self.mutt =self.locate_command('mutt')                      # Locate the mutt command
             if self.mutt == "" : requisites_status=False                # if blank didn't find it
+
+        # Get the location of rrdtool command
+        if (self.os_type == "LINUX"):                                   # On Linux
+            self.rrdtool =self.locate_command('rrdtool')                # Locate the rrdtool command
+            if self.rrdtool == "" : requisites_status=False             # if blank didn't find it
 
         # Get the location of curl command
         if (self.os_type == "LINUX"):                                   # On Linux
