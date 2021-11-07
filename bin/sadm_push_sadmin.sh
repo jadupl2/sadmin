@@ -49,6 +49,7 @@
 # 2021_04_24 Fix: v2.29 Correct typo in error message.
 # 2021_05_22 server: v2.30 Remove sync depreciated $SADMIN/usr/mon/swatch_nmon* script and files.
 # 2021_10_20 server: v2.31 Remove sync depreciated slac_channel.cfg file
+#@2021_11_07 server: v2.32 Don't try to push files if the client is lock. 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -80,7 +81,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.31'                                     # Script Version
+export SADM_VER='2.32'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -240,12 +241,12 @@ process_servers()
     while read wline                                                    # Then Read Line by Line
         do
         xcount=`expr $xcount + 1`                                       # Server Counter
-        server_name=`    echo $wline|awk -F\; '{ print $1 }'`            # Extract Server Name
-        server_os=`      echo $wline|awk -F\; '{ print $2 }'`            # Extract O/S (linux/aix)
-        server_domain=`  echo $wline|awk -F\; '{ print $3 }'`            # Extract Domain of Server
-        server_monitor=` echo $wline|awk -F\; '{ print $4 }'`            # Monitor  t=True f=False
-        server_sporadic=`echo $wline|awk -F\; '{ print $5 }'`            # Sporadic t=True f=False
-        server_dir=`     echo $wline|awk -F\; '{ print $6 }'`            # Client SADMIN Install Dir.
+        server_name=`    echo $wline|awk -F\; '{ print $1 }'`           # Extract Server Name
+        server_os=`      echo $wline|awk -F\; '{ print $2 }'`           # Extract O/S (linux/aix)
+        server_domain=`  echo $wline|awk -F\; '{ print $3 }'`           # Extract Domain of Server
+        server_monitor=` echo $wline|awk -F\; '{ print $4 }'`           # Monitor  t=True f=False
+        server_sporadic=`echo $wline|awk -F\; '{ print $5 }'`           # Sporadic t=True f=False
+        server_dir=`     echo $wline|awk -F\; '{ print $6 }'`           # Client SADMIN Install Dir.
         server_fqdn=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
         
         sadm_write "\n"                                                 # Blank Line
@@ -260,6 +261,10 @@ process_servers()
                 sadm_write "Total Error(s) now at ${ERROR_COUNT}\n"     # Show Error count
                 continue                                                # skip this server
         fi
+
+        # Check if System is Locked.
+        sadm_is_system_lock "$server_name"                              # Check lock file status
+        if [ $? -eq 1 ] ; then continue ; fi                            # System Lock, Nxt Server
 
         # If SSH to server failed & it's a sporadic server = warning & next server
         $SADM_SSH_CMD $server_fqdn date > /dev/null 2>&1                # SSH to Server for date
