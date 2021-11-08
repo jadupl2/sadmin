@@ -34,6 +34,7 @@
 # 2020_11_04 Minor: v3.13 Update SADMIN section & use env cmd to use proper bash shell.
 #@2021_05_13 Update: v3.14 Check if ntpdate is present before syncing time.
 #@2021_06_11 Update: v3.15 When syncing time with atomic clock redirect output to script log.
+#@2021_11_08 Update: v3.16 When system start, delete everything in $SADMIN/tmp.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 
@@ -66,7 +67,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.15'                                      # Script Version
+export SADM_VER='3.16'                                      # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -116,7 +117,7 @@ main_process()
     sadm_writelog " "
     
     sadm_writelog "Running Startup Standard Procedure"
-    sadm_writelog "  Removing old files (log,pid) in ${SADM_TMP_DIR}"
+    sadm_writelog "  Removing files in '$SADMIN/tmp' ${SADM_TMP_DIR} directory."
     rm -f ${SADM_TMP_DIR}/* >> $SADM_LOG 2>&1
 
     sadm_writelog "  Removing SADM System Monitor Lock File ${SADM_BASE_DIR}/sysmon.lock"
@@ -133,7 +134,7 @@ main_process()
     fi 
              
     sadm_writelog "  Start 'nmon' performance system monitor tool"
-    ${SADM_BIN_DIR}/sadm_nmon_watcher.sh | tee -a $SADM_LOG
+    ${SADM_BIN_DIR}/sadm_nmon_watcher.sh > /dev/null 2>&1
     if [ $? -ne 0 ] 
         then sadm_writelog "  Error starting 'nmon' System Monitor." 
              ERROR_COUNT=$(($ERROR_COUNT+1))
