@@ -84,7 +84,8 @@
 # 2021_08_17 server: v3.30 Performance improvement et code restructure
 # 2021_08_27 server v3.31 Increase ssh connection Timeout "-o ConnectTimeout=3".
 # 2021_10_20 server v3.32 Remove syncing of depreciated file 'alert_slack.cfg'. 
---------------------------------------------------------------------------------------------------
+# 2021_11_15 server v3.33 Fix type error on comment line
+# --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
@@ -131,7 +132,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.32'                                     # Script Version
+export SADM_VER='3.33'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
@@ -1416,7 +1417,7 @@ update_server_uptime()
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
-    echo -e "\nALL = $@ \n\n"
+    #echo -e "\nALL = $@ \n\n"
     while getopts "d:hv" opt ; do                                       # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
