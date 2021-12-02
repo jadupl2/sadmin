@@ -141,7 +141,7 @@
 # 2020_06_06 Update: v3.40 When writing to log don't include time when prefix with OK,Warning,Error
 # 2020_06_09 Update: v3.41 Don't trim the RCH file (ResultCodeHistory). if $SADM_MAX_RCLINE=0.
 # 2020_07_11 Fixes: v3.42 Date and time was not include in script log.
-# 2020_07_12 Update: v3.43 When virtual system 'sadm_server_model' return (VMWARE,VIRTUALBOX,VM)
+# 2020_07_12 Update: v3.43 When virtual system 'wmodel' return (VMWARE,VIRTUALBOX,VM)
 # 2020_07_20 Update: v3.44 Change permission for log and rch to allow normal user to run script.
 # 2020_07_23 New: v3.45 New function 'sadm_ask', show received msg & wait for y/Y (return 1) or n/N (return 0)
 # 2020_07_29 Fix: v3.46 Fix date not showing in the log under some condition.
@@ -180,6 +180,7 @@
 #@2021_09_30 lib v3.79 Various little corrections.
 #@2021_10_20 lib v3.80 Merge slack channel file with alert group & change log footer
 #@2021_11_07 lib v3.81 Set new SADM_RRDTOOL variable that contain location of rrdtool
+#@2021_12_02 lib v3.82 Improve 'sadm_server_model' function.
 #===================================================================================================
 
 
@@ -193,7 +194,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.81"                                              # This Library Version
+export SADM_LIB_VER="3.82"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -1241,10 +1242,11 @@ sadm_server_type() {
                                     if [ $? -eq 0 ]                     # If VirtualBox was found
                                         then sadm_server_type="V"       # If VirtualBox Server
                                         else sadm_server_type="P"       # Default Assume Physical
-                                    fi 
+                                    fi
                             fi
                     fi
                     ;;
+
         "AIX")      sadm_server_type="P"                                # Default Assume Physical
                     ;;
         "DARWIN")   sadm_server_type="P"                                # Default Assume Physical
@@ -1261,33 +1263,34 @@ sadm_server_type() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_model() {
     case "$(sadm_get_ostype)" in
-        "LINUX") sadm_sm=`${SADM_DMIDECODE} |grep -i "Product Name:" |head -1 |awk -F: '{print $2}'`
-                 sadm_sm=`echo ${sadm_sm}| sed 's/ProLiant//'`
-                 sadm_sm=`echo ${sadm_sm}|sed -e 's/^[ \t]*//' |sed 's/^[ \t]*//;s/[ \t]*$//' `
-                 sadm_server_model="${sadm_sm}"
+        "LINUX") wmodel=""
                  if [ "$(sadm_server_type)" = "P" ]
-                    then grep -i '^revision' /proc/cpuinfo > /dev/null 2>&1
-                         if [ $? -eq 0 ]
-                            then wrev=`grep -i '^revision' /proc/cpuinfo |cut -d ':' -f 2`
-                                 wrev=`echo $wrev | sed -e 's/^[ \t]*//'`   # Del Lead Space
-                                 sadm_server_model="Raspberry Rev.${wrev}"
-                         fi
-                    else sadm_server_model="VM"                         # Default Virtual Model 
-                         # Are we running under VMWare ?
-                         A=`dmidecode -s system-manufacturer | awk '{ print $1 }' | tr [A-Z] [a-z]`
-                         if [ "$A" = "vmware," ] ; then sadm_server_model="VMWARE" ; fi
-                         # Are we running under VirtualBox ? 
-                         A=`dmidecode -s bios-version | tr [A-Z] [a-z]`     
-                         if [ "$A" = "virtualbox" ] ; then sadm_server_model="VIRTUALBOX" ; fi 
+                     then if [ $(sadm_get_osname) = "RASPBIAN" ]
+                             then wmodel=$(awk -F\: '/^Model/ {print $2}' /proc/cpuinfo)
+                                  wmodel=$(echo "$wmodel" | awk '{$1=$1};1')
+                             else fmodel="/sys/devices/virtual/dmi/id/product_name"
+                                  if [ -r $fmodel ] 
+                                     then wmodel=$(cat $fmodel)
+                                     else sadm_sm=`${SADM_DMIDECODE} |grep -i "Product Name:" |head -1 |awk -F: '{print $2}'`
+                                          sadm_sm=`echo ${sadm_sm}| sed 's/ProLiant//'`
+                                          sadm_sm=`echo ${sadm_sm}|sed -e 's/^[ \t]*//' |sed 's/^[ \t]*//;s/[ \t]*$//' `
+                                          wmodel="${sadm_sm}"
+                                  fi 
+                          fi 
+                     else wmodel="VM"                                # Default Virtual Model 
+                          A=`dmidecode -s system-manufacturer | awk '{print $1}' |tr [A-Z] [a-z]`
+                          if [ "$A" = "vmware," ]    ; then wmodel="VMWARE"     ; fi
+                          A=`dmidecode -s bios-version | tr [A-Z] [a-z]`     
+                          if [ "$A" = "virtualbox" ] ; then wmodel="VIRTUALBOX" ; fi 
                  fi
                  ;;
-        "AIX")   sadm_server_model=`uname -M | sed 's/IBM,//'`
+        "AIX")   wmodel=`uname -M | sed 's/IBM,//'`
                  ;;
        "DARWIN") syspro="system_profiler SPHardwareDataType"
-                 sadm_server_model=`$syspro |grep 'Ident' |awk -F: '{ print $2 }' |tr -d ' '`
+                 wmodel=`$syspro |grep 'Ident' |awk -F: '{ print $2 }' |tr -d ' '`
                  ;;
     esac
-    echo "$sadm_server_model"
+    echo "$wmodel"
 }
 
 
