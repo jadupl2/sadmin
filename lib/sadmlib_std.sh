@@ -181,6 +181,7 @@
 #@2021_10_20 lib v3.80 Merge slack channel file with alert group & change log footer
 #@2021_11_07 lib v3.81 Set new SADM_RRDTOOL variable that contain location of rrdtool
 #@2021_12_02 lib v3.82 Improve 'sadm_server_model' function.
+#@2021_12_12 lib v3.83 Fix 'sadm_server_vg' wasn't returning proper size under certain condition.
 #===================================================================================================
 
 
@@ -194,7 +195,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.82"                                              # This Library Version
+export SADM_LIB_VER="3.83"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -1634,31 +1635,34 @@ sadm_server_vg() {
     case "$(sadm_get_ostype)" in
         "LINUX") ${SADM_WHICH} vgs >/dev/null 2>&1
                  if [ $? -eq 0 ]
-                    then vgs --noheadings -o vg_name,vg_size,vg_free | tr -d '<' >$SADM_TMP_DIR/sadm_vg_$$ 2>/dev/null
+                    then vgs --noheadings --unit g -o vg_name,vg_size,vg_free | tr -d '<' >$SADM_TMP_DIR/sadm_vg_$$ 2>/dev/null
                          while read sadm_wvg                                                 # Read VG one per line
                             do
-                            if [ "$index" -ne 0 ]                                           # Don't add ; for 1st VG
-                                then sadm_server_vg="${sadm_server_vg},"                    # For others VG add ";"
+                            if [ "$index" -ne 0 ]                                 # Don't add ; for 1st VG
+                                then sadm_server_vg="${sadm_server_vg},"          # For others VG add ";"
                             fi
-                            sadm_vg_name=`echo ${sadm_wvg} | awk '{ print $1 }'`            # Save VG Name
-                            sadm_vg_size=`echo ${sadm_wvg} | awk '{ print $2 }'`            # Get VGSize from vgs output
-                            if $(echo $sadm_vg_size | grep -i 'g' >/dev/null 2>&1)             # If Size Specified in GB
+                            sadm_vg_name=`echo ${sadm_wvg} | awk '{ print $1 }'`  # Save VG Name
+                            sadm_vg_size=`echo ${sadm_wvg} | awk '{ print $2 }'`  # Get VGSize from vgs output
+
+                            if $(echo $sadm_vg_size |grep -i 'g' >/dev/null 2>&1) # If Size Specified in GB
                                 then sadm_vg_size=`echo $sadm_vg_size | sed 's/g//' |sed 's/G//'`        # Get rid of "g" in size
                                      sadm_vg_size=`echo "($sadm_vg_size * 1024) / 1" | $SADM_BC` # Convert in MB
                                 else sadm_vg_size=`echo $sadm_vg_size | sed 's/m//'`        # Get rid of "m" in size
                                      sadm_vg_size=`echo "$sadm_vg_size / 1" | $SADM_BC`     # Get rid of decimal
                             fi
-                            sadm_vg_free=`echo ${sadm_wvg} | awk '{ print $3 }'`            # Get VGFree from vgs ouput
-                            if $(echo $sadm_vg_free | grep -i 'g' >/dev/null 2>&1)             # If Size Specified in GB
+
+                            sadm_vg_free=`echo ${sadm_wvg} | awk '{ print $3 }'`  # Get VGFree from vgs ouput
+                            if $(echo $sadm_vg_free |grep -i 'g' >/dev/null 2>&1) # If Size Specified in GB
                                 then sadm_vg_free=`echo $sadm_vg_free | sed 's/g//' |sed 's/G//'|sed 's/M//'`        # Get rid of "g" in size
                                      sadm_vg_free=`echo "($sadm_vg_free * 1024) / 1" | $SADM_BC`  # Convert in MB
                                 else sadm_vg_free=`echo $sadm_vg_free | sed 's/m//' |sed 's/M//'`        # Get rid of "m" in size
                                      sadm_vg_free=`echo "$sadm_vg_free / 1" | $SADM_BC`     # Get rid of decimal
                             fi
-                            sadm_vg_used=`expr ${sadm_vg_size} - ${sadm_vg_free}`           # Calculate VG Used MB
+
+                            sadm_vg_used=`expr ${sadm_vg_size} - ${sadm_vg_free}` # Calculate VG Used MB
                             sadm_server_vg="${sadm_server_vg}${sadm_vg_name}|${sadm_vg_size}|${sadm_vg_used}|${sadm_vg_free}"
-                            index=`expr $index + 1`                                         # Increment Index by 1
-                            done < $SADM_TMP_DIR/sadm_vg_$$                                          # Read VG From Generated File
+                            index=`expr $index + 1`                               # Increment Index by 1
+                            done < $SADM_TMP_DIR/sadm_vg_$$                       # Read VG From Generated File
                  fi
                  ;;
         "AIX")   lsvg > $SADM_TMP_DIR/sadm_vg_$$
