@@ -53,7 +53,7 @@
 # 2020_01_20 Update: v3.10 Better handling & Error message when can't connect to database.
 # 2020_01_20 Fix: v3.11 Fix 'get_osminorversion' function. Crash (raspbian) when no os minor version 
 # 2020_02_25 Update: v3.12 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
-# 2020_09_10 Update: v3.13 Minor update to date/time module.
+# 2020_09_10 Update: v3.13 Minor update to date/time module. 
 # 2020_12_24 Update: v3.14 CentOSStream is CENTOS
 #@2021_05_02 Fix: v3.15 Fix typo error in 'locate_command' method.
 #@2021_05_11 Fix: v3.16 Fix Path to which command was not set properly because of defined alias.
