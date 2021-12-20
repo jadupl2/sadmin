@@ -182,6 +182,7 @@
 #@2021_11_07 lib v3.81 Set new SADM_RRDTOOL variable that contain location of rrdtool
 #@2021_12_02 lib v3.82 Improve 'sadm_server_model' function.
 #@2021_12_12 lib v3.83 Fix 'sadm_server_vg' wasn't returning proper size under certain condition.
+#@2021_12_20 lib v3.84 Load additional options from the SADMIN configuration file.
 #===================================================================================================
 
 
@@ -195,7 +196,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.83"                                              # This Library Version
+export SADM_LIB_VER="3.84"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -373,6 +374,16 @@ export SADM_YEARLY_BACKUP_DATE=31                                       # Yearly
 export SADM_MKSYSB_NFS_SERVER=""                                        # Mksysb NFS Server
 export SADM_MKSYSB_NFS_MOUNT_POINT=""                                   # Mksysb Mnt Point
 export SADM_MKSYSB_NFS_TO_KEEP=2                                        # Mksysb Bb. Copy
+export SADM_PID_TIMEOUT=7200                                            # PID File TTL default
+export SADM_LOCK_TIMEOUT=3600                                           # Host Lock File TTL           
+export SADM_MONITOR_UPDATE_INTERVAL=60                                  # Sysmon sec. refresh rate
+export SADM_MONITOR_RECENT_COUNT=10                                     # SysMon Nb Recent Script
+export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"                  # SysMon Recent list Exclude
+export SADM_DR_SCRIPT_MAXAGE=30                                         # Exec. days before yellow
+export SADM_DR_REAR_INTERVAL=7                                          # Max Days between backup      
+export SADM_DR_STORIX_INTERVAL=7                                        # Max Days between Storix
+export SADM_DR_BACKUP_DIF=50                                            # Max % different BackupSize
+
 
 # Local to Library Variable - Can't be use elsewhere outside this script
 export LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"                         # Local Temp File
@@ -1885,6 +1896,24 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_MONITOR_RECENT_EXCLUDE" > /dev/null 2>&1
         if [ $? -eq 0 ] ;then SADM_MONITOR_RECENT_EXCLUDE=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
         #
+        echo "$wline" |grep -i "^SADM_PID_TIMEOUT" > /dev/null 2>&1
+        if [ $? -eq 0 ] ;then SADM_PID_TIMEOUT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_LOCK_TIMEOUT" > /dev/null 2>&1
+        if [ $? -eq 0 ] ;then SADM_LOCK_TIMEOUT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_DR_SCRIPT_MAXAGE" > /dev/null 2>&1
+        if [ $? -eq 0 ] ;then SADM_DR_SCRIPT_MAXAGE=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_DR_REAR_INTERVAL" > /dev/null 2>&1
+        if [ $? -eq 0 ] ;then SADM_DR_REAR_INTERVAL=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_DR_STORIX_INTERVAL" > /dev/null 2>&1
+        if [ $? -eq 0 ] ;then SADM_DR_STORIX_INTERVAL=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_DR_BACKUP_DIF" > /dev/null 2>&1
+        if [ $? -eq 0 ] ;then SADM_DR_BACKUP_DIF=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        #
         done < $SADM_CFG_FILE
 
     # Get Tead/Write and Read/Only User Password from pasword file (If on SADMIN Server)
@@ -1894,7 +1923,6 @@ sadm_load_config_file() {
         then SADM_RW_DBPWD=`grep "^${SADM_RW_DBUSER}," $DBPASSFILE |awk -F, '{ print $2 }'` # RW PWD
              SADM_RO_DBPWD=`grep "^${SADM_RO_DBUSER}," $DBPASSFILE |awk -F, '{ print $2 }'` # RO PWD
     fi
-
     return 0
 }
 
