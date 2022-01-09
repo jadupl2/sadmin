@@ -1939,6 +1939,7 @@ sadm_load_config_file() {
 #   6) Write HostName - Script name and version - O/S Name and version to the Log file ($SADM_LOG)
 # --------------------------------------------------------------------------------------------------
 # mkdir -p ${SADMIN}/{etc/x1,lib,usr/{x2,x3},bin,tmp/{Y1,Y2,Y3/z},opt,var}
+# mkdir -p -v /home/josevnz/tmp/{dir1,anotherdir,similardir}
 #$ mkdir {bananas,apples,oranges,peaches, kiwis}
 sadm_start() {
 
