@@ -52,6 +52,7 @@
 # 2021_05_10 nolog: v3.22 Change error message "sadm_osupdate_farm.sh" to "sadm_osupdate_starter".
 # 2021_05_22 nolog: v3.23 Standardize command line options & Update SADMIN code section
 # 2021_06_03 client: v3.24 Include script version in sysinfo text file generated
+#@2022_01_10 client: v3.25 Include memory module information in system information file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -84,7 +85,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.24'                                     # Script Version
+export SADM_VER='3.25'                                     # Script Version
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -647,6 +648,11 @@ create_linux_config_files()
 
     if [ "$UNAME" != "" ]
         then CMD="$UNAME -a"
+             execute_command "$CMD" "$SYSTEM_FILE" 
+    fi
+
+    if [ "$DMIDECODE" != "" ]
+        then CMD="$DMIDECODE -t memory"
              execute_command "$CMD" "$SYSTEM_FILE" 
     fi
 
