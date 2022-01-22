@@ -63,14 +63,16 @@ except ImportError as e:                                    # Trap Import Error
 
 
 
+
 # Global Variables Definition
 # --------------------------------------------------------------------------------------------------
-sver       = "2.04"                                                     # Script Version 
-sdesc      = "SADMIN template script"                                   # Script Description
-sdb_conn   = ""                                                         # Database Connector
-sdb_cur    = ""                                                         # Database Cursor 
-sexit_code = 0                                                          # Script Default Return Code
-
+sadm_ver        = "2.04"                                    # This Script Version 
+sadm_desc       = "SADMIN template script"                  # This Script Description
+sadm_exit_code  = 0                                         # Script Default Return Code
+sadm_dict       = {}                                        # SADMIN Config Dictionnary
+#
+db_conn         = ""                                        # Database Connector
+db_cur          = ""                                        # Database Cursor 
 
 
 
@@ -169,7 +171,7 @@ def process_servers(wconn,wcur,st):
 def main_process(ws_debug : int):
     sa.write_log ("Starting Main Process ...")                          # Inform User Starting Main
 
-    return (sexit_code)                                                 # Return Err. Code To Caller
+    return (sadm_exit_code)                                                 # Return Err. Code To Caller
 
 
 
@@ -190,7 +192,7 @@ def cmd_options(argv):
 
     # Defined Command line default values 
     ws_debug = 0                                                        # Script Debug Level (0-9)
-    parser = argparse.ArgumentParser(description=sdesc)                 # Desc. is the script name
+    parser = argparse.ArgumentParser(description=sadm_desc)                 # Desc. is the script name
     
     # Declare Arguments
     parser.add_argument("-v", 
@@ -210,7 +212,7 @@ def cmd_options(argv):
         ws_debug=args.debuglevel                                        # Save Debug Level
         print("Debug Level is now set at %d" % (ws_debug))              # Show user debug Level
     if args.version:                                                    # If -v specified
-        sa.show_version(sver)                                           # Show Custom Show Version
+        sa.show_version(sadm_ver)                                           # Show Custom Show Version
         sys.exit(0)                                                     # Exit with code 0
     return(ws_debug)      
 
@@ -226,7 +228,7 @@ def main(argv):
     # Make sure only root can run this script (Optional Code).
     if os.getuid() != 0 :                                               # UID of user is not zero
         print("\nThis script must be run by 'root' user.")              # Advise User Message / Log
-        print("Or try 'sudo %s'." % (os.path.basename(sys.argv[0])))       # Suggest to use 'sudo'
+        print("Or use 'sudo %s'." % (os.path.basename(sys.argv[0])))    # Suggest to use 'sudo'
         print("Script aborted.\n")                                      # Process Aborted Msg
         sys.exit(1)                                                     # Exit with Error Code
 
@@ -234,26 +236,26 @@ def main(argv):
     (ws_debug) = cmd_options(argv)   
 
     # Initialize SADMIN Env. and get back return code, database connector & cursor (if db_used).
-    (sexit_code,dict_cfg,sdb_conn,sdb_cur) = sa.start(sver,sdesc)       # Init. SADMIN Env.
-    if sexit_code != 0 :                                                # If Error while Init SADMIN
-        sa.stop(sexit_code)                                             # Close SADMIN Env.     
-        sys.exit(sexit_code)                                            # Return to O/S with error
+    (sadm_exit_code,sadm_dict,db_conn,db_cur) = sa.start(sadm_ver,sadm_desc)       # Init. SADMIN Env.
+    if sadm_exit_code != 0 :                                                # If Error while Init SADMIN
+        sa.stop(sadm_exit_code)                                             # Close SADMIN Env.     
+        sys.exit(sadm_exit_code)                                            # Return to O/S with error
 
     # Make sure script can only be run on SADMIN server (Optional).
-    if sa.get_fqdn() != dict_cfg['sadm_server']:                        # If Not on SADMIN Server
-        print("\nThis script can only be run on SADMIN server (%s)" % (dict_cfg['sadm_server']))
+    if sa.get_fqdn() != sadm_dict['sadm_server']:                        # If Not on SADMIN Server
+        print("\nThis script can only be run on SADMIN server (%s)" % (sadm_dict['sadm_server']))
         print("Script aborted.\n")                                      # Abort advise message
-        sa.stop(sexit_code)                                             # Close SADMIN Env. 
+        sa.stop(sadm_exit_code)                                             # Close SADMIN Env. 
         sys.exit(1)                                                     # Exit To O/S
 
     # Execute Script Main Process
-    sexit_code = main_process(ws_debug)                                 # Pass Cmdline Options
+    sadm_exit_code = main_process(ws_debug)                                 # Pass Cmdline Options
     # OR 
-    #sexit_code = process_servers(ws_debug,sdb_conn,sdb_cur)            # Process All Active Servers 
+    #sadm_exit_code = process_servers(ws_debug,db_conn,db_cur)            # Process All Active Servers 
 
     # Gracefully exit SADMIN and back to O/S
-    sa.stop(sexit_code)                                                 
-    sys.exit(sexit_code)                                                
+    sa.stop(sadm_exit_code)                                                 
+    sys.exit(sadm_exit_code)                                                
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == "__main__": main(sys.argv)
