@@ -39,6 +39,8 @@ try :
     import os                                               # Operating System interface
     import sys                                              # System-Specific Module
     import argparse                                         # Command line arguments parsing
+    import pymysql                                          # To Connect & Use MySQL DB
+    import socket                                           # LowLevel network interface
     import sadmlib2_std as sa                               # SADMIN Python Library
 
     # Already import in sadmlib2_std
@@ -48,8 +50,6 @@ try :
     # import pwd                                            # Pwd /etc/passwd Database 
     # import inspect                                        # Check Object Type
     # import time                                           # Time access & conversions
-    # import socket                                         # LowLevel network interface
-    # import pymysql                                        # Connect & Use MySQL DB
     # import subprocess                                     # Subprocess management
     # import smtplib                                        # SMTP protocol client
     # import grp                                            # Access group database
@@ -68,35 +68,36 @@ except ImportError as e:                                    # Trap Import Error
 # --------------------------------------------------------------------------------------------------
 sadm_ver        = "2.04"                                    # This Script Version 
 sadm_desc       = "SADMIN template script"                  # This Script Description
-sadm_exit_code  = 0                                         # Script Default Return Code
+sexitcode  = 0                                         # Script Default Return Code
 sadm_dict       = {}                                        # SADMIN Config Dictionnary
 #
-db_conn         = ""                                        # Database Connector
-db_cur          = ""                                        # Database Cursor 
+#db_conn         = ""                                        # Database Connector
+#db_cur          = ""                                        # Database Cursor 
 
 
 
 
 
-# Process all your active(s) server(s) in the Database (Used if want to process selected servers)
+# Process all your active(s) server(s) in the SADMIN Database 
+# This function is presented as an example, if want to process all (or selected) servers info.
 # --------------------------------------------------------------------------------------------------
-def process_servers(wconn,wcur,st):
-    st.writelog ("Processing All Actives Server(s)")                    # Enter Servers Processing
+def process_servers(ws_debug, db_conn, db_cur) :
+    sa.write_log ("Processing All Actives Server(s)")                   # Enter Servers Processing
 
     # Construct SQL to Read All Actives Servers , Put Rows you want in the select 
     # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
     sql  = "SELECT srv_name, srv_desc, srv_domain, srv_osname, "
-    sql += " srv_ostype, srv_sporadic, srv_monitor, srv_osversion "
-    sql += " FROM server WHERE srv_active = %s " % ('True')
+    sql += "srv_ostype, srv_sporadic, srv_monitor, srv_osversion "
+    sql += "FROM server WHERE srv_active = %s " % ('True') 
     sql += " order by srv_name;"
 
     # Execute the SQL Statement
     try :
-        wcur.execute(sql)                                               # Execute SQL Statement
-        rows = wcur.fetchall()                                          # Retrieve All Rows 
-    except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
-        self.enum, self.emsg = error.args                               # Get Error No. & Message
-        st.writelog (">>>>>>>>>>>>> %s %s" % (self.enum,self.emsg))     # Print Error No. & Message
+        db_cur.execute(sql)                                             # Execute SQL Statement
+        rows = db_cur.fetchall()                                        # Retrieve All Rows 
+    except(pymysql.err.InternalError, pymysql.err.IntegrityError, pymysql.err.DataError) as error:
+        (enum,emsg) = error.args                                        # Get Error No. & Message
+        sa.write_err (">>>>>>>>>>>>> %s %s" % (enum,emsg))               # Print Error No. & Message
         return (1)
     
     # Process each Actives Servers
@@ -112,55 +113,55 @@ def process_servers(wconn,wcur,st):
         wmonitor    = row['srv_monitor']                                # Extract Server Monitored ?
         wosversion  = row['srv_osversion']                              # Extract Server O/S Version
         wfqdn   = "%s.%s" % (wname,wdomain)                             # Construct FQDN 
-        st.writelog("")                                                 # Insert Blank Line
-        st.writelog (('-' * 40))                                        # Insert Dash Line
-        st.writelog ("Processing (%d) %-15s - %s %s" % (lineno,wfqdn,wos,wosversion)) # Server Info
+        sa.write_log("")                                                # Insert Blank Line
+        sa.write_log (('-' * 40))                                       # Insert Dash Line
+        sa.write_log ("Processing (%d) %-15s - %s %s" % (lineno,wfqdn,wos,wosversion)) # Server Info
 
         # If Debug is activated - Display Monitoring & Sporadic Status of Server.
-        if st.debug > 4 :                                               # If Debug Level > 4 
+        if ws_debug > 4 :                                               # If Debug Level > 4 
             if wmonitor :                                               # Monitor Collumn is at True
-                st.writelog ("Monitoring is ON for %s" % (wfqdn))       # Show That Monitoring is ON
+                sa.write_log ("Monitoring is ON for %s" % (wfqdn))      # Show That Monitoring is ON
             else :
-                st.writelog ("Monitoring is OFF for %s" % (wfqdn))      # Show That Monitoring OFF
+                sa.write_log ("Monitoring is OFF for %s" % (wfqdn))     # Show That Monitoring OFF
             if wsporadic :                                              # If a Sporadic Server
-                st.writelog ("Sporadic system is ON for %s" % (wfqdn))  # Show Sporadic is ON
+                sa.write_log ("Sporadic system is ON for %s" % (wfqdn))  # Show Sporadic is ON
             else :
-                st.writelog ("Sporadic system is OFF for %s" % (wfqdn)) # Show Sporadic is OFF
+                sa.write_log ("Sporadic system is OFF for %s" % (wfqdn)) # Show Sporadic is OFF
 
         # Test if Server Name can be resolved - If not Signal Error & continue with next system.
         try:
             hostip = socket.gethostbyname(wfqdn)                        # Resolve Server Name ?
         except socket.gaierror:                                         # Hostname can't be resolve
-            st.writelog ("[ ERROR ] Can't process %s, hostname can't be resolved" % (wfqdn))
+            sa.write_log ("[ ERROR ] Can't process %s, hostname can't be resolved" % (wfqdn))
             error_count += 1                                            # Increase Error Counter
             if (error_count != 0 ):                                     # If Error count not at zero
-                st.writelog ("Total error(s) : %s" % (error_count))     # Show Total Error Count
+                sa.write_log ("Total error(s) : %s" % (error_count))     # Show Total Error Count
             continue
 
         # Perform a SSH to current processing server
-        if (wfqdn != st.cfg_server):                                    # If not on SADMIN Server
-            wcommand = "%s %s %s" % (st.ssh_cmd,wfqdn,"date")           # SSH Cmd to Server for date
-            st.writelog ("Command is %s" % (wcommand))                  # Show User what will do
-            ccode, cstdout, cstderr = st.oscommand("%s" % (wcommand))   # Execute O/S CMD 
+        if (wfqdn != sadm_dict['sadm_server']):                         # If not on SADMIN Server
+            wcommand = "%s %s %s" % (sadm_dict['cmd_ssh_full'],wfqdn,"date") # SSH to Server for date
+            sa.write_log ("Command is %s" % (wcommand))                  # Show User what will do
+            ccode, cstdout, cstderr = sa.oscommand("%s" % (wcommand))   # Execute O/S CMD 
             if (ccode == 0):                                            # If ssh Worked 
-                st.writelog ("[OK] SSH Worked")                         # Inform User SSH Worked
+                sa.write_log ("[OK] SSH Worked")                         # Inform User SSH Worked
             else:                                                       # If ssh didn't work
                 if wsporadic :                                          # If a Sporadic Server
-                    st.writelog("[ WARNING ] Can't SSH to sporadic system %s"% (wfqdn))
-                    st.writelog("Continuing with next system")          # Not Error if Sporadic Srv. 
+                    sa.write_log("[ WARNING ] Can't SSH to sporadic system %s"% (wfqdn))
+                    sa.write_log("Continuing with next system")          # Not Error if Sporadic Srv. 
                     continue                                            # Continue with next system
                 else :
                     if not wmonitor :                                   # Monitor Column is False
-                        st.writelog("[ WARNING ] Can't SSH to %s , but Monitoring is Off"% (wfqdn))
-                        st.writelog("Continuing with next system")      # Not Error if Sporadic Srv. 
+                        sa.write_log("[ WARNING ] Can't SSH to %s , but Monitoring is Off"% (wfqdn))
+                        sa.write_log("Continuing with next system")      # Not Error if Sporadic Srv. 
                         continue                                        # Continue with next system
                     else:
                         error_count += 1                                # Increase Error Counter
-                        st.writelog("[ERROR] SSH Error %d %s" % (ccode,cstderr)) # Show User Failed
+                        sa.write_log("[ERROR] SSH Error %d %s" % (ccode,cstderr)) # Show User Failed
         else:
-            st.writelog ("[OK] No need for SSH on SADMIN server %s" % (st.cfg_server)) # On SADM Srv
+            sa.write_log ("[OK] No need for SSH on SADMIN server %s" % (sadm_dict['sadm_server'])) 
         if (error_count != 0 ):                                         # If Error count not at zero
-            st.writelog ("Total error(s) : %s" % (error_count))         # Show Total Error Count 
+            sa.write_log ("Total error(s) : %s" % (error_count))         # Show Total Error Count 
         lineno += 1                                                     # Increase Server Counter
     return (error_count)                                                # Return Err.Count to caller
 
@@ -171,7 +172,7 @@ def process_servers(wconn,wcur,st):
 def main_process(ws_debug : int):
     sa.write_log ("Starting Main Process ...")                          # Inform User Starting Main
 
-    return (sadm_exit_code)                                                 # Return Err. Code To Caller
+    return (sexitcode)                                             # Return Err. Code To Caller
 
 
 
@@ -224,7 +225,7 @@ def cmd_options(argv):
 # Start of the Script - Main Function 
 # --------------------------------------------------------------------------------------------------
 def main(argv):
-
+    
     # Make sure only root can run this script (Optional Code).
     if os.getuid() != 0 :                                               # UID of user is not zero
         print("\nThis script must be run by 'root' user.")              # Advise User Message / Log
@@ -235,27 +236,36 @@ def main(argv):
     # Evaluate command line options & Return option(s) used.
     (ws_debug) = cmd_options(argv)   
 
-    # Initialize SADMIN Env. and get back return code, database connector & cursor (if db_used).
-    (sadm_exit_code,sadm_dict,db_conn,db_cur) = sa.start(sadm_ver,sadm_desc)       # Init. SADMIN Env.
-    if sadm_exit_code != 0 :                                                # If Error while Init SADMIN
-        sa.stop(sadm_exit_code)                                             # Close SADMIN Env.     
-        sys.exit(sadm_exit_code)                                            # Return to O/S with error
-
     # Make sure script can only be run on SADMIN server (Optional).
-    if sa.get_fqdn() != sadm_dict['sadm_server']:                        # If Not on SADMIN Server
+    if sa.get_fqdn() != sa.dict_cfg['sadm_server']:                      # If Not on SADMIN Server
         print("\nThis script can only be run on SADMIN server (%s)" % (sadm_dict['sadm_server']))
         print("Script aborted.\n")                                      # Abort advise message
-        sa.stop(sadm_exit_code)                                             # Close SADMIN Env. 
+        sa.stop(sexitcode)                                              # Close SADMIN Env. 
         sys.exit(1)                                                     # Exit To O/S
 
-    # Execute Script Main Process
-    sadm_exit_code = main_process(ws_debug)                                 # Pass Cmdline Options
+    # Execute Script Main Process (Without SADMIN Database Access)
+    #(sexitcode,sadm_dict) = sa.start(sadm_ver,sadm_desc)           # Init. SADMIN Env.
+    #if sexitcode != 0 :                                            # If Error while Init SADMIN
+    #    sa.stop(sexitcode)                                         # Close SADMIN Env.     
+    #    sys.exit(sexitcode)                                        # Return to O/S with error
+    #if ws_debug > 0 :  sa.print_dict_cfg()                              # Show SADM cfg Dictionnary
+    #sexitcode = main_process(ws_debug)                             # Pass Cmdline Options
     # OR 
-    #sadm_exit_code = process_servers(ws_debug,db_conn,db_cur)            # Process All Active Servers 
+
+    # Execute Script Main Process (With SADMIN Database Access)
+    (sexitcode,sadm_dict,db_conn,db_cur) = sa.start(sadm_ver,sadm_desc,db_used=True) 
+    if sexitcode != 0 :                                            # If Error while Init SADMIN
+        sa.stop(sexitcode)                                         # Close SADMIN Env.     
+        sys.exit(sexitcode)                                        # Return to O/S with error
+    if ws_debug > 0 :  sa.print_dict_cfg()                              # Show SADM cfg Dictionnary
+    print ("\nValues")
+    print ("db_cur = %s" % (type(db_cur)))
+    type(db_conn)
+    sexitcode = process_servers(ws_debug,db_conn,db_cur)           # Process All Active Servers 
 
     # Gracefully exit SADMIN and back to O/S
-    sa.stop(sadm_exit_code)                                                 
-    sys.exit(sadm_exit_code)                                                
+    sa.stop(sexitcode)                                                 
+    sys.exit(sexitcode)                                                
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == "__main__": main(sys.argv)
