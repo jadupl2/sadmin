@@ -55,6 +55,7 @@
 # 2020_05_05 Update: v3.10 Adjust screen presentation.
 # 2020_05_14 Update: v3.11 Remove line feed after "Installing pip3" 
 # 2020_12_24 Update: v3.12 CentOSStream return CENTOS.
+#@2022_02_10 Fix: v3.13 Correct 'pip3' installation on Fedora 35
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -63,7 +64,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.12'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.13'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -263,8 +264,12 @@ install_pip3()
     printf "Installing pip3 " | tee -a $SLOG
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
-        then #echo "Running 'yum --enablerepo=epel -y install python34 python34-setuptools python34-pip'" |tee -a $SLOG
-             yum --enablerepo=epel -y install python34-pip >>$SLOG 2>&1
+        then if [ "$SADM_OSNAME" = "FEDORA" ]
+                then #echo "Running: dnf -y install python3-pip" 
+                     dnf -y install python3-pip >> $SLOG 2>&1
+                else #echo "Running 'yum --enablerepo=epel -y install python34 python34-setuptools python34-pip'" |tee -a $SLOG
+                     yum --enablerepo=epel -y install python34-pip >>$SLOG 2>&1
+             fi
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
         then apt-get update >> $SLOG 2>&1
@@ -474,7 +479,6 @@ get_sysinfo()
 #                                       Script Start HERE
 #===================================================================================================
 
-    # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
         then echo "Script can only be run user 'root'" | tee -a $SLOG   # Advise User should be root
              echo "Process aborted"  | tee -a $SLOG                     # Abort advise message
