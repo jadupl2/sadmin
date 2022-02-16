@@ -54,6 +54,7 @@
 #@2021_09_14 web v2.24 SysMon page - New section that list recent scripts execution.
 #@2021_09_15 web v2.25 SysMon page - Recent scripts section won't show if SADM_MONITOR_RECENT_COUNT=0
 #@2021_09_30 web v2.26 Sysmon page - Show recent activities even when no alert to report
+#@2022_02_16 web v2.27 Sysmon page - Monitor tmp file was not deleted after use.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -90,7 +91,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.26" ;                                                       # Current version number
+$SVER  = "2.27" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -657,6 +658,8 @@ function show_activity($con,$alert_file) {
                 break;;
         }
         echo "\n</tr>\n";                                                  # Write reformatted line
+        unlink($tmp_file1);                                                 # Delete Work File 1
+        unlink($tmp_file2);                                                 # Delete Work File 2
     }
 }
 
