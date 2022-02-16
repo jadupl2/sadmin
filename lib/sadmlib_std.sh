@@ -183,6 +183,7 @@
 #@2021_12_02 lib v3.82 Improve 'sadm_server_model' function.
 #@2021_12_12 lib v3.83 Fix 'sadm_server_vg' wasn't returning proper size under certain condition.
 #@2021_12_20 lib v3.84 Load additional options from the SADMIN configuration file.
+#@2022_02_16 lib v3.85 Fix: Serial number return by sadm_server_serial() on iMac was incomplete.
 #===================================================================================================
 
 
@@ -196,7 +197,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.84"                                              # This Library Version
+export SADM_LIB_VER="3.85"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -1312,23 +1313,28 @@ sadm_server_model() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_serial() {
     case "$(sadm_get_ostype)" in
-        "LINUX")    if [ "$(sadm_server_type)" = "V" ]                  # If Virtual Machine
-                        then wserial=" "                                # VM as no serial
-                        else wserial=`${SADM_DMIDECODE} |grep "Serial Number" |head -1 |awk '{ print $3 }'`
-                            if [ -r /proc/cpuinfo ]                     # Serial in cpuinfo (raspi)
-                                then grep -i serial /proc/cpuinfo > /dev/null 2>&1
-                                     if [ $? -eq 0 ]                    # If Serial found in cpuinfo
-                                        then wserial="$(grep -i Serial /proc/cpuinfo |cut -d ':' -f 2)"
-                                             wserial=`echo $wserial | sed -e 's/^[ \t]*//'` #Del Lead Space
-                                     fi
-                            fi
-                    fi
-                    ;;
-        "AIX")      wserial=`uname -u | awk -F, '{ print $2 }'`
-                    ;;
-        "DARWIN")   syspro="system_profiler SPHardwareDataType"
-                    wserial=`$syspro |grep -i 'Serial' |awk -F: '{ print $2 }' |tr -d ' '`
-                    ;;
+        "LINUX")  if [ "$(sadm_server_type)" = "V" ]                    # If Virtual Machine
+                     then wserial=""                                    # VM as no serial
+                     else wserial=`${SADM_DMIDECODE} |grep "Serial Number" |head -1 |awk '{print $3}'`
+                          if [ "$wserial" = "Not" ] ; then wserial="" ; fi 
+                          if [ -r /proc/cpuinfo ] && [ "$wserial" = "" ]                   
+                             then grep -i serial /proc/cpuinfo > /dev/null 2>&1
+                                  if [ $? -eq 0 ]                    
+                                     then wserial="$(grep -i Serial /proc/cpuinfo |cut -d ':' -f 2)"
+                                          wserial=`echo $wserial | sed -e 's/^[ \t]*//'`
+                                  fi
+                          fi
+                          if [ "$wserial" = "" ]                   
+                             then wserial=$(${SADM_DMIDECODE} |grep 'Serial Number' |cut -d':' -f2 |tail -1)
+                                  wserial=$(echo "$wserial" | awk '{$1=$1;print}')
+                          fi
+                  fi
+                  ;;
+        "AIX")    wserial=`uname -u | awk -F, '{ print $2 }'`
+                  ;;
+        "DARWIN") syspro="system_profiler SPHardwareDataType"
+                  wserial=`$syspro |grep -i 'Serial' |awk -F: '{ print $2 }' |tr -d ' '`
+                  ;;
     esac
     echo "$wserial"
 }
