@@ -55,6 +55,7 @@
 #@2022_01_10 client: v3.25 Include memory module information in system information file.
 #@2022_01_11 client: v3.26 Added more disks size information.
 #@2022_02_17 client: v3.27 Fix error writing network config file in $SADMIN/dat/dr/sysinfo.txt.
+#@2022_02_17 client: v3.28 Now show last o/s update date and status on screen and log.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -87,7 +88,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.27'                                     # Script Version
+export SADM_VER='3.28'                                     # Script Version
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -398,12 +399,16 @@ set_last_osupdate_date()
     fi
     case "$RCH_CODE" in
         0)  OSUPDATE_STATUS="S"
+            sadm_write "$OSUPDATE_DATE - Success ...\n"
             ;;
         1)  OSUPDATE_STATUS="F"
+            sadm_write "$OSUPDATE_DATE - Failed ...\n"
             ;;
         2)  OSUPDATE_STATUS="R"
+            sadm_write "$OSUPDATE_DATE - Running ...\n"
             ;;
       "*")  OSUPDATE_STATUS="U"
+            sadm_write "$OSUPDATE_DATE - Undefined Status ...\n"
             ;;
     esac
     return 0
