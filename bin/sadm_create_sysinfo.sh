@@ -54,6 +54,7 @@
 # 2021_06_03 client: v3.24 Include script version in sysinfo text file generated
 #@2022_01_10 client: v3.25 Include memory module information in system information file.
 #@2022_01_11 client: v3.26 Added more disks size information.
+#@2022_02_17 client: v3.27 Fix error writing network config file in $SADMIN/dat/dr/sysinfo.txt.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -86,7 +87,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.26'                                     # Script Version
+export SADM_VER='3.27'                                     # Script Version
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -627,13 +628,16 @@ create_linux_config_files()
                 done
     fi
 
-    if [ -d "/etc/sysconfig/network-scripts" ]
-        then for xfile in `ls -1 /etc/sysconfig/network-scripts/ifcfg*`
-                do
-                if [ "$xfile" != "/etc/sysconfig/network-scripts/ifcfg-lo" ]
-                    then print_file "$xfile" "$NET_FILE"
-                fi
-                done
+    wd="/etc/sysconfig/network-scripts" 
+    if [ -d "$wd" ]
+        then if [ "$(ls -A $wd)" ]
+                then for xfile in `ls -1 ${wd}/ifcfg*`
+                        do
+                        if [ "$xfile" != "/etc/sysconfig/network-scripts/ifcfg-lo" ]
+                            then print_file "$xfile" "$NET_FILE"
+                        fi 
+                        done
+             fi
     fi
     
     if [ -r '/etc/network/interfaces' ] ; then print_file "/etc/network/interfaces" "$NET_FILE" ; fi
