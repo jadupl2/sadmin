@@ -10,17 +10,18 @@
 # --------------------------------------------------------------------------------------------------
 # Change log
 #
-# 2016_10_10    v1.7 Modification making sure that nmon is available on the server.
-#               If not found a copy in /sadmin/pkg/nmon/aix in used to create the link /usr/bin/nmon
-# 2016_11_11    v1.8 Enhance checking for nmon existence and add some message for user, ReTested AIX
-# 2016_12_20    v1.9 Change to run on Aix 7.x and minor corrections
-# 2017_12_29    v2.0 Add Warning message stating that nmon not available on MacOS
-# 2017_01_27    V2.1 Now list two newest nmon files in $SADMIN/dat/nmon & Fix minor Bug & add comment
-# 2017_02_02    V2.2 Show number of nmon running only once, if nmon is already running
-# 2017_02_04    V2.3 Snapshot will be taken every 2 minutes instead of 5.
-# 2017_02_08    V2.4 Fix Compatibility problem with 'sadh' shell (If statement) 
-# 2018_06_04    V2.5 Adapt to new Libr.
-# 2018_07_21    v2.6 Rewrote for performance since it now run within System Monitor.
+# 2016_10_10 v1.7 Modification making sure that nmon is available on the server.
+#            If not found a copy in /sadmin/pkg/nmon/aix in used to create the link /usr/bin/nmon
+# 2016_11_11 v1.8 Enhance checking for nmon existence and add some message for user, ReTested AIX
+# 2016_12_20 v1.9 Change to run on Aix 7.x and minor corrections
+# 2017_12_29 v2.0 Add Warning message stating that nmon not available on MacOS
+# 2017_01_27 V2.1 Now list two newest nmon files in $SADMIN/dat/nmon & Fix minor Bug & add comment
+# 2017_02_02 V2.2 Show number of nmon running only once, if nmon is already running
+# 2017_02_04 V2.3 Snapshot will be taken every 2 minutes instead of 5.
+# 2017_02_08 V2.4 Fix Compatibility problem with 'sadh' shell (If statement) 
+# 2018_06_04 V2.5 Adapt to new Libr.
+# 2018_07_21 v2.6 Rewrote for performance since it now run within System Monitor.
+#@2020_10_01 v2.7 If not able to start/Restart nmon, email include instruction about what to do.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'exit 0' 2                                                          # INTERCEPT The Control-C
@@ -33,7 +34,7 @@ trap 'exit 0' 2                                                          # INTER
 export HOSTNAME=`hostname -s`                                           # Hostname Without domain
 export OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`                   # OSName(AIX/LINUX/DARWIN) 
 export PN=${0##*/}                                                      # Script name
-export VER='2.6'                                                        # Script Version No.
+export VER='2.7'                                                        # Script Version No.
 export INST=`echo "$PN" | awk -F\. '{ print $1 }'`                      # Script name without ext.
 export WDATE=`date "+%C%y.%m.%d;%H:%M:%S"`                              # Today Date and Time
 export DASH=`printf %80s |tr ' ' '-'`                                   # 80 dashes
@@ -160,7 +161,7 @@ check_nmon()
 
     # nmon_count = 0 = Not running - Then we start it 
     # nmon_count = 1 = Running - Then OK
-    # nmon_count = * = More than one runing ? Kill them and then we start a fresh one
+    # nmon_count = * = More than one running ? Kill them and then we start a fresh one
     # not running nmon, start it
     echo -e " "
     if [ "$nmon_count" -ne 1 ]
@@ -244,6 +245,17 @@ check_nmon()
         then check_nmon                                                 # nmon not running start it
              EXIT_CODE=$?                                               # Save Return Code 
         else EXIT_CODE=1
+             MSG0="Dear user,\n"
+             MSG1="The Performance Collector 'nmon' is not running on '${HOSTNAME}'.\n"
+             MSG2="The 'nmon' watcher (${INST}.sh) was not able to start it.\n\n"
+             MSG3="I would suggest that you run the 'nmon' watcher manually and see the error message.\n"
+             MSG4="To run the 'nmon' watcher, run the command below :\n"
+             MSG5="# $SADMIN/usr/mon/swatch_nmon.sh\n\n" 
+             MSG6="If it's not installed, please install it by running the command below :\n"
+             MSG7="# $SADM_BIN_DIR/sadm_requirements.sh -i\n\n"
+             MSG8="Have a good day"
+             MSG="${MSG0}${MSG1}${MSG2}${MSG3}${MSG4}${MSG5}${MSG6}${MSG7}${MSG8}"
+             echo -e "Not able to start the performance collector 'nmon' on '${HOSTNAME}'." >${SADM_UMON_DIR}/${INST}.txt         
     fi
     echo -e "\nReturn code : $EXIT_CODE"                                # Print Script return code
     echo -e "End of script $PN on ${HOSTNAME} `date`\n${DASH}\n"        # Print Script Footer

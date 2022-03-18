@@ -17,6 +17,7 @@
 *.jar
 *.rar
 *.tar
+*.xcf
 # Allow zip (have some in package directory pkg)
 #*.zip
 
@@ -29,11 +30,7 @@
 *.org
 *.tmp
 
-# Ignore Python Related files and directories
-__pycache__/
-**/__pycache__/
-*.pyc
-
+# Ignore Python Related files andEnsure that package util-linux is installed on client & server.
 # Ignore MacOS related custom attributes of its containing folder
 .DS_Store
 .DS_Store?
@@ -54,12 +51,18 @@ bitbucket-pipelines.yml
 
 # --------------------------------------
 # SADMIN PROJECT 
-# --------------------------------------
+# -------------------------------------- 
+
+# Exclude old stuff to Keep 
+old2keep/*
+
 
 # Exclude the SADMIN System monitor lock file.
 sysmon.lock
 readme.html
 readme.pdf
+lib/__pycache__/
+bin/__pycache__/
 
 # Exclude old stuff Directories
 old2keep/*
@@ -98,19 +101,34 @@ usr/mon/swatch_nmon.log
 doc/odt/*
 usr/cfg/*
 usr/pkg/*
+usr/img/*
 usr/dat/*
 usr/wip/*
 
+# HTML Report Generated Daily
+www/view/daily_backup_report.html
+www/view/daily_rear_report.html
+www/view/daily_scripts_report.html
+www/view/daily_storix_report.html
+#
 # Want these WebSite directories to be part of project (but empty)
+#
 www/dat/*
 !www/dat/.gitkeep
+#
 www/tmp/*
 !www/tmp/.gitkeep
 !www/tmp/perf/.gitkeep
+#
 www/rrd/*
 !www/rrd/.gitkeep
+#
+www/view/daily*
 www/test/*
+# 
 www/doc/odt/*
+www/doc/md/
+
 
 # Template Configuration Files to be included
 cfg/*
@@ -131,3 +149,5 @@ cfg/*
 # Setup Directory
 setup/update/*
 !setup/update/.gitkeep
+
+docs/*

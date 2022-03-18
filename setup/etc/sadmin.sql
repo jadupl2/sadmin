@@ -3,8 +3,8 @@
 -- https://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Oct 27, 2019 at 09:18 PM
--- Server version: 5.5.64-MariaDB
+-- Generation Time: Jul 21, 2021 at 10:18 AM
+-- Server version: 5.5.68-MariaDB
 -- PHP Version: 5.4.16
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -27,15 +27,16 @@ USE `sadmin`;
 --
 -- Table structure for table `server`
 --
+
 DROP TABLE IF EXISTS `server`;
 CREATE TABLE IF NOT EXISTS `server` (
   `srv_id` int(11) NOT NULL COMMENT 'Server ID',
   `srv_name` varchar(15) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Name',
   `srv_domain` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Domain',
   `srv_desc` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Description',
-  `srv_tag` varchar(15) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Tag',
-  `srv_note` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Notes',
-  `srv_active` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Server Active ?',
+  `srv_tag` varchar(15) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Server Tag',
+  `srv_note` varchar(30) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Server Notes',
+  `srv_active` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Server Active 0=No 1=Yes',
   `srv_sporadic` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Server Sporadically ON?',
   `srv_monitor` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Monitor the Server?',
   `srv_alert_group` varchar(15) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'default' COMMENT 'Alert Group',
@@ -45,36 +46,36 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_vm` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'True=VM, False=Physical',
   `srv_osname` varchar(15) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'O/S Name (Fedora,Ubuntu)',
   `srv_ostype` varchar(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'linux' COMMENT 'O/S Type linux/aix',
-  `srv_oscodename` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'O/S Code Name (Alias)',
-  `srv_osversion` varchar(12) COLLATE utf8_unicode_ci NOT NULL COMMENT 'O/S Version',
-  `srv_osver_major` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'O/S Major Version No.',
+  `srv_oscodename` varchar(15) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'O/S Code Name (Alias)',
+  `srv_osversion` varchar(12) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'O/S Version',
+  `srv_osver_major` varchar(10) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'O/S Major Version No.',
   `srv_date_creation` datetime DEFAULT '0000-00-00 00:00:00' COMMENT 'Server Creation Date',
   `srv_date_edit` datetime DEFAULT '0000-00-00 00:00:00' COMMENT 'Last Edit Date',
   `srv_date_update` datetime DEFAULT '0000-00-00 00:00:00' COMMENT 'Last Update Date',
   `srv_date_osupdate` datetime DEFAULT '0000-00-00 00:00:00' COMMENT 'Date of Update',
-  `srv_kernel_version` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Kernel Version',
+  `srv_kernel_version` varchar(40) COLLATE utf8_unicode_ci DEFAULT NULL,
   `srv_kernel_bitmode` smallint(11) NOT NULL DEFAULT '64' COMMENT 'Kernel is 32 or 64 bits',
   `srv_hwd_bitmode` smallint(11) NOT NULL DEFAULT '64' COMMENT 'Hardware is 32 or 64 bits',
-  `srv_model` varchar(25) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Hardware Model',
-  `srv_serial` varchar(25) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Hardware Serial No.',
-  `srv_memory` int(11) NOT NULL COMMENT 'Amount of Memory in MB',
+  `srv_model` varchar(30) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `srv_serial` varchar(25) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Hardware Serial No.',
+  `srv_memory` int(11) DEFAULT NULL COMMENT 'Amount of Memory in MB',
   `srv_nb_cpu` smallint(6) NOT NULL DEFAULT '1' COMMENT 'Number of Cpu',
-  `srv_cpu_speed` int(11) NOT NULL COMMENT 'CPU Speed in MHz',
+  `srv_cpu_speed` int(11) DEFAULT NULL COMMENT 'CPU Speed in MHz',
   `srv_nb_socket` smallint(6) NOT NULL DEFAULT '1' COMMENT 'Number of CPU Socket',
   `srv_core_per_socket` smallint(6) NOT NULL DEFAULT '1' COMMENT 'Number of core per Socket',
   `srv_thread_per_core` smallint(6) NOT NULL DEFAULT '0' COMMENT 'Number of thread per core',
-  `srv_ip` varchar(15) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Main IP',
-  `srv_ips_info` varchar(1024) COLLATE utf8_unicode_ci NOT NULL COMMENT 'All Server IPS',
-  `srv_disks_info` varchar(1024) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Disks Size Info',
-  `srv_vgs_info` varchar(1024) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Volume Groups INfo',
-  `srv_backup` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Execute Backup 0=No 1=Yes',
+  `srv_ip` varchar(15) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Server Main IP',
+  `srv_ips_info` varchar(1024) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'All Server IPS',
+  `srv_disks_info` varchar(1024) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Disks Size Info',
+  `srv_vgs_info` varchar(1024) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Volume Groups INfo',
+  `srv_backup` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Daily Backup 0=No 1=Yes',
   `srv_backup_month` varchar(13) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNN' COMMENT 'Backup Month YNNYNNYNNYNN',
   `srv_backup_dom` varchar(32) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN' COMMENT 'Backup DayofMonth YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN',
   `srv_backup_dow` varchar(8) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNN' COMMENT 'Backup DayOfWeek YNNNNNNN',
   `srv_backup_hour` smallint(6) NOT NULL DEFAULT '1' COMMENT 'Start Hour of Backuo',
   `srv_backup_minute` smallint(6) NOT NULL DEFAULT '0' COMMENT 'Start Minute of Backup',
-  `srv_update_auto` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'O/S Update Auto Schedule',
-  `srv_update_status` varchar(1) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Last O/S Update Status(R/F/S)',
+  `srv_update_auto` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'OS_Update_Auto (Y=1 N=0)',
+  `srv_update_status` varchar(1) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Last O/S Update Status(R/F/S)',
   `srv_update_reboot` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Reboot After Update',
   `srv_update_month` varchar(13) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNN' COMMENT 'Update Month YNNYNNYNNYNN',
   `srv_update_dom` varchar(32) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN' COMMENT 'Date of Update (1/31) YNNYNNYNNYNN...',
@@ -82,21 +83,22 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_update_hour` smallint(6) NOT NULL DEFAULT '1' COMMENT 'Update Start Hour',
   `srv_update_minute` smallint(6) NOT NULL DEFAULT '0' COMMENT 'Update Start Minute',
   `srv_maint` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Activate Maintenance Mode',
-  `srv_maint_date_start` datetime NOT NULL COMMENT 'Start Date/Time of Maint. Mode',
-  `srv_maint_date_end` datetime NOT NULL COMMENT 'End date/Time of Maintenance Mode',
+  `srv_maint_date_start` datetime DEFAULT NULL COMMENT 'Start Date/Time of Maint. Mode',
+  `srv_maint_date_end` datetime DEFAULT NULL COMMENT 'End date/Time of Maintenance Mode',
   `srv_sadmin_dir` varchar(45) COLLATE utf8_unicode_ci NOT NULL DEFAULT '/opt/sadmin' COMMENT 'SADMIN Root Dir. on Client',
   `srv_ssh_port` int(2) NOT NULL DEFAULT '22' COMMENT 'SSH Port to access server',
   `ssh_sudo_user` varchar(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'sadmin' COMMENT 'ssh sudo user to server',
-  `srv_img_backup` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Execute Image Backup 0=No 1+Yes',
+  `srv_img_backup` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'ReaR Backup 0=No 1=Yes',
   `srv_img_month` varchar(13) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNN' COMMENT 'Image Backup Backup Month',
   `srv_img_dom` varchar(32) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN' COMMENT 'Image Backup Day of the month',
   `srv_img_dow` varchar(8) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNN' COMMENT 'Image Backup Day of the Week',
   `srv_img_hour` smallint(6) NOT NULL DEFAULT '4' COMMENT 'Image Backup Start Hour',
   `srv_img_minute` smallint(6) NOT NULL DEFAULT '0' COMMENT 'Image Backup Start Minute',
-  `srv_uptime` varchar(20) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Uptime',
-  `srv_arch` varchar(12) COLLATE utf8_unicode_ci NOT NULL COMMENT 'System Architecture'
-) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
-
+  `srv_uptime` varchar(25) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `srv_arch` varchar(12) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'System Architecture',
+  `srv_rear_ver` varchar(7) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'unknown' COMMENT 'Rear Version',
+  `srv_boot_date` datetime DEFAULT NULL
+) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
 
 
 --
@@ -111,7 +113,6 @@ CREATE TABLE IF NOT EXISTS `server_category` (
   `cat_date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP COMMENT 'Cat. Upd. TimeStamp',
   `cat_default` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Default Category ?'
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Category Table';
-
 
 --
 -- Dumping data for table `server_category`
@@ -143,6 +144,7 @@ CREATE TABLE IF NOT EXISTS `server_group` (
 --
 -- Dumping data for table `server_group`
 --
+
 INSERT INTO `server_group` (`grp_id`, `grp_code`, `grp_desc`, `grp_active`, `grp_date`, `grp_default`) VALUES
 (2, 'Cluster', 'Clustered Server', 1, '2017-11-22 16:55:50', 0),
 (3, 'Service', 'Infrastructure Service', 1, '2017-11-07 05:00:00', 0),
@@ -157,22 +159,17 @@ INSERT INTO `server_group` (`grp_id`, `grp_code`, `grp_desc`, `grp_active`, `grp
 --
 -- Table structure for table `server_network`
 --
-DROP TABLE IF EXISTS `server_network`;
+
 CREATE TABLE IF NOT EXISTS `server_network` (
   `net_ip` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'IP Address',
   `net_ip_wzero` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'IP with zero included',
   `net_hostname` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'IP Hostname',
   `net_mac` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'IP Mac Address',
-  `net_man` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Card Manufacturer',
-  `net_ping` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'IP Respond to ping ?',
+  `net_man` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Card Manufacturer (Vendor)',
+  `net_ping` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1=Responded to ping, 0=Didn''t',
   `net_date_ping` datetime NOT NULL COMMENT 'Last Ping Respond Date',
   `net_date_update` datetime NOT NULL COMMENT 'Date Last Change'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-
-
---
--- Indexes for dumped tables
---
 
 --
 -- Indexes for table `server`
@@ -210,7 +207,7 @@ ALTER TABLE `server_network`
 -- AUTO_INCREMENT for table `server`
 --
 ALTER TABLE `server`
-  MODIFY `srv_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server ID',AUTO_INCREMENT=45;
+  MODIFY `srv_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server ID',AUTO_INCREMENT=64;
 --
 -- AUTO_INCREMENT for table `server_category`
 --

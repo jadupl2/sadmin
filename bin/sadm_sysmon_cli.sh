@@ -7,7 +7,7 @@
 #   Date     :  14 Fevrier 2017
 #   Requires :  sh
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -28,7 +28,7 @@
 # 2018_07_11    v2.0 Now showing running process after scanning the server rch files
 # 2018_07_18    v2.1 Fix problem reporting System Monitor Result (rpt filename)
 # 2018_08_20    v2.2 Don't use rch file & don't send email if failing (It is an interactive script)
-#@2019_06_07 Update: v2.3 Updated to adapt to the new format of the '.rch' file.
+# 2019_06_07 mon: v2.3 Updated to adapt to the new format of the '.rch' file.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -55,7 +55,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
     export SADM_VER='2.3'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
     export SADM_LOG_FOOTER="N"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
@@ -147,8 +147,8 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
     if [ "$(whoami)" != "root" ]                                        # Is it root running script?
-        then sadm_writelog "Script can only be run user 'root'"         # Advise User should be root
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_write "Script can only be run user 'root'.\n"         # Advise User should be root
+             sadm_write "Process aborted.\n"                            # Abort advise message
              sadm_stop 1                                                # Close/Trim Log & Upd. RCH
              exit 1                                                     # Exit To O/S
     fi

@@ -1,7 +1,7 @@
 <?php
 # ==================================================================================================
 #   Author      :  Jacques Duplessis
-#   Email       :  jacques.duplessis@sadmin.ca
+#   Email       :  sadmlinux@gmail.com
 #   Title       :  sadm_server_main.php
 #   Version     :  1.0
 #   Date        :  13 June 2016
@@ -9,7 +9,7 @@
 #   Description :  Web Page used to present list of  Server that can be edited/deleted.
 #                  Option a the top of the list is used to create a new  group
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -21,14 +21,14 @@
 #
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
-# ==================================================================================================
+# =======================server===========================================================================
 # ChangeLog
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 # 2019_01_11 Added: v2.1 Add Model and Serial No. in bubble while on server name.
-#@2019_08_17 Update: v2.2 New page heading and Logo of distribution inserted.
-#@2019_08_17 Fix: v2.3 Return to caller URL wasn't set properly.
+# 2019_08_17 Update: v2.2 New page heading and Logo of distribution inserted.
+# 2019_08_17 Fix: v2.3 Return to caller URL wasn't set properly.
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
@@ -196,7 +196,7 @@ function display_data($con,$row) {
 #
    
     # DISPLAY PAGE HEADING
-    $title1="System Maintenance";                                       # Heading 1 Line
+    $title1="SADMIN Client C.R.U.D.";                                       # Heading 1 Line
     $title2="[C]reate [R]ead [U]pdate [D]elete";                        # Heading 2 Line
     display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
 

@@ -24,15 +24,18 @@
 # 2018_09_25    v3.6 Show SMON Alert Group, Channel and History Files
 # 2019_01_19    v3.7 Added: Added Backup List & Backup Exclude File Name available to User.
 # 2019_01_28 Added: v3.8 Database info only show when running on SADMIN Server
-#@2019_03_18 Added: v3.9 Add demo call to function 'sadm_get_packagetype'
-#@2019_04_07 Update: v3.10 Don't show Database user name if run on client.
-#@2019_04_11 Update: v3.11 Add Database column "active","category" and "group" to server output.
-#@2019_04_25 Update: v3.12 Add Alert_Repeat, Textbelt API Key and URL Variables in Output.
-#@2019_05_17 Update: v3.13 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
-#@2019_10_14 Update: v3.14 Add demo for calling sadm_server_arch function & show result.
-#@2019_10_17 Update: v3.15 Print Category and Group table content at the end of report.
-#@2019_10_30 Update: v3.16 Remove 'facter' utilization (depreciated).
-#@2019_11_25 Update: v3.17 Change printing format of Database table at the end of execution.
+# 2019_03_18 Added: v3.9 Add demo call to function 'sadm_get_packagetype'
+# 2019_04_07 Update: v3.10 Don't show Database user name if run on client.
+# 2019_04_11 Update: v3.11 Add Database column "active","category" and "group" to server output.
+# 2019_04_25 Update: v3.12 Add Alert_Repeat, Textbelt API Key and URL Variables in Output.
+# 2019_05_17 Update: v3.13 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
+# 2019_10_14 Update: v3.14 Add demo for calling sadm_server_arch function & show result.
+# 2019_10_17 Update: v3.15 Print Category and Group table content at the end of report.
+# 2019_10_30 Update: v3.16 Remove 'facter' utilization (depreciated).
+# 2019_11_25 Update: v3.17 Change printing format of Database table at the end of execution.
+# 2020_04_01 Update: v3.18 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2020_11_24 Update: v3.19 Don't show DB password file on client
+# 2020_12_24 Update: v3.20 Include output of capitalize function.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -54,7 +57,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.17'                              # Current Script Version
+    export SADM_VER='3.20'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -72,8 +75,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #---------------------------------------------------------------------------------------------------
 #
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But they can be overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    # But they can be overridden here on a per script basis.
+    export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
     #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
@@ -170,10 +173,10 @@ print_user_variables()
     presult="$SADM_INST"                                                # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_USERNAME"                                          # Variable Name
-    pdesc="Current User Name"                                           # Description
-    presult="$SADM_USERNAME"                                            # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    #pexample="\$SADM_USERNAME"                                          # Variable Name
+    #pdesc="Current User Name"                                           # Description
+    #presult="$SADM_USERNAME"                                            # Actual Content of Variable
+    #printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_TPID"                                              # Variable Name
     pdesc="Current Process ID"                                          # Description
@@ -181,12 +184,12 @@ print_user_variables()
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_MULTIPLE_EXEC"                                     # Variable Name
-    pdesc="Allow running multiple copy"                                 # Description
+    pdesc="Allow running multiple copy [Y/N]"                           # Description
     presult="$SADM_MULTIPLE_EXEC"                                       # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_USE_RCH"                                           # Variable Name
-    pdesc="Gen. entry in .rch file"                                     # Description
+    pdesc="Generate entry in '*.rch' file"                              # Description
     presult="$SADM_USE_RCH"                                             # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
@@ -196,22 +199,22 @@ print_user_variables()
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_LOG_APPEND"                                        # Variable Name
-    pdesc="Append Log or Create New One"                                # Description
+    pdesc="Append to Log=Y, Create new log=N"                           # Description
     presult="$SADM_LOG_APPEND"                                          # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_LOG_HEADER"                                        # Variable Name
-    pdesc="Generate Header in log"                                      # Description
+    pdesc="Generate Header in log [Y,N]"                                # Description
     presult="$SADM_LOG_HEADER"                                          # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_LOG_FOOTER"                                        # Name
-    pdesc="Generate or not Footer in log"                               # Description
+    pdesc="Generate or not Footer in log [Y/N]"                         # Description
     presult="$SADM_LOG_FOOTER"                                          # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_EXIT_CODE"                                         # Variable Name
-    pdesc="Script Exit Return Code"                                     # Description
+    pdesc="Current value of script exit code"                           # Description
     presult="$SADM_EXIT_CODE"                                           # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
   
@@ -419,6 +422,11 @@ print_bash_functions()
     presult=`sadm_tolower STRING`                                       # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
     
+    pexample="sadm_capitalize STRING"                                   # Example Calling Function
+    pdesc="Return string capitalize"                                    # Function Description
+    presult=`sadm_capitalize String`                                    # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+    
 }
 
 
@@ -617,16 +625,6 @@ print_file_variable()
     presult="$SADM_ALERT_INIT"                                          # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
-    pexample="\$SADM_SLACK_FILE"                                        # Variable Name
-    pdesc="SADMIN Slack Channel WebHook File"                           # Description
-    presult="$SADM_SLACK_FILE"                                          # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-
-    pexample="\$SADM_SLACK_INIT"                                        # Variable Name
-    pdesc="SADMIN Initial Slack WebHook File"                           # Description
-    presult="$SADM_SLACK_INIT"                                          # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-
     pexample="\$SADM_ALERT_HIST"                                        # Variable Name
     pdesc="SADMIN Alert History File"                                   # Description
     presult="$SADM_ALERT_HIST"                                          # Actual Content of Variable
@@ -637,10 +635,10 @@ print_file_variable()
     presult="$SADM_ALERT_HINI"                                          # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
-    pexample="\$SADM_ALERT_SEQ"                                         # Variable Name
-    pdesc="SADMIN Alert Reference Number File"                          # Description
-    presult="$SADM_ALERT_SEQ"                                           # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+#    pexample="\$SADM_ALERT_SEQ"                                         # Variable Name
+#    pdesc="SADMIN Alert Reference Number File"                          # Description
+#    presult="$SADM_ALERT_SEQ"                                           # Actual Content of Variable
+#    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     #pexample="\$SADM_REL_FILE"                                          # Variable Name
     #pdesc="SADMIN Release File"                                         # Description
@@ -672,11 +670,13 @@ print_file_variable()
     presult="$SADM_RCHLOG"                                              # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
                 
-    pexample="\$DBPASSFILE"                                             # Directory Variable Name
-    pdesc="SADMIN Database User Password File"                          # Directory Description
-    presult="$DBPASSFILE"                                               # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-                
+    if [ "$SADM_HOST_TYPE" = "S" ]                                      # PrintOnly on SADMIN Server
+        then pexample="\$DBPASSFILE"                                    # Directory Variable Name
+             pdesc="SADMIN Database User Password File"                 # Directory Description
+             presult="$DBPASSFILE"                                      # Actual Content of Variable
+             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
+    fi 
+
     pexample="\$SADM_RPT_FILE"                                          # Directory Variable Name
     pdesc="SYStem MONitor Report File"                                  # Directory Description
     presult="$SADM_RPT_FILE"                                            # Actual Content of Variable
@@ -992,80 +992,79 @@ print_command_path()
     printheader "COMMAND PATH USE BY SADMIN STD. LIBR." "Description" "  This System Result"
 
     pexample="\$SADM_LSB_RELEASE"                                       # Variable Name
-    pdesc="Cmd. 'lsb_release', Get O/S Version"                         # Command Location
+    pdesc="'lsb_release' use to get O/S version"                        # Command Location
     presult="$SADM_LSB_RELEASE"                                         # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_DMIDECODE"                                         # Variable Name
-    pdesc="Cmd. 'dmidecode', Get model & type"                          # Command Location
+    pdesc="'dmidecode' use to get model & type"                         # Command Location
     presult="$SADM_DMIDECODE"                                           # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_BC"                                                # Variable Name
-    pdesc="Cmd. 'bc', Do some Math."                                    # Command Location
+    pdesc="'bc' use to do some Math."                                   # Command Location
     presult="$SADM_BC"                                                  # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_FDISK"                                             # Variable Name
-    pdesc="Cmd. 'fdisk', Get Partition Info"                            # Command Location
+    pdesc="'fdisk' use to get partition info"                           # Command Location
     presult="$SADM_FDISK"                                               # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_WHICH"                                             # Variable Name
-    pdesc="Cmd. 'which', Get Command location"                          # Command Location
+    pdesc="'which' use to get command path"                             # Command Location
     presult="$SADM_WHICH"                                               # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_PERL"                                              # Variable Name
-    pdesc="Cmd. 'perl', epoch time Calc."                               # Command Location
+    pdesc="'perl' epoch time Math on AIX"                               # Command Location
     presult="$SADM_PERL"                                                # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_MAIL"                                              # Variable Name
-    pdesc="Cmd. 'mail', Send SysAdmin Email"                            # Command Location
+    pdesc="'mail' use to send email (Aix)"                              # Command Location
     presult="$SADM_MAIL"                                                # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_MUTT"                                              # Variable Name
-    pdesc="Cmd. 'mutt', Used to Send Email"                             # Command Location
+    pdesc="'mutt' use to send email"                                    # Command Location
     presult="$SADM_MUTT"                                                # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_CURL"                                              # Variable Name
-    pdesc="Used to send alert to Slack"                                 # Command Location
+    pdesc="'curl' Use to send alert to Slack"                           # Command Location
     presult="$SADM_CURL"                                                # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_LSCPU"                                             # Variable Name
-    pdesc="Cmd. 'lscpu', Socket & thread info"                          # Command Location
+    pdesc="'lscpu' To get Socket/Thread info"                           # Command Location
     presult="$SADM_LSCPU"                                               # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_NMON"                                              # Variable Name
-    pdesc="Cmd. 'nmon', Collect Perf Statistic"                         # Command Location
+    pdesc="'nmon' Collect Performance Stat."                            # Command Location
     presult="$SADM_NMON"                                                # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_PARTED"                                            # Variable Name
-    pdesc="Cmd. 'parted', Get Disk Real Size"                           # Command Location
+    pdesc="'parted' use to get disk real size"                          # Command Location
     presult="$SADM_PARTED"                                              # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_ETHTOOL"                                           # Variable Name
-    pdesc="Cmd. 'ethtool', Get System IP Info"                          # Command Location
+    pdesc="'ethtool' use to get system IP"                              # Command Location
     presult="$SADM_ETHTOOL"                                             # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_SSH"                                               # Variable Name
-    pdesc="Cmd. 'ssh', SSH to SADMIN client"                            # Command Location
+    pdesc="'ssh' use to SSH on SADMIN client"                           # Command Location
     presult="$SADM_SSH"                                                 # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_SSH_CMD"                                           # Variable Name
-    pdesc="Cmd. 'ssh', SSH to Connect to client"                        # Command Location
+    pdesc="'ssh' SSH cmd to Connect to client"                          # Command Location
     presult="$SADM_SSH_CMD"                                             # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-
 }
 
 

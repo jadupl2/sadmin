@@ -1,1 +1,1 @@
-Put your error message in here (script_name.txt).
+File /tmp/sysmon.tmp doesn't exist - Running stemplate.sh.

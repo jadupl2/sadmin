@@ -16,7 +16,7 @@
 #   Date        :  11 December 2016
 #   Requires    :  sh & sadmlib.sh 
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -43,56 +43,72 @@
 # 2018_06_11 v2.2 Backtrack change v2.1
 # 2018_06_19 v2.3 Change Backup DB Command line (Default compress)
 # 2018_09_14 v2.4 Was reporting Error, even when all scripts ran ok.
-#@2019_05_01 Update: v2.5 Log name now showed to help user diagnostic problem when an error occurs.
-#@2019_05_23  Update: v2.6 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
+# 2019_05_01 Update: v2.5 Log name now showed to help user diagnostic problem when an error occurs.
+# 2019_05_23 Update: v2.6 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
+# 2020_02_23 Update: v2.7 Produce an alert only if one of the executed scripts isn't executable.
+# 2020_06_03 Update: v2.8 Update code section and minor update while writing new documentation
 #
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTS LE ^C
 #set -x
 
 
-#===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
-#
-    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
+# ---------------------------------------------------------------------------------------
+# SADMIN CODE SECTION 1.50
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
+# ---------------------------------------------------------------------------------------
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.6'                               # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    
+    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null 
+         if [ $? -eq 0 ]                                   # Found SADMIN in /etc/env.
+            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                 printf "'SADMIN' environment variable temporarily set to ${SADMIN}.\n"
+            else exit 1                                    # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
-    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
+export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
-    # Load SADMIN Standard Shell Library 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='2.8'                                      # Script Version
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy ?
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. LockFile
+export SADM_USE_RCH="Y"                                    # Update RCH HistoryFile 
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
+export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
+export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
 
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                   # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#===================================================================================================
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Server
+# ---------------------------------------------------------------------------------------
+
 
 
 
@@ -104,16 +120,42 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 # --------------------------------------------------------------------------------------------------
-#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# Show Script command line options
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${SADM_PN} usage :"
-    printf "\n\t-d   (Debug Level [0-9])"
-    printf "\n\t-h   (Display this help message)"
-    printf "\n\t-v   (Show Script Version Info)"
+    printf "\nUsage: %s%s%s [options]\n" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
+    printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
+    printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
     printf "\n\n" 
 }
+
+
+#===================================================================================================
+#                  Run the script received as parameter (Return 0=Success 1= Error)
+#===================================================================================================
+exec_script()
+{
+    RC=0                                                                # Set Error Flag at OFF
+    SCRIPT="$*"                                                         # Name of Script to execute
+    SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Script full path name
+    FLOG=`echo $SCRIPT | awk -F\. '{print $1}'`                         # Log name without extension
+    SLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${FLOG}.log"                 # Log Name full path
+    if [ ! -x $SCMD ]                                                   # Script not executable
+        then sadm_writelog "[ ERROR ] Script $SCMD not executable or doesn't exist."
+             RC=1                                                       # Raise Error Flag 
+        else sadm_writelog "Running $SCMD ..."                          # Show Running Script Name
+             $SCMD >/dev/null 2>&1                                      # Run the Script
+             if [ $? -ne 0 ]                                            # If Error was encounter
+                then sadm_writelog "[ WARNING ] Encounter while running $SCRIPT"   
+                     sadm_writelog "For detail consult the log ($SLOG)" # Log for more detail
+                else sadm_writelog "[ SUCCESS ] Running $SCMD"          # Advise user it's OK
+             fi
+    fi    
+    return $RC
+}
+
 
 
 
@@ -122,98 +164,31 @@ show_usage()
 #===================================================================================================
 main_process()
 {
-    sadm_writelog "Starting Main Process ... "                          # Inform User Starting Main
     ERROR_COUNT=0                                                       # Clear Error Counter
 
     # Once a day - Delete old rch and log files & chown+chmod on SADMIN Server
-    SCRIPT="sadm_server_housekeeping.sh"                                # Name of Script to execute
-    SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Script full path name
-    FLOG=`echo $SCRIPT | awk -F\. '{print $1}'`                         # Log name without extension
-    SLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${FLOG}.log"                 # Log Name full path
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."               # Show Running Script Name
-    $SCMD >/dev/null 2>&1                                               # Run the Script
-    if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] Encounter in $SCRIPT"               # Signal Error to user
-             sadm_writelog "For more detail consult the log ($SLOG)"    # Log for more detail
-             ERROR_COUNT=$(($ERROR_COUNT+1))                            # Increase Error Counter
-        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
-    fi
+    exec_script "sadm_server_housekeeping.sh"                           # Name of Script to execute
+    if [ $? -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi         # On Error Incr. Err. Count
     
-
     # Collect from all servers Hardware info, Perf. Stat, ((nmon and sar)
-    SCRIPT="sadm_daily_farm_fetch.sh"                                   # Name of Script to execute
-    SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Script full path name
-    FLOG=`echo $SCRIPT | awk -F\. '{print $1}'`                         # Log name without extension
-    SLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${FLOG}.log"                 # Log Name full path
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."               # Show Running Script Name
-    $SCMD >/dev/null 2>&1                                               # Run the Script
-    if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] Encounter in $SCRIPT"               # Signal Error to user
-             sadm_writelog "For more detail consult the log ($SLOG)"    # Log for more detail
-             ERROR_COUNT=$(($ERROR_COUNT+1))                            # Increase Error Counter
-        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
-    fi
-
+    exec_script "sadm_daily_farm_fetch.sh"                              # Name of Script to execute
+    if [ $? -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi         # On Error Incr. Err. Count
 
     # Daily DataBase Update with the Data Collected
-    SCRIPT="sadm_database_update.py"                                    # Name of Script to execute
-    SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Script full path name
-    FLOG=`echo $SCRIPT | awk -F\. '{print $1}'`                         # Log name without extension
-    SLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${FLOG}.log"                 # Log Name full path
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."               # Show Running Script Name
-    $SCMD >/dev/null 2>&1                                               # Run the Script
-    if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] Encounter in $SCRIPT"               # Signal Error to user
-             sadm_writelog "For more detail consult the log ($SLOG)"    # Log for more detail
-             ERROR_COUNT=$(($ERROR_COUNT+1))                            # Increase Error Counter
-        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
-    fi 
-
+    exec_script "sadm_database_update.py"                               # Name of Script to execute
+    if [ $? -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi         # On Error Incr. Err. Count
 
     # With all the nmon collect from the server farm update respective host rrd performace database
-    SCRIPT="sadm_nmon_rrd_update.sh"                                    # Name of Script to execute
-    SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Script full path name
-    FLOG=`echo $SCRIPT | awk -F\. '{print $1}'`                         # Log name without extension
-    SLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${FLOG}.log"                 # Log Name full path
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."               # Show Running Script Name
-    $SCMD >/dev/null 2>&1                                               # Run the Script
-    if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] Encounter in $SCRIPT"               # Signal Error to user
-             sadm_writelog "For more detail consult the log ($SLOG)"    # Log for more detail
-             ERROR_COUNT=$(($ERROR_COUNT+1))                            # Increase Error Counter
-        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
-    fi 
-
+    exec_script "sadm_nmon_rrd_update.sh"                               # Name of Script to execute
+    if [ $? -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi         # On Error Incr. Err. Count
 
     # Scan the Subnet Selected - Inventory IP Address Avail.
-    SCRIPT="sadm_subnet_lookup.py"                                      # Name of Script to execute
-    SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Script full path name
-    FLOG=`echo $SCRIPT | awk -F\. '{print $1}'`                         # Log name without extension
-    SLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${FLOG}.log"                 # Log Name full path
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."               # Show Running Script Name
-    $SCMD >/dev/null 2>&1                                               # Run the Script
-    if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] Encounter in $SCRIPT"               # Signal Error to user
-             sadm_writelog "For more detail consult the log ($SLOG)"    # Log for more detail
-             ERROR_COUNT=$(($ERROR_COUNT+1))                            # Increase Error Counter
-        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
-    fi 
-
+    exec_script "sadm_subnet_lookup.py"                                 # Name of Script to execute
+    if [ $? -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi         # On Error Incr. Err. Count
 
     # Once a day we Backup the MySQL Database
-    SCRIPT="sadm_backupdb.sh"                                           # Name of Script to execute
-    SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Script full path name
-    FLOG=`echo $SCRIPT | awk -F\. '{print $1}'`                         # Log name without extension
-    SLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${FLOG}.log"                 # Log Name full path
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."               # Show Running Script Name
-    $SCMD >/dev/null 2>&1                                               # Run the Script
-    if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] Encounter in $SCRIPT"               # Signal Error to user
-             sadm_writelog "For more detail consult the log ($SLOG)"    # Log for more detail
-             ERROR_COUNT=$(($ERROR_COUNT+1))                            # Increase Error Counter
-        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
-    fi 
-
+    exec_script "sadm_backupdb.sh"                                      # Name of Script to execute
+    if [ $? -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi         # On Error Incr. Err. Count
 
     # Set SADM_EXIT_CODE according to Error Counter (Return 1 or 0)
     if [ "$ERROR_COUNT" -gt 0 ]                                         # If some error occured

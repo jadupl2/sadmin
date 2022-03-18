@@ -1,14 +1,14 @@
 <?php
 # ==================================================================================================
 #   Author      :  Jacques Duplessis  
-#   Email       :  jacques.duplessis@sadmin.ca
+#   Email       :  sadmlinux@gmail.com
 #   Title       :  sadm_server_update.php
 #   Version     :  1.8
 #   Date        :  9 December 2017
 #   Requires    :  php - MySQL
 #   Description :  Web Page Menu used to edit a server.
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 # Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
 #        have and use a 100 characters per line. Comments in script always begin at column 73. 
@@ -28,9 +28,11 @@
 # ChangeLog
 #   2017_12_09 - Jacques Duplessis
 #       V1.0 Initial version - Server Edit Menu to Split Server Table Edition Add lot of comments in code and enhance code performance 
-#@2019_01_11 Update: v1.2 Add menu item for updating backup schedule,
-#@2019_07_25 Update: v1.3 Minor modification to page layout.
-#@2019_08_18 Update: v1.4 Add ReaR Backup in menu.
+# 2019_01_11 Update: v1.2 Add menu item for updating backup schedule,
+# 2019_07_25 Update: v1.3 Minor modification to page layout.
+# 2019_08_18 Update: v1.4 Add ReaR Backup in menu.
+# 2020_01_04 Update: v1.5 Change Server C.R.U.D. Menu
+# 2020_07_12 Update: v1.6 Add 'Delete System' as a menu item and change item labelling.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -49,10 +51,10 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     color           :   #f9f4be;   
     font-family     :   Verdana, Geneva, sans-serif;
     font-size       :   1.0em;
-    width           :   45%;
-    margin          :   0 auto;
-    text-align      :   left;
-    border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
+    width           :   50%;
+    margin          :   0px 0px 0px 0px;
+    text-align      :   Center;
+    border          :   10px solid #000000;   border-width : 1px;     border-style : solid;   
     border-color    :   #000000;             border-radius: 10px;
     line-height     :   1.7;    
 }
@@ -107,11 +109,12 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG          = False ;                                               # Debug Activated True/False
-$SVER           = "1.4" ;                                               # Current version number
+$SVER           = "1.6" ;                                               # Current version number
 $URL_MAIN       = '/crud/srv/sadm_server_main.php';                     # Maintenance Main Page URL
-$URL_UPDATE     = '/crud/srv/sadm_server_update.php';                   # Update Page URL
+$URL_UPDATE     = '/crud/srv/sadm_server_update.php';                   # Update System Page URL
+$URL_DELETE     = '/crud/srv/sadm_server_delete.php';                   # Delete System Page URL
 $URL_OSUPDATE   = '/crud/srv/sadm_server_osupdate.php';                 # O/S Update Page URL
-$URL_BACKUP     = '/crud/srv/sadm_server_backup.php';                   # O/S Update Page URL
+$URL_BACKUP     = '/crud/srv/sadm_server_backup.php';                   # Daily Backup Upd. Page URL
 $URL_REAR       = '/crud/srv/sadm_server_rear_backup.php';              # ReaR backup schedule page
 $URL_HOME       = '/index.php';                                         # Site Main Page
 $CREATE_BUTTON  = False ;                                               # Don't Show Create Button
@@ -122,29 +125,32 @@ $URL_MENU       = "/crud/srv/sadm_server_menu.php";                     # CRUD S
 //                      DISPLAY SERVER UPDATE MENU 
 // ================================================================================================
 function display_menu($wkey) {
-    global $URL_UPDATE, $URL_OSUPDATE, $URL_BACKUP, $URL_MAIN, $URL_MENU, $URL_REAR;
-    echo "\n<br><br>";
+    global $URL_UPDATE, $URL_OSUPDATE, $URL_BACKUP, $URL_MAIN, $URL_MENU, $URL_DELETE, $URL_REAR;
+    echo "\n<br><br><center>";
     echo "\n\n<div class='menu'>\n";                                    # Start Menu
     echo "\n<br>";
 
     echo "\n<div class='menu_item'>\n";                                 # Start Menu Item
     echo "\n<p>";
     echo "\n<a href='" . $URL_UPDATE . "?sel=" . $wkey . "&back=" . $URL_MENU ; 
-    echo "'>System static information</a></p>";
+    echo "'>Modify system static information</a></p>";
+    echo "\n<p>";
+    echo "\n<a href='" . $URL_DELETE . "?sel=" . $wkey . "&back=" . $URL_MENU ; 
+    echo "'>Remove system from SADMIN</a></p>";
     echo "\n<p>";
     echo "\n<a href='" . $URL_OSUPDATE . "?sel=" . $wkey . "&back=" . $URL_MENU ;
-    echo "'>Operating system update schedule</a></p>";
+    echo "'>Modify O/S update schedule</a></p>";
     echo "\n<p>";
     echo "\n<a href='" . $URL_BACKUP . "?sel=" . $wkey . "&back=" . $URL_MENU ;
-    echo "'>Backup schedule</a></p>";
+    echo "'>Modify Backup schedule</a></p>";
     echo "\n<p>";
     echo "\n<a href='" . $URL_REAR . "?sel=" . $wkey . "&back=" . $URL_MENU ;
-    echo "'>ReaR backup schedule</a></p>";
+    echo "'>Modify ReaR backup schedule</a></p>";
     echo "\n<br>";
     echo "\n<p>\n<a href='" . $URL_MAIN . "'>Back to system list</a></p>";
     echo "\n</div>";                                                    # << End of menu_item
     echo "\n<br>";
-
+    echo "\n</center>";
     echo "\n</div>\n<br>\n\n";                                          # End of Menu Div.
 }
 

@@ -1,1 +1,1 @@
-Performance Collector nmon not running, restarting it.
+Performance Collector 'nmon' not running, restarting it.

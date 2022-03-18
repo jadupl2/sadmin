@@ -7,7 +7,7 @@
 #   Date        :  6 August 2019
 #   Description :  List active servers and associated with a ReaR backup schedule (if any).
 #   
-#   Copyright (C) 2019 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2019 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -24,7 +24,12 @@
 # 2019_08_26 New: v1.0 Initial version of ReaR backup Status Page
 # 2019_08_26 New: v1.1 First Release of Rear Backup Status Page.
 # 2019_09_20 Update: v1.2 Show History (RCH) content using same uniform way.
-#@2019_10_15 Update: v1.3 Add Architecture, O/S Name, O/S Version to page
+# 2019_10_15 Update: v1.3 Add Architecture, O/S Name, O/S Version to page
+# 2020_01_13 Update: v1.4 Change column disposition and show ReaR version no. of systems.
+# 2020_01_14 Update: v1.5 Don't show MacOS System on page (Not supported by ReaR).
+# 2020_03_05 Update: v1.6 When mouse over server name (Show more information).
+# 2020_07_29 Update: v1.7 Remove system description to allow more space on each line.
+# 2020_13_13 Update: v1.8 Add link in heading to view ReaR Daily Report.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -52,23 +57,27 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
-$DEBUG           = False ;                                              # Debug Activated True/False
-$WVER            = "1.3" ;                                              # Current version number
-$URL_CREATE      = '/crud/srv/sadm_server_create.php';                  # Create Page URL
-$URL_UPDATE      = '/crud/srv/sadm_server_update.php';                  # Update Page URL
-$URL_DELETE      = '/crud/srv/sadm_server_delete.php';                  # Delete Page URL
-$URL_MAIN        = '/crud/srv/sadm_server_main.php';                    # Maintenance Main Page URL
-$URL_HOME        = '/index.php';                                        # Site Main Page
-$URL_SERVER      = '/view/srv/sadm_view_servers.php';                   # View Servers List
-$URL_OSUPDATE    = '/crud/srv/sadm_server_osupdate.php';                # O/S Schedule Update URL
-$URL_BACKUP      = '/crud/srv/sadm_server_rear_backup.php';             # Rear Schedule Update URL
-$URL_VIEW_FILE   = '/view/log/sadm_view_file.php';                      # View File Content URL
-$URL_VIEW_RCH    = '/view/rch/sadm_view_rchfile.php';                   # View RCH File Content URL
-$URL_HOST_INFO   = '/view/srv/sadm_view_server_info.php';               # Display Host Info URL
-$URL_VIEW_BACKUP = "/view/sys/sadm_view_rear.php";                      # Rear Back Status Page
-$CREATE_BUTTON   = False ;                                              # Yes Display Create Button
-$BACKUP_RCH      = 'sadm_rear_backup.rch';                              # Rear BackupRCH Suffix name
-$BACKUP_LOG      = 'sadm_rear_backup.log';                              # Rear BackupLog Suffix name
+$DEBUG              = False ;                                           # Debug Activated True/False
+$WVER               = "1.8" ;                                           # Current version number
+$URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
+$URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
+$URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
+$URL_MAIN           = '/crud/srv/sadm_server_main.php';                 # Maintenance Main Page URL
+$URL_HOME           = '/index.php';                                     # Site Main Page
+$URL_SERVER         = '/view/srv/sadm_view_servers.php';                # View Servers List
+$URL_OSUPDATE       = '/crud/srv/sadm_server_osupdate.php';             # O/S Schedule Update URL
+$URL_BACKUP         = '/crud/srv/sadm_server_rear_backup.php';          # Rear Schedule Update URL
+$URL_VIEW_FILE      = '/view/log/sadm_view_file.php';                   # View File Content URL
+$URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
+$URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
+$URL_VIEW_BACKUP    = "/view/sys/sadm_view_rear.php";                   # Rear Back Status Page
+$URL_REAR_REPORT    = "/view/daily_rear_report.html";                   # Rear Daily Report Page
+$URL_BACKUP_REPORT  = "/view/daily_backup_report.html";                 # Backup Daily Report Page
+$URL_STORIX_REPORT  = "/view/daily_storix_report.html";                 # Storix Daily Report Page
+$URL_SCRIPTS_REPORT = "/view/daily_scripts_report.html";                # Scripts Daily Report Page
+$CREATE_BUTTON      = False ;                                           # Yes Display Create Button
+$BACKUP_RCH         = 'sadm_rear_backup.rch';                           # Rear BackupRCH Suffix name
+$BACKUP_LOG         = 'sadm_rear_backup.log';                           # Rear BackupLog Suffix name
 
 
 #===================================================================================================
@@ -78,22 +87,22 @@ function setup_table() {
 
     # Table creation
     echo "<div id='SimpleTable'>"; 
-    echo '<table id="sadmTable" class="display" row-border width="100%">';   
+    echo '<table id="sadmTable" class="display" row-border width="96%">';   
 
     # Table Heading
     echo "<thead>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
-    echo "<th class='dt-head-left'>Description</th>\n";
-    echo "<th class='dt-head-left'>Arch</th>\n";
-    echo "<th class='dt-head-left'>O/S Name</th>\n";
-    echo "<th class='dt-head-left'>O/S Version</th>\n";
-    echo "<th class='text-center'>Next Rear Backup</th>\n";
-    echo "<th class='text-center'>Last Rear Backup</th>\n";
-    echo "<th class='dt-head-left'>Rear Backup Occurrence</th>\n";
-    echo "<th class='text-center'>Duration</th>\n";
+    #echo "<th class='dt-head-left'>Description</th>\n";
+    #echo "<th class='dt-head-left'>Arch</th>\n";
+    echo "<th class='dt-head-left'>O/S</th>\n";
+    echo "<th class='dt-head-left'>Rear Ver</th>\n";
+    echo "<th class='text-center'>Last Backup</th>\n";
     echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='text-center'>View Log / History</th>\n";
+    echo "<th class='text-center'>Duration</th>\n";
+    echo "<th class='text-center'>Next Backup</th>\n";
+    echo "<th class='dt-head-left'>Backup Occurrence</th>\n";
+    echo "<th class='text-center'>Log / History</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
 
@@ -101,16 +110,16 @@ function setup_table() {
     echo "<tfoot>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
-    echo "<th class='dt-head-left'>Description</th>\n";
-    echo "<th class='dt-head-left'>Arch</th>\n";
-    echo "<th class='dt-head-left'>O/S Name</th>\n";
-    echo "<th class='dt-head-left'>O/S Version</th>\n";
-    echo "<th class='text-center'>Next Rear Backup</th>\n";
-    echo "<th class='text-center'>Last Rear Backup</th>\n";
-    echo "<th class='dt-head-left'>Rear Backup Occurrence</th>\n";
-    echo "<th class='text-center'>Duration</th>\n";
+    #echo "<th class='dt-head-left'>Description</th>\n";
+    #echo "<th class='dt-head-left'>Arch</th>\n";
+    echo "<th class='dt-head-left'>O/S</th>\n";
+    echo "<th class='dt-head-left'>Rear Ver</th>\n";
+    echo "<th class='text-center'>Last Backup</th>\n";
     echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='text-center'>View Log / History</th>\n";
+    echo "<th class='text-center'>Duration</th>\n";
+    echo "<th class='text-center'>Next Backup</th>\n";
+    echo "<th class='dt-head-left'>Backup Occurrence</th>\n";
+    echo "<th class='text-center'>Log / History</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
  
@@ -126,40 +135,37 @@ function display_data($count, $row) {
     global  $URL_HOST_INFO, $URL_VIEW_FILE, $URL_BACKUP, $URL_VIEW_RCH, 
             $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG; 
     
-    if (($row['srv_arch'] != "x86_64") and ($row['srv_arch'] != "i686")) {
-        return;
-    }
-    echo "<tr>\n";  
+    # ReaR Not Supported on MacOS and Raspberry Pi
+    if (($row['srv_arch'] != "x86_64") and ($row['srv_arch'] != "i686")) { return ; } 
+    if ($row['srv_ostype'] == "darwin") { return ; }
+
     
     # Server Name
+    echo "<tr>\n";  
     echo "<td class='dt-center'>";
     echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP ."'";
-    echo " title='" .$row['srv_osname']. "-" .$row['srv_osversion']." server, ip address is " ;
-    echo $row['srv_ip']  . ", click to edit schedule\'>";
+    echo " title='" .$row['srv_osname']. "-" .$row['srv_osversion']." - " ;
+    echo $row['srv_ip']  . ", click to edit the schedule.'>";
     echo $row['srv_name']  . "</a></td>\n";
 
     # Server Description
-    echo "<td class='dt-body-left'>" . nl2br( $row['srv_desc']) . "</td>\n";  
+    #echo "<td class='dt-body-left'>" . nl2br( $row['srv_desc']) . "</td>\n";  
     
     # Server Architecture  
-    echo "<td class='dt-body-left'>" . ucfirst( $row['srv_arch']) . "</td>\n";  
+    #echo "<td class='dt-body-left'>" . ucfirst( $row['srv_arch']) . "</td>\n";  
     
     # Server O/S Name 
-    echo "<td class='dt-body-center'>" . ucfirst( $row['srv_osname']) . "</td>\n";  
+    #echo "<td class='dt-body-center'>" . ucfirst( $row['srv_osname']) . "</td>\n";  
+    
+    # Display Operating System Logo
+    $WOS   = sadm_clean_data($row['srv_osname']);
+    sadm_show_logo($WOS);                                               # Show Distribution Logo
     
     # Server O/S Version
-    echo "<td class='dt-body-center'>" . nl2br( $row['srv_osversion']) . "</td>\n";  
+    #echo "<td class='dt-body-center'>" . nl2br( $row['srv_osversion']) . "</td>\n";  
 
-    # Next Rear Backup Date
-    echo "<td class='dt-center'>";
-    if ($row['srv_img_backup'] == True ) { 
-        list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
-            $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
-        echo $UPD_DATE_TIME ;
-    }else{
-        echo "Not activated";
-    }
-    echo "</td>\n";  
+    # ReaR Server Version
+    echo "<td class='dt-body-center'>" . nl2br( $row['srv_rear_ver']) . "</td>\n";  
 
 
     # Last Rear Backup Date 
@@ -180,26 +186,6 @@ function display_data($count, $row) {
     echo "</td>\n";  
 
 
-    # Rear Backup Occurrence
-    echo "<td class='dt-body-left'>";
-    if ($row['srv_img_backup'] == True ) { 
-        list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
-            $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
-        echo $STR_SCHEDULE ;
-    }else{
-        echo " ";
-    }
-    echo "</td>\n"; 
-
-
-    # Backup elapse time
-    if (! file_exists($rch_file))  {                                    # If RCH File Not Found
-        echo "\n<td class='dt-center'>  </td>";
-    }else{
-        echo "<td class='dt-center'>" . nl2br($celapse) . "</td>\n";  
-    }
-
-
     # Last Backup Status
     if (! file_exists($rch_file))  {                                    # If RCH File Not Found
         echo "\n<td class='dt-center'>  </td>";
@@ -216,13 +202,49 @@ function display_data($count, $row) {
         }   
     }
 
+    
+    # Backup elapse time
+    if (! file_exists($rch_file))  {                                    # If RCH File Not Found
+        echo "\n<td class='dt-center'>  </td>";
+    }else{
+        echo "<td class='dt-center'>" . nl2br($celapse) . "</td>\n";  
+    }
+
+
+    # Next Rear Backup Date
+    echo "<td class='dt-center'>";
+    if ($row['srv_img_backup'] == True ) { 
+        list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
+            $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
+        echo $UPD_DATE_TIME ;
+    }else{
+        echo "Not activated";
+    }
+    echo "</td>\n";  
+
+
+
+    # Rear Backup Occurrence
+    echo "<td class='dt-body-left'>";
+    if ($row['srv_img_backup'] == True ) { 
+        list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
+            $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
+        echo $STR_SCHEDULE ;
+    }else{
+        echo " ";
+    }
+    echo "</td>\n"; 
+
+
+
+
 
     # Display link to view Rear Backup log and rch file
     echo "<td class='dt-center'>";
     $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_" . $BACKUP_LOG;
     if (file_exists($log_name)) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
-        echo " title='View Backup Log'>Log</a>&nbsp;&nbsp;&nbsp;";
+        echo " title='View Backup Log'>[log]</a>&nbsp;&nbsp;&nbsp;";
     }else{
         echo " N/A ";
     }
@@ -231,7 +253,7 @@ function display_data($count, $row) {
     $rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
     if (file_exists($rch_name)) {
         echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
-        echo " title='View Backup History (rch) file'>History</a>";
+        echo " title='View Backup History (rch) file'>[rch]</a>";
     }else{
         echo "N/A";
     }
@@ -258,7 +280,10 @@ function display_data($count, $row) {
         exit();  
     }
     $title1="ReaR Backup Schedule Status";                              # Page Title 1
-    $title2="ReaR only available on x86_64 and i686 architecture";                                                         # Page Title 2
+    $title2="";
+    if (file_exists(SADM_WWW_DIR . "/view/daily_rear_report.html")) {
+        $title2="<a href='" . $URL_REAR_REPORT . "'>View the ReaR Daily Report</a>"; 
+    }     
     display_lib_heading("NotHome","$title1","$title2",$WVER);           # Display Heading
     setup_table();                                                      # Create Table & Heading
     
@@ -269,6 +294,7 @@ function display_data($count, $row) {
         display_data($count, $row);                                     # Display Next Server
     }
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
+    echo "<center>MacOS and Raspberry Pi aren't shown on this page because they are not supported by ReaR.</center>.";
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>

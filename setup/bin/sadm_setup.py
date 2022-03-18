@@ -7,7 +7,7 @@
 #   Licence     :   You can redistribute it or modify under the terms of GNU General Public 
 #                   License, v.2 or above.
 # ==================================================================================================
-#   Copyright (C) 2016-2017 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016-2017 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is a free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -66,6 +66,38 @@
 # 2019_07_04 Update: v3.29 Crontab client and Server definition revised for Aix and Linux.
 # 2019_08_25 Update: v3.30 On Client setup Web USer and Group in sadmin.cfg to sadmin user & group.
 # 2019_10_30 Update: v3.31 Remove installation of 'facter' package (Depreciated).
+# 2019_12_18 Fix: v3.32 Fix problem when inserting server into database on Ubuntu/Raspbian.
+# 2019_12_20 Update: v3.33 Remove installation of ruby (was used for facter) & of pymysql (Done)
+# 2020_03_08 Update: v3.34 Added 'hwinfo' package to installation requirement.
+# 2020_03_16 Update: v3.35 Set default alert group to sysadmin email in .alert_group.cfg. 
+# 2020_04_19 Update: v3.36 Minor adjustments.
+# 2020_04_21 Update: v3.37 Add syslinux,genisomage,rear packages req. & hwinfo to EPEL(RHEL/CentOS8)
+# 2020_04_23 Update: v3.38 Fix Renaming Apache config error.
+# 2020_04_27 Update: v3.39 Remove 'arp-scan' installation on server (no longer needed).
+# 2020_04_27 Fix: v3.40 Fix problem with typo error.
+# 2020_07_10 Update: v3.41 Assign temporary passwd to sadmin user.
+# 2020_07_11 Update: v3.42 Minor script changes.
+# 2020_07_11 Update: v3.43 Added rsync package to client installation. 
+# 2020_09_05 Update: v3.44 Minor change to sadm_client crontab file.
+# 2020_11_09 New: v3.45 Add Daily Email Report to crontab of sadm_server.
+# 2020_11_15 Update: v3.46 'wkhtmltopdf' package was added to server installation.
+# 2020_12_21 Update: v3.47 Bypass installation of 'ReaR' on Arm platform (Not available).
+# 2020_12_21 Update: v3.48 Bypass installation of 'syslinux' on Arm platform (Not available).
+# 2020_12_23 Fix: v3.49 Fix typo error.
+# 2020_12_24 Update: v3.50 CentOSStream return CENTOS.
+# 2020_12_27 Fix: v3.51 Fix problem with 'rear' & 'syslinux' when installing SADMIN server.
+# 2021_01_06 Update: v3.52 Ensure that package util-linux is installed on client & server.
+# 2021_01_27 Update: v3.53 Activate Startup and Shutdown Script (SADMIN Service)
+# 2021_04_19 Update: v3.54 Fix Path to sadm_service_ctrl.sh
+# 2021_06_06 Update: v3.55 Add to sadm_client crontab, script to make sure 'nmon' is running
+# 2021_06_30 Update: v3.56 Adjust Client, Server crontab with documentation
+# 2021_07_20 install: v3.57 Fix sadmin.service configuration problem.
+# 2021_07_20 install: v3.58 Bug fix when installing SADMIN server 'mysql' packages.
+# 2021_07_20 install: v3.59 Update alert group file, default now assigned to 'mail_sysadmin' group.
+# 2021_07_20 install: v3.60 Client package to install changed from 'util-linux-ng' to 'util-linux'.
+# 2021_07_21 install: v3.61 Fix server install problem on rpm system with package 'php-mysqlnd'.
+# 2021_07_21 install: v3.62 Fix 'srv_rear_ver' field didn't have a default value in Database.
+# 2021_11_07 install: v3.63 Remove SADM_RRDTOOL variable from sadmin.cfg (depreciated).
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -82,7 +114,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.31"                                            # Setup Version Number
+sver                = "3.63"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -110,6 +142,9 @@ class color:
     UNDERLINE   = '\033[4m'
     END         = '\033[0m'
 
+# Some package are only available on these platform
+rear_supported_architecture     = ["i686","i386","x86_64","amd64"] 
+syslinux_supported_architecture = ["i686","i386","x86_64","amd64"] 
 
 # Command and package require by SADMIN Client to work correctly
 req_client = {}                                                         # Require Packages Dict.
@@ -120,6 +155,16 @@ req_client = {
                     'deb':'nmon',                           'drepo':'base'},
     'ethtool'    :{ 'rpm':'ethtool',                        'rrepo':'base',  
                     'deb':'ethtool',                        'drepo':'base'},
+    'rear'       :{ 'rpm':'rear',                           'rrepo':'base',  
+                    'deb':'rear',                           'drepo':'base'},
+    'syslinux'   :{ 'rpm':'syslinux',                       'rrepo':'base',  
+                    'deb':'syslinux',                       'drepo':'base'},
+    'genisoimage':{ 'rpm':'genisoimage',                    'rrepo':'base',  
+                    'deb':'genisoimage',                    'drepo':'base'},
+    'rsync'      :{ 'rpm':'rsync',                          'rrepo':'base',  
+                    'deb':'rsync',                          'drepo':'base'},
+    'hwinfo'     :{ 'rpm':'hwinfo',                         'rrepo':'epel',  
+                    'deb':'hwinfo',                         'drepo':'base'},
     'ifconfig'   :{ 'rpm':'net-tools',                      'rrepo':'base',  
                     'deb':'net-tools',                      'drepo':'base'},
     'sudo'       :{ 'rpm':'sudo',                           'rrepo':'base',  
@@ -134,8 +179,6 @@ req_client = {
                     'deb':'mutt',                           'drepo':'base'},
     'gawk'       :{ 'rpm':'gawk',                           'rrepo':'base',
                     'deb':'gawk',                           'drepo':'base'},
-    'ruby-libs'  :{ 'rpm':'ruby-libs',                      'rrepo':'epel',  
-                    'deb':'ruby-full',                      'drepo':'base'},
     'bc'         :{ 'rpm':'bc',                             'rrepo':'base',  
                     'deb':'bc',                             'drepo':'base'},
     'curl'       :{ 'rpm':'curl',                           'rrepo':'base',  
@@ -144,14 +187,10 @@ req_client = {
                     'deb':'openssh-client',                 'drepo':'base'},
     'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
                     'deb':'dmidecode',                      'drepo':'base'},
-    # 'pymsql'     :{ 'rpm':'python34-pip python3-pip',       'rrepo':'epel',
-    #                 'deb':'python3-pip',                    'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
     'iostat'     :{ 'rpm':'sysstat',                        'rrepo':'base',  
                     'deb':'sysstat',                        'drepo':'base'},
-    #'datetime'   :{ 'rpm':'perl-DateTime ',                 'rrepo':'base',
-    #                'deb':'libdatetime-perl ',              'drepo':'base'},
     'libwww'     :{ 'rpm':'perl-libwww-perl ',              'rrepo':'base',
                     'deb':'libwww-perl ',                   'drepo':'base'},
     'lscpu'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
@@ -161,19 +200,20 @@ req_client = {
 # Command and package require by SADMIN Server to work correctly
 req_server = {}                                                         # Require Packages Dict.
 req_server = { 
-    'httpd'      :{ 'rpm':'httpd httpd-tools',                              'rrepo':'base',
-                    'deb':'apache2 apache2-utils libapache2-mod-php',       'drepo':'base'},
-    'rrdtool'    :{ 'rpm':'rrdtool',                                        'rrepo':'base',
-                    'deb':'rrdtool',                                        'drepo':'base'},
-    'fping'      :{ 'rpm':'fping',                                          'rrepo':'epel',
-                    'deb':'fping monitoring-plugins-standard',              'drepo':'base'},
-    'arp-scan'   :{ 'rpm':'arp-scan',                                       'rrepo':'epel',
-                    'deb':'arp-scan',                                       'drepo':'base'},
-    'php'        :{ 'rpm':'php php-common php-cli php-mysqlnd php-mbstring','rrepo':'base', 
-                    'deb':'php php-mysql php-common php-cli ',              'drepo':'base'},
-#    'mysql'      :{ 'rpm':'mariadb-server MySQL-python',                    'rrepo':'base',
-    'mysql'      :{ 'rpm':'mariadb-server ',                                'rrepo':'base',
-                    'deb':'mariadb-server mariadb-client',                  'drepo':'base'}
+    'httpd'         :{ 'rpm':'httpd httpd-tools',                              'rrepo':'base',
+                       'deb':'apache2 apache2-utils libapache2-mod-php',       'drepo':'base'},
+    'rrdtool'       :{ 'rpm':'rrdtool',                                        'rrepo':'base',
+                       'deb':'rrdtool',                                        'drepo':'base'},
+    'fping'         :{ 'rpm':'fping',                                          'rrepo':'epel',
+                       'deb':'fping monitoring-plugins-standard',              'drepo':'base'},
+#    'arp-scan'      :{ 'rpm':'arp-scan',                                       'rrepo':'epel',
+#                       'deb':'arp-scan',                                       'drepo':'base'},
+    'wkhtmltopdf'   :{ 'rpm':'wkhtmltopdf',                                    'rrepo':'epel',  
+                       'deb':'wkhtmltopdf',                                    'drepo':'base'},
+    'php'           :{ 'rpm':'php php-common php-cli php-mysqlnd php-mbstring','rrepo':'base', 
+                       'deb':'php php-common php-cli php-mysql php-mbstring',  'drepo':'base'},
+    'mysql'         :{ 'rpm':'mariadb-server ',                                'rrepo':'base',
+                       'deb':'mariadb-server mariadb-client',                  'drepo':'base'}
 }
 
 #===================================================================================================
@@ -299,7 +339,7 @@ def update_host_file(wdomain,wip) :
 
     writelog('')
     writelog('----------')
-    writelog ("Adding 'sadmin..%s to /etc/hosts file" % (wdomain),'bold')
+    writelog ("Adding 'sadmin.%s to /etc/hosts file" % (wdomain),'bold')
     try : 
         hf = open('/etc/hosts','r+')                                    # Open /etc/hosts file
     except :
@@ -366,14 +406,21 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("PATH=%s\n" % (os.environ["PATH"]))
     hcron.write ("SADMIN=%s\n" % (sroot))
     hcron.write ("# \n")
+    #hcron.write ("# \n")
+    #hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
+    #hcron.write ("# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
     hcron.write ("# \n")
-    hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
-    hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
+    hcron.write ("# Every 45 Min, this script make sure the 'nmon' performance collector is running.\n")
+    hcron.write ("*/45 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.sh > /dev/null 2>&1\n" % (wuser))
     hcron.write ("# \n")
-    hcron.write ("# Run Daily before midnight\n")
-    hcron.write ("# Housekeeping, Save Filesystem Info, Create SysInfo & Set Files/Dir. Owner\n")
+    hcron.write ("# \n")
+    hcron.write ("# Run these four scripts in sequence, just before midnight every day:\n")
+    hcron.write ("# (1) sadm_housekeeping_client.sh (Make sure files in $SADMIN have proper owner:group & permission)\n")
+    hcron.write ("# (2) sadm_dr_savefs.sh (Save lvm filesystems metadata to recreate them easily in Disaster Recovery)\n")
+    hcron.write ("# (3) sadm_create_cfg2html.sh (Run cfg2html tool - Produce system configuration web page).\n")
+    hcron.write ("# (4) sadm_create_sysinfo.sh (Collect Hardware & Software info of system to update Database).\n")
     hcron.write ("23 23 * * *  %s sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1\n" % (wuser))
-    hcron.write ("#\n")
+    hcron.write ("# \n")
 
     # Insert line that run System monitor every 5 minutes.
     chostname = socket.gethostname().split('.')[0]
@@ -473,26 +520,38 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("PATH=%s\n" % (os.environ["PATH"]))
     hcron.write ("SADMIN=%s\n" % (sroot))
     hcron.write ("# \n")
-    hcron.write ("# \n")
-    hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
-    hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
+    #hcron.write ("# \n")
+    #hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
+    #hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
     hcron.write ("# \n")
     #
     hcron.write ("# Rsync all *.rch,*.log,*.rpt files from all actives clients.\n")
     cscript="sudo ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1"
     if wostype == "AIX" : 
-        hcron.write ("# */6 don't work on Aix.\n")
+        hcron.write ("# */5 don't work on Aix.\n")
         hcron.write ("4,10,16,22,28,34,40,46,52,58 * * * * %s %s\n" % (wuser,cscript))
     else:
-        hcron.write ("*/6 * * * * %s %s\n" % (wuser,cscript))
+        hcron.write ("*/5 * * * * %s %s\n" % (wuser,cscript))
+    #
+    cscript="sudo ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1"
+    hcron.write ("#\n")
+    hcron.write ("# Early morning daily run, Collect Perf data - Update Database, Housekeeping\n")
+    hcron.write ("08 05 * * * %s %s\n" % (wuser,cscript))
+    #
+    cscript="sudo ${SADMIN}/bin/sadm_daily_report.sh >/dev/null 2>&1"
+    hcron.write ("#\n")
+    hcron.write ("# Daily SADMIN Report by Email\n")
+    hcron.write ("07 07 * * * %s %s\n" % (wuser,cscript))    
     hcron.write ("#\n")
     #
-    hcron.write ("# Early morning daily run, Collect Perf data - Update Database, Housekeeping\n")
-    hcron.write ("05 05 * * * %s sudo ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1\n" % (wuser))
+    cscript="sudo ${SADMIN}/bin/sadm_push_sadmin.sh >/dev/null 2>&1"
     hcron.write ("#\n")
-    #hcron.write ("# Morning report sent to Sysadmin by Email\n")
-    #hcron.write ("03 08 * * * ${SADMIN}/bin/sadm_rch_scr_summary.sh -m >/dev/null 2>&1\n")
-    #hcron.write ("#\n")
+    hcron.write ("# Daily push of /opt/sadmin/(lib,bin,cfg/.*) to all active servers (Optional)\n")
+    hcron.write ("#   -s To include push of /opt/sadmin/sys\n")
+    hcron.write ("#   -u To include push of /opt/sadmin/(usr/bin usr/lib usr/cfg)\n")
+    hcron.write ("#30 15 * * * %s %s\n" % (wuser,cscript))
+    hcron.write ("#\n")
+    #
     hcron.close()                                                       # Close SADMIN Crontab file
 
     # Change Server Crontab file permission to 644
@@ -657,7 +716,7 @@ def firewall_rule() :
     COMMAND = "systemctl status firewalld"                              # Check if Firewall running
     if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
     ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
-    if ccode is not 0 :  
+    if ccode != 0 :  
         writelog("Not running")
         return (0)                                                      # If Firewall not running
     else:
@@ -666,6 +725,12 @@ def firewall_rule() :
     # Open TCP Port 80 on Firewall
     writelog("  - Adding rules to allow incoming connection on port 80")
     COMMAND="firewall-cmd --zone=public --add-port=80/tcp --permanent"  # Allow port 80 for HTTP 
+    if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
+    ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
+
+    # Open TCP Port 443 on Firewall
+    writelog("  - Adding rules to allow incoming connection on port 443")
+    COMMAND="firewall-cmd --zone=public --add-port=443/tcp --permanent"  # Allow port 80 for HTTP 
     if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
     ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
 
@@ -686,7 +751,7 @@ def locate_command(lcmd) :
     COMMAND = "which %s" % (lcmd)                                       # Build the which command
     if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
     ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
-    if ccode is not 0 :                                                 # Command was not Found
+    if ccode != 0 :                                                     # Command was not Found
         cmd_path=""                                                     # Cmd Path Null when Not fnd
     else :                                                              # If command Path is Found
         cmd_path = cstdout                                              # Save command Path
@@ -697,6 +762,10 @@ def locate_command(lcmd) :
 
 #===================================================================================================
 #       This function verify if the Package Received in parameter is available on the server 
+# 
+# Parameters : 
+#   lpacktype = Package Type rpm, deb or cus (Custom from local directory)
+#   lpackages = Package Name
 #===================================================================================================
 def locate_package(lpackages,lpacktype) :
 
@@ -734,7 +803,7 @@ def locate_package(lpackages,lpacktype) :
 #                       S A T I S F Y    R E Q U I R E M E N T   F U N C T I O N 
 #===================================================================================================
 #
-def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits):
+def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosarch):
     global fhlog
 
     # Based on installation Type (Client or Server), Move client or server dict. in Work Dict.
@@ -761,7 +830,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits):
             else:                                                       # If we had error 
                 writelog ("Error Code is %d" % (ccode))                 # Advise user of error
 
-    # Under Debug Mode, Display the working dictionnary we will be processing below
+    # Under Debug Mode, Display the working dictionnary that we will be processing below
     if (DEBUG):                                                         # Under Debug Show Req Dict.
         for cmd,pkginfo in req_work.items():                            # For all items in Work Dict
             writelog("\nFor command '{0}' we need package :" .format(cmd)) # Show Command name
@@ -781,6 +850,17 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits):
         # Verify if needed package is installed
         pline = "Checking for %s ... " % (needed_packages)		        # Show What were looking for
         writelog (pline,'nonl')                                         # Show What were looking for
+
+        # Rear Only available on Intel platform Architecture
+        if needed_packages == "rear" and sosarch not in rear_supported_architecture :
+              writelog (" Ok, 'rear' isn't supported on this platform (%s)" % (sosarch)) 
+              continue                                                  # Proceed with Next Package
+
+        # Syslinux Only available on Intel platform Architecture
+        if needed_packages == "syslinux" and sosarch not in syslinux_supported_architecture :
+              writelog (" Ok, 'syslinux' isn't supported on this platform (%s)" % (sosarch)) 
+              continue                                                  # Proceed with Next Package
+
         if locate_package(needed_packages,packtype) :                   # If Package is installed
             writelog (" Ok ")                                           # Show User Check Result
             continue                                                    # Proceed with Next Package
@@ -798,11 +878,19 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits):
                 icmd = "yum install --enablerepo=epel -y %s >>%s 2>&1" % (needed_packages,logfile)
             else:
                 icmd = "yum install -y %s >>%s 2>&1" % (needed_packages,logfile)
+
+        # wkhtmltopdf package available for all version except CentOS,Redhat Version 8 
+        # Install it from SADMIN package directory
+        if (needed_packages == "wkhtmltopdf") :
+            if ( (sosname == "REDHAT" or sosname == "CENTOS") and sosver == 8):
+                icmd = "dnf -y install $SADMIN/pkg/wkhtmltopdf/*centos8* >>%s 2>&1" % (logfile)
+
         writelog ("-----------------------",'log')
         writelog (icmd,'log')
         writelog ("-----------------------",'log')
         
         # Execute install Command 
+            
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
             writelog (" Done ")
@@ -923,20 +1011,34 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     wcmd = "%s %s" % ("lsb_release","-si")
     ccode, cstdout, cstderr = oscommand(wcmd)
     osdist=cstdout.upper()
+    if osdist == "REDHATENTERPRISESERVER" : osdist="REDHAT"
+    if osdist == "REDHATENTERPRISEAS"     : osdist="REDHAT"
+    if osdist == "REDHATENTERPRISE"       : osdist="REDHAT"
+    if osdist == "CENTOSSTREAM"           : osdist="CENTOS"
     #
     wcmd = "%s %s" % ("lsb_release","-sr")
     ccode, cstdout, cstderr = oscommand(wcmd)
     osver=cstdout
     #
+    wcmd = "%s %s" % ("lsb_release","-c | awk '{print$2}'")
+    ccode, cstdout, cstderr = oscommand(wcmd)
+    oscodename=cstdout
+    #
+    wcmd = "%s %s" % ("uname","-m")
+    ccode, cstdout, cstderr = oscommand(wcmd)
+    warch=cstdout
+    #
     # Construct insert new server SQL Statement
     sql = "use sadmin; "
     sql += "insert into server set srv_name='%s', srv_domain='%s'," % (sname,sdomain);
-    sql += " srv_desc='SADMIN Server', srv_active='1', srv_date_creation='%s'," % (dbdate);
-    sql += " srv_sporadic='0', srv_monitor='1', srv_cat='Prod', srv_group='Regular', ";
-    sql += " srv_backup='0', srv_update_auto='0', srv_tag='SADMin Server', ";
-    sql += " srv_osname='%s'," % (osdist);
-    sql += " srv_osversion='%s'," % (osver);
-    sql += " srv_ostype='linux', srv_graph='1' ;"
+    sql += " srv_desc='SADMIN Server', srv_active='1', srv_date_creation='%s'," % (dbdate)
+    sql += " srv_sporadic='0', srv_monitor='1', srv_cat='Prod', srv_group='Regular', "
+    sql += " srv_backup='0', srv_update_auto='0', srv_tag='SADMin Server', " 
+    sql += " srv_osname='%s'," % (osdist)
+    sql += " srv_arch='%s'  ," % (warch) 
+    sql += " srv_osversion='%s'," % (osver)
+    sql += " srv_ostype='linux', srv_graph='1', srv_note='', srv_kernel_version='', srv_model='',"
+    sql += " srv_serial='', srv_memory='0', srv_rear_ver='unknown', srv_cpu_speed='0' ;"
     #
     # Execute the Insert New Server Statement
     cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
@@ -1394,14 +1496,6 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         writelog ("Problem enabling Web Server Service",'bold')
         writelog ("%s - %s" % (cstdout,cstderr))        
  
-#===================================================================================================
-# Read the SADMIN version file and return the current version number
-#===================================================================================================
-#
-def get_sadmin_version(sroot):
-    vfile = "%s/cfg/.version" % (sroot)                                 # Current Version File Name
-    sversion = open(vfile).readline()                                   # Open,Read 1st line,Close
-    return (sversion.rstrip())                                          # Return Version Number
 
 
 #===================================================================================================
@@ -1419,10 +1513,13 @@ def update_apache_config(sroot,sfile,sname,svalue):
     svalue {[string]}   --  [Variable New value]
     """    
 
-    wtmp_file = "%s/tmp/apache.tmp" % (sroot)                           # Tmp Apache config file
-    wbak_file = "%s/tmp/apache.bak" % (sroot)                           # Backup Apache config file
+    dirname = os.path.dirname(sfile)
+    wtmp_file = "%s/apache.tmp" % (dirname)                             # Tmp Apache config file
+    wbak_file = "%s/apache.bak" % (dirname)                             # Backup Apache config file
+#    wtmp_file = "%s/tmp/apache.tmp" % (sroot)                           # Tmp Apache config file
+#    wbak_file = "%s/tmp/apache.bak" % (sroot)                           # Backup Apache config file
     if (DEBUG) :
-        writelog ("Update_apache_config - sfile=%s - sname=%s - svalue=%s\n" % (sfile,sname,svalue))
+        writelog ("Update_apache_config - sroot=%s - sfile=%s - sname=%s - svalue=%s\n" % (sroot,sfile,sname,svalue))
         writelog ("\nsfile=%s\nwtmp_file=%s\nwbak_file=%s" % (sfile,wtmp_file,wbak_file))
 
     fi = open(sfile,'r')                                                # Current Apache Input File
@@ -1587,7 +1684,7 @@ def set_sadmin_env(ver):
     print ("Environment variable 'SADMIN' is now set to %s" % (sadm_base_dir))
     print ("  - Line below is now in %s & %s" % (SADM_PROFILE,SADM_ENVFILE)) 
     print ("    %s" % (eline),end='')                                   # SADMIN Line in sadmin.sh
-    print ("  - This will make 'SADMIN' environment variable set upon reboot")
+    print ("  - This will make 'SADMIN' environment variable set upon reboot.")
     return sadm_base_dir                                                # Return SADMIN Root Dir
 
 
@@ -1613,19 +1710,23 @@ def create_sadmin_config_file(sroot,sostype):
 
 
 #===================================================================================================
-#             Replace default line - Put the Sadmin Email as the default value for alert
-#  1st = Root Dir. of SADMIN, 2nd = Name of setting, 3rd = Value of the setting, 4th = Show Upd. line
+# Replace default line - Put the Sadmin Email as the default value for alert
+#
+# Parameters: 
+#  1st = Root Dir. of SADMIN
+#  2nd = Email of Sysadmin entered previously
+#
 # ===================================================================================================
 #
 def update_alert_group_default(sroot,semail):
     """
-    Create $SADMIN/.alert_group.cfg & alert_group.cfg based on $SADMIN/setup/etc/alert_group.def file
-    Change the default group value to be the sysadmin email address.
+    Create $SADMIN/alert_group.cfg from $SADMIN/cfg/.alert_group.cfg template file
+    Change the email address of 'mail_sysadmin' group to sysadmin entered previously.
     Arguments:
     sroot  {[string]}   --  [SADMIN root install directory]
-    sname  {[string]}   --  [Name of variable in sadmin.cfg to change value]
-    semail {[string]}   --  [New value of the variable]
+    semail {[string]}   --  [Sysadmin email Address]
     """    
+
     winput  = "%s/cfg/.alert_group.cfg" % (sroot)                       # AlertGroup Base Def. File
     woutput = "%s/cfg/alert_group.cfg" % (sroot)                        # AlertGroup New Default File
     if (DEBUG) :
@@ -1634,12 +1735,12 @@ def update_alert_group_default(sroot,semail):
 
     fi = open(winput,'r')                                               # Open Base AlertGroup File
     fo = open(woutput,'w')                                              # AlertGroup New Default File
-    lineNotFound=True                                                   # Assume '^default ' != in file
-    cline = "default    m %s\n" % (semail)                              # Line to Insert in AlertGrp
+    cline = "mail_sysadmin       m   %s\n" % (semail)                   # Line to Insert in AlertGrp
 
     # Replace Line Starting with default with a new one with sysadmin email.
+    lineNotFound=True                                                   # 'mail_sysadmin' != in file
     for line in fi:                                                     # Read sadmin.cfg until EOF
-        if line.startswith("%s" % ('default')) :                        # Line Start with default ?
+        if line.startswith("%s" % ('mail_sysadmin')) :                  # 'mail_sysadmin' at BOL ?
            line = "%s" % (cline)                                        # Change Line with new one
            lineNotFound=False                                           # Line was found in file
         fo.write (line)                                                 # Write line to output file
@@ -1778,15 +1879,15 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
         wdata = 0                                                       # Where response is store
         while True:                                                     # Loop until Valid response
             eprompt = sprompt + " [" + color.BOLD + str(sdefault) + color.END + "]" # Ins Def. in prompt
-            wdata = input("%s : " % (eprompt))                       # Accept an Integer
+            wdata = input("%s : " % (eprompt))                          # Accept an Integer
             if (len(wdata) ==0): wdata = sdefault
             try:
                 wdata = int(wdata)
-            except ValueError as e:                    # If Value is not an Integer
-                writelog ("Value Error - Not an integer (%s)" % (wdata))                            # Advise User Message
+            except ValueError as e:                                     # If Value is not an Integer
+                writelog ("Value Error - Not an integer (%s)" % (wdata)) # Advise User Message
                 continue                                                # Continue at start of loop
-            except TypeError as e:                    # If Value is not an Integer
-                writelog ("Type Error - Not an integer (%s)" % (wdata))                            # Advise User Message
+            except TypeError as e:                                      # If Value is not an Integer
+                writelog ("Type Error - Not an integer (%s)" % (wdata)) # Advise User Message
                 continue                                                # Continue at start of loop
             if (wdata == 0) : wdata = sdefault                          # No Input = Default Value
             if (wdata > smax) or (wdata < smin):                        # Must be between min & max
@@ -1903,8 +2004,7 @@ def setup_sadmin_config_file(sroot,wostype):
             continue                                                    # Go Back re-accept email
         break                                                           # Ok Email seem valid enough
     update_sadmin_cfg(sroot,"SADM_MAIL_ADDR",wcfg_mail_addr)            # Update Value in sadmin.cfg 
-    if (wcfg_host_type == "S"):                                         # If Host is SADMIN Server
-        update_alert_group_default(sroot,wcfg_mail_addr)                # Upd. AlertGroup Def. Email 
+    update_alert_group_default(sroot,wcfg_mail_addr)                    # Upd. AlertGroup Def. Email 
 
 
     # Accept the Alert type to use at the end of each script execution
@@ -1997,7 +2097,7 @@ def setup_sadmin_config_file(sroot,wostype):
     if (found_grp == True):                                             # Group were found in file
         writelog("Group %s is an existing group" % (wcfg_group),'bold') # Existing group Advise User 
     else:
-        writelog ("Creating group %s" % (wcfg_group),'nonl')            # Show creating the group
+        writelog ("Creating group %s ... " % (wcfg_group),'nonl')       # Show creating the group
         if wostype == "LINUX" :                                         # Under Linux
             ccode,cstdout,cstderr = oscommand("groupadd %s" % (wcfg_group))   # Add Group on Linux
         if wostype == "AIX" :                                           # Under AIX
@@ -2099,8 +2199,16 @@ def setup_sadmin_config_file(sroot,wostype):
     return(wcfg_server,SADM_IP,wcfg_domain,wcfg_mail_addr,wcfg_user,wcfg_group) # Return to Caller
 
 
+
 #===================================================================================================
 # DETERMINE THE INSTALLATION PACKAGE TYPE OF CURRENT O/S AND OPEN THE SCRIPT LOG FILE 
+#
+# Return :
+#   Package Type (deb,rpm,dmg,aix)
+#   O/S Name (AIX/CENTOS/REDHAT,UBUNTU,DEBIAN,RASPBIAN,...)
+#   O/S Major Version Number
+#   O/S Running in 32 or 64 bits (32,64)
+#   O/S Architecture (Aarch64,Armv6l,Armv7l,I686,X86_64)
 #===================================================================================================
 #
 def getpacktype(sroot,sostype):
@@ -2124,7 +2232,8 @@ def getpacktype(sroot,sostype):
         osname = cstdout.upper()
         if (cstdout.upper() == "REDHATENTERPRISESERVER"): osname="REDHAT" 
         if (cstdout.upper() == "REDHATENTERPRISEAS")    : osname="REDHAT" 
-        if (cstdout.upper() == "REDHATENTERPRISE")      : osname="REDHAT"   
+        if (cstdout.upper() == "REDHATENTERPRISE")      : osname="REDHAT"
+        if (cstdout.upper() == "CENTOSSTREAM")          : osname="CENTOS"
     else:                                                               # If Problem with the cmd
         writelog("Problem running %s" % (cmd))                          # Infor User
         writelog("Error %d - %s " % (ccode,cstderr))                    # Show Error# and Stderror
@@ -2150,12 +2259,15 @@ def getpacktype(sroot,sostype):
         ccode, cstdout, cstderr = oscommand("getconf KERNEL_BITMODE")
     osbits=cstdout
 
-    # Return :
-    # Package Type (deb,rpm,dmg,aix)
-    # O/S Name (AIX/CENTOS/REDHAT,UBUNTU,DEBIAN,RASPBIAN,...)
-    # O/S Major Version Number
-    # O/S Running in 32 or 64 bits (32,64)
-    return (packtype,osname,osver,osbits)                               # Return Packtype & O/S Name
+    # Get the O/S Architecture (Aarch64,Armv6l,Armv7l,I686,X86_64)
+    if sostype == "LINUX" or sostype == "DARWIN" :
+        ccode, cstdout, cstderr = oscommand("arch")
+        osarch=cstdout
+    if sostype == "AIX" :
+        ccode, cstdout, cstderr = oscommand("uname -p")
+        osarch=cstdout
+
+    return (packtype,osname,osver,osbits,osarch)                        # Return Packtype & O/S Name
 
 
 
@@ -2173,7 +2285,11 @@ def run_script(sroot,sname):
         run_status = True                                               # Return Value will be True
     else:                                                               # If Problem with the insert
         writelog("Problem running %s" % (script))                       # Infor User
-        writelog("Error %d - %s - %s" % (ccode,cstdout,cstderr))        # Show Error#,Stdout,Stderr
+        writelog("Error No.%d" % (ccode))                               # Show Error#
+        writelog("Standard Output :")                                   # Show Stdout header
+        writelog("%s" % (cstdout))                                      # Show Stdout content
+        writelog("Standard Error :")                                    # Show Stderr header
+        writelog("%s" % (cstderr))                                      # Show Stderr content
     return (run_status)                                                 # Return Insert Status
 
 
@@ -2182,11 +2298,10 @@ def run_script(sroot,sname):
 #===================================================================================================
 #
 def end_message(sroot,sdomain,sserver,stype):
-    sversion = get_sadmin_version(sroot)
     writelog ("\n\n\n\n\n")
-    writelog ("SADMIN TOOLS - VERSION %s - Successfully Installed" % (sversion),'bold')
+    writelog ("SADMIN TOOLS Successfully Installed")
     writelog ("===========================================================================")
-    writelog ("You need to logout/login before using SADMIN Tools or type the command ")
+    writelog ("You need to logout & log back in, before using SADMIN or type the command :")
     writelog ("'. /etc/profile.d/sadmin.sh', this define 'SADMIN' environment variable.")
     writelog (" ")
     if (stype == "S") :
@@ -2198,17 +2313,18 @@ def end_message(sroot,sdomain,sserver,stype):
         writelog ("  - Have server configuration on hand, usefull in case of a Disaster Recovery.")
         writelog ("  - View your servers farm subnet utilization and see what IP are free to use.")
     writelog (" ")
-    writelog ("CREATE YOUR OWN SCRIPT USING SADMIN LIBRARIES",'bold')
-    writelog ("  - cp %s/bin/sadm_template.sh %s/usr/bin/newscript.sh" % (sroot,sroot))
-    writelog ("  - cp %s/bin/sadm_template.py %s/usr/bin/newscript.py" % (sroot,sroot))
-    writelog ("Modify it to your need, run it and see the result.") 
+    writelog ("CREATE YOUR OWN SCRIPT USING SADMIN TEMPLATES",'bold')
+    writelog ("  - cp %s/bin/sadm_template.sh %s/usr/bin/YourScript.sh" % (sroot,sroot))
+    writelog ("  - cp %s/bin/sadm_template.py %s/usr/bin/YourScript.py" % (sroot,sroot))
+    writelog ("  - cp %s/bin/sadm_template_menus.sh %s/usr/bin/YourMenuScript.sh" % (sroot,sroot))
+    writelog ("Copy the templates, run them and modify them to your need.") 
     writelog (" ")
     writelog ("SEE SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :",'bold')
     writelog ("  - %s/bin/sadmlib_std_demo.sh" % (sroot))
     writelog ("  - %s/bin/sadmlib_std_demo.py" % (sroot))
     writelog (" ")
     writelog ("USE THE SADMIN WRAPPER TO RUN YOUR EXISTING SCRIPT",'bold')
-    writelog ("  - # $SADMIN/bin/sadm_wrapper.sh yourscript.sh")
+    writelog ("  - %s/bin/sadm_wrapper.sh YourScript.sh" % (sroot))
     writelog (" ")
     if (stype == "C") :
         writelog ("BUT FIRST YOU NEED TO ADD THIS CLIENT ON THE SADMIN SERVER",'bold')
@@ -2216,6 +2332,27 @@ def end_message(sroot,sdomain,sserver,stype):
         writelog (" ")
     writelog ("\n===========================================================================")
     writelog ("ENJOY !!",'bold')
+
+
+
+#===================================================================================================
+# Activate SADMIN Service 
+#   - Startup Script ($SADMIN/sys/sadm_startup.sh) 
+#   - Shutdown Script ($SADMIN/sys/sadm_shutdown.sh) 
+#===================================================================================================
+#
+def sadmin_service(sroot):
+    cmd = "%s/bin/sadm_service_ctrl.sh -s" % (sroot)                    # Enable SADMIN Service 
+    writelog (" ") 
+    writelog ("Enabling SADMIN Service - %s ... " % (cmd),"nonl")       # Inform User
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Enable MariaDB Server
+    if (ccode != 0):                                                    # Problem Enabling Service
+        writelog ("Problem with enabling SADMIN Service.")              # Advise User
+        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+    else:
+        writelog (' Done ')
 
 
 
@@ -2238,26 +2375,28 @@ def mainflow(sroot):
     # Create initial $SADMIN/cfg/sadmin.cfg from template ($SADMIN/cfg/.sadmin.cfg)
     create_sadmin_config_file(sroot,wostype)                            # Create Initial sadmin.cfg
 
-    # Get the Distribution Package Type (rpm,deb,aix,dmg), O/S Name (REDHAT,CENTOS,UBUNTU,...) 
-    # O/S Major version number and the running kernel bit mode (32 or 64).
-    (packtype,sosname,sosver,sosbits) = getpacktype(sroot,wostype)      # Type(deb,rpm),OSName,OSVer
+    # Get the Distribution Package Type (rpm,deb,aix,dmg), O/S Name (REDHAT,CENTOS,UBUNTU,...), 
+    # O/S Major version number, the running kernel bit mode (32 or 64) and the system architecture
+    # (Aarch64,Armv6l,Armv7l,I686,X86_64,...)
+    (packtype,sosname,sosver,sosbits,sosarch) = getpacktype(sroot,wostype)
     if (DEBUG) : writelog("Package type on system is %s" % (packtype))  # Debug, Show Packaging Type 
     if (DEBUG) : writelog("O/S Name detected is %s" % (sosname))        # Debug, Show O/S Name
     if (DEBUG) : writelog("O/S Major version number is %s" % (sosver))  # Debug, Show O/S Version
     if (DEBUG) : writelog("O/S is running in %sBits mode." % (sosbits)) # Debug, Show O/S Bits MOde
+    if (DEBUG) : writelog("O/S architecture is %s" % (sosarch))         # Debug, Show O/S Arch
 
     # Go and Ask Setup Question to user 
     # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, sadmin User and Group).
-    (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype) # Ask Config questions
+    (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype) # Ask User
 
-    # On Client Apache web server is not installed
+    # On SADMIN Client, Apache web server is not installed, 
     # But we need to set the WebUser and the WebGroup to some default value (SADMIN user and Group)
     update_sadmin_cfg(sroot,"SADM_WWW_USER",uuser,False)                # Update Value in sadmin.cfg
     update_sadmin_cfg(sroot,"SADM_WWW_GROUP",ugroup,False)              # Update Value in sadmin.cfg
 
     # Check and if needed install missing packages require.
-    satisfy_requirement('C',sroot,packtype,logfile,sosname,sosver,sosbits) # Chk/Install Client Req.
-    special_install(packtype,sosname,logfile)                           # Install pymysql module
+    satisfy_requirement('C',sroot,packtype,logfile,sosname,sosver,sosbits,sosarch) 
+    # special_install(packtype,sosname,logfile)                           # Install pymysql module
 
     # Create SADMIN user sudo file
     update_sudo_file(logfile,uuser)                                     # Create User sudo file
@@ -2268,13 +2407,13 @@ def mainflow(sroot):
     # Functions excuted if only installing a SADMIN Server .
     if (stype == 'S') :                                                 # If install SADMIN Server
         update_host_file(udomain,uip)                                   # Update /etc/hosts file
-        satisfy_requirement('S',sroot,packtype,logfile,sosname,sosver,sosbits)  # Verify/Install Server Req.
+        satisfy_requirement('S',sroot,packtype,logfile,sosname,sosver,sosbits,sosarch) 
         firewall_rule()                                                 # Open Port 80 for HTTP
         setup_mysql(sroot,userver,udomain,sosname)                      # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
         update_server_crontab_file(logfile,sroot,wostype,uuser)         # Create Server Crontab File 
-        rrdtool_path = locate_command("rrdtool")                        # Get rrdtool path
-        update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path,False)      # Update Value in sadmin.cfg
+        #rrdtool_path = locate_command("rrdtool")                        # Get rrdtool path
+        #update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path,False)      # Update Value in sadmin.cfg
 
     # Run First SADM Client Script to feed Web interface and Database
     writelog ('  ')
@@ -2305,6 +2444,7 @@ def mainflow(sroot):
         run_script(sroot,"sadm_database_update.py")                     # Update DB with info collec
         
     # End of Setup
+    sadmin_service(sroot)                                               # Startup/Shutdown Script ON
     end_message(sroot,udomain,userver,stype)                            # Last Message to User
     fhlog.close()                                                       # Close Script Log
 

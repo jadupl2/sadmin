@@ -45,7 +45,7 @@
 # Changelog
 # 2018_01_09 V1.5 New Version - Script Restructure, Usage Instructions & Work with new Library
 # 2018_09_19 V1.6 Update for Alert Group and new LIbrary
-#
+# 2020_04_02 Update: v1.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 # ==================================================================================================
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -112,14 +112,6 @@ show_usage()
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\n" 
 }
-show_version()
-{
-    printf "\n${SADM_PN} - Version $SADM_VER"
-    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
-    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
-    printf " - Kernel Version $(sadm_get_kernel_version)"
-    printf "\n\n" 
-}
 
 
 
@@ -184,14 +176,12 @@ check_script()
 
     # If normal user can run your script, put the lines below in comment
     if [ "$(whoami)" != "root" ]                                        # Is it root running script?
-        then sadm_writelog "Script can only be run user 'root'"         # Advise User should be root
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_write "Script can only be run user 'root'.\n"         # Advise User should be root
+             sadm_write "Process aborted.\n"                            # Abort advise message
              sadm_stop 1                                                # Close/Trim Log & Upd. RCH
              exit 1                                                     # Exit To O/S
     fi
-    sadm_writelog "  "                                                  # Write white line to log
-    sadm_writelog "Executing $SCRIPT $@"                                # Write script name to log
-    sadm_writelog "  "                                                  # Write white line to log
+    sadm_write "\nExecuting $SCRIPT $@ \n"                              # Write script name to log
     $SCRIPT "$@" >> $SADM_LOG 2>&1                                      # Run selected user script
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log

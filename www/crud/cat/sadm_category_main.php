@@ -1,7 +1,7 @@
 <?php
 # ==================================================================================================
 #   Author      :  Jacques Duplessis
-#   Email       :  jacques.duplessis@sadmin.ca
+#   Email       :  sadmlinux@gmail.com
 #   Title       :  sadm_category_main.php
 #   Version     :  1.0
 #   Date        :  13 June 2016
@@ -9,7 +9,7 @@
 #   Description :  Web Page used to present list of category that can be edited/deleted.
 #                  Option a the top of the list is used to create a new category
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -26,7 +26,7 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
-#@2019_08_29 Update: v2.1 Use new page heading function.
+# 2019_08_29 Update: v2.1 Use new page heading function.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library

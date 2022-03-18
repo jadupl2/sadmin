@@ -1,14 +1,14 @@
 <?php
 # ==================================================================================================
 #   Author      :  Jacques Duplessis 
-#   Email       :  jacques.duplessis@sadmin.ca
+#   Email       :  sadmlinux@gmail.com
 #   Title       :  sadm_category_create.php
 #   Version     :  1.8
 #   Date        :  13 June 2016
 #   Requires    :  php - MySQL
 #   Description :  Web Page used to create a new server category.
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -26,7 +26,7 @@
 #       V1.9 Add lot of comments in code and enhance code performance 
 #   2017_11_15 - Jacques Duplessis
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
-#@2019_08_29 Update: v2.1 New page heading, using the library heading function.
+# 2019_08_29 Update: v2.1 New page heading, using the library heading function.
 #
 # ==================================================================================================
 #

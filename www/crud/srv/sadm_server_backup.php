@@ -1,14 +1,14 @@
 <?php
 # ==================================================================================================
 #   Author      :  Jacques Duplessis
-#   Email       :  jacques.duplessis@sadmin.ca
+#   Email       :  sadmlinux@gmail.com
 #   Title       :  sadm_server_backup.php
 #   Version     :  1.8
 #   Date        :  7 Jan 2019
 #   Requires    :  php - MySQL
 #   Description :  Web Page used to edit a server backup schedule.
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -28,8 +28,12 @@
 # 2019_01_22 Added: v1.4 Add Dark Theme
 # 2019_08_14 Update: v1.5 Redesign page,show one line schedule,show backup policies, fit Ipad screen.
 # 2019_08_19 Update: v1.6 Some typo error and show 'Backup isn't activated' when no schedule define.
-#@2019_12_01 Update: v1.7 Backup will run daily (Remove entry fields for specify day of backup)
+# 2019_12_01 Update: v1.7 Backup will run daily (Remove entry fields for specify day of backup)
 #       If not run every day, they could miss the day of weekly & monthly and date of Yearly backup.
+# 2020_01_03 Update: v1.8 Web Page disposition and input was changed.
+# 2020_01_13 Update: v1.9 Enhance Web Appearance and color. 
+# 2020_01_18 Update: v2.0 Reduce width of text-area for include,exclude list to fit on Ipad.
+# 2021_05_25 web: v2.1 Replace php depreciated function 'eregi_replace' warning message.
 # ==================================================================================================
 #
 #
@@ -40,36 +44,36 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 ?>
   <style media="screen" type="text/css">
 .backup_page {
-    background-color:   #3b3b3b;
-    color           :   #f9f4be;   
+    background-color:   #28866c;
+    color           :   White;   
     font-family     :   Verdana, Geneva, sans-serif;
     font-size       :   0.9em;
-    width           :   90%;
-    margin          :   0 auto;
+    width           :   85%;
+    margin          :   0px 10px 10px 10px;
     text-align      :   left;
     border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
     border-color    :   #000000;             border-radius: 10px;
     line-height     :   1.7;    
 }
 .backup_left_side   { width : 50%;  float : left;   margin : 10px 0px 10px 0px;    }
-.left_label         { float : left; width : 50%;    text-align: right; font-weight : bold; }
-.left_input         { margin-bottom : 5px;  margin-left : 50%;  background-color : #393a3c;
+.left_label         { float : left; width : 50%;  padding-left : 2%; margin-left :5 px;  text-align: left; font-weight : normal; }
+.left_input         { margin-bottom : 5px;  margin-left : 55%;  
                       width : 50%; border-width: 0px;  border-style : solid;  border-color : #000000;
                       padding-left: 6px;
 }
 
-.backup_right_side  { width : 50%;  float : right;  margin : 10px auto;     }
-.right_label        { float : left; width : 85%;    font-weight : bold; }
-.right_input        { margin-bottom : 4px;  margin-right : 10px;     background-color:    #454c5e;
+.backup_right_side  { width : 50%;  float : right;  margin : 10px 0px 10px 0px;    }
+.right_label        { float : left; width : 85%;    font-weight : normal; }
+.right_input        { margin-bottom : 4px;  margin-right : 10px;     
                       float : left;  padding-left : 5px;  padding-right : 5px;  padding-top : 5px;
                       border-width: 1px;  border-style : solid;  border-color : #000000;
 }                      
 .backup_policy {
     background-color:   #28866c;
-    color           :   #FF9800;;   
+    color           :   #F7FF00; 
     font-family     :   Verdana, Geneva, sans-serif;
-    width           :   90%;
-    margin          :   auto;
+    width           :   85%;
+    margin          :   0px 0px 0px 10px;
     padding-top     :   10px;
     padding-left    :   15px; 
     text-align      :   left;
@@ -90,8 +94,8 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     border-color    :   #000000;             border-radius: 10px; */
     line-height     :   1.5;    
 }
-.deux_boutons   { width : 70%;   margin: 1% auto;   } 
-.premier_bouton { width : 20%;  float : left;   margin-left : 25%;  text-align : right ; }
+.deux_boutons   { width : 85%;  margin: 0px 0px 0px 0px;  } 
+.premier_bouton { width : 20%;  height : 20px ; float : left;   margin-left : 25%;  text-align : right ; }
 .second_bouton  { width : 20%;  float : right;  margin-right: 25%;  text-align : left  ; }
 </style>
 
@@ -106,7 +110,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.7" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -189,12 +193,15 @@ function Write_BackupList($server_name, $oldFileHash) {
     $newFileHash = sha1($_POST["backuplist"]);                          # Calc. Edited File Hash
     if ($newFileHash != $oldFileHash) {                                 # Sha1 Before and After
         $fp = fopen($SADM_BACKUP_LIST, "w");                            # File Modified 
-        $data = $_POST["backuplist"];                                   # Put TextArea in data
+        #$data = $_POST["backuplist"];                                   # Put TextArea in data
+        #$data = eregi_replace("\r","",$_POST["backuplist"]);
+        $data = str_replace("\r", '', $_POST["backuplist"]);
+        #$data = preg_replace("\r","",$data);
         fwrite($fp, $data);                                             # Write Data
         fclose($fp);                                                    # Close backup_list.tmp
     }else{
         if (file_exists($SADM_BACKUP_LIST)) {                           # If Modified version exist
-            unlink($SADM_BACKUP_LIST);                                  # Not Modifed then Delete it
+            unlink($SADM_BACKUP_LIST);                                  # Not Modified then Delete it
         }
     }
 }
@@ -208,7 +215,10 @@ function Write_BackupExclude($server_name, $oldFileHash) {
     $newFileHash = sha1($_POST["backupexclude"]);                       # Calc. Edited File Hash
     if ($newFileHash != $oldFileHash) {                                 # Sha1 Before and After
         $fp = fopen($SADM_BACKUP_EXCLUDE, "w");                         # Create backup_exclude.tmp
-        $data = $_POST["backupexclude"];                                # Put TextArea in data
+        #$data = $_POST["backupexclude"];                                # Put TextArea in data
+        #$data = eregi_replace("\r","",$_POST["backupexclude"]);
+        #$data = preg_replace("\r","",$_POST["backupexclude"]);
+        $data = str_replace("\r", '', $_POST["backupexclude"]);
         fwrite($fp, $data);                                             # Write data to disk
         fclose($fp);                                                    # Close backup_exclude.tmp
     }else{
@@ -382,7 +392,7 @@ function display_left_side($con,$wrow,$mode) {
     # ----------------------------------------------------------------------------------------------
     # Hour to Run the Backup
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='left_label'>Time of Backup</div>";
+    echo "\n\n<div class='left_label'>Daily Backup Time</div>";
     echo "\n<div class='left_input'>";
     echo "\n<select name='scr_backup_hour' size=1>";
     switch ($mode) {
@@ -435,7 +445,7 @@ function display_left_side($con,$wrow,$mode) {
     # Files and Directories to Backup
     echo "\n\n<div class='left_label'>Backup List (Files & Dir.)</div>";
     echo "\n<div class='left_input'>";
-    echo "  <textarea rows='12' cols='80' name='backuplist' form='backup'>";
+    echo "  <textarea rows='15' cols='60' name='backuplist' form='backup'>";
     $BLHASH = Read_BackupList($wrow);
     echo "</textarea>";
     echo "\n</div>";
@@ -443,7 +453,7 @@ function display_left_side($con,$wrow,$mode) {
     # Files and Directories to Exclude from Backup
     echo "\n\n<div class='left_label'>Exclude List (Files & Dir.)</div>";
     echo "\n<div class='left_input'>";
-    echo "  <textarea rows='12' cols='80' name='backupexclude' form='backup'>";
+    echo "  <textarea rows='15' cols='60' name='backupexclude' form='backup'>";
     $BEHASH = Read_BackupExclude($wrow);
     echo "</textarea>";
     echo "\n</div>";
@@ -691,7 +701,7 @@ if (isset($_POST['submitted'])) {
     }
     
     # DISPLAY SCREEN HEADING    
-    $title1="Backup schedule of '" . $row['srv_name'] . "." . $row['srv_domain'] . "'";
+    $title1="Daily backup schedule of '" . $row['srv_name'] . "." . $row['srv_domain'] . "'";
     if ($row['srv_backup'] == True) {
         list ($title2, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_backup_dom'], 
         $row['srv_backup_month'],$row['srv_backup_dow'], 
@@ -700,7 +710,7 @@ if (isset($_POST['submitted'])) {
         $title2="Backup isn't activated";
     }
     display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
-    show_backup_policy();
+#    show_backup_policy();
     
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
     echo "\n\n<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' id='backup' method='POST'>";
@@ -725,5 +735,6 @@ if (isset($_POST['submitted'])) {
     echo "\n</form>";                                                   # End of Form
     echo "\n<br>";                                                      # Blank Line After Button
     echo "\n<br>";                                                      # Blank Line After Button
+    show_backup_policy();
     std_page_footer($con)                                               # Close MySQL & HTML Footer
     ?>

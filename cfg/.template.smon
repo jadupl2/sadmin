@@ -1,23 +1,17 @@
-#---------------------------------------------------------------------------------------------------
-# SADMin System Monitor Configuration file
-#   The file need to be place in ${SADMIN}/cfg and name `hostname`.smon
-#   This file is read and updated by SADMIN System Monitor (sadm_sysmon.pl) every time it run.
-#
-#     - New Filesystem line will be added automatically to this file when detected.
-#     - Filesystem can be increase automatically by 10% two times within 24 Hrs
-#         - If the last field (Script to Run Field) of the filesystem line contain "sadm_fs_incr.sh"
-#
-#     - Comments lines must always begin with a "#" (Column 1)
-#     - Column are delimited by space(s) and/or tabulation.
-#     - At execution each line is evaluated based on the test requested by the first column.
-#         - The result of the operation is reflected in the second column.
-# 2018_09_14 Update: v2.6 - Change Default Warning and Error Alert Group 
-#@2019_10_08 Update: v2.7 - Turn off (Comment line) syslog service check.
-#@2019_10_25 Update: v2.8 - Turn off (Comment line) ping test lines.
-##
-#---------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+# SADMIN SYStem MONitor configuration file (3.0)
+#  - The file MUST reside in ${SADMIN}/cfg (filename `hostname`.smon).
+#  - It is read when the SADMIN System Monitor start (sadm_sysmon.pl).
+#  - Before exiting SysMon write the updated version of this file.
+#  - Updated value (or resulting status) is recorded in the second column of each line
+#  - New Filesystem are added automatically to this file when detected.
+#  - Sysmon is run every 5 minutes from the sadm_server crontab (/etc/cron.d/sadm_server)
+#  - Comments lines must always begin with a "#" (Column 1)
+#  - Column are delimited by space(s) and/or tabulation.
+#  - At execution each line is evaluated based on the test requested in the first column
+#----------------------------------------------------------------------------------------
 # Col   Name            Description
-#---------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
 #  1    IDENTIFIER      This name specify the test we want to run.
 #                       These are the one presently supported :
 #
@@ -32,7 +26,7 @@
 #               Actual value is returned in column 2 of the line.
 #       cpu_level
 #               Return cpu usage using 'vmstat' command (Linux/Aix) and 'iostat' on MacOS. 
-#               The 'usr'added to the 'sys' value is returned in column 2 of the line.
+#               The 'usr' added to the 'sys' value is returned in column 2 of the line.
 #       swap_space
 #               Return the percentage of the Swap/Paging Space used.
 #               On Linux we use 'free | grep -i swap', on Aix 'lsps -a' and on MacOS 
@@ -81,17 +75,18 @@
 #               A value of 1 is returned if everything is ok or 0 when an error is detected. 
 #               Line will only be evaluated if the command 'multipathd' is present on system.
 #                       
-#       http_   
+#       http_ or https_  
 #               Test the web site respond (1=Up 0=NoResponse)
-#               Example : http_sysinfo.maison.ca
+#               Example : http_google.com
+#                         https_redhat.com
 #
 #       ping_
-#               Everytime Sysmon is run is will ping the name or the IP your have specified after 
+#               Each time Sysmon is run is will ping the name or the IP your have specified after 
 #               the prefix 'ping_'.
 #               Example : ping_www.google.com
 #               This will ping the 'www.google.com' web site and return a 0 is it ping, if not a 1.
 #
-#       FS      Everytime Sysmon is run the server smon configuration file is loaded in memory,
+#       FS      Every time Sysmon is run the server smon configuration file is loaded in memory,
 #               updated in memory during execution and then unloaded to disk when terminated.
 #               So SysMon is able to know when a new filesystem is created on the system and it is
 #               added automatically to his configuration file. 
@@ -125,7 +120,7 @@
 #                                       column to 120 so an error would be trigger only when the cpu
 #                                       level exceed 80% for at least 120 continuous minutes. If you
 #                                       leave it 0, is sysmon is run at the cpu_level exceed 80% an
-#                                       error will be trigger immediatly.
+#                                       error will be trigger immediately.
 #                           - For Service (service_) and Filesystem (FS) lines it represented the
 #                             number of time the service was restarted or the filesystem was
 #                             increased in the last 24 Hours. You don't need to change this field,
@@ -167,7 +162,7 @@
 #---------------------------------------------------------------------------------------------------
 #  G    Active/Inactive If this value is set to 'Y', the line will always be evaluated (Default)
 #                       If this column is set to 'N', the line will never be evaluated.
-#                       This is used, when you want temporarely deactivate a line.
+#                       This is used, when you want temporarily deactivate a line.
 #---------------------------------------------------------------------------------------------------
 #  H    Last Event Date This column contain the date of the last event (script execution, cpu_level
 #                       exceeded, swap_space exceeded, filesystem increase, service restarted,..)
@@ -206,24 +201,30 @@
 # Example 
 #script:stemplate.sh       1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 default default -
 #
-# SADMIN Script Don't remove - This script make sure 'nmon' performance collector is running
-script:swatch_nmon.sh            0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 default default -
-#
 #
 # ----- Aix/Linux/MacOS CPU Load, Server Load Average and Swap Space usage Monitoring
 load_average                     0  >  20  35 120 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 cpu_level                       29 >=  85  95 240 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 swap_space                      14  >  85  90 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 default default -
 #
-# ----- Linux Service Monitoring
+# ----- Linux Common Service Monitoring
 service_crond,cron               1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-service_chronyd,ntp,ntpd         0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+service_chronyd                  0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 service_ssh,sshd                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-#service_postfix,sendmail         1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-service_syslog,rsyslog,syslogd   0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
-#service_at,atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+service_postfix                  1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+service_at,atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+#service_systemd-resolved         1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+#
+#service_sendmail                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+#service_ntp,ntpd                 0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+#service_syslog,syslogd           0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+#service_rsyslog                  0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+#
+# DNS Service
 #service_named                    0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #service_named-chroot             0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
+#
+# DHCP Service
 #service_dhcpd                    0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #
 # ----- Monitor Daemon or Process Running 
@@ -239,6 +240,12 @@ check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 0000
 #ping_www.ibm.com                 0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
 #
 #
+Test web site responsiveness (0=Up 1=NoResponse)
+#http_linux.com                   0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+#https_sadmin.ca                  0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+#https_linternux.com              0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+#
+#
 #
 # ----- Filesystem Monitoring
 # Can increase it by 10%, two times within 24hours maximum, if script "sadm_fs_incr.sh" in Column L.
@@ -247,4 +254,4 @@ check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 0000
 # IDENTIFIER - COLUMN 1          2  3   4   5   6  7    8   9 A B C D E F G     H     I   J    K   L
 #---------------------------------------------------------------------------------------------------
 #
-#SADMSTAT 2.5 holmes - Sat Feb  4 09:56:10 2017 - Execution Time 5.00 seconds
+#SYSMON 2.43 holmes - Last Boot: 2021-05-28 07:16:27 - Sun Jun 13 10:37:04 2021 - Execution Time 1.00 seconds

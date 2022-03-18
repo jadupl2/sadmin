@@ -48,9 +48,22 @@
 # 2019_07_23 Update: v3.05 Remove utilization of history sequence number file.
 # 2019_08_19 Update: v3.06 Added rear_exclude_init Global Var. as default Rear Exclude List 
 # 2019_08_19 Update: v3.07 Added Global Var. rear_newcron and rear_crontab file location 
-#@2019_10_14 Update: v3.08 Added function 'get_arch' - Return system arch. (x86_64,armv7l,i686,...)
-#@2019_10_30 Update: v3.09 Remove 'facter' utilization (Depreciated).
-#
+# 2019_10_14 Update: v3.08 Added function 'get_arch' - Return system arch. (x86_64,armv7l,i686,...)
+# 2019_10_30 Update: v3.09 Remove 'facter' utilization (Depreciated).
+# 2020_01_20 Update: v3.10 Better handling & Error message when can't connect to database.
+# 2020_01_20 Fix: v3.11 Fix 'get_osminorversion' function. Crash (raspbian) when no os minor version 
+# 2020_02_25 Update: v3.12 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
+# 2020_09_10 Update: v3.13 Minor update to date/time module. 
+# 2020_12_24 Update: v3.14 CentOSStream is CENTOS
+#@2021_05_02 Fix: v3.15 Fix typo error in 'locate_command' method.
+#@2021_05_11 Fix: v3.16 Fix Path to which command was not set properly because of defined alias.
+#@2021_05_14 Update: v3.17 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
+#@2021_05_16 Update: v3.18 Adjustment for MacOS Big Sur
+#@2021_08_17 library v3.19 Add 'SADM_MONITOR_UPDATE_INTERVAL'variable that control refresh rate. 
+#@2021_09_30 library v3.20 Various little bug corrections
+#@2021_11_07 library v3.21 Locate 'rrd_tool'executable.
+# Add 'SADM_MONITOR_UPDATE_INTERVAL'variable that control refresh rate. 
+#  Starting a new version of this library
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -102,27 +115,37 @@ start_epoch         = ""                                                # Script
 #                                   SADM Python Tools Library
 #===================================================================================================
 class sadmtools():
+    """ Series of method to that can be used to administer a Linux/Aix Farm.
 
-    #-----------------------------------------------------------------------------------------------
-    #  INITIALIZATION OF SADM TOOLS------------------------------------------------------
-    #-----------------------------------------------------------------------------------------------
+        Requirements : 
+            - You MUST have an environment variable named "SADMIN" that contain name of the root
+              install directory (SADMIN="/opt/sadmin") of the SADMIN tools.
+            - You MUST include the Global variables of the "SADMIN Section" in your script. 
+    """
+
+    # SADMIN Tools Initialization
     def __init__(self):
-        """ Class sadmtool: Series of function to that can be used to administer a Linux/Aix Farm.
+        """ __init__ : Series of method to that can be used to administer a Linux/Aix Farm.
+
+        Requirements : 
+            - You MUST have an environment variable named "SADMIN" that contain name of the root
+              install directory (SADMIN="/opt/sadmin") of the SADMIN tools.
+            - You MUST include the Global variables of the "SADMIN Section" in your script. 
         """
 
         # Making Sure SADMIN Environment Variable is Define & import 'sadmlib_std.py' if can be found.
-        if (os.getenv("SADMIN",default="X") == "X"):                    # SADMIN Env. Var. Defined ?
-            print ("SADMIN Environment Variable isn't define.")         # SADMIN Var MUST be defined
+        if (os.getenv("SADMIN",default="X") == "X"):                    # SADMIN Env.Var. Not Define
+            print ("'SADMIN' Environment Variable isn't defined.")      # SADMIN Var MUST be defined
             print ("It specify the directory where you installed the SADMIN Tools")
             print ("Add this line at the end of /etc/environment file") # Show Where to Add Env. Var
-            print ("SADMIN='/[dir-where-you-install-sadmin]'")          # Show What to Add.
+            print ("export SADMIN='/[dir-where-you-install-sadmin]'")   # Show What to Add.
             print ("Then logout and log back in and run this script again.")
             sys.exit(1)                                                 # Exit to O/S with Error 1
         else:
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.09"                                # This Library Version
+        self.libver             = "3.21"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -172,6 +195,7 @@ class sadmtools():
         # SADM Web Site Directories Structure
         self.www_dir            = os.path.join(self.base_dir,'www')     # SADM WebSite Dir Structure
         self.www_dat_dir        = os.path.join(self.www_dir,'dat')      # SADM Web Site Data Dir
+        self.www_arc_dir        = os.path.join(self.www_dat_dir,'archive') # SADM WebSite ArchiveDir
         self.www_doc_dir        = os.path.join(self.www_dir,'doc')      # SADM Web Site Doc Dir
         self.www_lib_dir        = os.path.join(self.www_dir,'lib')      # SADM Web Site Lib Dir
         self.www_tmp_dir        = os.path.join(self.www_dir,'tmp')      # SADM Web Site Tmp Dir
@@ -186,10 +210,8 @@ class sadmtools():
         self.cfg_hidden         = self.cfg_dir + '/.sadmin.cfg'         # Hidden Config Filename
         self.alert_file         = self.cfg_dir + '/alert_group.cfg'     # AlertGroup Definition File
         self.alert_init         = self.cfg_dir + '/.alert_group.cfg'    # AlertGroup Initial File
-        self.slack_file         = self.cfg_dir + '/alert_slack.cfg'     # Alert Slack Channel File
-        self.slack_init         = self.cfg_dir + '/.alert_slack.cfg'    # Alert Slack Channel Init
-        self.alert_hist         = self.cfg_dir + '/alert_history.cfg'   # Alert History Text File
-        self.alert_hini         = self.cfg_dir + '/.alert_history.cfg'  # Alert History Initial File
+        self.alert_hist         = self.cfg_dir + '/alert_history.txt'   # Alert History Text File
+        self.alert_hini         = self.cfg_dir + '/.alert_history.txt'  # Alert History Initial File
         #self.crontab_work       = self.www_lib_dir + '/.crontab.txt'   # Work crontab
         #self.crontab_file       = '/etc/cron.d/sadmin'                 # Final crontab
         self.rear_newcron       = self.cfg_dir + '.sadm_rear_backup'    # Tmp Cron for Rear Backup
@@ -261,10 +283,11 @@ class sadmtools():
         self.cfg_network3               = ""                            # Network Subnet 3 to report
         self.cfg_network4               = ""                            # Network Subnet 4 to report
         self.cfg_network5               = ""                            # Network Subnet 5 to report
+        self.cfg_monitor_update_interval = 60                           # Monitor Page Upd Interval
 
         # O/S Path to various commands used by SADM Tools
         self.lsb_release        = ""                                    # Command lsb_release Path
-        self.which              = ""                                    # whic1h Path - Required
+        self.which              = "/usr/bin/which"                      # which Path - Required
         self.dmidecode          = ""                                    # Command dmidecode Path
         self.bc                 = ""                                    # Command bc (Do Some Math)
         self.fdisk              = ""                                    # fdisk (Read Disk Capacity)
@@ -278,6 +301,7 @@ class sadmtools():
         self.ethtool            = ""                                    # ethtool command path
         self.curl               = ""                                    # curl command path
         self.mutt               = ""                                    # mutt command path
+        self.rrdtool            = ""                                    # rrdtool command path
 
         self.load_config_file(self.cfg_file)                            # Load sadmin.cfg in cfg var
         self.check_requirements()                                       # Check SADM Requirement Met
@@ -293,7 +317,7 @@ class sadmtools():
         print ("SADMIN Shell Library Version",self.libver)
         print ("O/S is",self.get_osname(),"- Version ",self.get_osversion())
         print ("Kernel Version ",self.get_kernel_version())
-        print ("\n")
+        #print ("\n")
 
 
     #-----------------------------------------------------------------------------------------------
@@ -306,7 +330,7 @@ class sadmtools():
 
         # No Connection to Database is possible if not on the SADMIN Server
         if self.get_fqdn() != self.cfg_server :                         # Only on SADMIN
-           print ("You are trying to connect to Database and aren't on SADMIN Server %s " % (self.cfg_server))
+           print ("Can't connect to database if you aren't on SADMIN Server %s " % (self.cfg_server))
            sys.exit(1)                                                 # Exit Pgm with Error Code 1
 
         # No Connection to DAtabase if user decided not to use it.
@@ -324,17 +348,31 @@ class sadmtools():
 
         # Try to connect to Database
         try :
-            #self.conn = pymysql.connect(conn_string)
-            self.conn=pymysql.connect(self.cfg_dbhost,self.cfg_rw_dbuser,self.cfg_rw_dbpwd,self.cfg_dbname)
+            self.conn = pymysql.connect(host=self.cfg_dbhost,
+                             user=self.cfg_rw_dbuser,
+                             password=self.cfg_rw_dbpwd,
+                             database=self.cfg_dbname,
+#                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+
+            #self.conn=pymysql.connect(self.cfg_dbhost,self.cfg_rw_dbuser,self.cfg_rw_dbpwd,self.cfg_dbname)
+        except pymysql.err.OperationalError as error : 
+            self.enum, self.emsg = error.args                           # Get Error No. & Message
+            self.writelog("Error connecting to database '%s'" % (self.cfg_dbname))
+            errmsg  = ">>>>>>>>>>>>>"                                   # Error Message Part 1    
+            errmsg += "'%s' " % (self.enum)                             # Error Message Part 2
+            errmsg += "'%s' " % (self.emsg)                             # Error Message Part 3
+            self.writelog(errmsg)                                       # Print Error No. & Message
+            self.stop (1)                                               # Close and Trim Log/Email
+            sys.exit(1)                                                 # Exit Pgm with Error Code 1
         except pymysql.err.InternalError as error :
             self.enum, self.emsg = error.args                           # Get Error No. & Message
-            print ("Error connecting to Database '%s'" % (self.cfg_dbname))
-            print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
-            sys.exit(1)                                                 # Exit Pgm with Error Code 1
-        except pymysql.err.OperationalError as error :
-            self.enum, self.emsg = error.args                           # Get Error No. & Message
-            print ("Error connecting to Database '%s'" % (self.cfg_dbname))
-            print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
+            self.writelog("Error connecting to Database '%s'" % (self.cfg_dbname))
+            errmsg  = ">>>>>>>>>>>>>"                                   # Error Message Part 1    
+            errmsg += "'%s' " % (self.enum)                             # Error Message Part 2
+            errmsg += "'%s' " % (self.emsg)                             # Error Message Part 3
+            self.writelog(errmsg)                                       # Print Error No. & Message
+            self.stop (1)                                               # Close and Trim Log/Email
             sys.exit(1)                                                 # Exit Pgm with Error Code 1
 
         # Define a cursor object using cursor() method
@@ -371,7 +409,7 @@ class sadmtools():
                 #print (">>>>>>>>>>>>>",e.message,e.args)               # Print Error No. & Message
                 print (">>>>>>>>>>>>>",e.args)                          # Print Error No. & Message
                 return (1)                                              # return (1) to Show Error
-        return (0)
+        return(0)
 
 
     # ----------------------------------------------------------------------------------------------
@@ -444,7 +482,6 @@ class sadmtools():
             if "SADM_GROUP"                  in CFG_NAME:  self.cfg_group          = CFG_VALUE
             if "SADM_WWW_USER"               in CFG_NAME:  self.cfg_www_user       = CFG_VALUE
             if "SADM_WWW_GROUP"              in CFG_NAME:  self.cfg_www_group      = CFG_VALUE
-            if "SADM_RRDTOOL"                in CFG_NAME:  self.cfg_rrdtool        = CFG_VALUE
             if "SADM_SSH_PORT"               in CFG_NAME:  self.cfg_ssh_port       = int(CFG_VALUE)
             if "SADM_MAX_LOGLINE"            in CFG_NAME:  self.cfg_max_logline    = int(CFG_VALUE)
             if "SADM_MAX_RCHLINE"            in CFG_NAME:  self.cfg_max_rchline    = int(CFG_VALUE)
@@ -487,6 +524,7 @@ class sadmtools():
             if "SADM_NETWORK3"               in CFG_NAME: self.cfg_network3        = CFG_VALUE
             if "SADM_NETWORK4"               in CFG_NAME: self.cfg_network4        = CFG_VALUE
             if "SADM_NETWORK5"               in CFG_NAME: self.cfg_network5        = CFG_VALUE
+            if "SADM_MONITOR_UPDATE_INTERVAL" in CFG_NAME: self.cfg_monitor_update_interval = CFG_VALUE
         FH_CFG_FILE.close()                                                 # Close Config File
 
         # Get Database User Password get .dbpass file (Read 'sadmin' and 'squery' user pwd)
@@ -516,8 +554,9 @@ class sadmtools():
 
     # ----------------------------------------------------------------------------------------------
     #                         Write Log to Log File, Screen or Both
-    # ----------------------------------------------------------------------------------------------
+  
     def writelog(self,sline,stype="normal"):
+    
         global FH_LOG_FILE
         now = datetime.datetime.now()
         part1 = now.strftime("%Y.%m.%d %H:%M:%S") + " - "
@@ -543,7 +582,7 @@ class sadmtools():
 
 
     # ----------------------------------------------------------------------------------------------
-    #                RETURN THE OS TYPE (LINUX, AIX) -- ALWAYS RETURNED IN UPPERCASE
+    #  EXECUTE the command received 
     # ----------------------------------------------------------------------------------------------
     def oscommand(self,command) :
         if self.lib_debug > 8 : self.writelog ("In sadm_oscommand function to run command : %s" % (command))
@@ -593,7 +632,7 @@ class sadmtools():
         packtype=""                                                     # Initial Packaging is None
         if (self.locate_command('rpm')   != "") : packtype="rpm"        # Is rpm command on system ?
         if (self.locate_command('dpkg')  != "") : packtype="deb"        # is deb command on system ?
-        if (self.locate_command('lslpp') != "") : packtype="aix"        # Is lslpp cmd on system ?
+        if (self.locate_command('lslpp') != "") : packtype="lpp"        # Is lslpp cmd on system ?
         if (self.locate_command('launchctl') != "") : packtype="dmg"    # launchctl MacOS on system?
         if (packtype == ""):                                            # If unknow/unsupported O/S
             self.writelog ('None of these commands are found (rpm, pkg, dmg or lslpp absent)')
@@ -633,8 +672,8 @@ class sadmtools():
     #                                 RETURN THE SERVER FQDN
     # ----------------------------------------------------------------------------------------------
     def get_fqdn(self):
-        #return (socket.getfqdn())
-        return ("%s.%s" % (self.hostname,self.get_domainname()))
+        return (socket.getfqdn())
+        #return ("%s.%s" % (self.hostname,self.get_domainname()))
 
     # ----------------------------------------------------------------------------------------------
     #                              RETURN THE IP OF THE CURRENT HOSTNAME
@@ -653,14 +692,14 @@ class sadmtools():
 
 
     # ----------------------------------------------------------------------------------------------
-    #                               Return Current Epoch Time
+    # Return Current Epoch Time as an integer
     # ----------------------------------------------------------------------------------------------
     def get_epoch_time(self):
         return int(time.time())
 
 
     # ----------------------------------------------------------------------------------------------
-    #                               Return Current Epoch Time
+    # Return a string with the format 'YYYY.MM.DD HH:MM:SS' based on the Epoch time received.
     # ----------------------------------------------------------------------------------------------
     def epoch_to_date(self,wepoch):
         ws = time.localtime(wepoch)
@@ -669,7 +708,7 @@ class sadmtools():
 
 
     # ----------------------------------------------------------------------------------------------
-    #           Convert Date Received (YYYY.MM.DD HH:MM:SS) to Epoch Time
+    # Return the epoch time of the date received ('YYYY.MM.DD HH:MM:SS')
     # ----------------------------------------------------------------------------------------------
     def date_to_epoch(self,wd):
         pattern = '%Y.%m.%d %H:%M:%S'
@@ -678,16 +717,15 @@ class sadmtools():
 
 
     # ----------------------------------------------------------------------------------------------
-    #    Calculate elapse time between date1 (YYYY.MM.DD HH:MM:SS) and date2 (YYYY.MM.DD HH:MM:SS)
-    #    Date 1 MUST be greater than date 2  (Date 1 = Like End time,  Date 2 = Start Time )
+    # Calculate elapse time between date1 (YYYY.MM.DD HH:MM:SS) and date2 (YYYY.MM.DD HH:MM:SS)
+    # Date 1 MUST be greater than date 2  (Date 1 = Like End time,  Date 2 = Start Time )
+    # Return the elapse time in a string format 'HH:MM:SS'.
     # ----------------------------------------------------------------------------------------------
     def elapse_time(self,wend,wstart):
+        whour=00 ; wmin=00 ; wsec=00                                    # Initialize return value
         epoch_start = self.date_to_epoch(wstart)                        # Get Epoch for Start Time
         epoch_end   = self.date_to_epoch(wend)                          # Get Epoch for End Time
         epoch_elapse = epoch_end - epoch_start                          # Substract End - Start time
-
-        whour=00 ; wmin=00 ; wsec=00
-
         # Calculate number of hours (1 hr = 3600 Seconds)
         if epoch_elapse > 3599 :                                        # If nb Sec Greater than 1Hr
             whour = epoch_elapse / 3600                                 # Calculate nb of Hours
@@ -770,6 +808,7 @@ class sadmtools():
             if osname.upper() == "REDHATENTERPRISESERVER" : osname="REDHAT"
             if osname.upper() == "REDHATENTERPRISEAS"     : osname="REDHAT"
             if osname.upper() == "REDHATENTERPRISE"       : osname="REDHAT"
+            if osname.upper() == "CENTOSSTREAM"           : osname="CENTOS"
         if self.os_type == "AIX" :
             osname="AIX"
         return osname
@@ -814,6 +853,12 @@ class sadmtools():
             if (self.get_osmajorversion() == "10.12") : oscodename="Sierra"
             if (self.get_osmajorversion() == "10.13") : oscodename="High Sierra"
             if (self.get_osmajorversion() == "10.14") : oscodename="Mojave"
+            if (self.get_osmajorversion() == "10.15") : oscodename="Catalina"
+            if (self.get_osmajorversion() == "11.2")  : oscodename="Big Sur"
+            #xstr='SOFTWARE LICENSE AGREEMENT FOR macOS'
+            #xfile='/System/Library/CoreServices/Setup Assistant.app/Contents/Resources/en.lproj/OSXSoftwareLicense.rtf'
+            #wcmd='grep  "$xstr" "$xfile" | awk -F "macOS "  { print $NF} '
+            #ccode, oscodename, cstderr = self.oscommand(wcmd)
         if self.os_type == "LINUX":
             wcmd = "%s %s" % (self.lsb_release,"-sc")
             ccode, cstdout, cstderr = self.oscommand(wcmd)
@@ -840,7 +885,7 @@ class sadmtools():
             maj_ver=cstdout
             ccode, cstdout, cstderr = self.oscommand("uname -r")
             min_ver=cstdout
-            osversion="%s.%s" % (maj.version,min.version)
+            osversion="%s.%s" % (maj_ver,min_ver)
         return osversion
 
 
@@ -868,8 +913,12 @@ class sadmtools():
     def get_osminorversion(self) :
         if self.os_type == "LINUX" :
             ccode, cstdout, cstderr = self.oscommand(self.lsb_release + " -sr")
-            osversion=cstdout
-            osminorversion=osversion.split('.')[1]
+            osversion=str(cstdout)
+            pos=osversion.find(".")
+            if pos == -1 :
+                osminorversion=""
+            else:
+                osminorversion=osversion.split('.')[1]
         if self.os_type == "AIX" :
             ccode, cstdout, cstderr = self.oscommand("uname -r")
             osminorversion=cstdout
@@ -972,7 +1021,7 @@ class sadmtools():
         try:
             shutil.move (self.tmpfile,fname)                                # Rename tmp to original
         except OSError as e:
-            print ("[ ERROR ] in %s function - Error renaming %s to %s" % (fcname,tmpfile,fname))
+            print ("[ ERROR ] in %s function - Error renaming %s to %s" % (fcname,self.tmpfile,fname))
             print ("Rename Error: %s - %s." % (e.fname,e.strerror))
             return 1
 
@@ -991,7 +1040,7 @@ class sadmtools():
     # ----------------------------------------------------------------------------------------------
     def locate_command(self,cmd) :
         ccode,cstdout,cstderr = self.oscommand("%s %s" % (self.which,cmd))  # Try to Locate Command
-        if ccode is not 0 :                                             # Command was not Found
+        if ccode != 0 :                                                 # Command was not Found
             cmd_path=""                                                 # Cmd Path Null when Not fnd
         else :                                                          # If command Path is Found
             cmd_path = cstdout                                          # Save command Path
@@ -1006,19 +1055,19 @@ class sadmtools():
     # ----------------------------------------------------------------------------------------------
     def check_requirements(self):
         global which,lsb_release,uname,bc,fdisk,mail,ssh,dmidecode,perl
-        global nmon,lscpu,ethtool,parted,curl,mutt
+        global nmon,lscpu,ethtool,parted,curl,mutt,rrdtool
 
         requisites_status=True                                          # Assume Requirement all Met
 
         # Get the location of the which command
-        ccode,cstdout,cstderr = self.oscommand("which which")           # We will use which cmd
-        if ccode is not 0 :                                             # to determine if a command
-            print("[ERROR] The command 'which' couldn't be found")      # is available
-            print("        This command is needed by the SADMIN tools") # If which is not available
-            print("        Please install it and re-run this script")   # We will ask the user to
-            print("        Script Aborted")                             # install it & abort script
-            sys.exit(1)                                                 # Exit Script with error
-        self.which = cstdout                                            # If found, Save Path to it
+        #ccode,cstdout,cstderr = self.oscommand("which which")           # We will use which cmd
+        #if ccode != 0 :                                                 # to determine if a command
+        #    print("[ERROR] The command 'which' couldn't be found")      # is available
+        #    print("        This command is needed by the SADMIN tools") # If which is not available
+        #    print("        Please install it and re-run this script")   # We will ask the user to
+        #    print("        Script Aborted")                             # install it & abort script
+        #    sys.exit(1)                                                 # Exit Script with error
+        #self.which = cstdout                                            # If found, Save Path to it
 
         # Get the location of the lsb_release command
         if (self.os_type == "LINUX"):                                   # On Linux
@@ -1079,6 +1128,11 @@ class sadmtools():
             self.mutt =self.locate_command('mutt')                      # Locate the mutt command
             if self.mutt == "" : requisites_status=False                # if blank didn't find it
 
+        # Get the location of rrdtool command
+        if (self.os_type == "LINUX"):                                   # On Linux
+            self.rrdtool =self.locate_command('rrdtool')                # Locate the rrdtool command
+            if self.rrdtool == "" : requisites_status=False             # if blank didn't find it
+
         # Get the location of curl command
         if (self.os_type == "LINUX"):                                   # On Linux
             self.curl =self.locate_command('curl')                      # Locate the curl command
@@ -1107,7 +1161,7 @@ class sadmtools():
         # Validate the Log Type
         self.log_type = self.log_type.upper()
         if ((self.log_type != 'S') and (self.log_type != "B") and (self.log_type != 'L')):
-            print ("Acceptable log_type are 'S','L','B' - Can't set log_type to %s" % (wlogtype))
+            print ("Acceptable log_type are 'S','L','B' - Can't set log_type to %s" % (self.log_type))
             sys.exit(1)                                                 # Exit with Error
 
         # Validate Log Append (True or False)
@@ -1124,9 +1178,9 @@ class sadmtools():
             else:                                                       # User Want Fresh New Log
                 FH_LOG_FILE=open(self.log_file,'w')                     # Open Log in a new log
         except IOError as e:                                            # If Can't Create or open
-            print ("Error open file %s \r\n" % self.log_file)           # Print Log FileName
-            print ("Error Number : {0}\r\n.format(e.errno)")            # Print Error Number
-            print ("Error Text   : {0}\r\n.format(e.strerror)")         # Print Error Message
+            print ("Error opening file %s" % self.log_file)             # Print Log FileName
+            print ("Error Number : %d" % (e.errno))                     # Print Error Number
+            print ("Error Text   : %s" % (e.strerror))                  # Print Error Message
             sys.exit(1)                                                 # Exit with Error
 
 
@@ -1169,8 +1223,8 @@ class sadmtools():
             wgid = grp.getgrnam(self.cfg_www_group).gr_gid              # Get GID User of Web Group
             wuid = pwd.getpwnam(self.cfg_www_user).pw_uid               # Get UID User of Web User
             #
-            if not os.path.exists(www_dat_net_dir) : os.mkdir(www_dat_net_dir,0o0775) # Web Net Dir.
-            os.chown(self.www_dat_net_dir, wuid, wgid)                  # Change owner of Net Dir
+            if not os.path.exists(self.www_net_dir) : os.mkdir(self.www_net_dir,0o0775) # Web Net Dir.
+            os.chown(self.www_net_dir, wuid, wgid)                  # Change owner of Net Dir
             #
             if not os.path.exists(self.www_dir)      : os.mkdir(self.www_dir,0o0775)     # WWW  Dir.
             os.chown(self.www_dir, wuid, wgid)                          # Change owner of log file
@@ -1180,6 +1234,9 @@ class sadmtools():
             #
             if not os.path.exists(self.www_dat_dir)  : os.mkdir(self.www_dat_dir,0o0775) # DAT  Dir.
             os.chown(self.www_dat_dir, wuid, wgid)                      # Change owner of dat file
+            #
+            if not os.path.exists(self.www_arc_dir)  : os.mkdir(self.www_arc_dir,0o0775) # DAT  Dir.
+            os.chown(self.www_arc_dir, wuid, wgid)                      # Change owner of dat file
             #
             if not os.path.exists(self.www_lib_dir)  : os.mkdir(self.www_lib_dir,0o0775) # Lib  Dir.
             os.chown(self.www_lib_dir, wuid, wgid)                      # Change owner of lib file
@@ -1224,7 +1281,7 @@ class sadmtools():
             try:
                 FH_RCH_FILE=open(self.rch_file,'a')                     # Open RC Log in append mode
             except IOError as e:                                        # If Can't Create or open
-                print ("Error open file %s \r\n" % rch_file)            # Print Log FileName
+                print ("Error open file %s \r\n" % self.rch_file)            # Print Log FileName
                 print ("Error Number : {0}\r\n.format(e.errno)")        # Print Error Number
                 print ("Error Text   : {0}\r\n.format(e.strerror)")     # Print Error Message
                 sys.exit(1)
@@ -1243,7 +1300,7 @@ class sadmtools():
         global FH_LOG_FILE, start_time, start_epoch
 
         self.exit_code = return_code                                    # Save Param.Recv Code
-        if self.exit_code is not 0 :                                    # If Return code is not 0
+        if self.exit_code != 0 :                                        # If Return code is not 0
             self.exit_code=1                                            # Making Sure code is 1 or 0
 
         # Write the Script Exit code of the script to the log
@@ -1305,7 +1362,7 @@ class sadmtools():
             MailMess="Alert requested on Success or Error."             # Message User Email Choice
 
         if self.cfg_alert_type > 3 or self.cfg_alert_type < 0 :         # User Email Choice Invalid
-            MailMess="SADM_ALERT_TYPE is not set properly [0-3] Now at %s",(str(cfg_alert_type))
+            MailMess="SADM_ALERT_TYPE is not set properly [0-3] Now at %s",(str(self.cfg_alert_type))
 
 #        if self.mail == "" :                                            # If Mail Program not found
 #            MailMess="No Mail can be send - Until mail command is install"  # Msg User Email Choice

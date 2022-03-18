@@ -1,14 +1,14 @@
 <?php
 # ==================================================================================================
 #   Author      :  Jacques Duplessis 
-#   Email       :  jacques.duplessis@sadmin.ca
+#   Email       :  sadmlinux@gmail.com
 #   Title       :  sadm_server_common.php
 #   Version     :  1.8
 #   Date        :  13 June 2016
 #   Requires    :  php - MySQL
 #   Description :  Web Page used to create a new server server.
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -28,7 +28,7 @@
 #       V2.1 Added Column to specify if performance graph are to be displayed (Sporadic Server...)
 # 2018_10_01 v2.2 Remove Alert Group Field
 # 2018_12_15 v2.3 Add 'Darwin' as a choice for Operating System Type.
-#@2018_08_18 v2.4 Reduce screen size to 40 for the install directory field
+# 2018_08_18 update: v2.4 Reduce screen size to 40 for the install directory field
 # ==================================================================================================
  
 
@@ -54,21 +54,21 @@ $URL_HOME   = '/index.php';                                             # Site M
 //       = "Update"  Will display row content    and user can modify all fields, except the row key
 // ================================================================================================
 function display_srv_form ($con,$wrow,$mode) {
-    $smode = strtoupper($mode);                                         # Make Sure Mode is Upcase
+    $smode = strtoupper($mode);                                         # Make Sure is Uppercase
     echo "\n\n<div class='double_form'>\n";                             # Start server Form Div
     
     # Server Name
-    echo "\n<div class='double_label'>Server Name</div>";               # Display Name of Column
+    echo "\n<div class='double_label'>System Name</div>";               # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
     if ($smode == 'CREATE') {                                           # If Create Allow Input
         echo "<input type='text' name='scr_name' size='16' ";           # Set Name for field & Size
         echo " maxlength='15' placeholder='Server Name' ";              # Set Default & Max Len
-        echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+        #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
         echo " required value='" . sadm_clean_data($wrow['srv_name']);  # Field is required
         echo "' >";                                                     # End of Input 
     }else{
        echo "<input type='text' name='scr_name' readonly size='15' ";   # Set Name for Field & Size
-       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_name']). "' >";     # Show Current  Value
     }
     echo "</div>";                                                      # << End of srv_input
@@ -76,19 +76,19 @@ function display_srv_form ($con,$wrow,$mode) {
     
 
     # Server Domain  
-    echo "\n<div class='double_label'>Server Domain</div>";             # Display Name of Column
+    echo "\n<div class='double_label'>System Domain</div>";             # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
     if ($smode == 'CREATE') { $wrow['srv_domain'] = SADM_DOMAIN ; }     # Default Value = Active
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
        echo "<input type='text' name='scr_domain' readonly ";           # Set Name and Read Only
        echo " maxlength='30' size='30' ";                               # Set Max. Length
-       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_domain']). "'/>";   # Show Current Value
     }else{
        echo "<input type='text' name='scr_domain' required ";           # Set Name & Col. is require
        echo " placeholder='" . SADM_DOMAIN . "'";                       # Set Default Domain
        echo " maxlength='30' size='30' ";                               # Set Max. Length
-       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_domain']). "'/>";   # Show Domain Current Value
     }
     echo "</div>";                                                      # << End of double_input
@@ -101,13 +101,13 @@ function display_srv_form ($con,$wrow,$mode) {
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
        echo "<input type='text' name='scr_desc' readonly ";             # Set Name and Read Only
        echo " maxlength='30' size='30' ";                               # Set Max. Length
-       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_desc']). "'/>";     # Show Current Value
     }else{
        echo "<input type='text' name='scr_desc' required ";             # Set Name & Col. is require
        echo " placeholder='Enter server Desc.'";                        # Set Default
        echo " maxlength='30' size='30' ";                               # Set Max. Length
-       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_desc']). "'/>";     # Show Current Value
     }
     echo "</div>";                                                      # << End of double_input
@@ -115,7 +115,7 @@ function display_srv_form ($con,$wrow,$mode) {
     
     
     # O/S Type
-    echo "\n<div class='double_label'>Server O/S Type</div>";
+    echo "\n<div class='double_label'>System O/S Type</div>";
     echo "\n<div class='double_input'>";
     switch ($smode) {
         case 'CREATE' : echo "\n<select name='scr_ostype' size=1>";
@@ -158,18 +158,18 @@ function display_srv_form ($con,$wrow,$mode) {
     
     
     # Server Note
-    echo "\n<div class='double_label'>Server Note</div>";               # Display Name of Column
+    echo "\n<div class='double_label'>System Note</div>";               # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
        echo "<input type='text' name='scr_note' readonly ";             # Set Name and Read Only
        echo " maxlength='30' size='30' ";                               # Set Max. Length
-       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_note']). "'/>";     # Show Current Value
     }else{
        echo "<input type='text' name='scr_note' ";                      # Set Name & Col. is require
        echo " placeholder='Enter server note' ";                        # Set Default
        echo " maxlength='30' size='30' ";                               # Set Max. Length
-       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_note']). "'/>";     # Show Current Value
     }
     echo "\n</div>";                                                    # << End of double_input
@@ -177,7 +177,7 @@ function display_srv_form ($con,$wrow,$mode) {
     
 
     # Server Category
-    echo "\n<div class='double_label'>Server Category</div>";           # Display Name of Column
+    echo "\n<div class='double_label'>System Category</div>";           # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
     switch ($smode) {
         case 'DISPLAY' :                                                # In Display/Delete Mode
@@ -221,7 +221,7 @@ function display_srv_form ($con,$wrow,$mode) {
 
 
     # Server Group
-    echo "\n<div class='double_label'>Server Group</div>";              # Display Name of Column
+    echo "\n<div class='double_label'>System Group</div>";              # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
     switch ($smode) {
         case 'DISPLAY' :                                                # In Display/Delete Mode
@@ -264,7 +264,7 @@ function display_srv_form ($con,$wrow,$mode) {
 
 
     # Server Active ?
-    echo "\n<div class='double_label'>Server Status</div>";             # Display Name of Column
+    echo "\n<div class='double_label'>System Status</div>";             # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
     echo "<span style='display:inline-block; width: 155px;'>";
     if ($smode == 'CREATE') { $wrow['srv_active'] = True ; }            # Default Value = Active
@@ -304,13 +304,13 @@ function display_srv_form ($con,$wrow,$mode) {
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
        echo "\n<input type='text' name='scr_sadmin_dir' readonly ";     # Set Name and Read Only
        echo " maxlength='45' size='40' ";                               # Set Max. Length
-       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_sadmin_dir']). "'/>"; # Show Current Value
     }else{
        echo "\n<input type='text' name='scr_sadmin_dir' ";              # Set Name & Col. is require
        echo " placeholder='SADMIN Directory' ";                         # Set Default
        echo " maxlength='45' size='40' ";                               # Set Max. Length
-       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_sadmin_dir']). "'/>"; # Show Current Value
     }
     echo "\n</div>";                                                    # << End of double_input
@@ -318,18 +318,18 @@ function display_srv_form ($con,$wrow,$mode) {
     
         
     # Server Tag
-    echo "\n<div class='double_label'>Server Tag</div>";                # Display Name of Column
+    echo "\n<div class='double_label'>System Tag</div>";                # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
        echo "\n<input type='text' name='scr_tag' readonly ";            # Set Name and Read Only
        echo " maxlength='15' size='17' ";                               # Set Max. Length
-       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_tag']). "'/>";      # Show Current Value
     }else{
        echo "\n<input type='text' name='scr_tag' ";                     # Set Name & Col. is require
        echo " placeholder='Enter server tag' ";                         # Set Default
        echo " maxlength='15' size='17' ";                               # Set Max. Length
-       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_tag']). "'/>";      # Show Current Value
     }
     echo "\n</div>";                                                    # << End of double_input
@@ -467,7 +467,7 @@ function display_srv_form ($con,$wrow,$mode) {
 
 
     # Display Performance Graph for this server
-    echo "\n<div class='double_label'>Show Performance Graph</div>";    # Display Name of Column
+    echo "\n<div class='double_label'>Collect System Performance</div>";    # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
     echo "<span style='display:inline-block; width: 110px;'>";
     if ($smode == 'CREATE') { $wrow['srv_graph'] = True ; }             # Default Value = Active

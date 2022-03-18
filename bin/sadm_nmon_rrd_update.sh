@@ -10,7 +10,7 @@
 #   Date        :   13 January 2018
 #   Requires    :   sh and SADMIN Library
 #
-#   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca> - http://www.sadmin.ca
+#   Copyright (C) 2016-2018 Jacques Duplessis <sadmlinux@gmail.com> - http://www.sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -30,7 +30,7 @@
 # 2018_01_20    V1.0c Work in Progress
 # 2018_01_21    V1.0d Work in Progress
 # 2018_01_22    V1.0e Work in Progress
-# 2018_01_23    V1.0f First woking Version
+# 2018_01_23    V1.0f First working Version
 # 2018_01_24    V1.1 Add Sub and Total for Error and Success After RRD Update
 # 2018_01_25    V1.2 Check if epoch time is less than last rrd epoch before rrdupdate & show friendly message
 #               V1.2a Added removal on work temp. file at the end
@@ -45,7 +45,7 @@
 # 2018_06_09    v2.1 Change Help and Version Function, Change Script Name, Change Startup Order
 # 2018_07_14    v2.2 Switch to Bash Shell instead of sh (Causing Problem with Dash on Debian/Ubuntu)
 # 2018_09_17    v2.3 Insert Default Alert Group 
-#@2018_11_26 Fix: v2.4 Problem running on RHEL8 with rrdtool 1.7, wasn't updating the rrd database.
+# 2018_11_26 Fix v2.4 Problem running on RHEL8 with rrdtool 1.7, wasn't updating the rrd database.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

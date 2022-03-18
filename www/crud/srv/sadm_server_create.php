@@ -1,14 +1,14 @@
 <?php
 # ==================================================================================================
 #   Author      :  Jacques Duplessis 
-#   Email       :  jacques.duplessis@sadmin.ca
+#   Email       :  sadmlinux@gmail.com
 #   Title       :  sadm_server_create.php
 #   Version     :  1.8
 #   Date        :  13 June 2016
 #   Requires    :  php - MySQL
 #   Description :  Web Page used to create a new server server.
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -28,7 +28,7 @@
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
 #   2018_02_03 - Jacques Duplessis
 #       V2.1 Added Server Graph Display Option
-#@2019_08_29 Update: v2.2 New page heading, using the library heading function.
+# 2019_08_29 Update: v2.2 New page heading, using the library heading function.
 #
 # ==================================================================================================
 #
@@ -103,7 +103,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
 # ==================================================================================================
     
     # START OF FORM - DISPLAY FORM READY TO ACCEPT DATA
-    display_lib_heading("NotHome","Create server page","",$SVER);       # Display Content Heading
+    display_lib_heading("NotHome","Create SADMIN Client","",$SVER);       # Display Content Heading
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_srv_form ($con,$row,"Create");                              # Display Form Default Value
     echo "<input type='hidden' value='1' name='submitted' />";          # Set submitted var. to 1

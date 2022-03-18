@@ -38,6 +38,16 @@
 # 2019_07_07 Update: v2.34 Update Filesystem Increase Message & verification.
 # 2019_07_25 Update: v2.35 Now using a tmp rpt file and real rpt is replace at the end of execution.
 # 2019_10_25 Update: v2.36 Don't check SNAP filesystem usage (snap filesystem always at 100%).
+# 2020_03_05 Fix: v2.37 Not getting 'SADMIN' variable content from /etc/environment (if export used).
+# 2020_03_28 Fix: v2.38 Fix problem when 'dmidecode' is not available on system.
+# 2020_07_27 Update: v2.39 Used space of CIFS Mounted filesystem are no longer monitored.
+# 2020_10_01 Update: v2.40 Write more elaborated email to user when restarting a service.
+# 2020_11_18 Update: v2.41 Fix: Fix problem with iostat on MacOS.
+# 2020_11_30 Update: v2.42 Fix: Fix problem reading SADMIN variable in /etc/environment.
+# 2021_06_12 mon: v2.43 Add Date & Time of last boot on last line of hostname.smon file.
+# 2021_07_03 mon: v2.44 Fix problem when trying to run custom script.
+# 2021_07_05 mon: v2.45 Added support to monitor 'http' and 'https' web site responsiveness.
+# 2021_07_06 mon: v2.46 Change error messages syntax to be more descriptive.
 #===================================================================================================
 #
 use English;
@@ -51,7 +61,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.36";                                       # Version Number
+my $VERSION_NUMBER      = "2.46";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -74,9 +84,11 @@ if ( ! -r "$ETC_ENVIRONMENT" ) {                                        # Env. F
 }
 
 # Get the SADMIN Variable content from /etc/environment and set SADM_BASE_DIR to it.
-my $SADM_BASE_DIR = `grep "^SADMIN" /etc/environment | awk -F= '{print \$2}'`; chomp $SADM_BASE_DIR;
+my $SADM_BASE_DIR = `grep "SADMIN=" /etc/environment |sed 's/export //g'| awk -F= '{print \$2}'|head -1`; 
+chomp $SADM_BASE_DIR;
 if ( ! -r "${SADM_BASE_DIR}/lib/sadmlib_std.sh") {                      # SADMIN Libr. Readable ? 
     print "SADMIN variable not define in /etc/environment\n" ;          # Advise User 
+    print "or '${SADM_BASE_DIR}/lib/sadmlib_std.sh' not found\n" ;      # Advise User 
     print "System Monitor Aborted ...\n";                               # Abort Message
     exit 1;                                                             # Exit with Error
 }
@@ -129,13 +141,33 @@ my $CMD_HEAD            = `which head`       ;chomp($CMD_HEAD);         # Locati
 my $CMD_UPTIME          = `which uptime`     ;chomp($CMD_UPTIME);       # Location of uptime command
 my $CMD_VMSTAT          = `which vmstat`     ;chomp($CMD_VMSTAT);       # Location of vmstat command
 my $CMD_IOSTAT          = `which iostat`     ;chomp($CMD_IOSTAT);       # Location of iostat command
-my $CMD_MPATHD          = `which multipathd` ;chomp($CMD_MPATHD);       # Location of multipathd cmd
-my $CMD_DMIDECODE       = `which dmidecode`  ;chomp($CMD_DMIDECODE);    # To check if we are in a VM
+#my $CMD_MPATHD          = `which multipathd` ;chomp($CMD_MPATHD);       # Location of multipathd cmd
+#my $CMD_DMIDECODE       = `which dmidecode`  ;chomp($CMD_DMIDECODE);    # To check if we are in a VM
 my $CMD_TOUCH           = `which touch`      ;chomp($CMD_TOUCH);        # Location of touch command
+
+# Determine if 'dmidecode' command is available on system
+system ("which dmidecode >/dev/null 2>&1"); 
+if ( $? != 0 ) { 
+    my $CMD_DMIDECODE = ""; 
+}else{ 
+    my $CMD_DMIDECODE = `which dmidecode 2>/dev/null`; chomp($CMD_DMIDECODE); 
+}
+
+# Determine if 'multipathd' command is available on system
+system ("which multipathd >/dev/null 2>&1"); 
+if ( $? != 0 ) { 
+    my $CMD_MPATHD = ""; 
+}else{ 
+    my $CMD_MPATHD = `which multipathd 2>/dev/null`; chomp($CMD_MPATHD);
+}
 
 # Determine if system use SysInit or SystemD 
 system ("which systemctl >/dev/null 2>&1"); 
-if ( $? != 0 ) { my $CMD_SYSTEMCTL = ""; }else{ my $CMD_SYSTEMCTL = `which systemctl 2>/dev/null`;}
+if ( $? != 0 ) { 
+    my $CMD_SYSTEMCTL = ""; 
+}else{ 
+    my $CMD_SYSTEMCTL = `which systemctl 2>/dev/null`; chomp($CMD_SYSTEMCTL); 
+}
 
 
 # `hostname`.smon file layout, fields are separated by space (be carefull)
@@ -185,6 +217,7 @@ my $SCP_CON       = "$CMD_SCP -rP${SADM_SSH_PORT} ${SADM_USER}\@${SADM_SERVER}";
 my $MINIMUM_SEC=86400;                 # 1 Day=86400 Sec. = Minimum between Filesystem Incr.
 my $MAX_FS_INCR=2;                     # Number of filesystem increase allowed per Day.
 my $SCRIPT_MIN_SEC_BETWEEN_EXEC=86400; # Restart script didn't run for more than value then ok 2 run
+
 
 
 #---------------------------------------------------------------------------------------------------
@@ -343,9 +376,12 @@ sub unload_smon_file {
     # GET ENDING TIME & WRITE SADM STATISTIC LINE AT THE EOF
     $end_time = time;                                                   # Get current time
     $xline1 = sprintf ("#SYSMON $VERSION_NUMBER $HOSTNAME - ");
-    $xline2 = sprintf ("%s" , scalar localtime(time));
-    $xline3 = sprintf (" - Execution Time %2.2f seconds\n" ,$end_time - $start_time);
-    printf (SADMTMP "${xline1}${xline2}${xline3}");
+    my $uptime = `uptime -s`;
+    chomp $uptime; 
+    $xline2 = sprintf ("Last Boot: %s - " , $uptime);
+    $xline3 = sprintf ("%s" , scalar localtime(time));
+    $xline4 = sprintf (" - Execution Time %2.2f seconds\n" ,$end_time - $start_time);
+    printf (SADMTMP "${xline1}${xline2}${xline3}${xline4}");
     close SADMTMP ;                                                     # Close temporary file
 
     # DELETE OLD SYSMON CONFIG FILE AND RENAME THE TEMP FILE TO SADM SYSMON FILE
@@ -755,10 +791,16 @@ sub check_for_error {
       write_rpt_file($alert_type ,"HTTP", "WEBSITE", $ERR_MESS );       # Go write ALert to rpt file
    } # End of HTTP Module
 
+   #---------- Error detected for the Module HTTPS
+   if ($MODULE eq "HTTPS")   {                                          # Error WebSite no Response
+      $ERR_MESS = "Web Site $WID isn't responding" ;                    # Prepare Mess. to rpt file
+      write_rpt_file($alert_type ,"HTTPS", "WEBSITE", $ERR_MESS );      # Go write ALert to rpt file
+   } # End of HTTP Module
+
    #---------- Error detected - A Daemon was suppose to be running and it is not
    if ($MODULE eq "DAEMON") {                                           # If Daemon Error
       if ($SUBMODULE eq "PROCESS") {                                    # Process Sub-Module
-         $ERR_MESS = "Daemon $WID not running !";                       # Prepare Mess. to rpt file
+         $ERR_MESS = "Daemon $WID isn't running !";                     # Prepare Mess. to rpt file
          write_rpt_file($alert_type,"DAEMON","PROCESS",$ERR_MESS );     # Go write ALert to rpt file
       }
    } # End of Daemon Module
@@ -766,7 +808,7 @@ sub check_for_error {
    #---------- Error detected - A service was suppose to be running and it is not
    if ($MODULE eq "SERVICE") {                                          # If Service not Running
       if ($SUBMODULE eq "DAEMON") {                                     # And Daemon as a Sub-Module
-         $ERR_MESS = "Service $WID not running !";                      # Prepare Mess. to rpt file
+         $ERR_MESS = "Service $WID isn't running !";                    # Prepare Mess. to rpt file
          write_rpt_file($alert_type,"SERVICE","DAEMON",$ERR_MESS );     # Go write ALert to rpt file
       }
    } # End of Service Module
@@ -775,7 +817,7 @@ sub check_for_error {
 
 
 #---------------------------------------------------------------------------------------------------
-# Check if we have a response from the web site
+# Check if we have a http response from the web site
 #---------------------------------------------------------------------------------------------------
 sub check_http {
 
@@ -783,23 +825,19 @@ sub check_http {
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split Current line ID
     $HTTP = $dummy[1];                                                  # Get URL from dummy array
     my $url="http://${HTTP}";                                           # Build URL to check
-    print "\n\nChecking response from $url ... ";                       # Show User what we check
+    print "\nChecking response from $url ... ";                         # Show User what we check
 
-    # Get document headers.
-    # Returns the following 5 values if successful:
-    #   - ($content_type, $document_length, $modified_time, $expires, $server)
-    # Returns an empty list if it fails. In scalar context returns TRUE if successful.
-    $ua->timeout(3);                                                    # Timeout if not responding
-    if (! head($url)) { $http_status=0; }else{ $http_status=1; }        # Status based on response
-    if ($http_status == 0) {                                            # If no response for URL
-        printf "\n[ERROR] Web site not responding" ;                    # Show error to user
+    $PCMD = "curl $url -I >/dev/null 2>&1" ;                            # Build curl command
+    @args = ("$PCMD"); system(@args) ;                                  # Test connect with curl
+    $src = $? >> 8;                                                     # Get curl Result code
+    if ($src == 0) {                                                    # If no response for URL
+        print "\n[OK] Web site is responding\n";                        # Show URL responded
+        $SADM_RECORD->{SADM_CURVAL}=0;                                  # 0= Web Site is UP
     }else{                                                              # If URL Response
-        #printf "\n[OK] Web site is responding";                         # Show URL responded
-        print BOLD, GREEN, "\n[OK] ", RESET, "Web site is responding";
+        print "\n[ ERROR ] ($src) Web site not responding\n" ;          # Show error to user
+        if ($src == 6) { print "Error #6 : Could not resolve host name\n" } 
+        $SADM_RECORD->{SADM_CURVAL}=1;                                  # 1= Web Site is Down
     }
-
-    #----- Put current value in sadm array and check for error.
-    $SADM_RECORD->{SADM_CURVAL} = $http_status ;                        # Put Status in SADM_RECORD
     $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                               # Current Value
     $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                               # Warning Threshold Value
     $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                               # Error Threshold Value
@@ -810,6 +848,43 @@ sub check_http {
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
     return;                                                             # Return to Caller
 }
+
+
+
+
+#---------------------------------------------------------------------------------------------------
+# Check if we have a https response from the web site
+#---------------------------------------------------------------------------------------------------
+sub check_https {
+
+    # From the sysmon_array extract the application name
+    @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split Current line ID
+    $HTTP = $dummy[1];                                                  # Get URL from dummy array
+    my $url="https://${HTTP}";                                          # Build URL to check
+    print "\nChecking response from $url ... ";                         # Show User what we check
+
+    $PCMD = "curl $url -I >/dev/null 2>&1" ;                            # Build curl command
+    @args = ("$PCMD"); system(@args) ;                                  # Test connect with curl
+    $src = $? >> 8;                                                     # Get curl Result code
+    if ($src == 0) {                                                    # If no response for URL
+        print "\n[OK] Web site is responding\n";                        # Show URL responded
+        $SADM_RECORD->{SADM_CURVAL}=0;                                  # 0= Web Site is UP
+    }else{                                                              # If URL Response
+        print "\n[ ERROR ] ($src) Web site not responding\n" ;          # Show error to user
+        if ($src == 6) { print "Error #6 : Could not resolve host name\n" } 
+        $SADM_RECORD->{SADM_CURVAL}=1;                                  # 1= Web Site is Down
+    }
+    $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                               # Current Value
+    $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                               # Warning Threshold Value
+    $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                               # Error Threshold Value
+    $TEST = $SADM_RECORD->{SADM_TEST}   ;                               # Test Operator (=,<=,!=,..)
+    $MOD  = "HTTPS"                     ;                               # Module Category
+    $SMOD = "WEBSITE"                   ;                               # Sub-Module Category
+    $STAT = $HTTP                       ;                               # URL of Web Site
+    check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
+    return;                                                             # Return to Caller
+}
+
 
 
 
@@ -1006,7 +1081,7 @@ sub check_cpu_usage {
         open (DB_FILE, "$CMD_VMSTAT 1 2 | $CMD_TAIL -1 |");             # Linux/Aix vmstat last line
     }
     $cpu_use = <DB_FILE> ;                                              # Open Stdout last Line
-    printf "\nCPU Usage line:  %s" , $cpu_use;                          # Show User that last Line
+    printf "\nCPU Usage line:  %s\n" , $cpu_use;                        # Show User that last Line
     @ligne = split ' ',$cpu_use;                                        # Split Line based on space
     if ( $OSNAME eq "linux" ) {                                         # Under Linux
         $cpu_user   = int $ligne[12];                                   # Linux Get User CPU Usage
@@ -1045,7 +1120,7 @@ sub check_cpu_usage {
     $SMOD = "CPU"                       ;                               # Sub-Module Category
     $STAT = $CVAL                       ;                               # Current Value Returned
     if ($SYSMON_DEBUG >= 5) {                                           # Debug Level at least 5
-        printf "CPU User: %3d - System: %3d  - Total: %3d" ,$cpu_user,$cpu_system,$cpu_total;
+        printf "CPU User: %3d - System: %3d  - Total: %3d\n" ,$cpu_user,$cpu_system,$cpu_total;
         printf " - Warning Level:%3d - Error Level:%3d",$WVAL,$EVAL;
     }
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
@@ -1229,7 +1304,8 @@ sub run_script {
         $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                           # Warning Threshold Value
         $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                           # Error Threshold Value
         $TEST = $SADM_RECORD->{SADM_TEST}   ;                           # Test Operator (=,<=,!=,..)
-        $MOD  = "$OSNAME"                   ;                           # Module Category
+#        $MOD  = "$OSNAME"                   ;                           # Module Category
+        $MOD  = "SCRIPT"                    ;                           # Module Category
         $SMOD = "SCRIPT"                    ;                           # Sub-Module Category
         $STAT = $sfile_name                 ;                           # Current Value Returned
         print "Script $sname is not valid ..." ;                        # Show Usr not script specify
@@ -1264,7 +1340,8 @@ sub run_script {
     $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                               # Warning Threshold Value
     $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                               # Error Threshold Value
     $TEST = $SADM_RECORD->{SADM_TEST}   ;                               # Test Operator (=,<=,!=,..)
-    $MOD  = "$OSNAME"                   ;                               # Module Category
+    #$MOD  = "$OSNAME"                   ;                               # Module Category
+    $MOD  = "SCRIPT"                    ;                               # Module Category
     $SMOD = "SCRIPT"                    ;                               # Sub-Module Category
     $STAT = $sfile_name                 ;                               # Current Value Returned
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
@@ -1280,7 +1357,7 @@ sub check_for_new_filesystems  {
     if ($SYSMON_DEBUG >= 5) { print "\nChecking for new filesystems ..." };
 
     # First Get Actual Filesystem Info - Don't check cdrom (/dev/cd0) and NFS Filesystem (:)
-    open (DF_FILE, "/bin/df -hP | grep \"^\/\" | grep -v \"\/mnt\/\"| grep -v \"cdrom\"| grep -v \":\" |");
+    open (DF_FILE, "/bin/df -hP | grep \"^\/\" | grep -v \"\/mnt\/\"| grep -v \"cdrom\"| grep -Ev \":\|//\" |");
 
     # Then Compare Actual value versus Warning & Error Value.
     $newcount = 0 ;                                                     # New filesystem counter
@@ -1418,7 +1495,7 @@ sub check_multipath {
     $SMOD = "MUTIPATH"                  ;                               # Sub-Module Category
     $STAT = $mstatus                    ;                               # Current Status Returned
     if ($SYSMON_DEBUG >= 5) {                                           # Debug Level at least 5
-        printf "\nMultipath status is %s - Code = (%d) (1=ok 0=Error)",$STAT,$CVAL; # Show User
+        printf "\nMultipath status is %s - Code = (%d) (1=ok 0=Error)\n",$STAT,$CVAL; # Show User
     }
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
 }
@@ -1541,11 +1618,13 @@ sub write_rpt_file {
         
         # Mail Message to SysAdmin
         ($myear,$mmonth,$mday,$mhour,$mmin,$msec,$mepoch) = Today_and_Now(); # Get Date,Time, Epoch
-        my $mail_mess0 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
-        my $mail_mess1 = "Daemon $daemon_name wasn't running on ${HOSTNAME}.\n";
-        my $mail_mess2 = "SysMon executed the script : '$SADM_RECORD->{SADM_SCRIPT} $daemon_name' to restart it.\n";
-        my $mail_mess3 = "This is the first time SysMon is restarting this service today.";
-        my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}";
+        my $mail_mess0 = "Dear user,\n";
+        my $mail_mess1 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
+        my $mail_mess2 = "Daemon $daemon_name wasn't running on '${HOSTNAME}'.\n";
+        my $mail_mess3 = "The System Monitor executed the script : '$SADM_RECORD->{SADM_SCRIPT} $daemon_name' to restart it.\n";
+        my $mail_mess4 = "This is the first time SysMon is restarting this service on this system today.\n\n";
+        my $mail_mess5 = "Have a good day\n";
+        my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}${mail_mess4}${mail_mess5}";
         my $mail_subject = "SADM: INFO $HOSTNAME daemon $daemon_name restarted";
         @args = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
         system(@args) ;                                                 # Execute
@@ -1717,7 +1796,7 @@ sub init_process {
 
     # Under Linux, Check if we are running under a VM or not.
     $VM = "N" ;                                                         # By Default not a VM
-    if ( $OSNAME eq "linux" ) {                                         # Under Linux Only (Not Aix)
+    if (( $OSNAME eq "linux" ) && ( $CMD_DMIDECODE != "" )) {           # Under Linux Only (Not Aix)
         $COMMAND = "$CMD_DMIDECODE | grep -i vmware >/dev/null 2>&1" ;  # Cmd to Check if a VM
          @args = ("$COMMAND");                                          # Form the O/S Command
         system(@args) ;                                                 # Execute dmidecode command
@@ -1807,7 +1886,10 @@ sub loop_through_array {
         if ($SADM_RECORD->{SADM_ID} =~ /^daemon_/ ) {check_daemon; }
 
         # Check HTTP
-        if ($SADM_RECORD->{SADM_ID} =~ /^http/ ) {check_http;    }
+        if ($SADM_RECORD->{SADM_ID} =~ /^http_/ ) {check_http; }
+
+        # Check HTTPS
+        if ($SADM_RECORD->{SADM_ID} =~ /^https_/ ) {check_https ;}
 
         # Check Running Script
         if ($SADM_RECORD->{SADM_ID} =~ /^script/  ) {run_script ;}
@@ -1837,9 +1919,12 @@ sub end_of_sysmon {
     if ($SYSMON_DEBUG >= 5) {
         $end_time = time;                                                   # Get current time
         $xline1 = sprintf ("#SYSMON $VERSION_NUMBER $HOSTNAME - ");         # Version & Hostname
-        $xline2 = sprintf ("%s" , scalar localtime(time));                  # Print Current Time
-        $xline3 = sprintf (" - Execution Time %2.2f seconds", ($end_time - $start_time));
-        printf ("\n${xline1}${xline2}${xline3}\n\n");                       # SADM Stat Line
+        my $uptime = `uptime -s`;
+        chomp $uptime; 
+        $xline2 = sprintf ("Last Boot: %s - " , $uptime);
+        $xline3 = sprintf ("%s" , scalar localtime(time));                  # Print Current Time
+        $xline4 = sprintf (" - Execution Time %2.2f seconds", ($end_time - $start_time));
+        printf ("\n${xline1}${xline2}${xline3}${xline4}\n\n");              # SADM Stat Line
     }
 }
 

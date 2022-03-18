@@ -1,7 +1,7 @@
 <?php
 # ==================================================================================================
 #   Author      :  Jacques Duplessis
-#   Email       :  jacques.duplessis@sadmin.ca
+#   Email       :  sadmlinux@gmail.com
 #   Title       :  sadm_server_main.php
 #   Version     :  1.0
 #   Date        :  13 June 2016
@@ -9,7 +9,7 @@
 #   Description :  Web Page used to present list of  Server that can be edited/deleted.
 #                  Option a the top of the list is used to create a new  group
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 # Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
 #        have and use a 100 characters per line. Comments in script always begin at column 73. 
@@ -37,7 +37,9 @@
 # 2019_08_04 Update: v2.5 Added O/S distribution logo instead of name on page
 # 2019_08_18 Update: v2.6 Change page heading and some text fields.
 # 2019_09_23 Update: v2.7 Add Distribution logo and Version for each servers.
-#@2019_10_13 Update: v2.8 Add System Architecture to page.
+# 2019_10_13 Update: v2.8 Add System Architecture to page.
+# 2020_01_13 Update: v2.9 Minor Appearance page change (Nb.Cpu and page width).
+# 2020_12_29 Update: v2.10 Show Architecture un-capitalize.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -66,7 +68,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG          = False ;                                               # Debug Activated True/False
-$WVER           = "2.8" ;                                               # Current version number
+$WVER           = "2.10" ;                                              # Current version number
 $URL_CREATE     = '/crud/srv/sadm_server_create.php';                   # Create Page URL
 $URL_UPDATE     = '/crud/srv/sadm_server_update.php';                   # Update Page URL
 $URL_DELETE     = '/crud/srv/sadm_server_delete.php';                   # Delete Page URL
@@ -88,7 +90,7 @@ function setup_table() {
     
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                      # Width Given to Table
-    echo '<table id="sadmTable" class="display" compact row-border no-wrap width="90%">';   
+    echo '<table id="sadmTable" class="display" compact row-border no-wrap width="96%">';   
     
     # PAGE TABLE HEADING
     echo "\n<thead>";
@@ -142,7 +144,7 @@ function display_data($count,$con,$row) {
 
     # Server Name
     echo "\n<td class='dt-left'>" ;
-    echo "<a href='" . $URL_HOST_INFO . "?host=" . $row['srv_name'];
+    echo "<a href='" . $URL_HOST_INFO . "?sel=" . $row['srv_name'];
     echo "' data-toggle='tooltip' title='";
     if ($row['srv_model']  != "") { echo "Model "  . $row['srv_model']  . " - " ;} 
     if ($row['srv_serial'] != "") { echo "Serial " . $row['srv_serial'] . " - " ;} 
@@ -155,7 +157,7 @@ function display_data($count,$con,$row) {
     echo "\n<td class='dt-left'>"    . $row['srv_desc']   . "</td>";    # Display Description
 
     # Server Architecture  
-    echo "<td class='dt-body-left'>" . ucfirst( $row['srv_arch']) . "</td>\n";  
+    echo "<td class='dt-body-left'>" . $row['srv_arch'] . "</td>\n";  
     
     # Display Operating System Logo
     $WOS   = sadm_clean_data($row['srv_osname']);
@@ -180,7 +182,7 @@ function display_data($count,$con,$row) {
     echo "\n<td class='dt-center'>" . $row['srv_memory'] ." MB </td>";
 
     # Display Server Number of CPU and Speed
-    echo "\n<td class='dt-center'>" . $row['srv_nb_cpu'] . " X " . $row['srv_cpu_speed'] ."Mhz</td>";
+    echo "\n<td class='dt-center'>" . $row['srv_nb_cpu'] . "X" . $row['srv_cpu_speed'] ."Mhz</td>";
 
     # Display Server Group
     #echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=group";

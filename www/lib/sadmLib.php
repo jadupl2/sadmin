@@ -7,7 +7,7 @@
 #   Requires :  php
 #   Synopsis :  This file is the PHP Library that's used by the SADMIN Web Interface
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -41,9 +41,15 @@
 # 2019_08_04 Update: v2.10 Added function 'sadm_show_logo' to show distribution logo in a table cell.
 # 2019_08_13 Update: v2.11 Fix bug - When creating one line schedule summary
 # 2019_08_14 Update: v2.12 Add function for new page header look (display_lib_heading).
-#@2019_10_15 Update: v2.13 Reduce Logo size image from 32 to 24 square pixels
-#@2019_10_15 Update: v2.14 Reduce font size on 2nd line of heading in "display_lib_heading".
-# ==================================================================================================
+# 2019_10_15 Update: v2.13 Reduce Logo size image from 32 to 24 square pixels
+# 2019_10_15 Update: v2.14 Reduce font size on 2nd line of heading in "display_lib_heading".
+# 2020_01_13 Update: v2.15 Reduce Day of the week name returned by SCHEDULE_TO_TEXT to 3 Char.
+# 2020_04_27 Update: v2.16 Change 2019 to 2020 in page footer
+# 2020_09_22 Update: v2.17 Facilitate going back to previous & Home page by adding button in header.
+# 2021_08_05 nolog v2.18 New function "getdocurl($RefString)" to allow link from script to doc
+# 2021_08_29 nolog v2.19 New function "get_alert_group_data" Return used alert grp name,type,tooltip.
+# 2021_08_31 nolog v2.20 New function "sadm_return_logo(OSNAME)" return image path, doc url & tooltip
+#===================================================================================================
 #
 
 #===================================================================================================
@@ -51,7 +57,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.14" ;   
+$LIBVER = "2.20" ;   
     
 
 #===================================================================================================
@@ -62,13 +68,26 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
     $URL_HOME   = '/index.php';                                         # Site Home Page URL
     
     # SHOW HEADING LINE 1
+    echo "\n<div style='float: left;'>";                                # Align Left Link Go Back
+    if (strtoupper($BACK_URL) != "HOME") {                              # Parameter Recv. = home
+        echo "<a href='javascript:history.go(-1)'>";                    # URL Go Back Previous Page
+        echo "<span data-toggle='tooltip' title='Back to previous page'>";  # Show Tooltip 
+        echo "<img src='/images/back_hand.png' ";                       # Show hand pointing left
+        echo "style='width:32px;height:32px;'></span></a>";             # Size Icons 32x32
+    }else{
+        echo "<a href='" . $URL_HOME . "'>";                            # URL to Go Back Home Page
+        echo "<span data-toggle='tooltip' title='Back to Home page'>";  # Show Tooltip 
+        echo "<img src='/images/home.png' ";                            # Show Home Icon
+        echo "style='width:32px;height:32px;'></span></a>";             # Size Icons 32x32
+    }
+    echo "</div>"; 
     echo "\n<div style='";
     echo "text-align: center ; color: #271c1c; ";
     echo "font-size: 1.8em; font-family: Verdana, sans-serif; ";
     echo "font-weight: bold; '>"; 
     echo "\n${TITLE1} " ."- v${WVER}";
     echo "\n</div>";
-
+ 
     # SHOW HEADING LINE 2
     if ($TITLE2 != "") {
         echo "\n<div style='";
@@ -81,14 +100,6 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
 
     # Space line for separation purpose
     echo "\n<hr/>";                                                     # Print Horizontal Line
-
-    // echo "\n<div style='float: left;'>";                                # Align Left Link Go Back
-    // if (strtoupper($BACK_URL) != "HOME") {                              # Parameter Recv. = home
-    //     echo "<a href='javascript:history.go(-1)'>Previous Page</a>";   # URL Go Back Previous Page
-    // }else{
-    //     echo "<a href='" . $URL_HOME . "'>Home Page</a>";               # URL to Go Back Home Page
-    // }
-    // echo "</div>";    
 }
 
 
@@ -100,7 +111,7 @@ function std_page_footer($wcon="") {
     echo "\n</div> <!-- End of sadmRightColumn   -->" ;                 # End of Left Content Page       
     echo "\n</div> <!-- End of sadmPageContents  -->" ;                 # End of Content Page
     echo "\n\n<div id='sadmFooter'>";
-    echo "\nCopyright &copy; 2015-2019 - www.sadmin.ca - Suggestions, Questions or Report a problem at ";
+    echo "\nCopyright &copy; 2015-2021 - www.sadmin.ca - Suggestions, Questions or Report a problem at ";
     echo '<a href="mailto:support@sadmin.ca">support@sadmin.ca</a></small>';
     echo "\n</div> <!-- End of Div sadmFooter -->";
 
@@ -109,6 +120,7 @@ function std_page_footer($wcon="") {
     echo "\n</body>";
     echo "\n</html>";
 }
+
 
 
 # ==================================================================================================
@@ -134,6 +146,90 @@ function netinfo ($ip_address,$ip_nmask) {
     return array (long2ip($ip_net), long2ip($ip_first), long2ip($ip_last), long2ip($ip_broadcast));
 }
 
+
+
+
+
+# ==================================================================================================
+# Function accept a valid alert group name (like default and defined in alert_group.fg file) 
+# Return :
+#   - The real group name (in case this function receive 'default' as the group name)
+#   - The group type (M=Mail, S=SLack, T=Texto, C=Cellular)
+#   - The Tool tip (Used when mouse is over the link, indicate the members of the alert group)
+# ==================================================================================================
+function get_alert_group_data ($calert) {
+
+    # If 'default' alert group is used, get the real effective alert group name.
+    if ($calert == "default") {                                 # If Alert Group is default
+        $CMD="grep -i \"^default\" " . SADM_ALERT_FILE . " |awk '{print$3}' |tr -d ' '";
+        if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; } 
+        unset($output_array);                                   # Clear output Array
+        exec ( $CMD , $output_array, $RCODE);                   # Execute command
+        if ($DEBUG) {                                           # If in Debug Mode
+            echo "\n<br>Return code of command : " . $RCODE ;   # Command ReturnCode
+            echo "\n<br>Content of output array:";              # Show what's next
+            echo '<code><pre>';                                 # Code to Show
+            print_r($output_array);                             # Show Cmd output
+            echo '</pre></code>';                               # End of code 
+        }
+        $calert=$output_array[0];                               # Real Alert Grp Name
+    }
+
+    # Get the group Alert Type (M=Mail, S=SLack, T=Texto, C=Cellular)
+    $CMD="grep -i \"^" . $calert . "\" " . SADM_ALERT_FILE . " |awk '{print$2}' |tr -d ' '";
+    if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ;}     # Cmd we execute
+    unset($output_array);                                           # Clear output Array
+    exec ( $CMD , $output_array, $RCODE);                           # Execute command
+    if ($DEBUG) {                                                   # If in Debug Mode
+        echo "\n<br>Return code of command is : " . $RCODE ;        # Command ReturnCode
+        echo "\n<br>Content of output array :";                     # Show what's next
+        echo '<code><pre>';                                         # Code to Show
+        print_r($output_array);                                     # Show Cmd output
+        echo '</pre></code>';                                       # End of code 
+    }
+    $alert_group_type=$output_array[0];                             # GrpType t,m,s,c              
+
+    # Get Alert group members for tooltip
+    $CMD="grep -i \"^" . $calert . "\" " . SADM_ALERT_FILE . " |awk '{print$3}' |tr -d ' '";
+    if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ;}     # Cmd we execute
+    unset($output_array);                                           # Clear output Array
+    exec ( $CMD , $output_array, $RCODE);                           # Execute command
+    if ($DEBUG) {                                                   # If in Debug Mode
+        echo "\n<br>Return code of command is : " . $RCODE ;        # Command ReturnCode
+        echo "\n<br>Content of output array :";                     # Show what's next
+        echo '<code><pre>';                                         # Code to Show
+        print_r($output_array);                                     # Show Cmd output
+        echo '</pre></code>';                                       # End of code 
+    }
+    $alert_member=$output_array[0];                                 # Alert Group Member
+
+    # Build to tooltip for the alert group 
+    switch (strtoupper($alert_group_type)) {
+        case 'M' :  $stooltip="Alert send by email to " . $alert_member ;  
+                    break;
+                    ;; 
+        case 'C' :  $stooltip="Alert send by SMS to " . $alert_member ;   
+                    break;
+                    ;; 
+        case 'T' :  $stooltip="Alert send by SMS to " . $alert_member ;
+                    break;
+                    ;; 
+        case 'S' :  $stooltip="Alert send with Slack to " . $alert_member ;
+                    break;
+                    ;; 
+        default  :  $stooltip="Invalid Alert type(" . $alert_type .")";
+                    break;
+                    ;;
+    }                    
+
+    return array ($calert, $alert_group_type, $stooltip) ; 
+}
+
+
+
+
+
+
 # ==================================================================================================
 # Function to convert a netmask (ex: 255.255.255.240) to a cidr mask (ex: 28):
 # Example: mask2cidr('255.255.255.0') would return 24 
@@ -144,6 +240,8 @@ function mask2cidr($wmask)
     $base = ip2long('255.255.255.255');
     return 32-log(($long ^ $base)+1,2);
 }
+
+
 
 # ==================================================================================================
 # Function to convert a CIDR (Example: 24) to Netmask (Example: 255.255.255.000) 
@@ -158,6 +256,8 @@ function cidr2mask($cidr) {
     $subnet_long = $max_ip << (32 - $cidr);                             # Calculate netmask
     return long2ip($subnet_long);                                       # Return NetMask
 }
+
+
 
 # ==================================================================================================
 # Function getEachIpInRange return an array of ip address in CIDR Received (Ex: '192.168.1.0/24')
@@ -186,6 +286,8 @@ function getEachIpInRange ($cidr) {
     }
     return $ips;
 }
+
+
 
 # ==================================================================================================
 #                      Update the crontab based on the $paction parameter
@@ -366,6 +468,8 @@ function calculate_osupdate_date($W1stMth,$WFreq,$Week1,$Week2,$Week3,$Week4,$WU
     return $UPD_DATE;
 }
 
+
+
 # ==================================================================================================
 #               Popup Message received as parameter and wait for OK to be pressed
 # ==================================================================================================
@@ -439,89 +543,84 @@ function mysql_date_2_DDMMYYYY( $mysql_date ) {
 }
 
 
+# ==================================================================================================
+# Function: 
+#   - Return the path to the linux distribution logo.
+# Parameter : 
+#   - Name of the distribution
+# Return :
+#   - Path to the image (logo) file.
+#   - The url to the distribution web page
+# ==================================================================================================
+function sadm_return_logo($WOS) {
+
+    $ititle = ucfirst($WOS) . " documentation";
+    
+    switch (strtoupper($WOS)) {
+        case 'REDHAT' :
+            $iurl='https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux' ;
+            $ipath='/images/logo_redhat.png';
+            break;
+        case 'FEDORA' :
+            $iurl='https://docs.fedoraproject.org/en-US/docs/' ;
+            $ipath='/images/logo_fedora.png';
+            break;
+        case 'MACOSX' :
+            $iurl='https://support.apple.com/guide/mac-help/welcome/mac' ;
+            $ipath='/images/logo_apple.png';
+            break;
+        case 'CENTOS' :
+            $iurl='https://docs.centos.org/en-US/docs/' ;
+            $ipath='/images/logo_centos.png';
+            break;
+        case 'UBUNTU' :
+            $iurl='https://help.ubuntu.com/' ;
+            $ipath='/images/logo_ubuntu.png';
+            break;
+        case 'LINUXMINT' :
+            $iurl='https://linuxmint.com/documentation.php' ;
+            $ipath='/images/logo_linuxmint.png';
+            break;
+        case 'DEBIAN' :
+            $iurl='https://www.debian.org/doc/' ;
+            $ipath='/images/logo_debian.png';
+            break;
+        case 'RASPBIAN' :
+            $iurl='https://www.raspbian.org/RaspbianDocumentation' ;
+            $ipath='/images/logo_raspbian.png';
+            break;
+        case 'SUSE' :
+            $iurl='https://doc.opensuse.org/' ;
+            $ipath='/images/logo_suse.png';
+            break;
+        case 'AIX' :
+            $iurl='https://www.ibm.com/docs/en/aix/7.2?topic=aix-pdfs' ;
+            $ipath='/images/logo_aix.png';
+            break;
+        default:
+            $iurl='https://en.wikipedia.org/wiki/Linux' ;
+            $ipath='/images/logo_linux.png';
+            break;
+    }
+
+    return array ($ipath, $iurl, $ititle) ; 
+}
+
+
 
 # ==================================================================================================
-# Show Distribution Logo as a celle in a table
+# Show Distribution Logo as a cell in a table
 # ==================================================================================================
 function sadm_show_logo($WOS) {
 
-    switch (strtoupper($WOS)) {
-        case 'REDHAT' :
-            echo "<td class='dt-center'>";
-            echo "<a href='http://www.redhat.com' ";
-            echo "title='Server $whost is a RedHat server - Visit redhat.com'>";
-            echo "<img src='/images/logo_redhat.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'FEDORA' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://getfedora.org' ";
-            echo "title='Server $whost is a Fedora server - Visit getfedora.org'>";
-            echo "<img src='/images/logo_fedora.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'MACOSX' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://apple.com' ";
-            echo "title='Server $whost is an Apple System - Visit apple.com'>";
-            echo "<img src='/images/logo_apple.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'CENTOS' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://www.centos.org' ";
-            echo "title='Server $whost is a CentOS server - Visit centos.org'>";
-            echo "<img src='/images/logo_centos.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'UBUNTU' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://www.ubuntu.com/' ";
-            echo "title='Server $whost is a Ubuntu server - Visit ubuntu.com'>";
-            echo "<img src='/images/logo_ubuntu.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'LINUXMINT' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://linuxmint.com/' ";
-            echo "title='Server $whost is a LinuxMint server - Visit linuxmint.com'>";
-            echo "<img src='/images/logo_linuxmint.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'DEBIAN' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://www.debian.org/' ";
-            echo "title='Server $whost is a Debian server - Visit debian.org'>";
-            echo "<img src='/images/logo_debian.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'RASPBIAN' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://www.raspbian.org/' ";
-            echo "title='Server $whost is a Raspbian server - Visit raspian.org'>";
-            echo "<img src='/images/logo_raspbian.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'SUSE' :
-            echo "<td class='dt-center'>";
-            echo "<a href='https://www.opensuse.org/' ";
-            echo "title='Server $whost is a OpenSUSE server - Visit opensuse.org'>";
-            echo "<img src='/images/logo_suse.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        case 'AIX' :
-            echo "<td class='dt-center'>";
-            echo "<a href='http://www-03.ibm.com/systems/power/software/aix/' ";
-            echo "title='Server $whost is an AIX server - Visit Aix Home Page'>";
-            echo "<img src='/images/logo_aix.png' ";
-            echo "style='width:24px;height:24px;'></a></td>\n";
-            break;
-        default:
-            echo "<td class='dt-center'>";
-            echo "<img src='/images/logo_linux.png' style='width:32px;height:32px;'>";
-            echo "${WOS}</td>\n";
-            break;
-    }
+    list($ipath, $iurl, $ititle) = sadm_return_logo ($WOS) ;
+
+    echo "<td class='dt-center'>";
+    echo "<a href='". $iurl . "' ";
+    echo "title='" . $ititle . "'>";
+    echo "<img src='" . $ipath . "' ";
+    echo "style='width:24px;height:24px;'>"; 
+    echo "</a></td>\n";
 }
 
 
@@ -686,13 +785,20 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
         if (substr($wdow,0,1) == "Y") {                                 # If DOW begin with Y=AllWeek
             $part3 = " day"; 
         }else{                                                          # If not Get Days it Run
-            if (substr($wdow,1,1) == "Y") { $part3 = $part3 . "Sunday,"    ;  $sday="1,"; }
-            if (substr($wdow,2,1) == "Y") { $part3 = $part3 . "Monday,"    ;  $sday = $sday . "2," ;}
-            if (substr($wdow,3,1) == "Y") { $part3 = $part3 . "Tuesday,"   ;  $sday = $sday . "3," ;}
-            if (substr($wdow,4,1) == "Y") { $part3 = $part3 . "Wednesday," ;  $sday = $sday . "4," ;}
-            if (substr($wdow,5,1) == "Y") { $part3 = $part3 . "Thursday,"  ;  $sday = $sday . "5," ;}
-            if (substr($wdow,6,1) == "Y") { $part3 = $part3 . "Friday,"    ;  $sday = $sday . "6," ;}
-            if (substr($wdow,7,1) == "Y") { $part3 = $part3 . "Saturday,"  ;  $sday = $sday . "7," ;}
+            #if (substr($wdow,1,1) == "Y") { $part3 = $part3 . "Sunday,"    ;  $sday="1,"; }
+            #if (substr($wdow,2,1) == "Y") { $part3 = $part3 . "Monday,"    ;  $sday = $sday . "2," ;}
+            #if (substr($wdow,3,1) == "Y") { $part3 = $part3 . "Tuesday,"   ;  $sday = $sday . "3," ;}
+            #if (substr($wdow,4,1) == "Y") { $part3 = $part3 . "Wednesday," ;  $sday = $sday . "4," ;}
+            #if (substr($wdow,5,1) == "Y") { $part3 = $part3 . "Thursday,"  ;  $sday = $sday . "5," ;}
+            #if (substr($wdow,6,1) == "Y") { $part3 = $part3 . "Friday,"    ;  $sday = $sday . "6," ;}
+            #if (substr($wdow,7,1) == "Y") { $part3 = $part3 . "Saturday,"  ;  $sday = $sday . "7," ;}
+            if (substr($wdow,1,1) == "Y") { $part3 = $part3 . "Sun," ;  $sday="1,"; }
+            if (substr($wdow,2,1) == "Y") { $part3 = $part3 . "Mon," ;  $sday = $sday . "2," ;}
+            if (substr($wdow,3,1) == "Y") { $part3 = $part3 . "Tue," ;  $sday = $sday . "3," ;}
+            if (substr($wdow,4,1) == "Y") { $part3 = $part3 . "Wed," ;  $sday = $sday . "4," ;}
+            if (substr($wdow,5,1) == "Y") { $part3 = $part3 . "Thu," ;  $sday = $sday . "5," ;}
+            if (substr($wdow,6,1) == "Y") { $part3 = $part3 . "Fri," ;  $sday = $sday . "6," ;}
+            if (substr($wdow,7,1) == "Y") { $part3 = $part3 . "Sat," ;  $sday = $sday . "7," ;}
         }
     }else{
         $part3=""; 
@@ -859,6 +965,64 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
 function StartsWith($MainString, $searchString) {
     return strpos($MainString, $searchString) === 0;
 }
+
+
+
+
+# ==================================================================================================
+# This function receive a string that has to be in ($SADMIN/www/doc/pgm2doc.cfg) first column.
+# It return the second column of the same file, which is the documentation link of string received.
+# If RefString received isn't found in the pgm2doc file or file don't exist, return an empty string.
+#
+# Example of $SADMIN/www/doc/pgm2doc.cfg content : 
+#   alert_group_cfg                ,  alert-group-cfg
+#   how_to_sms                     ,  how-to-sms
+#   sadm_backup                    ,  sadm-backup
+#   sadm_cfg2html                  ,  sadm-cfg2html
+#   sysmon_filesystem              ,  sysmon-filesystem
+#   sysmon_https                   ,  sysmon-https
+#   sysmon_load_average            ,  sysmon-load-average
+#
+# ==================================================================================================
+function getdocurl($RefString) {
+    global $DEBUG ;
+
+    $RefString = strtolower($RefString); 
+
+    # Open Documentation Link File ($SADMIN/www/doc/pgm2doc.cfg)
+    try {
+      if ( !file_exists(SADM_PGM2DOC) ) { 
+          throw new Exception("File not found (" . SADM_PGM2DOC . ")."); 
+      }
+      $fh = fopen(SADM_PGM2DOC, "r");                                   # Open pgm2doc file
+      if ( !$fh ) { 
+          throw new Exception("File open failed (" . SADM_PGM2DOC . ")."); 
+      } 
+    }
+    catch ( Exception $e ) {
+        sadm_fatal_error ("Unable to open file (" . SADM_PGM2DOC . ").");
+        return ("");
+    }
+
+    # Read file until RefString is found or End of file
+    $RefURL = "" ;                                                      # Default return value
+    while(!feof($fh)) {                                                 # Read till End Of File
+      $wline = fgets($fh);                                              # Read Line By Line    
+      if (strlen($wline) > 0) {                                         # Don't process empty Line
+          if (startsWith($wline, '#'))   { continue; }                  # Skip comment line
+          list($keyname,$doc_link) = explode(",", $wline);          # SPlit Line Key & URL
+          $keyname = str_replace(' ', '', $keyname);            # Remove Spaces
+          if ($keyname == $RefString) {                             # Key we seach for ?
+            $RefURL = str_replace(' ', '', $doc_link);                  # Remove Spaces of URL 
+            break ; 
+          } 
+      } 
+    }
+    fclose($fh);                                                        # Close File
+    return ($RefURL) ;                                                  # Return URL or empty string
+}
+
+
 
 
 

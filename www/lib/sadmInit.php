@@ -23,14 +23,18 @@
 # 2018_11_22  v3.2 Read SADMIN root directory from /etc/environment on all platform now.
 # 2019_01_11  Added: v3.3 Definitions of Backup List & Backup Exclude file.
 # 2019_02_11  Added: v3.4 Add $SADMIN/www to PHP Path
-#@2019_07_16  Update: Remove repeating error message when not connecting to Database.
-#@2019_08_16  Update: v3.5 Correct Typo for number of rear backup to keep
-#@2019_08_19 Update: v3.6 Added Global Var. SADM_REAR_EXCLUDE_INIT for Rear Initial Options file.
+# 2019_07_16  Update: Remove repeating error message when not connecting to Database.
+# 2019_08_16  Update: v3.5 Correct Typo for number of rear backup to keep
+# 2019_08_19 Update: v3.6 Added Global Var. SADM_REAR_EXCLUDE_INIT for Rear Initial Options file.
+# 2020_12_26 Update: v3.7 Added Global Var. SADM_WWW_ARC_DIR for Server archive when deleted.
+# 2021_08_02 nolog v3.8 Added 'SADM_PGM2DOC' for Doc to Links file definition.
+# 2021_08_17 nolog v3.9 Added "SADM_MONITOR_UPDATE_INTERVAL" 
+#@2021_09_15 web v3.10 Load new Var. SADM_MONITOR_RECENT_COUNT,SADM_MONITOR_RECENT_EXCLUDE
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
     # Set SADMIN PHP Library Version NUmber
-    define("SADM_PHP_LIBVER","3.6");
+    define("SADM_PHP_LIBVER","3.8");
 
     # Setting the HOSTNAME Variable
     list($HOSTNAME) = explode ('.', gethostname());                     # HOSTNAME without domain
@@ -99,6 +103,7 @@ define("SADM_WWW_DIR"      , SADM_BASE_DIR . "/www");                   # Web Si
 define("SADM_WWW_DOC_DIR"  , SADM_WWW_DIR  . "/doc");                   # Web server Doc Dir
 define("SADM_WWW_CFG_DIR"  , SADM_WWW_DIR  . "/cfg");                   # Web Server CFG Dir
 define("SADM_WWW_DAT_DIR"  , SADM_WWW_DIR  . "/dat");                   # Web Server Data Dir
+define("SADM_WWW_ARC_DIR"  , SADM_WWW_DAT_DIR  . "/archive");           # Web Server Archive Dir
 define("SADM_WWW_LIB_DIR"  , SADM_WWW_DIR  . "/lib");                   # Web Server Library Dir
 define("SADM_WWW_RRD_DIR"  , SADM_WWW_DIR  . "/rrd");                   # Web servers RRD Dir
 define("SADM_WWW_TMP_DIR"  , SADM_WWW_DIR  . "/tmp");                   # Web Server Temp Dir
@@ -107,7 +112,8 @@ define("SADM_WWW_NET_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/net");    # Web ne
 
 
 # SADMIN FILES DEFINITION
-define("SADM_CFG_FILE"            , SADM_CFG_DIR     . "/sadmin.cfg");          # Config File
+define("SADM_CFG_FILE"            , SADM_CFG_DIR     . "/sadmin.cfg");          # SADMIN Config File
+define("SADM_PGM2DOC"             , SADM_WWW_DOC_DIR . "/pgm2doc_link.cfg");    # PGM to Doc link
 define("SADM_BACKUP_LIST_INIT"    , SADM_CFG_DIR     . "/.backup_list.txt");    # BackupList Init
 define("SADM_BACKUP_EXCLUDE_INIT" , SADM_CFG_DIR     . "/.backup_exclude.txt"); # Backup Exclude Init
 define("SADM_REAR_EXCLUDE_INIT"   , SADM_CFG_DIR     . "/.rear_exclude.txt");   # ReaR Exclude Init
@@ -166,7 +172,8 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_NETWORK4")      { define("SADM_NETWORK4"      , trim($fvalue));}
           if (trim($fname) == "SADM_NETWORK5")      { define("SADM_NETWORK5"      , trim($fvalue));}
           if (trim($fname) == "SADM_SSH_PORT")      { define("SADM_SSH_PORT"      , trim($fvalue));}
-          if (trim($fname) == "SADM_RRDTOOL")       { define("SADM_RRDTOOL"       , trim($fvalue));}
+          #if (trim($fname) == "SADM_RRDTOOL")       { define("SADM_RRDTOOL"       , trim($fvalue));}
+          define ("SADM_RRDTOOL" , '/usr/bin/rrdtool') ;
           if (trim($fname) == "SADM_BACKUP_NFS_SERVER")      { define("SADM_BACKUP_NFS_SERVER"      , trim($fvalue));}
           if (trim($fname) == "SADM_BACKUP_NFS_MOUNT_POINT") { define("SADM_BACKUP_NFS_MOUNT_POINT" , trim($fvalue));}
           if (trim($fname) == "SADM_DAILY_BACKUP_TO_KEEP")   { define("SADM_DAILY_BACKUP_TO_KEEP"   , trim($fvalue));}
@@ -186,7 +193,13 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_REAR_NFS_SERVER")        { define("SADM_REAR_NFS_SERVER"        , trim($fvalue));}
           if (trim($fname) == "SADM_REAR_NFS_MOUNT_POINT")   { define("SADM_REAR_NFS_MOUNT_POINT"   , trim($fvalue));}
           if (trim($fname) == "SADM_REAR_BACKUP_TO_KEEP")    { define("SADM_REAR_BACKUP_TO_KEEP"    , trim($fvalue));}
+          if (trim($fname) == "SADM_MONITOR_UPDATE_INTERVAL") {define("SADM_MONITOR_UPDATE_INTERVAL", trim($fvalue));}
+          if (trim($fname) == "SADM_MONITOR_RECENT_COUNT")   { define("SADM_MONITOR_RECENT_COUNT"   , trim($fvalue));}
+          if (trim($fname) == "SADM_MONITOR_RECENT_EXCLUDE") { define("SADM_MONITOR_RECENT_EXCLUDE" , trim($fvalue));}
     }
+    if ( ! defined(SADM_MONITOR_RECENT_COUNT))    {define("SADM_MONITOR_RECENT_COUNT" , 10);}
+    if ( ! defined(SADM_MONITOR_UPDATE_INTERVAL)) {define("SADM_MONITOR_UPDATE_INTERVAL", 60);}
+    if ( ! defined(SADM_MONITOR_RECENT_EXCLUDE))  {define("SADM_MONITOR_RECENT_EXCLUDE", "sadm_nmon_watcher");}
     fclose($handle);
 } else {
     echo "<BR>\nError opening the SADMIN configuration file " . SADM_CFG_FILE . "<BR>";

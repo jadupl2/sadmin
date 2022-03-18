@@ -2,21 +2,21 @@
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
 #   Title       :   sadm_support_request.sh
-#   Synopsis    :   Run this script to create a log file used to submit problem.
+#   Synopsis    :   Create a log file used to submit problem.
 #   Version     :   1.0
 #   Date        :   30 March 2018 
 #   Requires    :   sh 
 #   Description :   Collect logs, and files modified during installation for debugging.
-#                   If problem detectied during installation, run this script an send the
-#                   resulting log (setup_result.log) to support at support@sadmin.ca
+#                   If problem detected during installation, run this script an send the
+#                   resulting log (setup_result.log) to support at sadmlinux@gmail.com
 #
-#   This code was originally written by Jacques Duplessis <jacques.duplessis@sadmin.ca>,
-#   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca> - http://www.sadmin.ca
+#   This code was originally written by Jacques Duplessis <sadmlinux@gmail.com>,
+#   Copyright (C) 2016-2018 Jacques Duplessis <sadmlinux@gmail.com> - https://www.sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
-
+#
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
@@ -37,8 +37,8 @@
 # 2018_12_31 Added: sadm_support_request.sh v1.8 - Remove blank line & Comment Line (#) from output.
 # 2019_06_10 Updated: v1.9 Add /etc/postfix/main.cf to support request output.
 # 2019_06_11 Updated: V2.0 Code Revision and performance improvement.
-#@2019_11_28 Updated: V2.1 When run on SADM server, will include crontab (osupdate,backup,rear).
-#@2019_12_02 Updated: V2.2 Add execution of sadm_check_requirenent.
+# 2019_11_28 Updated: V2.1 When run on SADM server, will include crontab (osupdate,backup,rear).
+# 2019_12_02 Updated: V2.2 Add execution of sadm_check_requirenent.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
@@ -153,19 +153,18 @@ run_command()
     SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Full Path of the script
 
     if [ ! -x "${SADM_BIN_DIR}/${SCRIPT}" ]                             # If SCript do not exist
-        then sadm_writelog "[ERROR] ${SADM_BIN_DIR}/${SCRIPT} Don't exist or can't execute" 
-             sadm_writelog " " 
+        then sadm_write "[ERROR] ${SADM_BIN_DIR}/${SCRIPT} Don't exist or can't execute\n\n" 
              return 1                                                   # Return Error to Callerr
     fi 
 
-    sadm_writelog "Running $SCMD ..."                                   # Show Command about to run
+    sadm_write "Running $SCMD ...\n"                                    # Show Command about to run
     $SCMD >${CMDLOG} 2>&1                                               # Run Script Collect output
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] $SCRIPT Terminate with Error"       # Signal Error in Log
-             sadm_writelog "Check Log for further detail about Error"   # Show user where to look
-             sadm_writelog "${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SCRIPT}.log" # Show Log Name    
+        then sadm_write "[ERROR] $SCRIPT Terminate with Error\n"        # Signal Error in Log
+             sadm_write "Check Log for further detail about Error\n"    # Show user where to look
+             sadm_write "${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SCRIPT}.log\n" # Show Log Name    
              return 1                                                   # Return Error to Callerr
-        else sadm_writelog "[SUCCESS] Script $SCRIPT terminated"        # Advise user it's OK
+        else sadm_write "[SUCCESS] Script $SCRIPT terminated.\n"        # Advise user it's OK
     fi
     return 0                                                            # Return Success to Caller
 }
@@ -202,7 +201,7 @@ main_process()
     fi 
 
     # Run the Shell Library Demo 
-    sadm_writelog " "                                                   # Blank LIne
+    sadm_write "\n"                                                     # Blank LIne
     CMD="sadmlib_std_demo"                                              # Script Name to execute
     CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${CMD}.log"                # Script Log file Name
     run_command "${CMD}.sh" "$CMDLOG"                                   # Run Shell Library Demo
@@ -210,7 +209,7 @@ main_process()
     if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove log
 
     # Run the Python Library Demo 
-    sadm_writelog " "                                                   # Blank LIne
+    sadm_write "\n"                                                     # Blank LIne
     CMD="sadmlib_std_demo"                                              # Script Name to execute
     CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${CMD}.log"                # Script Log file Name
     run_command "${CMD}.py" "$CMDLOG"                                   # Run Python Library Demo
@@ -218,8 +217,8 @@ main_process()
     if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove tmp log
 
     # Run the check requirement script.
-    sadm_writelog " "                                                   # Blank LIne
-    CMD="sadm_check_requirements.sh"                                    # Script Name to execute
+    sadm_write "\n"                                                     # Blank LIne
+    CMD="sadm_requirements.sh"                                          # Script Name to execute
     CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${CMD}.log"                # Script Log file Name
     run_command "${CMD}" "$CMDLOG"                                      # Run Check Requirement
     print_file "${CMDLOG}"                                              # Print tmp log 
@@ -229,8 +228,7 @@ main_process()
     if [ "$(sadm_get_ostype)" = "LINUX" ]                               # If Current O/S is Linux 
         then CMD="chage -l $SADM_USER"                                  # Command Name to execute
              CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_chage.log"        # Command Log file Name
-             sadm_writelog " "                                          # Blank LIne
-             sadm_writelog "Running $CMD ..."                           # Show Command about to run
+             sadm_write "\nRunning $CMD ...\n"                          # Show Command about to run
              $CMD > $CMDLOG                                             # Exec Command
              print_file "${CMDLOG}"                                     # Print tmp log 
              if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove log
@@ -239,16 +237,14 @@ main_process()
     # Create file with SADMIN tree in it
     which tree >/dev/null 2>&1
     if [ $? -eq 0 ] 
-        then sadm_writelog " "                                          # Blank LIne
-             TLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_sadm_support_tree.log"
-             sadm_writelog "Recording $SADMIN tree structure list in $TLOG ..."
+        then TLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_sadm_support_tree.log"
+             sadm_write "Recording $SADMIN tree structure list in $TLOG ...\n"
              tree > $TLOG
     fi
     
     # List of files in SADMIN
-    sadm_writelog " "                                                   # Blank LIne
     LLOG="$SADM_LOG_DIR/${SADM_HOSTNAME}_sadm_support_files_list.log" 
-    sadm_writelog "Creating a listing of all files in $SADMIN to $LLOG ..."
+    sadm_write "Creating a listing of all files in $SADMIN to $LLOG ...\n"
     find $SADMIN -ls > $LLOG
 
     return 0
@@ -291,8 +287,8 @@ main_process()
 
     # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
+             sadm_write "Process aborted.\n"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S with Error
     fi
@@ -311,7 +307,7 @@ main_process()
         then echo "tar -cvzf ${SADM_TMP_DIR}/${SADM_INST}.tgz ${SADM_LOG}"
     fi
     tar -cvzf $SRQ_FILE log >/dev/null 2>&1
-    echo "Please send the file '$SRQ_FILE' to support@sadmin.ca."
+    echo "Please send the file '$SRQ_FILE' to sadmlinux@gmail.com."
     echo "We will get back to you as soon as possible."
     echo " "                                                            # Insert Blank Line
     cd $BACDIR

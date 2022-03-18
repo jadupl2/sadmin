@@ -2,7 +2,7 @@
 /* Change Log
     2018_02_08 JDuplessis
         V 2.1 Added Bottom Button on Server Update Page
-    
+#@2020_03_03 Update: Standardize Link Color used within site.  
 --------------------------------------------------------------------------------------------------*/
 
 /* Datatable Item per page box color
@@ -57,6 +57,33 @@ hr {
     padding         :   0;
     background-color:   black;
 }
+
+
+/* Default Link Color */
+a:link {
+    color: Blue ;
+    background-color: transparent;
+    /* text-decoration: none; */
+  }
+  a:visited {
+    color: #FF9800;
+    background-color: transparent;
+    /* text-decoration: none; */
+}
+  
+  a:hover {
+    color: red;
+    background-color: transparent;
+    text-decoration: underline;
+  }
+  
+  a:active {
+    color: yellow;
+    background-color: transparent;
+    text-decoration: underline;
+  }
+
+
 /* CSS for Standard Table */
 table {
     font-family     :   'Arial';
@@ -77,9 +104,9 @@ table {
 /* Table Heading Line CSS */
 th {
     font-family     :   arial;
-    /* padding         :   0px;
+    padding         :   1px;
     margin-top      :   0px;
-    margin-bottom   :   0px; */
+    margin-bottom   :   0px; 
     background-color:   #006456; 
     color           :   #fff;
     /* text-transform  :   uppercase; */
@@ -120,7 +147,6 @@ table thead td {
     text-align      :   center;
     background-color:   #124f44; 
     color           :   white;
-    padding         :   5px 5px 5px 5px;
     margin          :   2px;
     border-width    :   1px;
     border-style    :   solid;
@@ -131,14 +157,21 @@ table thead td {
 	box-shadow      :   3px 3px 5px #888;
 	position        :   relative;
 	top             :   5px;    
-    /* height          :   120px;
-    padding         :   1px 1px 1px 5px; */
+	bottom          :   5px;    
+    height          :   100px;
+    /* padding         :   1px 1px 1px 5px; */
 }
 
 
 /* ---------------------------------------------------------------------------------------------- */
 /*  THIS SECTION IS USED FOR THE MENU LINE IN THE HEADING AT THE TOP OF PAGE OF EVERY WEB PAGE    */
 /* ---------------------------------------------------------------------------------------------- */
+
+#quick_link     a:visited {color : black  ; font-size : 14px;}
+#quick_link     a:link    {color : white  ; font-size : 14px;}
+#quick_link     a:hover   {color : yellow ; font-size : 14px;}
+#quick_link     a:active  {color : green  ; font-size : 14px;}
+
 #sadmTopMenu{
     padding         :   2px;
     /* text-align      :   center; */
@@ -269,7 +302,7 @@ table thead td {
     font-family     :   Verdana, Geneva, sans-serif;
     /* background-color:   #fff5c3;
     color           :   black; */
-    background-color:   #2d3139;
+    background-color:   #006456;
     color           :    white;
     width           :   45%;
     margin-top      :   5%;
@@ -289,7 +322,7 @@ table thead td {
 .simple_label {
     float           :   left;
     width           :   210px;
-    font-weight     :   bold; 
+    font-weight     :   normal; 
     text-align      :   right;   
     margin-right    :   15px;
 
@@ -298,10 +331,10 @@ table thead td {
 .simple_input {
     float           :   left;
     margin-bottom   :   10px;
-    color           :   white;
-    background-color:   #454c5e;
+    color           :   White;
+    background-color:   #006456;
     width           :   200px;
-    border          :   1px solid  black;
+    /*border          :   1px solid  black; */
     
 }
 /* Attribute for the Category, Group Main Screen Table (That List All Category, Group) */
@@ -335,9 +368,9 @@ table thead td {
     font-family     :   Verdana, Geneva, sans-serif;
     /* background-color:   #fff5c3;
     color           :   black; */
-    background-color:   #2d3139;
-    color           :    white;
-    width           :   58%;
+    background-color:   #006456;
+    color           :   white;
+    width           :   60%;
     margin-top      :   2%;
     margin-left     :   auto;
     margin-right    :   auto;
@@ -345,32 +378,32 @@ table thead td {
     font-size       :   12px;
     text-align      :   left;
     padding         :   2%;
-    border-width    :   1px;
+    border-width    :   0px;
     border-style    :   solid;
     border-color    :   #000000;
     border-radius   :   10px;
-    line-height     :   1.7;    
+    line-height     :   1.5;    
     /* background-color:   #8ee9d4;      */
 }
 /* Attribute for Column Name at the left of the form */
 .double_label {
     float           :   left;
     width           :   200px;
-    font-weight     :   bold;    
+    /*font-weight     :   normal;    */
     text-align      :   right;
     margin-right    :   10px;
 }
 /* Attribute for column Input at the right of the screen in the form */
 .double_input {
-    margin-bottom   :   8px;
-    color           :   white;
-    background-color:   #454c5e;
+    margin-bottom   :   10px;
+    color           :   White;
+    background-color:   #006456;
     float           :   left;
     /* width           :   200px; */
 }
 
 .input_color {
-    color           :  #454c5e;
+    color           :  White ;
     font-size       :   14px;
   }
 
@@ -400,7 +433,7 @@ table thead td {
 /* ---------------------------------------------------------------------------------------------- */
 div.server_data {
     font-family     :   Geneva, sans-serif;
-    background-color:   #2d3139;
+    background-color:   #006456;
     color           :    white;
     margin-left     :   5px;
     margin-right    :   auto;
@@ -420,7 +453,7 @@ div.server_data {
 
 /* ===== Server Left side of Server Info Screen  ===== */
 div.server_leftside {
-    width           : 43%;
+    width           : 45%;
     float           : left;
     margin-left     : 1px; 
     padding         : 0px;
@@ -428,9 +461,9 @@ div.server_leftside {
 }
 /* ===== Server Right side of Server Info Screen  ===== */
 div.server_rightside {
-    width           : 50%;
+    width           : 45%;
     float           : left;
-    margin-left     : 10px; 
+    margin-left     : 1px; 
     padding         : 0px;
     /* background-color: blue; */
 }
@@ -438,9 +471,9 @@ div.server_rightside {
 /* ===== Label on left size of the Server Info Screen ==== */
 div.server_left_label {
     float           : left;
-    width           : 38%;
-    font-weight     : bold;
-    text-align      : right;
+    width           : 35%;
+    font-weight     : normal;
+    text-align      : left;
     /*font-family: "Verdana";*/
     /* font: 13px arial, sans-serif; */
     /*background-color: yellow;*/
@@ -449,9 +482,9 @@ div.server_left_label {
 /* ===== Label on right size of the Server Info Screen ==== */
 div.server_right_label {
     float           : left;
-    width           : 38%;
-    font-weight     : bold;
-    text-align      : right;
+    width           : 40%;
+    font-weight     : normal;
+    text-align      : left;
     /* font: 13px arial, sans-serif; */
     /*background-color: yellow;*/
 }
@@ -459,11 +492,12 @@ div.server_right_label {
 /* ===== Data on right size of Server Info Screen  ===== */
 div.server_left_data {
     margin-bottom   : 4px;
-    margin-left     : 40%;
+    margin-left     : 30%;
     /* color           : black;
     background-color: #f5f4f0; */
-    background-color: #333333;
-    color           : white;
+    background-color: #FFFFFF;
+    text-align      : left;
+    color           : black;
     /* 
     background-color: #4178be;
     */
@@ -481,10 +515,11 @@ div.server_right_data {
     padding-left    : 5px;
     /* color           : black;
     background-color: #f5f4f0; */
-    color           : white;
-    background-color: #333333;
+    color           : black;
+    background-color: #FFFFFF;
+    text-align      : left;
     border          : 1px solid black;
-    width           : 60%;
+    width           : 68%;
     /* font: 13px arial, sans-serif; */
     /*background-color: green;*/
 }
@@ -494,6 +529,7 @@ div.server_top_buttons {
     font-family     :   Geneva, sans-serif;
     /* background-color:   #fff5c3; */
     background-color:   #2d3139;
+    background-color:   #124f44;
     color           :    white;
     margin-left     :   5px;
     margin-right    :   auto;

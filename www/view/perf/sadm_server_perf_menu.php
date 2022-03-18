@@ -7,7 +7,7 @@
 #   Requires :  php
 #   Synopsis :  Present Options to Generate Performance Graphics for Server(s)#   
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -27,7 +27,7 @@
 #       V 1.1 Add Default Start/End Date for Adhoc graph 
 #   2018_05_06 JDuplessis
 #       V 1.2 Remove unnecessary variable
-#@2019_01_17 Change: v1.3 Date Input now use HTML 5 Format 
+# 2019_01_17 Change: v1.3 Date Input now use HTML 5 Format 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.

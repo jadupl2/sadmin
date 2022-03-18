@@ -17,6 +17,7 @@
 # 2019_03_17 Fix: v1.7 Wasn't reporting error coming from result code history (rch) file.
 # 2019_04_25 Update: v1.8 Was showing 'Nothing to report' althought there was info displayed.
 # 2019_06_07 Update: v1.9 Include the alarm type in the screen output.
+# 2020_04_08 mon: v2.0 Correct alignment error.
 #
 #===================================================================================================
 use English;
@@ -29,7 +30,7 @@ my $SADM_BASE_DIR       = "$ENV{'SADMIN'}" || "/sadmin";                # SADMIN
 my $SADM_BIN_DIR        = "$SADM_BASE_DIR/bin";                         # SADMIN bin Directory
 my $SADM_WDATA_DIR      = "${SADM_BASE_DIR}/www/dat";                   # Dir where all *.rpt reside
 my $XDISPLAY            = "$ENV{'DISPLAY'}";                            # Variable ENV Display
-my $VERSION_NUMBER      = "1.9";                                        # SADM Version Number
+my $VERSION_NUMBER      = "2.0";                                        # SADM Version Number
 my $CLEAR               = `tput clear`;                                 # Clear Screen escape code
 my $RPT_FILE            = "$SADM_BASE_DIR/tmp/sadm_sysmon_tui_rpt.$$";  # Work for rpt files
 my $RCH_FILE            = "$SADM_BASE_DIR/tmp/sadm_sysmon_tui_rch.$$";  # Work for rch files
@@ -79,7 +80,8 @@ sub display_report {
             $RTime  = substr($RSTime,0,5);                              # Start Time minus seconds
             $RDesc  = "Script $RScript Running";                        # Name of the running script
         }
-        printf "%-8s %-10s %-10s %-5s %-12s %-15s %-13s %-30s\n",$RType,$RNode,$RDate,$RTime,$RGrp,"Linux","Script",$RDesc;
+        #printf "%-8s %-10s %-10s %-5s %-12s %-15s %-13s %-30s\n",$RType,$RNode,$RDate,$RTime,$RGrp,"Linux","Script",$RDesc;
+        printf "%-8s %-10s %-10s %-5s %-15s %-13s %-30s\n",$RType,$RNode,$RDate,$RTime,$RGrp,"Script",$RDesc;
         $noreport =  1;                                                 # Flag at least line in report
     }
     close (SADMRCH);                                                    # Close RCH Work File

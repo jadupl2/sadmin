@@ -32,9 +32,9 @@
 # 2018_05_14 V2.5 Add SADM_USE_RCH Variable to use or not a RCH FIle (Set to 'N' for this Script)
 # 2018_09_20 v2.6 Update code to align with latest Library
 # 2019_02_25 Change: v2.7 Nicer color presentation and code cleanup.
-#@2019_11_11 Change: v2.8 Add RPM Tools option in menu.
-#@2019_11_21 Change: v2.10 Minor correction to RPM Tools Menu
-#@2019_11_22 Change: v2.11 Restrict RPM & DEV Menu when available only.
+# 2019_11_11 Change: v2.8 Add RPM Tools option in menu.
+# 2019_11_21 Change: v2.10 Minor correction to RPM Tools Menu
+# 2019_11_22 Change: v2.11 Restrict RPM & DEV Menu when available only.
 #=================================================================================================== 
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x

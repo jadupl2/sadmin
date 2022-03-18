@@ -2,7 +2,7 @@
 #---------------------------------------------------------------------------------------------------
 # Shellscript:	sadmlib_fs.sh - Contains SADM FileSystem Related functions
 # Version    :	2.0
-# Author     :	jacques duplessis (jacques.duplessis@sadmin.ca)
+# Author     :	jacques duplessis (sadmlinux@gmail.com)
 # Date       :	2016-06-01
 # Requires   :	bash shell - lvm installed
 # Category   :	filesystem tools
@@ -17,7 +17,7 @@
 # 2018_05_18 v2.2 Adapted to be used by Auto Filesystem Increase
 # 2018_06_12 v2.3 Fix Problem with get_mntdata was not returning good lvsize (xfs only)
 # 2018_09_20 v2.4 Fix problem with filesystem commands options
-#@2019_02_25 Improvement: v2.5 SADMIN Filesystem Library - Major code revamp and bug fixes.
+# 2019_02_25 Improvement: v2.5 SADMIN Filesystem Library - Major code revamp and bug fixes.
 #===================================================================================================
 # 
 #

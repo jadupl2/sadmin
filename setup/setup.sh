@@ -8,13 +8,13 @@
 #   Requires    :   sh 
 #   Description :   Make sure python 3 is installed and then execute sadm_setup.py
 #
-#   This code was originally written by Jacques Duplessis <jacques.duplessis@sadmin.ca>,
-#   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca> - https://www.sadmin.ca
+#   This code was originally written by Jacques Duplessis <sadmlinux@gmail.com>,
+#   Copyright (C) 2016-2018 Jacques Duplessis <sadmlinux@gmail.com> - https://www.sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
-
+#
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
@@ -36,64 +36,35 @@
 # 2019_03_08 Updated: v2.2 Add EPEL repository when installing RHEL or CENTOS 8
 # 2019_03_17 Fix: v.2.3 Fix O/S detection for Redhat/CentOS
 # 2019_03_21 Nolog: v.2.4 Minor typo change.
-#@2019_04_19 Update: v2.5 Will now install python 3.6 on CentOS/RedHat 7 instead of 3.4
-#@2019_04_19 Fix: v2.6 Solve problem with installing 'pymysql' module.
-#@2019_04_19 Fix: v2.7 Solve problem with pip3 on Ubuntu.
-#@2019_06_19 Update: v2.8 Update procedure to install CentOS/RHEL repository for version 5,6,7,8
-#
-# RHEL/CentOS 8:
-# yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-# on RHEL 8 it is recommended to also enable the codeready-builder-for-rhel-8-*-rpms repository 
-# since EPEL packages may depend on packages from it:
-# subscription-manager repos --enable "codeready-builder-for-rhel-8-*-rpms"
-#
-#[root@rhel8 ~]# subscription-manager repos --enable "codeready-builder-for-rhel-8-*-rpms"
-#Repository 'codeready-builder-for-rhel-8-x86_64-source-rpms' is enabled for this system.
-#Repository 'codeready-builder-for-rhel-8-x86_64-rpms' is enabled for this system.
-#Repository 'codeready-builder-for-rhel-8-x86_64-debug-rpms' is enabled for this system.
-#[root@rhel8 ~]# dnf update
-#Updating Subscription Management repositories.
-#Red Hat CodeReady Linux Builder for RHEL 8 x86_64 (Debug RPMs)                    632 kB/s | 1.5 MB     00:02
-#Red Hat CodeReady Linux Builder for RHEL 8 x86_64 (RPMs)                          853 kB/s | 2.2 MB     00:02
-#Red Hat CodeReady Linux Builder for RHEL 8 x86_64 (Source RPMs)                    85 kB/s | 196 kB     00:02
-#Red Hat Enterprise Linux 8 for x86_64 - AppStream (RPMs)                           17 kB/s | 4.5 kB     00:00
-#Red Hat Enterprise Linux 8 for x86_64 - BaseOS (RPMs)                              15 kB/s | 4.0 kB     00:00
-#Dependencies resolved.
-#Nothing to do.
-#Complete!
-#[root@rhel8 ~]#
-#
-#    RHEL/CentOS 8:
-#
-#   # yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-#
-#    on RHEL 8 it is recommended to also enable the codeready-builder-for-rhel-8-*-rpms repository since EPEL packages may depend on packages from it:
-#
-#   # subscription-manager repos --enable "codeready-builder-for-rhel-8-*-rpms"
-#
-#    on CentOS 8 it is recommended to also enable the PowerTools repository since EPEL packages may depend on packages from it:
-#
-#   # dnf config-manager --set-enabled PowerTools
-#
-#
-#NOTE for RHEL 8 users with certificate subscriptions
-#EPEL packages assume that the 'codeready-builder' repository is enabled. You can do this with: subscription-manager repos --enable "codeready-builder-for-rhel-8-*-rpms"
-#
-#NOTE for CentOS 8 users
-#EPEL packages assume that the 'PowerTools' repository is enabled. You can do this with: dnf config-manager --set-enabled PowerTools
-#
-#NOTE for CentOS users
-#You can install EPEL by running yum install epel-release. The package is included in the CentOS Extras repository, enabled by default.
-#
+# 2019_04_19 Update: v2.5 Will now install python 3.6 on CentOS/RedHat 7 instead of 3.4
+# 2019_04_19 Fix: v2.6 Solve problem with installing 'pymysql' module.
+# 2019_04_19 Fix: v2.7 Solve problem with pip3 on Ubuntu.
+# 2019_06_19 Update: v2.8 Update procedure to install CentOS/RHEL repository for version 5,6,7,8
+# 2019_12_20 Update: v2.9 Better verification and installation of python3 (If needed)
+# 2019_12_27 Update: v3.0 Add recommended EPEL Repos on CentOS/RHEL 8.
+# 2019_12_27 Update: v3.1 On RHEL/CentOS 6/7, revert to Python 3.4 (3.6 Incomplete on EPEL)
+# 2020_01_18 Fix: v3.2 Fix problem installing pip3, when running setup.sh script.
+# 2020_02_23 Fix: v3.3 Fix some problem installing lsb_release and typo with 'dnf' command..
+# 2020_02_23 Fix: v3.3 Fix some problem installing lsb_release and typo with 'dnf' command..
+# 2020_04_19 Update: v3.4 Minor logging changes.
+# 2020_04_21 Update: v3.5 On RHEL/CENTOS 8 hwinfo package remove from base, use EPEL repo.
+# 2020_04_21 Update: v3.6 Change processing display & change installation dnf-utils for yum-utils.
+# 2020_04_23 Update: v3.7 Added some more error checking.
+# 2020_04_23 Fix: v3.8a Fix after Re-Tested on CentOS/RedHat 8 
+# 2020_04_27 Update: v3.9 Install 'getmac' python3 module (for subnet scan).
+# 2020_05_05 Update: v3.10 Adjust screen presentation.
+# 2020_05_14 Update: v3.11 Remove line feed after "Installing pip3" 
+# 2020_12_24 Update: v3.12 CentOSStream return CENTOS.
+#@2022_02_10 Fix: v3.13 Correct 'pip3' installation on Fedora 35
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
 
-
+ 
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='2.8'                              ; export SADM_VER           # Your Script Version
+SADM_VER='3.13'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -105,6 +76,9 @@ if [ ! -d ${SLOGDIR} ] ; then mkdir $SLOGDIR ; fi                       # If Don
 SLOG="${SLOGDIR}/sadm_pre_setup.log"        ; export SLOG               # Script Log Name
 SADM_OSNAME=""                              ; export SADM_OSNAME        # Operating System Name 
 SADM_OSVERSION=""                           ; export SADM_OSVERSION     # O/S System Major Version#
+SADM_OSFULLVER=""                           ; export SADM_OSFULLVER     # O/S Full Version number
+SADM_OSTYPE=""                              ; export SADM_OSTYPE        # OS(AIX/LINUX/DARWIN/SUNOS) 
+SADM_PACKTYPE=""                            ; export SADM_PACKTYPE      # Package Type use on System
 
 # Screen related variable
 clr=$(tput clear)                               ; export clr            # clear the screen
@@ -131,7 +105,7 @@ add_epel_repo()
     # Add EPEL Repository on Redhat / CentOS 5 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 5 ] 
         then if [ ! -r /etc/yum.repos.d/epel.repo ] 
-                then echo "Adding CentOS/Redhat V5 EPEL repository ..." |tee -a $SLOG
+                then printf "Adding CentOS/Redhat V5 EPEL repository ..." |tee -a $SLOG
                      EPEL="https://archives.fedoraproject.org/pub/archive/epel/epel-release-latest-5.noarch.rpm"
                      yum install -y $EPEL >>$SLOG 2>&1
                      if [ $? -ne 0 ]
@@ -139,11 +113,12 @@ add_epel_repo()
                              return 1
                      fi
              fi 
-             echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
+             printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
              yum-config-manager --disable epel >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
                      return 1
+                else echo "[ OK ]"
              fi 
              return 0
     fi
@@ -151,7 +126,7 @@ add_epel_repo()
     # Add EPEL Repository on Redhat / CentOS 6 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 6 ] 
         then if [ ! -r /etc/yum.repos.d/epel.repo ] 
-                then echo "Adding CentOS/Redhat V6 EPEL repository ..." |tee -a $SLOG
+                then printf "Adding CentOS/Redhat V6 EPEL repository ..." |tee -a $SLOG
                      EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm"
                      yum install -y $EPEL >>$SLOG 2>&1
                      if [ $? -ne 0 ]
@@ -159,11 +134,12 @@ add_epel_repo()
                              return 1
                      fi
              fi 
-             echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
+             printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
              yum-config-manager --disable epel >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
                      return 1
+                else echo "[ OK ]"
              fi 
              return 0
     fi
@@ -171,7 +147,7 @@ add_epel_repo()
     # Add EPEL Repository on Redhat / CentOS 7 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 7 ] 
         then if [ ! -r /etc/yum.repos.d/epel.repo ] 
-                then echo "Adding CentOS/Redhat V7 EPEL repository ..." |tee -a $SLOG
+                then printf "Adding CentOS/Redhat V7 EPEL repository ..." |tee -a $SLOG
                      EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
                      yum install -y $EPEL >>$SLOG 2>&1
                      if [ $? -ne 0 ]
@@ -179,61 +155,90 @@ add_epel_repo()
                              return 1
                      fi
              fi 
-             echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
+             printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
              yum-config-manager --disable epel >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
                      return 1
+                else echo "[ OK ]"
              fi 
              return 0
     fi
 
     # Add EPEL Repository on Redhat / CentOS 8 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 8 ] 
-        then echo "Adding CentOS/Redhat V8 EPEL repository (Disable by default) ..." |tee -a $SLOG
+        then printf "Adding CentOS/Redhat V8 EPEL repository (Disable by default) ..." |tee -a $SLOG
              EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
              yum install -y $EPEL >>$SLOG 2>&1
              if [ $? -ne 0 ]
                 then echo "[Error] Adding EPEL repository." |tee -a $SLOG
-                     return 1
+                     return 1 
+                else echo " [ OK ]"
              fi
              #
-             rpm -qi dnf-utils >/dev/null 2>&1                          # Check dns-utils is install
+             printf "Checking if 'yum-utils' is installed ... "
+             rpm -qi yum-utils >/dev/null 2>&1                          # Check dns-utils is install
              if [ $? -ne 0 ] 
-                then echo "Installing dnf-utils" | tee -a $LOG
-                     dnf install -y dnf-utils >>$SLOG 2>&1
+                then printf "Installing " | tee -a $LOG
+                     dnf install -y yum-utils >/dev/null 2>&1
+                     rpm -qi yum-utils >/dev/null 2>&1                  # dns-utils now installed ?
+                     if [ $? -ne 0 ] 
+                        then echo "[ WARNING ] Problem installing 'yum-utils'." | tee -a $LOG
+                        else echo " [ OK ] "
+                     fi
+                else echo " [ OK ] "
              fi
              #
-             echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
-             dnf config-manager --set-disabled epel >/dev/null 2>&1
+             printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
+             yum-config-manager --disable epel >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
                      return 1
+                else echo "[ OK ]"
              fi 
+             return 0
+             #
+             # On RHEL 8 it is required to also enable the codeready-builder-for-rhel-8-*-rpms 
+             # repository since EPEL packages may depend on packages from it:
+             if [ "$SADM_OSNAME" = "REDHAT" ] 
+                then echo "On RHEL 8, it's required to also enable codeready-builder ..." 
+                     echo "Since EPEL packages may depend on packages from it." 
+                     ARCH=$( /bin/arch )
+                     subscription-manager repos --enable "codeready-builder-for-rhel-8-${ARCH}-rpms"
+             fi
+             #
+             # On CentOS 8 it is recommended to also enable the PowerTools repository since EPEL 
+             # packages may depend on packages from it:
+             if [ "$SADM_OSNAME" = "CENTOS" ] 
+                then printf "On CentOS 8, it's recommended to also enable the EPEL PowerTools Repository.\n"  
+                     print "dnf config-manager --set-enabled PowerTools" 
+                     dnf config-manager --set-enabled PowerTools
+                     if [ $? -ne 0 ]
+                        then echo "[ WARNING ] Couldn't enable EPEL PowerTools repository." | tee -a $SLOG
+                        else echo " [ OK ]"
+                     fi 
+             fi
     fi
 
     return 0 
 }
 
+
 #===================================================================================================
-# Check if python 3 is installed, if not install it 
+# Install python3 on system
 #===================================================================================================
-check_python()
+install_python3()
 {
-    # Check if python3 is installed 
-    echo "Installing 'python3' required module, if they are not installed ... " | tee -a $SLOG
+    echo "Installing python3." | tee -a $SLOG
 
-    which yum >/dev/null 2>&1
-    if [ $? -eq 0 ] 
-        then yum --enablerepo=epel -y install python36 python36-setuptools python36-pip >>$SLOG 2>&1
+    if [ "$SADM_PACKTYPE" = "rpm" ] 
+        then echo "Running 'yum --enablerepo=epel -y install python34 python34-setuptools python34-pip'" |tee -a $SLOG
+             yum --enablerepo=epel -y install python34 python34-setuptools python34-pip >>$SLOG 2>&1
     fi 
-
-    which apt-get >/dev/null 2>&1
-    if [ $? -eq 0 ] 
-        then echo "Running 'apt-get update'"| tee -a $SLOG
-             apt-get update >> $SLOG 2>&1
+    if [ "$SADM_PACKTYPE" = "deb" ] 
+        then apt-get update >> $SLOG 2>&1
              echo "Running 'apt-get -y install python3 python3-pip'"| tee -a $SLOG
-             apt-get -y install python3 python3-pip >>$SLOG 2>&1
+             apt-get -y install python3 python3-venv python3-pip >>$SLOG 2>&1
     fi 
     
     # python3 should now be installed, if not then abort installation
@@ -248,29 +253,119 @@ check_python()
              exit 1
     fi
 
-    # Install Python Module pymysql
-    pip3 install pymysql  > /dev/null 2>&1
+}
+
+
+#===================================================================================================
+# Install pip3 on system
+#===================================================================================================
+install_pip3()
+{
+    printf "Installing pip3 " | tee -a $SLOG
+
+    if [ "$SADM_PACKTYPE" = "rpm" ] 
+        then if [ "$SADM_OSNAME" = "FEDORA" ]
+                then #echo "Running: dnf -y install python3-pip" 
+                     dnf -y install python3-pip >> $SLOG 2>&1
+                else #echo "Running 'yum --enablerepo=epel -y install python34 python34-setuptools python34-pip'" |tee -a $SLOG
+                     yum --enablerepo=epel -y install python34-pip >>$SLOG 2>&1
+             fi
+    fi 
+    if [ "$SADM_PACKTYPE" = "deb" ] 
+        then apt-get update >> $SLOG 2>&1
+             #echo "Running 'apt-get -y install python3-pip'"| tee -a $SLOG
+             apt-get -y install python3-pip >>$SLOG 2>&1
+    fi 
+    
+    # pip3 should now be installed, if not then abort installation
+    which pip3 > /dev/null 2>&1
     if [ $? -ne 0 ]
         then echo " " | tee -a $SLOG
              echo "----------" | tee -a $SLOG
-             echo "We have problem installing python module 'pymysql'." | tee -a $SLOG
-             echo "Please install pymysql package (pip3 install pymysql)" | tee -a $SLOG
+             echo "We are having problem installing pip3" | tee -a $SLOG
+             echo "Please install python-pip3 package" | tee -a $SLOG
              echo "Then run this script again." | tee -a $SLOG 
              echo "----------" | tee -a $SLOG
              exit 1
     fi
 
-    echo " Done " | tee -a $SLOG
+}
+
+
+
+#===================================================================================================
+# Check if python 3 is installed, if not install it 
+#===================================================================================================
+check_python3()
+{
+    # Check if python3 is installed 
+    printf "Check if python3 is installed ..." | tee -a $SLOG
+
+    # python3 should now be installed, if not then install it or abort installation
+    which python3 > /dev/null 2>&1
+    if [ $? -eq 0 ]
+        then echo " [ OK ] " | tee -a $SLOG
+        else echo "Python3 is not installed."  | tee -a $SLOG
+             install_python3 
+             echo " [ OK ]" | tee -a $SLOG
+    fi
+
+    # Check if pip3 is installed 
+    printf "Check if pip3 is installed ... " | tee -a $SLOG
+
+    # pip3 should be installed, if not then install it or abort installation
+    which pip3 > /dev/null 2>&1
+    if [ $? -ne 0 ] ; then install_pip3 ; fi                        
+    echo " [ OK ]" | tee -a $SLOG
+   
+    # Check if python3 'pymsql' module is installed 
+    printf "Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
+    python3 -c "import pymysql" > /dev/null 2>&1
+    if [ $? -eq 0 ] 
+        then echo "[ OK ] " | tee -a $SLOG
+        else printf "Installing module " 
+             pip3 install pymysql  > /dev/null 2>&1
+             if [ $? -ne 0 ]
+                then echo " " | tee -a $SLOG
+                     echo "----------" | tee -a $SLOG
+                     echo "We have problem installing python module 'pymysql'." | tee -a $SLOG
+                     echo "Please install pymysql package (pip3 install pymysql)" | tee -a $SLOG
+                     echo "Then run this script again." | tee -a $SLOG 
+                     echo "----------" | tee -a $SLOG
+                     exit 1
+                else echo " [ OK ] " | tee -a $SLOG
+             fi
+    fi
+
+    # Check if python3 'getmac' module is installed 
+    printf "Check if python3 'getmac' module is installed ... " | tee -a $SLOG
+    python3 -c "import getmac" > /dev/null 2>&1
+    if [ $? -eq 0 ] 
+        then echo "[ OK ] " | tee -a $SLOG
+        else printf "Installing module " 
+             pip3 install getmac  > /dev/null 2>&1
+             if [ $? -ne 0 ]
+                then echo " " | tee -a $SLOG
+                     echo "----------" | tee -a $SLOG
+                     echo "We have problem installing python module 'getmac'." | tee -a $SLOG
+                     echo "Please install getmac package (pip3 install getmac)" | tee -a $SLOG
+                     echo "Then run this script again." | tee -a $SLOG 
+                     echo "----------" | tee -a $SLOG
+                     exit 1
+                else echo " [ OK ] " | tee -a $SLOG
+             fi
+    fi
+
     return 0                                                            # Return No Error to Caller
 }
 
 
 #===================================================================================================
-#     Check if lsb_release command is installed, if not install it, if can't then abort script 
+# Make sure hostname is in /etc/hosts
 #===================================================================================================
 check_hostname()
 {
-    echo -n "Making sure server is defined in /etc/hosts ... " | tee -a $SLOG
+    printf "Making sure server is defined in /etc/hosts ... " | tee -a $SLOG
 
     # Get current IP Address of Server
     S_IPADDR=`ip addr show | grep global | head -1 | awk '{ print $2 }' |awk -F/ '{ print $1 }'`
@@ -292,7 +387,7 @@ check_hostname()
     cp /tmp/hosts.$$ /etc/hosts ; chmod 644 /etc/hosts ; chown root:root /etc/hosts 
     rm -f /tmp/hosts.$$
     
-    echo " Done " | tee -a $SLOG
+    echo "[ OK ] " | tee -a $SLOG
 }
 
 #===================================================================================================
@@ -300,31 +395,32 @@ check_hostname()
 #===================================================================================================
 check_lsb_release()
 {
-    if [ "$SADM_OSTYPE" != LINUX ] ; then return 1 ; fi                 # Only available on Linux
+    SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`  
+    if [ "$SADM_OSTYPE" != LINUX ]
+        then return 1 
+    fi                                                                  # Only available on Linux
 
     # Make sure lsb_release is installed
-    echo -n "Checking if 'lsb_release' is available ... " | tee -a $SLOG
+    printf "Checking if 'lsb_release' is available ... " | tee -a $SLOG
     which lsb_release > /dev/null 2>&1
-    if [ $? -eq 0 ] ; then echo " Done " | tee -a $SLOG ; return ; fi 
+    if [ $? -eq 0 ] ; then echo "[ OK ] " | tee -a $SLOG ; return ; fi 
 
-    echo " " | tee -a $SLOG
-    echo -n "Installing lsb_release ... " | tee -a $SLOG
+    printf "Installing lsb_release ... " | tee -a $SLOG
     
     which yum >/dev/null 2>&1
     if [ $? -eq 0 ] 
-        then echo "Running 'yum -y install redhat-lsb-core' ..." >>$SLOG
+        then echo "'yum -y install redhat-lsb-core' ..." >>$SLOG
              yum -y install redhat-lsb-core >>$SLOG  2>&1 
     fi 
     which dnf >/dev/null 2>&1
     if [ $? -eq 0 ] 
-        then echo "Running 'dnf-y install redhat-lsb-core' ..." >>$SLOG
-             dnf-y install redhat-lsb-core >>$SLOG  2>&1
+        then echo "'dnf -y install redhat-lsb-core' ..." >>$SLOG
+             dnf -y install redhat-lsb-core >>$SLOG  2>&1
     fi 
     which apt-get >/dev/null 2>&1
     if [ $? -eq 0 ] 
-        then echo "Running 'apt-get update'" >> $SLOG
-             apt-get update >/dev/null 2>&1
-             echo "Running apt-get -y install lsb-release'" >>$SLOG
+        then apt-get update >/dev/null 2>&1
+             echo "'apt-get -y install lsb-release'" >>$SLOG
              apt-get -y install lsb-release >>$SLOG 2>&1
     fi 
     
@@ -333,31 +429,57 @@ check_lsb_release()
     if [ $? -ne 0 ]
         then echo " " | tee -a $SLOG
              echo "----------" | tee -a $SLOG
-             echo "We are having problem installing lsb_release command" | tee -a $SLOG
+             echo "We are having problem installing lsb_release command." | tee -a $SLOG
              echo "Please install lsb-release(deb) or redhat-lsb-core(rpm) package" | tee -a $SLOG
              echo "Then run this script again." | tee -a $SLOG 
              echo "----------" | tee -a $SLOG
              exit 1
+        else echo " [ OK ]"
     fi
-    echo " Done " | tee -a $SLOG
+
     return 0
 }
+
+#===================================================================================================
+# Gather System Information needed for this script
+#===================================================================================================
+get_sysinfo()
+{
+    # Get O/S Name (REDHAT,UBUNTU,CENTOS,...) and O/S Major Number
+    SADM_OSNAME=`lsb_release -si | tr '[:lower:]' '[:upper:]'`         
+    if [ "$SADM_OSNAME" = "REDHATENTERPRISESERVER" ] ; then SADM_OSNAME="REDHAT" ; fi
+    if [ "$SADM_OSNAME" = "REDHATENTERPRISEAS" ]     ; then SADM_OSNAME="REDHAT" ; fi
+    if [ "$SADM_OSNAME" = "REDHATENTERPRISE" ]       ; then SADM_OSNAME="REDHAT" ; fi
+    if [ "$SADM_OSNAME" = "CENTOSSTREAM" ]           ; then SADM_OSNAME="CENTOS" ; fi
+
+
+    SADM_OSFULLVER=`lsb_release -sr| tr -d ' '`                         # Get O/S Full Version No.
+    SADM_OSVERSION=`lsb_release -sr |awk -F. '{ print $1 }'| tr -d ' '` # Use lsb_release 2 Get Ver
+    echo "Your System is running $SADM_OSNAME Version $SADM_OSVERSION ..." >> $SLOG
+    
+    SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`                 # OS(AIX/LINUX/DARWIN/SUNOS)
+
+    # Determine Package format in use on this system
+    SADM_PACKTYPE=""                                                    # Initial Package Type None
+    which rpm > /dev/null 2>&1                                          # Is command rpm available 
+    if [ $? -eq 0 ] ; then SADM_PACKTYPE="rpm"  ; fi                    # RedHat, CentOS Package
+    which dpkg > /dev/null 2>&1                                         # Is command dpkg available 
+    if [ $? -eq 0 ] ; then SADM_PACKTYPE="deb"  ; fi                    # Debian,Raspbian,Ubuntu deb  
+    which lslpp > /dev/null 2>&1                                        # Is command lslpp available 
+    if [ $? -eq 0 ] ; then SADM_PACKTYPE="aix"  ; fi                    # Aix Package Type
+    which launchctl > /dev/null 2>&1                                    # Is command launchctl avail 
+    if [ $? -eq 0 ] ; then SADM_PACKTYPE="dmg"  ; fi                    # Apple package type
+    echo "SADM_PACKTYPE=$SADM_PACKTYPE" >>$SLOG 
+}
+
 
 
 
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
-#
-    # Only Supported on Linux for the moment
-    SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`                 # OS(AIX/LINUX/DARWIN/SUNOS)
-    #if [ "$SADM_OSTYPE" != LINUX ] 
-    #    then echo "SADMIN is only supported on Linux for the moment ($SADM_OSNAME)" | tee -a $SLOG
-    #         exit 1
-    #fi
 
-    # Script must be run by root
-    if [ "$(whoami)" != "root" ]                                        # Is it root running script?
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
         then echo "Script can only be run user 'root'" | tee -a $SLOG   # Advise User should be root
              echo "Process aborted"  | tee -a $SLOG                     # Abort advise message
              exit 1                                                     # Exit To O/S
@@ -377,57 +499,20 @@ EOF
     echo " " > $SLOG                                                    # Init the Log File
     echo "SADMIN Pre-installation verification v${SADM_VER}" | tee -a $SLOG
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
-    #echo "SLOGDIR = $SLOGDIR & Log file is $SLOG" | tee -a $SLOG 
+    echo "SLOGDIR = $SLOGDIR & Log file is $SLOG" >> $SLOG 
 
-    # Make sure lsb_release exist, if not install it
-    if [ "$SADM_OSTYPE" = LINUX ]                                      # Under Linux install lsb_release
-        then check_lsb_release                                          # lsb_release must be found
-             if [ $? -ne 0 ]                                            # Error installing lsb_release
-                then echo "Was unable to install lsb_release"           # Inform user
-                     exit 1                                             # Abort setup
-             fi
+    check_lsb_release                                                   # lsb_release must be found
+    get_sysinfo                                                         # Get OS Name,Version
+    if [ "$SADM_OSNAME" = "REDHAT" ] || [ "$SADM_OSNAME" = "CENTOS" ]   # On RedHat & CentOS
+        then add_epel_repo                                              # Add EPEL Repository 
     fi 
-
-
-    # Get O/S Name and O/S Major Number
-    SADM_OSNAME=`lsb_release -si | tr '[:lower:]' '[:upper:]'`          # O/S Name (REDHAT,UBUNTU,CENTOS,...)
-    if [ "$SADM_OSNAME" = "REDHATENTERPRISESERVER" ] ; then SADM_OSNAME="REDHAT" ; fi
-    if [ "$SADM_OSNAME" = "REDHATENTERPRISEAS" ]     ; then SADM_OSNAME="REDHAT" ; fi
-    if [ "$SADM_OSNAME" = "REDHATENTERPRISE" ]       ; then SADM_OSNAME="REDHAT" ; fi
-    SADM_OSFULLVER=`lsb_release -sr| tr -d ' '`                         # Get O/S Full Version No.
-    SADM_OSVERSION=`lsb_release -sr |awk -F. '{ print $1 }'| tr -d ' '` # Use lsb_release 2 Get Ver
-    echo "Your System is running $SADM_OSNAME Version $SADM_OSVERSION ..." >> $SLOG
-    
-
-    # # Support only Redhat/CentOS or Debian/Ubuntu
-    # if [ "${SADM_OSNAME}" = "REDHAT" ] || [ "${SADM_OSNAME}" = "CENTOS" ]
-    #     then if [ "${SADM_OSVERSION}" -lt "6" ]
-    #             then echo "O/S Version ${SADM_OSNAME} too low - upport Version 6 and up" | tee -a $SLOG
-    #                  exit 1
-    #          fi
-    # fi 
-    # if [ "$SADM_OSNAME" = "DEBIAN" ] || [ "$SADM_OSNAME" = "UBUNTU" ] 
-    #     then if [ "${SADM_OSVERSION}" -lt "8" ]
-    #             then echo "O/S Version ${SADM_OSNAME} too low - Support Version 8 and up" | tee -a $SLOG
-    #                  exit 1
-    #          fi
-    # fi 
-
-    # Add EPEL Repository on RedHat, CentOS 
-    if [ "${SADM_OSNAME}" = "REDHAT" ] || [ "${SADM_OSNAME}" = "CENTOS" ]
-        then add_epel_repo
-    fi 
-
-
-    # Make sure python3 is on the system, if not install it
-    check_python                                                        # python3 must be found
-
-    # Check name resolution for this host
-    check_hostname
+    check_python3                                                       # Make sure python3 install
+    check_hostname                                                      # Update /etc/hosts 
 
     # Ok Python3 and lsb_release command are installed - Proceeed with Main Setup Script
     echo "We will now proceed with main setup program ($SCRIPT)" >> $SLOG 
-    echo "All Verifications Pass ..."
+    echo "All Verifications done ..." >> $SLOG
+    echo "---------------------------------------------------------------------------"| tee -a $SLOG
     echo -e "\n" | tee -a $SLOG                                         # Blank Lines
     $SCRIPT 
 

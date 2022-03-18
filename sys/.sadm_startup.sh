@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author:     Jacques Duplessis
 #   Title:      sadm_startup.sh
@@ -29,72 +29,81 @@
 # 2018_11_02    V3.8 Added sleep before updating time clock (Raspbian Problem)
 # 2019_03_27 Update: v3.9 If 'ntpdate' report an error, show error message and add cosmetic messages
 # 2019_03_29 Update: v3.10 Get SADMIN Directory Location from /etc/environment
-#@2019_12_07 Update: v3.11 Avoid NTP Server name resolution (DNS not up), use IP Addr. now.
+# 2019_12_07 Update: v3.11 Avoid NTP Server name resolution (DNS not up), use IP Addr. now.
+# 2020_05_27 Fix: v3.12 Force using bash instead of dash & problem setting SADMIN env. variable.
+# 2020_11_04 Minor: v3.13 Update SADMIN section & use env cmd to use proper bash shell.
+#@2021_05_13 Update: v3.14 Check if ntpdate is present before syncing time.
+#@2021_06_11 Update: v3.15 When syncing time with atomic clock redirect output to script log.
+#@2021_11_08 Update: v3.16 When system start, delete everything in $SADMIN/tmp.
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 
 
-export SADMIN=`grep "^SADMIN=" /etc/environment |awk -F= '{print $2}'`  # Get SADMIN Install Dir
-if [ "$SADMIN" = "" ]                                                   # Couldn't get Install Dir.
-    then printf "Couldn't get SADMIN variable in /etc/environment"      # Advise User What's wrong
-         printf "SADMIN service script aborted."                        # Advise what to fix
-         exit 1                                                         # Exit Script with error
-fi
 
 
-#===================================================================================================
-#               Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
-#
-    # Test if 'SADMIN' environment variable is defined
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
 
-    # Test if 'SADMIN' Shell Library is readable 
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
+# ---------------------------------------------------------------------------------------
+# SADMIN CODE SECTION 1.50
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
+# ---------------------------------------------------------------------------------------
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.11'                              # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    
+    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null 
+         if [ $? -eq 0 ]                                   # Found SADMIN in /etc/env.
+            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
+                 printf "'SADMIN' environment variable temporarily set to ${SADMIN}.\n"
+            else exit 1                                    # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-#
-#---------------------------------------------------------------------------------------------------
-#
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But they can be overridden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#
-#===================================================================================================
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
+export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
+# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='3.16'                                      # Script Version
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy ?
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. LockFile
+export SADM_USE_RCH="Y"                                    # Update RCH HistoryFile 
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
+export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
+export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Server
+# ---------------------------------------------------------------------------------------
 
 
 
 # --------------------------------------------------------------------------------------------------
 #                                   This Script environment variables
 # --------------------------------------------------------------------------------------------------
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-NTP_SERVER="68.69.221.61 162.159.200.1 205.206.70.2" ;export NTP_SERVER # Canada NTP Pool
+export NTP_SERVER="68.69.221.61 162.159.200.1 205.206.70.2"             # Canada NTP Pool
 
 
 
@@ -108,20 +117,21 @@ main_process()
     sadm_writelog " "
     
     sadm_writelog "Running Startup Standard Procedure"
-    sadm_writelog "  Removing old files (log,pid) in ${SADM_TMP_DIR}"
+    sadm_writelog "  Removing files in '$SADMIN/tmp' ${SADM_TMP_DIR} directory."
     rm -f ${SADM_TMP_DIR}/* >> $SADM_LOG 2>&1
 
     sadm_writelog "  Removing SADM System Monitor Lock File ${SADM_BASE_DIR}/sysmon.lock"
     rm -f ${SADM_BASE_DIR}/sysmon.lock >> $SADM_LOG 2>&1
 
-    sadm_writelog "  Synchronize System Clock with NTP server $NTP_SERVER"
-    sleep 2
-    ntpdate -u $NTP_SERVER >$SADM_TMP_FILE1 2>&1
-    if [ $? -ne 0 ] 
-        then sadm_writelog "  NTP Error Synchronizing Time with $NTP_SERVER" 
-             cat $SADM_TMP_FILE1 | while read wline ; do sadm_writelog "$wline"; done
-             ERROR_COUNT=$(($ERROR_COUNT+1))
-    fi
+    if which ntpdate >/dev/null 2>&1
+       then sleep 5                                                     # Wait network to come up
+            sadm_writelog "  Synchronize System Clock with NTP server $NTP_SERVER"
+            ntpdate -u $NTP_SERVER 2>&1 | tee -a $SADM_LOG
+            if [ $? -ne 0 ] 
+               then sadm_writelog "  NTP Error Synchronizing Time with $NTP_SERVER" 
+                    ERROR_COUNT=$(($ERROR_COUNT+1))
+            fi
+    fi 
              
     sadm_writelog "  Start 'nmon' performance system monitor tool"
     ${SADM_BIN_DIR}/sadm_nmon_watcher.sh > /dev/null 2>&1

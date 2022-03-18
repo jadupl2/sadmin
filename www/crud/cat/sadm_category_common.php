@@ -1,14 +1,14 @@
 <?php
 # ==================================================================================================
 #   Author      :  Jacques Duplessis 
-#   Email       :  jacques.duplessis@sadmin.ca
+#   Email       :  sadmlinux@gmail.com
 #   Title       :  sadm_category_common.php
 #   Version     :  1.8
 #   Date        :  13 June 2016
 #   Requires    :  php - MySQL
 #   Description :  Web Page used to create a new server category.
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -24,7 +24,8 @@
 # ChangeLog
 #   2017_11_15 - Jacques Duplessis
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
-#@2019_01_22 update: v2.1 New Design & New Dark Mode.
+# 2019_01_22 update: v2.1 New Design & New Dark Mode.
+# 2020_01_09 update: v2.2 Web page have now a new lighter look.
 # ==================================================================================================
  
 
@@ -33,7 +34,7 @@
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.1" ;                                                        # Current version number
+$SVER  = "2.2" ;                                                        # Current version number
 $URL_CREATE = '/crud/cat/sadm_category_create.php';                     # Create Page URL
 $URL_UPDATE = '/crud/cat/sadm_category_update.php';                     # Update Page URL
 $URL_DELETE = '/crud/cat/sadm_category_delete.php';                     # Delete Page URL
@@ -59,12 +60,12 @@ function display_cat_form ($wrow,$mode) {
     if ($smode == 'CREATE') {                                           # If Create Allow Input
         echo "\n<input type='text' name='scr_code' size='11' ";         # Set Name for field & Size
         echo " maxlength='11' placeholder='Cat. Code' ";                # Set Default & Max Len
-        echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+        #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
         echo " required value='" . sadm_clean_data($wrow['cat_code']);  # Field is required
         echo "' >";                                                     # End of Input 
     }else{
        echo "\n<input type='text' name='scr_code' readonly size='11' "; # Set Name for Field & Size
-       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " maxlength='11'";
        echo " value='" . sadm_clean_data($wrow['cat_code']). "' >";     # Show Current  Value
     }
@@ -78,13 +79,13 @@ function display_cat_form ($wrow,$mode) {
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
        echo "\n<input type='text' name='scr_desc' readonly ";           # Set Name and Read Only
        echo " maxlength='25' size='27' ";                               # Set Max. Length
-       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['cat_desc']). "'/>";     # Show Current Value
     }else{
        echo "\n<input type='text' name='scr_desc' required ";           # Set Name & Col. is require
        echo " placeholder='Enter Category Desc.'";                      # Set Default
        echo " maxlength='25' size='27' ";                               # Set Max. Length
-       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['cat_desc']). "'/>";     # Show Current Value
     }
     echo "\n</div>";                                                    # << End of simple_input

@@ -1,14 +1,14 @@
 <?php
 # ==================================================================================================
 #   Author      :  Jacques Duplessis
-#   Email       :  jacques.duplessis@sadmin.ca
+#   Email       :  sadmlinux@gmail.com
 #   Title       :  sadm_server_backup.php
 #   Version     :  1.0
 #   Date        :  18 August 2019
 #   Requires    :  php - MySQL
 #   Description :  Web Page used to edit a server rear schedule.
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -22,8 +22,11 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-#@2019_08_18 New: v1.0 Initial Beta version - Allow to define ReaR Backup schedule.
-#@2019_08_19 Update: v1.1 Initial working version.
+# 2019_08_18 New: v1.0 Initial Beta version - Allow to define ReaR Backup schedule.
+# 2019_08_19 Update: v1.1 Initial working version.
+# 2020_01_13 Update: v1.2 Enhance Web Page Appearance and color. 
+# 2020_04_16 Update: v1.3 Small page adjustments.
+# 2021_04_19 Update: v1.4 Change "Exclude" to "Include/Exclude" Label on file config
 # ==================================================================================================
 #
 #
@@ -34,34 +37,10 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 ?>
   <style media="screen" type="text/css">
 .rear_page {
-    background-color:   #3b3b3b;
+    background-color:   #006456;
     color           :   #f9f4be;   
     font-family     :   Verdana, Geneva, sans-serif;
     font-size       :   0.9em;
-    width           :   98%;
-    margin          :   0 auto;
-    text-align      :   left;
-    border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
-    border-color    :   #000000;             border-radius: 10px;
-    line-height     :   1.7;    
-}
-.rear_left_side   { width : 45%;  float : left;   margin : 10px 0px 10px 0px;    }
-.left_label         { float : left; width : 50%;    text-align: right; font-weight : bold; }
-.left_input         { margin-bottom : 5px;  margin-left : 50%;  background-color : #393a3c;
-                      width : 50%; border-width: 0px;  border-style : solid;  border-color : #000000;
-                      padding-left: 6px;
-}
-
-.rear_right_side  { width : 55%;  float : right;  margin : 10px auto;     }
-.right_label        { float : left; width : 85%;    font-weight : bold; }
-.right_input        { margin-bottom : 4px;  margin-right : 10px;     background-color:    #454c5e;
-                      float : left;  padding-left : 5px;  padding-right : 5px;  padding-top : 5px;
-                      border-width: 1px;  border-style : solid;  border-color : #000000;
-}                      
-.rear_policy {
-    background-color:   #3b3b3b;
-    color           :   #fbfbfb;   
-    font-family     :   Verdana, Geneva, sans-serif;
     width           :   90%;
     margin          :   0 auto;
     text-align      :   left;
@@ -69,11 +48,37 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     border-color    :   #000000;             border-radius: 10px;
     line-height     :   1.7;    
 }
-.rear_retension {
-    background-color:   #3b3b3b;
+.rear_left_side   { float : left; width : 48%; margin : 10px 0px 10px 0px;    }
+.left_label       { float : left; width : 40%; text-align: right; padding-right: 2%; font-weight : normal; }
+.left_input       {               width : 80ß%; margin-bottom : 5px;  margin-left : 20%; padding-left: 0px;
+                            border-width: 0px;  border-style : solid;  border-color : #000000;
+                      
+}
+
+.rear_right_side  { width : 51%;  float : right;  margin-left : 5px ;     }
+.right_label        { float : left; width : 82%;    font-weight : normal; }
+.right_input        { margin-bottom : 4px;  margin-right : 10px;    
+                      float : left;  width : 72% ; padding-left : 5px;  padding-right : 15px;  padding-top : 5px;
+                      border-width: 0px;  border-style : solid;  border-color : #000000;
+}                      
+.rear_policy {
+    background-color:   #006456;
     color           :   #fbfbfb;   
     font-family     :   Verdana, Geneva, sans-serif;
-    width           :   85%;
+    width           :   90%;
+    padding-left    :   10px;
+    padding-top     :   10px;
+    margin          :   0 auto;
+    text-align      :   left;
+    border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
+    border-color    :   #000000;             border-radius: 10px;
+    line-height     :   1.7;    
+}
+.rear_retension {
+    background-color:   #006456;
+    color           :   #fbfbfb;   
+    font-family     :   Verdana, Geneva, sans-serif;
+    width           :   98%;
     margin          :   0 auto;
     text-align      :   left;
     /* border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
@@ -96,7 +101,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.1" ;                                                        # Current version number
+$SVER  = "1.4" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -384,15 +389,11 @@ function display_left_side($con,$wrow,$mode) {
 function show_rear_policy() {
 
     echo "\n\n<div class='rear_policy'>\n                       <!-- Start rear_policy Div -->";
-
-    echo "<h4><center>";
-    echo "ReaR backup policies for all systems (defined in " . SADM_CFG_FILE . ")";
-    echo "</h4></center>";
-
+    echo "<strong>   ReaR backup policies for all systems (as defined in '\$SADMIN/cfg/sadmin.cfg')</strong>";
     
     # Backup destination
-    echo "\n\n<div class='rear_retension'>\n                    <!-- Start rear_retension Div -->";
-    echo "\nNFS backup server is '" . SADM_REAR_NFS_SERVER ;
+    echo "\n<div class='rear_retension'>\n                    <!-- Start rear_retension Div -->";
+    echo "NFS backup server is '" . SADM_REAR_NFS_SERVER ;
     echo "' and destination directory is '". SADM_REAR_NFS_MOUNT_POINT ."'";
 
     # ReaR Backup policy
@@ -402,7 +403,7 @@ function show_rear_policy() {
     # Script used to run the Rear backup
     echo "\n<br>&nbsp;&nbsp;&nbsp;  - ";
     echo "To create a Rear backup, the script " . SADM_BIN_DIR . "/sadm_rear_backup.sh will be run.";
-    echo "\n<br></div>                                          <!-- End of rear_retension Div -->";
+    echo "\n</div>                                          <!-- End of rear_retension Div -->";
 
     # End Of Backup Policy
     echo "\n<br></div>                                          <!-- End of rear_policy Div -->";
@@ -424,9 +425,9 @@ function display_right_side($con,$wrow,$mode) {
     $smode = strtoupper($mode);                                         # Make Sure Mode is Upcase
     
     # Files and Directories to Exclude from Backup
-    echo "\n\n<div class='right_label'>ReaR variables use to exclude data from backup</div>";
+    echo "\n\n<div class='right_label'>ReaR variables use to include/exclude data from backup</div>";
     echo "\n<div class='right_input'>";
-    echo "  <textarea rows='24' cols='70' name='rearexclude' form='backup'>";
+    echo "  <textarea rows='24' cols='60' name='rearexclude' form='backup'>";
     $BEHASH = Read_RearExclude($wrow);
     echo "</textarea>";
     echo "\n</div>";
