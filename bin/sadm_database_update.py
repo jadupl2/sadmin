@@ -43,6 +43,7 @@
 #@2021_06_10 Update: v3.14 Enlarge column 'srv_uptime' from 20 to 25 Char 
 #@2021_06_11 Update: v3.15 Add 'srv_boot_date' that contain last boot date & Fix error message.
 #@2021_06_17 Fix: v3.16 Fix Duplicate column name 'srv_boot_date'
+#@2022_03_28 Update: v3.17 Give a warning instead of error if input file is not created yet.
 # 
 # ==================================================================================================
 #
@@ -95,7 +96,7 @@ def setup_sadmin():
     st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
-    st.ver              = "3.16"                # Current Script Version
+    st.ver              = "3.17"                # Current Script Version
     st.pdesc            = "SADMIN Daily database update v%s" % st.ver
     st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
     st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
@@ -312,8 +313,8 @@ def process_servers(wconn,wcur,st):
         try:
             FH = open(sysfile, 'r')                                     # Open Sysinfo File
         except FileNotFoundError as e:
-            st.writelog("[ERROR] Sysinfo file could not be found %s" % (sysfile))
-            total_error = total_error + 1                           # Add 1 To Total Error
+            st.writelog("[WARNING] Sysinfo file could not be found %s" % (sysfile))
+            #total_error = total_error + 1                           # Add 1 To Total Error
             continue
         except IOError as e:                                            # If Can't open file
             st.writelog ("Error opening file %s \r\n" % sysfile)        # Print FileName
