@@ -99,7 +99,7 @@ def setup_sadmin():
     #st.cfg_alert_group  = "default"            # Valid Alert Group are defined in alert_group.cfg
     #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
-    #st.cfg_max_logline  = 500                  # When Script End Trim log file to 500 Lines
+    st.cfg_max_logline  = 600                  # When Script End Trim log file to 500 Lines
     #st.cfg_max_rchline  = 35                   # When Script End Trim rch file to 35 Lines
     #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server 
 
