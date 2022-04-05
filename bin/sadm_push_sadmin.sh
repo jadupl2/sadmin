@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_push_sadmin.sh
-#   Synopsis :  Copy the SADMIN master version to all actives clients. 
+#   Synopsis :  Copy the SADMIN master version to all actives clients (No overwite of config files). 
 #   Version  :  1.0
 #   Date     :  6 September 2015
 #   Requires :  sh
@@ -50,6 +50,7 @@
 # 2021_05_22 server: v2.30 Remove sync depreciated $SADMIN/usr/mon/swatch_nmon* script and files.
 # 2021_10_20 server: v2.31 Remove sync depreciated slac_channel.cfg file
 #@2021_11_07 server: v2.32 Don't try to push files (and give error) if the client system is lock. 
+#@2022_04_04 server: v2.33 Minor changes
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -81,7 +82,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.32'                                     # Script Version
+export SADM_VER='2.33'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -117,13 +118,15 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 
 # --------------------------------------------------------------------------------------------------
-#                               This Script environment variables
+# Script Environment variables
 # --------------------------------------------------------------------------------------------------
 export SYNC_USR="N"                                                     # -u Don't sync usr/bin
 export SYNC_SYS="N"                                                     # -s Don't sync sys Dir
 export SYNC_CLIENT=""                                                   # -c SADMIN client to sync
 export ERROR_COUNT=0                                                    # Script Error Count
 export WARNING_COUNT=0                                                  # Script Warning count
+
+
 
 # --------------------------------------------------------------------------------------------------
 #                H E L P       U S A G E    D I S P L A Y    F U N C T I O N
