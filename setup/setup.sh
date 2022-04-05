@@ -56,6 +56,8 @@
 # 2020_05_14 Update: v3.11 Remove line feed after "Installing pip3" 
 # 2020_12_24 Update: v3.12 CentOSStream return CENTOS.
 #@2022_02_10 Fix: v3.13 Correct 'pip3' installation on Fedora 35
+#@2022_04_02 Update: v3.14 lsb_release cmd depreciated in RHEL 9, so /etc/os-release file is use.
+#@2022_04_03 Update: v3.15 Adapted to use EPEL 9 for RedHat, Centos, AlmaLinux and Rockey Linux.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -64,7 +66,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.13'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.15'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -105,7 +107,7 @@ add_epel_repo()
     # Add EPEL Repository on Redhat / CentOS 5 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 5 ] 
         then if [ ! -r /etc/yum.repos.d/epel.repo ] 
-                then printf "Adding CentOS/Redhat V5 EPEL repository ..." |tee -a $SLOG
+                then printf "Adding CentOS/Redhat V5 EPEL Archive repository ..." |tee -a $SLOG
                      EPEL="https://archives.fedoraproject.org/pub/archive/epel/epel-release-latest-5.noarch.rpm"
                      yum install -y $EPEL >>$SLOG 2>&1
                      if [ $? -ne 0 ]
@@ -220,6 +222,30 @@ add_epel_repo()
              fi
     fi
 
+    # Add EPEL Repository on Redhat / CentOS 8 (but do not enable it)
+    if [ "$SADM_OSVERSION" -eq 9 ] 
+       then printf "Adding CentOS/Redhat/Alma/Rocky V9 EPEL repository (Disable by default) ..." |tee -a $SLOG
+            dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
+            if [ $? -ne 0 ]
+               then echo "[ WARNING ] Couldn't enable EPEL repository." | tee -a $SLOG
+                    else echo " [ OK ]"
+            fi 
+            dnf -y install epel-release epel-next-release  >>$SLOG 2>&1
+            if [ $? -ne 0 ]
+               then echo "[Error] Adding EPEL V9 repository." |tee -a $SLOG
+                    return 1 
+               else echo " [ OK ]"
+            fi
+            #
+    fi
+
+#CentOS Stream 9
+#dnf config-manager --set-enabled crb
+#dnf install epel-release epel-next-release
+
+#RHEL9
+#subscription-manager repos --enable codeready-builder-beta-for-rhel-9-$(arch)-rpms
+#dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
     return 0 
 }
 
@@ -393,52 +419,52 @@ check_hostname()
 #===================================================================================================
 #     Check if lsb_release command is installed, if not install it, if can't then abort script 
 #===================================================================================================
-check_lsb_release()
-{
-    SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`  
-    if [ "$SADM_OSTYPE" != LINUX ]
-        then return 1 
-    fi                                                                  # Only available on Linux
-
-    # Make sure lsb_release is installed
-    printf "Checking if 'lsb_release' is available ... " | tee -a $SLOG
-    which lsb_release > /dev/null 2>&1
-    if [ $? -eq 0 ] ; then echo "[ OK ] " | tee -a $SLOG ; return ; fi 
-
-    printf "Installing lsb_release ... " | tee -a $SLOG
-    
-    which yum >/dev/null 2>&1
-    if [ $? -eq 0 ] 
-        then echo "'yum -y install redhat-lsb-core' ..." >>$SLOG
-             yum -y install redhat-lsb-core >>$SLOG  2>&1 
-    fi 
-    which dnf >/dev/null 2>&1
-    if [ $? -eq 0 ] 
-        then echo "'dnf -y install redhat-lsb-core' ..." >>$SLOG
-             dnf -y install redhat-lsb-core >>$SLOG  2>&1
-    fi 
-    which apt-get >/dev/null 2>&1
-    if [ $? -eq 0 ] 
-        then apt-get update >/dev/null 2>&1
-             echo "'apt-get -y install lsb-release'" >>$SLOG
-             apt-get -y install lsb-release >>$SLOG 2>&1
-    fi 
-    
-    # lsb_release should now be installed, if not then abort installation
-    which lsb_release > /dev/null 2>&1
-    if [ $? -ne 0 ]
-        then echo " " | tee -a $SLOG
-             echo "----------" | tee -a $SLOG
-             echo "We are having problem installing lsb_release command." | tee -a $SLOG
-             echo "Please install lsb-release(deb) or redhat-lsb-core(rpm) package" | tee -a $SLOG
-             echo "Then run this script again." | tee -a $SLOG 
-             echo "----------" | tee -a $SLOG
-             exit 1
-        else echo " [ OK ]"
-    fi
-
-    return 0
-}
+#check_lsb_release()
+# {
+#    SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`  
+#    if [ "$SADM_OSTYPE" != LINUX ]
+#        then return 1 
+#    fi                                                                  # Only available on Linux
+#
+#    # Make sure lsb_release is installed
+#    printf "Checking if 'lsb_release' is available ... " | tee -a $SLOG
+#    which lsb_release > /dev/null 2>&1
+#    if [ $? -eq 0 ] ; then echo "[ OK ] " | tee -a $SLOG ; return ; fi 
+#
+#    printf "Installing lsb_release ... " | tee -a $SLOG
+#    
+#    which yum >/dev/null 2>&1
+#    if [ $? -eq 0 ] 
+#        then echo "'yum -y install redhat-lsb-core' ..." >>$SLOG
+#             yum -y install redhat-lsb-core >>$SLOG  2>&1 
+#    fi 
+#    which dnf >/dev/null 2>&1
+#    if [ $? -eq 0 ] 
+#        then echo "'dnf -y install redhat-lsb-core' ..." >>$SLOG
+#             dnf -y install redhat-lsb-core >>$SLOG  2>&1
+#    fi 
+#    which apt-get >/dev/null 2>&1
+#    if [ $? -eq 0 ] 
+#        then apt-get update >/dev/null 2>&1
+#             echo "'apt-get -y install lsb-release'" >>$SLOG
+#             apt-get -y install lsb-release >>$SLOG 2>&1
+#    fi 
+#    
+#    # lsb_release should now be installed, if not then abort installation
+#    which lsb_release > /dev/null 2>&1
+#    if [ $? -ne 0 ]
+#        then echo " " | tee -a $SLOG
+#             echo "----------" | tee -a $SLOG
+#             echo "We are having problem installing lsb_release command." | tee -a $SLOG
+#             echo "Please install lsb-release(deb) or redhat-lsb-core(rpm) package" | tee -a $SLOG
+#             echo "Then run this script again." | tee -a $SLOG 
+#             echo "----------" | tee -a $SLOG
+#             exit 1
+#        else echo " [ OK ]"
+#    fi
+#
+#    return 0
+#}
 
 #===================================================================================================
 # Gather System Information needed for this script
@@ -446,15 +472,22 @@ check_lsb_release()
 get_sysinfo()
 {
     # Get O/S Name (REDHAT,UBUNTU,CENTOS,...) and O/S Major Number
-    SADM_OSNAME=`lsb_release -si | tr '[:lower:]' '[:upper:]'`         
+    OS_FILE="/etc/os-release"
+    SADM_OSNAME=$(awk -F= '/^ID=/ {print $2}' $OS_FILE |tr -d '"' |tr '[:lower:]' '[:upper:]')         
     if [ "$SADM_OSNAME" = "REDHATENTERPRISESERVER" ] ; then SADM_OSNAME="REDHAT" ; fi
     if [ "$SADM_OSNAME" = "REDHATENTERPRISEAS" ]     ; then SADM_OSNAME="REDHAT" ; fi
     if [ "$SADM_OSNAME" = "REDHATENTERPRISE" ]       ; then SADM_OSNAME="REDHAT" ; fi
     if [ "$SADM_OSNAME" = "CENTOSSTREAM" ]           ; then SADM_OSNAME="CENTOS" ; fi
 
-
-    SADM_OSFULLVER=`lsb_release -sr| tr -d ' '`                         # Get O/S Full Version No.
-    SADM_OSVERSION=`lsb_release -sr |awk -F. '{ print $1 }'| tr -d ' '` # Use lsb_release 2 Get Ver
+    if [ -f /etc/os-release ] 
+        then SADM_OSFULLVER=$(awk -F= '/^VERSION_ID=/ {print $2}' /etc/os-release |tr -d '"')
+        else printf "File /etc/os-release doesn't exist, couldn't get O/S version\n"
+             SADM_OSFULLVER="00.00"
+    fi 
+    #SADM_OSFULLVER=`lsb_release -sr| tr -d ' '`                         # Get O/S Full Version No.
+    
+    SADM_OSVERSION=$(echo $SADM_OSFULLVER | awk -F. '{ print $1 }'| tr -d ' ')
+    #SADM_OSVERSION=`lsb_release -sr |awk -F. '{ print $1 }'| tr -d ' '` # Use lsb_release 2 Get Ver
     echo "Your System is running $SADM_OSNAME Version $SADM_OSVERSION ..." >> $SLOG
     
     SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`                 # OS(AIX/LINUX/DARWIN/SUNOS)
@@ -501,7 +534,7 @@ EOF
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
     echo "SLOGDIR = $SLOGDIR & Log file is $SLOG" >> $SLOG 
 
-    check_lsb_release                                                   # lsb_release must be found
+    #check_lsb_release                                                   # lsb_release must be found
     get_sysinfo                                                         # Get OS Name,Version
     if [ "$SADM_OSNAME" = "REDHAT" ] || [ "$SADM_OSNAME" = "CENTOS" ]   # On RedHat & CentOS
         then add_epel_repo                                              # Add EPEL Repository 
