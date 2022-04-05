@@ -78,13 +78,7 @@
 # 2019_01_29 Change: v2.60 Improve the sadm_get_domainname function.
 # 2019_02_05 Fix: v2.61 Correct type error. 
 # 2019_02_06 Fix: v2.62 break error when finding system domain name.
-# 2019_02_25 Change: v2.63 Added SADM_80_SPACES variable available to user.
-# 2019_02_28 Change: v2.64 'lsb_release -si' return new string in RHEL/CentOS 8 Chg sadm_get_osname
-# 2019_03_18 Change: v2.65 Improve: Optimize code to reduce load time (125 lines removed).
-# 2019_03_18 New: v2.66 Function 'sadm_get_packagetype' that return package type (rpm,dev,aix,dmg).  
-# 2019_03_31 Update: v2.67 Set log file owner ($SADM_USER) and permission (664) if executed by root.
-# 2019_04_07 Update: v2.68 Optimize execution time & screen color variable now available.
-# 2019_04_09 Update: v2.69 Fix tput error when running in batch mode and TERM not set.
+# 2019server: v2.33 Minor changes_04_09 Update: v2.69 Fix tput error when running in batch mode and TERM not set.
 # 2019_04_25 Update: v2.70 Read and Load 2 news sadmin.cfg variable Alert_Repeat,Textbelt Key & URL
 # 2019_05_01 Update: v2.71 Correct problem while writing to alert history log.
 # 2019_05_07 Update: v2.72 Function 'sadm_alert_sadmin' is removed, now using 'sadm_send_alert'
@@ -184,6 +178,7 @@
 #@2021_12_12 lib v3.83 Fix 'sadm_server_vg' wasn't returning proper size under certain condition.
 #@2021_12_20 lib v3.84 Load additional options from the SADMIN configuration file.
 #@2022_02_16 lib v3.85 Fix: Serial number return by sadm_server_serial() on iMac was incomplete.
+#@2022_04_04 lib v3.86 Update: to Replace use of depeciated lsb_release in RHEL9 
 #===================================================================================================
 
 
@@ -728,7 +723,6 @@ sadm_check_requirements() {
 
     # The 'which' command is needed to determine presence of command - Return Error if not found
     if which which >/dev/null 2>&1                                      # Try the command which
-#        then SADM_WHICH=`which which`  ; export SADM_WHICH             # Save Path of Which Command
         then SADM_WHICH="/usr/bin/which"; export SADM_WHICH             # Save Path of Which Command
         else sadm_write "${SADM_ERROR} The command 'which' couldn't be found\n"
              sadm_write "        This program is often used by the SADMIN tools\n"
@@ -943,13 +937,17 @@ sadm_elapse() {
 
 
 
-# --------------------------------------------------------------------------------------------------
-#                THIS FUNCTION DETERMINE THE OS (DISTRIBUTION) VERSION NUMBER
-# --------------------------------------------------------------------------------------------------
+# Function Determine The O/S Version Number
 sadm_get_osversion() {
     wosversion="0.0"                                                    # Default Value
     case "$(sadm_get_ostype)" in
-        "LINUX")    wosversion=`$SADM_LSB_RELEASE -sr`                  # Use lsb_release to Get Ver
+        "LINUX")    if [ -f /etc/os-release ] 
+                        then wosversion=$(awk -F= '/^VERSION_ID=/ {print $2}' /etc/os-release)
+                        else printf "File /etc/os-release doesn't exist, couldn't get O/S version\n"
+                    fi 
+                    #if [ "$SADM_LSB_RELEASE" != "" ] 
+                    #    then wosversion=`$SADM_LSB_RELEASE -sr`         # Use lsb_release to Get Ver
+                    #fi 
                     ;;
         "AIX")      wosversion="`uname -v`.`uname -r`"                  # Get Aix Version
                     ;;
@@ -959,9 +957,9 @@ sadm_get_osversion() {
     echo "$wosversion"
 }
 
-# --------------------------------------------------------------------------------------------------
-#                            RETURN THE OS (DISTRIBUTION) MAJOR VERSION
-# --------------------------------------------------------------------------------------------------
+
+
+# Return the os (distribution) major version
 sadm_get_osmajorversion() {
     case "$(sadm_get_ostype)" in
         "LINUX")    wosmajorversion=`echo $(sadm_get_osversion) | awk -F. '{ print $1 }'| tr -d ' '`
@@ -975,9 +973,8 @@ sadm_get_osmajorversion() {
 }
 
 
-# --------------------------------------------------------------------------------------------------
-#                            RETURN THE OS (DISTRIBUTION) MINOR VERSION
-# --------------------------------------------------------------------------------------------------
+
+# Return the os (distribution) minor version
 sadm_get_osminorversion() {
     case "$(sadm_get_ostype)" in
         "LINUX")    wosminorversion=`echo $(sadm_get_osversion) | awk -F. '{ print $2 }'| tr -d ' '`
@@ -990,11 +987,11 @@ sadm_get_osminorversion() {
     echo "$wosminorversion"
 }
 
-# --------------------------------------------------------------------------------------------------
-#                RETURN THE OS TYPE (LINUX, AIX) -- ALWAYS RETURNED IN UPPERCASE
-# --------------------------------------------------------------------------------------------------
+
+
+# Return the os type (AIX/LINUX/DARWIN/SUNOS) -- Always returned in uppercase
 sadm_get_ostype() {
-    sadm_get_ostype=`uname -s | tr '[:lower:]' '[:upper:]'`     # OS Name (AIX/LINUX/DARWIN/SUNOS)
+    sadm_get_ostype=`uname -s | tr '[:lower:]' '[:upper:]'`
     echo "$sadm_get_ostype"
 }
 
@@ -1022,6 +1019,7 @@ sadm_get_oscodename() {
                     if [ "$wver"  = "10.14" ] ; then woscodename="Mojave"           ;fi
                     if [ "$wver"  = "10.15" ] ; then woscodename="Catalina"         ;fi
                     if [ "$wver"  = "10.16" ] ; then woscodename="Big Sur"          ;fi
+                    if [ "$wver"  = "10.17" ] ; then woscodename="Moyave"           ;fi
                     ;;
         "LINUX")    woscodename=`$SADM_LSB_RELEASE -sc`
                     ;;
