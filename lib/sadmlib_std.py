@@ -62,6 +62,8 @@
 #@2021_08_17 library v3.19 Add 'SADM_MONITOR_UPDATE_INTERVAL'variable that control refresh rate. 
 #@2021_09_30 library v3.20 Various little bug corrections
 #@2021_11_07 library v3.21 Locate 'rrd_tool'executable.
+#@2022_04_04 library v3.22 Change get_fqdn function so it work well on RHEL9 
+#
 # Add 'SADM_MONITOR_UPDATE_INTERVAL'variable that control refresh rate. 
 #  Starting a new version of this library
 #==================================================================================================
@@ -145,7 +147,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.21"                                # This Library Version
+        self.libver             = "3.22"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -672,8 +674,8 @@ class sadmtools():
     #                                 RETURN THE SERVER FQDN
     # ----------------------------------------------------------------------------------------------
     def get_fqdn(self):
-        return (socket.getfqdn())
-        #return ("%s.%s" % (self.hostname,self.get_domainname()))
+        #return (socket.getfqdn())
+        return ("%s.%s" % (self.hostname,self.get_domainname()))
 
     # ----------------------------------------------------------------------------------------------
     #                              RETURN THE IP OF THE CURRENT HOSTNAME
