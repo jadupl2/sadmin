@@ -192,7 +192,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.85"                                              # This Library Version
+export SADM_LIB_VER="3.86"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -380,6 +380,13 @@ export SADM_DR_REAR_INTERVAL=7                                          # Max Da
 export SADM_DR_STORIX_INTERVAL=7                                        # Max Days between Storix
 export SADM_DR_BACKUP_DIF=50                                            # Max % different BackupSize
 
+# Array of O/S Supported & Package Family
+export SADM_OS_SUPPORTED=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMALINUX' 'ROCKY'
+                           'DEBIAN' 'RASPBIAN' 'UBUNTU' 'LINUXMINT' 'AIX' )
+export SADM_REDHAT_FAMILY=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMALINUX' 'ROCKY' )
+export SADM_DEBIAN_FAMILY=( 'DEBIAN' 'RASPBIAN' 'UBUNTU' 'LINUXMINT' )
+export OS_REL="/etc/os-release"                                         # O/S Release File
+
 
 # Local to Library Variable - Can't be use elsewhere outside this script
 export LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"                         # Local Temp File
@@ -469,7 +476,6 @@ SADM_SINFO="[ ${BOLD}${BLUE}INFO${NORMAL} ]"                            # INFO B
 
 
 # Function return the string received to uppercase
-# --------------------------------------------------------------------------------------------------
 sadm_toupper() {
     echo $1 | tr  "[:lower:]" "[:upper:]"
 }
@@ -477,7 +483,6 @@ sadm_toupper() {
 
 
 # Function return the string received to uppercase
-# --------------------------------------------------------------------------------------------------
 sadm_tolower() {
     echo $1 | tr "[:upper:]" "[:lower:]" 
 }
@@ -485,7 +490,6 @@ sadm_tolower() {
 
 
 # Function return the string received to with the first character in uppercase
-# --------------------------------------------------------------------------------------------------
 sadm_capitalize() {
     C=`echo $1 | tr "[:upper:]" "[:lower:]"`
     echo "${C^}"
@@ -494,7 +498,6 @@ sadm_capitalize() {
 
 
 # Check if variable is an integer - Return 1, if not an integer - Return 0 if it is an integer
-# --------------------------------------------------------------------------------------------------
 sadm_isnumeric() {
     wnum=$1
     if [ "$wnum" -eq "$wnum" ] 2>/dev/null ; then return 0 ; else return 1 ; fi
@@ -503,7 +506,6 @@ sadm_isnumeric() {
 
 
 # Display Question (Receive as $1) and wait for response from user, Y/y (return 1) or N/n (return 0)
-# --------------------------------------------------------------------------------------------------
 sadm_ask() {
     wmess="$1 [y,n] ? "                                                 # Add Y/N to Mess. Rcv
     while :                                                             # While until good answer
@@ -530,7 +532,6 @@ sadm_ask() {
 # Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE variable.
 # Use sadm_write (No LF at EOL) instead of sadm_writelog (With LF at EOL).
 # Replace '[ OK ]' By a Green '[ OK ]', add color to ERROR WARNING, FAILED, SUCCESS, and INFO.
-# --------------------------------------------------------------------------------------------------
 sadm_write() {
     SADM_SMSG="$@"                                                      # Screen Msg = Msg Received
     SADM_LMSG="$SADM_SMSG"                                              # Log Mess. = Screen Mess
@@ -941,13 +942,10 @@ sadm_elapse() {
 sadm_get_osversion() {
     wosversion="0.0"                                                    # Default Value
     case "$(sadm_get_ostype)" in
-        "LINUX")    if [ -f /etc/os-release ] 
-                        then wosversion=$(awk -F= '/^VERSION_ID=/ {print $2}' /etc/os-release)
-                        else printf "File /etc/os-release doesn't exist, couldn't get O/S version\n"
+        "LINUX")    if [ -f $OS_REL ] 
+                        then wosversion=$(awk -F= '/^VERSION_ID=/ {print $2}' $OS_REL)
+                        else printf "File $OS_REL doesn't exist, couldn't get O/S version\n"
                     fi 
-                    #if [ "$SADM_LSB_RELEASE" != "" ] 
-                    #    then wosversion=`$SADM_LSB_RELEASE -sr`         # Use lsb_release to Get Ver
-                    #fi 
                     ;;
         "AIX")      wosversion="`uname -v`.`uname -r`"                  # Get Aix Version
                     ;;
@@ -996,9 +994,7 @@ sadm_get_ostype() {
 }
 
 
-# --------------------------------------------------------------------------------------------------
-#                             RETURN THE OS PROJECT CODE NAME
-# --------------------------------------------------------------------------------------------------
+# Return The O/S Code Name
 sadm_get_oscodename() {
     case "$(sadm_get_ostype)" in
         "DARWIN")   wver="$(sadm_get_osmajorversion)"                   # Default is OX Version
@@ -1021,7 +1017,7 @@ sadm_get_oscodename() {
                     if [ "$wver"  = "10.16" ] ; then woscodename="Big Sur"          ;fi
                     if [ "$wver"  = "10.17" ] ; then woscodename="Moyave"           ;fi
                     ;;
-        "LINUX")    woscodename=`$SADM_LSB_RELEASE -sc`
+        "LINUX")    woscodename=$(awk -F= '/^VERSION_CODENAME=/ {print $2}' $OS_REL)
                     ;;
         "AIX")      woscodename="IBM_AIX"
                     ;;
@@ -1031,19 +1027,17 @@ sadm_get_oscodename() {
 
 
 
-# --------------------------------------------------------------------------------------------------
-#                   RETURN THE OS  NAME (ALWAYS RETURNED IN UPPERCASE)
-# --------------------------------------------------------------------------------------------------
+# Return The OS  Name (Always Returned In Uppercase)
 sadm_get_osname() {
     case "$(sadm_get_ostype)" in
         "DARWIN")   wosname=`sw_vers -productName | tr -d ' '`
                     wosname=`echo $wosname | tr '[:lower:]' '[:upper:]'`
                     ;;
-        "LINUX")    wosname=`$SADM_LSB_RELEASE -si | tr '[:lower:]' '[:upper:]'`
-                    if [ "$wosname" = "REDHATENTERPRISESERVER" ] ; then wosname="REDHAT" ; fi
-                    if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT" ; fi
-                    if [ "$wosname" = "REDHATENTERPRISE" ]       ; then wosname="REDHAT" ; fi
-                    if [ "$wosname" = "CENTOSSTREAM" ]           ; then wosname="CENTOS" ; fi
+        "LINUX")    wosname=$(awk -F= '/^ID=/ {print $2}' $OS_REL |tr -d '"' |tr '[:lower:]' '[:upper:]')         
+                    if [ "$wosname" = "REDHATENTERPRISESERVER" ] ; then wosname="REDHAT" ;fi
+                    if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT" ;fi
+                    if [ "$wosname" = "REDHATENTERPRISE" ]       ; then wosname="REDHAT" ;fi
+                    if [ "$wosname" = "CENTOSSTREAM" ]           ; then wosname="CENTOS" ;fi
                     ;;
         "AIX")      wosname="AIX"
                     ;;
@@ -1055,9 +1049,7 @@ sadm_get_osname() {
 
 
 
-# --------------------------------------------------------------------------------------------------
-#                                 RETURN SADMIN RELEASE VERSION NUMBER
-# --------------------------------------------------------------------------------------------------
+# Return Sadmin Release Version Number
 sadm_get_release() {
     if [ -r "$SADM_REL_FILE" ]
         then wrelease=`cat $SADM_REL_FILE`
