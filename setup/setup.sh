@@ -57,16 +57,19 @@
 # 2020_12_24 Update: v3.12 CentOSStream return CENTOS.
 #@2022_02_10 Fix: v3.13 Correct 'pip3' installation on Fedora 35
 #@2022_04_02 Update: v3.14 lsb_release cmd depreciated in RHEL 9, so /etc/os-release file is use.
-#@2022_04_03 Update: v3.15 Adapted to use EPEL 9 for RedHat, Centos, AlmaLinux and Rockey Linux.
+#@2022_04_03 Update: v3.15 Adapted to use EPEL 9 for RedHat, Centos, AlmaLinux and Rocky Linux.
+#@2022_04_06 Fix: v3.16 Fix problem verifying and install Python 3 pip on CentOS9
+#@2022_04_07 Update: v3.17 Change to support Alma and Rocky Linux
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
 
+
  
-#                               Script environment variables
+# Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.15'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.17'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -98,159 +101,197 @@ cyan=$(tput setaf 6)                            ; export cyan           # Cyan c
 white=$(tput setaf 7)                           ; export white          # White color
 
 
+
 #===================================================================================================
-#  Install EPEL Repository for Redhat / CentOS
+#  Install EPEL 7 Repository for Redhat / CentOS / Rocky / Alma Linux / 
 #===================================================================================================
-add_epel_repo()
+add_epel_7_repo()
 {
-
-    # Add EPEL Repository on Redhat / CentOS 5 (but do not enable it)
-    if [ "$SADM_OSVERSION" -eq 5 ] 
-        then if [ ! -r /etc/yum.repos.d/epel.repo ] 
-                then printf "Adding CentOS/Redhat V5 EPEL Archive repository ..." |tee -a $SLOG
-                     EPEL="https://archives.fedoraproject.org/pub/archive/epel/epel-release-latest-5.noarch.rpm"
-                     yum install -y $EPEL >>$SLOG 2>&1
-                     if [ $? -ne 0 ]
-                        then echo "[Error] Adding EPEL repository." |tee -a $SLOG
-                             return 1
-                     fi
-             fi 
-             printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
-             yum-config-manager --disable epel >/dev/null 2>&1
-             if [ $? -ne 0 ]
-                then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
-                     return 1
-                else echo "[ OK ]"
-             fi 
-             return 0
-    fi
-
-    # Add EPEL Repository on Redhat / CentOS 6 (but do not enable it)
-    if [ "$SADM_OSVERSION" -eq 6 ] 
-        then if [ ! -r /etc/yum.repos.d/epel.repo ] 
-                then printf "Adding CentOS/Redhat V6 EPEL repository ..." |tee -a $SLOG
-                     EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm"
-                     yum install -y $EPEL >>$SLOG 2>&1
-                     if [ $? -ne 0 ]
-                        then echo "[Error] Adding EPEL repository." |tee -a $SLOG
-                             return 1
-                     fi
-             fi 
-             printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
-             yum-config-manager --disable epel >/dev/null 2>&1
-             if [ $? -ne 0 ]
-                then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
-                     return 1
-                else echo "[ OK ]"
-             fi 
-             return 0
-    fi
-
-    # Add EPEL Repository on Redhat / CentOS 7 (but do not enable it)
-    if [ "$SADM_OSVERSION" -eq 7 ] 
-        then if [ ! -r /etc/yum.repos.d/epel.repo ] 
-                then printf "Adding CentOS/Redhat V7 EPEL repository ..." |tee -a $SLOG
-                     EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
-                     yum install -y $EPEL >>$SLOG 2>&1
-                     if [ $? -ne 0 ]
-                        then echo "[Error] Adding EPEL repository." |tee -a $SLOG
-                             return 1
-                     fi
-             fi 
-             printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
-             yum-config-manager --disable epel >/dev/null 2>&1
-             if [ $? -ne 0 ]
-                then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
-                     return 1
-                else echo "[ OK ]"
-             fi 
-             return 0
-    fi
-
-    # Add EPEL Repository on Redhat / CentOS 8 (but do not enable it)
-    if [ "$SADM_OSVERSION" -eq 8 ] 
-        then printf "Adding CentOS/Redhat V8 EPEL repository (Disable by default) ..." |tee -a $SLOG
-             EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
-             yum install -y $EPEL >>$SLOG 2>&1
-             if [ $? -ne 0 ]
-                then echo "[Error] Adding EPEL repository." |tee -a $SLOG
-                     return 1 
-                else echo " [ OK ]"
-             fi
-             #
-             printf "Checking if 'yum-utils' is installed ... "
-             rpm -qi yum-utils >/dev/null 2>&1                          # Check dns-utils is install
-             if [ $? -ne 0 ] 
-                then printf "Installing " | tee -a $LOG
-                     dnf install -y yum-utils >/dev/null 2>&1
-                     rpm -qi yum-utils >/dev/null 2>&1                  # dns-utils now installed ?
-                     if [ $? -ne 0 ] 
-                        then echo "[ WARNING ] Problem installing 'yum-utils'." | tee -a $LOG
-                        else echo " [ OK ] "
-                     fi
-                else echo " [ OK ] "
-             fi
-             #
-             printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
-             yum-config-manager --disable epel >/dev/null 2>&1
-             if [ $? -ne 0 ]
-                then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
-                     return 1
-                else echo "[ OK ]"
-             fi 
-             return 0
-             #
-             # On RHEL 8 it is required to also enable the codeready-builder-for-rhel-8-*-rpms 
-             # repository since EPEL packages may depend on packages from it:
-             if [ "$SADM_OSNAME" = "REDHAT" ] 
-                then echo "On RHEL 8, it's required to also enable codeready-builder ..." 
-                     echo "Since EPEL packages may depend on packages from it." 
-                     ARCH=$( /bin/arch )
-                     subscription-manager repos --enable "codeready-builder-for-rhel-8-${ARCH}-rpms"
-             fi
-             #
-             # On CentOS 8 it is recommended to also enable the PowerTools repository since EPEL 
-             # packages may depend on packages from it:
-             if [ "$SADM_OSNAME" = "CENTOS" ] 
-                then printf "On CentOS 8, it's recommended to also enable the EPEL PowerTools Repository.\n"  
-                     print "dnf config-manager --set-enabled PowerTools" 
-                     dnf config-manager --set-enabled PowerTools
-                     if [ $? -ne 0 ]
-                        then echo "[ WARNING ] Couldn't enable EPEL PowerTools repository." | tee -a $SLOG
-                        else echo " [ OK ]"
-                     fi 
-             fi
-    fi
-
-    # Add EPEL Repository on Redhat / CentOS 8 (but do not enable it)
-    if [ "$SADM_OSVERSION" -eq 9 ] 
-       then printf "Adding CentOS/Redhat/Alma/Rocky V9 EPEL repository (Disable by default) ..." |tee -a $SLOG
-            dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
+    if [ ! -r /etc/yum.repos.d/epel.repo ]  
+       then printf "Adding CentOS/Redhat V7 EPEL repository ..." |tee -a $SLOG
+            EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+            yum install -y $EPEL >>$SLOG 2>&1
             if [ $? -ne 0 ]
-               then echo "[ WARNING ] Couldn't enable EPEL repository." | tee -a $SLOG
-                    else echo " [ OK ]"
-            fi 
-            dnf -y install epel-release epel-next-release  >>$SLOG 2>&1
-            if [ $? -ne 0 ]
-               then echo "[Error] Adding EPEL V9 repository." |tee -a $SLOG
-                    return 1 
-               else echo " [ OK ]"
+                then echo "[Error] Adding EPEL 7 repository." |tee -a $SLOG
+                     return 1
             fi
-            #
+            printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
+            yum-config-manager --disable epel >/dev/null 2>&1
+            if [ $? -ne 0 ]
+               then echo "Couldn't disable EPEL 7 for version $SADM_OSVERSION" | tee -a $SLOG
+                    return 1
+               else echo "[ OK ]"
+            fi 
+            return 0
     fi
-
-#CentOS Stream 9
-#dnf config-manager --set-enabled crb
-#dnf install epel-release epel-next-release
-
-#RHEL9
-#subscription-manager repos --enable codeready-builder-beta-for-rhel-9-$(arch)-rpms
-#dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
-    return 0 
 }
 
 
 #===================================================================================================
+# Add EPEL Repository on Redhat / CentOS 8 (but do not enable it)
+#===================================================================================================
+add_epel_8_repo()
+{
+
+    printf "Checking if 'yum-utils' is installed ... "
+    rpm -qi yum-utils >/dev/null 2>&1                          # Check dns-utils is install
+    if [ $? -ne 0 ] 
+       then printf "Installing " | tee -a $LOG
+            dnf install -y yum-utils >/dev/null 2>&1
+            rpm -qi yum-utils >/dev/null 2>&1                  # dns-utils now installed ?
+            if [ $? -ne 0 ] 
+               then echo "[ WARNING ] Problem installing 'yum-utils'." | tee -a $LOG
+               else echo " [ OK ] "
+            fi
+        else echo " [ OK ] "
+    fi
+
+    # On RHEL 8 it is required to also enable the codeready-builder-for-rhel-8-*-rpms 
+    # repository since EPEL packages may depend on packages from it:
+    if [ "$SADM_OSNAME" = "REDHAT" ] 
+       then echo "On RHEL 8, it's required to also enable codeready-builder ..." 
+            echo "Since EPEL packages may depend on packages from it." 
+            ARCH=$( /bin/arch )
+            subscription-manager repos --enable "codeready-builder-for-rhel-8-${ARCH}-rpms"
+            if [ $? -ne 0 ]
+               then echo "[ WARNING ] Couldn't enable EPEL codeready-builder repository" |tee -a $SLOG
+               else echo " [ OK ]"
+            fi 
+            dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+            if [ $? -ne 0 ]
+               then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
+                    return 1
+               else echo " [ OK ]"
+            fi 
+    fi
+
+    # On CentOS 8 it is recommended to also enable the PowerTools repository since EPEL 
+    # packages may depend on packages from it:
+    if [ "$SADM_OSNAME" = "CENTOS" ] 
+       then printf "On CentOS 8, it's recommended to also enable the EPEL PowerTools Repository.\n"  
+            print "dnf config-manager --set-enabled PowerTools" 
+            dnf config-manager --set-enabled PowerTools
+            if [ $? -ne 0 ]
+               then echo "[ WARNING ] Couldn't enable EPEL PowerTools repository." | tee -a $SLOG
+               else echo " [ OK ]"
+            fi 
+            printf "Adding CentOS/Redhat V8 EPEL repository (Disable by default) ..." |tee -a $SLOG
+            dnf -y install epel-release epel-next-release >>$SLOG 2>&1
+            if [ $? -ne 0 ]
+                then echo "[Error] Adding EPEL 8 repository." |tee -a $SLOG
+                     return 1 
+                else echo " [ OK ]"
+            fi
+    fi
+
+    # On Alma Linux and Rocky Linux 8 it is recommended to also enable the PowerTools repository 
+    # since EPEL packages may depend on packages from it:
+    if [ "$SADM_OSNAME" = "ALMALINUX" ] || [ "$SADM_OSNAME" = "ROCKY" ]
+       then printf "On Alma & Rocky Linux 8, we also enable the EPEL PowerTools Repository.\n"  
+            print "dnf config-manager --set-enabled PowerTools" 
+            dnf config-manager --set-enabled PowerTools
+            if [ $? -ne 0 ]
+               then echo "[ WARNING ] Couldn't enable EPEL PowerTools repository." | tee -a $SLOG
+               else echo " [ OK ]"
+            fi 
+            printf "Adding Alma & Rocky Linux V8 EPEL repository (Disable by default)" |tee -a $SLOG
+            dnf -y install epel-release epel-next-release >>$SLOG 2>&1
+            if [ $? -ne 0 ]
+                then echo "[Error] Adding EPEL 8 repository." |tee -a $SLOG
+                     return 1 
+                else echo " [ OK ]"
+            fi
+    fi
+
+    printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
+    yum-config-manager --disable epel >/dev/null 2>&1
+    if [ $? -ne 0 ]
+       then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
+            return 1
+       else echo "[ OK ]"
+    fi 
+}
+
+
+
+#===================================================================================================
+# Add EPEL Repository on Redhat / CentOS 9 (but do not enable it)
+#===================================================================================================
+add_epel_9_repo()
+{
+
+    if [ "$SADM_OSNAME" = "ALMALINUX" ] || [ "$SADM_OSNAME" = "ROCKY" ]
+        then printf "No Alma & Rocky Linux 9 yet, no EPEL version for it.\n"
+             return 0 
+    fi 
+
+    if [ "$SADM_OSNAME" = "CENTOS" ] 
+        then printf "Enable 'crb' EPEL repository ..." |tee -a $SLOG
+             dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
+             if [ $? -ne 0 ]
+                then echo "[ ERROR ] Couldn't enable EPEL repository." | tee -a $SLOG
+                     return 1 
+             fi 
+             printf "Installing EPEL CentOS/Redhat V9 EPEL ..." |tee -a $SLOG
+             dnf -y install epel-release epel-next-release  >>$SLOG 2>&1
+             if [ $? -ne 0 ]
+                then echo "[Error] Adding epel-release & epel-next-release V9 repository." |tee -a $SLOG
+                     return 1 
+                else echo " [ OK ]"
+             fi
+    fi 
+
+
+    if [ "$SADM_OSNAME" = "REDHAT" ] 
+        then printf "Enable 'codeready-builder' EPEL repository ..." |tee -a $SLOG
+             subscription-manager repos --enable codeready-builder-beta-for-rhel-9-$(arch)-rpms >>$SLOG 2>&1 
+             if [ $? -ne 0 ]
+                then echo "[ ERROR ] Couldn't enable'codeready-builder' EPEL repository." |tee -a $SLOG
+                     return 1 
+             fi 
+             printf "Installing EPEL CentOS/Redhat V9 EPEL ..." |tee -a $SLOG
+             dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm  >>$SLOG 2>&1
+             if [ $? -ne 0 ]
+                then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
+                     return 1 
+                else echo " [ OK ]"
+             fi
+    fi 
+}
+
+
+
+#===================================================================================================
+#  Install EPEL Repository for Redhat / CentOS / Rocky / Alma Linux / 
+#===================================================================================================
+add_epel_repo()
+{
+    if [ "$SADM_OSVERSION" -eq 7 ] 
+       then add_epel_7_repo 
+            if [ $? -ne 0 ]
+               then echo "[Error] Adding EPEL 7 repository." |tee -a $SLOG
+                    return 1
+            fi
+    fi 
+    if [ "$SADM_OSVERSION" -eq 8 ] 
+       then add_epel_8_repo 
+            if [ $? -ne 0 ]
+               then echo "[Error] Adding EPEL 8 repository." |tee -a $SLOG
+                    return 1
+            fi
+    fi 
+    if [ "$SADM_OSVERSION" -eq 9 ] 
+       then add_epel_9_repo 
+            if [ $? -ne 0 ]
+               then echo "[Error] Adding EPEL 9 repository." |tee -a $SLOG
+                    return 1
+            fi
+    fi 
+    return 0 
+}
+
+
+
 # Install python3 on system
 #===================================================================================================
 install_python3()
@@ -278,30 +319,31 @@ install_python3()
              echo "----------" | tee -a $SLOG
              exit 1
     fi
-
 }
 
 
-#===================================================================================================
 # Install pip3 on system
 #===================================================================================================
 install_pip3()
 {
     printf "Installing pip3 " | tee -a $SLOG
 
-    if [ "$SADM_PACKTYPE" = "rpm" ] 
-        then if [ "$SADM_OSNAME" = "FEDORA" ]
-                then #echo "Running: dnf -y install python3-pip" 
-                     dnf -y install python3-pip >> $SLOG 2>&1
-                else #echo "Running 'yum --enablerepo=epel -y install python34 python34-setuptools python34-pip'" |tee -a $SLOG
-                     yum --enablerepo=epel -y install python34-pip >>$SLOG 2>&1
-             fi
-    fi 
-    if [ "$SADM_PACKTYPE" = "deb" ] 
-        then apt-get update >> $SLOG 2>&1
-             #echo "Running 'apt-get -y install python3-pip'"| tee -a $SLOG
-             apt-get -y install python3-pip >>$SLOG 2>&1
-    fi 
+    case "$SADM_OSNAME" in                                               # Test Answer
+         REDHAT|CENTOS|ROCKY|ALMALINUX )     if [ "$SADM_OSVERSION" -lt 8 ]
+                                           then yum -y install python3-pip >> $SLOG 2>&1
+                                           else dnf -y install python3-pip >> $SLOG 2>&1
+                                        fi
+                                        ;;
+         FEDORA)                        dnf -y install python3-pip >> $SLOG 2>&1
+                                        ;;
+         UBUNTU|DEBIAN|RASPBIAN|MINT)   apt-get update >> $SLOG 2>&1
+                                        apt-get -y install python3-pip >>$SLOG 2>&1
+                                        ;;
+         * )                            echo "O/S $SADM_OSNAME v$SADM_OSVERSION is not supported"
+                                        echo "Installation aborted ..."
+                                        exit 1
+                                        ;;
+    esac
     
     # pip3 should now be installed, if not then abort installation
     which pip3 > /dev/null 2>&1
@@ -314,18 +356,16 @@ install_pip3()
              echo "----------" | tee -a $SLOG
              exit 1
     fi
-
 }
 
 
 
-#===================================================================================================
 # Check if python 3 is installed, if not install it 
 #===================================================================================================
 check_python3()
 {
     # Check if python3 is installed 
-    printf "Check if python3 is installed ..." | tee -a $SLOG
+    printf "Verifying if python3 is installed ..." | tee -a $SLOG
 
     # python3 should now be installed, if not then install it or abort installation
     which python3 > /dev/null 2>&1
@@ -386,7 +426,7 @@ check_python3()
 }
 
 
-#===================================================================================================
+
 # Make sure hostname is in /etc/hosts
 #===================================================================================================
 check_hostname()
@@ -416,57 +456,9 @@ check_hostname()
     echo "[ OK ] " | tee -a $SLOG
 }
 
-#===================================================================================================
-#     Check if lsb_release command is installed, if not install it, if can't then abort script 
-#===================================================================================================
-#check_lsb_release()
-# {
-#    SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`  
-#    if [ "$SADM_OSTYPE" != LINUX ]
-#        then return 1 
-#    fi                                                                  # Only available on Linux
-#
-#    # Make sure lsb_release is installed
-#    printf "Checking if 'lsb_release' is available ... " | tee -a $SLOG
-#    which lsb_release > /dev/null 2>&1
-#    if [ $? -eq 0 ] ; then echo "[ OK ] " | tee -a $SLOG ; return ; fi 
-#
-#    printf "Installing lsb_release ... " | tee -a $SLOG
-#    
-#    which yum >/dev/null 2>&1
-#    if [ $? -eq 0 ] 
-#        then echo "'yum -y install redhat-lsb-core' ..." >>$SLOG
-#             yum -y install redhat-lsb-core >>$SLOG  2>&1 
-#    fi 
-#    which dnf >/dev/null 2>&1
-#    if [ $? -eq 0 ] 
-#        then echo "'dnf -y install redhat-lsb-core' ..." >>$SLOG
-#             dnf -y install redhat-lsb-core >>$SLOG  2>&1
-#    fi 
-#    which apt-get >/dev/null 2>&1
-#    if [ $? -eq 0 ] 
-#        then apt-get update >/dev/null 2>&1
-#             echo "'apt-get -y install lsb-release'" >>$SLOG
-#             apt-get -y install lsb-release >>$SLOG 2>&1
-#    fi 
-#    
-#    # lsb_release should now be installed, if not then abort installation
-#    which lsb_release > /dev/null 2>&1
-#    if [ $? -ne 0 ]
-#        then echo " " | tee -a $SLOG
-#             echo "----------" | tee -a $SLOG
-#             echo "We are having problem installing lsb_release command." | tee -a $SLOG
-#             echo "Please install lsb-release(deb) or redhat-lsb-core(rpm) package" | tee -a $SLOG
-#             echo "Then run this script again." | tee -a $SLOG 
-#             echo "----------" | tee -a $SLOG
-#             exit 1
-#        else echo " [ OK ]"
-#    fi
-#
-#    return 0
-#}
 
-#===================================================================================================
+
+
 # Gather System Information needed for this script
 #===================================================================================================
 get_sysinfo()
@@ -478,21 +470,29 @@ get_sysinfo()
     if [ "$SADM_OSNAME" = "REDHATENTERPRISEAS" ]     ; then SADM_OSNAME="REDHAT" ; fi
     if [ "$SADM_OSNAME" = "REDHATENTERPRISE" ]       ; then SADM_OSNAME="REDHAT" ; fi
     if [ "$SADM_OSNAME" = "CENTOSSTREAM" ]           ; then SADM_OSNAME="CENTOS" ; fi
+    if [ "$SADM_OSNAME" != "REDHAT" ] && [ "$SADM_OSNAME" != "CENTOS" ] && [ "$SADM_OSNAME" != "FEDORA" ] &&
+       [ "$SADM_OSNAME" != "UBUNTU" ] && [ "$SADM_OSNAME" != "DEBIAN" ] && [ "$SADM_OSNAME" != "RASPBIAN" ] &&
+       [ "$SADM_OSNAME" != "ALMALINUX" ] && [ "$SADM_OSNAME" != "ROCKY"  ] && [ "$SADM_OSNAME" != "LINUXMINT" ]
+       then printf "This distribution of Linux ($SADM_OSNAME) is currently not supported.\n"
+            exit 1
+    fi
 
+    # Get O/S Full Version Number
     if [ -f /etc/os-release ] 
         then SADM_OSFULLVER=$(awk -F= '/^VERSION_ID=/ {print $2}' /etc/os-release |tr -d '"')
         else printf "File /etc/os-release doesn't exist, couldn't get O/S version\n"
              SADM_OSFULLVER="00.00"
     fi 
-    #SADM_OSFULLVER=`lsb_release -sr| tr -d ' '`                         # Get O/S Full Version No.
     
+    # Get O/S Major version number
     SADM_OSVERSION=$(echo $SADM_OSFULLVER | awk -F. '{ print $1 }'| tr -d ' ')
     #SADM_OSVERSION=`lsb_release -sr |awk -F. '{ print $1 }'| tr -d ' '` # Use lsb_release 2 Get Ver
     echo "Your System is running $SADM_OSNAME Version $SADM_OSVERSION ..." >> $SLOG
     
+    # Get O/S Type (LINUX,AIX,DARWIN,SUNOS)
     SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`                 # OS(AIX/LINUX/DARWIN/SUNOS)
 
-    # Determine Package format in use on this system
+    # Determine Package format in use on this system (rpm,deb,aix,dmg)
     SADM_PACKTYPE=""                                                    # Initial Package Type None
     which rpm > /dev/null 2>&1                                          # Is command rpm available 
     if [ $? -eq 0 ] ; then SADM_PACKTYPE="rpm"  ; fi                    # RedHat, CentOS Package
@@ -508,12 +508,11 @@ get_sysinfo()
 
 
 
-#===================================================================================================
-#                                       Script Start HERE
+# Script Start HERE
 #===================================================================================================
 
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then echo "Script can only be run user 'root'" | tee -a $SLOG   # Advise User should be root
+        then echo "Script can only be run by the 'root' user." | tee -a $SLOG   
              echo "Process aborted"  | tee -a $SLOG                     # Abort advise message
              exit 1                                                     # Exit To O/S
     fi
@@ -529,22 +528,23 @@ get_sysinfo()
 EOF
 
     # Display OS Name and Version
+    get_sysinfo                                                         # Get OS Name,Version
     echo " " > $SLOG                                                    # Init the Log File
     echo "SADMIN Pre-installation verification v${SADM_VER}" | tee -a $SLOG
-    echo "---------------------------------------------------------------------------"| tee -a $SLOG
-    echo "SLOGDIR = $SLOGDIR & Log file is $SLOG" >> $SLOG 
+    echo "$SADM_OSTYPE $SADM_OSNAME v$SADM_OSVERSION with $SADM_PACKTYPE ($(arch)) as package format" | tee -a $SLOG
+    echo "Log directory is $SLOGDIR & Log file is $SLOG" | tee -a $SLOG 
+    echo "---------------------------------------------------------------------------"
 
-    #check_lsb_release                                                   # lsb_release must be found
-    get_sysinfo                                                         # Get OS Name,Version
-    if [ "$SADM_OSNAME" = "REDHAT" ] || [ "$SADM_OSNAME" = "CENTOS" ]   # On RedHat & CentOS
+    if [ "$SADM_OSNAME" = "REDHAT" ] || [ "$SADM_OSNAME" = "CENTOS" ] ||  
+       [ "$SADM_OSNAME" = "ROCKY" ]  || [ "$SADM_OSNAME" = "ALMALINUX" ] 
         then add_epel_repo                                              # Add EPEL Repository 
     fi 
     check_python3                                                       # Make sure python3 install
     check_hostname                                                      # Update /etc/hosts 
 
-    # Ok Python3 and lsb_release command are installed - Proceeed with Main Setup Script
+    # Ok Python3 is installed - Proceed with Main Setup Script
     echo "We will now proceed with main setup program ($SCRIPT)" >> $SLOG 
-    echo "All Verifications done ..." >> $SLOG
+    echo "All Verifications done with success ..." >> $SLOG
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
     echo -e "\n" | tee -a $SLOG                                         # Blank Lines
     $SCRIPT 
