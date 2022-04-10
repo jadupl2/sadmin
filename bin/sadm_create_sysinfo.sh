@@ -374,7 +374,7 @@ set_last_osupdate_date()
     if [ ! -r "$RCHFILE" ]
         then sadm_write "\nMissing O/S Update RCH file ($RCHFILE).\n"
              sadm_write "Can't determine last O/S Update Date/Time & Status.\n"
-             sadm_write "Situation will resolve by itself, when you run your first O/S update for this system\n."
+             sadm_write "Situation will resolve by itself, when you run your first O/S update for this system.\n"
              sadm_write "You can run 'sadm_osupdate_starter.sh $(sadm_get_hostname)' on $SADM_SERVER to update this system.\n"
              sadm_write "You will then get a valid 'rch' file.\n\n"
              OSUPDATE_DATE=""
