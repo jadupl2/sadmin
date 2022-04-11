@@ -57,6 +57,7 @@
 #@2022_02_17 client: v3.27 Fix error writing network config file in $SADMIN/dat/dr/sysinfo.txt.
 #@2022_02_17 client: v3.28 Now show last o/s update date and status on screen and log.
 #@2022_03_04 client: v3.29 Added more info about disks, filesystems and partition size
+#@2022_04_10 client: v3.30 Small change for CentOS 9 - Depreciated lsb_release
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -89,7 +90,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.29'                                     # Script Version
+export SADM_VER='3.30'                                     # Script Version
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -132,6 +133,7 @@ export SADM_MAX_LOGLINE=0                                # Nb Lines to trim(0=No
 # Scripts Variables
 #===================================================================================================
 DASH_LINE=`printf %79s |tr " " "-"`             ; export DASH_LINE      # 79 minus sign line
+OSRELEASE="/etc/os-release"
 
 # Name of all Output Files
 HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"   ; export HPREFIX        # Output File Loc & Name
@@ -176,7 +178,6 @@ NMCLI=""                                        ; export NMCLI          # Linux 
 HOSTNAMECTL=""                                  ; export HOSTNAMECTL    # Linux HostNameCTL Command
 OSUPDATE_DATE=""                                ; export OSUPDATE_DATE  # Date of Last O/S Update
 OSUPDATE_STATUS=""                              ; export OSUPDATE_STATUS # Status (S,F,R) O/S Update
-LSBRELEASE=""                                   ; export LSBRELEASE     # lsb_release Location
 MIITOOL=""                                      ; export MIITOOL        # mii-tool command location
 ETHTOOL=""                                      ; export ETHTOOL        # ethtool command location
 UNAME=""                                        ; export UNAME          # uname  command location
@@ -296,7 +297,6 @@ pre_validation()
                 command_available "lshw"        ; LSHW=$SADM_CPATH      # lshw Cmd Path
                 command_available "nmcli"       ; NMCLI=$SADM_CPATH     # nmcli Cmd Path
                 command_available "hostnamectl" ; HOSTNAMECTL=$SADM_CPATH   # hostnamectl Cmd Path
-                command_available "lsb_release" ; LSBRELEASE=$SADM_CPATH    # lsb_release Cmd Path
                 command_available "mii-tool"    ; MIITOOL=$SADM_CPATH   # mii-tool Cmd Path
                 command_available "ethtool"     ; ETHTOOL=$SADM_CPATH   # ethtool Cmd Path
                 command_available "sysctl"      ; SYSCTL=$SADM_CPATH    # Cmd Path or Blank !found
@@ -696,8 +696,8 @@ create_linux_config_files()
              execute_command "$CMD" "$SYSTEM_FILE" 
     fi
 
-    if [ "$LSBRELEASE" != "" ]
-        then CMD="$LSBRELEASE -a"
+    if [ -f "$OSRELEASE"  ]
+        then CMD="cat $OSRELEASE"
              execute_command "$CMD" "$SYSTEM_FILE" 
     fi
 
