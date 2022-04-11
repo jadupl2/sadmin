@@ -60,6 +60,7 @@
 #@2022_04_03 Update: v3.15 Adapted to use EPEL 9 for RedHat, Centos, AlmaLinux and Rocky Linux.
 #@2022_04_06 Fix: v3.16 Fix problem verifying and install Python 3 pip on CentOS9
 #@2022_04_07 Update: v3.17 Change to support Alma and Rocky Linux
+#@2022_04_11 Update: v3.18 Use /etc/os-release to get O/S info instead using lsb_release depreciated
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -69,7 +70,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.17'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.18'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -486,7 +487,6 @@ get_sysinfo()
     
     # Get O/S Major version number
     SADM_OSVERSION=$(echo $SADM_OSFULLVER | awk -F. '{ print $1 }'| tr -d ' ')
-    #SADM_OSVERSION=`lsb_release -sr |awk -F. '{ print $1 }'| tr -d ' '` # Use lsb_release 2 Get Ver
     echo "Your System is running $SADM_OSNAME Version $SADM_OSVERSION ..." >> $SLOG
     
     # Get O/S Type (LINUX,AIX,DARWIN,SUNOS)
