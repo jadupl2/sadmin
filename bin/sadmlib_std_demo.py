@@ -45,6 +45,7 @@
 # 2019_10_18 Update: v3.9 Print SADMIN Database Tables and columns at the end of report.
 # 2019_10_30 Update: v3.10 Remove Utilization of 'facter' (Depreciated).
 #@2021_05_03 Update: v3.11 Rewrote "Overview of setup_admin(), st.start() & st.stop()" section.
+#@2022_04_10 Update: v3.12 Remove lsb_release command dependency
 #===================================================================================================
 #
 try :
@@ -88,7 +89,7 @@ def setup_sadmin():
     st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
-    st.ver              = "3.11"                # Current Script Version
+    st.ver              = "3.12"                # Current Script Version
     st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
     st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
     st.log_header       = False                 # Show/Generate Header in script log (.log)
@@ -906,11 +907,7 @@ def print_command_path(st):
     
     printheader (st,"COMMAND PATH USE BY SADMIN STD. LIBR.","Description","  This System Result")
 
-    pexample="st.lsb_release"                                           # Variable Name
-    pdesc="Cmd. 'lsb_release', Get O/S Version"                         # Variable Description
-    presult=st.lsb_release                                              # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
-    
+  
     pexample="st.dmidecode"                                             # Variable Name
     pdesc="Cmd. 'dmidecode', Get model & type"                          # Variable Description
     presult=st.dmidecode                                                # Return Value(s)
