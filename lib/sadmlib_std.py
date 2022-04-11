@@ -63,6 +63,7 @@
 #@2021_09_30 library v3.20 Various little bug corrections
 #@2021_11_07 library v3.21 Locate 'rrd_tool'executable.
 #@2022_04_04 library v3.22 Change get_fqdn function so it work well on RHEL9 
+#@2022_04_10 library v3.23 Use /etc/os-release file instead of depreciated lsb_release cmd.
 #
 # Add 'SADM_MONITOR_UPDATE_INTERVAL'variable that control refresh rate. 
 #  Starting a new version of this library
@@ -109,6 +110,14 @@ platform            = sys.platform                                      # Platfo
 start_time          = ""                                                # Script Start Date & Time
 stop_time           = ""                                                # Script Stop Date & Time
 start_epoch         = ""                                                # Script Start EPoch Time
+
+# Logic to get O/S Distribution Information into Dictionnary os_dict
+osrelease           = "/etc/os-release"                                 # Distribution Info file
+os_dict             = {}                                                # Dict. for O/S Info
+with open(osrelease) as f:                                              # Open /etc/os-release as f
+    for line in f:                                                      # Process each line
+        k,v = line.rstrip().split("=")                                  # Get Key,Value of each line
+        os_dict[k] = v.strip('"')                                       # Store info in Dictionnary
 
 
 
@@ -288,7 +297,6 @@ class sadmtools():
         self.cfg_monitor_update_interval = 60                           # Monitor Page Upd Interval
 
         # O/S Path to various commands used by SADM Tools
-        self.lsb_release        = ""                                    # Command lsb_release Path
         self.which              = "/usr/bin/which"                      # which Path - Required
         self.dmidecode          = ""                                    # Command dmidecode Path
         self.bc                 = ""                                    # Command bc (Do Some Math)
@@ -804,13 +812,11 @@ class sadmtools():
             ccode, cstdout, cstderr = self.oscommand(wcmd)
             osname=cstdout.upper()
         if self.os_type == "LINUX":
-            wcmd = "%s %s" % (self.lsb_release,"-si")
-            ccode, cstdout, cstderr = self.oscommand(wcmd)
-            osname=cstdout.upper()
-            if osname.upper() == "REDHATENTERPRISESERVER" : osname="REDHAT"
-            if osname.upper() == "REDHATENTERPRISEAS"     : osname="REDHAT"
-            if osname.upper() == "REDHATENTERPRISE"       : osname="REDHAT"
-            if osname.upper() == "CENTOSSTREAM"           : osname="CENTOS"
+            osname=os_dict['ID'].upper()
+            if osname == "REDHATENTERPRISESERVER" : osname="REDHAT"
+            if osname == "REDHATENTERPRISEAS"     : osname="REDHAT"
+            if osname == "REDHATENTERPRISE"       : osname="REDHAT"
+            if osname == "CENTOSSTREAM"           : osname="CENTOS"
         if self.os_type == "AIX" :
             osname="AIX"
         return osname
@@ -862,9 +868,10 @@ class sadmtools():
             #wcmd='grep  "$xstr" "$xfile" | awk -F "macOS "  { print $NF} '
             #ccode, oscodename, cstderr = self.oscommand(wcmd)
         if self.os_type == "LINUX":
-            wcmd = "%s %s" % (self.lsb_release,"-sc")
-            ccode, cstdout, cstderr = self.oscommand(wcmd)
-            oscodename=cstdout.upper()
+            try: 
+                oscodename=os_dict['VERSION_CODENAME']
+            except KeyError as e:     
+                oscodename=""
         if self.os_type == "AIX" :
             oscodename="IBM AIX"
         return (oscodename)
@@ -876,8 +883,7 @@ class sadmtools():
     def get_osversion(self) :
         osversion="0.0"                                                 # Default Value
         if self.os_type == "LINUX" :
-            ccode, cstdout, cstderr = self.oscommand(self.lsb_release + " -sr")
-            osversion=cstdout
+            osversion=os_dict['VERSION_ID']
         if self.os_type == "DARWIN" :
             cmd = "sw_vers -productVersion"
             ccode, cstdout, cstderr = self.oscommand(cmd)
@@ -896,8 +902,7 @@ class sadmtools():
     # ----------------------------------------------------------------------------------------------
     def get_osmajorversion(self) :
         if self.os_type == "LINUX" :
-            ccode, cstdout, cstderr = self.oscommand(self.lsb_release + " -sr")
-            osversion=cstdout
+            osversion=os_dict['VERSION_ID']
             osmajorversion=osversion.split('.')[0]
         if self.os_type == "AIX" :
             ccode, cstdout, cstderr = self.oscommand("uname -v")
@@ -914,8 +919,8 @@ class sadmtools():
     # ----------------------------------------------------------------------------------------------
     def get_osminorversion(self) :
         if self.os_type == "LINUX" :
-            ccode, cstdout, cstderr = self.oscommand(self.lsb_release + " -sr")
-            osversion=str(cstdout)
+            osversion=os_dict['VERSION_ID']
+            osversion=str(osversion)
             pos=osversion.find(".")
             if pos == -1 :
                 osminorversion=""
@@ -1056,7 +1061,7 @@ class sadmtools():
     # It is recommended to install any missing command.
     # ----------------------------------------------------------------------------------------------
     def check_requirements(self):
-        global which,lsb_release,uname,bc,fdisk,mail,ssh,dmidecode,perl
+        global which,uname,bc,fdisk,mail,ssh,dmidecode,perl
         global nmon,lscpu,ethtool,parted,curl,mutt,rrdtool
 
         requisites_status=True                                          # Assume Requirement all Met
@@ -1070,11 +1075,6 @@ class sadmtools():
         #    print("        Script Aborted")                             # install it & abort script
         #    sys.exit(1)                                                 # Exit Script with error
         #self.which = cstdout                                            # If found, Save Path to it
-
-        # Get the location of the lsb_release command
-        if (self.os_type == "LINUX"):                                   # On Linux
-            self.lsb_release = self.locate_command('lsb_release')       # find command & save it
-            if self.lsb_release == "" : requisites_status=False         # if blank didn't find it
 
         # Get the location of the uname command
         self.uname = self.locate_command('uname')                       # Locate uname command
