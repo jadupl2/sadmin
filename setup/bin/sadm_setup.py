@@ -98,6 +98,7 @@
 # 2021_07_21 install: v3.61 Fix server install problem on rpm system with package 'php-mysqlnd'.
 # 2021_07_21 install: v3.62 Fix 'srv_rear_ver' field didn't have a default value in Database.
 # 2021_11_07 install: v3.63 Remove SADM_RRDTOOL variable from sadmin.cfg (depreciated).
+#@2022_04_11 install: v3.64 Use /etc/os-release to get O/S info instead of lsb_release depreciated
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -114,7 +115,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.63"                                            # Setup Version Number
+sver                = "3.64"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -128,6 +129,14 @@ stype               = ""                                                # C=Clie
 fhlog               = ""                                                # Log File Handle
 logfile             = ""                                                # Log FileName
 req_work            = {}                                                # Active Requirement Dict.
+
+# Logic to get O/S Distribution Information into Dictionnary os_dict
+osrelease           = "/etc/os-release"                                 # Distribution Info file
+os_dict             = {}                                                # Dict. for O/S Info
+with open(osrelease) as f:                                              # Open /etc/os-release as f
+    for line in f:                                                      # Process each line
+        k,v = line.rstrip().split("=")                                  # Get Key,Value of each line
+        os_dict[k] = v.strip('"')                                       # Store info in Dictionnary
 
 # Text Colors Attributes Class
 class color:
@@ -149,8 +158,6 @@ syslinux_supported_architecture = ["i686","i386","x86_64","amd64"]
 # Command and package require by SADMIN Client to work correctly
 req_client = {}                                                         # Require Packages Dict.
 req_client = { 
-    'lsb_release':{ 'rpm':'redhat-lsb-core',                'rrepo':'base',  
-                    'deb':'lsb-release',                    'drepo':'base'},
     'nmon'       :{ 'rpm':'nmon',                           'rrepo':'epel',  
                     'deb':'nmon',                           'drepo':'base'},
     'ethtool'    :{ 'rpm':'ethtool',                        'rrepo':'base',  
@@ -1008,21 +1015,18 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     dbdate  = curdate + " " + curtime                                   # MariaDB Insert Date/Time  
     #
     # Get O/S Distribution Name
-    wcmd = "%s %s" % ("lsb_release","-si")
-    ccode, cstdout, cstderr = oscommand(wcmd)
-    osdist=cstdout.upper()
+    osdist=os_dict['ID'].upper()
     if osdist == "REDHATENTERPRISESERVER" : osdist="REDHAT"
     if osdist == "REDHATENTERPRISEAS"     : osdist="REDHAT"
     if osdist == "REDHATENTERPRISE"       : osdist="REDHAT"
-    if osdist == "CENTOSSTREAM"           : osdist="CENTOS"
+    if osdist == "CENTOSSTREAM"           : osdist="CENTOS"    
     #
-    wcmd = "%s %s" % ("lsb_release","-sr")
-    ccode, cstdout, cstderr = oscommand(wcmd)
-    osver=cstdout
+    osver=os_dict['VERSION_ID']
     #
-    wcmd = "%s %s" % ("lsb_release","-c | awk '{print$2}'")
-    ccode, cstdout, cstderr = oscommand(wcmd)
-    oscodename=cstdout
+    try: 
+        oscodename=os_dict['VERSION_CODENAME']
+    except KeyError as e:     
+        oscodename=""
     #
     wcmd = "%s %s" % ("uname","-m")
     ccode, cstdout, cstderr = oscommand(wcmd)
@@ -2226,23 +2230,15 @@ def getpacktype(sroot,sostype):
         sys.exit(1)                                                     # Exit to O/S  
 
     # Get O/S Distribution Name                                         # CentOS,Redhat,
-    cmd = "lsb_release -si"                                             # Get OSName with lsb_release
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute Script
-    if (ccode == 0):                                                    # Command Execution Went OK
-        osname = cstdout.upper()
-        if (cstdout.upper() == "REDHATENTERPRISESERVER"): osname="REDHAT" 
-        if (cstdout.upper() == "REDHATENTERPRISEAS")    : osname="REDHAT" 
-        if (cstdout.upper() == "REDHATENTERPRISE")      : osname="REDHAT"
-        if (cstdout.upper() == "CENTOSSTREAM")          : osname="CENTOS"
-    else:                                                               # If Problem with the cmd
-        writelog("Problem running %s" % (cmd))                          # Infor User
-        writelog("Error %d - %s " % (ccode,cstderr))                    # Show Error# and Stderror
+    osname=os_dict['ID'].upper()
+    if osname == "REDHATENTERPRISESERVER" : osname="REDHAT"
+    if osname == "REDHATENTERPRISEAS"     : osname="REDHAT"
+    if osname == "REDHATENTERPRISE"       : osname="REDHAT"
+    if osname == "CENTOSSTREAM"           : osname="CENTOS"
 
     # Get O/S Major Version Number
     if sostype == "LINUX" :
-        ccode, cstdout, cstderr = oscommand("lsb_release -sr")
-        osversion=cstdout
-        osver=osversion.split('.')[0]
+        osversion=os_dict['VERSION_ID']
     if sostype == "AIX" :
         ccode, cstdout, cstderr = oscommand("uname -v")
         osver=cstdout
