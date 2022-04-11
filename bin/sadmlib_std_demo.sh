@@ -36,6 +36,7 @@
 # 2020_04_01 Update: v3.18 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 # 2020_11_24 Update: v3.19 Don't show DB password file on client
 # 2020_12_24 Update: v3.20 Include output of capitalize function.
+#@2022_04_10 Update: v3.21 Remove lsb_release command dependency
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -57,7 +58,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.20'                              # Current Script Version
+    export SADM_VER='3.21'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -990,11 +991,6 @@ print_sadmin_cfg()
 print_command_path()
 {
     printheader "COMMAND PATH USE BY SADMIN STD. LIBR." "Description" "  This System Result"
-
-    pexample="\$SADM_LSB_RELEASE"                                       # Variable Name
-    pdesc="'lsb_release' use to get O/S version"                        # Command Location
-    presult="$SADM_LSB_RELEASE"                                         # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_DMIDECODE"                                         # Variable Name
     pdesc="'dmidecode' use to get model & type"                         # Command Location
