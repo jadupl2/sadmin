@@ -40,6 +40,7 @@
 # 2020_04_29 Update: v1.8 Remove arp-scan from the SADMIN server requirement list.
 # 2020_11_20 Update: v1.9 Added package 'wkhtmltopdf' installation to server requirement.
 # 2021_04_02 Fix: v1.10 Fix crash when trying to install missing package.
+#@2022_04_10 Update: v1.11 Small change for CentOS 9 - Depreciated lsb_release
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -68,7 +69,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.10'                              # Your Current Script Version
+    export SADM_VER='1.11'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -98,6 +99,7 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 SPATH=""                                    ; export SPATH              # Full Path of Command 
 INSTREQ=0                                   ; export INSTREQ            # Install Mode default OFF
 CHK_SERVER="N"                              ; export CHK_SERVER         # Check Server Req. if "Y"
+OSRELEASE="/etc/os-release"                 ; export OSRELEASE
 
 package_type="$(sadm_get_packagetype)"      ; export package_type       # System Pack Type (rpm,deb)
 #
@@ -200,8 +202,11 @@ install_package()
 #===================================================================================================
 add_epel_repo()
 {
-    SADM_OSVERSION=`lsb_release -sr |awk -F. '{ print $1 }'| tr -d ' '` ; export SADM_OSVERSION 
-    
+    if [ -f $OSRELEASE ] 
+       then export SADM_OSVERSION=$(awk -F= '/^VERSION_ID=/ {print $2}' $OSRELEASE)
+       else printf "File $OSRELEASE doesn't exist, couldn't get O/S version\n"
+    fi
+                        fi 
     # Add EPEL Repository on Redhat / CentOS 6 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 6 ] 
         then yum -C repolist | grep "^epel " >/dev/null 2>&1
@@ -373,11 +378,6 @@ check_sadmin_requirements() {
     # Get Command path for Linux O/S ---------------------------------------------------------------
     if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux O/S
        then 
-            command_available "lsb_release" ; SADM_LSB_RELEASE=$SPATH   # Save Command Path Returned
-            if [ "$SADM_LSB_RELEASE" = "" ] && [ "$INSTREQ" -eq 1 ]     # Cmd not found & Inst Req.
-                then install_package "redhat-lsb-core" "lsb-release"    # Install Package (rpm,deb)
-                     command_available "lsb_release" ; SADM_LSB_RELEASE=$SPATH   
-            fi
 
             command_available "dmidecode"   ; SADM_DMIDECODE=$SPATH     # Save Command Path Returned
             if [ "$SADM_DMIDECODE" = "" ] && [ "$INSTREQ" -eq 1 ]       # Cmd not found & Inst Req.
