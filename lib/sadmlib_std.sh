@@ -177,6 +177,7 @@
 #@2022_02_16 lib v3.85 Fix: Serial number return by sadm_server_serial() on iMac was incomplete.
 #@2022_04_04 lib v3.86 Update: to Replace use of depeciated lsb_release in RHEL9 
 #@2022_04_10 lib v3.87 Update: When PID exist don't reinitialize the script log 
+#@2022_04_11 lib v3.88 Use /etc/os-release file instead of depreciated lsb_release cmd.
 #===================================================================================================
 
 
@@ -190,7 +191,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.87"                                              # This Library Version
+export SADM_LIB_VER="3.88"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -293,7 +294,6 @@ export SADM_RCHLOG="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"  # Result
 export SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt"             # Monitor Report file (rpt)
 
 # COMMAND PATH REQUIRE THAT SADMIN USE
-export SADM_LSB_RELEASE=""                                              # Command lsb_release Path
 export SADM_DMIDECODE=""                                                # Command dmidecode Path
 export SADM_BC=""                                                       # Command bc (Do Some Math)
 export SADM_FDISK=""                                                    # fdisk (Read Disk Capacity)
@@ -732,8 +732,7 @@ sadm_check_requirements() {
 
     # Get Command path for Linux O/S ---------------------------------------------------------------
     if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux O/S
-       then SADM_LSB_RELEASE=$(sadm_get_command_path "lsb_release")     # Get lsb_release cmd path
-            SADM_DMIDECODE=$(sadm_get_command_path "dmidecode")         # Get dmidecode cmd path
+       then SADM_DMIDECODE=$(sadm_get_command_path "dmidecode")         # Get dmidecode cmd path
             SADM_NMON=$(sadm_get_command_path "nmon")                   # Get nmon cmd path   
             SADM_ETHTOOL=$(sadm_get_command_path "ethtool")             # Get ethtool cmd path   
             SADM_PARTED=$(sadm_get_command_path "parted")               # Get parted cmd path   
@@ -941,7 +940,7 @@ sadm_get_osversion() {
     wosversion="0.0"                                                    # Default Value
     case "$(sadm_get_ostype)" in
         "LINUX")    if [ -f $OS_REL ] 
-                        then wosversion=$(awk -F= '/^VERSION_ID=/ {print $2}' $OS_REL)
+                        then wosversion=$(awk -F= '/^VERSION_ID=/ {print $2}' $OS_REL | tr -d '"')
                         else printf "File $OS_REL doesn't exist, couldn't get O/S version\n"
                     fi 
                     ;;
@@ -1266,7 +1265,7 @@ sadm_server_model() {
     case "$(sadm_get_ostype)" in
         "LINUX") wmodel=""
                  if [ "$(sadm_server_type)" = "P" ]
-                     then if [ $(sadm_get_osname) = "RASPBIAN" ]
+                     then if [ $(sadm_get_osname) = "RASPBIAN" ] || [ -f /usr/bin/raspi-config ]
                              then wmodel=$(awk -F\: '/^Model/ {print $2}' /proc/cpuinfo)
                                   wmodel=$(echo "$wmodel" | awk '{$1=$1};1')
                              else fmodel="/sys/devices/virtual/dmi/id/product_name"
@@ -1948,6 +1947,8 @@ sadm_start() {
        then pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Epoch time of PID File
             cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
+            sadm_writelog " "
+            sadm_writelog " "
             sadm_write "Script '$SADM_PN' is already running ...\n"     # Script already running
             sadm_write "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid' exist, created $pelapse seconds ago.\n"
             sadm_write "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N').\n" 
@@ -1957,11 +1958,12 @@ sadm_start() {
             sadm_write "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script.\n"
             if [ ! -z "$SADM_PID_TIMEOUT" ] 
                 then sadm_write "  - You wait till PID timeout '\$SADM_PID_TIMEOUT' is reach.\n"
-                     sadm_write "    The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n\n"
+                     sadm_write "    The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n\n\n"
                      if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
                         then sadm_write "\nThe PID file exceeded it time to live '\$SADM_PID_TIMEOUT'.\n"
                              sadm_write "Assuming script was aborted abnormally, "
                              sadm_write "Script execution is now re-enable and the PID file updated.\n\n"
+                             sadm_writelog " "
                              touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
                              DELETE_PID="Y"                             # Del PID Since running
                         else DELETE_PID="N"                             # No Del PID Since running
