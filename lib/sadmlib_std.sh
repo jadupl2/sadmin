@@ -178,6 +178,7 @@
 #@2022_04_04 lib v3.86 Update: to Replace use of depeciated lsb_release in RHEL9 
 #@2022_04_10 lib v3.87 Update: When PID exist don't reinitialize the script log 
 #@2022_04_11 lib v3.88 Use /etc/os-release file instead of depreciated lsb_release cmd.
+#@2022_04_14 lib v3.89 Fix problem getting osversion on old rhel version.
 #===================================================================================================
 
 
@@ -191,7 +192,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.88"                                              # This Library Version
+export SADM_LIB_VER="3.89"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -296,6 +297,7 @@ export SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt"             # Monito
 # COMMAND PATH REQUIRE THAT SADMIN USE
 export SADM_DMIDECODE=""                                                # Command dmidecode Path
 export SADM_BC=""                                                       # Command bc (Do Some Math)
+export SADM_LSB_RELEASE=""                                              # Path to lsb_release
 export SADM_FDISK=""                                                    # fdisk (Read Disk Capacity)
 export SADM_WHICH=""                                                    # which Path - Required
 export SADM_PERL=""                                                     # perl Path (for epoch time)
@@ -565,7 +567,6 @@ sadm_write() {
 
 # Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE variable.
 # A newLine is added at the end of each file written.
-# --------------------------------------------------------------------------------------------------
 sadm_writelog() {
     SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
     SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Log Message with Date/Time
@@ -583,8 +584,9 @@ sadm_writelog() {
     esac
 }
 
+
+
 # This function call sadm_writelog, it's is declare for uniformity with sadm_write_err.
-# --------------------------------------------------------------------------------------------------
 sadm_write_log() {
     SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
     sadm_writelog "$SADM_SMSG"                                          # Go write to script log
@@ -594,7 +596,6 @@ sadm_write_log() {
 
 
 # Write String received to log ($SADM_LOG) & script error log ($SADM_ELOG)
-# --------------------------------------------------------------------------------------------------
 sadm_write_err() {
     SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
     sadm_writelog "$SADM_SMSG"                                          # Go write to script log
@@ -604,10 +605,8 @@ sadm_write_err() {
 
 
 
-# Purpose : 
-#   Show Script Name, version, Library Version, O/S Name/Version and Kernel version.
-#   Use for '-v' arguments of a script
-# --------------------------------------------------------------------------------------------------
+# Show Script Name, version, Library Version, O/S Name/Version and Kernel version.
+# Use for '-v' arguments of a script
 sadm_show_version()
 {
     printf "\n${SADM_PN} v${SADM_VER} - Hostname ${SADM_HOSTNAME}"
@@ -629,7 +628,6 @@ sadm_show_version()
 # Return Value : 
 #   0 - if the trim done with success 
 #   1 - if problem occured while trimming the file
-# --------------------------------------------------------------------------------------------------
 sadm_trimfile() {
     wfile=$1 ; maxline=$2                                               # Save FileName & Trim Num.
     wreturn_code=0                                                      # Default Return Code 
@@ -671,7 +669,6 @@ sadm_trimfile() {
 # Return Value : 
 #   0) If command exist & the full command path is returned (/usr/bin/cal).
 #   1) If command doesn't exist & an empty string is returned ("")
-# --------------------------------------------------------------------------------------------------
 sadm_get_command_path() {
     SADM_CMD=$1                                                         # Save Parameter received
     if ${SADM_WHICH} ${SADM_CMD} >/dev/null 2>&1                        # Command is found ?
@@ -695,7 +692,6 @@ sadm_get_command_path() {
 #   0) If package type was determine and echo rpm (Redhat,CentOS,Suse,...), 
 #      deb(Ubuntu,Debian,Raspbian,...), lslpp(Aix), launchctl(MacOS)
 #   1) If couldn't determine package type and echo empty strinng
-# ----------------------------------------------------------------------------------------------
 sadm_get_packagetype() {
     packtype=""                                                     # Initial Package None
     found=$(sadm_get_command_path 'rpm')                            # Is command rpm available ?
@@ -712,11 +708,8 @@ sadm_get_packagetype() {
 
 
 
-# --------------------------------------------------------------------------------------------------
-# THIS FUNCTION MAKE SURE THAT ALL SADM SHELL LIBRARIES (LIB/SADM_*) REQUIREMENTS ARE MET BEFORE USE
-# IF THE REQUIRENMENT ARE NOT MET, THEN THE SCRIPT WILL ABORT INFORMING USER TO CORRECT SITUATION
-# --------------------------------------------------------------------------------------------------
-#
+# This Function Make Sure That All  Requirements for using SADM Shell Libraries (Lib/Sadm_*) Are Met
+# If Requirenments Aren't Met, Then The Script Will Abort Informing User To Correct Situation
 sadm_check_requirements() {
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "sadm_check_requirement\n" ; fi
 
@@ -730,7 +723,7 @@ sadm_check_requirements() {
              return 1                                                   # Return Error to Caller
     fi
 
-    # Get Command path for Linux O/S ---------------------------------------------------------------
+    # Get Command path for Linux O/S command or "" if couldn't find it.
     if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux O/S
        then SADM_DMIDECODE=$(sadm_get_command_path "dmidecode")         # Get dmidecode cmd path
             SADM_NMON=$(sadm_get_command_path "nmon")                   # Get nmon cmd path   
@@ -739,6 +732,7 @@ sadm_check_requirements() {
             SADM_MUTT=$(sadm_get_command_path "mutt")                   # Get mutt cmd path   
             SADM_LSCPU=$(sadm_get_command_path "lscpu")                 # Get lscpu cmd path   
             SADM_FDISK=$(sadm_get_command_path "fdisk")                 # Get fdisk cmd path   
+            SADM_LSB_RELEASE=$(sadm_get_command_path "lsb_release")     # Get lsb_release cmd path   
     fi
 
     # Special consideration for nmon on Aix 5.x & 6.x (After that it is included as part of O/S ----
@@ -771,11 +765,9 @@ sadm_check_requirements() {
 }
 
 
-# --------------------------------------------------------------------------------------------------
 # Function will Sleep for a number of seconds.
 #   - 1st parameter is the time to sleep in seconds.
 #   - 2nd Parameter is the interval in seconds, user will be showed the elapse number of seconds.
-# --------------------------------------------------------------------------------------------------
 sadm_sleep() {
     SLEEP_TIME=$1                                                       # Nb. Sec. to Sleep 
     TIME_INTERVAL=$2                                                    # Interval show user count
@@ -791,9 +783,7 @@ sadm_sleep() {
 
 
 
-# --------------------------------------------------------------------------------------------------
-#                       R E T U R N      C U R R E N T    E P O C H   T I M E
-# --------------------------------------------------------------------------------------------------
+#  R E T U R N      C U R R E N T    E P O C H   T I M E
 sadm_get_epoch_time() {
     w_epoch_time=`${SADM_PERL} -e 'print time'`                         # Use Perl to get Epoch Time
     echo "$w_epoch_time"                                                # Return Epoch to Caller
@@ -939,17 +929,24 @@ sadm_elapse() {
 sadm_get_osversion() {
     wosversion="0.0"                                                    # Default Value
     case "$(sadm_get_ostype)" in
-        "LINUX")    if [ -f $OS_REL ] 
-                        then wosversion=$(awk -F= '/^VERSION_ID=/ {print $2}' $OS_REL | tr -d '"')
-                        else printf "File $OS_REL doesn't exist, couldn't get O/S version\n"
+        "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
+                       then osver=$($SADM_LSB_RELEASE -rs)
+                       else if [ -f $OS_REL ] 
+                                then osver=$(awk -F= '/^VERSION_ID=/ {print $2}' $OS_REL |tr -d '"')
+                                else if [ -f /etc/system-release-cpe ] 
+                                        then osver=$(awk -F: '{print $5}' /etc/system-release-cpe)
+                                        else printf "Couldn't get O/S version\n"
+                                             osver=0.0
+                                     fi
+                            fi 
                     fi 
                     ;;
-        "AIX")      wosversion="`uname -v`.`uname -r`"                  # Get Aix Version
+        "AIX")      osver="`uname -v`.`uname -r`"                  # Get Aix Version
                     ;;
-        "DARWIN")   wosversion=`sw_vers -productVersion`                # Get O/S Version on MacOS
+        "DARWIN")   osver=`sw_vers -productVersion`                # Get O/S Version on MacOS
                     ;;
     esac
-    echo "$wosversion"
+    echo "$osver"
 }
 
 
@@ -995,31 +992,45 @@ sadm_get_ostype() {
 sadm_get_oscodename() {
     case "$(sadm_get_ostype)" in
         "DARWIN")   wver="$(sadm_get_osmajorversion)"                   # Default is OX Version
-                    if [ "$wver"  = "10.0" ]  ; then woscodename="Cheetah"          ;fi
-                    if [ "$wver"  = "10.1" ]  ; then woscodename="Puma"             ;fi
-                    if [ "$wver"  = "10.2" ]  ; then woscodename="Jaguar"           ;fi
-                    if [ "$wver"  = "10.3" ]  ; then woscodename="Panther"          ;fi
-                    if [ "$wver"  = "10.4" ]  ; then woscodename="Tiger"            ;fi
-                    if [ "$wver"  = "10.5" ]  ; then woscodename="Leopard"          ;fi
-                    if [ "$wver"  = "10.6" ]  ; then woscodename="Snow Leopard"     ;fi
-                    if [ "$wver"  = "10.7" ]  ; then woscodename="Lion"             ;fi
-                    if [ "$wver"  = "10.8" ]  ; then woscodename="Mountain Lion"    ;fi
-                    if [ "$wver"  = "10.9" ]  ; then woscodename="Mavericks"        ;fi
-                    if [ "$wver"  = "10.10" ] ; then woscodename="Yosemite"         ;fi
-                    if [ "$wver"  = "10.11" ] ; then woscodename="El Capitan"       ;fi
-                    if [ "$wver"  = "10.12" ] ; then woscodename="Sierra"           ;fi
-                    if [ "$wver"  = "10.13" ] ; then woscodename="High Sierra"      ;fi
-                    if [ "$wver"  = "10.14" ] ; then woscodename="Mojave"           ;fi
-                    if [ "$wver"  = "10.15" ] ; then woscodename="Catalina"         ;fi
-                    if [ "$wver"  = "10.16" ] ; then woscodename="Big Sur"          ;fi
-                    if [ "$wver"  = "10.17" ] ; then woscodename="Moyave"           ;fi
+                    if [ "$wver"  = "10.0" ]  ; then oscode="Cheetah"          ;fi
+                    if [ "$wver"  = "10.1" ]  ; then oscode="Puma"             ;fi
+                    if [ "$wver"  = "10.2" ]  ; then oscode="Jaguar"           ;fi
+                    if [ "$wver"  = "10.3" ]  ; then oscode="Panther"          ;fi
+                    if [ "$wver"  = "10.4" ]  ; then oscode="Tiger"            ;fi
+                    if [ "$wver"  = "10.5" ]  ; then oscode="Leopard"          ;fi
+                    if [ "$wver"  = "10.6" ]  ; then oscode="Snow Leopard"     ;fi
+                    if [ "$wver"  = "10.7" ]  ; then oscode="Lion"             ;fi
+                    if [ "$wver"  = "10.8" ]  ; then oscode="Mountain Lion"    ;fi
+                    if [ "$wver"  = "10.9" ]  ; then oscode="Mavericks"        ;fi
+                    if [ "$wver"  = "10.10" ] ; then oscode="Yosemite"         ;fi
+                    if [ "$wver"  = "10.11" ] ; then oscode="El Capitan"       ;fi
+                    if [ "$wver"  = "10.12" ] ; then oscode="Sierra"           ;fi
+                    if [ "$wver"  = "10.13" ] ; then oscode="High Sierra"      ;fi
+                    if [ "$wver"  = "10.14" ] ; then oscode="Mojave"           ;fi
+                    if [ "$wver"  = "10.15" ] ; then oscode="Catalina"         ;fi
+                    if [ "$wver"  = "10.16" ] ; then oscode="Big Sur"          ;fi
+                    if [ "$wver"  = "10.17" ] ; then oscode="Moyave"           ;fi
                     ;;
-        "LINUX")    woscodename=$(awk -F= '/^VERSION_CODENAME=/ {print $2}' $OS_REL)
+        "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
+                       then osver=$($SADM_LSB_RELEASE -sc)
+                       else if [ -f "$OS_REL"] 
+                               then grep -q "^VERSION_CODENAME=" $OS_REL 
+                                    if [ $? -eq 0 ]
+                                       then oscode=$(awk -F= '/^VERSION_CODENAME=/ {print $2}' $OS_REL)
+                                       else grep '^VERSION=' /etc/os-release | grep '(' 
+                                            if [ $? -eq 0 ] 
+                                               then oscode=$(awk -F= '/^VERSION=/ {print $2}' $OS_REL) 
+                                                    oscode=$(echo $oscode | tr -d '()"' | awk '{print $2}')
+                                               else oscode=""
+                                            fi
+                                    fi 
+                            fi 
+                    fi 
                     ;;
-        "AIX")      woscodename="IBM_AIX"
+        "AIX")      oscode="IBM_AIX"
                     ;;
     esac
-    echo "$woscodename"
+    echo "$oscode"
 }
 
 
@@ -1030,10 +1041,22 @@ sadm_get_osname() {
         "DARWIN")   wosname=`sw_vers -productName | tr -d ' '`
                     wosname=`echo $wosname | tr '[:lower:]' '[:upper:]'`
                     ;;
-        "LINUX")    wosname=$(awk -F= '/^ID=/ {print $2}' $OS_REL |tr -d '"' |tr '[:lower:]' '[:upper:]')         
+        "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
+                       then wosname=$($SADM_LSB_RELEASE -si)
+                       else if [ -f "$OS_REL"] 
+                               then grep -q '^ID=' $OS_REL 
+                                    if [ $? -eq 0 ]
+                                       then wosname=$(awk -F= '/^ID=/ {print $2}' $OS_REL)
+                                            wosname=$(echo $wosname | tr -d '"' | )
+                                       else wosname=""
+                                    fi 
+                            fi 
+                    fi 
+                    wosname=$(echo $wosname | tr '[:lower:]' '[:upper:]')
                     if [ "$wosname" = "REDHATENTERPRISESERVER" ] ; then wosname="REDHAT" ;fi
                     if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT" ;fi
                     if [ "$wosname" = "REDHATENTERPRISE" ]       ; then wosname="REDHAT" ;fi
+                    if [ "$wosname" = "RHEL" ]                   ; then wosname="REDHAT" ;fi
                     if [ "$wosname" = "CENTOSSTREAM" ]           ; then wosname="CENTOS" ;fi
                     ;;
         "AIX")      wosname="AIX"
@@ -1995,10 +2018,10 @@ sadm_start() {
         then sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
              sadm_writelog "$(date +"%a %d %b %Y %T") - ${SADM_PN} v${SADM_VER} - Library v${SADM_LIB_VER}"
              if [ "$SADM_PDESC" ]                                       # If Script Desc. Not empty
-                then sadm_writelog "Desc.: $SADM_PDESC"                 # Include it in log Header
+                then sadm_writelog "Desc: $SADM_PDESC"                  # Include it in log Header
              fi
-             sadm_writelog "$(sadm_get_fqdn) - User: $(whoami) - Arch: $(arch) - SADMIN: $SADMIN"
-             hline3="$(sadm_get_osname) ($(sadm_get_oscodename)) $(sadm_capitalize $(sadm_get_ostype))"
+             sadm_writelog "Host: $(sadm_get_fqdn) - User: $(whoami) - Arch: $(arch) - SADMIN: $SADMIN"
+             hline3="$(sadm_capitalize $(sadm_get_osname)) $(sadm_capitalize $(sadm_get_ostype))"
              hline3="${hline3} release $(sadm_get_osversion) - Kernel $(sadm_get_kernel_version)"
              sadm_writelog "$hline3"
              sadm_writelog "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
