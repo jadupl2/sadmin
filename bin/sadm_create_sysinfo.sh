@@ -537,7 +537,7 @@ create_linux_config_files()
     if [ "$PVSCAN"    != "" ] ; then CMD="$PVSCAN"    ; execute_command "$CMD" "$LVM_FILE" ; fi
     if [ "$PVDISPLAY" != "" ] ; then CMD="$PVDISPLAY" ; execute_command "$CMD" "$LVM_FILE" ; fi
     if [ "$VGS"       != "" ] ; then CMD="$VGS"       ; execute_command "$CMD" "$LVM_FILE" ; fi
-    if [ "$VGSCAN"    != "" ] ; then CMD="$VGSCAN"    ; execute_command "$CMD" "$LVM_FILE" ; fi
+    if [ "$VGSCAN"    != "" ] ; then CMD="$VGSCAN 2>/dev/null"    ; execute_command "$CMD" "$LVM_FILE" ; fi
     if [ "$VGDISPLAY" != "" ] ; then CMD="$VGDISPLAY" ; execute_command "$CMD" "$LVM_FILE" ; fi
     if [ "$LVS"       != "" ] ; then CMD="$LVS"       ; execute_command "$CMD" "$LVM_FILE" ; fi
     if [ "$LVSCAN"    != "" ] ; then CMD="$LVSCAN"    ; execute_command "$CMD" "$LVM_FILE" ; fi
