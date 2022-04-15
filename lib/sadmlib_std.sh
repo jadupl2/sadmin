@@ -1043,21 +1043,22 @@ sadm_get_osname() {
                     ;;
         "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
                        then wosname=$($SADM_LSB_RELEASE -si)
-                       else if [ -f "$OS_REL"] 
+                       else if [ -f "$OS_REL" ] 
                                then grep -q '^ID=' $OS_REL 
                                     if [ $? -eq 0 ]
                                        then wosname=$(awk -F= '/^ID=/ {print $2}' $OS_REL)
-                                            wosname=$(echo $wosname | tr -d '"' | )
+                                            wosname=$(echo $wosname | tr -d '"' )
                                        else wosname=""
                                     fi 
                             fi 
                     fi 
                     wosname=$(echo $wosname | tr '[:lower:]' '[:upper:]')
-                    if [ "$wosname" = "REDHATENTERPRISESERVER" ] ; then wosname="REDHAT" ;fi
-                    if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT" ;fi
-                    if [ "$wosname" = "REDHATENTERPRISE" ]       ; then wosname="REDHAT" ;fi
-                    if [ "$wosname" = "RHEL" ]                   ; then wosname="REDHAT" ;fi
-                    if [ "$wosname" = "CENTOSSTREAM" ]           ; then wosname="CENTOS" ;fi
+                    if [ "$wosname" = "REDHATENTERPRISESERVER" ] ; then wosname="REDHAT"   ;fi
+                    if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT"   ;fi
+                    if [ "$wosname" = "REDHATENTERPRISE" ]       ; then wosname="REDHAT"   ;fi
+                    if [ "$wosname" = "RHEL" ]                   ; then wosname="REDHAT"   ;fi
+                    if [ "$wosname" = "CENTOSSTREAM" ]           ; then wosname="CENTOS"   ;fi
+                    if [ -f /usr/bin/raspi-config ]              ; then wosname="RASPBIAN" ;fi
                     ;;
         "AIX")      wosname="AIX"
                     ;;
