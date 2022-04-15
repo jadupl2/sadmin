@@ -158,6 +158,8 @@ syslinux_supported_architecture = ["i686","i386","x86_64","amd64"]
 # Command and package require by SADMIN Client to work correctly
 req_client = {}                                                         # Require Packages Dict.
 req_client = { 
+    'lsb_release':{ 'rpm':'redhat-lsb-core',                'rrepo':'base',  
+                    'deb':'lsb-release',                    'drepo':'base'},
     'nmon'       :{ 'rpm':'nmon',                           'rrepo':'epel',  
                     'deb':'nmon',                           'drepo':'base'},
     'ethtool'    :{ 'rpm':'ethtool',                        'rrepo':'base',  
@@ -1013,25 +1015,49 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     curdate = cnow.strftime("%Y-%m-%d")                                 # Format Current date
     curtime = cnow.strftime("%H:%M:%S")                                 # Format Current Time
     dbdate  = curdate + " " + curtime                                   # MariaDB Insert Date/Time  
-    #
+    
     # Get O/S Distribution Name
-    osdist=os_dict['ID'].upper()
+    if os.path.isfile('/usr/bin/lsb_release') : 
+        wcmd = "%s %s" % ("lsb_release","-si")
+        ccode, cstdout, cstderr = oscommand(wcmd)
+        osdist=cstdout.upper()
+    else: 
+        try: 
+            osdist=os_dict['ID'].upper()
+        except KeyError as e:     
+            writelog('Cannot determine O/S distrobution')
     if osdist == "REDHATENTERPRISESERVER" : osdist="REDHAT"
     if osdist == "REDHATENTERPRISEAS"     : osdist="REDHAT"
+    if osdist == "RHEL"                   : osdist="REDHAT"
     if osdist == "REDHATENTERPRISE"       : osdist="REDHAT"
     if osdist == "CENTOSSTREAM"           : osdist="CENTOS"    
-    #
-    osver=os_dict['VERSION_ID']
-    #
-    try: 
-        oscodename=os_dict['VERSION_CODENAME']
-    except KeyError as e:     
-        oscodename=""
-    #
+    
+    # Get O/S Version
+    if os.path.isfile('/usr/bin/lsb_release') : 
+      ccode, cstdout, cstderr = oscommand("lsb_release" + " -sr")
+      osver=cstdout
+    else:
+        try: 
+            osver=os_dict['VERSION_ID']
+        except KeyError as e:     
+            osver="0.0"
+
+    # Get O/S Code Name
+    if os.path.isfile('/usr/bin/lsb_release') : 
+        wcmd = "%s %s" % ("lsb_release","-c | awk '{print$2}'")
+        ccode, cstdout, cstderr = oscommand(wcmd)
+        oscodename=cstdout
+    else:
+        try: 
+            oscodename=os_dict['VERSION_CODENAME']
+        except KeyError as e:     
+            oscodename=""
+
+    # Get Architecture
     wcmd = "%s %s" % ("uname","-m")
     ccode, cstdout, cstderr = oscommand(wcmd)
     warch=cstdout
-    #
+
     # Construct insert new server SQL Statement
     sql = "use sadmin; "
     sql += "insert into server set srv_name='%s', srv_domain='%s'," % (sname,sdomain);
@@ -2209,7 +2235,7 @@ def setup_sadmin_config_file(sroot,wostype):
 #
 # Return :
 #   Package Type (deb,rpm,dmg,aix)
-#   O/S Name (AIX/CENTOS/REDHAT,UBUNTU,DEBIAN,RASPBIAN,...)
+#   O/S Name (AIX/CENTOS/REDHAT,UBUNTU,ROCKY,ALMALINUX,DEBIAN,RASPBIAN,...)
 #   O/S Major Version Number
 #   O/S Running in 32 or 64 bits (32,64)
 #   O/S Architecture (Aarch64,Armv6l,Armv7l,I686,X86_64)
@@ -2230,15 +2256,31 @@ def getpacktype(sroot,sostype):
         sys.exit(1)                                                     # Exit to O/S  
 
     # Get O/S Distribution Name                                         # CentOS,Redhat,
-    osname=os_dict['ID'].upper()
+    if os.path.isfile('/usr/bin/lsb_release') : 
+        wcmd = "%s %s" % ("lsb_release","-si")
+        ccode, cstdout, cstderr = oscommand(wcmd)
+        osname=cstdout.upper()
+    else: 
+        try: 
+            osname=os_dict['ID'].upper()
+        except KeyError as e:     
+            writelog('Cannot determine O/S distrobution')
     if osname == "REDHATENTERPRISESERVER" : osname="REDHAT"
+    if osname == "RHEL"                   : osname="REDHAT"
     if osname == "REDHATENTERPRISEAS"     : osname="REDHAT"
     if osname == "REDHATENTERPRISE"       : osname="REDHAT"
     if osname == "CENTOSSTREAM"           : osname="CENTOS"
 
     # Get O/S Major Version Number
     if sostype == "LINUX" :
-        osversion=os_dict['VERSION_ID']
+        if os.path.isfile('/usr/bin/lsb_release') : 
+            ccode, cstdout, cstderr = oscommand("lsb_release" + " -sr")
+            osver=cstdout
+        else:
+            try: 
+                osver=os_dict['VERSION_ID']
+            except KeyError as e:     
+                osver="0.0"
     if sostype == "AIX" :
         ccode, cstdout, cstderr = oscommand("uname -v")
         osver=cstdout
