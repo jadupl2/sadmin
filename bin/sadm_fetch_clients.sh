@@ -85,6 +85,7 @@
 # 2021_08_27 server v3.31 Increase ssh connection Timeout "-o ConnectTimeout=3".
 # 2021_10_20 server v3.32 Remove syncing of depreciated file 'alert_slack.cfg'. 
 # 2021_11_15 server v3.33 Fix type error on comment line
+#@2022_04_19 server v3.34 Minor fix and performance improvements.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
@@ -132,7 +133,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.33'                                     # Script Version
+export SADM_VER='3.34'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
@@ -526,6 +527,8 @@ update_backup_crontab ()
     echo "$cline" >> $SADM_BACKUP_NEWCRON                               # Output Line to Crontab cfg
 }
 
+
+
 #===================================================================================================
 # Generic rsync function, use to collect client files (*.rpt,*.log,*.rch,) 
 # rsync remote SADM client with local directories
@@ -721,7 +724,7 @@ validate_server_connectivity()
 
     # Try to get uptime from system to test if ssh to system is working
     # -o ConnectTimeout=1 -o ConnectionAttempts=1 
-    wuptime=$($SADM_SSH_CMD -o ConnectTimeout=1 -o ConnectionAttempts=4 $FQDN_SNAME uptime 2>/dev/null)
+    wuptime=$($SADM_SSH_CMD -o ConnectTimeout=1 -o ConnectionAttempts=3 $FQDN_SNAME uptime 2>/dev/null)
     RC=$?                                                               # Save Error Number
     if [ $RC -eq 0 ]                                                    # If SSH Worked
         then GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
@@ -816,7 +819,10 @@ process_servers()
 
     build_server_list "$WOSTYPE"
     if [ $? -ne 0 ] ; then return 1 ; fi
-    
+    if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
+        then return 0 
+    fi 
+
     sadm_writelog " "                                                   # Blank Line in log/Screen
     sadm_writelog "=================================================="
     sadm_writelog "Processing active '$WOSTYPE' server(s)" 
@@ -886,7 +892,7 @@ process_servers()
                          continue                                       # Not accessible, Nxt Server
                  fi 
             else GLOB_UPTIME=$(uptime |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
-                 update_server_uptime "$SNAME" "$GLOB_UPTIME"           # Update Server Uptime in DB
+                 update_server_uptime "$server_name" "$GLOB_UPTIME"           # Update Server Uptime in DB
         fi                            
 
         # On Linux & O/S AutoUpdate is ON, Generate Crontab entry in O/S Update crontab work file
@@ -1047,6 +1053,9 @@ process_servers()
     #sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
     return $ERROR_COUNT                                                 # Return Total Error Count
 }
+
+
+
 
 # --------------------------------------------------------------------------------------------------
 # Combine all clients *.rpt files and issues alert(s) if needed.
@@ -1388,7 +1397,7 @@ update_server_uptime()
 
     SQL1="UPDATE server SET "                                           # SQL Update Statement
     SQL2="srv_uptime = '$WUPTIME', "                                    # System uptime value
-    SQL3="srv_date_update = '${WCURDAT}' "                             # Last Update Date
+    SQL3="srv_date_update = '${WCURDAT}' "                              # Last Update Date
     SQL4=" "                                                            # Last Boot Date
     SQL5="where srv_name = '${WSERVER}' ;"                              # Server name to update
     SQL="${SQL1}${SQL2}${SQL3}${SQL4}${SQL5}"                           # Create final SQL Statement
