@@ -916,11 +916,12 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
         
         # If unable to install package
         if (needed_cmd == "lsb_release"):
-            writelog   ("Warning: Package '%s' not available on %s v%s." % (needed_cmd,sosname,sosver))
+            writelog("Warning: Package '%s' not available on %s v%s." % (needed_cmd,sosname,sosver))
             continue
         if (needed_cmd == "nmon"):
-            if ! os.path.exists('/usr/bin/nmon')
+            if not os.path.isfile('/usr/bin/nmon'):
                 package_dir="%s/pkg/%s/%s/%s/%s" % (sroot,needed_cmd,sosname.lower(),sosver,sosarch)
+                writelog (" ")
                 writelog ("Warning: Distribution don't include '%s'." % (needed_cmd))
                 writelog ("Installing the one from %s" % (package_dir))
                 pcmd = "cp %s/nmon /usr/bin" % (package_dir)
@@ -930,8 +931,10 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
                     writelog("Error trying to copy the package from SADMIN - %s." % (pcmd))
                 else :
                     writelog (" Done ")
+                    continue
             else :
                 writelog (" Done ")
+                continue
         writelog   ("Error: Was unable to install package %s." % (needed_packages),'bold')
             
 
