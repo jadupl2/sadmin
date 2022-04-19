@@ -99,13 +99,14 @@
 # 2021_07_21 install: v3.62 Fix 'srv_rear_ver' field didn't have a default value in Database.
 # 2021_11_07 install: v3.63 Remove SADM_RRDTOOL variable from sadmin.cfg (depreciated).
 #@2022_04_11 install: v3.64 Use /etc/os-release to get O/S info instead of lsb_release depreciated
+#@2022_04_16 install: v3.65 Updated for Rocky, AlmaLinux and CentOS 9.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
     import os,time,sys,pdb,socket,datetime,glob,fnmatch,shutil,getpass  # Import Std Python3 Modules
     from subprocess import Popen, PIPE
-    import pymysql
+    import pymysql,platform
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -115,7 +116,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.64"                                            # Setup Version Number
+sver                = "3.65"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -154,6 +155,10 @@ class color:
 # Some package are only available on these platform
 rear_supported_architecture     = ["i686","i386","x86_64","amd64"] 
 syslinux_supported_architecture = ["i686","i386","x86_64","amd64"] 
+
+# Supported Distribution by SADMIN
+rhel_family = ["RHEL","FEDORA","CENTOS","ALMALINUX","ROCKY"]
+debian_family = ["DEBIAN","UBUNTU","LINUXMINT","RASPBIAN"]
 
 # Command and package require by SADMIN Client to work correctly
 req_client = {}                                                         # Require Packages Dict.
@@ -348,7 +353,7 @@ def update_host_file(wdomain,wip) :
 
     writelog('')
     writelog('----------')
-    writelog ("Adding 'sadmin.%s to /etc/hosts file" % (wdomain),'bold')
+    writelog ("Adding 'sadmin.%s' to /etc/hosts file" % (wdomain),'bold')
     try : 
         hf = open('/etc/hosts','r+')                                    # Open /etc/hosts file
     except :
@@ -614,10 +619,10 @@ def special_install(lpacktype,sosname,logfile) :
         else:                                                           # 
             if (sosname != "FEDORA"):                                   # On Redhat/CentOS
                 writelog('Installing python34-pip from EPEL ... ','nonl') # Need Help of EPEL Repo
-                icmd = "yum install --enablerepo=epel -y python34-pip >>%s 2>&1" % (logfile)
+                icmd = "yum install --enablerepo=epel -y python3-pip >>%s 2>&1" % (logfile)
             else:                                                       # On Fedora
                 writelog ('Installing python3-pip ... ','nonl')         # Inform User Pkg installing
-                icmd="yum install -y python3-pip >>%s 2>&1" % (logfile) # Fedora pip3 install cmd
+                icmd="dnf install -y python3-pip >>%s 2>&1" % (logfile) # Fedora pip3 install cmd
 
         # Install pip3 command 
         if (DEBUG): writelog (icmd)                                     # Inform User Pkg installing
@@ -682,7 +687,7 @@ def update_sudo_file(logfile,wuser) :
     hsudo.close()                                                       # Close SADMIN sudo  file
 
     # Change sudo file permission to 440
-    cmd = "chmod 440 %s" % (sudofile)                                   # chmod 440 on sudofile
+    cmd = "chmod 640 %s" % (sudofile)                                   # chmod 440 on sudofile
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chmod on sudofile
     if (ccode == 0):                                                    # If chmod went ok
         writelog( "  - Permission on sudo file changed successfully")   # Show success to user
@@ -865,6 +870,12 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
               writelog (" Ok, 'rear' isn't supported on this platform (%s)" % (sosarch)) 
               continue                                                  # Proceed with Next Package
 
+        # lsb_release package is depreciated on Centos,Rhel,AlmaLinux,Rocky 9, so fail is Ok
+        if (needed_packages == "lsb_release" and sosname != "FEDORA") and 
+            (sosname in rhel_family and sosver >= 9)
+            writelog (" Ok, 'lsb_release' is depreciated on '%s' V%s." % (sosname,sosver)) 
+            continue                                                  # Proceed with Next Package
+
         # Syslinux Only available on Intel platform Architecture
         if needed_packages == "syslinux" and sosarch not in syslinux_supported_architecture :
               writelog (" Ok, 'syslinux' isn't supported on this platform (%s)" % (sosarch)) 
@@ -874,10 +885,8 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             writelog (" Ok ")                                           # Show User Check Result
             continue                                                    # Proceed with Next Package
 
-        # Install Missing Packages
+        # Install Missing Packages - Setup command to install missing package
         writelog ("Installing %s ... " % (needed_packages),'nonl')      # Show user what installing
-        
-        # Setup command to install missing package
         if (packtype == "deb") :                                        # If Package type is '.deb'
             icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
             icmd += "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
@@ -891,42 +900,37 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
         # wkhtmltopdf package available for all version except CentOS,Redhat Version 8 
         # Install it from SADMIN package directory
         if (needed_packages == "wkhtmltopdf") :
-            if ( (sosname == "REDHAT" or sosname == "CENTOS") and sosver == 8):
-                icmd = "dnf -y install $SADMIN/pkg/wkhtmltopdf/*centos8* >>%s 2>&1" % (logfile)
+           if (sosname in rhel_family and sosver >= 8) and (sosname != "FEDORA") :
+              package_dir="%s/pkg/%s/%s/%s/%s" % (sroot,needed_packages,sosname.lower(),sosver,sosarch)
+              icmd = "dnf -y install %s/wkhtmltox*  >>%s 2>&1" % (package_dir,logfile)
 
         writelog ("-----------------------",'log')
         writelog (icmd,'log')
         writelog ("-----------------------",'log')
         
-        # Execute install Command 
-            
+        # To Test if install did work, try to execute command just installed.
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
             writelog (" Done ")
-            #writelog ("Installed successfully")
-        else:
-            if (needed_cmd == "nmon"):
-                package_dir="%s/pkg/%s/%s/%s/%sBits" % (sroot,needed_cmd,sosname.lower(),sosver,sosbits)
-                pcmd = "ls -1t %s | head -1" % (package_dir)
-                ccode, cstdout, cstderr = oscommand(pcmd)
-                if (ccode != 0) : 
-                    writelog   ("Error, was unable to install package %s." % (needed_cmd),'bold')
-                else :
-                    package_path = "%s/%s" % (package_dir,cstdout)
-                    writelog (" from local rpm ... ",'nonl')                 
-                    writelog("Installing package %s" % (package_path))
-                    icmd = "yum install -y %s" % (package_path) 
-                    writelog ("-----------------------",'log')
-                    writelog (icmd,'log')
-                    writelog ("-----------------------",'log')
-                    ccode, cstdout, cstderr = oscommand(icmd)
-                    if (ccode == 0) : 
-                        writelog (" Done ")
-                    else: 
-                        writelog   ("Error, was unable to install package %s." % (needed_cmd),'bold')
-            else: 
-                writelog   ("Error, was unable to install package %s." % (needed_cmd),'bold')
-
+            continue
+        
+        # If unable to install package
+        if (needed_cmd == "lsb_release"):
+            writelog   ("Info: '%s' don't seems to be available on %s v%s." % (needed_cmd,sosname,sosver))
+            continue
+        if (needed_cmd == "nmon"):
+            package_dir="%s/pkg/%s/%s/%s/%s" % (sroot,needed_cmd,sosname.lower(),sosver,sosarch)
+            writelog   ("Info: Distribution don't include '%s', installing the one from %s" % (needed_cmd,package_dir))
+            pcmd = "cp %s/nmon /usr/bin" % (package_dir))
+            ccode, cstdout, cstderr = oscommand(pcmd)
+            if (ccode != 0) : 
+               writelog("Error: 'nmon' couldn't be install, no performance Graph will be possible.)
+               writelog("Was trying to copy the package from SADMIN - %s." % (pcmd))
+            else :
+               writelog (" Done ")
+        else: 
+            writelog   ("Error, was unable to install package %s." % (needed_cmd),'bold')
+            
 
 
 #===================================================================================================
@@ -1054,9 +1058,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
             oscodename=""
 
     # Get Architecture
-    wcmd = "%s %s" % ("uname","-m")
-    ccode, cstdout, cstderr = oscommand(wcmd)
-    warch=cstdout
+    warch=platform.machine() 
 
     # Construct insert new server SQL Statement
     sql = "use sadmin; "
@@ -1207,7 +1209,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         writelog('  ')                                                  # Space Line
         writelog('----------')                                          # Separation Line
         cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,init_sql)         # SQL Cmd to Load DB
-        writelog("Loading Initial Data in SADMIN Database ... ",'bold') # Load Initial Database 
+        writelog("Loading initial data in SADMIN database ... ",'bold') # Load Initial Database 
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Lload DB
         if (ccode != 0):                                                # If problem deleting user
             writelog ("Problem loading the database ...")               # Advise User
@@ -1253,7 +1255,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
                 else:
                     password_ok = True                                  # Ok Exit the loop
         else:                                                           # Database user don't exist
-            writelog ("User '%s' don't exist in Database." % (uname))   # Show user was found
+            writelog ("User '%s' don't exist in database, will now create it." % (uname))   # Show user was found
             wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
             writelog ("Creating 'sadmin' user ... ",'nonl')             # Show User Creating DB Usr
             sql =  "drop user 'sadmin'@'localhost'; flush privileges; " # Drop Usr,ByPass Bug Debian
@@ -1309,7 +1311,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
                 else:
                     password_ok = True                                  # Ok Exit the loop
         else:                                                           # Database user don't exist
-            writelog ("User '%s' don't exist in Database." % (uname))   # Show user was found
+            writelog ("User '%s' don't exist in database, will now be created." % (uname))   # Show user was found
             wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Accept user pwd
             writelog ("Creating '%s' user ... " % (uname),'nonl')       # Show User Creating DB Usr
             sql =  "drop user 'squery'@'localhost'; flush privileges; " # Drop User - ByPass Bug Deb
@@ -1714,8 +1716,8 @@ def set_sadmin_env(ver):
     print ("Environment variable 'SADMIN' is now set to %s" % (sadm_base_dir))
     print ("  - Line below is now in %s & %s" % (SADM_PROFILE,SADM_ENVFILE)) 
     print ("    %s" % (eline),end='')                                   # SADMIN Line in sadmin.sh
-    print ("  - This will make 'SADMIN' environment variable set upon reboot.")
-    return sadm_base_dir                                                # Return SADMIN Root Dir
+    print ("  - This will make 'SADMIN' environment variable persistent across reboot.")
+    return (sadm_base_dir)                                              # Return SADMIN Root Dir
 
 
 #===================================================================================================
@@ -1734,7 +1736,7 @@ def create_sadmin_config_file(sroot,sostype):
         except:
             writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
             sys.exit(1)                                                 # Exit to O/S with Error
-    writelog ("  - Initial SADMIN configuration file (%s) in place." % (cfgfile)) # Advise User
+    writelog ("  - Initial SADMIN configuration file (%s) created." % (cfgfile)) # Advise User
     writelog (' ')
     
 
@@ -2339,7 +2341,7 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("\n\n\n\n\n")
     writelog ("SADMIN TOOLS Successfully Installed")
     writelog ("===========================================================================")
-    writelog ("You need to logout & log back in, before using SADMIN or type the command :")
+    writelog ("You need to logout & log back in before using SADMIN or type the command :")
     writelog ("'. /etc/profile.d/sadmin.sh', this define 'SADMIN' environment variable.")
     writelog (" ")
     if (stype == "S") :
