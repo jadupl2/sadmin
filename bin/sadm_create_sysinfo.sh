@@ -58,7 +58,7 @@
 #@2022_02_17 client: v3.28 Now show last o/s update date and status on screen and log.
 #@2022_03_04 client: v3.29 Added more info about disks, filesystems and partition size
 #@2022_04_10 client: v3.30 Change relative to CentOS 9 - Depreciated lsb_release command
-#@2022_04_19 client: v3.31 Now include information from inxi command
+#@2022_04_19 client: v3.31 Now include information from inxi command (if available)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
