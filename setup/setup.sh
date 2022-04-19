@@ -61,6 +61,7 @@
 #@2022_04_06 Fix: v3.16 Fix problem verifying and install Python 3 pip on CentOS9
 #@2022_04_07 Update: v3.17 Change to support Alma and Rocky Linux
 #@2022_04_11 Update: v3.18 Use /etc/os-release to get O/S info instead using lsb_release depreciated
+#@2022_04_16 Update: v3.19 Misc. Fixes for CentOS 9, Epel 9 and change UI a bit.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -70,7 +71,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.18'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.19'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -366,7 +367,7 @@ install_pip3()
 check_python3()
 {
     # Check if python3 is installed 
-    printf "Verifying if python3 is installed ..." | tee -a $SLOG
+    printf "Check if python3 is installed ..." | tee -a $SLOG
 
     # python3 should now be installed, if not then install it or abort installation
     which python3 > /dev/null 2>&1
@@ -432,8 +433,6 @@ check_python3()
 #===================================================================================================
 check_hostname()
 {
-    printf "Making sure server is defined in /etc/hosts ... " | tee -a $SLOG
-
     # Get current IP Address of Server
     S_IPADDR=`ip addr show | grep global | head -1 | awk '{ print $2 }' |awk -F/ '{ print $1 }'`
 
@@ -442,6 +441,8 @@ check_hostname()
 
     # Get Domain Name f IP Address
     S_DOMAIN=`host $S_IPADDR |head -1 |awk '{ print $NF }' |awk -F\. '{printf "%s.%s\n", $2, $3}'` 
+
+    printf "Making sure '$S_HOSTNAME' is defined in /etc/hosts ... " | tee -a $SLOG
 
     # Insert Server into /etc/hosts (If not already there)
     grep -Eiv "^${S_IPADDR}|${S_HOSTNAME}" /etc/hosts > /tmp/hosts.$$
@@ -453,7 +454,6 @@ check_hostname()
     # Put New /etc/hosts in Place.
     cp /tmp/hosts.$$ /etc/hosts ; chmod 644 /etc/hosts ; chown root:root /etc/hosts 
     rm -f /tmp/hosts.$$
-    
     echo "[ OK ] " | tee -a $SLOG
 }
 
@@ -470,6 +470,7 @@ get_sysinfo()
     if [ "$SADM_OSNAME" = "REDHATENTERPRISESERVER" ] ; then SADM_OSNAME="REDHAT" ; fi
     if [ "$SADM_OSNAME" = "REDHATENTERPRISEAS" ]     ; then SADM_OSNAME="REDHAT" ; fi
     if [ "$SADM_OSNAME" = "REDHATENTERPRISE" ]       ; then SADM_OSNAME="REDHAT" ; fi
+    if [ "$SADM_OSNAME" = "RHEL" ]                   ; then SADM_OSNAME="REDHAT" ; fi
     if [ "$SADM_OSNAME" = "CENTOSSTREAM" ]           ; then SADM_OSNAME="CENTOS" ; fi
     if [ "$SADM_OSNAME" != "REDHAT" ] && [ "$SADM_OSNAME" != "CENTOS" ] && [ "$SADM_OSNAME" != "FEDORA" ] &&
        [ "$SADM_OSNAME" != "UBUNTU" ] && [ "$SADM_OSNAME" != "DEBIAN" ] && [ "$SADM_OSNAME" != "RASPBIAN" ] &&
@@ -531,16 +532,21 @@ EOF
     get_sysinfo                                                         # Get OS Name,Version
     echo " " > $SLOG                                                    # Init the Log File
     echo "SADMIN Pre-installation verification v${SADM_VER}" | tee -a $SLOG
-    echo "$SADM_OSTYPE $SADM_OSNAME v$SADM_OSVERSION with $SADM_PACKTYPE ($(arch)) as package format" | tee -a $SLOG
+    echo "$SADM_OSTYPE $SADM_OSNAME v$SADM_OSVERSION with $SADM_PACKTYPE ($(arch)) as package format." | tee -a $SLOG
     echo "Log directory is $SLOGDIR & Log file is $SLOG" | tee -a $SLOG 
     echo "---------------------------------------------------------------------------"
 
+    # Add EPEL for these dictribution
     if [ "$SADM_OSNAME" = "REDHAT" ] || [ "$SADM_OSNAME" = "CENTOS" ] ||  
        [ "$SADM_OSNAME" = "ROCKY" ]  || [ "$SADM_OSNAME" = "ALMALINUX" ] 
-        then add_epel_repo                                              # Add EPEL Repository 
+        then add_epel_repo                                               
     fi 
-    check_python3                                                       # Make sure python3 install
-    check_hostname                                                      # Update /etc/hosts 
+    
+    # Make sure python 3 installed, if not install it.
+    check_python3
+
+    # Make sure current host is in /etc/hosts
+    check_hostname
 
     # Ok Python3 is installed - Proceed with Main Setup Script
     echo "We will now proceed with main setup program ($SCRIPT)" >> $SLOG 
