@@ -57,7 +57,8 @@
 #@2022_02_17 client: v3.27 Fix error writing network config file in $SADMIN/dat/dr/sysinfo.txt.
 #@2022_02_17 client: v3.28 Now show last o/s update date and status on screen and log.
 #@2022_03_04 client: v3.29 Added more info about disks, filesystems and partition size
-#@2022_04_10 client: v3.30 Small change for CentOS 9 - Depreciated lsb_release
+#@2022_04_10 client: v3.30 Change relative to CentOS 9 - Depreciated lsb_release command
+#@2022_04_19 client: v3.31 Now include information from inxi command
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -90,7 +91,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.30'                                     # Script Version
+export SADM_VER='3.31'                                     # Script Version
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -164,6 +165,7 @@ SADM_CPATH=""                                   ; export SADM_CPATH     # Tmp Va
 LSBLK=""                                        ; export LSBLK          # lsblk Cmd Path
 BLKID=""                                        ; export BLKID          # blkid Cmd Path
 HWINFO=""                                       ; export HWINFO         # hwinfo Cmd Path
+INXI=""                                         ; export INXI           # inxi Cmd Path
 LSVG=""                                         ; export LSVG           # Aix LSVG Command Path
 LSPV=""                                         ; export LSPV           # Aix LSPV Command Path
 PRTCONF=""                                      ; export PRTCONF        # Aix Print Config Cmd
@@ -231,7 +233,6 @@ command_available()
         then SADM_CPATH=`$SADM_WHICH $SADM_PKG`
         else SADM_CPATH=""
     fi
-    export SADM_CPATH
 
     # If SADM_DEBUG is activated then display Package Name and Full path to it
     #-----------------------------------------------------------------------------------------------
@@ -288,6 +289,7 @@ pre_validation()
                 command_available "lsblk"       ; LSBLK=$SADM_CPATH     # Cmd Path or Blank !found
                 command_available "blkid"       ; BLKID=$SADM_CPATH     # Cmd Path or Blank !found
                 command_available "hwinfo"      ; HWINFO=$SADM_CPATH    # Cmd Path or Blank !found
+                command_available "inxi"        ; INXI=$SADM_CPATH       # Cmd Path or Blank !found
                 command_available "diskutil"    ; DISKUTIL=$SADM_CPATH  # Cmd Path or Blank !found
                 command_available "networksetup" ; NETWORKSETUP=$SADM_CPATH  # NetworkSetup Cmd Path
                 command_available "hostinfo"    ; HOSTINFO=$SADM_CPATH  # HostInfo Cmd Path
@@ -313,7 +315,6 @@ pre_validation()
     command_available "uname"       ; UNAME=$SADM_CPATH                 # Cmd Path or Blank !found
     command_available "uptime"      ; UPTIME=$SADM_CPATH                # Cmd Path or Blank !found
     command_available "last"        ; LAST=$SADM_CPATH                  # Cmd Path or Blank !found
-
     return 0
 }
 
@@ -483,6 +484,11 @@ create_linux_config_files()
     write_file_header "Disks Information" "$DISKS_FILE"
     sadm_write "Creating $DISKS_FILE ...\n"
 
+    if [ "$INXI" != "" ]
+        then CMD="$INXI -d"
+             execute_command "$CMD" "$DISKS_FILE" 
+    fi
+
     if [ "$HWINFO" != "" ]
         then CMD="hwinfo --block --short"
              execute_command "$CMD" "$DISKS_FILE" 
@@ -621,6 +627,12 @@ create_linux_config_files()
              execute_command "$CMD" "$NET_FILE" 
     fi
 
+    if [ "$INXI" != "" ]
+        then CMD="$INXI -i"
+             execute_command "$CMD" "$NET_FILE" 
+             CMD="$INXI -n"
+             execute_command "$CMD" "$NET_FILE" 
+    fi
 
     # Network Device information
     if [ "$IPCONFIG" != "" ]
@@ -663,6 +675,19 @@ create_linux_config_files()
 
     if [ "$UNAME" != "" ]
         then CMD="$UNAME -a"
+             execute_command "$CMD" "$SYSTEM_FILE" 
+    fi
+
+    if [ "$INXI" != "" ]
+        then CMD="$INXI -a"
+             execute_command "$CMD" "$SYSTEM_FILE" 
+             CMD="$INXI -m"
+             execute_command "$CMD" "$SYSTEM_FILE" 
+             CMD="$INXI -G"
+             execute_command "$CMD" "$SYSTEM_FILE" 
+             CMD="$INXI -S"
+             execute_command "$CMD" "$SYSTEM_FILE" 
+             CMD="$INXI -M"
              execute_command "$CMD" "$SYSTEM_FILE" 
     fi
 
