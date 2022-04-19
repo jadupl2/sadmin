@@ -100,6 +100,7 @@
 # 2021_11_07 install: v3.63 Remove SADM_RRDTOOL variable from sadmin.cfg (depreciated).
 #@2022_04_11 install: v3.64 Use /etc/os-release to get O/S info instead of lsb_release depreciated
 #@2022_04_16 install: v3.65 Updated for Rocky, AlmaLinux and CentOS 9.
+#@2022_04_19 install: v3.66 Fixes for CentOS 9 
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -116,7 +117,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.65"                                            # Setup Version Number
+sver                = "3.66"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -871,8 +872,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
               continue                                                  # Proceed with Next Package
 
         # lsb_release package is depreciated on Centos,Rhel,AlmaLinux,Rocky 9, so fail is Ok
-        if (needed_packages == "lsb_release" and sosname != "FEDORA") and 
-            (sosname in rhel_family and sosver >= 9)
+        if (needed_packages == "lsb_release" and sosname != "FEDORA") and (sosname in rhel_family and sosver >= 9):
             writelog (" Ok, 'lsb_release' is depreciated on '%s' V%s." % (sosname,sosver)) 
             continue                                                  # Proceed with Next Package
 
@@ -916,20 +916,23 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
         
         # If unable to install package
         if (needed_cmd == "lsb_release"):
-            writelog   ("Info: '%s' don't seems to be available on %s v%s." % (needed_cmd,sosname,sosver))
+            writelog   ("Warning: Package '%s' not available on %s v%s." % (needed_cmd,sosname,sosver))
             continue
         if (needed_cmd == "nmon"):
-            package_dir="%s/pkg/%s/%s/%s/%s" % (sroot,needed_cmd,sosname.lower(),sosver,sosarch)
-            writelog   ("Info: Distribution don't include '%s', installing the one from %s" % (needed_cmd,package_dir))
-            pcmd = "cp %s/nmon /usr/bin" % (package_dir))
-            ccode, cstdout, cstderr = oscommand(pcmd)
-            if (ccode != 0) : 
-               writelog("Error: 'nmon' couldn't be install, no performance Graph will be possible.)
-               writelog("Was trying to copy the package from SADMIN - %s." % (pcmd))
+            if ! os.path.exists('/usr/bin/nmon')
+                package_dir="%s/pkg/%s/%s/%s/%s" % (sroot,needed_cmd,sosname.lower(),sosver,sosarch)
+                writelog ("Warning: Distribution don't include '%s'." % (needed_cmd))
+                writelog ("Installing the one from %s" % (package_dir))
+                pcmd = "cp %s/nmon /usr/bin" % (package_dir)
+                ccode, cstdout, cstderr = oscommand(pcmd)
+                if (ccode != 0) : 
+                    writelog("Package 'nmon' couldn't be install, no performance Graph will be possible.")
+                    writelog("Error trying to copy the package from SADMIN - %s." % (pcmd))
+                else :
+                    writelog (" Done ")
             else :
-               writelog (" Done ")
-        else: 
-            writelog   ("Error, was unable to install package %s." % (needed_cmd),'bold')
+                writelog (" Done ")
+        writelog   ("Error: Was unable to install package %s." % (needed_packages),'bold')
             
 
 
@@ -2384,10 +2387,12 @@ def end_message(sroot,sdomain,sserver,stype):
 def sadmin_service(sroot):
     cmd = "%s/bin/sadm_service_ctrl.sh -s" % (sroot)                    # Enable SADMIN Service 
     writelog (" ") 
+    writelog (" ")
+    writelog ("----------")
     writelog ("Enabling SADMIN Service - %s ... " % (cmd),"nonl")       # Inform User
     ccode,cstdout,cstderr = oscommand(cmd)                              # Enable MariaDB Server
     if (ccode != 0):                                                    # Problem Enabling Service
-        writelog ("Problem with enabling SADMIN Service.")              # Advise User
+        writelog ("Problem with enabling SADMIN service.")              # Advise User
         writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
