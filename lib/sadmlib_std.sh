@@ -1984,9 +1984,9 @@ sadm_start() {
                 then sadm_write "  - You wait till PID timeout '\$SADM_PID_TIMEOUT' is reach.\n"
                      sadm_write "    The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n\n\n"
                      if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
-                        then sadm_write "\nThe PID file exceeded it time to live '\$SADM_PID_TIMEOUT'.\n"
-                             sadm_write "Assuming script was aborted abnormally, "
-                             sadm_write "Script execution is now re-enable and the PID file updated.\n\n"
+                        then sadm_write "The PID file exceeded the time to live ('\$SADM_PID_TIMEOUT').\n"
+                             sadm_write "Assuming script was aborted abnormally.\n "
+                             sadm_write "Script execution is now resume and the PID file recreated.\n"
                              sadm_writelog " "
                              touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
                              DELETE_PID="Y"                             # Del PID Since running
