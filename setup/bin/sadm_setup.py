@@ -868,8 +868,8 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
 
         # Rear Only available on Intel platform Architecture
         if needed_packages == "rear" and sosarch not in rear_supported_architecture :
-              writelog (" Ok, 'rear' isn't supported on this platform (%s)" % (sosarch)) 
-              continue                                                  # Proceed with Next Package
+            writelog (" Ok, 'rear' isn't supported on this platform (%s)" % (sosarch)) 
+            continue                                                  # Proceed with Next Package
 
         # lsb_release package is depreciated on Centos,Rhel,AlmaLinux,Rocky 9, so fail is Ok
         if (needed_packages == "lsb_release" and sosname != "FEDORA") and (sosname in rhel_family and sosver >= 9):
@@ -878,8 +878,8 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
 
         # Syslinux Only available on Intel platform Architecture
         if needed_packages == "syslinux" and sosarch not in syslinux_supported_architecture :
-              writelog (" Ok, 'syslinux' isn't supported on this platform (%s)" % (sosarch)) 
-              continue                                                  # Proceed with Next Package
+            writelog (" Ok, 'syslinux' isn't supported on this platform (%s)" % (sosarch)) 
+            continue                                                  # Proceed with Next Package
 
         if locate_package(needed_packages,packtype) :                   # If Package is installed
             writelog (" Ok ")                                           # Show User Check Result
@@ -916,6 +916,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
         
         # If unable to install package
         if (needed_cmd == "lsb_release"):
+            writelog(" ")
             writelog("Warning: Package '%s' not available on %s v%s." % (needed_cmd,sosname,sosver))
             continue
         if (needed_cmd == "nmon"):
