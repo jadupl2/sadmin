@@ -266,7 +266,7 @@ process_servers()
         fi
 
         # Check if System is Locked.
-        sadm_is_system_lock "$server_name"                              # Check lock file status
+        sadm_check_lockfile "$server_name"                              # Check lock file status
         if [ $? -eq 1 ] ; then continue ; fi                            # System Lock, Nxt Server
 
         # If SSH to server failed & it's a sporadic server = warning & next server

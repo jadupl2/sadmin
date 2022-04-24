@@ -162,7 +162,7 @@
 # 2021_04_10 Fix: v3.70 Fix Path to which command was not set properly because of defined alias.
 # 2021_06_30 lib: v3.71 To be more succinct global variables were removed from log footer.
 # 2021_08_06 nolog v3.72 $SADMIN/www/tmp directory default permission now set to 777 
-# 2021_08_13 lib v3.73 New func. see Doc sadm_create_lockfile  sadm_remove_lockfile sadm_is_system_lock
+# 2021_08_13 lib v3.73 New func. see Doc sadm_create_lockfile  sadm_remove_lockfile sadm_check_lockfile
 # 2021_08_17 lib v3.74 Performance improvement.
 #@2021_09_09 lib v3.75 'sadm_write_err $msg' function added to write to log and error log.
 #@2021_09_13 lib v3.76 Enhance script log header to be more concise, yet have more information.
@@ -2988,7 +2988,7 @@ sadm_remove_lockfile()
 #   0) System is not lock
 #   1) System is Lock
 # --------------------------------------------------------------------------------------------------
-sadm_is_system_lock()
+sadm_check_lockfile()
 {
     SNAME=$1                                                            # Save System Name to verify
     LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # Prevent Monitor lock file    

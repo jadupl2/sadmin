@@ -719,7 +719,7 @@ validate_server_connectivity()
     SNAME=$(echo "$FQDN_SNAME" | awk -F\. '{print $1}')                 # System Name without Domain
 
     # Check if System is Locked.
-    sadm_is_system_lock "$SNAME"                                        # Check lock file status
+    sadm_check_lockfile "$SNAME"                                        # Check lock file status
     if [ $? -eq 1 ] ; then return 2 ; fi                                # System Lock, Nxt Server
 
     # Try to get uptime from system to test if ssh to system is working
