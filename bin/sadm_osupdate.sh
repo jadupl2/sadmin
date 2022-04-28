@@ -44,6 +44,7 @@
 # 2020_12_12 Update: v3.25 Minor adjustments.
 # 2021_05_04 Update: v3.26 Adjust some message format of the log.
 # 2021_08_19 osupdate v3.27 Fix prompting issue on '.deb' distributions.
+#@2022_04_27 osupdate v3.28 Use apt command instead of apt-get
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -76,7 +77,7 @@
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.27'                              # Your Current Script Version
+    export SADM_VER='3.28'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -361,28 +362,28 @@ run_apt_get()
 {
     sadm_write "Starting $(sadm_get_osname) update process ...\n"
     
-    CMD="DEBIAN_FRONTEND='noninteractive' apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade"
+    CMD="DEBIAN_FRONTEND='noninteractive' apt -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade"
     sadm_writelog "Running: $CMD"
-    DEBIAN_FRONTEND='noninteractive' apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade
+    DEBIAN_FRONTEND='noninteractive' apt -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade
     RC=$?
     if [ "$RC" -ne 0 ]
-       then sadm_writelog "Return Code of \"apt-get -y upgrade\" is ${RC}."
+       then sadm_writelog "Return Code of \"apt -y upgrade\" is ${RC}."
             return $RC
-       else sadm_writelog "[OK] \"apt-get -y upgrade\" done with success."
+       else sadm_writelog "[OK] \"apt -y upgrade\" done with success."
     fi
 
-    CMD="DEBIAN_FRONTEND='noninteractive' apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade"
+    CMD="DEBIAN_FRONTEND='noninteractive' apt -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade"
     sadm_writelog "Running: $CMD"
-    DEBIAN_FRONTEND='noninteractive' apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade
+    DEBIAN_FRONTEND='noninteractive' apt -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade
     RC=$?
     if [ "$RC" -ne 0 ]
-       then sadm_writelog "Return Code of \"apt-get -y dist-upgrade\" is ${RC}."
+       then sadm_writelog "Return Code of \"apt -y dist-upgrade\" is ${RC}."
             return $RC
-       else sadm_writelog "[OK] \"apt-get -y dist-upgrade\" ran with success."
+       else sadm_writelog "[OK] \"apt -y dist-upgrade\" ran with success."
     fi
     
-    sadm_write "\nRemove orphaned packages, running 'apt-get autoremove'.\n"
-    apt-get autoremove -y >>$SADM_LOG 2>&1
+    sadm_write "\nRemove orphaned packages, running 'apt autoremove'.\n"
+    apt autoremove -y >>$SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
         then sadm_write "Return Code of \"apt-get autoremove -y\" is ${RC}\n"
