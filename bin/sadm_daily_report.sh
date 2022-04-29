@@ -542,8 +542,8 @@ script_report()
              SADM_EXIT_CODE=$?                                          # Save mutt return Code.
     fi 
     if [ $SADM_EXIT_CODE -eq 0 ]                                        # If mail sent successfully
-        then sadm_writelog "${SADM_OK} Script report sent to $SADM_MAIL_ADDR"      
-        else sadm_writelog "${SADM_ERROR} Sending script report email to $SADM_MAIL_ADDR"
+        then sadm_writelog "[ OK ] Script report sent to $SADM_MAIL_ADDR"      
+        else sadm_writelog "[ ERROR ] Sending script report email to $SADM_MAIL_ADDR"
     fi
 
     sadm_write "${BOLD}${YELLOW}End of the Script Report ...${NORMAL}\n" 
