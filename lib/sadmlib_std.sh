@@ -179,6 +179,7 @@
 #@2022_04_10 lib v3.87 Update: When PID exist don't reinitialize the script log 
 #@2022_04_11 lib v3.88 Use /etc/os-release file instead of depreciated lsb_release cmd.
 #@2022_04_14 lib v3.89 Fix problem getting osversion on old rhel version.
+#@2022_04_30 lib v3.90 New functions: sadm_create_lockfile,sadm_remove_lockfile,sadm_check_lockfile.
 #===================================================================================================
 
 
@@ -192,7 +193,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.89"                                              # This Library Version
+export SADM_LIB_VER="3.90"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -1358,7 +1359,7 @@ sadm_server_serial() {
 sadm_server_memory() {
     case "$(sadm_get_ostype)" in
         "LINUX")    sadm_server_memory=`grep -i "memtotal:" /proc/meminfo | awk '{ print $2 }'`
-                    sadm_server_memory=`echo "$sadm_server_memory / 1024" | bc`
+                    sadm_server_memory=`echo "$sadm_server_memory / 1024" | $SADM_BC`
                     ;;
         "AIX")      sadm_server_memory=`bootinfo -r`
                     sadm_server_memory=`echo "${sadm_server_memory} /1024" | $SADM_BC`
@@ -2884,8 +2885,6 @@ write_alert_history() {
 
 
 
-
-
 # --------------------------------------------------------------------------------------------------
 # Create a system lock file for the received system name.
 # This function is used to create a ($LOCK_FILE) for the system received as a parameter.
@@ -2928,6 +2927,9 @@ sadm_create_lockfile()
 
 
 
+
+
+
 # --------------------------------------------------------------------------------------------------
 # Remove the lock file for the received system name.
 # This function is used to remove a ($LOCK_FILE) for the system received as a parameter.
@@ -2944,15 +2946,14 @@ sadm_create_lockfile()
 #   0) System Lock file was remove successfully
 #   1) System Lock file could not be removed 
 # --------------------------------------------------------------------------------------------------
-sadm_remove_lockfile()
-{
+sadm_remove_lockfile() {
     SNAME=$1                                                            # Save System Name to verify
     RC=0                                                                # Default Return Code
     LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # System Lock file name
     if [ -w "$LOCK_FILE" ]                                              # Lock file exist ?
         then rm -f ${LOCK_FILE} >/dev/null 2>&1                         # Delete Lock file 
              if [ $? -eq 0 ]                                            # no error while updating
-               then sadm_writelog "'$SNAME' lock file ($LOCK_FILE) removed."  # Advise User 
+               then sadm_writelog "The lock file for system '$SNAME' is removed."  # Advise User 
                else sadm_writelog "[ ERROR ] Removing '${SNAME}' lock file '${LOCK_FILE}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
@@ -2964,8 +2965,6 @@ sadm_remove_lockfile()
 
 
 
-# --------------------------------------------------------------------------------------------------
-#
 # This function is used to check if a ($LOCK_FILE) exist for the system received as a parameter.
 # When the lock file exist "${SADMIN}/tmp/$(hostname -s).lock" for a system, no monitoring error 
 # or warning is reported (No alert, No notification) to the user (on monitor screen) until the 
@@ -2986,30 +2985,34 @@ sadm_remove_lockfile()
 #
 # Return Value : 
 #   0) System is not lock
-#   1) System is Lock
+#   1) System is Lock.
 # --------------------------------------------------------------------------------------------------
-sadm_check_lockfile()
-{
+#
+sadm_check_lockfile() {
     SNAME=$1                                                            # Save System Name to verify
-    LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # Prevent Monitor lock file    
-    if [ -f "$LOCK_FILE" ]                                              # If lockfile exist
-       then FEPOCH=`stat -c %Y $LOCK_FILE`                              # Get Lock File Epoch Time
-            CEPOCH=$(sadm_get_epoch_time)                               # Get Current Epoch Time
-            FAGE=`expr $CEPOCH - $FEPOCH`                               # Sec. Since lock created
-            SEC_LEFT=`expr $OSTIMEOUT - $FAGE`                          # Sec. before lock expire
-            if [ $FAGE -gt $SADM_LOCK_TIMEOUT ]                         # Running more than 60Min ?
-               then sadm_writelog "Server is lock for more than $SADM_LOCK_TIMEOUT seconds."
-                    sadm_writelog "Removing the lock file ($LOCK_FILE)."
-                    sadm_writelog "We now restart to monitor this system as usual."
-                    rm -f $LOCK_FILE > /dev/null 2>&1                   # Remove Lock File
-               else sadm_writelog "System '${SNAME}' is currently lock."
-                    sadm_writelog "System normal monitoring will resume in ${SEC_LEFT} seconds."
-                    sadm_writelog "Maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
-                    return 1                                            # System Lock Return 1
+    RC=0                                                                # Default Return Code
+    LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # System Lock file name
+    if [ -r "$LOCK_FILE" ]                                              # Lock file exist ?
+        then current_epoch=$(sadm_get_epoch_time)                       # Get current Epoch Time
+             create_epoch=$(stat -c %Y $LOCK_FILE)                      # Get lock file epoch
+             lock_age=`echo "$current_epoch - $create_epoch" | $SADM_BC` # Age of lock in seconds
+             sec_left=`expr $SADM_LOCK_TIMEOUT - $lock_age` 
+             if [ $lock_age -ge $SADM_LOCK_TIMEOUT ]                     # Age of lock reach timeout?
+                then sadm_writelog "Server is lock for more than $SADM_LOCK_TIMEOUT seconds."
+                     sadm_writelog "Removing the lock file ($LOCK_FILE)."
+                     sadm_writelog "We now restart to monitor this system as usual."
+                     sadm_remove_lockfile "$SNAME"
+                     #rm -f $LOCK_FILE > /dev/null 2>&1
+                else sadm_writelog "The system '${SNAME}' is currently lock."
+                     #sadm_writelog "System normal monitoring will resume in ${sec_left} seconds."
+                     #sadm_writelog "Maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
+                     return 1                                           # System Lock Return 1
             fi 
     fi 
-    return 0 
-}
+    return 0                                                            # Return no lockfile
+}  
+
+
 
 
 
