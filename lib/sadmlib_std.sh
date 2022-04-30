@@ -3000,10 +3000,10 @@ sadm_check_lockfile() {
              if [ $lock_age -ge $SADM_LOCK_TIMEOUT ]                     # Age of lock reach timeout?
                 then sadm_writelog "Server is lock for more than $SADM_LOCK_TIMEOUT seconds."
                      sadm_writelog "Removing the lock file ($LOCK_FILE)."
-                     sadm_writelog "We now restart to monitor this system as usual."
+                     sadm_writelog "We now restart monitoring this system as usual."
                      sadm_remove_lockfile "$SNAME"
                      #rm -f $LOCK_FILE > /dev/null 2>&1
-                else sadm_writelog "The system '${SNAME}' is currently lock."
+                else #sadm_writelog "The system '${SNAME}' is currently lock."
                      #sadm_writelog "System normal monitoring will resume in ${sec_left} seconds."
                      #sadm_writelog "Maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
                      return 1                                           # System Lock Return 1
