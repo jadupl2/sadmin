@@ -2121,7 +2121,7 @@ def setup_sadmin_config_file(sroot,wostype):
     sdefault = 587                                                      # Default SMTP Port No.
     sprompt  = "Enter SMTP port number "                                # Prompt for Answer
     while True :  
-        wsmtp_port = accept_field(sroot,"SADM_SMTP_PORT",sdefault,sprompt,'I')
+        wsmtp_port = accept_field(sroot,"SADM_SMTP_PORT",sdefault,sprompt,'I',25,2525)
         if wsmtp_port != 25 and wsmtp_port != 465 and wsmtp_port != 587 and wsmtp_port != 2525 :
             writelog ("Invalid port number %s - Valid smtp port are 25, 465, 587 or 2525")
             continue                                                    # Go Back Re-Accept Email
