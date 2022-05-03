@@ -180,6 +180,7 @@
 #@2022_04_11 lib v3.88 Use /etc/os-release file instead of depreciated lsb_release cmd.
 #@2022_04_14 lib v3.89 Fix problem getting osversion on old rhel version.
 #@2022_04_30 lib v3.90 New functions: sadm_create_lockfile,sadm_remove_lockfile,sadm_check_lockfile.
+#@2022_05_03 lib v3.91 Read new smtp server info from sadmin.cfg & gmail passwd file.
 #===================================================================================================
 
 
@@ -347,9 +348,10 @@ export SADM_NETWORK3=""                                                 # Networ
 export SADM_NETWORK4=""                                                 # Network 4 to Scan
 export SADM_NETWORK5=""                                                 # Network 5 to Scan
 export SADM_MONITOR_UPDATE_INTERVAL=60                                  # Monitor page upd interval
-export SADM_MONITOR_RECENT_COUNT=10                                   # Sysmon Nb. Recent Scripts 
+export SADM_MONITOR_RECENT_COUNT=10                                     # Sysmon Nb. Recent Scripts 
 export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"                  # Exclude from SysMon Recent
 export DBPASSFILE="${SADM_CFG_DIR}/.dbpass"                             # MySQL Passwd File
+export GMPW_FILE="${SADM_CFG_DIR}/.gmpw"                                # SMTP sender passwd file
 export SADM_RELEASE=`cat $SADM_REL_FILE`                                # SADM Release Ver. Number
 export SADM_SSH_PORT=""                                                 # Default SSH Port
 export SADM_REAR_NFS_SERVER=""                                          # ReaR NFS Server
@@ -380,6 +382,10 @@ export SADM_DR_SCRIPT_MAXAGE=30                                         # Exec. 
 export SADM_DR_REAR_INTERVAL=7                                          # Max Days between backup      
 export SADM_DR_STORIX_INTERVAL=7                                        # Max Days between Storix
 export SADM_DR_BACKUP_DIF=50                                            # Max % different BackupSize
+export SADM_SMTP_SERVER="smtp.gmail.com"                                # smtp mail relay host name
+export SADM_SMTP_PORT=587                                               # smtp port(25,465,587,2525)
+export SADM_SMTP_SENDER="sadmin.gmail.com"                              # Email address of sender 
+export SADM_GMPW=""                                                     # smtp sender gmail passwd
 
 # Array of O/S Supported & Package Family
 export SADM_OS_SUPPORTED=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMALINUX' 'ROCKY'
@@ -1932,6 +1938,15 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_DR_BACKUP_DIF" > /dev/null 2>&1
         if [ $? -eq 0 ] ;then SADM_DR_BACKUP_DIF=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
         #
+        echo "$wline" |grep -i "^SADM_SMTP_SERVER" > /dev/null 2>&1
+        if [ $? -eq 0 ] ;then SADM_SMTP_SERVER=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_SMTP_PORT" > /dev/null 2>&1
+        if [ $? -eq 0 ] ;then SADM_SMTP_PORT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_SMTP_SENDER" > /dev/null 2>&1
+        if [ $? -eq 0 ] ;then SADM_SMTP_SENDER=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        #
         done < $SADM_CFG_FILE
 
     # Get Tead/Write and Read/Only User Password from pasword file (If on SADMIN Server)
@@ -1941,6 +1956,13 @@ sadm_load_config_file() {
         then SADM_RW_DBPWD=`grep "^${SADM_RW_DBUSER}," $DBPASSFILE |awk -F, '{ print $2 }'` # RW PWD
              SADM_RO_DBPWD=`grep "^${SADM_RO_DBUSER}," $DBPASSFILE |awk -F, '{ print $2 }'` # RO PWD
     fi
+
+    # Get Tead/Write and Read/Only User Password from pasword file (If on SADMIN Server)
+    SADM_GMPW=""                                                        # Default smtp sender PWD
+    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] && [ -r "$GMPW_FILE" ]   # On Server & smtp pwd file
+        then SADM_GMPW=`cat $GMPW_FILE | head -1`                       # Read smtp sender passwd 
+    fi
+
     return 0
 }
 
