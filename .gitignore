@@ -130,7 +130,7 @@ www/doc/odt/*
 www/doc/md/
 
 
-# Template Configuration Files to be included
+# All files in cfg directory excluded, except the one specified
 cfg/*
 !cfg/.sadmin.cfg
 !cfg/.alert_group.cfg
