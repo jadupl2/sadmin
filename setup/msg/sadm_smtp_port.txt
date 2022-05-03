@@ -1,0 +1,7 @@
+# sadmin.cfg SADM_SMTP_PORT Documentation
+# Revise 2022_05_03
+# ----------------------------------------------------------------------------
+This field specify the port to communicate with the smtp server.
+Valid port number are 25, 465, 587 and 2525.
+Default is 587.
+

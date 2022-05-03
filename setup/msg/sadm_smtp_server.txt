@@ -1,0 +1,6 @@
+# sadmin.cfg SADM_SMTP_SERVER Documentation
+# Revise 2022_05_03
+# ----------------------------------------------------------------------------
+This field specify the smtp server (ex: smtp.gmail.com)
+It's use by SADMIN Python Library to send email and alert.
+Default is 'smtp.gmail.com'.
