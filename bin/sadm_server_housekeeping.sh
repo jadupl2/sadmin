@@ -34,6 +34,7 @@
 # 2021_05_29 server: v2.8 Code optimization, update SADMIN section and Help screen.
 # 2021_07_30 server: v2.9 Solve intermittent error on monitor page.
 # 2021_08_17 nolog  v2.10 chmod 1777 $SADM_WWW_TMP_DIR 
+#@2022_05_03 server v2.11 Secure passwd file in $SADMIN/cfg
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -66,7 +67,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.10'                                      # Script Version
+export SADM_VER='2.11'                                      # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -167,8 +168,8 @@ set_dir()
 # --------------------------------------------------------------------------------------------------
 alert_housekeeping()
 {
-    sadm_write "${BOLD}${YELLOW}Move Alert older than $ARC_DAYS days to the alert history file.\n" 
-    sadm_write "They are move from $SADM_ALERT_HIST to $SADM_ALERT_ARC file.${NORMAL}\n"
+    sadm_writelog "Move Alert older than $ARC_DAYS days to the alert history file." 
+    sadm_writelog "Move from $SADM_ALERT_HIST to $SADM_ALERT_ARC file."
 
     # If History archive doesn't exist, create it.
     if [ ! -f "$SADM_ALERT_ARC" ]                                       # If Archive don't exist
@@ -383,7 +384,11 @@ file_housekeeping()
     fi
 
     # $SADMIN/www/tmp writable by everyone (If not cause intermittent problem with monitor page refresh)
-    chmod 1777 $SADM_WWW_TMP_DIR            
+    chmod 1777 $SADM_WWW_TMP_DIR  
+
+    if [ -f "$DBPASSFILE" ] ; then chmod 600 $DBPASSFILE ; fi 
+    if [ -f "$GMPW_FILE" ]  ; then chmod 600 $GMPW_FILE ; fi 
+    
     return $ERROR_COUNT
 }
 
