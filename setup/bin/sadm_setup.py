@@ -101,6 +101,7 @@
 #@2022_04_11 install: v3.64 Use /etc/os-release to get O/S info instead of lsb_release depreciated
 #@2022_04_16 install: v3.65 Updated for Rocky, AlmaLinux and CentOS 9.
 #@2022_04_19 install: v3.66 Fixes for CentOS 9 
+#@2022_05_03 install: v3.67 Ask info about smtp server information to send email from python libr.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -117,7 +118,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.66"                                            # Setup Version Number
+sver                = "3.67"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -2108,6 +2109,43 @@ def setup_sadmin_config_file(sroot,wostype):
         wcfg_prelay = accept_field(sroot,"SADM_RELAYHOST",sdefault,sprompt) # Accept RelayHost
     setup_postfix(sroot,wostype,wcfg_prelay)                            # Set relayhost in main.cf
 
+    # Accept smtp server, where to send email.
+    # For google it's 'smtp.gmail.com' (Use by python Library to send email)
+    sdefault = "smtp.mail.com"                                          # Default Gmail SMTP
+    sprompt  = "Enter SMTP server "                                     # Prompt for Answer
+    wsmtp_server = accept_field(sroot,"SADM_SMTP_SERVER",sdefault,sprompt)
+    update_sadmin_cfg(sroot,"SADM_SMTP_SERVER",wsmtp_server)            # Update Value in sadmin.cfg
+
+    # Accept smtp server port (25, 465, 587 or 2525)
+    # For google it's 'smtp.gmail.com' (Use by python Library to send email)
+    sdefault = 587                                                      # Default SMTP Port No.
+    sprompt  = "Enter SMTP port number "                                # Prompt for Answer
+    while True :  
+        wsmtp_port = accept_field(sroot,"SADM_SMTP_PORT",sdefault,sprompt)
+        if wsmtp_port != 25 and wsmtp_port != 465 and wsmtp_port != 587 and wsmtp_port != 2525 :
+            writelog ("Invalid port number %s - Valid smtp port are 25, 465, 587 or 2525")
+            continue                                                    # Go Back Re-Accept Email
+        break
+    update_sadmin_cfg(sroot,"SADM_SMTP_PORT",wsmtp_port)                # Update Value in sadmin.cfg
+
+    # Accept sender email address
+    # For google it's 'smtp.gmail.com' (Use by python Library to send email)
+    sdefault = "account@gmail.com"                                      # Default SMTP Port No.
+    sprompt  = "Enter SMTP sender email address "                       # Prompt for Answer
+    wcfg_mail_addr = ""                                                 # Clear Email Address
+    while True :                                                        # Until Valid Email Address
+        wcfg_mail_addr = accept_field(sroot,"SADM_SMTP_SENDER",sdefault,sprompt)
+        x = wcfg_mail_addr.split('@')                                   # Split Email Entered 
+        if (len(x) != 2):                                               # If not 2 fields = Invalid
+            writelog ("Invalid email address - no '@' sign",'bold')     # Advise user no @ sign
+            continue                                                    # Go Back Re-Accept Email
+        try :
+            xip = socket.gethostbyname(x[1])                            # Try Get IP of Domain
+        except (socket.gaierror) as error :                             # If Can't - domain invalid
+            writelog ("The domain %s is not valid" % (x[1]),'bold')     # Advise User
+            continue                                                    # Go Back re-accept email
+        break        
+    update_sadmin_cfg(sroot,"SADM_SMTP_SENDER",wsmtp_sender)            # Update Value in sadmin.cfg
 
     # Accept the maximum number of lines we want in every log produce
     #sdefault = 500                                                      # No Default value 
