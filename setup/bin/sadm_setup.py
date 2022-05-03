@@ -1907,7 +1907,7 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
         wdata=""
         while (wdata == ""):                                            # Input until something 
             eprompt = sprompt                                           # Save Default Prompt Unmodified
-            if (len(sdefault) !=0):                                     # If Default Value received
+            if len(sdefault) != 0:                                     # If Default Value received
                 eprompt = sprompt + " [" + color.BOLD + sdefault + color.END + "]" # Ins Def. Val. in prompt
             wdata = input("%s : " % (eprompt))                          # Accept user response
             wdata = wdata.strip()                                       # Del leading/trailing space
@@ -1920,7 +1920,7 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
         while True:                                                     # Loop until Valid response
             eprompt = sprompt + " [" + color.BOLD + str(sdefault) + color.END + "]" # Ins Def. in prompt
             wdata = input("%s : " % (eprompt))                          # Accept an Integer
-            if (len(wdata) ==0): wdata = sdefault
+            if len(wdata) == 0 : wdata = sdefault
             try:
                 wdata = int(wdata)
             except ValueError as e:                                     # If Value is not an Integer
@@ -2121,7 +2121,7 @@ def setup_sadmin_config_file(sroot,wostype):
     sdefault = 587                                                      # Default SMTP Port No.
     sprompt  = "Enter SMTP port number "                                # Prompt for Answer
     while True :  
-        wsmtp_port = accept_field(sroot,"SADM_SMTP_PORT",sdefault,sprompt)
+        wsmtp_port = accept_field(sroot,"SADM_SMTP_PORT",sdefault,sprompt,'I')
         if wsmtp_port != 25 and wsmtp_port != 465 and wsmtp_port != 587 and wsmtp_port != 2525 :
             writelog ("Invalid port number %s - Valid smtp port are 25, 465, 587 or 2525")
             continue                                                    # Go Back Re-Accept Email
@@ -2132,10 +2132,10 @@ def setup_sadmin_config_file(sroot,wostype):
     # For google it's 'smtp.gmail.com' (Use by python Library to send email)
     sdefault = "account@gmail.com"                                      # Default SMTP Port No.
     sprompt  = "Enter SMTP sender email address "                       # Prompt for Answer
-    wcfg_mail_addr = ""                                                 # Clear Email Address
+    wsmtp_sender = ""                                                 # Clear Email Address
     while True :                                                        # Until Valid Email Address
-        wcfg_mail_addr = accept_field(sroot,"SADM_SMTP_SENDER",sdefault,sprompt)
-        x = wcfg_mail_addr.split('@')                                   # Split Email Entered 
+        wsmtp_sender = accept_field(sroot,"SADM_SMTP_SENDER",sdefault,sprompt)
+        x = wsmtp_sender.split('@')                                   # Split Email Entered 
         if (len(x) != 2):                                               # If not 2 fields = Invalid
             writelog ("Invalid email address - no '@' sign",'bold')     # Advise user no @ sign
             continue                                                    # Go Back Re-Accept Email
