@@ -189,13 +189,13 @@ add_epel_8_repo()
     # On Alma Linux and Rocky Linux 8 it is recommended to also enable the PowerTools repository 
     # since EPEL packages may depend on packages from it:
     if [ "$SADM_OSNAME" = "ALMALINUX" ] || [ "$SADM_OSNAME" = "ROCKY" ]
-       then dnf -y install dnf install epel-release >>$SLOG 2>&1 
+       then dnf -y install epel-release >>$SLOG 2>&1 
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
                     return 1
                else echo " [ OK ]"
             fi 
-            dnf -y install dnf install epel-next-release >>$SLOG 2>&1
+            dnf -y install epel-next-release >>$SLOG 2>&1
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 Next repository" |tee -a $SLOG
                     return 1
