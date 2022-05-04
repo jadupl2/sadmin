@@ -102,6 +102,7 @@
 #@2022_04_16 install: v3.65 Updated for Rocky, AlmaLinux and CentOS 9.
 #@2022_04_19 install: v3.66 Fixes for CentOS 9 
 #@2022_05_03 install: v3.67 Ask info about smtp server information to send email from python libr.
+#@2022_05_04 install: v3.68 added some modification to posfix config file (After making a backup)
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -118,7 +119,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.67"                                            # Setup Version Number
+sver                = "3.68"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1943,49 +1944,55 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
 # SETUP POSTFIX CONFIGURATION FILE (/ETC/POSTFIX/MAIN.CF)
 #===================================================================================================
 #
-def setup_postfix(sroot,wostype,wrelay):
-    if wostype != "LINUX" :                                             # Configure Only on Linux
-        return
+def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd):
 
-    pfile="/etc/postfix/main.cf"                                        # Postfix Config FileName
-    pfile_org="/etc/postfix/main.cf.org"                                # Backup of original main.cf
-    pfile_tmp="/etc/postfix/main.tmp"                                   # Temp will become cf file
-    if not os.path.isfile(pfile):                                       # If main.cf don't exist
-        return                                                          # Will not create one
+    if wostype != "LINUX" : return                                      # Configure Only on Linux
+    maincf="/etc/postfix/main.cf"                                       # Postfix Config FileName
+    maincf_org="/etc/postfix/main.cf.org"                               # Backup of original main.cf
+    maincf_tmp="/etc/postfix/main.tmp"                                  # Temp will become cf file
+    if not os.path.isfile(maincf): return                               # Postfix not installed
 
-    # Make a Backup of main.cf - If main.cf.org don't exist, copy main.cfg to main.cf.org
-    if not os.path.isfile(pfile_org):                                   # If main.cf.org don't exist
+    # Make a Backup of main.cf - If main.cf.org don't exist
+    if not os.path.isfile(maincf_org):                                  # if backup not already done
         try:
-            shutil.copyfile(pfile,pfile_org)                            # Backup original main.cf
+            shutil.copyfile(maincf,maincf_org)                          # Backup original main.cf
+            fo = open(maincf,'w')                                       # Add these lines at the end
+            fo.write("smtp_use_tls = yes")
+            fo.write("smtp_sasl_auth_enable = yes")
+            fo.write("smtp_sasl_security_options =")
+            fo.write("smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd")
+            fo.write("smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt")
+            fo.close()  
         except IOError as e:
-            writelog("Error copying Postfix %s config file. %s" % (pfile,e)) 
+            writelog("Error copying Postfix %s config file. %s" % (maincf,e)) 
             sys.exit(1)                                                 # Exit to O/S With Error
         except:
             writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
             sys.exit(1)          
 
-
-    writelog ("Updating relayhost in postfix configuration file (%s) ..." % (pfile))
-    fi = open(pfile,'r')                                                # Current Postfix main.cf
-    fo = open(pfile_tmp,'w')                                            # Open new tmp main.cf file
+    # Update Postfix configuration
+    writelog ("Updating relayhost in postfix configuration file (%s) ..." % (maincf))
+    fi = open(maincf,'r')                                               # Current Postfix main.cf
+    fo = open(maincf_tmp,'w')                                           # Open new tmp main.cf file
     norelay=True                                                        # Assume no relayhost is set
     for line in fi:                                                     # Read Input file until EOF
         if line.startswith('relayhost=') :                              # line Start with relayhost?
-            line = "relayhost=%s" % (wrelay)                            # Replace with new relayhost
+            line = "relayhost [%s]:%d" % (wsmtp_server,wsmtp_port)      # Replace with new relayhost
             norelay=False                                               # RelayHost was Set
         fo.write (line)                                                 # Write line to output file
     fi.close()                                                          # File read now close it
     if (norelay) :                                                      # If no relayhost was set
-        line = "relayhost=%s" % (wrelay)                                # Insert new relayhost line
+        line = "relayhost [%s]:%d" % (wsmtp_server,wsmtp_port)          # Replace with new relayhost
         fo.write (line)                                                 # Write line to output file
     fo.close()                                                          # Close the output file
 
+
     # Delete main.cf and copy main.cf.tmp to main.cf
     try:                                                                # Will try rename env. file
-        os.remove(pfile)                                                # Remove current main.cf
-        os.rename(pfile_tmp,pfile)                                      # Rename tmp to main.cf
+        os.remove(maincf)                                                # Remove current main.cf
+        os.rename(maincf_tmp,maincf)                                      # Rename tmp to main.cf
     except:
-        print ("Error removing or renaming %s" % (pfile))               # Show User if error
+        print ("Error removing or renaming %s" % (maincf))               # Show User if error
         sys.exit(1)                                                     # Exit to O/S with Error
     return()
 
@@ -2078,7 +2085,7 @@ def setup_sadmin_config_file(sroot,wostype):
     while True:                                                         # Accept until valid server
         wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt)# Accept SADMIN Server Name
         writelog ("Validating server name ...")                         # Advise User Validating
-        ccode,SADM_IP,cstderr = oscommand("host %s |awk '{ print $4 }' |head -1" % (wcfg_server))
+        ccode,SADM_IP,cstderr = oscommand("host %s  }' |head -1" % (wcfg_server))
         #writelog ("wcfg_server = %s SADM_IP = %s ccode = %s cstderr = %s" % (wcfg_server,SADM_IP,ccode,cstderr))
         digit1=SADM_IP.split('.')[0]                                    # 1st Digit=127 = Invalid
         if ((digit1 == "127") or (SADM_IP.count(".") != 3)):            # If Resolve to loopback IP
@@ -2102,40 +2109,46 @@ def setup_sadmin_config_file(sroot,wostype):
 
 
     # Accept PostFix RelayHost
-    sdefault = ""                                                       # No Default Value
-    sprompt  = "Enter Postfix Internet mail relayhost (for postfix)"    # Prompt for Relay Host
-    wcfg_prelay = ""                                                    # Clear Field
-    while (wcfg_prelay == ""):                                          # Until something entered
-        wcfg_prelay = accept_field(sroot,"SADM_RELAYHOST",sdefault,sprompt) # Accept RelayHost
-    setup_postfix(sroot,wostype,wcfg_prelay)                            # Set relayhost in main.cf
+    #sdefault = ""                                                       # No Default Value
+    #sprompt  = "Enter Postfix Internet mail relayhost (for postfix)"    # Prompt for Relay Host
+    #wcfg_prelay = ""                                                    # Clear Field
+    #while (wcfg_prelay == ""):                                          # Until something entered
+    #    wcfg_prelay = accept_field(sroot,"SADM_RELAYHOST",sdefault,sprompt) # Accept RelayHost
+    #setup_postfix(sroot,wostype,wcfg_prelay)                            # Set relayhost in main.cf
 
-    # Accept smtp server, where to send email.
-    # For google it's 'smtp.gmail.com' (Use by python Library to send email)
-    sdefault = "smtp.mail.com"                                          # Default Gmail SMTP
-    sprompt  = "Enter SMTP server "                                     # Prompt for Answer
-    wsmtp_server = accept_field(sroot,"SADM_SMTP_SERVER",sdefault,sprompt)
+
+    # Accept smtp mail server, where to send email (Default smtp-gmail.com)
+    # Use by python Library to send email
+    while True :  
+        sdefault = "smtp.mail.com"                                      # Default Gmail SMTP
+        sprompt  = "Enter SMTP server name"                             # Prompt for Answer
+        wsmtp_server = accept_field(sroot,"SADM_SMTP_SERVER",sdefault,sprompt)
+        ccode,cstdout,cstderr = oscommand("host wsmtp_server >/dev/null 2>&1")
+        if ccode != 0 :                                                 # smtp name can't be resolve
+            writelog("The smtp name cannot be resolve (maybe a typo error).")
+            continue                                                    # Go ReAccept the smtp name
+        break
     update_sadmin_cfg(sroot,"SADM_SMTP_SERVER",wsmtp_server)            # Update Value in sadmin.cfg
 
     # Accept smtp server port (25, 465, 587 or 2525)
-    # For google it's 'smtp.gmail.com' (Use by python Library to send email)
+    # For Google it's 'smtp.gmail.com'
     sdefault = 587                                                      # Default SMTP Port No.
     sprompt  = "Enter SMTP port number "                                # Prompt for Answer
     while True :  
         wsmtp_port = accept_field(sroot,"SADM_SMTP_PORT",sdefault,sprompt,'I',25,2525)
         if wsmtp_port != 25 and wsmtp_port != 465 and wsmtp_port != 587 and wsmtp_port != 2525 :
-            writelog ("Invalid port number %s - Valid smtp port are 25, 465, 587 or 2525")
+            writelog("Invalid port number, valid smtp port are 25, 465, 587 or 2525")
             continue                                                    # Go Back Re-Accept Email
         break
     update_sadmin_cfg(sroot,"SADM_SMTP_PORT",wsmtp_port)                # Update Value in sadmin.cfg
 
     # Accept sender email address
-    # For google it's 'smtp.gmail.com' (Use by python Library to send email)
     sdefault = "account@gmail.com"                                      # Default SMTP Port No.
-    sprompt  = "Enter SMTP sender email address "                       # Prompt for Answer
-    wsmtp_sender = ""                                                 # Clear Email Address
+    sprompt  = "Enter sender email address "                            # Prompt for Answer
+    wsmtp_sender = ""                                                   # Clear Email Address
     while True :                                                        # Until Valid Email Address
         wsmtp_sender = accept_field(sroot,"SADM_SMTP_SENDER",sdefault,sprompt)
-        x = wsmtp_sender.split('@')                                   # Split Email Entered 
+        x = wsmtp_sender.split('@')                                     # Split Email Entered 
         if (len(x) != 2):                                               # If not 2 fields = Invalid
             writelog ("Invalid email address - no '@' sign",'bold')     # Advise user no @ sign
             continue                                                    # Go Back Re-Accept Email
@@ -2146,6 +2159,17 @@ def setup_sadmin_config_file(sroot,wostype):
             continue                                                    # Go Back re-accept email
         break        
     update_sadmin_cfg(sroot,"SADM_SMTP_SENDER",wsmtp_sender)            # Update Value in sadmin.cfg
+
+    # Accept smtp user password 
+    sdefault = ""                                                       # No Default for user pwd 
+    sprompt  = "Enter SMTP user password "                              # Prompt for User password
+    while True :  
+        wsmtp_pwd = accept_field(sroot,"SADM_SMTP_PWD",sdefault,sprompt,'P')
+        if wsmtp_port != 25 and wsmtp_port != 465 and wsmtp_port != 587 and wsmtp_port != 2525 :
+            writelog("Invalid port number, valid smtp port are 25, 465, 587 or 2525")
+            continue                                                    # Go Back Re-Accept Email
+        break
+    setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd) 
 
     # Accept the maximum number of lines we want in every log produce
     #sdefault = 500                                                      # No Default value 
