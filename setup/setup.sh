@@ -159,7 +159,7 @@ add_epel_8_repo()
                then echo "[ WARNING ] Couldn't enable EPEL codeready-builder repository" |tee -a $SLOG
                else echo " [ OK ]"
             fi 
-            dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+            dnf -y install dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
                     return 1
@@ -171,7 +171,7 @@ add_epel_8_repo()
     # packages may depend on packages from it:
     if [ "$SADM_OSNAME" = "CENTOS" ] 
        then printf "On CentOS 8, it's recommended to also enable the EPEL PowerTools Repository.\n"  
-            print "dnf config-manager --set-enabled PowerTools" 
+            printf "dnf config-manager --set-enabled PowerTools" 
             dnf config-manager --set-enabled PowerTools
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL PowerTools repository." | tee -a $SLOG
@@ -189,20 +189,18 @@ add_epel_8_repo()
     # On Alma Linux and Rocky Linux 8 it is recommended to also enable the PowerTools repository 
     # since EPEL packages may depend on packages from it:
     if [ "$SADM_OSNAME" = "ALMALINUX" ] || [ "$SADM_OSNAME" = "ROCKY" ]
-       then printf "On Alma & Rocky Linux 8, we also enable the EPEL PowerTools Repository.\n"  
-            print "dnf config-manager --set-enabled PowerTools" 
-            dnf config-manager --set-enabled PowerTools
+       then dnf -y install dnf install epel-release >>$SLOG 2>&1 
             if [ $? -ne 0 ]
-               then echo "[ WARNING ] Couldn't enable EPEL PowerTools repository." | tee -a $SLOG
+               then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
+                    return 1
                else echo " [ OK ]"
             fi 
-            printf "Adding Alma & Rocky Linux V8 EPEL repository (Disable by default)" |tee -a $SLOG
-            dnf -y install epel-release epel-next-release >>$SLOG 2>&1
+            dnf -y install dnf install epel-next-release >>$SLOG 2>&1
             if [ $? -ne 0 ]
-                then echo "[Error] Adding EPEL 8 repository." |tee -a $SLOG
-                     return 1 
-                else echo " [ OK ]"
-            fi
+               then echo "[ WARNING ] Couldn't enable EPEL 8 Next repository" |tee -a $SLOG
+                    return 1
+               else echo " [ OK ]"
+            fi 
     fi
 
     printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
