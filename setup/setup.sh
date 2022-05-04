@@ -193,13 +193,13 @@ add_epel_8_repo()
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
                     return 1
-               else echo " [ OK ]"
+               else echo "Enable EPEL 8 repository [ OK ]"
             fi 
             dnf -y install epel-next-release >>$SLOG 2>&1
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 Next repository" |tee -a $SLOG
                     return 1
-               else echo " [ OK ]"
+               else echo "Enable EPEL 8 Next repository [ OK ]"
             fi 
     fi
 
