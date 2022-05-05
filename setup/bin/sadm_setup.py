@@ -1944,7 +1944,7 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
 # SETUP POSTFIX CONFIGURATION FILE (/ETC/POSTFIX/MAIN.CF)
 #===================================================================================================
 #
-def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd):
+def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,sosname):
 
     if wostype != "LINUX" : return                                      # Configure Only on Linux
     maincf="/etc/postfix/main.cf"                                       # Postfix Config FileName
@@ -1957,11 +1957,15 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd):
         try:
             shutil.copyfile(maincf,maincf_org)                          # Backup original main.cf
             fo = open(maincf,'a')                                       # Add these lines at the end
-            fo.write("smtp_use_tls = yes")
-            fo.write("smtp_sasl_auth_enable = yes")
-            fo.write("smtp_sasl_security_options =")
-            fo.write("smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd")
-            fo.write("smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt")
+            fo.write("smtp_use_tls = yes\n")
+            fo.write("smtp_sasl_auth_enable = yes\n")
+            fo.write("smtp_sasl_security_options =\n")
+            fo.write("smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd\n")
+            if (sosname == "REDHAT") or (sosname == "CENTOS") or (sosname == "FEDORA") or 
+               (sosname == "ALMALINUX") or (sosname == "ROCKY") :       
+                fo.write("smtp_tls_CAfile = /etc/ssl/certs/ca-bundle.crt\n")
+            else: 
+                fo.write("smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt\n")
             fo.close()  
         except IOError as e:
             writelog("Error copying Postfix %s config file. %s" % (maincf,e)) 
@@ -1977,7 +1981,7 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd):
     norelay=True                                                        # Assume no relayhost is set
     for line in fi:                                                     # Read Input file until EOF
         if line.startswith('relayhost=') :                              # line Start with relayhost?
-            line = "relayhost [%s]:%d" % (wsmtp_server,wsmtp_port)      # Replace with new relayhost
+            line = "relayhost [%s]:%d\n" % (wsmtp_server,wsmtp_port)    # Replace with new relayhost
             norelay=False                                               # RelayHost was Set
         fo.write (line)                                                 # Write line to output file
     fi.close()                                                          # File read now close it
@@ -2002,7 +2006,7 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd):
 # ASK IMPORTANT INFO THAT NEED TO BE ACCURATE IN THE $SADMIN/CFG/SADMIN.CFG FILE
 #===================================================================================================
 #
-def setup_sadmin_config_file(sroot,wostype):
+def setup_sadmin_config_file(sroot,wostype,sosname):
 #"""[Ask important info that need to be accurate in the $sadmin/cfg/sadmin.cfg file]
 #    It Return SADMIN ServerName, ServerIP, Default, SysAdminEmail, SadminUser, SadminGroup
 #
@@ -2169,7 +2173,7 @@ def setup_sadmin_config_file(sroot,wostype):
             writelog("Invalid port number, valid smtp port are 25, 465, 587 or 2525")
             continue                                                    # Go Back Re-Accept Email
         break
-    setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd) 
+    setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,sosname) 
 
     # Accept the maximum number of lines we want in every log produce
     #sdefault = 500                                                      # No Default value 
@@ -2498,7 +2502,7 @@ def mainflow(sroot):
 
     # Go and Ask Setup Question to user 
     # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, sadmin User and Group).
-    (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype) # Ask User
+    (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype,sosname) 
 
     # On SADMIN Client, Apache web server is not installed, 
     # But we need to set the WebUser and the WebGroup to some default value (SADMIN user and Group)
