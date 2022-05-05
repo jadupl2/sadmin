@@ -1956,7 +1956,7 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd):
     if not os.path.isfile(maincf_org):                                  # if backup not already done
         try:
             shutil.copyfile(maincf,maincf_org)                          # Backup original main.cf
-            fo = open(maincf,'w')                                       # Add these lines at the end
+            fo = open(maincf,'a')                                       # Add these lines at the end
             fo.write("smtp_use_tls = yes")
             fo.write("smtp_sasl_auth_enable = yes")
             fo.write("smtp_sasl_security_options =")
@@ -2086,11 +2086,11 @@ def setup_sadmin_config_file(sroot,wostype):
         wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt)# Accept SADMIN Server Name
         writelog ("Validating server name ...")                         # Advise User Validating
         ccode,SADM_IP,cstderr = oscommand("host %s  }' |head -1" % (wcfg_server))
-        #writelog ("wcfg_server = %s SADM_IP = %s ccode = %s cstderr = %s" % (wcfg_server,SADM_IP,ccode,cstderr))
+        writelog ("wcfg_server = %s SADM_IP = %s ccode = %s cstderr = %s" % (wcfg_server,SADM_IP,ccode,cstderr))
         digit1=SADM_IP.split('.')[0]                                    # 1st Digit=127 = Invalid
         if ((digit1 == "127") or (SADM_IP.count(".") != 3)):            # If Resolve to loopback IP
             writelog ("  ")
-            #writelog ("SADM_IP.count %s" % (SADM_IP.count(".")))
+            writelog ("SADM_IP.count %s" % (SADM_IP.count(".")))
             writelog ("*** ERROR ***")
             writelog ("SADMIN server name '%s' can't be resolve." %(wcfg_server))
             writelog ("SADMIN clients would not be able to get to the SADMIN Server.")
