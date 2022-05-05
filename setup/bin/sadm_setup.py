@@ -2085,7 +2085,7 @@ def setup_sadmin_config_file(sroot,wostype):
     while True:                                                         # Accept until valid server
         wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt)# Accept SADMIN Server Name
         writelog ("Validating server name ...")                         # Advise User Validating
-        ccode,SADM_IP,cstderr = oscommand("host %s  }' |head -1" % (wcfg_server))
+        ccode,SADM_IP,cstderr = oscommand("host %s |awk '{ print $4 }' |head -1" % (wcfg_server))
         writelog ("wcfg_server = %s SADM_IP = %s ccode = %s cstderr = %s" % (wcfg_server,SADM_IP,ccode,cstderr))
         digit1=SADM_IP.split('.')[0]                                    # 1st Digit=127 = Invalid
         if ((digit1 == "127") or (SADM_IP.count(".") != 3)):            # If Resolve to loopback IP
@@ -2123,9 +2123,9 @@ def setup_sadmin_config_file(sroot,wostype):
         sdefault = "smtp.mail.com"                                      # Default Gmail SMTP
         sprompt  = "Enter SMTP server name"                             # Prompt for Answer
         wsmtp_server = accept_field(sroot,"SADM_SMTP_SERVER",sdefault,sprompt)
-        ccode,cstdout,cstderr = oscommand("host wsmtp_server >/dev/null 2>&1")
+        ccode,cstdout,cstderr = oscommand("host %s >/dev/null 2>&1" % (wsmtp_server))
         if ccode != 0 :                                                 # smtp name can't be resolve
-            writelog("The smtp name cannot be resolve (maybe a typo error).")
+            writelog("The smtp host name '%s'cannot be resolve." % (wsmtp_server))
             continue                                                    # Go ReAccept the smtp name
         break
     update_sadmin_cfg(sroot,"SADM_SMTP_SERVER",wsmtp_server)            # Update Value in sadmin.cfg
