@@ -1986,7 +1986,7 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,s
         fo.write (line)                                                 # Write line to output file
     fi.close()                                                          # File read now close it
     if (norelay) :                                                      # If no relayhost was set
-        line = "relayhost [%s]:%d" % (wsmtp_server,wsmtp_port)          # Replace with new relayhost
+        line = "relayhost [%s]:%d\n" % (wsmtp_server,wsmtp_port)        # Replace with new relayhost
         fo.write (line)                                                 # Write line to output file
     fo.close()                                                          # Close the output file
 
