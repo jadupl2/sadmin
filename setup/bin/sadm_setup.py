@@ -1961,7 +1961,7 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,s
             fo.write("smtp_sasl_auth_enable = yes\n")
             fo.write("smtp_sasl_security_options =\n")
             fo.write("smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd\n")
-            if (sosname == "REDHAT") or (sosname == "CENTOS") or (sosname == "FEDORA") or \
+            if (sosname == "REDHAT") or (sosname == "CENTOS") or (sosname == "FEDORA") or 
                (sosname == "ALMALINUX") or (sosname == "ROCKY") :       
                 fo.write("smtp_tls_CAfile = /etc/ssl/certs/ca-bundle.crt\n")
             else: 
