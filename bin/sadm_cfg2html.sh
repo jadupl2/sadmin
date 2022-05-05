@@ -161,9 +161,11 @@ function main_process()
                then CFG2HTML="$SADM_PKG_DIR/cfg2html/cfg2html"          # Use then one in /sadmin
                else sadm_write "Command 'cfg2html' was not found.\n"    # Not Found inform user
                     sadm_write "We will install it now.\n"              # Not Found inform user
-                    if [ "$(sadm_get_osname)" = "REDHAT" ]    || [ "$(sadm_get_osname)" = "CENTOS" ]
-                       || [ "$(sadm_get_osname)" = "ALMALINUX" ] || [ "$(sadm_get_osname)" = "ROCKY" ]
-                       || [ "$(sadm_get_osname)" = "FEDORA" ]
+                    if [ "$(sadm_get_osname)"  = "REDHAT" ]     || 
+                        [ "$(sadm_get_osname)" = "CENTOS" ]     || 
+                        [ "$(sadm_get_osname)" = "ALMALINUX" ]  || 
+                        [ "$(sadm_get_osname)" = "ROCKY" ]      || 
+                        [ "$(sadm_get_osname)" = "FEDORA" ]
                         then rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm
                     fi 
                     if [ "$(sadm_get_osname)" = "UBUNTU" ]   || 
