@@ -24,6 +24,7 @@
 # 2021_07_20 client: v3.7 Fix problem with cfg2html on Fedora 34.
 # 2021_07_21 client: v3.7a cfg2html hang on Fedora 34, had to use -n to make it complete.
 # 2021_07_21 client: v3.8 Fix problem with cfg2html on Fedora 34.
+#@2022_05_05 client: v3.9 Update code for AlmaLinux and Rocky Linux.
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------
@@ -56,7 +57,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.8'                               # Your Current Script Version
+    export SADM_VER='3.9'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
@@ -144,46 +145,28 @@ function cmd_options()
 }
 
 
-#===================================================================================================
-#                                       Script Start HERE
-#===================================================================================================
 
-    cmd_options "$@"                                                    # Check command-line Options    
-    sadm_start                                                          # Create Dir.,PID,log,rch
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
 
-    # If you want this script to be run only by root user, uncomment the lines below.
-    if [ $(id -u) -ne 0 ]                                               # If Cur. user is not root
-        then sadm_writelog "Script can only be run by the 'root' user." # Advise User Message
-             sadm_writelog "Try 'sudo ${0##*/}'."                       # Suggest using sudo
-             sadm_writelog "Process aborted."                           # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
 
-    # Script not supported on MacOS
-    if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # If on MacOS 
-       then sadm_write "This script is not supported on MacOS.\n"       # Advise User
-            sadm_stop 0                                                 # Close and Trim Log
-            exit 0                                                      # Exit To O/S
-    fi
-
+# --------------------------------------------------------------------------------------------------
 # Make sure that cfg2html is accessible on the server
 # If package not installed then used the SADMIN version located in $SADMIN_BASE_DIR/pkg
-# ----------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+function main_process()
+{
+
     CFG2HTML=`which cfg2html >/dev/null 2>&1`                           # Locate cfg2html
     if [ $? -ne 0 ]                                                     # if found
        then if [ "$(sadm_get_osname)" = "AIX" ]                         # If on AIX & Not Found
                then CFG2HTML="$SADM_PKG_DIR/cfg2html/cfg2html"          # Use then one in /sadmin
                else sadm_write "Command 'cfg2html' was not found.\n"    # Not Found inform user
                     sadm_write "We will install it now.\n"              # Not Found inform user
-                    if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ]
-                       then rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm
+                    if [ "$(sadm_get_osname)" = "REDHAT" ]    || [ "$(sadm_get_osname)" = "CENTOS" ]
+                       || [ "$(sadm_get_osname)" = "ALMALINUX" ] || [ "$(sadm_get_osname)" = "ROCKY" ]
+                       || [ "$(sadm_get_osname)" = "FEDORA" ]
+                        then rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm
                     fi 
-                    if [ "$(sadm_get_osname)" = "FEDORA" ]
-                       then rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm
-                    fi
-                    if [ "$(sadm_get_osname)" = "UBUNTU" ]   ||
+                    if [ "$(sadm_get_osname)" = "UBUNTU" ]   || 
                        [ "$(sadm_get_osname)" = "DEBIAN" ]   ||
                        [ "$(sadm_get_osname)" = "RASPBIAN" ] ||
                        [ "$(sadm_get_osname)" = "LINUXMINT" ]
@@ -234,6 +217,37 @@ function cmd_options()
     if [ "$(sadm_get_osname)" = "AIX" ]
         then rm -f ${SADM_DR_DIR}/`hostname -s`_?.txt > /dev/null 2>&1
     fi
+}
+
+
+
+
+#===================================================================================================
+#                                       Script Start HERE
+#===================================================================================================
+
+    cmd_options "$@"                                                    # Check command-line Options    
+    sadm_start                                                          # Create Dir.,PID,log,rch
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
+
+    # If you want this script to be run only by root user, uncomment the lines below.
+    if [ $(id -u) -ne 0 ]                                               # If Cur. user is not root
+        then sadm_writelog "Script can only be run by the 'root' user." # Advise User Message
+             sadm_writelog "Try 'sudo ${0##*/}'."                       # Suggest using sudo
+             sadm_writelog "Process aborted."                           # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
+    fi
+
+    # Script not supported on MacOS
+    if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # If on MacOS 
+       then sadm_write "This script is not supported on MacOS.\n"       # Advise User
+            sadm_stop 0                                                 # Close and Trim Log
+            exit 0                                                      # Exit To O/S
+    fi
+
+    main_process
+    SADM_EXIT_CODE=$?
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
