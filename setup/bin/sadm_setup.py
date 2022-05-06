@@ -2025,19 +2025,19 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,s
     fpw = open(pfix_pwd,'w')                                            # Will become sass_passwd
     fpw.write (sasl)                                                    # Server:port User:Pwd
     fpw.close()                                                         # Close file
-    os.chmod(pfix_pwd, 600)
+    os.chmod(pfix_pwd, 0o600)
     ccode,cstdout,cstderr = oscommand("postmap %s" % (pfix_pwd))
     if (ccode != 0):
         writelog ("Problem running postmap command")
         writelog ("%s - %s" % (cstdout,cstderr)) 
 
-    writelog ("Postfix Restarting")
+    writelog ("Restarting Postfix")
     ccode,cstdout,cstderr = oscommand("systemctl restart postfix && systemctl enable postfix") 
     if (ccode != 0):
         writelog ("Problem running postmap command")
         writelog ("%s - %s" % (cstdout,cstderr)) 
     
-    writelog ("Changing finger information for root")
+    #writelog ("Changing finger information for root")
     ccode,cstdout,cstderr = oscommand("chfn -f sadmin root")
     if (ccode != 0):
         writelog ("Problem running postmap command")

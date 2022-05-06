@@ -62,6 +62,7 @@
 #@2022_04_07 Update: v3.17 Change to support Alma and Rocky Linux
 #@2022_04_11 Update: v3.18 Use /etc/os-release to get O/S info instead using lsb_release depreciated
 #@2022_04_16 Update: v3.19 Misc. Fixes for CentOS 9, Epel 9 and change UI a bit.
+#@2022_05_06 Update: v3.20 Install git if not already installed
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -71,7 +72,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.19'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.20'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -291,6 +292,47 @@ add_epel_repo()
 }
 
 
+
+# Install git core
+#===================================================================================================
+install_git()
+{
+    which git > /dev/null 2>&1
+    if [ $? -ne 0 ]
+        then echo "Installing git ..." | tee -a $SLOG
+             case "$SADM_OSNAME" in                                               # Test Answer
+                  REDHAT|CENTOS|ROCKY|ALMALINUX ) if [ "$SADM_OSVERSION" -lt 8 ]
+                                                     then yum -y install git-core >> $SLOG 2>&1
+                                                     else dnf -y install git-core >> $SLOG 2>&1
+                                                  fi
+                                                 ;;
+                  FEDORA)                        dnf -y install git-core >> $SLOG 2>&1
+                                                 ;;
+                  UBUNTU|DEBIAN|RASPBIAN|MINT)   apt update >> $SLOG 2>&1
+                                                 apt -y install git >>$SLOG 2>&1
+                                                 ;;
+                  * )                            echo "$SADM_OSNAME v$SADM_OSVERSION isn't supported"
+                                                 echo "Installation aborted ..."
+                                                 exit 1
+                                                 ;;
+             esac
+    else echo "'git' is already installed" >> $SLOG 2>&1
+         return
+    fi 
+
+
+    # git should now be installed, if not then abort installation
+    which git > /dev/null 2>&1
+    if [ $? -ne 0 ]
+        then echo " " | tee -a $SLOG
+             echo "----------" | tee -a $SLOG
+             echo "We are having problem installing git" | tee -a $SLOG
+             echo "Please install git (git-core) package" | tee -a $SLOG
+             echo "Then run this script again." | tee -a $SLOG 
+             echo "----------" | tee -a $SLOG
+             exit 1
+    fi
+}
 
 # Install python3 on system
 #===================================================================================================
@@ -531,9 +573,12 @@ EOF
     echo " " > $SLOG                                                    # Init the Log File
     echo "SADMIN Pre-installation verification v${SADM_VER}" | tee -a $SLOG
     echo "$SADM_OSTYPE $SADM_OSNAME v$SADM_OSVERSION with $SADM_PACKTYPE ($(arch)) as package format." | tee -a $SLOG
-    echo "Log directory is $SLOGDIR & Log file is $SLOG" | tee -a $SLOG 
+    echo "Log file is $SLOG" | tee -a $SLOG 
     echo "---------------------------------------------------------------------------"
 
+    # Install git if not install
+    install_git 
+    
     # Add EPEL for these dictribution
     if [ "$SADM_OSNAME" = "REDHAT" ] || [ "$SADM_OSNAME" = "CENTOS" ] ||  
        [ "$SADM_OSNAME" = "ROCKY" ]  || [ "$SADM_OSNAME" = "ALMALINUX" ] 
