@@ -104,6 +104,7 @@
 #@2022_05_03 install: v3.67 Ask info about smtp server information to send email from python libr.
 #@2022_05_04 install: v3.68 added some modification to posfix config file (After making a backup)
 #@2022_05_06 install: v3.69 Improve postfix configuration and update the sasl_passwd file
+#@2022_05_06 install: v3.70 Change finger information for root (sadmin replace root in email)
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -120,7 +121,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.69"                                            # Setup Version Number
+sver                = "3.70"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1819,7 +1820,7 @@ def update_postfix_cf(sroot,sname,svalue,show=True):
            lineNotFound=False                                           # Line was found in file
         fo.write (line)                                                 # Write line to output file
     if (lineNotFound) :                                                 # SNAME wasn't found in file
-        line = "%s\n" % (cline)                                         # Add line if wasn't present
+        line = "%s" % (cline)                                           # Add line if wasn't present
         fo.write (line)                                                 # Write 'SNAME = SVALUE Line
     fi.close()                                                          # File read now close it
     fo.close()                                                          # Close the output file
@@ -2006,23 +2007,19 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,s
     if not os.path.isfile(maincf): return                               # Postfix not installed
 
     # Update lines in main.cf
-    try:
-        update_postfix_cf(sroot,"smtp_use_tls","yes")
-        update_postfix_cf(sroot,"smtp_sasl_auth_enable","yes")
-        update_postfix_cf(sroot,"smtp_sasl_security_options"," ")
-        update_postfix_cf(sroot,"smtp_sasl_password_maps","hash:/etc/postfix/sasl_passwd")
-        if (sosname == "REDHAT") or (sosname == "CENTOS") or (sosname == "FEDORA") or \
-           (sosname == "ALMALINUX") or (sosname == "ROCKY") :     
-           update_postfix_cf(sroot,"smtp_tls_CAfile","/etc/ssl/certs/ca-bundle.crt")  
-        else: 
-           update_postfix_cf(sroot,"smtp_tls_CAfile","etc/ssl/certs/ca-certificates.crt")  
-        relayhost =  "[%s]:%d\n" % (wsmtp_server,wsmtp_port)  
-        update_postfix_cf(sroot,"relayhost",relayhost)
-    except e :
-        writelog("Unexpected error: %s ", (e,sys.exc_info())            # Advise Usr Show Error Msg
-        sys.exit(1)       
-
-    # Create/Update /etc/postfix/sasl_passwd   
+    update_postfix_cf(sroot,"smtp_use_tls","yes")
+    update_postfix_cf(sroot,"smtp_sasl_auth_enable","yes")
+    update_postfix_cf(sroot,"smtp_sasl_security_options"," ")
+    update_postfix_cf(sroot,"smtp_sasl_password_maps","hash:/etc/postfix/sasl_passwd")
+    if (sosname == "REDHAT") or (sosname == "CENTOS") or (sosname == "FEDORA") or \
+       (sosname == "ALMALINUX") or (sosname == "ROCKY") :     
+       update_postfix_cf(sroot,"smtp_tls_CAfile","/etc/ssl/certs/ca-bundle.crt")  
+    else: 
+       update_postfix_cf(sroot,"smtp_tls_CAfile","etc/ssl/certs/ca-certificates.crt")  
+    relayhost =  "[%s]:%d" % (wsmtp_server,wsmtp_port)  
+    update_postfix_cf(sroot,"relayhost",relayhost)
+    
+    # Create/Update /etc/postfix/sasl_passwd  
     pfix_pwd = "/etc/postfix/sasl_passwd"
     sasl =  "[%s]:%d %s:%s\n" % (wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd) 
     fpw = open(pfix_pwd,'w')                                            # Will become sass_passwd
@@ -2030,17 +2027,19 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,s
     fpw.close()                                                         # Close file
     os.chmod(pfix_pwd, 600)
     ccode,cstdout,cstderr = oscommand("postmap %s" % (pfix_pwd))
-    if (ccode == 0):
-        writelog( " Done ")
-    else:
+    if (ccode != 0):
         writelog ("Problem running postmap command")
         writelog ("%s - %s" % (cstdout,cstderr)) 
 
     writelog ("Postfix Restarting")
     ccode,cstdout,cstderr = oscommand("systemctl restart postfix && systemctl enable postfix") 
-    if (ccode == 0):
-        writelog( " Done ")
-    else:
+    if (ccode != 0):
+        writelog ("Problem running postmap command")
+        writelog ("%s - %s" % (cstdout,cstderr)) 
+    
+    writelog ("Changing finger information for root")
+    ccode,cstdout,cstderr = oscommand("chfn -f sadmin root")
+    if (ccode != 0):
         writelog ("Problem running postmap command")
         writelog ("%s - %s" % (cstdout,cstderr)) 
     
