@@ -103,6 +103,7 @@
 #@2022_04_19 install: v3.66 Fixes for CentOS 9 
 #@2022_05_03 install: v3.67 Ask info about smtp server information to send email from python libr.
 #@2022_05_04 install: v3.68 added some modification to posfix config file (After making a backup)
+#@2022_05_06 install: v3.69 Improve postfix configuration and update the sasl_passwd file
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -119,7 +120,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.68"                                            # Setup Version Number
+sver                = "3.69"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1792,6 +1793,56 @@ def update_alert_group_default(sroot,semail):
     fo.close()                                                          # Close the output file
 
 
+#===================================================================================================
+#                     Replacing Value in SADMIN configuration file (sadmin.cfg)
+#  1st = Root Dir. of SADMIN, 2nd = Name of setting, 3rd = Value of the setting, 4th = Show Upd. line
+# ===================================================================================================
+#
+def update_postfix_cf(sroot,sname,svalue,show=True):
+
+    wcfg_file = "/etc/postfix/mail.cf"                                  # Postfix main config file
+    wtmp_file = "%s/tmp/main_cf.tmp" % (sroot)                          # Tmp Postfix config file
+    wbak_file = "/etc/postfix/mail.cf.bak"                              # Backup Postfix config file
+    if (DEBUG) :
+        writelog ("In update_postfix_cf - sname = %s - svalue = %s\n" % (sname,svalue))
+        writelog ("\nwcfg_file=%s\nwtmp_file=%s\nwbak_file=%s" % (wcfg_file,wtmp_file,wbak_file))
+
+    fi = open(wcfg_file,'r')                                            # Current main.cf file
+    fo = open(wtmp_file,'w')                                            # Will become new main.cf
+    lineNotFound=True                                                   # Assume String not in file
+    cline = "%s = %s\n" % (sname,svalue)                                # Line to Insert in file
+
+    # Replace Line Starting with 'sname' with new 'svalue' 
+    for line in fi:                                                     # Read sadmin.cfg until EOF
+        if line.startswith("%s" % (sname)) :                            # Line Start with SNAME ?
+           line = "%s" % (cline)                                        # Change Line with new one
+           lineNotFound=False                                           # Line was found in file
+        fo.write (line)                                                 # Write line to output file
+    if (lineNotFound) :                                                 # SNAME wasn't found in file
+        line = "%s\n" % (cline)                                         # Add line if wasn't present
+        fo.write (line)                                                 # Write 'SNAME = SVALUE Line
+    fi.close()                                                          # File read now close it
+    fo.close()                                                          # Close the output file
+
+    # Rename main.cf to main.cf.bak (if main.cf.bak doesn't already exist)
+    if not os.path.isfile(wbak_file):                                   # main.cf.bak doesn't exist
+        try:                                                            # Will try rename env. file
+            os.rename(wcfg_file,wbak_file)                              # Rename Current to tmp
+        except:
+            writelog ("Error renaming %s to %s" % (wcfg_file,wbak_file))# Advise user of problem
+            sys.exit(1)                                                 # Exit to O/S with Error
+
+    # Put new main.cf in place - Rename $SADMIN/tmp/main_cf.tmp to main.cf
+    try:                                                                # Will try rename env. file
+        os.rename(wtmp_file,wcfg_file)                                  # Rename tmp to sadmin.cfg
+    except:
+        writelog ("Error renaming %s to %s" % (wtmp_file,wcfg_file))    # Advise user of problem
+        sys.exit(1)                                                     # Exit to O/S with Error
+
+    if (show) : 
+        writelog ("[%s] set to '%s' in %s" % (sname,svalue,wcfg_file),'bold') 
+
+
 
 #===================================================================================================
 #                     Replacing Value in SADMIN configuration file (sadmin.cfg)
@@ -1840,6 +1891,10 @@ def update_sadmin_cfg(sroot,sname,svalue,show=True):
 
     if (show) : 
         writelog ("[%s] set to '%s' in %s" % (sname,svalue,wcfg_file),'bold') # Bold Attr. Name in sadmin
+
+
+
+
 
 #===================================================================================================
 #             Accept Integer, Alphanumeric and Password field based on parameter received.
@@ -1941,63 +1996,57 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
 
 
 #===================================================================================================
-# SETUP POSTFIX CONFIGURATION FILE (/ETC/POSTFIX/MAIN.CF)
+# Setup postfix configuration (/etc/postfix/main.cf)
 #===================================================================================================
 #
 def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,sosname):
 
     if wostype != "LINUX" : return                                      # Configure Only on Linux
     maincf="/etc/postfix/main.cf"                                       # Postfix Config FileName
-    maincf_org="/etc/postfix/main.cf.org"                               # Backup of original main.cf
-    maincf_tmp="/etc/postfix/main.tmp"                                  # Temp will become cf file
     if not os.path.isfile(maincf): return                               # Postfix not installed
 
-    # Make a Backup of main.cf - If main.cf.org don't exist
-    if not os.path.isfile(maincf_org):                                  # if backup not already done
-        try:
-            shutil.copyfile(maincf,maincf_org)                          # Backup original main.cf
-            fo = open(maincf,'a')                                       # Add these lines at the end
-            fo.write("smtp_use_tls = yes\n")
-            fo.write("smtp_sasl_auth_enable = yes\n")
-            fo.write("smtp_sasl_security_options =\n")
-            fo.write("smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd\n")
-            if (sosname == "REDHAT") or (sosname == "CENTOS") or (sosname == "FEDORA") or \
-               (sosname == "ALMALINUX") or (sosname == "ROCKY") :       
-                fo.write("smtp_tls_CAfile = /etc/ssl/certs/ca-bundle.crt\n")
-            else: 
-                fo.write("smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt\n")
-            fo.close()  
-        except IOError as e:
-            writelog("Error copying Postfix %s config file. %s" % (maincf,e)) 
-            sys.exit(1)                                                 # Exit to O/S With Error
-        except:
-            writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
-            sys.exit(1)          
-
-    # Update Postfix configuration
-    writelog ("Updating relayhost in postfix configuration file (%s) ..." % (maincf))
-    fi = open(maincf,'r')                                               # Current Postfix main.cf
-    fo = open(maincf_tmp,'w')                                           # Open new tmp main.cf file
-    norelay=True                                                        # Assume no relayhost is set
-    for line in fi:                                                     # Read Input file until EOF
-        if line.startswith('relayhost=') :                              # line Start with relayhost?
-            line = "relayhost [%s]:%d\n" % (wsmtp_server,wsmtp_port)    # Replace with new relayhost
-            norelay=False                                               # RelayHost was Set
-        fo.write (line)                                                 # Write line to output file
-    fi.close()                                                          # File read now close it
-    if (norelay) :                                                      # If no relayhost was set
-        line = "relayhost [%s]:%d\n" % (wsmtp_server,wsmtp_port)        # Replace with new relayhost
-        fo.write (line)                                                 # Write line to output file
-    fo.close()                                                          # Close the output file
-
-
-    # Delete main.cf and copy main.cf.tmp to main.cf
-    try:                                                                # Will try rename env. file
-        os.remove(maincf)                                                # Remove current main.cf
-        os.rename(maincf_tmp,maincf)                                      # Rename tmp to main.cf
+    # Update lines in main.cf
+    try:
+        update_postfix_cf(sroot,"smtp_use_tls","yes")
+        update_postfix_cf(sroot,"smtp_sasl_auth_enable","yes")
+        update_postfix_cf(sroot,"smtp_sasl_security_options"," ")
+        update_postfix_cf(sroot,"smtp_sasl_password_maps","hash:/etc/postfix/sasl_passwd")
+        if (sosname == "REDHAT") or (sosname == "CENTOS") or (sosname == "FEDORA") or \
+           (sosname == "ALMALINUX") or (sosname == "ROCKY") :     
+           update_postfix_cf(sroot,"smtp_tls_CAfile","/etc/ssl/certs/ca-bundle.crt")  
+        else: 
+           update_postfix_cf(sroot,"smtp_tls_CAfile","etc/ssl/certs/ca-certificates.crt")  
+        relayhost =  "[%s]:%d\n" % (wsmtp_server,wsmtp_port)  
+        update_postfix_cf(sroot,"relayhost",relayhost)
+    except IOError as e:
+        writelog("Error copying Postfix %s config file. %s" % (maincf,e)) 
+        sys.exit(1)                                                 # Exit to O/S With Error
     except:
-        print ("Error removing or renaming %s" % (maincf))               # Show User if error
-        sys.exit(1)                                                     # Exit to O/S with Error
+        writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
+        sys.exit(1)       
+
+    # Create/Update /etc/postfix/sasl_passwd   
+    pfix_pwd = "/etc/postfix/sasl_passwd"
+    sasl =  "[%s]:%d %s:%s\n" % (wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd) 
+    fpw = open(pfix_pwd,'w')                                            # Will become sass_passwd
+    fpw.write (sasl)                                                    # Server:port User:Pwd
+    fpw.close()                                                         # Close file
+    os.chmod(pfix_pwd, 600)
+    ccode,cstdout,cstderr = oscommand("postmap %s" % (pfix_pwd))
+    if (ccode == 0):
+        writelog( " Done ")
+    else:
+        writelog ("Problem running postmap command")
+        writelog ("%s - %s" % (cstdout,cstderr)) 
+
+    writelog ("Postfix Restarting")
+    ccode,cstdout,cstderr = oscommand("systemctl restart postfix && systemctl enable postfix") 
+    if (ccode == 0):
+        writelog( " Done ")
+    else:
+        writelog ("Problem running postmap command")
+        writelog ("%s - %s" % (cstdout,cstderr)) 
+    
     return()
 
 
@@ -2039,7 +2088,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
 
 
     # Accept SysAdmin Email address
-    sdefault = ""                                                       # No default value
+    sdefault = "" Write 'SNAME = SVALUE Line                                                      # No default value
     sprompt  = "Enter System Administrator Email"                       # Prompt for Answer
     wcfg_mail_addr = ""                                                 # Clear Email Address
     while True :                                                        # Until Valid Email Address
@@ -2168,10 +2217,10 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     sdefault = ""                                                       # No Default for user pwd 
     sprompt  = "Enter SMTP user password "                              # Prompt for User password
     while True :  
-        wsmtp_pwd = accept_field(sroot,"SADM_SMTP_PWD",sdefault,sprompt,'P')
-        if wsmtp_port != 25 and wsmtp_port != 465 and wsmtp_port != 587 and wsmtp_port != 2525 :
-            writelog("Invalid port number, valid smtp port are 25, 465, 587 or 2525")
-            continue                                                    # Go Back Re-Accept Email
+        wsmtp_pwd = accept_field(sroot,"SADM_SMTP_PWD",sdefault,sprompt,'A')
+        if len(wsmtp_pwd) < 1 :                                         # Need at least 1 Char
+            writelog ("You need to give your user password")            # Advise user 
+            continue 
         break
     setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,sosname) 
 
