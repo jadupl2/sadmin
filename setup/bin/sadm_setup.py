@@ -1800,9 +1800,9 @@ def update_alert_group_default(sroot,semail):
 #
 def update_postfix_cf(sroot,sname,svalue,show=True):
 
-    wcfg_file = "/etc/postfix/mail.cf"                                  # Postfix main config file
+    wcfg_file = "/etc/postfix/main.cf"                                  # Postfix main config file
     wtmp_file = "%s/tmp/main_cf.tmp" % (sroot)                          # Tmp Postfix config file
-    wbak_file = "/etc/postfix/mail.cf.bak"                              # Backup Postfix config file
+    wbak_file = "/etc/postfix/main.cf.bak"                              # Backup Postfix config file
     if (DEBUG) :
         writelog ("In update_postfix_cf - sname = %s - svalue = %s\n" % (sname,svalue))
         writelog ("\nwcfg_file=%s\nwtmp_file=%s\nwbak_file=%s" % (wcfg_file,wtmp_file,wbak_file))
@@ -2018,11 +2018,8 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,s
            update_postfix_cf(sroot,"smtp_tls_CAfile","etc/ssl/certs/ca-certificates.crt")  
         relayhost =  "[%s]:%d\n" % (wsmtp_server,wsmtp_port)  
         update_postfix_cf(sroot,"relayhost",relayhost)
-    except IOError as e:
-        writelog("Error copying Postfix %s config file. %s" % (maincf,e)) 
-        sys.exit(1)                                                 # Exit to O/S With Error
-    except:
-        writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
+    except e :
+        writelog("Unexpected error: %s ", (e,sys.exc_info())            # Advise Usr Show Error Msg
         sys.exit(1)       
 
     # Create/Update /etc/postfix/sasl_passwd   
@@ -2088,7 +2085,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
 
 
     # Accept SysAdmin Email address
-    sdefault = "" Write 'SNAME = SVALUE Line                                                      # No default value
+    sdefault = "" 
     sprompt  = "Enter System Administrator Email"                       # Prompt for Answer
     wcfg_mail_addr = ""                                                 # Clear Email Address
     while True :                                                        # Until Valid Email Address
@@ -2173,7 +2170,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     # Accept smtp mail server, where to send email (Default smtp-gmail.com)
     # Use by python Library to send email
     while True :  
-        sdefault = "smtp.mail.com"                                      # Default Gmail SMTP
+        sdefault = "smtp.gmail.com"                                     # Default Gmail SMTP
         sprompt  = "Enter SMTP server name"                             # Prompt for Answer
         wsmtp_server = accept_field(sroot,"SADM_SMTP_SERVER",sdefault,sprompt)
         ccode,cstdout,cstderr = oscommand("host %s >/dev/null 2>&1" % (wsmtp_server))
