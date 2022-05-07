@@ -62,7 +62,7 @@
 #@2022_04_07 Update: v3.17 Change to support Alma and Rocky Linux
 #@2022_04_11 Update: v3.18 Use /etc/os-release to get O/S info instead using lsb_release depreciated
 #@2022_04_16 Update: v3.19 Misc. Fixes for CentOS 9, Epel 9 and change UI a bit.
-#@2022_05_06 Update: v3.20 
+#@2022_05_06 Update: v3.20 Fix somes issue installing EPEL repositories on AlmaLinux & Rocky Linux
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -136,18 +136,18 @@ add_epel_7_repo()
 add_epel_8_repo()
 {
 
-    printf "Checking if 'yum-utils' is installed ... "
-    rpm -qi yum-utils >/dev/null 2>&1                          # Check dns-utils is install
-    if [ $? -ne 0 ] 
-       then printf "Installing " | tee -a $LOG
-            dnf install -y yum-utils >/dev/null 2>&1
-            rpm -qi yum-utils >/dev/null 2>&1                  # dns-utils now installed ?
-            if [ $? -ne 0 ] 
-               then echo "[ WARNING ] Problem installing 'yum-utils'." | tee -a $LOG
-               else echo " [ OK ] "
-            fi
-        else echo " [ OK ] "
-    fi
+    #printf "Checking if 'yum-utils' is installed ... "
+    #rpm -qi yum-utils >/dev/null 2>&1                          # Check dns-utils is install
+    #if [ $? -ne 0 ] 
+    #   then printf "Installing " | tee -a $LOG
+    #        dnf install -y yum-utils >/dev/null 2>&1
+    #        rpm -qi yum-utils >/dev/null 2>&1                  # dns-utils now installed ?
+    #        if [ $? -ne 0 ] 
+    #           then echo "[ WARNING ] Problem installing 'yum-utils'." | tee -a $LOG
+    #           else echo " [ OK ] "
+    #        fi
+    #    else echo " [ OK ] "
+    #fi
 
     # On RHEL 8 it is required to also enable the codeready-builder-for-rhel-8-*-rpms 
     # repository since EPEL packages may depend on packages from it:
@@ -160,7 +160,8 @@ add_epel_8_repo()
                then echo "[ WARNING ] Couldn't enable EPEL codeready-builder repository" |tee -a $SLOG
                else echo " [ OK ]"
             fi 
-            dnf -y install dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+            epel="subscription-manager repos --enable codeready-builder-for-rhel-8-$(arch)-rpms"
+            dnf -y install $epel 
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
                     return 1
@@ -178,25 +179,40 @@ add_epel_8_repo()
                then echo "[ WARNING ] Couldn't enable EPEL PowerTools repository." | tee -a $SLOG
                else echo " [ OK ]"
             fi 
-            printf "Adding CentOS/Redhat V8 EPEL repository (Disable by default) ..." |tee -a $SLOG
-            dnf -y install epel-release epel-next-release >>$SLOG 2>&1
-            if [ $? -ne 0 ]
-                then echo "[Error] Adding EPEL 8 repository." |tee -a $SLOG
-                     return 1 
-                else echo " [ OK ]"
-            fi
-    fi
-
-    # On Alma Linux and Rocky Linux 8 it is recommended to also enable the PowerTools repository 
-    # since EPEL packages may depend on packages from it:
-    if [ "$SADM_OSNAME" = "ALMALINUX" ] || [ "$SADM_OSNAME" = "ROCKY" ]
-       then dnf -y install epel-release >>$SLOG 2>&1 
+            epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"  
+            dnf -y install $epel >>$SLOG 2>&1 
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
                     return 1
                else echo "Enable EPEL 8 repository [ OK ]"
             fi 
-            dnf -y install epel-next-release >>$SLOG 2>&1
+            epelnext="https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-8.noarch.rpm"
+            dnf -y install $epelnext >>$SLOG 2>&1
+            if [ $? -ne 0 ]
+               then echo "[ WARNING ] Couldn't enable EPEL 8 Next repository" |tee -a $SLOG
+                    return 1
+               else echo "Enable EPEL 8 Next repository [ OK ]"
+            fi 
+    fi
+
+    # On Alma Linux and Rocky Linux 8 it is recommended to also enable the PowerTools repository 
+    # since EPEL packages may depend on packages from it:
+    if [ "$SADM_OSNAME" = "ALMALINUX" ] || [ "$SADM_OSNAME" = "ROCKY" ]
+       then printf "dnf config-manager --set-enabled PowerTools" 
+            dnf config-manager --set-enabled PowerTools
+            if [ $? -ne 0 ]
+               then echo "[ WARNING ] Couldn't enable EPEL PowerTools repository." | tee -a $SLOG
+               else echo " [ OK ]"
+            fi 
+            epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"  
+            dnf -y install $epel >>$SLOG 2>&1 
+            if [ $? -ne 0 ]
+               then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
+                    return 1
+               else echo "Enable EPEL 8 repository [ OK ]"
+            fi 
+            epelnext="https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-8.noarch.rpm"
+            dnf -y install $epelnext >>$SLOG 2>&1
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 Next repository" |tee -a $SLOG
                     return 1
@@ -205,7 +221,7 @@ add_epel_8_repo()
     fi
 
     printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
-    yum-config-manager --disable epel >/dev/null 2>&1
+    dnf config-manager --disable epel >/dev/null 2>&1
     if [ $? -ne 0 ]
        then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
             return 1
@@ -233,10 +249,19 @@ add_epel_9_repo()
                 then echo "[ ERROR ] Couldn't enable EPEL repository." | tee -a $SLOG
                      return 1 
              fi 
-             printf "Installing EPEL CentOS/Redhat V9 EPEL ..." |tee -a $SLOG
-             dnf -y install epel-release epel-next-release  >>$SLOG 2>&1
+             printf "Installing epel-release CentOS/Redhat V9 ..." |tee -a $SLOG
+             epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"
+             dnf -y install $epel >>$SLOG 2>&1
              if [ $? -ne 0 ]
-                then echo "[Error] Adding epel-release & epel-next-release V9 repository." |tee -a $SLOG
+                then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
+                     return 1 
+                else echo " [ OK ]"
+             fi
+             printf "Installing epel-next-release CentOS/Redhat V9 ..." |tee -a $SLOG
+             epelnxt="https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-9.noarch.rpm"
+             dnf -y install epel-next-release  >>$SLOG 2>&1
+             if [ $? -ne 0 ]
+                then echo "[Error] Adding epel-next-release V9 repository." |tee -a $SLOG
                      return 1 
                 else echo " [ OK ]"
              fi
@@ -250,8 +275,9 @@ add_epel_9_repo()
                 then echo "[ ERROR ] Couldn't enable'codeready-builder' EPEL repository." |tee -a $SLOG
                      return 1 
              fi 
-             printf "Installing EPEL CentOS/Redhat V9 EPEL ..." |tee -a $SLOG
-             dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm  >>$SLOG 2>&1
+             printf "Installing epel-release CentOS/Redhat V9 ..." |tee -a $SLOG
+             epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"
+             dnf -y install $epel >>$SLOG 2>&1
              if [ $? -ne 0 ]
                 then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
                      return 1 
