@@ -105,6 +105,7 @@
 #@2022_05_04 install: v3.68 added some modification to posfix config file (After making a backup)
 #@2022_05_06 install: v3.69 Improve postfix configuration and update the sasl_passwd file
 #@2022_05_06 install: v3.70 Change finger information for root (sadmin replace root in email)
+#@2022_05_10 install: v3.71 Remove installation of mail command & add 'inxi' command for sysInfo.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -121,7 +122,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.70"                                            # Setup Version Number
+sver                = "3.71"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -192,8 +193,8 @@ req_client = {
                     'deb':'lshw',                           'drepo':'base'},
     'parted'     :{ 'rpm':'parted',                         'rrepo':'base',  
                     'deb':'parted',                         'drepo':'base'},
-    'mail'       :{ 'rpm':'mailx',                          'rrepo':'base',
-                    'deb':'mailutils',                      'drepo':'base'},
+#    'mail'       :{ 'rpm':'mailx',                          'rrepo':'base',
+#                    'deb':'mailutils',                      'drepo':'base'},
     'mutt'       :{ 'rpm':'mutt',                           'rrepo':'base',
                     'deb':'mutt',                           'drepo':'base'},
     'gawk'       :{ 'rpm':'gawk',                           'rrepo':'base',
@@ -202,6 +203,8 @@ req_client = {
                     'deb':'bc',                             'drepo':'base'},
     'curl'       :{ 'rpm':'curl',                           'rrepo':'base',  
                     'deb':'curl',                           'drepo':'base'},
+    'inxi'       :{ 'rpm':'inxi',                           'rrepo':'base',  
+                    'deb':'inxi',                           'drepo':'base'},
     'ssh'        :{ 'rpm':'openssh-clients',                'rrepo':'base',
                     'deb':'openssh-client',                 'drepo':'base'},
     'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
