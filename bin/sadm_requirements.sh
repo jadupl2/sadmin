@@ -41,6 +41,7 @@
 # 2020_11_20 Update: v1.9 Added package 'wkhtmltopdf' installation to server requirement.
 # 2021_04_02 Fix: v1.10 Fix crash when trying to install missing package.
 #@2022_04_10 Update: v1.11 Small change for CentOS 9 - Depreciated lsb_release
+#@2022_05_10 Update: v1.12 Replace 'mail' command by 'mutt'
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -69,7 +70,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.11'                              # Your Current Script Version
+    export SADM_VER='1.12'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -481,12 +482,6 @@ check_sadmin_requirements() {
     if [ "$SADM_SSH" = "" ] && [ "$INSTREQ" -eq 1 ]                     # Cmd not found & Inst Req.
         then install_package "openssh-clients" "openssh-client"         # Install Package (rpm,deb)
              command_available "ssh"         ; SADM_SSH=$SPATH          # Recheck Should be install
-    fi    
-
-    command_available "mail"        ; SADM_MAIL=$SPATH                  # Save Command Path Returned
-    if [ "$SADM_MAIL" = "" ] && [ "$INSTREQ" -eq 1 ]                    # Cmd not found & Inst Req.
-        then install_package "mailx" "mailutils"                        # Install Package (rpm,deb)
-             command_available "mail"        ; SADM_MAIL=$SPATH         # Recheck Should be install
     fi    
 
     command_available "bc"          ; SADM_BC=$SADM_BC                  # Save Command Path Returned
