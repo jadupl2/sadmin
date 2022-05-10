@@ -181,6 +181,7 @@
 #@2022_04_14 lib v3.89 Fix problem getting osversion on old rhel version.
 #@2022_04_30 lib v3.90 New functions: sadm_create_lockfile,sadm_remove_lockfile,sadm_check_lockfile.
 #@2022_05_03 lib v3.91 Read new smtp server info from sadmin.cfg & gmail passwd file.
+#@2022_05_10 lib v3.92 Replace usage of 'mail' by 'mutt' 
 #===================================================================================================
 
 
@@ -194,7 +195,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.90"                                              # This Library Version
+export SADM_LIB_VER="3.92"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -303,7 +304,6 @@ export SADM_LSB_RELEASE=""                                              # Path t
 export SADM_FDISK=""                                                    # fdisk (Read Disk Capacity)
 export SADM_WHICH=""                                                    # which Path - Required
 export SADM_PERL=""                                                     # perl Path (for epoch time)
-export SADM_MAIL=""                                                     # mail Pgm Path
 export SADM_MUTT=""                                                     # mutt Pgm Path
 export SADM_CURL=""                                                     # curl Pgm Path
 export SADM_LSCPU=""                                                    # Path to lscpu Command
@@ -736,7 +736,6 @@ sadm_check_requirements() {
             SADM_NMON=$(sadm_get_command_path "nmon")                   # Get nmon cmd path   
             SADM_ETHTOOL=$(sadm_get_command_path "ethtool")             # Get ethtool cmd path   
             SADM_PARTED=$(sadm_get_command_path "parted")               # Get parted cmd path   
-            SADM_MUTT=$(sadm_get_command_path "mutt")                   # Get mutt cmd path   
             SADM_LSCPU=$(sadm_get_command_path "lscpu")                 # Get lscpu cmd path   
             SADM_FDISK=$(sadm_get_command_path "fdisk")                 # Get fdisk cmd path   
             SADM_LSB_RELEASE=$(sadm_get_command_path "lsb_release")     # Get lsb_release cmd path   
@@ -763,7 +762,7 @@ sadm_check_requirements() {
     SADM_PERL=$(sadm_get_command_path "perl")                           # Get perl cmd path   
     SADM_SSH=$(sadm_get_command_path "ssh")                             # Get ssh cmd path   
     SADM_BC=$(sadm_get_command_path "bc")                               # Get bc cmd path   
-    SADM_MAIL=$(sadm_get_command_path "mail")                           # Get mail cmd path   
+    SADM_MUTT=$(sadm_get_command_path "mutt")                           # Get mutt cmd path   
     SADM_CURL=$(sadm_get_command_path "curl")                           # Get curl cmd path   
     SADM_MYSQL=$(sadm_get_command_path "mysql")                         # Get mysql cmd path  
     SADM_SED=$(sadm_get_command_path "sed")                             # Get sed cmd path  
@@ -2687,7 +2686,7 @@ sadm_send_alert()
         then mheader="SADMIN System Monitor on '$aserver'."             # Sysmon Header Line
     fi 
     
-    # Message Foother 
+    # Message Footer 
     if [ $acounter -eq 1 ] && [ $MaxRepeat -eq 1 ]                      # If Alarm is 1 of 1 bypass
         then mfooter=""                                                 # Default Footer is blank
         else mfooter=`printf "%s: %02d of %02d" "Alert counter" "$acounter" "$MaxRepeat"` 
@@ -2717,8 +2716,8 @@ sadm_send_alert()
           aemail=`echo $aemail | awk '{$1=$1;print}'`                   # Del Leading/Trailing Space
           if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Email alert sent to $aemail \n" ; fi 
           if [ "$aattach" != "" ]                                       # If Attachment Specified
-             then printf "%s\n" "$body" | $SADM_MAIL -s "$ws" -a "$aattach" $aemail >>$SADM_LOG 2>&1 
-             else printf "%s\n" "$body" | $SADM_MAIL -s "$ws" $aemail  >>$SADM_LOG 2>&1 
+             then printf "%s\n" "$body"| $SADM_MUTT -s "$ws" $aemail -a "$aattach"  >>$SADM_LOG 2>&1 
+             else printf "%s\n" "$body"| $SADM_MUTT -s "$ws" $aemail >>$SADM_LOG 2>&1 
           fi
           RC=$?                                                         # Save Error Number
           if [ $RC -ne 0 ]                                              # Error sending email 
@@ -2806,6 +2805,60 @@ sadm_send_alert()
     return $RC
 }
 
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Send email to email address received.
+# 
+# Args:            
+#     maddr (str)     : Email Address to which you want to send it
+#     msubject (str)  : Subject of your email
+#     mbody (str)     : Body of your email
+#     mfile (str)     : Name of the file (MUST exist) to attach to the email.
+#                       (If no attachment, leave blank "")
+# Returns:
+#     Return Code (Int)   : 0 Successfully sent the email
+#                           1 Error while sending the email (Parameters may be wrong)
+#
+# --------------------------------------------------------------------------------------------------
+sadm_sendmail() {
+
+    RC=0 
+    LIB_DEBUG=5                                                         # Debug Library Level
+    if [ $# -ne 4 ]                                                     # Invalid No. of Parameter
+        then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}."
+             sadm_writelog "Should be 4 we received $# : $* "           # Show what received
+             return 1                                                   # Return Error to caller
+    fi
+
+    # Save Parameters Received (After Removing leading and trailing spaces).
+    maddr=$(echo "$1" |awk '{$1=$1;print}')                             # Send to this email
+    msubject="$2"                                                       # Save Alert Subject
+    mbody="$3"                                                          # Save Alert Message
+    mfile="$4"                                                          # Save Attachment FileName
+    if [ "$LIB_DEBUG" -gt 4 ] 
+         then sadm_write_log "Email sent to : ${maddr}" 
+              sadm_write_log "Email subject : ${msubject}" 
+              sadm_write_log "Email body    : ${mbody}" 
+              sadm_write_log "Email mfile   : ${mfile}" 
+    fi 
+
+    if [ "$mfile" != "" ] && [ -r "$mfile" ]                            # If Attachment Specified
+        then if [ "$LIB_DEBUG" -gt 4 ] 
+                then sadm_write_log "Mail with attachment"
+                     printf "%s\n" "$mbody" | $SADM_MUTT -s "$msubject" $maddr -a "$mfile"  >>$SADM_LOG 2>&1 
+             fi
+        else printf "%s\n" "$mbody" | $SADM_MUTT -s "$msubject" $maddr >>$SADM_LOG 2>&1 
+    fi
+    RC=$?                                                               # Save Error Number
+    if [ $RC -ne 0 ]                                                    # Error sending email 
+        then wstatus="[ Error ] Sending email to $maddr"                # Advise Error sending Email
+             sadm_write_err "${wstatus}\n"                              # Show Message to user 
+    fi
+    LIB_DEBUG=0                                                         # Debug Library Level
+    return $RC
+} 
 
 
 
