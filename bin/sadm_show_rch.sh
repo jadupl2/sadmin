@@ -35,6 +35,7 @@
 # 2019_08_25 Update: v1.16 Put running scripts and scripts with error on top of email report.
 # 2020_04_06 Update: v1.17 Allow simultaneous execution of this script.
 # 2020_05_23 Update: v1.18 Changing the way to get SADMIN variable in /etc/environment 
+#@2022_05_11 Update: v1.19 Replace "sadm_send_alert" by "sadm_sendmail". 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -80,7 +81,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.18'                              # Your Current Script Version
+    export SADM_VER='1.19'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="N"                          # [Y]=Include Log Header [N]=No log Header
@@ -616,10 +617,8 @@ main_process()
             nl $SADM_TMP_FILE3                                         # Display file content
             wmess="See attachment for the list of lines without $FIELD_IN_RCH fields."
             wtime=`date "+%Y.%m.%d %H:%M"`
-            if [ $DEBUG_LEVEL -gt 0 ] ; then 
-               sadm_write "sadm_send_alert 'S' '$wtime' '$SADM_HOSTNAME' '$SADM_PN' 'default' '$wsubject' '$wmess' '$SADM_TMP_FILE3'\n"
-            fi
-            sadm_send_alert "S" "$wtime" "$SADM_HOSTNAME" "$SADM_PN" "default" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
+            #sadm_send_alert "S" "$wtime" "$SADM_HOSTNAME" "$SADM_PN" "default" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
+            sadm_sendmail "$SADM_MAIL_ADDR" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
    fi
 
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
