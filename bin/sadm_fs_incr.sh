@@ -45,6 +45,7 @@
 # 2020_03_24 Update: v2.0 Script will not generate an rpt file anymore (Remove double error report)
 # 2020_05_23 Update: v2.1 Changing the way to get SADMIN variable in /etc/environment 
 # 2020_10_22 Update: v2.2 Line Feed added in Email when filesystem is increase
+#@2022_05_11 Update: v2.3 Replace "sadm_send_alert" by "sadm_sendmail".
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -92,7 +93,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library.)
-    export SADM_VER='2.2'                               # Your Current Script Version
+    export SADM_VER='2.3'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -313,9 +314,7 @@ main_process()
             echo "$WMESS" >> $MAIL_BODY                                 # Msg to Email Body File
             wmess="Filesystem $FSNAME Increase rejected on - Space Low $VGFREE MB" 
             wsub="$SADM_PN reported an error on $SADM_HOSTNAME"   
-            wtime=`date "+%Y.%m.%d %H:%M"`
-            sadm_send_alert "S" "$wtime" "$SADM_HOSTNAME" "$SADM_PN" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
-            send_email "$SADM_HOSTNAME $wmess"
+            sadm_sendmail "$SADM_MAIL_ADDR" "$wsub" "$wmess" "$MAIL_BODY" 
             return 1                                                    # Return Error to Caller
     fi
 
@@ -341,8 +340,7 @@ main_process()
             wmess="Filesystem $FSNAME increase rejected"                # Send Email to Sysadmin
             wsub="$SADM_PN reported an error on $SADM_HOSTNAME"   
             wtime=`date "+%Y.%m.%d %H:%M"`
-            sadm_send_alert "S" "$wtime" "$SADM_HOSTNAME" "$SADM_PN" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
-            send_email "SADM WARNING: $SADM_HOSTNAME $wmess"
+            sadm_sendmail "$SADM_MAIL_ADDR" "$wsub" "$wmess" "$MAIL_BODY" 
             return 1                                                    # Return Error to Caller
        else sadm_writelog "Filesystem $FSNAME will increase by $SIZE2ADD MB"
     fi
@@ -372,9 +370,7 @@ main_process()
     sadm_writelog " "
     wmess="Filesystem $FSNAME on $SADM_HOSTNAME was increase."
     wsub="$SADM_PN reported an error on $SADM_HOSTNAME"   
-    wtime=`date "+%Y.%m.%d %H:%M"`
-    sadm_send_alert "S" "$wtime" "$SADM_HOSTNAME" "$SADM_PN" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
-    send_email "SADM WARNING: $wmess"   
+    sadm_sendmail "$SADM_MAIL_ADDR" "$wsub" "$wmess" "$MAIL_BODY" 
     return $RC                                                          # Return Return Code Caller
 }
 
