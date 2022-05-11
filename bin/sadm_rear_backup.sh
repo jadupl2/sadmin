@@ -73,6 +73,7 @@
 # 2021_05_11 backup: v2.26 Fix 'rear' command missing false error message 
 # 2021_05_12 backup: v2.27 Write more information about ReaR sadmin.cfg in the log.
 # 2021_06_02 backup: v2.28 Added more information in the script log.
+#@2022_05_11 backup: v2.29 Minor change to log output
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -104,7 +105,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.28'                              # Your Current Script Version
+    export SADM_VER='2.29'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -283,7 +284,8 @@ create_etc_rear_site_conf()
 # --------------------------------------------------------------------------------------------------
 rear_preparation()
 {
-    sadm_write "${BOLD}STARTING ReaR PREPARATIONs${NORMAL}\n"            # Feed User and Log
+    sadm_write_log "-----"                                              # Separator Line
+    sadm_write_log "STARTING ReaR PREPARATION"                          # Feed User and Log
 
     # Check if REAR is not installed - Abort Process 
     ${SADM_WHICH} rear >/dev/null 2>&1                                  # rear command is found ?
@@ -305,7 +307,8 @@ rear_preparation()
 
     # Make sure Local mount point exist.
     if [ ! -d ${NFS_MOUNT} ] 
-        then sadm_write "Create local temporary mount point directory (${NFS_MOUNT}).\n" 
+        then sadm_write_log " "
+             sadm_write_log "Create local temporary mount point directory (${NFS_MOUNT})." 
              mkdir ${NFS_MOUNT} ; chmod 775 ${NFS_MOUNT} 
      fi
 
@@ -356,7 +359,7 @@ rear_preparation()
              FDATE=`stat --printf='%y\n' $REAR_CUR_ISO |awk '{ print $1 }'`
              FTIME=`stat --printf='%y\n' $REAR_CUR_ISO |awk '{ print $2 }' |awk -F\. '{ print $1 }'`
              REAR_NEW_ISO="${REAR_NAME}_${FDATE}_${FTIME}.iso"
-             sadm_write "Rename previous ISO `basename $REAR_CUR_ISO` to `basename $REAR_NEW_ISO` " 
+             #sadm_write "Rename previous ISO `basename $REAR_CUR_ISO` to `basename $REAR_NEW_ISO` " 
              mv $REAR_CUR_ISO $REAR_NEW_ISO >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
                  then sadm_write "$SADM_ERROR trying to move $REAR_CUR_ISO to $REAR_NEW_ISO \n"
@@ -384,6 +387,7 @@ rear_preparation()
     fi
 
     sadm_writelog "END OF ReaR PREPARATION ${SADM_SUCCESS}"
+    sadm_writelog "-----" 
     sadm_writelog " " 
     return 0
 }
@@ -493,25 +497,26 @@ rear_housekeeping()
 create_backup()
 {
     # Feed user and log, the what we are about to do.
-    sadm_write "\n"                                                     # Write white line
-    sadm_write "${SADM_FIFTY_DASH}\n"
-    sadm_write "${BOLD}CREATING THE 'ReaR' BACKUP${NORMAL}\n" 
-    sadm_write "\n"                                                     # Write white line
-    sadm_write "$REAR mkbackup -v \n"       
+    sadm_write_log " "                                                     # Write white line
+    sadm_write_log "-----"
+    sadm_write_log "CREATING THE 'ReaR' BACKUP" 
+    sadm_write_log " "                                                     # Write white line
+    sadm_write_log "$REAR mkbackup -v"       
 
     # Create the Backup TGZ file on the NFS Server
     $REAR mkbackup -v >> $SADM_LOG 2>&1                                 # Produce Rear Backup for DR
     RC=$?                                                               # Save Command return code.
     sadm_write "ReaR backup exit code : ${RC}\n"                        # Show user backup exit code 
     if [ $RC -ne 0 ]
-        then sadm_write "See the error message in ${SADM_LOG} ${SADM_ERROR}.\n" 
-             sadm_write "***** Rear Backup completed with Error - Aborting Script *****\n"
-             sadm_write "Unmount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT}\n" 
+        then sadm_write_err "See the error message in ${SADM_LOG} ${SADM_ERROR}." 
+             sadm_write_err "***** Rear Backup completed with Error - Aborting Script *****"
+             sadm_write_err "Unmount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT}" 
              umount  ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} > /dev/null 2>&1
              return 1                                                   # Back to caller with error
-        else sadm_write "More info in the log ${SADM_LOG}.\n"
-             sadm_write "Rear Backup completed ${SADM_SUCCESS}\n"
-             sadm_write "\n"
+        else sadm_write_log " "
+             sadm_write_log "More info in the log ${SADM_LOG}."
+             sadm_write_log "Rear Backup completed ${SADM_SUCCESS}"
+             sadm_write_log " "
     fi
     #chmod 664 ${REAR_DIR}/*                                             # Give access for Maint.
     return 0                                                            # Return Default return code
