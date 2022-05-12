@@ -386,8 +386,8 @@ file_housekeeping()
     # $SADMIN/www/tmp writable by everyone (If not cause intermittent problem with monitor page refresh)
     chmod 1777 $SADM_WWW_TMP_DIR  
 
-    if [ -f "$DBPASSFILE" ] ; then chmod 600 $DBPASSFILE ; fi 
-    if [ -f "$GMPW_FILE" ]  ; then chmod 600 $GMPW_FILE ; fi 
+    if [ -f "$DBPASSFILE" ] ; then chmod 644 $DBPASSFILE ; fi 
+    if [ -f "$GMPW_FILE" ]  ; then chmod 640 $GMPW_FILE ; fi 
     
     return $ERROR_COUNT
 }
