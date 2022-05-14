@@ -78,6 +78,7 @@
 # 2021_05_24 backup: v3.30 Optimize code & update command line options [-v] & [-h]. 
 # 2021_06_04 backup: v3.31 Fix sporadic problem with exclude list. 
 # 2021_06_05 backup: v3.32 Include backup & system information in each backup log.
+#@2021_05_14 backup: v3.33 Now the log include the size of each day of backup.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -109,7 +110,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.32'                                     # Script Version
+export SADM_VER='3.33'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -578,11 +579,13 @@ clean_backup_dir()
 
     # List Current backup days we have and Count Nb. how many we need to delete
     sadm_write "List of backup currently on disk:\n"
-    ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_write "${ln}\n" ;done
+    #ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_write "${ln}\n" ;done
+    du -h . |while read ln ;do sadm_write "${ln}\n" ;done
     backup_count=`ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l` # Calc. Nb. Days of backup
     day2del=$(($backup_count-$SADM_DAILY_BACKUP_TO_KEEP))               # Calc. Nb. Days to remove
     sadm_write "\n"
-    sadm_write "Keep only the last $SADM_DAILY_BACKUP_TO_KEEP days of each backup.\n"
+    sadm_write "You have decided to keep only the last $SADM_DAILY_BACKUP_TO_KEEP days of each backup.\n"
+    sadm_write "You can change your choice by changing 'SADM_DAILY_BACKUP_TO_KEEP' in \$SADMIN/cfg/sadmin.cfg\n"
     sadm_write "We now have $backup_count days of backup(s).\n"         # Show Nb. Backup Days
 
     # If current number of backup days on disk is greater than nb. of backup to keep, then cleanup.
@@ -592,7 +595,8 @@ clean_backup_dir()
              cat $SADM_TMP_FILE3 |while read ln ;do sadm_write "Deleting ${ln}\n" ;rm -fr ${ln}* ;done
              sadm_write "\n"
              sadm_write "List of backup currently on disk:\n"
-             ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_write "${ln}\n" ;done
+             #ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_write "${ln}\n" ;done
+             du -h . |while read ln ;do sadm_write "${ln}\n" ;done
         else sadm_write "No clean up needed\n"
     fi
 
