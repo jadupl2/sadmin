@@ -49,7 +49,7 @@
 #===================================================================================================
 #
 try :
-    import os, time, sys, pdb, socket, datetime, glob, getopt, fnmatch
+    import os, time, sys, pdb, socket, datetime, glob, getopt, fnmatch ,argparse
     import sadmlib_std as sadm
 except ImportError as e:                                            
     print ("Import Error : %s " % e)
@@ -72,47 +72,48 @@ show_textbelt       = "N"                                               # Don't 
 
 
 
+
 # --------------------------------------------------------------------------------------------------
-# SADMIN SECTION
-# Setup SADMIN Global Variables and Load SADMIN Python Library
+# SADMIN PYTHON FRAMEWORK SECTION 2.0
+# To use SADMIN tools, this section MUST be present near the top of your code.
 # --------------------------------------------------------------------------------------------------
-def setup_sadmin():
+try:
+    SADM = os.environ.get('SADMIN')                                     # Getting SADMIN Root Dir.
+    sys.path.insert(0, os.path.join(SADM, 'lib'))                       # Add lib dir to sys.path
+    import sadmlib2_std as sa                                           # Load SADMIN Python Library
+except ImportError as e:                                                # If Error importing SADMIN
+    print("Import error : SADMIN module: %s " % e)                      # Advise User of Error
+    sys.exit(1)                                                         # Go Back to O/S with Error
 
-    # Create Instance of SADMIN Tool
-    st = sadm.sadmtools()                       # Create [S]ADMIN [T]ools instance (Setup Dir.,Var.)
+# Local variables local to this script.
+pver = "1.0"                                                            # Script Version
+pdesc = "Update 'pdesc' variable & put a description of your script."   # Script Description
+phostname = platform.node().split('.')[0].strip()                       # Get current hostname
+pdb_conn = None                                                         # Database Connector
+pdb_cur = None                                                          # Database Cursor
+pdebug = 0                                                              # Debug Level from 0 to 9
+pexit_code = 0                                                          # Script Default Exit Code
 
-    # You can use variable below BUT DON'T CHANGE THEM - They are used by SADMIN Standard Library.
-    st.pn               = os.path.basename(sys.argv[0])                 # Script name with extension
-    st.inst             = os.path.basename(sys.argv[0]).split('.')[0]   # Script name without Ext
-    st.tpid             = str(os.getpid())                              # Get Current Process ID.
-    st.exit_code        = 0                                             # Script Exit Code (Use it)
-    st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
-
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
-    st.ver              = "3.12"                # Current Script Version
-    st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
-    st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
-    st.log_header       = False                 # Show/Generate Header in script log (.log)
-    st.log_footer       = False                 # Show/Generate Footer in script log (.log)
-    st.multiple_exec    = "Y"                   # Allow running multiple copy at same time ?
-    st.use_rch          = False                 # Generate entry in Result Code History (.rch) 
-    st.debug            = 0                     # Increase Verbose from 0 to 9 
-    st.usedb            = True                  # Open/Use Database(True) or Don't Need DB(False)
-    st.dbsilent         = False                 # When DB Error, False=ShowErrMsg and True=NoErrMsg 
-                                                # But Error Code always returned (0=ok else error)
-
-    # Override Default define in $SADMIN/cfg/sadmin.cfg
-    #st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSuccess 3=Allways
-    #st.cfg_alert_group  = "default"            # Valid Alert Group are defined in alert_group.cfg
-    #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
-    #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
-    #st.cfg_max_logline  = 1000                 # When Script End Trim log file to 1000 Lines
-    #st.cfg_max_rchline  = 125                  # When Script End Trim rch file to 125 Lines
-    #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server 
-
-    # Start SADMIN Tools - Initialize 
-    st.start()                                  # Init. SADMIN Env. (Create dir.,Log,RCH, Open DB..)
-    return(st)                                  # Return Instance Object To Caller
+# The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
+# Uncomment anyone of them to influence execution of SADMIN standard library.
+#
+#sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
+#sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
+#sa.pid_timeout      = 7200       # PID File Default Time to Live in seconds.
+#sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
+#sa.max_logline      = 500        # Max. lines to keep in log (0=No trim) after execution.
+#sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
+#sa.log_type         = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
+#sa.log_append       = False      # Append Existing Log(True) or Create New One(False)
+#sa.log_header       = True       # Show/Generate Header in script log (.log)
+#sa.log_footer       = True       # Show/Generate Footer in script log (.log)
+#sa.multiple_exec    = "Y"        # Allow running multiple copy at same time ?
+#sa.db_used          = True       # Open/Use Database(True) or Don't Need DB(False)
+#sa.db_silent        = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
+#sa.rch_used         = True       # Generate entry in Result Code History (.rch)
+#sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
+cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
+# ==================================================================================================
 
 
 
@@ -153,7 +154,7 @@ def printheader(st,col1,col2,col3=" "):
 
     lcount = 0 
     print ("\n\n\n%s" % ("=" * 100))
-    print ("%s v%s - Library v%s" % (st.pn,st.ver,st.libver))
+    print ("%s v%s - Library v%s" % (sa.pn,pver,sa.lib_ver))
     print ("%-39s%-36s%-33s" % (col1,col2,col3))
     print ("%s" % ("=" * 100))
 
@@ -165,9 +166,9 @@ def printheader(st,col1,col2,col3=" "):
 def print_functions(st):
     printheader (st,"Calling Functions","Description","  This System Result")
 
-    pexample="st.get_release()"                                         # Variable Name
+    pexample="sa.get_release()"                                         # Variable Name
     pdesc="SADMIN Release Number (XX.XX)"                               # Function Description
-    presult=st.get_release()                                            # Return Value(s)
+    presult=sa.get_release()                                            # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     pexample="st.get_ostype()"                                          # Variable Name
@@ -1103,23 +1104,23 @@ def print_db_variables(st):
         st.dbclose()                                                    # Close the Database
         st.writelog (" ")                                               # Blank Line
 
-#===================================================================================================
-#                                  M A I N     P R O G R A M
-#===================================================================================================
-#
-def main(argv):
-    global show_password, show_storix, show_textbelt                    # Command line options
+
+
+
+# Command line Options
+# --------------------------------------------------------------------------------------------------
+def cmd_options(argv):
+    """ Command line Options functions - Evaluate Command Line Switch Options
+
+        Args:
+            (argv): Arguments pass on the comand line.
+              [-d 0-9]  Set Debug (verbose) Level
+              [-h]      Show this help message
+              [-v]      Show script version information
+        Returns:
+            sadm_debug (int)          : Set to the debug level [0-9] (Default is 0)
+    """
     
-    # Script can only be run by the user root (Optional Code)
-    if not os.getuid() == 0:                                            # UID of user is not root
-       print ("This script must be run by the 'root' user")             # Advise User Message / Log
-       print ("Try sudo %s" % (os.path.basename(sys.argv[0])))          # Suggest to use 'sudo'
-       print ("Process aborted")                                        # Process Aborted Msg
-       sys.exit(1)                                                      # Exit with Error Code
-
-    st = sadm.sadmtools()                                               # [S]ADMIN [T]ools Instance 
-    st = setup_sadmin()                                                 # Setup SADMIN Tool Instance
-
     # Evaluate Command Line Switch Options Upfront
     # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level     
 
@@ -1149,6 +1150,57 @@ def main(argv):
             st.stop (0)                                                 # Close log,db,...,Trim Log
             sys.exit(0)                                                 # Exit Script with no Error
     if st.debug > 0 : st.writelog("Debug Level %d activated" % (st.debug)) # Debug: Show debug level
+
+    sadm_debug = 0                                                      # Script Debug Level (0-9)
+    parser = argparse.ArgumentParser(description=pdesc)                 # Desc. is the script name
+
+    # Declare Arguments
+    parser.add_argument("-v",
+                        action="store_true",
+                        dest='version',
+                        help="Show script version")
+    parser.add_argument("-d",
+                        metavar="0-9",
+                        type=int,
+                        dest='sadm_debug',
+                        help="debug/verbose level from 0 to 9",
+                        default=0)
+    
+    args = parser.parse_args()                                          # Parse the Arguments
+
+    # Set return values accordingly.
+    if args.sadm_debug:                                                 # Debug Level -d specified
+        sadm_debug = args.sadm_debug                                    # Save Debug Level
+        print("Debug Level is now set at %d" % (sadm_debug))            # Show user debug Level
+    if args.version:                                                    # If -v specified
+        sa.show_version(pver)                                           # Show Custom Show Version
+        sys.exit(0)                                                     # Exit with code 0
+    return(sadm_debug)                                                  # Return opt values
+
+
+#===================================================================================================
+#                                  M A I N     P R O G R A M
+#===================================================================================================
+#
+def main(argv):
+    global show_password,show_storix,show_textbelt,pdb_conn,pdb_cur     # Command line options
+    (pdebug) = cmd_options(argv)                                        # Analyse cmdline options
+
+    # If you need this script to be run by 'root' only (If not remove the if))
+    if not os.getuid() == 0:                                            # UID of user is not 'root'
+        print("This script must be run by the 'root' user.")            # Advise User Message / Log
+        print("Try 'sudo %s'" % (os.path.basename(sys.argv[0])))        # Suggest to use 'sudo'
+        print("Process aborted.")                                       # Process Aborted Msg
+        sys.exit(1)                                                     # Exit with Error Code
+
+    # If you need this script to run only on the SADMIN server, uncomment lines below.
+    # if sa.get_fqdn() != sa.sadm_server:                                # Only run on SADMIN
+    #    print("This script can only be run on SADMIN server (%s)" % (sa.sadm_server))
+    #    print("Process aborted")                                        # Abort advise message
+    #    sys.exit(1)                                                     # Exit To O/S
+
+    pexit_code = 0                                                      # Pgm Exit Code Default
+    sa.start(pver, pdesc)                                               # Initialize SADMIN env.
 
 
     # Print All Demo Informations
