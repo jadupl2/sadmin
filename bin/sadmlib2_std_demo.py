@@ -20,7 +20,7 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-# CHANGE LOG
+# CHANGELOG
 # 2017_07_07    V1.7 Minor Code enhancement
 # 2017_07_31    V1.8 Added Log Template to script
 # 2017_09_02    V1.9 Add Command line switch 
@@ -60,17 +60,6 @@ except ImportError as e:
 #pdb.set_trace()                                                    # Activate Python Debugging
 
 
-#===================================================================================================
-#                             Local Variables used by this script
-#===================================================================================================
-conn                = ""                                                # Database Connector
-cur                 = ""                                                # Database Cursor
-lcount              = 0                                                 # Print Line Counter
-#
-show_password       = "N"                                               # Don't show DB Password
-show_storix         = "N"                                               # Don't show Storix Info
-show_textbelt       = "N"                                               # Don't show TextBelt Key
-
 
 
 
@@ -106,15 +95,28 @@ pexit_code = 0                                                          # Script
 #sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
 #sa.log_type         = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
 #sa.log_append       = False      # Append Existing Log(True) or Create New One(False)
-#sa.log_header       = True       # Show/Generate Header in script log (.log)
-#sa.log_footer       = True       # Show/Generate Footer in script log (.log)
+sa.log_header       = False       # Show/Generate Header in script log (.log)
+sa.log_footer       = False       # Show/Generate Footer in script log (.log)
 #sa.multiple_exec    = "Y"        # Allow running multiple copy at same time ?
 #sa.db_used          = True       # Open/Use Database(True) or Don't Need DB(False)
 #sa.db_silent        = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
-#sa.rch_used         = True       # Generate entry in Result Code History (.rch)
+sa.rch_used         = False       # Generate entry in Result Code History (.rch)
 #sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
 cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
 # ==================================================================================================
+
+
+
+# Local Variables used by this script
+# --------------------------------------------------------------------------------------------------
+conn                = ""                                                # Database Connector
+cur                 = ""                                                # Database Cursor
+lcount              = 0                                                 # Print Line Counter
+#
+show_password       = "N"                                               # Don't show DB Password
+show_storix         = "N"                                               # Don't show Storix Info
+show_textbelt       = "N"                                               # Don't show TextBelt Key
+
 
 
 
@@ -230,17 +232,17 @@ def print_functions():
     pexample="sa.get_fqdn()"                                            # Example Calling Function
     pdesc="Fully Qualified Domain Host Name"                            # Function Description
     presult=sa.get_fqdn()                                               # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
-    #pexample="sa.get_serial()"                                          # Example Calling Function
-    #pdesc="Get System serial Number"                                    # Function Description
-    #presult=sa.get_serial()                                             # Return Value(s)
-    #printline (pexample,pdesc,presult)                               # Print Example Line
+    pexample="sa.get_serial()"                                          # Example Calling Function
+    pdesc="Get System serial Number"                                    # Function Description
+    presult=sa.get_serial()                                             # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.get_epoch_time()"                                      # Example Calling Function
     pdesc="Get Current Epoch Time"                                      # Function Description
     presult=sa.get_epoch_time()                                         # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     wepoch= sa.get_epoch_time()
     pexample="sa.epoch_to_date(%d)" % (wepoch)                          # Example Calling Function
@@ -256,24 +258,37 @@ def print_functions():
     printline (pexample,pdesc,presult)                               # Print Example Line
 
     DATE1="2018.06.30 10:00:44" ; DATE2="2018.06.30 10:00:03"           # Set Date to Calc Elapse
-    print ("      DATE1=%s" % (DATE1))                                  # Print Date1 Used for Ex.
-    print ("      DATE2=%s" % (DATE2))                                  # Print Date2 Used for Ex.
-    pexample="sa.elapse_time(DATE1,DATE2)"                              # Example Calling Function
+    print ("      DATE1 is End date/time   : %s" % (DATE1))             # Print Date1 Used for Ex.
+    print ("      DATE2 is Start date/time : %s" % (DATE2))             # Print Date2 Used for Ex.
+    pexample="sa.(DATE1,DATE2)"                                         # Example Calling Function
     pdesc="Elapse Time between two timestamps"                          # Function Description
     presult=sa.elapse_time(DATE1,DATE2)                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.get_packagetype()"                                     # Example Calling Function
     pdesc="Get package type (rpm,deb,aix,dmg)"                          # Function Description
     presult=sa.get_packagetype()                                        # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.get_arch()"                                            # Example Calling Function
     pdesc="Get system architecture"                                     # Function Description
     presult=sa.get_arch()                                               # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
+    pexample="sa.create_lockfile(hostname)"                             # Example Calling Function
+    pdesc="Lock specified host (monitoring off)"                        # Function Description
+    presult=sa.create_lockfile(sa.sadm_server)                          # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
+    pexample="sa.check_lockfile(hostname)"                              # Example Calling Function
+    pdesc="Check if host specified is lock"                             # Function Description
+    presult=sa.check_lockfile(sa.sadm_server)                           # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+    pexample="sa.remove_lockfile(hostname)"                             # Example Calling Function
+    pdesc="Unlock host specified (monitoring on)"                       # Function Description
+    presult=sa.remove_lockfile(sa.sadm_server)                          # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
 
 #===================================================================================================
@@ -285,24 +300,31 @@ def print_python_function():
     pexample="sa.db_silent"                                              # Variable Name
     pdesc="When DBerror, No ErrMsg (Just ErrNo)"                        # Function Description
     presult=sa.db_silent                                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
                  
-    pexample="sa.db_used"                                                 # Variable Name
+    pexample="sa.db_used"                                               # Variable Name
     pdesc="Script need (Open/Close) Database ?"                         # Function Description
-    presult=sa.db_used                                                    # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    presult=sa.db_used                                                  # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.silentremove('file')"                                  # Example Calling Function
     pdesc="Silent File Del, No Err if not exist"                        # Function Description
     presult=sa.silentremove('file')                                     # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
-    pexample="sa.write_log(msg,'nonl'|'bold')"                           # Example Calling Function
-    pdesc="Write Log (nonl=NoNewLine)"                                  # Function Description
-    sa.log_type="L"
-    presult=sa.write_log('Message','bold')                               # Return Value(s)
-    sa.log_type="B"
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    pexample="sa.write_log (wline, lf=True )"                           # Example Calling Function
+    pdesc="Write to log with or without lineFeed"                       # Log & show 'message' 
+    sa.log_type="L"                                                     # Log only to Log File
+    sa.write_log('Message')                                             # Log 'message'
+    sa.log_type="B"                                                     # Log to Screen & Log File
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+    pexample="sa.write_err (wline, lf=True )"                           # Example Calling Function
+    pdesc="Write to log & error log file "                              # Log & show 'message' 
+    sa.log_type="L"                                                     # Log only to Log File
+    sa.write_err('Message')                                             # Log 'message'
+    sa.log_type="B"                                                     # Log to Screen & Log File
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     #print ('\nccode,cstdout,cstderr = ins.oscommand("%s" % (wcommand))')
     #print ('\nins.trimfile (file, maxline=500)')
@@ -538,37 +560,37 @@ def print_file_variable():
     pexample="sa.pid_file"                                              # Variable Name
     pdesc="Current script PID file"                                     # Function Description
     presult=sa.pid_file                                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.cfg_file"                                              # Variable Name
-    pdesc="SADMIN Configuration File"                                   # Function Description
+    pdesc="SADMIN configuration file"                                   # Function Description
     presult=sa.cfg_file                                                 # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.cfg_hidden"                                            # Name of Variable
-    pdesc="SADMIN Initial Configuration File"                           # Variable Description
+    pdesc="SADMIN config. file (Template)"                              # Variable Description
     presult=sa.cfg_hidden                                               # Actual Content of Variable
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.alert_file"                                            # Name of Variable
     pdesc="Alert Group Definition File Name"                            # Variable Description
     presult=sa.alert_file                                               # Actual Content of Variable
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.alert_init"                                            # Name of Variable
     pdesc="Alert Group Initial File (Template)"                         # Variable Description
     presult=sa.alert_init                                               # Actual Content of Variable
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.alert_hist"                                            # Name of Variable
     pdesc="Alert - History File"                                        # Variable Description
     presult=sa.alert_hist                                               # Actual Content of Variable
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.alert_hini"                                            # Name of Variable
-    pdesc="Alert - History Initial File"                                # Variable Description
+    pdesc="Alert - History Initial File (Template)"                     # Variable Description
     presult=sa.alert_hini                                               # Actual Content of Variable
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
 #    pexample="sa.tmp_file1"                                             # Variable Name
 #    pdesc="User usable Temp Work File 1"                                # Function Description
@@ -633,15 +655,15 @@ def print_sadmin_cfg():
 
     printheader ("SADMIN CONFIG FILE VARIABLES","Description","  This System Result")
 
-    pexample="sa.sadm_server"                                            # Variable Name
-    pdesc="SADMIN SERVER NAME (FQDN)"                                   # Function Description
-    presult=sa.sadm_server                                               # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    pexample="sa.sadm_server"                                           # Variable Name
+    pdesc="SADMIN server name (FQDN)"                                   # Function Description
+    presult=sa.sadm_server                                              # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
-    pexample="sa.sadm_host_type"                                         # Variable Name
+    pexample="sa.sadm_host_type"                                        # Variable Name
     pdesc="SADMIN [C]lient or [S]erver"                                 # Function Description
-    presult=sa.sadm_host_type                                            # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    presult=sa.sadm_host_type                                           # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.sadm_mail_addr"                                         # Variable Name
     pdesc="SADMIN Administrator Default Email"                          # Function Description
@@ -675,12 +697,12 @@ def print_sadmin_cfg():
     printline (pexample,pdesc,presult)                               # Print Example Line
 
     pexample="sa.sadm_cie_name"                                          # Variable Name
-    pdesc="Your Company Name"                                           # Function Description
+    pdesc="Your Company name"                                           # Function Description
     presult=sa.sadm_cie_name                                             # Return Value(s)
     printline (pexample,pdesc,presult)                               # Print Example Line
 
     pexample="sa.sadm_domain"                                            # Variable Name
-    pdesc="Server Creation Default Domain"                              # Function Description
+    pdesc="Server creation default domain"                              # Function Description
     presult=sa.sadm_domain                                               # Return Value(s)
     printline (pexample,pdesc,presult)                               # Print Example Line
 
@@ -733,34 +755,81 @@ def print_sadmin_cfg():
 
         pexample="sa.sadm_ro_dbuser"                                     # Variable Name
         pdesc="SADMIN Database Read Only User"                          # Function Description
-        presult=sa.sadm_ro_dbuser                                        # Return Value(s)
-        printline (pexample,pdesc,presult)                           # Print Example Line
+        presult=sa.sadm_ro_dbuser                                       # Return Value(s)
+        printline (pexample,pdesc,presult)                              # Print Example Line
 
-        pexample="sa.sadm_ro_dbpwd"                                      # Variable Name
+        pexample="sa.sadm_ro_dbpwd"                                     # Variable Name
         pdesc="SADMIN Database Read Only User Pwd"                      # Function Description
         presult=""                                                      # Default don't show passwd
-        if show_password == "Y" : presult=sa.sadm_ro_dbpwd               # Selected to Show DB Passwd
-        printline (pexample,pdesc,presult)                           # Print Example Line
+        if show_password == "Y" : presult=sa.sadm_ro_dbpwd              # Selected to Show DB Passwd
+        printline (pexample,pdesc,presult)                              # Print Example Line
 
-    pexample="sa.cmd_rrdtool"                                           # Variable Name
-    pdesc="RRDTOOL Binary Location"                                     # Function Description
-    presult=sa.cmd_rrdtool                                              # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+        pexample="sa.sadm_smtp_server"                                  # Variable Name
+        pdesc="Your Internet smtp server"                               # Function Description
+        presult=sa.sadm_smtp_server                                     # Default don't show passwd
+        printline (pexample,pdesc,presult)                              # Print Example Line
 
-    pexample="sa.sadm_ssh_port"                                          # Variable Name
+        pexample="sa.sadm_smtp_port"                                    # Variable Name
+        pdesc="Your Internet smtp server port"                          # Function Description
+        presult=sa.sadm_smtp_port                                       # Default don't show passwd
+        printline (pexample,pdesc,presult)                              # Print Example Line
+
+        pexample="sa.sadm_smtp_sender"                                  # Variable Name
+        pdesc="Your internet email address"                             # Function Description
+        presult=sa.sadm_smtp_sender                                     # Email sender name
+        printline (pexample,pdesc,presult)                              # Print Example Line
+
+        pexample="sa.sadm_gmpw"                                         # Variable Name
+        pdesc="Your internet smtp email password"                       # Function Description
+        presult=""                                                      # Default don't show passwd
+        if show_password == "Y" : presult=sa.sadm_gmpw                  # Selected to Show smtp pwd
+        printline (pexample,pdesc,presult)                              # Print Example Line
+
+        pexample="sa.sadm_monitor_update_interval"                      # Variable Name
+        pdesc="SYSMON web page refresh rate (Sec)"                      # Refresh rate in seconds
+        presult=sa.sadm_monitor_update_interval                         # Variable Name
+        printline (pexample,pdesc,presult)                              # Print Example Line
+
+        pexample="sa.sadm_monitor_recent_count"                         # Variable Name
+        pdesc="SYSMON web page nb. recent scripts"                      # 0=no recent else nb 2 show
+        presult=sa.sadm_monitor_recent_count                            # Variable Name
+        printline (pexample,pdesc,presult)                              # Print Example Line
+
+        pexample="sa.sadm_monitor_recent_exclude"                       # Variable Name
+        pdesc="SYSMON recent scripts excluded"                          # Script exclude from recent
+        presult=sa.sadm_monitor_recent_exclude                          # Variable Name
+        printline (pexample,pdesc,presult)                              # Print Example Line
+
+        pexample="sa.sadm_dr_script_maxage"                             # Variable Name
+        pdesc="Max. nb. of days script without running"                 # Daily report turn yellow 
+        presult=sa.sadm_dr_script_maxage                                # Variable Name
+        printline (pexample,pdesc,presult)                              # Print Example Line
+
+        pexample="sa.sadm_dr_rear_interval"                             # Variable Name
+        pdesc="Maximum nb. of days without ReaR backup"                 # Nb of days without backup
+        presult=sa.sadm_dr_rear_interval                                # Variable Name
+        printline (pexample,pdesc,presult)                              # Print Example Line
+
+        pexample="sa.sadm_dr_backup_dif"                                # Variable Name
+        pdesc="BackupSize differ more than XX% (Turn Yellow)"           # BackupSize Differ than %
+        presult=sa.sadm_dr_backup_dif                                   # Variable Name
+        printline (pexample,pdesc,presult)                              # Print Example Line
+
+
+    pexample="sa.sadm_ssh_port"                                         # Variable Name
     pdesc="SSH Port to communicate with client"                         # Function Description
-    presult=sa.sadm_ssh_port                                             # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    presult=sa.sadm_ssh_port                                            # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
-    pexample="sa.sadm_nmon_keepdays"                                     # Variable Name
+    pexample="sa.sadm_nmon_keepdays"                                    # Variable Name
     pdesc="Nb. of days to keep nmon perf. file"                         # Function Description
-    presult=sa.sadm_nmon_keepdays                                        # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    presult=sa.sadm_nmon_keepdays                                       # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
-    pexample="sa.sadm_rch_keepdays"                                      # Variable Name
+    pexample="sa.sadm_rch_keepdays"                                     # Variable Name
     pdesc="Nb. days to keep unmodified rch file"                        # Function Description
-    presult=sa.sadm_rch_keepdays                                         # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    presult=sa.sadm_rch_keepdays                                        # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.sadm_log_keepdays"                                      # Variable Name
     pdesc="Nb. days to keep unmodified log file"                        # Function Description
@@ -882,13 +951,23 @@ def print_sadmin_cfg():
     presult=sa.sadm_yearly_backup_date                                   # Return Value(s)
     printline (pexample,pdesc,presult)                               # Print Example Line
 
-    if show_storix == "Y" :                                             # Selected Show Storix Info
-        pexample="sa.sadm_storix_nfs_server"                             # Variable Name
-        pdesc="Storix NFS Server IP or Name"                            # Function Description
-        presult=sa.sadm_storix_nfs_server                                # Return Value(s)
-        printline (pexample,pdesc,presult)                           # Print Example Line
+    pexample="sa.sadm_pid_timeout"                                      # Variable Name
+    pdesc="Script PID file default TimeToLive (Sec)"                    # Function Description
+    presult=sa.sadm_pid_timeout                                         # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
-        pexample="sa.sadm_storix_mount_point"                            # Variable Name
+    pexample="sa.sadm_lock_timeout"                                     # Variable Name
+    pdesc="Host max sec a host can be lock (no error if can't reach)"   # Function Description
+    presult=sa.sadm_lock_timeout                                        # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+    if show_storix == "Y" :                                             # Selected Show Storix Info
+        pexample="sa.sadm_storix_nfs_server"                            # Variable Name
+        pdesc="Storix NFS Server IP or Name"                            # Function Description
+        presult=sa.sadm_storix_nfs_server                               # Return Value(s)
+        printline (pexample,pdesc,presult)                              # Print Example Line
+
+        pexample="sa.sadm_storix_mount_point"                           # Variable Name
         pdesc="Storix NFS Mount Point"                                  # Function Description
         presult=sa.sadm_storix_mount_point                               # Return Value(s)
         printline (pexample,pdesc,presult)                           # Print Example Line
@@ -906,26 +985,30 @@ def print_command_path():
     
     printheader ("COMMAND PATH USE BY SADMIN STD. LIBR.","Description","  This System Result")
 
-  
-    pexample="sa.cmd_dmidecode"                                             # Variable Name
+    pexample="sa.cmd_dmidecode"                                         # Variable Name
     pdesc="Cmd. 'dmidecode', Get model & type"                          # Variable Description
-    presult=sa.cmd_dmidecode                                                # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    presult=sa.cmd_dmidecode                                            # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
     
-    pexample="sa.cmd_bc"                                                    # Variable Name
+    pexample="sa.cmd_bc"                                                # Variable Name
     pdesc="Cmd. 'bc', Do some Math."                                    # Variable Description
-    presult=sa.cmd_bc                                                       # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    presult=sa.cmd_bc                                                   # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
     
-    pexample="sa.cmd_fdisk"                                                 # Variable Name
+    pexample="sa.cmd_rrdtool"                                           # Variable Name
+    pdesc="Cmd. 'rrdtool', To record & produce graph"                   # Variable Description
+    presult=sa.cmd_rrdtool                                              # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+    
+    pexample="sa.cmd_fdisk"                                             # Variable Name
     pdesc="Cmd. 'fdisk', Get Partition Info"                            # Variable Description
-    presult=sa.cmd_fdisk                                                    # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    presult=sa.cmd_fdisk                                                # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
     
-    pexample="sa.cmd_which"                                                 # Variable Name
+    pexample="sa.cmd_which"                                             # Variable Name
     pdesc="Cmd. 'which', Get Command location"                          # Variable Description
-    presult=sa.cmd_which                                                    # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    presult=sa.cmd_which                                                # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
     
     pexample="sa.cmd_perl"                                                  # Variable Name
     pdesc="Cmd. 'perl', epoch time Calc."                               # Variable Description
@@ -973,7 +1056,7 @@ def print_command_path():
     printline (pexample,pdesc,presult)                               # Print Example Line
     
     pexample="sa.cmd_ssh_full"                                               # Variable Name
-    pdesc="Cmd. 'ssh', SSH to Connect to client"                        # Variable Description
+    pdesc="Cmd. 'ssh', SSH to connect to client"                        # Variable Description
     presult=sa.cmd_ssh_full                                                  # Return Value(s)
     printline (pexample,pdesc,presult)                               # Print Example Line
     
@@ -982,48 +1065,40 @@ def print_command_path():
 # Print sadm_start and sadm_stop Function Used by SADMIN Tools
 #===================================================================================================
 def print_start_stop():
-    printheader ("Overview of setup_admin(), sa.start() & sa.stop() functions"," "," ")
+    printheader ("Overview of Start and Stop functions"," "," ")
      
     print ("") 
-    print ("Extract of SADMIN Section") 
-    print ("def setup_sadmin():") 
-    print ("    # Create SADMIN Tools Instance (Create Directories,Load sadmin.cfg,Assign Variables)") 
-    print ("    st = sadm.sadmtools()      ") 
-    print ("    # Start SADMIN Tools - Initialize SADMIN Env. (Create dir.,Log,RCH, Open DB..)") 
-    print ("    sa.start()                                  # Init. ") 
+    print ("Function 'sa.start(pver,pdesc)'")
+    print ("    - 'pver' variable in SADMIN section, indicating the program version.") 
+    print ("    - 'pdesc' variable in SADMIN section, is a short description of the program.") 
     print ("") 
-    print ("- The function 'setup_sadmin()', need to be called  when your script is starting.") 
-    print ("    1) It make sure the SADMIN environment variable is set to the proper directory.") 
-    print ("    2) Setup global variables, load modules, create instance.") 
-    print ("    3) Load SADMIN configuration file ($SADMIN/cfg/sadmin.cfg).") 
-    print ("    4) Check Library requirements") 
-    print ("    5) Call the 'sa.start()' function below.") 
-    print ("    6) And finally it return an object of the instance.") 
-    print ("") 
-    print ("- Function 'sa.start()' (Included in the 'setup_sadmin()')") 
     print ("  What this function does:") 
+    print ("    0) Check if PID file exist, show error message and abort.") 
+    print ("       Unless user allow to run simultaneously more than one copy (sa.multiple_exec=True).") 
     print ("    1) Make sure all directories & sub-directories exist and have proper permissions.") 
     print ("    2) Make sure log file exist with proper permission (sa.log_file)") 
-    print ("       Write the log header (if 'sa.log_header = True').") 
-    print ("    3) Record the start Date/Time and Status Code 2(Running) to RCH file.") 
-    print ("    4) If PID file exist, show error message and abort.") 
-    print ("       Unless user allow more than one copy to run simultaneously (sa.multiple_exec = 'Y').") 
+    print ("    3) Write the log header (if 'sa.log_header = True').") 
+    print ("    4) Record the start Date/Time.") 
     print ("    5) Add line in the [R]eturn [C]ode [H]istory file stating script is started (Code 2).") 
     print ("") 
-    print ("- Function 'sa.stop()'") 
+    print ("") 
+    print ("Function 'sa.stop(pexit_code)'") 
+    print ("    - 'pexit_code' variable defined in SADMIN section, indicate the program exit code.") 
+    print ("") 
     print ("  This function should be called near the end of your script.") 
-    print ("    Example : sa.stop(sa.exit_code)   # Close SADMIN Environment") 
-    print ("              sys.exit(sa.exit_code)  # Exit To O/S") 
     print ("  It accept one parameter - Either 0 (Successful) or non-zero (Error Encountered).") 
+    print ("  Example : sa.stop(pexit_code)   # Close SADMIN Environment") 
+    print ("") 
     print ("  What this function does:") 
-    print ("    1) Get Actual Time and Calculate the Execution Time.") 
-    print ("    2) It check if the Exit Code is not zero, change it to 1.") 
+    print ("    1) Get actual time and calculate the execution time.") 
+    print ("    2) It check if the exit code is not zero, change it to 1.") 
     print ("    3) If 'sa.log_footer = True', write the log footer.") 
     print ("    4) If 'sa.use_rch = True', append (Start/End/Elapse Time ...) in RCH File.") 
-    print ("    5) Trim The RCH File according to user choice in sadmin.cfg (SADM_MAX_RCHLINE).") 
-    print ("    6) Trim the log according to user choice in sadmin.cfg (SADM_MAX_LOGLINE).") 
-    print ("    7) Delete the PID File of the script (sa.pid_file).") 
-    print ("    8) Delete the user 3 TMP Files (sa.tmp_file1, sa.tmp_file2, sa.tmp_file3).") 
+    print ("    5) Trim The RCH File according to user choice in sadmin.cfg or overidden in SADMIN section.")  
+    print ("       No trim is done if 'sa.sadm_max_rchline = 0'.") 
+    print ("    6) Trim the log according to user choice in sadmin.cfg or overidden in SADMIN section.") 
+    print ("       No trim is done if 'sa.sadm_max_logline = 0'.") 
+    print ("    7) Delete the PID file of the script (sa.pid_file).") 
     print (" ")
 
 
