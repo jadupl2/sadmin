@@ -153,7 +153,7 @@ export TOTAL_ERROR=0                                                    # Total 
 export URL_VIEW_FILE='/view/log/sadm_view_file.php'                     # View log File Content URL
 
 # If the size of Today & Yesterday Backup/ReaR this percentage, it will highlight in yellow
-export WPCT=50                                                          # If BackupSize is 50% Larger
+export WPCT=50                                                          # BackupSize 50% Larger/lower
 
 export BACKUP_REPORT="ON"                                               # Backup Report Activated
 export REAR_REPORT="ON"                                                 # ReaR Report Activated
