@@ -2479,18 +2479,18 @@ sadm_stop() {
             if [ ! -d "${WRCHDIR}" ] ; then mkdir -p $WRCHDIR ; fi      # Host Main Dir don't exist
             if [ $(id -u) -eq 0 ] 
                 then chmod 775 $WLOGDIR                                 # Make it accesible
-                     chown ${SADM_USER}:${SADM_GROUP} $WLOGDIR          # Own by Main User and Group
+                     chown $SADM_WWW_USER:$SADM_WWW_GROUP $WLOGDIR      # Own by Main User and Group
                      chmod 775 $WRCHDIR                                 # Make it accesible
-                     chown ${SADM_USER}:${SADM_GROUP} $WRCHDIR          # Own by Main User and Group
+                     chown $SADM_WWW_USER:$SADM_WWW_GROUP $WRCHDIR      # Own by Main User and Group
                      chmod 666 ${WLOG}                                  # Make sure we can overwite
                      cp $SADM_LOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log
-                     chown ${SADM_USER}:${SADM_GROUP} ${WLOG}           # Good group
+                     chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WLOG}       # Good group
             fi
             if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]    # Want to Produce RCH File
                then if [ $(id -u) -eq 0 ] 
-                       then chmod 666 ${WRCH}                          # Make sure we can overwite
+                       then chmod 666 ${WRCH}                           # Make sure we can overwite
                             cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
-                            chown ${SADM_USER}:${SADM_GROUP} ${WRCH}   # Good group
+                            chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WRCH} # Good group
                     fi
             fi 
     fi
