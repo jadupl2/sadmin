@@ -251,7 +251,7 @@ check_available_update()
         # Ubuntu, Debian, Raspian, Linux MInt, ...
         * ) 
             sadm_writelog "Start with a clean of APT cache, running 'apt-get clean'" 
-            apt-get clean >> $SADM_LOG 2>&1                             # Cleanup /var/cache/apt
+            apt-get clean  >>$SADM_LOG 2>>$SADM_ELOG                    # Cleanup /var/cache/apt
             rc=$?                                                       # Save Exit Code
             if [ $rc -ne 0 ] 
                 then sadm_writelog "[ ERROR ] while cleaning apt cache, return code ${rc}" 
@@ -259,7 +259,7 @@ check_available_update()
             fi
             sadm_writelog " "
             sadm_writelog "Update the APT package repository cache with 'apt-get update'" 
-            apt-get update  >> $SADM_LOG 2>&1                           # Updating the apt-cache
+            apt-get update   >>$SADM_LOG 2>>$SADM_ELOG                  # Updating the apt-cache
             rc=$?                                                       # Save Exit Code
             if [ "$rc" -ne 0 ]
                then UpdateStatus=2                                      # 2=Problem checking update
@@ -305,7 +305,7 @@ run_up2date()
     sadm_write "${SADM_TEN_DASH}\n"
     sadm_write "Starting the $(sadm_get_osname) update  process ...\n"
     sadm_write "Running \"up2date --nox -u\"\n"
-    up2date --nox -u >>$SADM_LOG 2>&1
+    up2date --nox -u  >>$SADM_LOG 2>>$SADM_ELOG
     rc=$?
     sadm_write "Return Code is ${rc}.\n"
     if [ $rc -ne 0 ]
@@ -327,7 +327,7 @@ run_yum()
     sadm_write "${SADM_TEN_DASH}\n"
     sadm_write "Starting $(sadm_get_osname) update process ...\n"
     sadm_write "Running : yum -y update\n"
-    yum -y update  >>$SADM_LOG 2>&1
+    yum -y update   >>$SADM_LOG 2>>$SADM_ELOG
     rc=$?
     sadm_write "Return Code after yum program update is ${rc}.\n"
     sadm_write "${SADM_TEN_DASH}\n"
@@ -343,7 +343,7 @@ run_dnf()
     sadm_write "${SADM_TEN_DASH}\n"
     sadm_write "Starting $(sadm_get_osname) update process ...\n"
     sadm_write "Running : dnf -y update\n"
-    dnf -y update  >>$SADM_LOG 2>&1
+    dnf -y update  >>$SADM_LOG 2>>$SADM_ELOG 
     rc=$?
     sadm_write "Return Code after dnf program update is ${rc}.\n"
     sadm_write "${SADM_TEN_DASH}\n"
@@ -446,11 +446,9 @@ update_sysinfo_file()
 perform_osupdate()
 {
     case "$(sadm_get_osname)" in                                        # Test OS Name
-        "REDHAT"|"CENTOS" )
+        "REDHAT"|"CENTOS"|"ALMALINUX"|"ROCKY" )
             case "$(sadm_get_osmajorversion)" in
-                [2-4])  run_up2date                                     # Go run up2date command
-                        SADM_EXIT_CODE=$?                               # Save Return Code
-                        sadm_write "No more update for Redhat/CentOS v$(sadm_get_osmajorversion).\n"
+                [2-4])  sadm_write "No more update for Redhat/CentOS v$(sadm_get_osmajorversion).\n"
                         sadm_write "This version have reach end of life.\n"
                         ;;
                 [5-7])  run_yum                                         # V 5 and above use yum cmd
@@ -500,6 +498,8 @@ main_process()
         1)  SADM_EXIT_CODE=0                                            # No Update Final Code to 0
             ;;
         2)  SADM_EXIT_CODE=1                                            # Error Encountered set to 1
+            ;;
+      100)  SADM_EXIT_CODE=1                                            # Problem with repo
             ;;
         *)  SADM_EXIT_CODE=1                                            # Error Encountered set to 1
             sadm_write "Check_available_update return code is invalid (${RC}).\n"
@@ -584,5 +584,6 @@ function cmd_options()
     fi
     main_process                                                        # Check/Perform O/S Update
     SADM_EXIT_CODE=$?                                                   # Save Status returned 
+    if [ $SADM_EXIT_CODE -ne 0 ] ; then cat $SADM_ELOG ; fi
     sadm_stop "$SADM_EXIT_CODE"                                         # End Process with exit Code
     exit  "$SADM_EXIT_CODE"                                             # Exit script
