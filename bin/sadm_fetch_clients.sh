@@ -87,6 +87,7 @@
 # 2021_11_15 server v3.33 Fix type error on comment line
 #@2022_04_19 server v3.34 Minor fix and performance improvements.
 #@2022_05_12 server v3.35 Move 'sadm_send_alert' and 'write_alert_history' functions from library.
+#@2022_05_19 server v3.36 Added 'chown' and 'chmod' for log and rch files and directories.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
@@ -135,7 +136,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.35'                                     # Script Version
+export SADM_VER='3.36'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
@@ -1021,7 +1022,8 @@ process_servers()
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
-
+        find $LDIR -type f -exec chown $SADM_WWW_USER:$SADM_WWW_GROUP {} \;
+        find $LDIR -type f -exec chmod 666 {} \;
 
        # Rsync remote rch dir. onto local web rch dir/ (${SADMIN}/www/dat/${server_name}/rch) 
         LDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                   # Local Receiving Dir. Path
@@ -1031,6 +1033,8 @@ process_servers()
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
+        find $LDIR -type f -exec chown $SADM_WWW_USER:$SADM_WWW_GROUP {} \;
+        find $LDIR -type f -exec chmod 666 {} \;
 
 
         # Get remote $SADMIN/dat/rpt Dir. and update local www/dat/${server_name}/rpt directory.
@@ -1041,6 +1045,8 @@ process_servers()
             #else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
+        find $LDIR -type f -exec chown $SADM_WWW_USER:$SADM_WWW_GROUP {} \;
+        find $LDIR -type f -exec chmod 666 {} \;
 
 
         # Advise the user if the total error counter is different than zero.
@@ -1365,8 +1371,11 @@ main_process()
     if [ ! -d ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ]                # Web RCH repo Dir not exist
         then mkdir -p ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch          # Create it
     fi
+
     cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch            # cp rch for instant Status
+    chmod 666 ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
     cp ${SADM_RPT_DIR}/*.rpt ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt   # cp rpt for instant Status
+    chmod 666 ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt/*.rpt
 
     # Check for Error or Alert to submit
     check_all_rpt                                                       # Check all *.rpt for Alert
