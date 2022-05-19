@@ -183,6 +183,7 @@
 #@2022_05_03 lib v3.91 Read new smtp server info from sadmin.cfg & gmail passwd file.
 #@2022_05_10 lib v3.92 Replace usage of 'mail' by 'mutt' 
 #@2022_05_12 lib v3.93 Move 'sadm_send_alert' & 'write_alert_history' to sadm_fetch_client
+#@2022_05_19 lib v3.94 Fix intermitent permission error message when was not running as 'root'
 #===================================================================================================
 
 
@@ -196,7 +197,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.93"                                              # This Library Version
+export SADM_LIB_VER="3.94"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -389,10 +390,10 @@ export SADM_SMTP_SENDER="sadmin.gmail.com"                              # Email 
 export SADM_GMPW=""                                                     # smtp sender gmail passwd
 
 # Array of O/S Supported & Package Family
-export SADM_OS_SUPPORTED=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMALINUX' 'ROCKY'
-                           'DEBIAN' 'RASPBIAN' 'UBUNTU' 'LINUXMINT' 'AIX' )
-export SADM_REDHAT_FAMILY=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMALINUX' 'ROCKY' )
-export SADM_DEBIAN_FAMILY=( 'DEBIAN' 'RASPBIAN' 'UBUNTU' 'LINUXMINT' )
+#export SADM_OS_SUPPORTED=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMALINUX' 'ROCKY'
+#                           'DEBIAN' 'RASPBIAN' 'UBUNTU' 'LINUXMINT' 'AIX' )
+#export SADM_REDHAT_FAMILY=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMALINUX' 'ROCKY' )
+#export SADM_DEBIAN_FAMILY=( 'DEBIAN' 'RASPBIAN' 'UBUNTU' 'LINUXMINT' )
 export OS_REL="/etc/os-release"                                         # O/S Release File
 
 
@@ -2470,12 +2471,26 @@ sadm_stop() {
     # If script is running on the SADMIN server, copy script final log and rch to web data section.
     # If we don't do that, log look incomplete & script seem to be always running on web interface.
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only run on SADMIN 
-       then if [ -w ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log ] 
-               then cp $SADM_LOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log
-            fi 
+       then WLOGDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log"          # Host Main LOG Directory
+            WLOG="${WLOGDIR}/${SADM_HOSTNAME}_${SADM_INST}.log"         # LOG File Name in Main Dir
+            WRCHDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"          # Host Main RCH Directory
+            WRCH="${WRCHDIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"         # RCH File Name in Main Dir
+            if [ ! -d "${WLOGDIR}" ] ; then mkdir -p $WLOGDIR ; fi      # Host Log dir. not exist
+            if [ ! -d "${WRCHDIR}" ] ; then mkdir -p $WRCHDIR ; fi      # Host Main Dir don't exist
+            if [ $(id -u) -eq 0 ] 
+                then chmod 775 $WLOGDIR                                 # Make it accesible
+                     chown ${SADM_USER}:${SADM_GROUP} $WLOGDIR          # Own by Main User and Group
+                     chmod 775 $WRCHDIR                                 # Make it accesible
+                     chown ${SADM_USER}:${SADM_GROUP} $WRCHDIR          # Own by Main User and Group
+                     chmod 666 ${WLOG}                                  # Make sure we can overwite
+                     cp $SADM_LOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log
+                     chown ${SADM_USER}:${SADM_GROUP} ${WLOG}           # Good group
+            fi
             if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]    # Want to Produce RCH File
-               then if [ -w  ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ] 
-                       then cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
+               then if [ $(id -u) -eq 0 ] 
+                       then chmod 666 ${WRCH}                          # Make sure we can overwite
+                            cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
+                            chown ${SADM_USER}:${SADM_GROUP} ${WRCH}   # Good group
                     fi
             fi 
     fi
