@@ -184,6 +184,7 @@
 #@2022_05_10 lib v3.92 Replace usage of 'mail' by 'mutt' 
 #@2022_05_12 lib v3.93 Move 'sadm_send_alert' & 'write_alert_history' to sadm_fetch_client
 #@2022_05_19 lib v3.94 Fix intermitent permission error message when was not running as 'root'
+#@2022_05_20 lib v3.95 Bug fix with 'capitalize' function on Old version of Red Hat (5,4)
 #===================================================================================================
 
 
@@ -197,7 +198,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.94"                                              # This Library Version
+export SADM_LIB_VER="3.95"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -501,7 +502,9 @@ sadm_tolower() {
 # Function return the string received to with the first character in uppercase
 sadm_capitalize() {
     C=`echo $1 | tr "[:upper:]" "[:lower:]"`
-    echo "${C^}"
+    premier=$(echo ${C:0:1} | tr  "[:lower:]" "[:upper:]")
+    echo "${premier}${C:1}"
+    #echo "${C^}"
 }
 
 
@@ -2482,14 +2485,14 @@ sadm_stop() {
                      chown $SADM_WWW_USER:$SADM_WWW_GROUP $WLOGDIR      # Own by Main User and Group
                      chmod 775 $WRCHDIR                                 # Make it accesible
                      chown $SADM_WWW_USER:$SADM_WWW_GROUP $WRCHDIR      # Own by Main User and Group
-                     chmod 666 ${WLOG}                                  # Make sure we can overwite
-                     cp $SADM_LOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log
+                     if [ -f "${WLOG}" ] ; then chmod 666 ${WLOG} ; fi  # If log exist chmod                              # Make sure we can overwite
+                     cp $SADM_LOG $WLOG
                      chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WLOG}       # Good group
             fi
-            if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]    # Want to Produce RCH File
+            if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]    # W  ant to Produce RCH File
                then if [ $(id -u) -eq 0 ] 
                        then chmod 666 ${WRCH}                           # Make sure we can overwite
-                            cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
+                            cp $SADM_RCHLOG $WRCH
                             chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WRCH} # Good group
                     fi
             fi 
