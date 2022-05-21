@@ -21,6 +21,7 @@
 #@2022_03_06 lib v4.07 Correct some typo in PID message to user
 #@2022_04_11 lib v4.08 Use /etc/os-release to get O/S info instead of lsb_release depreciated
 #@2022_05_09 lib v4.10 First Production version of new Python Library
+#@2022_05_21 lib v4.11 Ameliorate file lock funstions & Minor changes
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -56,7 +57,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.10"                                # This Library Version
+lib_ver             = "4.11"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -82,7 +83,7 @@ log_type            = "B"                                   # S=Screen L=Log B=B
 log_append          = False                                 # Create new log every time
 log_header          = True                                  # True = Produce Log Header
 log_footer          = True                                  # True = Produce Log Footer
-multiple_exec       = False                                 # Allow Multiple Instance ?
+multiple_exec       = False                                 # Allow running multiple Instance ?
 db_used             = False                                 # Use or Not MySQL DB ?
 db_silent           = False                                 # Show ErrMsg when error
 rch_used            = True                                  # True = Use RCH File ?
@@ -631,7 +632,7 @@ def write_err (wline, lf=True ):
 
 
 # --------------------------------------------------------------------------------------------------
-def create_lockfile(fname) :
+def create_lockfile(fname, errmsg=True ) :
 
     """  
         Create a system 'lock_file' for the received system name.
@@ -643,29 +644,31 @@ def create_lockfile(fname) :
         seconds set by 'lock_timeout'. The "check_lockfile()" function will automatically 
         remove the 'lock_file' when it is expired.
         
-        Args: 
-            Name of the system to lock (hostname -s, not fully qualified)
-            The full path name of the lock file is "$SADMIN/tmp/$(hostname -s).lock"
+    Args: 
+        fname : Name of the system you want to remove the lock file (hostname -s, not FQDN).
+                The full path name of the lock file is "$SADMIN/tmp/$(hostname -s).lock"
 
-        Return Value : 
-            0) System Lock file was created successfully
-            1) System Lock file could not be created or updated
+    Args Optionnal: 
+        errmsg: Default value is True
+                Use if don't want any message or error message written to log or screen.
+                Base your logic only on the return value and built and display your own message.
+
     """
 
-    fexit_code = 0                                                      # Default return code
+    fexit_code = True                                                   # Default return value
     lock_file = dir_tmp + '/' + fname + '.lock'                         # Lock File Name
     if os.path.isfile(lock_file):                                       # If lock file already exist
-        write_log("[ ERROR ] Lock file '%s' already exist." % (lock_file))                                     
-        return(1)
+        if errmsg : write_err("[ WARNING ] Lock file '%s' already exist." % (lock_file))                                     
+        return(True)
 
     try:
         f = open(lock_file,"w")                                         # Open lock_file for writing
         now = datetime.datetime.now()                                   # Get current Time
         fline = pn,now.strftime("%Y%m%d%H%M%S")                         # Lock file content
-        f.write ("%s\n" % str((fline)))                                      # Write Script name and date
+        f.write ("%s\n" % str((fline)))                                 # Write Script name and date
     except IOError:
-        write_err("Couldn't create lock file '%s'" % lock_file)         # If can't create lock file
-        fexit_code = 1                                                  # Set Error return code
+        if errmsg : write_err("Couldn't create lock file '%s'" % lock_file)  # If can't create lock file
+        fexit_code = False                                                  # Set Error return code
     finally:
         f.close()                                                       # Close Lock file
     return(fexit_code)                                                  # Return to caller
@@ -673,7 +676,7 @@ def create_lockfile(fname) :
 
 
 # --------------------------------------------------------------------------------------------------
-def remove_lockfile(fname): 
+def remove_lockfile(fname ,errmsg=True): 
 
     """ 
         Remove the lock file for the received system host name.
@@ -684,12 +687,16 @@ def remove_lockfile(fname):
         then 'lock_file' will be automatically by "check_lockfile()" function.
        
         Args: 
-            Name of the system you want to remove the lock file (hostname -s, not fully qualified).
-            The full path name of the lock file is "$SADMIN/tmp/$(hostname -s).lock"
+            fname : Name of the system you want to remove the lock file (hostname -s, not FQDN).
+                    The full path name of the lock file is "$SADMIN/tmp/$(hostname -s).lock"
+
+        Args Optionnal: 
+            errmsg: Default value is True
+                    Use if don't want any message or error message written to log or screen.
+                    Base your logic only on the return value and built and display your own message.
 
         Return Value : 
-            0) System Lock file was removed successfully.
-            1) System Lock file could not be removed.
+            Always return True, even the lock file doesn't exist
     """
 
     fexit_code = 0    
@@ -698,14 +705,14 @@ def remove_lockfile(fname):
         try: 
             os.remove(lock_file)
         except FileNotFoundError:
-            write_err("Lock file can't be found (%s)" % lock_file)       
+            if errmsg : write_err("Lock file can't be found (%s)" % lock_file)       
 
-    return(0)
+    return(True)
 
 
 
 # --------------------------------------------------------------------------------------------------
-def check_lockfile(fname):
+def check_lockfile(fname, errmsg=True):
 
     """ 
         This function is used to check if a 'lock_file' exist for the system name received.
@@ -718,34 +725,45 @@ def check_lockfile(fname):
         then 'lock_file' file is automatically remove by this function and exit with a return
         code of 0, as if the lock file didn't exist.
        
-    Args: 
-        Name of the system you want to remove the lock file (hostname -s, not fully qualified).
-        The full path name of the lock file is "$SADMIN/tmp/$(hostname -s).lock"
+        Args: 
+            fname : Name of the system you want to remove the lock file (hostname -s, not FQDN).
+                    The full path name of the lock file is "$SADMIN/tmp/$(hostname -s).lock"
 
-    Return Value : 
-        0) System Lock file doesn't exist.
-        1) System Lock file exist and system is lock.
+        Args Optionnal: 
+            errmsg: Default value is True
+                    Use if don't want any message or error message written to log or screen.
+                    Base your logic only on the return value and built and display your own message.
+
+        Return Value : 
+            False) System is not lock.
+            True)  System is lock.
     """
     
     fexit_code = 0    
     lock_file = dir_tmp + '/' + fname + '.lock'                         # Lock File Name
-    if os.path.isfile(lock_file):
-        epoch_creation = int(os.path.getctime(lock_file))
-        epoch_now = int(time.time())
-        file_age = int(epoch_now - epoch_creation)
-        if file_age > lock_timeout :
+    if os.path.isfile(lock_file):                                       # CHeck if lock File Exist
+        epoch_creation = int(os.path.getctime(lock_file))               # Get Epoch Creation time
+        epoch_now = int(time.time())                                    # Get Current epoch time
+        file_age = int(epoch_now - epoch_creation)                      # Nb. Sec. that file exist
+        if file_age > lock_timeout :                                    # Greater that Max. TTL
             if lib_debug > 4 :
-                write_log("Server is lock for more than %d seconds." % (lock_timeout))
-                write_log("Removing the lock file (%s)." % (lock_file))
-                write_log("We now restart to monitor this system as usual.")
-            remove_lockfile(fname) 
+                if errmsg : write_log("Server is lock for more than %d seconds." % (file_age))
+                if lock_timeout != 0 :
+                    if errmsg : 
+                        write_log("Removing the lock file (%s)." % (lock_file))
+                        write_log("We now restart to monitor this system as usual.")
+                    remove_lockfile(fname) 
+                else: 
+                    if errmsg : 
+                        write_log("The 'sa.lock_timeout' is set to 0, meaning system will remain lock.")
+                        write_log("System %s will remain lock until you remove the lock file (%s)" % (fname,lock_file))
         else:
-            if lib_debug > 4 :
-                write_log("[ WARNING ] System '%s' is currently lock."% (wname))
-                write_log("System monitoring will resume in %d seconds." % (lock_timeout-file_age))
+            if errmsg : 
+                write_log("[ WARNING ] System '%s' is currently lock. "% (fname))
+                write_log("System will unlock in %d seconds." % (lock_timeout-file_age))
                 write_log("Maximum lock time allowed is %d seconds." % (lock_timeout))
-            return 1
-    return 0 
+            return True
+    return False 
 
 
 
@@ -1890,7 +1908,7 @@ def start(pver,pdesc) :
     Initialize the SADMIN environment
 
         - Make sure all Directories require exist
-        - Open script log in append mode (sadm_log_append="Y") or new log.
+        - Open script log in append mode (log_append=True) or new log.
         - Write Log Header, record startup Date/Time and update RCH file.
         - Check if script is already running (pid_file).
         - Advise user & Quit if Attribute multiple_exec="N".
@@ -1911,10 +1929,10 @@ def start(pver,pdesc) :
     uid = pwd.getpwnam(sadm_user).pw_uid                                # Get UID User in sadmin.cfg
     gid = grp.getgrnam(sadm_group).gr_gid                               # Get GID User in sadmin.cfg
 
-    # Open the script log file.
+    # Open the SCRIPT LOG file.
     try:                                                                # Try to Open/Create Log
         if not os.path.exists(dir_log)  : os.mkdir(dir_log,2775)        # Create SADM Log Dir
-        if (log_append):                                    # User Want to Append to Log
+        if (log_append):                                                # User Want to Append to Log
             log_file_fh=open(log_file,'a')                              # Open Log in append  mode
         else:                                                           # User Want Fresh New Log
             log_file_fh=open(log_file,'w')                              # Open Log in a new log
@@ -1926,7 +1944,7 @@ def start(pver,pdesc) :
         sys.exit(1)               
     if os.getuid() == 0: os.chown(log_file,uid,gid)                     # Set Owner of log file
 
-    # Open the script Error Log File.start()
+    # Open the script ERROR LOG file. 
     try: 
         if (log_append):                                                # User Want to Append to Log
             err_file_fh=open(err_file,'a')                              # Open ErrLog append  mode
@@ -1941,16 +1959,17 @@ def start(pver,pdesc) :
         sys.exit(1)                                                     # Back to O/S 
     if os.getuid() == 0: os.chown(err_file,uid,gid)                     # Set Owner, error log file
 
-
     # Validate Log Type (S=Screen L=Log B=Both)
     if ((log_type.upper() != 'S') and (log_type.upper() != "B") and (log_type.upper() != 'L')):
         write_err ("Valid log_type are 'S','L','B' - Can't set log_type to %s" % (log_type.upper()))
-        return(1,'','')                                                 # Return Error to caller
+        stop(1)                                                         # Close SADMIN 
+        sys.exit(1)                                                     # Back to O/S 
 
     # Validate Log open move - Append (True or False)
     if ( (log_append != True) and (log_append != False) ):
         write_err ("Invalid log.append attribute can be True or False (%s)" % (log_append))
-        return(1,'','')                                                 # Return Error to caller
+        stop(1)                                                         # Close SADMIN 
+        sys.exit(1)                                                     # Back to O/S 
 
     # Set & Save Starting Date/Time
     start_epoch = int(time.time())                                      # StartTime in Epoch Time
@@ -2033,6 +2052,9 @@ def start(pver,pdesc) :
     # Check Files that are present ONLY ON SADMIN SERVER
     # Make sure the alert History file exist , if not use the history template to create it.
     if (get_fqdn() == sadm_server) :
+        if check_lockfile(phostname) :                                  # System is Lock on SADMIN
+           stop(1)                                                      # Close SADMIN
+           sys.exit(1)                                                  # Exit back to O/S,Abort
         if not os.path.exists(alert_hist):                              # AlertHistory Missing
             if not os.path.exists(alert_hini):                          # AlertHistoryTemplate
                 touch_file(alert_hini)                                  # Create HistoryTemplate
@@ -2040,7 +2062,7 @@ def start(pver,pdesc) :
             try:
                 shutil.copy(alert_hini,alert_hist)                      # cp Template in History
             except:
-                write_log ("Couldn't copy %s to %s" % (alert_hini,alert_hist))  # Advise user
+                write_err ("Couldn't copy %s to %s" % (alert_hini,alert_hist))  # Advise user
                 stop(1)                                                 # Close SADMIN
                 sys.exit(1)                                             # Exit back to O/S,Abort
         if os.getuid() == 0:                                            # If running as root
