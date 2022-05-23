@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_rmcmd_starter.sh
-#   Synopsis :  Remote Script Starter 
+#   Synopsis :  Start a script on a remote system
 #   Version  :  1.0
 #   Date     :  8 Dec 2020  
 #   Requires :  sh
@@ -12,18 +12,19 @@
 #   -d   (Debug Level [0-9])
 #   -h   (Display this help message)
 #   -v   (Show Script Version Info)
-#   -n   (System Name where script reside)
+#   -n   (Remote System Name where script reside)
 #   -l   (Lock System (no monitoring) while script is running)
 #   -s   (Script Name to execute)
 #   -u   (User Name use to ssh on remote system)
 #   -p   (Prefix script Name with path of /sadmin on remote system)
 #
 #
-# Example of line to put in crontab to start remote bcakup of a VM
+# Example of line to put in crontab (/etc/crond/sadm_vm) to start remote backup of a VM
 # SADMIN=/sadmin
 # BSCRIPT=/opt/sa/bin/virtualbox/sadm_vm_backup.sh
 #
 # 0 14 6,21 * * root $SADMIN/bin/sadm_rmcd_starter.sh -lu 'jacques' -n borg -s "$BSCRIPT -yn rhel8"
+#
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
@@ -43,8 +44,9 @@
 # 2020_12_12 New: v1.0 Initial version.
 # 2021_02_13 Update: v1.1 First production release, added some command line option.
 # 2021_02_18 Update: v1.2 Lock FileName now created with remote node name.
-# 2021_02_19 Fix: v1.3 Add -l to Lock proper system name.
-# 2021_08_17 osupdate: v1.4  Change to use Library System Lock 
+# 2021_02_19 Fix: v1.3 Add -l to Lock system name.
+# 2021_08_17 osupdate: v1.4 Change to use Library System Lock 
+#@2022_05_23 osupdate: v1.5 Check if node is already lock prior to execute remote script
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -77,7 +79,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Library).
-export SADM_VER='1.4'                                   # Current Script Version
+export SADM_VER='1.5'                                   # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # Write log to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New Log
@@ -195,10 +197,20 @@ rmcd_start()
                 sadm_write "${SADM_OK} SADMIN Path added to script name, now changed to $SCRIPT'.\n" 
         fi
 
+        
+        # Check if the node is currently lock (Abort execution)
+        sadm_check_lockfile "${LOCKNODE}"                               # Check if node is lock
+        if [ $? -eq 1 ]                                                 # If node is lock
+            sadm_write_err "The system '${SNAME}' is currently lock."
+            sadm_write_err "System normal monitoring will resume in ${sec_left} seconds."
+            sadm_write_err "Maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
+            ERROR_COUNT=$(($ERROR_COUNT+1))                             # Increment Error Counter
+            return 1                                                    # Return Error to caller
+
         # If requested (-l), created a server lock file, to prevent generation monitoring error.
         if [ "$LOCK" = "Y" ]                                            # cmdline option lock system
            then sadm_create_lockfile "${LOCKNODE}"                      # Create System Lock File
-                if [ $? -ne 0 ]                                         # If Touch went OK
+                if [ $? -ne 0 ]                                         # Unable to Lock Node
                    then ERROR_COUNT=$(($ERROR_COUNT+1))                 # Increment Error Counter
                         sadm_writelog "${SADM_ERROR} Aborting process for '${SERVER}'."
                         return 1                                        # Return Error to caller 
@@ -212,13 +224,13 @@ rmcd_start()
         $SADM_SSH_CMD ${SUSER}\@${fqdn_server} ${SCRIPT} >>$SADM_LOG 2>&1 # SSH to Run Script
         RC=$? 
         if [ $RC -ne 0 ]                                                # Update went Successfully ?
-           then sadm_writelog "${SADM_ERROR} Script completed with error no.$RC on '${server_name}'."
+           then sadm_writelog "[ ERROR ] Script completed with error no.$RC on '${server_name}'."
                 ERROR_COUNT=$(($ERROR_COUNT+1))                         # Increment Error Counter
-           else sadm_writelog "${SADM_OK} Script completed successfully on '${server_name}'."
+           else sadm_writelog "[ OK ] Script completed successfully on '${server_name}'."
         fi
 
         # If the lock file exist, then time to remove it.
-        if [ "$LOCK" = "Y" ] ; then sadm_remove_lockfile "$LOCKNODE" ; fi # Go remove the lock file
+        if [ "$LOCK" = "Y" ] ;then sadm_remove_lockfile "$LOCKNODE" ;fi # Remove the lock file
         done < $SADM_TMP_FILE1
 
     if [ "$ERROR_COUNT" -ne 0 ]
@@ -257,7 +269,7 @@ function cmd_options()
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
-            n) SERVER=$OPTARG                                           # Server where script reside 
+            n) SERVER=$OPTARG                                           # System to backup
                ;;
             s) 
                SCRIPT=$OPTARG                                           # Script to execute on system
@@ -298,7 +310,7 @@ function cmd_options()
              exit 1                                                     # Exit To O/S
     fi
 
-    rmcd_start                                                       # Go Update Server
+    rmcd_start                                                          # Go Run Remote Script
     SADM_EXIT_CODE=$?                                                   # Save Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
