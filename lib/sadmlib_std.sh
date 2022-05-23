@@ -185,6 +185,7 @@
 #@2022_05_12 lib v3.93 Move 'sadm_send_alert' & 'write_alert_history' to sadm_fetch_client
 #@2022_05_19 lib v3.94 Fix intermitent permission error message when was not running as 'root'
 #@2022_05_20 lib v3.95 Bug fix with 'capitalize' function on Old version of Red Hat (5,4)
+#@2022_05_23 lib v3.96 Function 'sadm_write_err' now write to error log AND regular log.
 #===================================================================================================
 
 
@@ -198,7 +199,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.95"                                              # This Library Version
+export SADM_LIB_VER="3.96"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -625,11 +626,25 @@ sadm_write_log() {
 
 # Write String received to log ($SADM_LOG) & script error log ($SADM_ELOG)
 sadm_write_err() {
+
     SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
-    sadm_writelog "$SADM_SMSG"                                          # Go write to script log
-    SADM_EMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"               # Log Message with Date/Time
-    printf "%-s\n" "$SADM_EMSG" >> $SADM_ELOG                           # Write mess. to error log.
+    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Log Message with Date/Time
+    if [ "$SADM_LOG_TYPE" = "" ] ; then SADM_LOG_TYPE="B" ; fi          # Log Type Default is Both
+    case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
+        s|S) printf "%-s\n" "$SADM_SMSG"                                # Write Msg To Screen
+             ;;
+        l|L) printf "%-s\n" "$SADM_LMSG" >> $SADM_ELOG                  # Write Msg to Error Log 
+             printf "%-s\n" "$SADM_LMSG" >> $SADM_LOG                   # Write Msg to Log File
+             ;;
+        b|B) printf "%-s\n" "$SADM_SMSG"                                # Both = to Screen
+             printf "%-s\n" "$SADM_LMSG" >> $SADM_ELOG                  # Write Msg to Error Log 
+             printf "%-s\n" "$SADM_LMSG" >> $SADM_LOG                   # Both = to Log
+             ;;
+        *)   printf "Wrong value in \$SADM_LOG_TYPE ($SADM_LOG_TYPE)\n" # Advise User if Incorrect
+             ;;
+    esac
 }
+
 
 
 
