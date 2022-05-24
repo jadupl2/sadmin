@@ -51,6 +51,7 @@
 # 2021_10_20 server: v2.31 Remove sync depreciated slac_channel.cfg file
 #@2021_11_07 server: v2.32 Don't try to push files (and give error) if the client system is lock. 
 #@2022_04_04 server: v2.33 Minor changes
+#@2022_05_24 server: v2.34 Update to check if the SADMIN client is lock prior to push.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -82,7 +83,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.33'                                     # Script Version
+export SADM_VER='2.34'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -267,7 +268,12 @@ process_servers()
 
         # Check if System is Locked.
         sadm_check_lockfile "$server_name"                              # Check lock file status
-        if [ $? -eq 1 ] ; then continue ; fi                            # System Lock, Nxt Server
+        if [ $? -ne 0 ] 
+            then sadm_writelog "[ WARNING ] System ${server_fqdn} is currently lock."
+                 WARNING_COUNT=$(($WARNING_COUNT+1))                     # Increase Warning Counter
+                 sadm_writelog "$SADM_WARNING at ${WARNING_COUNT} - $SADM_ERROR at ${ERROR_COUNT}"
+                 continue                                                # Go process next server
+        fi                            # System Lock, Nxt Server
 
         # If SSH to server failed & it's a sporadic server = warning & next server
         $SADM_SSH_CMD $server_fqdn date > /dev/null 2>&1                # SSH to Server for date
