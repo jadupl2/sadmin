@@ -56,6 +56,8 @@
 # 2021_05_04 Update: v4.4 Don't sleep after updating a server if a reboot wasn't requested.
 # 2021_05_10 nolog: v4.5 Error message change "sadm_osupdate_farm.sh" to "sadm_osupdate_starter"
 # 2021_08_17 nolog: v4.6 Change to use the library lock file function. 
+#@2022_05_24 nolog: v4.7 Fix problem with lock file detection. 
+#
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -88,7 +90,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='4.6'                                   # Current Script Version
+export SADM_VER='4.7'                                   # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="Y"                              # [Y]=Append Existing Log [N]=Create New One
@@ -256,10 +258,17 @@ rcmd_osupdate()
         then WREBOOT="-r"                                           # Add -r option to reboot  
     fi                                                              # This reboot after Update
     
+    # Check if System is Locked.
+    sadm_check_lockfile "$server_name"                              # Check lock file status
+    if [ $? -ne 0 ]                                                 # If System is lock
+       then sadm_write_err "System '${server_name}' is lock, update not possible at this time."
+            return 1 
+    fi
+
     # Create lock file while O/S Update is running (this turn off monitoring)
     sadm_create_lockfile "${server_name}"                           # Stop monitoring server
     if [ $? -ne 0 ]                                                 # If Creation went OK
-       then sadm_writelog "Update of '${server_name}' cancelled."   # Couldn't create lock file
+       then sadm_write_err "Update of '${server_name}' cancelled."  # Couldn't create lock file
             return 1 
     fi
     
