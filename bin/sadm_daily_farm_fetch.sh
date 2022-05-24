@@ -53,6 +53,7 @@
 # 2020_12_12 Update: v4.5 Add and use SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
 # 2021_02_13 Minor: v4.5 Change for log appearance.
 # 2021_06_03 nolog: v4.6 Update SADMIN section and minor code update
+#@2022_05_24 update: v4.7 Updated to use the library 'check_lock_file' function.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -85,7 +86,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.6'                                      # Script Version
+export SADM_VER='4.7'                                      # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -195,29 +196,13 @@ process_servers()
                  continue                                               # Continue with next Server
         fi
 
-        # Lock File is created when the remote O/S update start (or for Maintenance Period).
-        # Prevent to return an error if not able to ssh to server (May be rebooting after update)
-        # Lock file will be deleted when the file creation date is older than $SADM_LOCK_TIMEOUT.
-        LOCK_FILE="${SADM_TMP_DIR}/${server_name}.lock"                 # Prevent Monitor lock file
-        if [ -f "$LOCK_FILE" ]                                          # If O/S Update running 
-           then FEPOCH=`stat -c %Y $LOCK_FILE`                          # Get File Modif. Epoch Time
-                CEPOCH=$(sadm_get_epoch_time)                           # Get Current Epoch Time
-                FAGE=`expr $CEPOCH - $FEPOCH`                           # Nb. Sec. OSUpdate running
-                SEC_LEFT=`expr $SADM_LOCK_TIMEOUT - $FAGE`              # Sec left before delete lck
-                if [ $FAGE -gt $SADM_LOCK_TIMEOUT ]                     # Running more than 90Min ?
-                   then msg="${BOLD}Server is lock for more than $SADM_LOCK_TIMEOUT seconds.${NORMAL}"
-                        sadm_writelog "${msg}"
-                        msg="${BOLD}Will now start to monitor this system as usual.${NORMAL}"
-                        sadm_writelog "${msg}"
-                        rm -f LOCK_FILE > /dev/null 2>&1                # Remove O/S Upd Flag File
-                   else msg="${SADM_WARNING} '$fqdn_server' server is lock."
-                        sadm_writelog "${msg}"
-                        msg1="Normal monitoring will resume in ${SEC_LEFT} seconds, "
-                        msg2="time allowed to keep a server lock is ${SADM_LOCK_TIMEOUT} sec."
-                        sadm_writelog "${msg1}${msg2}"
-                        continue                                        # Continue with Nxt Server
-                fi 
-        fi 
+        # Check if System is Locked.
+        sadm_check_lockfile "$server_name"                              # Check lock file status
+        if [ $? -eq 1 ] 
+            then sadm_write_log "System $server_name is currently lock."
+                 sadm_write_log "Continue with next system."
+                 continue
+        fi                                                              # System Lock, Nxt Server
 
         # TEST SSH TO SERVER (IF NOT ON SADMIN SERVER)
         if [ "${server_name}" != "$SADM_HOSTNAME" ]                     # If not on SADMIN Server 
