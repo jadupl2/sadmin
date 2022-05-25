@@ -186,7 +186,8 @@
 #@2022_05_19 lib v3.94 Fix intermitent permission error message when was not running as 'root'
 #@2022_05_20 lib v3.95 Bug fix with 'capitalize' function on Old version of Red Hat (5,4)
 #@2022_05_23 lib v3.96 Function 'sadm_write_err' now write to error log AND regular log.
-#@2022_05_25 lib v3.97 Added verification of new variables SADM_ROOT_ONLY and SADM_SADM_SERVER_ONLY                               # Run only on SADMIN server?- 1=Yes 0=No
+#@2022_05_25 lib v3.97 Added verification of new variables SADM_ROOT_ONLY and SADM_SADM_SERVER_ONLY
+#@2022_05_25 lib v3.98 Minor text modification related to PID expiration.
 #===================================================================================================
 
 
@@ -200,7 +201,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.97"                                              # This Library Version
+export SADM_LIB_VER="3.98"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -2033,29 +2034,26 @@ sadm_start() {
             sadm_writelog " "
             sadm_writelog " "
             sadm_write "Script '$SADM_PN' is already running ...\n"     # Script already running
-            sadm_write "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid' exist, created $pelapse seconds ago.\n"
             sadm_write "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N').\n" 
+            sadm_write "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid' exist, was created $pelapse seconds ago.\n"
+            sadm_write "The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n"
             sadm_writelog " "
-            sadm_write "Script can't run unless one of the following thing is done :\n"
-            sadm_write "  - Remove the PID File (\${SADMIN}/tmp/${SADM_INST}.pid).\n"
-            sadm_write "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script.\n"
             if [ ! -z "$SADM_PID_TIMEOUT" ] 
-                then sadm_write "  - You wait till PID timeout '\$SADM_PID_TIMEOUT' is reach.\n"
-                     sadm_write "    The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n\n\n"
-                     if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
+                then sadm_write "Script can't run unless one of the following thing is done :\n"
+                     sadm_write "  - Remove the PID File (\${SADMIN}/tmp/${SADM_INST}.pid).\n"
+                     sadm_write "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script.\n"
+                     sadm_write "  - You wait till PID timeout '\$SADM_PID_TIMEOUT' is reach.\n"
+                     DELETE_PID="N"                                     # No Del PID Since running
+                else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
                         then sadm_write "The PID file exceeded the time to live ('\$SADM_PID_TIMEOUT').\n"
-                             sadm_write "Assuming script was aborted abnormally.\n "
+                             sadm_write "Assuming script was aborted abnormally.\n"
                              sadm_write "Script execution is now resume and the PID file recreated.\n"
                              sadm_writelog " "
                              touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
                              DELETE_PID="Y"                             # Del PID Since running
                         else DELETE_PID="N"                             # No Del PID Since running
-                             #sadm_stop 1                                # Call SADM Stop Function
                              exit 1                                     # Exit with Error
                      fi
-                else DELETE_PID="N"                                     # No Del PID Since running
-                     #sadm_stop 1                                        # Call SADM Stop Function
-                     exit 1                                             # Exit with Error
             fi 
        else echo "$TPID" > $SADM_PID_FILE                               # Create the PID File
             DELETE_PID="Y"                                              # Del PID Since running
