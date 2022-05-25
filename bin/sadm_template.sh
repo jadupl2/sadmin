@@ -52,7 +52,8 @@
 #---------------------------------------------------------------------------------------------------
 # CHANGE LOG
 # 2021_07_01 New     v1.0  Initial Beta Version
-#@2021_09_15 lib v4.0  Added SADM_PDESC var. that can contain a description of the script.
+#@2021_09_15 lib v4.0 Added SADM_PDESC var. that can contain a description of the script.
+#@2022_05_25 lib v4.1 Added new variables SADM_ROOT_ONLY and SADM_SADM_SERVER_ONLY
 #---------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
@@ -73,7 +74,7 @@ if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]
          EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null 
          if [ $? -eq 0 ]                                   # Found SADMIN in /etc/env.
             then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                 printf "'SADMIN' environment variable temporarily set to ${SADMIN}.\n"
+                 printf "'SADM Added verification of new variables SADM_ROOT_ONLY and SADM_SADM_SERVER_ONLYIN' environment variable temporarily set to ${SADMIN}.\n"
             else exit 1                                    # No SADMIN Env. Var. Exit
          fi
 fi 
@@ -86,7 +87,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.0'                                      # Script version number
+export SADM_VER='4.1'                                      # Script version number
 export SADM_PDESC="SADMIN template shell script"           # Script Optional Desc.(Not use if empty)
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -101,6 +102,8 @@ export SADM_DEBUG=0                                        # Debug Level(0-9) 0=
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+export SADM_ROOT_ONLY                                      # Run only by root ? - 1=Yes 0=No
+export SADM_SADM_SERVER_ONLY                               # Run only on SADMIN server?- 1=Yes 0=No
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
@@ -298,33 +301,8 @@ function cmd_options()
 # MAIN CODE START HERE
 #===================================================================================================
     cmd_options "$@"                                                    # Check command-line Options
-    sadm_start                                                          # Create Dir.,PID,log,rch
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-
-    # If you want this script to be run only by root user, uncomment the lines below.
-    #if [ $(id -u) -ne 0 ]                                               # If Cur. user is not root
-    #    then sadm_writelog "Script can only be run by the 'root' user." # Advise User Message
-    #         sadm_writelog "Try 'sudo ${0##*/}'."                       # Suggest using sudo
-    #         sadm_writelog "Process aborted."                           # Abort advise message
-    #         sadm_stop 1                                                # Close and Trim Log
-    #         exit 1                                                     # Exit To O/S with Error
-    #fi
-
-    # If you want this script to be run only on the SADMIN server, uncomment the lines below.
-    #if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-    #    then sadm_writelog "Script can only be run on (${SADM_SERVER})" # Advise User Message
-    #         sadm_writelog "Process aborted"                            # Abort advise message
-    #         sadm_stop 1                                                # Close and Trim Log
-    #         exit 1                                                     # Exit To O/S
-    #fi
-
-    # Use 'main_process' for code without interaction with SADMIN Database.
-    main_process                                                        # Main Process
-    
-    # Or use 'process_server' for code dealing with server in SADMIN Database.
-    #process_servers                                                    # Process All Active Servers
-    
+    sadm_start                                                          # Won't come back if error
+    main_process                                                        # Your PGM Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
-    
