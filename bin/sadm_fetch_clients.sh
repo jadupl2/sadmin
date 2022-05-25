@@ -822,6 +822,8 @@ process_servers()
 
     build_server_list "$WOSTYPE"
     if [ $? -ne 0 ] ; then return 1 ; fi
+
+    # Check input file presence and readability and not empty
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
         then return 0 
     fi 
@@ -1344,6 +1346,7 @@ main_process()
     > $FETCH_RPT_LOCAL                                                  # Create Monitor Empty RPT
     > $FETCH_RPT_GLOBAL                                                 # Create Mon. in Glocal Dir
     LINUX_ERROR=0; AIX_ERROR=0 ; MAC_ERROR=0                            # Init. Error count to 0
+
     process_servers "linux"                                             # Process Active Linux
     LINUX_ERROR=$?                                                      # Save Nb. Errors in process
     process_servers "aix"                                               # Process Active Aix
