@@ -186,6 +186,7 @@
 #@2022_05_19 lib v3.94 Fix intermitent permission error message when was not running as 'root'
 #@2022_05_20 lib v3.95 Bug fix with 'capitalize' function on Old version of Red Hat (5,4)
 #@2022_05_23 lib v3.96 Function 'sadm_write_err' now write to error log AND regular log.
+#@2022_05_25 lib v3.97 Added verification of new variables SADM_ROOT_ONLY and SADM_SADM_SERVER_ONLY                               # Run only on SADMIN server?- 1=Yes 0=No
 #===================================================================================================
 
 
@@ -199,7 +200,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.96"                                              # This Library Version
+export SADM_LIB_VER="3.97"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -342,7 +343,7 @@ export SADM_DBHOST="sadmin.maison.ca"                                   # MySQL 
 export SADM_DBPORT=3306                                                 # MySQL Listening Port
 export SADM_RW_DBUSER=""                                                # MySQL Read/Write User
 export SADM_RW_DBPWD=""                                                 # MySQL Read/Write Passwd
-export SADM_RO_DBUSER=""                                                # MySQL Read Only User
+export SADM_RO_DBUSER=""  False                                              # MySQL Read Only User
 export SADM_RO_DBPWD=""                                                 # MySQL Read Only Passwd
 export SADM_SERVER=""                                                   # Server FQDN Name
 export SADM_DOMAIN=""                                                   # Default Domain Name
@@ -2306,6 +2307,23 @@ sadm_start() {
                else cp $SADM_ALERT_INIT $SADM_ALERT_FILE                # Copy Template as initial
                     chmod 664 $SADM_ALERT_FILE
             fi
+    fi
+
+    # Check if this script to be run only by root user
+    if [ ! -z "$SADM_ROOT_ONLY" ] && [ $SADM_ROOT_ONLY -ne 0 ] &&  [ $(id -u) -ne 0 ]  
+        then sadm_write_err "Script can only be run by the 'root' user" # Advise User Message
+             sadm_write_err "Try 'sudo ${0##*/}'"                       # Suggest using sudo
+             sadm_write_err "Process aborted"                           # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
+    fi
+
+    # Check if this script to be run only on the SADMIN server.
+    if [ ! -z "$SADM_SERVER_ONLY" ] && [ $SADM_SERVER_ONLY -ne 0 && "$(sadm_get_fqdn)" != "$SADM_SERVER" ] 
+        then sadm_write_err "Script can only run on (${SADM_SERVER})"  # Advise User Message
+             sadm_write_err "Process aborted"                           # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
     fi
 
     # Check Files that are present ONLY ON SADMIN SERVER
