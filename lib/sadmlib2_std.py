@@ -22,6 +22,7 @@
 #@2022_04_11 lib v4.08 Use /etc/os-release to get O/S info instead of lsb_release depreciated
 #@2022_05_09 lib v4.10 First Production version of new Python Library
 #@2022_05_21 lib v4.11 Ameliorate file lock funstions & Minor changes
+#@2022_05_25 lib v4.12 Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -57,7 +58,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.11"                                # This Library Version
+lib_ver             = "4.12"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -77,6 +78,8 @@ pdb_conn            = None                                  # Database Connector
 pdb_cur             = None                                  # Database cursor
 pdebug              = 0                                     # Debug Level 0-9
 pexit_code          = 0                                     # Script Default Return Code
+proot_only          = False                                 # Pgm run by root only ?
+psadm_server_only   = False                                 # Pgm run on SADMIN server only?
 
 # Start Function Arguments Definitions
 log_type            = "B"                                   # S=Screen L=Log B=Both
@@ -1924,7 +1927,7 @@ def start(pver,pdesc) :
 
     """
 
-    # Get the SADMIN userid and groupid chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
+    # Get the SADMIN userproot_onlyid and groupid chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
     rcode = 0                                                           # Set return code to 0 
     uid = pwd.getpwnam(sadm_user).pw_uid                                # Get UID User in sadmin.cfg
     gid = grp.getgrnam(sadm_group).gr_gid                               # Get GID User in sadmin.cfg
@@ -2049,6 +2052,21 @@ def start(pver,pdesc) :
         write_log ('='*50)                                              # 50 '=' Lines
         write_log (" ")                                                 # Space Line in the LOG
 
+    # If this script can only be run by 'root' 
+    if proot_only and os.getuid() != 0:                                 # UID of user is not 'root'
+        print("This script can only be run by the 'root' user.")        # Advise User Message / Log
+        print("Try 'sudo %s'" % (os.path.basename(sys.argv[0])))        # Suggest to use 'sudo'
+        print("Process aborted.")                                       # Process Aborted Msg
+        stop(1)                                                         # Close SADMIN 
+        sys.exit(1)                                                     # Back to O/S 
+
+    # If this script can only be run on the SADMIN server
+    if psadm_server_only and sa.get_fqdn() != sa.sadm_server :          # Only run on SADMIN
+        print("This script can only be run on SADMIN server (%s)" % (sa.sadm_server))
+        print("Process aborted")                                        # Abort advise message
+        stop(1)                                                         # Close SADMIN 
+        sys.exit(1)                                                     # Back to O/S 
+    
     # Check Files that are present ONLY ON SADMIN SERVER
     # Make sure the alert History file exist , if not use the history template to create it.
     if (get_fqdn() == sadm_server) :
