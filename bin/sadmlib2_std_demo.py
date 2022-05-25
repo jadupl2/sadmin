@@ -49,6 +49,7 @@
 #@2022_05_15 Update: v3.13 Updated to use the new SADMIN Python Library
 #@2022_05_18 Update: v3.14 Updated to include new sadmin.cfg fields in report
 #@2022_05_21 Update: v3.15 Late Adjustement & Minor changes
+#@2022_05_25 Update: v3.16 Added field sa.proot_only & sa.psadm_server_only to output & new DB table
 #==================================================================================================
 #
 try :
@@ -66,7 +67,7 @@ except ImportError as e:
 
 # --------------------------------------------------------------------------------------------------
 # SADMIN PYTHON FRAMEWORK SECTION 2.0
-# To use SADMIN tools, this section MUST be present near the top of your code.
+# To use SADMIN tools, this section MUST be pr#print ("%s v%s - Library v%s" % (sa.pn,pver,sa.lib_ver))esent near the top of your code.
 # --------------------------------------------------------------------------------------------------
 try:
     SADM = os.environ.get('SADMIN')                                     # Getting SADMIN Root Dir.
@@ -77,7 +78,7 @@ except ImportError as e:                                                # If Err
     sys.exit(1)                                                         # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver = "3.15"                                                           # Script Version
+pver = "3.16"                                                           # Script Version
 pdesc = "Demonstrate Functions & Variables available to developpers using SADMIN Tools"
 phostname = platform.node().split('.')[0].strip()                       # Get current hostname
 pdb_conn = None                                                         # Database Connector
@@ -317,6 +318,7 @@ def print_python_function():
 #===================================================================================================
 def print_user_variables():
     printheader ("User Var. that affect SADMIN behavior","Description","  This System Result")
+    print ("%s v%s - Library v%s" % (sa.pn,pver,sa.lib_ver))
 
     pexample="pver"                                                     # Variable Name
     pdesc="Program version number"                                      # Function Description
@@ -329,7 +331,7 @@ def print_user_variables():
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.pinst"                                                 # Variable Name
-    pdesc="Programe name without extension"                           # Function Description
+    pdesc="Programe name without extension"                             # Function Description
     presult=sa.pinst                                                    # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
@@ -376,6 +378,16 @@ def print_user_variables():
     pexample="sa.pexit_code"                                            # Variable Name
     pdesc="Script Exit Return Code"                                     # Function Description
     presult=sa.pexit_code                                               # Current Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+        
+    pexample="sa.proot_only "                                           # Variable Name
+    pdesc="Script can only be run by root"                              # Function Description
+    presult=sa.proot_only                                               # Current Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+                                              
+    pexample="sa.psadm_server_only"                                     # Variable Name
+    pdesc="Script can only run on SADMIN server"                        # Function Description
+    presult=sa.psadm_server_only                                        # Current Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
                        
     return(0)
@@ -1140,6 +1152,20 @@ def print_db_variables():
         (returncode,stdout,stderr)=sa.oscommand(cmd)
         print (stdout);
 
+        print ("\n\nMain script table:")
+        sql="describe scripts_main; "
+        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+        (returncode,stdout,stderr)=sa.oscommand(cmd)
+        print (stdout);
+        
+        print ("\n\nMain script details:")
+        sql="describe scripts_details; "
+        cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser, sa.sadm_ro_dbpwd, sa.sadm_dbhost)
+        cmd = "%s %s -e '%s'" % (cmd, sa.sadm_dbname, sql)
+        (returncode,stdout,stderr)=sa.oscommand(cmd)
+        print (stdout);
+        
         sa.write_log ("Closing Database pdb_connection")                     # Show we are closing DB
         sa.db_close(pdb_conn,pdb_cur)                                            # Close the Database
         sa.write_log (" ")                                               # Blank Line
