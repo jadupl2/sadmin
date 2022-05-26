@@ -106,6 +106,7 @@
 #@2022_05_06 install: v3.69 Improve postfix configuration and update the sasl_passwd file
 #@2022_05_06 install: v3.70 Change finger information for root (sadmin replace root in email)
 #@2022_05_10 install: v3.71 Remove installation of mail command & add 'inxi' command for sysInfo.
+#@2022_05_26 install: v3.72 Minor change and corrections to questions asked while installing.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -122,7 +123,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.71"                                            # Setup Version Number
+sver                = "3.72"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -2041,10 +2042,10 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,s
         writelog ("%s - %s" % (cstdout,cstderr)) 
     
     #writelog ("Changing finger information for root")
-    ccode,cstdout,cstderr = oscommand("chfn -f sadmin root")
-    if (ccode != 0):
-        writelog ("Problem running postmap command")
-        writelog ("%s - %s" % (cstdout,cstderr)) 
+    #ccode,cstdout,cstderr = oscommand("chfn -f sadmin root")
+    #if (ccode != 0):
+    #    writelog ("Problem running postmap command")
+    #    writelog ("%s - %s" % (cstdout,cstderr)) 
     
     return()
 
@@ -2138,7 +2139,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
         wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt)# Accept SADMIN Server Name
         writelog ("Validating server name ...")                         # Advise User Validating
         ccode,SADM_IP,cstderr = oscommand("host %s |awk '{ print $4 }' |head -1" % (wcfg_server))
-        writelog ("wcfg_server = %s SADM_IP = %s ccode = %s cstderr = %s" % (wcfg_server,SADM_IP,ccode,cstderr))
+        #writelog ("wcfg_server = %s SADM_IP = %s ccode = %s cstderr = %s" % (wcfg_server,SADM_IP,ccode,cstderr))
         digit1=SADM_IP.split('.')[0]                                    # 1st Digit=127 = Invalid
         if ((digit1 == "127") or (SADM_IP.count(".") != 3)):            # If Resolve to loopback IP
             writelog ("  ")
@@ -2221,6 +2222,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
             writelog ("You need to give your user password")            # Advise user 
             continue 
         break
+    writelog(" ")
     setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,sosname) 
 
     # Accept the maximum number of lines we want in every log produce
@@ -2306,7 +2308,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
             cmd = "usermod -p '$6$gfz87SfX$XA2N1ZXl79D3Z2C/gtp1d1rba7TenH2XzweeF9oKGIMGzdabzxKF8f9SCsu7m304BoCjal.h/UGMJ4UUKMuF4/' %s" % (wcfg_user)
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Assign Password
             writelog ("The password 'Gotham20!' have been assign to '%s' user." % (wcfg_user),'bold') 
-            writelog ("We suggest you change it after installation.",'bold') # Inform user to change pwd
+            writelog ("We strongly recommend you change it after installation.",'bold') # Inform user to change pwd
         if wostype == "AIX" :                                           # Under AIX
             cmd = "mkuser pgrp='%s' -s /bin/ksh " % (wcfg_group)        # Build mkuser command
             cmd += " home='%s' " % (os.environ.get('SADMIN'))           # Set Home Directory
@@ -2488,7 +2490,7 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("  - %s/bin/sadm_wrapper.sh YourScript.sh" % (sroot))
     writelog (" ")
     if (stype == "C") :
-        writelog ("BUT FIRST YOU NEED TO ADD THIS CLIENT ON THE SADMIN SERVER",'bold')
+        writelog ("WANT TO ADD A CLIENT ON THE SADMIN SERVER",'bold')
         writelog ("  - See instruction on this page : https://www.sadmin.ca/www/client_add.php")
         writelog (" ")
     writelog ("\n===========================================================================")
