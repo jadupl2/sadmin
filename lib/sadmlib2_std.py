@@ -23,6 +23,7 @@
 #@2022_05_09 lib v4.10 First Production version of new Python Library
 #@2022_05_21 lib v4.11 Ameliorate file lock funstions & Minor changes
 #@2022_05_25 lib v4.12 Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
+#@2022_05_26 lib v4.13 Prevent error message to appears when running not as root.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -58,7 +59,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.12"                                # This Library Version
+lib_ver             = "4.13"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -1872,7 +1873,8 @@ def stop(pexit_code) :
     if (get_fqdn() == sadm_server) :                                    # If on SADMIN Server
         if (rch_used) :                                                 # Copy Now rch to www
             try:
-                woutput = dir_www_host + "/rch"  + '/' + phostname + '_' + pinst + '.rch'        
+                woutput = dir_www_host + "/rch"  + '/' + phostname + '_' + pinst + '.rch'      
+                if os.getuid() == 0 and os.path.exists(woutput): os.chmod(woutput, 0o0660)          # Change RCH File Permission  
                 shutil.copyfile(rch_file, woutput )                     # Copy Now rch to www
             except Exception as e:
                 print ("Couldn't copy %s to %s\n%s\n" % (rch_file,woutput,e)) # Advise user
@@ -1885,6 +1887,7 @@ def stop(pexit_code) :
         if log_footer :
             try:
                 woutput = dir_www_host + "/log"  + '/' + phostname + '_' + pinst + '.log'
+                if os.getuid() == 0 and os.path.exists(woutput): os.chmod(woutput, 0o0660)          # Change RCH File Permission  
                 shutil.copyfile(log_file,woutput )                      # Copy Now log to www
             except Exception as e:
                 print ("Couldn't copy %s to %s\n%s\n" % (log_file,woutput,e)) # Advise user
