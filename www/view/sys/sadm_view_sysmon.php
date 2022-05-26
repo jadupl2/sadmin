@@ -56,6 +56,7 @@
 #@2021_09_30 web v2.26 Sysmon page - Show recent activities even when no alert to report
 #@2022_02_16 web v2.27 Sysmon page - Monitor tmp file was not deleted after use.
 #@2022_02_17 web v2.28 Sysmon page - Added a test to delete only when tmp file exist
+#@2022_05_26 web v2.29 Sysmon page - Fix intermittent problem creating tmp alert file.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -92,7 +93,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.28" ;                                                       # Current version number
+$SVER  = "2.29" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -124,7 +125,11 @@ function create_alert_file() {
     # Get content of all *.rpt files (Contain Error,Warning,Info reported by System Monitor)
     # EXAMPLE OF RPT LINE BELOW : 
     # Warning;holmes;2021.07.24;10:15;linux;FILESYSTEM;Filesystem /wsadmin at 82% >= 80%;default;default
-    touch($alert_file);                                                 # Create empty alert file
+
+    if (file_exists($alert_file)) { unlink($path_user.$path); }         # Delete Alert file if exist
+    touch($alert_file);                                                 # Create empty file
+    chmod($alert_file,0660);                                            # Set Permission on file
+
     $CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rpt' -exec cat {} \; >> $alert_file";
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }        # Show Cmd that we execute
     $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute the find command
