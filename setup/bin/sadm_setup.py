@@ -933,7 +933,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             continue
         if (needed_cmd == "nmon"):
             if not os.path.isfile('/usr/bin/nmon'):
-                package_dir="%s/pkg/%s/%s/%s/%s" % (sroot,needed_cmd,sosname.lower(),sosver,sosarch)
+                package_dir="%s/pkg/%s/%s/%s/%s" % (sroot,needed_cmd,sosname.lower(),int(float(sosver)),sosarch)
                 writelog (" ")
                 writelog ("Warning: Distribution don't include '%s'." % (needed_cmd))
                 writelog ("Installing the one from %s" % (package_dir))
