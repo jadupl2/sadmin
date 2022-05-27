@@ -24,6 +24,7 @@
 #@2022_05_21 lib v4.11 Ameliorate file lock funstions & Minor changes
 #@2022_05_25 lib v4.12 Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
 #@2022_05_26 lib v4.13 Prevent error message to appears when running not as root.
+#@2022_05_27 lib v4.14 Fix for AlmaLinux, problem with blank line in /etc/os-release
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -59,7 +60,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.13"                                # This Library Version
+lib_ver             = "4.14"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -169,6 +170,8 @@ osrelease                    = "/etc/os-release"            # Distribution Info 
 os_dict                      = {}                           # Dict. for O/S Info
 with open(osrelease) as f:                                  # Open /etc/os-release as f
     for line in f:                                          # Process each line
+        if len(line) < 2  : continue                        # Skip empty Line
+        if line[0].strip == "#" : continue                  # Skip line beginning with #
         k,v = line.rstrip().split("=")                      # Get Key,Value of each line
         os_dict[k] = v.strip('"')                           # Store info in Dictionnary
 
