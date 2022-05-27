@@ -107,6 +107,7 @@
 #@2022_05_06 install: v3.70 Change finger information for root (sadmin replace root in email)
 #@2022_05_10 install: v3.71 Remove installation of mail command & add 'inxi' command for sysInfo.
 #@2022_05_26 install: v3.72 Minor change and corrections to questions asked while installing.
+#@2022_05_27 install: v3.73 Fix for AlmaLinux, problem with blank line in /etc/os-release
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -123,7 +124,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.72"                                            # Setup Version Number
+sver                = "3.73"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -143,6 +144,8 @@ osrelease           = "/etc/os-release"                                 # Distri
 os_dict             = {}                                                # Dict. for O/S Info
 with open(osrelease) as f:                                              # Open /etc/os-release as f
     for line in f:                                                      # Process each line
+        if len(line) < 2  : continue                                    # Skip empty Line
+        if line[0].strip == "#" : continue                              # Skip line beginning with #
         k,v = line.rstrip().split("=")                                  # Get Key,Value of each line
         os_dict[k] = v.strip('"')                                       # Store info in Dictionnary
 
