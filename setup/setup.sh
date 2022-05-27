@@ -204,19 +204,11 @@ add_epel_8_repo()
                then echo "[ WARNING ] Couldn't enable EPEL PowerTools repository." | tee -a $SLOG
                else echo " [ OK ]"
             fi 
-            epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"  
-            dnf -y install $epel >>$SLOG 2>&1 
+            dnf -y install epel-release >>$SLOG 2>&1 
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
                     return 1
                else echo "Enable EPEL 8 repository [ OK ]"
-            fi 
-            epelnext="https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-8.noarch.rpm"
-            dnf -y install $epelnext >>$SLOG 2>&1
-            if [ $? -ne 0 ]
-               then echo "[ WARNING ] Couldn't enable EPEL 8 Next repository" |tee -a $SLOG
-                    return 1
-               else echo "Enable EPEL 8 Next repository [ OK ]"
             fi 
     fi
 
@@ -237,8 +229,38 @@ add_epel_8_repo()
 add_epel_9_repo()
 {
 
-    if [ "$SADM_OSNAME" = "ALMALINUX" ] || [ "$SADM_OSNAME" = "ROCKY" ]
-        then printf "No Alma & Rocky Linux 9 yet, no EPEL version for it.\n"
+    if [ "$SADM_OSNAME" = "ROCKY" ]
+        then printf "Enable 'crb' EPEL repository ..." |tee -a $SLOG
+             dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
+             if [ $? -ne 0 ]
+                then echo "[ ERROR ] Couldn't enable EPEL repository." | tee -a $SLOG
+                     return 1 
+             fi 
+             printf "Installing epel-release on Rocky Linux V9 ..." |tee -a $SLOG
+             dnf -y install epel-release >>$SLOG 2>&1
+             if [ $? -ne 0 ]
+                then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
+                     return 1 
+                else echo " [ OK ]"
+             fi
+             return 0 
+    fi 
+
+
+    if [ "$SADM_OSNAME" = "ALMALINUX" ] 
+        then printf "Enable 'crb' EPEL repository ..." |tee -a $SLOG
+             dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
+             if [ $? -ne 0 ]
+                then echo "[ ERROR ] Couldn't enable EPEL repository." | tee -a $SLOG
+                     return 1 
+             fi 
+             printf "Installing epel-release on AlmaLinux V9 ..." |tee -a $SLOG
+             dnf -y install epel-release >>$SLOG 2>&1
+             if [ $? -ne 0 ]
+                then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
+                     return 1 
+                else echo " [ OK ]"
+             fi
              return 0 
     fi 
 
@@ -462,16 +484,28 @@ check_hostname()
     S_IPADDR=`ip addr show | grep global | head -1 | awk '{ print $2 }' |awk -F/ '{ print $1 }'`
 
     # Get Hostname as per name resolution of IP Address
-    S_HOSTNAME=`host $S_IPADDR | head -1 | awk '{ print $NF }' | cut -d. -f1` 
+    host $S_IPADDR > /dev/null 2>&1
+    if [ $? -ne 0 ] 
+       then echo " "
+            echo "The current system ip '$S_IPADDR' is not resolvable to a name."
+            echo "This need to be resolved before continuing."
+            echo "The SADMIN server will not be able to reach this system, if this is not resolve."
+            echo "When you type the command 'host $S_IPADDR' the last column must not be '3(NXDOMAIN)'"     
+            echo "Correct this situation and run 'setup.sh' again."
+            echo " " 
+            exit 1
+       else S_HOSTNAME=`host $S_IPADDR | head -1 | awk '{ print $NF }' | cut -d. -f1` 
+            S_DOMAIN=`host $S_IPADDR |head -1 |awk '{ print $NF }' |awk -F\. '{printf "%s.%s\n", $2, $3}'` 
+    fi 
 
     # Get Domain Name f IP Address
     S_DOMAIN=`host $S_IPADDR |head -1 |awk '{ print $NF }' |awk -F\. '{printf "%s.%s\n", $2, $3}'` 
 
-    printf "Making sure '$S_HOSTNAME' is defined in /etc/hosts ... " | tee -a $SLOG
+    printf "Making sure '$SADM_HOSTNAME' is defined in /etc/hosts ... " | tee -a $SLOG
 
     # Insert Server into /etc/hosts (If not already there)
     grep -Eiv "^${S_IPADDR}|${S_HOSTNAME}" /etc/hosts > /tmp/hosts.$$
-    echo "$S_IPADDR    ${S_HOSTNAME}.${S_DOMAIN}    ${S_HOSTNAME}" >> /tmp/hosts.$$
+    echo "$S_IPADDR    ${SADM_HOSTNAME}.${S_DOMAIN}    ${SADM_HOSTNAME}" >> /tmp/hosts.$$
 
     # Make Backup of /etc/hosts in /etc/host.org (If not already exist)
     if [ ! -f /etc/hosts.org ] ; then cp /etc/hosts /etc/hosts.org ; fi
