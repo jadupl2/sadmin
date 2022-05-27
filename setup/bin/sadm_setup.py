@@ -908,12 +908,13 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             else:
                 icmd = "yum install -y %s >>%s 2>&1" % (needed_packages,logfile)
 
-        # wkhtmltopdf package available for all version except CentOS,Redhat Version 8 
-        # Install it from SADMIN package directory
-        if (needed_packages == "wkhtmltopdf") :
-           if (sosname in rhel_family and sosver >= 8) and (sosname != "FEDORA") :
-              package_dir="%s/pkg/%s/%s/%s/%s" % (sroot,needed_packages,sosname.lower(),sosver,sosarch)
-              icmd = "dnf -y install %s/wkhtmltox*  >>%s 2>&1" % (package_dir,logfile)
+            # wkhtmltopdf package available for all version except CentOS,Redhat Version 8 9
+            # Install it from SADMIN package directory
+            if (needed_packages == "wkhtmltopdf") :
+               if (sosname in rhel_family) and (int(float(sosver)) >= 8) and (sosname != "FEDORA") :
+                  package_dir="%s/pkg/%s/%s/%s/%s" % (sroot,needed_packages,sosname.lower(),sosver,sosarch)
+                  icmd = "dnf -y install %s/wkhtmltox*  >>%s 2>&1" % (package_dir,logfile)
+                  writelog("package dir = %s" % package_dir)
 
         writelog ("-----------------------",'log')
         writelog (icmd,'log')
