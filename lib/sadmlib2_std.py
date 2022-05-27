@@ -25,6 +25,7 @@
 #@2022_05_25 lib v4.12 Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
 #@2022_05_26 lib v4.13 Prevent error message to appears when running not as root.
 #@2022_05_27 lib v4.14 Fix for AlmaLinux, problem with blank line in /etc/os-release
+#@2022_05_27 lib v4.15 Use socket.getfqdn() to get fqdn
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -60,7 +61,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.14"                                # This Library Version
+lib_ver             = "4.15"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -963,8 +964,8 @@ def get_fqdn():
             Return the fully qualified domain name of the current host.
     """ 
 
-    return("%s.%s" % (phostname,get_domainname()))
-    #return (socket.getfqdn())
+    #return("%s.%s" % (phostname,get_domainname()))
+    return (socket.getfqdn())
 
 
 
