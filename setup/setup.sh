@@ -235,6 +235,7 @@ add_epel_9_repo()
              if [ $? -ne 0 ]
                 then echo "[ ERROR ] Couldn't enable EPEL repository." | tee -a $SLOG
                      return 1 
+                else echo " [ OK ]"
              fi 
              printf "Installing epel-release on Rocky Linux V9 ..." |tee -a $SLOG
              dnf -y install epel-release >>$SLOG 2>&1
@@ -253,6 +254,7 @@ add_epel_9_repo()
              if [ $? -ne 0 ]
                 then echo "[ ERROR ] Couldn't enable EPEL repository." | tee -a $SLOG
                      return 1 
+                else echo " [ OK ]"
              fi 
              printf "Installing epel-release on AlmaLinux V9 ..." |tee -a $SLOG
              dnf -y install epel-release >>$SLOG 2>&1
