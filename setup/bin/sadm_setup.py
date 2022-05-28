@@ -108,6 +108,7 @@
 #@2022_05_10 install: v3.71 Remove installation of mail command & add 'inxi' command for sysInfo.
 #@2022_05_26 install: v3.72 Minor change and corrections to questions asked while installing.
 #@2022_05_27 install: v3.73 Fix for AlmaLinux, problem with blank line in /etc/os-release
+#@2022_05_28 install: v3.74 Add firewall rule if SSH port specified is different than 22.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -124,7 +125,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.73"                                            # Setup Version Number
+sver                = "3.74"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -722,9 +723,9 @@ def update_sudo_file(logfile,wuser) :
 
 
 #===================================================================================================
-# IF FIREWALL IS RUNNING - OPEN PORT (80) FOR HTTP
+# IF FIREWALL IS RUNNING - OPEN PORT (80 & 443 ) FOR HTTP/HTTPS
 #===================================================================================================
-def firewall_rule() :
+def rpm_firewall_rule(ussh_port) :
     writelog('')
     writelog('--------------------')
     writelog("Checking Firewall Information",'bold')
@@ -732,10 +733,10 @@ def firewall_rule() :
     # Check if the command 'firewalld-cmd' is present on system - If not return to caller
     writelog("  - Checking Firewall ... ",'nonl')
     if (locate_command('firewall-cmd') == "") :                         # firewalld command not found
-        writelog("Not installed")
+        writelog("Firewall (firewalld) not installed")
         return (0)                                                      # No need to continue
     else :
-        writelog("Installed")
+        writelog("Firewall (firewalld) installed")
 
     # Check if Firewall is running - If not then return to caller 
     writelog("  - Checking if firewall is running ... ",'nonl')
@@ -743,24 +744,31 @@ def firewall_rule() :
     if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
     ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
     if ccode != 0 :  
-        writelog("Not running")
+        writelog("Firewall (firewalld) not running")
         return (0)                                                      # If Firewall not running
     else:
-        writelog("Running")
+        writelog("Firewall (firewalld) running")
 
     # Open TCP Port 80 on Firewall
-    writelog("  - Adding rules to allow incoming connection on port 80")
-    COMMAND="firewall-cmd --zone=public --add-port=80/tcp --permanent"  # Allow port 80 for HTTP 
-    if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
-    ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
+    writelog("  - Adding rules to allow incoming connection for http (port 80)")
+    COMMAND="firewall-cmd --zone=public --add-service=http --permanent" 
+    if (DEBUG): print ("O/S command : %s " % (COMMAND))                 
+    ccode,cstdout,cstderr = oscommand(COMMAND)                          
 
     # Open TCP Port 443 on Firewall
-    writelog("  - Adding rules to allow incoming connection on port 443")
-    COMMAND="firewall-cmd --zone=public --add-port=443/tcp --permanent"  # Allow port 80 for HTTP 
-    if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
-    ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
+    writelog("  - Adding rules to allow incoming connection for https (port 443)")
+    COMMAND="firewall-cmd --zone=public --add-service=https --permanent" 
+    if (DEBUG): print ("O/S command : %s " % (COMMAND))
+    ccode,cstdout,cstderr = oscommand(COMMAND)
 
-    # Restart Firewall to activate the new rule
+    # Iff SSH Port chosen was not 22 add firewall rule 
+    if ussh_port != 22 : 
+        writelog("  - Adding rules to allow SSH on port %d" % (ussh_port))
+        COMMAND="firewall-cmd --zone=public --add-port=%d/tcp https --permanent" % (ussh_port)
+        if (DEBUG): print ("O/S command : %s " % (COMMAND))             # Under Debug print cmd   
+        ccode,cstdout,cstderr = oscommand(COMMAND)                      
+
+    # Reload Firewall rules
     COMMAND = "firewall-cmd --reload"                                   # Activate Rule - Restart FW
     if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
     ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
@@ -2335,6 +2343,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     ccode, cstdout, cstderr = oscommand(cmd)                            # Change SADMIN Dir Owner 
 
 
+
     # Questions ask only if on the SADMIN Server
     if (wcfg_host_type == "S"):                                         # If Host is SADMIN Server
         
@@ -2355,8 +2364,8 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
         wcfg_network1b = accept_field(sroot,"SADM_NETMASK1",sdefault,sprompt,"I",1,30) # NetMask
         update_sadmin_cfg(sroot,"SADM_NETWORK1","%s/%s" % (wcfg_network1a,wcfg_network1b))
     
-    return(wcfg_server,SADM_IP,wcfg_domain,wcfg_mail_addr,wcfg_user,wcfg_group) # Return to Caller
-
+    return(wcfg_server,SADM_IP,wcfg_domain,wcfg_mail_addr,wcfg_user,wcfg_group,wcfg_ssh_port) 
+    
 
 
 #===================================================================================================
@@ -2556,7 +2565,7 @@ def mainflow(sroot):
 
     # Go and Ask Setup Question to user 
     # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, sadmin User and Group).
-    (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype,sosname) 
+    (userver,uip,udomain,uemail,uuser,ugroup,ussh_port) = setup_sadmin_config_file(sroot,wostype,sosname) 
 
     # On SADMIN Client, Apache web server is not installed, 
     # But we need to set the WebUser and the WebGroup to some default value (SADMIN user and Group)
@@ -2577,7 +2586,7 @@ def mainflow(sroot):
     if (stype == 'S') :                                                 # If install SADMIN Server
         update_host_file(udomain,uip)                                   # Update /etc/hosts file
         satisfy_requirement('S',sroot,packtype,logfile,sosname,sosver,sosbits,sosarch) 
-        firewall_rule()                                                 # Open Port 80 for HTTP
+        if (packtype == "rpm"): rpm_firewall_rule(ussh_port)            # Open HTTP/HTTPS/SSH Ports
         setup_mysql(sroot,userver,udomain,sosname)                      # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
         update_server_crontab_file(logfile,sroot,wostype,uuser)         # Create Server Crontab File 
