@@ -50,8 +50,8 @@
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
     import os,time,sys,argparse,pdb,socket,datetime,glob,pymysql,fnmatch 
-    SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir. Name
-    sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
+#    SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir. Name
+#    sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
     import sadmlib_std as sadm                                      # Import SADMIN Python Library
 except ImportError as e:
     print ("Import Error : %s " % e)

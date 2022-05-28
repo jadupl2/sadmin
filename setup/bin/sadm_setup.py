@@ -922,7 +922,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
                if (sosname in rhel_family) and (int(float(sosver)) >= 8) and (sosname != "FEDORA") :
                   package_dir="%s/pkg/%s/%s/%s/%s" % (sroot,needed_packages,sosname.lower(),int(float(sosver)),sosarch)
                   icmd = "dnf -y install %s/wkhtmltox*  >>%s 2>&1" % (package_dir,logfile)
-                  writelog("imcd = %s" % icmd)
+                  #writelog("imcd = %s" % icmd)
 
         writelog ("-----------------------",'log')
         writelog (icmd,'log')

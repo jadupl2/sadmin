@@ -53,7 +53,7 @@ try :
 #   import pdb                                              # Python Debugger
 except ImportError as e:
     print ("Import Error : %s " % e)
-    sys.exit(1)
+    sys.exit(1)get_fqdn
 #pdb.set_trace()                                            # Activate Python Debugging
 
 
@@ -964,8 +964,8 @@ def get_fqdn():
             Return the fully qualified domain name of the current host.
     """ 
 
-    return("%s.%s" % (phostname,get_domainname()))
-    #return (socket.getfqdn())
+    #return("%s.%s" % (phostname,get_domainname()))
+    return (socket.getfqdn())
 
 
 

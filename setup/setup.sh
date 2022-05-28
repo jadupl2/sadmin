@@ -493,11 +493,11 @@ check_selinux()
              return 0 
     fi 
 
-    sestat==$(getenforce)
+    sestat=$(getenforce)
     printf "   - Current SELinux status is ${sestat}.\n"
     
     if [ "$sestat" == "Enforcing" ]
-       then printf "   - Temporarely (until reboot) setting it to 'permissive'."
+       then printf "   - Temporarely (until reboot) setting it to 'Permissive'.\n"
             setenforce 0
        else printf "   - Leave SELinux to ${sestat}.\n"
     fi 
