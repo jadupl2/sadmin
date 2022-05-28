@@ -964,8 +964,8 @@ def get_fqdn():
             Return the fully qualified domain name of the current host.
     """ 
 
-    #return("%s.%s" % (phostname,get_domainname()))
-    return (socket.getfqdn())
+    return("%s.%s" % (phostname,get_domainname()))
+    #return (socket.getfqdn())
 
 
 
