@@ -63,6 +63,7 @@
 #@2022_04_11 Update: v3.18 Use /etc/os-release to get O/S info instead using lsb_release depreciated
 #@2022_04_16 Update: v3.19 Misc. Fixes for CentOS 9, Epel 9 and change UI a bit.
 #@2022_05_06 Update: v3.20 Fix somes issue installing EPEL repositories on AlmaLinux & Rocky Linux
+#@2022_05_28 Update: v3.21 Update Make sure SELinux is set (temporarely) to Permissive or disable.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -72,7 +73,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.20'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.21'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -478,6 +479,34 @@ check_python3()
 
 
 
+# Make sure we have no problem with SELinux
+#===================================================================================================
+check_selinux()
+{
+
+    printf "Checking SELinux Status ...\n" | tee -a $SLOG
+
+    selinuxenabled
+    if [ $? -eq 0 ] 
+        then printf "   - SELinux is currently enabled.\n"
+        else printf "   - SELinux is currently disabled.\n"
+             return 0 
+    fi 
+
+    sestat==$(getenforce)
+    printf "   - Current SELinux status is ${sestat}.\n"
+    
+    if [ "$sestat" == "Enforcing" ]
+       then printf "   - Temporarely (until reboot) setting it to 'permissive'."
+            setenforce 0
+       else printf "   - Leave SELinux to ${sestat}.\n"
+    fi 
+}
+
+
+
+
+
 # Make sure hostname is in /etc/hosts
 #===================================================================================================
 check_hostname()
@@ -608,6 +637,9 @@ EOF
 
     # Make sure current host is in /etc/hosts
     check_hostname
+
+    # If SELinux present and activated, make it temporarely permissive until next reboot
+    if [ "$SADM_PACKTYPE" = "rpm" ] ; then check_selinux ; fi
 
     # Ok Python3 is installed - Proceed with Main Setup Script
     echo "We will now proceed with main setup program ($SCRIPT)" >> $SLOG 
