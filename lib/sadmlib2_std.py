@@ -26,6 +26,7 @@
 #@2022_05_26 lib v4.13 Prevent error message to appears when running not as root.
 #@2022_05_27 lib v4.14 Fix for AlmaLinux, problem with blank line in /etc/os-release
 #@2022_05_27 lib v4.15 Use socket.getfqdn() to get fqdn
+#@2022_05_29 lib v4.16 Python socket.getfqdn() don't always return a domain name, use shell method
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -53,7 +54,7 @@ try :
 #   import pdb                                              # Python Debugger
 except ImportError as e:
     print ("Import Error : %s " % e)
-    sys.exit(1)get_fqdn
+    sys.exit(1)
 #pdb.set_trace()                                            # Activate Python Debugging
 
 
@@ -61,7 +62,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.15"                                # This Library Version
+lib_ver             = "4.16"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -135,7 +136,7 @@ sadm_yearly_backup_to_keep    = 3                           # Nb Yearly Backup t
 sadm_weekly_backup_day        = 5                           # Weekly Backup Day (1=Mon.)
 sadm_monthly_backup_date      = 1                           # Monthly Backup Date (1-28)
 sadm_yearly_backup_month      = 12                          # Yearly Backup Month (1-12)
-sadm_yearly_backup_date       = 31                          # Yearly Backup Date(1-31)
+sadm_yearly_backup_date       = 31                          # Yearl Backup Date(1-31)
 sadm_rear_nfs_server          = ""                          # Rear NFS Server
 sadm_rear_nfs_mount_point     = ""                          # Rear NFS Mount Point
 sadm_rear_backup_to_keep      = 3                           # Nb of Rear Backup to keep
@@ -815,9 +816,8 @@ def get_host_ip():
             wip (str) : The main IP address of the current system.
     """ 
 
-    whost = get_fqdn()
     try: 
-        whost = socket.gethostbyname(whost)
+        whost = socket.gethostbyname(phostname)
     except (socket.gaierror, NameError) as e:
         print("Couldn't get the IP address of '%s'." % (whost))
         print("\n%s" % (e))
@@ -829,6 +829,7 @@ def get_host_ip():
 
 # --------------------------------------------------------------------------------------------------
 def get_release() :
+
     """ 
         Return SADMIN Release Version Number from '$SADMIN/cfg/.release' file.
 
@@ -941,10 +942,11 @@ def get_domainname():
         ccode, cstdout, cstderr = oscommand("namerslv -s | grep domain | awk '{ print $2 }'")
         wdomain = cstdout.lower()
     else:
-        host_ip = socket.gethostbyname(whostname)
-        host_dom = socket.getfqdn(host_ip).split('.')[1:]
-        wdomainname = '.'.join(host_dom)
-        wdomainname = wdomainname.lower()
+        host_ip = socket.gethostbyname(phostname)
+        cmd = "host %s | awk '{print $NF}'| cut -d. -f2-3" % host_ip
+        ccode, cstdout, cstderr = oscommand(cmd)
+        wdomain=cstdout.lower()
+        if wdomain == "" : wdomain = sadm_domain
     return(wdomain)
 
 
@@ -963,9 +965,8 @@ def get_fqdn():
         Return (str):
             Return the fully qualified domain name of the current host.
     """ 
-
-    #return("%s.%s" % (phostname,get_domainname()))
-    return (socket.getfqdn())
+    host_fqdn = "%s.%s" % (phostname,get_domainname())
+    return (host_fqdn)
 
 
 
