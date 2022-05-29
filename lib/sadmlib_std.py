@@ -674,17 +674,27 @@ class sadmtools():
         if (self.os_type != "AIX"):                                        # Under Linux
             cmd = "host %s |head -1 |awk '{ print $1 }' |cut -d. -f2-3" % (self.hostname)
             ccode, cstdout, cstderr = self.oscommand(cmd)
+            wdomainname=cstdout.lower()
         else:
-            ccode, cstdout, cstderr = self.oscommand("namerslv -s | grep domain | awk '{ print $2 }'")
-        wdomainname=cstdout.lower()
+            host_ip = socket.gethostbyname(whostname)
+            host_dom = socket.getfqdn(host_ip).split('.')[1:]
+            wdomainname = '.'.join(host_dom)
+            wdomainname = wdomainname.lower()
         return wdomainname
+
+
 
     # ----------------------------------------------------------------------------------------------
     #                                 RETURN THE SERVER FQDN
     # ----------------------------------------------------------------------------------------------
     def get_fqdn(self):
-        return (socket.getfqdn())
+        host_ip = socket.gethostbyname(self.hostname)
+        host_fqdn = socket.getfqdn(host_ip)
+        return (host_fqdn)
+        #return (socket.getfqdn())
         #return ("%s.%s" % (self.hostname,self.get_domainname()))
+
+
 
     # ----------------------------------------------------------------------------------------------
     #                              RETURN THE IP OF THE CURRENT HOSTNAME

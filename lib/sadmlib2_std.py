@@ -941,10 +941,10 @@ def get_domainname():
         ccode, cstdout, cstderr = oscommand("namerslv -s | grep domain | awk '{ print $2 }'")
         wdomain = cstdout.lower()
     else:
-        #wdomain = socket.getfqdn().split('.', 1)[0].lower()
-        cmd = "host %s |head -1 |awk '{ print $1 }' |cut -d. -f2-3" % (phostname)
-        ccode, cstdout, cstderr = oscommand(cmd)
-        wdomain=cstdout
+        host_ip = socket.gethostbyname(whostname)
+        host_dom = socket.getfqdn(host_ip).split('.')[1:]
+        wdomainname = '.'.join(host_dom)
+        wdomainname = wdomainname.lower()
     return(wdomain)
 
 

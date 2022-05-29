@@ -803,20 +803,20 @@ def print_sadmin_cfg(st):
     presult=st.cfg_network5                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_mksysb_nfs_server"                                 # Variable Name
-    pdesc="AIX MKSYSB NFS Server IP or Name"                            # Function Description
-    presult=st.cfg_mksysb_nfs_server                                    # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    #pexample="st.cfg_mksysb_nfs_server"                                 # Variable Name
+    #pdesc="AIX MKSYSB NFS Server IP or Name"                            # Function Description
+    #presult=st.cfg_mksysb_nfs_server                                    # Return Value(s)
+    #printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_mksysb_nfs_mount_point"                            # Variable Name
-    pdesc="AIX MKSYSB NFS Mount Point"                                  # Function Description
-    presult=st.cfg_mksysb_nfs_mount_point                               # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    #pexample="st.cfg_mksysb_nfs_mount_point"                            # Variable Name
+    #pdesc="AIX MKSYSB NFS Mount Point"                                  # Function Description
+    #presult=st.cfg_mksysb_nfs_mount_point                               # Return Value(s)
+    #printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_mksysb_backup_to_keep"                             # Variable Name
-    pdesc="AIX MKSYSB NFS Backup - Nb .to keep"                         # Function Description
-    presult=st.cfg_mksysb_backup_to_keep                                # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    #pexample="st.cfg_mksysb_backup_to_keep"                             # Variable Name
+    #pdesc="AIX MKSYSB NFS Backup - Nb .to keep"                         # Function Description
+    #presult=st.cfg_mksysb_backup_to_keep                                # Return Value(s)
+    #printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     pexample="st.cfg_rear_nfs_server"                                   # Variable Name
     pdesc="Rear NFS Server IP or Name"                                  # Function Description
