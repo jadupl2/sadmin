@@ -205,12 +205,12 @@ def print_functions():
     pexample="sa.get_host_ip()"                                         # Example Calling Function
     pdesc="Current Host IP Address"                                     # Function Description
     presult=sa.get_host_ip()                                            # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.get_domainname()"                                      # Example Calling Function
     pdesc="Current Host Domain Name"                                    # Function Description
     presult=sa.get_domainname()                                         # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.get_fqdn()"                                            # Example Calling Function
     pdesc="Fully Qualified Domain Host Name"                            # Function Description
