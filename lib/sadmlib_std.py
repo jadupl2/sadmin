@@ -597,6 +597,7 @@ class sadmtools():
     #  EXECUTE the command received 
     # ----------------------------------------------------------------------------------------------
     def oscommand(self,command) :
+
         if self.lib_debug > 8 : self.writelog ("In sadm_oscommand function to run command : %s" % (command))
         p = subprocess.Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
         out = p.stdout.read().strip().decode()
@@ -671,32 +672,20 @@ class sadmtools():
     #                                 RETURN THE DOMAINNAME
     # ----------------------------------------------------------------------------------------------
     def get_domainname(self):
-        whostname = self.hostname
-        if (self.os_type != "AIX"):                                        # Under Linux
-            cmd = "host %s |head -1 |awk '{ print $1 }' |cut -d. -f2-3" % (self.hostname)
-            ccode, cstdout, cstderr = self.oscommand(cmd)
-            wdomainname=cstdout.lower()
-        else:
-            host_ip = socket.gethostbyname(whostname)
-            cmd = "host %s | awk '{print $NF}'| cut -d. -f2-3" % host_ip
-            ccode, cstdout, cstderr = self.oscommand(cmd)
-            wdomainname=cstdout.lower()
-            if wdomainname == "" : wdomainname = self.cfg_domain
+        cmd = "hostname -f | cut -d. -f2-3"
+        ccode, cstdout, cstderr = self.oscommand(cmd)
+        wdomainname=cstdout
+        if wdomainname == "" : wdomainname = self.cfg_domain
+        wdomainname=cstdout.lower()
         return wdomainname
-
 
 
     # ----------------------------------------------------------------------------------------------
     #                                 RETURN THE SERVER FQDN
     # ----------------------------------------------------------------------------------------------
     def get_fqdn(self):
-        host_ip = socket.gethostbyname(self.hostname)
-        cmd = "host %s | awk  '{print $NF}' | sed 's/.$//'" % host_ip
-        ccode, cstdout, cstderr = self.oscommand(cmd)
-        host_fqdn=cstdout.lower()
+        host_fqdn = "%s.%s" % (self.hostname,get_domainname())
         return (host_fqdn)
-
-
 
 
     # ----------------------------------------------------------------------------------------------

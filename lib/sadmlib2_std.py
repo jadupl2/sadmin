@@ -938,16 +938,12 @@ def get_domainname():
             Return domain name of the current host.
     """ 
 
-    if (get_ostype() == "AIX"):                                         # Under Aix
-        ccode, cstdout, cstderr = oscommand("namerslv -s | grep domain | awk '{ print $2 }'")
-        wdomain = cstdout.lower()
-    else:
-        host_ip = socket.gethostbyname(phostname)
-        cmd = "host %s | awk '{print $NF}'| cut -d. -f2-3" % host_ip
-        ccode, cstdout, cstderr = oscommand(cmd)
-        wdomain=cstdout.lower()
-        if wdomain == "" : wdomain = sadm_domain
-    return(wdomain)
+    cmd = "hostname -f | cut -d. -f2-3"
+    ccode, cstdout, cstderr = self.oscommand(cmd)
+    wdomainname=cstdout
+    if wdomainname == "" : wdomainname = self.cfg_domain
+    wdomainname=cstdout.lower()
+    return wdomainname
 
 
 

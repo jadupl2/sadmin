@@ -750,20 +750,20 @@ def rpm_firewall_rule(ussh_port) :
         writelog("Firewall (firewalld) running")
 
     # Open TCP Port 80 on Firewall
-    writelog("  - Adding rules to allow incoming connection for http (port 80)")
+    writelog("  - Adding rule to allow incoming connection for http (port 80)")
     COMMAND="firewall-cmd --zone=public --add-service=http --permanent" 
     if (DEBUG): print ("O/S command : %s " % (COMMAND))                 
     ccode,cstdout,cstderr = oscommand(COMMAND)                          
 
     # Open TCP Port 443 on Firewall
-    writelog("  - Adding rules to allow incoming connection for https (port 443)")
+    writelog("  - Adding rule to allow incoming connection for https (port 443)")
     COMMAND="firewall-cmd --zone=public --add-service=https --permanent" 
     if (DEBUG): print ("O/S command : %s " % (COMMAND))
     ccode,cstdout,cstderr = oscommand(COMMAND)
 
     # Iff SSH Port chosen was not 22 add firewall rule 
     if ussh_port != 22 : 
-        writelog("  - Adding rules to allow SSH on port %d" % (ussh_port))
+        writelog("  - Adding rule to allow SSH on port %d" % (ussh_port))
         COMMAND="firewall-cmd --zone=public --add-port=%d/tcp https --permanent" % (ussh_port)
         if (DEBUG): print ("O/S command : %s " % (COMMAND))             # Under Debug print cmd   
         ccode,cstdout,cstderr = oscommand(COMMAND)                      
