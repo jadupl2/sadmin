@@ -764,7 +764,7 @@ def rpm_firewall_rule(ussh_port) :
     # Iff SSH Port chosen was not 22 add firewall rule 
     if ussh_port != 22 : 
         writelog("  - Adding rule to allow SSH on port %d" % (ussh_port))
-        COMMAND="firewall-cmd --zone=public --add-port=%d/tcp https --permanent" % (ussh_port)
+        COMMAND="firewall-cmd --zone=public --add-port=%d/tcp --permanent" % (ussh_port)
         if (DEBUG): print ("O/S command : %s " % (COMMAND))             # Under Debug print cmd   
         ccode,cstdout,cstderr = oscommand(COMMAND)                      
 
@@ -1570,7 +1570,7 @@ def update_apache_config(sroot,sfile,sname,svalue):
     sfile  {[string]}   --  [Full Path Apache configuration file]
     sname  {[string]}   --  [Variable nameto change value]
     svalue {[string]}   --  [Variable New value]
-    """    
+    """   
 
     dirname = os.path.dirname(sfile)
     wtmp_file = "%s/apache.tmp" % (dirname)                             # Tmp Apache config file
