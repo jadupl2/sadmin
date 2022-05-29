@@ -65,7 +65,8 @@
 #@2022_04_04 library v3.22 Change get_fqdn function so it work well on RHEL9 
 #@2022_04_10 library v3.23 Use /etc/os-release file instead of depreciated lsb_release cmd.
 #@2022_05_27 library v3.24 Use socket.getfqdn() to get fqdn
-#
+#@2022_05_29 library v3.25 socket.getfqdn() don't always return a domain name, use shell method
+# 
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -157,7 +158,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.24"                                # This Library Version
+        self.libver             = "3.25"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -677,9 +678,10 @@ class sadmtools():
             wdomainname=cstdout.lower()
         else:
             host_ip = socket.gethostbyname(whostname)
-            host_dom = socket.getfqdn(host_ip).split('.')[1:]
-            wdomainname = '.'.join(host_dom)
-            wdomainname = wdomainname.lower()
+            cmd = "host %s | awk '{print $NF}'| cut -d. -f2-3" % host_ip
+            ccode, cstdout, cstderr = self.oscommand(cmd)
+            wdomainname=cstdout.lower()
+            if wdomainname == "" : wdomainname = self.cfg_domain
         return wdomainname
 
 
@@ -689,10 +691,11 @@ class sadmtools():
     # ----------------------------------------------------------------------------------------------
     def get_fqdn(self):
         host_ip = socket.gethostbyname(self.hostname)
-        host_fqdn = socket.getfqdn(host_ip)
+        cmd = "host %s | awk  '{print $NF}' | sed 's/.$//'" % host_ip
+        ccode, cstdout, cstderr = self.oscommand(cmd)
+        host_fqdn=cstdout.lower()
         return (host_fqdn)
-        #return (socket.getfqdn())
-        #return ("%s.%s" % (self.hostname,self.get_domainname()))
+
 
 
 
@@ -702,13 +705,6 @@ class sadmtools():
     def get_host_ip(self):
         whostname = self.get_fqdn()
         whostip = socket.gethostbyname(whostname)
-        #if self.os_type == "LINUX" :                                    # Under Linux
-        #    print ("whostname = %s " % (whostname))
-        #    ccode, cstdout, cstderr = self.oscommand("host $whostname |awk '{ print $4 }' |head -1")
-        #    print ("ccode = %d - cstderr = %s  - cstdout %s - whostname = %s " % (ccode,cstderr,cstdout,whostname))
-        #if self.os_type == "AIX" :                                      # Under AIX
-        #    ccode, cstdout, cstderr = self.oscommand("host $whostname.$wdomain |head -1 |awk '{ print $3 }'")
-        #whostip=cstdout
         return whostip
 
 
