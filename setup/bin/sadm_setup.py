@@ -1568,7 +1568,7 @@ def update_apache_config(sroot,sfile,sname,svalue):
     Arguments:
     sroot  {[string]}   --  [Root Dir. of SADMIN]
     sfile  {[string]}   --  [Full Path Apache configuration file]
-    sname  {[string]}   --  [Variable nameto change value]
+    sname  {[string]}   --  [Variable name to change value]
     svalue {[string]}   --  [Variable New value]
     """   
 
@@ -1602,9 +1602,15 @@ def update_apache_config(sroot,sfile,sname,svalue):
     try:                                                                # Will try rename env. file
         os.rename(wtmp_file,sfile)                                      # Rename tmp to sadmin.cfg
     except:
-        writelog ("Error renaming %s to %s" % (wtmp_file,sfile))           # Advise user of problem
+        writelog ("Error renaming %s to %s" % (wtmp_file,sfile))        # Advise user of problem
         sys.exit(1)                                                     # Exit to O/S with Error
 
+    # Remove backup file
+    try:                                                                # Will try Remove bak file
+        os.remove(wbak_file)                                            
+    except:
+        writelog ("Error removing %s" % (wbak_file))                    # Advise user of problem
+        sys.exit(1)                                                     # Exit to O/S with Error
 
 #===================================================================================================
 #   Set and/or Validate that SADMIN Environment Variable is set in /etc/environment file
