@@ -939,9 +939,9 @@ def get_domainname():
     """ 
 
     cmd = "hostname -f | cut -d. -f2-3"
-    ccode, cstdout, cstderr = self.oscommand(cmd)
+    ccode, cstdout, cstderr = oscommand(cmd)
     wdomainname=cstdout
-    if wdomainname == "" : wdomainname = self.cfg_domain
+    if wdomainname == "" : wdomainname = sadm_domain
     wdomainname=cstdout.lower()
     return wdomainname
 
