@@ -684,7 +684,7 @@ class sadmtools():
     #                                 RETURN THE SERVER FQDN
     # ----------------------------------------------------------------------------------------------
     def get_fqdn(self):
-        host_fqdn = "%s.%s" % (self.hostname,get_domainname())
+        host_fqdn = "%s.%s" % (self.hostname,self.get_domainname())
         return (host_fqdn)
 
 
