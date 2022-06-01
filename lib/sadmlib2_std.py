@@ -27,6 +27,7 @@
 #@2022_05_27 lib v4.14 Fix for AlmaLinux, problem with blank line in /etc/os-release
 #@2022_05_27 lib v4.15 Use socket.getfqdn() to get fqdn
 #@2022_05_29 lib v4.16 Python socket.getfqdn() don't always return a domain name, use shell method
+#@2022_06_01 library v4.17 Fix finally get_domain() function to get the domaine name.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -62,7 +63,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.16"                                # This Library Version
+lib_ver             = "4.17"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -938,10 +939,10 @@ def get_domainname():
             Return domain name of the current host.
     """ 
 
-    cmd = "hostname -f | cut -d. -f2-3"
+    cmd = "host %s  | cut -d' ' -f1-1 | cut -d. -f2-3" % phostname
     ccode, cstdout, cstderr = oscommand(cmd)
     wdomainname=cstdout
-    if wdomainname == "" : wdomainname = sadm_domain
+    if wdomainname == "" or wdomainname == phostname : wdomainname = sadm_domain
     wdomainname=cstdout.lower()
     return wdomainname
 
