@@ -251,9 +251,7 @@ if (!is_readable(SADM_ALERT_FILE)) {
     }else{
         echo "<BR>\nDatabase password file missing " .SADM_DBPASS_FILE; # Error Mess. - File Missing
     }
-
-
-    # ADD Web site root and Library Directory to search path
+     # ADD Web site root and Library Directory to search path
     #echo ini_get('include_path');
     set_include_path(get_include_path() . PATH_SEPARATOR . SADM_WWW_DIR);
     set_include_path(get_include_path() . PATH_SEPARATOR . SADM_WWW_LIB_DIR);

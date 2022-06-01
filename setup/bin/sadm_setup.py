@@ -956,7 +956,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             else :
                 writelog (" Done ")
                 continue
-        writelog   ("Error: Was unable to install package %s." % (needed_packages),'bold')
+        writelog   ("Warning: Was unable to install package %s." % (needed_packages),'bold')
             
 
 
