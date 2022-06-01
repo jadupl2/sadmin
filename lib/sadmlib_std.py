@@ -66,7 +66,8 @@
 #@2022_04_10 library v3.23 Use /etc/os-release file instead of depreciated lsb_release cmd.
 #@2022_05_27 library v3.24 Use socket.getfqdn() to get fqdn
 #@2022_05_29 library v3.25 socket.getfqdn() don't always return a domain name, use shell method
-# 
+#@2022_06_01 library v3.26 Fix finally get_domain() function to get the domaine name.
+#  
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -158,7 +159,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.25"                                # This Library Version
+        self.libver             = "3.26"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -672,11 +673,10 @@ class sadmtools():
     #                                 RETURN THE DOMAINNAME
     # ----------------------------------------------------------------------------------------------
     def get_domainname(self):
-        cmd = "hostname -f | cut -d. -f2-3"
+        cmd = "host %s  | cut -d' ' -f1-1 | cut -d. -f2-3" % self.hostname
         ccode, cstdout, cstderr = self.oscommand(cmd)
         wdomainname=cstdout
-        if wdomainname == "" : wdomainname = self.cfg_domain
-        wdomainname=cstdout.lower()
+        if wdomainname == "" or wdomainname == self.hostname : wdomainname = self.cfg_domain
         return wdomainname
 
 
