@@ -1099,6 +1099,13 @@ def print_db_variables(st):
         (returncode,stdout,stderr)=st.oscommand(cmd)
         print (stdout);
 
+        print ("\n\nServer Table Content:")
+        sql="select srv_name, srv_desc, srv_active, srv_ostype, srv_osname, srv_cat,srv_group  from server; "
+        cmd =  "mysql -t -u%s -p%s -h%s" % (st.cfg_ro_dbuser, st.cfg_ro_dbpwd, st.cfg_dbhost)
+        cmd = "%s %s -e '%s'" % (cmd, st.cfg_dbname, sql)
+        (returncode,stdout,stderr)=st.oscommand(cmd)
+        print (stdout);
+
         st.writelog ("Closing Database connection")                     # Show we are closing DB
         st.dbclose()                                                    # Close the Database
         st.writelog (" ")                                               # Blank Line
