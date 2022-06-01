@@ -88,6 +88,7 @@
 #@2022_04_19 server v3.34 Minor fix and performance improvements.
 #@2022_05_12 server v3.35 Move 'sadm_send_alert' and 'write_alert_history' functions from library.
 #@2022_05_19 server v3.36 Added 'chown' and 'chmod' for log and rch files and directories.
+#@2022_06_01 server v3.37 Create system rpt and rch in $SADMIN/www/dat if missing
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
@@ -136,7 +137,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.36'                                     # Script Version
+export SADM_VER='3.37'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
@@ -1374,9 +1375,12 @@ main_process()
     if [ ! -d ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ]                # Web RCH repo Dir not exist
         then mkdir -p ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch          # Create it
     fi
-
     cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch            # cp rch for instant Status
     chmod 666 ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch
+
+    if [ ! -d ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt ]                # Web RCH repo Dir not exist
+        then mkdir -p ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt          # Create it
+    fi
     cp ${SADM_RPT_DIR}/*.rpt ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt   # cp rpt for instant Status
     chmod 666 ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt/*.rpt
 
