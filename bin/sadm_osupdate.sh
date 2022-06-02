@@ -224,7 +224,7 @@ check_available_update()
             esac
             ;;
             
-        "FEDORA" )
+        "FEDORA"|"ALMALINUX"|"ROCKY" )
             sadm_write "Checking for new update, with 'dnf check-update'\n"  # Update the log
             dnf check-update >> $SADM_LOG 2>&1                          # List Available update
             rc=$?                                                       # Save Exit Code
