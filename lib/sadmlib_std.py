@@ -148,15 +148,14 @@ class sadmtools():
         """
 
         # Making Sure SADMIN Environment Variable is Define & import 'sadmlib_std.py' if can be found.
-        if (os.getenv("SADMIN",default="X") == "X"):                    # SADMIN Env.Var. Not Define
+        self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
+        if self.base_dir is None:
             print ("'SADMIN' Environment Variable isn't defined.")      # SADMIN Var MUST be defined
             print ("It specify the directory where you installed the SADMIN Tools")
             print ("Add this line at the end of /etc/environment file") # Show Where to Add Env. Var
             print ("export SADMIN='/[dir-where-you-install-sadmin]'")   # Show What to Add.
             print ("Then logout and log back in and run this script again.")
             sys.exit(1)                                                 # Exit to O/S with Error 1
-        else:
-            self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
         self.libver             = "3.26"                                # This Library Version
@@ -673,7 +672,9 @@ class sadmtools():
     #                                 RETURN THE DOMAINNAME
     # ----------------------------------------------------------------------------------------------
     def get_domainname(self):
-        cmd = "host %s  | cut -d' ' -f1-1 | cut -d. -f2-3" % self.hostname
+        whostip = socket.gethostbyname(self.hostname)
+
+        cmd = "host %s  | awk '{print $NF}' | cut -d. -f2-3" % whostip 
         ccode, cstdout, cstderr = self.oscommand(cmd)
         wdomainname=cstdout
         if wdomainname == "" or wdomainname == self.hostname : wdomainname = self.cfg_domain

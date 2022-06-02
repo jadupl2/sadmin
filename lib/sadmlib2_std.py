@@ -939,12 +939,13 @@ def get_domainname():
             Return domain name of the current host.
     """ 
 
-    cmd = "host %s  | cut -d' ' -f1-1 | cut -d. -f2-3" % phostname
+    whostip = socket.gethostbyname(phostname)
+    cmd = "host %s  | awk '{print $NF}' | cut -d. -f2-3" % whostip 
     ccode, cstdout, cstderr = oscommand(cmd)
     wdomainname=cstdout
     if wdomainname == "" or wdomainname == phostname : wdomainname = sadm_domain
-    wdomainname=cstdout.lower()
     return wdomainname
+
 
 
 

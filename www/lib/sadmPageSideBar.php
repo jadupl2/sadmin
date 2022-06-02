@@ -38,7 +38,7 @@
 # 2019_08-30 New: v2.10 Side Bar re-arrange order.
 # 2019_09-23 Update: v2.11 Change 'Status' for ' Job' in Sidebar.
 # 2019_12_01 Update: v2.12 Shorten label name of sidebar.
-# 2020_07_29 Update: v2.13 Show server attribute counter even if it's zero.
+# 2022_06_02 Update: v2.14 Change some syntax due to the new PHP v8 on RHEL9
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -53,7 +53,7 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.13";                                                        # Current version number
+$SVER  = "2.14";                                                        # Current version number
 $URL_SERVER    = '/view/srv/sadm_view_servers.php';                     # Show Servers List URL
 $URL_OSUPDATE  = "/view/sys/sadm_view_schedule.php";                    # View O/S Update Status URL 
 $URL_BACKUP    = "/view/sys/sadm_view_backup.php";                      # View Backup Status URL 
@@ -413,10 +413,10 @@ function SideBar_OS_Summary() {
 
 	# DISPLAY NUMBER OF ACTIVE SERVER
     $kpart2 = $sadm_array["srv_active,"];                               # Array Key for Act. Server
-    if ( ${kpart2} != 0 ) {                                             # If Nb. Active server is 0
+    if ( $kpart2 != 0 ) {                                             # If Nb. Active server is 0
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_SERVER . "?selection=all_active'>";     # View Active server URL
-        echo "${kpart2} Active(s)</a></div>";                           # Print Nb. of Active Server
+        echo "$kpart2 Active(s)</a></div>";                           # Print Nb. of Active Server
     }else{
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "0 Active</div>";                                          # Print Nb. of Active Server
@@ -424,10 +424,10 @@ function SideBar_OS_Summary() {
 
     # DISPLAY NUMBER OF INACTIVE SERVERS
     $kpart2 = $sadm_array["srv_inactive,"];                             # Array Key for Inact. Srv.
-    if ( ${kpart2} != 0 ) {                                             # If no Inactive server
+    if ( $kpart2 != 0 ) {                                             # If no Inactive server
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_SERVER . "?selection=all_inactive'>";   # View Inactive server URL
-        echo "${kpart2} Inactive(s)</a></div>";                         # Print Nb. Inactive Server
+        echo "$kpart2 Inactive(s)</a></div>";                         # Print Nb. Inactive Server
     }else{
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "0 Inactive</div>";                                        # Print Nb. Inactive Server
@@ -435,10 +435,10 @@ function SideBar_OS_Summary() {
 
     # DISPLAY NUMBER OF VIRTUAL SERVERS
     $kpart2 = $sadm_array["srv_vm,"];                                   # Array Key for Virtual Srv.
-    if ( ${kpart2} != 0 ) {                                             # If no Virtual Server
+    if ( $kpart2 != 0 ) {                                             # If no Virtual Server
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_SERVER . "?selection=all_vm'>";         # View Virtual server URL
-        echo "${kpart2} Virtual(s)</a></div>";                          # Print Nb. of Virtual Srv. 
+        echo "$kpart2 Virtual(s)</a></div>";                          # Print Nb. of Virtual Srv. 
     }else{
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "0 Virtual</div>";                                         # Print Nb. of Virtual Srv. 
@@ -446,10 +446,10 @@ function SideBar_OS_Summary() {
 
     # DISPLAY NUMBER OF PHYSICAL SERVERS
     $kpart2 = $sadm_array["srv_physical,"];                             # Array Key for Physical Srv
-    if ( ${kpart2} != 0 ) {                                             # If No Physical Server
+    if ( $kpart2 != 0 ) {                                             # If No Physical Server
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_SERVER . "?selection=all_physical'>";   # View Physical server URL
-        echo "${kpart2} Physical(s)</a></div>";                         # Print Nb. of Physical Srv.
+        echo "$kpart2 Physical(s)</a></div>";                         # Print Nb. of Physical Srv.
     }else{
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "0 Physical</div>";                                        # Print Nb. of Physical Srv.
@@ -457,10 +457,10 @@ function SideBar_OS_Summary() {
 
     # DISPLAY NUMBER OF SPORADIC SERVERS
     $kpart2 = $sadm_array["srv_sporadic,"];                             # Array Key for Sporadic Srv
-    if ( ${kpart2} != 0 ) {                                             # If no sporadic servers
+    if ( $kpart2 != 0 ) {                                             # If no sporadic servers
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_SERVER . "?selection=all_sporadic'>";   # View Sporadic server URL
-        echo "${kpart2} Sporadic(s)</a></div>";                         # Print Nb. of Sporadic Srv.
+        echo "$kpart2 Sporadic(s)</a></div>";                         # Print Nb. of Sporadic Srv.
     }else{
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "0 Sporadic</div>";                                        # Print Nb. of Sporadic Srv.
