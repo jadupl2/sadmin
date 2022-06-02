@@ -49,6 +49,7 @@
 # 2021_08_05 nolog v2.18 New function "getdocurl($RefString)" to allow link from script to doc
 # 2021_08_29 nolog v2.19 New function "get_alert_group_data" Return used alert grp name,type,tooltip.
 # 2021_08_31 nolog v2.20 New function "sadm_return_logo(OSNAME)" return image path, doc url & tooltip
+#@2022_06_02 update v2.21 Added Logo of AlmaLinux, rocky Linux and update logo of Ubuntu,
 #===================================================================================================
 #
 
@@ -57,7 +58,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.20" ;   
+$LIBVER = "2.21" ;   
     
 
 #===================================================================================================
@@ -575,11 +576,11 @@ function sadm_return_logo($WOS) {
             break;
         case 'ALMALINUX' :
             $iurl='https://wiki.almalinux.org/' ;
-            $ipath='logo_almalinux.png';
+            $ipath='/images/logo_almalinux.png';
             break;
         case 'ROCKY' :
             $iurl='https://docs.rockylinux.org/' ;
-            $ipath='logo_rockylinux.png ';
+            $ipath='/images/logo_rockylinux.png ';
             break;
         case 'UBUNTU' :
             $iurl='https://help.ubuntu.com/' ;
