@@ -109,6 +109,7 @@
 #@2022_05_26 install: v3.72 Minor change and corrections to questions asked while installing.
 #@2022_05_27 install: v3.73 Fix for AlmaLinux, problem with blank line in /etc/os-release
 #@2022_05_28 install: v3.74 Add firewall rule if SSH port specified is different than 22.
+#@2022_06_01 install: v3.75 Add some SELinux comment at the end of the installation.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -125,7 +126,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.74"                                            # Setup Version Number
+sver                = "3.75"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -2494,6 +2495,9 @@ def end_message(sroot,sdomain,sserver,stype):
         writelog ("  - If you want, you can schedule automatic O/S update of your servers.")
         writelog ("  - Have server configuration on hand, usefull in case of a Disaster Recovery.")
         writelog ("  - View your servers farm subnet utilization and see what IP are free to use.")
+        writelog ("If you are using SELinux :")
+        writelog ("  - You MUST apply some changes to configuration to make the web interface work.")
+        writelog ("  - If you are not using SELinux, there's nothing to do")
     writelog (" ")
     writelog ("CREATE YOUR OWN SCRIPT USING SADMIN TEMPLATES",'bold')
     writelog ("  - cp %s/bin/sadm_template.sh %s/usr/bin/YourScript.sh" % (sroot,sroot))
