@@ -573,6 +573,14 @@ function sadm_return_logo($WOS) {
             $iurl='https://docs.centos.org/en-US/docs/' ;
             $ipath='/images/logo_centos.png';
             break;
+        case 'ALMALINUX' :
+            $iurl='https://wiki.almalinux.org/' ;
+            $ipath='logo_almalinux.png';
+            break;
+        case 'ROCKY' :
+            $iurl='https://docs.rockylinux.org/' ;
+            $ipath='logo_rockylinux.png ';
+            break;
         case 'UBUNTU' :
             $iurl='https://help.ubuntu.com/' ;
             $ipath='/images/logo_ubuntu.png';
