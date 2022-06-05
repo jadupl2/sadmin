@@ -2043,11 +2043,14 @@ sadm_start() {
                      sadm_write "  - Remove the PID File (\${SADMIN}/tmp/${SADM_INST}.pid).\n"
                      sadm_write "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script.\n"
                      sadm_write "  - You wait till PID timeout '\$SADM_PID_TIMEOUT' is reach.\n"
+                     sadm_writelog " "
+                     sadm_writelog " "
                      DELETE_PID="N"                                     # No Del PID Since running
                 else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
                         then sadm_write "The PID file exceeded the time to live ('\$SADM_PID_TIMEOUT').\n"
                              sadm_write "Assuming script was aborted abnormally.\n"
                              sadm_write "Script execution is now resume and the PID file recreated.\n"
+                             sadm_writelog " "
                              sadm_writelog " "
                              touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
                              DELETE_PID="Y"                             # Del PID Since running
