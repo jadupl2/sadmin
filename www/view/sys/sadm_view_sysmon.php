@@ -237,13 +237,13 @@ function sysmon_page_heading($HEAD_TYPE)
 
     # Display Section Heading and Prefix Section with Environment
     switch (strtoupper($HEAD_TYPE)) {
-        case 'E' :  echo "\n<br><H3><strong>Critical ALert</strong></H3>\n" ;
+        case 'E' :  echo "\n<br><H3><strong>Red alert (Error)</strong></H3>\n" ;
                     $HCOLOR = "Red";
                     break;
-        case 'W' :  echo "\n<br><H3><strong>Warning Alert</strong></H3>\n" ;
+        case 'W' :  echo "\n<br><H3><strong>Yellow alert (Warning) </strong></H3>\n" ;
                     $HCOLOR = "Yellow";
                     break;
-        case 'R' :  echo "\n<br><H3><strong>Running Scripts</strong></H3>\n" ;
+        case 'R' :  echo "\n<br><H3><strong>Green alert (Running Scripts)</strong></H3>\n" ;
                     $HCOLOR = "Lime";
                     break;
         case 'I' :  echo "\n<br><H3><strong>Information Section</strong></H3>\n" ;
