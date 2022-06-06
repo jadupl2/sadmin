@@ -2554,7 +2554,7 @@ sadm_stop() {
 # --------------------------------------------------------------------------------------------------
 sadm_sendmail() {
 
-    RC=0 
+    RC=0                                                                # Function Return Code
     #LIB_DEBUG=5                                                         # Debug Library Level
     if [ $# -ne 4 ]                                                     # Invalid No. of Parameter
         then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}."
@@ -2573,13 +2573,12 @@ sadm_sendmail() {
               sadm_write_log "Email body    : ${mbody}" 
               sadm_write_log "Email mfile   : ${mfile}" 
     fi 
-
+    #sadm_sendmail "$SADM_MAIL_ADDR" "${SADM_HOSTNAME} sa_repo_checklist" "Body" "$fav_file"
+    # Send Email
     if [ "$mfile" != "" ] && [ -r "$mfile" ]                            # If Attachment Specified
-        then if [ "$LIB_DEBUG" -gt 4 ] 
-                then sadm_write_log "Mail with attachment"
-                     printf "%s\n" "$mbody" | $SADM_MUTT -s "$msubject" $maddr -a "$mfile"  >>$SADM_LOG 2>&1 
-             fi
-        else printf "%s\n" "$mbody" | $SADM_MUTT -s "$msubject" $maddr >>$SADM_LOG 2>&1 
+        then echo "$mbody" | $SADM_MUTT -s "$msubject" $maddr -a "$mfile" >>$SADM_LOG 2>&1 
+             #echo "echo \$mbody\" \| $SADM_MUTT -s \"$msubject\" $maddr -a \"$mfile\""
+        else echo "$mbody" | $SADM_MUTT -s "$msubject" $maddr >>$SADM_LOG 2>&1 
     fi
     RC=$?                                                               # Save Error Number
     if [ $RC -ne 0 ]                                                    # Error sending email 
