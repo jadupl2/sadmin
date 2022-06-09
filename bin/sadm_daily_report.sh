@@ -44,7 +44,8 @@
 # 2021_06_08 nolog: v1.25 Remove from daily backup report system that the daily backup is disable.
 # 2021_06_08 nolog: v1.26 Remove from daily ReaR backup report system that the backup is disable.
 # 2021_06_10 server: v1.27 Show system backup in bold instead of having a yellow background.
-# 2021_08_07 server: v1.28 Help message was showing wrong command line options.
+# 2021_08_07 server: v1.28 Help message was showing wrong command line options.w background.
+#@2022_06_09 server: v1.29 Added AlmaLinux and Rocky Logo
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -75,7 +76,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.28'                                  # Current Script Version
+export SADM_VER='1.29'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -388,6 +389,16 @@ insert_logo()
         'raspbian')     echo -n "<a href='https://www.raspbian.org/' " >> $WHTML
                         echo -n "title='Server $whost is a Raspbian server - Visit raspian.org'>" >> $WHTML
                         echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_raspbian.png' " >> $WHTML
+                        echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
+                        ;;
+        'almalinux')    echo -n "<a href='https://almalinux.org/' " >> $WHTML
+                        echo -n "title='Server $whost is a AlmaLinux server - Visit almalinux.org'>" >> $WHTML
+                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_almalinux.png' " >> $WHTML
+                        echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
+                        ;;
+        'rocky')        echo -n "<a href='https://rockylinux.org//' " >> $WHTML
+                        echo -n "title='Server $whost is a Rocky Linux server - Visit rockylinux.org'>" >> $WHTML
+                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_rockylinux.png' " >> $WHTML
                         echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
                         ;;
         'suse')         echo -n "<a href='https://www.opensuse.org/' " >> $WHTML
