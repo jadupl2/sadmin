@@ -110,6 +110,7 @@
 #@2022_05_27 install: v3.73 Fix for AlmaLinux, problem with blank line in /etc/os-release
 #@2022_05_28 install: v3.74 Add firewall rule if SSH port specified is different than 22.
 #@2022_06_01 install: v3.75 Add some SELinux comment at the end of the installation.
+#@2022_06_10 install: v3.76 Update some /etc/postfix/main.cf parameters
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -126,9 +127,10 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.75"                                            # Setup Version Number
+sver                = "3.76"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
+phostname           = platform.node().split('.')[0].strip()             # Get current hostname
 sadm_base_dir       = ""                                                # SADMIN Install Directory
 conn                = ""                                                # MySQL Database Connector
 cur                 = ""                                                # MySQL Database Cursor
@@ -2030,6 +2032,8 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,s
     if not os.path.isfile(maincf): return                               # Postfix not installed
 
     # Update lines in main.cf
+    update_postfix_cf(sroot,"inet_interfaces","\$myhostname,localhost")
+    update_postfix_cf(sroot,"myhostname",phostname)
     update_postfix_cf(sroot,"smtp_use_tls","yes")
     update_postfix_cf(sroot,"smtp_sasl_auth_enable","yes")
     update_postfix_cf(sroot,"smtp_sasl_security_options"," ")
