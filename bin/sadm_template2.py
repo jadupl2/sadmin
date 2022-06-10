@@ -63,8 +63,6 @@ pdb_conn = None                                                         # Databa
 pdb_cur = None                                                          # Database cursor
 pdebug = 0                                                              # Debug level from 0 to 9
 pexit_code = 0                                                          # Script default exit code
-proot_only = False                                                      # Pgm run by root only ?
-psadm_server_only = False                                               # Run only on SADMIN server?
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
 # Uncomment anyone of them to influence execution of SADMIN standard library.
