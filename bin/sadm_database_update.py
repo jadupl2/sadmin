@@ -44,15 +44,13 @@
 #@2021_06_11 Update: v3.15 Add 'srv_boot_date' that contain last boot date & Fix error message.
 #@2021_06_17 Fix: v3.16 Fix Duplicate column name 'srv_boot_date'
 #@2022_03_28 Update: v3.17 Give a warning instead of error if input file is not created yet.
+#@2022_06_10 Update: v3.18 Updated to use the new SADMIN Python Library v2
 # 
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
     import os,time,sys,argparse,pdb,socket,datetime,glob,pymysql,fnmatch 
-#    SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir. Name
-#    sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
-    import sadmlib_std as sadm                                      # Import SADMIN Python Library
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -69,58 +67,54 @@ wdict           = {}                                                    # Dict f
 
 
 
-# ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.49 
-# Setup for Global Variables and import SADMIN Python module
-# To use SADMIN tools, this section MUST be present near the top of your code.    
-# ---------------------------------------------------------------------------------------
-def setup_sadmin():
 
-    # Load SADMIN Standard Python Library Module ($SADMIN/lib/sadmlib_std.py).
-    try :
-        SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir.
-        sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
-        import sadmlib_std as sadm                                      # Import SADMIN Python Libr.
-    except ImportError as e:                                            # If Error importing SADMIN 
-        print ("Error Importing SADMIN Module: %s " % e)                # Advise User of Error
-        sys.exit(1)                                                     # Go Back to O/S with Error
-    
-    # Create [S]ADMIN [T]ools instance (Setup Dir.,Var.)
-    st = sadm.sadmtools()                       
+# --------------------------------------------------------------------------------------------------
+# SADMIN PYTHON FRAMEWORK SECTION 2.0
+# To use SADMIN tools, this section MUST be present near the top of your code.
+# --------------------------------------------------------------------------------------------------
+try:
+    SADM = os.environ.get('SADMIN')                                     # Getting SADMIN Root Dir.
+    sys.path.insert(0, os.path.join(SADM, 'lib'))                       # Add lib dir to sys.path
+    import sadmlib2_std as sa                                           # Load SADMIN Python Library
+except ImportError as e:                                                # If Error importing SADMIN
+    print("Import error : SADMIN module: %s " % e)                      # Advise User of Error
+    sys.exit(1)                                                         # Go Back to O/S with Error
 
-    # You can use variable below BUT DON'T CHANGE THEM - They are used by SADMIN Module.
-    st.pn               = os.path.basename(sys.argv[0])                 # Script name with extension
-    st.inst             = os.path.basename(sys.argv[0]).split('.')[0]   # Script name without Ext
-    st.tpid             = str(os.getpid())                              # Get Current Process ID.
-    st.exit_code        = 0                                             # Script Exit Code (Use it)
-    st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
+# Local variables local to this script.
+pver = "3.18"                                                           # Program version
+pdesc = "Update SADMIN database from '\*sysinfo.txt' file from each system." 
+phostname = sa.get_hostname()                                           # Get current `hostname -s`
+pdb_conn = None                                                         # Database connector
+pdb_cur = None                                                          # Database cursor
+pdebug = 0                                                              # Debug level from 0 to 9
+pexit_code = 0                                                          # Script default exit code
+proot_only = False                                                      # Pgm run by root only ?
+psadm_server_only = False                                               # Run only on SADMIN server?
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
-    st.ver              = "3.17"                # Current Script Version
-    st.pdesc            = "SADMIN Daily database update v%s" % st.ver
-    st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
-    st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
-    st.log_header       = True                  # Show/Generate Header in script log (.log)
-    st.log_footer       = True                  # Show/Generate Footer in script log (.log)
-    st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
-    st.use_rch          = True                  # Generate entry in Result Code History (.rch) 
-    st.debug            = 0                     # Increase Verbose from 0 to 9 
-    st.usedb            = True                  # Open/Use Database(True) or Don't Need DB(False)
-    st.dbsilent         = False                 # When DB Error, False=ShowErrMsg and True=NoErrMsg 
-                                                # But Error Code always returned (0=ok else error)
+# The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
+# Uncomment anyone of them to influence execution of SADMIN standard library.
+#
+sa.proot_only = True              # Pgm run by root only ?
+sa.psadm_server_only = True       # Run only on SADMIN server ?
+sa.db_used          = True        # Open/Use Database(True) or Don't Need DB(False)
+#sa.db_silent        = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
+#sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
+#sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
+#sa.pid_timeout      = 7200       # PID File Default Time to Live in seconds.
+#sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
+#sa.max_logline      = 500        # Max. lines to keep in log (0=No trim) after execution.
+#sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
+#sa.log_type         = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
+#sa.log_append       = False      # Append Existing Log(True) or Create New One(False)
+#sa.log_header       = True       # Show/Generate Header in script log (.log)
+#sa.log_footer       = True       # Show/Generate Footer in script log (.log)
+#sa.multiple_exec    = "Y"        # Allow running multiple copy at same time ?
+#sa.rch_used         = True       # Generate entry in Result Code History (.rch)
+#sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
+cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
+#
+# ==================================================================================================
 
-    # Override Default define in $SADMIN/cfg/sadmin.cfg
-    #st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSuccess 3=Always
-    #st.cfg_alert_group  = "default"            # Valid Alert Group are defined in alert_group.cfg
-    #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
-    #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
-    #st.cfg_max_logline  = 500                  # When Script End Trim log file to 500 Lines
-    #st.cfg_max_rchline  = 35                   # When Script End Trim rch file to 35 Lines
-    #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server 
-
-    # Start SADMIN Tools - Initialize 
-    st.start()                                  # Init. SADMIN Env. (Create dir.,Log,RCH, Open DB..)
-    return(st)                                  # Return Instance Object To Caller
 
 
 
@@ -128,15 +122,15 @@ def setup_sadmin():
 #                   UPDATE ROW INTO FROM THE WROW DICTIONNARY THE SERVER TABLE
 #===================================================================================================
 #
-def update_row(st,wconn, wcur, wdict):
-    st.writelog ("Updating %s.%s data in Database" % (wdict['srv_name'],wdict['srv_domain']))
+def update_row(wconn, wcur, wdict):
+    sa.write_log ("Updating %s.%s data in Database" % (wdict['srv_name'],wdict['srv_domain']))
 
 
     # Enlarge col 'srv_kernel_version' to 40char. for '2.6.32-754.35.1.el6.centos.plus.i686'
     # Enlarge column 'srv_model' to 30 Characters to accommodate 'Precision WorkStation T3500'
     # Enlarge column 'srv_uptime' from 20 to 25 Char to accommodate largest runtime string
     # Add Last Boot Date Column 
-    if st.get_release() < "1.3.4" :                                         # Change made in 1.3.3
+    if sa.get_release() < "1.3.4" :                                            # Change made in 1.3.3
         sql="ALTER TABLE server MODIFY COLUMN srv_kernel_version VARCHAR(40);"
         try:
             wcur.execute(sql);                                              # Execute the Select SQL
@@ -210,16 +204,16 @@ def update_row(st,wconn, wcur, wdict):
         #enum, emsg = error.args                                         # Get Error No. & Message
         enum=1
         emsg=error                                                     # Get Error Message
-        st.writelog(">>>>>>>>>>>>> (%s) %s " % (enum,error))            # Print Error No. & Message
-        st.writelog("sql=%s" % (sql))
+        sa.write_log(">>>>>>>>>>>>> (%s) %s " % (enum,error))            # Print Error No. & Message
+        sa.write_log("sql=%s" % (sql))
         return(1)                                                      # return (1) to indicate Err
 
     # Execute the SQL Update Statement
     try:
-        if st.debug > 4: st.writelog("sql=%s" % (sql))
+        if pdebug > 4: sa.write_log("sql=%s" % (sql))
         wcur.execute(sql)                                               # Update Server Data
         wconn.commit()                                                  # Commit the transaction
-        st.writelog("[OK] %s update Succeeded" % (wdict['srv_name']))   # Advise User Update is OK
+        sa.write_log("[OK] %s update Succeeded" % (wdict['srv_name']))   # Advise User Update is OK
         return (0)                                                      # return (0) Insert Worked
 
 
@@ -246,26 +240,27 @@ def update_row(st,wconn, wcur, wdict):
 
     #except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
     #    enum, emsg = error.args                                         # Get Error No. & Message
-    #    st.writelog("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
-    #    if st.debug > 4: st.writelog("sql=%s" % (sql))
+    #    sa.write_log("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
+    #    if pdebug > 4: sa.write_log("sql=%s" % (sql))
     #    wconn.rollback()                                                # RollBack Transaction
     #    return (1)                                                      # return (1) to indicate Err
     #except Exception as error:
     #    enum, emsg = error.args                                         # Get Error No. & Message
-    #    st.writelog("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
-    #    if st.debug > 4: st.writelog("sql=%s" % (sql))
+    #    sa.write_log("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
+    #    if pdebug > 4: sa.write_log("sql=%s" % (sql))
     #    wconn.rollback()                                                # RollBack Transaction
     #    return (1)                                                      # return (1) to indicate Err
     return(0)                                                           # Return 0 = update went OK
 
 
 
-#===================================================================================================
-#                        Process all Actives Servers in the Database
-#===================================================================================================
-#
-def process_servers(wconn,wcur,st):
-    st.writelog ("Processing all actives systems")
+
+# Process all your active(s) server(s) in the Database (Used if want to process selected servers)
+# --------------------------------------------------------------------------------------------------
+def process_servers(wconn, wcur):
+    #global pdb_conn, pdb_cur                                            # DB Connection & Cursor
+
+    sa.write_log ("Processing all actives systems")
 
     # Fetch all actives Systems
     sql  = "SELECT srv_name, srv_desc, srv_domain, srv_osname  "
@@ -275,15 +270,15 @@ def process_servers(wconn,wcur,st):
         wcur.execute(sql)
         rows = wcur.fetchall()
     except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
-        self.enum, self.emsg = error.args                               # Get Error No. & Message
-        print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
+        enum,emsg = error.args                                          # Get Error No. & Message
+        print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Message
         return (1)
     except:
         print ("Error: unable to fetch data")
         return (1)
     
     # Under debug show all actives systems that was fetch
-    if st.debug > 4:
+    if pdebug > 4:
         for row in rows:
             wname = row['srv_name']
             wdesc = row['srv_desc'] 
@@ -295,38 +290,38 @@ def process_servers(wconn,wcur,st):
     lineno = 1
     total_error = 0
     for row in rows:
-        if st.debug > 4: st.writelog ("%02d %s" % (lineno, row))
+        if pdebug > 4: sa.write_log ("%02d %s" % (lineno, row))
         wname = row['srv_name']
         wdesc = row['srv_desc'] 
         wdomain = row['srv_domain']
         wos = row['srv_osname']
-        st.writelog("")                                                 # Insert Blank Line
-        st.writelog (('-' * 40))                                        # Insert Dash Line
-        st.writelog ("Processing (%d) %-15s - os:%s" % (lineno,wname+"."+wdomain,wos))
+        sa.write_log("")                                                 # Insert Blank Line
+        sa.write_log (('-' * 40))                                        # Insert Dash Line
+        sa.write_log ("Processing (%d) %-15s - os:%s" % (lineno,wname+"."+wdomain,wos))
 
         # Construct the name of the sysinfo file for that system
-        sysfile = st.www_dat_dir + "/" + wname + "/dr/" + wname + "_sysinfo.txt"
-        st.writelog("Reading sysinfo file : " + sysfile)                # Display Sysinfo File
+        sysfile = sa.dir_www_dat + "/" + wname + "/dr/" + wname + "_sysinfo.txt"
+        sa.write_log("Reading sysinfo file : " + sysfile)                # Display Sysinfo File
 
         # Open sysinfo.txt file for the current server ---------------------------------------------
-        if st.debug > 4: st.writelog("Opening %s" % (sysfile))          # Opened Sysinfo file Msg
+        if pdebug > 4: sa.write_log("Opening %s" % (sysfile))          # Opened Sysinfo file Msg
         try:
             FH = open(sysfile, 'r')                                     # Open Sysinfo File
         except FileNotFoundError as e:
-            st.writelog("[WARNING] Sysinfo file could not be found %s" % (sysfile))
+            sa.write_log("[WARNING] Sysinfo file could not be found %s" % (sysfile))
             #total_error = total_error + 1                           # Add 1 To Total Error
             continue
         except IOError as e:                                            # If Can't open file
-            st.writelog ("Error opening file %s \r\n" % sysfile)        # Print FileName
-            st.writelog ("Error Number : {0}\r\n.format(e.errno)")      # Print Error Number
-            st.writelog ("error({0}):{1}".format(e.errno, e.strerror))
-            st.writelog (repr(e))
-            st.writelog( "Error Text   : {0}\r\n.format(e.strerror)")   # Print Error Message
+            sa.write_log ("Error opening file %s \r\n" % sysfile)        # Print FileName
+            sa.write_log ("Error Number : {0}\r\n.format(e.errno)")      # Print Error Number
+            sa.write_log ("error({0}):{1}".format(e.errno, e.strerror))
+            sa.write_log (repr(e))
+            sa.write_log( "Error Text   : {0}\r\n.format(e.strerror)")   # Print Error Message
             return 1                                                    # Return Error to Caller
-        if st.debug > 4: st.writelog ("File %s opened" % sysfile)       # Opened Sysinfo file Msg
+        if pdebug > 4: sa.write_log ("File %s opened" % sysfile)       # Opened Sysinfo file Msg
 
         # Process the content of the sysinfo.txt file ----------------------------------------------
-        if st.debug > 4: st.writelog("Reading %s" % sysfile)            # Reading Sysinfo file Msg
+        if pdebug > 4: sa.write_log("Reading %s" % sysfile)            # Reading Sysinfo file Msg
         wdict = {}                                                      # Create an empty Dictionary
         wdict['srv_date_update']   = "None"                             # Default Value Upd.Date
         wdict['srv_sadmin_dir']    = "/opt/sadmin"                      # Set Def. SADMIN Root Dir
@@ -338,18 +333,18 @@ def process_servers(wconn,wcur,st):
             wline = cfg_line.strip()                                    # Strip CR/LF/Trailing space
             if '#' in wline or len(wline) == 0:                         # If comment or blank line
                 continue                                                # Go read the next line
-            if st.debug > 4: print("  Parsing Line : %s" % (wline))     # Debug Info - Parsing Line
+            if pdebug > 4: print("  Parsing Line : %s" % (wline))     # Debug Info - Parsing Line
             split_line = wline.split('=')                               # Split based on equal sign
             CFG_NAME = split_line[0].strip()                            # Param Name Uppercase Trim
             try:
                 CFG_VALUE = str(split_line[1]).strip()                  # Param Value Trimmed
                 CFG_NAME = str.upper(CFG_NAME)                          # Make Name in Uppercase
             except LookupError:
-                st.writelog(" ")                                        # Print Blank Line
-                st.writelog("ERROR GETTING VALUE ON LINE %s" % wline)   # Print IndexError Line
+                sa.write_log(" ")                                        # Print Blank Line
+                sa.write_log("ERROR GETTING VALUE ON LINE %s" % wline)   # Print IndexError Line
                 total_error = total_error + 1                           # Add 1 To Total Error
                 NO_ERROR_OCCUR = False                                  # Now No "Error" is False
-                st.writelog("CONTINUE WITH THE NEXT SERVER")            # Advise user we continue
+                sa.write_log("CONTINUE WITH THE NEXT SERVER")            # Advise user we continue
                 continue                                                # Go Read Next Line
 
             # Save Information Found in SysInfo file into our row dictionnary (server_row)----------
@@ -387,7 +382,7 @@ def process_servers(wconn,wcur,st):
                 try:
                     if "SADM_KERNEL_BITMODE" in CFG_NAME: wdict['srv_kernel_bitmode'] = int(CFG_VALUE)
                 except ValueError as e:
-                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    sa.write_log("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
                     wdict['srv_kernel_bitmode'] = int(0)                # Set Kernel Bits to Zero
                     total_error = total_error + 1                       # Add 1 To Total Error
                     NO_ERROR_OCCUR = False                              # Now No "Error" is False
@@ -396,7 +391,7 @@ def process_servers(wconn,wcur,st):
                 try:
                     if "SADM_SERVER_MEMORY" in CFG_NAME: wdict['srv_memory'] = int(CFG_VALUE)
                 except ValueError as e:
-                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    sa.write_log("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
                     wdict['srv_memory'] = int(0)                        # Set Memory Amount to 0
                     total_error = total_error + 1                       # Add 1 To Total Error
                     NO_ERROR_OCCUR = False                              # Now No "Error" is False
@@ -406,7 +401,7 @@ def process_servers(wconn,wcur,st):
                     if "SADM_SERVER_HARDWARE_BITMODE" in CFG_NAME:
                         wdict['srv_hwd_bitmode'] = int(CFG_VALUE)
                 except ValueError as e:
-                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    sa.write_log("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
                     wdict['srv_hwd_bitmode'] = int(0)                   # Set Hard Bits to Zero
                     total_error = total_error + 1                       # Add 1 To Total Error
                     NO_ERROR_OCCUR = False                              # Now No "Error" is False
@@ -415,7 +410,7 @@ def process_servers(wconn,wcur,st):
                 try:
                     if "SADM_SERVER_NB_CPU"  in CFG_NAME: wdict['srv_nb_cpu'] = int(CFG_VALUE)
                 except ValueError as e:
-                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    sa.write_log("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
                     wdict['srv_nb_cpu'] = int(0)                        # Set Nb Cpu to 0
                     total_error = total_error + 1                       # Add 1 To Total Error
                     NO_ERROR_OCCUR = False                              # Now No "Error" is False
@@ -424,7 +419,7 @@ def process_servers(wconn,wcur,st):
                 try:
                     if "SADM_SERVER_CPU_SPEED" in CFG_NAME: wdict['srv_cpu_speed'] = int(CFG_VALUE)
                 except ValueError as e:
-                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    sa.write_log("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
                     wdict['srv_cpu_speed'] = int(0)                     # Set CPU Speed to 0
                     total_error = total_error + 1                       # Add 1 To Total Error
                     NO_ERROR_OCCUR = False                              # Now No "Error" is False
@@ -433,7 +428,7 @@ def process_servers(wconn,wcur,st):
                 try:
                     if "SADM_SERVER_NB_SOCKET" in CFG_NAME: wdict['srv_nb_socket'] = int(CFG_VALUE)
                 except:
-                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    sa.write_log("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
                     wdict['srv_nb_socket'] = int(0)                     # Set Nb Socket to Zero
                     total_error = total_error + 1                       # Add 1 To Total Error
                     NO_ERROR_OCCUR = False                              # Now No "Error" is False
@@ -443,7 +438,7 @@ def process_servers(wconn,wcur,st):
                     if "SADM_SERVER_CORE_PER_SOCKET"  in CFG_NAME:
                         wdict['srv_core_per_socket'] = int(CFG_VALUE)
                 except:
-                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    sa.write_log("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
                     wdict['srv_core_per_socket'] = int(0)               # Set Nb Core/Socket to Zero
                     total_error = total_error + 1                       # Add 1 To Total Error
                     NO_ERROR_OCCUR = False                              # Now No "Error" is False
@@ -454,7 +449,7 @@ def process_servers(wconn,wcur,st):
                         wdict['srv_thread_per_core'] = int(CFG_VALUE)
                 except:
                     wdict['srv_thread_per_core'] = int(0)                # Set Nb Threads to zero
-                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    sa.write_log("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
                     total_error = total_error + 1                       # Add 1 To Total Error
                     NO_ERROR_OCCUR = False                              # Now No "Error" is False
 
@@ -462,7 +457,7 @@ def process_servers(wconn,wcur,st):
                 try:
                     if "SADM_SERVER_DISKS" in CFG_NAME: wdict['srv_disks_info'] = CFG_VALUE
                 except:
-                    st.writelog("ERROR: Converting %s and value is (%s)" % (CFG_NAME, CFG_VALUE))
+                    sa.write_log("ERROR: Converting %s and value is (%s)" % (CFG_NAME, CFG_VALUE))
                     total_error = total_error + 1                       # Add 1 To Total Error
                     NO_ERROR_OCCUR = False                              # Now No "Error" is False
 
@@ -470,101 +465,90 @@ def process_servers(wconn,wcur,st):
                 try:
                     if "SADM_SERVER_VG" in CFG_NAME: wdict['srv_vgs_info'] = CFG_VALUE
                 except:
-                    st.writelog("ERROR: Converting %s and value is (%s)" % (CFG_NAME, CFG_VALUE))
+                    sa.write_log("ERROR: Converting %s and value is (%s)" % (CFG_NAME, CFG_VALUE))
                     total_error = total_error + 1                       # Add 1 To Total Error
                     NO_ERROR_OCCUR = False                              # Now No "Error" is False
 
             except IndexError as e:
-                st.writelog("ERROR: Converting %s and value is (%s)" % (CFG_NAME, CFG_VALUE))
-                st.writelog("%s" % e)
+                sa.write_log("ERROR: Converting %s and value is (%s)" % (CFG_NAME, CFG_VALUE))
+                sa.write_log("%s" % e)
                 total_error = total_error + 1                           # Add 1 To Total Error
                 NO_ERROR_OCCUR = False                                  # Now No "Error" is False
-        if st.debug > 4: st.writelog("Closing %s" % sysfile)            # Closing Sysinfo file Msg
+        if pdebug > 4: sa.write_log("Closing %s" % sysfile)            # Closing Sysinfo file Msg
         FH.close()                                                      # Close the Sysinfo File
         if NO_ERROR_OCCUR:                                              # If No Error Moving Fld
-           RC = update_row(st,wconn, wcur, wdict)                       # Go Update Row
+           RC = update_row(wconn, wcur, wdict)                       # Go Update Row
            total_error = total_error + RC                               # RC=0=Success RC=1=Error
         if (total_error != 0):                                          # Not SHow if Total Error=0
-            st.writelog(" ")                                            # Space line
-            st.writelog("Total Error Count at %d now" % (total_error))  # Total Error after each Srv
+            sa.write_log(" ")                                            # Space line
+            sa.write_log("Total Error Count at %d now" % (total_error))  # Total Error after each Srv
         lineno += 1
 
     return(total_error)                                                 # Return Nb Error to caller
 
 
 
-# --------------------------------------------------------------------------------------------------
-# Command line Options functions
-# Evaluate Command Line Switch Options Upfront
-# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
-# --------------------------------------------------------------------------------------------------
-def cmd_options(st,argv):
 
-    # Evaluate Command Line Switch Options Upfront
-    # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d [0-9]) Set Debug Level     
-    parser = argparse.ArgumentParser(description=st.pdesc)              # Desc. is the script name
-    #
-    parser.add_argument("-v", 
-        action="store_true", 
-        dest='version',
-        help="show script version")
+# Command line Options
+# --------------------------------------------------------------------------------------------------
+def cmd_options(argv):
+    """ Command line Options functions - Evaluate Command Line Switch Options
+
+        Args:
+            (argv): Arguments pass on the comand line.
+              [-d 0-9]  Set Debug (verbose) Level
+              [-h]      Show this help message
+              [-v]      Show script version information
+        Returns:
+            sadm_debug (int)          : Set to the debug level [0-9] (Default is 0)
+    """
+
+    sadm_debug = 0                                                      # Script Debug Level (0-9)
+    parser = argparse.ArgumentParser(description=pdesc)                 # Desc. is the script name
+
+    # Declare Arguments
+    parser.add_argument("-v",
+                        action="store_true",
+                        dest='version',
+                        help="Show script version")
     parser.add_argument("-d",
-        metavar="0-9",  
-        type=int, 
-        dest='debuglevel',
-        help="debug/verbose level from 0 to 9",
-        default=0)
-    #
-    args=parser.parse_args()                                            # Parse the Arguments
-
-    if args.version:                                                    # If -v specified
-        st.show_version()                                               # Show Custom Show Version
-        st.stop (0)                                                     # Close/TrimLog/Del tmpfiles
-        sys.exit(0)                                                     # Exit with code 0
-        
-    if args.debuglevel:                                                 # Debug Level -d specified 
-        st.debug=args.debuglevel                                        # Save Debug Level
-        print ("Debug Level is now set at %d" % (st.debug))             # SHow user debug Level
-
-    return()                                                            # Return To Caller
-
-
-
-
-#===================================================================================================
-#                                  M A I N     P R O G R A M
-#===================================================================================================
-#
-def main(argv):
-
-    # Create [S]ADMIN [T]ool Instance and call the start() function.
-    st = setup_sadmin()                                                 # Sadm Tools class instance
-    cmd_options (st,argv)                                               # Check command-line Options
-
-    # Script can only be run by the user root (Optional Code)
-    if not os.getuid() == 0:                                            # UID of user is not root
-       print ("This script must be run by the 'root' user")             # Advise User Message / Log
-       print ("Try sudo %s" % (os.path.basename(sys.argv[0])))          # Suggest to use 'sudo'
-       print ("Process aborted")                                        # Process Aborted Msg
-       sys.exit(1)                                                      # Exit with Error Code
-
-    # If Script should only be run on the SADMIN Server
-    if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
-        st.writelog("This script can only be run on SADMIN server (%s)" % (st.cfg_server))
-        st.writelog("Process aborted")                                  # Abort advise message
-        st.stop(1)                                                      # Close and Trim Log
-        sys.exit(1)                                                     # Exit To O/S
-
-    # If we are on SADMIN server & use Database (st.usedb=True), open connection to Server Database
-    if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
-        (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
-
-    st.exit_code = process_servers(conn,cur,st)                         # Process Actives Servers
+                        metavar="0-9",
+                        type=int,
+                        dest='sadm_debug',
+                        help="debug/verbose level from 0 to 9",
+                        default=0)
     
-    if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
-        st.dbclose()                                                    # Close the Database
-    st.stop(st.exit_code)                                               # Close SADM Environment
-    sys.exit(st.exit_code)                                              # Exit To O/S
+    args = parser.parse_args()                                          # Parse the Arguments
+
+    # Set return values accordingly.
+    if args.sadm_debug:                                                 # Debug Level -d specified
+        sadm_debug = args.sadm_debug                                    # Save Debug Level
+        print("Debug Level is now set at %d" % (sadm_debug))            # Show user debug Level
+    if args.version:                                                    # If -v specified
+        sa.show_version(pver)                                           # Show Custom Show Version
+        sys.exit(0)                                                     # Exit with code 0
+    return(sadm_debug)                                                  # Return opt values
+
+
+
+
+# Main Function
+# --------------------------------------------------------------------------------------------------
+def main(argv):
+    global pdb_conn, pdb_cur                                            # DB Connection & Cursor
+    (pdebug) = cmd_options(argv)                                        # Analyse cmdline options
+
+    pexit_code = 0                                                      # Pgm Exit Code Default
+    sa.start(pver, pdesc)                                               # Initialize SADMIN env.
+
+    (pexit_code, pdb_conn, pdb_cur) = sa.db_connect()                   # Connect to SADMIN Database
+    if pexit_code == 0:                                                 # If Connection to DB is OK
+        pexit_code = process_servers(pdb_conn, pdb_cur)                 # Loop All Active systems
+        sa.db_close(pdb_conn, pdb_cur)                                  # Close connection to DB
+
+    sa.stop(pexit_code)                                                 # Gracefully exit SADMIN
+    sys.exit(pexit_code)                                                # Back to O/S with Exit Code
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == "__main__": main(sys.argv)
+                                                    # Exit To O/S
