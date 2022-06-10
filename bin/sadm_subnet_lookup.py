@@ -31,6 +31,7 @@
 # 2020_04_30 Update: v3.2 Install module 'getmac', if it's not installed.
 # 2021_05_14 Fix: v3.3 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
 #@2021_06_02 Update: v3.4 Fixes, Added command line options and major code review
+#@2022_06_10 Update: v3.5 Update to use the new SADMIN Python Library v2
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -43,7 +44,7 @@ try :
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
-    #pdb.set_trace()                                                        # Activate Python st.debugging
+    #pdb.set_trace()                                                    # Activate Python
 
 
 #===================================================================================================
@@ -54,72 +55,51 @@ netdict = {}                                                            # Networ
 
 
 
-# ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.49 
-# Setup for Global Variables and import SADMIN Python module
-# To use SADMIN tools, this section MUST be present near the top of your code.    
-# ---------------------------------------------------------------------------------------
-def setup_sadmin():
+# --------------------------------------------------------------------------------------------------
+# SADMIN PYTHON FRAMEWORK SECTION 2.0
+# To use SADMIN tools, this section MUST be present near the top of your code.
+# --------------------------------------------------------------------------------------------------
+try:
+    SADM = os.environ.get('SADMIN')                                     # Getting SADMIN Root Dir.
+    sys.path.insert(0, os.path.join(SADM, 'lib'))                       # Add lib dir to sys.path
+    import sadmlib2_std as sa                                           # Load SADMIN Python Library
+except ImportError as e:                                                # If Error importing SADMIN
+    print("Import error : SADMIN module: %s " % e)                      # Advise User of Error
+    sys.exit(1)                                                         # Go Back to O/S with Error
 
-    # Load SADMIN Standard Python Library Module ($SADMIN/lib/sadmlib_std.py).
-    try :
-        SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir.
-        sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
-        import sadmlib_std as sadm                                      # Import SADMIN Python Libr.
-    except ImportError as e:                                            # If Error importing SADMIN 
-        print ("Error importing SADMIN module: %s " % e)                # Advise User of Error
-        sys.exit(1)                                                     # Go Back to O/S with Error
-    
-    # Create [S]ADMIN [T]ools instance (Setup Dir.,Var.)
-    st = sadm.sadmtools()                       
+# Local variables local to this script.
+pver = "1.1"                                                            # Program version
+pdesc = "Produce Web network page that list IP, name and mac usage for subnet you specified."
+phostname = sa.get_hostname()                                           # Get current `hostname -s`
+pdb_conn = None                                                         # Database connector
+pdb_cur = None                                                          # Database cursor
+pdebug = 0                                                              # Debug level from 0 to 9
+pexit_code = 0                                                          # Script default exit code
 
-    # You can use variable below BUT DON'T CHANGE THEM - They are used by SADMIN Module.
-    st.pn               = os.path.basename(sys.argv[0])                 # Script name with extension
-    st.inst             = os.path.basename(sys.argv[0]).split('.')[0]   # Script name without Ext
-    st.tpid             = str(os.getpid())                              # Get Current Process ID.
-    st.exit_code        = 0                                             # Script Exit Code (Use it)
-    st.hostname         = socket.gethostname().split('.')[0]            # Get current hostname
-
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.    
-    st.ver              = "3.4"                 # Current Script Version
-    st.pdesc            = "SADMIN Subnet Scanner v%s" % st.ver    
-    st.log_type         = 'B'                   # Output goes to [S]creen to [L]ogFile or [B]oth
-    st.log_append       = False                 # Append Existing Log(True) or Create New One(False)
-    st.log_header       = True                  # Show/Generate Header in script log (.log)
-    st.log_footer       = True                  # Show/Generate Footer in script log (.log)
-    st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
-    st.use_rch          = True                  # Generate entry in Result Code History (.rch) 
-    st.debug            = 0                     # Increase Verbose from 0 to 9 
-    st.usedb            = True                  # Open/Use Database(True) or Don't Need DB(False)
-    st.dbsilent         = False                 # When DB Error, False=ShowErrMsg and True=NoErrMsg 
-                                                # But Error Code always returned (0=ok else error)
-
-    # Override Default define in $SADMIN/cfg/sadmin.cfg
-    #st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSuccess 3=Always
-    #st.cfg_alert_group  = "default"            # Valid Alert Group are defined in alert_group.cfg
-    #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
-    #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
-    st.cfg_max_logline  = 600                  # When Script End Trim log file to 500 Lines
-    #st.cfg_max_rchline  = 35                   # When Script End Trim rch file to 35 Lines
-    #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server 
-
-    # Start SADMIN Tools - Initialize 
-    st.start()                                  # Init. SADMIN Env. (Create dir.,Log,RCH, Open DB..)
-    return(st)                                  # Return Instance Object To Caller
-
-
-
-
-#===================================================================================================
-#                                       RUN O/S COMMAND FUNCTION
-#===================================================================================================
+# The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
+# Uncomment anyone of them to influence execution of SADMIN standard library.
 #
-def oscommand(command) :
-    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    out = p.stdout.read().strip().decode()
-    err = p.stderr.read().strip().decode()
-    returncode = p.wait()
-    return (returncode,out,err)
+sa.proot_only = True             # Pgm run by root only ?
+sa.psadm_server_only = True      # Run only on SADMIN server ?
+sa.db_used          = True       # Open/Use Database(True) or Don't Need DB(False)
+#sa.db_silent        = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
+#sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
+#sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
+#sa.pid_timeout      = 7200       # PID File Default Time to Live in seconds.
+#sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
+sa.max_logline      = 600        # Max. lines to keep in log (0=No trim) after execution.
+#sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
+#sa.log_type         = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
+#sa.log_append       = False      # Append Existing Log(True) or Create New One(False)
+#sa.log_header       = True       # Show/Generate Header in script log (.log)
+#sa.log_footer       = True       # Show/Generate Footer in script log (.log)
+#sa.multiple_exec    = "Y"        # Allow running multiple copy at same time ?
+#sa.rch_used         = True       # Generate entry in Result Code History (.rch)
+#sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
+cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
+#
+# ==================================================================================================
+
 
 
 # ----------------------------------------------------------------------------------------------
@@ -138,7 +118,7 @@ def oscommand(command) :
 #   2 = If Row was found then return row data as a tuple.
 #       If Row was not found 'None' is returned as the second parameter
 # ----------------------------------------------------------------------------------------------
-def db_readkey(st,wconn,wcur,tbkey,dbsilent=True):
+def db_readkey(wconn,wcur,tbkey,dbsilent=True):
 
     sql = "SELECT * FROM server_network WHERE net_ip='%s'" % (tbkey)    # Build select statement
     try :
@@ -146,20 +126,20 @@ def db_readkey(st,wconn,wcur,tbkey,dbsilent=True):
         if (number_of_rows == 0):                                       # If IP Not found
             if not dbsilent :                                           # If not in Silent Mode
                 emsg = "Key '%s' not found in table" % (tbkey)          # Build Error Message
-                st.writelog(">>>>>>>>>>>>> %d %s" % (1,emsg))           # Show Error No. & Message
+                sa.write_log(">>>>>>>>>>>>> %d %s" % (1,emsg))          # Show Error No. & Message
             return(1,None)                                              # Return Error No. & No Data
 
         dbrow = wcur.fetchone()                                         # Get one row base on key
         if (dbrow == None) :                                            # If not row returned
             if not dbsilent :                                           # If not in Silent Mode
                 emsg = "No row found with matching key '%s'" % (tbkey)
-                st.writelog(">>>>>>>>>>>>> %d %s" % (1,emsg))           # Show Error No. & Message
+                sa.write_log(">>>>>>>>>>>>> %d %s" % (1,emsg))          # Show Error No. & Message
             return(1,None)                                              # Return Error No. & No Data
 
     except (pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as e:
         if not dbsilent :                                               # If not in Silent Mode
             enum, emsg = e.args                                         # Get Error No. & Message
-            st.writelog(">>>>>>>>>>>>> %d %s" % (enum,emsg))            # Show Error No. & Message
+            sa.write_log(">>>>>>>>>>>>> %d %s" % (enum,emsg))           # Show Error No. & Message
             return(1,None)                                              # Return Error No. & No Data
 
     return(0,dbrow)                                                     # Return no Error & row data
@@ -185,8 +165,8 @@ def db_readkey(st,wconn,wcur,tbkey,dbsilent=True):
 #   0 = Update Succeeded     
 #   1 = Update Failed 
 #-----------------------------------------------------------------------------------------------
-def db_insert(st,wconn,wcur,tbkey,tbdata,dbsilent=False):
-    if st.debug : st.writelog("Inserting IP: %s " % tbkey);             # Show key to Insert
+def db_insert(wconn,wcur,tbkey,tbdata,dbsilent=False):
+    if pdebug > 4 : sa.write_log("Inserting IP: %s " % tbkey);          # Show key to Insert
     wdate = time.strftime('%Y-%m-%d %H:%M:%S')                          # Save Current Date & Time
 
     # If IP is pingable then update the last ping date
@@ -201,12 +181,12 @@ def db_insert(st,wconn,wcur,tbkey,tbdata,dbsilent=False):
               net_ip='%s', net_ip_wzero='%s', net_hostname='%s', net_mac='%s', net_man='%s', \
               net_ping='%d', net_date_ping='%s', net_date_update='%s' " % \
               (tbdata[0], tbdata[1], tbdata[2], tbdata[3], tbdata[4], tbdata[5], wpingdate, wdate);
-        if st.debug : st.writelog("Insert SQL: %s " % sql);             # st.debug Show SQL Statement
+        if pdebug > 4 : sa.write_log("Insert SQL: %s " % sql);          # debug Show SQL Statement
     except (TypeError, ValueError, IndexError) as error:                # Mismatch Between Num & Str
         enum=1                                                          # Set Class Error Number
         emsg=error                                                      # Get Error Message
         if not dbsilent:                                                # If not in Silent Mode
-            st.writelog(">>>>>>>>>>>>>",enum,error)                     # Print Error No. & Message
+            sa.write_log(">>>>>>>>>>>>>",enum,error)                    # Print Error No. & Message
             return(enum)                                                # return (1) indicate Error
 
     # Execute the insert statement
@@ -216,7 +196,7 @@ def db_insert(st,wconn,wcur,tbkey,tbdata,dbsilent=False):
     except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
         if not dbsilent :                                               # If not in Silent Mode
             enum, emsg = error.args                                     # Get Error No. & Message
-            st.writelog(">>>>>>>>>>>>> %d %s" % (enum,emsg))            # Show Error No. & Message
+            sa.write_log(">>>>>>>>>>>>> %d %s" % (enum,emsg))            # Show Error No. & Message
         return(enum)                                                    # return Error Number
 
     return(0)                                                           # return (0) Insert Worked
@@ -242,7 +222,7 @@ def db_insert(st,wconn,wcur,tbkey,tbdata,dbsilent=False):
 #   1 = Update Failed 
 #===================================================================================================
 #
-def db_update(st,wconn,wcur,wip,wzero,wname,wmac,wman,wping,wdateping,wdatechange):
+def db_update(wconn,wcur,wip,wzero,wname,wmac,wman,wping,wdateping,wdatechange):
 
     # Update Server Row With Info collected from the sysinfo.txt file
     try:
@@ -253,10 +233,10 @@ def db_update(st,wconn,wcur,wip,wzero,wname,wmac,wman,wping,wdateping,wdatechang
         enum, emsg = error.args                                         # Get Error No. & Message
         #enum=1
         #emsg=error                                                     # Get Error Message
-        st.writelog(">>>>>>>>>>>>> (%s) %s " % (enum,error))            # Print Error No. & Message
-        st.writelog("sql=%s" % (sql))
+        sa.write_log(">>>>>>>>>>>>> (%s) %s " % (enum,error))           # Print Error No. & Message
+        sa.write_log("sql=%s" % (sql))
         return(1)                                                       # return (1) to indicate Err
-    if (st.debug) : st.writelog("sql=%s" % (sql))                      # Show SQL in Error
+    if pdebug > 4 : sa.write_log("sql=%s" % (sql))                      # Show SQL in Error
 
     # Execute the SQL Update Statement
     try:
@@ -264,14 +244,14 @@ def db_update(st,wconn,wcur,wip,wzero,wname,wmac,wman,wping,wdateping,wdatechang
         wconn.commit()                                                  # Commit the transaction
     except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
         enum, emsg = error.args                                         # Get Error No. & Message
-        st.writelog("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
-        if (st.debug) : st.writelog("sql=%s" % (sql))                      # Show SQL in Error
+        sa.write_log("[ERROR] (%s) %s " % (enum,error))                 # Print Error No. & Message
+        if pdebug > 4 : sa.write_log("sql=%s" % (sql))                  # Show SQL in Error
         wconn.rollback()                                                # RollBack Transaction
         return (1)                                                      # return (1) to indicate Err
     except Exception as error:
         enum, emsg = error.args                                         # Get Error No. & Message
-        st.writelog("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
-        if (st.debug) : st.writelog("sql=%s" % (sql))                      # Show SQL in Error
+        sa.write_log("[ERROR] (%s) %s " % (enum,error))                 # Print Error No. & Message
+        if pdebug > 4 : sa.write_log("sql=%s" % (sql))                  # Show SQL in Error
         wconn.rollback()                                                # RollBack Transaction
         return (1)                                                      # return (1) to indicate Err
     return(0)                                                           # Return 0 = update went OK
@@ -282,42 +262,39 @@ def db_update(st,wconn,wcur,wip,wzero,wname,wmac,wman,wping,wdateping,wdatechang
 #                            Scan The Network Received (Example: "192.168.1.0/24")
 #===================================================================================================
 #
-def scan_network(st,snet,wconn,wcur) :
+def scan_network(snet,wconn,wcur) :
 
     # GET MAIN NETWORK INTERFACE NAME 
-    cmd = "netstat -rn |grep '^0.0.0.0' |awk '{ print $NF }'"           # Get Default Route DevName
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Run the arp-scan command
+    cmd = "route -n |grep '^0.0.0.0' |awk '{ print $NF }'"              # Get Default Route DevName
+    ccode,cstdout,cstderr = sa.oscommand(cmd)                           # Run the arp-scan command
     if (ccode != 0):                                                    # If Error running command
-        st.writelog ("Problem running : %s" & (cmd))                    # Show Command in Error
-        st.writelog ("Stdout : %s \nStdErr : %s" % (cstdout,cstderr))   # Write stdout & stderr
+        sa.write_log ("Problem running : %s" & (cmd))                   # Show Command in Error
+        sa.write_log ("Stdout : %s \nStdErr : %s" % (cstdout,cstderr))  # Write stdout & stderr
     else:                                                               # If netstat succeeded
         netdev=cstdout                                                  # Save Net. Interface Name
-        st.writelog ("Current host interface name     : %s" % (netdev)) # Show Interface selected
-
+        sa.write_log ("Current host interface name     : %s" % (netdev)) # Show Interface selected
 
     # SHOW NUMBER OF IP IN NETWORK SUBNET
     NET4 = ipaddress.ip_network(snet)                                   # Create instance of network
     snbip = NET4.num_addresses                                          # Save Number of possible IP
-    st.writelog ("Possible IP on %s   : %s " % (snet,snbip))            # Show Nb. Possible IP
-
+    sa.write_log ("Possible IP on %s   : %s " % (snet,snbip))           # Show Nb. Possible IP
 
     # SHOW NETWORK NETMASK
     snetmask = NET4.netmask                                             # Save Network Netmask
-    st.writelog ("Network netmask                 : %s" % (snetmask))   # Show User Netmask
-
+    sa.write_log ("Network netmask                 : %s" % (snetmask))  # Show User Netmask
 
     # Run fping on Subnet and generate a file containing that IP of servers alive.
-    fpingfile = "%s/fping.txt" % (st.net_dir)                           # fping result file name
+    fpingfile = "%s/fping.txt" % (sa.dir_net)                           # fping result file name
     cmd  = "fping -aq -r1 -g %s 2>/dev/null |tee %s" % (snet,fpingfile) # fping cmd
-    st.writelog ("\nRunning fping and output to %s" % (fpingfile))      # Show fping output filename
-    if (st.debug) : st.writelog ("Command : %s" % (cmd))   
-    ccode,fpinglist,cstderr = oscommand(cmd)                            # Run the fping command
+    sa.write_log ("\nRunning fping and output to %s" % (fpingfile))     # Show fping output filename
+    if (pdebug > 4) : sa.write_log ("Command : %s" % (cmd))   
+    ccode,fpinglist,cstderr = sa.oscommand(cmd)                         # Run the fping command
     if (ccode > 1):                                                     # If Error running command
-        st.writelog ("Problem running : %s" % (cmd))                    # Show Command in Error
-        st.writelog ("Stdout : %s \nStdErr : %s" % (cstdout,cstderr))   # Write stdout & stderr
+        sa.write_log ("Problem running : %s" % (cmd))                   # Show Command in Error
+        sa.write_log ("Stdout : %s \nStdErr : %s" % (cstdout,cstderr))  # Write stdout & stderr
         sys.exit(1)                                                     # Exit script with Error
     else: 
-        st.writelog ("The fping finished with success.\n")              # Show Command Success
+        sa.write_log ("The fping finished with success.\n")             # Show Command Success
 
 
     # ITERATING THROUGH THE USABLE ADDRESSES ON A NETWORK:
@@ -325,24 +302,24 @@ def scan_network(st,snet,wconn,wcur) :
         hip = str(ipaddress.ip_address(ip))                             # Save processing IP
         try :                                                           # Try Get Hostname of the IP
             (hname,halias,hiplist)   = socket.gethostbyaddr(hip)        # Get IP DNS Name
-            if st.debug : st.writelog ("hname = %s, Alias = %s, IPList = %s" % (hname,halias,hiplist))
+            if pdebug > 4 : sa.write_log ("hname = %s, Alias = %s, IPList = %s" % (hname,halias,hiplist))
         except socket.herror as e:                                      # If IP has no Name
             hname = ""                                                  # Clear IP Hostname
 
         # Is the IP is in the ping (fping) active list ?
         if ("%s" % (hip) in fpinglist) :                                # Is IP is fping active list
             hactive = 1                                                 # IP is reachable
-            if (st.debug) : st.writelog("Yes fping say it is active")   # Show debug info
+            if (pdebug > 4) : sa.write_log("Yes fping say it is active")   # Show debug info
         else: 
             hactive = 0                                                 # IP is not Reachable
-            if (st.debug) : st.writelog("No fping say it isn't active") # Show debug info
+            if (pdebug > 4) : sa.write_log("No fping say it isn't active") # Show debug info
 
         # Get the Mac Address of IP
         hmac = ''                                                       # Clear Work Mac Address
         hmac = get_mac_address(ip=hip, network_request=True)            # Get Mac Address of IP 
-        if st.debug : print ( "get_mac_address returned .%s." % (hmac)) # Show debug info
+        if pdebug > 4 : print ( "get_mac_address returned .%s." % (hmac)) # Show debug info
         if hmac == "00:00:00:00:00:00" : hmac=""                        # If can't get Mac Address
-        if st.debug : print ( "The working Mac is : .%s." % (hmac))     # Print Final hmac Content
+        if pdebug > 4 : print ( "The working Mac is : .%s." % (hmac))     # Print Final hmac Content
 
         # Create an IP field with leading zero
         (ip1,ip2,ip3,ip4) = hip.split('.')                              # Split IP Address
@@ -354,21 +331,21 @@ def scan_network(st,snet,wconn,wcur) :
         # Format info and insert it in the 'netdict' array
         WLINE = "%s,%s,%s,%s,%d" % (zip, hname, hmac, hmanu, hactive)   # Format Output file Line
         netdict[hip] = WLINE                                            # Put Line in Dictionary
-        if (st.debug) : st.writelog ("Put %s info '%s' in array" % (hip,WLINE))
+        if (pdebug > 4) : sa.write_log ("Put %s info '%s' in array" % (hip,WLINE))
 
         # Verify if IP is in the SADMIN database
-        if (st.debug) : st.writelog("Checking if IP '%s' exist in database" % (hip))   
-        (dberr,dbrow) = db_readkey(st,wconn,wcur,hip,True)              # Read IP Row if Exist
+        if (pdebug > 4) : sa.write_log("Checking if IP '%s' exist in database" % (hip))   
+        (dberr,dbrow) = db_readkey(wconn,wcur,hip,True)                 # Read IP Row if Exist
         if (dberr != 0):                                                # If IP Not in Database
-            if (st.debug) : st.writelog("IP %s doesn't exist in database" % (hip)) # Advise Usr of flow
+            if (pdebug > 4) : sa.write_log("IP %s doesn't exist in database" % (hip)) # Advise Usr of flow
             cdata = [hip,zip,hname,hmac,hmanu,hactive]                  # Data to Insert
-            dberr = db_insert(st,wconn,wcur,hip,cdata,False)            # Insert New IP in Table
+            dberr = db_insert(wconn,wcur,hip,cdata,False)               # Insert New IP in Table
             if (dberr != 0) :                                           # Did the insert went well ?
-                st.writelog("[ Error ] %d adding '%s' to database" % (dberr,hip))
+                sa.write_log("[ Error ] %d adding '%s' to database" % (dberr,hip))
             else :
-                st.writelog("[ OK ] %s inserted in database" % (hip))
-                if (st.debug) :
-                    st.writelog("Data inserted: IP:%s Host:%s Mac:%s Vend:%s Active:%d" 
+                sa.write_log("[ OK ] %s inserted in database" % (hip))
+                if (pdebug > 4) :
+                    sa.write_log("Data inserted: IP:%s Host:%s Mac:%s Vend:%s Active:%d" 
                     % (hip,hname,hmac,hmanu,hactive))
             continue                                                    # Continue with next IP
 
@@ -380,116 +357,123 @@ def scan_network(st,snet,wconn,wcur) :
         row_ping     = dbrow['net_ping']                                # Save Last Ping Result(0,1)
         row_pingdate = dbrow['net_date_ping']                           # Save Last Ping Date
         row_datechg  = dbrow['net_date_update']                         # Save Last Mac/Name Chg Date
-        if (st.debug) :
-            st.writelog("Actual data in Database: host:%s, Mac:%s, Ping:%s, DatePing:%s, DateUpdate:%s" 
+        if (pdebug > 4) :
+            sa.write_log("Actual data in Database: host:%s, Mac:%s, Ping:%s, DatePing:%s, DateUpdate:%s" 
             % (row_hostname,row_mac,row_ping,row_pingdate,row_datechg))
         wdate = time.strftime('%Y-%m-%d %H:%M:%S')                      # Format Current Date & Time
 
         # If IP Pingable save ping date and ping status
         if (hactive == 1) :                                             # If IP is pingable now
             row_ping = 1                                                # Update Row Ping Info work
-            st.writelog("%-16s Ping worked, update ping date from %s to %s" % (hip,row_pingdate,wdate))
+            sa.write_log("%-16s Ping worked, update ping date from %s to %s" % (hip,row_pingdate,wdate))
             row_pingdate = wdate                                        # Update Last Ping Date
         else:
             row_ping = 0                                                # Upd. Row Info not pingable
-            st.writelog("%-16s Ping didn't worked, leave last ping date as it is." % (hip))
+            sa.write_log("%-16s Ping didn't worked, leave last ping date as it is." % (hip))
 
 
         # If MAC have changed, update MAC and last change date/time.
         if row_mac != hmac :                                            # If MAC Changed
             if hmac == "" or hmac is None :                             # If No MAC (No card)
-                st.writelog("%-16s No MAC address for the moment" % (hip))
+                sa.write_log("%-16s No MAC address for the moment" % (hip))
             else:
                 if hmac is not None : 
-                    st.writelog("%-16s >>>> Mac address changed from '%s' to '%s'" % (hip,row_mac,hmac))
+                    sa.write_log("%-16s >>>> Mac address changed from '%s' to '%s'" % (hip,row_mac,hmac))
                     row_datechg = wdate                                 # MAC Changed Upd. Date Chng
                     row_mac = hmac                                      # Update IP Mac Address
                 else :
-                    st.writelog("%-16s Keep old mac at '%s' since new mac is '%s'" % (hip,row_mac,hmac))
+                    sa.write_log("%-16s Keep old mac at '%s' since new mac is '%s'" % (hip,row_mac,hmac))
         else :
-            st.writelog ("%-16s No MAC address changed ('%s')" % (hip,hmac))
+            sa.write_log ("%-16s No MAC address changed ('%s')" % (hip,hmac))
     
         # If actual hostname is different from the last execution, update last change date
         if (row_hostname != hname):
-            st.writelog("%-16s >>>> Host Name changed from '%s' to '%s'" % (hip,row_hostname,hname))
+            sa.write_log("%-16s >>>> Host Name changed from '%s' to '%s'" % (hip,row_hostname,hname))
             row_datechg = wdate                                         # Hostname Chg Upd Date Chng
             row_hostname = hname                                        # Update IP new hostname
 
         # GO UPDATE DATABASE
-        if (st.debug) : st.writelog ("Updating '%s' data" % (hip))
-        dberr = db_update(st,wconn,wcur,hip,zip,row_hostname,row_mac,row_manu,row_ping,row_pingdate,row_datechg)
+        if (pdebug > 4) : sa.write_log ("Updating '%s' data" % (hip))
+        dberr = db_update(wconn,wcur,hip,zip,row_hostname,row_mac,row_manu,row_ping,row_pingdate,row_datechg)
         if (dberr != 0) :                                               # If no Error updating IP
-            st.writelog("%-16s [ ERROR ] Updating databse" % (hip))     # Advise User Update Error
+            sa.write_log("%-16s [ ERROR ] Updating databse" % (hip))    # Advise User Update Error
         else :
-            if (st.debug) : 
-                st.writelog("Update: IP:%s Host:%s Mac.%s Vend:%s Active:%d PingDate:%s ChangeDate:%s" 
+            if (pdebug > 4) : 
+                sa.write_log("Update: IP:%s Host:%s Mac.%s Vend:%s Active:%d PingDate:%s ChangeDate:%s" 
                 % (hip,row_hostname,row_mac,row_manu,row_ping,row_pingdate,row_datechg))
-            st.writelog("%-16s [ OK ] Database updated" % (hip))        # Advise User Update Error
+            sa.write_log("%-16s [ OK ] Database updated" % (hip))       # Advise User Update Error
     return(0)                                                           # Return to Caller
 
 #===================================================================================================
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
-def main_process(wconn,wcur,st):
-    if (st.debug): st.writelog("Processing Network1 = _%s_" % (st.cfg_network1))
-    if (st.cfg_network1 != "") :
-        scan_network(st,st.cfg_network1,wconn,wcur)                     # Network Subnet 1 to report
+def main_process(wconn,wcur):
+    global pdb_conn, pdb_cur                                            # DB Connection & Cursor
+    
+    if pdebug > 4 : sa.write_log("Processing Network1 = _%s_" % (sa.sadm_network1))
+    if (sa.sadm_network1 != "") :
+        scan_network(sa.sadm_network1,wconn,wcur)                     # Network Subnet 1 to report
 
-    if (st.debug): st.writelog("Processing Network2 = _%s_" % (st.cfg_network2))
-    if (st.cfg_network2 != "") :
-        scan_network(st,st.cfg_network2,wconn,wcur)                     # Network Subnet 2 to report
+    if pdebug > 4 : sa.write_log("Processing Network2 = _%s_" % (sa.sadm_network2))
+    if (sa.sadm_network2 != "") :
+        scan_network(sa.sadm_network2,wconn,wcur)                     # Network Subnet 2 to report
 
-    if (st.debug): st.writelog("Processing Network3 = _%s_" % (st.cfg_network3))
-    if (st.cfg_network3 != "") :
-        scan_network(st,st.cfg_network3,wconn,wcur)                     # Network Subnet 3 to report
+    if pdebug > 4 : sa.write_log("Processing Network3 = _%s_" % (sa.sadm_network3))
+    if (sa.sadm_network3 != "") :
+        scan_network(sa.sadm_network3,wconn,wcur)                     # Network Subnet 3 to report
 
-    if (st.debug): st.writelog("Processing Network4 = _%s_" % (st.cfg_network4))
-    if (st.cfg_network4 != "") :
-        scan_network(st,st.cfg_network4,wconn,wcur)                     # Network Subnet 4 to report
+    if pdebug > 4 : sa.write_log("Processing Network4 = _%s_" % (sa.sadm_network4))
+    if (sa.sadm_network4 != "") :
+        scan_network(sa.sadm_network4,wconn,wcur)                     # Network Subnet 4 to report
 
-    if (st.debug): st.writelog("Processing Network5 = _%s_" % (st.cfg_network5))
-    if (st.cfg_network5 != "") : scan_network(st,st.cfg_network5)       # Network Subnet 5 to report
+    if pdebug > 4 : sa.write_log("Processing Network5 = _%s_" % (sa.sadm_network5))
+    if (sa.sadm_network5 != "") : scan_network(sa.sadm_network5)       # Network Subnet 5 to report
 
     return(0)
 
 
 
 
+# Command line Options
 # --------------------------------------------------------------------------------------------------
-# Command line Options functions
-# Evaluate Command Line Switch Options Upfront
-# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
-# --------------------------------------------------------------------------------------------------
-def cmd_options(st,argv):
+def cmd_options(argv):
+    """ Command line Options functions - Evaluate Command Line Switch Options
 
-    # Evaluate Command Line Switch Options Upfront
-    # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d [0-9]) Set Debug Level     
-    parser = argparse.ArgumentParser(description=st.pdesc)              # Desc. is the script name
-    #
-    parser.add_argument("-v", 
-        action="store_true", 
-        dest='version',
-        help="show script version")
+        Args:
+            (argv): Arguments pass on the comand line.
+              [-d 0-9]  Set Debug (verbose) Level
+              [-h]      Show this help message
+              [-v]      Show script version information
+        Returns:
+            sadm_debug (int)          : Set to the debug level [0-9] (Default is 0)
+    """
+
+    sadm_debug = 0                                                      # Script Debug Level (0-9)
+    parser = argparse.ArgumentParser(description=pdesc)                 # Desc. is the script name
+
+    # Declare Arguments
+    parser.add_argument("-v",
+                        action="store_true",
+                        dest='version',
+                        help="Show script version")
     parser.add_argument("-d",
-        metavar="0-9",  
-        type=int, 
-        dest='debuglevel',
-        help="debug/verbose level from 0 to 9",
-        default=0)
-    #
-    args=parser.parse_args()                                            # Parse the Arguments
+                        metavar="0-9",
+                        type=int,
+                        dest='sadm_debug',
+                        help="debug/verbose level from 0 to 9",
+                        default=0)
+    
+    args = parser.parse_args()                                          # Parse the Arguments
 
+    # Set return values accordingly.
+    if args.sadm_debug:                                                 # Debug Level -d specified
+        sadm_debug = args.sadm_debug                                    # Save Debug Level
+        print("Debug Level is now set at %d" % (sadm_debug))            # Show user debug Level
     if args.version:                                                    # If -v specified
-        st.show_version()                                               # Show Custom Show Version
-        st.stop (0)                                                     # Close/TrimLog/Del tmpfiles
+        sa.show_version(pver)                                           # Show Custom Show Version
         sys.exit(0)                                                     # Exit with code 0
-        
-    if args.debuglevel:                                                 # Debug Level -d specified 
-        st.debug=args.debuglevel                                        # Save Debug Level
-        print ("Debug Level is now set at %d" % (st.debug))             # SHow user debug Level
-
-    return()    
+    return(sadm_debug)                                                  # Return opt values
 
 
 
@@ -499,36 +483,18 @@ def cmd_options(st,argv):
 #===================================================================================================
 #
 def main(argv):
-    
-    # Create [S]ADMIN [T]ool Instance and call the start() function.
-    st = setup_sadmin()                                                 # Sadm Tools class instance
-    cmd_options (st,argv)                                               # Check command-line Options
+    global pdb_conn, pdb_cur                                            # DB Connection & Cursor
+    pdebug = cmd_options(argv)                                          # Analyse cmdline options
+    pexit_code = 0                                                      # Pgm Exit Code Default
 
-    # Insure that this script can only be run by the user root (Optional Code)
-    if not os.getuid() == 0:                                            # UID of user is not zero
-       st.writelog ("This script must be run by the 'root' user")       # Advise User Message / Log
-       st.writelog ("Try sudo ./%s" % (st.pn))                          # Suggest to use 'sudo'
-       st.writelog ("Process aborted")                                  # Process Aborted Msg
-       st.stop (1)                                                      # Close and Trim Log/Email
-       sys.exit(1)                                                      # Exit with Error Code
-
-    # Test if script is running on the SADMIN Server, If not abort script (Optional code)
-    if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
-        st.writelog("This script can only be run on SADMIN server (%s)" % (st.cfg_server))
-        st.writelog("Process aborted")                                  # Abort advise message
-        st.stop(1)                                                      # Close and Trim Log
-        sys.exit(1)                                                     # Exit To O/S
-
-    # If we are on SADMIN server & use Database (st.usedb=True), open connection to Server Database
-    if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
-        (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
-
-    st.exit_code = main_process(conn,cur,st)                            # Use Subnet in sadmin.cfg
-
-    if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
-        st.dbclose()                                                    # Close the Database
-    st.stop(st.exit_code)                                               # Close SADM Environment
-    sys.exit(st.exit_code)                                              # Exit To O/S
+    sa.start(pver, pdesc)                                               # Initialize SADMIN env.
+    if sa.get_fqdn() == sa.sadm_server and sa.db_used :                 # On SADMIN srv & usedb True
+        (pexit_code, pdb_conn, pdb_cur) = sa.db_connect()               # Connect to SADMIN Database
+        if pexit_code == 0:                                             # If Connection to DB is OK
+           pexit_code = main_process(pdb_conn, pdb_cur)                 # Use Subnet in sadmin.cfg
+           sa.db_close(pdb_conn, pdb_cur)                               # Close connection to DB
+    sa.stop(pexit_code)                                                 # Gracefully exit SADMIN
+    sys.exit(pexit_code)                                                # Back to O/S with Exit Code
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == "__main__": main(sys.argv)
