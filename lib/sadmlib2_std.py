@@ -29,6 +29,7 @@
 #@2022_05_29 lib v4.16 Python socket.getfqdn() don't always return a domain name, use shell method
 #@2022_06_01 library v4.17 Fix finally get_domain() function to get the domaine name.
 #@2022_06_10 library v4.18 Fix some problems within the start() function.
+#@2022_06_10 library v4.19 Fix error at the end of execution when script wasn't running as 'root'
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -64,7 +65,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.18"                                # This Library Version
+lib_ver             = "4.19"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -1874,11 +1875,11 @@ def stop(pexit_code) :
         silentremove (pid_file)                                         # Delete PID File
 
     # Copy RCH & LOG files to Server Central Directory to be available to monitor quickly
-    if (get_fqdn() == sadm_server) :                                    # If on SADMIN Server
+    if (get_fqdn() == sadm_server  and os.getuid() == 0 ) :             # If on SADMIN Server
         if (rch_used) :                                                 # Copy Now rch to www
             try:
                 woutput = dir_www_host + "/rch"  + '/' + phostname + '_' + pinst + '.rch'      
-                if os.getuid() == 0 and os.path.exists(woutput): os.chmod(woutput, 0o0660)          # Change RCH File Permission  
+                if os.getuid() == 0 and os.path.exists(woutput): os.chmod(woutput, 0o0660) 
                 shutil.copyfile(rch_file, woutput )                     # Copy Now rch to www
             except Exception as e:
                 print ("Couldn't copy %s to %s\n%s\n" % (rch_file,woutput,e)) # Advise user
@@ -1887,7 +1888,7 @@ def stop(pexit_code) :
             silentremove(rch_file)                                      # Then Delete it 
 
     # If on SADMIN Server, copy immediately rch, log and elog to server central directories.
-    if (get_fqdn() == sadm_server) :                                    # If on SADMIN Server
+    if (get_fqdn() == sadm_server and os.getuid() == 0 ) :              # If on SADMIN Server
         if log_footer :
             try:
                 woutput = dir_www_host + "/log"  + '/' + phostname + '_' + pinst + '.log'
