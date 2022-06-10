@@ -245,7 +245,7 @@ function show_heading() {
     }
        
     # DISPLAY STANDARD PAGE HEADING ----------------------------------------------------------------
-    $title1="Information about " . ucfirst($iptype) . " Subnet ${SUBNET}";
+    $title1="Information about " . ucfirst($iptype) . " subnet ${SUBNET}";
     $title2="";
     display_lib_heading("NotHome","$title1","$title2",$SVER); 
 
