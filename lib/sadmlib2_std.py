@@ -28,6 +28,7 @@
 #@2022_05_27 lib v4.15 Use socket.getfqdn() to get fqdn
 #@2022_05_29 lib v4.16 Python socket.getfqdn() don't always return a domain name, use shell method
 #@2022_06_01 library v4.17 Fix finally get_domain() function to get the domaine name.
+#@2022_06_10 library v4.18 Fix some problems within the start() function.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -63,7 +64,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.17"                                # This Library Version
+lib_ver             = "4.18"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -423,7 +424,7 @@ def load_config_file(cfg_file):
             print("Or restore the files from a backup & review the file content.\n")
         else :
             print("\nThe configuration file %s doesn't exist." % (cfg_file))
-            print("Will continue using template configuration file %s" & (cfg_hidden))
+            print("Will continue using template configuration file %s" % (cfg_hidden))
             print("Please review the configuration file.")
             print("cp %s %s \n" % (cfg_hidden,cfg_file))                  # Install Default cfg  file
             cmd =  "cp %s %s " % (cfg_hidden,cfg_file)                  # Copy Default cfg
@@ -2067,7 +2068,7 @@ def start(pver,pdesc) :
         sys.exit(1)                                                     # Back to O/S 
 
     # If this script can only be run on the SADMIN server
-    if psadm_server_only and sa.get_fqdn() != sa.sadm_server :          # Only run on SADMIN
+    if psadm_server_only and get_fqdn() != sadm_server :                # Only run on SADMIN
         print("This script can only be run on SADMIN server (%s)" % (sa.sadm_server))
         print("Process aborted")                                        # Abort advise message
         stop(1)                                                         # Close SADMIN 
