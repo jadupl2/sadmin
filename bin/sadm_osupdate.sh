@@ -45,6 +45,7 @@
 # 2021_05_04 Update: v3.26 Adjust some message format of the log.
 # 2021_08_19 osupdate v3.27 Fix prompting issue on '.deb' distributions.
 #@2022_04_27 osupdate v3.28 Use apt command instead of apt-get
+#@2022_06_10 osupdate v3.29 Now list package to be updated when using rpm format.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -77,7 +78,7 @@
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.28'                              # Your Current Script Version
+    export SADM_VER='3.29'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -194,6 +195,7 @@ check_available_update()
                         rc=$?                                           # Save Exit Code
                         case $rc in
                             100) UpdateStatus=0                         # Update Exist
+                                 dnf check-update                       # List Available update
                                  sadm_write "${SADM_OK} Update available.\n" # Update the log
                                  ;;
                             0)   UpdateStatus=1                         # No Update available
@@ -210,6 +212,7 @@ check_available_update()
                         rc=$?                                           # Save Exit Code
                         case $rc in
                             100) UpdateStatus=0                         # Update Exist
+                                 dnf check-update                       # List Available update
                                  sadm_write "${SADM_OK} Update available.\n" # Update the log
                                  ;;
                             0)   UpdateStatus=1                         # No Update available
@@ -230,7 +233,8 @@ check_available_update()
             rc=$?                                                       # Save Exit Code
             case $rc in
                 100) UpdateStatus=0                                     # Update Exist
-                     sadm_write "${SADM_OK} Update available.\n"              # Update the log
+                     dnf check-update                                   # List Available update
+                     sadm_write "${SADM_OK} Update available.\n"        # Update the log
                      ;;
                   0) UpdateStatus=1                                     # No Update available
                      sadm_write "${SADM_OK} No Update available.\n"
