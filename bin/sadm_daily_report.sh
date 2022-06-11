@@ -2325,14 +2325,15 @@ main_process()
     # Set Path to wkhtmltopdf (If Exist on System) else will be blank
     export WKHTMLTOPDF=$(sadm_get_command_path "wkhtmltopdf")           # Get wkhtmltopdf cmd path 
     if [ "$WKHTMLTOPDF" = "" ]
-        then sadm_write "$SADM_WARNING Please consider installing package 'wkhtmltopdf'.\n"
+        then sadm_write "[ WARNING ] Please consider installing package 'wkhtmltopdf'.\n"
              sadm_write "With this package, we will be able generate pdf from the generate html pages.\n"
              sadm_write "   - For Debian,Ubuntu,Raspbian,... : sudo apt -y install wkhtmltopdf \n"
              sadm_write "   - For CentOS and RHEL v7 ...     : sudo yum -y install $SADMIN/pkg/wkhtmltopdf/*centos7* \n"
              sadm_write "   - For CentOS and RHEL v8 ...     : sudo dnf -y install $SADMIN/pkg/wkhtmltopdf/*centos8* \n"
              sadm_write "   - For Fedora (included in repo)  : sudo dnf -y install wkhtmltopdf \n"
              sadm_write "You can also download the latest version of 'wkhtmltopdf' at https://wkhtmltopdf.org \n"
-             sadm_write "After doing so, a pdf copy of the reports will be attached to the emails.\n\n"
+             sadm_write "After doing so, a pdf copy of the reports will be attached to the emails.\n"
+             sadm_write_log " "
     fi 
 
     if [ "$BACKUP_REPORT" = "ON" ]                                      # If CmdLine -b was used
