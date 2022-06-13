@@ -30,6 +30,7 @@
 #@2022_06_01 library v4.17 Fix finally get_domain() function to get the domaine name.
 #@2022_06_10 library v4.18 Fix some problems within the start() function.
 #@2022_06_10 library v4.19 Fix error at the end of execution when script wasn't running as 'root'
+#@2022_06_13 library v4.20 Add possibility use 'sendmail()' to send multiple attachments.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -65,7 +66,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.19"                                # This Library Version
+lib_ver             = "4.20"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -2338,7 +2339,7 @@ def sendmail(mail_addr, mail_subject, mail_body, mail_attach) :
             mail_subject (str)  : Subject of your email
             mail_body (str)     : Body of your email
             mail_attach (str)   : Name of the file (MUST exist) to attach to the email.
-                                  (If no attchement, leave blank)
+                                  (If no attachment, leave blank)
     
         Returns:
             Return Code (Int)   : 0 Successfully sent the email
@@ -2350,15 +2351,18 @@ def sendmail(mail_addr, mail_subject, mail_body, mail_attach) :
     data['To'] = mail_addr                                              # store receiver email 
     data['Subject'] = mail_subject                                      # storing the subject 
     data.attach(MIMEText(mail_body, 'plain'))                           # attach body with msg inst
-    if os.path.exists(mail_attach): 
-        filename = mail_attach                                          # open the file to be sent 
-        attachment = open(filename, "rb")                               # Read file into memory
-        p = MIMEBase('application', 'octet-stream')                     # MIMEBase inst & named as p
-        p.set_payload((attachment).read())                              # Payload into encoded form
-        encoders.encode_base64(p)                                       # encode into base64
-        p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
-        data.attach(p)                                                  # attach inst p to inst msg
-        text = data.as_string()                                         # Conv. Multipart msg 2 str
+
+    if mail_attach != "" :
+        filenames = mail_attach.split(',')
+        for filename in filenames :
+            if os.path.exists(filename): 
+                attachment = open(filename, "rb")                       # Read file into memory
+                p = MIMEBase('application', 'octet-stream')             # MIMEBase inst & named as p
+                p.set_payload((attachment).read())                      # Payload into encoded form
+                encoders.encode_base64(p)                               # encode into base64
+                p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+                data.attach(p)                                          # attach inst p to inst msg
+                text = data.as_string()                                 # Conv. Multipart msg 2 str
     else: 
         text = mail_body
 
