@@ -63,19 +63,17 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.50
+# SADMIN CODE SECTION 1.51
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
 
 # MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    
-    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null 
-         if [ $? -eq 0 ]                                   # Found SADMIN in /etc/env.
-            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                 printf "'SADM Added verification of new variables SADM_ROOT_ONLY and SADM_SADM_SERVER_ONLYIN' environment variable temporarily set to ${SADMIN}.\n"
-            else exit 1                                    # No SADMIN Env. Var. Exit
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                    # No SADMIN Env. Var. Exit
          fi
 fi 
 
@@ -102,11 +100,11 @@ export SADM_DEBUG=0                                        # Debug Level(0-9) 0=
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
-export SADM_ROOT_ONLY                                      # Run only by root ? - 1=Yes 0=No
-export SADM_SADM_SERVER_ONLY                               # Run only on SADMIN server?- 1=Yes 0=No
+export SADM_ROOT_ONLY="N"                                  # Run only by root ? - 1=Yes 0=No
+export SADM_SADM_SERVER_ONLY="N"                           # Run only on SADMIN server?- 1=Yes 0=No
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
+. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)

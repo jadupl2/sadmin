@@ -2447,6 +2447,7 @@ sadm_stop() {
                 *   )   GRP_DESC="Grp. $GRP_TYPE ?"                     # Illegal Code Desc
                         ;;
              esac
+
              case $SADM_ALERT_TYPE in
                 0)  sadm_write "Regardless of it termination status, this script is set to never send alert.\n"
                     ;;
@@ -2470,6 +2471,7 @@ sadm_stop() {
                     SADM_ALERT_TYPE=3
                     ;;
              esac
+
              if [ "$SADM_LOG_APPEND" = "N" ]                            # If New log Every Execution
                 then sadm_write "New log created '\$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log'.\n"
                 else if [ $SADM_MAX_LOGLINE -eq 0 ]                     # MaxTrimLog=0 then no Trim
@@ -2545,8 +2547,9 @@ sadm_stop() {
 #     maddr (str)     : Email Address to which you want to send it
 #     msubject (str)  : Subject of your email
 #     mbody (str)     : Body of your email
-#     mfile (str)     : Name of the file (MUST exist) to attach to the email.
-#                       (If no attachment, leave blank "")
+#     mfile (str)     : Name of the files (MUST exist) to attach to the email.
+#                           - If no attachment, leave blank "")
+#                           - If multiples attachment separate each file name by comma.
 # Returns:
 #     Return Code (Int)   : 0 Successfully sent the email
 #                           1 Error while sending the email (Parameters may be wrong)
@@ -2566,24 +2569,55 @@ sadm_sendmail() {
     maddr=$(echo "$1" |awk '{$1=$1;print}')                             # Send to this email
     msubject="$2"                                                       # Save Alert Subject
     mbody="$3"                                                          # Save Alert Message
-    mfile="$4"                                                          # Save Attachment FileName
+    mfile="$4"                                                          # Comma separatedFileName(s)
     if [ "$LIB_DEBUG" -gt 4 ] 
          then sadm_write_log "Email sent to : ${maddr}" 
               sadm_write_log "Email subject : ${msubject}" 
               sadm_write_log "Email body    : ${mbody}" 
-              sadm_write_log "Email mfile   : ${mfile}" 
+              sadm_write_log "Email mfile(s): ${mfile}" 
     fi 
-    #sadm_sendmail "$SADM_MAIL_ADDR" "${SADM_HOSTNAME} sa_repo_checklist" "Body" "$fav_file"
-    # Send Email
-    if [ "$mfile" != "" ] && [ -r "$mfile" ]                            # If Attachment Specified
-        then echo "$mbody" | $SADM_MUTT -s "$msubject" $maddr -a "$mfile" >>$SADM_LOG 2>&1 
-             #echo "echo \$mbody\" \| $SADM_MUTT -s \"$msubject\" $maddr -a \"$mfile\""
-        else echo "$mbody" | $SADM_MUTT -s "$msubject" $maddr >>$SADM_LOG 2>&1 
+
+    # Send mail with 1 or no attachment
+    if [ $(expr index "$mfile" ,) -eq 0 ]                               # No comma = 1 file attach
+       then if [ "$mfile" != "" ]                                       # If Attach. file specified 
+                then if [ ! -r "$mfile" ]                               # Attachment Not Readable ?
+                        then emsg="Attachment file $mfile can't be read or doesn't exist."
+                             sadm_write_err "$emsg"                     # Avise user of error
+                             printf "\n$emsg\n" >> $mbody               # Add Err Msg to Body
+                             RC=1                                       # Set Error return code
+                             echo "$mbody" | $SADM_MUTT -s "$msubject" $maddr >>$SADM_LOG 2>&1
+                        else echo "$mbody" | $SADM_MUTT -s "$msubject" $maddr -a "$mfile" >>$SADM_LOG 2>&1 
+                             RC=$?                                      # Save Error Number
+                     fi
+                else echo "$mbody" | $SADM_MUTT -s "$msubject" $maddr >>$SADM_LOG 2>&1 
+                     RC=$?                                              # Save Error Number
+            fi
+            if [ $RC -ne 0 ]                                            # Error sending email 
+                then wstatus="[ Error ] Sending email to $maddr"        # Advise Error sending Email
+                     sadm_write_err "${wstatus}\n"                      # Show Message to user 
+                     RC=1                                               # Set Error return code
+            fi 
     fi
-    RC=$?                                                               # Save Error Number
-    if [ $RC -ne 0 ]                                                    # Error sending email 
-        then wstatus="[ Error ] Sending email to $maddr"                # Advise Error sending Email
-             sadm_write_err "${wstatus}\n"                              # Show Message to user 
+
+    # Send mail with more than one attachment (filename are delimited by comma)
+    opt_a=""                                                        # -a attachment cumulative
+    if [ $(expr index "$mfile" ,) -ne 0 ]                               # comma = multiple attach
+       then for file in ${mfile//,/ }
+                do if [ ! -r "$file" ]                                  # Attachment Not Readable ?
+                        then emsg="Missing attachment file '$file' can't be read or doesn't exist."
+                             sadm_write_err "$emsg"                     # Avise user of error
+                             mbody=$(printf "\n${mbody}\n\n${emsg}\n") 
+                             RC=1                                       # Set Error return code
+                        else opt_a="$opt_a -a $file "                       # Add -a attach Cmd Option
+                             #echo "opt_a = $opt_a"
+                   fi 
+                done
+            echo "$mbody" | $SADM_MUTT -s $msubject $opt_a \-\- $maddr
+            RC=$?                                                       # Save Error Number
+            if [ $RC -ne 0 ]                                            # Error sending email 
+                then wstatus="[ Error ] Sending email to $maddr"        # Advise Error sending Email
+                     sadm_write_err "${wstatus}\n"                      # Show Message to user 
+            fi
     fi
     #LIB_DEBUG=0                                                         # Debug Library Level
     return $RC
@@ -2779,7 +2813,7 @@ sadm_check_lockfile() {
 # --------------------------------------------------------------------------------------------------
 # Things to do when first called
 # --------------------------------------------------------------------------------------------------
-    SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Save Script Startup Time
+    export SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`                     # Save Script Startup Time
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "main: grepping /etc/environment\n" ; fi
     
     # Get SADMIN Installation Directory
