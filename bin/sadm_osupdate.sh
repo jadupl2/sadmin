@@ -412,7 +412,8 @@ run_apt_get()
             body6="They are then listed as 'kept-back'."
             body7="run apt-get install <list of packages kept back>."
             mbody=`echo -e "${body1}\n${body2}\n${body3}\n${body4}\n${body5}\n${body6}\n\n${body7}\n\nHave a nice day."`
-            printf "%s" "$mbody" | $SADM_MUTT -s "$msub" "$SADM_MAIL_ADDR" >>$SADM_LOG 2>&1 
+            #printf "%s" "$mbody" | $SADM_MUTT -s "$msub" "$SADM_MAIL_ADDR" >>$SADM_LOG 2>&1 
+            sadm_sendmail "$SADM_MAIL_ADDR" "$msub" "$mbody" ""
     fi
 
     sadm_write "System Updated with Success.\n"
