@@ -89,6 +89,7 @@
 #@2022_05_12 server v3.35 Move 'sadm_send_alert' and 'write_alert_history' functions from library.
 #@2022_05_19 server v3.36 Added 'chown' and 'chmod' for log and rch files and directories.
 #@2022_06_01 server v3.37 Create system rpt and rch in $SADMIN/www/dat if missing
+#@2022_06_13 server v3.38 Update to use 'sadm_sendmail()' instead  of mutt manually.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
@@ -137,7 +138,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.37'                                     # Script Version
+export SADM_VER='3.38'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
@@ -717,7 +718,7 @@ validate_server_connectivity()
     # Can we resolve the hostname ?
     if ! host $FQDN_SNAME >/dev/null 2>&1                               # Name is resolvable ? 
            then SMSG="Can't process '$FQDN_SNAME', hostname can't be resolved."
-                sadm_writelog "${SADM_ERROR} ${SMSG}"                   # Advise user
+                sadm_write_err "${SADM_ERROR} ${SMSG}"                  # Advise user
                 return 1                                                # Return Error to Caller
     fi
     SNAME=$(echo "$FQDN_SNAME" | awk -F\. '{print $1}')                 # System Name without Domain
@@ -728,7 +729,7 @@ validate_server_connectivity()
 
     # Try to get uptime from system to test if ssh to system is working
     # -o ConnectTimeout=1 -o ConnectionAttempts=1 
-    wuptime=$($SADM_SSH_CMD -o ConnectTimeout=1 -o ConnectionAttempts=3 $FQDN_SNAME uptime 2>/dev/null)
+    wuptime=$($SADM_SSH_CMD -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
     RC=$?                                                               # Save Error Number
     if [ $RC -eq 0 ]                                                    # If SSH Worked
         then GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
@@ -738,18 +739,18 @@ validate_server_connectivity()
 
     # SSH didn't work, but it's a sporadic system (Laptop or Tmp Server, don't report an error)
     if [ "$server_sporadic" = "1" ]                                     # If Error on Sporadic Host
-        then sadm_writelog "${SADM_WARNING}  Can't SSH to ${FQDN_SNAME} (Sporadic System)."
+        then sadm_write_err "[ WARNING ] Can't SSH to ${FQDN_SNAME} (Sporadic System)."
              return 2                                                   # Return Skip Code to caller
     fi 
 
     # SSH didn't work, but monitoring for that system is off (don't report an error)
     if [ "$server_monitor" = "0" ]                                      # If Error & Monitor is OFF
-        then sadm_writelog "${SADM_WARNING} Can't SSH to ${FQDN_SNAME} (Monitoring is OFF)."
+        then sadm_write_err "[ WARNING ] Can't SSH to ${FQDN_SNAME} (Monitoring is OFF)."
              return 2                                                   # Return Skip Code to caller
     fi 
 
     # SSH is not working and it should be 
-    sadm_writelog "$SADM_ERROR ${FQDN_SNAME} unresponsive (Can't SSH to it)." 
+    sadm_write_err "[ ERROR ] ${FQDN_SNAME} unresponsive (Can't SSH to it)." 
     
     # Create Error Line in Global Error Report File (rpt)
     ADATE=`date "+%Y.%m.%d;%H:%M"`                                      # Current Date/Time
@@ -1122,7 +1123,7 @@ check_all_rpt()
                 #sadm_write "$etime SysMon alert ($etype) on ${ehost} : ${emess}\n"
                 alert_counter=`expr $alert_counter + 1`                 # Increase Submit AlertCount
                 umess="${alert_counter}) $etime SysMon alert ($etype) on ${ehost} : ${emess} -"
-                t_alert=`expr $t_alert + 1`                     # Incr. Alert counter
+                t_alert=`expr $t_alert + 1`                             # Incr. Alert counter
                 sadm_send_alert "$etype" "$etime" "$ehost" "SysMon" "$egname" "$esub" "$emess2" "$eattach"
                 RC=$?
                 case $RC in
@@ -1138,7 +1139,9 @@ check_all_rpt()
                     3)  t_oldies=`expr $t_oldies + 1`
                         sadm_writelog "${umess} Alert is older than 24 hrs."
                         ;;
-                    *)  if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "   - ERROR: Unknown return code $RC"; fi
+                    *)  if [ $SADM_DEBUG -gt 0 ] 
+                            then sadm_writelog "   - ERROR: Unknown return code $RC"
+                        fi
                         ;;
                 esac                                                    # End of case
                 done < $SADM_TMP_FILE3 
@@ -1686,8 +1689,10 @@ sadm_send_alert()
           aemail=`echo $aemail | awk '{$1=$1;print}'`                   # Del Leading/Trailing Space
           if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Email alert sent to $aemail \n" ; fi 
           if [ "$aattach" != "" ]                                       # If Attachment Specified
-             then printf "%s\n" "$body"| $SADM_MUTT -s "$ws" $aemail -a "$aattach"  >>$SADM_LOG 2>&1 
-             else printf "%s\n" "$body"| $SADM_MUTT -s "$ws" $aemail >>$SADM_LOG 2>&1 
+             then #printf "%s\n" "$body"| $SADM_MUTT -s "$ws" $aemail -a "$aattach"  >>$SADM_LOG 2>&1 
+                  sadm_sendmail "$aemail" "$ws" "$body" "$aattach" 
+             else #printf "%s\n" "$body"| $SADM_MUTT -s "$ws" $aemail >>$SADM_LOG 2>&1 
+                  sadm_sendmail "$aemail" "$ws" "$body" "" 
           fi
           RC=$?                                                         # Save Error Number
           if [ $RC -ne 0 ]                                              # Error sending email 
