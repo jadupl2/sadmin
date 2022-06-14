@@ -90,6 +90,7 @@
 #@2022_05_19 server v3.36 Added 'chown' and 'chmod' for log and rch files and directories.
 #@2022_06_01 server v3.37 Create system rpt and rch in $SADMIN/www/dat if missing
 #@2022_06_13 server v3.38 Update to use 'sadm_sendmail()' instead  of mutt manually.
+#@2022_06_14 server v3.39 Email alert will now send script log AND script error log.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
@@ -138,10 +139,10 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.38'                                     # Script Version
+export SADM_VER='3.39'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
-export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy ?
@@ -1225,11 +1226,20 @@ check_all_rch()
            else esub="Success of '$escript' on ${ehost}."               # Script Success Alert Subj.
                 emess="Successfully ran '$escript' on ${ehost}."        # Script Success Alert Mess.
         fi
+        
+        eattach=""                                                      # Clear Attachment Name
         elogfile="${ehost}_${escript}.log"                              # Build Log File Name
         elogname="${SADM_WWW_DAT_DIR}/${ehost}/log/${elogfile}"         # Build Log Full Path File
         if [ -e "$elogname" ]                                           # If Log file exist
            then eattach="$elogname"                                     # Set Attachment to LogName
-           else eattach=""                                              # Clear Attachment LogName
+        fi
+        errlogfile="${ehost}_${escript}_e.log"                          # Build Err Log File Name
+        errlogname="${SADM_WWW_DAT_DIR}/${ehost}/log/${errlogfile}"     # Build Err Log Full Path
+        if [ -e "$errlogname" ]                                         # If Error Log file exist
+           then if [ -e "$elogname" ]                                   # If log already attach
+                   then eattach="$eattach,$errlogname"                  # Also attach Error Log
+                   else eattach="$errlogname"                           # Attach Error Log
+                fi 
         fi
 
         # Event Group Type ($egtype) = 0=None 1=AlertOnErr 2=AlertOnOK 3=Always 
@@ -1525,10 +1535,25 @@ sadm_send_alert()
             sadm_writelog "aattachment=\"$aattach\""                    # Show Alert Attachment File
     fi
 
-    # Is there is an attachment specified & the attachment is not readable ?
-    if [ "$aattach" != "" ] && [ ! -r "$aattach" ]                      # Can't read Attachment File
-       then sadm_writelog "Error in ${FUNCNAME} - Can't read attachment file '$aattach'"
-            return 1                                                    # Return Error to caller
+
+    # Mail with more than one attachment (Verify if file do exist)
+    opt_a=""                                                            # -a attachment cumulative
+    if [ $(expr index "$mfile" ,) -ne 0 ]                               # comma = multiple attach
+       then for file in ${mfile//,/ }                                   # Process all Attachment
+                do if [ ! -r "$file" ]                                  # Attachment Not Readable ?
+                        then emsg="Missing attachment file '$file' can't be read or doesn't exist."
+                             sadm_write_err "$emsg"                     # Avise user of error
+                             amessage=$(printf "\n${amessage}\n\n${emsg}\n") 
+                             RC=1                                       # Set Error return code
+                        else opt_a="$opt_a -a $file "                   # Add -a attach Cmd Option
+                   fi 
+                done
+       else if [ "$aattach" != "" ] && [ ! -r "$aattach" ]              # Can't read Attachment File
+               then emsg="Missing attachment file '$aattach' can't be read or doesn't exist."
+                    sadm_write_err "$emsg"                              # Avise user of error
+                    amessage=$(printf "\n${amessage}\n\n${emsg}\n") 
+                    RC=1                                                # Set Error return code
+            fi 
     fi
 
     # Validate the Alert type from alert group file ([M]ail, [S]lack, [T]exto or [C]ellular)
@@ -1673,10 +1698,16 @@ sadm_send_alert()
     if [ "$atype" = "S" ] && [ "$agroup_type" != "T" ]                  # If Script Alert, Not Texto
        then SNAME=`echo ${ascript} |awk '{ print $1 }'`                 # Get Script Name
             LOGFILE="${aserver}_${SNAME}.log"                           # Assemble log Script Name
-            LOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}"     # Add Dir. Path 
+            LOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}"     # Add Log Dir. Path 
             URL_VIEW_FILE='/view/log/sadm_view_file.php'                # View File Content URL
             LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
-            body=$(printf "${body}\nView full log :\n${LOGURL}")        # Insert Log URL In Mess
+            ELOGFILE="${aserver}_${SNAME}_e.log"                        # Assemble Error log Name
+            ELOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${ELOGFILE}"   # Add Error log Dir. Path 
+            if [ -s "$ELOGNAME" ]                                       # If Error log not empty
+                then ELOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${ELOGNAME}" 
+                     body=$(printf "${body}\nError log :\n${ELOGURL}\nView full log :\n${LOGURL}") 
+                else body=$(printf "${body}\nView full log :\n${LOGURL}") 
+            fi 
     fi
     if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Alert body will be : $body \n" ; fi
 
@@ -1688,12 +1719,7 @@ sadm_send_alert()
        M) aemail=`grep -i "^$agroup " $SADM_ALERT_FILE |awk '{ print $3 }'` # Get Emails of Group
           aemail=`echo $aemail | awk '{$1=$1;print}'`                   # Del Leading/Trailing Space
           if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Email alert sent to $aemail \n" ; fi 
-          if [ "$aattach" != "" ]                                       # If Attachment Specified
-             then #printf "%s\n" "$body"| $SADM_MUTT -s "$ws" $aemail -a "$aattach"  >>$SADM_LOG 2>&1 
-                  sadm_sendmail "$aemail" "$ws" "$body" "$aattach" 
-             else #printf "%s\n" "$body"| $SADM_MUTT -s "$ws" $aemail >>$SADM_LOG 2>&1 
-                  sadm_sendmail "$aemail" "$ws" "$body" "" 
-          fi
+          sadm_sendmail "$aemail" "$ws" "$body" "$aattach"
           RC=$?                                                         # Save Error Number
           if [ $RC -ne 0 ]                                              # Error sending email 
               then wstatus="[ Error ] Sending email to $aemail"         # Advise Error sending Email
