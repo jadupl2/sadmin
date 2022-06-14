@@ -188,6 +188,7 @@
 #@2022_05_23 lib v3.96 Function 'sadm_write_err' now write to error log AND regular log.
 #@2022_05_25 lib v3.97 Added verification of new variables SADM_ROOT_ONLY and SADM_SADM_SERVER_ONLY
 #@2022_05_25 lib v3.98 Minor text modification related to PID expiration.
+#@2022_06_14 lib v3.99 fix problem get O/S Code name.
 #===================================================================================================
 
 
@@ -201,7 +202,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.98"                                              # This Library Version
+export SADM_LIB_VER="3.99"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -1057,15 +1058,14 @@ sadm_get_oscodename() {
                     ;;
         "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
                        then osver=$($SADM_LSB_RELEASE -sc)
-                       else if [ -f "$OS_REL"] 
-                               then grep -q "^VERSION_CODENAME=" $OS_REL 
+                       else if [ -f "$OS_REL" ] 
+                               then grep -q "^VERSION=" $OS_REL 
                                     if [ $? -eq 0 ]
-                                       then oscode=$(awk -F= '/^VERSION_CODENAME=/ {print $2}' $OS_REL)
-                                       else grep '^VERSION=' /etc/os-release | grep '(' 
+                                       then grep '^VERSION=' $OS_REL | grep -q '('
                                             if [ $? -eq 0 ] 
-                                               then oscode=$(awk -F= '/^VERSION=/ {print $2}' $OS_REL) 
-                                                    oscode=$(echo $oscode | tr -d '()"' | awk '{print $2}')
-                                               else oscode=""
+                                                then oscode=$(grep '^VERSION=' $OS_REL | cut -d'(' -f2)
+                                                     oscode=$(echo $oscode | cut -d')' -f1)
+                                                else oscode=""
                                             fi
                                     fi 
                             fi 
