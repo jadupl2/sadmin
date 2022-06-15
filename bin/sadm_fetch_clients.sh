@@ -91,6 +91,7 @@
 #@2022_06_01 server v3.37 Create system rpt and rch in $SADMIN/www/dat if missing
 #@2022_06_13 server v3.38 Update to use 'sadm_sendmail()' instead  of mutt manually.
 #@2022_06_14 server v3.39 Email alert will now send script log AND script error log.
+#@2022_06_15 server v3.40 Fix problem when 2 atachments or more were send with sadm_sendmail()
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
@@ -139,7 +140,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.39'                                     # Script Version
+export SADM_VER='3.40'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -1538,8 +1539,8 @@ sadm_send_alert()
 
     # Mail with more than one attachment (Verify if file do exist)
     opt_a=""                                                            # -a attachment cumulative
-    if [ $(expr index "$mfile" ,) -ne 0 ]                               # comma = multiple attach
-       then for file in ${mfile//,/ }                                   # Process all Attachment
+    if [ $(expr index "$aattach" ,) -ne 0 ]                             # comma = multiple attach
+       then for file in ${aattach//,/ }                                 # Process all Attachment
                 do if [ ! -r "$file" ]                                  # Attachment Not Readable ?
                         then emsg="Missing attachment file '$file' can't be read or doesn't exist."
                              sadm_write_err "$emsg"                     # Avise user of error
@@ -1549,7 +1550,7 @@ sadm_send_alert()
                    fi 
                 done
        else if [ "$aattach" != "" ] && [ ! -r "$aattach" ]              # Can't read Attachment File
-               then emsg="Missing attachment file '$aattach' can't be read or doesn't exist."
+               then emsg="Missing file attachment '$aattach' can't be read or doesn't exist."
                     sadm_write_err "$emsg"                              # Avise user of error
                     amessage=$(printf "\n${amessage}\n\n${emsg}\n") 
                     RC=1                                                # Set Error return code
