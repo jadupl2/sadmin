@@ -2600,11 +2600,11 @@ sadm_sendmail() {
     fi
 
     # Send mail with more than one attachment (filename are delimited by comma)
-    opt_a=""                                                        # -a attachment cumulative
+    opt_a=""                                                            # -a attachment cumulative
     if [ $(expr index "$mfile" ,) -ne 0 ]                               # comma = multiple attach
        then for file in ${mfile//,/ }
                 do if [ ! -r "$file" ]                                  # Attachment Not Readable ?
-                        then emsg="Missing attachment file '$file' can't be read or doesn't exist."
+                        then emsg="Attachment file '$file' can't be read or doesn't exist."
                              sadm_write_err "$emsg"                     # Avise user of error
                              mbody=$(printf "\n${mbody}\n\n${emsg}\n") 
                              RC=1                                       # Set Error return code
