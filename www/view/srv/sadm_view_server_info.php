@@ -42,6 +42,7 @@
 # 2019_10_15 Update: v2.13 Color change of input fields.
 # 2020_07_12 Update: v2.14 Replace 'CRUD' button with 'Modify' that direct you to CRUD server menu.
 # 2020_12_29 Update: v2.15 Date for starting & ending maintenance mode was not show properly.
+#@2022_06_16 Update: v2.16 If o/s code name is empty, don't print the empty parentheses.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -85,7 +86,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.15" ;                                                       # Current version number
+$SVER  = "2.16" ;                                                       # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -159,10 +160,18 @@ function display_left_side ($wrow) {
     echo "\n\n<div class='server_left_label'>O/S Type</div>";
     echo "\n<div class='server_left_data'>" . ucfirst($wrow['srv_ostype']) . "</div>";
  
-    # O/S Name and Version
+    # O/S Name, Code Name and O/S Version
     echo "\n\n<div class='server_left_label'>O/S Name & Version</div>";
     echo "\n<div class='server_left_data'>";
-    echo ucfirst($wrow['srv_osname']) ." (". $wrow['srv_oscodename'] .") ". $wrow['srv_osversion'];
+    echo ucfirst($wrow['srv_osname']);
+    if (empty($wrow['srv_oscodename'])) { 
+        echo "&nbsp" ; 
+        #echo "empty" ; 
+    }else{ 
+        #echo " ("...$wrow['srv_oscodename']...") " ; 
+        echo " (". $wrow['srv_oscodename'] .") " ; 
+    }
+    echo $wrow['srv_osversion'];
     echo "</div>";
 
     # Kernel Version & Bit Mode
