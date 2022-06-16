@@ -1057,7 +1057,7 @@ sadm_get_oscodename() {
                     if [ "$wver"  = "10.17" ] ; then oscode="Moyave"           ;fi
                     ;;
         "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
-                       then osver=$($SADM_LSB_RELEASE -sc)
+                       then oscode=$($SADM_LSB_RELEASE -sc)
                        else if [ -f "$OS_REL" ] 
                                then grep -q "^VERSION=" $OS_REL 
                                     if [ $? -eq 0 ]
