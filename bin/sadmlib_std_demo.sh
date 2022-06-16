@@ -38,6 +38,7 @@
 # 2020_12_24 Update: v3.20 Include output of capitalize function.
 #@2022_04_10 Update: v3.21 Remove lsb_release command dependency
 #@2022_05_10 Update: v3.22 Use 'mutt'instead of 'mail' 
+#@2022_06_16 Update: v3.23 Put back the content of $LSB_RELEASE in output
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -59,7 +60,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.22'                              # Current Script Version
+    export SADM_VER='3.23'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -1056,6 +1057,11 @@ print_command_path()
     pexample="\$SADM_SSH_CMD"                                           # Variable Name
     pdesc="'ssh' SSH cmd to Connect to client"                          # Command Location
     presult="$SADM_SSH_CMD"                                             # Actual Content of Variable
+    printline "$pexample" "$p"
+
+    pexample="\$SADM_LSB_RELEASE"                                       # Variable Name
+    pdesc="Cmd use to get distribution info"                            # Command Location
+    presult="$SADM_LSB_RELEASE"                                         # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 }
 
