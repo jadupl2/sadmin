@@ -111,6 +111,7 @@
 #@2022_05_28 install: v3.74 Add firewall rule if SSH port specified is different than 22.
 #@2022_06_01 install: v3.75 Add some SELinux comment at the end of the installation.
 #@2022_06_10 install: v3.76 Update some /etc/postfix/main.cf parameters
+#@2022_06_18 install: v3.77 Fix SSH port setting problem during installation on Alma Linux 9
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -127,7 +128,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.76"                                            # Setup Version Number
+sver                = "3.77"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -2374,9 +2375,11 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
         sprompt  = "Enter the Network Netmask [1-30]"                   # Prompt for Answer
         wcfg_network1b = accept_field(sroot,"SADM_NETMASK1",sdefault,sprompt,"I",1,30) # NetMask
         update_sadmin_cfg(sroot,"SADM_NETWORK1","%s/%s" % (wcfg_network1a,wcfg_network1b))
-    
+    else:
+        wcfg_ssh_port=22
+        
     return(wcfg_server,SADM_IP,wcfg_domain,wcfg_mail_addr,wcfg_user,wcfg_group,wcfg_ssh_port) 
-    
+    wcfg_ssh_port
 
 
 #===================================================================================================
