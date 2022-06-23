@@ -26,7 +26,7 @@
 # 2017_09_29 V2.8 Correct chown on ${SADMIN}/dat/net and Test creation and chown on www directories
 # 2017_12_18 V2.9 Function were changed to run on MacOS and Some Restructuration was done
 # 2017_12_23 V2.10 SSH Command line construction added at the end of script
-# 2017_12_30 V2.11 Combine sadmlib_server into sadmlib_std , so one library from then on.
+# 2017_12_30 V2.11 Combine sadmlib_server into  , so one library from then on.
 # 2018_01_03 V2.12 Added Check for facter command , if present use it get get hardware info
 # 2018_01_05 V2.13 Remove Warning when command can't be found for compatibility
 # 2018_01_23 V2.14 Add arc directory in $SADMIN/www for archiving purpose
@@ -175,7 +175,7 @@
 #@2021_12_12 lib v3.83 Fix 'sadm_server_vg' wasn't returning proper size under certain condition.
 #@2021_12_20 lib v3.84 Load additional options from the SADMIN configuration file.
 #@2022_02_16 lib v3.85 Fix: Serial number return by sadm_server_serial() on iMac was incomplete.
-#@2022_04_04 lib v3.86 Update: to Replace use of depeciated lsb_release in RHEL9 
+#@2022_04_04 lib v3.86 Update: to Replace use of depreciated lsb_release in RHEL9 
 #@2022_04_10 lib v3.87 Update: When PID exist don't reinitialize the script log 
 #@2022_04_11 lib v3.88 Use /etc/os-release file instead of depreciated lsb_release cmd.
 #@2022_04_14 lib v3.89 Fix problem getting osversion on old rhel version.
@@ -183,7 +183,7 @@
 #@2022_05_03 lib v3.91 Read new smtp server info from sadmin.cfg & gmail passwd file.
 #@2022_05_10 lib v3.92 Replace usage of 'mail' by 'mutt' 
 #@2022_05_12 lib v3.93 Move 'sadm_send_alert' & 'write_alert_history' to sadm_fetch_client
-#@2022_05_19 lib v3.94 Fix intermitent permission error message when was not running as 'root'
+#@2022_05_19 lib v3.94 Fix intermittent permission error message when was not running as 'root'
 #@2022_05_20 lib v3.95 Bug fix with 'capitalize' function on Old version of Red Hat (5,4)
 #@2022_05_23 lib v3.96 Function 'sadm_write_err' now write to error log AND regular log.
 #@2022_05_25 lib v3.97 Added verification of new variables SADM_ROOT_ONLY and SADM_SADM_SERVER_ONLY
@@ -1482,10 +1482,11 @@ sadm_server_cpu_speed() {
                          sadm_server_cpu_speed=`echo "$freq / 1000" | $SADM_BC `
                     else sadm_server_cpu_speed=`grep -i "cpu MHz" /proc/cpuinfo |tail -1 |awk -F: '{print $2}'`
                          sadm_server_cpu_speed=`echo "$sadm_server_cpu_speed / 1" | $SADM_BC`
-                         #if [ "$sadm_server_cpu_speed" -gt 1000 ]
-                         #   then sadm_server_cpu_speed=`expr $sadm_server_cpu_speed / 1000`
-                         #fi
                  fi
+                 if [ -f /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_max_freq ]
+                    then freq=$(cat /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_max_freq)
+                         sadm_server_cpu_speed=`echo "$freq / 1000" | $SADM_BC `
+                 fi 
                  ;;
         "AIX")   sadm_server_cpu_speed=`pmcycles -m | awk '{ print $5 }'`
                  ;;
@@ -1505,10 +1506,10 @@ sadm_server_cpu_speed() {
 sadm_server_core_per_socket() {
     case "$(sadm_get_ostype)" in
        "LINUX")     wcps=`egrep "core id|physical id" /proc/cpuinfo |tr -d "\n" |sed s/physical/\\nphysical/g |grep -v ^$ |sort |uniq |wc -l`
-                    if [ "$wcps" -eq 0 ] ;then wcps=1 ; fi
                     if [ "$SADM_LSCPU" != "" ]
-                        then wcps=`$SADM_LSCPU | grep -i '^core(s) per socket' | cut -d ':' -f 2 | tr -d ' '`
+                        then wcps=`$SADM_LSCPU | grep -iE "core(s) per socket|Core\(s\) per cluster" | cut -d ':' -f 2 | tr -d ' '`
                     fi
+                    if [ $wcps -eq 0 ] ;then wcps=1 ; fi
                     ;;
         "AIX")      wcps=1
                     ;;
@@ -1558,6 +1559,7 @@ sadm_server_nb_socket() {
        "LINUX")     wns=`cat /proc/cpuinfo | grep "physical id" | sort | uniq | wc -l`
                     if [ "$SADM_LSCPU" != "" ]
                         then wns=`$SADM_LSCPU | grep -i '^Socket(s)' | cut -d ':' -f 2 | tr -d ' '`
+                             if [ "$wns" == "-" ] ; then wns=1 ; fi
                     fi
                     ;;
         "AIX")      wns=`lscfg -vpl sysplanar0 | grep WAY | wc -l | tr -d ' '`
@@ -1579,6 +1581,10 @@ sadm_server_hardware_bitmode() {
                    if [ "$sadm_server_hardware_bitmode" = "lm" ]
                        then sadm_server_hardware_bitmode=64
                        else sadm_server_hardware_bitmode=32
+                   fi
+                   if [ "SADM_LSCPU" != "" ] 
+                      then $SADM_LSCPU | grep -i "cpu op-mode(s):" | grep -q 64
+                           if [ $? -eq 0 ] ; then sadm_server_hardware_bitmode=64 ; fi
                    fi
                    ;;
         "AIX")     sadm_server_hardware_bitmode=`bootinfo -y`
@@ -2311,7 +2317,7 @@ sadm_start() {
     fi
 
     # Check if this script to be run only by root user
-    if [ ! -z "$SADM_ROOT_ONLY" ] && [ $SADM_ROOT_ONLY -ne 0 ] &&  [ $(id -u) -ne 0 ]  
+    if [ ! -z "$SADM_ROOT_ONLY" ] && [ $SADM_ROOT_ONLY == "Y" ] &&  [ $(id -u) -ne 0 ]  
         then sadm_write_err "Script can only be run by the 'root' user" # Advise User Message
              sadm_write_err "Try 'sudo ${0##*/}'"                       # Suggest using sudo
              sadm_write_err "Process aborted"                           # Abort advise message
