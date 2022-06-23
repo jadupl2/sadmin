@@ -93,7 +93,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.29" ;                                                       # Current version number
+$SVER  = "2.30" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -128,7 +128,7 @@ function create_alert_file() {
 
     if (file_exists($alert_file)) { unlink($path_user.$path); }         # Delete Alert file if exist
     touch($alert_file);                                                 # Create empty file
-    chmod($alert_file,0660);                                            # Set Permission on file
+    chmod($alert_file,0666);                                            # Set Permission on file
 
     $CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rpt' -exec cat {} \; >> $alert_file";
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }        # Show Cmd that we execute
@@ -168,10 +168,15 @@ function create_alert_file() {
     if ( file_exists ($alert_file) and (filesize($alert_file) > 0) ) 
     {
         if ($DEBUG) { echo "\n<br>Opening alert file in append mode"; }        
-        $afile = fopen("$alert_file","a") or die("can't open in append mode file " . $alert_file );
+        $afile = fopen("$alert_file","a+") or die("can't open in append mode file " . $alert_file );
     }else{
         if ($DEBUG) { echo "\n<br>Opening alert file in write mode"; }        
-        $afile = fopen("$alert_file","w") or die("can't open in write mode file " . $alert_file );
+        $afile = fopen("$alert_file","w"); 
+        if ( !$afile ) {
+            $arrayFiles = scandir( SADM_WWW_TMP_DIR );
+            echo "\n<br>Files contained in \$SADMIN/tmp : " . $arrayFiles . "<br>\n";
+            die("can't open in write mode file " . $alert_file );          
+        }  
     }
 
 
@@ -703,8 +708,6 @@ function display_data($con,$alert_file) {
     $xheading = false ; ;                                               # Init. Default values
     $current_section="";                                                # Last Section Processed
 
- 
-
     # Loop through the array and process ERROR first 
     foreach ($array_sysmon as $line_num => $line) {
         if ($DEBUG) { 
@@ -794,7 +797,6 @@ function display_data($con,$alert_file) {
 
 # Main Page Logic start here 
 #---------------------------------------------------------------------------------------------------
-#
     $title1="Systems Monitor Status";                                   # Page Title
     display_lib_heading("HOME","$title1"," ",$SVER);                    # Display Content Heading
     create_alert_file();                                                # Create AlertFile (RPT/RCH)
