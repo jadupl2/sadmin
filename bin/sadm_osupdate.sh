@@ -47,6 +47,7 @@
 #@2022_04_27 osupdate v3.28 Use apt command instead of apt-get
 #@2022_06_10 osupdate v3.29 Now list package to be updated when using rpm format.
 #@2022_06_13 osupdate v3.30 Update to use 'sadm_sendmail()' instead  of mutt manually.
+#@2022_06_25 osupdate v3.31 Now list package to be updated when using apt format.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -79,7 +80,7 @@
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='3.30'                              # Your Current Script Version
+    export SADM_VER='3.31'                              # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -276,6 +277,7 @@ check_available_update()
                     sadm_writelog " " ; sadm_writelog " "
                     sadm_writelog "Retrieving list of upgradable packages." 
                     sadm_writelog "Running 'apt list --upgradable'."
+                    apt list --upgradable | tee -a  ${SADM_LOG}
                     NB_UPD=`apt list --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l`
                     if [ "$NB_UPD" -ne 0 ]
                         then sadm_writelog "There are ${NB_UPD} update available."
