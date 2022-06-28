@@ -2033,18 +2033,18 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,s
     if not os.path.isfile(maincf): return                               # Postfix not installed
 
     # Update lines in main.cf
-    update_postfix_cf(sroot,"inet_interfaces","\$myhostname,localhost")
-    update_postfix_cf(sroot,"myhostname",phostname)
-    update_postfix_cf(sroot,"smtp_use_tls","yes")
-    update_postfix_cf(sroot,"smtp_sasl_auth_enable","yes")
-    update_postfix_cf(sroot,"smtp_sasl_security_options"," ")
-    update_postfix_cf(sroot,"smtp_sasl_password_maps","hash:/etc/postfix/sasl_passwd")
-    if (sosname == "REDHAT") or (sosname == "CENTOS") or (sosname == "FEDORA") or \
-       (sosname == "ALMALINUX") or (sosname == "ROCKY") :     
-       update_postfix_cf(sroot,"smtp_tls_CAfile","/etc/ssl/certs/ca-bundle.crt")  
-    else: 
-       update_postfix_cf(sroot,"smtp_tls_CAfile","etc/ssl/certs/ca-certificates.crt")  
-    relayhost =  "[%s]:%d" % (wsmtp_server,wsmtp_port)  
+    #update_postfix_cf(sroot,"inet_interfaces","\$myhostname,localhost")
+    #update_postfix_cf(sroot,"myhostname",phostname)
+    #update_postfix_cf(sroot,"smtp_use_tls","yes")
+    #update_postfix_cf(sroot,"smtp_sasl_auth_enable","yes")
+    #update_postfix_cf(sroot,"smtp_sasl_security_options"," ")
+    #update_postfix_cf(sroot,"smtp_sasl_password_maps","hash:/etc/postfix/sasl_passwd")
+    #if (sosname == "REDHAT") or (sosname == "CENTOS") or (sosname == "FEDORA") or \
+    #   (sosname == "ALMALINUX") or (sosname == "ROCKY") :     
+    #   update_postfix_cf(sroot,"smtp_tls_CAfile","/etc/ssl/certs/ca-bundle.crt")  
+    #else: 
+    #   update_postfix_cf(sroot,"smtp_tls_CAfile","etc/ssl/certs/ca-certificates.crt")  
+    #relayhost =  "[%s]:%d" % (wsmtp_server,wsmtp_port)  
     update_postfix_cf(sroot,"relayhost",relayhost)
     
     # Create/Update /etc/postfix/sasl_passwd  
@@ -2198,7 +2198,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     # Use by python Library to send email
     while True :  
         sdefault = "smtp.gmail.com"                                     # Default Gmail SMTP
-        sprompt  = "Enter SMTP server name"                             # Prompt for Answer
+        sprompt  = "Enter your ISP SMTP server name"                    # Prompt for Answer
         wsmtp_server = accept_field(sroot,"SADM_SMTP_SERVER",sdefault,sprompt)
         ccode,cstdout,cstderr = oscommand("host %s >/dev/null 2>&1" % (wsmtp_server))
         if ccode != 0 :                                                 # smtp name can't be resolve
@@ -2209,45 +2209,45 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
 
     # Accept smtp server port (25, 465, 587 or 2525)
     # For Google it's 'smtp.gmail.com'
-    sdefault = 587                                                      # Default SMTP Port No.
-    sprompt  = "Enter SMTP port number "                                # Prompt for Answer
-    while True :  
-        wsmtp_port = accept_field(sroot,"SADM_SMTP_PORT",sdefault,sprompt,'I',25,2525)
-        if wsmtp_port != 25 and wsmtp_port != 465 and wsmtp_port != 587 and wsmtp_port != 2525 :
-            writelog("Invalid port number, valid smtp port are 25, 465, 587 or 2525")
-            continue                                                    # Go Back Re-Accept Email
-        break
-    update_sadmin_cfg(sroot,"SADM_SMTP_PORT",wsmtp_port)                # Update Value in sadmin.cfg
+    #sdefault = 587                                                      # Default SMTP Port No.
+    #sprompt  = "Enter SMTP port number "                                # Prompt for Answer
+    #while True :  
+    #    wsmtp_port = accept_field(sroot,"SADM_SMTP_PORT",sdefault,sprompt,'I',25,2525)
+    #    if wsmtp_port != 25 and wsmtp_port != 465 and wsmtp_port != 587 and wsmtp_port != 2525 :
+    #        writelog("Invalid port number, valid smtp port are 25, 465, 587 or 2525")
+    #        continue                                                    # Go Back Re-Accept Email
+    #    break
+    #update_sadmin_cfg(sroot,"SADM_SMTP_PORT",wsmtp_port)                # Update Value in sadmin.cfg
 
     # Accept sender email address
-    sdefault = "account@gmail.com"                                      # Default SMTP Port No.
-    sprompt  = "Enter sender email address "                            # Prompt for Answer
-    wsmtp_sender = ""                                                   # Clear Email Address
-    while True :                                                        # Until Valid Email Address
-        wsmtp_sender = accept_field(sroot,"SADM_SMTP_SENDER",sdefault,sprompt)
-        x = wsmtp_sender.split('@')                                     # Split Email Entered 
-        if (len(x) != 2):                                               # If not 2 fields = Invalid
-            writelog ("Invalid email address - no '@' sign",'bold')     # Advise user no @ sign
-            continue                                                    # Go Back Re-Accept Email
-        try :
-            xip = socket.gethostbyname(x[1])                            # Try Get IP of Domain
-        except (socket.gaierror) as error :                             # If Can't - domain invalid
-            writelog ("The domain %s is not valid" % (x[1]),'bold')     # Advise User
-            continue                                                    # Go Back re-accept email
-        break        
-    update_sadmin_cfg(sroot,"SADM_SMTP_SENDER",wsmtp_sender)            # Update Value in sadmin.cfg
-
+    #sdefault = "account@gmail.com"                                      # Default SMTP Port No.
+    #sprompt  = "Enter sender email address "                            # Prompt for Answer
+    #wsmtp_sender = ""                                                   # Clear Email Address
+    #while True :                                                        # Until Valid Email Address
+    #    wsmtp_sender = accept_field(sroot,"SADM_SMTP_SENDER",sdefault,sprompt)
+    #    x = wsmtp_sender.split('@')                                     # Split Email Entered 
+    #    if (len(x) != 2):                                               # If not 2 fields = Invalid
+    #        writelog ("Invalid email address - no '@' sign",'bold')     # Advise user no @ sign
+    #        continue                                                    # Go Back Re-Accept Email
+    #    try :
+    #        xip = socket.gethostbyname(x[1])                            # Try Get IP of Domain
+    #    except (socket.gaierror) as error :                             # If Can't - domain invalid
+    #        writelog ("The domain %s is not valid" % (x[1]),'bold')     # Advise User
+    #        continue                                                    # Go Back re-accept email
+    #    break        
+    #update_sadmin_cfg(sroot,"SADM_SMTP_SENDER",wsmtp_sender)            # Update Value in sadmin.cfg
+#
     # Accept smtp user password 
-    sdefault = ""                                                       # No Default for user pwd 
-    sprompt  = "Enter SMTP user password "                              # Prompt for User password
-    while True :  
-        wsmtp_pwd = accept_field(sroot,"SADM_SMTP_PWD",sdefault,sprompt,'A')
-        if len(wsmtp_pwd) < 1 :                                         # Need at least 1 Char
-            writelog ("You need to give your user password")            # Advise user 
-            continue 
-        break
-    writelog(" ")
-    setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,sosname) 
+    #sdefault = ""                                                       # No Default for user pwd 
+    #sprompt  = "Enter SMTP user password "                              # Prompt for User password
+    #while True :  
+    #    wsmtp_pwd = accept_field(sroot,"SADM_SMTP_PWD",sdefault,sprompt,'A')
+    #    if len(wsmtp_pwd) < 1 :                                         # Need at least 1 Char
+    #        writelog ("You need to give your user password")            # Advise user 
+    #        continue 
+    #    break
+    #writelog(" ")
+    #setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,sosname) 
 
     # Accept the maximum number of lines we want in every log produce
     #sdefault = 500                                                      # No Default value 
