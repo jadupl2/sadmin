@@ -2197,7 +2197,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     # Accept smtp mail server, where to send email (Default smtp-gmail.com)
     # Use by python Library to send email
     while True :  
-        sdefault = "smtp.gmail.com"                                     # Default Gmail SMTP
+        sdefault = "smtp.isp.com"                                     # Default Gmail SMTP
         sprompt  = "Enter your ISP SMTP server name"                    # Prompt for Answer
         wsmtp_server = accept_field(sroot,"SADM_SMTP_SERVER",sdefault,sprompt)
         ccode,cstdout,cstderr = oscommand("host %s >/dev/null 2>&1" % (wsmtp_server))
