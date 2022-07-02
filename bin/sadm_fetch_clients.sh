@@ -91,7 +91,8 @@
 #@2022_06_01 server v3.37 Create system rpt and rch in $SADMIN/www/dat if missing
 #@2022_06_13 server v3.38 Update to use 'sadm_sendmail()' instead  of mutt manually.
 #@2022_06_14 server v3.39 Email alert will now send script log AND script error log.
-#@2022_06_15 server v3.40 Fix problem when 2 atachments or more were send with sadm_sendmail()
+#@2022_06_15 server v3.40 Fix problem when 2 attachments or more were send with sadm_sendmail()
+#@2022_07_01 server v3.41 Prevent error updating crontab
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
@@ -140,7 +141,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.40'                                     # Script Version
+export SADM_VER='3.41'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -1314,9 +1315,11 @@ crontab_update()
     if [ -f ${SADM_CRON_FILE} ] ; then work_sha1=`sha1sum ${SADM_CRON_FILE} |awk '{print $1}'` ;fi 
     if [ -f ${SADM_CRONTAB} ]   ; then real_sha1=`sha1sum ${SADM_CRONTAB}   |awk '{print $1}'` ;fi 
     if [ "$work_sha1" != "$real_sha1" ]                                 # New Different than Actual?
-       then cp ${SADM_CRON_FILE} ${SADM_CRONTAB}                        # Put in place New Crontab
-            chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB}   # Set crontab Perm.
-            sadm_writelog "  - O/S update schedule crontab ($SADM_CRONTAB) was updated." 
+       then if [ -f ${SADM_CRON_FILE} ]
+                then cp ${SADM_CRON_FILE} ${SADM_CRONTAB}               # Put in place New Crontab
+                     chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB} # Set crontab Perm.
+                     sadm_writelog "  - O/S update schedule crontab ($SADM_CRONTAB) was updated."
+            fi  
        else sadm_writelog "  - No need to update the O/S update schedule crontab ($SADM_CRONTAB)."
     fi
     rm -f ${SADM_CRON_FILE} >>/dev/null 2>&1                            # Remove crontab work file
@@ -1326,9 +1329,11 @@ crontab_update()
     if [ -f ${SADM_BACKUP_NEWCRON} ] ; then nsha1=`sha1sum ${SADM_BACKUP_NEWCRON} |awk '{print $1}'` ;fi
     if [ -f ${SADM_BACKUP_CRONTAB} ] ; then asha1=`sha1sum ${SADM_BACKUP_CRONTAB} |awk '{print $1}'` ;fi 
     if [ "$nsha1" != "$asha1" ]                                         # New Different than Actual?
-       then cp ${SADM_BACKUP_NEWCRON} ${SADM_BACKUP_CRONTAB}            # Put in place New Crontab
-            chmod 644 $SADM_BACKUP_CRONTAB ; chown root:root ${SADM_BACKUP_CRONTAB}
-            sadm_writelog "  - Clients backup schedule crontab ($SADM_BACKUP_CRONTAB) was updated." 
+       then if [ -f ${SADM_BACKUP_NEWCRON} ]
+                then cp ${SADM_BACKUP_NEWCRON} ${SADM_BACKUP_CRONTAB}   # Put in place New Crontab
+                     chmod 644 $SADM_BACKUP_CRONTAB ; chown root:root ${SADM_BACKUP_CRONTAB}
+                     sadm_writelog "  - Clients backup schedule crontab ($SADM_BACKUP_CRONTAB) was updated." 
+            fi
        else sadm_writelog "  - No need to update the backup crontab ($SADM_BACKUP_CRONTAB)."
     fi
     rm -f ${SADM_BACKUP_NEWCRON} >>/dev/null 2>&1                       # Remove crontab work file
@@ -1338,9 +1343,11 @@ crontab_update()
     if [ -f ${SADM_REAR_NEWCRON} ] ; then nsha1=`sha1sum ${SADM_REAR_NEWCRON} |awk '{print $1}'` ;fi
     if [ -f ${SADM_REAR_CRONTAB} ] ; then asha1=`sha1sum ${SADM_REAR_CRONTAB} |awk '{print $1}'` ;fi 
     if [ "$nsha1" != "$asha1" ]                                         # New Different than Actual?
-       then cp ${SADM_REAR_NEWCRON} ${SADM_REAR_CRONTAB}                # Put in place New Crontab
-            chmod 644 $SADM_REAR_CRONTAB ; chown root:root ${SADM_REAR_CRONTAB}
-            sadm_writelog "  - Clients ReaR backup schedule crontab ($SADM_REAR_CRONTAB) was updated."
+       then if [ -f ${SADM_REAR_NEWCRON} ]
+                then cp ${SADM_REAR_NEWCRON} ${SADM_REAR_CRONTAB}       # Put in place New Crontab
+                     chmod 644 $SADM_REAR_CRONTAB ; chown root:root ${SADM_REAR_CRONTAB}
+                     sadm_writelog "  - Clients ReaR backup schedule crontab ($SADM_REAR_CRONTAB) was updated."
+            fi 
        else sadm_writelog "  - No need to update the ReaR backup crontab ($SADM_REAR_CRONTAB)."
     fi
     rm -f ${SADM_REAR_NEWCRON} >>/dev/null 2>&1                         # Remove crontab work file
