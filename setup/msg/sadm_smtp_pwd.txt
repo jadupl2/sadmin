@@ -1,8 +1,8 @@
 # sadmin.cfg SADM_SMTP_SERVER Documentation
-# Revise 2022_05_03
+# Revise 2022_07_02
 # ----------------------------------------------------------------------------
 This field specify the password of the sender email.
 As of 30 may 2022, Google will no longer accept connection from less secure app.
 https://support.mozilla.org/gu-IN/questions/1369886
-You need to define a secure app password, for more info visit the page below
+You need to define a secure application  password, for more info visit the page below
 https://support.google.com/accounts/answer/185833#app-passwords

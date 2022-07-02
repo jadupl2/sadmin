@@ -1,5 +1,8 @@
 # sadmin.cfg SADM_SMTP_SERVER Documentation
-# Revise 2022_06_28
+# Revise 2022_07-02
 # ----------------------------------------------------------------------------
 This field specify your ISP smtp server name
 It's use by SADMIN to send report and alert by email.
+If your using Gmail, you need to get an application password.
+https://support.google.com/accounts/answer/185833?hl=en&ref_topic=7189145
+Default is 'smtp.gmail.com'.
