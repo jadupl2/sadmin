@@ -63,6 +63,7 @@
 # 2021_06_06 client: v2.02 Fix problem related to system monitor file update.
 # 2021_06_10 client: v2.03 Fix problem removing 'nmon' watcher from monitor file.
 # 2021_07_22 client: v2.04 Fix problem when run the 1st time during setup script.
+#@2022_07_02 client: v2.05 Set permission for gmail passwd file
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -95,7 +96,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.04'                                     # Script Version
+export SADM_VER='2.05'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -448,18 +449,18 @@ set_file()
         then sadm_write "  - chmod ${VAL_OCTAL} ${VAL_FILE} "
              chmod ${VAL_OCTAL} ${VAL_FILE}
              if [ $? -ne 0 ]
-                then sadm_write "${SADM_ERROR} On 'chmod' operation on ${VAL_FILE}.\n"
+                then sadm_write_err "${SADM_ERROR} On 'chmod' operation on ${VAL_FILE}.\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
-                else sadm_write "${SADM_OK}\n"
+                else sadm_write_log "${SADM_OK}\n"
              fi
              sadm_write "  - chown ${VAL_OWNER}:${VAL_GROUP} ${VAL_FILE} "
              chown ${VAL_OWNER}:${VAL_GROUP} ${VAL_FILE}
              if [ $? -ne 0 ]
-                then sadm_write "${SADM_ERROR} On 'chown' operation on ${VAL_FILE}.\n"
+                then sadm_write_err "${SADM_ERROR} On 'chown' operation on ${VAL_FILE}.\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
-                else sadm_write "${SADM_OK}\n"
+                else sadm_write_log "${SADM_OK}\n"
              fi
              #lsline=`ls -l $VAL_FILE`
              #sadm_write "${lsline}\n"
@@ -492,18 +493,6 @@ file_housekeeping()
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]
        then afile="$SADM_WWW_LIB_DIR/.crontab.txt"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            #
-            #afile="$SADM_CFG_DIR/alert_group.cfg"
-            #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            #
-            #afile="$SADM_CFG_DIR/.dbpass"
-            #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            #
-            #afile="$SADM_CFG_DIR/.alert_history.txt"
-            #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            #
-            #afile="$SADM_CFG_DIR/alert_history.txt"
-            #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
     fi
 
     # Remove default crontab job - We want to run the ReaR Backup from the sadm_rear_backup crontab.
@@ -524,6 +513,14 @@ file_housekeeping()
     set_file "${SADM_BASE_DIR}/license"      "0664" "${SADM_USER}" "${SADM_GROUP}" 
     set_file "${SADM_BASE_DIR}/changelog.md" "0664" "${SADM_USER}" "${SADM_GROUP}" 
     
+    # Password files
+    set_file "${SADM_CFG_DIR}/.dbpass"       "0640" "${SADM_USER}" "${SADM_WWW_GROUP}"
+    set_file "${SADM_CFG_DIR}/.gmpw"         "0640" "${SADM_USER}" "${SADM_WWW_GROUP}"
+    set_file "/etc/postfix/sasl_passwd"      "0600"  "root" "root"
+    set_file "/etc/postfix/sasl_passwd.db"   "0600"  "root" "root"
+    
+    set_files_recursive "$SADM_TMP_DIR"        "1777" "${SADM_USER}" "${SADM_GROUP}" 
+    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
 
     set_files_recursive "$SADM_DAT_DIR"        "0664" "${SADM_USER}" "${SADM_GROUP}" 
     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
@@ -558,14 +555,13 @@ file_housekeeping()
     set_files_recursive "$SADM_PKG_DIR"        "0755" "${SADM_USER}" "${SADM_GROUP}" 
     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
 
-
     sadm_write "\n"
     sadm_write "${BOLD}SADMIN Files Pruning.${NORMAL}\n"
 
     # Remove files older than 7 days in SADMIN TMP Directory
     if [ -d "$SADM_TMP_DIR" ]
-        then sadm_write "  - Remove any unmodified file(s) for more than 7 days in ${SADM_TMP_DIR}.\n"
-             sadm_write "    - find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \;"
+        then sadm_write_log "  - Remove unmodified file(s) for more than 7 days in ${SADM_TMP_DIR}."
+             sadm_write_log "    - find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \;"
              find $SADM_TMP_DIR  -type f -mtime +7 -exec ls -l {} \; >> $SADM_LOG
              find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
@@ -576,7 +572,6 @@ file_housekeeping()
              fi
              sadm_write "  - Remove all pid files once a day - This prevent script from not running.\n"
              sadm_write "    - find $SADM_TMP_DIR  -type f -name '*.pid' -exec rm -f {} \; "
-             #find $SADM_TMP_DIR  -type f -name "*.pid" -exec ls -l {} \; >> $SADM_LOG
              find $SADM_TMP_DIR  -type f -name "*.pid" -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_write "${SADM_ERROR} On last pruning operation.\n"
