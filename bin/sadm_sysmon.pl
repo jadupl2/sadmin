@@ -48,6 +48,7 @@
 # 2021_07_03 mon: v2.44 Fix problem when trying to run custom script.
 # 2021_07_05 mon: v2.45 Added support to monitor 'http' and 'https' web site responsiveness.
 # 2021_07_06 mon: v2.46 Change error messages syntax to be more descriptive.
+#@2022_07_02 mon: v2.47 Use 'mutt'email client instead of 'mail' ,
 #===================================================================================================
 #
 use English;
@@ -61,7 +62,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.46";                                       # Version Number
+my $VERSION_NUMBER      = "2.47";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -135,7 +136,7 @@ my $SADMIN_STD_FILE     = "$SADM_CFG_DIR/.sadmin.cfg";                  # SADMIN
 my $CMD_CHMOD           = `which chmod`      ;chomp($CMD_CHMOD);        # Location of chmod command
 my $CMD_CP              = `which cp`         ;chomp($CMD_CP);           # Location of cp command
 my $CMD_FIND            = `which find`       ;chomp($CMD_FIND);         # Location of find command
-my $CMD_MAIL            = `which mail`       ;chomp($CMD_MAIL);         # Location of mail command
+my $CMD_MUTT            = `which mutt`       ;chomp($CMD_MUTT);         # Location of mutt command
 my $CMD_TAIL            = `which tail`       ;chomp($CMD_TAIL);         # Location of tail command
 my $CMD_HEAD            = `which head`       ;chomp($CMD_HEAD);         # Location of head command
 my $CMD_UPTIME          = `which uptime`     ;chomp($CMD_UPTIME);       # Location of uptime command
@@ -236,7 +237,7 @@ sub load_sadmin_cfg {
         my $mail_mess4 = "You need to review it, to reflect your need.\n";
         my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}${mail_mess4}";
         my $mail_subject = "SADM WARNING: $SADMIN_CFG_FILE not found on $HOSTNAME";
-        @cmd = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
+        @cmd = ("echo \"$mail_message\" | $CMD_MUTT -s \"$mail_subject\" $SADM_MAIL_ADDR");
         $return_code = 0xffff & system @cmd ;                           # Perform Mail Command
         @cmd = ("$CMD_CP $SADMIN_STD_FILE $SADMIN_CFG_FILE");           # cp template to sadmin.cfg
         $return_code = 0xffff & system @cmd ;                           # Perform Command cp
@@ -317,7 +318,7 @@ sub load_smon_file {
         my $mail_mess3 = "A new one was created based on the template file ${SYSMON_STD_FILE}.\n";
         my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}";
         my $mail_subject = "SADM INFO: $SYSMON_CFG_FILE not found on $HOSTNAME";
-        @cmd = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
+        @cmd = ("echo \"$mail_message\" | $CMD_MUTT -s \"$mail_subject\" $SADM_MAIL_ADDR");
         $return_code = 0xffff & system @cmd ;                           # Perform Mail Command
 #        @cmd = ("$CMD_CP $SYSMON_STD_FILE $SYSMON_CFG_FILE");           # cp template standard.smon
 #        $return_code = 0xffff & system @cmd ;                           # Perform Command cp
@@ -1626,7 +1627,7 @@ sub write_rpt_file {
         my $mail_mess5 = "Have a good day\n";
         my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}${mail_mess4}${mail_mess5}";
         my $mail_subject = "SADM: INFO $HOSTNAME daemon $daemon_name restarted";
-        @args = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
+        @args = ("echo \"$mail_message\" | $CMD_MUTT -s \"$mail_subject\" $SADM_MAIL_ADDR");
         system(@args) ;                                                 # Execute
         if ( $? == -1 ) {                                               # If Mail Command Fails
             print "\nCommand failed: $!";                               # Show Error to users
