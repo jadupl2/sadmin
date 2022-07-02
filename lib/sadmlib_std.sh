@@ -189,6 +189,7 @@
 #@2022_05_25 lib v3.97 Added verification of new variables SADM_ROOT_ONLY and SADM_SADM_SERVER_ONLY
 #@2022_05_25 lib v3.98 Minor text modification related to PID expiration.
 #@2022_06_14 lib v3.99 fix problem get O/S Code name.
+#@2022_07_02 lib v4.00 Fix problem with 'sadm_server_core_per_socket' function.
 #===================================================================================================
 
 
@@ -202,7 +203,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="3.99"                                              # This Library Version
+export SADM_LIB_VER="4.00"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -1507,7 +1508,7 @@ sadm_server_core_per_socket() {
     case "$(sadm_get_ostype)" in
        "LINUX")     wcps=`egrep "core id|physical id" /proc/cpuinfo |tr -d "\n" |sed s/physical/\\nphysical/g |grep -v ^$ |sort |uniq |wc -l`
                     if [ "$SADM_LSCPU" != "" ]
-                        then wcps=`$SADM_LSCPU | grep -iE "core(s) per socket|Core\(s\) per cluster" | cut -d ':' -f 2 | tr -d ' '`
+                        then wcps=`$SADM_LSCPU | grep -iE "core\(s\) per socket|Core\(s\) per cluster" | cut -d ':' -f 2 | tr -d ' '`
                     fi
                     if [ $wcps -eq 0 ] ;then wcps=1 ; fi
                     ;;
