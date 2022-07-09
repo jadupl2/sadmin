@@ -58,6 +58,7 @@
 # 2021_08_17 nolog: v4.6 Change to use the library lock file function. 
 #@2022_05_24 nolog: v4.7 Fix problem with lock file detection. 
 #@2022_06_21 Update: v4.8 Changes to use new functionalities SADMIN CODE SECTION 1.51
+#@2022_07_09 Update: v4.9 Added more verbosity to screen and log
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -90,7 +91,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.8'                                       # Script version number
+export SADM_VER='4.9'                                       # Script version number
 export SADM_PDESC="SADMIN template shell script"           # Script Optional Desc.(Not use if empty)
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -288,13 +289,18 @@ rcmd_osupdate()
              ${server_sadmin_dir}/bin/$USCRIPT                       # Run Locally when on SADMIN
              RC=$?
     fi      
+    if [ $RC -eq 0 ]
+        then sadm_write_log "[ OK ] O/S update is terminated with success on $fqdn_server"
+        else sadm_write_log "[ ERROR ] O/S update terminated with error on $fqdn_server"
+    fi 
 
     # After the O/S update is terminated, a reboot will be done on some occasion.
     # If user requested a reboot after each update, see reboot option when scheduling the O/S Update
     # We need to wait a moment to give the selected system time to reboot and become available again.
     # We will sleep 480 seconds (8 Min.) to give system time to restart and start it's app.
     if [ "$WREBOOT" != "" ]                                         # if Reboot requested
-        then sadm_writelog "Sleep $REBOOT_TIME seconds, give time to '${server_name}' to become available."
+        then sadm_write_log "System $fqdn_server is now rebooting."
+             sadm_write_log "We will sleep $REBOOT_TIME seconds, to give time for '${server_name}' to become available."
              # Sleep for $REBOOT_TIME seconds and update progress bar every 30 seconds.
              sadm_sleep $REBOOT_TIME 30 
     fi 
@@ -306,11 +312,11 @@ rcmd_osupdate()
     #if [ $RC -ne 0 ]                                                    # Update went Successfully?
     #   then sadm_write "${SADM_ERROR} O/S Update completed with error on '${server_name}'.\n"
     #        update_server_db "${server_name}" "F"                       # Update Status False in DB
-    #   else sadm_write "${SADM_OK} O/S Update completed successfully on '${server_name}'.\n"
-    #        update_server_db "${server_name}" "S"                       # Update Status Success 
+    #   else sadm_write "${SADM_OK} O/S Update in now completed successfully on '${server_name}'.\n"
+    #        update_server_db "${server_name}" "S"                      # Update Status Success 
     #fi
     
-    sadm_write "O/S Update completed on '${server_name}'.\n"            # Advise User were back .
+    sadm_write "O/S Update is now completed on '${server_name}'.\n"     # Advise User were back .
     return 0
 }
 
