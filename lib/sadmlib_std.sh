@@ -190,6 +190,7 @@
 #@2022_05_25 lib v3.98 Minor text modification related to PID expiration.
 #@2022_06_14 lib v3.99 fix problem get O/S Code name.
 #@2022_07_02 lib v4.00 Fix problem with 'sadm_server_core_per_socket' function.
+#@2022_07_07 lib v4.01 Add verbosity to sadm_sleep() and fix sadm_sendmail() subject problem.
 #===================================================================================================
 
 
@@ -203,7 +204,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.00"                                              # This Library Version
+export SADM_LIB_VER="4.01"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -820,11 +821,11 @@ sadm_sleep() {
     TIME_SLEPT=0                                                        # Time Slept in Seconds
     while [ $SLEEP_TIME -gt $TIME_SLEPT ]                               # Loop Sleep time Exhaust
         do
-        printf "${TIME_SLEPT}..."                                       # Indicate Sec. Slept
+        sadm_write "${TIME_SLEPT}..."                                       # Indicate Sec. Slept
         sleep $TIME_INTERVAL                                            # Sleep Interval Nb. Seconds
         TIME_SLEPT=$(( $TIME_SLEPT + $TIME_INTERVAL ))                  # Inc Slept Time by Interval
         done
-    printf "${TIME_SLEPT}\n"
+    sadm_write "${TIME_SLEPT}\n"
 }
 
 
@@ -2392,7 +2393,7 @@ sadm_stop() {
 
     # Write script exit code and execution time to log (If user ask for a log footer) 
     if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ]      # Want to Produce Log Footer
-        then sadm_write "\n"                                            # Blank LIne
+        then sadm_write "\n"                                            # Blank Line
              sadm_write "${SADM_FIFTY_DASH}\n"                          # Dash Line
              if [ $SADM_EXIT_CODE -eq 0 ]                               # If script succeeded
                 then foot1="Script exit code is ${SADM_EXIT_CODE} (Success)" # Success 
@@ -2578,10 +2579,10 @@ sadm_sendmail() {
     mbody="$3"                                                          # Save Alert Message
     mfile="$4"                                                          # Comma separatedFileName(s)
     if [ "$LIB_DEBUG" -gt 4 ] 
-         then sadm_write_log "Email sent to : ${maddr}" 
-              sadm_write_log "Email subject : ${msubject}" 
-              sadm_write_log "Email body    : ${mbody}" 
-              sadm_write_log "Email mfile(s): ${mfile}" 
+         then sadm_write_log "1- Email sent to : ${maddr}" 
+              sadm_write_log "2- Email subject : ${msubject}" 
+              sadm_write_log "3- Email body    : ${mbody}" 
+              sadm_write_log "4- Email mfile(s): ${mfile}" 
     fi 
 
     # Send mail with 1 or no attachment
@@ -2592,11 +2593,11 @@ sadm_sendmail() {
                              sadm_write_err "$emsg"                     # Avise user of error
                              printf "\n$emsg\n" >> $mbody               # Add Err Msg to Body
                              RC=1                                       # Set Error return code
-                             echo "$mbody" | $SADM_MUTT -s "$msubject" $maddr >>$SADM_LOG 2>&1
-                        else echo "$mbody" | $SADM_MUTT -s "$msubject" $maddr -a "$mfile" >>$SADM_LOG 2>&1 
+                             echo "$mbody" | $SADM_MUTT -s "$msubject" "$maddr" >>$SADM_LOG 2>&1
+                        else echo "$mbody" | $SADM_MUTT -s "$msubject" "$maddr" -a "$mfile" >>$SADM_LOG 2>&1 
                              RC=$?                                      # Save Error Number
                      fi
-                else echo "$mbody" | $SADM_MUTT -s "$msubject" $maddr >>$SADM_LOG 2>&1 
+                else echo "$mbody" | $SADM_MUTT -s "$msubject" "$maddr" >>$SADM_LOG 2>&1 
                      RC=$?                                              # Save Error Number
             fi
             if [ $RC -ne 0 ]                                            # Error sending email 
@@ -2619,7 +2620,7 @@ sadm_sendmail() {
                              #echo "opt_a = $opt_a"
                    fi 
                 done
-            echo "$mbody" | $SADM_MUTT -s $msubject $opt_a \-\- $maddr
+            echo "$mbody" | $SADM_MUTT -s "$msubject" $opt_a \-\- "$maddr"
             RC=$?                                                       # Save Error Number
             if [ $RC -ne 0 ]                                            # Error sending email 
                 then wstatus="[ Error ] Sending email to $maddr"        # Advise Error sending Email
