@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_push_sadmin.sh
-#   Synopsis :  Copy the SADMIN master version to all actives clients (No overwite of config files). 
+#   Synopsis :  Copy the SADMIN master version to all actives clients (No overwrite of config files). 
 #   Version  :  1.0
 #   Date     :  6 September 2015
 #   Requires :  sh
@@ -13,7 +13,6 @@
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
-
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
@@ -52,6 +51,7 @@
 #@2021_11_07 server: v2.32 Don't try to push files (and give error) if the client system is lock. 
 #@2022_04_04 server: v2.33 Minor changes
 #@2022_05_24 server: v2.34 Update to check if the SADMIN client is lock prior to push.
+#@2022_07_09 server: v2.35 Now pushing Email user password file (.gmpw)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -83,7 +83,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.34'                                     # Script Version
+export SADM_VER='2.35'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -359,7 +359,7 @@ process_servers()
 
 
         # Copy Site Common configuration files to client
-        rem_cfg_files=(alert_group.cfg )
+        rem_cfg_files=(alert_group.cfg .gmpw )
         for WFILE in "${rem_cfg_files[@]}"
           do
           CFG_SRC="${SADM_CFG_DIR}/${WFILE}"
