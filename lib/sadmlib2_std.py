@@ -555,21 +555,19 @@ def load_config_file(cfg_file):
         sadm_rw_dbpwd  = ''                                             # Set DB R/W 'sadmin' Passwd
         sadm_ro_dbpwd  = ''                                             # Set DB R/O 'squery' Passwd
 
-
-    # Get SMTP User mail passwd
-    if ((get_fqdn() == sadm_server ) and (sadm_host_type == "S")):         
-        sadm_gmpw=""
-        try : 
-            if os.path.exists(gmpw_file):
-                with open(gmpw_file) as f:
-                    sadm_gmpw = f.readline().strip()
-        except (IOError, FileNotFoundError) as e:                       # Can't open SMTP Pwd file
-            print("Error opening smtp sender password file %s" % (gmpw_file)) 
-            print("Error Line No. : %d" % (inspect.currentframe().f_back.f_lineno)) # Print LineNo
-            print("Function Name  : %s" % (sys._getframe().f_code.co_name)) # Get cur function Name
-            print("Error Number   : %d" % (e.errno))                    # write_log Error Number
-            print("Error Text     : %s" % (e.strerror))                 # write_log Error Message
-            sys.exit(1)    
+    # Get SMTP User mail password        
+    sadm_gmpw=""
+    try : 
+        if os.path.exists(gmpw_file):
+            with open(gmpw_file) as f:
+                sadm_gmpw = f.readline().strip()
+    except (IOError, FileNotFoundError) as e:                       # Can't open SMTP Pwd file
+        print("Error opening smtp sender password file %s" % (gmpw_file)) 
+        print("Error Line No. : %d" % (inspect.currentframe().f_back.f_lineno)) # Print LineNo
+        print("Function Name  : %s" % (sys._getframe().f_code.co_name)) # Get cur function Name
+        print("Error Number   : %d" % (e.errno))                    # write_log Error Number
+        print("Error Text     : %s" % (e.strerror))                 # write_log Error Message
+        sys.exit(1)    
     return 
 
 
@@ -1705,6 +1703,10 @@ def stop(pexit_code) :
     #if get_fqdn() == sadm_server and db_used :                          # If Database was Used
     #    db_close (pdb_conn,pdb_cur)                                     # Close Database
 
+    # Making sure exit code is either 0 (Success) or 1 (error).
+    if pexit_code != 0 : pexit_code =1 
+
+
     # Calculate the execution time, format it and write it to the log
     end_epoch = int(time.time())                                        # Save End Time in Epoch Time
     elapse_seconds = end_epoch - start_epoch                            # Calc. Total Seconds Elapse
@@ -1893,7 +1895,7 @@ def stop(pexit_code) :
         if log_footer :
             try:
                 woutput = dir_www_host + "/log"  + '/' + phostname + '_' + pinst + '.log'
-                if os.getuid() == 0 and os.path.exists(woutput): os.chmod(woutput, 0o0660)          # Change RCH File Permission  
+                if os.getuid() == 0 and os.path.exists(woutput): os.chmod(woutput, 0o0660) 
                 shutil.copyfile(log_file,woutput )                      # Copy Now log to www
             except Exception as e:
                 print ("Couldn't copy %s to %s\n%s\n" % (log_file,woutput,e)) # Advise user
@@ -2362,7 +2364,7 @@ def sendmail(mail_addr, mail_subject, mail_body, mail_attach) :
                 encoders.encode_base64(p)                               # encode into base64
                 p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
                 data.attach(p)                                          # attach inst p to inst msg
-                text = data.as_string()                                 # Conv. Multipart msg 2 str
+        text = data.as_string()                                 # Conv. Multipart msg 2 str
     else: 
         text = mail_body
 
@@ -2375,21 +2377,21 @@ def sendmail(mail_addr, mail_subject, mail_body, mail_attach) :
             try:
                 server.login(sadm_smtp_sender, sadm_gmpw)
             except smtplib.SMTPException :
-                write_err("Authentication for %s failed." % sadm_smtp_sender)
-                return 1
+                write_err("Authentication for %s at %s:%d failed (%s)." % (sadm_smtp_sender,sadm_smtp_server,sadm_smtp_port,sadm_gmpw))
+                return (1)
             try : 
                 server.sendmail(sadm_smtp_sender, mail_addr, text)
             except Exception as e: 
                 write_err("[ ERROR ] Trying to send email to %s" % (mail_addr))
                 write_err("%s" % e)
-                return 1
+                return (1)
             finally:
                 server.close()
     except (smtplib.SMTPException, socket.error, socket.gaierror, socket.herror) as e:
             write_err("[ ERROR ] Connection to %s port %s failed" % (sadm_smtp_server,sadm_smtp_port))
             write_err("%s" % e)
-            return 1
-    return 0
+            return(1)
+    return (0)
 
 
 
