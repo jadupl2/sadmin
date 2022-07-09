@@ -4,7 +4,7 @@
 #   Date        :   2017-09-09
 #   Name        :   sadm_setup.py
 #   Synopsis    : 
-#   Licence     :   You can redistribute it or modify under the terms of GNU General Public 
+#   License     :   You can redistribute it or modify under the terms of GNU General Public 
 #                   License, v.2 or above.
 # ==================================================================================================
 #   Copyright (C) 2016-2017 Jacques Duplessis <sadmlinux@gmail.com>
@@ -2034,17 +2034,17 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,s
     if not os.path.isfile(maincf): return                               # Postfix not installed
 
     # Update lines in main.cf
-    update_postfix_cf(sroot,"inet_interfaces","\$myhostname,localhost")
-    update_postfix_cf(sroot,"myhostname",phostname)
+    #update_postfix_cf(sroot,"inet_interfaces","\$myhostname,localhost")
+    #update_postfix_cf(sroot,"myhostname",phostname)
     update_postfix_cf(sroot,"smtp_use_tls","yes")
     update_postfix_cf(sroot,"smtp_sasl_auth_enable","yes")
     update_postfix_cf(sroot,"smtp_sasl_security_options"," ")
     update_postfix_cf(sroot,"smtp_sasl_password_maps","hash:/etc/postfix/sasl_passwd")
-    if (sosname == "REDHAT") or (sosname == "CENTOS") or (sosname == "FEDORA") or \
-       (sosname == "ALMALINUX") or (sosname == "ROCKY") :     
-       update_postfix_cf(sroot,"smtp_tls_CAfile","/etc/ssl/certs/ca-bundle.crt")  
-    else: 
-       update_postfix_cf(sroot,"smtp_tls_CAfile","etc/ssl/certs/ca-certificates.crt")  
+    #if (sosname == "REDHAT") or (sosname == "CENTOS") or (sosname == "FEDORA") or \
+    #   (sosname == "ALMALINUX") or (sosname == "ROCKY") :     
+    #   update_postfix_cf(sroot,"smtp_tls_CAfile","/etc/ssl/certs/ca-bundle.crt")  
+    #else: 
+    #   update_postfix_cf(sroot,"smtp_tls_CAfile","etc/ssl/certs/ca-certificates.crt")  
     relayhost =  "[%s]:%d" % (wsmtp_server,wsmtp_port)  
     update_postfix_cf(sroot,"relayhost",relayhost)
     
