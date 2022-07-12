@@ -231,15 +231,15 @@ dir_housekeeping()
         then CMD="find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \;"
              find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then sadm_writelog "${SADM_ERROR} running ${CMD}\n"
+                then sadm_write_err "${SADM_ERROR} running ${CMD}\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_write "${SADM_OK} ${CMD}\n"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
              fi
-             CMD="find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \;"
-             find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \;>/dev/null 2>&1
+             CMD="find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_GROUP}" {} \;"
+             find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_GROUP} {} \;>/dev/null 2>&1
              if [ $? -ne 0 ]
-                then sadm_writelog "${SADM_ERROR} running ${CMD}\n"
+                then sadm_write_err "${SADM_ERROR} running ${CMD}"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_write "${SADM_OK} ${CMD}\n"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
