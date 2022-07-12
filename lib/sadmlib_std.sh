@@ -55,8 +55,7 @@
 # 2018_09_18 v2.37 Alert mechanism Update, Enhance Performance, fixes
 # 2018_09_20 v2.38 Fix Alerting problem with Slack, Change chown bug and Set default alert group to 'default'
 # 2018_09_22 v2.39 Change Alert Message Format
-# 2018_09_23 v2.40 Added adir_housekeeping
-lert_sysadmin function
+# 2018_09_23 v2.40 Added dir_housekeeping alert_sysadmin function
 # 2018_09_25 v2.41 Enhance Email Standard Alert Message
 # 2018_09_26 v2.42 Send Alert Include Message Subject now
 # 2018_09_27 v2.43 Now Script log can be sent to Slack Alert
