@@ -527,7 +527,7 @@ create_backup()
             then sadm_write "Current directory: `pwd`\n"                # Print Current Dir.
                  sadm_write "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}\n" # Command we'll execute
         fi
-        sadm_writelog "Create Link to latest backup of ${backup_line} in ${LATEST_DIR}"
+        sadm_writelog "Create link to latest backup of ${backup_line} in ${LATEST_DIR}"
         ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}  >>$SADM_LOG 2>&1   # Run Soft Link Command
         if [ $? -ne 0 ]                                                 # If Error trying to link
             then sadm_write_err "[ ERROR ] Creating Link Backup in latest Directory"
@@ -660,12 +660,12 @@ mount_nfs()
 umount_nfs()
 {
     sadm_write "\n"
-    sadm_write "Unmounting NFS mount directory ${LOCAL_MOUNT}.\n"
+    sadm_write "Unmounting NFS mount directory ${LOCAL_MOUNT}\n"
     umount $LOCAL_MOUNT >> $SADM_LOG 2>&1                               # Umount Just to make sure
     if [ $? -ne 0 ]                                                     # If Error trying to mount
-        then sadm_write_err "[ ERROR ] Unmounting NFS Dir. $LOCAL_MOUNT"   # Error - Advise User
+        then sadm_write_err "[ ERROR ] Unmounting NFS Directory $LOCAL_MOUNT"   
              return 1                                                   # End Function with error
-        else sadm_write_log "[ SUCCESS ] Unmounting NFS Dir. $LOCAL_MOUNT" # Succeeded to Demount NFS
+        else sadm_write_log "[ SUCCESS ] Unmounting NFS Directory $LOCAL_MOUNT" 
     fi
     return 0
 }
