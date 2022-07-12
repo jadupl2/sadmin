@@ -195,10 +195,10 @@ function main_process()
     # Run CFG2HTML
     CFG2VER=`$CFG2HTML -v | tr -d '\n'`
     if [ "$(sadm_get_osname)" = "FEDORA" ]
-        then sadm_write "${CFG2VER}\nRunning : $CFG2HTML -n -H -o ${SADM_DR_DIR}.\n"
+        then sadm_write "${CFG2VER}\nRunning : $CFG2HTML -n -H -o ${SADM_DR_DIR}\n"
              $CFG2HTML -n -H -o $SADM_DR_DIR >>$SADM_LOG 2>&1
              SADM_EXIT_CODE=$?
-        else sadm_write "${CFG2VER}\nRunning : $CFG2HTML -H -o ${SADM_DR_DIR}.\n"
+        else sadm_write "${CFG2VER}\nRunning : $CFG2HTML -H -o ${SADM_DR_DIR}\n"
              $CFG2HTML -H -o $SADM_DR_DIR >>$SADM_LOG 2>&1
              SADM_EXIT_CODE=$?
     fi 
