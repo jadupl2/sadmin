@@ -433,7 +433,6 @@ dir_housekeeping()
 }
 
 
-
 # --------------------------------------------------------------------------------------------------
 # Function that set the Owner/Group and Privilege of the Filename received.
 # --------------------------------------------------------------------------------------------------
@@ -451,7 +450,7 @@ set_file()
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] On 'chmod' operation on ${VAL_FILE}."
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
-                     RETURN_CODE=1                                      # Error = Return Code to 1
+                     RETURN_CODE=1      dir_housekeeping                                # Error = Return Code to 1
                 else sadm_write_log "[ OK ]"
              fi
              sadm_write "  - chown ${VAL_OWNER}:${VAL_GROUP} ${VAL_FILE} "
