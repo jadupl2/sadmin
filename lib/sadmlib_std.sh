@@ -55,7 +55,8 @@
 # 2018_09_18 v2.37 Alert mechanism Update, Enhance Performance, fixes
 # 2018_09_20 v2.38 Fix Alerting problem with Slack, Change chown bug and Set default alert group to 'default'
 # 2018_09_22 v2.39 Change Alert Message Format
-# 2018_09_23 v2.40 Added alert_sysadmin function
+# 2018_09_23 v2.40 Added adir_housekeeping
+lert_sysadmin function
 # 2018_09_25 v2.41 Enhance Email Standard Alert Message
 # 2018_09_26 v2.42 Send Alert Include Message Subject now
 # 2018_09_27 v2.43 Now Script log can be sent to Slack Alert
@@ -191,6 +192,7 @@
 #@2022_06_14 lib v3.99 fix problem get O/S Code name.
 #@2022_07_02 lib v4.00 Fix problem with 'sadm_server_core_per_socket' function.
 #@2022_07_07 lib v4.01 Add verbosity to sadm_sleep() and fix sadm_sendmail() subject problem.
+#@2022_07_12 lib v4.02 Change Group of some directory in www to solve web problem
 #===================================================================================================
 
 
@@ -204,7 +206,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.01"                                              # This Library Version
+export SADM_LIB_VER="4.02"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -2100,7 +2102,11 @@ sadm_start() {
     # ($SADMIN/tmp) If TMP Directory doesn't exist, create it.
     [ ! -d "$SADM_TMP_DIR" ] && mkdir -p $SADM_TMP_DIR
     if [ $(id -u) -eq 0 ]
-        then chmod 1777 $SADM_TMP_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_TMP_DIR
+        then chmod 1777 $SADM_TMP_DIR 
+             if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
+                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_TMP_DIR
+                else chown ${SADM_USER}:${SADM_GROUP} $SADM_TMP_DIR
+             fi
     fi
 
     # ($SADMIN/lib) If LIB Directory doesn't exist, create it.
@@ -2235,7 +2241,7 @@ sadm_start() {
     if [ $(id -u) -eq 0 ]
        then chmod 0775 $SADM_WWW_DIR
             if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR
+                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DIR
                 else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DIR
             fi
     fi
@@ -2245,7 +2251,7 @@ sadm_start() {
     if [ $(id -u) -eq 0 ]
        then chmod 0775 $SADM_WWW_DAT_DIR
             if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR
+                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR
                 else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR
             fi
     fi
@@ -2255,7 +2261,7 @@ sadm_start() {
     if [ $(id -u) -eq 0 ]
        then chmod 0775 $SADM_WWW_ARC_DIR
             if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_ARC_DIR
+                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_ARC_DIR
                 else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_ARC_DIR
             fi
     fi
@@ -2265,7 +2271,7 @@ sadm_start() {
     if [ $(id -u) -eq 0 ]
        then chmod 0775 $SADM_WWW_DOC_DIR
             if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR
+                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DOC_DIR
                 else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DOC_DIR
             fi
     fi
@@ -2275,7 +2281,7 @@ sadm_start() {
     if [ $(id -u) -eq 0 ]
        then chmod 0775 $SADM_WWW_LIB_DIR
             if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
+                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_LIB_DIR
                 else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_LIB_DIR
             fi
     fi
@@ -2285,7 +2291,7 @@ sadm_start() {
     if [ $(id -u) -eq 0 ]
        then chmod 0775 $SADM_WWW_IMG_DIR
             if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR
+                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_IMG_DIR
                 else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_IMG_DIR
             fi
     fi
@@ -2295,7 +2301,7 @@ sadm_start() {
     if [ $(id -u) -eq 0 ]
        then chmod 1777 $SADM_WWW_TMP_DIR
             if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR
+                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR
                 else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR
             fi
     fi
