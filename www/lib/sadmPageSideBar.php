@@ -74,28 +74,22 @@ $URL_VIEW_REAR = "/view/sys/sadm_view_rear.php";                        # Rear B
 // ================================================================================================
 function build_sidebar_scripts_info() {
     
-    $DEBUG = False;                                                     # Activate/Deactivate Debug
-    
-    # Reset All Counters
-    $count=0;                                                           # Working Counter
-    $script_array = array() ;
-    
-    # Form the base directory name where all the servers 'rch' files are located
+    #$DEBUG = True;                                                     # Activate/Deactivate Debug
+    $count = 0;                                                         # Working Counter
+    $script_array = array() ;                                           # Define Array Script 
     $RCH_ROOT = $_SERVER['DOCUMENT_ROOT'] . "/dat/";                    # $SADMIN/www/dat
     if ($DEBUG) { echo "<br>Opening $RCH_ROOT directory "; }            # Debug Display RCH Root Dir
-    
-    # Make sure that the DATA Root directory is a directory
     if (! is_dir($RCH_ROOT)) {
         $msg="The $RCH_ROOT directory doesn't exist !\nCorrect the situation and retry operation";
-        alert ("$msg");
+        alert ("$msg");                                                 # Display Alert Box with msg
         ?><script type="text/javascript">history.go(-1);</script><?php
         exit;
     }
     
     # Create unique filename that will contains all servers *.rch filename
-    #$tmprch = tempnam ('tmp/', 'ref_rch_file-');                        # Create unique file name
-    $tmprch = tempnam ($_SERVER['DOCUMENT_ROOT'] . "/dat/", 'ref_rch_file-'); # Create unique file name
+    $tmprch = tempnam($_SERVER['DOCUMENT_ROOT'] . "/dat/", 'ref_rch_file_'); # Create unique file
     if ($DEBUG) { echo "<br>Temp file of rch filename : " . $tmprch;}   # Show unique filename
+    
     $CMD="find $RCH_ROOT -name '*.rch'  > $tmprch";                     # Construct find command
     if ($DEBUG) { echo "<br>Command executed is : " . $CMD ; }          # Show command constructed
     $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute find command
@@ -137,8 +131,10 @@ function build_sidebar_scripts_info() {
     fclose($input_fh);                                                  # Close Input Filename List
     krsort($script_array);                                              # Reverse Sort Array on Keys
     unlink($tmprch);                                                    # Delete Temp File
+    
     # Under Debug - Display The Array Used to build the SideBar
     if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key is $key and value is $value";}}
+    #$DEBUG = False;      
     return $script_array;
     }
 
@@ -287,7 +283,7 @@ function SideBar_OS_Summary() {
     
 
 	# ---------------------------   SCRIPTS STATUS SIDEBAR      ------------------------------------
-    echo "\n<div class='SideBarTitle'>Scripts Status</div>";             # SideBar Section Title
+    echo "\n<div class='SideBarTitle'>Scripts Status</div>";            # SideBar Section Title
 	$script_array = build_sidebar_scripts_info();                       # Build $script_array
     $TOTAL_SCRIPTS=count($script_array);                                # Get Nb. Scripts in Array
     $TOTAL_FAILED=0; $TOTAL_SUCCESS=0; $TOTAL_RUNNING=0;                # Initialize Total to Zero
