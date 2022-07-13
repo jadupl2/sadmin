@@ -35,6 +35,7 @@
 # 2021_07_30 server: v2.9 Solve intermittent error on monitor page.
 # 2021_08_17 nolog  v2.10 chmod 1777 $SADM_WWW_TMP_DIR 
 #@2022_05_03 server v2.11 Secure passwd file in $SADMIN/cfg
+#@2022_07_13 server v2.12 Fix typo that was preventing script from running under certain condition.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -43,19 +44,17 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.50
+# SADMIN CODE SECTION 1.51
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
 
 # MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    
-    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null 
-         if [ $? -eq 0 ]                                   # Found SADMIN in /etc/env.
-            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                 printf "'SADMIN' environment variable temporarily set to ${SADMIN}.\n"
-            else exit 1                                    # No SADMIN Env. Var. Exit
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                    # No SADMIN Env. Var. Exit
          fi
 fi 
 
@@ -67,38 +66,39 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.11'                                      # Script Version
+export SADM_VER='2.12'                                     # Script version number
+export SADM_PDESC="Set owner,group,permission on www sub-directories and archive old alerts."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy ?
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. LockFile
-export SADM_USE_RCH="Y"                                    # Update RCH HistoryFile 
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+export SADM_ROOT_ONLY="N"                                  # Run only by root ? - 1=Yes 0=No
+export SADM_SADM_SERVER_ONLY="N"                           # Run only on SADMIN server?- 1=Yes 0=No
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
+. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
-# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Server
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 # ---------------------------------------------------------------------------------------
-
-
 
 
 
@@ -116,6 +116,8 @@ ARC_DAYS=7                                  ; export ARC_DAYS               # AL
 show_usage()
 {
     printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
+    printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
     printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
     printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
     printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
@@ -124,39 +126,38 @@ show_usage()
 
 
 
+
 # --------------------------------------------------------------------------------------------------
 #                             General Directories Owner/Group and Privilege
 # --------------------------------------------------------------------------------------------------
 set_dir()
 {
-    VAL_DIR=$1 ; VAL_OCTAL=$2 ; VAL_OWNER=$3 ; VAL_GROUP=$4
-    RETURN_CODE=0
+     VAL_DIR=$1 ; VAL_OCTAL=$2 ; VAL_OWNER=$3 ; VAL_GROUP=$4
+     RETURN_CODE=0
 
     if [ -d "$VAL_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "Change $VAL_DIR to $VAL_OCTAL"
              chmod $VAL_OCTAL $VAL_DIR
              if [ $? -ne 0 ]
-                then sadm_writelog "Error occured on 'chmod' operation for $VALDIR"
+                then sadm_writelog "Error occurred on 'chmod' operation for $VALDIR"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
              fi
              sadm_writelog "Change chmod gou-s $VAL_DIR"
              chmod gou-s $VAL_DIR
              if [ $? -ne 0 ]
-                then sadm_writelog "Error occured on 'chmod' operation for $VALDIR"
+                then sadm_writelog "Error occurred on 'chmod' operation for $VALDIR"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
              fi
              sadm_writelog "Change $VAL_DIR owner to ${VAL_OWNER}.${VAL_GROUP}"
              chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR
              if [ $? -ne 0 ]
-                then sadm_writelog "Error occured on 'chown' operation for $VALDIR"
+                then sadm_writelog "Error occurred on 'chown' operation for $VALDIR"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
              fi
-             ls -ld $VAL_DIR | tee -a $SADM_LOG
-             if [ $RETURN_CODE = 0 ] ; then sadm_writelog "OK" ; fi
     fi
     return $RETURN_CODE
 }
@@ -231,15 +232,15 @@ dir_housekeeping()
         then CMD="find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \;"
              find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then sadm_write_err "${SADM_ERROR} running ${CMD}\n"
+                then sadm_write_err "[ ERROR ] running ${CMD}\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_write "${SADM_OK} ${CMD}\n"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
              fi
-             CMD="find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_GROUP}" {} \;"
+             CMD="find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_GROUP} {} \;"
              find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_GROUP} {} \;>/dev/null 2>&1
              if [ $? -ne 0 ]
-                then sadm_write_err "${SADM_ERROR} running ${CMD}"
+                then sadm_write_err "[ ERROR ] running ${CMD}"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_write "${SADM_OK} ${CMD}\n"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
@@ -264,7 +265,7 @@ file_housekeeping()
         then CMD="chmod 0644 $afile && chown root:root $afile"
              chmod 0644 $afile && chown root:root $afile 
              if [ $? -ne 0 ]
-                then sadm_write "${SADM_ERROR} running ${CMD}\n"
+                then sadm_write "[ ERROR ] running ${CMD}\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_write "${SADM_OK} running ${CMD}\n"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
@@ -277,7 +278,7 @@ file_housekeeping()
         then CMD="chmod 0644 $afile && chown root:root $afile"
              chmod 0644 $afile && chown root:root $afile 
              if [ $? -ne 0 ]
-                then sadm_write "${SADM_ERROR} running ${CMD}\n"
+                then sadm_write "[ ERROR ] running ${CMD}\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_write "${SADM_OK} running ${CMD}\n"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
@@ -287,10 +288,10 @@ file_housekeeping()
     # Make sure crontab for Backup have proper permission and owner
     afile="/etc/cron.d/sadm_backup"
     if [ -f "$afile" ]
-        then CMD="chmod 0644 $afile && chown root:root $afile"
+      then CMD="chmod 0644 $afile && chown root:root $afile"
              chmod 0644 $afile && chown root:root $afile 
              if [ $? -ne 0 ]
-                then sadm_write "${SADM_ERROR} running ${CMD}\n"
+                then sadm_write "[ ERROR ] running ${CMD}\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_write "${SADM_OK} running ${CMD}\n"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
@@ -343,7 +344,7 @@ file_housekeeping()
     CMD="find $SADM_WWW_DIR -type f -name *.rrd -exec chmod 664 {} \;"
     find $SADM_WWW_DIR -type f -name *.rrd -exec chmod 664 {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
-       then sadm_write "${SADM_ERROR} running ${CMD}\n"
+       then sadm_write "[ ERROR ] running ${CMD}\n"
             ERROR_COUNT=$(($ERROR_COUNT+1))
        else sadm_write "${SADM_OK} running $CMD \n"
             if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
@@ -353,7 +354,7 @@ file_housekeeping()
     CMD="find $SADM_WWW_DIR -type f -name *.pdf -exec chmod 664 {} \;"
     find $SADM_WWW_DIR -type f -name *.pdf -exec chmod 664 {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
-       then sadm_write "${SADM_ERROR} running ${CMD}\n"
+       then sadm_write "[ ERROR ] running ${CMD}\n"
             ERROR_COUNT=$(($ERROR_COUNT+1))
        else sadm_write "${SADM_OK} running ${CMD}\n"
             if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
@@ -376,7 +377,7 @@ file_housekeeping()
              CMD="find $SADM_WWW_PERF_DIR -type f -mtime +5 -name '*.png' -exec rm -f {} \;"
              find $SADM_WWW_PERF_DIR -type f -mtime +5 -name "*.png" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
-                then sadm_write "${SADM_ERROR} running ${CMD}\n"
+                then sadm_write_err "[ ERROR ] running ${CMD}\n"
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_write "${SADM_OK} running ${CMD}\n"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
@@ -401,7 +402,8 @@ function adjust_server_crontab()
 {
     # Make sure the Daily Email Report is in the SADMIN server crontab.
     F="/etc/cron.d/sadm_server"
-    if ! grep -q 'sadm_daily_report.sh' $F 
+    grep -q 'sadm_daily_report.sh' "$F" 
+    if [ $? -ne 0 ] 
        then echo "#" >> $F 
             echo "# SADMIN Daily Email Report about Scripts, ReaR and Daily Backup" >> $F 
             echo "04 07 * * * root $SADMIN/bin/sadm_daily_report.sh > /dev/null 2>&1" >> $F 
@@ -409,20 +411,21 @@ function adjust_server_crontab()
             sadm_write "${BOLD}${YELLOW}Daily Email Report added to ${F}${NORMAL}.\n" 
     fi 
 
-    # Push SERVER $SADMIN/bin $SADMIN/lib $SADMIN/.*.cfg to all actives clients.
+    # Create cron entry to push server $SADMIN/bin $SADMIN/lib $SADMIN/.*.cfg to all actives clients.
     # -s To include push of $SADMIN/sys
     # -u To include push of $SADMIN/(usr/bin usr/lib usr/cfg) 
     F="/etc/cron.d/sadm_server"
-    if ! grep -q 'sadm_push_sadmin.sh' $F 
+    grep -q 'sadm_push_sadmin.sh' $F 
+    if [ $? -ne 0 ] 
        then echo "#" >> $F 
-            echo "# Daily push of $SADMIN/(lib,bin,/cfg/.*) to all active servers (Optional)" >>$F 
+            echo "# Daily push of $SADMIN/\(lib,bin,/cfg/\.\*\) to all active servers - Optional" >>$F 
             echo "#   -s To include push of $SADMIN/sys" >> $F
-            echo "#   -u To include push of $SADMIN/(usr/bin usr/lib usr/cfg)" >> $F 
+            echo "#   -u To include push of $SADMIN/\(usr/bin usr/lib usr/cfg\)" >> $F 
             echo "#30 11,20 * * * root ${SADMIN}/bin/sadm_push_sadmin.sh > /dev/null 2>&1" >>$F 
             echo "#" >> $F  
             sadm_write "${BOLD}${YELLOW}Daily Push of SADMIN Scripts added to ${F}${NORMAL}.\n" 
     fi 
-    sadm_write "\n" 
+    sadm_write_log " " 
     return 0                                                            # Return OK to Caller
 }
 
@@ -439,7 +442,7 @@ function cmd_options()
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
-               if [ "$num" = "" ]                                       # No it's not numeric 
+               if [ "$num" == "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
@@ -470,28 +473,11 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-
-    # If you want this script to be run only by root user, uncomment the lines below.
-    if [ $(id -u) -ne 0 ]                                               # If Cur. user is not root
-        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
-             sadm_writelog "Try 'sudo ${0##*/}'."                       # Suggest using sudo
-             sadm_write "Process aborted.\n"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
-
-    # If you want this script to be run only on the SADMIN server, uncomment the lines below.
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-        then sadm_write "Script can only be run on (${SADM_SERVER}), process aborted.\n"
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
     adjust_server_crontab                                               # Check sadm_server crontab
     alert_housekeeping                                                  # Prune Alert History File
     if [ $? -eq 0 ]
-       then sadm_write "$SADM_OK Alert archiving done.\n"
-       else sadm_write "$SADM_ERROR While archiving alert.\n"
+       then sadm_write_log "[ OK ] Alert archiving done."
+       else sadm_write_err "[ ERROR ] While archiving alert."
             ERROR_COUNT=$(($ERROR_COUNT+1))
     fi 
     dir_housekeeping                                                    # Do Dir HouseKeeping
