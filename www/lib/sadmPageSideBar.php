@@ -39,6 +39,7 @@
 # 2019_09-23 Update: v2.11 Change 'Status' for ' Job' in Sidebar.
 # 2019_12_01 Update: v2.12 Shorten label name of sidebar.
 # 2022_06_02 Update: v2.14 Change some syntax due to the new PHP v8 on RHEL9
+#@2022_07_13 Update: v2.15 Show Alert when combine rch summary file can't be opened.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -53,7 +54,7 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.14";                                                        # Current version number
+$SVER  = "2.15";                                                        # Current version number
 $URL_SERVER    = '/view/srv/sadm_view_servers.php';                     # Show Servers List URL
 $URL_OSUPDATE  = "/view/sys/sadm_view_schedule.php";                    # View O/S Update Status URL 
 $URL_BACKUP    = "/view/sys/sadm_view_backup.php";                      # View Backup Status URL 
@@ -80,7 +81,7 @@ function build_sidebar_scripts_info() {
     $RCH_ROOT = $_SERVER['DOCUMENT_ROOT'] . "/dat/";                    # $SADMIN/www/dat
     if ($DEBUG) { echo "<br>Opening $RCH_ROOT directory "; }            # Debug Display RCH Root Dir
     if (! is_dir($RCH_ROOT)) {
-        $msg="The $RCH_ROOT directory doesn't exist !\nCorrect the situation and retry operation";
+        $msg="The directory $RCH_ROOT doesn't exist !\nCorrect the situation and retry operation";
         alert ("$msg");                                                 # Display Alert Box with msg
         ?><script type="text/javascript">history.go(-1);</script><?php
         exit;
@@ -96,7 +97,11 @@ function build_sidebar_scripts_info() {
     if ($DEBUG) { echo "<br>Return code of command is : " . $RCODE ; }  # Display Return Code
     
     # Open input file containing the name of all rch filenames
-    $input_fh  = fopen("$tmprch","r") or die ("can't open ref-rch file - " . $tmprch);
+    if (! ($input_fh = fopen("$tmprch","r"))) {
+        $errStr = "Failed to open '{$tmprch}' for read.";
+        alert ("$errStr"); 
+        return $script_array;
+    } 
     
     # Loop through filename list in the file
     while(! feof($input_fh)) {
