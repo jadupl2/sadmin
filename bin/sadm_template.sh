@@ -100,8 +100,8 @@ export SADM_DEBUG=0                                        # Debug Level(0-9) 0=
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
-export SADM_ROOT_ONLY="N"                                  # Run only by root ? - 1=Yes 0=No
-export SADM_SADM_SERVER_ONLY="N"                           # Run only on SADMIN server?- 1=Yes 0=No
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SADM_SERVER_ONLY="Y"                           # Run only on SADMIN server? [Y] or [N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
@@ -111,7 +111,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
-export SADM_ALERT_TYPE=3                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
@@ -137,6 +137,8 @@ export SADM_ALERT_TYPE=3                                   # 0=No 1=OnError 2=On
 show_usage()
 {
     printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
+    printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
     printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
     printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
     printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"

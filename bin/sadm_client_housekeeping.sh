@@ -15,6 +15,9 @@
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
 #
+# This code was originally written by Jacques Duplessis <sadmlinux@gmail.com>.
+# Developer Web Site : https://sadmin.ca
+#   
 # --------------------------------------------------------------------------------------------------
 # 2017_08_08    v1.7 Add /sadmin/jac in the housekeeping and change 600 to 644 for configuration file
 # 2017-10-10    v1.8 Remove deletion of release file on sadm client in /sadmin/cfg

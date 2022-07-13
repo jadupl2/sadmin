@@ -9,7 +9,10 @@
 # Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
 #        have and use a 100 characters per line. Comments in script always begin at column 73. 
 #        You will have a better experience, if you set screen width to have at least 100 Characters.
-# 
+#
+# This code was originally written by Jacques Duplessis <sadmlinux@gmail.com>.
+# Developer Web Site : https://sadmin.ca
+#   
 #---------------------------------------------------------------------------------------------------
 #   The SADMIN Tool is a free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
