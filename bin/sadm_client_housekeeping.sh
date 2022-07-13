@@ -64,10 +64,70 @@
 # 2021_06_10 client: v2.03 Fix problem removing 'nmon' watcher from monitor file.
 # 2021_07_22 client: v2.04 Fix problem when run the 1st time during setup script.
 #@2022_07_02 client: v2.05 Set permission for gmail passwd file (.gmpw)
+#@2022_07_13 client: v2.06 Update to new section of SADMIN and remove unused code.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
 
+
+
+
+# ---------------------------------------------------------------------------------------
+# SADMIN CODE SECTION 1.51
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
+# ---------------------------------------------------------------------------------------
+
+# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                    # No SADMIN Env. Var. Exit
+         fi
+fi 
+
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
+export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+
+# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='2.06'                                      # Script version number
+export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth 
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
+export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
+export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SADM_SERVER_ONLY="Y"                           # Run only on SADMIN server? [Y] or [N]
+
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+# ---------------------------------------------------------------------------------------
 
 
 
@@ -96,7 +156,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.05'                                     # Script Version
+export SADM_VER='2.06'                                     # Script Version
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -142,17 +202,21 @@ FILE_ERROR=0                                ; export FILE_ERROR         # Return
 
 
 
+
 # --------------------------------------------------------------------------------------------------
-#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# Show script command line options
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${SADM_PN} usage :"
-    printf "\n\t-d   (Debug Level [0-9])"
-    printf "\n\t-h   (Display this help message)"
-    printf "\n\t-v   (Show Script Version Info)"
-    printf "\n\n"
+    printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
+    printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
+    printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
+    printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
+    printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
+    printf "\n\n" 
 }
+
 
 
 
@@ -403,32 +467,6 @@ dir_housekeeping()
              fi
     fi
 
-
-#    # Remove Directory that should only be there on the SADMIN Server not the client.
-#    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]
-#       then sadm_write "\nRemove useless directories on client (if any) ...\n"
-#            #
-#            # Remove Database Backup Directory on SADMIN Client if it exist
-#            if [ -d "$SADM_DBB_DIR" ] && [ "$SADM_HOST_TYPE" = "C" ]
-#                then sadm_write "Directory $SADM_DBB_DIR should exist only on SADMIN server.\n"
-#                     sadm_write "I am deleting it now.\n"
-#                     rm -fr $SADM_DBB_DIR
-#            fi
-#            # Remove Network Scan Directory on SADMIN Client if it exist
-#            if [ -d "$SADM_NET_DIR" ] && [ "$SADM_HOST_TYPE" = "C" ]
-#                then sadm_write "Directory $SADM_NET_DIR should exist only on SADMIN server.\n"
-#                     sadm_write "I am deleting it now.\n"
-#                     rm -fr $SADM_NET_DIR
-#            fi
-#            # Remove Web Site Directory on SADMIN Client if it exist
-#            #if [ -d "$SADM_WWW_DIR" ] && [ "$SADM_HOST_TYPE" = "C" ]
-#            #    then sadm_write "Directory $SADM_WWW_DIR should exist only on SADMIN server.\n"
-#            #         sadm_write "I am deleting it now.\n"
-#            #         rm -fr $SADM_WWW_DIR
-#            #fi
-#            sadm_write "${SADM_TEN_DASH}\n"
-#    fi
-#
     return $ERROR_COUNT
 }
 
@@ -450,7 +488,7 @@ set_file()
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] On 'chmod' operation on ${VAL_FILE}."
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
-                     RETURN_CODE=1      dir_housekeeping                                # Error = Return Code to 1
+                     RETURN_CODE=1                                      # Error = Return Code to 1
                 else sadm_write_log "[ OK ]"
              fi
              sadm_write "  - chown ${VAL_OWNER}:${VAL_GROUP} ${VAL_FILE} "
@@ -487,7 +525,7 @@ file_housekeeping()
     if [ ! -f "${SADM_ULIB_DIR}/.gitkeep" ] ; then touch ${SADM_ULIB_DIR}/.gitkeep ; fi 
     if [ ! -f "${SADM_UCFG_DIR}/.gitkeep" ] ; then touch ${SADM_UCFG_DIR}/.gitkeep ; fi 
     if [ ! -f "${SADM_UDOC_DIR}/.gitkeep" ] ; then touch ${SADM_UDOC_DIR}/.gitkeep ; fi 
-    
+
     # Remove files that should only be there on the SADMIN Server not the client.
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]
        then afile="$SADM_WWW_LIB_DIR/.crontab.txt"
