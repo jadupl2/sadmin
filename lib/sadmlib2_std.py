@@ -172,7 +172,7 @@ sadm_smtp_sender             = "sender@gmail.com"           # smtp sender accoun
 sadm_gmpw                    = ""                           # smtp sender password
 
 # Logic to get O/S Distribution Information into Dictionnary os_dict
-if wostype=platform.system().upper() != "DARWIN":           # If not on MAc
+if platform.system().upper() != "DARWIN":                   # If not on MAc
     osrelease                    = "/etc/os-release"        # Distribution Info file
     os_dict                      = {}                       # Dict. for O/S Info
     with open(osrelease) as f:                              # Open /etc/os-release as f
