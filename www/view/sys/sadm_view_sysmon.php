@@ -57,6 +57,8 @@
 #@2022_02_16 web v2.27 Sysmon page - Monitor tmp file was not deleted after use.
 #@2022_02_17 web v2.28 Sysmon page - Added a test to delete only when tmp file exist
 #@2022_05_26 web v2.29 Sysmon page - Fix intermittent problem creating tmp alert file.
+#@2022_05_26 web v2.30 Sysmon page - Fix intermittent problem creating tmp alert file.
+#@2022_05_26 web v2.31 Sysmon page - Rewrote some part of the code for new version of php
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -93,7 +95,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.30" ;                                                       # Current version number
+$SVER  = "2.31" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -120,7 +122,7 @@ $alert_file = SADM_WWW_TMP_DIR . "/sysmon_alert_file_" . getmypid() ;   # File B
 #
 function create_alert_file() {
     global $DEBUG, $tmp_file1, $tmp_file2, $alert_file ;
-
+    #$DEBUG = True;
     # Create the Alert file from all SYSTEM MONITOR REPORT FILE (*.RPT) in $SADM_WWW_DAT_DIR. 
     # Get content of all *.rpt files (Contain Error,Warning,Info reported by System Monitor)
     # EXAMPLE OF RPT LINE BELOW : 
@@ -223,6 +225,7 @@ function create_alert_file() {
     }
     if (file_exists($tmp_file1)) { unlink($tmp_file1); }                # Delete Work File 1
     if (file_exists($tmp_file2)) { unlink($tmp_file2); }                # Delete Work File 2
+    #$DEBUG = False;
 }
 
 
@@ -482,8 +485,10 @@ function display_line($line,$BGCOLOR,$con)
 # Show the scripts execution history - The last $SADM_MONITOR_HISTORY_SIZE scripts that have run 
 #---------------------------------------------------------------------------------------------------
 function show_activity($con,$alert_file) {
-    global $DEBUG, $tmp_file1, $tmp_file2, $URL_HOST_INFO, $URL_VIEW_RCH, $URL_WEB, $URL_VIEW_FILE ; 
+    global $DEBUG, $tmp_file1, $tmp_file2, $URL_HOST_INFO, $URL_VIEW_RCH, $URL_WEB, $URL_VIEW_FILE ;
 
+    if ($DEBUG) { echo "<br>\nSADM_MONITOR_RECENT_COUNT " . SADM_MONITOR_RECENT_COUNT . "\n<br>" ; }
+    
     # Get the last $SADM_MONITOR_RECENT_COUNT scripts than have ran.
     $wdate=date('Y.m.d');                                               # Get current Date
     if ($DEBUG) { echo "\nCurrent date : " . $wdate . "\n "; }  
@@ -675,17 +680,17 @@ function show_activity($con,$alert_file) {
 }
 
 
-
-
-# Display Main Page Data from the row received in parameter
+# Display notification section : Running(Green), Warning(Yellow), Error(Red) and Info(Blue) section.
 #---------------------------------------------------------------------------------------------------
-function display_data($con,$alert_file) {
+function display_alert_section($con,$alert_file) {
     global $DEBUG, $URL_HOST_INFO, $URL_VIEW_FILE, $URL_WEB, $URL_VIEW_RCH, $URL_DOC_DIR;
 
+    if ($DEBUG) { echo "\nI am in display_alert_section\n\n"; }
+    # $DEBUG = False;
     echo "\n<tbody style: font-family: 'Ubuntu', sans-serif;>\n";       # Start of Table Body
     $array_sysmon = file($alert_file);                                  # Put Alert file in Array
     natsort($array_sysmon);                                             # Sort Array 
-    if ($DEBUG) { echo "\nFINAL ARRAY CONTENT\n<br>" ; var_dump ($array_sysmon); echo "\n<br>" ; }  
+    if ($DEBUG) { echo "\n1- FINAL ARRAY CONTENT\n<br>" ; var_dump ($array_sysmon); echo "\n<br>" ; }  
     #echo "\nFINAL ARRAY CONTENT\n<br>" ; var_dump ($array_sysmon); echo "\n<br>" ; 
 
     # If nothing to report
@@ -699,7 +704,7 @@ function display_data($con,$alert_file) {
         echo "\n</tbody>\n";                                            # End of tbody
         return;                                                         # Return to Caller 
     }
-    
+
     # Initialize default value before entering the loop.
     $wheading = false ;                                                 # Init. Warning values
     $eheading = false ;                                                 # Init. Error values
@@ -712,7 +717,7 @@ function display_data($con,$alert_file) {
     foreach ($array_sysmon as $line_num => $line) {
         if ($DEBUG) { 
             echo "\nProcessing Line #{$line_num} : ." .htmlspecialchars($line). ".<br />\n"; 
-            echo "Length of line #{$line_num} is ". strlen($line) ; 
+            echo "Length of line #{$line_num} is ". strlen($line) . ".<br>\n"; 
         }
         if (strlen($line) > 4095) { continue ; }                        # Empty Line Exceeding 4095
         # Running;holmes;2019.09.30;10:39;SADM;SCRIPT;sadm_fetch_clients;default/1;default/1 
@@ -721,6 +726,7 @@ function display_data($con,$alert_file) {
             if (! $eheading) { sysmon_page_heading ('E') ; $eheading=True ; $wcount=0; } 
             $wcount += 1;
             if ($wcount % 2 == 0) $BGCOLOR="#fff1e6" ; else $BGCOLOR="#f0efeb" ;
+            if ($DEBUG) { echo "display_line: ". $line . ".<br>\n"; } 
             display_line($line,$BGCOLOR,$con);
         }
     }
@@ -740,6 +746,7 @@ function display_data($con,$alert_file) {
             if (! $wheading) { sysmon_page_heading ('W') ; $wheading=True ; $wcount=0; } 
             $wcount += 1;
             if ($wcount % 2 == 0) $BGCOLOR="#fff1e6" ; else $BGCOLOR="#f0efeb" ;
+            if ($DEBUG) { echo "display_line: ". $line . ".<br>\n"; } 
             display_line($line,$BGCOLOR,$con);
         }
     }
@@ -759,6 +766,7 @@ function display_data($con,$alert_file) {
             if (! $rheading) { sysmon_page_heading ('R') ; $rheading=True ; $wcount=0;} 
             $wcount += 1;
             if ($wcount % 2 == 0) $BGCOLOR="#fff1e6" ; else $BGCOLOR="#f0efeb" ;
+            if ($DEBUG) { echo "display_line: ". $line . ".<br>\n"; } 
             display_line($line,$BGCOLOR,$con);
         }
     }
@@ -779,11 +787,47 @@ function display_data($con,$alert_file) {
             if (! $iheading) { sysmon_page_heading ('I') ; $iheading=True ; $wcount=0; } 
             $wcount += 1;
             if ($wcount % 2 == 0) $BGCOLOR="#fff1e6" ; else $BGCOLOR="#f0efeb" ;
+            if ($DEBUG) { echo "display_line: ". $line . ".<br>\n"; } 
             display_line($line,$BGCOLOR,$con);
         }
     }
     if ($iheading) { echo "\n</table>\n" ; }                     # If data Shown,End of Table
 
+
+}
+
+
+
+
+
+# Display Main Page Data from the row received in parameter
+#---------------------------------------------------------------------------------------------------
+function display_data($con,$alert_file) {
+    global $DEBUG, $URL_HOST_INFO, $URL_VIEW_FILE, $URL_WEB, $URL_VIEW_RCH, $URL_DOC_DIR;
+    #$DEBUG = True ;
+
+    echo "\n<tbody style: font-family: 'Ubuntu', sans-serif;>\n";       # Start of Table Body
+    $array_sysmon = file($alert_file);                                  # Put Alert file in Array
+    natsort($array_sysmon);                                             # Natural Sort Array 
+    if ($DEBUG) { echo "\n2- FINAL ARRAY CONTENT\n<br>" ; var_dump ($array_sysmon); echo "\n<br>" ; }  
+    #echo "\nFINAL ARRAY CONTENT\n<br>" ; var_dump ($array_sysmon); echo "\n<br>" ; 
+
+    # If nothing to report
+    if ($DEBUG) { echo "\nSize of array is " . sizeof($array_sysmon) . "\n<br>" ; }
+    if (sizeof($array_sysmon) == 0) {                                   # Array Empty everything OK
+        echo "<center><strong>At this moment, no error or warning to report</strong></center>" ;
+        #if (file_exists($alert_file)) { unlink($alert_file); }          # Delete Work Alert File
+        if (SADM_MONITOR_RECENT_COUNT != 0) {                           # History of script activity
+            show_activity($con,$alert_file);
+        }
+        echo "\n</table>\n" ;
+        echo "\n</tbody>\n";                                            # End of tbody
+        if (file_exists($alert_file)) { unlink($alert_file); }          # Delete Work Alert File
+        return;                                                         # Return to Caller 
+    }else{
+        display_alert_section($con,$alert_file);
+    }
+    
     # Show History of recent scripts activity
     if (SADM_MONITOR_RECENT_COUNT != 0) {
         show_activity($con,$alert_file);
