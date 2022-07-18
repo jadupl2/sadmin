@@ -94,6 +94,7 @@
 #@2022_06_15 server v3.40 Fix problem when 2 attachments or more were send with sadm_sendmail()
 #@2022_07_01 server v3.41 Prevent error updating crontab
 #@2022_07_09 server v3.42 Updated to use new SADMIN section
+#@2022_07_14 server v3.43 Change group to $SADM_GROUP in $SADMIN/www/dat, fix problem removing client
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -124,7 +125,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.42'                                     # Script version number
+export SADM_VER='3.43'                                     # Script version number
 export SADM_PDESC="Get scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -150,7 +151,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
-export SADM_ALERT_TYPE=3                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 export SADM_MAX_LOGLINE=2500                                # Nb Lines to trim(0=NoTrim)
@@ -1003,7 +1004,7 @@ process_servers()
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
-        chown -R $SADM_WWW_USER:$SADM_WWW_GROUP ${SADM_WWW_DAT_DIR}/${server_name} # Change Owner
+        chown -R $SADM_WWW_USER:$SADM_GROUP ${SADM_WWW_DAT_DIR}/${server_name} # Change Owner
 
         
         # Get remote $SADMIN/log Dir. and update local www/dat/${server_name}/log directory.
