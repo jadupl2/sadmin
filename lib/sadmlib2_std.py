@@ -172,14 +172,15 @@ sadm_smtp_sender             = "sender@gmail.com"           # smtp sender accoun
 sadm_gmpw                    = ""                           # smtp sender password
 
 # Logic to get O/S Distribution Information into Dictionnary os_dict
-osrelease                    = "/etc/os-release"            # Distribution Info file
-os_dict                      = {}                           # Dict. for O/S Info
-with open(osrelease) as f:                                  # Open /etc/os-release as f
-    for line in f:                                          # Process each line
-        if len(line) < 2  : continue                        # Skip empty Line
-        if line[0].strip == "#" : continue                  # Skip line beginning with #
-        k,v = line.rstrip().split("=")                      # Get Key,Value of each line
-        os_dict[k] = v.strip('"')                           # Store info in Dictionnary
+if wostype=platform.system().upper() != "DARWIN":           # If not on MAc
+    osrelease                    = "/etc/os-release"        # Distribution Info file
+    os_dict                      = {}                       # Dict. for O/S Info
+    with open(osrelease) as f:                              # Open /etc/os-release as f
+       for line in f:                                       # Process each line
+           if len(line) < 2  : continue                     # Skip empty Line
+           if line[0].strip == "#" : continue               # Skip line beginning with #
+           k,v = line.rstrip().split("=")                   # Get Key,Value of each line
+           os_dict[k] = v.strip('"')                        # Store info in Dictionnary
 
 # O/S Path to various commands used by SADM Tools
 cmd_which           = "/usr/bin/which"                      # which Path - Required
