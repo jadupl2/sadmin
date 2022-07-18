@@ -1,4 +1,5 @@
 <?php
+#!/usr/bin/env  php
 # ==================================================================================================
 #   Author      :  Jacques Duplessis
 #   Email       :  sadmlinux@gmail.com
@@ -40,6 +41,7 @@
 # 2019_12_01 Update: v2.12 Shorten label name of sidebar.
 # 2022_06_02 Update: v2.14 Change some syntax due to the new PHP v8 on RHEL9
 #@2022_07_13 Update: v2.15 Show Alert when combine rch summary file can't be opened.
+#@2022_07_18 fix: v2.16 Fix intermittent problem - SideBar wouldn't not displayed correctly.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -53,8 +55,8 @@ echo "\n\n<div class='SideBar'>";
 #                                      GLOBAL Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.15";                                                        # Current version number
+$DEBUG = True ;                                                        # Debug Activated True/False
+$SVER  = "2.16";                                                        # Current version number
 $URL_SERVER    = '/view/srv/sadm_view_servers.php';                     # Show Servers List URL
 $URL_OSUPDATE  = "/view/sys/sadm_view_schedule.php";                    # View O/S Update Status URL 
 $URL_BACKUP    = "/view/sys/sadm_view_backup.php";                      # View Backup Status URL 
@@ -73,91 +75,99 @@ $URL_VIEW_REAR = "/view/sys/sadm_view_rear.php";                        # Rear B
 // ================================================================================================
 //                   Build Array Used by SideBar for Scripts Status 
 // ================================================================================================
-function build_sidebar_scripts_info() {
-    
-    #$DEBUG = True;                                                     # Activate/Deactivate Debug
+function build_sidebar_scripts_info()
+{
+    #$DEBUG = False;                                                      # Activate/Deactivate Debug
     $count = 0;                                                         # Working Counter
     $script_array = array() ;                                           # Define Array Script 
-    $RCH_ROOT = $_SERVER['DOCUMENT_ROOT'] . "/dat/";                    # $SADMIN/www/dat
+    $RCH_ROOT = $_SERVER['DOCUMENT_ROOT'] . "/dat";                    # $SADMIN/www/dat
     if ($DEBUG) { echo "<br>Opening $RCH_ROOT directory "; }            # Debug Display RCH Root Dir
     if (! is_dir($RCH_ROOT)) {
-        $msg="The directory $RCH_ROOT doesn't exist !\nCorrect the situation and retry operation";
-        alert ("$msg");                                                 # Display Alert Box with msg
+        $msg="\nThe directory $RCH_ROOT doesn't exist !\nCorrect the situation and retry operation\n";
+        sadm_alert ("$msg");                                            # Display Alert Box with msg
         ?><script type="text/javascript">history.go(-1);</script><?php
         exit;
     }
-    
+    if ($DEBUG) { echo "<br>0 WWWDAT = " . $RCH_ROOT ; }
+
     # Create unique filename that will contains all servers *.rch filename
-    $tmprch = tempnam($_SERVER['DOCUMENT_ROOT'] . "/dat/", 'ref_rch_file_'); # Create unique file
-    if ($DEBUG) { echo "<br>Temp file of rch filename : " . $tmprch;}   # Show unique filename
-    
-    $CMD="find $RCH_ROOT -name '*.rch'  > $tmprch";                     # Construct find command
-    if ($DEBUG) { echo "<br>Command executed is : " . $CMD ; }          # Show command constructed
-    $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute find command
+    $tmp_rch = tempnam($_SERVER['DOCUMENT_ROOT'] . "/tmp/", 'ref_rch_file_'); # Create unique file
+    chown ("$tmp_rch",SADM_GROUP);
+    chmod("$tmp_rch",0664);
+    if ($DEBUG) { echo "<br>Tmp filename : " . $tmp_rch ; }             # Show unique filename
+
+    # Create a list of all rch files for all systems in $tmp_rch
+    $CMD="find " . $RCH_ROOT . " -name '*.rch' -type f  > $tmp_rch ";  
+    if ($DEBUG) { echo "<br>\nCommand executed is : " . $CMD . "\n"; }  # Show command constructed
+    unset($name_array);                                                 # Clear output Array
+    $last_line = system ("$CMD",$RCODE);                                # Execute find command
     if ($DEBUG) { echo "<br>Return code of command is : " . $RCODE ; }  # Display Return Code
-    
-    # Open input file containing the name of all rch filenames
-    if (! ($input_fh = fopen("$tmprch","r"))) {
-        $errStr = "Failed to open '{$tmprch}' for read.";
-        alert ("$errStr"); 
-        return $script_array;
-    } 
-    
+
     # Loop through filename list in the file
-    while(! feof($input_fh)) {
-        $wfile = trim(fgets($input_fh));                                # Read rch filename line
-        if ($DEBUG) { echo "\n<br><br>Processing file : " . $wfile ;}   # Debug Show rch filename
-        if ($wfile != "") {                                             # If filename not blank
-            $line_array = file($wfile);                                 # Reads entire file in array
-            if ($DEBUG) { echo "\n>Number of line in $wfile is ". count($line_array);} 
-            $last_index = count($line_array) - 1;                       # Array Index of Last Line
-            if ($DEBUG) { echo "\n<br>line_array[last_index]=" . $line_array[$last_index];}
-            if ($line_array[$last_index] != "") {                       # If None Blank Last Line
-                $tag = explode(" ",$line_array[$last_index]);           # Split Line space delimited
-                $num_tags = count($tag);                                # Nb Elements on lines
-                if ($num_tags == 10) {
-                   list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode) = explode(" ",$line_array[$last_index], 10);
-                   $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". $calert .",". $ctype . "," . trim($ccode) .",". basename($wfile) ."\n";
-                   if ($DEBUG) { echo "<br>Output line is " . $outline ; } # Print Output Line
-                   $count+=1;
-                   # Key is "StartDate + StartTime + FileName"
-                   $akey = $cdate1 ."_". $ctime1 ."_". basename($wfile);
-                   if ($DEBUG) {  echo "<br>AKey is " . $akey ;  }      # Print Array Key
-                   if (array_key_exists("$akey",$script_array)) {
-                      $script_array[$akey] = $outline . "_" . $count ;
-                   }else{
-                      $script_array[$akey] = $outline ;
-                   }
+    $fh = fopen($tmp_rch,"r");
+    if ($fh) {
+        while (($line = fgets($fh)) !== false) {
+            $wfile = trim($line);                                       # Read rch filename line
+            if ($wfile != "") {                                         # If filename not blank
+                $line_array = file($wfile);                             # Put rch file in array
+                $last_index = count($line_array) - 1;                   # Array Index of Last Line
+                if ($line_array[$last_index] != "") {                   # If None Blank Last Line
+                    $tag = explode(" ",$line_array[$last_index]);       # Split Line space delimited
+                    $num_tags = count($tag);                            # Nb Elements on lines
+                    if ($num_tags == 10) {
+                       list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode) = explode(" ",$line_array[$last_index], 10);
+                       $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdte2 .",". $ctime2 .",". $celapsed .",". $cname .",". $calert .",". $ctype . "," . trim($ccode) .",". basename($wfile) ."\n";
+                       #echo "<br>Output line is " . $outline ; 
+                       $count+=1;
+                       # Key is "StartDate + StartTime + FileName"
+                       $akey = $cdate1 ."_". $ctime1 ."_". basename($wfile);
+                       if (array_key_exists("$akey",$script_array)) {
+                          $script_array[$akey] = $outline . "_" . $count ;
+                       }else{
+                          $script_array[$akey] = $outline ;
+                       }
+                    }else{
+                        echo "<br>\nNb tag not equal 10 : " . $num_tags; 
+                    }
+                }else{
+                    echo "<br>\nBlank line : ..." . $line_array[$last_index] . "..." ;
                 }
+            }else{
+                echo "<br>\nblank file name : ..." . $wfile . "..."; 
             }
         }
+        fclose($fh);
+    } else {
+        $errStr = "Failed to open '{$tmp_rch}' for read.";
+        sadm_alert ("$errStr"); 
+        unlink($tmp_rch);                                                    # Delete Temp File
+        return $script_array;
     }
-
-    fclose($input_fh);                                                  # Close Input Filename List
+    
     krsort($script_array);                                              # Reverse Sort Array on Keys
-    unlink($tmprch);                                                    # Delete Temp File
+    unlink($tmp_rch);                                                    # Delete Temp File
     
     # Under Debug - Display The Array Used to build the SideBar
-    if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key is $key and value is $value";}}
+    #if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key,value $key,$value";}}
     #$DEBUG = False;      
     return $script_array;
-    }
+}
 
 
 
 # ==================================================================================================
-# This function read the server tabe and collect info to build the SideBar (Except Scripts Status)
+# This function read the server table and collect info to build the SideBar (Except Scripts Status)
 # The function return an array with the information needed to display the SideBar info
 # ==================================================================================================
 function SideBar_OS_Summary() {
     global $con;                                                        # Global Database Conn. Obj.
 
-    # Loop Through Retreived Data and Display each Row
+    # Loop Through Retrieved Data and Display each Row
     $sql = "SELECT * FROM server ;";                                    # Construct SQL Statement
     
     # Execute the Row Update SQL
     if ( ! $result=mysqli_query($con,$sql)) {                           # Execute Update Row SQL
-        $err_line = (__LINE__ -1) ;                                     # Error on preceeding line
+        $err_line = (__LINE__ -1) ;                                     # Error on proceeding line
         $err_msg1 = "Error on select server\nError (";                  # Advise User Message 
         $err_msg2 = strval(mysqli_errno($con)) . ") " ;                 # Insert Err No. in Message
         $err_msg3 = mysqli_error($con) . "\nAt line "  ;                # Insert Err Msg and Line No 
@@ -258,6 +268,7 @@ function SideBar_OS_Summary() {
 # Start of SADM SideBar
 # ==================================================================================================
 #
+    echo "\n<br>I am in" ;
     $sadm_array = SideBar_OS_Summary();                                 # Build sadm_array Used 
 
     # PRINT SERVER O/S DISTRIBUTION 
@@ -471,5 +482,4 @@ function SideBar_OS_Summary() {
 
     
     echo "\n</div> <!-- End of SideBar  -->\n\n\n"                      # End of Left Column Div
-?>
-    
+?> 

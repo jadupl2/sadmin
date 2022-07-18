@@ -113,7 +113,9 @@ $URL_STORIX_REPORT  = "/view/daily_storix_report.html";                 # Storix
     echo "\n<div id='sadmPageContents'>             <!-- Start Of sadmPageContents -->\n\n";
     
     # Display SideBar on Left 
+    #
     require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');
+    #require ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');
 
     # Beginning Content Page
     echo "\n<div id='sadmRightColumn'>              <!-- Start Of sadmRightColumn -->\n\n"; 
