@@ -31,6 +31,7 @@
 # 2019_08_17 Update: v1.1 New Heading and return to Maintenance Server List
 # 2019_12_26 Update: v1.2 Update: Deleted server now place in www/dat/archive directory.
 # 2021_06_07 web: v1.3 Remove faulty error message when a client was delete just after creating it.
+# 2022_07_18 web: v1.4 Note & filename where archive file will be created.
 #
 # ==================================================================================================
 #
@@ -47,7 +48,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.3" ;                                                        # Current version number
+$SVER  = "1.4" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -173,16 +174,16 @@ $CREATE_BUTTON = False ;                                                # Don't 
 
     # Display Note to user
     echo "<br><br>";
-    #echo "Archive name is $archive_name" ;
-    #echo "<br>";
-    #echo SADM_WWW_DAT_DIR . "/" . $wkey ;
-        if (file_exists(SADM_WWW_DAT_DIR . "/" . $wkey )) {
-            if (! file_exists($archive_name)) {                             # No Archive already exist ?
-            echo "Note: An archive of server data will be created in '" .SADM_WWW_ARC_DIR. "/' directory";
-            echo "<br>      The name of the archive will be '" .$wkey. ".tgz'";
-        }else{
-            echo "<br>An archive already exist for that server and it won't be overwritten.";
-        }
+    echo "Archive name is $archive_name" ;
+    echo "<br>";
+    echo SADM_WWW_DAT_DIR . "/" . $wkey ;
+    if (file_exists(SADM_WWW_DAT_DIR . "/" . $wkey )) {
+       if (! file_exists($archive_name)) {                             # No Archive already exist ?
+          echo "Note: An archive of server data will be created in '" .SADM_WWW_ARC_DIR. "/' directory";
+          echo "<br>      The name of the archive will be '" .$wkey. ".tgz'";
+       }else{
+          echo "<br>An archive already exist for that server and it won't be overwritten.";
+       }
     }
     echo "</center>";
      
