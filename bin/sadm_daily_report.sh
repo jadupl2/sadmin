@@ -46,6 +46,7 @@
 # 2021_06_10 server: v1.27 Show system backup in bold instead of having a yellow background.
 # 2021_08_07 server: v1.28 Help message was showing wrong command line options.w background.
 #@2022_06_09 server: v1.29 Added AlmaLinux and Rocky Logo
+#@2022_07_18 server: v1.30 Remove unneeded work files
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -76,7 +77,7 @@ export SADM_HOSTNAME=`hostname -s`                      # Current Host name with
 export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Std Libr.).
-export SADM_VER='1.29'                                  # Current Script Version
+export SADM_VER='1.30'                                  # Current Script Version
 export SADM_EXIT_CODE=0                                 # Current Script Default Exit Return Code
 export SADM_LOG_TYPE="B"                                # writelog go to [S]creen [L]ogFile [B]oth
 export SADM_LOG_APPEND="N"                              # [Y]=Append Existing Log [N]=Create New One
@@ -1809,9 +1810,9 @@ backup_report()
         if [ -d ${LOCAL_MOUNT}/${server_name} ]                         # If Server Backup Dir Exist
            then export TOUCH_TODAY=`date "+%Y/%m/%d"`                   # Today Date YYYY/MM/DD
                 export TOUCH_YESTERDAY=$(date --date="yesterday" +"%Y/%m/%d") # Yesterday YYYY/MM/DD
-                touch_file="${SADM_TMP_DIR}/daily_report.time"          # Backup Ref Touch File Time
                 bsize="${SADM_TMP_DIR}/daily_report.size"               # WorkFile, Calc Backup Size
                 cd ${LOCAL_MOUNT}/${server_name}                        # CD into Backup Dir.
+                touch_file="${SADM_TMP_DIR}/daily_report.time"          # Backup Ref Touch File Time
                 touch -d "$TOUCH_TODAY" $touch_file                     # TouchFile=Today Date/Time 
                 find . -type f -newer $touch_file -exec stat --format=%s {} \; > $bsize
                 if [ "$SADM_DEBUG" -gt 4 ]
@@ -1827,12 +1828,13 @@ backup_report()
                         CUR_TOTAL=$(echo "$TOTAL /1024/1024" | bc)      # Convert Backup Size in MB
                 fi 
                 touch -d "$TOUCH_YESTERDAY" $touch_file                 # TouchFile=Yesterday  
-                rm -f $bsize > /dev/null 2>&1                           # Del. Size Work File
                 find . -type f -newer $touch_file -exec ls -l {} \; | grep "$UND_YESTERDAY" > $bsize
                 if [ -s $bsize ]                                        # Backup File Not Found or 0
                    then TOTAL=$(awk '{sum += $5} END {print sum}' $bsize) # Add each file size 
                         PRV_TOTAL=$(echo "$TOTAL /1024/1024" | bc)      # Convert Backup Size in MB
                 fi 
+                rm -f $bsize > /dev/null 2>&1                           # Del. Size Work File
+                rm -f $touch_file > /dev/null 2>&1                      # Del. Touch Work File
         fi
         if [ "$SADM_DEBUG" -gt 4 ]                                      # If Debug Show System name
            then sadm_writelog "CUR_TOTAL=$CUR_TOTAL PRV_TOTAL=$PRV_TOTAL"
@@ -2361,6 +2363,7 @@ main_process()
              SADM_EXIT_CODE=$(($SADM_EXIT_CODE+$RC))                    # Add ReturnCode to ExitCode
     fi 
 
+    if [ -f "$RCH_SUMMARY" ] ; then rm -f $RCH_SUMMARY >/dev/null 2>&1 ;fi  # Remove Work file
     return $SADM_EXIT_CODE
 
 }
