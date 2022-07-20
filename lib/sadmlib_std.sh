@@ -192,6 +192,7 @@
 #@2022_07_02 lib v4.00 Fix problem with 'sadm_server_core_per_socket' function.
 #@2022_07_07 lib v4.01 Add verbosity to sadm_sleep() and fix sadm_sendmail() subject problem.
 #@2022_07_12 lib v4.02 Change Group of some directory in www to solve web problem
+#@2022_07_20 lib v4.03 Cmd 'lsb_release' depreciated ? not available on Alma9,Rocky9,CentOS9,RHEL9
 #===================================================================================================
 
 
@@ -205,7 +206,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.02"                                              # This Library Version
+export SADM_LIB_VER="4.03"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -723,7 +724,12 @@ sadm_get_command_path() {
     if ${SADM_WHICH} ${SADM_CMD} >/dev/null 2>&1                        # Command is found ?
         then CMD_PATH=`${SADM_WHICH} ${SADM_CMD}`                       # Store Path in Cmd path
              echo "$CMD_PATH"                                           # echo the Command Path 
-             return 0                                                   # Return 0 if Cmd found
+             return 0  
+        else if [ "${SADM_CMD}" == "lsb_release" ] && [ -f /usr/lib/dkms/lsb_release ]                     # Another one not in Path
+                then CMD_PATH="/usr/lib/dkms/lsb_release"
+                     echo "$CMD_PATH"
+                     return 0 
+             fi
     fi
     echo ""                                                             # Return empty str as path
     return 1                                                            # Return 1 if Cmd not Found
