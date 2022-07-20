@@ -268,7 +268,6 @@ function SideBar_OS_Summary() {
 # Start of SADM SideBar
 # ==================================================================================================
 #
-    echo "\n<br>I am in" ;
     $sadm_array = SideBar_OS_Summary();                                 # Build sadm_array Used 
 
     # PRINT SERVER O/S DISTRIBUTION 
