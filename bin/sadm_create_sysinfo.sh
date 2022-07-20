@@ -59,27 +59,25 @@
 #@2022_03_04 client: v3.29 Added more info about disks, filesystems and partition size
 #@2022_04_10 client: v3.30 Change relative to CentOS 9 - Depreciated lsb_release command
 #@2022_04_19 client: v3.31 Now include information from inxi command (if available)
+#@2022_07_20 client: v3.32 When using inxi suppress color escape from generated files.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
 
 
-
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.50
+# SADMIN CODE SECTION 1.51
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
 
 # MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    
-    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null 
-         if [ $? -eq 0 ]                                   # Found SADMIN in /etc/env.
-            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                 printf "'SADMIN' environment variable temporarily set to ${SADMIN}.\n"
-            else exit 1                                    # No SADMIN Env. Var. Exit
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                    # No SADMIN Env. Var. Exit
          fi
 fi 
 
@@ -91,40 +89,42 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.31'                                     # Script Version
+export SADM_VER='3.32'                                     # Script Version
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy ?
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. LockFile
-export SADM_USE_RCH="Y"                                    # Update RCH HistoryFile 
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SADM_SERVER_ONLY="Y"                           # Run only on SADMIN server? [Y] or [N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
+. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
-# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-export SADM_MAX_LOGLINE=0                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Server
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 # ---------------------------------------------------------------------------------------
 
 
-
+  
 
 
 
@@ -192,17 +192,18 @@ LSSCSI=""                                       ; export LSSCSI         # List S
 LSPCI=""                                        ; export LSPCI          # List PCI Components
 
 # --------------------------------------------------------------------------------------------------
-#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# Show script command line options
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${SADM_PN} usage :"
-    printf "\n\t-d   (Debug Level [0-9])"
-    printf "\n\t-h   (Display this help message)"
-    printf "\n\t-v   (Show Script Version Info)"
-    printf "\n\n"
+    printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
+    printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
+    printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
+    printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
+    printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
+    printf "\n\n" 
 }
-
 
 
 
@@ -679,15 +680,15 @@ create_linux_config_files()
     fi
 
     if [ "$INXI" != "" ]
-        then CMD="$INXI -a"
+        then CMD="$INXI -ac"
              execute_command "$CMD" "$SYSTEM_FILE" 
-             CMD="$INXI -m"
+             CMD="$INXI -mc"
              execute_command "$CMD" "$SYSTEM_FILE" 
-             CMD="$INXI -G"
+             CMD="$INXI -Gc"
              execute_command "$CMD" "$SYSTEM_FILE" 
-             CMD="$INXI -S"
+             CMD="$INXI -Sc"
              execute_command "$CMD" "$SYSTEM_FILE" 
-             CMD="$INXI -M"
+             CMD="$INXI -Mc"
              execute_command "$CMD" "$SYSTEM_FILE" 
     fi
 
@@ -743,6 +744,7 @@ create_linux_config_files()
 
     if [ "$LSPCI" != "" ]
         then CMD="$LSPCI -k 2>/dev/null"
+             CMD="$LSPCI "
              execute_command "$CMD" "$SYSTEM_FILE" 
     fi
     
@@ -933,21 +935,12 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root
-        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
-             sadm_write "Process aborted.\n"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
-
-    # Set the PATH to each commands that may be used 
     pre_validation                                                      # Cmd present ?
     SADM_EXIT_CODE=$?                                                   # Save Function Return code
     if [ $SADM_EXIT_CODE -ne 0 ]                                        # Which Command missing
         then sadm_stop $SADM_EXIT_CODE                                  # Upd. RC & Trim Log & RCH
              exit 1
     fi
-
     if [ "$SADM_OS_TYPE"  = "AIX"   ]                                 # If running in AIX
         then create_aix_config_files                                    # Collect Aix Info
         else create_linux_config_files                                  # Collect Linux/OSX Info
