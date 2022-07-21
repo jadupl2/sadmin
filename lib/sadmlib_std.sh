@@ -186,7 +186,7 @@
 #@2022_05_19 lib v3.94 Fix intermittent permission error message when was not running as 'root'
 #@2022_05_20 lib v3.95 Bug fix with 'capitalize' function on Old version of Red Hat (5,4)
 #@2022_05_23 lib v3.96 Function 'sadm_write_err' now write to error log AND regular log.
-#@2022_05_25 lib v3.97 Added verification of new variables SADM_ROOT_ONLY and SADM_SADM_SERVER_ONLY
+#@2022_05_25 lib v3.97 Added verification of new variables SADM_ROOT_ONLY and SADM_SERVER_ONLY
 #@2022_05_25 lib v3.98 Minor text modification related to PID expiration.
 #@2022_06_14 lib v3.99 fix problem get O/S Code name.
 #@2022_07_02 lib v4.00 Fix problem with 'sadm_server_core_per_socket' function.
@@ -2104,6 +2104,25 @@ sadm_start() {
              sadm_writelog " "                                          # White space line
     fi
 
+    # Check if this script to be run only by root user
+    if [ ! -z "$SADM_ROOT_ONLY" ] && [ $SADM_ROOT_ONLY == "Y" ] &&  [ $(id -u) -ne 0 ]  
+        then sadm_write_err "Script can only be run by the 'root' user" # Advise User Message
+             sadm_write_err "Try 'sudo ${0##*/}'"                       # Suggest using sudo
+             sadm_write_err "Process aborted"                           # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
+    fi
+
+    # Check if this script to be run only on the SADMIN server.
+    if [ ! -z "$SADM_SERVER_ONLY" ] && [ "$SADM_SERVER_ONLY" == "Y" ] 
+        then if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] 
+                then sadm_write_err "Script can only run on ${SADM_SERVER}"
+                     sadm_write_err "Process aborted"                   # Abort advise message
+                     sadm_stop 1                                        # Close and Trim Log
+                     exit 1                                             # Exit To O/S
+             fi 
+    fi
+
     # ($SADMIN/tmp) If TMP Directory doesn't exist, create it.
     [ ! -d "$SADM_TMP_DIR" ] && mkdir -p $SADM_TMP_DIR
     if [ $(id -u) -eq 0 ]
@@ -2314,8 +2333,8 @@ sadm_start() {
 
     # Alert Group File ($SADMIN/cfg/alert_group.cfg) MUST be present.
     # If it doesn't exist, create it from initial file ($SADMIN/cfg/.alert_group.cfg)
-    if [ ! -r "$SADM_ALERT_FILE" ]                                      # alert_group.cfg not Exist
-       then if [ ! -r "$SADM_ALERT_INIT" ]                              # .alert_group.cfg not Exist
+    if [ ! -f "$SADM_ALERT_FILE" ]                                      # alert_group.cfg not Exist
+       then if [ ! -f "$SADM_ALERT_INIT" ]                              # .alert_group.cfg not Exist
                then sadm_write "********************************************************\n"
                     sadm_write "SADMIN Alert Group file not found - $SADM_ALERT_FILE \n"
                     sadm_write "Even Alert Group Template file is missing - $SADM_ALERT_INIT\n"
@@ -2327,23 +2346,6 @@ sadm_start() {
                else cp $SADM_ALERT_INIT $SADM_ALERT_FILE                # Copy Template as initial
                     chmod 664 $SADM_ALERT_FILE
             fi
-    fi
-
-    # Check if this script to be run only by root user
-    if [ ! -z "$SADM_ROOT_ONLY" ] && [ $SADM_ROOT_ONLY == "Y" ] &&  [ $(id -u) -ne 0 ]  
-        then sadm_write_err "Script can only be run by the 'root' user" # Advise User Message
-             sadm_write_err "Try 'sudo ${0##*/}'"                       # Suggest using sudo
-             sadm_write_err "Process aborted"                           # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
-
-    # Check if this script to be run only on the SADMIN server.
-    if [ ! -z "$SADM_SERVER_ONLY" ] && [ $SADM_SERVER_ONLY -ne 0 && "$(sadm_get_fqdn)" != "$SADM_SERVER" ] 
-        then sadm_write_err "Script can only run on (${SADM_SERVER})"  # Advise User Message
-             sadm_write_err "Process aborted"                           # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
     fi
 
     # Check Files that are present ONLY ON SADMIN SERVER

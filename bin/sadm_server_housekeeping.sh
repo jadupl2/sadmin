@@ -82,7 +82,7 @@ export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you t
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? - 1=Yes 0=No
-export SADM_SADM_SERVER_ONLY="N"                           # Run only on SADMIN server?- 1=Yes 0=No
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server?- 1=Yes 0=No
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library

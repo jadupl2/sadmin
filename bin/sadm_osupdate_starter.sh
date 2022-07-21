@@ -98,7 +98,7 @@ export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og 
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="Y"                               # Run Simultaneous copy of script
+export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
 export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
@@ -106,8 +106,8 @@ export SADM_DEBUG=0                                        # Debug Level(0-9) 0=
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
-export SADM_ROOT_ONLY="Y"                                   # Run only by root ? - 1=Yes 0=No
-export SADM_SADM_SERVER_ONLY="Y"                            # Run only on SADMIN server?- 1=Yes 0=No
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? - 1=Yes 0=No
+export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server?- 1=Yes 0=No
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
