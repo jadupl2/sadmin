@@ -2165,49 +2165,55 @@ backup_line()
 backup_legend()
 {
     echo -e "\n<br>\n<hr class="dash">\n" >> $HTML_BFILE                # Horizontal Dashed Line
-    echo -e "\n\n<br><table cellspacing="0" cellpadding="0" border=0>\n"  >> $HTML_BFILE 
+    echo -e "\n\n<br><table cellspacing="5" cellpadding="0" border=0>\n"  >> $HTML_BFILE 
     BCOL="#ffffff"                                                      # Background color (White)
     FCOL="#000000"                                                      # Font Color (Black)
 
     echo -e "<tr>"  >> $HTML_BFILE                                            # Heading rows
     DATA="Column Name"
-    echo -e "<th align=center colspan=6>$DATA</th>" >> $HTML_BFILE
-    echo -e "<th align=center colspan=5>Column have a yellow background when ...</td>" >>$HTML_BFILE
+    echo -e "<th align=left colspan=5>$DATA</th>" >> $HTML_BFILE
+    echo -e "<th align=left >&nbsp;</th>" >> $HTML_BFILE
+    echo -e "<th align=left colspan=5>Column have a yellow background when ...</td>" >>$HTML_BFILE
     echo -e "</tr>"  >> $HTML_BFILE                                     
 
     echo -e "<tr>"  >> $HTML_BFILE                                      
     DATA="Last Backup Date"
     echo -e "<td align=left colspan=5 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
+    echo -e "<td align=left >&nbsp;</td>" >> $HTML_BFILE
     DATA="The backup date is not today (Backup are done daily)."
-    echo -e "<td align=left colspan=6 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
+    echo -e "<td align=left colspan=5 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
     echo -e "</tr>"  >> $HTML_BFILE 
 
     echo -e "<tr>"  >> $HTML_BFILE                                      
     DATA="Last Backup Status"
     echo -e "<td align=left colspan=5 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
+    echo -e "<td align=left >&nbsp;</td>" >> $HTML_BFILE
     DATA="The backup status is different than 'Success'."
-    echo -e "<td align=left colspan=6 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
+    echo -e "<td align=left colspan=5 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
     echo -e "</tr>"  >> $HTML_BFILE 
 
     echo -e "<tr>"  >> $HTML_BFILE                                      
     DATA="Schedule Activated"
     echo -e "<td align=left colspan=5 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
+    echo -e "<td align=left >&nbsp;</td>" >> $HTML_BFILE
     DATA="The backup schedule is not activated."
-    echo -e "<td align=left colspan=6 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
+    echo -e "<td align=left colspan=5 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
     echo -e "</tr>"  >> $HTML_BFILE 
 
     echo -e "<tr>"  >> $HTML_BFILE                                      
     DATA="Current Size"
     echo -e "<td align=left colspan=5 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
+    echo -e "<td align=left >&nbsp;</td>" >> $HTML_BFILE
     DATA="The backup size is zero or ${WPCT}% bigger or smaller than the previous backup."
-    echo -e "<td align=left colspan=6 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
+    echo -e "<td align=left colspan=5 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
     echo -e "</tr>"  >> $HTML_BFILE 
 
     echo -e "<tr>"  >> $HTML_BFILE                                      
     DATA="Previous Size"
     echo -e "<td align=left colspan=5 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
+    echo -e "<td align=left >&nbsp;</td>" >> $HTML_BFILE
     DATA="The backup size is zero or ${WPCT}% bigger or smaller than the current backup."
-    echo -e "<td align=left colspan=6 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
+    echo -e "<td align=left colspan=5 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_BFILE
     echo -e "</tr>"  >> $HTML_BFILE 
     echo -e "</table>\n<br><br>\n" >> $HTML_BFILE                       # End of Legend Section
 }
