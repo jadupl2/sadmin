@@ -59,6 +59,7 @@
 #@2022_05_26 web v2.29 Sysmon page - Fix intermittent problem creating tmp alert file.
 #@2022_05_26 web v2.30 Sysmon page - Fix intermittent problem creating tmp alert file.
 #@2022_05_26 web v2.31 Sysmon page - Rewrote some part of the code for new version of php
+#@2022_07_21 web v2.32 Sysmon page - Fix problem with recent scripts section
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -95,7 +96,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.31" ;                                                       # Current version number
+$SVER  = "2.32" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -245,16 +246,16 @@ function sysmon_page_heading($HEAD_TYPE)
 
     # Display Section Heading and Prefix Section with Environment
     switch (strtoupper($HEAD_TYPE)) {
-        case 'E' :  echo "\n<br><H3><strong>Red alert (Error)</strong></H3>\n" ;
+        case 'E' :  echo "\n<br><H3><strong>Error Notification</strong></H3>\n" ;
                     $HCOLOR = "Red";
                     break;
-        case 'W' :  echo "\n<br><H3><strong>Yellow alert (Warning) </strong></H3>\n" ;
+        case 'W' :  echo "\n<br><H3><strong>Warning Notification </strong></H3>\n" ;
                     $HCOLOR = "Yellow";
                     break;
-        case 'R' :  echo "\n<br><H3><strong>Green alert (Running Scripts)</strong></H3>\n" ;
+        case 'R' :  echo "\n<br><H3><strong>Running Scripts</strong></H3>\n" ;
                     $HCOLOR = "Lime";
                     break;
-        case 'I' :  echo "\n<br><H3><strong>Information Section</strong></H3>\n" ;
+        case 'I' :  echo "\n<br><H3><strong>Information Notification</strong></H3>\n" ;
                     $HCOLOR = "SkyBlue";
                     break;
         case 'X' :  echo "\n<br><H3><strong>Unknown Section</strong></H3>\n" ;
@@ -264,14 +265,14 @@ function sysmon_page_heading($HEAD_TYPE)
 
     # Display Section Heading in the proper color
     echo "\n<table align=center border=0 cellspacing=0>";
-    echo "\n<tr>";
-    echo "\n<td colspan='1' bgcolor=$HCOLOR>&nbsp;&nbsp;</td>";
-    echo "\n<td width=80  align='center'   bgcolor=$HCOLOR><b>System</b></td>";
-    echo "\n<td colspan='3' bgcolor=$HCOLOR>&nbsp;&nbsp;</td>";
-    echo "\n<td width=90  align='center' bgcolor=$HCOLOR><b>Event</td>";
-    echo "\n<td width=90  align='center' bgcolor=$HCOLOR><b>Module</td>";
-    echo "\n<td width=110 align='center' bgcolor=$HCOLOR><b>Alert</td>";
-    echo "\n<td width=110 align='center' bgcolor=$HCOLOR><b>Alert Type</td>";
+    #echo "\n<tr>";
+    #echo "\n<td colspan='1' bgcolor=$HCOLOR>&nbsp;&nbsp;</td>";
+    #echo "\n<td width=80  align='center'   bgcolor=$HCOLOR><b>System</b></td>";
+    #echo "\n<td colspan='3' bgcolor=$HCOLOR>&nbsp;&nbsp;</td>";
+    #echo "\n<td width=90  align='center' bgcolor=$HCOLOR><b>Event</td>";
+    #echo "\n<td width=90  align='center' bgcolor=$HCOLOR><b>Module</td>";
+    #echo "\n<td width=110 align='center' bgcolor=$HCOLOR><b>Alert</td>";
+    #echo "\n<td width=110 align='center' bgcolor=$HCOLOR><b>Alert Type</td>";
     echo "\n</tr>";
     echo "\n<tr>";
     echo "\n<td width=90  align='center' bgcolor=$HCOLOR><b>Status</b></td>";
@@ -482,17 +483,17 @@ function display_line($line,$BGCOLOR,$con)
 
 
 
-# Show the scripts execution history - The last $SADM_MONITOR_HISTORY_SIZE scripts that have run 
+# Show the scripts execution history - Show last $SADM_MONITOR_HISTORY_SIZE scripts.
+# Define in sadmin.cfg
 #---------------------------------------------------------------------------------------------------
 function show_activity($con,$alert_file) {
     global $DEBUG, $tmp_file1, $tmp_file2, $URL_HOST_INFO, $URL_VIEW_RCH, $URL_WEB, $URL_VIEW_FILE ;
 
     if ($DEBUG) { echo "<br>\nSADM_MONITOR_RECENT_COUNT " . SADM_MONITOR_RECENT_COUNT . "\n<br>" ; }
-    
-    # Get the last $SADM_MONITOR_RECENT_COUNT scripts than have ran.
     $wdate=date('Y.m.d');                                               # Get current Date
     if ($DEBUG) { echo "\nCurrent date : " . $wdate . "\n "; }  
-    if ($DEBUG) { echo "\nSADM_MONITOR_RECENT_COUNT : " . SADM_MONITOR_RECENT_COUNT . "\n " ; }      
+    
+    # Get the last $SADM_MONITOR_RECENT_COUNT scripts than have ran.
     $CMD_PART1="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \;" ;
     $CMD_PART2=" | grep $wdate |sort -t' ' -k3,3r  >$tmp_file2";
     $CMD="$CMD_PART1 $CMD_PART2";                                       # Combine 2 long commands
@@ -508,26 +509,32 @@ function show_activity($con,$alert_file) {
         echo '</pre></code>';                                           # End of code display
     }
     
+    # Header of the Section
     echo "\n<br><br><H3><strong>". SADM_MONITOR_RECENT_COUNT ;
     echo " Most Recent Scripts Execution</strong></H3>\n" ;
-    echo "\n<table  align=center border=0 cellspacing=0>" ;
-    $HCOLOR='#0e8420';
-    echo "<tr style='background-color:$HCOLOR ; color:white ; padding:0px 10px 0px 10px;'>\n";
-    echo "\n<td>&nbsp;&nbsp;</td>";
-    echo "\n<td><b>System</td>";
-    echo "\n<td>&nbsp;&nbsp;</td>";
-    echo "\n<td>&nbsp;&nbsp;</td>";
-    echo "\n<td>&nbsp;&nbsp;</td>";
-    echo "\n<td>&nbsp;&nbsp;</td>";
-    echo "\n<td>&nbsp;&nbsp;</td>";
-    echo "\n<td>&nbsp;&nbsp;</td>";
-    echo "\n<td>&nbsp;&nbsp;</td>";
-    echo "</tr>\n";
-    #echo "\n<td colspan='1' bgcolor=$HCOLOR>&nbsp;&nbsp;</td>";
+    echo "\n<table  align=center border=0 cellspacing=14>" ;
 
-    echo "<tr style='background-color:$HCOLOR ; color:white'>\n";
+    # Header Line 1
+    #$HCOLOR='#0e8420';
+    $HCOLOR='#000000';
+    #echo "<tr style='background-color:$HCOLOR ; color:white ; padding:10px 10px 10px 10px;'>\n";
+    #echo "\n<td>&nbsp;&nbsp;</td>";
+    #echo "\n<td><b>System</td>";
+    #echo "\n<td>&nbsp;&nbsp;</td>";
+    #echo "\n<td>&nbsp;&nbsp;</td>";
+    #echo "\n<td>&nbsp;&nbsp;</td>";
+    #echo "\n<td>&nbsp;&nbsp;</td>";
+    #echo "\n<td>&nbsp;&nbsp;</td>";
+    #echo "\n<td>&nbsp;&nbsp;</td>";
+    #echo "\n<td>&nbsp;&nbsp;</td>";
+    #echo "</tr>\n";
+    ##echo "\n<td colspan='1' bgcolor=$HCOLOR>&nbsp;&nbsp;</td>";
+
+    # Header Line 2
+    #echo "<tr style='background-color:$HCOLOR ; color:white'>\n";
+    echo "<tr style='background-color:$HCOLOR ; color:white ; padding:0px 10px 0px 10px;'>\n";
     echo "<td width=35 align='center'><b>No</td>\n";    
-    echo "<td widtd=90 align='left'><b>Name</td>\n";
+    echo "<td widtd=90 align='left'><b>System</td>\n";
     echo "<td align='left'><b>Script Name</td>\n";
     echo "<td align='center'><b>Start Date/Time</td>\n";
     echo "<td align='center'><b>End Date/Time</td>\n";
@@ -838,7 +845,7 @@ function display_data($con,$alert_file) {
 }
 
 
-
+#---------------------------------------------------------------------------------------------------
 # Main Page Logic start here 
 #---------------------------------------------------------------------------------------------------
     $title1="Systems Monitor Status";                                   # Page Title
