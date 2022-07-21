@@ -31,7 +31,7 @@
 # 2019_08_17 Update: v1.1 New Heading and return to Maintenance Server List
 # 2019_12_26 Update: v1.2 Update: Deleted server now place in www/dat/archive directory.
 # 2021_06_07 web: v1.3 Remove faulty error message when a client was delete just after creating it.
-# 2022_07_18 web: v1.4 Note & filename where archive file will be created.
+#@2022_07_18 web: v1.4 Fix delete permission problem, Show Filename where archive file created 
 #
 # ==================================================================================================
 #
@@ -174,9 +174,9 @@ $CREATE_BUTTON = False ;                                                # Don't 
 
     # Display Note to user
     echo "<br><br>";
-    echo "Archive name is $archive_name" ;
-    echo "<br>";
-    echo SADM_WWW_DAT_DIR . "/" . $wkey ;
+    #echo "Archive name is $archive_name" ;
+    #echo "<br>";
+    #echo SADM_WWW_DAT_DIR . "/" . $wkey ;
     if (file_exists(SADM_WWW_DAT_DIR . "/" . $wkey )) {
        if (! file_exists($archive_name)) {                             # No Archive already exist ?
           echo "Note: An archive of server data will be created in '" .SADM_WWW_ARC_DIR. "/' directory";
