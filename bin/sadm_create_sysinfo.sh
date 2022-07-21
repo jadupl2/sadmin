@@ -60,8 +60,9 @@
 #@2022_04_10 client: v3.30 Change relative to CentOS 9 - Depreciated lsb_release command
 #@2022_04_19 client: v3.31 Now include information from inxi command (if available)
 #@2022_07_20 client: v3.32 When using inxi suppress color escape from generated files.
+#@2022_07_21 client: v3.33 Small enhancement in Network section
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+trap 'sadm_stop 0; exit 0' 2                                            # Intercept the ^C
 #set -x
 
 
@@ -89,7 +90,7 @@ export SADM_HOSTNAME=`hostname -s`                         # Host name without D
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.32'                                     # Script Version
+export SADM_VER='3.33'                                     # Script Version
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -328,13 +329,13 @@ pre_validation()
 # ==================================================================================================
 write_file_header()
 {
-    SOSNAME="$SADM_OS_NAME" ; SOSVER="$SADM_OS_MAJORVER"
+    SOSNAME="$SADM_OS_NAME" ; SOSVER="$SADM_OS_VERSION"
     WTITLE=$1
     WFILE=$2
     echo "# ${SADM_DASH}"       >$WFILE 2>&1
-    echo "# SADMIN Release $(sadm_get_release) - $SADM_PN v$SADM_VER" >>$WFILE 2>&1
+    echo "# SADMIN Release $(sadm_get_release) - $SADM_PN Version $SADM_VER" >>$WFILE 2>&1
     echo "# $SADM_CIE_NAME - `date`"                 >>$WFILE 2>&1
-    echo "# $WTITLE on $(sadm_get_fqdn) - $SOSNAME V${SOSVER}" >>$WFILE
+    echo "# $WTITLE on $(sadm_get_fqdn) - $SOSNAME Version ${SOSVER}" >>$WFILE
     echo "# ${SADM_DASH}"                             >>$WFILE 2>&1
     echo "#"                                         >>$WFILE 2>&1
 }
@@ -555,13 +556,41 @@ create_linux_config_files()
     write_file_header "Network Information" "$NET_FILE"
     sadm_write "Creating $NET_FILE ...\n"
 
-    if [ -d "/sys/class/net" ] && [ "$MIITOOL" != "" ]
-        then for w in `ls -1 /sys/class/net  --color=never | grep -v "^lo"`
-                do
-                CMD="$MIITOOL $w 2>/dev/null" 
-                execute_command "$CMD" "$NET_FILE"
-                done
+    if [ -r '/etc/hosts' ]              ; then print_file "/etc/hosts"              "$NET_FILE" ; fi
+    if [ -r '/etc/resolv.conf' ]        ; then print_file "/etc/resolv.conf"        "$NET_FILE" ; fi
+
+    if [ "$IP" != "" ]
+        then CMD="$IP addr"
+             execute_command "$CMD" "$NET_FILE" 
     fi
+
+    if [ "$IP" != "" ]
+        then CMD="$IP -brief a"
+             execute_command "$CMD" "$NET_FILE" 
+    fi
+
+    if [ "$IP" != "" ]
+        then CMD="$IP -brief link"
+             execute_command "$CMD" "$NET_FILE" 
+    fi
+
+    if [ "$IP" != "" ]
+        then CMD="$IP r"
+             execute_command "$CMD" "$NET_FILE" 
+    fi
+
+    if [ "$NETSTAT" != "" ]
+        then CMD="$NETSTAT -rn"
+             execute_command "$CMD" "$NET_FILE" 
+    fi
+
+    #if [ -d "/sys/class/net" ] && [ "$MIITOOL" != "" ]
+    #    then for w in `ls -1 /sys/class/net  --color=never | grep -v "^lo"`
+    #            do
+    #            CMD="$MIITOOL $w 2>/dev/null" 
+    #            execute_command "$CMD" "$NET_FILE"
+    #            done
+    #fi
 
     if [ -d "/sys/class/net" ] && [ "$ETHTOOL" != "" ]
         then for w in `ls -1 /sys/class/net  --color=never | grep -v "^lo"`
@@ -581,21 +610,6 @@ create_linux_config_files()
                 done
              CMD="$NMCLI dev status"
              execute_command "$CMD" "$NET_FILE"
-    fi
-
-    if [ "$IP" != "" ]
-        then CMD="$IP addr"
-             execute_command "$CMD" "$NET_FILE" 
-    fi
-
-    if [ "$IFCONFIG" != "" ]
-        then CMD="$IFCONFIG -a"
-             execute_command "$CMD" "$NET_FILE" 
-    fi
-
-    if [ "$NETSTAT" != "" ]
-        then CMD="$NETSTAT -rn"
-             execute_command "$CMD" "$NET_FILE" 
     fi
 
     # MacOS Network Information
@@ -629,9 +643,9 @@ create_linux_config_files()
     fi
 
     if [ "$INXI" != "" ]
-        then CMD="$INXI -i"
+        then CMD="$INXI -ic"
              execute_command "$CMD" "$NET_FILE" 
-             CMD="$INXI -n"
+             CMD="$INXI -nc"
              execute_command "$CMD" "$NET_FILE" 
     fi
 
@@ -662,8 +676,6 @@ create_linux_config_files()
     fi
     
     if [ -r '/etc/network/interfaces' ] ; then print_file "/etc/network/interfaces" "$NET_FILE" ; fi
-    if [ -r '/etc/hosts' ]              ; then print_file "/etc/hosts"              "$NET_FILE" ; fi
-    if [ -r '/etc/resolv.conf' ]        ; then print_file "/etc/resolv.conf"        "$NET_FILE" ; fi
     if [ -r '/etc/host.conf' ]          ; then print_file "/etc/host.conf"          "$NET_FILE" ; fi
     if [ -r '/etc/ssh.conf' ]           ; then print_file "/etc/ssh.conf"           "$NET_FILE" ; fi
     if [ -r '/etc/sshd.conf' ]          ; then print_file "/etc/sshd.conf"          "$NET_FILE" ; fi
