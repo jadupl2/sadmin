@@ -145,7 +145,7 @@ SCRIPTS="$SCRIPTS sadm_template sadmlib_std_demo"
 SCRIPTS="$SCRIPTS sadm_vm_tools sadm_vm_start sadm_vm_stop"
 
 # Server name to be exclude from every Daily Report (Backup, Rear and Scripts)
-SERVERS="SomeHostname"
+SERVERS="dm4500w"
 
 
 
