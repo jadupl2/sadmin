@@ -45,6 +45,7 @@
 #   | server    | Server related modification or fixes  | 
 #   | client    | Server related modifications          | 
 #   | osupdate  | O/S Update modification or fixes      |  
+#
 # Field 3: Version number '999.999' (Max 7 Char., No spaces)
 # Field 4: Description of change (Max 60 Characters)
 #
