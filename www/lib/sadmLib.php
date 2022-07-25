@@ -702,28 +702,39 @@ function accept_key($server_key) {
 # Convert Data for a schedule to one line text
 # wdom =  Date of the month the schedule will run, value receive is a string of 32 Char. 
 #         32 Characters (either a Y or a N) each representing a day (1-31) Y=Update N=No Update
-#            Position 0 = Y Then ALL Date in the month are Selected
-#            Position 1-31 Indicate (Y) date of the month that script will run or not (N)
-# wmth =  13 Characters (either a Y or a N) each representing a month (YNNNNNNNNNNNN)
-#           Position 0 = Y Then ALL Months are Selected
-#           Position 1-12 represent the month that are selected (Y or N)             
-#           Default is YNNNNNNNNNNNN meaning will run every month 
-# wdow =  8 Characters (either a Y or a N) 
-#            If Position 0 = Y then will run every day of the week
-#            Position 1-7 Indicate a week day () Starting with Sunday
-#            Default is all Week (YNNNNNNN)
-# whrs    Hour when the update should begin (00-23) - Default 1am
-# wmin    Minute when the update will begin (00-50) - Default 5min
+#            Position 0 = Y Then ALL Date in the month are selected
+#            Position 1-31 a 'Y' Indicate the date of the month that script will run or not 'N'.
+#            Default is YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN meaning will run every Day Of the Month.
 #
-# The function return 2 Values:
-#  First one is a string that specify when (Day,Time) and at what repetition the schedule occurs.
+# wmth =  13 Characters (either a Y or a N) each representing a month (YNNNNNNNNNNNN)
+#           Position 0 = Y Then ALL months are selected
+#           Position 1-12 represent the month that are selected ('Y') to run or not (N) ,
+#           Default is YNNNNNNNNNNNN meaning will run every month.
+#
+# wdow =  8 Characters (either a Y or a N) 
+#            If Position 0 = Y then will run every day of the week.
+#            Position 1-7 Indicate a week day, starting with Sunday.
+#            Default is all Week (YNNNNNNN)
+#
+# whrs =  Hour when the event should begin (00-23) - Default 1am
+# wmin =  Minute when the event will begin (00-50) - Default 5min
+#
+#
+# Return 2 Values: 
+#  - event_occurence: 
+#       Is a string that specify when (Day,Time) and at what repetition the schedule occurs.
 #       Example of string returned : "Every Wednesday at 01:15"
-#  Second one is also a string containing the date and time the next O/S update will occur.
+#  - update_date_time
+#       I a string containing the date and time the next events will occur.
 #       Example of string returned : "2019-04-03 22:00"
+# 
 #===================================================================================================
 function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
 {
 
+    #print("\nwdom=".$wdom."wmth=".$wmth."wdow=".$wdow."whrs=".$whrs."wmin=".$wmin);
+    print("\nwdow=".$wdow."whrs=".$whrs."wmin=".$wmin) . "\n";
+    
     # Variables used to construct the next O/S Update Date
     $sdate    = "";                                                     # Sel Day (1,3,31) empty now
     $smth     = "";                                                     # Selected Mth empty for now
@@ -763,7 +774,7 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
         $sdate = rtrim($sdate, ',') ;                                   # Del sdate trailing Comma
         if ($part1 != "") { $part1 = $part1 . " of " ; }                # At least one date specify
     }
-
+    #echo "Part1 = $part1"; 
 
     # Month(s) that the Schedule Backup will Run
     #   part2 will contains the months names (Jan,Apr,Aug) or nothing if every month (if 1st Char=Y)
@@ -781,7 +792,7 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
         }
     }
 #    $part2 = rtrim($part2,',') . " " ;                                  # Del part2 trailing Comma
-    $part2 = rtrim($part2,',') ;                                  # Del part2 trailing Comma
+    $part2 = rtrim($part2,',') ;                                        # Del part2 trailing Comma
     $smth  = rtrim($smth, ',') ;                                        # Del smth trailing Comma
     
    
@@ -812,28 +823,33 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
     }else{
         $part3=""; 
     }
-    $part3 = rtrim($part3, ',') ." " ;                                  # Del part3 trailing Comma
+    $part3 = rtrim($part3, ',') . " " ;                                  # Del part3 trailing Comma
     $sday  = rtrim($sday, ',');                                         # Del sday trailing Comma
-    
+    #echo "Part1 = $part1 - Part2 = $part2 - Part3 = $part3"; 
 
     # Part4 is the hours and minutes of the schedule, just format them and put them in part4.
-    $part4a = sprintf("%02d", $whrs);
-    $part4b = sprintf("%02d", $wmin);
-    $part4 = "at ${part4a}:${part4b}";
-
-    # Combine the Four part to define the schedule event occurence 
-    #print ("1=" . $part1 . " 2=". $part2 . " 3=".$part3 . " 4=".$part4);
+    $part4 = "at $seltime" ;
     $event_occurence = "$part1" . "$part2" . "$part3" . "$part4";
+    #print "Event Occurence : $event_occurence"; 
     
-    # Now let's construct the date and time of the next O/S Update.
+
+    # From Here, Now let's construct the date and time of the next event
+    # If Any Month, any date, any day, then event could be later today or tomorrow
     #print ("<br>sdate='" . $sdate . "' smth='". $smth . "' sday='" .$sday . "' seltime='".$seltime."'");
     if (($sdate == "") and ($smth == "") and ($sday == "")) {
-        $update_date_time = date('Y-m-d', strtotime('tomorrow'))        . " $seltime";
+        $curepoch = time();                                             # Current Epoch Time 
+        $event1   = mktime($selhrs,$selmin,0,$curmth,$curday,$curyear); # Epoch if run today
+        $w_month  = date('m', strtotime('tomorrow')) ;    
+        if ($event1 < $event2) {
+            $update_date_time = date("Y-m-d H:i", substr("$event1", 0, 16));
+        }else{
+            $update_date_time = date("Y-m-d H:i", substr("$event2", 0, 16));
+        }
         return array ($event_occurence , $update_date_time) ;
     }
 
-    if (($sdate == "") and ($smth == "")) { 
-        $aday = array ($sday);
+    if (($sdate == "") and ($smth == "")) {                             # Any Mth or Date, at DOWeek
+        $aday = array($sday);
         foreach($aday as $wday)                                        # Process each Date Selected
             {
                 $pos = strpos($wday,"1") ;
@@ -841,8 +857,19 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                     $tyear  = date('Y', strtotime('next Sunday'));            # Year of next update
                     $tmonth = date('m', strtotime('next Sunday'));            # Month of next update
                     $tdate  = date('d', strtotime('next Sunday'));            # Day of next update
-                    $tepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
-                    if ($tepoch >= $curepoch) {
+                    $nxtepoch  = mktime($whrs,$wmin,0,$tmonth,$tdate,$tyear); # Epoch if nxt week
+                    $dayofweek = date('w');                                   # Get Day of the week
+                    if ($dayofweek == 0) {
+                        $w_month  = date('m') ;                               # Today Mth Num.
+                        $w_day    = date('d') ;                               # Today day Num.
+                        $w_year   = date('Y') ;                               # Today Year Num. 
+                        $w_epoch = mktime($whrs,$wmin,0,$w_month,$w_day,$w_year); # Epoch this week
+                        if ($w_epoch >= $curepoch) {
+                            $update_date_time = date('Y-m-d') . " $seltime";
+                            return array ($event_occurence , $update_date_time) ;
+                        }
+                    }
+                    if ($nxtepoch >= $curepoch) {
                         $update_date_time = date('Y-m-d', strtotime('next Sunday'))    . " $seltime";
                         return array ($event_occurence , $update_date_time) ;
                     }
@@ -852,8 +879,24 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                     $tyear  = date('Y', strtotime('next Monday'));            # Year of next update
                     $tmonth = date('m', strtotime('next Monday'));            # Month of next update
                     $tdate  = date('d', strtotime('next Monday'));            # Day of next update
-                    $tepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
-                    if ($tepoch >= $curepoch) {
+                    $nxtepoch  = mktime($whrs,$wmin,0,$tmonth,$tdate,$tyear); # Epoch if nxt week    America/Toronto
+
+                    $curepoch = time();                                       # Current Epoch Time
+                    $dayofweek = date('w');                                   # Get Day of the week
+                    if ($dayofweek == 1) {
+                        $w_month  = date('m') ;                               # Today Mth Num.
+                        $w_day    = date('d') ;                               # Today day Num.
+                        $w_year   = date('Y') ;                               # Today Year Num. 
+                        $w_epoch = mktime($whrs,$wmin,0,$w_month,$w_day,$w_year); # Epoch this week
+                        $curepoch = time();                                                 # Current Epoch Time
+                        #print "\njack w_epoch = " . $w_epoch . " curepoch= " . $curepoch ;
+                        if ($w_epoch > $curepoch) {
+                            #print "\ncoco" ;
+                            $update_date_time = date('Y-m-d',strtotime('today')) . " $seltime";
+                            return array ($event_occurence , $update_date_time) ;
+                        }
+                    }
+                    if ($nxtepoch >= $curepoch) {
                         $update_date_time = date('Y-m-d', strtotime('next Monday'))    . " $seltime";
                         return array ($event_occurence , $update_date_time) ;
                     }
@@ -863,8 +906,19 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                     $tyear  = date('Y', strtotime('next Tuesday'));            # Year of next update
                     $tmonth = date('m', strtotime('next Tuesday'));            # Month of next update
                     $tdate  = date('d', strtotime('next Tuesday'));            # Day of next update
-                    $tepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
-                    if ($tepoch >= $curepoch) {
+                    $nxtepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
+                    $dayofweek = date('w');                                   # Get Day of the week
+                    if ($dayofweek == 2) {
+                        $w_month  = date('m') ;                               # Today Mth Num.
+                        $w_day    = date('d') ;                               # Today day Num.
+                        $w_year   = date('Y') ;                               # Today Year Num. 
+                        $w_epoch = mktime($whrs,$wmin,0,$w_month,$w_day,$w_year); # Epoch this week
+                        if ($w_epoch >= $curepoch) {
+                            $update_date_time = date('Y-m-d') . " $seltime";
+                            return array ($event_occurence , $update_date_time) ;
+                        }
+                    }
+                    if ($nxtepoch >= $curepoch) {
                         $update_date_time = date('Y-m-d', strtotime('next Tuesday'))    . " $seltime";
                         return array ($event_occurence , $update_date_time) ;
                     }
@@ -874,8 +928,19 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                     $tyear  = date('Y', strtotime('next Wednesday'));            # Year of next update
                     $tmonth = date('m', strtotime('next Wednesday'));            # Month of next update
                     $tdate  = date('d', strtotime('next Wednesday'));            # Day of next update
-                    $tepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
-                    if ($tepoch >= $curepoch) {
+                    $nxtepoch  = mktime($whrs,$wmin,0,$tmonth,$tdate,$tyear); # Epoch if nxt week
+                    $dayofweek = date('w');                                   # Get Day of the week
+                    if ($dayofweek == 3) {
+                        $w_month  = date('m') ;                               # Today Mth Num.
+                        $w_day    = date('d') ;                               # Today day Num.
+                        $w_year   = date('Y') ;                               # Today Year Num. 
+                        $w_epoch = mktime($whrs,$wmin,0,$w_month,$w_day,$w_year); # Epoch this week
+                        if ($w_epoch >= $curepoch) {
+                            $update_date_time = date('Y-m-d') . " $seltime";
+                            return array ($event_occurence , $update_date_time) ;
+                        }
+                    }
+                    if ($nxtepoch >= $curepoch) {
                         $update_date_time = date('Y-m-d', strtotime('next Wednesday'))    . " $seltime";
                         return array ($event_occurence , $update_date_time) ;
                     }
@@ -885,8 +950,19 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                     $tyear  = date('Y', strtotime('next Thursday'));            # Year of next update
                     $tmonth = date('m', strtotime('next Thursday'));            # Month of next update
                     $tdate  = date('d', strtotime('next Thursday'));            # Day of next update
-                    $tepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
-                    if ($tepoch >= $curepoch) {
+                    $nxtepoch  = mktime($whrs,$wmin,0,$tmonth,$tdate,$tyear); # Epoch if nxt week
+                    $dayofweek = date('w');                                   # Get Day of the week
+                    if ($dayofweek == 4) {
+                        $w_month  = date('m') ;                               # Today Mth Num.
+                        $w_day    = date('d') ;                               # Today day Num.
+                        $w_year   = date('Y') ;                               # Today Year Num. 
+                        $w_epoch = mktime($whrs,$wmin,0,$w_month,$w_day,$w_year); # Epoch this week
+                        if ($w_epoch >= $curepoch) {
+                            $update_date_time = date('Y-m-d') . " $seltime";
+                            return array ($event_occurence , $update_date_time) ;
+                        }
+                    }
+                    if ($nxtepoch >= $curepoch) {
                         $update_date_time = date('Y-m-d', strtotime('next Thursday'))    . " $seltime";
                         return array ($event_occurence , $update_date_time) ;
                     }
@@ -896,8 +972,19 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                     $tyear  = date('Y', strtotime('next Friday'));            # Year of next update
                     $tmonth = date('m', strtotime('next Friday'));            # Month of next update
                     $tdate  = date('d', strtotime('next Friday'));            # Day of next update
-                    $tepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
-                    if ($tepoch >= $curepoch) {
+                    $nxtepoch  = mktime($whrs,$wmin,0,$tmonth,$tdate,$tyear); # Epoch if nxt week
+                    $dayofweek = date('w');                                   # Get Day of the week
+                    if ($dayofweek == 5) {
+                        $w_month  = date('m') ;                               # Today Mth Num.
+                        $w_day    = date('d') ;                               # Today day Num.
+                        $w_year   = date('Y') ;                               # Today Year Num. 
+                        $w_epoch = mktime($whrs,$wmin,0,$w_month,$w_day,$w_year); # Epoch this week
+                        if ($w_epoch >= $curepoch) {
+                            $update_date_time = date('Y-m-d') . " $seltime";
+                            return array ($event_occurence , $update_date_time) ;
+                        }
+                    }
+                    if ($nxtepoch >= $curepoch) {
                         $update_date_time = date('Y-m-d', strtotime('next Friday'))    . " $seltime";
                         return array ($event_occurence , $update_date_time) ;
                     }
@@ -907,8 +994,19 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                     $tyear  = date('Y', strtotime('next Saturday'));            # Year of next update
                     $tmonth = date('m', strtotime('next Saturday'));            # Month of next update
                     $tdate  = date('d', strtotime('next Saturday'));            # Day of next update
-                    $tepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
-                    if ($tepoch >= $curepoch) {
+                    $nxtepoch  = mktime($whrs,$wmin,0,$tmonth,$tdate,$tyear); # Epoch if nxt week
+                    $dayofweek = date('w');                                   # Get Day of the week
+                    if ($dayofweek == 6) {
+                        $w_month  = date('m') ;                               # Today Mth Num.
+                        $w_day    = date('d') ;                               # Today day Num.
+                        $w_year   = date('Y') ;                               # Today Year Num. 
+                        $w_epoch = mktime($whrs,$wmin,0,$w_month,$w_day,$w_year); # Epoch this week
+                        if ($w_epoch >= $curepoch) {
+                            $update_date_time = date('Y-m-d') . " $seltime";
+                            return array ($event_occurence , $update_date_time) ;
+                        }
+                    }
+                    if ($nxtepoch >= $curepoch) {
                         $update_date_time = date('Y-m-d', strtotime('next Saturday'))    . " $seltime";
                         return array ($event_occurence , $update_date_time) ;
                     }

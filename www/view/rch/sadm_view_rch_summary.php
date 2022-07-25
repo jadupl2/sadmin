@@ -86,7 +86,7 @@ function setup_table() {
     
     # TABLE CREATION
     echo "\n<div id='SimpleTable'>";                                      # Width Given to Table
-    echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='98%'>";
+    echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='100%'>";
     
     # PAGE TABLE HEADING 
     echo "\n<thead>\n";

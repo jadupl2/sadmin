@@ -87,7 +87,7 @@ function setup_table() {
 
     # Table creation
     echo "<div id='SimpleTable'>"; 
-    echo '<table id="sadmTable" class="display" row-border width="96%">';   
+    echo '<table id="sadmTable" class="display" row-border width="100%">';   
 
     # Table Heading
     echo "<thead>\n";
@@ -95,13 +95,13 @@ function setup_table() {
     echo "<th>Server</th>\n";
     #echo "<th class='dt-head-left'>Description</th>\n";
     #echo "<th class='dt-head-left'>Arch</th>\n";
-    echo "<th class='dt-head-left'>O/S</th>\n";
-    echo "<th class='dt-head-left'>Rear Ver</th>\n";
-    echo "<th class='text-center'>Last Backup</th>\n";
+    echo "<th class='text-center'>O/S</th>\n";
+    echo "<th class='text-center'>ReaR Ver.</th>\n";
+    echo "<th class='text-center'>Last Execution</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Duration</th>\n";
     echo "<th class='text-center'>Next Backup</th>\n";
-    echo "<th class='dt-head-left'>Backup Occurrence</th>\n";
+    echo "<th class='text-center'>Backup Occurrence</th>\n";
     echo "<th class='text-center'>Log / History</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
@@ -112,13 +112,13 @@ function setup_table() {
     echo "<th>Server</th>\n";
     #echo "<th class='dt-head-left'>Description</th>\n";
     #echo "<th class='dt-head-left'>Arch</th>\n";
-    echo "<th class='dt-head-left'>O/S</th>\n";
-    echo "<th class='dt-head-left'>Rear Ver</th>\n";
-    echo "<th class='text-center'>Last Backup</th>\n";
+    echo "<th class='text-center'>O/S</th>\n";
+    echo "<th class='text-center'>ReaR Ver.</th>\n";
+    echo "<th class='text-center'>Last Execution</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Duration</th>\n";
     echo "<th class='text-center'>Next Backup</th>\n";
-    echo "<th class='dt-head-left'>Backup Occurrence</th>\n";
+    echo "<th class='text-center'>Backup Occurrence</th>\n";
     echo "<th class='text-center'>Log / History</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
@@ -145,7 +145,7 @@ function display_data($count, $row) {
     echo "<td class='dt-center'>";
     echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP ."'";
     echo " title='" .$row['srv_osname']. "-" .$row['srv_osversion']." - " ;
-    echo $row['srv_ip']  . ", click to edit the schedule.'>";
+    echo $row['srv_ip']  . ", Click to edit the schedule.'>";
     echo $row['srv_name']  . "</a></td>\n";
 
     # Server Description
@@ -168,7 +168,7 @@ function display_data($count, $row) {
     echo "<td class='dt-body-center'>" . nl2br( $row['srv_rear_ver']) . "</td>\n";  
 
 
-    # Last Rear Backup Date 
+    # Last Execution Rear Backup date & time
     echo "<td class='dt-center'>" ;
     $rch_dir  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/rch/" ;   # Set the RCH Directory Path
     $rch_file = $rch_dir . $row['srv_name'] . "_" . $BACKUP_RCH;        # Set Full PathName of RCH
@@ -184,7 +184,6 @@ function display_data($count, $row) {
         echo "$cdate1" . ' ' . substr($ctime1,0,5) ;
     }
     echo "</td>\n";  
-
 
     # Last Backup Status
     if (! file_exists($rch_file))  {                                    # If RCH File Not Found
@@ -205,7 +204,7 @@ function display_data($count, $row) {
     
     # Backup elapse time
     if (! file_exists($rch_file))  {                                    # If RCH File Not Found
-        echo "\n<td class='dt-center'>  </td>";
+        echo "\n<td class='dt-center'>&nbsp;</td>";
     }else{
         echo "<td class='dt-center'>" . nl2br($celapse) . "</td>\n";  
     }
@@ -225,7 +224,7 @@ function display_data($count, $row) {
 
 
     # Rear Backup Occurrence
-    echo "<td class='dt-body-left'>";
+    echo "<td class='dt-center'>";
     if ($row['srv_img_backup'] == True ) { 
         list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
             $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
@@ -264,9 +263,10 @@ function display_data($count, $row) {
 
 
 # ==================================================================================================
-#                                      PHP MAIN START HERE
+# PHP MAIN START HERE
 # ==================================================================================================
 
+    # Get all active systenms from the SADMIN Database
     $sql = "SELECT * FROM server where srv_active = True order by srv_name;";
     $result=mysqli_query($con,$sql) ;     
     $NUMROW = mysqli_num_rows($result);                                 # Get Nb of rows returned
@@ -279,13 +279,15 @@ function display_data($count, $row) {
         sadm_fatal_error($err_msg);                                     # Display Error & Go Back
         exit();  
     }
+
+    # Show ReaR schedule page heading
     $title1="ReaR Backup Schedule Status";                              # Page Title 1
     $title2="";
     if (file_exists(SADM_WWW_DIR . "/view/daily_rear_report.html")) {
         $title2="<a href='" . $URL_REAR_REPORT . "'>View the ReaR Daily Report</a>"; 
     }     
     display_lib_heading("NotHome","$title1","$title2",$WVER);           # Display Heading
-    setup_table();                                                      # Create Table & Heading
+    setup_table();                                                      # Create HTML Table/Heading
     
     # Loop Through Retrieved Data and Display each Row
     $count=0;   
@@ -294,6 +296,7 @@ function display_data($count, $row) {
         display_data($count, $row);                                     # Display Next Server
     }
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
+
     echo "<center>MacOS and Raspberry Pi aren't shown on this page because they are not supported by ReaR.</center>.";
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
