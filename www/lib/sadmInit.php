@@ -30,11 +30,14 @@
 # 2021_08_02 nolog v3.8 Added 'SADM_PGM2DOC' for Doc to Links file definition.
 # 2021_08_17 nolog v3.9 Added "SADM_MONITOR_UPDATE_INTERVAL" 
 #@2021_09_15 web v3.10 Load new Var. SADM_MONITOR_RECENT_COUNT,SADM_MONITOR_RECENT_EXCLUDE
+#@2022_07_26 web v3.11 Set the TimeZone to America/Toronto
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
+    date_default_timezone_set('America/Toronto');
+
     # Set SADMIN PHP Library Version NUmber
-    define("SADM_PHP_LIBVER","3.8");
+    define("SADM_PHP_LIBVER","3.11");
 
     # Setting the HOSTNAME Variable
     list($HOSTNAME) = explode ('.', gethostname());                     # HOSTNAME without domain
