@@ -50,6 +50,7 @@
 # 2021_08_29 nolog v2.19 New function "get_alert_group_data" Return used alert grp name,type,tooltip.
 # 2021_08_31 nolog v2.20 New function "sadm_return_logo(OSNAME)" return image path, doc url & tooltip
 #@2022_06_02 update v2.21 Added Logo of AlmaLinux, rocky Linux and update logo of Ubuntu,
+#@2022_07_26 Fixes v2.22 Correct problem calculating "Next Update Date/Time" in some situation.
 #===================================================================================================
 #
 
@@ -58,7 +59,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.21" ;   
+$LIBVER = "2.22" ;   
     
 
 #===================================================================================================
@@ -133,15 +134,15 @@ function netinfo ($ip_address,$ip_nmask) {
     # convert ip addresses to long form
     $ip_address_long     = ip2long($ip_address);
     $ip_nmask_long       = ip2long($ip_nmask);
-    # caculate network address
+    # calculate network address
     $ip_net              = $ip_address_long & $ip_nmask_long;
-    # caculate first usable address
+    # calculate first usable address
     $ip_host_first       = ((~$ip_nmask_long) & $ip_address_long);
     $ip_first            = ($ip_address_long ^ $ip_host_first) + 1;
-    # caculate last usable address
+    # calculate last usable address
     $ip_broadcast_invert = ~$ip_nmask_long;
     $ip_last             = ($ip_address_long | $ip_broadcast_invert) - 1;
-    # caculate broadcast address
+    # calculate broadcast address
     $ip_broadcast        = $ip_address_long | $ip_broadcast_invert;
 
     return array (long2ip($ip_net), long2ip($ip_first), long2ip($ip_last), long2ip($ip_broadcast));
@@ -161,32 +162,32 @@ function netinfo ($ip_address,$ip_nmask) {
 function get_alert_group_data ($calert) {
 
     # If 'default' alert group is used, get the real effective alert group name.
-    if ($calert == "default") {                                 # If Alert Group is default
+    if ($calert == "default") {                                         # If Alert Group is default
         $CMD="grep -i \"^default\" " . SADM_ALERT_FILE . " |awk '{print$3}' |tr -d ' '";
         if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; } 
-        unset($output_array);                                   # Clear output Array
-        exec ( $CMD , $output_array, $RCODE);                   # Execute command
-        if ($DEBUG) {                                           # If in Debug Mode
-            echo "\n<br>Return code of command : " . $RCODE ;   # Command ReturnCode
-            echo "\n<br>Content of output array:";              # Show what's next
-            echo '<code><pre>';                                 # Code to Show
-            print_r($output_array);                             # Show Cmd output
-            echo '</pre></code>';                               # End of code 
+        unset($output_array);                                           # Clear output Array
+        exec ( $CMD , $output_array, $RCODE);                           # Execute command
+        if ($DEBUG) {                                                   # If in Debug Mode
+            echo "\n<br>Return code of command : " . $RCODE ;           # Command ReturnCode
+            echo "\n<br>Content of output array:";                      # Show what's next
+            echo '<code><pre>';                                         # Code to Show
+            print_r($output_array);                                     # Show Cmd output
+            echo '</pre></code>';                                       # End of code 
         }
-        $calert=$output_array[0];                               # Real Alert Grp Name
+        $calert=$output_array[0];                                       # Real Alert Grp Name
     }
 
     # Get the group Alert Type (M=Mail, S=SLack, T=Texto, C=Cellular)
     $CMD="grep -i \"^" . $calert . "\" " . SADM_ALERT_FILE . " |awk '{print$2}' |tr -d ' '";
-    if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ;}     # Cmd we execute
-    unset($output_array);                                           # Clear output Array
-    exec ( $CMD , $output_array, $RCODE);                           # Execute command
-    if ($DEBUG) {                                                   # If in Debug Mode
-        echo "\n<br>Return code of command is : " . $RCODE ;        # Command ReturnCode
-        echo "\n<br>Content of output array :";                     # Show what's next
-        echo '<code><pre>';                                         # Code to Show
-        print_r($output_array);                                     # Show Cmd output
-        echo '</pre></code>';                                       # End of code 
+    if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ;}         # Cmd we execute
+    unset($output_array);                                               # Clear output Array
+    exec ( $CMD , $output_array, $RCODE);                               # Execute command
+    if ($DEBUG) {                                                       # If in Debug Mode
+        echo "\n<br>Return code of command is : " . $RCODE ;            # Command ReturnCode
+        echo "\n<br>Content of output array :";                         # Show what's next
+        echo '<code><pre>';                                             # Code to Show
+        print_r($output_array);                                         # Show Cmd output
+        echo '</pre></code>';                                           # End of code 
     }
     $alert_group_type=$output_array[0];                             # GrpType t,m,s,c              
 
@@ -733,7 +734,7 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
 {
 
     #print("\nwdom=".$wdom."wmth=".$wmth."wdow=".$wdow."whrs=".$whrs."wmin=".$wmin);
-    print("\nwdow=".$wdow."whrs=".$whrs."wmin=".$wmin) . "\n";
+    #print("\nwdow=".$wdow."whrs=".$whrs."wmin=".$wmin) . "\n";
     
     # Variables used to construct the next O/S Update Date
     $sdate    = "";                                                     # Sel Day (1,3,31) empty now
@@ -825,12 +826,12 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
     }
     $part3 = rtrim($part3, ',') . " " ;                                  # Del part3 trailing Comma
     $sday  = rtrim($sday, ',');                                         # Del sday trailing Comma
-    #echo "Part1 = $part1 - Part2 = $part2 - Part3 = $part3"; 
+    #print "\nPart1 = $part1 - Part2 = $part2 - Part3 = $part3"; 
 
     # Part4 is the hours and minutes of the schedule, just format them and put them in part4.
     $part4 = "at $seltime" ;
     $event_occurence = "$part1" . "$part2" . "$part3" . "$part4";
-    #print "Event Occurence : $event_occurence"; 
+    #echo nl2br("\nEvent Occurence : $event_occurence"); 
     
 
     # From Here, Now let's construct the date and time of the next event
@@ -839,8 +840,11 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
     if (($sdate == "") and ($smth == "") and ($sday == "")) {
         $curepoch = time();                                             # Current Epoch Time 
         $event1   = mktime($selhrs,$selmin,0,$curmth,$curday,$curyear); # Epoch if run today
-        $w_month  = date('m', strtotime('tomorrow')) ;    
-        if ($event1 < $event2) {
+        $tyear    = date('Y', strtotime('tomorrow'));                   # tomorrow Year 
+        $tmonth   = date('m', strtotime('tomorrow'));                   # tomorrow Month
+        $tdate    = date('d', strtotime('tomorrow'));                   # tomorrow Day 
+        $event2   = mktime($whrs,$wmin,0,$tmonth,$tdate,$tyear);        # Epoch for tommorow
+        if ($event1 > $curepoch) {
             $update_date_time = date("Y-m-d H:i", substr("$event1", 0, 16));
         }else{
             $update_date_time = date("Y-m-d H:i", substr("$event2", 0, 16));
@@ -869,10 +873,8 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                             return array ($event_occurence , $update_date_time) ;
                         }
                     }
-                    if ($nxtepoch >= $curepoch) {
-                        $update_date_time = date('Y-m-d', strtotime('next Sunday'))    . " $seltime";
-                        return array ($event_occurence , $update_date_time) ;
-                    }
+                    $update_date_time = date('Y-m-d', strtotime('next Sunday'))    . " $seltime";
+                    return array ($event_occurence , $update_date_time) ;
                 }
                 $pos = strpos($wday,"2") ;
                 if ($pos !== false) {
@@ -880,7 +882,6 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                     $tmonth = date('m', strtotime('next Monday'));            # Month of next update
                     $tdate  = date('d', strtotime('next Monday'));            # Day of next update
                     $nxtepoch  = mktime($whrs,$wmin,0,$tmonth,$tdate,$tyear); # Epoch if nxt week    America/Toronto
-
                     $curepoch = time();                                       # Current Epoch Time
                     $dayofweek = date('w');                                   # Get Day of the week
                     if ($dayofweek == 1) {
@@ -889,18 +890,17 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                         $w_year   = date('Y') ;                               # Today Year Num. 
                         $w_epoch = mktime($whrs,$wmin,0,$w_month,$w_day,$w_year); # Epoch this week
                         $curepoch = time();                                                 # Current Epoch Time
-                        #print "\njack w_epoch = " . $w_epoch . " curepoch= " . $curepoch ;
+                        #print "\njack w_epoch = " . $w_epoch . " curepoch= " . $curepoch . " ";
                         if ($w_epoch > $curepoch) {
                             #print "\ncoco" ;
                             $update_date_time = date('Y-m-d',strtotime('today')) . " $seltime";
                             return array ($event_occurence , $update_date_time) ;
                         }
                     }
-                    if ($nxtepoch >= $curepoch) {
-                        $update_date_time = date('Y-m-d', strtotime('next Monday'))    . " $seltime";
-                        return array ($event_occurence , $update_date_time) ;
-                    }
+                    $update_date_time = date('Y-m-d', strtotime('next Monday'))    . " $seltime";
+                    return array ($event_occurence , $update_date_time) ;
                 }
+
                 $pos = strpos($wday,"3") ;
                 if ($pos !== false) {
                     $tyear  = date('Y', strtotime('next Tuesday'));            # Year of next update
@@ -913,16 +913,16 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                         $w_day    = date('d') ;                               # Today day Num.
                         $w_year   = date('Y') ;                               # Today Year Num. 
                         $w_epoch = mktime($whrs,$wmin,0,$w_month,$w_day,$w_year); # Epoch this week
+                        #echo nl2br("\nw_epoch=$w_epoch - curepoch=$curepoch\n");
                         if ($w_epoch >= $curepoch) {
                             $update_date_time = date('Y-m-d') . " $seltime";
                             return array ($event_occurence , $update_date_time) ;
                         }
                     }
-                    if ($nxtepoch >= $curepoch) {
-                        $update_date_time = date('Y-m-d', strtotime('next Tuesday'))    . " $seltime";
-                        return array ($event_occurence , $update_date_time) ;
-                    }
+                $update_date_time = date('Y-m-d', strtotime('next Tuesday'))    . " $seltime";
+                return array ($event_occurence , $update_date_time) ;
                 }
+
                 $pos = strpos($wday,"4") ;
                 if ($pos !== false) {
                     $tyear  = date('Y', strtotime('next Wednesday'));            # Year of next update
@@ -940,11 +940,10 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                             return array ($event_occurence , $update_date_time) ;
                         }
                     }
-                    if ($nxtepoch >= $curepoch) {
-                        $update_date_time = date('Y-m-d', strtotime('next Wednesday'))    . " $seltime";
-                        return array ($event_occurence , $update_date_time) ;
-                    }
+                $update_date_time = date('Y-m-d', strtotime('next Wednesday'))    . " $seltime";
+                return array ($event_occurence , $update_date_time) ;
                 }
+
                 $pos = strpos($wday,"5") ;
                 if ($pos !== false) {
                     $tyear  = date('Y', strtotime('next Thursday'));            # Year of next update
@@ -962,11 +961,10 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                             return array ($event_occurence , $update_date_time) ;
                         }
                     }
-                    if ($nxtepoch >= $curepoch) {
-                        $update_date_time = date('Y-m-d', strtotime('next Thursday'))    . " $seltime";
-                        return array ($event_occurence , $update_date_time) ;
-                    }
+                $update_date_time = date('Y-m-d', strtotime('next Thursday'))    . " $seltime";
+                return array ($event_occurence , $update_date_time) ;
                 }                                                
+
                 $pos = strpos($wday,"6") ;
                 if ($pos !== false) {
                     $tyear  = date('Y', strtotime('next Friday'));            # Year of next update
@@ -984,11 +982,10 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                             return array ($event_occurence , $update_date_time) ;
                         }
                     }
-                    if ($nxtepoch >= $curepoch) {
-                        $update_date_time = date('Y-m-d', strtotime('next Friday'))    . " $seltime";
-                        return array ($event_occurence , $update_date_time) ;
-                    }
+                    $update_date_time = date('Y-m-d', strtotime('next Friday'))    . " $seltime";
+                    return array ($event_occurence , $update_date_time) ;
                 }                                                
+
                 $pos = strpos($wday,"7") ;
                 if ($pos !== false) {
                     $tyear  = date('Y', strtotime('next Saturday'));            # Year of next update
@@ -1006,10 +1003,8 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
                             return array ($event_occurence , $update_date_time) ;
                         }
                     }
-                    if ($nxtepoch >= $curepoch) {
-                        $update_date_time = date('Y-m-d', strtotime('next Saturday'))    . " $seltime";
-                        return array ($event_occurence , $update_date_time) ;
-                    }
+                    $update_date_time = date('Y-m-d', strtotime('next Saturday'))    . " $seltime";
+                    return array ($event_occurence , $update_date_time) ;
                 }                                                
     }
 }
