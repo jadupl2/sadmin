@@ -32,6 +32,7 @@
 # 2021_05_14 Fix: v3.3 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
 #@2021_06_02 Update: v3.4 Fixes, Added command line options and major code review
 #@2022_06_10 Update: v3.5 Update to use the new SADMIN Python Library v2
+#@2022_07_27 Fix: v3.6 Fix reported ping when wasn't under certain condition.
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -51,7 +52,7 @@ except ImportError as e:
 #                                 Local Variables used by this script
 #===================================================================================================
 #
-netdict = {}                                                            # Network Work Dictionnary
+netdict = {}                                                            # Network Work Dictionary
 
 
 
@@ -68,7 +69,7 @@ except ImportError as e:                                                # If Err
     sys.exit(1)                                                         # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver = "1.1"                                                            # Program version
+pver = "3.6"                                                            # Program version
 pdesc = "Produce Web network page that list IP, name and mac usage for subnet you specified."
 phostname = sa.get_hostname()                                           # Get current `hostname -s`
 pdb_conn = None                                                         # Database connector
@@ -89,7 +90,7 @@ sa.db_used          = True       # Open/Use Database(True) or Don't Need DB(Fals
 #sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
 sa.max_logline      = 600        # Max. lines to keep in log (0=No trim) after execution.
 #sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
-#sa.log_type         = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
+sa.log_type         = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
 #sa.log_append       = False      # Append Existing Log(True) or Create New One(False)
 #sa.log_header       = True       # Show/Generate Header in script log (.log)
 #sa.log_footer       = True       # Show/Generate Footer in script log (.log)
@@ -119,6 +120,8 @@ cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cm
 #       If Row was not found 'None' is returned as the second parameter
 # ----------------------------------------------------------------------------------------------
 def db_readkey(wconn,wcur,tbkey,dbsilent=True):
+    global pdebug
+    
 
     sql = "SELECT * FROM server_network WHERE net_ip='%s'" % (tbkey)    # Build select statement
     try :
@@ -147,7 +150,7 @@ def db_readkey(wconn,wcur,tbkey,dbsilent=True):
 
 
 #-----------------------------------------------------------------------------------------------
-# INSERT ROW IN SERVER_NETWORK TABLE
+# INSERT ROW IN SERVER_NETWORK TABLE    
 #
 # Function parameters :
 #   - st = Object Instance of SADM Tools 
@@ -166,6 +169,8 @@ def db_readkey(wconn,wcur,tbkey,dbsilent=True):
 #   1 = Update Failed 
 #-----------------------------------------------------------------------------------------------
 def db_insert(wconn,wcur,tbkey,tbdata,dbsilent=False):
+    global pdebug
+
     if pdebug > 4 : sa.write_log("Inserting IP: %s " % tbkey);          # Show key to Insert
     wdate = time.strftime('%Y-%m-%d %H:%M:%S')                          # Save Current Date & Time
 
@@ -223,6 +228,7 @@ def db_insert(wconn,wcur,tbkey,tbdata,dbsilent=False):
 #===================================================================================================
 #
 def db_update(wconn,wcur,wip,wzero,wname,wmac,wman,wping,wdateping,wdatechange):
+    global pdebug
 
     # Update Server Row With Info collected from the sysinfo.txt file
     try:
@@ -263,6 +269,7 @@ def db_update(wconn,wcur,wip,wzero,wname,wmac,wman,wping,wdateping,wdatechange):
 #===================================================================================================
 #
 def scan_network(snet,wconn,wcur) :
+    global pdebug
 
     # GET MAIN NETWORK INTERFACE NAME 
     cmd = "route -n |grep '^0.0.0.0' |awk '{ print $NF }'"              # Get Default Route DevName
@@ -295,8 +302,9 @@ def scan_network(snet,wconn,wcur) :
         sys.exit(1)                                                     # Exit script with Error
     else: 
         sa.write_log ("The fping finished with success.\n")             # Show Command Success
-
-
+    fp = open(fpingfile,'r')
+    ping_array = fp.read()
+    #print("The Array is: \n", ping_array) #printing the array
     # ITERATING THROUGH THE USABLE ADDRESSES ON A NETWORK:
     for ip in NET4.hosts():                                             # Loop through possible IP
         hip = str(ipaddress.ip_address(ip))                             # Save processing IP
@@ -307,12 +315,14 @@ def scan_network(snet,wconn,wcur) :
             hname = ""                                                  # Clear IP Hostname
 
         # Is the IP is in the ping (fping) active list ?
-        if ("%s" % (hip) in fpinglist) :                                # Is IP is fping active list
+        search_ip = "%s\n" % hip
+        #print("The search ip is : ...%s...\n" % (search_ip)) 
+        if search_ip in ping_array:
             hactive = 1                                                 # IP is reachable
-            if (pdebug > 4) : sa.write_log("Yes fping say it is active")   # Show debug info
+            sa.write_log("%-16s fping say it is active" % (hip))   
         else: 
             hactive = 0                                                 # IP is not Reachable
-            if (pdebug > 4) : sa.write_log("No fping say it isn't active") # Show debug info
+            sa.write_log("%-16s fping say it isn't active" % (hip)) 
 
         # Get the Mac Address of IP
         hmac = ''                                                       # Clear Work Mac Address
@@ -401,7 +411,9 @@ def scan_network(snet,wconn,wcur) :
             if (pdebug > 4) : 
                 sa.write_log("Update: IP:%s Host:%s Mac.%s Vend:%s Active:%d PingDate:%s ChangeDate:%s" 
                 % (hip,row_hostname,row_mac,row_manu,row_ping,row_pingdate,row_datechg))
-            sa.write_log("%-16s [ OK ] Database updated" % (hip))       # Advise User Update Error
+            sa.write_log("%-16s [ OK ] Database updated\n" % (hip))       # Advise User Update Error
+    
+    #close(fp)
     return(0)                                                           # Return to Caller
 
 #===================================================================================================
@@ -409,7 +421,7 @@ def scan_network(snet,wconn,wcur) :
 #===================================================================================================
 #
 def main_process(wconn,wcur):
-    global pdb_conn, pdb_cur                                            # DB Connection & Cursor
+    global pdb_conn, pdb_cur , pdebug                                 # DB Connection & Cursor
     
     if pdebug > 4 : sa.write_log("Processing Network1 = _%s_" % (sa.sadm_network1))
     if (sa.sadm_network1 != "") :
@@ -485,9 +497,11 @@ def cmd_options(argv):
 def main(argv):
     global pdb_conn, pdb_cur                                            # DB Connection & Cursor
     pdebug = cmd_options(argv)                                          # Analyse cmdline options
-    pexit_code = 0                                                      # Pgm Exit Code Default
+    print ("1pdebug = ",pdebug)
 
+    pexit_code = 0                                                      # Pgm Exit Code Default
     sa.start(pver, pdesc)                                               # Initialize SADMIN env.
+    print ("2pdebug = ",pdebug)
     if sa.get_fqdn() == sa.sadm_server and sa.db_used :                 # On SADMIN srv & usedb True
         (pexit_code, pdb_conn, pdb_cur) = sa.db_connect()               # Connect to SADMIN Database
         if pexit_code == 0:                                             # If Connection to DB is OK
