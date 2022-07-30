@@ -194,7 +194,7 @@
 #@2022_07_12 lib v4.02 Change Group of some directory in www to solve web problem
 #@2022_07_20 lib v4.03 Cmd 'lsb_release' depreciated ? not available on Alma9,Rocky9,CentOS9,RHEL9
 #@2022_07_27 lib v4.04 Fix problem related to PID.
-#@2022_07_30 lib v4.05 Functions rename sadm_check_system_lock,sadm_lock_system,sadm_unlock_system.
+#@2022_07_30 lib v4.05 sadm_sendmail the fourth parameter (attachment) is now optional.
 #===================================================================================================
 
 
