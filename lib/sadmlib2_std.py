@@ -31,6 +31,7 @@
 #@2022_06_10 library v4.18 Fix some problems within the start() function.
 #@2022_06_10 library v4.19 Fix error at the end of execution when script wasn't running as 'root'
 #@2022_06_13 library v4.20 Add possibility use 'sendmail()' to send multiple attachments.
+#@2022_07_13 library v4.21 If not file attached to email, subject was blank.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -66,7 +67,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.20"                                # This Library Version
+lib_ver             = "4.21"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -2333,7 +2334,7 @@ def get_packagetype():
 
 # Send an email to sysadmin define in sadmin.cfg with subject and body received
 # ----------------------------------------------------------------------------------------------
-def sendmail(mail_addr, mail_subject, mail_body, mail_attach) :
+def sendmail(mail_addr, mail_subject, mail_body, mail_attach="") :
     
     """ Send email to email address received.
         
@@ -2350,9 +2351,9 @@ def sendmail(mail_addr, mail_subject, mail_body, mail_attach) :
     """
 
     data = MIMEMultipart()                                              # instance of MIMEMultipart
-    data['From'] = sadm_smtp_sender                                     # store sender email address  
-    data['To'] = mail_addr                                              # store receiver email 
-    data['Subject'] = mail_subject                                      # storing the subject 
+    data['From '] = sadm_smtp_sender                                     # store sender email address  
+    data['To '] = mail_addr                                              # store receiver email 
+    data['Subject '] = mail_subject                                      # storing the subject 
     data.attach(MIMEText(mail_body, 'plain'))                           # attach body with msg inst
 
     if mail_attach != "" :
@@ -2365,9 +2366,7 @@ def sendmail(mail_addr, mail_subject, mail_body, mail_attach) :
                 encoders.encode_base64(p)                               # encode into base64
                 p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
                 data.attach(p)                                          # attach inst p to inst msg
-        text = data.as_string()                                 # Conv. Multipart msg 2 str
-    else: 
-        text = mail_body
+    text = data.as_string()                                             # Conv. Multipart msg 2 str
 
     try : 
         context = ssl.create_default_context()
