@@ -162,7 +162,7 @@
 # 2021_04_10 Fix: v3.70 Fix Path to which command was not set properly because of defined alias.
 # 2021_06_30 lib: v3.71 To be more succinct global variables were removed from log footer.
 # 2021_08_06 nolog v3.72 $SADMIN/www/tmp directory default permission now set to 777 
-# 2021_08_13 lib v3.73 New func. see Doc sadm_create_lockfile  sadm_remove_lockfile sadm_check_lockfile
+# 2021_08_13 lib v3.73 New func. see Doc sadm_lock_system  sadm_unlock_system sadm_check_system_lock
 # 2021_08_17 lib v3.74 Performance improvement.
 #@2021_09_09 lib v3.75 'sadm_write_err $msg' function added to write to log and error log.
 #@2021_09_13 lib v3.76 Enhance script log header to be more concise, yet have more information.
@@ -179,7 +179,7 @@
 #@2022_04_10 lib v3.87 Update: When PID exist don't reinitialize the script log 
 #@2022_04_11 lib v3.88 Use /etc/os-release file instead of depreciated lsb_release cmd.
 #@2022_04_14 lib v3.89 Fix problem getting osversion on old rhel version.
-#@2022_04_30 lib v3.90 New functions: sadm_create_lockfile,sadm_remove_lockfile,sadm_check_lockfile.
+#@2022_04_30 lib v3.90 New functions: sadm_lock_system,sadm_unlock_system,sadm_check_system_lock.
 #@2022_05_03 lib v3.91 Read new smtp server info from sadmin.cfg & gmail passwd file.
 #@2022_05_10 lib v3.92 Replace usage of 'mail' by 'mutt' 
 #@2022_05_12 lib v3.93 Move 'sadm_send_alert' & 'write_alert_history' to sadm_fetch_client
@@ -193,6 +193,8 @@
 #@2022_07_07 lib v4.01 Add verbosity to sadm_sleep() and fix sadm_sendmail() subject problem.
 #@2022_07_12 lib v4.02 Change Group of some directory in www to solve web problem
 #@2022_07_20 lib v4.03 Cmd 'lsb_release' depreciated ? not available on Alma9,Rocky9,CentOS9,RHEL9
+#@2022_07_27 lib v4.04 Fix problem related to PID.
+#@2022_07_30 lib v4.05 Functions rename sadm_check_system_lock,sadm_lock_system,sadm_unlock_system.
 #===================================================================================================
 
 
@@ -206,7 +208,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.03"                                              # This Library Version
+export SADM_LIB_VER="4.05"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -766,15 +768,15 @@ sadm_get_packagetype() {
 # This Function Make Sure That All  Requirements for using SADM Shell Libraries (Lib/Sadm_*) Are Met
 # If Requirenments Aren't Met, Then The Script Will Abort Informing User To Correct Situation
 sadm_check_requirements() {
-    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "sadm_check_requirement\n" ; fi
+    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write_log "sadm_check_requirement\n" ; fi
 
     # The 'which' command is needed to determine presence of command - Return Error if not found
     if which which >/dev/null 2>&1                                      # Try the command which
         then SADM_WHICH="/usr/bin/which"; export SADM_WHICH             # Save Path of Which Command
-        else sadm_write "${SADM_ERROR} The command 'which' couldn't be found\n"
-             sadm_write "        This program is often used by the SADMIN tools\n"
-             sadm_write "        Please install it and re-run this script\n"
-             sadm_write "        *** Script Aborted\n"
+        else sadm_write_err "[ ERROR ] The command 'which' couldn't be found\n"
+             sadm_write_err "          This program is often used by the SADMIN tools\n"
+             sadm_write_err "          Please install it and re-run this script\n"
+             sadm_write_err "          *** Script Aborted\n"
              return 1                                                   # Return Error to Caller
     fi
 
@@ -2061,6 +2063,8 @@ sadm_start() {
                      sadm_writelog " "
                      sadm_writelog " "
                      DELETE_PID="N"                                     # No Del PID Since running
+                     sadm_stop 1                                        # Close and Trim Log
+                     exit 1                                             # Exit To O/S with Error
                 else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
                         then sadm_write "The PID file exceeded the time to live ('\$SADM_PID_TIMEOUT').\n"
                              sadm_write "Assuming script was aborted abnormally.\n"
@@ -2579,10 +2583,10 @@ sadm_stop() {
 sadm_sendmail() {
 
     RC=0                                                                # Function Return Code
-    #LIB_DEBUG=5                                                         # Debug Library Level
-    if [ $# -ne 4 ]                                                     # Invalid No. of Parameter
+    #LIB_DEBUG=5                                                        # Debug Library Level
+    if [ $# -le 3 ]                                                     # Invalid No. of Parameter
         then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}."
-             sadm_writelog "Should be 4 we received $# : $* "           # Show what received
+             sadm_writelog "Should be 3 or 4 we received $# : $* "      # Show what received
              return 1                                                   # Return Error to caller
     fi
 
@@ -2590,7 +2594,7 @@ sadm_sendmail() {
     maddr=$(echo "$1" |awk '{$1=$1;print}')                             # Send to this email
     msubject="$2"                                                       # Save Alert Subject
     mbody="$3"                                                          # Save Alert Message
-    mfile="$4"                                                          # Comma separatedFileName(s)
+    if [ $# -eq 3 ] ; then mfile="" ; else mfile="$4" ; fi              # Comma separatedFileName(s)
     if [ "$LIB_DEBUG" -gt 4 ] 
          then sadm_write_log "1- Email sent to : ${maddr}" 
               sadm_write_log "2- Email subject : ${msubject}" 
@@ -2704,9 +2708,9 @@ merge_alert_files() {
 # This function is used to create a ($LOCK_FILE) for the system received as a parameter.
 # When the lock file exist "${SADMIN}/tmp/$(hostname -s).lock" for a system, no error or warning is 
 # reported (No alert, No notification) to the user (on monitor screen) until the lock file is 
-# deleted, either by calling the "sadm_remove_lockfile" function or if the lock file time stamp 
+# deleted, either by calling the "sadm_unlock_system" function or if the lock file time stamp 
 # exceed the number of seconds set by $SADM_LOCK_TIMEOUT then then ($LOCK_FILE) would be 
-# automatically by "sadm_check_lockfile" function.
+# automatically by "sadm_check_system_lock" function.
 #
 # Input Parameters :
 #   1) Name of the system to lock (Creating the lock file for it) 
@@ -2715,7 +2719,7 @@ merge_alert_files() {
 #   0) System Lock file was created successfully
 #   1) System Lock file could not be created or updated
 # --------------------------------------------------------------------------------------------------
-sadm_create_lockfile()
+sadm_lock_system()
 {
     SNAME=$1                                                            # Save System Name to verify
     RC=0                                                                # Default Return Code
@@ -2749,9 +2753,9 @@ sadm_create_lockfile()
 # This function is used to remove a ($LOCK_FILE) for the system received as a parameter.
 # When the lock file exist "${SADMIN}/tmp/$(hostname -s).lock" for a system, no error or warning is 
 # reported (No alert, No notification) to the user (on monitor screen) until the lock file is 
-# deleted, either by calling the "sadm_remove_lockfile" function or if the lock file time stamp 
+# deleted, either by calling the "sadm_unlock_system" function or if the lock file time stamp 
 # exceed the number of seconds set by $SADM_LOCK_TIMEOUT then then ($LOCK_FILE) would be 
-# automatically by "sadm_check_lockfile" function.
+# automatically by "sadm_check_system_lock" function.
 #
 # Input Parameters :
 #   1) Name of the system to remove the lock file ("${SADMIN}/tmp/$(hostname -s).lock") 
@@ -2760,7 +2764,7 @@ sadm_create_lockfile()
 #   0) System Lock file was remove successfully
 #   1) System Lock file could not be removed 
 # --------------------------------------------------------------------------------------------------
-sadm_remove_lockfile() {
+sadm_unlock_system() {
     SNAME=$1                                                            # Save System Name to verify
     RC=0                                                                # Default Return Code
     LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # System Lock file name
@@ -2802,7 +2806,7 @@ sadm_remove_lockfile() {
 #   1) System is Lock.
 # --------------------------------------------------------------------------------------------------
 #
-sadm_check_lockfile() {
+sadm_check_system_lock() {
     SNAME=$1                                                            # Save System Name to verify
     RC=0                                                                # Default Return Code
     LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # System Lock file name
@@ -2815,7 +2819,7 @@ sadm_check_lockfile() {
                 then sadm_writelog "Server is lock for more than $SADM_LOCK_TIMEOUT seconds."
                      sadm_writelog "Removing the lock file ($LOCK_FILE)."
                      sadm_writelog "We now restart monitoring this system as usual."
-                     sadm_remove_lockfile "$SNAME"
+                     sadm_unlock_system "$SNAME"
                      #rm -f $LOCK_FILE > /dev/null 2>&1
                 else #sadm_writelog "The system '${SNAME}' is currently lock."
                      #sadm_writelog "System normal monitoring will resume in ${sec_left} seconds."
