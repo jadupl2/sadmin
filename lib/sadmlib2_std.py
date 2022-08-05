@@ -11,27 +11,27 @@
 #        You will have a better experience, if you set screen width to have at least 100 Characters.
 #---------------------------------------------------------------------------------------------------
 # Change Log
-#@2021_09_16 lib v4.0 Initial version
-#@2021_10_21 lib v4.01 If rch is not used (rch_used=False). delete the RCH file if present
-#@2021_10_31 lib v4.02 Added Epoch Math Function, get_serial and fix chown error in footer
-#@2021_12_02 lib v4.03 Added help to each functions, complete re-structure
-#@2021_12_11 lib v4.04 Fix typo error
-#@2021_12_18 lib v4.05 Fix error with Start function
-#@2021_12_20 lib v4.06 Load additional options fields from the SADMIN configuration file.
-#@2022_03_06 lib v4.07 Correct some typo in PID message to user
-#@2022_04_11 lib v4.08 Use /etc/os-release to get O/S info instead of lsb_release depreciated
-#@2022_05_09 lib v4.10 First Production version of new Python Library
-#@2022_05_21 lib v4.11 Ameliorate file lock funstions & Minor changes
-#@2022_05_25 lib v4.12 Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
-#@2022_05_26 lib v4.13 Prevent error message to appears when running not as root.
-#@2022_05_27 lib v4.14 Fix for AlmaLinux, problem with blank line in /etc/os-release
-#@2022_05_27 lib v4.15 Use socket.getfqdn() to get fqdn
-#@2022_05_29 lib v4.16 Python socket.getfqdn() don't always return a domain name, use shell method
-#@2022_06_01 library v4.17 Fix finally get_domain() function to get the domaine name.
-#@2022_06_10 library v4.18 Fix some problems within the start() function.
-#@2022_06_10 library v4.19 Fix error at the end of execution when script wasn't running as 'root'
-#@2022_06_13 library v4.20 Add possibility use 'sendmail()' to send multiple attachments.
-#@2022_07_13 library v4.21 If not file attached to email, subject was blank.
+#@2021_09_16 lib v4.00 Initial new version
+#@2021_10_21 lib v4.01 If rch is not used (rch_used=False). delete the RCH file if present.
+#@2021_10_31 lib v4.02 Added Epoch math function, get_serial and fix chown error creating footer.
+#@2021_12_02 lib v4.03 Added help (Docstrings) to each functions and complete code re-structure.
+#@2021_12_11 lib v4.04 Fix some typo error.
+#@2021_12_18 lib v4.05 Fix error within 'start' function.
+#@2021_12_20 lib v4.06 Load additional options fields (SMTP) from the SADMIN configuration file.
+#@2022_03_06 lib v4.07 Change message when PID exist and trying to run a second instance of script.
+#@2022_04_11 lib v4.08 Use file '/etc/os-release' to get O/S info instead of 'lsb_release'.
+#@2022_05_09 lib v4.10 First Production version of new Python Library v4.
+#@2022_05_21 lib v4.11 Enhance host lock function & minor changes.
+#@2022_05_25 lib v4.12 New variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
+#@2022_05_26 lib v4.13 Change message that appear when running not as 'root'.
+#@2022_05_27 lib v4.14 Fix for AlmaLinux, problem with blank line in '/etc/os-release' file.
+#@2022_05_27 lib v4.15 Use socket.getfqdn() to get fqdn.
+#@2022_05_29 lib v4.16 Python socket.getfqdn() don't always return a domain name, use shell method.
+#@2022_06_01 lib v4.17 Fix get_domain() function to get proper domain name.
+#@2022_06_10 lib v4.18 Fix minor problem within the 'start' function.
+#@2022_06_10 lib v4.19 Fix error message at end of execution when script wasn't running as 'root'.
+#@2022_06_13 lib v4.20 Add possibility use 'sendmail()' to send multiple attachments.
+#@2022_07_13 lib v4.21 If no file attached to email, subject was blank.
 # --------------------------------------------------------------------------------------------------
 #
 

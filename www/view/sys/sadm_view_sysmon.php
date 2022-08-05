@@ -823,7 +823,7 @@ function display_data($con,$alert_file) {
     if ($DEBUG) { echo "\nSize of array is " . sizeof($array_sysmon) . "\n<br>" ; }
     if (sizeof($array_sysmon) == 0) {                                   # Array Empty everything OK
         echo "<center><strong>At this moment, no error or warning to report</strong></center>" ;
-        #if (file_exists($alert_file)) { unlink($alert_file); }          # Delete Work Alert File
+        if (file_exists($alert_file)) { unlink($alert_file); }         # Delete Work Alert File
         if (SADM_MONITOR_RECENT_COUNT != 0) {                           # History of script activity
             show_activity($con,$alert_file);
         }

@@ -30,9 +30,9 @@
 # 2020_04_27 New: v3.1 Show full Ping and change Date/Time.
 # 2020_04_30 Update: v3.2 Install module 'getmac', if it's not installed.
 # 2021_05_14 Fix: v3.3 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
-#@2021_06_02 Update: v3.4 Fixes, Added command line options and major code review
-#@2022_06_10 Update: v3.5 Update to use the new SADMIN Python Library v2
-#@2022_07_27 Fix: v3.6 Fix reported ping when wasn't under certain condition.
+#@2021_06_02 server v3.4 Added command line options and major code review
+#@2022_06_10 server v3.5 Update to use the new SADMIN Python Library v2
+#@2022_07_27 server v3.6 Bug fix when ping were reported when it wasn't.
 # --------------------------------------------------------------------------------------------------
 #
 try :

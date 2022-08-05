@@ -199,7 +199,7 @@ rmcd_start()
 
         
         # Check if the node is currently lock (Abort execution)
-        sadm_check_lockfile "${LOCKNODE}"                               # Check if node is lock
+        sadm_check_system_lock "${LOCKNODE}"                               # Check if node is lock
         if [ $? -eq 1 ]                                                 # If node is lock
             sadm_write_err "The system '${SNAME}' is currently lock."
             sadm_write_err "System normal monitoring will resume in ${sec_left} seconds."
@@ -209,7 +209,7 @@ rmcd_start()
 
         # If requested (-l), created a server lock file, to prevent generation monitoring error.
         if [ "$LOCK" = "Y" ]                                            # cmdline option lock system
-           then sadm_create_lockfile "${LOCKNODE}"                      # Create System Lock File
+           then sadm_lock_system "${LOCKNODE}"                      # Create System Lock File
                 if [ $? -ne 0 ]                                         # Unable to Lock Node
                    then ERROR_COUNT=$(($ERROR_COUNT+1))                 # Increment Error Counter
                         sadm_writelog "${SADM_ERROR} Aborting process for '${SERVER}'."
@@ -230,7 +230,7 @@ rmcd_start()
         fi
 
         # If the lock file exist, then time to remove it.
-        if [ "$LOCK" = "Y" ] ;then sadm_remove_lockfile "$LOCKNODE" ;fi # Remove the lock file
+        if [ "$LOCK" = "Y" ] ;then sadm_unlock_system "$LOCKNODE" ;fi # Remove the lock file
         done < $SADM_TMP_FILE1
 
     if [ "$ERROR_COUNT" -ne 0 ]

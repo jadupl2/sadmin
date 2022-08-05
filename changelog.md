@@ -6,7 +6,7 @@
   - [.sadmin.cfg](https://sadmin.ca/sadmin-cfg) (v2.6 2021/08/16) - Monitor page refresh rate can now be set via 'SADM_MONITOR_UPDATE_INTERVAL'
 
 ### Libraries, Scripts Templates, Demo
-  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.73 2021/08/13) - New func. see Doc sadm_create_lockfile sadm_remove_lockfile sadm_check_lockfile
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.73 2021/08/13) - New func. see Doc sadm_lock_system sadm_unlock_system sadm_check_system_lock
   - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.74 2021/08/17) - Performance improvement.
 
 ### Operating System Update

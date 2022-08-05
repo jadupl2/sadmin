@@ -53,14 +53,14 @@
 # 2021_05_22 nolog: v3.23 Standardize command line options & Update SADMIN code section
 # 2021_06_03 client: v3.24 Include script version in sysinfo text file generated
 #@2022_01_10 client: v3.25 Include memory module information in system information file.
-#@2022_01_11 client: v3.26 Added more disks size information.
-#@2022_02_17 client: v3.27 Fix error writing network config file in $SADMIN/dat/dr/sysinfo.txt.
-#@2022_02_17 client: v3.28 Now show last o/s update date and status on screen and log.
-#@2022_03_04 client: v3.29 Added more info about disks, filesystems and partition size
-#@2022_04_10 client: v3.30 Change relative to CentOS 9 - Depreciated lsb_release command
-#@2022_04_19 client: v3.31 Now include information from inxi command (if available)
-#@2022_07_20 client: v3.32 When using inxi suppress color escape from generated files.
-#@2022_07_21 client: v3.33 Small enhancement in Network section
+#@2022_01_11 client: v3.26 Added more disks information.
+#@2022_02_17 client: v3.27 Fix error writing network information file.
+#@2022_02_17 client: v3.28 Now show last O/S update status and date.
+#@2022_03_04 client: v3.29 Added more info about disks, filesystems and partition size.
+#@2022_04_10 client: v3.30 Change for RHEL/Rocky/AlmaLinux/CentOS v9, 'lsb_release' command is gone.
+#@2022_04_19 client: v3.31 Now include information from 'inxi' command (if available).
+#@2022_07_20 client: v3.32 When using 'inxi' suppress color escape sequence from generated files.
+#@2022_07_21 client: v3.33 Small enhancement in network information section.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # Intercept the ^C
 #set -x

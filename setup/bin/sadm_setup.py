@@ -98,21 +98,21 @@
 # 2021_07_21 install: v3.61 Fix server install problem on rpm system with package 'php-mysqlnd'.
 # 2021_07_21 install: v3.62 Fix 'srv_rear_ver' field didn't have a default value in Database.
 # 2021_11_07 install: v3.63 Remove SADM_RRDTOOL variable from sadmin.cfg (depreciated).
-#@2022_04_11 install: v3.64 Use /etc/os-release to get O/S info instead of lsb_release depreciated
-#@2022_04_16 install: v3.65 Updated for Rocky, AlmaLinux and CentOS 9.
-#@2022_04_19 install: v3.66 Fixes for CentOS 9 
-#@2022_05_03 install: v3.67 Ask info about smtp server information to send email from python libr.
-#@2022_05_04 install: v3.68 added some modification to posfix config file (After making a backup)
-#@2022_05_06 install: v3.69 Improve postfix configuration and update the sasl_passwd file
-#@2022_05_06 install: v3.70 Change finger information for root (sadmin replace root in email)
-#@2022_05_10 install: v3.71 Remove installation of mail command & add 'inxi' command for sysInfo.
-#@2022_05_26 install: v3.72 Minor change and corrections to questions asked while installing.
-#@2022_05_27 install: v3.73 Fix for AlmaLinux, problem with blank line in /etc/os-release
-#@2022_05_28 install: v3.74 Add firewall rule if SSH port specified is different than 22.
-#@2022_06_01 install: v3.75 Add some SELinux comment at the end of the installation.
-#@2022_06_10 install: v3.76 Update some /etc/postfix/main.cf parameters
-#@2022_06_18 install: v3.77 Fix SSH port setting problem during installation on Alma Linux 9
-#@2022_07_02 install: v3.78 Input smtp server data
+#@2022_04_11 install v3.64 Use /etc/os-release file to get O/S info ('lsb_release' depreciated).
+#@2022_04_16 install v3.65 Updated for RHEL, Rocky, AlmaLinux and CentOS 9.
+#@2022_04_19 install v3.66 Fixes for setup on CentOS 9.
+#@2022_05_03 install v3.67 Ask info about smtp server information to send email from Python library.
+#@2022_05_04 install v3.68 Added modification to 'postfix' config file (After making a backup).
+#@2022_05_06 install v3.69 Improve 'postfix' configuration and update password file 'sasl_passwd'.
+#@2022_05_06 install v3.70 Change finger information for root ('sadmin' replace 'root' in email)
+#@2022_05_10 install v3.71 Remove installation of mail command & add 'inxi' command for sysInfo.
+#@2022_05_26 install v3.72 Minor modification to question asked while installing 'sadmin'.
+#@2022_05_27 install v3.73 Fix for AlmaLinux, problem with blank line in /etc/os-release.
+#@2022_05_28 install v3.74 Add firewall rule if SSH port specified is different than 22.
+#@2022_06_01 install v3.75 Add some 'SELinux' comments at the end of the installation.
+#@2022_06_10 install v3.76 Update some parameters at the end of '/etc/postfix/main.cf' file.
+#@2022_06_18 install v3.77 Fix SSH port setting problem during installation on AlmaLinux v9.
+#@2022_07_02 install v3.78 Fix input problem related to smtp server data.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3

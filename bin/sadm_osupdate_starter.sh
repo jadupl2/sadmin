@@ -135,7 +135,7 @@ export ONE_SERVER=""                                                    # Name o
 export USCRIPT="sadm_osupdate.sh"                                       # Script to execute on nodes
 
 # Seconds given for system reboot and to start applications.
-export REBOOT_TIME=480                                                  
+export REBOOT_TIME=600                                                  
 
 
 
@@ -265,14 +265,14 @@ rcmd_osupdate()
     fi                                                              # This reboot after Update
     
     # Check if System is Locked.
-    sadm_check_lockfile "$server_name"                              # Check lock file status
+    sadm_check_system_lock "$server_name"                              # Check lock file status
     if [ $? -ne 0 ]                                                 # If System is lock
        then sadm_write_err "System '${server_name}' is lock, update not possible at this time."
             return 1 
     fi
 
     # Create lock file while O/S Update is running (this turn off monitoring)
-    sadm_create_lockfile "${server_name}"                           # Stop monitoring server
+    sadm_lock_system "${server_name}"                           # Stop monitoring server
     if [ $? -ne 0 ]                                                 # If Creation went OK
        then sadm_write_err "Update of '${server_name}' cancelled."  # Couldn't create lock file
             return 1 
@@ -373,6 +373,6 @@ function cmd_options()
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     rcmd_osupdate                                                       # Go Update Server
     SADM_EXIT_CODE=$?                                                   # Save Exit Code
-    sadm_remove_lockfile "${ONE_SERVER}"                                # Go remove the lock file
+    sadm_unlock_system "${ONE_SERVER}"                                # Go remove the lock file
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)

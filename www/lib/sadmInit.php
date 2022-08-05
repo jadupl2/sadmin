@@ -29,12 +29,13 @@
 # 2020_12_26 Update: v3.7 Added Global Var. SADM_WWW_ARC_DIR for Server archive when deleted.
 # 2021_08_02 nolog v3.8 Added 'SADM_PGM2DOC' for Doc to Links file definition.
 # 2021_08_17 nolog v3.9 Added "SADM_MONITOR_UPDATE_INTERVAL" 
-#@2021_09_15 web v3.10 Load new Var. SADM_MONITOR_RECENT_COUNT,SADM_MONITOR_RECENT_EXCLUDE
-#@2022_07_26 web v3.11 Set the TimeZone to America/Toronto
+#@2021_09_15 nolog v3.10 Load new Var. SADM_MONITOR_RECENT_COUNT,SADM_MONITOR_RECENT_EXCLUDE
+#@2022_07_26 nolog v3.11 Set the TimeZone to America/Toronto
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
     date_default_timezone_set('America/Toronto');
+
 
     # Set SADMIN PHP Library Version NUmber
     define("SADM_PHP_LIBVER","3.11");
@@ -47,7 +48,6 @@ $DEBUG=False ;
     if (!is_readable(SADM_ENV)) {                                       # Can't read environment 
         exit ("SADMIN environment file " . SADM_ENV . " wasn't found or not readable") ;
     }
-
     $handle = fopen(SADM_ENV , "r");                                    # Open O/S Environment file
     if ($handle) {                                                      # If Successfully Open
         while (($line = fgets($handle)) !== false) {                    # If Still Line to read                                                 # Increase Line Number
@@ -139,16 +139,19 @@ if (!is_readable(SADM_CFG_FILE)) {
 
 # LOADING CONFIGURATION FILE AND DEFINE GLOBAL SADM ENVIRONMENT VARIABLE
 $lineno = 0;                                                            # Clear Line Number
+$fname = "" ; $fvalue="" ;
 $handle = fopen(SADM_CFG_FILE , "r");                                   # Set Configuration Filename
 if ($handle) {                                                          # If Successfully Open
     while (($line = fgets($handle)) !== false) {                        # If Still Line to read
           $lineno++;                                                    # Increase Line Number
-          if (strpos(trim($line),'#') === 0)                            # If 1st Non-WhiteSpace is #
-             continue;                                                  # Go Read the next line
+          if (empty($line)) { continue; }                               # Skip blank Line
+          if (strpos(trim($line),'#') === 0) { continue; }              # Skip comments line
+          if (strlen($line) < 10)  { continue; }                        # Skip line less than 10 chr
+          if (strpos(trim($line),'=') === false) { continue; }          # Skip Line with no '='
           list($fname,$fvalue) = explode ('=',$line);                   # Split Line by Name & Value
           if ($DEBUG) {
-                #$long = strlen($line);
-                echo "\n<BR>------------\n<br>$lineno : $line ";
+                $long = strlen($line);
+                echo "\n<BR>------------\n<br>$lineno $long : $line ";
                 echo "\n<BR>The Parameter is : " . $fname ;
                 echo "\n<BR>The Value is     : " . $fvalue ;
           }
@@ -175,7 +178,6 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_NETWORK4")      { define("SADM_NETWORK4"      , trim($fvalue));}
           if (trim($fname) == "SADM_NETWORK5")      { define("SADM_NETWORK5"      , trim($fvalue));}
           if (trim($fname) == "SADM_SSH_PORT")      { define("SADM_SSH_PORT"      , trim($fvalue));}
-          define ("SADM_RRDTOOL" , '/usr/bin/rrdtool') ;
           if (trim($fname) == "SADM_BACKUP_NFS_SERVER")      { define("SADM_BACKUP_NFS_SERVER"      , trim($fvalue));}
           if (trim($fname) == "SADM_BACKUP_NFS_MOUNT_POINT") { define("SADM_BACKUP_NFS_MOUNT_POINT" , trim($fvalue));}
           if (trim($fname) == "SADM_DAILY_BACKUP_TO_KEEP")   { define("SADM_DAILY_BACKUP_TO_KEEP"   , trim($fvalue));}
@@ -202,6 +204,7 @@ if ($handle) {                                                          # If Suc
     if ( ! defined(SADM_MONITOR_RECENT_COUNT))    {define("SADM_MONITOR_RECENT_COUNT" , 10);}
     if ( ! defined(SADM_MONITOR_UPDATE_INTERVAL)) {define("SADM_MONITOR_UPDATE_INTERVAL", 60);}
     if ( ! defined(SADM_MONITOR_RECENT_EXCLUDE))  {define("SADM_MONITOR_RECENT_EXCLUDE", "sadm_nmon_watcher");}
+    define ("SADM_RRDTOOL" , '/usr/bin/rrdtool') ;
     fclose($handle);
 } else {
     echo "<BR>\nError opening the SADMIN configuration file " . SADM_CFG_FILE . "<BR>";

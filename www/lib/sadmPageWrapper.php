@@ -58,7 +58,10 @@ $URL_STORIX_REPORT  = "/view/daily_storix_report.html";                 # Storix
         </td>
         <td bgcolor="#124f44" align="right" valign="middle" style="width:15%">
             <font size="3"><font color="#ffffff"><strong>
-            <?php echo SADM_CIE_NAME ?></strong></font>
+            <?php
+             echo SADM_CIE_NAME ;
+             ?>
+             </strong></font>
         </td>
     </tr>
 
@@ -109,15 +112,13 @@ $URL_STORIX_REPORT  = "/view/daily_storix_report.html";                 # Storix
 
 <?php
     echo "\n</div>                                  <!-- End of sadmHeader -->\n\n";
-
     echo "\n<div id='sadmPageContents'>             <!-- Start Of sadmPageContents -->\n\n";
     
     # Display SideBar on Left 
-    #
     require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');
     #require ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');
 
-    # Beginning Content Page
+    # Set the beginning Content Page
     echo "\n<div id='sadmRightColumn'>              <!-- Start Of sadmRightColumn -->\n\n"; 
 ?>
 

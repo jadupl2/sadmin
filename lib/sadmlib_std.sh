@@ -168,18 +168,18 @@
 #@2021_09_13 lib v3.76 Enhance script log header to be more concise, yet have more information.
 #@2021_09_14 lib v3.77 If script desc. "SADM_PDESC" var. exist & not empty, include in log header.
 #@2021_09_15 lib v3.78 Function "sadm_show_version" will show Script Desc. ($SADM_PDESC) if Avail.
-#@2021_09_30 lib v3.79 Various little corrections.
-#@2021_10_20 lib v3.80 Merge slack channel file with alert group & change log footer
-#@2021_11_07 lib v3.81 Set new SADM_RRDTOOL variable that contain location of rrdtool
+#@2021_09_30 lib v3.79 Various small little corrections.
+#@2021_10_20 lib v3.80 Merge 'slack channel file' with 'alert group' & change log footer.
+#@2021_11_07 lib v3.81 Set new 'SADM_RRDTOOL' variable that contain location of 'rrdtool' command.
 #@2021_12_02 lib v3.82 Improve 'sadm_server_model' function.
 #@2021_12_12 lib v3.83 Fix 'sadm_server_vg' wasn't returning proper size under certain condition.
 #@2021_12_20 lib v3.84 Load additional options from the SADMIN configuration file.
-#@2022_02_16 lib v3.85 Fix: Serial number return by sadm_server_serial() on iMac was incomplete.
-#@2022_04_04 lib v3.86 Update: to Replace use of depreciated lsb_release in RHEL9 
-#@2022_04_10 lib v3.87 Update: When PID exist don't reinitialize the script log 
-#@2022_04_11 lib v3.88 Use /etc/os-release file instead of depreciated lsb_release cmd.
-#@2022_04_14 lib v3.89 Fix problem getting osversion on old rhel version.
-#@2022_04_30 lib v3.90 New functions: sadm_lock_system,sadm_unlock_system,sadm_check_system_lock.
+#@2022_02_16 lib v3.85 Fix: Serial number return by 'sadm_server_serial()' on iMac was incomplete.
+#@2022_04_04 lib v3.86 Replace use of depreciated 'lsb_release' in RHEL v9. 
+#@2022_04_10 lib v3.87 When PID exist don't reinitialize the script log.  
+#@2022_04_11 lib v3.88 Use '/etc/os-release' file instead of depreciated 'lsb_release' command.
+#@2022_04_14 lib v3.89 Fix problem getting O/S version on old RHEL version.
+#@2022_04_30 lib v3.90 New function 'sadm_lock_system','sadm_unlock_system','sadm_check_system_lock'.
 #@2022_05_03 lib v3.91 Read new smtp server info from sadmin.cfg & gmail passwd file.
 #@2022_05_10 lib v3.92 Replace usage of 'mail' by 'mutt' 
 #@2022_05_12 lib v3.93 Move 'sadm_send_alert' & 'write_alert_history' to sadm_fetch_client
@@ -1795,6 +1795,7 @@ sadm_load_config_file() {
                      echo "Job aborted."
                      echo "****************************************************************"
                      sadm_stop 1                                        # Exit to O/S with Error
+                     exit 1
                 else echo "****************************************************************"
                      echo "SADMIN configuration file $SADM_CFG_FILE doesn't exist."
                      echo "Will continue using template configuration file $SADM_CFG_HIDDEN"
@@ -2035,54 +2036,17 @@ sadm_load_config_file() {
 # mkdir -p ${SADMIN}/{etc/x1,lib,usr/{x2,x3},bin,tmp/{Y1,Y2,Y3/z},opt,var}
 # mkdir -p -v /home/josevnz/tmp/{dir1,anotherdir,similardir}
 #$ mkdir {bananas,apples,oranges,peaches, kiwis}
+
 sadm_start() {
 
-    # 1st thing inititialize log directory and file.
+    # Make sure log directory exist and have proper permission
     [ ! -d "$SADM_LOG_DIR" ] && mkdir -p $SADM_LOG_DIR                  # Log Dir. Got to exist
     if [ $(id -u) -eq 0 ]                                               # Need good permission
         then chmod 0775 $SADM_LOG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR
     fi
 
-    # If PID File exist and User want to run only 1 copy of the script - Abort Script
-    if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]     # PIP Exist - Run One Copy
-       then pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Epoch time of PID File
-            cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
-            pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
-            sadm_writelog " "
-            sadm_writelog " "
-            sadm_write "Script '$SADM_PN' is already running ...\n"     # Script already running
-            sadm_write "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N').\n" 
-            sadm_write "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid' exist, was created $pelapse seconds ago.\n"
-            sadm_write "The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n"
-            sadm_writelog " "
-            if [ ! -z "$SADM_PID_TIMEOUT" ] 
-                then sadm_write "Script can't run unless one of the following thing is done :\n"
-                     sadm_write "  - Remove the PID File (\${SADMIN}/tmp/${SADM_INST}.pid).\n"
-                     sadm_write "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script.\n"
-                     sadm_write "  - You wait till PID timeout '\$SADM_PID_TIMEOUT' is reach.\n"
-                     sadm_writelog " "
-                     sadm_writelog " "
-                     DELETE_PID="N"                                     # No Del PID Since running
-                     sadm_stop 1                                        # Close and Trim Log
-                     exit 1                                             # Exit To O/S with Error
-                else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
-                        then sadm_write "The PID file exceeded the time to live ('\$SADM_PID_TIMEOUT').\n"
-                             sadm_write "Assuming script was aborted abnormally.\n"
-                             sadm_write "Script execution is now resume and the PID file recreated.\n"
-                             sadm_writelog " "
-                             sadm_writelog " "
-                             touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
-                             DELETE_PID="Y"                             # Del PID Since running
-                        else DELETE_PID="N"                             # No Del PID Since running
-                             exit 1                                     # Exit with Error
-                     fi
-            fi 
-       else echo "$TPID" > $SADM_PID_FILE                               # Create the PID File
-            DELETE_PID="Y"                                              # Del PID Since running
-    fi
-
-    # Initialize script log and error log
-    if [ "$SADM_LOG_APPEND" != "Y" ]                                    # Don't want to append Log
+    # If new log is desired, remove old log and start new one.
+    if [ "$SADM_LOG_APPEND" = "N" ]                                    # Don't want to append Log
         then if [ -e "$SADM_LOG" ]  ; then rm -f $SADM_LOG  > /dev/null 2>&1 ; fi
              if [ -e "$SADM_ELOG" ] ; then rm -f $SADM_ELOG > /dev/null 2>&1 ; fi
     fi
@@ -2125,6 +2089,45 @@ sadm_start() {
                      sadm_stop 1                                        # Close and Trim Log
                      exit 1                                             # Exit To O/S
              fi 
+    fi
+
+
+    # If PID File exist and User want to run only 1 copy of the script - Abort Script
+    if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]     # PIP Exist - Run One Copy
+       then pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Epoch time of PID File
+            cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
+            pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
+            sadm_writelog " "
+            sadm_write "Script '$SADM_PN' is already running ...\n"     # Script already running
+            sadm_write "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N').\n" 
+            sadm_write "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid' exist, was created $pelapse seconds ago.\n"
+            sadm_write "The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n"
+            sadm_writelog " "
+            if [ ! -z "$SADM_PID_TIMEOUT" ] 
+                then sadm_write "Script can't run unless one of the following thing is done :\n"
+                     sadm_write "  - Remove the PID File (\${SADMIN}/tmp/${SADM_INST}.pid).\n"
+                     sadm_write "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script.\n"
+                     sadm_write "  - You wait till PID timeout '\$SADM_PID_TIMEOUT' is reach.\n"
+                     sadm_writelog " "
+                     sadm_writelog " "
+                     DELETE_PID="N"                                     # No Del PID Since running
+                     #sadm_stop 1                                        # Close and Trim Log
+                     exit 1                                             # Exit To O/S with Error
+                else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
+                        then sadm_write "The PID file exceeded the time to live ('\$SADM_PID_TIMEOUT').\n"
+                             sadm_write "Assuming script was aborted abnormally.\n"
+                             sadm_write "Script execution is now resume and the PID file recreated.\n"
+                             sadm_writelog " "
+                             sadm_writelog " "
+                             touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
+                             DELETE_PID="Y"                             # Del PID Since running
+                        else DELETE_PID="N"                             # No Del PID Since running
+                             #sadm_stop 1                                # Close and Trim Log
+                             exit 1                                     # Exit with Error
+                     fi
+            fi                                                          # Close and Trim Log
+       else echo "$TPID" > $SADM_PID_FILE                               # Create the PID File
+            DELETE_PID="Y"                                              # Del PID Since running
     fi
 
     # ($SADMIN/tmp) If TMP Directory doesn't exist, create it.
@@ -2257,6 +2260,7 @@ sadm_start() {
         then chmod 0775 $SADM_NET_DIR
              chown ${SADM_USER}:${SADM_GROUP} $SADM_NET_DIR
     fi
+
     # ($SADMIN/dat/dbb) If Database Backup Directory doesn't exist, create it.
     [ ! -d "$SADM_DBB_DIR" ] && mkdir -p $SADM_DBB_DIR
     if [ $(id -u) -eq 0 ]
@@ -2347,6 +2351,7 @@ sadm_start() {
                     sadm_write "Don't forget to review the file content.\n"
                     sadm_write "********************************************************\n"
                     sadm_stop 1                                         # Exit to O/S with Error
+                    exit 1
                else cp $SADM_ALERT_INIT $SADM_ALERT_FILE                # Copy Template as initial
                     chmod 664 $SADM_ALERT_FILE
             fi
@@ -2364,7 +2369,6 @@ sadm_start() {
     fi
 
     # Feed the (RCH) Return Code History File stating the script is Running (Code 2)
-    #SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME      # Statup Time of Script
     if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]            # Want to Produce RCH File
         then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
              [ $(id -u) -eq 0 ] && chmod 664 $SADM_RCHLOG               # Change protection on RCH

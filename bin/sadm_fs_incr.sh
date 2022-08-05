@@ -38,14 +38,14 @@
 # 2018_08_21    V1.3 Use Alerting system on top of email for Error or Warning occur.
 # 2018_09_25    V1.4 Alerting can now send attachment with Subject
 # 2018_09_30    V1.5 Reformat error message for alerting system
-# 2019_06_11 Update: v1.6 Alert message change when filesystem increase failed.
-# 2019_07_11 Update: v1.7 Change Email Body when filesystem in increase
-# 2020_03_16 Update: v1.8 Separation Blank Lines added to log.
-# 2020_03_23 Update: v1.9 Minor modifications in log and email.
-# 2020_03_24 Update: v2.0 Script will not generate an rpt file anymore (Remove double error report)
-# 2020_05_23 Update: v2.1 Changing the way to get SADMIN variable in /etc/environment 
-# 2020_10_22 Update: v2.2 Line Feed added in Email when filesystem is increase
-#@2022_05_11 Update: v2.3 Replace "sadm_send_alert" by "sadm_sendmail".
+# 2019_06_11 nolog v1.6 Alert message change when filesystem increase failed.
+# 2019_07_11 nolog v1.7 Change Email Body when filesystem in increase
+# 2020_03_16 nolog v1.8 Separation Blank Lines added to log.
+# 2020_03_23 nolog v1.9 Minor modifications in log and email.
+# 2020_03_24 nolog v2.0 Script will not generate an rpt file anymore (Remove double error report)
+# 2020_05_23 nolog v2.1 Changing the way to get SADMIN variable in /etc/environment 
+# 2020_10_22 nolog v2.2 Line Feed added in Email when filesystem is increase
+#@2022_05_11 nolog v2.3 Replace "sadm_send_alert" by "sadm_sendmail".
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
