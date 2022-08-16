@@ -33,24 +33,24 @@
 #       V2.3 Added 3 functions for Network Information (netinfo, mask2cidr and cidr2mask)
 #   2018_04_17 - Jacques Duplessis
 #       V2.4 Added getEachIpInRange Function that return list of IP in a CIDR
-# 2019_01_11 Add: v2.5 CLicking on logo bring you back to sadmin Home page.
-# 2019_01_21 v2.6 Add function from From Schedule to Text.
-# 2019_02_16 Change: v2.7 Convert schedule metadata to one text line (Easier to read in Sched. List)
-# 2019_04_04 Update: v2.8 Function SCHEDULE_TO_TEXT now return 2 values (Occurrence & Date of update)
-# 2019_05_02 Update: v2.9 Function sadm_fatal_error - Insert back page link before showing alert.
-# 2019_08_04 Update: v2.10 Added function 'sadm_show_logo' to show distribution logo in a table cell.
-# 2019_08_13 Update: v2.11 Fix bug - When creating one line schedule summary
-# 2019_08_14 Update: v2.12 Add function for new page header look (display_lib_heading).
-# 2019_10_15 Update: v2.13 Reduce Logo size image from 32 to 24 square pixels
-# 2019_10_15 Update: v2.14 Reduce font size on 2nd line of heading in "display_lib_heading".
-# 2020_01_13 Update: v2.15 Reduce Day of the week name returned by SCHEDULE_TO_TEXT to 3 Char.
-# 2020_04_27 Update: v2.16 Change 2019 to 2020 in page footer
-# 2020_09_22 Update: v2.17 Facilitate going back to previous & Home page by adding button in header.
-# 2021_08_05 nolog v2.18 New function "getdocurl($RefString)" to allow link from script to doc
-# 2021_08_29 nolog v2.19 New function "get_alert_group_data" Return used alert grp name,type,tooltip.
-# 2021_08_31 nolog v2.20 New function "sadm_return_logo(OSNAME)" return image path, doc url & tooltip
-#@2022_06_02 web v2.21 Added Logo of AlmaLinux, Rocky Linux & update logo of Ubuntu.
-#@2022_07_26 web v2.22 Fix bug calculating "Next Update Date/Time" in some situation.
+# 2019_01_11 lib v2.5 CLicking on logo bring you back to sadmin Home page.
+# 2019_01_21 lib v2.6 Add function from From Schedule to Text.
+# 2019_02_16 lib v2.7 Convert schedule metadata to one text line (Easier to read in Sched. List)
+# 2019_04_04 lib v2.8 Function SCHEDULE_TO_TEXT now return 2 values (Occurrence & Date of update)
+# 2019_05_02 lib v2.9 Function sadm_fatal_error - Insert back page link before showing alert.
+# 2019_08_04 lib v2.10 Added function 'sadm_show_logo' to show distribution logo in a table cell.
+# 2019_08_13 lib v2.11 Fix bug - When creating one line schedule summary
+# 2019_08_14 lib v2.12 Add function for new page header look (display_lib_heading).
+# 2019_10_15 lib v2.13 Reduce Logo size image from 32 to 24 square pixels
+# 2019_10_15 lib v2.14 Reduce font size on 2nd line of heading in "display_lib_heading".
+# 2020_01_13 lib v2.15 Reduce Day of the week name returned by SCHEDULE_TO_TEXT to 3 Char.
+# 2020_04_27 lib v2.16 Change 2019 to 2020 in page footer
+# 2020_09_22 lib v2.17 Facilitate going back to previous & Home page by adding button in header.
+# 2021_08_05 lib v2.18 New function "getdocurl($RefString)" to allow link from script to doc
+# 2021_08_29 lib v2.19 New function "get_alert_group_data" Return used alert grp name,type,tooltip.
+# 2021_08_31 lib v2.20 New function "sadm_return_logo(OSNAME)" return image path, doc url & tooltip
+#@2022_06_02 lib v2.21 Added Logo of AlmaLinux, Rocky Linux & update logo of Ubuntu.
+#@2022_07_26 lib v2.22 Fix bug calculating "Next Update Date/Time" in some situation.
 #===================================================================================================
 #
 

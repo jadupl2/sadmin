@@ -180,21 +180,21 @@
 #@2022_04_11 lib v3.88 Use '/etc/os-release' file instead of depreciated 'lsb_release' command.
 #@2022_04_14 lib v3.89 Fix problem getting O/S version on old RHEL version.
 #@2022_04_30 lib v3.90 New function 'sadm_lock_system','sadm_unlock_system','sadm_check_system_lock'.
-#@2022_05_03 lib v3.91 Read new smtp server info from sadmin.cfg & gmail passwd file.
-#@2022_05_10 lib v3.92 Replace usage of 'mail' by 'mutt' 
-#@2022_05_12 lib v3.93 Move 'sadm_send_alert' & 'write_alert_history' to sadm_fetch_client
-#@2022_05_19 lib v3.94 Fix intermittent permission error message when was not running as 'root'
-#@2022_05_20 lib v3.95 Bug fix with 'capitalize' function on Old version of Red Hat (5,4)
-#@2022_05_23 lib v3.96 Function 'sadm_write_err' now write to error log AND regular log.
-#@2022_05_25 lib v3.97 Added verification of new variables SADM_ROOT_ONLY and SADM_SERVER_ONLY
+#@2022_05_03 lib v3.91 Read smtp server info from sadmin.cfg.
+#@2022_05_10 lib v3.92 Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
+#@2022_05_12 lib v3.93 Move 'sadm_send_alert()' & 'write_alert_history()' to sadm_fetch_client.
+#@2022_05_19 lib v3.94 Fix intermittent permission error message when was not running as 'root'.
+#@2022_05_20 lib v3.95 Bug fix with 'sadm_capitalize()' function on RHEL(5,4)
+#@2022_05_23 lib v3.96 Function 'sadm_write_err()' now write to error log AND regular log.
+#@2022_05_25 lib v3.97 Added new global variables 'SADM_ROOT_ONLY' and 'SADM_SERVER_ONLY'.
 #@2022_05_25 lib v3.98 Minor text modification related to PID expiration.
-#@2022_06_14 lib v3.99 fix problem get O/S Code name.
-#@2022_07_02 lib v4.00 Fix problem with 'sadm_server_core_per_socket' function.
-#@2022_07_07 lib v4.01 Add verbosity to sadm_sleep() and fix sadm_sendmail() subject problem.
-#@2022_07_12 lib v4.02 Change Group of some directory in www to solve web problem
+#@2022_06_14 lib v3.99 Fix problem 'sadm_get_oscodename()'.
+#@2022_07_02 lib v4.00 Fix problem with 'sadm_server_core_per_socket()' function under RHEL 9.
+#@2022_07_07 lib v4.01 Add verbosity to 'sadm_sleep()' and fix 'sadm_sendmail()' subject problem.
+#@2022_07_12 lib v4.02 Change group of some web directories to solve web system removal error.
 #@2022_07_20 lib v4.03 Cmd 'lsb_release' depreciated ? not available on Alma9,Rocky9,CentOS9,RHEL9
-#@2022_07_27 lib v4.04 Fix problem related to PID.
-#@2022_07_30 lib v4.05 sadm_sendmail the fourth parameter (attachment) is now optional.
+#@2022_07_27 lib v4.04 Fix problem related to PID in startup.
+#@2022_07_30 lib v4.05 Update, 'sadm_sendmail()' fourth parameter (attachment) is now optional.
 #===================================================================================================
 
 
@@ -324,9 +324,10 @@ export SADM_NMON=""                                                     # Path t
 export SADM_PARTED=""                                                   # Path to parted Command
 export SADM_ETHTOOL=""                                                  # Path to ethtool Command
 export SADM_SSH=""                                                      # Path to ssh Exec.
-export SADM_MYSQL=""                                                    # Default mysql FQDN
+export SADM_MYSQL=""                                                    # Default mysql 
 export SADM_SED=""                                                      # Path to sed Command
 export SADM_RRDTOOL=""                                                  # Path to rrdtool
+export SADM_INXI=""                                                     # Path to inxi
 
 # SADMIN CONFIG FILE VARIABLES (Default Values here will be overridden by SADM CONFIG FILE Content)
 export SADM_MAIL_ADDR="your_email@domain.com"                           # Default is in sadmin.cfg
@@ -393,7 +394,6 @@ export SADM_MONITOR_RECENT_COUNT=10                                     # SysMon
 export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"                  # SysMon Recent list Exclude
 export SADM_DR_SCRIPT_MAXAGE=30                                         # Exec. days before yellow
 export SADM_DR_REAR_INTERVAL=7                                          # Max Days between backup      
-export SADM_DR_STORIX_INTERVAL=7                                        # Max Days between Storix
 export SADM_DR_BACKUP_DIF=50                                            # Max % different BackupSize
 export SADM_SMTP_SERVER="smtp.gmail.com"                                # smtp mail relay host name
 export SADM_SMTP_PORT=587                                               # smtp port(25,465,587,2525)
@@ -767,7 +767,7 @@ sadm_get_packagetype() {
 
 # This Function Make Sure That All  Requirements for using SADM Shell Libraries (Lib/Sadm_*) Are Met
 # If Requirenments Aren't Met, Then The Script Will Abort Informing User To Correct Situation
-sadm_check_requirements() {
+sadm_load_cmd_path() {
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write_log "sadm_check_requirement\n" ; fi
 
     # The 'which' command is needed to determine presence of command - Return Error if not found
@@ -817,24 +817,29 @@ sadm_check_requirements() {
     SADM_MYSQL=$(sadm_get_command_path "mysql")                         # Get mysql cmd path  
     SADM_SED=$(sadm_get_command_path "sed")                             # Get sed cmd path  
     SADM_RRDTOOL=$(sadm_get_command_path "rrdtool")                     # Get rrdtool cmd path  
+    SADM_INXI=$(sadm_get_command_path "inxi")                           # Get inxi cmd path  
     return 0
 }
 
 
+
+
+
 # Function will Sleep for a number of seconds.
-#   - 1st parameter is the time to sleep in seconds.
-#   - 2nd Parameter is the interval in seconds, user will be showed the elapse number of seconds.
+# Parameters:
+#   - 1st is the total time to sleep in seconds.
+#   - 2nd is the interval in seconds, user will be showed the remaining seconds at each interval.
 sadm_sleep() {
     SLEEP_TIME=$1                                                       # Nb. Sec. to Sleep 
-    TIME_INTERVAL=$2                                                    # Interval show user count
-    TIME_SLEPT=0                                                        # Time Slept in Seconds
-    while [ $SLEEP_TIME -gt $TIME_SLEPT ]                               # Loop Sleep time Exhaust
+    SLEEP_INTERVAL=$2                                                   # Interval show user count
+    TIME_LEFT=$SLEEP_TIME                                               # Time Slept in Seconds
+    printf "%d" $TIME_LEFT                                              # Time left to sleep
+    while [ $TIME_LEFT -gt 1 ]                                          # Loop Sleep time Exhaust
         do
-        sadm_write "${TIME_SLEPT}..."                                       # Indicate Sec. Slept
-        sleep $TIME_INTERVAL                                            # Sleep Interval Nb. Seconds
-        TIME_SLEPT=$(( $TIME_SLEPT + $TIME_INTERVAL ))                  # Inc Slept Time by Interval
+        sleep $SLEEP_INTERVAL                                           # Sleep Interval Nb. Seconds
+        TIME_LEFT=$(( $TIME_LEFT - $SLEEP_INTERVAL ))                   # Inc Slept Time by Interval
+        printf "...%s" $TIME_LEFT                                       # Indicate Sec. Slept
         done
-    sadm_write "${TIME_SLEPT}\n"
 }
 
 
@@ -912,7 +917,6 @@ sadm_date_to_epoch() {
     HH=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $1 }'`    # Extract Hours
     MM=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $2 }'`    # Extract Min
     SS=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $3 }'`    # Extract Sec
-
     case "$(sadm_get_ostype)" in
         "LINUX")    if [ ${#DD} -lt 2 ]     ; then  DD=` printf "%02d" $DD`     ; fi
                     if [ ${#MTH} -lt 2 ]    ; then  MTH=`printf "%02d" $MTH`    ; fi
@@ -1987,9 +1991,6 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_DR_REAR_INTERVAL" > /dev/null 2>&1
         if [ $? -eq 0 ] ;then SADM_DR_REAR_INTERVAL=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
         #
-        echo "$wline" |grep -i "^SADM_DR_STORIX_INTERVAL" > /dev/null 2>&1
-        if [ $? -eq 0 ] ;then SADM_DR_STORIX_INTERVAL=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
         echo "$wline" |grep -i "^SADM_DR_BACKUP_DIF" > /dev/null 2>&1
         if [ $? -eq 0 ] ;then SADM_DR_BACKUP_DIF=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
         #
@@ -2039,12 +2040,11 @@ sadm_load_config_file() {
 
 sadm_start() {
 
-    # Make sure log directory exist and have proper permission
+    # Make sure log directory exist and have proper permissiget_osna
     [ ! -d "$SADM_LOG_DIR" ] && mkdir -p $SADM_LOG_DIR                  # Log Dir. Got to exist
     if [ $(id -u) -eq 0 ]                                               # Need good permission
         then chmod 0775 $SADM_LOG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR
     fi
-
     # If new log is desired, remove old log and start new one.
     if [ "$SADM_LOG_APPEND" = "N" ]                                    # Don't want to append Log
         then if [ -e "$SADM_LOG" ]  ; then rm -f $SADM_LOG  > /dev/null 2>&1 ; fi
@@ -2064,7 +2064,7 @@ sadm_start() {
              if [ "$SADM_PDESC" ]                                       # If Script Desc. Not empty
                 then sadm_writelog "Desc: $SADM_PDESC"                  # Include it in log Header
              fi
-             sadm_writelog "Host: $(sadm_get_fqdn) - User: $(whoami) - Arch: $(arch) - SADMIN: $SADMIN"
+             sadm_writelog "Host: $(sadm_get_fqdn) - User: $SADM_USERNAME - Arch: $(arch) - SADMIN: $SADMIN"
              hline3="$(sadm_capitalize $(sadm_get_osname)) $(sadm_capitalize $(sadm_get_ostype))"
              hline3="${hline3} release $(sadm_get_osversion) - Kernel $(sadm_get_kernel_version)"
              sadm_writelog "$hline3"
@@ -2843,12 +2843,16 @@ sadm_check_system_lock() {
 # Things to do when first called
 # --------------------------------------------------------------------------------------------------
     export SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`                     # Save Script Startup Time
-    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "main: grepping /etc/environment\n" ; fi
-    
-    # Get SADMIN Installation Directory
-    grep "SADMIN=" /etc/environment >/dev/null 2>&1                     # Do Env.File include SADMIN
+    export SADM_ETCENV="/etc/environment"                               # Common file needed     
+    if [ ! -r "$SADM_ETCENV" ]                                          # /etc/environment can't read
+        then printf "\n\nFile $SADM_ETCENV is missing & it's needed."   # Inform User 
+             print "\nCannot continue, aborting"                        # We are aborting
+             exit 1                                                     # Exit with error
+    fi 
+
+    grep "SADMIN=" $SADM_ETCENV >/dev/null 2>&1                         # Do Env.File include SADMIN
     if [ $? -ne 0 ]                                                     # SADMIN missing in /etc/env
-        then echo "export SADMIN=$SADMIN" >> /etc/environment           # Then add it to the file
+        then echo "SADMIN=$SADMIN" >> /etc/environment                  # Then add it to the file
     fi
     
     # User got to be root or be part of the SADMIN Group specified in $SADMIN/cfg/sadmin.cfg
@@ -2868,16 +2872,8 @@ sadm_check_system_lock() {
             fi
     fi 
 
-    # Read SADMIN Confiuration file and put value in Global Variables.
     sadm_load_config_file                                               # Load sadmin.cfg file
-
-    # If old slack file exist, Merge it with alert group file
-    if [ -r "$SADM_SLACK_FILE" ] ; then merge_alert_files ; fi     
-
-    # Check SADMIN requirements
-    sadm_check_requirements                                             # Check Lib Requirements
-    if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement are not met
-    
+    if [ -r "$SADM_SLACK_FILE" ] ; then merge_alert_files ; fi          # If old version
+    sadm_load_cmd_path                                                  # Load Cmd Path Variables
+    if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Error while checking
     export SADM_SSH_CMD="${SADM_SSH} -qnp${SADM_SSH_PORT}"              # SSH Command to SSH CLient
-    #export SADM_USERNAME=$(whoami)                                      # Current User Name
-    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "Library Loaded,\n" ; fi

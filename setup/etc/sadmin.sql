@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.0.4deb2
+-- version 5.2.0-1.el9
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost:3306
--- Generation Time: Mar 31, 2022 at 08:48 AM
--- Server version: 10.5.12-MariaDB-0+deb11u1
--- PHP Version: 7.4.28
+-- Host: localhost
+-- Generation Time: Aug 11, 2022 at 10:06 AM
+-- Server version: 10.5.16-MariaDB
+-- PHP Version: 8.0.13
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -26,11 +26,63 @@ USE `sadmin`;
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `script`
+--
+
+CREATE TABLE IF NOT EXISTS `script` (
+  `scr_id` mediumint(8) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Script ID',
+  `scr_name` varchar(40) DEFAULT NULL COMMENT 'Script Name',
+  `scr_desc` varchar(80) DEFAULT NULL COMMENT 'Script Description',
+  `scr_version` varchar(10) NOT NULL COMMENT 'Script version',
+  `scr_alert_grp` varchar(15) DEFAULT NULL COMMENT 'Default Alert Group\r\n',
+  `scr_alert_type` smallint(6) NOT NULL DEFAULT 1 COMMENT 'Alert Type (1,2,3,4)',
+  `scr_sysadm_email` varchar(50) NOT NULL COMMENT 'Email Address to Alert',
+  `scr_multiple_exec` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Run multiple instance',
+  `scr_use_rch` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Update RCH file',
+  `scr_log_type` varchar(1) NOT NULL DEFAULT 'B' COMMENT 'Log type (L,S,B)',
+  `scr_log_append` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Append Log ?',
+  `scr_log_header` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Generate header in log',
+  `scr_log_footer` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Generate footer in log',
+  `scr_active` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Script active ?',
+  `scr_max_logline` int(11) NOT NULL DEFAULT 500 COMMENT 'Max. Lines in log',
+  `scr_max_rchline` int(11) NOT NULL DEFAULT 35 COMMENT 'Max. lines in RCH',
+  `scr_pid_timeout` int(11) NOT NULL DEFAULT 7200 COMMENT 'PID max. TTL',
+  `src_max_inactive_days` int(2) NOT NULL DEFAULT 31 COMMENT 'Days without run threshold before alert\r\n',
+  `scr_root_exec` tinyint(4) NOT NULL DEFAULT 0 COMMENT 'Need root(1) or not(0)',
+  `scr_run_sadmin` tinyint(4) NOT NULL DEFAULT 0 COMMENT 'Run on SADMIN Server Only(1) or nay system(0)',
+  `scr_os` varchar(10) NOT NULL DEFAULT 'any' COMMENT 'OS on whitch script can be run',
+  `scr_last_activity` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'Last Activity date',
+  `scr_severity` smallint(6) NOT NULL DEFAULT 1 COMMENT 'Alert severity (1,2,3,4) Error, Warning, Info, None',
+  PRIMARY KEY (`scr_id`),
+  UNIQUE KEY `scr_name_key` (`scr_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Main Scripts Table';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `script_rch`
+--
+
+CREATE TABLE IF NOT EXISTS `script_rch` (
+  `scrdet_host` varchar(15) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Script Host Name',
+  `scrdet_name` varchar(40) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Script Name',
+  `scrdet_status` tinyint(2) NOT NULL DEFAULT 0 COMMENT 'Status last execution',
+  `scrdet_active` int(1) NOT NULL DEFAULT 1 COMMENT '1=Show in Monitor\r\n0=Was acknowledge by Sysadmin don''t show in Monitor',
+  `srcdet_start` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT 'Start Date_Time',
+  `srcdet_end` timestamp NULL DEFAULT NULL COMMENT 'End Date Time',
+  `srcdet_elapse` time DEFAULT NULL COMMENT 'Execution Elapse  Time',
+  `scrdet_alertcode` tinyint(3) UNSIGNED DEFAULT NULL COMMENT 'Script alert code',
+  `scrdet_alertgroup` varchar(30) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Script alert group',
+  PRIMARY KEY (`scrdet_host`,`scrdet_name`,`srcdet_start`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+
+--
 -- Table structure for table `server`
 --
 
-CREATE TABLE `server` (
-  `srv_id` int(11) NOT NULL COMMENT 'Server ID',
+CREATE TABLE IF NOT EXISTS `server` (
+  `srv_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server ID',
   `srv_name` varchar(15) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Name',
   `srv_domain` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Domain',
   `srv_desc` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Description',
@@ -97,70 +149,51 @@ CREATE TABLE `server` (
   `srv_uptime` varchar(25) COLLATE utf8_unicode_ci DEFAULT NULL,
   `srv_arch` varchar(12) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'System Architecture',
   `srv_rear_ver` varchar(7) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'unknown' COMMENT 'Rear Version',
-  `srv_boot_date` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
+  `srv_boot_date` datetime DEFAULT NULL,
+  `srv_reboot_time` int(11) NOT NULL DEFAULT 600 COMMENT 'Nb. Sec, after reboot for App. to be avail.',
+  `srv_lock` tinyint(4) NOT NULL DEFAULT 0 COMMENT 'Unlock(0) Lock(1)',
+  PRIMARY KEY (`srv_id`),
+  UNIQUE KEY `idx_srv_name` (`srv_name`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=97 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
 
--- --------------------------------------------------------
 
 --
 -- Table structure for table `server_category`
 --
 
-CREATE TABLE `server_category` (
-  `cat_id` int(11) NOT NULL COMMENT 'Category ID',
+CREATE TABLE IF NOT EXISTS `server_category` (
+  `cat_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Category ID',
   `cat_code` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Category Code',
   `cat_desc` varchar(25) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Category Description',
   `cat_active` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Category Active ?',
   `cat_date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE current_timestamp() COMMENT 'Cat. Upd. TimeStamp',
-  `cat_default` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Default Category ?'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Category Table';
+  `cat_default` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Default Category ?',
+  PRIMARY KEY (`cat_id`),
+  UNIQUE KEY `key_cat_code` (`cat_code`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Category Table';
 
---
--- Dumping data for table `server_category`
---
-
-INSERT INTO `server_category` (`cat_id`, `cat_code`, `cat_desc`, `cat_active`, `cat_date`, `cat_default`) VALUES
-(2, 'Legacy', 'Legacy Unsupported Server', 1, '2019-01-21 16:36:23', 0),
-(3, 'Dev', 'Development Environment', 1, '2019-08-17 15:01:47', 1),
-(5, 'Poc', 'Proof Of Concept env.', 1, '2019-01-21 16:24:25', 0),
-(6, 'Prod', 'Production Environment', 1, '2017-11-07 05:00:00', 0),
-(11, 'Temporary', 'Temporary Server', 1, '2017-12-06 16:23:26', 0);
-
--- --------------------------------------------------------
 
 --
 -- Table structure for table `server_group`
 --
 
-CREATE TABLE `server_group` (
-  `grp_id` int(11) NOT NULL COMMENT 'Server Group ID',
+CREATE TABLE IF NOT EXISTS `server_group` (
+  `grp_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server Group ID',
   `grp_code` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Groupe Code',
   `grp_desc` varchar(25) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Grp Des.',
   `grp_active` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Server Active ?',
   `grp_date` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Group Activity Date',
-  `grp_default` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Default Group'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Group Table';
+  `grp_default` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Default Group',
+  PRIMARY KEY (`grp_id`),
+  UNIQUE KEY `idx_grp_code` (`grp_code`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Group Table';
 
---
--- Dumping data for table `server_group`
---
-
-INSERT INTO `server_group` (`grp_id`, `grp_code`, `grp_desc`, `grp_active`, `grp_date`, `grp_default`) VALUES
-(2, 'Cluster', 'Clustered Server', 1, '2017-11-22 16:55:50', 0),
-(3, 'Service', 'Infrastructure Service', 1, '2017-11-07 05:00:00', 0),
-(4, 'Retired', 'Server not in use', 1, '2017-11-07 05:00:00', 0),
-(5, 'Raspberry', 'Raspberry Pi', 1, '2019-03-17 18:38:24', 0),
-(6, 'Regular', 'Normal App. Server', 1, '2019-01-21 16:36:43', 1),
-(7, 'Temporary', 'Temporaly in service', 1, '2017-11-07 05:00:00', 0),
-(8, 'Laptop', 'Linux Laptop', 1, '2017-11-07 05:00:00', 0);
-
--- --------------------------------------------------------
 
 --
 -- Table structure for table `server_network`
 --
 
-CREATE TABLE `server_network` (
+CREATE TABLE IF NOT EXISTS `server_network` (
   `net_ip` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'IP Address',
   `net_ip_wzero` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'IP with zero included',
   `net_hostname` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'IP Hostname',
@@ -168,62 +201,12 @@ CREATE TABLE `server_network` (
   `net_man` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Card Manufacturer (Vendor)',
   `net_ping` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1=Responded to ping, 0=Didn''t',
   `net_date_ping` datetime NOT NULL COMMENT 'Last Ping Respond Date',
-  `net_date_update` datetime NOT NULL COMMENT 'Date Last Change'
+  `net_date_update` datetime NOT NULL COMMENT 'Date Last Change',
+  PRIMARY KEY (`net_ip`(15)),
+  UNIQUE KEY `key_ip_zero` (`net_ip_wzero`(15))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
---
--- Indexes for dumped tables
---
 
---
--- Indexes for table `server`
---
-ALTER TABLE `server`
-  ADD PRIMARY KEY (`srv_id`),
-  ADD UNIQUE KEY `idx_srv_name` (`srv_name`) USING BTREE;
-
---
--- Indexes for table `server_category`
---
-ALTER TABLE `server_category`
-  ADD PRIMARY KEY (`cat_id`),
-  ADD UNIQUE KEY `key_cat_code` (`cat_code`) USING BTREE;
-
---
--- Indexes for table `server_group`
---
-ALTER TABLE `server_group`
-  ADD PRIMARY KEY (`grp_id`),
-  ADD UNIQUE KEY `idx_grp_code` (`grp_code`) USING BTREE;
-
---
--- Indexes for table `server_network`
---
-ALTER TABLE `server_network`
-  ADD PRIMARY KEY (`net_ip`(15)),
-  ADD UNIQUE KEY `key_ip_zero` (`net_ip_wzero`(15));
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `server`
---
-ALTER TABLE `server`
-  MODIFY `srv_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server ID';
-
---
--- AUTO_INCREMENT for table `server_category`
---
-ALTER TABLE `server_category`
-  MODIFY `cat_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Category ID', AUTO_INCREMENT=12;
-
---
--- AUTO_INCREMENT for table `server_group`
---
-ALTER TABLE `server_group`
-  MODIFY `grp_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server Group ID', AUTO_INCREMENT=9;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

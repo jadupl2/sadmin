@@ -12,7 +12,7 @@
 #---------------------------------------------------------------------------------------------------
 # Change Log
 #@2021_09_16 lib v4.00 Initial new version
-#@2021_10_21 lib v4.01 If rch is not used (rch_used=False). delete the RCH file if present.
+#@2021_10_21 lib v4.01 If rch is not used (use_rch=False). delete the RCH file if present.
 #@2021_10_31 lib v4.02 Added Epoch math function, get_serial and fix chown error creating footer.
 #@2021_12_02 lib v4.03 Added help (Docstrings) to each functions and complete code re-structure.
 #@2021_12_11 lib v4.04 Fix some typo error.
@@ -98,7 +98,7 @@ log_footer          = True                                  # True = Produce Log
 multiple_exec       = False                                 # Allow running multiple Instance ?
 db_used             = False                                 # Use or Not MySQL DB ?
 db_silent           = False                                 # Show ErrMsg when error
-rch_used            = True                                  # True = Use RCH File ?
+use_rch            = True                                   # True = Use RCH File ?
 pid_timeout         = 7200                                  # PID File TTL default
 lock_timeout        = 3600                                  # Host Lock File TTL 
 max_logline         = 500                                   # Max Nb. Lines in LOG
@@ -165,14 +165,13 @@ sadm_max_logline             = 500                          # Max Nb. Lines in L
 sadm_max_rchline             = 100                          # Max Nb. Lines in RCH file
 sadm_dr_script_maxage        = 30                           # Exec. days before yellow
 sadm_dr_rear_interval        = 7                            # Max Days between backup
-sadm_dr_storix_interval      = 7                            # Max Days between Storix 
 sadm_dr_backup_dif           = 50                           # Max % different BackupSize 
 sadm_smtp_server             = "smtp.gmail.com"             # smtp host relay name
 sadm_smtp_port               = 587                          # smtp relay host port
 sadm_smtp_sender             = "sender@gmail.com"           # smtp sender account
 sadm_gmpw                    = ""                           # smtp sender password
 
-# Logic to get O/S Distribution Information into Dictionnary os_dict
+# Logic to get O/S Distribution Information into Dictionary os_dict
 if platform.system().upper() != "DARWIN":                   # If not on MAc
     osrelease                    = "/etc/os-release"        # Distribution Info file
     os_dict                      = {}                       # Dict. for O/S Info
@@ -184,13 +183,13 @@ if platform.system().upper() != "DARWIN":                   # If not on MAc
            os_dict[k] = v.strip('"')                        # Store info in Dictionnary
 
 # O/S Path to various commands used by SADM Tools
-cmd_which           = "/usr/bin/which"                      # which Path - Required
+cmd_which           = "/usr/bin/which"                     # which Path - Required
+cmd_locate          = "/usr/bin/locate"                    # Locate command 
 cmd_lsb_release     = ""                                    # Command lsb_release Path
 cmd_dmidecode       = ""                                    # Command dmidecode Path
 cmd_bc              = ""                                    # Command bc (Do Some Math)
 cmd_fdisk           = ""                                    # fdisk (Read Disk Capacity)
 cmd_perl            = ""                                    # perl Path (for epoch time)
-cmd_uname           = ""                                    # uname command path
 cmd_nmon            = ""                                    # nmon command path
 cmd_lscpu           = ""                                    # lscpu command path
 cmd_inxi            = ""                                    # inxi command path
@@ -274,7 +273,10 @@ backup_list        = dir_cfg + '/backup_list.txt'                       # FileNa
 backup_list_init   = dir_cfg + '/.backup_list.txt'                      # Initial File/Dir. 2 Backup
 backup_exclude     = dir_cfg + '/backup_exclude.txt'                    # Exclude File/Dir 2 Exclude
 backup_exclude_init= dir_cfg + '/.backup_exclude.txt'                   # Initial File/Dir 2 Exclude
-
+tmp_file_prefix    = dir_tmp + '/' + pinst                              # TMP Prefix
+tmp_file1          = "%s_1.%s" % (tmp_file_prefix,ppid)                 # Temp1 Filename
+tmp_file2          = "%s_2.%s" % (tmp_file_prefix,ppid)                 # Temp2 Filename
+tmp_file3          = "%s_3.%s" % (tmp_file_prefix,ppid)                 # Temp3 Filename
 # The SSH command used to communicate with all the systems.
 cmd_ssh_full = "%s -qnp %s " % (cmd_ssh,sadm_ssh_port) 
 
@@ -306,7 +308,7 @@ def silentremove(filename : str):
 
 
 # --------------------------------------------------------------------------------------------------
-def trimfile(filename, nlines=500) :
+def trimfile(filename,nlines=500) :
     
     """ 
         Trim the file received to the number of lines indicated in second parameter.
@@ -411,7 +413,7 @@ def load_config_file(cfg_file):
     sadm_network4                ,sadm_network5                 ,sadm_monitor_update_interval  ,\
     sadm_monitor_recent_count    ,sadm_monitor_recent_exclude   ,sadm_pid_timeout              ,\
     sadm_lock_timeout            ,sadm_max_logline              ,sadm_max_rchline              ,\
-    sadm_dr_script_maxage        ,sadm_dr_rear_interval         ,sadm_dr_storix_interval       ,\
+    sadm_dr_script_maxage        ,sadm_dr_rear_interval         ,\
     sadm_dr_backup_dif           ,sadm_smtp_server              ,sadm_smtp_port                ,\
     sadm_smtp_sender             ,sadm_gmpw
 
@@ -521,7 +523,6 @@ def load_config_file(cfg_file):
         if "SADM_MONITOR_RECENT_EXCLUDE"   in CFG_NAME: sadm_monitor_recent_exclude  = CFG_VALUE
         if "SADM_DR_SCRIPT_MAXAGE"         in CFG_NAME: sadm_dr_script_maxage        = int(CFG_VALUE)
         if "SADM_DR_REAR_INTERVAL"         in CFG_NAME: sadm_dr_rear_interval        = int(CFG_VALUE)
-        if "SADM_DR_STORIX_INTERVAL"       in CFG_NAME: sadm_dr_storix_interval      = int(CFG_VALUE)
         if "SADM_DR_BACKUP_DIF"            in CFG_NAME: sadm_dr_backup_dif           = int(CFG_VALUE)
         if "SADM_SMTP_SERVER"              in CFG_NAME: sadm_smtp_server             = CFG_VALUE
         if "SADM_SMTP_PORT"                in CFG_NAME: sadm_smtp_port               = int(CFG_VALUE)
@@ -642,10 +643,37 @@ def write_err (wline, lf=True ):
     return(0) 
 
 
+# Function will Sleep for a number of seconds.
+#   - 1st parameter is the time to sleep in seconds.
+#   - 2nd Parameter is the interval in seconds, user will be showed the elapse number of seconds.
+def sleep(sleep_time=60, sleep_interval=15): 
+    
+    """ 
+        - When sleep time is 60 seconds and sleep_interval is 15 seconds, write a 
+          string similar to this "0...15...30...45...60". 
+        - Example: 
+            Could be used to let user know when server should come back after a reboot.
+        
+        Args:
+            sleep_time (int)        : Number of seconds to sleep.
+            sleep_interval (int)    : Interval in seconds to show user sleep time left.
+        Returns:
+            None
+    """
+
+    time_left = sleep_time                                              # Time Sleep in Seconds
+    print ("%s" % time_left, end = '', flush=True)                      # Print Time & Flush Output
+    while time_left > 1 :                                               # Loop Sleep time Exhaust
+        time.sleep(sleep_interval)                                      # Sleep Interval Nb. Seconds
+        time_left -= sleep_interval                                     # Decr. interval to timeleft
+        print ("...%s" % time_left, end = '', flush=True)               # Print Nb. Sec. Left
+
+
+
 
 
 # --------------------------------------------------------------------------------------------------
-def create_lockfile(fname, errmsg=True ) :
+def lock_system(fname, errmsg=True ) :
 
     """  
         Create a system 'lock_file' for the received system name.
@@ -653,8 +681,8 @@ def create_lockfile(fname, errmsg=True ) :
         When the lock file exist "${SADMIN}/tmp/$(hostname -s).lock" for a system, 
         no error or warning is reported (No alert, No notification) to the user 
         (on monitor screen) until the 'lock_file'is removed, either by calling 
-        "remove_lockfile()" function or when the lock file time stamp exceed the number of 
-        seconds set by 'lock_timeout'. The "check_lockfile()" function will automatically 
+        "unlock_systemfunction or when the lock file time stamp exceed the number of 
+        seconds set by 'lock_timeout'. The "check_system_lockockock()" function will automatically 
         remove the 'lock_file' when it is expired.
         
     Args: 
@@ -689,7 +717,7 @@ def create_lockfile(fname, errmsg=True ) :
 
 
 # --------------------------------------------------------------------------------------------------
-def remove_lockfile(fname ,errmsg=True): 
+def unlock_system(fname ,errmsg=True): 
 
     """ 
         Remove the lock file for the received system host name.
@@ -697,7 +725,7 @@ def remove_lockfile(fname ,errmsg=True):
         warning is reported (No alert, No notification) to the user (on monitor screen) until the 
         lock file is remove.
         When the lock file time stamp exceed the number of seconds set by 'lock_timeout' variable
-        then 'lock_file' will be automatically by "check_lockfile()" function.
+        then 'lock_file' will be automatically by "check_system_lock()" function.
        
         Args: 
             fname : Name of the system you want to remove the lock file (hostname -s, not FQDN).
@@ -725,7 +753,7 @@ def remove_lockfile(fname ,errmsg=True):
 
 
 # --------------------------------------------------------------------------------------------------
-def check_lockfile(fname, errmsg=True):
+def check_system_lock(fname, errmsg=True):
 
     """ 
         This function is used to check if a 'lock_file' exist for the system name received.
@@ -765,7 +793,7 @@ def check_lockfile(fname, errmsg=True):
                     if errmsg : 
                         write_log("Removing the lock file (%s)." % (lock_file))
                         write_log("We now restart to monitor this system as usual.")
-                    remove_lockfile(fname) 
+                    unlock_system(fname) 
                 else: 
                     if errmsg : 
                         write_log("The 'sa.lock_timeout' is set to 0, meaning system will remain lock.")
@@ -1073,7 +1101,7 @@ def get_osname():
         osname=cstdout
     if ostype == "LINUX":
         if cmd_lsb_release != "" :
-            wcmd = "%s %s" % ("lsb_release","-si")
+            wcmd = "%s %s" % (cmd_lsb_release," -si")
             ccode, cstdout, cstderr = oscommand(wcmd)
             osname=cstdout
         else:
@@ -1239,7 +1267,8 @@ def get_osversion() :
     osversion="0.0"                                                 # Default Value
     if ostype == "LINUX" :
         if cmd_lsb_release != "" :
-            ccode, cstdout, cstderr = oscommand("lsb_release" + " -sr")
+            wcmd = "%s %s" % (cmd_lsb_release," -sr")
+            ccode, cstdout, cstderr = oscommand(wcmd)
             osversion=cstdout
         else:
             osversion=os_dict['VERSION_ID']
@@ -1274,7 +1303,8 @@ def get_osminorversion() :
     #
     if ostype == "LINUX" :
         if cmd_lsb_release != "" :        
-            ccode, cstdout, cstderr = oscommand("lsb_release" + " -sr")
+            wcmd = "%s %s" % (cmd_lsb_release," -sr")
+            ccode, cstdout, cstderr = oscommand(wcmd)
             osversion=str(cstdout)
             pos=osversion.find(".")
             if pos == -1 :
@@ -1318,7 +1348,8 @@ def get_osmajorversion() :
     ostype=get_ostype()                                             # Return WINDOWS,LINUX,DARWIN
     if ostype == "LINUX" :
         if cmd_lsb_release != "" :
-            ccode, cstdout, cstderr = oscommand("lsb_release" + " -sr")
+            wcmd = "%s %s" % (cmd_lsb_release," -sr")
+            ccode, cstdout, cstderr = oscommand(wcmd)
             osversion=cstdout
             osmajorversion=osversion.split('.')[0]
         else :
@@ -1378,7 +1409,7 @@ def get_oscodename() :
         #ccode, oscodename, cstderr = oscommand(wcmd)
     if ostype == "LINUX":
         if cmd_lsb_release != "" : 
-            wcmd = "%s %s" % ("lsb_release","-sc")
+            wcmd = "%s %s" % (cmd_lsb_release," -sc")
             ccode, cstdout, cstderr = oscommand(wcmd)
             oscodename=cstdout.upper()
         else:
@@ -1415,8 +1446,17 @@ def locate_command(cmd) :
     cmd_path=""                                                     # Cmd Path Null when Not fnd
     ostype=get_ostype()                                             # AIX, WINDOWS,LINUX or DARWIN
     if ostype == "WINDOWS": return(cmd_path)                        # Function not use in Windows
-    ccode,cstdout,cstderr = oscommand("%s %s" % (cmd_which,cmd)) # Try to Locate Command
-    if ccode == 0 : cmd_path = cstdout                              # Save command Path when found
+
+    if cmd == "lsb_release" : 
+        ccode,cstdout,cstderr = oscommand("%s %s" % (cmd_locate,cmd))   # Try to Locate Command
+        #print ("cstdout = %s - ccode = %d" % (cstdout,ccode))
+        if ccode == 0 : 
+            cmd_path = cstdout                              # Save command Path when found
+            return(cmd_path)                                                   
+
+    ccode,cstdout,cstderr = oscommand("%s %s" % (cmd_which,cmd))    # Try to Locate Command
+    if ccode == 0 : 
+        cmd_path = cstdout                              # Save command Path when found
     return(cmd_path)                                                   
 
 
@@ -1566,7 +1606,7 @@ def get_serial():
 
 
 # --------------------------------------------------------------------------------------------------
-def check_requirements(): 
+def load_cmd_path(): 
 
     """ 
         Function tries to locate every command that the SADMIN tools library or scripts may used.  
@@ -1583,7 +1623,7 @@ def check_requirements():
 
     global \
         cmd_ssh         ,   cmd_lsb_release ,   cmd_dmidecode   ,   cmd_bc          ,\
-        cmd_fdisk       ,   cmd_perl        ,   cmd_uname       ,\
+        cmd_fdisk       ,   cmd_perl        ,   cmd_locate      ,   cmd_which       ,\
         cmd_nmon        ,   cmd_lscpu       ,   cmd_inxi        ,   cmd_parted      ,\
         cmd_ethtool     ,   cmd_curl        ,   cmd_mutt        ,   cmd_rrdtool     
 
@@ -1600,21 +1640,20 @@ def check_requirements():
     
     # Commands available only on Linux
     if (ostype == "LINUX"):                                             # On Linux Only
-        cmd_lsb_release = locate_command('lsb_release')                 # find command & save it
         cmd_fdisk    = locate_command('fdisk')                          # Locate fdisk command
-        if cmd_fdisk == "" : requisites_status=False                    # if blank didn't find it
-        cmd_dmidecode    = locate_command('dmidecode')                  # Locate dmidecode command
-        if cmd_dmidecode == "" : requisites_status=False                # if blank didn't find it
-        cmd_parted       = locate_command('parted')                     # Locate the nmon command
-        if cmd_parted    == "" : requisites_status=False                # if blank didn't find it
-        cmd_lscpu = locate_command('lscpu')                             # Locate the lscpu command
-        if cmd_lscpu     == "" : requisites_status=False                # if blank didn't find it
-        cmd_inxi = locate_command('inxi')                               # Locate the inxi command
-        if cmd_inxi      == "" : requisites_status=False                # if blank didn't find it
+        if cmd_fdisk       == "" : requisites_status=False              # if blank didn't find it
+        cmd_dmidecode       = locate_command('dmidecode')               # Locate dmidecode command
+        if cmd_dmidecode   == "" : requisites_status=False              # if blank didn't find it
+        cmd_parted          = locate_command('parted')                  # Locate the nmon command
+        if cmd_parted      == "" : requisites_status=False              # if blank didn't find it
+        cmd_lscpu           = locate_command('lscpu')                   # Locate the lscpu command
+        if cmd_lscpu       == "" : requisites_status=False              # if blank didn't find it
+        cmd_inxi            = locate_command('inxi')                    # Locate the inxi command
+        if cmd_inxi        == "" : requisites_status=False              # if blank didn't find it
+        cmd_lsb_release     = locate_command('lsb_release')             # Locate lsb_release command
+        if cmd_lsb_release == "" : requisites_status=False              # if blank didn't find it
 
     # Commands that should be on every Unix supported platform
-    cmd_uname = locate_command('uname')                                 # Locate uname command
-    if cmd_uname == "" : requisites_status=False                        # if blank didn't find it
     cmd_bc       = locate_command('bc')                                 # Locate bc command
     if cmd_bc    == "" : requisites_status=False                        # if blank didn't find it
     cmd_ssh      = locate_command('ssh')                                # Locate the SSH command
@@ -1685,7 +1724,7 @@ def stop(pexit_code) :
         - Trim the log based on user selection in sadmin.cfg
         - Send email to sysadmin (if user selected that option in sadmin.cfg)
         - Delete the PID file of the script ($SADM_PID_FILE)
-        - If rch file is not in used (rch_used is False), delete script rch file.
+        - If rch file is not in used (use_rch is False), delete script rch file.
 
         Args:            
             pexit_code (int)    : Can be either 0 (Successfully) if the script terminate 
@@ -1737,7 +1776,7 @@ def stop(pexit_code) :
         write_log (msg)
 
     # Update the [R]eturn [C]ode [H]istory File and trim it if needed.
-    if (rch_used) :                                                     # If User use RCH File
+    if (use_rch) :                                                     # If User use RCH File
         rch_exists = os.path.isfile(rch_file)                           # Do we have existing rch ?
         if rch_exists :                                                 # If we do, del code2 line?
             with open(rch_file) as xrch:                                # Open rch file
@@ -1864,7 +1903,7 @@ def stop(pexit_code) :
         write_err ("%s" % (e))
 
     # Make Sure Owner/Group of RCH File are the one chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
-    if (rch_used) :                                         # If Using a RCH File
+    if (use_rch) :                                         # If Using a RCH File
         try :
             if os.getuid() == 0: os.chown(rch_file, -1, gid)            # -1 leave UID unchange
             if os.getuid() == 0: os.chmod(rch_file, 0o0660)             # Change RCH File Permission
@@ -1881,7 +1920,7 @@ def stop(pexit_code) :
 
     # Copy RCH & LOG files to Server Central Directory to be available to monitor quickly
     if (get_fqdn() == sadm_server  and os.getuid() == 0 ) :             # If on SADMIN Server
-        if (rch_used) :                                                 # Copy Now rch to www
+        if (use_rch) :                                                 # Copy Now rch to www
             try:
                 woutput = dir_www_host + "/rch"  + '/' + phostname + '_' + pinst + '.rch'      
                 if os.getuid() == 0 and os.path.exists(woutput): os.chmod(woutput, 0o0660) 
@@ -1889,7 +1928,7 @@ def stop(pexit_code) :
             except Exception as e:
                 print ("Couldn't copy %s to %s\n%s\n" % (rch_file,woutput,e)) # Advise user
     else :
-        if not rch_used :                                               # If not using RCH File
+        if not use_rch :                                               # If not using RCH File
             silentremove(rch_file)                                      # Then Delete it 
 
     # If on SADMIN Server, copy immediately rch, log and elog to server central directories.
@@ -2083,7 +2122,7 @@ def start(pver,pdesc) :
     # Check Files that are present ONLY ON SADMIN SERVER
     # Make sure the alert History file exist , if not use the history template to create it.
     if (get_fqdn() == sadm_server) :
-        if check_lockfile(phostname) :                                  # System is Lock on SADMIN
+        if check_system_lock(phostname) :                                  # System is Lock on SADMIN
            stop(1)                                                      # Close SADMIN
            sys.exit(1)                                                  # Exit back to O/S,Abort
         if not os.path.exists(alert_hist):                              # AlertHistory Missing
@@ -2133,7 +2172,7 @@ def start(pver,pdesc) :
         delete_pid="Y"                                                  # Del PID in stop() function
 
     # Record Date & Time the script is starting in the RCH File
-    if (rch_used) :                                                     # If want to Create/Upd RCH
+    if (use_rch) :                                                     # If want to Create/Upd RCH
         try:
             rch_file_fh=open(rch_file,'a')                              # Open RCH file append mode
         except IOError as e:                                            # If Can't Create or open
@@ -2430,17 +2469,12 @@ if (os.getenv("SADMIN",default="X") == "X"):                            # SADMIN
     print("'SADMIN' Environment Variable isn't defined.")               # SADMIN Var MUST be defined
     print("It specify the directory where you installed the SADMIN Tools.")
     print("Add this line at the end of /etc/environment file")          # Show Where to Add Env. Var
-    print("export SADMIN='/[dir-where-you-install-sadmin]'")            # Show What to Add.
+    print("SADMIN='/[dir-where-you-install-sadmin]'")                   # Show What to Add.
     print("Then logout and log back in and run the script again.")      # Show what to do 
     sys.exit(1)  
 
-# Load SADMIN configuration file ($SADMIN/cfg/sadmin.cfg) into memory 
 load_config_file(cfg_file)                                              # Load sadmin.cfg in Dict.
-
-# Get binary require to give user the best security and experience 
-check_requirements()                                                    # Check for SADMIN Req. bin
-
-# Load SADMIN alert group file ($SADMIN/cfg/alert_group.cfg) into Alert Group Dictionnary 
-dict_alert = load_alert_file()                                          # Alert group file in dict
+load_cmd_path()                                                         # Load Cmd Path Variables
+dict_alert = load_alert_file()                                          # Load Alert group in dict
 if (lib_debug > 0) : 
     print_dict_alert()                                                  # Print Alert Group Dict

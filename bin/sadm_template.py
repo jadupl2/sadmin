@@ -4,7 +4,8 @@
 #   Script Name :   XXXXXXXX.py
 #   Date        :   YYYY/MM/DD
 #   Requires    :   python3 and SADMIN Python Library
-#   Description :
+#   Description :   Your description of what this script is doing.
+# ---------------------------------------------------------------------------------------------------
 #
 # Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to
 #        have and use a 100 characters per line. Comments in script always begin at column 73.
@@ -18,19 +19,18 @@
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
-#
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 #
-# Version Change Log
-#
+# VERSION CHANGE LOG
+# ------------------
 #@2022_05_09 lib v1.0 New Python template using V2 of SADMIN python library.
 #@2022_05_25 lib v1.1 Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
 #
 # --------------------------------------------------------------------------------------------------
 #
-# The following modules are needed by SADMIN Tools and they all come with Standard Python 3
+# Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
 try:
     import os, sys, argparse, time, datetime, socket, platform      # Import Std Python3 Modules
     import pymysql                                                  # Use MySQL DB
@@ -38,17 +38,18 @@ try:
 except ImportError as e:                                            # Trap Import Error
     print("Import Error : %s " % e)                                 # Print Import Error Message
     sys.exit(1)                                                     # Back to O/S With Error Code 1
-# pdb.set_trace()                                                    # Activate Python Debugging
+#pdb.set_trace()                                                    # Activate Python Debugging
 
 
 
 
 # --------------------------------------------------------------------------------------------------
-# SADMIN PYTHON FRAMEWORK SECTION 2.0
-# To use SADMIN tools, this section MUST be present near the top of your code.
+# SADMIN CODE SECTION v2.2
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
 # --------------------------------------------------------------------------------------------------
 try:
-    SADM = os.environ.get('SADMIN')                                     # Getting SADMIN Root Dir.
+    SADM = os.environ.get('SADMIN')                                     # Get SADMIN Env. Var. Dir.
     sys.path.insert(0, os.path.join(SADM, 'lib'))                       # Add lib dir to sys.path
     import sadmlib2_std as sa                                           # Load SADMIN Python Library
 except ImportError as e:                                                # If Error importing SADMIN
@@ -56,18 +57,18 @@ except ImportError as e:                                                # If Err
     sys.exit(1)                                                         # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver = "1.1"                                                            # Program version
-pdesc = "Update 'pdesc' variable & put a description of your script."   # Program description
-phostname = sa.get_hostname()                                           # Get current `hostname -s`
-pdb_conn = None                                                         # Database connector
-pdb_cur = None                                                          # Database cursor
-pdebug = 0                                                              # Debug level from 0 to 9
-pexit_code = 0                                                          # Script default exit code
+pver        = "1.1"                                                     # Program version
+pdesc       = "Update 'pdesc' variable & put a description of your script."
+phostname   = sa.get_hostname()                                         # Get current `hostname -s`
+pdb_conn    = None                                                      # Database connector
+pdb_cur     = None                                                      # Database cursor
+pdebug      = 0                                                         # Debug level from 0 to 9
+pexit_code  = 0                                                         # Script default exit code
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
-# Uncomment anyone of them to influence execution of SADMIN standard library.
+# Uncomment anyone to change them and influence execution of SADMIN standard library.
 #
-sa.proot_only = True              # Pgm run by root only ?
+sa.proot_only        = True       # Pgm run by root only ?
 sa.psadm_server_only = False      # Run only on SADMIN server ?
 #sa.db_used          = True       # Open/Use Database(True) or Don't Need DB(False)
 #sa.db_silent        = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
@@ -82,9 +83,9 @@ sa.psadm_server_only = False      # Run only on SADMIN server ?
 #sa.log_header       = True       # Show/Generate Header in script log (.log)
 #sa.log_footer       = True       # Show/Generate Footer in script log (.log)
 #sa.multiple_exec    = "Y"        # Allow running multiple copy at same time ?
-#sa.rch_used         = True       # Generate entry in Result Code History (.rch)
+#sa.use_rch         = True       # Generate entry in Result Code History (.rch)
 #sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
-cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
+sa.cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
 #
 # ==================================================================================================
 
@@ -154,7 +155,7 @@ def process_servers():
             continue                                                    # Go read Next Server
 
         # Check if System is Locked.
-        if sa.check_lockfile(wname) != 0:                               # If System is Lock
+        if sa.check_system_lock(wname) != 0:                               # If System is Lock
             sa.write_err("[ WARNING ] System '%s' is currently lock." % (wname))
             sa.write_log("Continuing with next system")                 # Not Error if system lock
             continue                                                    # Go read Next Server
@@ -186,10 +187,8 @@ def process_servers():
 # --------------------------------------------------------------------------------------------------
 def main_process():
 
-    # Inform User Starting Main
-    sa.write_log("Starting Main Process ...")
-
-    # Put your code HERE !
+    # Insert your code HERE !
+    sa.sleep(10,2)
 
     # Return Err. Code To Caller
     return(pexit_code)

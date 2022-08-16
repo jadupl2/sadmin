@@ -35,10 +35,10 @@
 # Field 2: 
 #   | Section   | Description                           | 
 #   |:---       | :---                                  |
-#   | Web       | Web Interface modification            | 
+#   | web       | Web Interface modification            | 
 #   | install   | Install,Uninstall & Update changes    | 
 #   | cmdline   | Command line tools changes            | 
-#   | template  | Library,Templates,Libr demo           | 
+#   | lib       | Library,Templates,Libr demo           | 
 #   | mon       | System Monitor related                | 
 #   | backup    | Backup related modification or fixes  | 
 #   | config    | Config files modification             | 
@@ -53,8 +53,8 @@
 #---------------------------------------------------------------------------------------------------
 # CHANGE LOG
 # 2021_07_01 New     v1.0  Initial Beta Version
-#@2021_09_15 lib v4.0 Added SADM_PDESC var. that can contain a description of the script.
-#@2022_05_25 lib v4.1 Added new variables SADM_ROOT_ONLY and SADM_SERVER_ONLY
+#@2021_09_25 lib v4.0 Added 'SADM_PDESC' that contain description of Script (Used in -v option).
+#@2022_05_25 lib v4.1 Added 'SADM_ROOT_ONLY' and 'SADM_SERVER_ONLY' checked before running script.
 #---------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
@@ -65,7 +65,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.51
+# SADMIN CODE SECTION 1.52
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
@@ -85,6 +85,7 @@ export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='4.1'                                      # Script version number
@@ -110,6 +111,7 @@ export SADM_SERVER_ONLY="N"                                # Run only on SADMIN 
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
@@ -118,7 +120,6 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 # ---------------------------------------------------------------------------------------
 
 
@@ -253,11 +254,13 @@ process_servers()
 #===================================================================================================
 main_process()
 {
-    sadm_write "Starting Main Process ...\n"                            # Starting processing Mess.
+    sadm_write_log "Starting Main Process ...\n"                        # Starting processing Mess.
     
     # PROCESSING CAN BE PUT HERE
     # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
     # ........
+    sadm_sleep "10" "2"
+
     
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
 }
@@ -304,6 +307,7 @@ function cmd_options()
 #===================================================================================================
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Won't come back if error
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong    
     main_process                                                        # Your PGM Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID

@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadmlib_std_demo.sh
-#   Synopsis : .
+#   Synopsis :  Demonstrate functions & variables available to developers using SADMIN Tools
 #   Version  :  1.0 
 #   Date     :  14 August 2015
 #   Requires :  sh
@@ -23,70 +23,90 @@
 # 2018_09_04    v3.5 Show SMON Alert type, curl, mutt and Alert Group
 # 2018_09_25    v3.6 Show SMON Alert Group, Channel and History Files
 # 2019_01_19    v3.7 Added: Added Backup List & Backup Exclude File Name available to User.
-# 2019_01_28 Added: v3.8 Database info only show when running on SADMIN Server
-# 2019_03_18 Added: v3.9 Add demo call to function 'sadm_get_packagetype'
-# 2019_04_07 Update: v3.10 Don't show Database user name if run on client.
-# 2019_04_11 Update: v3.11 Add Database column "active","category" and "group" to server output.
-# 2019_04_25 Update: v3.12 Add Alert_Repeat, Textbelt API Key and URL Variables in Output.
-# 2019_05_17 Update: v3.13 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
-# 2019_10_14 Update: v3.14 Add demo for calling sadm_server_arch function & show result.
-# 2019_10_17 Update: v3.15 Print Category and Group table content at the end of report.
-# 2019_10_30 Update: v3.16 Remove 'facter' utilization (depreciated).
-# 2019_11_25 Update: v3.17 Change printing format of Database table at the end of execution.
-# 2020_04_01 Update: v3.18 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-# 2020_11_24 Update: v3.19 Don't show DB password file on client
-# 2020_12_24 Update: v3.20 Include output of capitalize function.
-#@2022_04_10 Update: v3.21 Remove lsb_release command dependency
-#@2022_05_10 Update: v3.22 Use 'mutt'instead of 'mail' 
-#@2022_06_16 Update: v3.23 Put back the content of $LSB_RELEASE in output
+# 2019_01_28 lib v3.8 Database info only show when running on SADMIN Server
+# 2019_03_18 lib v3.9 Add demo call to function 'sadm_get_packagetype'
+# 2019_04_07 lib v3.10 Don't show Database user name if run on client.
+# 2019_04_11 lib v3.11 Add Database column "active","category" and "group" to server output.
+# 2019_04_25 lib v3.12 Add Alert_Repeat, Textbelt API Key and URL Variables in Output.
+# 2019_05_17 lib v3.13 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
+# 2019_10_14 lib v3.14 Add demo for calling sadm_server_arch function & show result.
+# 2019_10_17 lib v3.15 Print Category and Group table content at the end of report.
+# 2019_10_30 lib v3.16 Remove 'facter' utilization (depreciated).
+# 2019_11_25 lib v3.17 Change printing format of Database table at the end of execution.
+# 2020_04_01 lib v3.18 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2020_11_24 lib v3.19 Don't show DB password file on client.
+# 2020_12_24 lib v3.20 Include output of capitalize function.
+#@2022_04_10 lib v3.21 Remove 'lsb_release' command dependency.
+#@2022_05_10 lib v3.22 Use 'mutt' instead of 'mail'.
+#@2022_06_16 lib v3.23 Added fields 'sa.proot_only' & 'sa.psadm_server_only' to output.
+#@2022_08_14 lib v3.24 Output updated with all the latest functions & global variables.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
-#===================================================================================================
-#               Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
-#
-    # Test if 'SADMIN' environment variable is defined
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
 
-    # Test if 'SADMIN' Shell Library is readable 
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.23'                              # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="N"                          # Show/Generate Script Footer 
-    export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
 
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-#
-#---------------------------------------------------------------------------------------------------
-#
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But they can be overridden here on a per script basis.
-    export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#
-#===================================================================================================
+
+
+# ---------------------------------------------------------------------------------------
+# SADMIN CODE SECTION 1.52
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
+# ---------------------------------------------------------------------------------------
+
+# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                    # No SADMIN Env. Var. Exit
+         fi
+fi 
+
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
+export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
+
+# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='3.24'                                     # Script version number
+export SADM_PDESC="Demonstrate functions & variables available to developers using SADMIN Tools"
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
+export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
+export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+# ---------------------------------------------------------------------------------------
+
 
 
 
@@ -101,29 +121,22 @@ lcount=0                                                                # Print 
 
 
 # --------------------------------------------------------------------------------------------------
-#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# Show script command line options
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${SADM_PN} usage :"
-    printf "\n\t-d   (Debug Level [0-9])"
-    printf "\n\t-p   (Show database password on output)"
-    printf "\n\t-s   (Show Storix Backup information)"
-    printf "\n\t-t   (Show TextBelt Key)"
-    printf "\n\t-h   (Display this help message)"
-    printf "\n\t-v   (Show Script Version Info)"
-    printf "\n\n" 
-}
-show_version()
-{
-    printf "\n${SADM_PN} - Version $SADM_VER"
-    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
-    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
-    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
+    printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
+    printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
+    printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
+    printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
+    printf "\n   ${BOLD}${YELLOW}[-p]${NORMAL}\t\t\tShow password on output"
+    printf "\n   ${BOLD}${YELLOW}[-t]${NORMAL}\t\t\tShow TextBelt Key on output"
     printf "\n\n" 
 }
 
-#===================================================================================================
+
 # Standardize Print Line Function 
 #===================================================================================================
 printline()
@@ -133,28 +146,26 @@ printline()
     printf "\n[%03d] " $lcount                                          # Print Line Number
     if [ "$p1" != "" ] ; then printf "%-33s" "$p1"            ;fi
     if [ "$p2" != "" ] ; then printf "%-36s" "$p2"            ;fi  
-    if [ "$p1" != "" ] && [ "$p2" != "" ] 
-#        then printf "%-33s" ": .${p3}."     
-        then printf "%-33s" ": ${p3}"     
-    fi
-    #printf "%-33s" ": .${p3}."  
+    if [ "$p1" != "" ] && [ "$p2" != "" ] ; then printf "%-33s" ": ${p3}" ;fi
 }
 
-#===================================================================================================
+
 # Standardize Print Header Function 
 #===================================================================================================
 printheader()
 {
     lcount=0                                                            # Clear Print Line Number
-    h1=$1
     h1=$1 ; h2=$2 ; h3=$3
-    printf "\n\n\n`printf %100s |tr " " "="`"
-    printf "\n$SADM_PN v$SADM_VER - Library v$SADM_LIB_VER"
+    printf "\n\n$(printf %100s |tr ' ' '=')"
+    #printf "\n$SADM_PN v$SADM_VER - Library v$SADM_LIB_VER"
     printf "\n%-39s%-36s%-33s" "$h1" "$h2" "$h3" 
     printf "\n`printf %100s |tr " " "="`"
 }
 
-#===================================================================================================
+
+
+
+
 # Print SADMIN Function available to Users
 #===================================================================================================
 print_user_variables()
@@ -176,10 +187,10 @@ print_user_variables()
     presult="$SADM_INST"                                                # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    #pexample="\$SADM_USERNAME"                                          # Variable Name
-    #pdesc="Current User Name"                                           # Description
-    #presult="$SADM_USERNAME"                                            # Actual Content of Variable
-    #printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    pexample="\$SADM_USERNAME"                                          # Variable Name
+    pdesc="Current User Name"                                           # Description
+    presult="$SADM_USERNAME"                                            # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_TPID"                                              # Variable Name
     pdesc="Current Process ID"                                          # Description
@@ -221,7 +232,15 @@ print_user_variables()
     presult="$SADM_EXIT_CODE"                                           # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
   
-
+    pexample="\$SADM_ROOT_ONLY"                                         # Variable Name
+    pdesc="Only run by 'root' user [Y/N]"                               # Description
+    presult="$SADM_ROOT_ONLY"                                           # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    
+    pexample="\$SADM_SERVER_ONLY"                                       # Variable Name
+    pdesc="Only run on SADMIN server [Y/N]"                             # Description
+    presult="$SADM_SERVER_ONLY"                                         # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 }
 
 #===================================================================================================
@@ -295,7 +314,12 @@ print_functions()
     pdesc="Fully Qualified Domain Host Name"                            # Function Description
     presult="$(sadm_get_fqdn)"                                          # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
-    
+
+    pexample="\$(sadm_server_serial)"                                   # Example Calling Function
+    pdesc="Server serial number (Ex: 4S7GYF1)"                          # Function Description
+    presult=$(sadm_server_serial)                                       # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+            
     pexample="\$(sadm_get_epoch_time)"                                  # Example Calling Function
     pdesc="Get Current Epoch Time"                                      # Function Description
     presult="$(sadm_get_epoch_time)"                                    # Return Value(s)
@@ -328,7 +352,63 @@ print_functions()
     pdesc="Get package type (rpm,deb,aix,dmg)"                          # Function Description
     presult="$(sadm_get_packagetype)"                                   # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
-     
+
+    pexample="\$(sadm_server_arch)"                                     # Example Calling Function
+    pdesc="System Architecture"                                         # Function Description
+    presult=$(sadm_server_arch)                                         # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+
+    pexample="sadm_lock_system \"hostname\""                            # Example Calling Function
+    pdesc="Lock the specified hostname"                                 # Function Description
+    presult="0=Lock 1=Error not lock"                                   # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+
+    pexample="sadm_check_system_lock \"hostname\""                      # Example Calling Function
+    pdesc="Check if specified hostname is lock"                         # Function Description
+    presult="0=Not Lock - 1=System Locked"                              # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+
+    pexample="sadm_unlock_system \"hostname\""                          # Example Calling Function
+    pdesc="Unlock the specified hostname"                               # Function Description
+    presult="0=Unlocked 1=Error could not unlock"                       # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+
+    pexample="sadm_writelog \"message\""                                # Example Calling Function
+    pdesc="Depreciated use 'sadm_write_log'"                            # Function Description
+    presult="message"                                                   # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+
+    pexample="sadm_write_log \"message\""                               # Example Calling Function
+    pdesc="Write message to Screen, Log or Both"                        # Function Description
+    presult="message"                                                   # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+
+    pexample="sadm_write_err \"message\""                               # Example Calling Function
+    pdesc="Write mess to error log & to std log"                        # Function Description
+    presult="message"                                                   # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+
+    pexample="sadm_sendmail(mail,sub,body,att)"
+    pdesc="sadm_sendmail(email,'subject',body',file1,..)"     
+    presult="0=Success  1=Error"                                        # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+
+    pexample="sadm_show_version"
+    pdesc="Cmdline -v option show script info."
+    presult=""                                                          # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+
+    pexample="sadm_sleep \"60\" \"15\""
+    pdesc="Sleep 60sec. at interval of 15sec."
+    presult="60...45...30...15...0"                                     # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+
+    pexample="sadm_trimfile \"filename\" 35"
+    pdesc="Keep the last 35 lines of filename."
+    presult="0=Success  1=Error"                                        # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+
+
 }
 
 
@@ -338,7 +418,7 @@ print_functions()
 #===================================================================================================
 print_bash_functions()
 {
-    printheader "SADMIN BASH SHELL SPECIFIC FUNCTIONS" "Description" "  This System Result"
+    printheader "FUNCTIONS AVAIl. ONLY IN BASH LIBRARY" "Description" "  This System Result"
 
     pexample="\$(sadm_server_type)"                                     # Example Calling Function
     pdesc="Host is Physical or Virtual (P/V)"                           # Function Description
@@ -349,12 +429,7 @@ print_bash_functions()
     pdesc="Server model (Ex: HP ProLiant DL580)"                        # Function Description
     presult=$(sadm_server_model)                                        # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
-        
-    pexample="\$(sadm_server_serial)"                                   # Example Calling Function
-    pdesc="Server serial number (Ex: 4S7GYF1)"                          # Function Description
-    presult=$(sadm_server_serial)                                       # Return Value(s)
-    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
-        
+
     pexample="\$(sadm_server_memory)"                                   # Example Calling Function
     pdesc="Server total memory in MB (Ex: 3790)"                        # Function Description
     presult=$(sadm_server_memory)                                       # Return Value(s)
@@ -374,12 +449,7 @@ print_bash_functions()
     pdesc="Number of Physical CPU on server"                            # Function Description
     presult=$(sadm_server_nb_cpu)                                       # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
-                
-    pexample="\$(sadm_server_arch)"                                     # Example Calling Function
-    pdesc="System Architecture"                                         # Function Description
-    presult=$(sadm_server_arch)                                         # Return Value(s)
-    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
-                
+       
     pexample="\$(sadm_server_nb_socket)"                                # Example Calling Function
     pdesc="Number of socket on server"                                  # Function Description
     presult=$(sadm_server_nb_socket)                                    # Return Value(s)
@@ -429,17 +499,22 @@ print_bash_functions()
     pdesc="Return string capitalize"                                    # Function Description
     presult=`sadm_capitalize String`                                    # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
-    
+
+    pexample="sadm_ask \"Question\""                                    # Example Calling Function
+    pdesc="Show message & wait for [Y/y/N/n]"                           # Function Description
+    presult="Question [Y/N] ? - (0=N 1=Y)"                              # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+
 }
 
 
 
 #===================================================================================================
-# Print Client Directories Variables Available to Users
+# Print Directories Variables Available to Users
 #===================================================================================================
-print_client_directory()
+print_directory()
 {
-    printheader "Client Directories Var. Avail." "Description" "  This System Result"
+    printheader "Directories Var. Avail." "Description" "  This System Result"
 
     pexample="\$SADM_BASE_DIR"                                          # Directory Variable Name
     pdesc="SADMIN Root Directory"                                       # Directory Description
@@ -550,16 +625,6 @@ print_client_directory()
     pdesc="User/System specific SysMon Scripts"                         # Directory Description
     presult="$SADM_UMON_DIR"                                            # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-}
-
-
-
-#===================================================================================================
-# Print Client Directories Variables Available to Users
-#===================================================================================================
-print_server_directory()
-{
-    printheader "Server Directories Var. Avail." "Description" "  This System Result"
         
     pexample="\$SADM_WWW_DIR"                                           # Directory Variable Name
     pdesc="SADMIN Web Site Root Directory"                              # Directory Description
@@ -590,7 +655,17 @@ print_server_directory()
     pdesc="SADMIN Web Performance Graph Dir."                           # Directory Description
     presult="$SADM_WWW_PERF_DIR"                                        # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-    
+
+}
+
+
+
+#===================================================================================================
+# Print Client Directories Variables Available to Users
+#===================================================================================================
+print_server_directory()
+{
+    printheader "Server Directories Var. Avail." "Description" "  This System Result"
 }
 
 
@@ -638,50 +713,39 @@ print_file_variable()
     presult="$SADM_ALERT_HINI"                                          # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
-#    pexample="\$SADM_ALERT_SEQ"                                         # Variable Name
-#    pdesc="SADMIN Alert Reference Number File"                          # Description
-#    presult="$SADM_ALERT_SEQ"                                           # Actual Content of Variable
-#    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-
-    #pexample="\$SADM_REL_FILE"                                          # Variable Name
-    #pdesc="SADMIN Release File"                                         # Description
-    #presult="$SADM_REL_FILE"                                            # Actual Content of Variable
-    #printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-    
     pexample="\$SADM_TMP_FILE1"                                         # Directory Variable Name
     pdesc="User usable Temp Work File 1"                                # Directory Description
     presult="$SADM_TMP_FILE1"                                           # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
         
-    pexample="\$SADM_TMP_FILE2"                                         # Directory Variable Name
-    pdesc="User usable Temp Work File 2"                                # Directory Description
+    pexample="\$SADM_TMP_FILE2"                                         # Variable Name
+    pdesc="User usable Temp Work File 2"                                # Description
     presult="$SADM_TMP_FILE2"                                           # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
         
-    pexample="\$SADM_TMP_FILE3"                                         # Directory Variable Name
-    pdesc="User usable Temp Work File 3"                                # Directory Description
+    pexample="\$SADM_TMP_FILE3"                                         # Variable Name
+    pdesc="User usable Temp Work File 3"                                # Description
     presult="$SADM_TMP_FILE3"                                           # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
             
-    pexample="\$SADM_LOG"                                               # Directory Variable Name
-    pdesc="Script Log File"                                             # Directory Description
+    pexample="\$SADM_LOG"                                               # Variable Name
+    pdesc="Script Log File"                                             # Description
     presult="$SADM_LOG"                                                 # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
             
-    pexample="\$SADM_RCHLOG"                                            # Directory Variable Name
-    pdesc="Script Return Code History File"                             # Directory Description
+    pexample="\$SADM_RCHLOG"                                            # Variable Name
+    pdesc="Script Return Code History File"                             # Description
     presult="$SADM_RCHLOG"                                              # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
                 
-    if [ "$SADM_HOST_TYPE" = "S" ]                                      # PrintOnly on SADMIN Server
-        then pexample="\$DBPASSFILE"                                    # Directory Variable Name
-             pdesc="SADMIN Database User Password File"                 # Directory Description
-             presult="$DBPASSFILE"                                      # Actual Content of Variable
-             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
-    fi 
+    pexample="\$DBPASSFILE"                                             # Variable Name
+    pdesc="SADMIN Database User Password File"                          # Description
+    presult="$DBPASSFILE"                                               # Actual Content of Variable
+    if [ "$show_password" = "N" ] ; then presult=" " ;fi                # Don't show DB Password
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
-    pexample="\$SADM_RPT_FILE"                                          # Directory Variable Name
-    pdesc="SYStem MONitor Report File"                                  # Directory Description
+    pexample="\$SADM_RPT_FILE"                                          # Variable Name
+    pdesc="System Monitor Report File"                                  # Description
     presult="$SADM_RPT_FILE"                                            # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
                 
@@ -704,7 +768,6 @@ print_file_variable()
     pdesc="Initial Backup Exclude (Template)"                           # Variable Description
     presult="$SADM_BACKUP_EXCLUDE_INIT"                                 # Variable Actual Content
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-                
 
 }
 
@@ -746,12 +809,13 @@ print_sadmin_cfg()
     presult="$SADM_ALERT_REPEAT"                                        # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    if [ "$show_textbelt" = "Y" ] 
-        then pexample="\$SADM_TEXTBELT_KEY"                             # Variable Name
-             pdesc="TextBelt.com API Key"                               # Description
-             presult="$SADM_TEXTBELT_KEY"                               # TextBelt API Key
-             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
+    pexample="\$SADM_TEXTBELT_KEY"                                      # Variable Name
+    pdesc="TextBelt.com API Key"                                        # Description
+    presult=" "                                                         # TextBelt API Key
+    if [ "$show_textbelt" = "Y" ]                                       # If command line switch
+        then presult="$SADM_TEXTBELT_KEY"                               # TextBelt API Key
     fi
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_TEXTBELT_URL"                                      # Variable Name
     pdesc="TextBelt.com API URL"                                        # Description
@@ -803,40 +867,84 @@ print_sadmin_cfg()
     presult="$SADM_DBPORT"                                              # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    if [ "$SADM_HOST_TYPE" = "S" ] 
-        then pexample="\$SADM_RW_DBUSER"                                # Directory Variable Name
-             pdesc="SADMIN Database Read/Write User"                    # Directory Description
-             presult="$SADM_RW_DBUSER"                                  # Actual Content of Variable
-             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
-    
-             pexample="\$SADM_RW_DBPWD"                                 # Directory Variable Name
-             pdesc="SADMIN Database Read/Write User Pwd"                # Directory Description
-             presult="$SADM_RW_DBPWD"                                   # Actual Content of Variable
-             if [ "$show_password" = "N" ] ; then presult=" " ;fi       # Don't show DB Password
-             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
-    
-             pexample="\$SADM_RO_DBUSER"                                # Directory Variable Name
-             pdesc="SADMIN Database Read Only User"                     # Directory Description
-             presult="$SADM_RO_DBUSER"                                  # Actual Content of Variable
-             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
-    
-             pexample="\$SADM_RO_DBPWD"                                 # Directory Variable Name
-             pdesc="SADMIN Database Read Only User Pwd"                 # Directory Description
-             presult="$SADM_RO_DBPWD"                                   # Actual Content of Variable
-             if [ "$show_password" = "N" ] ; then presult=" " ;fi       # Don't show DB Password
-             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
-    fi
-
-    pexample="\$SADM_RRDTOOL"                                           # Directory Variable Name
-    pdesc="RRDTOOL Binary Location"                                     # Directory Description
-    presult="$SADM_RRDTOOL"                                             # Actual Content of Variable
+    pexample="\$SADM_RW_DBUSER"                                         # Directory Variable Name
+    pdesc="SADMIN Database Read/Write User"                         
+    result="$SADM_RW_DBUSER"                                  # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
+    pexample="\$SADM_RW_DBPWD"                                          # Directory Variable Name
+    pdesc="SADMIN Database Read/Write User Pwd"                         # Directory Description
+    presult="$SADM_RW_DBPWD"                                           # Actual Content of Variable
+    if [ "$show_password" = "N" ] ; then presult=" " ;fi                # Don't show DB Password
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    
+    pexample="\$SADM_RO_DBUSER"                                         # Directory Variable Name
+    pdesc="SADMIN Database Read Only User"                              # Directory Description
+    presult="$SADM_RO_DBUSER"                                           # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    
+    pexample="\$SADM_RO_DBPWD"                                          # Directory Variable Name
+    pdesc="SADMIN Database Read Only User Pwd"                          # Directory Description
+    presult="$SADM_RO_DBPWD"                                            # Actual Content of Variable
+    if [ "$show_password" = "N" ] ; then presult=" " ;fi                # Don't show DB Password
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_SMTP_SERVER"                                       # Variable Name
+    pdesc="Your Internet SMTP Server Name"                              # Description
+    presult="$SADM_SMTP_SERVER"                                         # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_SMTP_PORT"                                         # Variable Name
+    pdesc="Your Internet SMTP Server Port"                              # Description
+    presult="$SADM_SMTP_PORT"                                           # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_SMTP_SENDER"                                       # Variable Name
+    pdesc="Your Internet Sender Email"                                      
+    presult="$SADM_SMTP_SENDER"                                         # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_GMPW"                                              # Variable Name
+    pdesc="Your Internet Sender Password"                                      
+    presult=$SADM_GMPW
+    if [ "$show_password" = "N" ] ; then presult=" " ;fi                # Don't show Password
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
     pexample="\$SADM_SSH_PORT"                                          # Directory Variable Name
     pdesc="SSH Port to communicate with client"                         # Directory Description
     presult="$SADM_SSH_PORT"                                            # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-    
+
+    pexample="\$SADM_MONITOR_UPDATE_INTERVAL"                           # Directory Variable Name
+    pdesc="Monitor page update interval in sec."                        # Directory Description
+    presult="$SADM_MONITOR_UPDATE_INTERVAL"                             # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_MONITOR_RECENT_COUNT"                              # Directory Variable Name
+    pdesc="Monitor page nb. recent scripts"                             # Directory Description
+    presult="$SADM_MONITOR_RECENT_COUNT"                                # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_MONITOR_RECENT_EXCLUDE"                            # Directory Variable Name
+    pdesc="Scripts excluded from SysMon Recent"                         # Directory Description
+    presult="$SADM_MONITOR_RECENT_EXCLUDE"                              # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_DR_SCRIPT_MAXAGE"                                  # Variable Name
+    pdesc="Nb. days before exec. become yellow"                         # Description
+    presult="$SADM_DR_SCRIPT_MAXAGE"                                    # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_DR_REAR_INTERVAL"                                  # Variable Name
+    pdesc="Max days between backup, then yellow"                        # Description
+    presult="$SADM_DR_REAR_INTERVAL"                                    # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_DR_BACKUP_DIF"                                     # Variable Name
+    pdesc="Max % different backupsize,...yellow"                        # Description
+    presult="${SADM_DR_BACKUP_DIF}%"                                    # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
     pexample="\$SADM_NMON_KEEPDAYS"                                     # Directory Variable Name
     pdesc="Nb. of days to keep nmon perf. file"                         # Directory Description
     presult="$SADM_NMON_KEEPDAYS"                                       # Actual Content of Variable
@@ -886,21 +994,6 @@ print_sadmin_cfg()
     pdesc="Network/Netmask 5 inv. IP/Name/Mac"                          # Directory Description
     presult="$SADM_NETWORK5"                                            # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-   
-    pexample="\$SADM_MKSYSB_NFS_SERVER"                                 # Directory Variable Name
-    pdesc="AIX MKSYSB NFS Server IP or Name"                            # Directory Description
-    presult="$SADM_MKSYSB_NFS_SERVER"                                   # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-    
-    pexample="\$SADM_MKSYSB_NFS_MOUNT_POINT"                            # Directory Variable Name
-    pdesc="AIX MKSYSB NFS Mount Point"                                  # Directory Description
-    presult="$SADM_MKSYSB_NFS_MOUNT_POINT"                              # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-    
-    pexample="\$SADM_MKSYSB_BACKUP_TO_KEEP"                             # Directory Variable Name
-    pdesc="AIX MKSYSB NFS Backup - Nb. to keep"                         # Directory Description
-    presult="$SADM_MKSYSB_BACKUP_TO_KEEP"                               # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_REAR_NFS_SERVER"                                   # Directory Variable Name
     pdesc="Rear NFS Server IP or Name"                                  # Directory Description
@@ -932,57 +1025,50 @@ print_sadmin_cfg()
     presult="$SADM_DAILY_BACKUP_TO_KEEP"                                # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_WEEKLY_BACKUP_TO_KEEP"                             # Directory Variable Name
-    pdesc="Nb. of Weekly Backup to keep"                                # Directory Description
+    pexample="\$SADM_WEEKLY_BACKUP_TO_KEEP"                             # Variable Name
+    pdesc="Nb. of Weekly Backup to keep"                                # Description
     presult="$SADM_WEEKLY_BACKUP_TO_KEEP"                               # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_MONTHLY_BACKUP_TO_KEEP"                            # Directory Variable Name
-    pdesc="Nb. of Monthly Backup to keep"                               # Directory Description
+    pexample="\$SADM_MONTHLY_BACKUP_TO_KEEP"                            # Variable Name
+    pdesc="Nb. of Monthly Backup to keep"                               # Description
     presult="$SADM_MONTHLY_BACKUP_TO_KEEP"                              # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_YEARLY_BACKUP_TO_KEEP"                             # Directory Variable Name
-    pdesc="Nb. of Yearly Backup to keep"                                # Directory Description
+    pexample="\$SADM_YEARLY_BACKUP_TO_KEEP"                             # Variable Name
+    pdesc="Nb. of Yearly Backup to keep"                                # Description
     presult="$SADM_YEARLY_BACKUP_TO_KEEP"                               # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_WEEKLY_BACKUP_DAY"                                 # Directory Variable Name
-    pdesc="Weekly Backup Day (1=Mon,...,7=Sun)"                         # Directory Description
+    pexample="\$SADM_WEEKLY_BACKUP_DAY"                                 # Variable Name
+    pdesc="Weekly Backup Day (1=Mon,...,7=Sun)"                         # Description
     presult="$SADM_WEEKLY_BACKUP_DAY"                                   # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_MONTHLY_BACKUP_DATE"                               # Directory Variable Name
-    pdesc="Monthly Backup Date (1-28)"                                  # Directory Description
+    pexample="\$SADM_MONTHLY_BACKUP_DATE"                               # Variable Name
+    pdesc="Monthly Backup Date (1-28)"                                  # Description
     presult="$SADM_MONTHLY_BACKUP_DATE"                                 # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_YEARLY_BACKUP_MONTH"                               # Directory Variable Name
-    pdesc="Month to take Yearly Backup (1-12)"                          # Directory Description
+    pexample="\$SADM_YEARLY_BACKUP_MONTH"                               # Variable Name
+    pdesc="Month to take Yearly Backup (1-12)"                          # Description
     presult="$SADM_YEARLY_BACKUP_MONTH"                                 # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_YEARLY_BACKUP_DATE"                                # Directory Variable Name
-    pdesc="Date to do Yearly Backup(1-DayInMth)"                        # Directory Description
+    pexample="\$SADM_YEARLY_BACKUP_DATE"                                # Variable Name
+    pdesc="Date to do Yearly Backup(1-DayInMth)"                        # Description
     presult="$SADM_YEARLY_BACKUP_DATE"                                  # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-
-    if [ "$show_storix" = "Y" ]                                         # Option -s was specified
-        then pexample="\$SADM_STORIX_NFS_SERVER"                        # Directory Variable Name
-             pdesc="Storix NFS Server IP or Name"                       # Directory Description
-             presult="$SADM_STORIX_NFS_SERVER"                          # Actual Content of Variable
-             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
     
-             pexample="\$SADM_STORIX_NFS_MOUNT_POINT"                   # Directory Variable Name
-             pdesc="Storix NFS Mount Point"                             # Directory Description
-             presult="$SADM_STORIX_NFS_MOUNT_POINT"                     # Actual Content of Variable
-             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
+    pexample="\$SADM_PID_TIMEOUT"                                       # Variable Name
+    pdesc="PID File Time To Live default in sec"                        # Description
+    presult="$SADM_PID_TIMEOUT"                                         # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-             pexample="\$SADM_STORIX_BACKUP_TO_KEEP"                    # Directory Variable Name
-             pdesc="Storix NFS Backup - Nb. to Keep"                    # Directory Description
-             presult="$SADM_STORIX_BACKUP_TO_KEEP"                      # Actual Content of Variable
-             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
-    fi
+    pexample="\$SADM_LOCK_TIMEOUT"                                      # Variable Name
+    pdesc="Maximum of sec. a system can be lock"                        # Description
+    presult="$SADM_LOCK_TIMEOUT"                                        # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
 }
 
@@ -995,73 +1081,93 @@ print_command_path()
     printheader "COMMAND PATH USE BY SADMIN STD. LIBR." "Description" "  This System Result"
 
     pexample="\$SADM_DMIDECODE"                                         # Variable Name
-    pdesc="'dmidecode' use to get model & type"                         # Command Location
+    pdesc="'dmidecode' use to get model & type"                         # Command Description
     presult="$SADM_DMIDECODE"                                           # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_BC"                                                # Variable Name
-    pdesc="'bc' use to do some Math."                                   # Command Location
+    pdesc="'bc' use to do some Math."                                   # Command Description
     presult="$SADM_BC"                                                  # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_FDISK"                                             # Variable Name
-    pdesc="'fdisk' use to get partition info"                           # Command Location
+    pdesc="'fdisk' use to get partition info"                           # Command Description
     presult="$SADM_FDISK"                                               # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_WHICH"                                             # Variable Name
-    pdesc="'which' use to get command path"                             # Command Location
+    pdesc="'which' use to get command path"                             # Command Description
     presult="$SADM_WHICH"                                               # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_PERL"                                              # Variable Name
-    pdesc="'perl' epoch time Math on AIX"                               # Command Location
+    pdesc="'perl' epoch time Math on AIX"                               # Command Description
     presult="$SADM_PERL"                                                # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_MUTT"                                              # Variable Name
-    pdesc="'mutt' use to send email"                                    # Command Location
+    pdesc="'mutt' use to send email"                                    # Command Description
     presult="$SADM_MUTT"                                                # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_CURL"                                              # Variable Name
-    pdesc="'curl' Use to send alert to Slack"                           # Command Location
+    pdesc="'curl' Use to send alert to Slack"                           # Command Description
     presult="$SADM_CURL"                                                # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_LSCPU"                                             # Variable Name
-    pdesc="'lscpu' To get Socket/Thread info"                           # Command Location
+    pdesc="'lscpu' To get Socket/Thread info"                           # Command Description
     presult="$SADM_LSCPU"                                               # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_NMON"                                              # Variable Name
-    pdesc="'nmon' Collect Performance Stat."                            # Command Location
+    pdesc="'nmon' Collect Performance Stat."                            # Command Description
     presult="$SADM_NMON"                                                # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_PARTED"                                            # Variable Name
-    pdesc="'parted' use to get disk real size"                          # Command Location
+    pdesc="'parted' use to get disk real size"                          # Command Description
     presult="$SADM_PARTED"                                              # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_ETHTOOL"                                           # Variable Name
-    pdesc="'ethtool' use to get system IP"                              # Command Location
+    pdesc="'ethtool' use to get system IP"                              # Command Description
     presult="$SADM_ETHTOOL"                                             # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_SSH"                                               # Variable Name
-    pdesc="'ssh' use to SSH on SADMIN client"                           # Command Location
+    pdesc="'ssh' use to SSH on SADMIN client"                           # Command Description
     presult="$SADM_SSH"                                                 # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_SSH_CMD"                                           # Variable Name
-    pdesc="'ssh' SSH cmd to Connect to client"                          # Command Location
+    pdesc="'ssh' SSH cmd to Connect to client"                          # Command Description
     presult="$SADM_SSH_CMD"                                             # Actual Content of Variable
-    printline "$pexample" "$p"
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_RRDTOOL"                                           # Variable Name
+    pdesc="'rrdtool' binary location"                                   # Description
+    presult="$SADM_RRDTOOL"                                             # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_LSB_RELEASE"                                       # Variable Name
-    pdesc="Cmd use to get distribution info"                            # Command Location
+    pdesc="'lsb_release' cmd (get dist. info)"                          # Command Description
     presult="$SADM_LSB_RELEASE"                                         # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_INXI"                                              # Variable Name
+    pdesc="'inxi' binary location"                                      # Description
+    presult="$SADM_INXI"                                                # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_MYSQL"                                             # Variable Name
+    pdesc="'mysql' binary location"                                     # Description
+    presult="$SADM_MYSQL"                                               # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_SED"                                               # Variable Name
+    pdesc="'sed' binary location"                                       # Description
+    presult="$SADM_SED"                                                 # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 }
 
@@ -1073,7 +1179,7 @@ print_db_variables()
 {
     printheader "Database Information" "Description" "  This System Result"
 
-    CMDLINE="$SADM_MYSQL -t -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL Auth/Read Only User
+    CMDLINE="$SADM_MYSQL -t -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "      # MySQL Auth/Read Only User
 
     printf "\n\nShow SADMIN Tables:\n"
     SQL="show tables; "                                                 # Show Table SQL
@@ -1084,26 +1190,45 @@ print_db_variables()
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
     SQL="select * from server_category; "                               # Show Table SQL
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+    SQL="SHOW keys FROM server_category FROM sadmin;"
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
     printf "\n\nGroup Table:\n"
     SQL="show columns from server_group; "                              # Show Table Format/columns
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
     SQL="select * from server_group; "                                  # Show Table SQL
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+    SQL="SHOW keys FROM server_group FROM sadmin;"
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
     printf "\n\nServer Table:\n"
     SQL="select srv_name, srv_desc, srv_osname, srv_osversion, srv_active, srv_cat, srv_group from server ; "
     SQL="describe server; "
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+    SQL="SHOW keys FROM server FROM sadmin;"
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+
+    printf "\n\nScript Table:\n"
+    SQL="describe script; "
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+    SQL="SHOW keys FROM script FROM sadmin;"
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+
+    printf "\n\nScript Details:\n"
+    SQL="describe script_rch; "
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+    SQL="SHOW keys FROM script_rch FROM sadmin;"
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+
 }
 
 
 #===================================================================================================
-# Print sadm_start and sadm_stop Function Used by SADMIN Tools
+# Print sadm_start() and sadm_stop() functions used by SADMIN tools.
 #===================================================================================================
 print_start_stop()
 {
-    printheader "Overview of sadm_start and sadm_stop function"
+    printheader "Overview of sadm_start() and sadm_stop() functions."
 
     printf "\nExample of utilization:\n\n"
     printf " # sadm_start                                         # Init Env Dir & RC/Log File\n"
@@ -1113,10 +1238,10 @@ print_start_stop()
     printf " # sadm_stop \$SADM_EXIT_CODE                          # Close SADM Tool & Upd RCH\n"
     printf " # exit \$SADM_EXIT_CODE                               # Exit With Global Err (0/1)\n"
     printf "\n"
-    printf "sadm_start\n"
-    printf "    Start and initialize sadm environment - Accept no Parameter\n"
-    printf "    If SADMIN root directory is not /sadmin, make sure the SADMIN Env. variable is set to proper dir.\n"
-    printf "    Please call this function when your script is starting\n"
+    printf "Function 'sadm_start()':\n"
+    printf "    Start and initialize SADMINenvironment - accept no parameter\n"
+    printf "    If SADMIN env. variable is not set /opt/sadmin, make sure it's set to proper dir.\n"
+    printf "    Call this function when your script is starting.\n"
     printf "    What this function will do for us :\n" 
     printf "        1) Make sure all directories & sub-directories exist and have proper permissions.\n"
     printf "        2) Make sure log file exist with proper permission ($SADM_LOG)\n"
@@ -1126,7 +1251,7 @@ print_start_stop()
     printf "        5) Add line in the [R]eturn [C]ode [H]istory file stating script is started (Code 2)\n"
     printf "        6) Write HostName - Script name and version - O/S Name and version to the Log file (SADM_LOG)\n"
     printf "\n"
-    printf "sadm_stop\n"
+    printf "Function 'sadm_stop($exit_code)':\n"
     printf "    Accept one parameter - Either 0 (Successfull) or non-zero (Error Encountered)\n"
     printf "    Please call this function just before your script end\n"
     printf "    What this function do.\n"
@@ -1145,60 +1270,64 @@ print_start_stop()
 
 
 # --------------------------------------------------------------------------------------------------
-#                                Script Start HERE
+# Command line Options functions
+# Evaluate Command Line Switch Options Upfront
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
 # --------------------------------------------------------------------------------------------------
-    # If you want this script to be run only by 'root'.
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
-             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
-             printf "\nProcess aborted\n\n"                             # Abort advise message
-             exit 1                                                     # Exit To O/S with error
-    fi
-
+function cmd_options()
+{
     # Evaluate Command Line Switch Options Upfront
     # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level, 
     # (-p) Show Database Password
     show_password="N"                                                   # Don't show DB Password
-    show_storix="N"                                                     # Don't show Storix Info
+    #show_storix="N"                                                     # Don't show Storix Info
     show_textbelt="N"                                                   # Don't show TextBelt Key
-    DEBUG_LEVEL=0                                                       # Lowest DEBUG Level
-    while getopts "htspvd:" opt ; do                                    # Loop to process Switch
+    SADM_DEBUG=0                                                        # Lowest DEBUG Level
+
+    while getopts "d:hvpt" opt ; do                                     # Loop to process Switch
         case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               ;;                                                       
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               if [ "$num" = "" ]                            
+                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 1                                           # Exit Script with Error
+               fi
+               printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               ;; 
             p) show_password="Y"                                        # Flag to Show DB Password
                ;;                                                       
             t) show_textbelt="Y"                                        # Flag to Show TextBelt Key
                ;;                                                       
-            s) show_storix="Y"                                          # Show Storix Backup Info
-               ;;                                                       
+            #s) show_storix="Y"                                          # Show Storix Backup Info
+            #   ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
-            v) show_version                                             # Show Script Version Info
+            v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
-           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+           \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+    return 
+}
 
-
-
-
+# --------------------------------------------------------------------------------------------------
+#                                Script Start HERE
+# --------------------------------------------------------------------------------------------------
+    cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Init Env. Dir. & RCH/Log
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
-    
     print_user_variables                                                # Print USer Variables
     print_functions                                                     # List Functions of SADMIN
     print_bash_functions                                                # List Bash Shell Only Func,
     print_start_stop                                                    # Help Start/Stop Function
     print_sadmin_cfg                                                    # List Sadmin Cfg File Var.
-    print_client_directory                                              # List Client Dir. Var. 
-    print_server_directory                                              # List Server Dir. Var. 
+    print_directory                                                     # List Client Dir. Var. 
     print_file_variable                                                 # List Files Var. of SADMIN
     print_command_path                                                  # List Command Path
     if [ "$SADM_HOST_TYPE" = "S" ] ; then print_db_variables ;fi        # On SADM Server List DB Var.

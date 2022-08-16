@@ -6,20 +6,20 @@
 #  Synopsis:  Screen Oriented functions - Library of screen related functions.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# 2016_07_07    v1.0 Initial Version
-# 2017_09_01    v1.1 Added Display of SADM Release Number on second line of menu
-# 2017_10_09    v1.2 Change Menu Heading & Menu item display
-# 2018_05_14    v1.3 Fix Display Problem under MacOS
-# 2018_09_20    v1.4 Show SADM Version instead of Release No.
-# 2019_02_25 Change: v1.5 Code revamp and new menu design.
-# 2019_03_03 Change: v1.6 Added color possibilities and cursor control to library.
-# 2019_03_17 Update: v1.7 Add time in menu heading.
-# 2019_04_07 Update: v1.8 Use Color constant variable now available from standard SADMIN Shell Libr.
-# 2019_11_11 Update: v1.9 Add function 'sadm_pager' to display a file and navigating into it.
-# 2019_11_12 Update: v2.0 Add comments and minor corrections.
-# 2019_11_18 Update: v2.1 Bug corrections and change heading colors.
-# 2019_11_22 Update: v2.2 Change Menu color to fit with white and black background color.
-# 2021_05_10 lib: v2.3 Version no. in 'sadm_display_heading' now align with first line.
+# 2016_07_07 lib v1.0 Initial Version
+# 2017_09_01 lib v1.1 Added Display of SADM Release Number on second line of menu
+# 2017_10_09 lib v1.2 Change Menu Heading & Menu item display
+# 2018_05_14 lib v1.3 Fix Display Problem under MacOS
+# 2018_09_20 lib v1.4 Show SADM Version instead of Release No.
+# 2019_02_25 lib v1.5 Code revamp and new menu design.
+# 2019_03_03 lib v1.6 Added color possibilities and cursor control to library.
+# 2019_03_17 lib v1.7 Add time in menu heading.
+# 2019_04_07 lib v1.8 Use Color constant variable now available from standard SADMIN Shell Libr.
+# 2019_11_11 lib v1.9 Add function 'sadm_pager' to display a file and navigating into it.
+# 2019_11_12 lib v2.0 Add comments and minor corrections.
+# 2019_11_18 lib v2.1 Bug corrections and change heading colors.
+# 2019_11_22 lib v2.2 Change Menu color to fit with white and black background color.
+# 2021_05_10 lib v2.3 Version no. in 'sadm_display_heading' now align with first line.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
