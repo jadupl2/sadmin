@@ -8,16 +8,16 @@
 #   Requires :  sh
 #===================================================================================================
 # Change Log
-# 2016_01_04 v1.1 Initial Version
-# 2017_02_02 v1.2 Initial Working Version
-# 2018_06_03 v1.3 Changes made to output format
-# 2018_06_21 v1.4 Added comments
-# 2018_07_19 v1.5 Added Scripts Error and Scripts Running in the Output (Same as Web Interface)
-# 2018_07_20 Fix: v1.6 Wasn't Deleting work file at the end
-# 2019_03_17 Fix: v1.7 Wasn't reporting error coming from result code history (rch) file.
-# 2019_04_25 Update: v1.8 Was showing 'Nothing to report' althought there was info displayed.
-# 2019_06_07 Update: v1.9 Include the alarm type in the screen output.
-# 2020_04_08 mon: v2.0 Correct alignment error.
+# 2016_01_04 cmdline v1.1 Initial Version
+# 2017_02_02 cmdline v1.2 Initial Working Version
+# 2018_06_03 cmdline v1.3 Changes made to output format
+# 2018_06_21 cmdline v1.4 Added comments
+# 2018_07_19 cmdline v1.5 Added Scripts Error and Scripts Running in the Output (Same as Web Interface)
+# 2018_07_20 cmdline v1.6 Wasn't Deleting work file at the end
+# 2019_03_17 cmdline v1.7 Wasn't reporting error coming from result code history (rch) file.
+# 2019_04_25 cmdline v1.8 Was showing 'Nothing to report' althought there was info displayed.
+# 2019_06_07 cmdline v1.9 Include the alarm type in the screen output.
+# 2020_04_08 cmdline v2.0 Correct alignment error.
 #
 #===================================================================================================
 use English;
