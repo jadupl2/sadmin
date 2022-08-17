@@ -6,8 +6,8 @@
 #   Version     :   1.0
 #   Date        :   4 January 2018
 #   Requires    :   sh and SADM Library
-#   Description :   Run from this script take a backup of all or selected (sadmin) database.
-#                   Backup are created in the choosen directory (BACKUP_DIR)
+#   Description :   Take a backup of all (Default) or selected (sadmin) database.
+#                   Backup are created in the chosen directory (BACKUP_DIR)
 #                   
 #
 #   Copyright (C) 2016-2018 Jacques Duplessis <sadmlinux@gmail.com> - http://sadmin.ca
@@ -25,21 +25,21 @@
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
 #
-# 2018_01_04    V1.0 Initial Backup MySQL Database Script
-#               V1.1 Test Bug Corrections
-# 2018_01_06    V1.2 Added Cleanup Function to Purge files based on nb. of files user wants to keep
-# 2018_01_07    V1.3 Added directory latest (always contain last backup) & Display Paramaters to users
-# 2018_01_08    V1.4 Global Restructure and variable naming
-# 2018_01_10    V1.5 Default to backup ALL MySQL Databases present, except the one specified & 
-#                   can compress backup.
-# 2018_06_03    V1.6 Small Ameliorations and corrections
-# 2018_06_11    V1.7 Change name to sadm_backupsd.sh
-# 2018_06_19    V1.8 Default option is to Compress Backup - Add -u to do uncompressed backup
-# 2018_07_14    v1.9 Switch to Bash Shell instead of sh (Causing Problem with Dash on Debian/Ubuntu)
-# 2018_08_19    v2.0 Add '-b' to specify backup directory, enhance log verbose. 
-# 2018_09_16 v2.1 Insert Alert Group Default
-# 2020_04_01 Update: v2.2 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-# 2021_05_26 backup: v2.3 Added command line option option [-b backup_dir] [-n dbname].
+# 2018_01_04 backup v1.0 Initial Backup MySQL Database Script
+# 2018_01_05 backup v1.1 Test Bug Corrections
+# 2018_01_06 backup v1.2 Added Cleanup Function to Purge files based on nb. of files user wants to keep
+# 2018_01_07 backup v1.3 Added directory latest (always contain last backup) & Display Paramaters to users
+# 2018_01_08 backup v1.4 Global Restructure and variable naming
+# 2018_01_10 backup v1.5 Default to backup ALL MySQL Databases present, except the one specified.
+# 2018_06_03 backup v1.6 Small Ameliorations and corrections
+# 2018_06_11 backup v1.7 Change name to sadm_backupsd.sh
+# 2018_06_19 backup v1.8 Default option is to Compress Backup - Add -u to do uncompressed backup
+# 2018_07_14 backup v1.9 Switch to Bash Shell instead of sh (Causing Problem with Dash on Debian/Ubuntu)
+# 2018_08_19 backup v2.0 Add '-b' to specify backup directory, enhance log verbose. 
+# 2018_09_16 backup v2.1 Insert Alert Group Default
+# 2020_04_01 backup v2.2 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2021_05_26 backup v2.3 Added command line option option [-b backup_dir] [-n dbname].
+#@2022_08_17 backup v2.4 Updated with SADMIN section 1.52
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -48,19 +48,17 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.50
+# SADMIN CODE SECTION 1.52
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
 
 # MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    
-    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null 
-         if [ $? -eq 0 ]                                   # Found SADMIN in /etc/env.
-            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                 printf "'SADMIN' environment variable temporarily set to ${SADMIN}.\n"
-            else exit 1                                    # No SADMIN Env. Var. Exit
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                    # No SADMIN Env. Var. Exit
          fi
 fi 
 
@@ -70,40 +68,42 @@ export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.3'                                      # Script Version
+export SADM_VER='2.4'                                      # Script version number
+export SADM_PDESC="Take a backup of all (Default) or selected (sadmin) database."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy ?
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. LockFile
-export SADM_USE_RCH="Y"                                    # Update RCH HistoryFile 
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
+. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
-# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Server
 # ---------------------------------------------------------------------------------------
-
-
 
 
 
@@ -153,6 +153,8 @@ export YEARLY_BACKUP_DATE=31                                            # Yearly
 show_usage()
 {
     printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
+    printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
     printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
     printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
     printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
@@ -172,8 +174,8 @@ backup_setup()
     
     which mysqldump >/dev/null 2>&1                                     # See if mysqldump available
     if [ $? -ne 0 ]                                                     # If Can't be found 
-        then sadm_write "The 'mysqldump' command can't be found.\n"     # Advise User
-             sadm_write "The Backup cannot be started.\n"               # No Backup can be performed
+        then sadm_write_err "The 'mysqldump' command can't be found."   # Advise User
+             sadm_write_err "The Backup cannot be started."             # No Backup can be performed
              return 1                                                   # Return Error to Caller
         else                                                            # If mysqldump was found
             MYSQLDUMP=`which mysqldump`                                 # Save mysqldump Full Path
@@ -232,8 +234,8 @@ backup_setup()
     if [ "$BACKUP_NAME" != 'all' ]                                      # If Backup one Database
         then grep -i "$BACKUP_NAME" $SADM_TMP_FILE2 > /dev/null 2>&1    # Grep for DB Name in DBList
              if [ $? -ne 0 ]                                            # If DB wasn't found 
-                then sadm_write "The Database $BACKUP_NAME doesn't exist in Database.\n" 
-                     sadm_write "The valid Database name are : \n"     # SHow user List valid DB
+                then sadm_write_err "The Database $BACKUP_NAME doesn't exist in Database.\n" 
+                     sadm_write_err "The valid Database name are : \n"  # SHow user List valid DB
                      while read dbname                                  # Read DB List one by one
                         do
                         sadm_write "${dbname}\n"                        # Display DB Name
@@ -355,7 +357,7 @@ backup_db()
     sadm_write "Running mysqldump ...\n"                                # Inform User
     $MYSQLDUMP $CREDENTIAL $SADM_DBNAME > $BFILE 2>&1                   # Run the Database Backup
     if [ $? -ne 0 ]                                                     # If Can't be found 
-        then sadm_write "[ERROR] The 'mysqldump' command failed \n"     # Advise User
+        then sadm_write_err "[ERROR] The 'mysqldump' command failed \n" # Advise User
              return 1                                                   # Return Error to Caller
         else sadm_write "[SUCCESS] Backup Succeeded \n"                 # Advise User
              rm -f ${LATEST_DIR}/${CURRENT_DB}*                         # Remove Last DB Backup
@@ -467,24 +469,6 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-
-    # If you want this script to be run only by root user, uncomment the lines below.
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root
-        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
-             sadm_writelog "Try 'sudo ${0##*/}'."                       # Suggest using sudo
-             sadm_write "Process aborted.\n"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
-
-    # If you want this script to be run only on the SADMIN server, uncomment the lines below.
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-        then sadm_write "Database backup only run on the SADMIN server (${SADM_SERVER}).\n"
-             sadm_write "Process aborted.\n"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
