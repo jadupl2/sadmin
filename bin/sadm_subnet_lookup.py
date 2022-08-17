@@ -33,6 +33,7 @@
 #@2021_06_02 server v3.4 Added command line options and major code review
 #@2022_06_10 server v3.5 Update to use the new SADMIN Python Library v2
 #@2022_07_27 server v3.6 Bug fix when ping were reported when it wasn't.
+#@2022_08_17 nolog  v3.7 Remove debug info & update to use the new SADMIN Python Library v2.2
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -57,11 +58,12 @@ netdict = {}                                                            # Networ
 
 
 # --------------------------------------------------------------------------------------------------
-# SADMIN PYTHON FRAMEWORK SECTION 2.0
-# To use SADMIN tools, this section MUST be present near the top of your code.
+# SADMIN CODE SECTION v2.2
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
 # --------------------------------------------------------------------------------------------------
 try:
-    SADM = os.environ.get('SADMIN')                                     # Getting SADMIN Root Dir.
+    SADM = os.environ.get('SADMIN')                                     # Get SADMIN Env. Var. Dir.
     sys.path.insert(0, os.path.join(SADM, 'lib'))                       # Add lib dir to sys.path
     import sadmlib2_std as sa                                           # Load SADMIN Python Library
 except ImportError as e:                                                # If Error importing SADMIN
@@ -69,20 +71,20 @@ except ImportError as e:                                                # If Err
     sys.exit(1)                                                         # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver = "3.6"                                                            # Program version
-pdesc = "Produce Web network page that list IP, name and mac usage for subnet you specified."
-phostname = sa.get_hostname()                                           # Get current `hostname -s`
-pdb_conn = None                                                         # Database connector
-pdb_cur = None                                                          # Database cursor
-pdebug = 0                                                              # Debug level from 0 to 9
-pexit_code = 0                                                          # Script default exit code
+pver        = "3.7"                                                     # Program version
+pdesc       = "Produce Web network page that list IP, name and mac usage for subnet you specified."
+phostname   = sa.get_hostname()                                         # Get current `hostname -s`
+pdb_conn    = None                                                      # Database connector
+pdb_cur     = None                                                      # Database cursor
+pdebug      = 0                                                         # Debug level from 0 to 9
+pexit_code  = 0                                                         # Script default exit code
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
-# Uncomment anyone of them to influence execution of SADMIN standard library.
+# Uncomment anyone to change them and influence execution of SADMIN standard library.
 #
-sa.proot_only = True             # Pgm run by root only ?
+sa.proot_only        = True       # Pgm run by root only ?
 sa.psadm_server_only = True      # Run only on SADMIN server ?
-sa.db_used          = True       # Open/Use Database(True) or Don't Need DB(False)
+sa.db_used           = True       # Open/Use Database(True) or Don't Need DB(False)
 #sa.db_silent        = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
@@ -90,16 +92,17 @@ sa.db_used          = True       # Open/Use Database(True) or Don't Need DB(Fals
 #sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
 sa.max_logline      = 600        # Max. lines to keep in log (0=No trim) after execution.
 #sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
-sa.log_type         = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
+#sa.log_type         = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
 #sa.log_append       = False      # Append Existing Log(True) or Create New One(False)
 #sa.log_header       = True       # Show/Generate Header in script log (.log)
 #sa.log_footer       = True       # Show/Generate Footer in script log (.log)
 #sa.multiple_exec    = "Y"        # Allow running multiple copy at same time ?
-#sa.rch_used         = True       # Generate entry in Result Code History (.rch)
+#sa.use_rch         = True       # Generate entry in Result Code History (.rch)
 #sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
-cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
+sa.cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
 #
 # ==================================================================================================
+
 
 
 
@@ -497,13 +500,11 @@ def cmd_options(argv):
 def main(argv):
     global pdb_conn, pdb_cur                                            # DB Connection & Cursor
     pdebug = cmd_options(argv)                                          # Analyse cmdline options
-    print ("1pdebug = ",pdebug)
 
     pexit_code = 0                                                      # Pgm Exit Code Default
     sa.start(pver, pdesc)                                               # Initialize SADMIN env.
-    print ("2pdebug = ",pdebug)
     if sa.get_fqdn() == sa.sadm_server and sa.db_used :                 # On SADMIN srv & usedb True
-        (pexit_code, pdb_conn, pdb_cur) = sa.db_connect()               # Connect to SADMIN Database
+        (pexit_code, pdb_conn, pdb_cur) = sa.db_connect('sadmin')       # Connect to SADMIN Database
         if pexit_code == 0:                                             # If Connection to DB is OK
            pexit_code = main_process(pdb_conn, pdb_cur)                 # Use Subnet in sadmin.cfg
            sa.db_close(pdb_conn, pdb_cur)                               # Close connection to DB
