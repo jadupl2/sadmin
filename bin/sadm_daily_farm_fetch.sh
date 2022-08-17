@@ -39,21 +39,22 @@
 # 2018_07_16    v3.1 Remove verbose when doing rsync
 # 2018_08_24    v3.2 If couldn't get /etc/environment from client, change Email format.
 # 2018_09_16    v3.3 Added Default Alert Group
-# 2019_02_27 Change: v3.4 Change error message when ping to system don't work
-# 2019_05_07 Update: v3.5 Add 'W 5' ping option, should produce less false alert
-# 2020_02_25 Update: v3.6 Fix intermittent problem getting SADMIN value from /etc/environment.
-# 2020_03_21 Update: v3.7 Show Error Total only at the end of each system processed.
-# 2020_04_05 Update: v3.8 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
-# 2020_04_21 Update: v3.9 Minor Error Message Alignment,
-# 2020_04_24 Update: v4.0 Show rsync status & solve problem if duplicate entry in /etc/environment.
-# 2020_05_06 Update: v4.1 Modification to log structure
-# 2020_05_23 Update: v4.2 No longer report an error, if a system is rebooting because of O/S update.
-# 2020_10_29 Fix: v4.3 If comma was used in server description, it cause delimiter problem.
-# 2020_11_05 Update: v4.4 Change msg written to log & no alert while o/s update is running.
-# 2020_12_12 Update: v4.5 Add and use SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
-# 2021_02_13 Minor: v4.5 Change for log appearance.
-# 2021_06_03 nolog: v4.6 Update SADMIN section and minor code update
-#@2022_05_24 update: v4.7 Updated to use the library 'check_lock_file' function.
+# 2019_02_27 server v3.4 Change error message when ping to system don't work
+# 2019_05_07 server v3.5 Add 'W 5' ping option, should produce less false alert
+# 2020_02_25 server v3.6 Fix intermittent problem getting SADMIN value from /etc/environment.
+# 2020_03_21 server v3.7 Show Error Total only at the end of each system processed.
+# 2020_04_05 server v3.8 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
+# 2020_04_21 server v3.9 Minor Error Message Alignment,
+# 2020_04_24 server v4.0 Show rsync status & solve problem if duplicate entry in /etc/environment.
+# 2020_05_06 server v4.1 Modification to log structure
+# 2020_05_23 server v4.2 No longer report an error, if a system is rebooting because of O/S update.
+# 2020_10_29 server v4.3 If comma was used in server description, it cause delimiter problem.
+# 2020_11_05 server v4.4 Change msg written to log & no alert while o/s update is running.
+# 2020_12_12 server v4.5 Add and use SADM_PID_TIMEOUT and SADM_LOCK_TIMEOUT Variables.
+# 2021_02_13 server v4.5 Change for log appearance.
+# 2021_06_03 nolog  v4.6 Update SADMIN section and minor code update
+#@2022_05_24 server v4.7 Updated to use the library 'check_lock_file()' function.
+#@2022_08_17 server v4.8 Update SADMIN section 2.2 and use error log when problem encountered.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -62,19 +63,17 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.50
+# SADMIN CODE SECTION 1.52
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
 
 # MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    
-    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null 
-         if [ $? -eq 0 ]                                   # Found SADMIN in /etc/env.
-            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                 printf "'SADMIN' environment variable temporarily set to ${SADMIN}.\n"
-            else exit 1                                    # No SADMIN Env. Var. Exit
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                    # No SADMIN Env. Var. Exit
          fi
 fi 
 
@@ -84,39 +83,42 @@ export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.7'                                      # Script Version
+export SADM_VER='4.8'                                      # Script version number
+export SADM_PDESC="Collect hardware/software/performance info data from all active servers"
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy ?
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. LockFile
-export SADM_USE_RCH="Y"                                    # Update RCH HistoryFile 
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
+. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
-# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Server
 # ---------------------------------------------------------------------------------------
-
 
 
 
@@ -137,6 +139,7 @@ DEBUG_LEVEL=0                                    ; export DEBUG_LEVEL   # 0=NoDe
 show_usage()
 {
     printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
     printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
     printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
     printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
@@ -190,17 +193,17 @@ process_servers()
         # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR TO USER AND CONTINUE WITH NEXT SYSTEM.
         if ! host $fqdn_server >/dev/null 2>&1
             then SMSG="${SADM_ERROR} Can't process '$fqdn_server', hostname can't be resolved."
-                 sadm_write "${SMSG}\n"                                 # Advise user
+                 sadm_write_err "${SMSG}\n"                                 # Advise user
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
-                 sadm_write "Error Count is now at $ERROR_COUNT \n"
+                 sadm_write_err "Error Count is now at $ERROR_COUNT \n"
                  continue                                               # Continue with next Server
         fi
 
         # Check if System is Locked.
         sadm_check_system_lock "$server_name"                              # Check lock file status
         if [ $? -eq 1 ] 
-            then sadm_write_log "System $server_name is currently lock."
-                 sadm_write_log "Continue with next system."
+            then sadm_write_err "System $server_name is currently lock."
+                 sadm_write_err "Continue with next system."
                  continue
         fi                                                              # System Lock, Nxt Server
 
@@ -213,17 +216,17 @@ process_servers()
 
         if [ $RC -ne 0 ]                                                # If SSH didn't worked
            then if [ "$server_sporadic" = "1" ]                # If Error on Sporadic Host
-                   then sadm_write "${SADM_WARNING}  Can't SSH to ${fqdn_server} (Sporadic System).\n"
+                   then sadm_write_err "${SADM_WARNING}  Can't SSH to ${fqdn_server} (Sporadic System).\n"
                      continue
                 fi 
                 if [ "$server_monitor" = "0" ]                 # If Error & Monitor is OFF
-                   then sadm_write "${SADM_WARNING} Can't SSH to ${fqdn_server} (Monitoring is OFF).\n"
+                   then sadm_write_err "${SADM_WARNING} Can't SSH to ${fqdn_server} (Monitoring is OFF).\n"
                         continue
                 fi 
                 if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_write "Return Code is $RC \n" ;fi 
-                sadm_write "$SADM_ERROR Can't SSH to ${fqdn_server} - Unable to process system.\n"
+                sadm_write_err "$SADM_ERROR Can't SSH to ${fqdn_server} - Unable to process system.\n"
                 ERROR_COUNT=$(($ERROR_COUNT+1))
-                sadm_write "Error Count is now at $ERROR_COUNT \n"
+                sadm_write_err "Error Count is now at $ERROR_COUNT \n"
                 continue
         fi                                                              # OK SSH Worked the 1st time
 
@@ -244,19 +247,19 @@ process_servers()
             then RDIR=`grep "SADMIN=" $WDIR/environment |sed 's/export //g' |awk -F= '{print $2}'|tail -1`
                  if [ "$RDIR" != "" ]                                   # No Remote Dir. Set
                     then sadm_writelog "SADMIN installed in ${RDIR} on ${server_name}."
-                    else sadm_writelog "$SADM_WARNING Couldn't get /etc/environment."
+                    else sadm_write_err "$SADM_WARNING Couldn't get /etc/environment."
                          if [ "$server_sporadic" = "1" ]               # SSH don't work & Sporadic
                             then sadm_writelog "${server_name} is a sporadic system."
                             else ERROR_COUNT=$(($ERROR_COUNT+1))       # Add 1 to Error Count
-                                 sadm_writelog "Error Count is now at $ERROR_COUNT"
+                                 sadm_write_err "Error Count is now at $ERROR_COUNT"
                          fi
                          sadm_writelog "Continuing with next system."   # Advise we are skipping srv
                          continue                                       # Go process next system
                  fi 
-            else sadm_writelog "$SADM_ERROR Couldn't get /etc/environment on ${server_name}."
+            else sadm_write_err "$SADM_ERROR Couldn't get /etc/environment on ${server_name}."
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Add 1 to Error Count
-                 sadm_writelog "Error Count is now at $ERROR_COUNT "
-                 sadm_writelog "Continuing with next system."           # Advise we are skipping srv
+                 sadm_write_err "Error Count is now at $ERROR_COUNT "
+                 sadm_write_err "Continuing with next system."           # Advise we are skipping srv
                  continue                                               # Go process next system
         fi
     
@@ -280,9 +283,9 @@ process_servers()
         fi
         RC=$?
         if [ $RC -ne 0 ]
-            then sadm_writelog "$SADM_ERROR ($RC) ${rcmd}"
+            then sadm_write_err "$SADM_ERROR ($RC) ${rcmd}"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
-                 sadm_writelog "Error Count is now at $ERROR_COUNT"
+                 sadm_write_err "Error Count is now at $ERROR_COUNT"
             else sadm_writelog "${SADM_OK} ${rcmd}"
         fi
  
@@ -305,7 +308,7 @@ process_servers()
         fi
         RC=$?
         if [ $RC -ne 0 ]
-            then sadm_writelog "$SADM_ERROR ($RC) ${rcmd}"
+            then sadm_write_err "$SADM_ERROR ($RC) ${rcmd}"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
             else sadm_writelog "${SADM_OK} ${rcmd}" 
         fi
@@ -361,26 +364,7 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options    
     sadm_start                                                          # Init Env Dir & RC/Log File
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ; fi                    # Exit if Problem 
-
-    # If you want this script to be run only by root user, uncomment the lines below.
-    if [ $(id -u) -ne 0 ]                                               # If Cur. user is not root
-        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
-             sadm_writelog "Try 'sudo ${0##*/}'."                       # Suggest using sudo
-             sadm_write "Process aborted.\n"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
-
-    # If you want this script to be run only on the SADMIN server, uncomment the lines below.
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-        then sadm_write "Script can only be run on (${SADM_SERVER}), process aborted.\n"
-             sadm_write "Process aborted\n"                             # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
     process_servers                                                     # Collect Files from Servers
     SADM_EXIT_CODE=$?                                                   # Return Code = Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
-    
