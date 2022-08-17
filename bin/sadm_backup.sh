@@ -31,75 +31,71 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 #
-# 2017_01_02  V1.2 Exclude *.iso added to tar command
-# 2017_10_02  V2.1 Added /wsadmin in the backup
-# 2017_12_27  V2.2 Adapt to new Library and Take NFS Server From SADMIN Config file Now
-# 2018_01_02  V2.3 Small Corrections and added comments
-# 2018_02_09  V2.4 Begin Testing new version with daily,weekly,monthly and yearly backup
-# 2018_02_09  V2.5 First Production Version
-# 2018_02_10  V2.6 Switch to bash instead of sh (Problem with Dash and array)
-#             V2.7 Create Backup Link in the latest directory
-#             V2.8 Add Exclude File Variable
-# 2018_02_11  V2.9 Fix Bug Creating Unnecessary Server Directory on local mount point
-# 2018_02_14  V3.0 Removal of old backup according to policy are now working
-# 2018_02_16  V3.1 Minor Esthetics corrections
-# 2018_02_18  V3.2 If tar exit with error 1, consider that it's not an error (nmon,log,rch,...).
-#                  This exit code means that some files were changed while being archived and so
-#                  the resulting archive does not contain the exact copy of the file set.
-# 2018_05_15  V3.3 Added LOG_HEADER, LOG_FOOTER, USE_RCH Variable to add flexibility to log control
-# 2018_05_25  V3.4 Fix Problem with Archive Directory Name
-# 2018_05_28  V3.5 Group Backup by Date in each server directories - Easier to Search and Manage.
-# 2018_05_28  V3.6 Backup Parameters now come from sadmin.cfg, no need to modify script anymore.
-# 2018_05_31  V3.7 List of files and directories to backup and to exclude from it come from a
-#                  user defined files respectively name 'backup_list.txt' and 'backup_exclude.txt'
-#                  in $SADMIN/cfg Directory.
-# 2018_06_02  V3.8 Add -v switch to display script version & Some minor corrections
-# 2018_06_18  v3.9 Backup compression is ON by default now (-n if don't want compression)
-# 2018_09_16  v3.10 Insert Alert Group Default
-# 2018_10_02  v3.11 Advise User & Trap Error when mounting NFS Mount point.
-# 2019_01_10 Changed: v3.12 Changed: Name of Backup List and Exclude file can be change.
-# 2019_01_11 Fixes: v3.13 Fix C/R problem after using the Web UI to change backup & exclude list.
-# 2019_02_01 Improve: v3.14 Reduce Output when no debug is activated.
-# 2019_07_18 Improve: v3.15 Modified to backup MacOS system onto a NFS drive.
-# 2020_04_01 Update: v3.16 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-# 2020_04_06 Update: v3.17 Don't show anymore directories that are skip because they don't exist.
-# 2020_04_08 Fix: v3.18 Fix 'chown' error.
-# 2020_04_09 Update: v3.19 Minor logging adjustment.
-# 2020_04_10 Update: v3.20 If backup_list.txt contains $ at beginning of line, it Var. is resolved
-# 2020_04_11 Update: v3.21 Log output changes.
-# 2020_05_18 Update: v3.22 Backup Dir. Structure changed, now group by System instead of backup type
-# 2020_05_24 Update: v3.23 Automatically move backup from old dir. structure to the new.
-# 2020_07_13 Fix: v3.24 New System Main Backup Directory was not created with right permission.
-# 2020_09_23 Update: v3.25 Modification to log recording.
-# 2020_10_26 Fix: v3.26 Suppress 'chmod' error message on backup directory.
-# 2021_01_05 Update: v3.27 List backup directory content at the end of backup.
-# 2021_03_29 Update: v3.28 Exclude list is shown before each backup (tar) begin.
-# 2021_03_29 Update: v3.29 Log of each backup (tar) recorded and place in backup directory.
-# 2021_05_24 backup: v3.30 Optimize code & update command line options [-v] & [-h]. 
-# 2021_06_04 backup: v3.31 Fix sporadic problem with exclude list. 
-# 2021_06_05 backup: v3.32 Include backup & system information in each backup log.
-#@2021_05_14 backup: v3.33 Now the log include the size of each day of backup.
-#@2021_05_14 backup: v3.34 Error message written to log and also to error log.
+# 2017_01_02 backup V1.2 Exclude *.iso added to tar command
+# 2017_10_02 backup V2.1 Added /wsadmin in the backup
+# 2017_12_27 backup V2.2 Adapt to new Library and Take NFS Server From SADMIN Config file Now
+# 2018_01_02 backup V2.3 Small Corrections and added comments
+# 2018_02_09 backup V2.4 Begin Testing new version with daily,weekly,monthly and yearly backup
+# 2018_02_09 backup V2.5 First Production Version
+# 2018_02_10 backup V2.6 Switch to bash instead of sh (Problem with Dash and array)
+# 2018_02_10 backup V2.7 Create Backup Link in the latest directory
+# 2018_02_10 backup V2.8 Add Exclude File Variable
+# 2018_02_11 backup V2.9 Fix Bug Creating Unnecessary Server Directory on local mount point
+# 2018_02_14 backup V3.0 Removal of old backup according to policy are now working
+# 2018_02_16 backup V3.1 Minor Esthetics corrections
+# 2018_02_18 backup V3.2 If tar exit with error 1, consider that it's not an error (nmon,log,rch,...).
+# 2018_05_15 backup V3.3 Added LOG_HEADER, LOG_FOOTER, USE_RCH Variable to add flexibility to log control
+# 2018_05_25 backup V3.4 Fix Problem with Archive Directory Name
+# 2018_05_28 backup V3.5 Group Backup by Date in each server directories - Easier to Search and Manage.
+# 2018_05_28 backup V3.6 Backup Parameters now come from sadmin.cfg, no need to modify script anymore.
+# 2018_05_31 backup V3.7 List of files and directories to backup and to exclude.
+# 2018_06_02 backup V3.8 Add -v switch to display script version & Some minor corrections
+# 2018_06_18 backup v3.9 Backup compression is ON by default now (-n if don't want compression)
+# 2018_09_16 backup v3.10 Insert Alert Group Default
+# 2018_10_02 backup v3.11 Advise User & Trap Error when mounting NFS Mount point.
+# 2019_01_10 backup v3.12 Changed: Name of Backup List and Exclude file can be change.
+# 2019_01_11 backup v3.13 Fix C/R problem after using the Web UI to change backup & exclude list.
+# 2019_02_01 backup v3.14 Reduce Output when no debug is activated.
+# 2019_07_18 backup v3.15 Modified to backup MacOS system onto a NFS drive.
+# 2020_04_01 backup v3.16 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2020_04_06 backup v3.17 Don't show anymore directories that are skip because they don't exist.
+# 2020_04_08 backup v3.18 Fix 'chown' error.
+# 2020_04_09 backup v3.19 Minor logging adjustment.
+# 2020_04_10 backup v3.20 If backup_list.txt contains $ at beginning of line, it Var. is resolved
+# 2020_04_11 backup v3.21 Log output changes.
+# 2020_05_18 backup v3.22 Backup Dir. Structure changed, now group by System instead of backup type
+# 2020_05_24 backup v3.23 Automatically move backup from old dir. structure to the new.
+# 2020_07_13 backup v3.24 New System Main Backup Directory was not created with right permission.
+# 2020_09_23 backup v3.25 Modification to log recording.
+# 2020_10_26 backup v3.26 Suppress 'chmod' error message on backup directory.
+# 2021_01_05 backup v3.27 List backup directory content at the end of backup.
+# 2021_03_29 backup v3.28 Exclude list is shown before each backup (tar) begin.
+# 2021_03_29 backup v3.29 Log of each backup (tar) recorded and place in backup directory.
+# 2021_05_24 backup v3.30 Optimize code & update command line options [-v] & [-h]. 
+# 2021_06_04 backup v3.31 Fix sporadic problem with exclude list. 
+# 2021_06_05 backup v3.32 Include backup & system information in each backup log.
+#@2021_05_14 backup v3.33 Now the log include the size of each day of backup.
+#@2022_08_14 backup v3.34 Error message written to log and also to error log.
+#@2022_08_17 backup v3.35 Include new SADMIN section 1.52
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
 
+
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.50
+# SADMIN CODE SECTION 1.52
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
 
 # MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    
-    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null 
-         if [ $? -eq 0 ]                                   # Found SADMIN in /etc/env.
-            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                 printf "'SADMIN' environment variable temporarily set to ${SADMIN}.\n"
-            else exit 1                                    # No SADMIN Env. Var. Exit
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                    # No SADMIN Env. Var. Exit
          fi
 fi 
 
@@ -109,42 +105,42 @@ export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.34'                                     # Script Version
+export SADM_VER='3.35'                                     # Script version number
+export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy ?
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. LockFile
-export SADM_USE_RCH="Y"                                    # Update RCH HistoryFile 
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
+. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
-# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-export SADM_MAX_LOGLINE=0                                   # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Server
 # ---------------------------------------------------------------------------------------
-
-
-
-
 
 
 
@@ -200,6 +196,8 @@ WEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" 
 MTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" "September"
         "October" "November" "December")
 
+
+#
 # --------------------------------------------------------------------------------------------------
 # Show Script command line option
 # --------------------------------------------------------------------------------------------------
@@ -534,8 +532,8 @@ create_backup()
         fi
         
         if [ $RC -ne 0 ]                                                # If Error while Backup
-            then MESS="[ ERROR ] ${RC} while creating $BACK_FILE"         # Advise Backup Error
-                 sadm_writelog "${MESS}"                                # Advise User - Log Info
+            then MESS="[ ERROR ] ${RC} while creating $BACK_FILE"       # Advise Backup Error
+                 sadm_write_err "${MESS}"                               # Advise User - Log Info
                  RC=1                                                   # Make Sure Return Code is 0
             else MESS="[ SUCCESS ] Creating Backup $BACK_FILE"            # Advise Backup Success
                  sadm_writelog "${MESS}"                                # Advise User - Log Info
@@ -552,7 +550,7 @@ create_backup()
     sadm_writelog " "                                                   # Insert Blank Line
     sadm_write "${SADM_TEN_DASH}\n"                                     # Line of 10 Dash in Log
     sadm_writelog " "                                                   # Insert Blank Line
-    sadm_write "Total error(s) while creating backup: ${TOTAL_ERROR}.\n"
+    sadm_write_err "Total error(s) while creating backup: ${TOTAL_ERROR}.\n"
 
     # List Backup Directory
     sadm_write "\n"
@@ -718,12 +716,6 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options    
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_write "Script can only be run by the 'root' user, process aborted.\n"
-             sadm_write "Try sudo %s" "${0##*/}\n"                      # Suggest using sudo
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
     mount_nfs                                                           # Mount NFS Dir.
     if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
     backup_setup                                                        # Create Necessary Dir.
@@ -732,6 +724,6 @@ function cmd_options()
     SADM_EXIT_CODE=$?                                                   # Save Backup Result Code
     clean_backup_dir                                                    # Delete Old Backup
     if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Cleaning up
-    umount_nfs                                                          # Umounting NFS Drive
+    umount_nfs                                                          # Unmounting NFS Drive
     sadm_stop $SADM_EXIT_CODE                                           # Close & Trim rch,log,pid
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
