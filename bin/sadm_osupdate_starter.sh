@@ -2,11 +2,10 @@
 # ---------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_osupdate_starter.sh
-#   Synopsis :  Run the O/S update to selected remote system
+#   Synopsis :  Run the O/S update script on the selected remote system.
 #   Version  :  1.0
 #   Date     :  9 March 2015 
 #   Requires :  sh
-#   SCCS-Id. :  @(#) sadm_osupdate_starter.sh 1.0 2015/03/10
 # --------------------------------------------------------------------------------------------------
 #   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
@@ -52,13 +51,13 @@
 # 2020_12_02 Update: v4.1 Log is now in appending mode and can grow up to 5000 lines.
 # 2020_12_12 Update: v4.2 Use new LOCK_FILE & Add and use SADM_PID_TIMEOUT & SADM_LOCK_TIMEOUT Var.
 # 2021_02_13 Minor: v4.2 Change for log appearance.
-# 2021_03_05 Update: v4.3 Add a sleep time after update to give system to reboot & become available.
-# 2021_05_04 Update: v4.4 Don't sleep after updating a server if a reboot wasn't requested.
-# 2021_05_10 nolog: v4.5 Error message change "sadm_osupdate_farm.sh" to "sadm_osupdate_starter"
-# 2021_08_17 nolog: v4.6 Change to use the library lock file function. 
-#@2022_05_24 nolog: v4.7 Fix problem with lock file detection. 
-#@2022_06_21 Update: v4.8 Changes to use new functionalities SADMIN CODE SECTION 1.51
-#@2022_07_09 Update: v4.9 Added more verbosity to screen and log
+# 2021_03_05 osupdate v4.3 Add a sleep time after update to give system to reboot & become available.
+# 2021_05_04 osupdate v4.4 Don't sleep after updating a server if a reboot wasn't requested.
+# 2021_05_10 nolog    v4.5 Error message change "sadm_osupdate_farm.sh" to "sadm_osupdate_starter"
+# 2021_08_17 nolog    v4.6 Change to use the library lock file function. 
+#@2022_05_24 nolog    v4.7 Fix problem with lock file detection. 
+#@2022_06_21 osupdate v4.8 Changes to use new functionalities of SADMIN code section v1.52
+#@2022_07_09 osupdate v4.9 Added more verbosity to screen and log
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -69,7 +68,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.51
+# SADMIN CODE SECTION 1.52
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
@@ -89,16 +88,17 @@ export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.9'                                       # Script version number
-export SADM_PDESC="SADMIN template shell script"           # Script Optional Desc.(Not use if empty)
+export SADM_VER='4.9'                                      # Script version number
+export SADM_PDESC="Run the O/S update script on the selected remote system."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
 export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
@@ -106,14 +106,15 @@ export SADM_DEBUG=0                                        # Debug Level(0-9) 0=
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
-export SADM_ROOT_ONLY="Y"                                  # Run only by root ? - 1=Yes 0=No
-export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server?- 1=Yes 0=No
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
@@ -122,8 +123,8 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 export SADM_MAX_LOGLINE=5000                                 # Nb Lines to trim(0=NoTrim)
 export SADM_MAX_RCLINE=60                                    # Nb Lines to trim(0=NoTrim)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 # ---------------------------------------------------------------------------------------
+
 
 
 
@@ -139,17 +140,21 @@ export REBOOT_TIME=600
 
 
 
+
 # --------------------------------------------------------------------------------------------------
-#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# Show script command line options
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${BOLD}${SADM_PN} [ -d 0-9 ] [ -h ] [ -v ]   hostname${NORMAL}" 
-    printf "\n\t${BOLD}-d${NORMAL}   (Debug Level [0-9])"
-    printf "\n\t${BOLD}-h${NORMAL}   (Display this help message)"
-    printf "\n\t${BOLD}-v${NORMAL}   (Show Script Version Info)"
+    printf "\nUsage: %s%s%s%s [options]" "${BOLD}" "${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
+    printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
+    printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
+    printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
+    printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
     printf "\n\n" 
 }
+
 
 
 
@@ -181,7 +186,7 @@ update_server_db()
     # Execute SQL to Update Server O/S Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e "$SQL" >>$SADM_LOG 2>&1
     if [ $? -ne 0 ]                                                     # If Error while updating
-        then sadm_write "${SADM_ERROR} O/S update status changed to 'Failed' in Database. \n"
+        then sadm_write_err "${SADM_ERROR} O/S update status changed to 'Failed' in Database. \n"
              RCU=1                                                      # Set Error Code
         else sadm_write "${SADM_OK} O/S update status changed to 'Success' in Database.\n"
              RCU=0                                                      # Set Error Code = Success 
@@ -233,8 +238,8 @@ rcmd_osupdate()
         then if [ "$server_sporadic" = "1" ]
                  then    sadm_writelog "${SADM_WARNING} Sporadic system now offline."
                          return 0 
-                 else    sadm_writelog "${SADM_ERROR} Could not ping ${fqdn_server}."
-                         sadm_writelog "Update is not possible, process aborted."
+                 else    sadm_write_err "${SADM_ERROR} Could not ping ${fqdn_server}."
+                         sadm_write_err "Update is not possible, process aborted."
                          return 1 
              fi
         else sadm_writelog "${SADM_OK} Ping host $fqdn_server."
@@ -242,9 +247,9 @@ rcmd_osupdate()
 
     # If 'srv_update_auto' = 0 in Database for that server, it means no update allowed for server
     if [ "$server_update_auto" = "0" ]
-        then sadm_writelog "${SADM_WARNING} O/S Update for '${fqdn_server}' isn't activated."
-             sadm_writelog "No O/S Update will be performed."
-             sadm_writelog "Unless you check field 'Activate O/S Update Schedule' in the schedule."
+        then sadm_write_err "${SADM_WARNING} O/S Update for '${fqdn_server}' isn't activated."
+             sadm_write_err "No O/S Update will be performed."
+             sadm_write_err "Unless you check field 'Activate O/S Update Schedule' in the schedule."
              return 1
     fi 
 
@@ -252,8 +257,8 @@ rcmd_osupdate()
     pgm="${server_sadmin_dir}/bin/$USCRIPT"                         # Path To o/s update script
     response=$($SADM_SSH_CMD $fqdn_server "if [ -x $pgm ] ;then echo 'ok' ;else echo 'error' ;fi")
     if [ "$response" != "ok" ]
-        then sadm_writelog "${SADM_ERROR} '$pgm' don't exist or not executable on $fqdn_server."
-             sadm_writelog "No O/S Update will be perform."
+        then sadm_write_err "${SADM_ERROR} '$pgm' don't exist or not executable on $fqdn_server."
+             sadm_write_err "No O/S Update will be perform."
              return 1
         else sadm_writelog "${SADM_OK} '$pgm' exist & executable on $fqdn_server."
     fi 
@@ -368,11 +373,11 @@ function cmd_options()
              exit 1                                                     # Exit To O/S
         else ONE_SERVER=$1                                              # Save Server Name to Update
     fi 
-    SADM_PDESC="Operating system update of '$ONE_SERVER'"               # Desc of running program
+    SADM_PDESC="O/S update on '$ONE_SERVER'"                            # Desc of running program
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     rcmd_osupdate                                                       # Go Update Server
     SADM_EXIT_CODE=$?                                                   # Save Exit Code
-    sadm_unlock_system "${ONE_SERVER}"                                # Go remove the lock file
+    sadm_unlock_system "${ONE_SERVER}"                                  # Go remove the lock file
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
