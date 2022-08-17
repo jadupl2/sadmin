@@ -32,6 +32,7 @@
 #@2022_06_10 lib v4.19 Fix error message at end of execution when script wasn't running as 'root'.
 #@2022_06_13 lib v4.20 Add possibility use 'sendmail()' to send multiple attachments.
 #@2022_07_13 lib v4.21 If no file attached to email, subject was blank.
+#@2022_08_17 lib v4.22 Add possibility to connect to other database than 'sadmin' in db_connect().
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -67,7 +68,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.21"                                # This Library Version
+lib_ver             = "4.22"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -384,7 +385,7 @@ def trimfile(filename,nlines=500) :
 def load_config_file(cfg_file):
     
     """ 
-        Load Sadmin Configuration File (sadmin.cfg) in dictionnary.
+        Load Sadmin Configuration File (sadmin.cfg) in dictionary.
         
         Args:
             cfg_file (str)  :   Full path of the SADMIN configuration file.
@@ -1687,8 +1688,8 @@ def db_close(pdb_conn,pdb_cur):
             pdb_cur (obj)    :   Database cursor.
     
         Returns: (db_err)
-            db_err (int)    :   Return 0 when connected to database
-                                Return 1 when error connecting to database
+            db_err (int)    :   Return 0 mean database is closed.
+                                Return 1 when error closing connection with database.
     """    
     
     if lib_debug > 4 : 
@@ -2193,7 +2194,7 @@ def start(pver,pdesc) :
 
     # If database SADMIN is used.
     #if db_used :
-    #    (db_err,pdb_conn,pdb_cur) = db_connect() 
+    #    (db_err,pdb_conn,pdb_cur) = db_connect('sadmin') 
     #    if db_err != 0 :
     #        rcode = 1
     #else:
@@ -2278,7 +2279,7 @@ def load_alert_file():
 
 
 # --------------------------------------------------------------------------------------------------
-def db_connect():
+def db_connect(dbname):
     
     """ Open a connection to the Database (sadmin).
         
@@ -2309,10 +2310,11 @@ def db_connect():
 
     # Open a connection to Database
     try :
-        pdb_conn = pymysql.connect(host=sadm_dbhost,
+        pdb_conn = pymysql.connect(
+                    host=sadm_dbhost,
                     user=sadm_rw_dbuser,
                     password=sadm_rw_dbpwd,
-                    database=sadm_dbname,
+                    database=dbname,
                     cursorclass=pymysql.cursors.DictCursor)
     except (pymysql.err.OperationalError, pymysql.err.InternalError) as e : 
         if not db_silent :
