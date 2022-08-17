@@ -37,14 +37,14 @@
 # 2019_10_16 Update: v3.8 Don't update anymore the domain column in the Database (Change with CRUD)
 # 2020_01_13 Update: v3.9 'ReaR' backup version is now updated in DB with info collect on systems.
 # 2020_12_19 Fix: v3.10 Fix Typo error that cause a crash when updating server database.
-#@2021_05_14 Update: v3.11 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
-#@2021_05_30 Fix: v3.12 Enlarge column 'srv_model' & 'srv_kernel_version' column wasn't big enough
-#@2021_06_01 Update: v3.13 Bug fixes and Command line option -v, -h and -d are now functional. 
-#@2021_06_10 Update: v3.14 Enlarge column 'srv_uptime' from 20 to 25 Char 
-#@2021_06_11 Update: v3.15 Add 'srv_boot_date' that contain last boot date & Fix error message.
-#@2021_06_17 Fix: v3.16 Fix Duplicate column name 'srv_boot_date'
-#@2022_03_28 Update: v3.17 Give a warning instead of error if input file is not created yet.
-#@2022_06_10 Update: v3.18 Updated to use the new SADMIN Python Library v2
+#@2021_05_14 server v3.11 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
+#@2021_05_30 server v3.12 Enlarge column 'srv_model' & 'srv_kernel_version' column wasn't big enough
+#@2021_06_01 server v3.13 Bug fixes and Command line option -v, -h and -d are now functional. 
+#@2021_06_10 server v3.14 Enlarge column 'srv_uptime' from 20 to 25 Char 
+#@2021_06_11 server v3.15 Add 'srv_boot_date' that contain last boot date & Fix error message.
+#@2021_06_17 server v3.16 Fix Duplicate column name 'srv_boot_date'
+#@2022_03_28 server v3.17 Give a warning instead of an error when O/S update is not yet run.
+#@2022_08_17 server v3.18 Updated to use the new SADMIN Python Library v2.
 # 
 # ==================================================================================================
 #
@@ -58,22 +58,13 @@ except ImportError as e:
 
 
 
-#===================================================================================================
-#                      Global Variables Definition use on a per script basis
-#===================================================================================================
-#
-wdict           = {}                                                    # Dict for Server Columns
-
-
-
-
-
 # --------------------------------------------------------------------------------------------------
-# SADMIN PYTHON FRAMEWORK SECTION 2.0
-# To use SADMIN tools, this section MUST be present near the top of your code.
+# SADMIN CODE SECTION v2.2
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
 # --------------------------------------------------------------------------------------------------
 try:
-    SADM = os.environ.get('SADMIN')                                     # Getting SADMIN Root Dir.
+    SADM = os.environ.get('SADMIN')                                     # Get SADMIN Env. Var. Dir.
     sys.path.insert(0, os.path.join(SADM, 'lib'))                       # Add lib dir to sys.path
     import sadmlib2_std as sa                                           # Load SADMIN Python Library
 except ImportError as e:                                                # If Error importing SADMIN
@@ -81,22 +72,20 @@ except ImportError as e:                                                # If Err
     sys.exit(1)                                                         # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver = "3.18"                                                           # Program version
-pdesc = "Update SADMIN database from '\*sysinfo.txt' file from each system." 
-phostname = sa.get_hostname()                                           # Get current `hostname -s`
-pdb_conn = None                                                         # Database connector
-pdb_cur = None                                                          # Database cursor
-pdebug = 0                                                              # Debug level from 0 to 9
-pexit_code = 0                                                          # Script default exit code
-proot_only = False                                                      # Pgm run by root only ?
-psadm_server_only = False                                               # Run only on SADMIN server?
+pver        = "3.18"                                                     # Program version
+pdesc       = "Update SADMIN database with information collected from each system."
+phostname   = sa.get_hostname()                                         # Get current `hostname -s`
+pdb_conn    = None                                                      # Database connector
+pdb_cur     = None                                                      # Database cursor
+pdebug      = 0                                                         # Debug level from 0 to 9
+pexit_code  = 0                                                         # Script default exit code
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
-# Uncomment anyone of them to influence execution of SADMIN standard library.
+# Uncomment anyone to change them and influence execution of SADMIN standard library.
 #
-sa.proot_only = True              # Pgm run by root only ?
-sa.psadm_server_only = True       # Run only on SADMIN server ?
-sa.db_used          = True        # Open/Use Database(True) or Don't Need DB(False)
+sa.proot_only        = True       # Pgm run by root only ?
+sa.psadm_server_only = False      # Run only on SADMIN server ?
+sa.db_used           = True       # Open/Use Database(True) or Don't Need DB(False)
 #sa.db_silent        = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
@@ -109,11 +98,21 @@ sa.db_used          = True        # Open/Use Database(True) or Don't Need DB(Fal
 #sa.log_header       = True       # Show/Generate Header in script log (.log)
 #sa.log_footer       = True       # Show/Generate Footer in script log (.log)
 #sa.multiple_exec    = "Y"        # Allow running multiple copy at same time ?
-#sa.rch_used         = True       # Generate entry in Result Code History (.rch)
+#sa.use_rch         = True       # Generate entry in Result Code History (.rch)
 #sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
-cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
+sa.cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
 #
 # ==================================================================================================
+
+
+
+#===================================================================================================
+#                      Global Variables Definition use on a per script basis
+#===================================================================================================
+#
+wdict           = {}                                                    # Dict for Server Columns
+
+
 
 
 
@@ -537,11 +536,10 @@ def cmd_options(argv):
 def main(argv):
     global pdb_conn, pdb_cur                                            # DB Connection & Cursor
     (pdebug) = cmd_options(argv)                                        # Analyse cmdline options
-
     pexit_code = 0                                                      # Pgm Exit Code Default
     sa.start(pver, pdesc)                                               # Initialize SADMIN env.
 
-    (pexit_code, pdb_conn, pdb_cur) = sa.db_connect()                   # Connect to SADMIN Database
+    (pexit_code, pdb_conn, pdb_cur) = sa.db_connect('sadmin')           # Connect to SADMIN Database
     if pexit_code == 0:                                                 # If Connection to DB is OK
         pexit_code = process_servers(pdb_conn, pdb_cur)                 # Loop All Active systems
         sa.db_close(pdb_conn, pdb_cur)                                  # Close connection to DB
