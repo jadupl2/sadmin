@@ -30,20 +30,20 @@
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
 #
-# 2016_05_05 v1.0 Initial Version
-# 2018_06_04 v1.1 Include Filesystem Type, Sorted by Mount Point, Better, clearer Output.
-# 2018_08_21 v1.2 Remove trailing space for data lines.
-# 2018_08_21 v1.3 Adapted to work on MacOS and Aix
-# 2018_09_03 v1.5 Option --total don't work on RHEL 5, Total Line Removed for now
-# 2018_09_24 v1.6 Corrected Total Display Problem under Linux
-# 2019_03_17 Update: v1.7 No background color change, using brighter color.
-# 2019_06_30 Update: v1.8 Remove tmpfs from output on Linux (useless)
-# 2020_03_12 Fix: v1.9 Correct problem under RHEL/CentOS older version (4,5,6).
-# 2020_03_14 Update: v2.0 To increase portability, Column total are now calculated by script.
-# 2020_03_15 Update: v2.1 Add -t to exclude tmpfs, -n nfs filesystem from the output and total line. 
-# 2020_03_15 Update: v2.2 Modified to work on MacOS
-# 2020_04_05 Update: v2.3 Add hostname and date in heading line.
-# 2020_05_27 Fix: v2.4 fix problem when dealing with TB filesystem.
+# 2016_05_05 cmdline v1.0 Initial Version
+# 2018_06_04 cmdline v1.1 Include Filesystem Type, Sorted by Mount Point, Better, clearer Output.
+# 2018_08_21 cmdline v1.2 Remove trailing space for data lines.
+# 2018_08_21 cmdline v1.3 Adapted to work on MacOS and Aix
+# 2018_09_03 cmdline v1.5 Option --total don't work on RHEL 5, Total Line Removed for now
+# 2018_09_24 cmdline v1.6 Corrected Total Display Problem under Linux
+# 2019_03_17 cmdline v1.7 No background color change, using brighter color.
+# 2019_06_30 cmdline v1.8 Remove tmpfs from output on Linux (useless)
+# 2020_03_12 cmdline v1.9 Correct problem under RHEL/CentOS older version (4,5,6).
+# 2020_03_14 cmdline v2.0 To increase portability, Column total are now calculated by script.
+# 2020_03_15 cmdline v2.1 Add -t to exclude tmpfs, -n nfs filesystem from the output and total line. 
+# 2020_03_15 cmdline v2.2 Modified to work on MacOS
+# 2020_04_05 cmdline v2.3 Add hostname and date in heading line.
+# 2020_05_27 cmdline v2.4 fix problem when dealing with TB filesystem.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
