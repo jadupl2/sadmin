@@ -28,14 +28,15 @@
 # 2018_10_07 v1.9 Add message when searching for a particular server (-s option)
 # 2018_11_21 v1.10 Add Change some Email header Titles.
 # 2019_04_02 Fix: v1.11 Doesn't report an error anymore when last line is blank.
-# 2019_05_07 Update: v1.12 Change send_alert calling parameters
-# 2019_06_07 Update: v1.13 Updated to adapt to the new field (alarm type) in RCH file.
-# 2019_06_11 Update: v1.14 Change screen & email message when an invalid '.rch' format is encountered.
-# 2019_08_13 Update: v1.15 Fix bug when using -m option (Email report), Error not on top of report.
-# 2019_08_25 Update: v1.16 Put running scripts and scripts with error on top of email report.
-# 2020_04_06 Update: v1.17 Allow simultaneous execution of this script.
-# 2020_05_23 Update: v1.18 Changing the way to get SADMIN variable in /etc/environment 
-#@2022_05_11 Update: v1.19 Replace "sadm_send_alert" by "sadm_sendmail". 
+# 2019_05_07 cmdline v1.12 Change send_alert calling parameters
+# 2019_06_07 cmdline v1.13 Updated to adapt to the new field (alarm type) in RCH file.
+# 2019_06_11 cmdline v1.14 Change screen & email message when an invalid '.rch' format is encountered.
+# 2019_08_13 cmdline v1.15 Fix bug when using -m option (Email report), Error not on top of report.
+# 2019_08_25 cmdline v1.16 Put running scripts and scripts with error on top of email report.
+# 2020_04_06 cmdline v1.17 Allow simultaneous execution of this script.
+# 2020_05_23 cmdline v1.18 Changing the way to get SADMIN variable in /etc/environment 
+#@2022_05_11 cmdline v1.19 Replace "sadm_send_alert()" call by "sadm_sendmail()". 
+#@2022_08_17 cmdline v1.20 Updated with new SADMIN section v1.52
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -43,72 +44,64 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
-#===================================================================================================
-# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
-# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
+# ---------------------------------------------------------------------------------------
+# SADMIN CODE SECTION 1.52
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
+# ---------------------------------------------------------------------------------------
 
-    # Is 'SADMIN' environment variable defined ?. If not try to use /etc/environment SADMIN value.
-    if [ -z $SADMIN ] || [ "$SADMIN" = "" ]                             # If SADMIN EnvVar not right
-        then missetc="Missing /etc/environment file, create it and add 'SADMIN=/InstallDir' line." 
-             if [ ! -e /etc/environment ] ; then printf "${missetc}\n" ; exit 1 ; fi
-             missenv="Please set 'SADMIN' environment variable to the install directory."
-             grep "SADMIN" /etc/environment >/dev/null 2>&1            # SADMIN line in /etc/env.? 
-             if [ $? -eq 0 ]                                            # Yes use SADMIN definition
-                 then export SADMIN=`grep "SADMIN" /etc/environment | awk -F\= '{ print $2 }'` 
-                      misstmp="Temporarily setting 'SADMIN' environment variable to '${SADMIN}'."
-                      missvar="Add 'SADMIN=${SADMIN}' in /etc/environment to suppress this message."
-                      if [ ! -e /bin/launchctl ] ; then printf "${missvar}" ; fi 
-                      printf "\n${missenv}\n${misstmp}\n\n"
-                 else missvar="Add 'SADMIN=/InstallDir' in /etc/environment to remove this message."
-                      printf "\n${missenv}\n$missvar\n"                 # Recommendation to user    
-                      exit 1                                            # Back to shell with Error
-             fi
-    fi 
-        
-    # Check if the SADMIN Shell Library is accessible, if not advise user and exit with error.
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]                            # Shell Library not readable
-        then missenv="Please set 'SADMIN' environment variable to the install directory."
-             printf "${missenv}\nSADMIN library ($SADMIN/lib/sadmlib_std.sh) can't be located\n"     
-             exit 1                                                     # Exit to Shell with Error
-    fi
+# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                    # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
-    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
-    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
+export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
-    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.19'                              # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="N"                          # [Y]=Include Log Header [N]=No log Header
-    export SADM_LOG_FOOTER="N"                          # [Y]=Include Log Footer [N]=No log Footer
-    export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
-    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
-    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
-    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
-    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
-    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
+# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='1.20'                                     # Script version number
+export SADM_PDESC="Display summary of all result file (RCH)."  
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="N"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="N"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
+export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
+export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Ok now, load Standard Shell Library
-    export SADM_OS_NAME=$(sadm_get_osname)              # Uppercase, REDHAT,CENTOS,UBUNTU,AIX,DEBIAN
-    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number (ex: 7.6.5)
-    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
-#---------------------------------------------------------------------------------------------------
-# Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# They can be overridden here, on a per script basis (if needed).
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
-    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
-    #export SADM_MAX_RCLINE=60                          # When script end Trim rch file to 60 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#===================================================================================================
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+# ---------------------------------------------------------------------------------------
+
 
 
 
@@ -157,7 +150,8 @@ display_heading()
         then tput clear ; 
              #echo -e "`date +%Y/%m/%d`                           Server Farm Scripts Summary Report \c"
              #echo -e "                            `date +%H:%M:%S`"  
-             printf "%-32s %-65s " "`date +%Y/%m/%d`" "Server Farm Scripts Summary Report" 
+             htitle="Server Farm Scripts Summary Report v${SADM_VER}"
+             printf "%-32s %-65s " "`date +%Y/%m/%d`" "$htitle" 
              printf "%8s\n" "`date +%H:%M:%S`"
              printf "%67s     %-8s %-7s %-9s %-5s\n" "Start" "Start" "End" "Elapse" "Alert"
              printf "%-6s %-7s %-12s %-32s" "Count" "Status" "Server" "Script"
@@ -538,31 +532,16 @@ main_process()
 
 
 
-
 # --------------------------------------------------------------------------------------------------
-#                       S T A R T     O F    T H E    S C R I P T 
+# Command line Options functions
+# Evaluate Command Line Switch Options Upfront
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
 # --------------------------------------------------------------------------------------------------
-
-
-
-    sadm_start                                                          # Init Env. Dir & RC/Log File
-    
-    # Script can only be run on the sadmin server (files needed for report are ont it)
-    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
-        then sadm_write "This script can be run only on the SADMIN server (${SADM_SERVER}).\n"
-             sadm_write "Process aborted.\n"                            # Abort advise message
-             echo "This script can be run only on the SADMIN server (${SADM_SERVER})"
-             echo "Process aborted"                                     # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
-
-    # Evaluate Command Line Switch Options Upfront
-    # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
-
+function cmd_options()
+{
     PAGER="ON" ; ERROR_ONLY="OFF" ; MAIL_ONLY="OFF" ; WATCH="OFF"       # Set Switch Default Value
     SERVER_NAME=""                                                      # Set Switch Default Value
+
     while getopts "hvd:epmws:" opt ; do                                 # Loop to process Switch
         case $opt in
             m) MAIL_ONLY="ON"                                           # Output goes to sysadmin
@@ -577,28 +556,37 @@ main_process()
                ;;                                                       # And it's refresh every Min
             p) PAGER="OFF"                                              # Display Continiously    
                ;;                                                       # No stop after each page
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
-               if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               if [ "$num" = "" ]                            
+                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
-                       exit 0
+                       exit 1                                           # Exit Script with Error
                fi
-               ;;                                                       # No stop after each page
+               printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
-           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+           \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+    return 
+}
 
+
+# --------------------------------------------------------------------------------------------------
+#                       S T A R T     O F    T H E    S C R I P T 
+# --------------------------------------------------------------------------------------------------
+
+    cmd_options "$@"                                                    # Check command-line Options
+    sadm_start                                                          # Init Env. Dir & RC/Log File
 
     # Get the last line of all rch files in $SADMIN/www, sort results and Display them
     if [ "$WATCH" = "ON" ]                                              # If WATCH switch is ON
@@ -610,17 +598,15 @@ main_process()
     fi
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
 
-    # Record in rch file that didn't have 9 fields (Wrong format) were written to $SADM_TMP_FILE3
-   if [ -s "$SADM_TMP_FILE3" ]                                         # If File size > than 0
-       then wsubject="$SADM_INST - Invalid formatted line(s) in RCH file(s)"        # Mail Message
-            printf "\n-----\n$wsubject\n"                              # Display Msg to user
-            nl $SADM_TMP_FILE3                                         # Display file content
-            wmess="See attachment for the list of lines without $FIELD_IN_RCH fields."
-            wtime=`date "+%Y.%m.%d %H:%M"`
-            #sadm_send_alert "S" "$wtime" "$SADM_HOSTNAME" "$SADM_PN" "default" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
-            sadm_sendmail "$SADM_MAIL_ADDR" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
-   fi
-
+    # If invalid rch (not $FIELD_IN_RCH fileds in it), send email to sysadmin to check it out.
+    if [ -s "$SADM_TMP_FILE3" ]                                         # If File size > than 0
+        then wsubject="$SADM_INST - Invalid formatted line(s) in RCH file(s)"        # Mail Message
+             printf "\n-----\n$wsubject\n"                              # Display Msg to user
+             nl $SADM_TMP_FILE3                                         # Display file content
+             wmess="See attachment for the list of lines without $FIELD_IN_RCH fields."
+             wtime=`date "+%Y.%m.%d %H:%M"`
+             sadm_sendmail "$SADM_MAIL_ADDR" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
+    fi
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
     
