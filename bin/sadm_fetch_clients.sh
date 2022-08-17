@@ -86,15 +86,15 @@
 # 2021_10_20 server v3.32 Remove syncing of depreciated file 'alert_slack.cfg'. 
 # 2021_11_15 server v3.33 Fix type error on comment line
 #@2022_04_19 server v3.34 Minor fix and performance improvements.
-#@2022_05_12 server v3.35 Move 'sadm_send_alert' and 'write_alert_history' functions from library.
+#@2022_05_12 server v3.35 Move 'sadm_send_alert()' & 'write_alert_history()' functions from library.
 #@2022_05_19 server v3.36 Added 'chown' and 'chmod' for log and rch files and directories.
-#@2022_06_01 server v3.37 Create system rpt and rch in $SADMIN/www/dat if missing
-#@2022_06_13 server v3.38 Update to use 'sadm_sendmail()' instead  of mutt manually.
-#@2022_06_14 server v3.39 Email alert will now send script log AND script error log.
+#@2022_06_01 server v3.37 Create 'rpt' and 'rch' directories in $SADMIN/www/dat if do not exist.
+#@2022_06_13 server v3.38 Update to use 'sadm_sendmail()' instead of 'mutt' manually.
+#@2022_06_14 server v3.39 Email alert will now send script AND error log.
 #@2022_06_15 server v3.40 Fix problem when 2 attachments or more were send with sadm_sendmail()
-#@2022_07_01 server v3.41 Prevent error updating crontab
-#@2022_07_09 server v3.42 Updated to use new SADMIN section
-#@2022_07_14 server v3.43 Change group to $SADM_GROUP in $SADMIN/www/dat, fix problem removing client
+#@2022_07_01 server v3.41 Fix error updating crontab.
+#@2022_07_09 server v3.42 Updated to use new SADMIN section v1.52.
+#@2022_07_14 server v3.43 Change group to '$SADM_GROUP' in $SADMIN/www/dat (fix web ui problem).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -103,7 +103,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.51
+# SADMIN CODE SECTION 1.52
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
@@ -123,6 +123,7 @@ export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='3.43'                                     # Script version number
@@ -140,23 +141,23 @@ export SADM_DEBUG=0                                        # Debug Level(0-9) 0=
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
-export SADM_ROOT_ONLY="Y"                                  # Run only by root ? - 1=Yes 0=No
-export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server?- 1=Yes 0=No
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-export SADM_MAX_LOGLINE=2500                                # Nb Lines to trim(0=NoTrim)
-export SADM_MAX_RCLINE=150                                  # Nb Lines to trim(0=NoTrim)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
 # ---------------------------------------------------------------------------------------
 
 
@@ -197,10 +198,12 @@ export t_alert=0 t_duplicate=0 t_ok=0 t_error=0 t_oldies=0
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${SADM_PN} usage :"
-    printf "\n\t-d   (Debug Level [0-9])"
-    printf "\n\t-h   (Display this help message)"
-    printf "\n\t-v   (Show Script Version Info)"
+    printf "\nUsage: %s%s%s%s [options]" "${BOLD}" "${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
+    printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
+    printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
+    printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
+    printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
     printf "\n\n" 
 }
 
@@ -1892,16 +1895,6 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options    
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_write "Script can only be run by the 'root' user, process aborted.\n"
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-        then sadm_write "Script can only be run on (${SADM_SERVER}), process aborted.\n"
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
     main_process                                                        # rsync from all clients
     SADM_EXIT_CODE=$?                                                   # Save Function Result Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Upd. RCH
