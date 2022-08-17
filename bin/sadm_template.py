@@ -255,7 +255,7 @@ def main(argv):
     #      Uncomment 'sa.db_used = True' in SADMIN section at the begiing of this script.
     # (2) 'main_Process'    : Process not related to DB, you decide what you put in there.
     if sa.get_fqdn() == sa.sadm_server and sa.db_used :                 # On SADMIN srv & usedb True
-        (pexit_code, pdb_conn, pdb_cur) = sa.db_connect()               # Connect to SADMIN Database
+        (pexit_code, pdb_conn, pdb_cur) = sa.db_connect('sadmin')       # Connect to SADMIN Database
         if pexit_code == 0:                                             # If Connection to DB is OK
             pexit_code = process_servers()                              # Loop All Active systems
             sa.db_close(pdb_conn, pdb_cur)                              # Close connection to DB

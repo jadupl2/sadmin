@@ -316,8 +316,18 @@ def print_functions():
 def print_python_function():
     printheader ("FUNCTIONS AVAILABLE ONLY PYTHON","Description","  This System Result")
 
-    pexample="sa.db_silent"                                             # Variable Name
-    pdesc="When DBerror, No ErrMsg (Just ErrNo)"                        # Function Description
+    pexample="sa.db_connect('sadmin')"                                  
+    pdesc="Open connection to database."                                # Function Description
+    presult="1=OK 1=Error,conn_obj,con_cursor"                          # Return 3 Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+                 
+    pexample="sa.db_close(pdb_conn,pdb_cur):"           
+    pdesc="Close connection with database."                             # Function Description
+    presult="0=Connection close 1=Error"                                # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+                 
+    pexample="sa.db_silent"                             
+    pdesc="If DBerror, No ErrMsg(Return Error#)"
     presult=sa.db_silent                                                # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
                  
@@ -329,6 +339,11 @@ def print_python_function():
     pexample="sa.silentremove('file')"                                  # Example Calling Function
     pdesc="Silent file delete (no msg, no err)"                         # Function Description
     presult=sa.silentremove('file')                                     # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+    pexample="sa.touch_file('filename')"                                # Example Calling Function
+    pdesc="Create an empty file."                                       # Function Description
+    presult="0=File created 1=Error"                                    # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
 
@@ -1124,7 +1139,7 @@ def print_db_variables():
 
     # Test Database Connection
     if ((sa.get_fqdn() == sa.sadm_server) and (sa.db_used)):            # On SADMIN srv & usedb True
-        (pexit_code,pdb_conn,pdb_cur) = sa.db_connect()                 # Connect to SADMIN Database
+        (pexit_code,pdb_conn,pdb_cur) = sa.db_connect('sadmin')         # Connect to SADMIN Database
         sa.write_log ("Database connection succeeded")                  # Show COnnect to DB Worked
         
         print ("\n\nShow SADMIN Tables:")
