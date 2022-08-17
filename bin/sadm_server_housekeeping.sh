@@ -34,7 +34,7 @@
 # 2021_05_29 server: v2.8 Code optimization, update SADMIN section and Help screen.
 # 2021_07_30 server: v2.9 Solve intermittent error on monitor page.
 # 2021_08_17 nolog  v2.10 chmod 1777 $SADM_WWW_TMP_DIR 
-#@2022_05_03 server v2.11 Secure passwd file in $SADMIN/cfg
+#@2022_05_03 server v2.11 Secure email passwd file ($SADMIN/cfg/.gmpw).
 #@2022_07_13 server v2.12 Fix typo that was preventing script from running under certain condition.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
@@ -42,9 +42,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
-
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.51
+# SADMIN CODE SECTION 1.52
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
@@ -64,6 +63,7 @@ export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='2.12'                                     # Script version number
@@ -81,14 +81,15 @@ export SADM_DEBUG=0                                        # Debug Level(0-9) 0=
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
-export SADM_ROOT_ONLY="Y"                                  # Run only by root ? - 1=Yes 0=No
-export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server?- 1=Yes 0=No
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
@@ -97,8 +98,9 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 # ---------------------------------------------------------------------------------------
+
+
 
 
 
@@ -111,11 +113,11 @@ ARC_DAYS=7                                  ; export ARC_DAYS               # AL
 
 
 # --------------------------------------------------------------------------------------------------
-# Show Script command line options
+# Show script command line options
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\nUsage: %s%s%s%s [options]" "${BOLD}" "${CYAN}" $(basename "$0") "${NORMAL}"
     printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
     printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
     printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
@@ -123,7 +125,6 @@ show_usage()
     printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
     printf "\n\n" 
 }
-
 
 
 
@@ -434,7 +435,7 @@ function adjust_server_crontab()
 # --------------------------------------------------------------------------------------------------
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
-# By Default (-h) Show Help Usage, (-v) Show Script Version,[-d 0-9] Set Debug Level 
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
@@ -442,7 +443,7 @@ function cmd_options()
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
-               if [ "$num" == "" ]                                       # No it's not numeric 
+               if [ "$num" = "" ]                            
                   then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
