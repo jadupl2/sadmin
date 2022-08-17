@@ -29,9 +29,10 @@
 #   2018_02_03 JDuplessis
 #       v1.2 Change Titles and Bug Fixes
 #   2018_02_07 JDuplessis
-#       v1.3 Graph Tootips Added - Network Graph Bug Fix - Titles Changed
-#
+#       v1.3 Graph Tooltips Added - Network Graph Bug Fix - Titles Changed
+#@2022_08_17 web v1.4 Fix Perf graph not showing under new PHP 8.
 # ==================================================================================================
+
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
@@ -45,7 +46,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.3" ;                                                        # Current version number
+$SVER  = "1.4" ;                                                        # Current version number
 
 
 # ==================================================================================================
@@ -80,8 +81,8 @@ function gen_png($WHOST,$WHOST_DESC,$WTYPE,$WPERIOD,$WOS,$RRDTOOL,$DEBUG)
     # Print Variables above for debugging purpose.
     if ($DEBUG) {                                                       # If Debug is Activated
         echo "\n<br>";                                                  # Blank Line separator
-        echo "\n<br>RRDTOOL    = $RRDTOOL";                             # Full Path to rrdtool Bin.
-        echo "\n<br>WTYPE      = $WTYPE";                               # Graph type to produce
+        echo "\n<br>RRDTOOL    = $RRDTOOL";                             
+        echo "\n<br>WTYPE      = $WTYPE";                               
         echo "\n<br>PERIOD     = $WPERIOD";                             # Show the Period received
         echo "\n<br>RRD_FILE   = $RRD_FILE";                            # Show RRD file we will use
         echo "\n<br>PNGDIR     = $PNGDIR";                              # PNG Dir. for the O/S
@@ -96,6 +97,7 @@ function gen_png($WHOST,$WHOST_DESC,$WTYPE,$WPERIOD,$WOS,$RRDTOOL,$DEBUG)
         echo "\n<br>HRS_START  = $HRS_START ";                          # Start Hours of Graph
         echo "\n<br>HRS_END    = $HRS_END   ";                          # End Hours of Graph
     }
+    if ($DEBUG) { echo "\n<br>Trace 0" ; } 
 
     # Set Start Date and Time Based on the Period selected
     if ($WPERIOD == "yesterday")  { $START = "$HRS_START $YESTERDAY" ;} # Start Yesterday Date/Time 
@@ -104,10 +106,12 @@ function gen_png($WHOST,$WHOST_DESC,$WTYPE,$WPERIOD,$WOS,$RRDTOOL,$DEBUG)
     if ($WPERIOD == "month")      { $START = "$HRS_START $LASTMONTH" ;} # Start 31Days ago Date/Time
     if ($WPERIOD == "year")       { $START = "$HRS_START $LASTYEAR"  ;} # Start 365Days ago
     if ($WPERIOD == "last2years") { $START = "$HRS_START $LAST2YEAR" ;} # Start 730Days ago 
+    if ($DEBUG) { echo "\n<br>Trace 1" ; } 
     
     # Set End Time and Date, PNG name and Graph Title
     $END   = "$HRS_END $YESTERDAY";                                     # End Yesterday at 23:00
     $GFILE = "${PNGDIR}/${WHOST}_${WTYPE}_${WPERIOD}_all.png";          # Name of PNG to generate
+    if ($DEBUG) { echo "\n<br>Trace 2" ; } 
 
     # Set the graph Title
     if ($WPERIOD == "yesterday")  { $GTITLE2 = "$YESTERDAY"    ;}       # Set Yesterday Title2
@@ -116,11 +120,17 @@ function gen_png($WHOST,$WHOST_DESC,$WTYPE,$WPERIOD,$WOS,$RRDTOOL,$DEBUG)
     if ($WPERIOD == "month")      { $GTITLE2 = "Last 31 days"  ;}       # Set Last 31Days Title2
     if ($WPERIOD == "year")       { $GTITLE2 = "Last 365 days" ;}       # Set Last 365Days Title2
     if ($WPERIOD == "last2years") { $GTITLE2 = "Last 730 days" ;}       # Set Last 730Days Title2
-    $GTITLE = ${WHOST} ." ${WTYPE} ${GTITLE2}";                         # Set Graph Title + Title2
-
-    # Generate the PNG graph based on the type of ressource selected
+    if ($DEBUG) { echo "\n<br>Trace 2a" ; } 
+    $GTITLE = $WHOST . " " . $WTYPE . " " . $GTITLE2;            # Set Graph Title + Title2
+    if ($DEBUG) { echo "\n<br>Trace 2B" ; } 
+    
+    # Generate the PNG graph based on the type of resource selected
     switch ($WTYPE) {
         case "cpu":                                                     # Generate CPU Graphic  
+            if ($DEBUG) { echo "\n<br>Trace 4" ; } 
+            if ($DEBUG) {                                               # If Debug is Activated
+                echo "\n<br>create_cpu_graph $WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,'S',$DEBUG";
+            }
             create_cpu_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
             break;
 
@@ -146,7 +156,7 @@ function gen_png($WHOST,$WHOST_DESC,$WTYPE,$WPERIOD,$WOS,$RRDTOOL,$DEBUG)
            
         case "neta":
             create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"a");
-        break;
+            break;
 
         case "netb":
             create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"b");
@@ -164,7 +174,7 @@ function gen_png($WHOST,$WHOST_DESC,$WTYPE,$WPERIOD,$WOS,$RRDTOOL,$DEBUG)
             create_memdist_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
             break;
     }
-        return ;
+    return ;
 }
 
 # ================================================================================================
@@ -344,6 +354,13 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
           $HOSTNAME = $row['srv_name'] ;                                # Save Server Name
 		  $HOSTDESC = $row['srv_desc'] ;                                # Save Server Description
           $HOSTOS   = $row['srv_ostype'];                               # Save O/S name aix/linux
+          if ($DEBUG) {                                                 # In Debug Show Param. Rcv
+            echo "\n<br>In While" ;                    
+            echo "\n<br>HOSTNAME  = " . $HOSTNAME;                    
+            echo "\n<br>HOSTDESC  = " . $HOSTDESC;                    
+            echo "\n<br>HOST O/S  = " . $HOSTOS;                    
+            echo "\n<br>";                                          
+          }          
           gen_png ($HOSTNAME, $HOSTDESC, $WTYPE, $WPERIOD, $HOSTOS,SADM_RRDTOOL,$DEBUG); # Gen PNG
           display_png ($HOSTNAME,$WTYPE,$WPERIOD,$COUNT,$DEBUG);        # Show PNG Just Generated
 
