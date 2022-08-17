@@ -21,20 +21,20 @@
 #   1.5      Adapted to work with XFS Filesystem
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-#   1.0      Initial Version - May 2016 - Jacques Duplessis
-#   1.5      Adapted to work with XFS Filesystem
-#   2.0      Major rewrite
-# 2017_09_01 V2.1 For Now Remove RPM Option from main Menu (May put it back later)
-# 2017_09_27 V2.1a Don't send email when script terminate with error
-# 2017_10_07 V2.2 Correct typo error and correct problem when creating filesystem (when changing type)
-# 2018_01_03 V2.3 Correct Main Menu Display Problem 
-# 2018_05_14 V2.4 Fix Problem with echo command on MacOS
-# 2018_05_14 V2.5 Add SADM_USE_RCH Variable to use or not a RCH FIle (Set to 'N' for this Script)
-# 2018_09_20 v2.6 Update code to align with latest Library
-# 2019_02_25 Change: v2.7 Nicer color presentation and code cleanup.
-# 2019_11_11 Change: v2.8 Add RPM Tools option in menu.
-# 2019_11_21 Change: v2.10 Minor correction to RPM Tools Menu
-# 2019_11_22 Change: v2.11 Restrict RPM & DEV Menu when available only.
+# 2017_08_08 cmdline v1.0 Initial Version - May 2016 - Jacques Duplessis
+# 2017_08_08 cmdline v1.5 Adapted to work with XFS Filesystem
+# 2017_08_08 cmdline v2.0 Major rewrite
+# 2017_09_01 cmdline V2.1 For Now Remove RPM Option from main Menu (May put it back later)
+# 2017_09_27 cmdline V2.1a Don't send email when script terminate with error
+# 2017_10_07 cmdline V2.2 Typo error and correct problem when creating filesystem (when changing type)
+# 2018_01_03 cmdline V2.3 Correct Main Menu Display Problem 
+# 2018_05_14 cmdline V2.4 Fix Problem with echo command on MacOS
+# 2018_05_14 cmdline V2.5 Add 'SADM_USE_RCH' var. to use or not RCH File (Set 'N' for this Script)
+# 2018_09_20 cmdline v2.6 Update code to align with latest Library
+# 2019_02_25 cmdline v2.7 Nicer color presentation and code cleanup.
+# 2019_11_11 cmdline v2.8 Add RPM Tools option in menu.
+# 2019_11_21 cmdline v2.10 Minor correction to RPM Tools Menu
+# 2019_11_22 cmdline v2.11 Restrict RPM & DEV Menu when available only.
 #=================================================================================================== 
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
