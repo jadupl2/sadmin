@@ -35,6 +35,7 @@
 #       V1.6 Comments Added 
 #   2018_02_07 JDuplessis
 #       V1.7 Link tooltips added - Bug Fix
+#@2022_08_17 web v1.8 Fix problem under php 8.0 showing the graph.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -48,8 +49,8 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG  = False  ;                                                      # Debug Activated True/False
-$SVER   = "1.7" ;                                                       # Current version number
+$DEBUG  = True  ;                                                      # Debug Activated True/False
+$SVER   = "1.8" ;                                                       # Current version number
 
 
 
@@ -59,9 +60,12 @@ $SVER   = "1.7" ;                                                       # Curren
 # ==================================================================================================
 #                  Generate the Performance Graphic from the rrd of hostname received 
 # --------------------------------------------------------------------------------------------------
-# HOSTNAME  = Name of Host,                 WHOST_DESC  = Host Desciption from MySql Database 
-# WTYPE     = cpu,runqueue,diskio,memory,page_inout,swap_space,network_eth[a,b,c]
-# WOS       = linux,aix (lowercase allways) RRDTOOL     = Path to rrdtool       DEBUG = True,False
+# WHOST         = Name of Host,                 
+# WHOST_DESC    = Host Desciption from MySql Database 
+# WTYPE         = cpu,runqueue,diskio,memory,page_inout,swap_space,network_eth[a,b,c]
+# WOS           = linux,aix (lowercase allways) 
+# RRDTOOL       = Path to rrdtool       
+# DEBUG         = True,False
 # ==================================================================================================
 function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$DEBUG)
 {
@@ -87,7 +91,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
     # Print Variables above for debugging purpose.
     if ($DEBUG) {                                                       # If Debug is Activated
         echo "\n<br>RRDTOOL    = $RRDTOOL";                             # Full Path to rrdtool Bin.
-        echo "\n<br>PERIOD     = $WPERIOD";                             # Show the Period received
+        echo "\n<br>WTYPE      = $WTYPE";                             # Show the Period received
         echo "\n<br>RRD_FILE   = $RRD_FILE";                            # Show RRD file we will use
         echo "\n<br>PNGDIR     = $PNGDIR";                              # PNG Dir. for the O/S
         echo "\n<br>IMGDIR     = $IMGDIR";                              # PNG Dir. for Web Server
@@ -108,28 +112,31 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_cpu_last2days.png";     # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - CPU - From $START to $END" ;  # Set Graph Title 
+            $GTITLE  = ucfirst($WHOST_NAME)." - CPU - From $START to $END" ;  # Set Graph Title 
+            if ($DEBUG) { 
+                echo "\n<br>create_cpu_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,'B',$DEBUG)";
+            }
             create_cpu_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
             # Generate Small CPU Graphic for the last 7 Days ---------------------------------------
             $START  = "$HRS_START $LASTWEEK" ;                          # Start 7 days ago at 00:00
             $END    = "$HRS_END   $YESTERDAY";                          # End Yesterday at 23:00
             $GFILE  = "${PNGDIR}/${WHOST_NAME}_cpu_week.png";           # Name of png to generate
-            $GTITLE = ucfirst(${WHOST_NAME})." - CPU - Last 7 Days" ;   # Set Graph Title 
+            $GTITLE = ucfirst($WHOST_NAME)." - CPU - Last 7 Days" ;   # Set Graph Title 
             create_cpu_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
             # Generate Small CPU Graphic for the last 31 Days --------------------------------------
             $START  = "$HRS_START $LASTMONTH" ;                         # Start 31 days ago at 00:00
             $END    = "$HRS_END   $YESTERDAY";                          # End Yesterday at 23:00
             $GFILE  = "${PNGDIR}/${WHOST_NAME}_cpu_month.png";          # Name of png to generate
-            $GTITLE = ucfirst(${WHOST_NAME})." - CPU - Last 4 weeks" ;  # Set Graph Title 
+            $GTITLE = ucfirst($WHOST_NAME)." - CPU - Last 4 weeks" ;  # Set Graph Title 
             create_cpu_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
             # Generate Small CPU Graphic for the last 365 Days -------------------------------------
             $START  = "$HRS_START $LASTYEAR" ;                          # Start 365 day ago at 00:00
             $END    = "$HRS_END   $YESTERDAY";                          # End Yesterday at 23:00
             $GFILE  = "${PNGDIR}/${WHOST_NAME}_cpu_year.png";           # Name of png to generate
-            $GTITLE = ucfirst(${WHOST_NAME})." - CPU - Last 365 Days" ; # Set Graph Title 
+            $GTITLE = ucfirst($WHOST_NAME)." - CPU - Last 365 Days" ; # Set Graph Title 
             create_cpu_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);  
             display_graph ($WHOST_NAME,$WHOST_DESC,"cpu",$DEBUG);       # Show Graph Just Generated
             break;
@@ -139,7 +146,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_runqueue_last2days.png";# Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - RunQueue - ";         # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - RunQueue - ";         # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_runq_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
@@ -147,7 +154,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTWEEK" ;                         # Start 7 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_runqueue_week.png";     # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - RunQueue - ";         # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - RunQueue - ";         # Set Graph Title Part I
             $GTITLE .= "Last 7 Days" ;                                  # Set Graph Title Part II
             create_runq_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
@@ -155,7 +162,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTMONTH" ;                        # Start 31 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_runqueue_month.png";    # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - RunQueue - ";         # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - RunQueue - ";         # Set Graph Title Part I
             $GTITLE .= "Last 4 weeks" ;                                 # Set Graph Title Part II
             create_runq_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
@@ -163,7 +170,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTYEAR" ;                         # Start 365 day ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_runqueue_year.png";     # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - RunQueue - ";         # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - RunQueue - ";         # Set Graph Title Part I
             $GTITLE .= "Last 365 Days" ;                                # Set Graph Title Part II
             create_runq_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);  
             display_graph ($WHOST_NAME,$WHOST_DESC,"runqueue",$DEBUG);  # Show Graph Just Generated
@@ -174,7 +181,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_memory_last2days.png";  # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Memory - ";           # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Memory - ";           # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_mem_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
@@ -182,7 +189,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTWEEK" ;                         # Start 7 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_memory_week.png";       # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Memory - ";           # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Memory - ";           # Set Graph Title Part I
             $GTITLE .= "Last 7 Days" ;                                  # Set Graph Title Part II
             create_mem_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
@@ -190,7 +197,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTMONTH" ;                        # Start 31 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_memory_month.png";      # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Memory - ";           # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Memory - ";           # Set Graph Title Part I
             $GTITLE .= "Last 4 weeks" ;                                 # Set Graph Title Part II
             create_mem_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
@@ -198,7 +205,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTYEAR" ;                         # Start 365 day ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_memory_year.png";       # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Memory - ";           # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Memory - ";           # Set Graph Title Part I
             $GTITLE .= "Last 365 Days" ;                                # Set Graph Title Part II
             create_mem_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);  
             display_graph ($WHOST_NAME,$WHOST_DESC,"memory",$DEBUG);    # Show Graph Just Generated
@@ -209,7 +216,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_diskio_last2days.png";  # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Disks I/O - ";        # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Disks I/O - ";        # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_disk_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
@@ -217,7 +224,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTWEEK" ;                         # Start 7 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_diskio_week.png";       # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Disks I/O - ";        # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Disks I/O - ";        # Set Graph Title Part I
             $GTITLE .= "Last 7 Days" ;                                  # Set Graph Title Part II
             create_disk_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
@@ -225,7 +232,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTMONTH" ;                        # Start 31 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_diskio_month.png";      # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Disks I/O - ";        # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Disks I/O - ";        # Set Graph Title Part I
             $GTITLE .= "Last 4 weeks" ;                                 # Set Graph Title Part II
             create_disk_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
@@ -233,7 +240,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTYEAR" ;                         # Start 365 day ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_diskio_year.png";       # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Disks I/O - ";        # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Disks I/O - ";        # Set Graph Title Part I
             $GTITLE .= "Last 365 Days" ;                                # Set Graph Title Part II
             create_disk_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);  
             display_graph ($WHOST_NAME,$WHOST_DESC,"diskio",$DEBUG);    # Show Graph Just Generated
@@ -244,7 +251,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_paging_last2days.png";  # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Paging Act. - ";      # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Paging Act. - ";      # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_paging_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
@@ -252,7 +259,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTWEEK" ;                         # Start 7 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_paging_week.png";       # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Paging Act. - ";      # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Paging Act. - ";      # Set Graph Title Part I
             $GTITLE .= "Last 7 Days" ;                                  # Set Graph Title Part II
             create_paging_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
@@ -260,7 +267,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTMONTH" ;                        # Start 31 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_paging_month.png";      # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Paging Act. - ";      # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Paging Act. - ";      # Set Graph Title Part I
             $GTITLE .= "Last 4 weeks" ;                                 # Set Graph Title Part II
             create_paging_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
@@ -268,7 +275,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTYEAR" ;                         # Start 365 day ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_paging_year.png";       # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Paging Act. - ";      # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Paging Act. - ";      # Set Graph Title Part I
             $GTITLE .= "Last 365 Days" ;                                # Set Graph Title Part II
             create_paging_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
             display_graph ($WHOST_NAME,$WHOST_DESC,"paging",$DEBUG);    # Show Graph Just Generated
@@ -279,7 +286,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_swap_last2days.png";    # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Swap Space - ";       # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Swap Space - ";       # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_swap_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
@@ -287,7 +294,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTWEEK" ;                         # Start 7 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_swap_week.png";         # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Swap Space - ";       # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Swap Space - ";       # Set Graph Title Part I
             $GTITLE .= "Last 7 Days" ;                                  # Set Graph Title Part II
             create_swap_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
@@ -295,7 +302,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTMONTH" ;                        # Start 31 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_swap_month.png";        # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Swap Space - ";       # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Swap Space - ";       # Set Graph Title Part I
             $GTITLE .= "Last 4 weeks" ;                                 # Set Graph Title Part II
             create_swap_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
@@ -303,7 +310,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTYEAR" ;                         # Start 365 day ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_swap_year.png";         # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Swap Space - ";       # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Swap Space - ";       # Set Graph Title Part I
             $GTITLE .= "Last 365 Days" ;                                # Set Graph Title Part II
             create_swap_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
             display_graph ($WHOST_NAME,$WHOST_DESC,"swap",$DEBUG);      # Show Graph Just Generated
@@ -314,7 +321,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_neta_last2days.png";    # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 1st Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 1st Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"a");
 
@@ -322,7 +329,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTWEEK" ;                         # Start 7 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_neta_week.png";         # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 1st Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 1st Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "Last 7 Days" ;                                  # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"a");
 
@@ -330,7 +337,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTMONTH" ;                        # Start 31 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_neta_month.png";        # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 1st Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 1st Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "Last 4 weeks" ;                                 # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"a");
 
@@ -338,7 +345,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTYEAR" ;                         # Start 365 day ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_neta_year.png";         # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 1st Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 1st Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "Last 365 Days" ;                                # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"a");
             display_graph ($WHOST_NAME,$WHOST_DESC,"neta",$DEBUG);      # Show Graph Just Generated
@@ -349,7 +356,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_netb_last2days.png";    # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 2nd Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 2nd Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"b");
 
@@ -357,7 +364,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTWEEK" ;                         # Start 7 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_netb_week.png";         # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 2nd Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 2nd Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "Last 7 Days" ;                                  # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"b");
 
@@ -365,7 +372,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTMONTH" ;                        # Start 31 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_netb_month.png";        # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 2nd Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 2nd Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "Last 4 weeks" ;                                 # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"b");
 
@@ -373,7 +380,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTYEAR" ;                         # Start 365 day ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_netb_year.png";         # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 2nd Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 2nd Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "Last 365 Days" ;                                # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"b");
             display_graph ($WHOST_NAME,$WHOST_DESC,"netb",$DEBUG);      # Show Graph Just Generated
@@ -384,7 +391,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_netc_last2days.png";    # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 3th Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 3th Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"c");
 
@@ -392,7 +399,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTWEEK" ;                         # Start 7 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_netc_week.png";         # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 3th Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 3th Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "Last 7 Days" ;                                  # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"c");
 
@@ -400,7 +407,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTMONTH" ;                        # Start 31 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_netc_month.png";        # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 3th Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 3th Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "Last 4 weeks" ;                                 # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"c");
 
@@ -408,7 +415,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTYEAR" ;                         # Start 365 day ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_netc_year.png";         # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 3th Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 3th Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "Last 365 Days" ;                                # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"c");
             display_graph ($WHOST_NAME,$WHOST_DESC,"netc",$DEBUG);      # Show Graph Just Generated
@@ -419,7 +426,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_netd_last2days.png";    # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 4th Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 4th Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"d");
 
@@ -427,7 +434,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTWEEK" ;                         # Start 7 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_netd_week.png";         # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 4th Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 4th Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "Last 7 Days" ;                                  # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"d");
 
@@ -435,7 +442,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTMONTH" ;                        # Start 31 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_netd_month.png";        # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 4th Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 4th Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "Last 4 weeks" ;                                 # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"d");
 
@@ -443,7 +450,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTYEAR" ;                         # Start 365 day ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_netd_year.png";         # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - 4th Network Dev - ";  # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - 4th Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "Last 365 Days" ;                                # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"d");
             display_graph ($WHOST_NAME,$WHOST_DESC,"netd",$DEBUG);      # Show Graph Just Generated
@@ -454,7 +461,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_memdist_last2days.png"; # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Mem Distribution - "; # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Mem Distribution - "; # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_memdist_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
@@ -462,7 +469,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTWEEK" ;                         # Start 7 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_memdist_week.png";      # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Mem Distribution - "; # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Mem Distribution - "; # Set Graph Title Part I
             $GTITLE .= "Last 7 Days" ;                                  # Set Graph Title Part II
             create_memdist_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
@@ -470,7 +477,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTMONTH" ;                        # Start 31 days ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_memdist_month.png";     # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Mem Distribution - "; # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Mem Distribution - "; # Set Graph Title Part I
             $GTITLE .= "Last 4 weeks" ;                                 # Set Graph Title Part II
             create_memdist_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
@@ -478,7 +485,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             $START   = "$HRS_START $LASTYEAR" ;                         # Start 365 day ago at 00:00
             $END     = "$HRS_END   $YESTERDAY";                         # End Yesterday at 23:00
             $GFILE   = "${PNGDIR}/${WHOST_NAME}_memdist_year.png";      # Name of png to generate
-            $GTITLE  = ucfirst(${WHOST_NAME})." - Mem Distribution - "; # Set Graph Title Part I
+            $GTITLE  = ucfirst($WHOST_NAME)." - Mem Distribution - "; # Set Graph Title Part I
             $GTITLE .= "Last 365 Days" ;                                # Set Graph Title Part II
             create_memdist_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
             display_graph ($WHOST_NAME,$WHOST_DESC,"memdist",$DEBUG);   # Show Graph Just Generated
