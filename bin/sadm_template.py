@@ -70,7 +70,7 @@ pexit_code  = 0                                                         # Script
 #
 sa.proot_only        = True       # Pgm run by root only ?
 sa.psadm_server_only = False      # Run only on SADMIN server ?
-#sa.db_used          = True       # Open/Use Database(True) or Don't Need DB(False)
+sa.db_used          = True        # Open/Use Database(True) or Don't Need DB(False)
 #sa.db_silent        = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
@@ -161,7 +161,7 @@ def process_servers():
             continue                                                    # Go read Next Server
 
         # Perform a SSH to system currently processing
-        wcommand = "%s %s %s" % (cmd_ssh_full, wfqdn, "date")           # SSH Cmd to Server for date
+        wcommand = "%s %s %s" % (sa.cmd_ssh_full, wfqdn, "date")           # SSH Cmd to Server for date
         sa.write_log("Command is %s" % (wcommand))                      # Show User what will do
         ccode, cstdout, cstderr = sa.oscommand("%s" % (wcommand))       # Execute O/S CMD
         if (ccode == 0):                                                # If ssh Worked
