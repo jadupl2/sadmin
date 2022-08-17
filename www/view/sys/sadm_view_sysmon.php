@@ -45,19 +45,19 @@
 # 2020_05_13 Update: v2.15 Customize message when nothing to report.
 # 2020_05_13 Update: v2.16 server name link was not displayed properly.
 # 2020_09_23 Update: v2.17 Add Home button in the page heading.
-# 2021_07_24 web v2.18 System Monitor page - Each alert now show effective group name (not 'default').
-# 2021_08_06 web v2.19 System Monitor page - Alert type now show description and tooltip.
-# 2021_08_07 web v2.20 System Monitor page - Warning, Error, Info now have separate section.
-# 2021_08_17 web v2.21 System Monitor page - Use the refresh interval from SADMIN configuration file. 
-# 2021_08_18 web v2.22 System Monitor page - Section heading are spread on two lines.
-# 2021_08_29 web v2.23 System Monitor page - Show alert group member(s) as tooltip.
+# 2021_07_24 web v2.18 Sysmon page - Each alert now show effective group name (not 'default').
+# 2021_08_06 web v2.19 Sysmon page - Alert type now show description and tooltip.
+# 2021_08_07 web v2.20 Sysmon page - Warning, Error, Info now have separate section.
+# 2021_08_17 web v2.21 Sysmon page - Use the refresh interval from SADMIN configuration file. 
+# 2021_08_18 web v2.22 Sysmon page - Section heading are spread on two lines.
+# 2021_08_29 web v2.23 Sysmon page - Show alert group member(s) as tooltip.
 #@2021_09_14 web v2.24 SysMon page - New section that list recent scripts execution.
 #@2021_09_15 web v2.25 SysMon page - Recent scripts section won't show if SADM_MONITOR_RECENT_COUNT=0
 #@2021_09_30 web v2.26 Sysmon page - Show recent activities even when no alert to report
 #@2022_02_16 web v2.27 Sysmon page - Monitor tmp file was not deleted after use.
-#@2022_02_17 web v2.28 Sysmon page - Added a test to delete only when tmp file exist
-#@2022_05_26 web v2.29 Sysmon page - Fix intermittent problem creating tmp alert file.
-#@2022_05_26 web v2.30 Sysmon page - Fix intermittent problem creating tmp alert file.
+#@2022_02_17 nolog v2.28 Sysmon page - Added a test to delete only when tmp file exist
+#@2022_05_26 nolog v2.29 Sysmon page - Fix intermittent problem creating tmp alert file.
+#@2022_05_26 nolog v2.30 Sysmon page - Fix intermittent problem creating tmp alert file.
 #@2022_05_26 web v2.31 Sysmon page - Rewrote some part of the code for new version of php
 #@2022_07_21 web v2.32 Sysmon page - Fix problem with recent scripts section
 # ==================================================================================================
@@ -849,8 +849,8 @@ function display_data($con,$alert_file) {
 # Main Page Logic start here 
 #---------------------------------------------------------------------------------------------------
     $title1="Systems Monitor Status";                                   # Page Title
-    display_lib_heading("HOME","$title1"," ",$SVER);                    # Display Content Heading
-    create_alert_file();                                                # Create AlertFile (RPT/RCH)
+    display_lib_heading("HOME","$title1"," ",$SVER);                    # Display Page Heading
+    create_alert_file();                                                # Cr. AlertFile from RPT/RCH
     display_data($con,$alert_file);                                     # Display SysMon Array
     
     # Page footer

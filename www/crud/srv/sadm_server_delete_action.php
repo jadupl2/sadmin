@@ -27,11 +27,11 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-# 2019_01_15 New: sadm_server_delete.php v2.1 Create server data archive before deleting it.
-# 2019_08_17 Update: v1.1 New Heading and return to Maintenance Server List
-# 2019_12_26 Update: v1.2 Update: Deleted server now place in www/dat/archive directory.
-# 2021_06_07 web: v1.3 Remove faulty error message when a client was delete just after creating it.
-#@2022_07_18 web: v1.4 Fix delete permission problem, Show Filename where archive file created 
+# 2019_01_15 web v1.0 system removal - Create server data archive before deleting it.
+# 2019_08_17 web v1.1 system removal - New heading and return to Maintenance Server List
+# 2019_12_26 web v1.2 system removal - Deleted server now place in www/dat/archive directory.
+# 2021_06_07 web v1.3 system removal - Fix faulty message when deleting a client after creating it.
+#@2022_07_18 web v1.4 system removal - Fix delete permission problem & show archive file name.
 #
 # ==================================================================================================
 #

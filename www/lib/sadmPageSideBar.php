@@ -24,24 +24,22 @@
 # ==================================================================================================
 #
 # ChangeLog
-#   Version 2.0 - October 2017 
-#       - Replace PostGres Database with MySQL 
-#       - Web Interface changed for ease of maintenance and can concentrate on other things
-# 2018_02_07 V2.1 Added Performance Link in SideBar
-# 2018_07_09 v2.2 Change SideBar Layout
-# 2018_07_21 v2.3 If an RCH is malformed (Less than 8 fields) it is ignored 
-# 2018_09_16 v2.4 Add Alert Group in RCH Array
-# 2018_09_22 v2.5 Failed Script counter was wrong
-# 2019_01_05 Improvement: v2.6 Add SideBar link to view all servers CPU performance on one page.
-# 2019_06_07 Update: v2.7 Updated to deal with the new format of the RCH file.
-# 2019_07-15 Update: v2.8 Add 'Backup Status Page' & Fix RCH files with only one line not reported.
-# 2019_08-26 New: v2.9 Add 'Rear Backup Status Page' 
-# 2019_08-30 New: v2.10 Side Bar re-arrange order.
-# 2019_09-23 Update: v2.11 Change 'Status' for ' Job' in Sidebar.
-# 2019_12_01 Update: v2.12 Shorten label name of sidebar.
-#@2022_06_02 web v2.14 Change some syntax due to the new PHP v8 on RHEL9
-#@2022_07_13 web v2.15 Show alert when combine rch summary file can't be opened.
-#@2022_07_18 web v2.16 Fix intermittent problem - SideBar wouldn't not displayed correctly.
+# 2017_10_06 web v1.0  SideBar - Initial version
+# 2018_02_07 web v2.1  SideBar - Added Performance Link in SideBar
+# 2018_07_09 web v2.2  SideBar - Change SideBar Layout
+# 2018_07_21 web v2.3  SideBar - If an RCH is malformed (Less than 8 fields) it is ignored 
+# 2018_09_16 web v2.4  SideBar - Add Alert Group in RCH Array
+# 2018_09_22 web v2.5  SideBar - Failed Script counter was wrong
+# 2019_01_05 web v2.6  SideBar - Add SideBar link to view all servers CPU performance on one page.
+# 2019_06_07 web v2.7  SideBar - Updated to deal with the new format of the RCH file.
+# 2019_07-15 web v2.8  SideBar - Add 'Backup Status Page' & Fix RCH files.
+# 2019_08-26 web v2.9  SideBar - Add 'Rear Backup Status Page' 
+# 2019_08-30 web v2.10 SideBar - Side Bar re-arrange order.
+# 2019_09-23 web v2.11 SideBar - Change 'Status' for ' Job' in Sidebar.
+# 2019_12_01 web v2.12 SideBar - Shorten label name of sidebar.
+#@2022_06_02 web v2.14 SideBar - Change some syntax due to the new PHP v8 on RHEL9
+#@2022_07_13 web v2.15 SideBar - Show alert when final 'rch' summary file couldn't be opened.
+#@2022_07_18 web v2.16 SideBar - Fix problem, sidebar wouldn't displayed correctly.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -104,24 +102,24 @@ function build_sidebar_scripts_info()
     #unset($name_array);            UNUSED                                     # Clear output Array
     $last_line = system ("$CMD",$RCODE);                                # Execute find command
     if ($DEBUG) { echo "<br>Return code of command is : " . $RCODE ; }  # Display Return Code
-    echo "<br>A1a ";
+    #echo "<br>A1a ";
 
     # Loop through filename list in the file
     $fh = fopen($tmp_rch,"r");
-    echo "<br>A2 ";
+    #echo "<br>A2 ";
     if ($fh) {
-        echo "<br>A3 ";
+        #echo "<br>A3 ";
         while ($line = fgets($fh)) {
-            echo "<br>A3A ProcessLine";
+            #echo "<br>A3A ProcessLine";
             $wfile = trim($line);                                       # Read rch filename line
-            echo "<br>A3AA ". $wfile;
+            #echo "<br>A3AA ". $wfile;
             if (file_exists($wfile)) {                                  # If file still exist
-                echo "<br>A3B File Exist";
+                #echo "<br>A3B File Exist";
                 $line_array = file($wfile);                             # Put all rch file in array
                 $last_index = count($line_array) - 1;                   # Nb. of lines -1 (lastLine)
                 $tag = explode(" ",$line_array[$last_index]);           # Split Line space delimited
                 $num_tags = count($tag);                                # Nb Elements on lines
-                echo "<br>A3C " . $num_tags . " Fields ";
+                #echo "<br>A3C " . $num_tags . " Fields ";
                 if ($num_tags != 10) { continue ; }                     # Not 10 fields=Invalid Line
                 list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode) = explode(" ",$line_array[$last_index], 10);
                 $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdte2 .",". $ctime2 .",". $celapsed .",". $cname .",". $calert .",". $ctype . "," . trim($ccode) .",". basename($wfile) ."\n";
@@ -132,23 +130,23 @@ function build_sidebar_scripts_info()
                 }else{                                                  # If Key doesn't exist
                    $script_array[$akey] = $outline ;                    # Store line in Array
                 }
-                echo "<br>A3D EndOfFileExist";
+                #echo "<br>A3D EndOfFileExist";
             }
-            echo "<br>A3E GotoNxtLine";
+            #echo "<br>A3E GotoNxtLine";
         }
         fclose($fh);
-        echo "<br>A4 ";
+        #echo "<br>A4 ";
     }else{
         $errStr = "Failed to open '{$tmp_rch}' for read.";
         sadm_alert ("$errStr"); 
         unlink($tmp_rch);                                               # Delete Temp File
-        echo "<br>A5 ";
+        #echo "<br>A5 ";
         return $script_array;
     }
-    echo "<br>A6 ";
+    #echo "<br>A6 ";
     krsort($script_array);                                              # Reverse Sort Array on Keys
     unlink($tmp_rch);                                                   # Delete Temp File
-    echo "<br>A7 ";
+    #echo "<br>A7 ";
     
     # Under Debug - Display The Array Used to build the SideBar
     #if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key,value $key,$value";}}
@@ -303,7 +301,7 @@ function SideBar_OS_Summary() {
 	# ---------------------------   SCRIPTS STATUS SIDEBAR      ------------------------------------
     echo "\n<div class='SideBarTitle'>Scripts Status</div>";            # SideBar Section Title
 	$script_array = build_sidebar_scripts_info();                       # Build $script_array
-    echo "<br>A99 ";
+    #echo "<br>A99 ";
     $TOTAL_SCRIPTS=count($script_array);                                # Get Nb. Scripts in Array
     $TOTAL_FAILED=0; $TOTAL_SUCCESS=0; $TOTAL_RUNNING=0;                # Initialize Total to Zero
 
