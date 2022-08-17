@@ -49,7 +49,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG  = True  ;                                                      # Debug Activated True/False
+$DEBUG  = False  ;                                                      # Debug Activated True/False
 $SVER   = "1.8" ;                                                       # Current version number
 
 
