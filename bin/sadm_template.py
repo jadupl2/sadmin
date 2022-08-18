@@ -83,7 +83,7 @@ sa.db_used          = True        # Open/Use Database(True) or Don't Need DB(Fal
 #sa.log_header       = True       # Show/Generate Header in script log (.log)
 #sa.log_footer       = True       # Show/Generate Footer in script log (.log)
 #sa.multiple_exec    = "Y"        # Allow running multiple copy at same time ?
-#sa.use_rch         = True       # Generate entry in Result Code History (.rch)
+sa.use_rch           = False      # Generate entry in Result Code History (.rch)
 #sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
 sa.cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
 #
