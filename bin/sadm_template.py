@@ -68,9 +68,9 @@ pexit_code  = 0                                                         # Script
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
 # Uncomment anyone to change them and influence execution of SADMIN standard library.
 #
-sa.proot_only        = True       # Pgm run by root only ?
-sa.psadm_server_only = False      # Run only on SADMIN server ?
-sa.db_used          = True        # Open/Use Database(True) or Don't Need DB(False)
+sa.proot_only        = False       # Pgm run by root only ?
+sa.psadm_server_only = False       # Run only on SADMIN server ?
+sa.db_used           = True        # Open/Use Database(True) or Don't Need DB(False)
 #sa.db_silent        = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
@@ -83,7 +83,7 @@ sa.db_used          = True        # Open/Use Database(True) or Don't Need DB(Fal
 #sa.log_header       = True       # Show/Generate Header in script log (.log)
 #sa.log_footer       = True       # Show/Generate Footer in script log (.log)
 #sa.multiple_exec    = "Y"        # Allow running multiple copy at same time ?
-sa.use_rch           = False      # Generate entry in Result Code History (.rch)
+sa.use_rch           = True      # Generate entry in Result Code History (.rch)
 #sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
 sa.cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
 #
