@@ -525,10 +525,12 @@ create_backup()
             then sadm_write "Current directory: `pwd`\n"                # Print Current Dir.
                  sadm_write "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}\n" # Command we'll execute
         fi
-        sadm_writelog "Create link to latest backup of ${backup_line} in ${LATEST_DIR}"
+        sadm_write_log "Create link to latest backup of ${backup_line} in ${LATEST_DIR}"
+        sadm_write_log "Current directory: `pwd`"                       # Print Current Dir.
+        sadm_write_log "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}"
         ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}  >>$SADM_LOG 2>&1   # Run Soft Link Command
         if [ $? -ne 0 ]                                                 # If Error trying to link
-            then sadm_write_err "[ ERROR ] Creating Link Backup in latest Directory"
+            then sadm_write_err "[ ERROR ] Creating link backup in latest directory."
         fi
         
         if [ $RC -ne 0 ]                                                # If Error while Backup

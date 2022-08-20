@@ -29,66 +29,83 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-# 2019_03_17 New: v1.0 Initial Version.
-# 2019_03_20 New: v1.1 Verify if SADMIN requirement are met and -i to install missing requirement.
-# 2019_03_29 Update: v1.2 Add 'chkconfig' command requirement if running system using SYSV Init.
-# 2019_04_07 Update: v1.3 Use color variables from SADMIN Library.
-# 2019_05_16 Update: v1.4 Don't generate the RCH file & allow running multiple instance of script.
-# 2019_10_30 Update: v1.5 Remove 'facter' requirement.
-# 2019_12_02 Fix: v1.6 Fix Mac OS crash.
-# 2020_04_01 Update: v1.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-# 2020_04_29 Update: v1.8 Remove arp-scan from the SADMIN server requirement list.
-# 2020_11_20 Update: v1.9 Added package 'wkhtmltopdf' installation to server requirement.
-# 2021_04_02 Fix: v1.10 Fix crash when trying to install missing package.
-#@2022_04_10 Update: v1.11 Small change for CentOS 9 - Depreciated lsb_release
-#@2022_05_10 Update: v1.12 Replace 'mail' command by 'mutt'
+# 2019_03_17 install v1.0 Initial Version.
+# 2019_03_20 install v1.1 Verify if SADMIN requirement are met and -i to install missing requirement.
+# 2019_03_29 install v1.2 Add 'chkconfig' command requirement if running system using SYSV Init.
+# 2019_04_07 install v1.3 Use color variables from SADMIN Library.
+# 2019_05_16 install v1.4 Don't generate the RCH file & allow running multiple instance of script.
+# 2019_10_30 install v1.5 Remove 'facter' requirement.
+# 2019_12_02 install v1.6 Fix Mac OS crash.
+# 2020_04_01 install v1.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2020_04_29 install v1.8 Remove arp-scan from the SADMIN server requirement list.
+# 2020_11_20 install v1.9 Added package 'wkhtmltopdf' installation to server requirement.
+# 2021_04_02 install v1.10 Fix crash when trying to install missing package.
+#@2022_04_10 install v1.11 Depreciated `lsb_release` for AlmaLinux 9, RHEL 9, Rocky 9 CentOS 9.
+#@2022_05_10 install v1.12 Using now 'mutt' instead of 'mail'.
+#@2022_07_19 install v1.13 Update of the list of commands and package require by SADMIN.
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
+trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT LE ^C
 #set -x
      
 
 
-#===================================================================================================
-# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
-#
-    if [ -z "$SADMIN" ]                                 # Test If SADMIN Environment Var. is present
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
+# ---------------------------------------------------------------------------------------
+# SADMIN CODE SECTION 1.52
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
+# ---------------------------------------------------------------------------------------
 
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN Shell Library not readable ?
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
+# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                    # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # You can use variable below BUT DON'T CHANGE THEM - They are used by SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
-    export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
+export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.12'                              # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
-    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
-    export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
+# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='1.13'                                     # Your Current Script Version
+export SADM_PDESC="Check if all SADMIN Tools requirement are present (-i install missing package).s"
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
+export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
+export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-#---------------------------------------------------------------------------------------------------
-# Value for these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# But they can be overridden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used for Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # At end of script Trim log to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#===================================================================================================
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+# ---------------------------------------------------------------------------------------
 
 
   
@@ -96,9 +113,8 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SPATH=""                                    ; export SPATH              # Full Path of Command 
-INSTREQ=0                                   ; export INSTREQ            # Install Mode default OFF
+SPATH=""                                    ; export SPATH              # Work Path of Command 
+INSTREQ=0                                   ; export INSTREQ            # 0=DryRun 1=Install Missing
 CHK_SERVER="N"                              ; export CHK_SERVER         # Check Server Req. if "Y"
 OSRELEASE="/etc/os-release"                 ; export OSRELEASE
 
@@ -143,14 +159,15 @@ install_package()
     PACKAGE_DEB=$2                                                       # Ubuntu/Debian/Raspian Deb
 
     case "$package_type"  in
-        "rpm" ) if [ "$(sadm_get_osname)" = "FEDORA" ] 
-                   then sadm_write "Running \"dnf -y install ${PACKAGE_RPM}\"\n" # Install Command
+        "rpm" ) sadm_write_log "----------"
+                if [ "$(sadm_get_osname)" = "FEDORA" ] 
+                   then sadm_write_log "Running \"dnf -y install ${PACKAGE_RPM}\"" # Install Command
                         dnf -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
                         rc=$?                                            # Save Exit Code
-                        sadm_write "Return Code after in installation of ${PACKAGE_RPM} is ${rc}.\n"
+                        sadm_write_log "Return Code after in installation of ${PACKAGE_RPM} is ${rc}."
                    else lmess="Starting installation of ${PACKAGE_RPM} under $(sadm_get_osname)"
-                        lmess="${lmess} Version $(sadm_get_osmajorversion)"
-                        sadm_write "${lmess}\n"
+                        lmess="${lmess} v$(sadm_get_osmajorversion)"
+                        sadm_write_log "${lmess}"
                         case "$(sadm_get_osmajorversion)" in
                             [567])  sadm_write "Running \"yum -y install ${PACKAGE_RPM}\"\n" # Install Command
                                     yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
@@ -174,22 +191,24 @@ install_package()
                                     ;;
                         esac
                 fi
+                sadm_write_log "----------"
                 ;;
-        "deb" )
-                sadm_write "Synchronize package index files.\n"
-                sadm_write "Running \"apt-get update\"\n"               # Msg Get package list
-                apt-get update > /dev/null 2>&1                         # Get Package List From Repo
+
+        "deb" ) sadm_write_log "----------"
+                sadm_write_log "Running \"apt update\""                 # Msg Get package list
+                apt update > /dev/null 2>&1                             # Get Package List From Repo
                 rc=$?                                                   # Save Exit Code
                 if [ "$rc" -ne 0 ]
-                    then sadm_write "We had problem running the \"apt-get update\" command.\n"
-                         sadm_write "We had a return code ${rc}.\n"
+                    then sadm_write_err "We had problem running the \"apt update\" command."
+                         sadm_write_err "We had a return code ${rc}."
                     else sadm_write "Return Code after apt-get update is ${rc}.\n" 
                          sadm_write "Installing the Package ${PACKAGE_DEB} now.\n"
-                         sadm_write "apt-get -y install ${PACKAGE_DEB}.\n"
-                         apt-get -y install ${PACKAGE_DEB} >>$SADM_LOG 2>&1
+                         sadm_write "apt -y install ${PACKAGE_DEB}\n"
+                         apt -y install ${PACKAGE_DEB} >>$SADM_LOG 2>&1
                          rc=$?                                          # Save Exit Code
                          sadm_write "Return Code after installation of ${PACKAGE_DEB} is $rc \n"
                 fi
+                sadm_write_log "----------"
                 ;;
     esac
 
@@ -199,85 +218,252 @@ install_package()
 
 
 #===================================================================================================
-#  Install EPEL Repository for Redhat / CentOS
+#  Install EPEL 7 Repository for Redhat / CentOS / Rocky / Alma Linux / 
+#===================================================================================================
+add_epel_7_repo()
+{
+    RC=0                                                                # Default Return Code
+
+    yum repolist | grep -qi "^epel "                                    # Is epel is already install
+    if [ $RC -ne 0 ]
+        then sadm_write_log "Adding CentOS/Redhat V7 EPEL repository ..." 
+             EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+             sadm_write_log "yum install -y $EPEL"
+             yum install -y $EPEL >>$SLOG 2>&1
+             if [ $? -ne 0 ]
+                 then sadm_write_err "[ ERROR ] Adding EPEL 7 repository."
+                      RC=1
+             fi
+    fi
+
+    if [ "$SADM_OSNAME" = "CENTOS" ] 
+        then sadm_write_log "Installing epel-next-release CentOS/Redhat v${SADM_OS_VERSION} ..." 
+             sadm_write_log "dnf -y install epel-next-release ..."
+             dnf -y install epel-next-release >>$SADM_LOG 2>&1
+             if [ $? -ne 0 ]
+                then sadm_write_err "[ ERROR ] Adding epel-next-release v${SADM_OS_VERSION} repo."
+                     RC=1
+                else sadm_write_log "[ OK ]"
+             fi
+    fi 
+
+    if [ "$SADM_OSNAME" = "REDHAT" ] 
+        then rhel1="--enable rhel-*-optional-rpms "
+             rhel2="--enable rhel-*-extras-rpms "
+             rhel3="--enable rhel-ha-for-rhel-*-server-rpms "
+             sadm_write_log "On Red Hat Enable Extra repositories ..."
+             sadm_write_log "subscription-manager repos "$rhel1" "$rhel2" "$rhel3""
+             subscription-manager repos "$rhel1" "$rhel2" "$rhel3" 
+             if [ $? -ne 0 ]
+                then sadm_write_err "[ ERROR ] Couldn't enable Red Hat extra repositories."
+                     RC=1
+                else sadm_write_log "[ OK ]"
+             fi 
+    fi
+
+    #sadm_write_log "Disabling EPEL Repository (yum-config-manager --disable epel) "
+    #sadm_write_log "yum-config-manager --disable epel" 
+    #yum-config-manager --disable >> $SADM_LOG 2>&1
+    #if [ $? -ne 0 ]
+    #   then sadm_write_err "Couldn't disable EPEL for version $SADM_OS_VERSION" 
+    #        RC=1
+    #   else sadm_write_log "[ OK ]"
+    #fi 
+
+    return $RC
+}
+
+
+#===================================================================================================
+# Add EPEL Repository on Redhat / CentOS 8 (but do not enable it)
+#===================================================================================================
+add_epel_8_repo()
+{
+    RC=0                                                                # Default Return Code
+    if [ "$SADM_OSNAME" != "REDHAT" ] 
+        then dnf repolist | grep -qi "^powertools "                     # Is powertools installed ?
+             if [ $RC -ne 0 ]
+                then sadm_write_log "dnf config-manager --set-enabled powertools ..." 
+                     dnf config-manager --set-enabled powertools  >>$SADM_LOG 2>&1 
+                     if [ $? -ne 0 ]
+                        then sadm_write_err "[ ERROR ] Couldn't enable 'powertools' repository."
+                             RC=1
+                        else sadm_write_log " [ OK ]"
+                     fi 
+             fi
+
+             dnf repolist | grep -qi "^epel "                                    # Is epel is already install
+             if [ $RC -ne 0 ]
+                then sadm_write_log "Installing epel-release on $SADM_OS_NAME v${SADM_OS_VERSION} ..."
+                     sadm_write_log "dnf -y install epel-release ..."
+                     dnf -y install epel-release >>$SADM_LOG 2>&1
+                     if [ $? -ne 0 ]
+                        then sadm_write_err "[ ERROR ] Adding epel-release v${SADM_OS_VERSION} repository."
+                             RC=1
+                        else sadm_write_log " [ OK ]"
+                     fi
+             fi
+    fi 
+
+    if [ "$SADM_OSNAME" = "CENTOS" ] 
+        then dnf repolist | grep -qi "^epel-next "                      # Is epel-next installed ?
+             if [ $RC -ne 0 ]
+                then sadm_write_log "Installing epel-next-release CentOS/Redhat v${SADM_OS_VERSION} ..." 
+                     sadm_write_log "dnf -y install epel-next-release ..."
+                     dnf -y install epel-next-release >>$SADM_LOG 2>&1
+                     if [ $? -ne 0 ]
+                        then sadm_write_err "[ ERROR ] Adding epel-next-release v${SADM_OS_VERSION} repo."
+                             RC=1
+                        else sadm_write_log "[ OK ]"
+                     fi
+             fi
+    fi 
+
+    if [ "$SADM_OSNAME" = "REDHAT" ] 
+        then dnf repolist | grep -qi "^epel "                                    # Is epel is already install
+             if [ $RC -ne 0 ]
+                then sadm_write_log "Installing epel-release on $SADM_OS_NAME v${SADM_OS_VERSION} ..."
+                     sadm_write_log "dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
+                     dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm >>$SADM_LOG 2>&1
+                     if [ $? -ne 0 ]
+                        then sadm_write_err "[ ERROR ] Adding epel-release v${SADM_OS_VERSION} repository."
+                             RC=1
+                        else sadm_write_log " [ OK ]"
+                     fi
+             fi
+
+             dnf repolist | grep -qi "^codeready-builder"
+             if [ $RC -ne 0 ]
+                then sadm_write_log "On Red Hat Enable 'codeready-builder' EPEL repository ..."
+                     sadm_write_log "subscription-manager repos --enable codeready-builder-for-rhel-8-$(arch)-rpms"
+                     subscription-manager repos --enable codeready-builder-for-rhel-8-$(arch)-rpms >>$SADM_LOG 2>&1
+                     if [ $? -ne 0 ]
+                        then sadm_write_err "[ ERROR ] Couldn't enable 'codeready-builder' EPEL repository."
+                             RC=1
+                        else sadm_write_log "[ OK ]"
+                     fi 
+             fi
+    fi 
+
+    #sadm_write_log "Disabling EPEL Repository (yum-config-manager --disable epel) " 
+    #dnf config-manager --disable epel >/dev/null 2>&1
+    #if [ $? -ne 0 ]
+    #   then sadm_write_err "Couldn't disable EPEL for version $SADM_OS_VERSION"
+    #        RC=1
+    #   else sadm_write_log "[ OK ]"
+    #fi 
+    return $RC
+}
+
+
+
+#===================================================================================================
+# Add EPEL Repository on Redhat / CentOS 9 (but do not enable it)
+#===================================================================================================
+add_epel_9_repo()
+{
+    RC=0                                                                # Default Return Code
+
+    dnf repolist | grep -qi "^crb "                                     # Is crb is already install
+    if [ $RC -ne 0 ]
+        then sadm_write_log "dnf config-manager --set-enabled crb ..." 
+             dnf config-manager --set-enabled crb  >>$SADM_LOG 2>&1 
+             if [ $? -ne 0 ]
+                then sadm_write_err "[ ERROR ] Couldn't enable 'crb' repository."
+                     RC=1
+                else sadm_write_log " [ OK ]"
+             fi 
+    fi 
+
+    dnf repolist | grep -qi "^epel "                                    # Is epel is already install
+    if [ $RC -ne 0 ]
+        then sadm_write_log "Installing epel-release on $SADM_OS_NAME v${SADM_OS_VERSION} ..."
+             sadm_write_log "dnf -y install epel-release ..."
+             dnf -y install epel-release >>$SADM_LOG 2>&1
+             if [ $? -ne 0 ]
+                then sadm_write_err "[ ERROR ] Adding epel-release v${SADM_OS_VERSION} repository."
+                     RC=1
+                else sadm_write_log " [ OK ]"
+             fi
+    fi 
+
+    if [ "$SADM_OSNAME" = "CENTOS" ] 
+        then sadm_write_log "Installing epel-next-release CentOS/Redhat v${SADM_OS_VERSION} ..." 
+             sadm_write_log "dnf -y install epel-next-release ..."
+             dnf -y install epel-next-release >>$SADM_LOG 2>&1
+             if [ $? -ne 0 ]
+                then sadm_write_err "[ ERROR ] Adding epel-next-release v${SADM_OS_VERSION} repo."
+                     RC=1
+                else sadm_write_log "[ OK ]"
+             fi
+    fi 
+
+    if [ "$SADM_OSNAME" = "REDHAT" ] 
+        then dnf repolist | grep -qi "^epel "                                    # Is epel is already install
+             if [ $RC -ne 0 ]
+                then sadm_write_log "Installing epel-release on $SADM_OS_NAME v${SADM_OS_VERSION} ..."
+                     sadm_write_log "dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"
+                     dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm>>$SADM_LOG 2>&1
+                     if [ $? -ne 0 ]
+                        then sadm_write_err "[ ERROR ] Adding epel-release v${SADM_OS_VERSION} repository."
+                             RC=1
+                        else sadm_write_log " [ OK ]"
+                     fi
+             fi
+
+             dnf repolist | grep -qi "^codeready-builder"
+             if [ $RC -ne 0 ]
+                then sadm_write_log "On Red Hat Enable 'codeready-builder' EPEL repository ..."
+                     sadm_write_log "subscription-manager repos --enable codeready-builder-beta-for-rhel-9-$(arch)-rpms"
+                     subscription-manager repos --enable codeready-builder-beta-for-rhel-9-$(arch)-rpms >>$SADM_LOG 2>&1
+                     if [ $? -ne 0 ]
+                        then sadm_write_err "[ ERROR ] Couldn't enable 'codeready-builder' EPEL repository."
+                             RC=1
+                        else sadm_write_log "[ OK ]"
+                     fi 
+             fi
+    fi  
+
+    #sadm_write_log "Disabling EPEL Repository (yum-config-manager --disable epel) " 
+    #dnf config-manager --disable epel >/dev/null 2>&1
+    #if [ $? -ne 0 ]
+    #   then sadm_write_err "Couldn't disable EPEL for version $SADM_OS_VERSION"
+    #        RC=1
+    #   else sadm_write_log "[ OK ]"
+    #fi 
+
+    return $RC
+}
+
+
+#===================================================================================================
+#  Install EPEL Repository for Redhat / CentOS / Rocky / Alma Linux / 
 #===================================================================================================
 add_epel_repo()
 {
-    if [ -f $OSRELEASE ] 
-       then export SADM_OSVERSION=$(awk -F= '/^VERSION_ID=/ {print $2}' $OSRELEASE)
-       else printf "File $OSRELEASE doesn't exist, couldn't get O/S version\n"
-    fi
-                        fi 
-    # Add EPEL Repository on Redhat / CentOS 6 (but do not enable it)
-    if [ "$SADM_OSVERSION" -eq 6 ] 
-        then yum -C repolist | grep "^epel " >/dev/null 2>&1
-             if [ $? -ne 0 ] 
-                then echo "Adding CentOS/Redhat V6 EPEL repository (Disabled by default) ..." 
-                     epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm"
-                     yum install -y $epel >/dev/null 2>&1
-                     if [ $? -ne 0 ]
-                        then echo "${YELLOW}Couldn't add EPEL repos for version ${SADM_OSVERSION}${NORMAL}" 
-                             return 1
-                    fi 
-                    echo "${YELLOW}Disabling EPEL Repository, will activate it only when needed"
-                    yum-config-manager --disable epel >/dev/null 2>&1
-                    if [ $? -ne 0 ]
-                        then echo "${YELLOW}Couldn't disable EPEL for version ${SADM_OSVERSION}${NORMAL}"
-                             return 1
-                    fi 
-                    return 0
-             fi
-    fi
+    case $SADM_OS_VERSION in
+        7)  add_epel_7_repo 
+            RC=$?
+            ;;
+        8)  add_epel_8_repo 
+            RC=$?
+            ;;
+        9)  add_epel_9_repo 
+            RC=$?
+            ;;
+        *)  sadm_write_err "Ver. $SADM_OS_VERSION of $SADM_OS_NAME don't have EPEL repository."
+            RC=1
+            ;;
+    esac
 
-    # Add EPEL Repository on Redhat / CentOS 7 (but do not enable it)
-    if [ "$SADM_OSVERSION" -eq 7 ] 
-        then yum -C repolist | grep "^epel" >/dev/null 2>&1
-             if [ $? -ne 0 ]     
-                then echo "Adding CentOS/Redhat V7 EPEL repository (Disabled by default) ..." 
-                     epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
-                     yum install -y $epel >/dev/null 2>&1
-                     if [ $? -ne 0 ]
-                        then echo "${YELLOW}Couldn't add EPEL repository for version ${SADM_OSVERSION}${NORMAL}" 
-                             return 1
-                     fi 
-                     echo "Disabling EPEL Repository, will activate it only when needed" 
-                     yum-config-manager --disable epel >/dev/null 2>&1
-                     if [ $? -ne 0 ]
-                        then echo "${YELLOW}Couldn't disable EPEL for version ${SADM_OSVERSION}${NORMAL}" 
-                             return 1
-                     fi 
-                     return 0
-             fi
-    fi
-
-    # Add EPEL Repository on Redhat / CentOS 8 (but do not enable it)
-    if [ "$SADM_OSVERSION" -eq 8 ] 
-        then yum -C repolist | grep "^epel" >/dev/null 2>&1
-             if [ $? -ne 0 ]     
-                then echo "Adding CentOS/Redhat V8 EPEL repository (Disabled by default) ..." 
-                     epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
-                     yum install -y $epel 
-                     if [ $? -ne 0 ]
-                        then echo "${YELLOW}Couldn't add EPEL repository for version ${SADM_OSVERSION}${NORMAL}" 
-                             return 1
-                     fi 
-                     #
-                     rpm -qi dnf-utils >/dev/null 2>&1                          # Is dns-utils installed
-                     if [ $? -ne 0 ] 
-                        then echo "Installing dnf-utils" 
-                             dnf install -y dnf-utils >/dev/null 2>&1
-                     fi
-                     #
-                     echo "Disabling EPEL Repository, will activate it only when needed" 
-                     dnf config-manager --set-disabled epel >/dev/null 2>&1
-                     if [ $? -ne 0 ]
-                        then echo "${YELLOW}Couldn't disable EPEL for version ${SADM_OSVERSION}${NORMAL}"
-                             return 1
-                     fi 
-             fi
+    if [ $RC -ne 0 ]
+       then sadm_write_err "[ ERROR ] Adding EPEL for $SADM_OS_NAME v${SADM_OS_VERSION} repo." 
+            return 1
+       else sadm_write_log "[ OK ] EPEL for $SADM_OS_NAME v${SADM_OS_VERSION} repo added with success." 
     fi
     return 0 
 }
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -286,9 +472,9 @@ add_epel_repo()
 # --------------------------------------------------------------------------------------------------
 command_available() {
     CMD=$1                                                              # Save Parameter received
-    printf "Checking availability of command $CMD ... "
+    printf "%-55s" "Checking availability of command $CMD"
     if ${SADM_WHICH} ${CMD} >/dev/null 2>&1                             # Locate command found ?
-        then SPATH=`${SADM_WHICH} ${CMD}`                               # Save Path of command
+        then SPATH=$($SADM_WHICH $CMD) 
              echo "$SPATH ${GREEN}[OK]${NORMAL}"                        # Show Path to user and OK
              return 0                                                   # Return 0 if cmd found
         else SPATH=""                                                   # PATH empty when Not Avail.
@@ -296,6 +482,7 @@ command_available() {
     fi
     return 1
 }
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -308,29 +495,35 @@ package_available() {
     DEB_PACK=$2                                                         # Deb Package Name
 
     case "$package_type"  in
-        "rpm" )     printf "Checking availability of rpm package $RPM_PACK ... " 
+        "rpm" )     printf "%-56s" "Checking availability of rpm package $RPM_PACK" 
                     rpm -q $RPM_PACK >/dev/null 2>&1
                     if [ $? -eq 0 ] ; then echo "${GREEN}[OK]${NORMAL}" ; return 0 ; fi
-                    echo "Package missing ${BOLD}${MAGENTA}[Warning]${NORMAL}" 
-                    install_package "$RPM_PACK" "$DEB_PACK" 
+                    echo "${BOLD}${MAGENTA}[Warning]${NORMAL} package missing" 
+                    if [ $INSTREQ -eq 1 ] 
+                        then install_package "$RPM_PACK" "$DEB_PACK" 
+                        else return 1
+                    fi
                     #
-                    printf "Check if install of $RPM_PACK was successful ... " 
+                    printf "%-56s" "Check if install of $RPM_PACK was successful" 
                     rpm -q $RPM_PACK >/dev/null 2>&1
                     if [ $? -eq 0 ] ; then echo "${GREEN}[OK]${NORMAL}" ; return 0 ; fi
-                    echo "Package missing ${BOLD}${MAGENTA}[Warning]${NORMAL}" 
+                    echo "${BOLD}${MAGENTA}[Warning]${NORMAL} package could not be installed." 
                     return 1 
                     ;;
 
-        "deb" )     printf "Checking availability of deb package $DEB_PACK ... " 
-                    dpkg -s $DEB_PACK >/dev/null 2>&1
+        "deb" )     printf "%-56s" "Checking availability of deb package $DEB_PACK" 
+                    dpkg -l $DEB_PACK >/dev/null 2>&1
                     if [ $? -eq 0 ] ; then echo "${GREEN}[OK]${NORMAL}" ; return 0 ; fi
-                    echo "Package missing ${BOLD}${MAGENTA}[Warning]${NORMAL}" 
-                    install_package "$RPM_PACK" "$DEB_PACK" 
+                    echo "${BOLD}${MAGENTA}[Warning]${NORMAL} package missing" 
+                    if [ $INSTREQ -eq 1 ] 
+                        then install_package "$RPM_PACK" "$DEB_PACK" 
+                        else return 1
+                    fi
                     #
-                    printf "Check if install of $DEB_PACK was successful ... " 
-                    dpkg -s $DEB_PACK >/dev/null 2>&1
+                    printf "%-56s" "Check if install of $DEB_PACK was successful" 
+                    dpkg -l $DEB_PACK >/dev/null 2>&1
                     if [ $? -eq 0 ] ; then echo "${GREEN}[OK]${NORMAL}" ; return 0 ; fi
-                    echo "Package missing ${BOLD}${MAGENTA}[Warning]${NORMAL}" 
+                    echo "${BOLD}${MAGENTA}[Warning]${NORMAL} package could not be installed." 
                     return 1 
                     ;;
         *)          printf "Package type $package+type is not supported yet" 
@@ -340,22 +533,28 @@ package_available() {
 }
 
 
-# --------------------------------------------------------------------------------------------------
+
 # THIS FUNCTION MAKE SURE THAT ALL SADM SHELL LIBRARIES (LIB/SADM_*) REQUIREMENTS ARE MET BEFORE USE
 # IF THE REQUIRENMENT ARE NOT MET, THEN THE SCRIPT WILL ABORT INFORMING USER TO CORRECT SITUATION
 # --------------------------------------------------------------------------------------------------
-#
 check_sadmin_requirements() {
-    sadm_write "${WHITE}${BOLD}SADMIN client requirements${NORMAL}\n"
+    sadm_write "${YELLOW}${BOLD}SADMIN client requirements${NORMAL}\n"
 
+    if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] ||
+       [ "$(sadm_get_osname)" = "ROCKY" ]  || [ "$(sadm_get_osname)" = "ALMALINUX" ]
+       then if [ $INSTREQ -eq 1 ] 
+                then add_epel_repo
+                else sadm_write_log "I would install EPEL repositories, if not already installed."
+             fi 
+    fi 
+    
     # The 'which' command is needed to determine presence of command - Return Error if not found
-    if which which >/dev/null 2>&1                                      # Try the command which
-        then SADM_WHICH=`which which`  ; export SADM_WHICH              # Save Path of Which Command
-        else sadm_write "[ERROR] The command 'which' couldn't be found.\n"
-             sadm_write "        This program is often used by the SADMIN tools.\n"
-             sadm_write "        Please install it and re-run this script.\n"
-             sadm_write "        *** Script Aborted.\n"
-             return 1                                                   # Return Error to Caller
+    if [ "$SADM_WHICH" == "" ]
+       then sadm_write_err "[ ERROR ] The command 'which' couldn't be found"
+            sadm_write_err "          This program is often used by the SADMIN tools"
+            sadm_write_err "          Please install it and re-run this script"
+            sadm_write_err "          *** Script Aborted"
+            return 1                                                   # Return Error to Caller
     fi
 
     # Special consideration for nmon on Aix 5.x & 6.x (After that it is included as part of O/S ----
@@ -367,9 +566,9 @@ check_sadmin_requirements() {
                     NMON_EXE="nmon_aix$(sadm_get_osmajorversion)$(sadm_get_osminorversion)"
                     NMON_USE="${NMON_WDIR}${NMON_EXE}"                  # Use exec. of your version
                     if [ ! -x "$NMON_USE" ]                             # nmon exist and executable
-                        then sadm_write "'nmon' for AIX $(sadm_get_osversion) isn't available.\n"
-                             sadm_write "The nmon executable we need is ${NMON_USE}.\n"
-                        else sadm_write "ln -s ${NMON_USE} /usr/bin/nmon\n"
+                        then sadm_write_err "'nmon' for AIX $(sadm_get_osversion) isn't available."
+                             sadm_write_err "The nmon executable we need is ${NMON_USE}."
+                        else sadm_write_err "ln -s ${NMON_USE} /usr/bin/nmon"
                              ln -s ${NMON_USE} /usr/bin/nmon            # Link nmon avail to user
                              if [ $? -eq 0 ] ; then SADM_NMON="/usr/bin/nmon" ; fi # Set SADM_NMON
                     fi
@@ -379,7 +578,6 @@ check_sadmin_requirements() {
     # Get Command path for Linux O/S ---------------------------------------------------------------
     if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux O/S
        then 
-
             command_available "dmidecode"   ; SADM_DMIDECODE=$SPATH     # Save Command Path Returned
             if [ "$SADM_DMIDECODE" = "" ] && [ "$INSTREQ" -eq 1 ]       # Cmd not found & Inst Req.
                 then install_package "dmidecode" "dmidecode"            # Install Package (rpm,deb)
@@ -424,11 +622,11 @@ check_sadmin_requirements() {
                      command_available "ifconfig" ;SADM_IFCONFIG=$SPATH # Recheck Should be install
             fi
 
-            command_available "iostat"     ; SADM_IOSTAT=$SPATH         # Save Command Path Returned
-            if [ "$SADM_IOSTAT" = "" ] && [ "$INSTREQ" -eq 1 ]          # Cmd not found & Inst Req.
-                then install_package "sysstat" "sysstat"                # Install Package (rpm,deb)
-                     command_available "iostat"  ; SADM_IOSTAT=$SPATH   # Recheck Should be install
-            fi
+            #command_available "sar"     ; SADM_SAR=$SPATH               # Save Command Path Returned
+            #if [ "$SADM_SAR" = "" ] && [ "$INSTREQ" -eq 1 ]             # Cmd not found & Inst Req.
+            #    then install_package "sysstat" "sysstat"                # Install Package (rpm,deb)
+            #         command_available "sar"  ; SADM_SAR=$SPATH         # Recheck Should be install
+            #fi
 
             command_available "parted"      ; SADM_PARTED=$SPATH        # Save Command Path Returned
             if [ "$SADM_PARTED" = "" ] && [ "$INSTREQ" -eq 1 ]          # Cmd not found & Inst Req.
@@ -466,8 +664,25 @@ check_sadmin_requirements() {
                      command_available "fdisk"  ; SADM_FDISK=$SPATH     # Recheck Should be install
             fi
 
+            if [ "$(sadm_get_osname)" != "RASPBIAN" ]
+                then command_available "rear"         ; SADM_REAR=$SPATH        # Save Command Path Returned
+                     if [ "$SADM_REAR" = "" ] && [ "$INSTREQ" -eq 1 ]           # Cmd not found & Inst Req.
+                         then install_package "rear" "rear"
+                              command_available "rear"   ; SADM_SYSLINUX=$SPATH # Recheck Should be install
+                     fi    
+            fi 
+
+            if [ "$(sadm_get_osname)" != "RASPBIAN" ]
+                then command_available "syslinux"         ; SADM_SYSLINUX=$SPATH        
+                     if [ "$SADM_RSYNC" = "" ] && [ "$INSTREQ" -eq 1 ]                  
+                        then install_package "syslinux" "syslinux"
+                             command_available "syslinux"   ; SADM_SYSLINUX=$SPATH      
+                     fi    
+            fi 
+
             # Check if Package is installed, if option (-i) is set then install it.
-            package_available "perl-libwww-perl" "libwww-perl"         #  Check if Perl Package Inst
+            package_available "perl-libwww-perl" "libwww-perl"          #  Check if Perl Package Inst
+            package_available "sysstat" "sysstat"                      
     fi
 
 
@@ -484,10 +699,33 @@ check_sadmin_requirements() {
              command_available "ssh"         ; SADM_SSH=$SPATH          # Recheck Should be install
     fi    
 
+    command_available "rsync"         ; SADM_RSYNC=$SPATH               # Save Command Path Returned
+    if [ "$SADM_RSYNC" = "" ] && [ "$INSTREQ" -eq 1 ]                   # Cmd not found & Inst Req.
+        then install_package "rsync" "rsync"
+             command_available "rsync"         ; SADM_RSYNC=$SPATH      # Recheck Should be install
+    fi    
+    command_available "genisoimage"   ; SADM_GENISOIMAGE=$SPATH         # Save Command Path Returned
+    if [ "$SADM_GENISOIMAGE" = "" ] && [ "$INSTREQ" -eq 1 ]              # Cmd not found & Inst Req.
+        then install_package "genisoimage" "genisoimage"
+             command_available "genisoimage" ; SADM_GENISOIMAGE=$SPATH  # Recheck Should be install
+    fi    
+
+    command_available "hwinfo"         ; SADM_HWINFO=$SPATH             # Save Command Path Returned
+    if [ "$SADM_HWINFO" = "" ] && [ "$INSTREQ" -eq 1 ]                  # Cmd not found & Inst Req.
+        then install_package "hwinfo" "hwinfo"
+             command_available "hwinfo"   ; SADM_SYSLINUX=$SPATH        # Recheck Should be install
+    fi    
+
     command_available "bc"          ; SADM_BC=$SADM_BC                  # Save Command Path Returned
     if [ "$SADM_BC" = "" ] && [ "$INSTREQ" -eq 1 ]                      # Cmd not found & Inst Req.
         then install_package "bc" "bc"                                  # Install Package (rpm,deb)
              command_available "bc"          ; SADM_BC=$SADM_BC         # Recheck Should be install
+    fi    
+
+    command_available "inxi"          ; SADM_INXI=$SADM_INXI            # Save Command Path Returned
+    if [ "$SADM_INXI" = "" ] && [ "$INSTREQ" -eq 1 ]                    # Cmd not found & Inst Req.
+        then install_package "inxi" "inxi"                              # Install Package (rpm,deb)
+             command_available "inxi" ; SADM_INXI=$SADM_INXI            # Recheck Should be install
     fi    
 
     command_available "python3"  ; SADM_PYTHON3=$SPATH                  # Save Command Path Returned
@@ -496,9 +734,10 @@ check_sadmin_requirements() {
              command_available "python3"  ; SADM_PYTHON3=$SPATH         # Recheck Should be install
     fi    
 
+
     # If on the SADMIN Server mysql MUST be present - Check Availibility of the mysql command.
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] || [ "$CHK_SERVER" = "Y" ] # Check Server Req.
-        then sadm_write "\n${WHITE}${BOLD}SADMIN server requirements.${NORMAL}\n"
+        then sadm_write "\n${YELLOW}${BOLD}SADMIN server requirements.${NORMAL}\n"
              command_available "mysql" ; SADM_MYSQL=$SPATH              # Get mysql cmd path  
              if [ "$SADM_MYSQL" = "" ] && [ "$INSTREQ" -eq 1 ]          # Cmd not found & Inst Req.
                 then install_package "mariadb-server " "mariadb-server mariadb-client"  
@@ -514,11 +753,6 @@ check_sadmin_requirements() {
                 then install_package "--enablerepo=epel fping" "fping monitoring-plugins-standard" 
                      command_available "fping" ; SADM_FPING=$SPATH      # Recheck Should be install
              fi    
-             #command_available "arp-scan" ; SADM_ARPSCAN=$SPATH        # Get  cmd path  
-             #if [ "$SADM_ARPSCAN" = "" ] && [ "$INSTREQ" -eq 1 ]       # Cmd not found & Inst Req.
-             #   then install_package "--enablerepo=epel arp-scan" "arp-scan" # Install package
-             #        command_available "arp-scan" ; SADM_ARPSCAN=$SPATH # Recheck Should be install
-             #fi    
              command_available "pip3" ; SADM_PIP3=$SPATH                # Get cmd path  
              if [ "$SADM_PIP3" = "" ] && [ "$INSTREQ" -eq 1 ]           # Cmd not found & Inst Req.
                 then install_package "python3-pip" "python3-pip"        # Install package
@@ -562,19 +796,8 @@ check_sadmin_requirements() {
 
 
 
-#===================================================================================================
-# Script Main Processing Function
-#===================================================================================================
-main_process()
-{
-    check_sadmin_requirements
-    SADM_EXIT_CODE=$?
-
-    return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
-}
 
 
-# --------------------------------------------------------------------------------------------------
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
 # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
@@ -596,9 +819,6 @@ function cmd_options()
                exit 0                                                   # Back to shell
                ;;
             i) INSTREQ=1                                                # Install Requirement ON
-               if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ]
-                   then add_epel_repo
-               fi 
                ;;                                                       # No stop after each page
             s) CHK_SERVER="Y"                                           # Check Server Requirement
                ;;                                                       # No stop after each page
@@ -615,24 +835,14 @@ function cmd_options()
 }
 
 
-#===================================================================================================
-#                                       Script Start HERE
-#===================================================================================================
 
+
+# Script Start HERE
+# --------------------------------------------------------------------------------------------------
     cmd_options "$@"                                                    # Check command-line Options    
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-
-    # If current user is not 'root', exit to O/S with error code 1 (Optional)
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
-             sadm_write "Process aborted.\n"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
-
-    main_process                                                        # Main Process
+    check_sadmin_requirements                                           # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
-    
