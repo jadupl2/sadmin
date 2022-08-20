@@ -113,6 +113,7 @@
 #@2022_06_10 install v3.76 Update some parameters at the end of '/etc/postfix/main.cf' file.
 #@2022_06_18 install v3.77 Fix SSH port setting problem during installation on AlmaLinux v9.
 #@2022_07_02 install v3.78 Fix input problem related to smtp server data.
+#@2022_07_19 install v3.79 Update of the commands requirements.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -129,7 +130,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.78"                                            # Setup Version Number
+sver                = "3.79"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname

@@ -29,20 +29,7 @@
 # 2017_12_30 V2.11 Combine sadmlib_server into  , so one library from then on.
 # 2018_01_03 V2.12 Added Check for facter command , if present use it get get hardware info
 # 2018_01_05 V2.13 Remove Warning when command can't be found for compatibility
-# 2018_01_23 V2.14 Add arc directory in $SADMIN/www for archiving purpose
-# 2018_01_25 V2.15 Add SADM_RRDTOOL to sadmin.cfg for php page using it
-# 2018_02_07 V2.16 Bug Fix when determining if server is a virtual or physical
-# 2018_02_08 V2.17 Correct 'if' statement compatibility problem with 'dash' shell
-# 2018_02_14 V2.18 Add Documentation Directory
-# 2018_02_22 V2.19 Add SADM_HOST_TYPE field in sadmin.cfg
-# 2018_05_03 V2.20 Password for Database Standard User (sadmin and squery) now read from .dbpass file
-# 2018_05_06 V2.21 Change name of crontab file in etc/cron.d to sadm_server_osupdate
-# 2018_05_14 V2.22 Add Options not to use or not the RC File, to show or not the Log Header and Footer
-# 2018_05_23 V2.23 Remove some variables and logic modifications
-# 2018_05_26 V2.24 Added Variables SADM_RPT_FILE and SADM_USERNAME for users
-# 2018_05_27 V2.25 Get Read/Write & Read/Only User Database Password, only if on SADMIN Server.
-# 2018_05_28 V2.26 Added Loading of backup parameters coming from sadmin.cfg
-# 2018_06_04 V2.27 Add dat/dbb,usr/bin,usr/doc,usr/lib,usr/mon,setup and www/tmp/perf creation.
+# 2018_01_23 V2.14 Add arc directory in usr/doc,usr/lib,usr/mon,setup and www/tmp/perf creation.
 # 2018_06_10 V2.28 SADM_CRONTAB file change name (/etc/cron.d/sadm_osupdate)
 # 2018_06_14 V2.29 Added test to make sure that /etc/environment contains "SADMIN=${SADMIN}" line
 # 2018_07_07 V2.30 Move .sadm_osupdate crontab work file to $SADMIN/cfg
@@ -65,7 +52,7 @@
 # 2018_10_20 v2.47 Alert not sent by client anymore,all alert are send by SADMIN Server(Avoid Dedup)
 # 2018_10_28 v2.48 Only assign a Reference Number to 'Error' alert (Warning & Info not anymore)
 # 2018_10_29 v2.49 Correct Type Error causing occasional crash
-# 2018_10_30 v2.50 Use dnsdomainname to get current domainname if host cmd don't return it.
+# 2018_10_30 v2.50 Use dnsdomainname to get current domain name if host cmd don't return it.
 # 2018_11_09 v2.51 Add Link in Slack Message to view script log.
 # 2018_11_09 v2.52 Update For Calculate CPU SPeed & for MacOS Mojave.
 # 2018_12_08 v2.53 Fix problem determining domainname when DNS is server is down.
@@ -721,6 +708,7 @@ sadm_trimfile() {
 # Return Value : 
 #   0) If command exist & the full command path is returned (/usr/bin/cal).
 #   1) If command doesn't exist & an empty string is returned ("")
+#---------------------------------------------------------------------------------------------------
 sadm_get_command_path() {
     SADM_CMD=$1                                                         # Save Parameter received
     if ${SADM_WHICH} ${SADM_CMD} >/dev/null 2>&1                        # Command is found ?
