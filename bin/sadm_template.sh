@@ -47,12 +47,12 @@
 #   | osupdate  | O/S Update modification or fixes      |  
 #
 # Field 3: Version number '999.999' (Max 7 Char., No spaces)
-# Field 4: Description of change (Max 60 Characters)
+# Field 4: Description of change (Up to 70 Characters)
 #
-#@YYYY_MM_DD Type    vxx.xx 123456789*123456789*123456789*123456789*123456789*123456789*-------------
+#@YYYY_MM_DD Type    vxx.xx 123456789*123456789*123456789*123456789*123456789*123456789*123456789*--
 #---------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# 2021_07_01 New     v1.0  Initial Beta Version
+# 2021_07_01 lib v1.0  Initial Beta Version
 #@2021_09_25 lib v4.0 Added 'SADM_PDESC' that contain description of Script (Used in -v option).
 #@2022_05_25 lib v4.1 Added 'SADM_ROOT_ONLY' and 'SADM_SERVER_ONLY' checked before running script.
 #---------------------------------------------------------------------------------------------------
@@ -100,9 +100,9 @@ export SADM_PID_TIMEOUT=7200                               # Sec. before PID Loc
 export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
-export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
-export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+export SADM_TMP_FILE1=$(tempfile $SADMIN/tmp/ --prefix "${SADM_INST}" --suffix _1.tmp) 
+export SADM_TMP_FILE2=$(tempfile $SADMIN/tmp/ --prefix "${SADM_INST}" --suffix _2.tmp) 
+export SADM_TMP_FILE3=$(tempfile $SADMIN/tmp/ --prefix "${SADM_INST}" --suffix _3.tmp) 
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 
