@@ -30,8 +30,9 @@
 # 2018_08_20 cmdline v2.2 Don't use rch file & don't send email if failing (It is an interactive script)
 # 2019_06_07 cmdline v2.3 Updated to adapt to the new format of the '.rch' file.
 #@2022_08_17 cmdline v2.4 Updated with new SADMIN section v1.52
+#@2022_08_21 cmdline v2.5 Fix problem when running on other system than SADMIN Server
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
 
 
@@ -60,7 +61,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.4'                                      # Script version number
+export SADM_VER='2.5'                                      # Script version number
 export SADM_PDESC="Run SADMIN System Monitor and display result file (hostname.rpt)."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -75,8 +76,8 @@ export SADM_DEBUG=0                                        # Debug Level(0-9) 0=
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
-export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
