@@ -181,7 +181,8 @@
 #@2022_07_12 lib v4.02 Change group of some web directories to solve web system removal error.
 #@2022_07_20 lib v4.03 Cmd 'lsb_release' depreciated ? not available on Alma9,Rocky9,CentOS9,RHEL9
 #@2022_07_27 lib v4.04 Fix problem related to PID in startup.
-#@2022_07_30 lib v4.05 Update, 'sadm_sendmail()' fourth parameter (attachment) is now optional.
+#@2022_07_30 lib v4.05 Update 'sadm_sendmail()' fourth parameter (attachment) is now optional.
+#@2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
 #===================================================================================================
 
 
@@ -195,7 +196,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.05"                                              # This Library Version
+export SADM_LIB_VER="4.06"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -1304,20 +1305,21 @@ sadm_server_ips() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_type() {
     case "$(sadm_get_ostype)" in
-        "LINUX")    sadm_server_type="P"                                # Physical Server Default
-                    if [ "$SADM_DMIDECODE" != "" ]
-                       then $SADM_DMIDECODE |grep -i vmware >/dev/null 2>&1 # Search vmware
-                            if [ $? -eq 0 ]                             # If vmware was found
-                               then sadm_server_type="V"                # If VMware Server
-                               else $SADM_DMIDECODE |grep -i virtualbox >/dev/null 2>&1
-                                    if [ $? -eq 0 ]                     # If VirtualBox was found
-                                        then sadm_server_type="V"       # If VirtualBox Server
-                                        else sadm_server_type="P"       # Default Assume Physical
+        "LINUX")    if command -v systemd-detect-virt >/dev/null
+                       then wout=$(systemd-detect-virt) 
+                            if [ "$wout" == "none" ] 
+                                then sadm_server_type="P"               # none = not a VM
+                                else sadm_server_type="V"               # Not none then a VM
+                            fi
+                       else if command -v hostnamectl >/dev/null
+                               then wout=$(hostnamectl status |awk -F: '/Chassis:/ {print $2}' |tr -d ' ')
+                                    if [ "$wout" == "vm" ]              # vm = virtual machine
+                                        then sadm_server_type="V"  
+                                        else sadm_server_type="P"  
                                     fi
                             fi
-                    fi
+                    fi 
                     ;;
-
         "AIX")      sadm_server_type="P"                                # Default Assume Physical
                     ;;
         "DARWIN")   sadm_server_type="P"                                # Default Assume Physical
