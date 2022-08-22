@@ -433,7 +433,7 @@ def load_config_file(cfg_file):
             print("\nThe configuration file %s doesn't exist." % (cfg_file))
             print("Will continue using template configuration file %s" % (cfg_hidden))
             print("Please review the configuration file.")
-            print("cp %s %s \n" % (cfg_hidden,cfg_file))                  # Install Default cfg  file
+            print("cp %s %s \n" % (cfg_hidden,cfg_file))                # Install Default cfg  file
             cmd =  "cp %s %s " % (cfg_hidden,cfg_file)                  # Copy Default cfg
             ccode, cstdout, cstderr = oscommand(cmd)
             if not ccode == 0 :
