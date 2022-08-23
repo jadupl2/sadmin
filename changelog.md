@@ -1,4 +1,4 @@
-# SADMIN Tools Changelog
+# SADMIN tools changelog
  
 ## Release [1.3.6](https://github.com/jadupl2/sadmin/releases) (2021-09-07)
 
