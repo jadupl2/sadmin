@@ -33,6 +33,7 @@
 #@2022_06_13 lib v4.20 Add possibility use 'sendmail()' to send multiple attachments.
 #@2022_07_13 lib v4.21 If no file attached to email, subject was blank.
 #@2022_08_17 lib v4.22 Add possibility to connect to other database than 'sadmin' in db_connect().
+#@2022_08_24 lib v4.23 Fix crash when log or error file didn't have the right permission.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -68,7 +69,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.22"                                # This Library Version
+lib_ver             = "4.23"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -1852,7 +1853,7 @@ def stop(pexit_code) :
     if sadm_alert_type == 2 :                                           # Alert on Success Only
         if pexit_code != 0 :                                            # If Script end with error
             MailMess="Send alert only on success, none will be send."   # Failed = No Alert Message
-        else :
+        else :History File 
             MailMess="Alert only send on success %s." % (grp_desc)      # Success Send Alert Message
                     
     if sadm_alert_type == 3 :                                           # User always Want email
@@ -1992,13 +1993,19 @@ def start(pver,pdesc) :
             log_file_fh=open(log_file,'a')                              # Open Log in append  mode
         else:                                                           # User Want Fresh New Log
             log_file_fh=open(log_file,'w')                              # Open Log in a new log
+    except PermissionError as e:                                        
+        print("\nPermission error when trying to open the log '%s'." % (log_file))
+        print("Check & change permission on the file or run this script with 'sudo'.\n")
+        sys.exit(1)                                                     # Back to O/S 
     except IOError as e:                                                # If Can't Create or open
         print("Error opening log file : %s" % (log_file))               # write_log Log FileName
         print("Error Line No.: %d" % (inspect.currentframe().f_back.f_lineno)) 
         print("Function Name : %s" % (sys._getframe().f_code.co_name))  # Current function Name
         print("Error No. %d - %s" % (e.errno,e.strerror))               # Print Error Number
         sys.exit(1)               
-    if os.getuid() == 0: os.chown(log_file,uid,gid)                     # Set Owner of log file
+    if os.getuid() == 0: 
+        os.chown(log_file,uid,gid)                                      # Set Owner of log file
+        os.chmod(log_file,0o664)                                        # Chg log file Perm.
 
     # Open the script ERROR LOG file. 
     try: 
@@ -2006,14 +2013,19 @@ def start(pver,pdesc) :
             err_file_fh=open(err_file,'a')                              # Open ErrLog append  mode
         else:                                                           # User Want Fresh New Log
             err_file_fh=open(err_file,'w')                              # Open New Error Log 
+    except PermissionError as e:                                        
+        print("\nPermission error when trying to open the error log '%s'." % (err_file))
+        print("Check & change permission on the file or run this script with 'sudo'.\n")
+        sys.exit(1)                                                     # Back to O/S 
     except IOError as e:                                                # If Can't Create or open
         print("Error opening error log file %s" % (err_file))           # write_log Error Log FileName
         print("Error Line No.: %d" % (inspect.currentframe().f_back.f_lineno)) # Line Number
         print("Function Name : %s" % (sys._getframe().f_code.co_name))  # Current function Name
         print("Error No. %d - %s" % (e.errno,e.strerror))               # Print Error Number
-        stop(1)                                                         # Close SADMIN 
         sys.exit(1)                                                     # Back to O/S 
-    if os.getuid() == 0: os.chown(err_file,uid,gid)                     # Set Owner, error log file
+    if os.getuid() == 0: 
+        os.chown(err_file,uid,gid)                                      # Set Owner, error log file
+        os.chmod(err_file,0o664)                                        # Chg error log file Perm.
 
     # Validate Log Type (S=Screen L=Log B=Both)
     if ((log_type.upper() != 'S') and (log_type.upper() != "B") and (log_type.upper() != 'L')):
