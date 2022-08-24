@@ -882,7 +882,6 @@ rear_report()
         #
         if [ "$SADM_DEBUG" -gt 4 ]                                      # If Debug Show System name
            then sadm_write "\n"                                         # Space line
-                sadm_write "${SADM_TEN_DASH}\n"                         # Ten Dashes Line    
                 sadm_write "Processing ${server_name}.\n"               # Server Name
         fi 
         #

@@ -201,7 +201,6 @@ export SADM_LIB_VER="4.06"                                              # This L
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
-export SADM_80_SPACES=`printf %80s  " "`                                # 80 spaces 
 export SADM_TEN_DASH=`printf %10s |tr " " "-"`                          # 10 dashes line
 export SADM_STIME=""                                                    # Store Script Start Time
 export SADM_DEBUG=0                                                     # 0=NoDebug Higher=+Verbose

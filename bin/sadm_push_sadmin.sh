@@ -130,6 +130,7 @@ export SYNC_SYS="N"                                                     # -s Don
 export SYNC_CLIENT=""                                                   # -c SADMIN client to sync
 export ERROR_COUNT=0                                                    # Script Error Count
 export WARNING_COUNT=0                                                  # Script Warning count
+export SADM_TEN_DASH=`printf %10s |tr " " "-"`                          # 10 dashes line
 
 
 

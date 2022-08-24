@@ -109,6 +109,7 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access S
 # --------------------------------------------------------------------------------------------------
 ERROR_COUNT=0                               ; export ERROR_COUNT            # Error Counter
 ARC_DAYS=7                                  ; export ARC_DAYS               # ALert Age to move
+export SADM_TEN_DASH=`printf %10s |tr " " "-"`                              # 10 dashes line
 
 
 

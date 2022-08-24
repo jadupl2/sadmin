@@ -178,6 +178,7 @@ export OSTIMEOUT=1800                                                   # 1800se
 export GLOB_UPTIME=""                                                   # Global Server uptime value 
 export BOOT_DATE=""                                                     # Server Last Boot Date/Time
 export ERROR_COUNT=0                                                    # Rsync Error Count
+export SADM_TEN_DASH=`printf %10s |tr " " "-"`                          # 10 dashes line
 #
 # Variables used to insert in /etc/cron.d/sadm* crontab files.
 export OS_SCRIPT="sadm_osupdate_starter.sh"                             # OSUpdate Script in crontab

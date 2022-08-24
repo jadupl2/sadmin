@@ -123,6 +123,7 @@ WREBOOT="N"                                 ; export WREBOOT            # Def. N
 # Sysinfo report file (Wil update last O/S Update date/time and status)
 HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"   ; export HPREFIX        # Output File Loc & Name
 HWD_FILE="${HPREFIX}_sysinfo.txt"               ; export HWD_FILE       # Hardware File Info
+export SADM_TEN_DASH=`printf %10s |tr " " "-"`                          # 10 dashes line
 
 
 

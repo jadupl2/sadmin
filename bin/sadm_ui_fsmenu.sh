@@ -35,6 +35,7 @@
 # --------------------------------------------------------------------------------------------------
 BATCH_MODE=0                        ; export BATCH_MODE                 # Batch mode OFF interactive
 export FS_VER="02.05"                                                   # Filesystem Menu Version
+export SADM_80_SPACES=`printf %80s  " "`                                # 80 spaces 
 
 #===================================================================================================
 #                       Set FileSystem Creation Screen Default Value
