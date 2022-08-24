@@ -68,8 +68,8 @@ pexit_code  = 0                                                         # Script
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
 # Uncomment anyone to change them and influence execution of SADMIN standard library.
 #
-sa.proot_only        = False       # Pgm run by root only ?
-sa.psadm_server_only = False       # Run only on SADMIN server ?
+sa.proot_only        = True        # Pgm run by root only ?
+sa.psadm_server_only = True       # Run only on SADMIN server ?
 sa.db_used           = True        # Open/Use Database(True) or Don't Need DB(False)
 #sa.db_silent        = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
