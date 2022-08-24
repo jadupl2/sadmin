@@ -11,13 +11,17 @@
 #        You will have a better experience, if you set screen width to have at least 100 Characters.
 # 
 # --------------------------------------------------------------------------------------------------
+#   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
+#   of the GNU General Public License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+#   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#   See the GNU General Public License for more details.
 #
-#   This code was originally written by Jacques Duplessis <sadmlinux@gmail.com>.
-#   Developer Web Site : h"${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
-#export TMP_FILE1="$(mktemp ${SADMIN}/tmp/sadm_uninstall.XXXXXXXXX)"              # Temp File 1
-gnu.org/licenses/>.
-# 
-#---------------------------------------------------------------------------------------------------
+#   You should have received a copy of the GNU General Public License along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
+# --------------------------------------------------------------------------------------------------
+#
 # Format on change log line : 
 # Field 1: 
 #   Date of change (YYY_MM_DD) prefix by '@' when you are adding change log line.
@@ -46,6 +50,7 @@ gnu.org/licenses/>.
 # 2021_07_01 lib v1.0  Initial Beta Version
 #@2021_09_25 lib v4.0 Added 'SADM_PDESC' that contain description of Script (Used in -v option).
 #@2022_05_25 lib v4.1 Added 'SADM_ROOT_ONLY' and 'SADM_SERVER_ONLY' checked before running script.
+#@2022_08_24 lib v4.2 Change the way temporary files are created ('mktemp').
 #---------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
@@ -79,7 +84,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.1'                                      # Script version number
+export SADM_VER='4.2'                                      # Script version number
 export SADM_PDESC="SADMIN template shell script"           # Script Optional Desc.(Not use if empty)
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -91,9 +96,9 @@ export SADM_PID_TIMEOUT=7200                               # Sec. before PID Loc
 export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_TMP_FILE1=$(tempfile $SADMIN/tmp/ --prefix "${SADM_INST}" --suffix _1.tmp) 
-export SADM_TMP_FILE2=$(tempfile $SADMIN/tmp/ --prefix "${SADM_INST}" --suffix _2.tmp) 
-export SADM_TMP_FILE3=$(tempfile $SADMIN/tmp/ --prefix "${SADM_INST}" --suffix _3.tmp) 
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}_XXX" --suffix _1.tmp) 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}_XXX" --suffix _2.tmp) 
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}_XXX" --suffix _3.tmp) 
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 
