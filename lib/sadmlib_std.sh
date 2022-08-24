@@ -153,7 +153,7 @@
 # 2021_08_17 lib v3.74 Performance improvement.
 #@2021_09_09 lib v3.75 'sadm_write_err $msg' function added to write to log and error log.
 #@2021_09_13 lib v3.76 Enhance script log header to be more concise, yet have more information.
-#@2021_09_14 lib v3.77 If script desc. "SADM_PDESC" var. exist & not empty, include in log header.
+#@2021_09_14 lib v3.77 If script desc. "SADM_PDESC" v#@2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
 #@2021_09_15 lib v3.78 Function "sadm_show_version" will show Script Desc. ($SADM_PDESC) if Avail.
 #@2021_09_30 lib v3.79 Various small little corrections.
 #@2021_10_20 lib v3.80 Merge 'slack channel file' with 'alert group' & change log footer.
@@ -183,6 +183,7 @@
 #@2022_07_27 lib v4.04 Fix problem related to PID in startup.
 #@2022_07_30 lib v4.05 Update 'sadm_sendmail()' fourth parameter (attachment) is now optional.
 #@2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
+#@2022_08_24 lib v4.07 Creation of $SADM_TMP_FILE1[1,2,3] done in SADMIN section & remove by stop().
 #===================================================================================================
 
 
@@ -282,15 +283,15 @@ export SADM_WEBSITE="https://sadmin.ca"                                 # sadmin
 # They are deleted automatically by the sadm_stop() function (If they exist).
 #TMP_FILE1="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE1  # Temp File 1
 #TMP_FILE2="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE2  # Temp File 2
-if [ ! -z $SADM_TMP_FILE1 ] || [ -z "$SADM_TMP_FILE1" ]                 # Var blank or don't exist
-   then export SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"       # Temp File 1 for you to use
-fi 
-if [ ! -z $SADM_TMP_FILE2 ] || [ -z "$SADM_TMP_FILE2" ]                 # Var blank or don't exist
-   then export SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"       # Temp File 1 for you to use
-fi 
-if [ ! -z $SADM_TMP_FILE3 ] || [ -z "$SADM_TMP_FILE3" ]                 # Var blank or don't exist
-   then export SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"       # Temp File 1 for you to use
-fi 
+#if [ ! -z $SADM_TMP_FILE1 ] || [ -z "$SADM_TMP_FILE1" ]                 # Var blank or don't exist
+#   then export SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"       # Temp File 1 for you to use
+#fi 
+#if [ ! -z $SADM_TMP_FILE2 ] || [ -z "$SADM_TMP_FILE2" ]                 # Var blank or don't exist
+#   then export SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"       # Temp File 1 for you to use
+#fi 
+#if [ ! -z $SADM_TMP_FILE3 ] || [ -z "$SADM_TMP_FILE3" ]                 # Var blank or don't exist
+#   then export SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"       # Temp File 1 for you to use
+#fi 
 
 # Definition of SADMIN log, error log, Result Code  History (.rch) and Monitor report file (*.rpt).
 export SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"     # Script Output LOG
@@ -2613,7 +2614,7 @@ sadm_sendmail() {
             fi
             if [ $RC -ne 0 ]                                            # Error sending email 
                 then wstatus="[ Error ] Sending email to $maddr"        # Advise Error sending Email
-                     sadm_write_err "${wstatus}\n"                      # Show Message to user 
+                     sadm_write_err "${wstatus}"                        # Show Message to user 
                      RC=1                                               # Set Error return code
             fi 
     fi
