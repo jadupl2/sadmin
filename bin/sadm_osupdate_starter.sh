@@ -58,6 +58,7 @@
 #@2022_05_24 nolog    v4.7 Fix problem with lock file detection. 
 #@2022_06_21 osupdate v4.8 Changes to use new functionalities of SADMIN code section v1.52
 #@2022_07_09 osupdate v4.9 Added more verbosity to screen and log
+#@2022_08_25 osupdate v5.0 Allow to run multiple instance of this script.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -91,14 +92,14 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.9'                                      # Script version number
+export SADM_VER='5.0'                                      # Script version number
 export SADM_PDESC="Run the O/S update script on the selected remote system."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
+export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
 export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
@@ -307,7 +308,7 @@ rcmd_osupdate()
         then sadm_write_log "System $fqdn_server is now rebooting."
              sadm_write_log "We will sleep $REBOOT_TIME seconds, to give time for '${server_name}' to become available."
              # Sleep for $REBOOT_TIME seconds and update progress bar every 30 seconds.
-             sadm_sleep $REBOOT_TIME 30 
+             sadm_sleep $REBOOT_TIME 60 
     fi 
 
 
@@ -320,8 +321,8 @@ rcmd_osupdate()
     #   else sadm_write "${SADM_OK} O/S Update in now completed successfully on '${server_name}'.\n"
     #        update_server_db "${server_name}" "S"                      # Update Status Success 
     #fi
-    
-    sadm_write "O/S Update is now completed on '${server_name}'.\n"     # Advise User were back .
+    sadm_write_log " "
+    sadm_write_log "O/S Update is now completed on '${server_name}'."
     return 0
 }
 
