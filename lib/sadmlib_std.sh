@@ -184,6 +184,7 @@
 #@2022_07_30 lib v4.05 Update 'sadm_sendmail()' fourth parameter (attachment) is now optional.
 #@2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
 #@2022_08_24 lib v4.07 Creation of $SADM_TMP_FILE1[1,2,3] done in SADMIN section & remove by stop().
+#@2022_08_25 lib v4.08 Change message of the system lock/unlock function.
 #===================================================================================================
 
 
@@ -197,7 +198,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.06"                                              # This Library Version
+export SADM_LIB_VER="4.08"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -2719,7 +2720,7 @@ sadm_lock_system()
     RC=0                                                                # Default Return Code
     LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # System Lock file name
     if [ -r "$LOCK_FILE" ]                                              # Lock file already exist ?
-        then sadm_writelog "Lock file already exist ($LOCK_FILE)."      # Advise User 
+        then sadm_write_log "The system '${SNAME}' is already exist lock."
              echo "$SADM_INST - $(date +%Y%m%d%H%M%S)" > ${LOCK_FILE}   # Update TimeStamp & Content
              if [ $? -eq 0 ]                                            # no error while updating
                then sadm_writelog "Lock file time stamp updated."       # Advise user
@@ -2729,8 +2730,8 @@ sadm_lock_system()
              
         else echo "$SADM_INST - $(date +%Y%m%d%H%M%S)" > ${LOCK_FILE}   # Create Lock File 
              if [ $? -eq 0 ]                                            # Lock file created [ OK ]
-               then sadm_writelog "System '${SNAME}' lock file (${LOCK_FILE}) created."  
-               else sadm_writelog "[ ERROR ] Creating '${SNAME}' lock file '${LOCK_FILE}'" 
+               then sadm_writelog "System '${SNAME}' is now lock."  
+               else sadm_writelog "[ ERROR ] while locking the system '${SNAME}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
     fi
@@ -2765,11 +2766,11 @@ sadm_unlock_system() {
     if [ -w "$LOCK_FILE" ]                                              # Lock file exist ?
         then rm -f ${LOCK_FILE} >/dev/null 2>&1                         # Delete Lock file 
              if [ $? -eq 0 ]                                            # no error while updating
-               then sadm_writelog "The lock file for system '$SNAME' is removed."  # Advise User 
-               else sadm_writelog "[ ERROR ] Removing '${SNAME}' lock file '${LOCK_FILE}'" 
+               then sadm_write_log "The system '$SNAME' is now unlocked."
+               else sadm_write_err "[ ERROR ] Removing '${SNAME}' lock file '${LOCK_FILE}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
-        else sadm_writelog "There were no lock file to remove '${LOCK_FILE}'."             
+        else sadm_write_log "The system '$SNAME' is now unlocked."
     fi 
     return $RC                                                          # Return to caller 
 } 
