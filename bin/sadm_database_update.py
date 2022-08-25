@@ -45,6 +45,7 @@
 #@2021_06_17 server v3.16 Fix Duplicate column name 'srv_boot_date'
 #@2022_03_28 server v3.17 Give a warning instead of an error when O/S update is not yet run.
 #@2022_08_17 server v3.18 Updated to use the new SADMIN Python Library v2.
+#@2022_08_25 server v3.19 Fix a 'KeyError' that could cause problem.
 # 
 # ==================================================================================================
 #
@@ -72,7 +73,7 @@ except ImportError as e:                                                # If Err
     sys.exit(1)                                                         # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "3.18"                                                     # Program version
+pver        = "3.19"                                                     # Program version
 pdesc       = "Update SADMIN database with information collected from each system."
 phostname   = sa.get_hostname()                                         # Get current `hostname -s`
 pdb_conn    = None                                                      # Database connector
@@ -346,7 +347,7 @@ def process_servers(wconn, wcur):
                 sa.write_log("CONTINUE WITH THE NEXT SERVER")            # Advise user we continue
                 continue                                                # Go Read Next Line
 
-            # Save Information Found in SysInfo file into our row dictionnary (server_row)----------
+            # Save Information Found in SysInfo file into our row dictionary (server_row)----------
             try:
                 NO_ERROR_OCCUR = True                                   # Assume no error will Occur
                 if "SADM_HOSTNAME"          in CFG_NAME: wdict['srv_name']      = CFG_VALUE.lower()
@@ -469,18 +470,30 @@ def process_servers(wconn, wcur):
                     NO_ERROR_OCCUR = False                              # Now No "Error" is False
 
             except IndexError as e:
-                sa.write_log("ERROR: Converting %s and value is (%s)" % (CFG_NAME, CFG_VALUE))
-                sa.write_log("%s" % e)
+                sa.write_err("ERROR: Converting %s and value is (%s)" % (CFG_NAME, CFG_VALUE))
+                sa.write_err("%s" % e)
                 total_error = total_error + 1                           # Add 1 To Total Error
                 NO_ERROR_OCCUR = False                                  # Now No "Error" is False
-        if pdebug > 4: sa.write_log("Closing %s" % sysfile)            # Closing Sysinfo file Msg
+        if pdebug > 4: sa.write_log("Closing %s" % sysfile)             # Closing Sysinfo file Msg
+
         FH.close()                                                      # Close the Sysinfo File
         if NO_ERROR_OCCUR:                                              # If No Error Moving Fld
-           RC = update_row(wconn, wcur, wdict)                       # Go Update Row
-           total_error = total_error + RC                               # RC=0=Success RC=1=Error
-        if (total_error != 0):                                          # Not SHow if Total Error=0
-            sa.write_log(" ")                                            # Space line
-            sa.write_log("Total Error Count at %d now" % (total_error))  # Total Error after each Srv
+            try :
+                sa.write_log ("Check %s.%s data in Database" % (wdict['srv_name'],wdict['srv_domain']))
+            except KeyError as e: 
+                sa.write_err(" ")                                       # Space line
+                sa.write_err("[ ERROR ] A Key is missing in array 'wdict'.") 
+                sa.write_err("%s" % e)
+                sa.write_err("Probably missing field in '%s'." % (sysfile)) 
+                sa.write_err(" ")                                       # Space line
+                total_error = total_error + 1                           # Add 1 To Total Error
+                sa.stop(1)
+                sys.exit(1)
+            RC = update_row(wconn, wcur, wdict)                         # Go Update Row
+            total_error = total_error + RC                              # RC=0=Success RC=1=Error
+            if (total_error != 0):                                      # Not SHow if Total Error=0
+                sa.write_log(" ")                                       # Space line
+                sa.write_log("Total Error Count at %d now" % (total_error)) 
         lineno += 1
 
     return(total_error)                                                 # Return Nb Error to caller
