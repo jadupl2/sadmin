@@ -1853,7 +1853,7 @@ def stop(pexit_code) :
     if sadm_alert_type == 2 :                                           # Alert on Success Only
         if pexit_code != 0 :                                            # If Script end with error
             MailMess="Send alert only on success, none will be send."   # Failed = No Alert Message
-        else :History File 
+        else : 
             MailMess="Alert only send on success %s." % (grp_desc)      # Success Send Alert Message
                     
     if sadm_alert_type == 3 :                                           # User always Want email
