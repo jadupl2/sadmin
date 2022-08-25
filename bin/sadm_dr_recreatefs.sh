@@ -52,6 +52,7 @@
 # 2018_06_04    v2.1 Correction for new Library
 # 2018_12_08    v2.2 Fix bug with Debugging Level. 
 # 2020_04_06 Update: v2.3 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
+#@2022_08_25 nolog v2.4 Updated with new SADMIN SECTION V1.52.
 #            
 #
 #===================================================================================================
@@ -61,58 +62,63 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
-#===================================================================================================
-# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
-# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
+# ---------------------------------------------------------------------------------------
+# SADMIN CODE SECTION 1.52
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
+# ---------------------------------------------------------------------------------------
 
-    # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-    if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
-        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
-             EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
-             if [ $? -eq 0 ]                                            # Yes it is 
-                then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}."
-                else exit 1                                             # No SADMIN Env. Var. Exit
-             fi
-    fi 
+# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                    # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
-    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
-    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
+export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
-    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='2.3'                               # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
-    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
-    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
-    export SADM_TMP_FILE1=""                            # Temp File1 you can use, Libr will set name
-    export SADM_TMP_FILE2=""                            # Temp File2 you can use, Libr will set name
-    export SADM_TMP_FILE3=""                            # Temp File3 you can use, Libr will set name
-    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
+# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='2.4'                                      # Script version number
+export SADM_PDESC="Recreate all filesystems of the selected volume group"
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}_XXX" --suffix _1.tmp) 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}_XXX" --suffix _2.tmp) 
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}_XXX" --suffix _3.tmp) 
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library Functions
-    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
-    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
-    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
-#---------------------------------------------------------------------------------------------------
-# Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# They can be overridden here, on a per script basis (if needed).
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
-    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=500                        # When script end Trim log to 500 Lines
-    #export SADM_MAX_RCLINE=35                          # When script end Trim rch file to 35 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#===================================================================================================
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+# ---------------------------------------------------------------------------------------
 
 
 
@@ -125,7 +131,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #              V A R I A B L E S    U S E D     I N    T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
 DRFILE=$SADM_DR_DIR/$(sadm_get_hostname)_fs_save_info.dat   ;export DRFILE  # Output file of program
-DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # DEBUG increase Verbose 
+SADM_DEBUG=0                                   ; export SADM_DEBUG    # DEBUG increase Verbose 
 STDERR="${SADM_TMP_DIR}/stderr.$$"              ; export STDERR         # Output of Standard Error
 STDOUT="${SADM_TMP_DIR}/stdout.$$"              ; export STDOUT         # Output of Standard Output
 FSTAB=/etc/fstab                                ; export FSTAB          # Filesystem Table Name
@@ -178,7 +184,7 @@ linux_setup()
         else sadm_write "$SADM_ERROR The command 'lvcreate' was not found.\n" ; return 1
     fi
     export LVCREATE  
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND LVCREATE  : $LVCREATE \n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND LVCREATE  : $LVCREATE \n" ; fi
 
 
     TUNE2FS=`which tune2fs >/dev/null 2>&1`
@@ -187,7 +193,7 @@ linux_setup()
         else sadm_write "$SADM_ERROR The command 'tune2fs' was not found.\n" ; return 1
     fi
     export TUNE2FS   
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND TUNE2FS   : $TUNE2FS \n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND TUNE2FS   : $TUNE2FS \n" ; fi
 
 
     MKFS_EXT2=`which mkfs.ext2 >/dev/null 2>&1`
@@ -196,7 +202,7 @@ linux_setup()
         else sadm_write "$SADM_ERROR The command 'mkfs.ext2' was not found.\n" ; return 1
     fi
     export MKFS_EXT2  
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND MKFS_EXT2 : $MKFS_EXT2 \n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND MKFS_EXT2 : $MKFS_EXT2 \n" ; fi
 
 
     MKFS_EXT3=`which mkfs.ext3 >/dev/null 2>&1`
@@ -205,7 +211,7 @@ linux_setup()
         else sadm_write "$SADM_ERROR The command 'mkfs.ext3' was not found.\n" ; return 1
     fi
     export MKFS_EXT3  
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND MKFS_EXT3 : $MKFS_EXT3 \n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND MKFS_EXT3 : $MKFS_EXT3 \n" ; fi
 
 
     MKFS_EXT4=`which mkfs.ext4 >/dev/null 2>&1`
@@ -215,7 +221,7 @@ linux_setup()
              return 1
     fi
     export MKFS_EXT4 
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND MKFS_EXT4 : $MKFS_EXT4 \n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND MKFS_EXT4 : $MKFS_EXT4 \n" ; fi
 
 
     MKFS_XFS=`which mkfs.xfs >/dev/null 2>&1`
@@ -226,7 +232,7 @@ linux_setup()
              XFS_ENABLE="N"
     fi
     export MKFS_XFS  
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND MKFS_XFS  : $MKFS_XFS \n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND MKFS_XFS  : $MKFS_XFS \n" ; fi
 
 
     FSCK_EXT2=`which fsck.ext2 >/dev/null 2>&1`
@@ -235,7 +241,7 @@ linux_setup()
         else sadm_write "$SADM_ERROR The command 'fsck.ext2' was not found.\n" ; return 1
     fi
     export FSCK_EXT2  
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND FSCK_EXT2 : $FSCK_EXT2 \n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND FSCK_EXT2 : $FSCK_EXT2 \n" ; fi
 
 
     FSCK_EXT3=`which fsck.ext3 >/dev/null 2>&1`
@@ -244,7 +250,7 @@ linux_setup()
         else sadm_write "$SADM_ERROR The command 'fsck.ext3' was not found.\n" ; return 1
     fi
     export FSCK_EXT3  
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND FSCK_EXT3 : $FSCK_EXT3 \n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND FSCK_EXT3 : $FSCK_EXT3 \n" ; fi
 
 
     FSCK_EXT4=`which fsck.ext4 >/dev/null 2>&1`
@@ -253,7 +259,7 @@ linux_setup()
         else sadm_write "$SADM_ERROR The command 'fsck.ext4' was not found.\n" ; return 1
     fi
     export FSCK_EXT4  
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND FSCK_EXT4 : $FSCK_EXT4 \n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND FSCK_EXT4 : $FSCK_EXT4 \n" ; fi
 
 
     FSCK_XFS=`which fsck.xfs >/dev/null 2>&1`
@@ -264,7 +270,7 @@ linux_setup()
              XFS_ENABLE="N"
     fi
     export FSCK_XFS   
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND FSCK_XFS  : $FSCK_XFS\n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND FSCK_XFS  : $FSCK_XFS\n" ; fi
 
 
     MKDIR=`which mkdir >/dev/null 2>&1`
@@ -273,7 +279,7 @@ linux_setup()
         else sadm_write "$SADM_ERROR The command 'mkdir' was not found\n" ; return 1
     fi
     export MKDIR      
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND MKDIR     : $MKDIR \n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND MKDIR     : $MKDIR \n" ; fi
 
 
     MOUNT=`which mount >/dev/null 2>&1`
@@ -282,7 +288,7 @@ linux_setup()
         else sadm_write "$SADM_ERROR The command 'mount' was not found\n" ; return 1
     fi
     export MOUNT      
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND MOUNT \n     : $MOUNT" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND MOUNT \n     : $MOUNT" ; fi
 
 
     CHMOD=`which chmod >/dev/null 2>&1`
@@ -291,7 +297,7 @@ linux_setup()
         else sadm_write "$SADM_ERROR The command 'chmod' was not found\n" ; return 1
     fi
     export CHMOD      
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND CHMOD     : $CHMOD \n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND CHMOD     : $CHMOD \n" ; fi
 
 
     CHOWN=`which chown >/dev/null 2>&1`
@@ -300,7 +306,7 @@ linux_setup()
         else sadm_write "$SADM_ERROR The command 'chown' was not found.\n" ; return 1
     fi
     export CHOWN      
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND CHOWN     : $CHOWN \n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND CHOWN     : $CHOWN \n" ; fi
 
     
     MKSWAP=`which mkswap >/dev/null 2>&1`
@@ -309,7 +315,7 @@ linux_setup()
         else sadm_write "$SADM_ERROR The command 'mkswap' was not found.\n" ; return 1
     fi
     export MKSWAP      
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND MKSWAP    : $MKSWAP \n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND MKSWAP    : $MKSWAP \n" ; fi
     
     
     SWAPON=`which swapon >/dev/null 2>&1`
@@ -318,7 +324,7 @@ linux_setup()
         else sadm_write "$SADM_ERROR The command 'swapon' was not found.\n" ; return 1
     fi
     export SWAPON      
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_write "COMMAND SWAPON    : $SWAPON \n" ; fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "COMMAND SWAPON    : $SWAPON \n" ; fi
 
     return 0
 }
@@ -692,14 +698,6 @@ aix_restore_vg()
 # --------------------------------------------------------------------------------------------------
 #                                     Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    # If you want this script to be run only by 'root'.
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
-             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
-             printf "\nProcess aborted\n\n"                             # Abort advise message
-             exit 1                                                     # Exit To O/S with error
-    fi
-
     sadm_start                                                          # Start Using SADM Tools
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
     
