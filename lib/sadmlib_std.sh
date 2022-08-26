@@ -185,6 +185,7 @@
 #@2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
 #@2022_08_24 lib v4.07 Creation of $SADM_TMP_FILE1[1,2,3] done in SADMIN section & remove by stop().
 #@2022_08_25 lib v4.08 Change message of the system lock/unlock function.
+#@2022_08_26 lib v4.09 Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
 #===================================================================================================
 
 
@@ -198,7 +199,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.08"                                              # This Library Version
+export SADM_LIB_VER="4.09"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -2718,9 +2719,9 @@ sadm_lock_system()
 {
     SNAME=$1                                                            # Save System Name to verify
     RC=0                                                                # Default Return Code
-    LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # System Lock file name
+    LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
     if [ -r "$LOCK_FILE" ]                                              # Lock file already exist ?
-        then sadm_write_log "The system '${SNAME}' is already exist lock."
+        then sadm_write_log "System '${SNAME}' is already lock."
              echo "$SADM_INST - $(date +%Y%m%d%H%M%S)" > ${LOCK_FILE}   # Update TimeStamp & Content
              if [ $? -eq 0 ]                                            # no error while updating
                then sadm_writelog "Lock file time stamp updated."       # Advise user
@@ -2762,15 +2763,15 @@ sadm_lock_system()
 sadm_unlock_system() {
     SNAME=$1                                                            # Save System Name to verify
     RC=0                                                                # Default Return Code
-    LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # System Lock file name
+    LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
     if [ -w "$LOCK_FILE" ]                                              # Lock file exist ?
         then rm -f ${LOCK_FILE} >/dev/null 2>&1                         # Delete Lock file 
              if [ $? -eq 0 ]                                            # no error while updating
-               then sadm_write_log "The system '$SNAME' is now unlocked."
-               else sadm_write_err "[ ERROR ] Removing '${SNAME}' lock file '${LOCK_FILE}'" 
+               then sadm_write_log "System '$SNAME' is now unlocked."
+               else sadm_write_err "[ ERROR ] Unlocking '${SNAME}' - Can't remove '${LOCK_FILE}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
-        else sadm_write_log "The system '$SNAME' is now unlocked."
+        else sadm_write_log "System '$SNAME' is now unlocked."
     fi 
     return $RC                                                          # Return to caller 
 } 
@@ -2804,15 +2805,15 @@ sadm_unlock_system() {
 sadm_check_system_lock() {
     SNAME=$1                                                            # Save System Name to verify
     RC=0                                                                # Default Return Code
-    LOCK_FILE="${SADM_TMP_DIR}/${SNAME}.lock"                           # System Lock file name
+    LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                           # System Lock file name
     if [ -r "$LOCK_FILE" ]                                              # Lock file exist ?
         then current_epoch=$(sadm_get_epoch_time)                       # Get current Epoch Time
              create_epoch=$(stat -c %Y $LOCK_FILE)                      # Get lock file epoch
              lock_age=`echo "$current_epoch - $create_epoch" | $SADM_BC` # Age of lock in seconds
              sec_left=`expr $SADM_LOCK_TIMEOUT - $lock_age` 
              if [ $lock_age -ge $SADM_LOCK_TIMEOUT ]                     # Age of lock reach timeout?
-                then sadm_writelog "Server is lock for more than $SADM_LOCK_TIMEOUT seconds."
-                     sadm_writelog "Removing the lock file ($LOCK_FILE)."
+                then sadm_writelog "System is lock for more than $SADM_LOCK_TIMEOUT seconds."
+                     sadm_writelog "Unlocking ${SNAME} system."
                      sadm_writelog "We now restart monitoring this system as usual."
                      sadm_unlock_system "$SNAME"
                      #rm -f $LOCK_FILE > /dev/null 2>&1
