@@ -34,6 +34,7 @@
 #@2022_07_13 lib v4.21 If no file attached to email, subject was blank.
 #@2022_08_17 lib v4.22 Add possibility to connect to other database than 'sadmin' in db_connect().
 #@2022_08_24 lib v4.23 Fix crash when log or error file didn't have the right permission.
+#@2022_08_26 lib v4.24 Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -69,7 +70,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.23"                                # This Library Version
+lib_ver             = "4.24"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -699,9 +700,9 @@ def lock_system(fname, errmsg=True ) :
     """
 
     fexit_code = True                                                   # Default return value
-    lock_file = dir_tmp + '/' + fname + '.lock'                         # Lock File Name
+    lock_file = dir_base + '/' + fname + '.lock'                         # Lock File Name
     if os.path.isfile(lock_file):                                       # If lock file already exist
-        if errmsg : write_err("[ WARNING ] Lock file '%s' already exist." % (lock_file))                                     
+        if errmsg : write_err("[ WARNING ] System '%s' already lock." % (fname))                                     
         return(True)
 
     try:
@@ -710,7 +711,8 @@ def lock_system(fname, errmsg=True ) :
         fline = pn,now.strftime("%Y%m%d%H%M%S")                         # Lock file content
         f.write ("%s\n" % str((fline)))                                 # Write Script name and date
     except IOError:
-        if errmsg : write_err("Couldn't create lock file '%s'" % lock_file)  # If can't create lock file
+        if errmsg : 
+           write_err("[ ERROR ] Locking system '%s' - Fail to create lock file '%s'" % (fname,lock_file)
         fexit_code = False                                                  # Set Error return code
     finally:
         f.close()                                                       # Close Lock file
@@ -743,13 +745,12 @@ def unlock_system(fname ,errmsg=True):
     """
 
     fexit_code = 0    
-    lock_file = dir_tmp + '/' + fname + '.lock'                         # Lock File Name
+    lock_file = dir_base + '/' + fname + '.lock'                         # Lock File Name
     if os.path.isfile(lock_file):
         try: 
             os.remove(lock_file)
         except FileNotFoundError:
-            if errmsg : write_err("Lock file can't be found (%s)" % lock_file)       
-
+            if errmsg : write_err("System '%s' already unlock." % fname)       
     return(True)
 
 
@@ -783,17 +784,17 @@ def check_system_lock(fname, errmsg=True):
     """
     
     fexit_code = 0    
-    lock_file = dir_tmp + '/' + fname + '.lock'                         # Lock File Name
+    lock_file = dir_base + '/' + fname + '.lock'                        # Lock File Name
     if os.path.isfile(lock_file):                                       # CHeck if lock File Exist
         epoch_creation = int(os.path.getctime(lock_file))               # Get Epoch Creation time
         epoch_now = int(time.time())                                    # Get Current epoch time
         file_age = int(epoch_now - epoch_creation)                      # Nb. Sec. that file exist
         if file_age > lock_timeout :                                    # Greater that Max. TTL
             if lib_debug > 4 :
-                if errmsg : write_log("Server is lock for more than %d seconds." % (file_age))
+                if errmsg : write_log("System '%s' is lock for more than %d seconds." % (fname,file_age))
                 if lock_timeout != 0 :
                     if errmsg : 
-                        write_log("Removing the lock file (%s)." % (lock_file))
+                        write_log("Unlocking system '%s'." % (fname))
                         write_log("We now restart to monitor this system as usual.")
                     unlock_system(fname) 
                 else: 
