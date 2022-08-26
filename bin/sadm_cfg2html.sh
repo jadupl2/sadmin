@@ -24,8 +24,8 @@
 # 2021_07_20 client: v3.7 Fix problem with cfg2html on Fedora 34.
 # 2021_07_21 client: v3.7a cfg2html hang on Fedora 34, had to use -n to make it complete.
 # 2021_07_21 client: v3.8 Fix problem with cfg2html on Fedora 34.
-#@2022_05_05 client: v3.9 Update code for RHEL, CentOS, AlmaLinux & Rocky Linux v9.
-#@2022_07_28 client: v3.10 Updated to use new SADMIN section 1.51
+# 2022_05_05 client: v3.9 Update code for RHEL, CentOS, AlmaLinux & Rocky Linux v9.
+# 2022_07_28 client: v3.10 Updated to use new SADMIN section 1.51
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------

@@ -39,7 +39,7 @@
 # 2018_09_16 backup v2.1 Insert Alert Group Default
 # 2020_04_01 backup v2.2 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 # 2021_05_26 backup v2.3 Added command line option option [-b backup_dir] [-n dbname].
-#@2022_08_17 backup v2.4 Updated with SADMIN section 1.52
+# 2022_08_17 backup v2.4 Updated with SADMIN section 1.52
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

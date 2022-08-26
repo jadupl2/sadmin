@@ -48,11 +48,11 @@
 # 2021_04_24 Fix: v2.29 Correct typo in error message.
 # 2021_05_22 server v2.30 Remove sync depreciated $SADMIN/usr/mon/swatch_nmon* script and files.
 # 2021_10_20 server v2.31 Remove sync depreciated slac_channel.cfg file
-#@2021_11_07 nolog  v2.32 Don't try to push files (and give error) if the client system is lock. 
-#@2022_04_04 server v2.33 Minor code improvement.
-#@2022_05_24 server v2.34 Update to check if the SADMIN client is lock prior to push.
-#@2022_07_09 server v2.35 Now pushing email user password file ($SADMIN/cfg/.gmpw).
-#@2022_08_17 server v2.36 Updated with new SADMIN section v1.52
+# 2021_11_07 nolog  v2.32 Don't try to push files (and give error) if the client system is lock. 
+# 2022_04_04 server v2.33 Minor code improvement.
+# 2022_05_24 server v2.34 Update to check if the SADMIN client is lock prior to push.
+# 2022_07_09 server v2.35 Now pushing email user password file ($SADMIN/cfg/.gmpw).
+# 2022_08_17 server v2.36 Updated with new SADMIN section v1.52
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

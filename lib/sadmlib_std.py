@@ -55,18 +55,18 @@
 # 2020_02_25 Update: v3.12 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
 # 2020_09_10 Update: v3.13 Minor update to date/time module. 
 # 2020_12_24 Update: v3.14 CentOSStream is CENTOS
-#@2021_05_02 lib v3.15 Fix typo error in 'locate_command' method.
-#@2021_05_11 lib v3.16 Fix Path to which command was not set properly because of defined alias.
-#@2021_05_14 lib v3.17 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
-#@2021_05_16 lib v3.18 Adjustment for MacOS Big Sur
-#@2021_08_17 lib v3.19 Add 'SADM_MONITOR_UPDATE_INTERVAL'variable that control refresh rate. 
-#@2021_09_30 lib v3.20 Small bug corrections
-#@2021_11_07 lib v3.21 Locate 'rrd_tool' executable, instead of using sadmin.cfg. 
-#@2022_04_04 lib v3.22 Change 'get_fqdn' function so it work well on RHEL v9. 
-#@2022_04_10 lib v3.23 Use '/etc/os-release' file instead of depreciated 'lsb_release' command.
-#@2022_05_27 lib v3.24 Use socket.getfqdn() in 'get_fqdn' function.
-#@2022_05_29 lib v3.25 Command 'socket.getfqdn()' don't always return a domain name,use shell method.
-#@2022_06_01 lib v3.26 Fix finally 'get_domain()' function to get the domain name.
+# 2021_05_02 lib v3.15 Fix typo error in 'locate_command' method.
+# 2021_05_11 lib v3.16 Fix Path to which command was not set properly because of defined alias.
+# 2021_05_14 lib v3.17 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
+# 2021_05_16 lib v3.18 Adjustment for MacOS Big Sur
+# 2021_08_17 lib v3.19 Add 'SADM_MONITOR_UPDATE_INTERVAL'variable that control refresh rate. 
+# 2021_09_30 lib v3.20 Small bug corrections
+# 2021_11_07 lib v3.21 Locate 'rrd_tool' executable, instead of using sadmin.cfg. 
+# 2022_04_04 lib v3.22 Change 'get_fqdn' function so it work well on RHEL v9. 
+# 2022_04_10 lib v3.23 Use '/etc/os-release' file instead of depreciated 'lsb_release' command.
+# 2022_05_27 lib v3.24 Use socket.getfqdn() in 'get_fqdn' function.
+# 2022_05_29 lib v3.25 Command 'socket.getfqdn()' don't always return a domain name,use shell method.
+# 2022_06_01 lib v3.26 Fix finally 'get_domain()' function to get the domain name.
 #  
 #==================================================================================================
 try :

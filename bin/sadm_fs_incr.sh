@@ -45,8 +45,8 @@
 # 2020_03_24 nolog v2.0 Script will not generate an rpt file anymore (Remove double error report)
 # 2020_05_23 nolog v2.1 Changing the way to get SADMIN variable in /etc/environment 
 # 2020_10_22 nolog v2.2 Line Feed added in Email when filesystem is increase
-#@2022_05_11 nolog v2.3 Replace "sadm_send_alert" by "sadm_sendmail".
-#@2022_08_25 nolog v2.4 Updated with new SADMIN SECTION V1.52.
+# 2022_05_11 nolog v2.3 Replace "sadm_send_alert" by "sadm_sendmail".
+# 2022_08_25 nolog v2.4 Updated with new SADMIN SECTION V1.52.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

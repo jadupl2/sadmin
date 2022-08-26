@@ -49,8 +49,8 @@
 # 2021_08_05 lib v2.18 New function "getdocurl($RefString)" to allow link from script to doc
 # 2021_08_29 lib v2.19 New function "get_alert_group_data" Return used alert grp name,type,tooltip.
 # 2021_08_31 lib v2.20 New function "sadm_return_logo(OSNAME)" return image path, doc url & tooltip
-#@2022_06_02 lib v2.21 Added Logo of AlmaLinux, Rocky Linux & update logo of Ubuntu.
-#@2022_07_26 lib v2.22 Fix bug calculating "Next Update Date/Time" in some situation.
+# 2022_06_02 lib v2.21 Added Logo of AlmaLinux, Rocky Linux & update logo of Ubuntu.
+# 2022_07_26 lib v2.22 Fix bug calculating "Next Update Date/Time" in some situation.
 #===================================================================================================
 #
 

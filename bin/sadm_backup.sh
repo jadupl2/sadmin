@@ -74,9 +74,9 @@
 # 2021_05_24 backup v3.30 Optimize code & update command line options [-v] & [-h]. 
 # 2021_06_04 backup v3.31 Fix sporadic problem with exclude list. 
 # 2021_06_05 backup v3.32 Include backup & system information in each backup log.
-#@2021_05_14 backup v3.33 Now the log include the size of each day of backup.
-#@2022_08_14 backup v3.34 Error message written to log and also to error log.
-#@2022_08_17 backup v3.35 Include new SADMIN section 1.52
+# 2021_05_14 backup v3.33 Now the log include the size of each day of backup.
+# 2022_08_14 backup v3.34 Error message written to log and also to error log.
+# 2022_08_17 backup v3.35 Include new SADMIN section 1.52
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

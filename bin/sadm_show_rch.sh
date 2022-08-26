@@ -35,8 +35,8 @@
 # 2019_08_25 cmdline v1.16 Put running scripts and scripts with error on top of email report.
 # 2020_04_06 cmdline v1.17 Allow simultaneous execution of this script.
 # 2020_05_23 cmdline v1.18 Changing the way to get SADMIN variable in /etc/environment 
-#@2022_05_11 cmdline v1.19 Replace "sadm_send_alert()" call by "sadm_sendmail()". 
-#@2022_08_17 cmdline v1.20 Updated with new SADMIN section v1.52
+# 2022_05_11 cmdline v1.19 Replace "sadm_send_alert()" call by "sadm_sendmail()". 
+# 2022_08_17 cmdline v1.20 Updated with new SADMIN section v1.52
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

@@ -40,9 +40,9 @@
 # 2020_04_29 install v1.8 Remove arp-scan from the SADMIN server requirement list.
 # 2020_11_20 install v1.9 Added package 'wkhtmltopdf' installation to server requirement.
 # 2021_04_02 install v1.10 Fix crash when trying to install missing package.
-#@2022_04_10 install v1.11 Depreciated `lsb_release` for AlmaLinux 9, RHEL 9, Rocky 9 CentOS 9.
-#@2022_05_10 install v1.12 Using now 'mutt' instead of 'mail'.
-#@2022_07_19 install v1.13 Update of the list of commands and package require by SADMIN.
+# 2022_04_10 install v1.11 Depreciated `lsb_release` for AlmaLinux 9, RHEL 9, Rocky 9 CentOS 9.
+# 2022_05_10 install v1.12 Using now 'mutt' instead of 'mail'.
+# 2022_07_19 install v1.13 Update of the list of commands and package require by SADMIN.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT LE ^C
 #set -x

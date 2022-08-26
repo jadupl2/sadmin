@@ -34,8 +34,8 @@
 # 2021_05_29 server: v2.8 Code optimization, update SADMIN section and Help screen.
 # 2021_07_30 server: v2.9 Solve intermittent error on monitor page.
 # 2021_08_17 nolog  v2.10 chmod 1777 $SADM_WWW_TMP_DIR 
-#@2022_05_03 server v2.11 Secure email passwd file ($SADMIN/cfg/.gmpw).
-#@2022_07_13 server v2.12 Fix typo that was preventing script from running under certain condition.
+# 2022_05_03 server v2.11 Secure email passwd file ($SADMIN/cfg/.gmpw).
+# 2022_07_13 server v2.12 Fix typo that was preventing script from running under certain condition.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x

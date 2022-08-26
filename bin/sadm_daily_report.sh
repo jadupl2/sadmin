@@ -45,9 +45,9 @@
 # 2021_06_08 nolog: v1.26 Remove from daily ReaR backup report system that the backup is disable.
 # 2021_06_10 server: v1.27 Show system backup in bold instead of having a yellow background.
 # 2021_08_07 server: v1.28 Help message was showing wrong command line options.w background.
-#@2022_06_09 server: v1.29 Added AlmaLinux and Rocky Logo for web interface.
-#@2022_07_18 server: v1.30 Remove unneeded work file at the end.
-#@2022_07_21 server: v1.31 Insert new SADMIN section v1.52.
+# 2022_06_09 server: v1.29 Added AlmaLinux and Rocky Logo for web interface.
+# 2022_07_18 server: v1.30 Remove unneeded work file at the end.
+# 2022_07_21 server: v1.31 Insert new SADMIN section v1.52.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

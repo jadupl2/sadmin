@@ -37,15 +37,15 @@
 # 2019_10_16 Update: v3.8 Don't update anymore the domain column in the Database (Change with CRUD)
 # 2020_01_13 Update: v3.9 'ReaR' backup version is now updated in DB with info collect on systems.
 # 2020_12_19 Fix: v3.10 Fix Typo error that cause a crash when updating server database.
-#@2021_05_14 server v3.11 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
-#@2021_05_30 server v3.12 Enlarge column 'srv_model' & 'srv_kernel_version' column wasn't big enough
-#@2021_06_01 server v3.13 Bug fixes and Command line option -v, -h and -d are now functional. 
-#@2021_06_10 server v3.14 Enlarge column 'srv_uptime' from 20 to 25 Char 
-#@2021_06_11 server v3.15 Add 'srv_boot_date' that contain last boot date & Fix error message.
-#@2021_06_17 server v3.16 Fix Duplicate column name 'srv_boot_date'
-#@2022_03_28 server v3.17 Give a warning instead of an error when O/S update is not yet run.
-#@2022_08_17 server v3.18 Updated to use the new SADMIN Python Library v2.
-#@2022_08_25 server v3.19 Fix a 'KeyError' that could cause problem.
+# 2021_05_14 server v3.11 Get DB result as a dict. (connect cursorclass=pymysql.cursors.DictCursor)
+# 2021_05_30 server v3.12 Enlarge column 'srv_model' & 'srv_kernel_version' column wasn't big enough
+# 2021_06_01 server v3.13 Bug fixes and Command line option -v, -h and -d are now functional. 
+# 2021_06_10 server v3.14 Enlarge column 'srv_uptime' from 20 to 25 Char 
+# 2021_06_11 server v3.15 Add 'srv_boot_date' that contain last boot date & Fix error message.
+# 2021_06_17 server v3.16 Fix Duplicate column name 'srv_boot_date'
+# 2022_03_28 server v3.17 Give a warning instead of an error when O/S update is not yet run.
+# 2022_08_17 server v3.18 Updated to use the new SADMIN Python Library v2.
+# 2022_08_25 server v3.19 Fix a 'KeyError' that could cause problem.
 # 
 # ==================================================================================================
 #

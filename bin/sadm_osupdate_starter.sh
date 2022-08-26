@@ -55,10 +55,10 @@
 # 2021_05_04 osupdate v4.4 Don't sleep after updating a server if a reboot wasn't requested.
 # 2021_05_10 nolog    v4.5 Error message change "sadm_osupdate_farm.sh" to "sadm_osupdate_starter"
 # 2021_08_17 nolog    v4.6 Change to use the library lock file function. 
-#@2022_05_24 nolog    v4.7 Fix problem with lock file detection. 
-#@2022_06_21 osupdate v4.8 Changes to use new functionalities of SADMIN code section v1.52
-#@2022_07_09 osupdate v4.9 Added more verbosity to screen and log
-#@2022_08_25 osupdate v5.0 Allow to run multiple instance of this script.
+# 2022_05_24 nolog    v4.7 Fix problem with lock file detection. 
+# 2022_06_21 osupdate v4.8 Changes to use new functionalities of SADMIN code section v1.52
+# 2022_07_09 osupdate v4.9 Added more verbosity to screen and log
+# 2022_08_25 osupdate v5.0 Allow to run multiple instance of this script.
 #
 # --------------------------------------------------------------------------------------------------
 #

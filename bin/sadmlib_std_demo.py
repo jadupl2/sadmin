@@ -44,13 +44,13 @@
 # 2019_10_14 lib v3.8 Add demo for calling sadm_server_arch function & show result.
 # 2019_10_18 lib v3.9 Print SADMIN Database Tables and columns at the end of report.
 # 2019_10_30 lib v3.10 Remove Utilization of 'facter' (Depreciated).
-#@2022_04_09 lib v3.11 Rewrote Overview of the 'sa.start()' and 'sa.stop()' functions.
-#@2022_04_10 lib v3.12 Remove 'lsb_release' command dependency (Not avail in RHEL 9)
-#@2022_05_15 lib v3.13 Updated to use the new SADMIN Python Library V2.
-#@2022_05_18 lib v3.14 Added print of new fields 'sa.sadm_pid_timeout' & 'sa.sadm_lock_timeout'.
-#@2022_05_21 lib v3.15 Late Adjustment & Minor changes
-#@2022_05_25 lib v3.16 Added fields 'sa.proot_only' & 'sa.psadm_server_only' to output.
-#@2022_08_14 lib v3.17 Output updated with all the latest functions & global variables.
+# 2022_04_09 lib v3.11 Rewrote Overview of the 'sa.start()' and 'sa.stop()' functions.
+# 2022_04_10 lib v3.12 Remove 'lsb_release' command dependency (Not avail in RHEL 9)
+# 2022_05_15 lib v3.13 Updated to use the new SADMIN Python Library V2.
+# 2022_05_18 lib v3.14 Added print of new fields 'sa.sadm_pid_timeout' & 'sa.sadm_lock_timeout'.
+# 2022_05_21 lib v3.15 Late Adjustment & Minor changes
+# 2022_05_25 lib v3.16 Added fields 'sa.proot_only' & 'sa.psadm_server_only' to output.
+# 2022_08_14 lib v3.17 Output updated with all the latest functions & global variables.
 #==================================================================================================
 #
 try :

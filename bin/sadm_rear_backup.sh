@@ -74,7 +74,7 @@
 # 2021_05_12 backup: v2.27 Write more information about ReaR sadmin.cfg in the log.
 # 2021_06_02 backup: v2.28 Added more information in the script log.
 # 2022_05_11 backup: v2.29 Minor change to log output.
-#@2022_08_17 backup: v2.30 Update new SADMIN section v1.52 and code revision.
+# 2022_08_17 backup: v2.30 Update new SADMIN section v1.52 and code revision.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x

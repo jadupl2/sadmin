@@ -66,8 +66,8 @@
 # 2021_06_06 client: v2.02 Fix problem related to system monitor file update.
 # 2021_06_10 client: v2.03 Fix problem removing 'nmon' watcher from monitor file.
 # 2021_07_22 client: v2.04 Fix problem when run the 1st time during setup script.
-#@2022_07_02 client: v2.05 Set permission for new gmail passwd file ($SADMIN/cfg/.gmpw)
-#@2022_07_13 client: v2.06 Update new SADMIN section v1.51 and code revision..
+# 2022_07_02 client: v2.05 Set permission for new gmail passwd file ($SADMIN/cfg/.gmpw)
+# 2022_07_13 client: v2.06 Update new SADMIN section v1.51 and code revision..
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x

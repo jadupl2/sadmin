@@ -41,7 +41,7 @@
 # 2020_04_05 client v2.8 Remove one call to sadm_start (Was there twice)
 # 2020_05_08 client v2.9 Minor Comment changes.
 # 2020_11_24 client v2.10 Minor log adjustment.
-#@2022_08_25 client v2.11 Updated with new SADMIN SECTION V1.52.
+# 2022_08_25 client v2.11 Updated with new SADMIN SECTION V1.52.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

@@ -36,10 +36,10 @@
 # 2020_04_01 lib v3.18 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
 # 2020_11_24 lib v3.19 Don't show DB password file on client.
 # 2020_12_24 lib v3.20 Include output of capitalize function.
-#@2022_04_10 lib v3.21 Remove 'lsb_release' command dependency.
-#@2022_05_10 lib v3.22 Use 'mutt' instead of 'mail'.
-#@2022_06_16 lib v3.23 Added fields 'sa.proot_only' & 'sa.psadm_server_only' to output.
-#@2022_08_14 lib v3.24 Output updated with all the latest functions & global variables.
+# 2022_04_10 lib v3.21 Remove 'lsb_release' command dependency.
+# 2022_05_10 lib v3.22 Use 'mutt' instead of 'mail'.
+# 2022_06_16 lib v3.23 Added fields 'sa.proot_only' & 'sa.psadm_server_only' to output.
+# 2022_08_14 lib v3.24 Output updated with all the latest functions & global variables.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

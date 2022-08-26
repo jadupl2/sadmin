@@ -29,8 +29,8 @@
 # 2018_07_18 cmdline v2.1 Fix problem reporting System Monitor Result (rpt filename)
 # 2018_08_20 cmdline v2.2 Don't use rch file & don't send email if failing (It is an interactive script)
 # 2019_06_07 cmdline v2.3 Updated to adapt to the new format of the '.rch' file.
-#@2022_08_17 cmdline v2.4 Updated with new SADMIN section v1.52
-#@2022_08_21 cmdline v2.5 Fix problem when running on other system than SADMIN Server
+# 2022_08_17 cmdline v2.4 Updated with new SADMIN section v1.52
+# 2022_08_21 cmdline v2.5 Fix problem when running on other system than SADMIN Server
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x

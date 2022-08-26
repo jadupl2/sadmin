@@ -52,7 +52,7 @@
 # 2018_06_04    v2.1 Correction for new Library
 # 2018_12_08    v2.2 Fix bug with Debugging Level. 
 # 2020_04_06 Update: v2.3 Replace function sadm_writelog() with NL incl. by sadm_write() No NL Incl.
-#@2022_08_25 nolog v2.4 Updated with new SADMIN SECTION V1.52.
+# 2022_08_25 nolog v2.4 Updated with new SADMIN SECTION V1.52.
 #            
 #
 #===================================================================================================

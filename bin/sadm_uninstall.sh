@@ -39,7 +39,7 @@
 # 2019_04_14 Fix: v1.7 Remove user before dropping database
 # 2019_04_17 Update: v1.8 When quitting script, remove pid file and print abort message.
 # 2019_06_25 Update: v1.9 Minor code update (use SADM_DEBUG instead of DEBUG_LEVEL).
-#@2019_09_20 install v2.0 Fixes & include new SADMIN section 1.52.
+# 2019_09_20 install v2.0 Fixes & include new SADMIN section 1.52.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT LE ^C

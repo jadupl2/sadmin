@@ -85,16 +85,16 @@
 # 2021_08_27 server v3.31 Increase ssh connection Timeout "-o ConnectTimeout=3".
 # 2021_10_20 server v3.32 Remove syncing of depreciated file 'alert_slack.cfg'. 
 # 2021_11_15 server v3.33 Fix type error on comment line
-#@2022_04_19 server v3.34 Minor fix and performance improvements.
-#@2022_05_12 server v3.35 Move 'sadm_send_alert()' & 'write_alert_history()' functions from library.
-#@2022_05_19 server v3.36 Added 'chown' and 'chmod' for log and rch files and directories.
-#@2022_06_01 server v3.37 Create 'rpt' and 'rch' directories in $SADMIN/www/dat if do not exist.
-#@2022_06_13 server v3.38 Update to use 'sadm_sendmail()' instead of 'mutt' manually.
-#@2022_06_14 server v3.39 Email alert will now send script AND error log.
-#@2022_06_15 server v3.40 Fix problem when 2 attachments or more were send with sadm_sendmail()
-#@2022_07_01 server v3.41 Fix error updating crontab.
-#@2022_07_09 server v3.42 Updated to use new SADMIN section v1.52.
-#@2022_07_14 server v3.43 Change group to '$SADM_GROUP' in $SADMIN/www/dat (fix web ui problem).
+# 2022_04_19 server v3.34 Minor fix and performance improvements.
+# 2022_05_12 server v3.35 Move 'sadm_send_alert()' & 'write_alert_history()' functions from library.
+# 2022_05_19 server v3.36 Added 'chown' and 'chmod' for log and rch files and directories.
+# 2022_06_01 server v3.37 Create 'rpt' and 'rch' directories in $SADMIN/www/dat if do not exist.
+# 2022_06_13 server v3.38 Update to use 'sadm_sendmail()' instead of 'mutt' manually.
+# 2022_06_14 server v3.39 Email alert will now send script AND error log.
+# 2022_06_15 server v3.40 Fix problem when 2 attachments or more were send with sadm_sendmail()
+# 2022_07_01 server v3.41 Fix error updating crontab.
+# 2022_07_09 server v3.42 Updated to use new SADMIN section v1.52.
+# 2022_07_14 server v3.43 Change group to '$SADM_GROUP' in $SADMIN/www/dat (fix web ui problem).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x

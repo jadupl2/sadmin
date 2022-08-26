@@ -55,15 +55,15 @@
 # 2020_05_05 Update: v3.10 Adjust screen presentation.
 # 2020_05_14 Update: v3.11 Remove line feed after "Installing pip3" 
 # 2020_12_24 Update: v3.12 CentOSStream return CENTOS.
-#@2022_02_10 install v3.13 Correct 'pip3' installation on Fedora 35.
-#@2022_04_02 install v3.14 Command 'lsb_release' is gone is RHEL 9, '/etc/os-release file' is use.
-#@2022_04_03 install v3.15 Adapted to use EPEL 9 for RedHat, Centos, AlmaLinux and Rocky Linux.
-#@2022_04_06 install v3.16 Fix problem verifying and installing Python 3 'pip3' on CentOS v9
-#@2022_04_07 install v3.17 Change to support AlmaLinux and Rocky Linux v9.
-#@2022_04_11 install v3.18 Fix some problem related to using '/etc/os-release' on AlmaLinux.
-#@2022_04_16 install v3.19 Misc. Fixes for CentOS 9, EPEL 9 and change UI a bit.
-#@2022_05_06 install v3.20 Fix some issue installing EPEL repositories on AlmaLinux & Rocky v9.
-#@2022_05_28 install v3.21 Make sure SELinux is set (temporarily) to Permissive during setup.
+# 2022_02_10 install v3.13 Correct 'pip3' installation on Fedora 35.
+# 2022_04_02 install v3.14 Command 'lsb_release' is gone is RHEL 9, '/etc/os-release file' is use.
+# 2022_04_03 install v3.15 Adapted to use EPEL 9 for RedHat, Centos, AlmaLinux and Rocky Linux.
+# 2022_04_06 install v3.16 Fix problem verifying and installing Python 3 'pip3' on CentOS v9
+# 2022_04_07 install v3.17 Change to support AlmaLinux and Rocky Linux v9.
+# 2022_04_11 install v3.18 Fix some problem related to using '/etc/os-release' on AlmaLinux.
+# 2022_04_16 install v3.19 Misc. Fixes for CentOS 9, EPEL 9 and change UI a bit.
+# 2022_05_06 install v3.20 Fix some issue installing EPEL repositories on AlmaLinux & Rocky v9.
+# 2022_05_28 install v3.21 Make sure SELinux is set (temporarily) to Permissive during setup.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x

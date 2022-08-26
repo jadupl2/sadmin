@@ -46,8 +46,8 @@
 # 2021_02_18 Update: v1.2 Lock FileName now created with remote node name.
 # 2021_02_19 Fix: v1.3 Add -l to Lock system name.
 # 2021_08_17 osupdate v1.4 Change to use Library System Lock 
-#@2022_05_23 osupdate v1.5 Do not to run remote script on system that are locked.
-#@2022_08_17 osupdate v1.6 Include new SADMIN section 1.52
+# 2022_05_23 osupdate v1.5 Do not to run remote script on system that are locked.
+# 2022_08_17 osupdate v1.6 Include new SADMIN section 1.52
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C

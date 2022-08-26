@@ -44,13 +44,13 @@
 # Field 3: Version number '999.999' (Max 7 Char., No spaces)
 # Field 4: Description of change (Up to 70 Characters)
 #
-#@YYYY_MM_DD Type    vxx.xx 123456789*123456789*123456789*123456789*123456789*123456789*123456789*--
+# YYYY_MM_DD Type    vxx.xx 123456789*123456789*123456789*123456789*123456789*123456789*123456789*--
 #---------------------------------------------------------------------------------------------------
 # CHANGE LOG
 # 2021_07_01 lib v1.0  Initial Beta Version
-#@2021_09_25 lib v4.0 Added 'SADM_PDESC' that contain description of Script (Used in -v option).
-#@2022_05_25 lib v4.1 Added 'SADM_ROOT_ONLY' and 'SADM_SERVER_ONLY' checked before running script.
-#@2022_08_24 lib v4.2 Change the way temporary files are created ('mktemp').
+# 2021_09_25 lib v4.0 Added 'SADM_PDESC' that contain description of Script (Used in -v option).
+# 2022_05_25 lib v4.1 Added 'SADM_ROOT_ONLY' and 'SADM_SERVER_ONLY' checked before running script.
+# 2022_08_24 lib v4.2 Change the way temporary files are created ('mktemp').
 #---------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C

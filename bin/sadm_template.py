@@ -25,8 +25,8 @@
 #
 # VERSION CHANGE LOG
 # ------------------
-#@2022_05_09 lib v1.0 New Python template using V2 of SADMIN python library.
-#@2022_05_25 lib v1.1 Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
+# 2022_05_09 lib v1.0 New Python template using V2 of SADMIN python library.
+# 2022_05_25 lib v1.1 Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
 #
 # --------------------------------------------------------------------------------------------------
 #

@@ -44,11 +44,11 @@
 # 2020_12_12 Update: v3.25 Minor adjustments.
 # 2021_05_04 Update: v3.26 Adjust some message format of the log.
 # 2021_08_19 osupdate v3.27 Fix prompting issue on '.deb' distributions.
-#@2022_04_27 osupdate v3.28 Use apt command instead of apt-get
-#@2022_06_10 osupdate v3.29 Now list package to be updated when using rpm format.
-#@2022_06_13 osupdate v3.30 Update to use 'sadm_sendmail()' instead  of mutt manually.
-#@2022_06_25 osupdate v3.31 Now list package to be updated when using apt format.
-#@2022_08_25 osupdate v3.32 Updated with new SADMIN SECTION V1.52.
+# 2022_04_27 osupdate v3.28 Use apt command instead of apt-get
+# 2022_06_10 osupdate v3.29 Now list package to be updated when using rpm format.
+# 2022_06_13 osupdate v3.30 Update to use 'sadm_sendmail()' instead  of mutt manually.
+# 2022_06_25 osupdate v3.31 Now list package to be updated when using apt format.
+# 2022_08_25 osupdate v3.32 Updated with new SADMIN SECTION V1.52.
 # --------------------------------------------------------------------------------------------------
 #set -x
 

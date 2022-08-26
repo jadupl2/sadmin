@@ -51,15 +51,15 @@
 # 2021_08_17 web v2.21 Sysmon page - Use the refresh interval from SADMIN configuration file. 
 # 2021_08_18 web v2.22 Sysmon page - Section heading are spread on two lines.
 # 2021_08_29 web v2.23 Sysmon page - Show alert group member(s) as tooltip.
-#@2021_09_14 web v2.24 SysMon page - New section that list recent scripts execution.
-#@2021_09_15 web v2.25 SysMon page - Recent scripts section won't show if SADM_MONITOR_RECENT_COUNT=0
-#@2021_09_30 web v2.26 Sysmon page - Show recent activities even when no alert to report
-#@2022_02_16 web v2.27 Sysmon page - Monitor tmp file was not deleted after use.
-#@2022_02_17 nolog v2.28 Sysmon page - Added a test to delete only when tmp file exist
-#@2022_05_26 nolog v2.29 Sysmon page - Fix intermittent problem creating tmp alert file.
-#@2022_05_26 nolog v2.30 Sysmon page - Fix intermittent problem creating tmp alert file.
-#@2022_05_26 web v2.31 Sysmon page - Rewrote some part of the code for new version of php
-#@2022_07_21 web v2.32 Sysmon page - Fix problem with recent scripts section
+# 2021_09_14 web v2.24 SysMon page - New section that list recent scripts execution.
+# 2021_09_15 web v2.25 SysMon page - Recent scripts section won't show if SADM_MONITOR_RECENT_COUNT=0
+# 2021_09_30 web v2.26 Sysmon page - Show recent activities even when no alert to report
+# 2022_02_16 web v2.27 Sysmon page - Monitor tmp file was not deleted after use.
+# 2022_02_17 nolog v2.28 Sysmon page - Added a test to delete only when tmp file exist
+# 2022_05_26 nolog v2.29 Sysmon page - Fix intermittent problem creating tmp alert file.
+# 2022_05_26 nolog v2.30 Sysmon page - Fix intermittent problem creating tmp alert file.
+# 2022_05_26 web v2.31 Sysmon page - Rewrote some part of the code for new version of php
+# 2022_07_21 web v2.32 Sysmon page - Fix problem with recent scripts section
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.

@@ -42,7 +42,7 @@
 # 2019_10_15 web v2.13 System info page - Color change of input fields.
 # 2020_07_12 web v2.14 System info page - Replace 'CRUD' button with 'Modify' directed to CRUD menu.
 # 2020_12_29 web v2.15 System info page - Date for starting & ending maintenance not show properly.
-#@2022_06_16 web v2.16 System info page - If O/S code name is empty, don't print empty parentheses.
+# 2022_06_16 web v2.16 System info page - If O/S code name is empty, don't print empty parentheses.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

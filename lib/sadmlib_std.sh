@@ -151,41 +151,41 @@
 # 2021_08_06 nolog v3.72 $SADMIN/www/tmp directory default permission now set to 777 
 # 2021_08_13 lib v3.73 New func. see Doc sadm_lock_system  sadm_unlock_system sadm_check_system_lock
 # 2021_08_17 lib v3.74 Performance improvement.
-#@2021_09_09 lib v3.75 'sadm_write_err $msg' function added to write to log and error log.
-#@2021_09_13 lib v3.76 Enhance script log header to be more concise, yet have more information.
-#@2021_09_14 lib v3.77 If script desc. "SADM_PDESC" v#@2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
-#@2021_09_15 lib v3.78 Function "sadm_show_version" will show Script Desc. ($SADM_PDESC) if Avail.
-#@2021_09_30 lib v3.79 Various small little corrections.
-#@2021_10_20 lib v3.80 Merge 'slack channel file' with 'alert group' & change log footer.
-#@2021_11_07 lib v3.81 Set new 'SADM_RRDTOOL' variable that contain location of 'rrdtool' command.
-#@2021_12_02 lib v3.82 Improve 'sadm_server_model' function.
-#@2021_12_12 lib v3.83 Fix 'sadm_server_vg' wasn't returning proper size under certain condition.
-#@2021_12_20 lib v3.84 Load additional options from the SADMIN configuration file.
-#@2022_02_16 lib v3.85 Fix: Serial number return by 'sadm_server_serial()' on iMac was incomplete.
-#@2022_04_04 lib v3.86 Replace use of depreciated 'lsb_release' in RHEL v9. 
-#@2022_04_10 lib v3.87 When PID exist don't reinitialize the script log.  
-#@2022_04_11 lib v3.88 Use '/etc/os-release' file instead of depreciated 'lsb_release' command.
-#@2022_04_14 lib v3.89 Fix problem getting O/S version on old RHEL version.
-#@2022_04_30 lib v3.90 New function 'sadm_lock_system','sadm_unlock_system','sadm_check_system_lock'.
-#@2022_05_03 lib v3.91 Read smtp server info from sadmin.cfg.
-#@2022_05_10 lib v3.92 Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
-#@2022_05_12 lib v3.93 Move 'sadm_send_alert()' & 'write_alert_history()' to sadm_fetch_client.
-#@2022_05_19 lib v3.94 Fix intermittent permission error message when was not running as 'root'.
-#@2022_05_20 lib v3.95 Bug fix with 'sadm_capitalize()' function on RHEL(5,4)
-#@2022_05_23 lib v3.96 Function 'sadm_write_err()' now write to error log AND regular log.
-#@2022_05_25 lib v3.97 Added new global variables 'SADM_ROOT_ONLY' and 'SADM_SERVER_ONLY'.
-#@2022_05_25 lib v3.98 Minor text modification related to PID expiration.
-#@2022_06_14 lib v3.99 Fix problem 'sadm_get_oscodename()'.
-#@2022_07_02 lib v4.00 Fix problem with 'sadm_server_core_per_socket()' function under RHEL 9.
-#@2022_07_07 lib v4.01 Add verbosity to 'sadm_sleep()' and fix 'sadm_sendmail()' subject problem.
-#@2022_07_12 lib v4.02 Change group of some web directories to solve web system removal error.
-#@2022_07_20 lib v4.03 Cmd 'lsb_release' depreciated ? not available on Alma9,Rocky9,CentOS9,RHEL9
-#@2022_07_27 lib v4.04 Fix problem related to PID in startup.
-#@2022_07_30 lib v4.05 Update 'sadm_sendmail()' fourth parameter (attachment) is now optional.
-#@2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
-#@2022_08_24 lib v4.07 Creation of $SADM_TMP_FILE1[1,2,3] done in SADMIN section & remove by stop().
-#@2022_08_25 lib v4.08 Change message of the system lock/unlock function.
-#@2022_08_26 lib v4.09 Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
+# 2021_09_09 lib v3.75 'sadm_write_err $msg' function added to write to log and error log.
+# 2021_09_13 lib v3.76 Enhance script log header to be more concise, yet have more information.
+# 2021_09_14 lib v3.77 If script desc. "SADM_PDESC" v#@2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
+# 2021_09_15 lib v3.78 Function "sadm_show_version" will show Script Desc. ($SADM_PDESC) if Avail.
+# 2021_09_30 lib v3.79 Various small little corrections.
+# 2021_10_20 lib v3.80 Merge 'slack channel file' with 'alert group' & change log footer.
+# 2021_11_07 lib v3.81 Set new 'SADM_RRDTOOL' variable that contain location of 'rrdtool' command.
+# 2021_12_02 lib v3.82 Improve 'sadm_server_model' function.
+# 2021_12_12 lib v3.83 Fix 'sadm_server_vg' wasn't returning proper size under certain condition.
+# 2021_12_20 lib v3.84 Load additional options from the SADMIN configuration file.
+# 2022_02_16 lib v3.85 Fix: Serial number return by 'sadm_server_serial()' on iMac was incomplete.
+# 2022_04_04 lib v3.86 Replace use of depreciated 'lsb_release' in RHEL v9. 
+# 2022_04_10 lib v3.87 When PID exist don't reinitialize the script log.  
+# 2022_04_11 lib v3.88 Use '/etc/os-release' file instead of depreciated 'lsb_release' command.
+# 2022_04_14 lib v3.89 Fix problem getting O/S version on old RHEL version.
+# 2022_04_30 lib v3.90 New function 'sadm_lock_system','sadm_unlock_system','sadm_check_system_lock'.
+# 2022_05_03 lib v3.91 Read smtp server info from sadmin.cfg.
+# 2022_05_10 lib v3.92 Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
+# 2022_05_12 lib v3.93 Move 'sadm_send_alert()' & 'write_alert_history()' to sadm_fetch_client.
+# 2022_05_19 lib v3.94 Fix intermittent permission error message when was not running as 'root'.
+# 2022_05_20 lib v3.95 Bug fix with 'sadm_capitalize()' function on RHEL(5,4)
+# 2022_05_23 lib v3.96 Function 'sadm_write_err()' now write to error log AND regular log.
+# 2022_05_25 lib v3.97 Added new global variables 'SADM_ROOT_ONLY' and 'SADM_SERVER_ONLY'.
+# 2022_05_25 lib v3.98 Minor text modification related to PID expiration.
+# 2022_06_14 lib v3.99 Fix problem 'sadm_get_oscodename()'.
+# 2022_07_02 lib v4.00 Fix problem with 'sadm_server_core_per_socket()' function under RHEL 9.
+# 2022_07_07 lib v4.01 Add verbosity to 'sadm_sleep()' and fix 'sadm_sendmail()' subject problem.
+# 2022_07_12 lib v4.02 Change group of some web directories to solve web system removal error.
+# 2022_07_20 lib v4.03 Cmd 'lsb_release' depreciated ? not available on Alma9,Rocky9,CentOS9,RHEL9
+# 2022_07_27 lib v4.04 Fix problem related to PID in startup.
+# 2022_07_30 lib v4.05 Update 'sadm_sendmail()' fourth parameter (attachment) is now optional.
+# 2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
+# 2022_08_24 lib v4.07 Creation of $SADM_TMP_FILE1[1,2,3] done in SADMIN section & remove by stop().
+# 2022_08_25 lib v4.08 Change message of the system lock/unlock function.
+# 2022_08_26 lib v4.09 Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
 #===================================================================================================
 
 

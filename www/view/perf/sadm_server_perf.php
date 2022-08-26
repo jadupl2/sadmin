@@ -35,7 +35,7 @@
 #       V1.6 Comments Added 
 #   2018_02_07 JDuplessis
 #       V1.7 Link tooltips added - Bug Fix
-#@2022_08_17 web v1.8 Fix problem under php 8.0 showing the graph.
+# 2022_08_17 web v1.8 Fix problem under php 8.0 showing the graph.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
