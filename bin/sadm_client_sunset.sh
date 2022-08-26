@@ -21,27 +21,27 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-# 2017_01_02    v1.1 Cosmetic Log Output change
-# 2017_12_28    v1.2 Adapted to MacOS to show Message non availability of nmon on OSX. 
-# 2018_01_05    v1.3 Add MySQL Database Backup in execution sequence
-# 2018_01_06    v1.4 Create Function fork the multiple script run by this one
-# 2018_01_10    v1.5 Database Backup - Compress Backup now
-# 2018_01_10    v1.6 Database Backup was not taken when compress (-c) was used.
-# 2018_01_23    v1.7 Added the script to read all nmon files and create/update the proper RRD.
-# 2018_01_24    v1.8 Pgm Restructure and add check to run rrd_update only on sadm server.
-# 2018_01_25    v1.9 Remove rrd_update and move it to sadm_sod_server.sh (start of day script)
-# 2018_02_04    v2.0 Remove MySql Backup & Change Script name from sadm_eod_client.sh to sadm_client_sunset.sh
-# 2018_04_05    v2.1 Remove execution of sadm_create_sar_perfdata.sh not needed anymore
-# 2018_06_03    v2.2 Adapt to new version of Shell Library and small ameliorations
-# 2018_06_09    v2.3 Change & Standardize scripts name called by this script & Change Startup Order
-# 2018_09_16    v2.4 Added Default Alert Group
-# 2018_11_13    v2.5 Adapted for MacOS (Don't run Aix/Linux scripts)
-# 2020_02_23 Update v2.6 Produce an alert only if one of the executed scripts isn't executable.
-# 2020_04_01 Update v2.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-# 2020_04_05 Update v2.8 Remove one call to sadm_start (Was there twice)
-# 2020_05_08 Update v2.9 Minor Comment changes.
-# 2020_11_24 Update v2.10 Minor log adjustment.
-#@2022_08_25 Update v2.11 Updated with new SADMIN SECTION V1.52.
+# 2017_01_02 client v1.1 Cosmetic Log Output change
+# 2017_12_28 client v1.2 Adapted to MacOS to show Message non availability of nmon on OSX. 
+# 2018_01_05 client v1.3 Add MySQL Database Backup in execution sequence
+# 2018_01_06 client v1.4 Create Function fork the multiple script run by this one
+# 2018_01_10 client v1.5 Database Backup - Compress Backup now
+# 2018_01_10 client v1.6 Database Backup was not taken when compress (-c) was used.
+# 2018_01_23 client v1.7 Added the script to read all nmon files and create/update the proper RRD.
+# 2018_01_24 client v1.8 Pgm Restructure and add check to run rrd_update only on sadm server.
+# 2018_01_25 client v1.9 Remove rrd_update and move it to sadm_sod_server.sh (start of day script)
+# 2018_02_04 client v2.0 Remove MySql Backup & Change Script name from sadm_eod_client.sh to sadm_client_sunset.sh
+# 2018_04_05 client v2.1 Remove execution of sadm_create_sar_perfdata.sh not needed anymore
+# 2018_06_03 client v2.2 Adapt to new version of Shell Library and small ameliorations
+# 2018_06_09 client v2.3 Change & Standardize scripts name called by this script & Change Startup Order
+# 2018_09_16 client v2.4 Added Default Alert Group
+# 2018_11_13 client v2.5 Adapted for MacOS (Don't run Aix/Linux scripts)
+# 2020_02_23 client v2.6 Produce an alert only if one of the executed scripts isn't executable.
+# 2020_04_01 client v2.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2020_04_05 client v2.8 Remove one call to sadm_start (Was there twice)
+# 2020_05_08 client v2.9 Minor Comment changes.
+# 2020_11_24 client v2.10 Minor log adjustment.
+#@2022_08_25 client v2.11 Updated with new SADMIN SECTION V1.52.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
