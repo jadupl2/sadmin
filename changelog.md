@@ -1,5 +1,207 @@
 # SADMIN tools changelog
  
+## Release [1.4.0](https://github.com/jadupl2/sadmin/releases) (2022-08-26)
+
+### Backup related
+  - [sadm_backupdb.sh](https://sadmin.ca/sadm-backup) (v2.4 2022/08/17) - Updated with SADMIN section 1.52
+  - [sadm_backup.sh](https://sadmin.ca/sadm-backupdb) (v3.34 2022/08/14) - Error message written to log and also to error log.
+  - [sadm_backup.sh](https://sadmin.ca/sadm-backupdb) (v3.35 2022/08/17) - Include new SADMIN section 1.52
+  - [sadm_rear_backup.sh](https://sadmin.ca/sadm-rear-backup) (v2.30 2022/08/17) - Update new SADMIN section v1.52 and code revision.
+
+### SADMIN Client related
+  - [sadm_cfg2html.sh](https://sadmin.ca/sadm-cfg2html) (v3.9 2022/05/05) - Update code for RHEL, CentOS, AlmaLinux & Rocky Linux v9.
+  - [sadm_cfg2html.sh](https://sadmin.ca/sadm-cfg2html) (v3.10 2022/07/28) - Updated to use new SADMIN section 1.51
+  - [sadm_client_housekeeping.sh](https://sadmin.ca/sadm-client-housekeeping) (v2.05 2022/07/02) - Set permission for new gmail passwd file ($SADMIN/cfg/.gmpw)
+  - [sadm_client_housekeeping.sh](https://sadmin.ca/sadm-client-housekeeping) (v2.06 2022/07/13) - Update new SADMIN section v1.51 and code revision..
+  - [sadm_client_sunset.sh](https://sadmin.ca/sadm-client-sunset) (v2.11 2022/08/25) - Updated with new SADMIN SECTION V1.52.
+  - [sadm_create_sysinfo.sh](https://sadmin.ca/sadm-create-sysinfo) (v3.25 2022/01/10) - Include memory module information in system information file.
+  - [sadm_create_sysinfo.sh](https://sadmin.ca/sadm-create-sysinfo) (v3.26 2022/01/11) - Added more disks information.
+  - [sadm_create_sysinfo.sh](https://sadmin.ca/sadm-create-sysinfo) (v3.27 2022/02/17) - Fix error writing network information file.
+  - [sadm_create_sysinfo.sh](https://sadmin.ca/sadm-create-sysinfo) (v3.28 2022/02/17) - Now show last O/S update status and date.
+  - [sadm_create_sysinfo.sh](https://sadmin.ca/sadm-create-sysinfo) (v3.29 2022/03/04) - Added more info about disks, filesystems and partition size.
+  - [sadm_create_sysinfo.sh](https://sadmin.ca/sadm-create-sysinfo) (v3.30 2022/04/10) - Change for RHEL/Rocky/AlmaLinux/CentOS v9, 'lsb_release' command is gone.
+  - [sadm_create_sysinfo.sh](https://sadmin.ca/sadm-create-sysinfo) (v3.31 2022/04/19) - Now include information from 'inxi' command (if available).
+  - [sadm_create_sysinfo.sh](https://sadmin.ca/sadm-create-sysinfo) (v3.32 2022/07/20) - When using 'inxi' suppress color escape sequence from generated files.
+  - [sadm_create_sysinfo.sh](https://sadmin.ca/sadm-create-sysinfo) (v3.33 2022/07/21) - Small enhancement in network information section.
+  - [sadm_create_sysinfo.sh](https://sadmin.ca/sadm-create-sysinfo) (v3.34 2022/08/25) - Update to SADMIN Section 1.52
+
+### Command line tools
+  - [sadm_show_rch.sh](https://sadmin.ca/sadm-show-rch) (v1.19 2022/05/11) - Replace "sadm_send_alert()" call by "sadm_sendmail()".
+  - [sadm_show_rch.sh](https://sadmin.ca/sadm-show-rch) (v1.20 2022/08/17) - Updated with new SADMIN section v1.52
+  - [sadm_sysmon_cli.sh](https://sadmin.ca/sadm-sysmon-cli) (v2.4 2022/08/17) - Updated with new SADMIN section v1.52
+  - [sadm_sysmon_cli.sh](https://sadmin.ca/sadm-sysmon-cli) (v2.5 2022/08/21) - Fix problem when running on other system than SADMIN Server
+
+### Configuration files
+  - [.sadmin.cfg](https://sadmin.ca/sadmin-cfg) (v2.7 2021/11/06) - SMTP Parameters added to configuration file & setup script.
+  - [.sadmin.cfg](https://sadmin.ca/sadmin-cfg) (v2.7 2021/11/06) - SMTP Parameters added to configuration file & setup script.
+
+### SADMIN Install, Uninstall & Update
+  - [sadm_requirements.sh](https://sadmin.ca/sadm-requirements) (v1.11 2022/04/10) - Depreciated `lsb_release` for AlmaLinux 9, RHEL 9, Rocky 9 CentOS 9.
+  - [sadm_requirements.sh](https://sadmin.ca/sadm-requirements) (v1.12 2022/05/10) - Using now 'mutt' instead of 'mail'.
+  - [sadm_requirements.sh](https://sadmin.ca/sadm-requirements) (v1.13 2022/07/19) - Update of the list of commands and package require by SADMIN.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.64 2022/04/11) - Use /etc/os-release file to get O/S info ('lsb_release' depreciated).
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.65 2022/04/16) - Updated for RHEL, Rocky, AlmaLinux and CentOS 9.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.66 2022/04/19) - Fixes for setup on CentOS 9.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.67 2022/05/03) - Ask info about smtp server information to send email from Python library.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.68 2022/05/04) - Added modification to 'postfix' config file (After making a backup).
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.69 2022/05/06) - Improve 'postfix' configuration and update password file 'sasl_passwd'.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.70 2022/05/06) - Change finger information for root ('sadmin' replace 'root' in email)
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.71 2022/05/10) - Remove installation of mail command & add 'inxi' command for sysInfo.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.72 2022/05/26) - Minor modification to question asked while installing 'sadmin'.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.73 2022/05/27) - Fix for AlmaLinux, problem with blank line in /etc/os-release.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.74 2022/05/28) - Add firewall rule if SSH port specified is different than 22.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.75 2022/06/01) - Add some 'SELinux' comments at the end of the installation.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.76 2022/06/10) - Update some parameters at the end of '/etc/postfix/main.cf' file.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.77 2022/06/18) - Fix SSH port setting problem during installation on AlmaLinux v9.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.78 2022/07/02) - Fix input problem related to smtp server data.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install) (v3.79 2022/07/19) - Update of the commands requirements.
+  - [setup.sh](https://sadmin.ca/_pages/install) (v3.13 2022/02/10) - Correct 'pip3' installation on Fedora 35.
+  - [setup.sh](https://sadmin.ca/_pages/install) (v3.14 2022/04/02) - Command 'lsb_release' is gone is RHEL 9, '/etc/os-release file' is use.
+  - [setup.sh](https://sadmin.ca/_pages/install) (v3.15 2022/04/03) - Adapted to use EPEL 9 for RedHat, Centos, AlmaLinux and Rocky Linux.
+  - [setup.sh](https://sadmin.ca/_pages/install) (v3.16 2022/04/06) - Fix problem verifying and installing Python 3 'pip3' on CentOS v9
+  - [setup.sh](https://sadmin.ca/_pages/install) (v3.17 2022/04/07) - Change to support AlmaLinux and Rocky Linux v9.
+  - [setup.sh](https://sadmin.ca/_pages/install) (v3.18 2022/04/11) - Fix some problem related to using '/etc/os-release' on AlmaLinux.
+  - [setup.sh](https://sadmin.ca/_pages/install) (v3.19 2022/04/16) - Misc. Fixes for CentOS 9, EPEL 9 and change UI a bit.
+  - [setup.sh](https://sadmin.ca/_pages/install) (v3.20 2022/05/06) - Fix some issue installing EPEL repositories on AlmaLinux & Rocky v9.
+  - [setup.sh](https://sadmin.ca/_pages/install) (v3.21 2022/05/28) - Make sure SELinux is set (temporarily) to Permissive during setup.
+
+### Libraries, Scripts Templates, Demo
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.01 2021/10/21) - If rch is not used (use_rch=False). delete the RCH file if present.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.02 2021/10/31) - Added Epoch math function, get_serial and fix chown error creating footer.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.03 2021/12/02) - Added help (Docstrings) to each functions and complete code re-structure.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.04 2021/12/11) - Fix some typo error.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.05 2021/12/18) - Fix error within 'start' function.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.06 2021/12/20) - Load additional options fields (SMTP) from the SADMIN configuration file.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.07 2022/03/06) - Change message when PID exist and trying to run a second instance of script.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.08 2022/04/11) - Use file '/etc/os-release' to get O/S info instead of 'lsb_release'.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.10 2022/05/09) - First Production version of new Python Library v4.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.11 2022/05/21) - Enhance host lock function & minor changes.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.12 2022/05/25) - New variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.13 2022/05/26) - Change message that appear when running not as 'root'.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.14 2022/05/27) - Fix for AlmaLinux, problem with blank line in '/etc/os-release' file.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.15 2022/05/27) - Use socket.getfqdn() to get fqdn.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.16 2022/05/29) - Python socket.getfqdn() don't always return a domain name, use shell method.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.17 2022/06/01) - Fix get_domain() function to get proper domain name.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.18 2022/06/10) - Fix minor problem within the 'start' function.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.19 2022/06/10) - Fix error message at end of execution when script wasn't running as 'root'.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.20 2022/06/13) - Add possibility use 'sendmail()' to send multiple attachments.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.21 2022/07/13) - If no file attached to email, subject was blank.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.22 2022/08/17) - Add possibility to connect to other database than 'sadmin' in db_connect().
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.23 2022/08/24) - Fix crash when log or error file didn't have the right permission.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.24 2022/08/26) - Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
+  - [sadmLib.php](https://sadmin.ca/sadmlib-std-php) (v2.21 2022/06/02) - Added Logo of AlmaLinux, Rocky Linux & update logo of Ubuntu.
+  - [sadmLib.php](https://sadmin.ca/sadmlib-std-php) (v2.22 2022/07/26) - Fix bug calculating "Next Update Date/Time" in some situation.
+  - [sadmlib_std_demo.py](https://sadmin.ca/sadmlib-std-py-demo) (v3.11 2022/04/09) - Rewrote Overview of the 'sa.start()' and 'sa.stop()' functions.
+  - [sadmlib_std_demo.py](https://sadmin.ca/sadmlib-std-py-demo) (v3.12 2022/04/10) - Remove 'lsb_release' command dependency (Not avail in RHEL 9)
+  - [sadmlib_std_demo.py](https://sadmin.ca/sadmlib-std-py-demo) (v3.13 2022/05/15) - Updated to use the new SADMIN Python Library V2.
+  - [sadmlib_std_demo.py](https://sadmin.ca/sadmlib-std-py-demo) (v3.14 2022/05/18) - Added print of new fields 'sa.sadm_pid_timeout' & 'sa.sadm_lock_timeout'.
+  - [sadmlib_std_demo.py](https://sadmin.ca/sadmlib-std-py-demo) (v3.15 2022/05/21) - Late Adjustment & Minor changes
+  - [sadmlib_std_demo.py](https://sadmin.ca/sadmlib-std-py-demo) (v3.16 2022/05/25) - Added fields 'sa.proot_only' & 'sa.psadm_server_only' to output.
+  - [sadmlib_std_demo.py](https://sadmin.ca/sadmlib-std-py-demo) (v3.17 2022/08/14) - Output updated with all the latest functions & global variables.
+  - [sadmlib_std_demo.sh](https://sadmin.ca/sadmlib-std-sh-demo) (v3.21 2022/04/10) - Remove 'lsb_release' command dependency.
+  - [sadmlib_std_demo.sh](https://sadmin.ca/sadmlib-std-sh-demo) (v3.22 2022/05/10) - Use 'mutt' instead of 'mail'.
+  - [sadmlib_std_demo.sh](https://sadmin.ca/sadmlib-std-sh-demo) (v3.23 2022/06/16) - Added fields 'sa.proot_only' & 'sa.psadm_server_only' to output.
+  - [sadmlib_std_demo.sh](https://sadmin.ca/sadmlib-std-sh-demo) (v3.24 2022/08/14) - Output updated with all the latest functions & global variables.
+  - [sadmlib_std.py](https://sadmin.ca/sadmlib-std-py) (v3.20 2021/09/30) - Small bug corrections
+  - [sadmlib_std.py](https://sadmin.ca/sadmlib-std-py) (v3.21 2021/11/07) - Locate 'rrd_tool' executable, instead of using sadmin.cfg.
+  - [sadmlib_std.py](https://sadmin.ca/sadmlib-std-py) (v3.22 2022/04/04) - Change 'get_fqdn' function so it work well on RHEL v9.
+  - [sadmlib_std.py](https://sadmin.ca/sadmlib-std-py) (v3.23 2022/04/10) - Use '/etc/os-release' file instead of depreciated 'lsb_release' command.
+  - [sadmlib_std.py](https://sadmin.ca/sadmlib-std-py) (v3.24 2022/05/27) - Use socket.getfqdn() in 'get_fqdn' function.
+  - [sadmlib_std.py](https://sadmin.ca/sadmlib-std-py) (v3.25 2022/05/29) - Command 'socket.getfqdn()' don't always return a domain name,use shell method.
+  - [sadmlib_std.py](https://sadmin.ca/sadmlib-std-py) (v3.26 2022/06/01) - Fix finally 'get_domain()' function to get the domain name.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.79 2021/09/30) - Various small little corrections.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.80 2021/10/20) - Merge 'slack channel file' with 'alert group' & change log footer.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.81 2021/11/07) - Set new 'SADM_RRDTOOL' variable that contain location of 'rrdtool' command.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.82 2021/12/02) - Improve 'sadm_server_model' function.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.83 2021/12/12) - Fix 'sadm_server_vg' wasn't returning proper size under certain condition.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.84 2021/12/20) - Load additional options from the SADMIN configuration file.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.85 2022/02/16) - Fix: Serial number return by 'sadm_server_serial()' on iMac was incomplete.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.86 2022/04/04) - Replace use of depreciated 'lsb_release' in RHEL v9.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.87 2022/04/10) - When PID exist don't reinitialize the script log.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.88 2022/04/11) - Use '/etc/os-release' file instead of depreciated 'lsb_release' command.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.89 2022/04/14) - Fix problem getting O/S version on old RHEL version.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.90 2022/04/30) - New function 'sadm_lock_system','sadm_unlock_system','sadm_check_system_lock'.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.91 2022/05/03) - Read smtp server info from sadmin.cfg.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.92 2022/05/10) - Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.93 2022/05/12) - Move 'sadm_send_alert()' & 'write_alert_history()' to sadm_fetch_client.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.94 2022/05/19) - Fix intermittent permission error message when was not running as 'root'.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.95 2022/05/20) - Bug fix with 'sadm_capitalize()' function on RHEL(5,4)
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.96 2022/05/23) - Function 'sadm_write_err()' now write to error log AND regular log.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.97 2022/05/25) - Added new global variables 'SADM_ROOT_ONLY' and 'SADM_SERVER_ONLY'.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.98 2022/05/25) - Minor text modification related to PID expiration.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v3.99 2022/06/14) - Fix problem 'sadm_get_oscodename()'.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.00 2022/07/02) - Fix problem with 'sadm_server_core_per_socket()' function under RHEL 9.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.01 2022/07/07) - Add verbosity to 'sadm_sleep()' and fix 'sadm_sendmail()' subject problem.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.02 2022/07/12) - Change group of some web directories to solve web system removal error.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.03 2022/07/20) - Cmd 'lsb_release' depreciated ? not available on Alma9,Rocky9,CentOS9,RHEL9
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.04 2022/07/27) - Fix problem related to PID in startup.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.05 2022/07/30) - Update 'sadm_sendmail()' fourth parameter (attachment) is now optional.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.06 2022/08/22) - Update 'sadm_server_type()' better detection if physical or virtual system.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.07 2022/08/24) - Creation of $SADM_TMP_FILE1[1,2,3] done in SADMIN section & remove by stop().
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.08 2022/08/25) - Change message of the system lock/unlock function.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.09 2022/08/26) - Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
+  - [sadm_template.py](https://sadmin.ca/sadm-template-py) (v1.0 2022/05/09) - New Python template using V2 of SADMIN python library.
+  - [sadm_template.py](https://sadmin.ca/sadm-template-py) (v1.1 2022/05/25) - Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
+  - [sadm_template.sh](https://sadmin.ca/sadm-template-sh) (v4.1 2022/05/25) - Added 'SADM_ROOT_ONLY' and 'SADM_SERVER_ONLY' checked before running script.
+  - [sadm_template.sh](https://sadmin.ca/sadm-template-sh) (v4.2 2022/08/24) - Change the way temporary files are created ('mktemp').
+
+### System Monitoring
+  - [sadm_sysmon.pl](https://sadmin.ca/sadm-sysmon) (v2.47 2022/07/02) - Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
+
+### Operating System Update
+  - [sadm_osupdate.sh](https://sadmin.ca/sadm-osupdate) (v3.28 2022/04/27) - Use apt command instead of apt-get
+  - [sadm_osupdate.sh](https://sadmin.ca/sadm-osupdate) (v3.29 2022/06/10) - Now list package to be updated when using rpm format.
+  - [sadm_osupdate.sh](https://sadmin.ca/sadm-osupdate) (v3.30 2022/06/13) - Update to use 'sadm_sendmail()' instead of mutt manually.
+  - [sadm_osupdate.sh](https://sadmin.ca/sadm-osupdate) (v3.31 2022/06/25) - Now list package to be updated when using apt format.
+  - [sadm_osupdate.sh](https://sadmin.ca/sadm-osupdate) (v3.32 2022/08/25) - Updated with new SADMIN SECTION V1.52.
+  - [sadm_osupdate_starter.sh](https://sadmin.ca/sadm-osupdate-starter) (v4.8 2022/06/21) - Changes to use new functionalities of SADMIN code section v1.52
+  - [sadm_osupdate_starter.sh](https://sadmin.ca/sadm-osupdate-starter) (v4.9 2022/07/09) - Added more verbosity to screen and log
+  - [sadm_osupdate_starter.sh](https://sadmin.ca/sadm-osupdate-starter) (v5.0 2022/08/25) - Allow to run multiple instance of this script.
+  - [sadm_rmcd_starter.sh](https://sadmin.ca/sadm_rmcd_starter) (v1.5 2022/05/23) - Do not to run remote script on system that are locked.
+  - [sadm_rmcd_starter.sh](https://sadmin.ca/sadm_rmcd_starter) (v1.6 2022/08/17) - Include new SADMIN section 1.52
+
+### SADMIN Server related
+  - [sadm_daily_farm_fetch.sh](https://sadmin.ca/sadm_daily_farm_fetch) (v4.7 2022/05/24) - Updated to use the library 'check_lock_file()' function.
+  - [sadm_daily_farm_fetch.sh](https://sadmin.ca/sadm_daily_farm_fetch) (v4.8 2022/08/17) - Update SADMIN section 2.2 and use error log when problem encountered.
+  - [sadm_daily_report.sh](https://sadmin.ca/sadm-daily-report) (v1.29 2022/06/09) - Added AlmaLinux and Rocky Logo for web interface.
+  - [sadm_daily_report.sh](https://sadmin.ca/sadm-daily-report) (v1.30 2022/07/18) - Remove unneeded work file at the end.
+  - [sadm_daily_report.sh](https://sadmin.ca/sadm-daily-report) (v1.31 2022/07/21) - Insert new SADMIN section v1.52.
+  - [sadm_database_update.py](https://sadmin.ca/sadm-database-update) (v3.17 2022/03/28) - Give a warning instead of an error when O/S update is not yet run.
+  - [sadm_database_update.py](https://sadmin.ca/sadm-database-update) (v3.18 2022/08/17) - Updated to use the new SADMIN Python Library v2.
+  - [sadm_database_update.py](https://sadmin.ca/sadm-database-update) (v3.19 2022/08/25) - Fix a 'KeyError' that could cause problem.
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) (v3.34 2022/04/19) - Minor fix and performance improvements.
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) (v3.35 2022/05/12) - Move 'sadm_send_alert()' & 'write_alert_history()' functions from library.
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) (v3.36 2022/05/19) - Added 'chown' and 'chmod' for log and rch files and directories.
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) (v3.37 2022/06/01) - Create 'rpt' and 'rch' directories in $SADMIN/www/dat if do not exist.
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) (v3.38 2022/06/13) - Update to use 'sadm_sendmail()' instead of 'mutt' manually.
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) (v3.39 2022/06/14) - Email alert will now send script AND error log.
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) (v3.40 2022/06/15) - Fix problem when 2 attachments or more were send with sadm_sendmail()
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) (v3.41 2022/07/01) - Fix error updating crontab.
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) (v3.42 2022/07/09) - Updated to use new SADMIN section v1.52.
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) (v3.43 2022/07/14) - Change group to '$SADM_GROUP' in $SADMIN/www/dat (fix web ui problem).
+  - [sadm_push_sadmin.sh](https://sadmin.ca/sadm-push-sadmin) (v2.33 2022/04/04) - Minor code improvement.
+  - [sadm_push_sadmin.sh](https://sadmin.ca/sadm-push-sadmin) (v2.34 2022/05/24) - Update to check if the SADMIN client is lock prior to push.
+  - [sadm_push_sadmin.sh](https://sadmin.ca/sadm-push-sadmin) (v2.35 2022/07/09) - Now pushing email user password file ($SADMIN/cfg/.gmpw).
+  - [sadm_push_sadmin.sh](https://sadmin.ca/sadm-push-sadmin) (v2.36 2022/08/17) - Updated with new SADMIN section v1.52
+  - [sadm_server_housekeeping.sh](https://sadmin.ca/sadm-server-housekeeping) (v2.11 2022/05/03) - Secure email passwd file ($SADMIN/cfg/.gmpw).
+  - [sadm_server_housekeeping.sh](https://sadmin.ca/sadm-server-housekeeping) (v2.12 2022/07/13) - Fix typo that was preventing script from running under certain condition.
+  - [sadm_subnet_lookup.py](https://sadmin.ca/sadm-subnet-lookup) (v3.5 2022/06/10) - Update to use the new SADMIN Python Library v2
+  - [sadm_subnet_lookup.py](https://sadmin.ca/sadm-subnet-lookup) (v3.6 2022/07/27) - Bug fix when ping were reported when it wasn't.
+
+### Web interface
+  - [sadmPageSideBar.php](https://sadmin.ca/sadm-pagesidebar) (v2.14 2022/06/02) - SideBar - Change some syntax due to the new PHP v8 on RHEL9
+  - [sadmPageSideBar.php](https://sadmin.ca/sadm-pagesidebar) (v2.15 2022/07/13) - SideBar - Show alert when final 'rch' summary file couldn't be opened.
+  - [sadmPageSideBar.php](https://sadmin.ca/sadm-pagesidebar) (v2.16 2022/07/18) - SideBar - Fix problem, sidebar wouldn't displayed correctly.
+  - [sadm_server_delete_action.php](https://sadmin.ca/sadm-remove-client) (v1.4 2022/07/18) - system removal - Fix delete permission problem & show archive file name.
+  - sadm_server_perf_adhoc_all.php (v1.4 2022/08/17) - Fix Perf graph not showing under new PHP 8.
+  - sadm_server_perf.php (v1.8 2022/08/17) - Fix problem under php 8.0 showing the graph.
+  - [sadm_view_server_info.php](https://sadmin.ca/sadm-view-server-info) (v2.16 2022/06/16) - System info page - If O/S code name is empty, don't print empty parentheses.
+  - [sadm_view_sysmon.php](https://sadmin.ca/sadm-system-monitor) (v2.26 2021/09/30) - Sysmon page - Show recent activities even when no alert to report
+  - [sadm_view_sysmon.php](https://sadmin.ca/sadm-system-monitor) (v2.27 2022/02/16) - Sysmon page - Monitor tmp file was not deleted after use.
+  - [sadm_view_sysmon.php](https://sadmin.ca/sadm-system-monitor) (v2.31 2022/05/26) - Sysmon page - Rewrote some part of the code for new version of php
+  - [sadm_view_sysmon.php](https://sadmin.ca/sadm-system-monitor) (v2.32 2022/07/21) - Sysmon page - Fix problem with recent scripts section
+   
+ 
 ## Release [1.3.6](https://github.com/jadupl2/sadmin/releases) (2021-09-07)
 
 ### Configuration files
