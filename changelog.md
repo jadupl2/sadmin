@@ -1,5 +1,8 @@
 # SADMIN Full Changelog
  
+## Release [1.4.1](https://github.com/jadupl2/sadmin/releases) (2022-08-26)
+   
+ 
 ## Release [1.4.0](https://github.com/jadupl2/sadmin/releases) (2022-08-26)
 
 ### Backup related
