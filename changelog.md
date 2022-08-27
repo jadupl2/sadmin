@@ -2,7 +2,10 @@
  
 ## Release [1.4.1](https://github.com/jadupl2/sadmin/releases) (2022-08-26)
    
- 
+- [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.25 2022/08/26) - Correct typo error on line 718.
+
+
+
 ## Release [1.4.0](https://github.com/jadupl2/sadmin/releases) (2022-08-26)
 
 ### Backup related
