@@ -284,7 +284,7 @@ process_servers()
         $SADM_SSH_CMD $server_fqdn date > /dev/null 2>&1                # SSH to Server for date
         RC=$?                                                           # Save Error Number
         if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "1" ]              # SSH don't work & Sporadic
-           then sadm_writelog "[ WARNING ] Can't SSH to sporadic server ${server_fqdn}\n"
+           then sadm_writelog "[ WARNING ] Can't SSH to sporadic server ${server_fqdn}"
                 WARNING_COUNT=$(($WARNING_COUNT+1))                     # Increase Warning Counter
                 sadm_writelog "$SADM_WARNING at ${WARNING_COUNT} - $SADM_ERROR at ${ERROR_COUNT}"
                 continue                                                # Go process next server
