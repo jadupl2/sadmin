@@ -35,7 +35,7 @@
 # 2022_08_17 lib v4.22 Add possibility to connect to other database than 'sadmin' in db_connect().
 # 2022_08_24 lib v4.23 Fix crash when log or error file didn't have the right permission.
 # 2022_08_26 lib v4.24 Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
-#@2022_08_26 lib v4.25 Correct a typo at line 718.
+# 2022_08_26 lib v4.25 Correct a typo at line 718.
 # --------------------------------------------------------------------------------------------------
 #
 
