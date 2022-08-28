@@ -33,8 +33,8 @@
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
 try:
     import os, sys, argparse, time, datetime, socket, platform      # Import Std Python3 Modules
-    import pymysql                                                  # Use MySQL DB
-#   import pdb                                                      # Python Debugger
+    import pymysql                                                  # Use for MySQL DB
+#   import pdb                                                      # Python Debugger (If needed)
 except ImportError as e:                                            # Trap Import Error
     print("Import Error : %s " % e)                                 # Print Import Error Message
     sys.exit(1)                                                     # Back to O/S With Error Code 1
@@ -44,49 +44,49 @@ except ImportError as e:                                            # Trap Impor
 
 
 # --------------------------------------------------------------------------------------------------
-# SADMIN CODE SECTION v2.2
+# SADMIN CODE SECTION v2.2a
 # Setup for Global Variables and load the SADMIN standard library.
-# To use SADMIN tools, this section MUST be present near the top of your code.    
+# To use SADMIN tools, this section MUST be present near the top of your Python code.    
 # --------------------------------------------------------------------------------------------------
 try:
-    SADM = os.environ.get('SADMIN')                                     # Get SADMIN Env. Var. Dir.
-    sys.path.insert(0, os.path.join(SADM, 'lib'))                       # Add lib dir to sys.path
-    import sadmlib2_std as sa                                           # Load SADMIN Python Library
-except ImportError as e:                                                # If Error importing SADMIN
-    print("Import error : SADMIN module: %s " % e)                      # Advise User of Error
-    sys.exit(1)                                                         # Go Back to O/S with Error
+    SADM = os.environ.get('SADMIN')                                  # Get SADMIN Env. Var. Dir.
+    sys.path.insert(0, os.path.join(SADM, 'lib'))                    # Add $SADMIN/lib to sys.path
+    import sadmlib2_std as sa                                        # Load SADMIN Python Library
+except ImportError as e:                                             # If Error importing SADMIN
+    print("Import error : SADMIN module: %s " % e)                   # Advise User of Error
+    sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "1.1"                                                     # Program version
+pver        = "1.1"                                                  # Program version no.
 pdesc       = "Update 'pdesc' variable & put a description of your script."
-phostname   = sa.get_hostname()                                         # Get current `hostname -s`
-pdb_conn    = None                                                      # Database connector
-pdb_cur     = None                                                      # Database cursor
-pdebug      = 0                                                         # Debug level from 0 to 9
-pexit_code  = 0                                                         # Script default exit code
+phostname   = sa.get_hostname()                                      # Get current `hostname -s`
+pdb_conn    = None                                                   # Database connector
+pdb_cur     = None                                                   # Database cursor
+pdebug      = 0                                                      # Debug level from 0 to 9
+pexit_code  = 0                                                      # Script default exit code
+
+# Uncomment anyone to change them to influence execution of SADMIN standard library.
+sa.proot_only        = True       # Pgm run by root only ?
+sa.psadm_server_only = True       # Run only on SADMIN server ?
+sa.db_used           = True       # Open/Use Database(True) or Don't Need DB(False)
+sa.use_rch           = True       # Generate entry in Result Code History (.rch)
+sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
+sa.log_append        = False      # Append Existing Log(True) or Create New One(False)
+sa.log_header        = True       # Show/Generate Header in script log (.log)
+sa.log_footer        = True       # Show/Generate Footer in script log (.log)
+sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
+sa.db_silent         = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
+sa.cmd_ssh_full      = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port) # SSH Cmd to access clients
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
-# Uncomment anyone to change them and influence execution of SADMIN standard library.
-#
-sa.proot_only        = True        # Pgm run by root only ?
-sa.psadm_server_only = True       # Run only on SADMIN server ?
-sa.db_used           = True        # Open/Use Database(True) or Don't Need DB(False)
-#sa.db_silent        = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
+# You can change them to fit your need
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
 #sa.pid_timeout      = 7200       # PID File Default Time to Live in seconds.
 #sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
 #sa.max_logline      = 500        # Max. lines to keep in log (0=No trim) after execution.
 #sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
-#sa.log_type         = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
-#sa.log_append       = False      # Append Existing Log(True) or Create New One(False)
-#sa.log_header       = True       # Show/Generate Header in script log (.log)
-#sa.log_footer       = True       # Show/Generate Footer in script log (.log)
-#sa.multiple_exec    = "Y"        # Allow running multiple copy at same time ?
-sa.use_rch           = True      # Generate entry in Result Code History (.rch)
 #sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
-sa.cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
-#
 # ==================================================================================================
 
 
@@ -94,8 +94,6 @@ sa.cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH
 
 # Scripts Global Variables
 # --------------------------------------------------------------------------------------------------
-pdb_conn                = ""                                                # Database Connector
-pdb_cur                 = ""                                                # Database Cursor
 
 
 
