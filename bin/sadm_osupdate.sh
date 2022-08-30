@@ -285,7 +285,7 @@ check_available_update()
                     sadm_writelog "Retrieving list of upgradable packages." 
                     sadm_writelog "Running 'apt list --upgradable'."
                     apt list --upgradable | tee -a  ${SADM_LOG}
-                    NB_UPD=`apt list --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l`
+                    NB_UPD=`apt list --upgradable 2>/dev/null | grep -iv 'Listing...' | wc -l`
                     if [ "$NB_UPD" -ne 0 ]
                         then sadm_writelog "There are ${NB_UPD} update available."
                              apt list --upgradable 2>/dev/null |grep -iv "listing"  >$SADM_TMP_FILE3 
@@ -572,7 +572,7 @@ function cmd_options()
                         printf "Automatic reboot cancelled for this server.\n"
                         printf "You will need to reboot system at your chosen time.\n\n"
                         WREBOOT="N"                                     # No Auto Reboot on SADM Srv
-                  else  printf "Reboot requested after successfull update.\n"  
+                  else  printf "\nReboot requested after a successful update.\n"  
                fi
                ;;
         esac                                                            # End of case
