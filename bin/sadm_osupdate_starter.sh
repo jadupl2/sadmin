@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_osupdate_starter.sh
-#   Synopsis :  Run the O/S update script on the selected remote system.
+#   Synopsis :  Update the Operating System on a selected remote system.
 #   Version  :  1.0
 #   Date     :  9 March 2015 
 #   Requires :  sh
@@ -271,16 +271,16 @@ rcmd_osupdate()
     fi                                                              # This reboot after Update
     
     # Check if System is Locked.
-    sadm_check_system_lock "$server_name"                              # Check lock file status
+    sadm_check_system_lock "$server_name"                           # Check lock file status
     if [ $? -ne 0 ]                                                 # If System is lock
        then sadm_write_err "System '${server_name}' is lock, update not possible at this time."
             return 1 
     fi
 
     # Create lock file while O/S Update is running (this turn off monitoring)
-    sadm_lock_system "${server_name}"                           # Stop monitoring server
-    if [ $? -ne 0 ]                                                 # If Creation went OK
-       then sadm_write_err "Update of '${server_name}' cancelled."  # Couldn't create lock file
+    sadm_lock_system "${server_name}"                               # Lock system while update o/s
+    if [ $? -ne 0 ]                                                 # If lock system failed
+       then sadm_write_err "Update of '${server_name}' cancelled."  # Couldn't Lock system
             return 1 
     fi
     
@@ -374,7 +374,7 @@ function cmd_options()
              exit 1                                                     # Exit To O/S
         else ONE_SERVER=$1                                              # Save Server Name to Update
     fi 
-    SADM_PDESC="O/S update on '$ONE_SERVER'"                            # Desc of running program
+    SADM_PDESC="Update operating system on system '$ONE_SERVER'"        # Desc of running program
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     rcmd_osupdate                                                       # Go Update Server
