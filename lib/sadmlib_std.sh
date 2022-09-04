@@ -107,7 +107,7 @@
 # 2020_02_25 Update: v3.28 Add 'export SADMIN=$INSTALLDIR' to /etc/environment, if not there.
 # 2020_03_15 Update: v3.29 Change the way script info (-v) is shown.
 # 2020_03_16 Update: v3.30 If not present, create Alert Group file (alert_group.cfg) from template.
-# 2020_04_01 Update: v3.31 Function sadm_writelog() with N/L depreciated, remplace by sadm_write().
+# 2020_04_01 Update: v3.31 Function sadm_writelog() with N/L depreciated, replace by sadm_write().
 # 2020_04_01 Update: v3.32 Function sadm_writelog() replaced by sadm_write in Library.
 # 2020_04_04 Update: v3.33 New Variable SADM_OK, SADM_WARNING, SADM_ERROR to Show Status in Color.
 # 2020_04_05 Update: v3.34 New Variable SADM_SUCCESS, SADM_FAILED to Show Status in Color.
