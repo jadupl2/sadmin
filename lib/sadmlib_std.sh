@@ -186,6 +186,7 @@
 # 2022_08_24 lib v4.07 Creation of $SADM_TMP_FILE1[1,2,3] done in SADMIN section & remove by stop().
 # 2022_08_25 lib v4.08 Change message of the system lock/unlock function.
 # 2022_08_26 lib v4.09 Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
+#@2022_09_04 lib v4.10 Replace 'sadm_writelog' by 'sadm_write_log' for standardization.
 #===================================================================================================
 
 
@@ -199,7 +200,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.09"                                              # This Library Version
+export SADM_LIB_VER="4.10"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -542,7 +543,7 @@ sadm_ask() {
 
 
 # Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE variable.
-# Use sadm_write (No LF at EOL) instead of sadm_writelog (With LF at EOL).
+# Use sadm_write (No LF at EOL) instead of sadm_write_log (With LF at EOL).
 # Replace '[ OK ]' By a Green '[ OK ]', add color to ERROR WARNING, FAILED, SUCCESS, and INFO.
 sadm_write() {
     SADM_SMSG="$@"                                                      # Screen Msg = Msg Received
@@ -595,8 +596,6 @@ sadm_writelog() {
         *)   printf "Wrong value in \$SADM_LOG_TYPE ($SADM_LOG_TYPE)\n" # Advise User if Incorrect
              ;;
     esac
-    #SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
-    #sadm_writelog "$@"                                          # Go write to script log
 }
 
 
@@ -2051,17 +2050,17 @@ sadm_start() {
 
     # Write Starting Info in the Log
     if [ ! -z "$SADM_LOG_HEADER" ] && [ "$SADM_LOG_HEADER" = "Y" ]      # Script Want Log Header
-        then sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
-             sadm_writelog "$(date +"%a %d %b %Y %T") - ${SADM_PN} v${SADM_VER} - Library v${SADM_LIB_VER}"
+        then sadm_write_log "${SADM_80_DASH}"                            # Write 80 Dashes Line
+             sadm_write_log "$(date +"%a %d %b %Y %T") - ${SADM_PN} v${SADM_VER} - Library v${SADM_LIB_VER}"
              if [ "$SADM_PDESC" ]                                       # If Script Desc. Not empty
-                then sadm_writelog "Desc: $SADM_PDESC"                  # Include it in log Header
+                then sadm_write_log "Desc: $SADM_PDESC"                  # Include it in log Header
              fi
-             sadm_writelog "Host: $(sadm_get_fqdn) - User: $SADM_USERNAME - Arch: $(arch) - SADMIN: $SADMIN"
+             sadm_write_log "Host: $(sadm_get_fqdn) - User: $SADM_USERNAME - Arch: $(arch) - SADMIN: $SADMIN"
              hline3="$(sadm_capitalize $(sadm_get_osname)) $(sadm_capitalize $(sadm_get_ostype))"
              hline3="${hline3} release $(sadm_get_osversion) - Kernel $(sadm_get_kernel_version)"
-             sadm_writelog "$hline3"
-             sadm_writelog "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
-             sadm_writelog " "                                          # White space line
+             sadm_write_log "$hline3"
+             sadm_write_log "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
+             sadm_write_log " "                                          # White space line
     fi
 
     # Check if this script to be run only by root user
@@ -2089,19 +2088,19 @@ sadm_start() {
        then pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Epoch time of PID File
             cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
-            sadm_writelog " "
+            sadm_write_log " "
             sadm_write "Script '$SADM_PN' is already running ...\n"     # Script already running
             sadm_write "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N').\n" 
             sadm_write "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid' exist, was created $pelapse seconds ago.\n"
             sadm_write "The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n"
-            sadm_writelog " "
+            sadm_write_log " "
             if [ ! -z "$SADM_PID_TIMEOUT" ] 
                 then sadm_write "Script can't run unless one of the following thing is done :\n"
                      sadm_write "  - Remove the PID File (\${SADMIN}/tmp/${SADM_INST}.pid).\n"
                      sadm_write "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script.\n"
                      sadm_write "  - You wait till PID timeout '\$SADM_PID_TIMEOUT' is reach.\n"
-                     sadm_writelog " "
-                     sadm_writelog " "
+                     sadm_write_log " "
+                     sadm_write_log " "
                      DELETE_PID="N"                                     # No Del PID Since running
                      #sadm_stop 1                                        # Close and Trim Log
                      exit 1                                             # Exit To O/S with Error
@@ -2109,8 +2108,8 @@ sadm_start() {
                         then sadm_write "The PID file exceeded the time to live ('\$SADM_PID_TIMEOUT').\n"
                              sadm_write "Assuming script was aborted abnormally.\n"
                              sadm_write "Script execution is now resume and the PID file recreated.\n"
-                             sadm_writelog " "
-                             sadm_writelog " "
+                             sadm_write_log " "
+                             sadm_write_log " "
                              touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
                              DELETE_PID="Y"                             # Del PID Since running
                         else DELETE_PID="N"                             # No Del PID Since running
@@ -2431,7 +2430,7 @@ sadm_stop() {
              RCHLINE="$RCHLINE $SADM_EXIT_CODE"                         # Format Part4 of RCH File
              if [ -w $SADM_RCHLOG ] 
                 then echo "$RCHLINE" >>$SADM_RCHLOG                     # Append to RCH File
-                else sadm_writelog "Permission denied to write to $SADM_RCHLOG"
+                else sadm_write_log "Permission denied to write to $SADM_RCHLOG"
              fi
              if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ] # If User want Log Footer
                 then if [ "$SADM_MAX_RCLINE" -ne 0 ]                    # User want to trim rch file
@@ -2581,8 +2580,8 @@ sadm_sendmail() {
     RC=0                                                                # Function Return Code
     #LIB_DEBUG=5                                                        # Debug Library Level
     if [ $# -le 3 ]                                                     # Invalid No. of Parameter
-        then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}."
-             sadm_writelog "Should be 3 or 4 we received $# : $* "      # Show what received
+        then sadm_write_log "Invalid number of argument received by function ${FUNCNAME}."
+             sadm_write_log "Should be 3 or 4 we received $# : $* "      # Show what received
              return 1                                                   # Return Error to caller
     fi
 
@@ -2672,13 +2671,13 @@ merge_alert_files() {
         fi 
         #
         nbfield=$(echo $aline | awk -F' ' '{print NF}')
-        #sadm_writelog "Selected : $aline we have $nbfield fields."
+        #sadm_write_log "Selected : $aline we have $nbfield fields."
         slchannel=$(echo $aline | awk -F' ' '{print $3}')
-        #sadm_writelog "Searching for $slchannel in $SADM_SLACK_FILE"
+        #sadm_write_log "Searching for $slchannel in $SADM_SLACK_FILE"
         grep -iq "^${slchannel} " $SADM_SLACK_FILE 
         if [ $? -ne 0 ] 
-            then sadm_writelog "Channel $slchannel in $SADM_ALERT_FILE isn't found in $SADM_SLACK_FILE"
-                 sadm_writelog "Cannot merge this entry, correct the situation please" 
+            then sadm_write_log "Channel $slchannel in $SADM_ALERT_FILE isn't found in $SADM_SLACK_FILE"
+                 sadm_write_log "Cannot merge this entry, correct the situation please" 
             else httphook=$(grep -i "^${slchannel} " $SADM_SLACK_FILE | awk '{print $2 }')
                  echo "$aline  $httphook"  >> $tmp_merge
         fi
@@ -2692,7 +2691,7 @@ merge_alert_files() {
              if [ -r "$SADM_SLACK_INIT" ] ; then rm -f "$SADM_SLACK_INIT" > /dev/null 2>&1 ; fi
              if [ -r "$tmp_merge" ]       ; then rm -f "$tmp_merge" > /dev/null 2>&1 ; fi
              if [ $(id -u) -eq 0 ]        ; then chmod 664 $SADM_ALERT_FILE ; fi
-             sadm_writelog "Slack config file ($SADM_SLACK_FILE) merged into alert group file ($SADM_ALERT_FILE)"
+             sadm_write_log "Slack config file ($SADM_SLACK_FILE) merged into alert group file ($SADM_ALERT_FILE)"
     fi 
     return
 }
@@ -2724,15 +2723,15 @@ sadm_lock_system()
         then sadm_write_log "System '${SNAME}' is already lock."
              echo "$SADM_INST - $(date +%Y%m%d%H%M%S)" > ${LOCK_FILE}   # Update TimeStamp & Content
              if [ $? -eq 0 ]                                            # no error while updating
-               then sadm_writelog "Lock file time stamp updated."       # Advise user
-               else sadm_writelog "[ ERROR ] Updating '${SNAME}' lock file '${LOCK_FILE}'" 
+               then sadm_write_log "Lock file time stamp updated."       # Advise user
+               else sadm_write_log "[ ERROR ] Updating '${SNAME}' lock file '${LOCK_FILE}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
              
         else echo "$SADM_INST - $(date +%Y%m%d%H%M%S)" > ${LOCK_FILE}   # Create Lock File 
              if [ $? -eq 0 ]                                            # Lock file created [ OK ]
-               then sadm_writelog "System '${SNAME}' is now lock."  
-               else sadm_writelog "[ ERROR ] while locking the system '${SNAME}'" 
+               then sadm_write_log "System '${SNAME}' is now lock."  
+               else sadm_write_log "[ ERROR ] while locking the system '${SNAME}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
     fi
@@ -2812,14 +2811,14 @@ sadm_check_system_lock() {
              lock_age=`echo "$current_epoch - $create_epoch" | $SADM_BC` # Age of lock in seconds
              sec_left=`expr $SADM_LOCK_TIMEOUT - $lock_age` 
              if [ $lock_age -ge $SADM_LOCK_TIMEOUT ]                     # Age of lock reach timeout?
-                then sadm_writelog "System is lock for more than $SADM_LOCK_TIMEOUT seconds."
-                     sadm_writelog "Unlocking ${SNAME} system."
-                     sadm_writelog "We now restart monitoring this system as usual."
+                then sadm_write_log "System is lock for more than $SADM_LOCK_TIMEOUT seconds."
+                     sadm_write_log "Unlocking ${SNAME} system."
+                     sadm_write_log "We now restart monitoring this system as usual."
                      sadm_unlock_system "$SNAME"
                      #rm -f $LOCK_FILE > /dev/null 2>&1
-                else #sadm_writelog "The system '${SNAME}' is currently lock."
-                     #sadm_writelog "System normal monitoring will resume in ${sec_left} seconds."
-                     #sadm_writelog "Maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
+                else #sadm_write_log "The system '${SNAME}' is currently lock."
+                     #sadm_write_log "System normal monitoring will resume in ${sec_left} seconds."
+                     #sadm_write_log "Maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
                      return 1                                           # System Lock Return 1
             fi 
     fi 

@@ -849,7 +849,7 @@ function display_data($con,$alert_file) {
 # Main Page Logic start here 
 #---------------------------------------------------------------------------------------------------
     $title1="Systems Monitor Status";                                   # Page Title
-    display_lib_heading("HOME","$title1","2022_09_05 21:21:23",$SVER);                    # Display Page Heading
+    display_lib_heading("HOME","$title1"," ",$SVER);                    # Display Page Heading
     create_alert_file();                                                # Cr. AlertFile from RPT/RCH
     display_data($con,$alert_file);                                     # Display SysMon Array
     
