@@ -77,6 +77,7 @@
 # 2021_05_14 backup v3.33 Now the log include the size of each day of backup.
 # 2022_08_14 backup v3.34 Error message written to log and also to error log.
 # 2022_08_17 backup v3.35 Include new SADMIN section 1.52
+#@2022_09_04 backup v3.36 False Error message was written to script error log.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -108,7 +109,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.35'                                     # Script version number
+export SADM_VER='3.36'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -549,16 +550,16 @@ create_backup()
 
     # End of Backup
     cd $CUR_PWD                                                         # Restore Previous Cur Dir.
-    sadm_writelog " "                                                   # Insert Blank Line
-    sadm_write "${SADM_TEN_DASH}\n"                                     # Line of 10 Dash in Log
-    sadm_writelog " "                                                   # Insert Blank Line
-    sadm_write_err "Total error(s) while creating backup: ${TOTAL_ERROR}.\n"
+    sadm_write_log " "                                                   # Insert Blank Line
+    sadm_write_log "${SADM_TEN_DASH}"                                    # Line of 10 Dash in Log
+    sadm_write_log " "                                                   # Insert Blank Line
+    sadm_write_log "Total error(s) while creating backup: ${TOTAL_ERROR}."
 
     # List Backup Directory
-    sadm_write "\n"
-    sadm_write "Content of today backup directory (${BACKUP_DIR}):\n"
+    sadm_write_log " "
+    sadm_write_log "Content of today backup directory (${BACKUP_DIR}):"
     ls -l ${BACKUP_DIR}
-    sadm_write "\n"
+    sadm_write_log " "
 
     return $TOTAL_ERROR                                                 # Return Total of Error
 }
