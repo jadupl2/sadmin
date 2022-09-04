@@ -32,23 +32,23 @@
 # 2019_03_09 Removed: v2.29 Remove DateTime Module (Not needed anymore)
 # 2019_03_20 nolog: v2.29 Mail message change
 # 2019_04_01 nolog: v2.30 Include color on status output.
-# 2019_04_17 Update: v2.31 Get SADMIN Root Directory from /etc/environment.
-# 2019_04_19 Update: v2.32 Produce customized Error Message, when running External Script.
-# 2019_05_13 Update: v2.33 Don't abort if can't create sysmon.lock file, happen during setup.
-# 2019_07_07 Update: v2.34 Update Filesystem Increase Message & verification.
-# 2019_07_25 Update: v2.35 Now using a tmp rpt file and real rpt is replace at the end of execution.
-# 2019_10_25 Update: v2.36 Don't check SNAP filesystem usage (snap filesystem always at 100%).
-# 2020_03_05 Fix: v2.37 Not getting 'SADMIN' variable content from /etc/environment (if export used).
-# 2020_03_28 Fix: v2.38 Fix problem when 'dmidecode' is not available on system.
-# 2020_07_27 Update: v2.39 Used space of CIFS Mounted filesystem are no longer monitored.
-# 2020_10_01 Update: v2.40 Write more elaborated email to user when restarting a service.
-# 2020_11_18 Update: v2.41 Fix: Fix problem with iostat on MacOS.
-# 2020_11_30 Update: v2.42 Fix: Fix problem reading SADMIN variable in /etc/environment.
-# 2021_06_12 mon: v2.43 Add Date & Time of last boot on last line of hostname.smon file.
-# 2021_07_03 mon: v2.44 Fix problem when trying to run custom script.
-# 2021_07_05 mon: v2.45 Added support to monitor 'http' and 'https' web site responsiveness.
-# 2021_07_06 mon: v2.46 Change error messages syntax to be more descriptive.
-# 2022_07_02 mon: v2.47 Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
+# 2019_04_17 sysmon v2.31 Get SADMIN Root Directory from /etc/environment.
+# 2019_04_19 sysmon v2.32 Produce customized Error Message, when running External Script.
+# 2019_05_13 sysmon v2.33 Don't abort if can't create sysmon.lock file, happen during setup.
+# 2019_07_07 sysmon v2.34 Update Filesystem Increase Message & verification.
+# 2019_07_25 sysmon v2.35 Now using a tmp rpt file and real rpt is replace at the end of execution.
+# 2019_10_25 sysmon v2.36 Don't check SNAP filesystem usage (snap filesystem always at 100%).
+# 2020_03_05 sysmon v2.37 Not getting 'SADMIN' variable content from /etc/environment (if export used).
+# 2020_03_28 sysmon v2.38 Fix problem when 'dmidecode' is not available on system.
+# 2020_07_27 sysmon v2.39 Used space of CIFS Mounted filesystem are no longer monitored.
+# 2020_10_01 sysmon v2.40 Write more elaborated email to user when restarting a service.
+# 2020_11_18 sysmon v2.41 Fix: Fix problem with iostat on MacOS.
+# 2020_11_30 sysmon v2.42 Fix: Fix problem reading SADMIN variable in /etc/environment.
+# 2021_06_12 sysmon v2.43 Add Date & Time of last boot on last line of hostname.smon file.
+# 2021_07_03 sysmon v2.44 Fix problem when trying to run custom script.
+# 2021_07_05 sysmon v2.45 Added support to monitor 'http' and 'https' web site responsiveness.
+# 2021_07_06 sysmon v2.46 Change error messages syntax to be more descriptive.
+# 2022_07_02 sysmon v2.47 Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
 #===================================================================================================
 #
 use English;

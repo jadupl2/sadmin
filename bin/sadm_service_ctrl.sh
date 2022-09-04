@@ -47,13 +47,13 @@
 # 2018_10_18    v2.2 Prevent Error Message don't display status after disabling the service
 # 2019_03_27 Fix: v2.3 Making sure InitV sadmin service script is executable.
 # 2019_03_28 Fix: v2.4 Was not executing shutdown script under RHEL/CentOS 4,5
-# 2019_03_29 Update: v2.5 Major Revamp - Re-Tested - SysV and SystemD
-# 2019_03_30 Update: v2.6 Added message when enabling/disabling sadmin service.
-# 2019_04_07 Update: v2.7 Use color variables from SADMIN Library.
-# 2019_12_27 Update: v2.8 Was exiting with error when using options '-h' or '-v'.
-# 2020_09_10 Update: v2.9 Minor code improvement.
-# 2021_05_23 Update: v2.10 Change switch from -d (disable) to -u (unset) and -s(status) to -l (List)
-# 2021_06_13 cmdline: v2.11 When using an invalid command line option, PID file wasn't removed.
+# 2019_03_29 cmdline v2.5 Major Revamp - Re-Tested - SysV and SystemD
+# 2019_03_30 cmdline v2.6 Added message when enabling/disabling sadmin service.
+# 2019_04_07 cmdline v2.7 Use color variables from SADMIN Library.
+# 2019_12_27 cmdline v2.8 Was exiting with error when using options '-h' or '-v'.
+# 2020_09_10 cmdline v2.9 Minor code improvement.
+# 2021_05_23 cmdline v2.10 Change switch from -d (disable) to -u (unset) and -s(status) to -l (List)
+# 2021_06_13 cmdline v2.11 When using an invalid command line option, PID file wasn't removed.
 #--------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
