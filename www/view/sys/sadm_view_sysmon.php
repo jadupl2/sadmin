@@ -23,28 +23,25 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-#   Version 2.0 - October 2017 
-#       - Replace PostGres Database with MySQL 
-#       - Web Interface changed for ease of maintenance and can concentrate on other things
-#   2018_02_12 JDuplessis
-#       v2.1 Added Some Debugging Information
-#   2018_05_06 JDuplessis
-#       2.2 Use Standard view file web page instead of custom vie log page
-# 2018_08_14 v2.3 Added Alert Group associated with event
-# 2018_09_30 v2.4 Enhance Performance, New Page Layout and Fix issue with rch new format.
-# 2019_06_07 Update: v2.5 Add Alarm type to page (Deal with new format).
-# 2019_08_04 Update: v2.6 Add Distribution Logo and modify status icons.
-# 2019_09_25 Update: v2.7 Page has become starting page and change page Title.
-# 2019_10_01 Update: v2.8 Page Added links to log, rch and script documentation.
-# 2019_10_15 Update: v2.9 Add Architecture, O/S Name, O/S Version to page
-# 2019_11_26 Fix: v2.10 Fix problem with temp files (Change from $SADMIN/tmp to $SADMIN/www/tmp)
-# 2019_11_27 Fix: v2.11 Fix 'open append failed', when no *.rpt exist or are all empty.
-# 2020_01_11 Update: v2.12 Remove Arch,Category and OS Version to make space on Line.
-# 2020_01_13 Fix: v2.13 Bug fix, displaying empty error line.
-# 2020_03_03 Update: v2.14 Server Description displayed when mouse over server name.
-# 2020_05_13 Update: v2.15 Customize message when nothing to report.
-# 2020_05_13 Update: v2.16 server name link was not displayed properly.
-# 2020_09_23 Update: v2.17 Add Home button in the page heading.
+# 2017_10_27 web v1.9 Replace PostGres Database with MySQL 
+# 2017_11_03 web v2.0 Changed for ease of maintenance and can concentrate on other things
+# 2018_02_12 web v2.1 Added Some Debugging Information
+# 2018_05_06 web v2.2 Use Standard view file web page instead of custom view log page
+# 2018_08_14 web v2.3 Added Alert Group associated with event
+# 2018_09_30 web v2.4 Enhance Performance, New Page Layout and Fix issue with rch new format.
+# 2019_06_07 web v2.5 Add Alarm type to page (Deal with new format).
+# 2019_08_04 web v2.6 Add Distribution Logo and modify status icons.
+# 2019_09_25 web v2.7 Page has become starting page and change page Title.
+# 2019_10_01 web v2.8 Page Added links to log, rch and script documentation.
+# 2019_10_15 web v2.9 Add Architecture, O/S Name, O/S Version to page
+# 2019_11_26 web v2.10 Fix problem with temp files (Change from $SADMIN/tmp to $SADMIN/www/tmp)
+# 2019_11_27 web v2.11 Fix 'open append failed', when no *.rpt exist or are all empty.
+# 2020_01_11 web v2.12 Remove Arch,Category and OS Version to make space on Line.
+# 2020_01_13 web v2.13 Bug fix, displaying empty error line.
+# 2020_03_03 web v2.14 Server Description displayed when mouse over server name.
+# 2020_05_13 web v2.15 Customize message when nothing to report.
+# 2020_05_13 web v2.16 server name link was not displayed properly.
+# 2020_09_23 web v2.17 Add Home button in the page heading.
 # 2021_07_24 web v2.18 Sysmon page - Each alert now show effective group name (not 'default').
 # 2021_08_06 web v2.19 Sysmon page - Alert type now show description and tooltip.
 # 2021_08_07 web v2.20 Sysmon page - Warning, Error, Info now have separate section.
@@ -60,6 +57,7 @@
 # 2022_05_26 nolog v2.30 Sysmon page - Fix intermittent problem creating tmp alert file.
 # 2022_05_26 web v2.31 Sysmon page - Rewrote some part of the code for new version of php
 # 2022_07_21 web v2.32 Sysmon page - Fix problem with recent scripts section
+#@2022_09_08 web v2.33 SysMon page - Add current date/time and look enhancement.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -96,7 +94,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.32" ;                                                       # Current version number
+$SVER  = "2.33" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -116,11 +114,12 @@ $alert_file = SADM_WWW_TMP_DIR . "/sysmon_alert_file_" . getmypid() ;   # File B
 
 
 
+
+
 # Create one output file ($alert_file) that contain scripts errors & system monitor alerts.
 # 1-Create alert file containing all *.rpt in $SADMIN/www/dat directories.
 # 2-Then add last line of all to the *.rch in $SADMIN/www/dat that Failed(Code 1) or Running(Code 2)
 #---------------------------------------------------------------------------------------------------
-#
 function create_alert_file() {
     global $DEBUG, $tmp_file1, $tmp_file2, $alert_file ;
     #$DEBUG = True;
@@ -166,7 +165,6 @@ function create_alert_file() {
         echo '</pre></code>';                                           # End of code display
     }
 
-
     # Open the alert file, ready to be put in converted RCH to RPT Format.
     if ( file_exists ($alert_file) and (filesize($alert_file) > 0) ) 
     {
@@ -181,7 +179,6 @@ function create_alert_file() {
             die("can't open in write mode file " . $alert_file );          
         }  
     }
-
 
     # Convert the global RCH file just created ($tmp_file2) to a RPT format kind of lines 
     # raspi2 2018.09.29 23:25:00 2018.09.29 23:25:17 00:00:17 sadm_client_housekeeping default 1 1
@@ -231,6 +228,7 @@ function create_alert_file() {
 
 
 
+
 # Display System Monitor Status Heading
 # Input Parameters : 
 #   1-  Heading type "E" for "Error", "W" for "Warning", "I" for "Info", "R" for ¨Running"
@@ -246,51 +244,43 @@ function sysmon_page_heading($HEAD_TYPE)
 
     # Display Section Heading and Prefix Section with Environment
     switch (strtoupper($HEAD_TYPE)) {
-        case 'E' :  echo "\n<br><H3><strong>Error Notification</strong></H3>\n" ;
+        case 'E' :  echo "\n<br><h3><strong>Error notification</strong></h3>\n" ;
                     $HCOLOR = "Red";
                     break;
-        case 'W' :  echo "\n<br><H3><strong>Warning Notification </strong></H3>\n" ;
+        case 'W' :  echo "\n<br><H3><strong>Warning notification </strong></H3>\n" ;
                     $HCOLOR = "Yellow";
                     break;
-        case 'R' :  echo "\n<br><H3><strong>Running Scripts</strong></H3>\n" ;
+        case 'R' :  echo "\n<br><H3><strong>Running script(s)</strong></H3>\n" ;
                     $HCOLOR = "Lime";
                     break;
-        case 'I' :  echo "\n<br><H3><strong>Information Notification</strong></H3>\n" ;
+        case 'I' :  echo "\n<br><H3><strong>Information notification</strong></H3>\n" ;
                     $HCOLOR = "SkyBlue";
                     break;
-        case 'X' :  echo "\n<br><H3><strong>Unknown Section</strong></H3>\n" ;
+        case 'X' :  echo "\n<br><H3><strong>Unknown section</strong></H3>\n" ;
                     $HCOLOR = "Lavender";
                     break;
     }
 
     # Display Section Heading in the proper color
-    echo "\n<table align=center border=0 cellspacing=0>";
-    #echo "\n<tr>";
-    #echo "\n<td colspan='1' bgcolor=$HCOLOR>&nbsp;&nbsp;</td>";
-    #echo "\n<td width=80  align='center'   bgcolor=$HCOLOR><b>System</b></td>";
-    #echo "\n<td colspan='3' bgcolor=$HCOLOR>&nbsp;&nbsp;</td>";
-    #echo "\n<td width=90  align='center' bgcolor=$HCOLOR><b>Event</td>";
-    #echo "\n<td width=90  align='center' bgcolor=$HCOLOR><b>Module</td>";
-    #echo "\n<td width=110 align='center' bgcolor=$HCOLOR><b>Alert</td>";
-    #echo "\n<td width=110 align='center' bgcolor=$HCOLOR><b>Alert Type</td>";
-    echo "\n</tr>";
-    echo "\n<tr>";
-    echo "\n<td width=90  align='center' bgcolor=$HCOLOR><b>Status</b></td>";
-    echo "\n<td width=80  align='center' bgcolor=$HCOLOR><b>Name</b></td>";
-    echo "\n<td width=35  align='left'   bgcolor=$HCOLOR><b>O/S</b></td>";
-    echo "\n<td width=30  align='center' bgcolor=$HCOLOR><b>Category</b></td>";
-    echo "\n<td width=270 align='left'   bgcolor=$HCOLOR><b>Alert Description</b></td>";
+    echo "\n<table width='90%'' align=center border=1 cellspacing=0 line-height=200%>";
+    echo "\n<tr style='background-color:$HCOLOR ; color:black ; line-height:200%'>\n";    
+    echo "\n<td width=85  align='center' bgcolor=$HCOLOR><b>Status</b></td>";
+    echo "\n<td width=75  align='center' bgcolor=$HCOLOR><b>System</b></td>";
+    echo "\n<td width=35  align='center' bgcolor=$HCOLOR><b>O/S</b></td>";
+    echo "\n<td width=30  align='center' bgcolor=$HCOLOR><b>Cat.</b></td>";
+    echo "\n<td width=270 align='center' bgcolor=$HCOLOR><b>Alert Description</b></td>";
     echo "\n<td width=90  align='center' bgcolor=$HCOLOR><b>Date/Time</td>";
-    echo "\n<td width=90  align='center' bgcolor=$HCOLOR><b>Name</td>";
-    echo "\n<td width=110 align='center' bgcolor=$HCOLOR><b>Group Name</td>";
-    echo "\n<td width=110 align='center' bgcolor=$HCOLOR><b>Description</td>";
+    echo "\n<td width=75  align='center' bgcolor=$HCOLOR><b>Module</td>";
+    echo "\n<td width=105 align='center' bgcolor=$HCOLOR><b>Alert Group Name</td>";
+    echo "\n<td width=100 align='center' bgcolor=$HCOLOR><b>Alert Type</td>";
     echo "\n</tr>\n";
 }
 
 
 
 
-# Function used to display one section at a time (Warning, Error, Running, Info, and Unknow)
+
+# Function used to display one section at a time (Warning, Error, Running, Info, and Unknown)
 # Input Parameters :
 #   1- String containing line to be displayed.
 #---------------------------------------------------------------------------------------------------
@@ -306,102 +296,104 @@ function display_line($line,$BGCOLOR,$con)
     echo "\n<tr>";                                                      # Start of line
     switch (strtoupper($wstatus)) {                                     # Depend on Uppercase Status
         case 'ERROR' :                                                  # If an Error Line
-            echo "\n<td  bgcolor=$BGCOLOR style='vertical-align:middle'><span data-toggle='tooltip' title='Error Reported'>";
+            echo "\n<td align='center' bgcolor=$BGCOLOR style='vertical-align:middle'><span data-toggle='tooltip' title='Error Reported'>";
             echo "<img src='/images/sadm_error.png' ";                  # Show error Icon
             echo "style='width:96px;height:40px;'></span></td>";        # Status Standard Image Size
             $alert_group=$errgrp;                                       # Set Event Alert Group
             break;
         case 'WARNING' :
-            echo "\n<td bgcolor=$BGCOLOR align='left'><span data-toggle='tooltip' title='Warning Reported'>";
-            echo "<img src='/images/sadm_warning.png' ";            # Show Warning Icon
-            echo "style='width:96px;height:40px;'></span></td>";    # Status Standard Image Size
-            $alert_group=$warngrp;                                  # Set Event Alert Group
+            echo "\n<td align='center' bgcolor=$BGCOLOR align='left'><span data-toggle='tooltip' title='Warning Reported'>";
+            echo "<img src='/images/sadm_warning.png' ";                # Show Warning Icon
+            echo "style='width:96px;height:40px;'></span></td>";        # Status Standard Image Size
+            $alert_group=$warngrp;                                      # Set Event Alert Group
             break;
-        case 'RUNNING' :                                            # Running Status = Script
-            echo "\n<td bgcolor=$BGCOLOR align='left'><span data-toggle='tooltip' title='Script currently running'>";
-            echo "<img src='/images/sadm_running.png' ";            # Show Running Icon
-            echo "style='width:96px;height:40px;'></span></td>";    # Status Standard Image Size
-            $alert_group=$errgrp;                                   # Script group 
+        case 'RUNNING' :                                                # Running Status = Script
+            echo "\n<td align='center' bgcolor=$BGCOLOR align='left'><span data-toggle='tooltip' title='Script currently running'>";
+            echo "<img src='/images/sadm_running.png' ";                # Show Running Icon
+            echo "style='width:96px;height:40px;'></span></td>";        # Status Standard Image Size
+            $alert_group=$errgrp;                                       # Script group 
             break;
-        case 'INFO' :                                               # Information from MOnitor
-            echo "\n<td bgcolor=$BGCOLOR align='left'><span data-toggle='tooltip' title='System Information'>";
-            echo "<img src='/images/sadm_info.png' ";               # Show Running Icon
-            echo "style='width:96px;height:40px;'></span></td>";    # Status Standard Image Size
-            $alert_group=$errgrp;                                   # Script group 
+        case 'INFO' :                                                   # Information from MOnitor
+            echo "\n<td align='center' bgcolor=$BGCOLOR align='left'><span data-toggle='tooltip' title='System Information'>";
+            echo "<img src='/images/sadm_info.png' ";                   # Show Running Icon
+            echo "style='width:96px;height:40px;'></span></td>";        # Status Standard Image Size
+            $alert_group=$errgrp;                                       # Script group 
             break;
         default:
             echo "\n<td bgcolor=$BGCOLOR align='left'><span data-toggle='tooltip' title='Unknown Status'>";
-            echo "<img src='/images/question_mark.jpg' ";           # Show Question Mark
+            echo "<img src='/images/question_mark.jpg' ";               # Show Question Mark
             echo "style='width:96px;height:40px;'></span> Unknown</td>";
-            $alert_group="default";                                 # Set Event Alert Group
+            $alert_group="default";                                     # Set Event Alert Group
             break;
     }
 
     # Get Server Description, O/S and O/S version.
-    $sql ="SELECT * FROM server where srv_name = '". $whost . "';"; # Construct select 
-    if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
-        $WDESC = "Server not in Database";                          # Server not found descr.
-        $WOS   = "Unknown";                                         # O/S name is unknown
-        $WVER  = "Unknown";                                         # O/S Version is unknown
-        $WCAT  = "Unknown";                                         # Server Category is unknown
+    $sql ="SELECT * FROM server where srv_name = '". $whost . "';";     # Construct select 
+    if ( ! $result=mysqli_query($con,$sql)) {                           # Execute SQL Select
+        $WDESC = "Server not in Database";                              # Server not found descr.
+        $WOS   = "Unknown";                                             # O/S name is unknown
+        $WVER  = "Unknown";                                             # O/S Version is unknown
+        $WCAT  = "Unknown";                                             # Server Category is unknown
     }else{
-        $row = mysqli_fetch_assoc($result);                         # Fetch server info
-        $WDESC = $row['srv_desc'];                                  # Save Server Description
-        $WOS   = $row['srv_osname'];                                # Save Server O/S Name
-        $WVER  = $row['srv_osversion'];                             # Save Server O/S Version
-        $WCAT  = $row['srv_cat'];                                   # Save Server Category
-        mysqli_free_result($result);                                # Free result set 
+        $row = mysqli_fetch_assoc($result);                             # Fetch server info
+        $WDESC = $row['srv_desc'];                                      # Save Server Description
+        $WOS   = $row['srv_osname'];                                    # Save Server O/S Name
+        $WVER  = $row['srv_osversion'];                                 # Save Server O/S Version
+        $WCAT  = $row['srv_cat'];                                       # Save Server Category
+        mysqli_free_result($result);                                    # Free result set 
     }
 
-    #-----Server Name -----
+    #----- System Name -----
     echo "\n<td  bgcolor=$BGCOLOR align='center'>";
     echo "<a href='" . $URL_HOST_INFO . "?sel=" . nl2br($whost) ;
     echo "' title='$WDESC at " . $row['srv_ip'] . "'>" ;
     echo nl2br($whost) . "</a></td>\n";
 
-    #----- Display Operating System Logo -----
-    $WOS   = sadm_clean_data($row['srv_osname']);                   # Set Server O/S Name
+    #----- Operating System Logo -----
+    $WOS   = sadm_clean_data($row['srv_osname']);                       # Set Server O/S Name
     list($ipath, $iurl, $ititle) = sadm_return_logo ($WOS) ;
-    echo "<td bgcolor=$BGCOLOR>";
-    echo "<a href='". $iurl . "' ";
-    echo "title='" . $ititle . "'>";
-    echo "<img src='" . $ipath . "' ";
-    echo "style='width:32px;height:32px;'>"; 
-    echo "</a></td>\n";
+    echo "<td align='center' bgcolor=$BGCOLOR>";
+    echo "<a href='". $iurl . "' title='" . $ititle . "'>";
+    echo "<img src='" . $ipath . "' style='width:32px;height:32px;'></a></td>\n";
 
-
-    #-----Server Category Name -----
-    echo "<td  bgcolor=$BGCOLOR align='center'>"  . $WCAT . "</td>\n";
+    #----- Category Name -----
+    echo "<td bgcolor=$BGCOLOR align='center'>"  . $WCAT . "</td>\n";
     
+    #----- Event Description -----
+    echo "<td bgcolor=$BGCOLOR>";                                       # Start of Cell
+    echo "&nbsp;\n" . $wdesc ;                                          # Desc. coming from rpt file
 
-    #----- Show Event Description -----
-    $wlog =  $whost . "_" . $wdesc . ".log";                        # Construct Script log Name
-    $log_name = SADM_WWW_DAT_DIR . "/" .$whost. "/log/" .trim($wlog); # Full Path to Script Log
-    $wrch =  $whost . "_" . $wdesc . ".rch";                        # Construct Script rch Name
-    $rch_name = SADM_WWW_DAT_DIR . "/" .$whost. "/rch/" .trim($wrch); # Full Path to Script rch  
-    echo "<td bgcolor=$BGCOLOR>";                                   # Start of Cell
-    echo $wdesc ;                                                   # Desc. coming from rpt file
+    # If it's a script and the usual log file exist, produce a link to view the log.
+    $wlog =  $whost . "_" . $wdesc . ".log";                            # Construct Script log Name
+    $log_name = SADM_WWW_DAT_DIR . "/" .$whost. "/log/" .trim($wlog);   # Full Path to Script Log
+    if (($wsubmod == "SCRIPT") and (file_exists($log_name))) {          # Is a script? Log exist?
+        echo "&nbsp;\n<a href='" . $URL_VIEW_FILE ;
+        echo "?filename=" . $log_name . "' title='View script log - " .$wlog. "'>[log]</a>";
+    }
 
-    # If a script produce link to log and history file if exist.
-    if ($wsubmod == "SCRIPT") {                                     # Module is a Script ?
-      if (file_exists($log_name)) {                                 # Log File Exist ?
-           echo str_repeat('&nbsp;', 2) . "\n<a href='" . $URL_VIEW_FILE . "?";
-           echo "filename=" . $log_name . "' title='View script log - ";
-           echo $wlog . "'>[log]</a>";                              # Create link to view log
-      }
-      if (file_exists($rch_name)) {                                 # History file RCH exist ?
-          echo str_repeat('&nbsp;', 2) . "\n<a href='" . $URL_VIEW_RCH . "?";
-          echo "host=" .$whost . "&filename=" . $wrch . "' title='View script history file - ";
-          echo $wrch . "'>[rch]</a>";                               # Create link to view rch
-      }
-    } 
+    # If it's a script and the error log file exist, produce a link to view the error log.
+    $welog =  $whost . "_" . $wdesc . "_e.log";                         # Construct Error log Name
+    $elog_name = SADM_WWW_DAT_DIR . "/" .$whost. "/log/" .trim($welog); # Full Path to Error Log
+    if (($wsubmod == "SCRIPT") and (file_exists($elog_name))) {         # Is a script? ErrLog exist?
+        echo "&nbsp;\n<a href='" . $URL_VIEW_FILE ;
+        echo "?filename=" . $elog_name . "' title='View script error log - " .$welog. "'>[elog]</a>";
+    }
 
-    # Produce Link to documentation if module exist in pgm2doc cfg file
+    # If it's a script and the rch file exist, produce a link to view the log.
+    $wrch =  $whost . "_" . $wdesc . ".rch";                            # Construct Script rch Name
+    $rch_name = SADM_WWW_DAT_DIR . "/" .$whost. "/rch/" .trim($wrch);   # Full Path to Script rch  
+    if (($wsubmod == "SCRIPT") and (file_exists($rch_name))) {          # Is a script? RCH exist?
+        echo "&nbsp;\n<a href='" . $URL_VIEW_RCH ;
+        echo "?host=" .$whost. "&filename=" .$wrch. "' title='View script history file - ";
+        echo $wrch . "'>[rch]</a>";                                   # Create link to view rch
+    }
+
+    # Produce Link to documentation (if script/module exist in $SADMIN/www/doc/pgm2doc.cfg file
     if ($wsubmod == "SCRIPT") {                                     # Module is a Script ?
         $doc_link = getdocurl("$wdesc") ;                           # Get Script Name Link
         if ( $doc_link != "" ) {                                    # We have a valid link ?
-            echo str_repeat('&nbsp;', 2) . "\n<a href='" . $URL_WEB . $doc_link ;
-            echo "' title='View script documentation'>[doc]</a>";
+            echo "&nbsp;\n<a href='" . $URL_WEB . $doc_link ;
+            echo "' title='View script documentation of '" . $wdesc . ">[doc]</a>";
         }
     }else{
         $doc_link = getdocurl("$wsubmod") ;                         # Get Module link to Doc
@@ -418,7 +410,7 @@ function display_line($line,$BGCOLOR,$con)
     # Event Module Name (All lowercase, except first character).
     echo "\n<td bgcolor=$BGCOLOR align='center'>" . ucwords(strtolower($wsubmod)) . "</td>";
 
-    # Show Event Alert Group
+    # Event Alert Group Name
     $pieces = explode("/", $alert_group);
     $str=preg_replace('/\s+/', '', $str);
     if ($DEBUG) { echo "pieces[0]=..$pieces[0].. pieces[1]=..$pieces[1].."; }               
@@ -483,16 +475,22 @@ function display_line($line,$BGCOLOR,$con)
 
 
 
-# Show the scripts execution history - Show last $SADM_MONITOR_HISTORY_SIZE scripts.
-# Define in sadmin.cfg
+# Show the scripts execution history - Show result line of last $SADM_MONITOR_HISTORY_SIZE scripts.
+# $SADM_MONITOR_HISTORY_SIZE is define in $SADMIN/cfg/sadmin.cfg
 #---------------------------------------------------------------------------------------------------
 function show_activity($con,$alert_file) {
     global $DEBUG, $tmp_file1, $tmp_file2, $URL_HOST_INFO, $URL_VIEW_RCH, $URL_WEB, $URL_VIEW_FILE ;
 
-    if ($DEBUG) { echo "<br>\nSADM_MONITOR_RECENT_COUNT " . SADM_MONITOR_RECENT_COUNT . "\n<br>" ; }
-    $wdate=date('Y.m.d');                                               # Get current Date
-    if ($DEBUG) { echo "\nCurrent date : " . $wdate . "\n "; }  
-    
+    $wdate=date('Y.m.d');
+    if ($DEBUG) { 
+        echo "<br>\nSADM_MONITOR_RECENT_COUNT " . SADM_MONITOR_RECENT_COUNT . "\n<br>" ; 
+        echo "<br>\nCurrent date : " . $wdate . "\n<br>"; 
+    }
+
+    # Header of the Section
+    $HEADS=" Most recent scripts execution" ;
+    echo "\n<br><br><h3><strong>". SADM_MONITOR_RECENT_COUNT . "${HEADS}</strong></h3>\n" ;
+
     # Get the last $SADM_MONITOR_RECENT_COUNT scripts than have ran.
     $CMD_PART1="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \;" ;
     $CMD_PART2=" | grep $wdate |sort -t' ' -k3,3r  >$tmp_file2";
@@ -509,33 +507,13 @@ function show_activity($con,$alert_file) {
         echo '</pre></code>';                                           # End of code display
     }
     
-    # Header of the Section
-    echo "\n<br><br><H3><strong>". SADM_MONITOR_RECENT_COUNT ;
-    echo " Most Recent Scripts Execution</strong></H3>\n" ;
-    echo "\n<table  align=center border=0 cellspacing=14>" ;
-
-    # Header Line 1
+    echo "\n<table  align=center border=0 width='95%'>" ;
     #$HCOLOR='#0e8420';
     $HCOLOR='#000000';
-    #echo "<tr style='background-color:$HCOLOR ; color:white ; padding:10px 10px 10px 10px;'>\n";
-    #echo "\n<td>&nbsp;&nbsp;</td>";
-    #echo "\n<td><b>System</td>";
-    #echo "\n<td>&nbsp;&nbsp;</td>";
-    #echo "\n<td>&nbsp;&nbsp;</td>";
-    #echo "\n<td>&nbsp;&nbsp;</td>";
-    #echo "\n<td>&nbsp;&nbsp;</td>";
-    #echo "\n<td>&nbsp;&nbsp;</td>";
-    #echo "\n<td>&nbsp;&nbsp;</td>";
-    #echo "\n<td>&nbsp;&nbsp;</td>";
-    #echo "</tr>\n";
-    ##echo "\n<td colspan='1' bgcolor=$HCOLOR>&nbsp;&nbsp;</td>";
-
-    # Header Line 2
-    #echo "<tr style='background-color:$HCOLOR ; color:white'>\n";
-    echo "<tr style='background-color:$HCOLOR ; color:white ; padding:0px 10px 0px 10px;'>\n";
-    echo "<td width=35 align='center'><b>No</td>\n";    
-    echo "<td widtd=90 align='left'><b>System</td>\n";
-    echo "<td align='left'><b>Script Name</td>\n";
+    echo "<tr style='background-color:$HCOLOR ; color:white ; line-height:200%'>\n";
+    echo "<td width=25 align='center'><b>No</td>\n";    
+    echo "<td widtd=90 align='center'><b>System</td>\n";
+    echo "<td align='center'><b>Script Name</td>\n";
     echo "<td align='center'><b>Start Date/Time</td>\n";
     echo "<td align='center'><b>End Date/Time</td>\n";
     echo "<td align='center'><b>Elapse</td>\n";
@@ -544,7 +522,6 @@ function show_activity($con,$alert_file) {
     echo "<td align='center'><b>Status</td>\n"; 
     #echo "<th class='text-center'>Log&nbsp;&&nbsp;History</th>\n";
     echo "</tr>\n";
-
 
     $lcount = 0;                                                        # Recent line counter
     $lines = file($tmp_file2);                                          # Load RCH Line into Array
@@ -555,10 +532,12 @@ function show_activity($con,$alert_file) {
         list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode) = explode(" ",$line);
 
         # Check if script is in the exclude list (sadmin.cfg), if yes then skip this entry
-        if ($DEBUG) { echo "\n<br>: <code><pre>SADM_MONITOR_RECENT_EXCLUDE = " .SADM_MONITOR_RECENT_EXCLUDE. '</pre></code>'; }
+        if ($DEBUG) { 
+            echo "\n<br><code><pre>"; 
+            echo "SADM_MONITOR_RECENT_EXCLUDE = " . SADM_MONITOR_RECENT_EXCLUDE ;
+            echo "</pre></code><br>\n"; 
+        }
         $script_exclude = explode(",",SADM_MONITOR_RECENT_EXCLUDE);
-        
-        #if ($DEBUG) { echo "\nprint ARRAY: \n" ; print_r ($script_exclude); }
         $sfound=False; 
         foreach ($script_exclude as $script) {
             #echo "\n\n<br>COMPARE ..$script.. with ..$cname..\n"; 
@@ -569,8 +548,7 @@ function show_activity($con,$alert_file) {
             }
             #else{echo "\nNOTFOUND\n" ; }
         }
-        #if ($DEBUG) { echo "\n<br>: <code><pre>found = " .$found. '</pre></code>'; }
-        if ($sfound) { continue ; }                                     # If script in exclude list
+        if ($sfound) { continue ; }                                     # In exclude list Skip it
 
         ++$lcount;                                                      # Increase Counter;
         if ( $lcount > SADM_MONITOR_RECENT_COUNT) { break ; }           # Reach Nb. Desired end loop
@@ -581,41 +559,60 @@ function show_activity($con,$alert_file) {
         $row = mysqli_fetch_assoc($result);                             # Get Column Row Array 
         if ($row) {$wdesc = $row['srv_desc']; } else { $wdesc = "Unknown";} #Get Srv Desc.
 
+        # Alternate color at each line.
         if ($lcount % 2 == 0) {                                         # If even lines count
-            echo "\n<tr style='background-color:#cccccc ; color:black'>\n";
+            echo "\n<tr style='background-color:#cccccc ; line-height:150% ; color:black'>\n";
         }else{
-            echo "\n<tr style='background-color:#ffffff ; color:black'>\n";
+            echo "\n<tr style='background-color:#ffffff ; line-height:150% ; color:black'>\n";
         }
     
         echo "\n<td align='center'>". $lcount . "</td>";                # Line counter
-        echo "\n<td align='left'><a href='" . $URL_HOST_INFO . "?sel=" . $cserver ;
+        
+        # Show server name with tooltip = Description of server.
+        echo "\n<td align='center'><a href='" . $URL_HOST_INFO . "?sel=" . $cserver ;
         echo "' data-toggle='tooltip' title='" . $wdesc . "'>" . $cserver . "</a></td>";
-        echo "\n<td class='dt-left'>" . $cname ;                        # Server Name Cell
-        # Link to log
+
+        # SHow name of the script
+        echo "\n<td align='left'> &nbsp;" . $cname ;                        # Server Name Cell
+        
+        # Show Link to log if it exist on disk.
         $LOGFILE = trim("${cserver}_${cname}.log");                     # Add .log to Script Name
         $log_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $LOGFILE ;
-        if (file_exists($log_name)) {
+        if (file_exists($log_name) and (filesize($log_name) != 0) ){
             echo "\n<a href='" . $URL_VIEW_FILE . "?filename=" . 
-            $log_name . "' data-toggle='tooltip' title='View script log file'>&nbsp; [log]</a>";
+            $log_name . "' data-toggle='tooltip' title='View script log file'>[log]</a>";
         }else{
-            echo "&nbsp;[No Log]";                                      # If No log exist for script
+            echo "&nbsp;";                                      # If No log exist for script
         }
+        
+        # Show Link to error log if it exist on disk.
+        $ELOGFILE = trim("${cserver}_${cname}_e.log");                   # Add _e.log to Script Name
+        $elog_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $ELOGFILE ;
+        if ((file_exists($elog_name)) and (filesize($elog_name) != 0))  {
+            echo "\n<a href='" . $URL_VIEW_FILE . "?filename=" ;
+            echo "$elog_name ' data-toggle='tooltip' title='View script errorlog file'>[elog]</a>";
+        }else{
+            echo "&nbsp;";                                              # If No log exist for script
+        }
+        
         # Link to rch
         $RCHFILE = trim("${cserver}_${cname}.rch");                     # Add .rch to Script Name
         $rch_name  = SADM_WWW_DAT_DIR . "/" . $cserver . "/rch/" . $RCHFILE ;
-        if (file_exists($rch_name)) {
-            echo "\n<a href='" . $URL_VIEW_RCH . "?host=". $cserver ."&filename=". $RCHFILE . 
-               "' data-toggle='tooltip' title='View History (rch) file'>&nbsp; [rch]</a>";
+        if ((file_exists($rch_name)) and (filesize($rch_name) != 0)) {
+            echo "\n<a href='" . $URL_VIEW_RCH . "?host=". $cserver ."&filename=". $RCHFILE ;
+            echo "' data-toggle='tooltip' title='View History (rch) file'>[rch]</a>";
         }else{
-            echo "&nbsp;[No RCH]";                                      # If no RCH Exist
+            echo "&nbsp;";                                      # If no RCH Exist
         }
+
         # Link to doc
         $doc_link = getdocurl("$cname") ;                               # Get Script Name Link
         if ( $doc_link != "" ) {                                        # We have a valid link ?
             echo "\n<a href='" . $URL_WEB . $doc_link ;
-            echo "' title='View script documentation'>&nbsp; [doc]</a>";
+            echo "' title='View script documentation'>[doc]</a>";
         }
         echo "</td>" ;
+
         # Display start date, start time
         echo "\n<td align='center'>" . $cdate1  . "&nbsp;" . $ctime1 . "</td>"; 
         # Display end date, end time and elapse script time
@@ -626,33 +623,31 @@ function show_activity($con,$alert_file) {
             echo "\n<td align='center'>" . $cdate2 . "&nbsp;" . $ctime2 . "</td>";  
             echo "\n<td align='center'>" . $celapsed . "</td>";  # Script Elapse Time
         }
-
-        list($calert, $alert_group_type, $stooltip) = get_alert_group_data ($calert) ;
         
         # Show Alert Group with Tooltip
+        list($calert, $alert_group_type, $stooltip) = get_alert_group_data ($calert) ;
         echo "\n<td align='center'>";
         echo "<span data-toggle='tooltip' title='" . $stooltip . "'>"; 
         echo $calert . "</span>(" . $alert_group_type . ")</td>"; 
-
 
         # Display the alert group type (0=none, 1=alert onerror, 2=alert on ok, 3=always)
         # Show Alert type Meaning
         switch ($ctype) {                                           # 0=No 1=Err 2=Success 3=All
             case 0 :                                                # 0=Don't send any Alert
                 $alert_type_msg="No alert(0)" ;                     # Mess to show on page
-                $etooltip="SADM_ALERT is to 0 in script " . $cname ;
+                $etooltip="SADM_ALERT is set to 0 in script " . $cname ;
                 break;
             case 1 :                                                # 1=Send Alert on Error
                 $alert_type_msg="Alert on error(1)" ;               # Mess to show on page
-                $etooltip="SADM_ALERT set to 1 in script " . $cname ;
+                $etooltip="SADM_ALERT is set to 1 in script " . $cname ;
                 break;
             case 2 :                                                # 2=Send Alert on Success
                 $alert_type_msg="Alert on success(2)" ;             # Mess to show on page
-                $etooltip="SADM_ALERT set to 2 in script " . $cname ;
+                $etooltip="SADM_ALERT is set to 2 in script " . $cname ;
                 break;
             case 3 :                                                # 3=Always Send Alert
                 $alert_type_msg="Always alert(3)" ;                 # Mess to show on page
-                $etooltip="SADM_ALERT set to 3 in script " . $cname ;
+                $etooltip="SADM_ALERT is set to 3 in script " . $cname ;
                 break;
             default:
                 $alert_type_msg="Unknown code($alert_type)" ;       # Invalid Alert Group Type
@@ -687,25 +682,25 @@ function show_activity($con,$alert_file) {
 }
 
 
-# Display notification section : Running(Green), Warning(Yellow), Error(Red) and Info(Blue) section.
+
+
+# Display <strong> section : Running(Green), Warning(Yellow), Error(Red) and Info(Blue) section.
 #---------------------------------------------------------------------------------------------------
 function display_alert_section($con,$alert_file) {
     global $DEBUG, $URL_HOST_INFO, $URL_VIEW_FILE, $URL_WEB, $URL_VIEW_RCH, $URL_DOC_DIR;
 
     if ($DEBUG) { echo "\nI am in display_alert_section\n\n"; }
-    # $DEBUG = False;
-    echo "\n<tbody style: font-family: 'Ubuntu', sans-serif;>\n";       # Start of Table Body
+    echo "\n<tbody style: font-family: 'Arial', 'Ubuntu', sans-serif;>\n";  
     $array_sysmon = file($alert_file);                                  # Put Alert file in Array
     natsort($array_sysmon);                                             # Sort Array 
     if ($DEBUG) { echo "\n1- FINAL ARRAY CONTENT\n<br>" ; var_dump ($array_sysmon); echo "\n<br>" ; }  
-    #echo "\nFINAL ARRAY CONTENT\n<br>" ; var_dump ($array_sysmon); echo "\n<br>" ; 
 
     # If nothing to report
     if (sizeof($array_sysmon) == 0) {                                   # Array Empty everything OK
         echo "<center><strong>For the moment, no error or warning to report</strong></center>" ;
         if (file_exists($alert_file)) { unlink($alert_file); }          # Delete Work Alert File
-        if (SADM_MONITOR_RECENT_COUNT != 0) {                           # History of script activity
-            show_activity($con,$alert_file);
+        if (SADM_MONITOR_RECENT_COUNT != 0) {                           # User want view last script
+            show_activity($con,$alert_file);                            # lastest script that ran
         }
         echo "\n</table>\n" ;
         echo "\n</tbody>\n";                                            # End of tbody
@@ -727,6 +722,7 @@ function display_alert_section($con,$alert_file) {
             echo "Length of line #{$line_num} is ". strlen($line) . ".<br>\n"; 
         }
         if (strlen($line) > 4095) { continue ; }                        # Empty Line Exceeding 4095
+
         # Running;holmes;2019.09.30;10:39;SADM;SCRIPT;sadm_fetch_clients;default/1;default/1 
         list($wstatus,$whost,$wdate,$wtime,$wmod,$wsubmod,$wdesc,$warngrp,$errgrp)=explode(";",$line);
         if (strtoupper($wstatus) == "ERROR") {
@@ -737,7 +733,7 @@ function display_alert_section($con,$alert_file) {
             display_line($line,$BGCOLOR,$con);
         }
     }
-    if ($eheading) { echo "\n</table>\n" ; }                     # If data Shown,End of Table
+    if ($eheading) { echo "\n</table>\n" ; }                        # If data Shown,End of Table
 
 
     # Loop through the array and process WARNING first 
@@ -823,7 +819,7 @@ function display_data($con,$alert_file) {
     if ($DEBUG) { echo "\nSize of array is " . sizeof($array_sysmon) . "\n<br>" ; }
     if (sizeof($array_sysmon) == 0) {                                   # Array Empty everything OK
         echo "<center><strong>At this moment, no error or warning to report</strong></center>" ;
-        if (file_exists($alert_file)) { unlink($alert_file); }         # Delete Work Alert File
+        if (file_exists($alert_file)) { unlink($alert_file); }          # Delete Work Alert File
         if (SADM_MONITOR_RECENT_COUNT != 0) {                           # History of script activity
             show_activity($con,$alert_file);
         }
@@ -849,7 +845,8 @@ function display_data($con,$alert_file) {
 # Main Page Logic start here 
 #---------------------------------------------------------------------------------------------------
     $title1="Systems Monitor Status";                                   # Page Title
-    display_lib_heading("HOME","$title1"," ",$SVER);                    # Display Page Heading
+    $title2 = date("Y-m-d h:i:s");
+    display_lib_heading("HOME","$title1","$title2",$SVER);              # Display Page Heading+Date
     create_alert_file();                                                # Cr. AlertFile from RPT/RCH
     display_data($con,$alert_file);                                     # Display SysMon Array
     
