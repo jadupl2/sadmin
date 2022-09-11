@@ -215,16 +215,18 @@ process_servers()
         fi 
 
         if [ $RC -ne 0 ]                                                # If SSH didn't worked
-           then if [ "$server_sporadic" = "1" ]                # If Error on Sporadic Host
-                   then sadm_write_err "${SADM_WARNING}  Can't SSH to ${fqdn_server} (Sporadic System).\n"
-                     continue
+           then if [ "$server_sporadic" = "1" ]                         # If Error on Sporadic Host
+                   then sadm_write_err "[ WARNING ]  Can't SSH to ${fqdn_server} (Sporadic System)."
+                        sadm_write_err "Continuing with next system"    # Not Error if Sporadic Srv. 
+                        continue
                 fi 
                 if [ "$server_monitor" = "0" ]                 # If Error & Monitor is OFF
-                   then sadm_write_err "${SADM_WARNING} Can't SSH to ${fqdn_server} (Monitoring is OFF).\n"
+                   then sadm_write_err "[ WARNING ] Can't SSH to ${fqdn_server} (Monitoring is OFF)."
+                        sadm_write_err "Continuing with next system"    # Not Error Monitoring Off
                         continue
                 fi 
                 if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_write "Return Code is $RC \n" ;fi 
-                sadm_write_err "$SADM_ERROR Can't SSH to ${fqdn_server} - Unable to process system.\n"
+                sadm_write_err "$SADM_ERROR Can't SSH to ${fqdn_server} - Unable to process system."
                 ERROR_COUNT=$(($ERROR_COUNT+1))
                 sadm_write_err "Error Count is now at $ERROR_COUNT \n"
                 continue
@@ -248,18 +250,18 @@ process_servers()
                  if [ "$RDIR" != "" ]                                   # No Remote Dir. Set
                     then sadm_writelog "SADMIN installed in ${RDIR} on ${server_name}."
                     else sadm_write_err "$SADM_WARNING Couldn't get /etc/environment."
-                         if [ "$server_sporadic" = "1" ]               # SSH don't work & Sporadic
-                            then sadm_writelog "${server_name} is a sporadic system."
-                            else ERROR_COUNT=$(($ERROR_COUNT+1))       # Add 1 to Error Count
+                         if [ "$server_sporadic" = "1" ]                # SSH don't work & Sporadic
+                            then sadm_write_log "${server_name} is a sporadic system."
+                            else ERROR_COUNT=$(($ERROR_COUNT+1))        # Add 1 to Error Count
                                  sadm_write_err "Error Count is now at $ERROR_COUNT"
                          fi
-                         sadm_writelog "Continuing with next system."   # Advise we are skipping srv
+                         sadm_write_err "Continuing with next system."  # Advise we are skipping srv
                          continue                                       # Go process next system
                  fi 
             else sadm_write_err "$SADM_ERROR Couldn't get /etc/environment on ${server_name}."
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Add 1 to Error Count
                  sadm_write_err "Error Count is now at $ERROR_COUNT "
-                 sadm_write_err "Continuing with next system."           # Advise we are skipping srv
+                 sadm_write_err "Continuing with next system."          # Advise we are skipping srv
                  continue                                               # Go process next system
         fi
     

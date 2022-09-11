@@ -429,14 +429,6 @@ function display_osschedule($con,$wrow,$mode) {
             }
         }
         
-        # CRONTAB SADMIN UPDATE ON LINUX
-        #if ($DEBUG) { sadm_alert ("POST[server_os] = " . $_POST['server_os'])  ;}
-        #if ($_POST['server_os'] == "linux") {
-        #    if (! $_POST['scr_update_auto']) { $MODE = "D"; }else{ $MODE = "U" ; }
-        #    update_crontab (SADM_UPDATE_SCRIPT . $_POST['server_key'],$MODE,$pmonth,$pdom,$pdow, 
-        #        $_POST['scr_update_hour'], $_POST['scr_update_minute']) ;
-        #}
-
         # Back to Server List Page
         echo "<script>location.replace('" . $_POST['BACKURL'] . "');</script>";  # Backup to Caller URL
         #$redirect="/crud/srv/sadm_server_menu.php?sel=" . $_POST['scr_name'];

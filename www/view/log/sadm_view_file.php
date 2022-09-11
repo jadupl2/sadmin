@@ -69,6 +69,7 @@ $SVER  = "1.5" ;                                                        # Curren
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
+
 # ==================================================================================================
 #                       D I S P L A Y    S E L E C T E D   F I L E
 # ==================================================================================================
@@ -115,13 +116,13 @@ function display_file ($WNAME)
     }else{
         $err_msg = "No parameter received - Please advise administrator";
         sadm_fatal_error($err_msg);                                     # Display Error & Go Back
-        exit ;
+        exit() ;
     }
 
     # Verify if the file exist, if not go back to previous page after advising user. ---------------
     if ($DEBUG)  { echo "<br>Name of the file is $FILE"; }              # In Debug display Full Name
     if (! file_exists($FILENAME))  {                                    # If Log does not exist
-        $msg = "The file " . $FILENAME . " doesn't exist.\n";          # Mess. to User
+        $msg = "The requested file doesn't exist !\n\n" .$FILENAME. "\n"; # Mess. to User
         sadm_fatal_error($msg);                                         # Display Error & Go Back
         exit();
     }

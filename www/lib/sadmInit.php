@@ -7,30 +7,29 @@
 #   Version  :  1.0 
 #   Date     :  14 August 2015
 #   Requires :  sh
-#   SCCS-Id. :  @(#) template.sh 1.0 2015/08/14
 # --------------------------------------------------------------------------------------------------
 # Change Log
-# 2017_12_31  V2.2 Define New Variable loaded from sadmin.cfg 
-# 2017_11_11  V2.1 Switching from PostGres to MySQL
-# 2018_01_10  V2.3 Correct Problem When SADMIN Env. Variable was not pointing to /sadmin  
-# 2018_01_25  V2.4 Add RRD Tools Variable 
-# 2018_03_13  V2.5 Get Root directory of SADMIN from /etc/environment
-# 2018_04_02  V2.6 Get SADMIN Environment Variable from /etc/profile.d/samin.sh now
-# 2018_04_04  V2.8 Message when error while reading sadmin.cfg and sadmin.sh
-# 2018_05_04  V2.9 User/Password for Database access moved from sadmin.cfg to .dbpass file
-# 2018_05_28  V3.0 Added Load Backup Parameters coming from sadmin.cfg now
-# 2018_06_10  V3.1 Change name of O/S Update script 
-# 2018_11_22  v3.2 Read SADMIN root directory from /etc/environment on all platform now.
-# 2019_01_11  Added: v3.3 Definitions of Backup List & Backup Exclude file.
-# 2019_02_11  Added: v3.4 Add $SADMIN/www to PHP Path
-# 2019_07_16  Update: Remove repeating error message when not connecting to Database.
-# 2019_08_16  Update: v3.5 Correct Typo for number of rear backup to keep
-# 2019_08_19 Update: v3.6 Added Global Var. SADM_REAR_EXCLUDE_INIT for Rear Initial Options file.
-# 2020_12_26 Update: v3.7 Added Global Var. SADM_WWW_ARC_DIR for Server archive when deleted.
-# 2021_08_02 nolog v3.8 Added 'SADM_PGM2DOC' for Doc to Links file definition.
-# 2021_08_17 nolog v3.9 Added "SADM_MONITOR_UPDATE_INTERVAL" 
-# 2021_09_15 nolog v3.10 Load new Var. SADM_MONITOR_RECENT_COUNT,SADM_MONITOR_RECENT_EXCLUDE
-# 2022_07_26 nolog v3.11 Set the TimeZone to America/Toronto
+# 2017_12_31 lib V2.2 Define New Variable loaded from sadmin.cfg 
+# 2017_11_11 lib V2.1 Switching from PostGres to MySQL
+# 2018_01_10 lib V2.3 Correct Problem When SADMIN Env. Variable was not pointing to /sadmin  
+# 2018_01_25 lib V2.4 Add RRD Tools Variable 
+# 2018_03_13 lib V2.5 Get Root directory of SADMIN from /etc/environment
+# 2018_04_02 lib V2.6 Get SADMIN Environment Variable from /etc/profile.d/samin.sh now
+# 2018_04_04 lib V2.8 Message when error while reading sadmin.cfg and sadmin.sh
+# 2018_05_04 lib V2.9 User/Password for Database access moved from sadmin.cfg to .dbpass file
+# 2018_05_28 lib V3.0 Added Load Backup Parameters coming from sadmin.cfg now
+# 2018_06_10 lib V3.1 Change name of O/S Update script 
+# 2018_11_22 lib v3.2 Read SADMIN root directory from /etc/environment on all platform now.
+# 2019_01_11 lib v3.3 Definitions of Backup List & Backup Exclude file.
+# 2019_02_11 lib v3.4 Add $SADMIN/www to PHP Path
+# 2019_07_16 lib Remove repeating error message when not connecting to Database.
+# 2019_08_16 lib v3.5 Correct Typo for number of rear backup to keep
+# 2019_08_19 lib v3.6 Added Global Var. SADM_REAR_EXCLUDE_INIT for Rear Initial Options file.
+# 2020_12_26 lib v3.7 Added Global Var. SADM_WWW_ARC_DIR for Server archive when deleted.
+# 2021_08_02 lib v3.8 Added 'SADM_PGM2DOC' for Doc to Links file definition.
+# 2021_08_17 lib v3.9 Added "SADM_MONITOR_UPDATE_INTERVAL" 
+# 2021_09_15 lib v3.10 Load new Var. SADM_MONITOR_RECENT_COUNT,SADM_MONITOR_RECENT_EXCLUDE
+# 2022_07_26 lib v3.11 Set the TimeZone to America/Toronto
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
@@ -128,8 +127,7 @@ define("SADM_WWW_TMP_FILE1"       , SADM_WWW_TMP_DIR . "www_tmpfile1_" . getmypi
 define("SADM_WWW_TMP_FILE2"       , SADM_WWW_TMP_DIR . "www_tmpfile2_" . getmypid() ); # SADM Temp File1
 define("SADM_WWW_TMP_FILE3"       , SADM_WWW_TMP_DIR . "www_tmpfile3_" . getmypid() ); # SADM Temp File1
 define("SADM_WWW_NETDEV"   , "netdev.txt");                             # File Network Interface lst
-#
-define("SADM_UPDATE_SCRIPT", "sadm_osupdate_farm.sh -s ");              # O/S Update Script Name
+
 
 
 # Check the Existence of SADMIN Environment file (sadmin.cfg)

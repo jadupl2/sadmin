@@ -113,8 +113,8 @@ function std_page_footer($wcon="") {
     echo "\n</div> <!-- End of sadmRightColumn   -->" ;                 # End of Left Content Page       
     echo "\n</div> <!-- End of sadmPageContents  -->" ;                 # End of Content Page
     echo "\n\n<div id='sadmFooter'>";
-    echo "\nCopyright &copy; 2015-2022 - www.sadmin.ca - Suggestions, Questions or Report a problem at ";
-    echo '<a href="mailto:support@sadmin.ca">support@sadmin.ca</a></small>';
+    echo "\nCopyright &copy; 2015-2022 - sadmin.ca - Suggestions, Questions or Report a problem at ";
+    echo '<a href="mailto:sadmlinux@gmail.com">sadmlinux@gmail.com</a></small>';
     echo "\n</div> <!-- End of Div sadmFooter -->";
 
     echo "\n\n</div> <!-- End of sadmWrapper       -->" ;                 # End of Real Full Page
@@ -159,7 +159,8 @@ function netinfo ($ip_address,$ip_nmask) {
 #   - The group type (M=Mail, S=SLack, T=Texto, C=Cellular)
 #   - The Tool tip (Used when mouse is over the link, indicate the members of the alert group)
 # ==================================================================================================
-function get_alert_group_data ($calert) {
+function get_alert_group_data ($calert) 
+{
 
     # If 'default' alert group is used, get the real effective alert group name.
     if ($calert == "default") {                                         # If Alert Group is default
@@ -503,10 +504,15 @@ function sadm_confirm($msg) {
 # ==================================================================================================
 function sadm_fatal_error($msg) {
     $message = preg_replace("/\r?\n/", "\\n", addslashes($msg));
-    echo "<a href='javascript:history.go(-1)'>Click to go back to previous page</a>";   
+    $URL_HOME   = '/index.php';                                         # Site Home Page URL
+    echo "\n<div style='float: left;'>";                                # Align Left Link Go Back
+    echo "<a href='" . $URL_HOME . "'>";                                # URL to Go Back Home Page
+    echo "<span data-toggle='tooltip' title='Back to Home page'>";      # Show Tooltip 
+    echo "<img src='/images/home.png' ";                                # Show Home Icon
+    echo "style='width:32px;height:32px;'></span></a>";                 # Size Icons 32x32
+    echo "</div>"; 
     echo "\n<script type=\"text/javascript\">";
     echo "\n alert(\"$message\");";
-    echo "\n windows.history.back()";
     echo "\n</script>\n";
 }
 
@@ -1112,9 +1118,9 @@ function getdocurl($RefString) {
       $wline = fgets($fh);                                              # Read Line By Line    
       if (strlen($wline) > 0) {                                         # Don't process empty Line
           if (startsWith($wline, '#'))   { continue; }                  # Skip comment line
-          list($keyname,$doc_link) = explode(",", $wline);          # SPlit Line Key & URL
-          $keyname = str_replace(' ', '', $keyname);            # Remove Spaces
-          if ($keyname == $RefString) {                             # Key we seach for ?
+          list($keyname,$doc_link) = explode(",", $wline);              # SPlit Line Key & URL
+          $keyname = str_replace(' ', '', $keyname);                    # Remove Spaces
+          if ($keyname == $RefString) {                                 # Key we seach for ?
             $RefURL = str_replace(' ', '', $doc_link);                  # Remove Spaces of URL 
             break ; 
           } 

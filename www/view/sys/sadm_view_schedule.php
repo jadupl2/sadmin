@@ -86,7 +86,7 @@ $URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View R
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_VIEW_SCHED= '/view/sys/sadm_view_schedule.php';                    # View O/S Update Schedule
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
-
+$UPDATE_SCRIPT = "sadm_osupdate.sh";                                    # O/S Update Script Name
 
 
 #===================================================================================================
@@ -96,8 +96,9 @@ function setup_table() {
 
     # Table creation
     #echo "<div id='SimpleTable'>"; 
-    #echo '<table id="sadmTable" class="display"  cell-border width="90%">';   
-    echo '<table id="sadmTable" class="display compact" width="90%">';   
+    #echo '<table id="sadmTable" class="display" line-height=200% cell-border width="90%">';   
+    echo '<table id="sadmTable" class="display compact stripe" width="90%">';   
+    #echo "\n<table width='90%'' align=center border=1 cellspacing=0 line-height=200%>";
     #echo '<table id="sadmTable" class="display compact"  class="cell-border compact stripe" width="90%">';   
 #row-border class="display compact" class="cell-border compact stripe">
 
@@ -206,7 +207,7 @@ function display_data($count, $row) {
             $row['srv_update_dow'], $row['srv_update_hour'], $row['srv_update_minute']);
         echo $UPD_DATE_TIME ;
     }else{
-        echo "Manual, no schedule";
+        echo "<B><I>Manual, no schedule</I></B>";
     }
     echo "</td>\n";  
 
@@ -217,26 +218,41 @@ function display_data($count, $row) {
         $row['srv_update_dow'], $row['srv_update_hour'], $row['srv_update_minute']);
         echo $STR_SCHEDULE ;
     }else{
-        echo "Manual, no schedule";
+        echo "<B><I>Manual, no schedule</I></B>";
     }
     echo "</td>\n";  
 
-    # Display link to view o/s update log and rch file
+    # Display link to view o/s update log file (If exist)
     echo "<td class='dt-center'>";
     $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate.log";
     if (file_exists($log_name)) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
-        echo " title='View Update Log'>[log]</a>&nbsp;&nbsp;&nbsp;";
+        echo " title='View Update Log'>[log]</a>&nbsp;";
     }else{
-        echo "N/A&nbsp;&nbsp;&nbsp;";
+        echo "&nbsp;";
     }
+
+    # Display link to view o/s update error log file (If exist)
+    #echo "<td class='dt-center'>";
+    $ELOGFILE = trim("${cserver}_${UPDATE_SCRIPT}_e.log");              # Add _e.log to Script Name
+    $elog_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $ELOGFILE ;
+
+    $elog_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate.log";
+    if (file_exists($elog_name)) {
+        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $elog_name . "'" ;
+        echo " title='View Error Log'>[elog]</a>&nbsp;";
+    }else{
+        echo "&nbsp;";
+    }
+
+    # Display link to view o/s update rch file (If exist)
     $rch_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/rch/" . $row['srv_name'] . "_sadm_osupdate.rch";
     $rch_www_name  = $row['srv_name'] . "_sadm_osupdate.rch";
     if (file_exists($rch_name)) {
         echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
         echo " title='View Update rch file'>[rch]</a>";
     }else{
-        echo "N/A";
+        echo "&nbsp;";
     }
     echo "</td>\n";  
 
@@ -244,7 +260,7 @@ function display_data($count, $row) {
     if ($row['srv_update_auto']   == True ) { 
         echo "<td class='dt-center'>Yes</td>\n"; 
     }else{ 
-        echo "<td class='dt-center'><B>Manual update</b></td>\n";
+        echo "<td class='dt-center'><B><I>Manual update</I></B></td>\n";
     }
 
     # Reboot after Update (Yes/No)

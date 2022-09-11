@@ -140,59 +140,59 @@ DASH_LINE=`printf %79s |tr " " "-"`             ; export DASH_LINE      # 79 min
 OSRELEASE="/etc/os-release"
 
 # Name of all Output Files
-HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"   ; export HPREFIX        # Output File Loc & Name
-HWD_FILE="${HPREFIX}_sysinfo.txt"               ; export HWD_FILE       # Hardware File Info
-PRTCONF_FILE="${HPREFIX}_prtconf.txt"           ; export PRTCONF_FILE   # prtconf output file
-DISKS_FILE="${HPREFIX}_diskinfo.txt"            ; export DISKS_FILE     # disk Inofrmation File
-LVM_FILE="${HPREFIX}_lvm.txt"                   ; export LVM_FILE       # lvm Information File
-NET_FILE="${HPREFIX}_network.txt"               ; export NET_FILE       # Network Information File
-SYSTEM_FILE="${HPREFIX}_system.txt"             ; export SYSTEM_FILE    # System Information File
-LSHW_FILE="${HPREFIX}_lshw.html"                ; export LSHW_FILE      # System Hardware in HTML 
+export HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"                    # Output File Loc & Name
+export HWD_FILE="${HPREFIX}_sysinfo.txt"                                # Hardware File Info
+export PRTCONF_FILE="${HPREFIX}_prtconf.txt"                            # prtconf output file
+export DISKS_FILE="${HPREFIX}_diskinfo.txt"                             # disk Inofrmation File
+export LVM_FILE="${HPREFIX}_lvm.txt"                                    # lvm Information File
+export NET_FILE="${HPREFIX}_network.txt"                                # Network Information File
+export SYSTEM_FILE="${HPREFIX}_system.txt"                              # System Information File
+export LSHW_FILE="${HPREFIX}_lshw.html"                                 # System Hardware in HTML 
 
 # Path to Command used in this Script
-LVS=""                                          ; export LVS            # LV Summary Cmd with Path
-LVSCAN=""                                       ; export LVSCAN         # LV Scan Cmd with Path
-LVDISPLAY=""                                    ; export LVDISPLAY      # LV Display Cmd with Path
-VGS=""                                          ; export VGS            # VG Summary Cmd with Path
-VGSCAN=""                                       ; export VGSCAN         # VG Scan Cmd with Path
-VGDISPLAY=""                                    ; export VGDISPLAY      # VG Display Cmd with Path
-PVS=""                                          ; export PVS            # Physical Vol Cmd with Path
-PVSCAN=""                                       ; export PVSCAN         # PV Scan Cmd with Path
-PVDISPLAY=""                                    ; export PVDISPLAY      # PV Display Cmd with Path
-NETSTAT=""                                      ; export NETSTAT        # netstat Cmd with Path
-IP=""                                           ; export IP             # ip Cmd with Path
-DF=""                                           ; export DF             # df Cmd with Path
-IFCONFIG=""                                     ; export IFCONFIG       # ifconfig Cmd with Path
-DMIDECODE=""                                    ; export DMIDECODE      # dmidecode Cmd with Path
-SADM_CPATH=""                                   ; export SADM_CPATH     # Tmp Var Store Cmd Path
-LSBLK=""                                        ; export LSBLK          # lsblk Cmd Path
-BLKID=""                                        ; export BLKID          # blkid Cmd Path
-HWINFO=""                                       ; export HWINFO         # hwinfo Cmd Path
-INXI=""                                         ; export INXI           # inxi Cmd Path
-LSVG=""                                         ; export LSVG           # Aix LSVG Command Path
-LSPV=""                                         ; export LSPV           # Aix LSPV Command Path
-PRTCONF=""                                      ; export PRTCONF        # Aix Print Config Cmd
-DISKUTIL=""                                     ; export DISKUTIL       # OSX Diskutil command
-NETWORKSETUP=""                                 ; export NETWORKSETUP   # OSX networksetup command
-HOSTINFO=""                                     ; export HOSTINFO       # OSX hostinfo command
-SWVERS=""                                       ; export SWVERS         # OSX sw_vers Command
-SYSTEMPROFILER=""                               ; export SYSTEMPROFILER # OSX system_profiler Cmd.
-IPCONFIG=""                                     ; export IPCONFIG       # OSX ipconfig Cmd.
-LSHW=""                                         ; export LSHW           # Linux List Hardware (lshw)
-NMCLI=""                                        ; export NMCLI          # Linux Network Manager CLI
-HOSTNAMECTL=""                                  ; export HOSTNAMECTL    # Linux HostNameCTL Command
-OSUPDATE_DATE=""                                ; export OSUPDATE_DATE  # Date of Last O/S Update
-OSUPDATE_STATUS=""                              ; export OSUPDATE_STATUS # Status (S,F,R) O/S Update
-MIITOOL=""                                      ; export MIITOOL        # mii-tool command location
-ETHTOOL=""                                      ; export ETHTOOL        # ethtool command location
-UNAME=""                                        ; export UNAME          # uname  command location
-UPTIME=""                                       ; export UPTIME         # uptime command location
-LAST=""                                         ; export LAST           # last command location
-LSATTR=""                                       ; export LSATTR         # lsattr command location
-SYSCTL=""                                       ; export SYSCTL         # sysctl command location
-SCUTIL=""                                       ; export SCUTIL         # MacOS to list DNS Param.
-LSSCSI=""                                       ; export LSSCSI         # List SCSI Device Info.
-LSPCI=""                                        ; export LSPCI          # List PCI Components
+export LVS=""                                                           # LV Summary Cmd with Path
+export LVSCAN=""                                                        # LV Scan Cmd with Path
+export LVDISPLAY=""                                                     # LV Display Cmd with Path
+export VGS=""                                                           # VG Summary Cmd with Path
+export VGSCAN=""                                                        # VG Scan Cmd with Path
+export VGDISPLAY=""                                                     # VG Display Cmd with Path
+export PVS=""                                                           # Physical Vol Cmd with Path
+export PVSCAN=""                                                        # PV Scan Cmd with Path
+export PVDISPLAY=""                                                     # PV Display Cmd with Path
+export NETSTAT=""                                                       # netstat Cmd with Path
+export IP=""                                                            # ip Cmd with Path
+export DF=""                                                            # df Cmd with Path
+export IFCONFIG=""                                                      # ifconfig Cmd with Path
+export DMIDECODE=""                                                     # dmidecode Cmd with Path
+export SADM_CPATH=""                                                    # Tmp Var Store Cmd Path
+export LSBLK=""                                                         # lsblk Cmd Path
+export BLKID=""                                                         # blkid Cmd Path
+export HWINFO=""                                                        # hwinfo Cmd Path
+export INXI=""                                                          # inxi Cmd Path
+export LSVG=""                                                          # Aix LSVG Command Path
+export LSPV=""                                                          # Aix LSPV Command Path
+export PRTCONF=""                                                       # Aix Print Config Cmd
+export DISKUTIL=""                                                      # OSX Diskutil command
+export NETWORKSETUP=""                                                  # OSX networksetup command
+export HOSTINFO=""                                                      # OSX hostinfo command
+export SWVERS=""                                                        # OSX sw_vers Command
+export SYSTEMPROFILER=""                                                # OSX system_profiler Cmd.
+export IPCONFIG=""                                                      # OSX ipconfig Cmd.
+export LSHW=""                                                          # Linux List Hardware (lshw)
+export NMCLI=""                                                         # Linux Network Manager CLI
+export HOSTNAMECTL=""                                                   # Linux HostNameCTL Command
+export OSUPDATE_DATE=""                                                 # Date of Last O/S Update
+export OSUPDATE_STATUS=""                                               # Status (S,F,R) O/S Update
+export MIITOOL=""                                                       # mii-tool command location
+export ETHTOOL=""                                                       # ethtool command location
+export UNAME=""                                                         # uname  command location
+export UPTIME=""                                                        # uptime command location
+export LAST=""                                                          # last command location
+export LSATTR=""                                                        # lsattr command location
+export SYSCTL=""                                                        # sysctl command location
+export SCUTIL=""                                                        # MacOS to list DNS Param.
+export LSSCSI=""                                                        # List SCSI Device Info.
+export LSPCI=""                                                         # List PCI Components
 
 
 # --------------------------------------------------------------------------------------------------
@@ -203,6 +203,7 @@ show_usage()
     printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
     printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
     printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
+    printf "\n   ${BOLD}${YELLOW}[-b]${NORMAL}\t\t\Output in HTML only (Default text)"
     printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
     printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
     printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
@@ -220,37 +221,31 @@ show_usage()
 command_available()
 {
     SADM_PKG=$1
-
-    # Check if only one parameter was received and if parameter is not empty
-    #-----------------------------------------------------------------------------------------------
     if [ $# -ne 1 ] || [ -z "$SADM_PKG" ]
-        then sadm_write "$SADM_ERROR : Invalid parameter received by command_available function\n"
-             sadm_write "        Parameter received = $* \n"
-             sadm_write "        Please correct error in the script.\n"
+        then sadm_write_err "[ ERROR ] Invalid parameter received by command_available function."
+             sadm_write_err " - Parameter received = $* "
+             sadm_write_err " - Please correct error in the script."
              return 1
     fi
 
 
     # Check if command can be located and set SADM_CPATH accordingly
-    #-----------------------------------------------------------------------------------------------
-    SADM_CPATH=`which $SADM_PKG > /dev/null 2>&1`
+    SADM_CPATH=`${SADM_WHICH} $SADM_PKG > /dev/null 2>&1`
     if [ $? -eq 0 ]
         then SADM_CPATH=`$SADM_WHICH $SADM_PKG`
         else SADM_CPATH=""
     fi
 
     # If SADM_DEBUG is activated then display Package Name and Full path to it
-    #-----------------------------------------------------------------------------------------------
     if [ $SADM_DEBUG -gt 0 ]
         then if [ ! -z $SADM_CPATH ]
                 then SADM_MSG=`printf "%-10s %-15s : %-30s" "[OK]" "$SADM_PKG" "$SADM_CPATH"`
                 else SADM_MSG=`printf "%-10s %-15s : %-30s" "[NA]" "$SADM_PKG" "Not Found"`
              fi
-             sadm_write "${SADM_MSG}\n"
+             sadm_write_log "${SADM_MSG}"
     fi
 
     # If Package was located return 0 else return 1
-    #-----------------------------------------------------------------------------------------------
     if [ -z "$SADM_CPATH" ] ; then return 1 ; else return 0 ; fi
 }
 
@@ -262,58 +257,66 @@ command_available()
 #
 pre_validation()
 {
-    sadm_write "Verifying command availability ...\n"
+    sadm_write_log "Verifying command availability ..."
 
     # The which command is needed to determine presence of command - Return Error if not found
     #-----------------------------------------------------------------------------------------------
-    if ! which which >/dev/null 2>&1
-        then sadm_write "The command 'which' isn't available - Install it and rerun this script.\n"
+    if [ "$SADM_WHICH" == "" ] 
+        then sadm_write_err "Command 'which' isn't available - Install it and rerun this script."
              return 1
     fi
 
-    # Check the availibility of some commands that will be used in this script
+    # Check the availability of some commands that will be used in this script
     # If command is found the uppercase command variable is set to full command path
     # If command isn't found the uppercase command variable is set nothing
     #-----------------------------------------------------------------------------------------------
-    if [ "$SADM_OS_TYPE"  = "AIX" ]
-        then    command_available "lspv"        ; LSPV=$SADM_CPATH      # Cmd Path or Blank !found
-                command_available "lsvg"        ; LSVG=$SADM_CPATH      # Cmd Path or Blank !found
-                command_available "lsattr"      ; LSATTR=$SADM_CPATH    # Cmd Path or Blank !found
-                command_available "prtconf"     ; PRTCONF=$SADM_CPATH   # Cmd Path or Blank !found
-        else    command_available "lvs"         ; LVS=$SADM_CPATH       # Cmd Path or Blank !found
-                command_available "lvscan"      ; LVSCAN=$SADM_CPATH    # Cmd Path or Blank !found
-                command_available "lvdisplay"   ; LVDISPLAY=$SADM_CPATH # Cmd Path or Blank !found
-                command_available "vgs"         ; VGS=$SADM_CPATH       # Cmd Path or Blank !found
-                command_available "vgscan"      ; VGSCAN=$SADM_CPATH    # Cmd Path or Blank !found
-                command_available "vgdisplay"   ; VGDISPLAY=$SADM_CPATH # Cmd Path or Blank !found
-                command_available "pvs"         ; PVS=$SADM_CPATH       # Cmd Path or Blank !found
-                command_available "pvscan"      ; PVSCAN=$SADM_CPATH    # Cmd Path or Blank !found
-                command_available "pvdisplay"   ; PVDISPLAY=$SADM_CPATH # Cmd Path or Blank !found
-                command_available "ip"          ; IP=$SADM_CPATH        # Cmd Path or Blank !found
-                command_available "dmidecode"   ; DMIDECODE=$SADM_CPATH # Cmd Path or Blank !found
-                command_available "lsblk"       ; LSBLK=$SADM_CPATH     # Cmd Path or Blank !found
-                command_available "blkid"       ; BLKID=$SADM_CPATH     # Cmd Path or Blank !found
-                command_available "hwinfo"      ; HWINFO=$SADM_CPATH    # Cmd Path or Blank !found
-                command_available "inxi"        ; INXI=$SADM_CPATH       # Cmd Path or Blank !found
-                command_available "diskutil"    ; DISKUTIL=$SADM_CPATH  # Cmd Path or Blank !found
-                command_available "networksetup" ; NETWORKSETUP=$SADM_CPATH  # NetworkSetup Cmd Path
-                command_available "hostinfo"    ; HOSTINFO=$SADM_CPATH  # HostInfo Cmd Path
-                command_available "sw_vers"     ; SWVERS=$SADM_CPATH    # sw_ver Cmd Path
-                command_available "system_profiler" ; SYSTEMPROFILER=$SADM_CPATH # Profiler Cmd Path
-                command_available "ipconfig"    ; IPCONFIG=$SADM_CPATH  # ipconfig Cmd Path
-                command_available "lshw"        ; LSHW=$SADM_CPATH      # lshw Cmd Path
-                command_available "nmcli"       ; NMCLI=$SADM_CPATH     # nmcli Cmd Path
-                command_available "hostnamectl" ; HOSTNAMECTL=$SADM_CPATH   # hostnamectl Cmd Path
-                command_available "mii-tool"    ; MIITOOL=$SADM_CPATH   # mii-tool Cmd Path
-                command_available "ethtool"     ; ETHTOOL=$SADM_CPATH   # ethtool Cmd Path
-                command_available "sysctl"      ; SYSCTL=$SADM_CPATH    # Cmd Path or Blank !found
-                command_available "scutil"      ; SCUTIL=$SADM_CPATH    # CmdPath="" if not found
-                command_available "lsscsi"      ; LSSCSI=$SADM_CPATH    # CmdPath="" if not found
-                command_available "rear"        ; REAR=$SADM_CPATH      # CmdPath="" if not found
-                command_available "lspci"       ; LSPCI=$SADM_CPATH     # CmdPath="" if not found
-    fi
 
-    # Aix, Linux and MacOS Common Commands
+    case "$SADM_OS_TYPE"  in
+        AIX)    command_available "lspv"        ; LSPV=$SADM_CPATH      
+                command_available "lsvg"        ; LSVG=$SADM_CPATH      
+                command_available "lsattr"      ; LSATTR=$SADM_CPATH    
+                command_available "prtconf"     ; PRTCONF=$SADM_CPATH   
+                ;;
+        DARWIN) command_available "sw_vers"     ; SWVERS=$SADM_CPATH    # sw_ver Cmd Path
+                command_available "system_profiler" ; SYSTEMPROFILER=$SADM_CPATH # Profiler Cmd Path
+                ;;
+        LINUX)  command_available "lvs"          ; LVS=$SADM_CPATH       # Cmd Path or Blank=!found
+                command_available "lvscan"       ; LVSCAN=$SADM_CPATH    # Cmd Path or Blank=!found
+                command_available "lvdisplay"    ; LVDISPLAY=$SADM_CPATH # Cmd Path or Blank=!found
+                command_available "vgs"          ; VGS=$SADM_CPATH       # Cmd Path or Blank=!found
+                command_available "vgscan"       ; VGSCAN=$SADM_CPATH    # Cmd Path or Blank=!found
+                command_available "vgdisplay"    ; VGDISPLAY=$SADM_CPATH # Cmd Path or Blank=!found
+                command_available "pvs"          ; PVS=$SADM_CPATH       # Cmd Path or Blank=!found
+                command_available "pvscan"       ; PVSCAN=$SADM_CPATH    # Cmd Path or Blank=!found
+                command_available "pvdisplay"    ; PVDISPLAY=$SADM_CPATH # Cmd Path or Blank=!found
+                command_available "ip"           ; IP=$SADM_CPATH        # Cmd Path or Blank=!found
+                command_available "dmidecode"    ; DMIDECODE=$SADM_CPATH # Cmd Path or Blank=!found
+                command_available "lsblk"        ; LSBLK=$SADM_CPATH     # Cmd Path or Blank=!found
+                command_available "blkid"        ; BLKID=$SADM_CPATH     # Cmd Path or Blank=!found
+                command_available "hwinfo"       ; HWINFO=$SADM_CPATH    # Cmd Path or Blank=!found
+                command_available "inxi"         ; INXI=$SADM_CPATH      # Cmd Path or Blank=!found
+                command_available "diskutil"     ; DISKUTIL=$SADM_CPATH  # Cmd Path or Blank=!found
+                command_available "networksetup" ; NETWORKSETUP=$SADM_CPATH  
+                command_available "hostinfo"     ; HOSTINFO=$SADM_CPATH  # HostInfo Cmd Path
+                command_available "ipconfig"     ; IPCONFIG=$SADM_CPATH  # ipconfig Cmd Path
+                command_available "lshw"         ; LSHW=$SADM_CPATH      # lshw Cmd Path
+                command_available "nmcli"        ; NMCLI=$SADM_CPATH     # nmcli Cmd Path
+                command_available "hostnamectl"  ; HOSTNAMECTL=$SADM_CPATH   
+                command_available "mii-tool"     ; MIITOOL=$SADM_CPATH   # mii-tool Cmd Path
+                command_available "ethtool"      ; ETHTOOL=$SADM_CPATH   # ethtool Cmd Path
+                command_available "sysctl"       ; SYSCTL=$SADM_CPATH    # CmdPath "" if not found
+                command_available "scutil"       ; SCUTIL=$SADM_CPATH    # CmdPath="" if not found
+                command_available "lsscsi"       ; LSSCSI=$SADM_CPATH    # CmdPath="" if not found
+                command_available "rear"         ; REAR=$SADM_CPATH      # CmdPath="" if not found
+                command_available "lspci"        ; LSPCI=$SADM_CPATH     # CmdPath="" if not found
+                ;;
+        *)      sadm_write_err "$SADM_OSTYPE is not supported yet."
+                sadm_write_err "Please reported to sadmlinux@gmail.com"
+                ;;
+    esac
+
+    # Commands that are available on all Unix systems.
+    command_available "ethtool"     ; ETHTOOL=$SADM_CPATH   # ethtool Cmd Path
     command_available "df"          ; DF=$SADM_CPATH                    # Cmd Path or Blank !found
     command_available "netstat"     ; NETSTAT=$SADM_CPATH               # Cmd Path or Blank !found
     command_available "ifconfig"    ; IFCONFIG=$SADM_CPATH              # Cmd Path or Blank !found
@@ -490,7 +493,7 @@ create_linux_config_files()
     sadm_write "Creating $DISKS_FILE ...\n"
 
     if [ "$INXI" != "" ]
-        then CMD="$INXI -d"
+        then CMD="$INXI -dc"
              execute_command "$CMD" "$DISKS_FILE" 
     fi
 

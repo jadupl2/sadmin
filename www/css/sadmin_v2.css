@@ -44,7 +44,11 @@ h2 {
 /* Heading 3 */
 h3 {
 	font-size       :   22px;
-	font-weight     :   normal;
+    font-family     :   Arial, sans-serif, Verdana,  Helvetica ;    
+    font-style      :   italic;
+    font-weight     :   bold;
+    color           :   #124f44;
+    /* color          : #ff0000 */
 	margin          :   6px 20px 10px 0px;
 }
 /* Horizontal Line */
@@ -123,7 +127,8 @@ td {
 }
 
 table thead td {
-    padding: 5px 0px;
+    /* padding: 5px 0px; */
+    padding: 0px 0px;
 
 }
 

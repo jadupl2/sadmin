@@ -711,7 +711,7 @@ validate_server_connectivity()
     # Can we resolve the hostname ?
     if ! host $FQDN_SNAME >/dev/null 2>&1                               # Name is resolvable ? 
            then SMSG="Can't process '$FQDN_SNAME', hostname can't be resolved."
-                sadm_write_err "${SADM_ERROR} ${SMSG}"                  # Advise user
+                sadm_write_err "[ ERROR ] ${SMSG}"                      # Advise user
                 return 1                                                # Return Error to Caller
     fi
     SNAME=$(echo "$FQDN_SNAME" | awk -F\. '{print $1}')                 # System Name without Domain
@@ -732,13 +732,13 @@ validate_server_connectivity()
 
     # SSH didn't work, but it's a sporadic system (Laptop or Tmp Server, don't report an error)
     if [ "$server_sporadic" = "1" ]                                     # If Error on Sporadic Host
-        then sadm_write_err "[ WARNING ] Can't SSH to ${FQDN_SNAME} (Sporadic System)."
+        then sadm_write_log "[ WARNING ] Can't SSH to ${FQDN_SNAME} (Sporadic System)."
              return 2                                                   # Return Skip Code to caller
     fi 
 
     # SSH didn't work, but monitoring for that system is off (don't report an error)
     if [ "$server_monitor" = "0" ]                                      # If Error & Monitor is OFF
-        then sadm_write_err "[ WARNING ] Can't SSH to ${FQDN_SNAME} (Monitoring is OFF)."
+        then sadm_write_log "[ WARNING ] Can't SSH to ${FQDN_SNAME} (Monitoring is OFF)."
              return 2                                                   # Return Skip Code to caller
     fi 
 

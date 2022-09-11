@@ -717,7 +717,7 @@ sadm_get_command_path() {
         then CMD_PATH=`${SADM_WHICH} ${SADM_CMD}`                       # Store Path in Cmd path
              echo "$CMD_PATH"                                           # echo the Command Path 
              return 0  
-        else if [ "${SADM_CMD}" == "lsb_release" ] && [ -f /usr/lib/dkms/lsb_release ]                     # Another one not in Path
+        else if [ "${SADM_CMD}" == "lsb_release" ] && [ -f /usr/lib/dkms/lsb_release ] # dkms rpm
                 then CMD_PATH="/usr/lib/dkms/lsb_release"
                      echo "$CMD_PATH"
                      return 0 

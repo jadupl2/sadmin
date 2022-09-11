@@ -26,17 +26,17 @@
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 #   2018_02_01 J.Duplessis
 #       V2.1 Correct Bug - Not showing last line of RCH when it was a running state (dot Date/Time)
-# 2018_07_21  v2.2 Make screen more compact
-# 2018_09_16  v2.3 Added Alert Group Display on Page
-# 2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
-# 2020_01_14 Update: v2.5 Add link to allow to view script log on the page.
-# 2020_01_19 Update: v2.6 Remove line counter and some other cosmetics changes.
-# 2020_01_21 Update: v2.7 Display rch date in date reverse order (Recent at the top)
-# 2020_04_05 Fix: v2.8 Fix link problem to show the script log.
-# 2020_04_17 Update: v2.9 Running script are now shown on the page.
-# 2021_08_06 nolog v2.10 Remove repetitive link to log.
+# 2018_07_21 web v2.2 Make screen more compact
+# 2018_09_16 web v2.3 Added Alert Group Display on Page
+# 2019_06_07 web v2.4 Add Alarm type to page (Deal with new format).
+# 2020_01_14 web v2.5 Add link to allow to view script log on the page.
+# 2020_01_19 web v2.6 Remove line counter and some other cosmetics changes.
+# 2020_01_21 web v2.7 Display rch date in date reverse order (Recent at the top)
+# 2020_04_05 web v2.8 Fix link problem to show the script log.
+# 2020_04_17 web v2.9 Running script are now shown on the page.
+# 2021_08_06 web v2.10 Remove repetitive link to log.
 # 2021_08_29 web v2.11 Result Code History viewer, show effective alert group instead of 'default.'
-# 2021_08_29 web v2.12 Result Code History viewer, show member(s) of alert group as tooltip. 
+#@2021_00_05 web v2.13 RCH file viewer; Make rch line more compact.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -67,7 +67,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.11" ;                                                       # Current version number
+$SVER  = "2.12" ;                                                       # Current version number
 $URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
 
 
@@ -76,18 +76,13 @@ $URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View F
 # ==================================================================================================
 function display_heading() {
     
-    # TABLE CREATION
-    echo "\n<div id='SimpleTable'>";                                      # Width Given to Table
+    echo "\n<div id='SimpleTable'>"; 
     echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='85%'>";
     
-    # PAGE TABLE HEADING 
     echo "\n<thead>";
     echo "\n<tr>" ;
-    #echo "\n<th>No.</th>";
-    echo "\n<th>Start Date</th>";
-    echo "\n<th>Start Time</th>";
-    echo "\n<th>End Date</th>";
-    echo "\n<th>End Time</th>";
+    echo "\n<th>Start Date & Time</th>";
+    echo "\n<th>End Date & Time</th>";
     echo "\n<th>Elapse Time</th>";
     echo "\n<th>Alert Group</th>";
     echo "\n<th>Alert Type</th>";
@@ -95,14 +90,10 @@ function display_heading() {
     echo "\n</tr>";
     echo "\n</thead>\n";
 
-    # PAGE TABLE FOOTER 
     echo "\n<tfoot>";
     echo "\n<tr>" ;
-    #echo "\n<th>No.</th>";
-    echo "\n<th>Start Date</th>";
-    echo "\n<th>Start Time</th>";
-    echo "\n<th>End Date</th>";
-    echo "\n<th>End Time</th>";
+    echo "\n<th>Start Date & Time</th>";
+    echo "\n<th>End Date & Time</th>";
     echo "\n<th>Elapse Time</th>";
     echo "\n<th>Alert Group</th>";
     echo "\n<th>Alert Type</th>";
@@ -112,14 +103,15 @@ function display_heading() {
 }
 
 
-// =================================================================================================
-//  D I S P L A Y    R C H   (WFILE)   F O R    T H E   S E L E C T E D   H O S T
-// Parameters received : 
-//      1- For the received host ($WHOST) 
-//      2- Host Description is also received (WDESC)
-//      3- The Sorted and Purge RCH File Name (WFILE) file to display 
-//      4- The RCH File Name (WNAME)
-// =================================================================================================
+
+# =================================================================================================
+#  D I S P L A Y    R C H   (WFILE)   F O R    T H E   S E L E C T E D   H O S T
+# Parameters received : 
+#      1- For the received host ($WHOST) 
+#      2- Host Description is also received (WDESC)
+#      3- The Sorted and Purge RCH File Name (WFILE) file to display 
+#      4- The RCH File Name (WNAME)
+# =================================================================================================
 function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
     global $URL_VIEW_FILE ;
     $count=0; $ddate = 0 ;                                              # Reset Counter & Var.
@@ -132,17 +124,12 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
             echo "\n<tr>";
             $BGCOLOR = "lavender";
             if ($count % 2 == 0) { $BGCOLOR="#FFF8C6" ; }else{ $BGCOLOR="#FAAFBE" ;}
-            #echo "\n<td class='dt-center'>" . $count   . "</td>";
-            echo "\n<td class='dt-center'>" . $cdate1  . "</td>";
-            echo "\n<td class='dt-center'>" . $ctime1  . "</td>";
-            echo "\n<td class='dt-center'>" . $cdate2  . "</td>";
-            echo "\n<td class='dt-center'>" . $ctime2  . "</td>";
+            echo "\n<td class='dt-center'>" . $cdate1 . "  ". $ctime1 . "</td>";
+            echo "\n<td class='dt-center'>" . $cdate2 . "  ". $ctime2 . "</td>";
             echo "\n<td class='dt-center'>" . $celapse . "</td>";
-
-
-            list($calert, $alert_group_type, $stooltip) = get_alert_group_data ($calert) ;
             
             # Show Alert Group with Tooltip
+            list($calert, $alert_group_type, $stooltip) = get_alert_group_data ($calert) ;
             echo "\n<td class='dt-center'>";
             echo "<span data-toggle='tooltip' title='" . $stooltip . "'>"; 
             echo $calert . "</span>(" . $alert_group_type . ")</td>";             
@@ -235,8 +222,7 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
  
  
 
-# ==================================================================================================
-#*                                      PROGRAM START HERE
+# PROGRAM START HERE
 # ==================================================================================================
 #
     # GET THE FIRST PARAMETER (HOSTNAME OF THE RCH FILE TO VIEW) & VALIDATE IT ---------------------
@@ -298,7 +284,7 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
     $rchline = system($cmd, $retval);
     if ($DEBUG) { echo "<br><pre>cmd=$cmd rchline=$rchline retval=$retval</pre>"; }
 
-    display_lib_heading("NotHome","[R]esult [C]ode [H]istory file viewer",$RCHFILE,$SVER);      
+    display_lib_heading("NotHome","[R]esult [C]ode [H]istory Viewer",$RCHFILE,$SVER);      
     display_heading();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
     display_rch_file ($HOSTNAME, $HOSTDESC, $csv_sorted, $RCV_FILENAME);# Go Display RCH File

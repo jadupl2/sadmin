@@ -37,6 +37,7 @@
 # 2021_08_27 web v2.9 Status of all Scripts - Fix link to log & History file (*.rch).
 # 2021_08_29 web v2.10 Status of all Scripts - Show effective alert group name instead of 'default'.
 # 2021_08_29 web v2.11 Status of all Scripts - Show member(s) of alert group as tooltip. 
+#@2022_09_05 web v2.12 Add [doc] links & [elog] link to view error log if it contains something.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -49,7 +50,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 <script>
     $(document).ready(function() {
         $('#sadmTable').DataTable( {
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "lengthMenu": [[ 50, 100, -1], [ 50, 100, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,
@@ -66,7 +67,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG              = False ;                                           # Debug Activated True/False
-$SVER               = "2.11" ;                                           # Current version number
+$SVER               = "2.12" ;                                           # Current version number
 $CREATE_BUTTON      = False ;                                           # Yes Display Create Button
 $URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
 $URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
@@ -86,7 +87,7 @@ function setup_table() {
     
     # TABLE CREATION
     echo "\n<div id='SimpleTable'>";                                      # Width Given to Table
-    echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='100%'>";
+    echo "\n<table id='sadmTable' border=1 class='display' cell-border compact row-border wrap width='100%'>";
     
     # PAGE TABLE HEADING 
     echo "\n<thead>\n";
@@ -94,7 +95,7 @@ function setup_table() {
     echo "<th class='dt-head-left'>System</th>\n";
     echo "<th class='dt-left'>Script Name</th>\n";
     echo "<th class='dt-center'>Start Date/Time</th>\n";
-    echo "<th class='dt-center'>End Date/Time</th>\n";
+    echo "<th class='dt-center'>End Time</th>\n";
     echo "<th class='dt-center'>Elapse</th>\n";
     echo "<th class='dt-head-center'>Alert Group</th>\n";
     echo "<th class='dt-head-center'>Alert Type</th>\n";
@@ -109,7 +110,7 @@ function setup_table() {
     echo "<th class='dt-head-left'>System</th>\n";
     echo "<th class='dt-left'>Script Name</th>\n";
     echo "<th class='dt-center'>Start Date/Time</th>\n";
-    echo "<th class='dt-center'>End Date/Time</th>\n";
+    echo "<th class='dt-center'>End Time</th>\n";
     echo "<th class='dt-center'>Elapse</th>\n";
     echo "<th class='dt-head-center'>Alert Group</th>\n";
     echo "<th class='dt-head-center'>Alert Type</th>\n";
@@ -159,30 +160,40 @@ function display_script_array($con,$wpage_type,$script_array) {
             # Display links to access the log file (If exist)
             $LOGFILE = trim("${cserver}_${cname}.log");                 # Add .log to Script Name
             $log_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $LOGFILE ;
-            if (file_exists($log_name)) {
+            if ((file_exists($log_name)) and (filesize($log_name) != 0))  {
                 echo "\n<a href='" . $URL_VIEW_FILE . "?filename=" . 
-                $log_name . "' data-toggle='tooltip' title='View script log file'>&nbsp; [log]</a>";
+                $log_name . "' data-toggle='tooltip' title='View script log file'>[log]</a>";
             }else{
-                echo "&nbsp;[No Log]";                                  # If No log exist for script
+                echo "&nbsp;";                                          # If No log exist for script
             }
  
+            # Show Link to error log if it exist on disk.
+            $ELOGFILE = trim("${cserver}_${cname}_e.log");              # Add _e.log to Script Name
+            $elog_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $ELOGFILE ;
+            if ((file_exists($elog_name)) and (filesize($elog_name) != 0))  {
+                echo "\n<a href='" . $URL_VIEW_FILE . "?filename=" ;
+                echo "$elog_name ' data-toggle='tooltip' title='View script error log file'>[elog]</a>";
+            }else{
+                echo "&nbsp;";                                          # If No log exist for script
+            }
+
             # Display links to access history (rch) file (If exist)
             $RCHFILE = trim("${cserver}_${cname}.rch");                 # Add .rch to Script Name
             $rch_name  = SADM_WWW_DAT_DIR . "/" . $cserver . "/rch/" . $RCHFILE ;
-            if (file_exists($rch_name)) {
-                echo "\n<a href='" . $URL_VIEW_RCH . "?host=". $cserver ."&filename=". $RCHFILE . 
-                   "' data-toggle='tooltip' title='View History (rch) file'>&nbsp; [rch]</a>";
+            if ((file_exists($rch_name)) and (filesize($rch_name) != 0))  {
+                 echo "\n<a href='" . $URL_VIEW_RCH . "?host=". $cserver ."&filename=". $RCHFILE . 
+                   "' data-toggle='tooltip' title='View History (rch) file'>[rch]</a>";
             }else{
-                echo "&nbsp;[No RCH]";                                  # If no RCH Exist
+                echo "&nbsp;";                                          # If no RCH Exist
             }
             
             # Display links to view script documentation (If exist)
             $doc_link = getdocurl("$cname") ;                           # Get Script Name Link
             if ( $doc_link != "" ) {                                    # We have a valid link ?
                 echo "\n<a href='" . $URL_WEB . $doc_link ;
-                echo "' title='View script documentation'>&nbsp; [doc]</a>";
+                echo "' title='View script documentation'>[doc]</a>";
             }
-            
+        
             echo "</td>" ;
 
 
@@ -236,7 +247,7 @@ function display_script_array($con,$wpage_type,$script_array) {
 
     
             # DISPLAY THE SCRIPT STATUS BASED ON RETURN CODE ---------------------------------------
-            echo "\n<td class='dt-left'><strong>";
+            echo "\n<td class='dt-center'><strong>";
             switch ($ccode) {
                 case 0:  
                     echo "<font color='black'>Success</font></strong></td>";
@@ -305,7 +316,7 @@ function display_script_array($con,$wpage_type,$script_array) {
 
     # VALIDATE THE PAGE TYPE RECEIVED - IF NOT SUPPORTED, BACK TO PREV PAGE ------------------------
     switch ($SELECTION) {
-        case 'all'      :   $HDESC="Status of all Scripts";             # View All Scripts
+        case 'all'      :   $HDESC="Status of all systems scripts";     # View All Scripts
                             break;                                       
         case 'failed'   :   $HDESC="List of script(s) that failed";     # View Only Failed Scripts
                             break;                                       

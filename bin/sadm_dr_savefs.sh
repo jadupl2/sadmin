@@ -246,7 +246,7 @@ check_lvm_version()
     fi 
 
     if [ "$CRPM" = "" ] && [ "$CDPKG" = "" ] 
-        then sadm_writelog "OS Not Supported yet ($(sadm_get_osname))"
+        then sadm_writelog "O/S Not Supported yet ($(sadm_get_osname))"
              sadm_writelog "Command 'rpm' and 'dpkg' not found" 
              return 1                                                   # Return Error to caller
     fi

@@ -423,7 +423,7 @@ create_backup()
                          sadm_write "${SADM_TEN_DASH}\n"                # Line of 10 Dash in Log
                          sadm_write "Backup file: ${backup_line}\n"     # Show Backup filename     
                          MESS="[$backup_line] doesn't exist on $SADM_HOSTNAME"
-                         sadm_writelog "${SADM_WARNING} ${MESS}"        # Advise User - Log Info
+                         sadm_write_log "[ WARNING ] ${MESS}"           # Advise User - Log Info
                          continue                                       # Go Read Nxt Line to backup
                     fi
         fi
