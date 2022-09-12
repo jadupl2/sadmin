@@ -58,6 +58,7 @@
 # 2022_05_26 web v2.31 Sysmon page - Rewrote some part of the code for new version of php
 # 2022_07_21 web v2.32 Sysmon page - Fix problem with recent scripts section
 #@2022_09_08 web v2.33 SysMon page - Add current date/time and look enhancement.
+#@2022_09_11 web v2.34 SysMon page - Modify to have a more pleasing look
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -94,7 +95,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.33" ;                                                       # Current version number
+$SVER  = "2.34" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -262,8 +263,8 @@ function sysmon_page_heading($HEAD_TYPE)
     }
 
     # Display Section Heading in the proper color
-    echo "\n<table width='90%'' align=center border=1 cellspacing=0 line-height=200%>";
-    echo "\n<tr style='background-color:$HCOLOR ; color:black ; line-height:200%'>\n";    
+    echo "\n<table width='100%'' align=center border=1 cellspacing=0 line-height=150%>";
+    echo "\n<tr style='background-color:$HCOLOR ; color:black ; line-height:150%'>\n";    
     echo "\n<td width=85  align='center' bgcolor=$HCOLOR><b>Status</b></td>";
     echo "\n<td width=75  align='center' bgcolor=$HCOLOR><b>System</b></td>";
     echo "\n<td width=35  align='center' bgcolor=$HCOLOR><b>O/S</b></td>";
@@ -366,7 +367,7 @@ function display_line($line,$BGCOLOR,$con)
     # If it's a script and the usual log file exist, produce a link to view the log.
     $wlog =  $whost . "_" . $wdesc . ".log";                            # Construct Script log Name
     $log_name = SADM_WWW_DAT_DIR . "/" .$whost. "/log/" .trim($wlog);   # Full Path to Script Log
-    if (($wsubmod == "SCRIPT") and (file_exists($log_name))) {          # Is a script? Log exist?
+    if (($wsubmod == "SCRIPT") and (file_exists($log_name)) and (filesize($log_name) != 0)) {
         echo "&nbsp;\n<a href='" . $URL_VIEW_FILE ;
         echo "?filename=" . $log_name . "' title='View script log - " .$wlog. "'>[log]</a>";
     }
@@ -374,7 +375,7 @@ function display_line($line,$BGCOLOR,$con)
     # If it's a script and the error log file exist, produce a link to view the error log.
     $welog =  $whost . "_" . $wdesc . "_e.log";                         # Construct Error log Name
     $elog_name = SADM_WWW_DAT_DIR . "/" .$whost. "/log/" .trim($welog); # Full Path to Error Log
-    if (($wsubmod == "SCRIPT") and (file_exists($elog_name))) {         # Is a script? ErrLog exist?
+    if ( ($wsubmod == "SCRIPT") and (file_exists($elog_name)) and (filesize($elog_name) != 0) ) {
         echo "&nbsp;\n<a href='" . $URL_VIEW_FILE ;
         echo "?filename=" . $elog_name . "' title='View script error log - " .$welog. "'>[elog]</a>";
     }
@@ -382,7 +383,7 @@ function display_line($line,$BGCOLOR,$con)
     # If it's a script and the rch file exist, produce a link to view the log.
     $wrch =  $whost . "_" . $wdesc . ".rch";                            # Construct Script rch Name
     $rch_name = SADM_WWW_DAT_DIR . "/" .$whost. "/rch/" .trim($wrch);   # Full Path to Script rch  
-    if (($wsubmod == "SCRIPT") and (file_exists($rch_name))) {          # Is a script? RCH exist?
+    if (($wsubmod == "SCRIPT") and (file_exists($rch_name)) and (filesize($rch_name) != 0)) {
         echo "&nbsp;\n<a href='" . $URL_VIEW_RCH ;
         echo "?host=" .$whost. "&filename=" .$wrch. "' title='View script history file - ";
         echo $wrch . "'>[rch]</a>";                                   # Create link to view rch
