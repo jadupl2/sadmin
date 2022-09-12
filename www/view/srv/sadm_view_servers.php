@@ -30,16 +30,17 @@
 #  Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
-#  2018_08_10   v2.1 Remove Alert field on page - Not yet ready for release
-# 2018_12_15   v2.2 Show Server memory, number of CPU and cpu Speed on home page.
-# 2019_01_06 Feature: v2.3 Add link to see Performance Graph of yesterday.
-# 2019_01_14 Feature: v2.4 See Server Model and Serial No. when mouse over server name.
-# 2019_08_04 Update: v2.5 Added O/S distribution logo instead of name on page
-# 2019_08_18 Update: v2.6 Change page heading and some text fields.
-# 2019_09_23 Update: v2.7 Add Distribution logo and Version for each servers.
-# 2019_10_13 Update: v2.8 Add System Architecture to page.
-# 2020_01_13 Update: v2.9 Minor Appearance page change (Nb.Cpu and page width).
-# 2020_12_29 Update: v2.10 Show Architecture un-capitalize.
+# 2018_08_10 web v2.1 Remove Alert field on page - Not yet ready for release
+# 2018_12_15 web v2.2 Show Server memory, number of CPU and cpu Speed on home page.
+# 2019_01_06 web v2.3 Add link to see Performance Graph of yesterday.
+# 2019_01_14 web v2.4 See Server Model and Serial No. when mouse over server name.
+# 2019_08_04 web v2.5 Added O/S distribution logo instead of name on page
+# 2019_08_18 web v2.6 Change page heading and some text fields.
+# 2019_09_23 web v2.7 Add Distribution logo and Version for each servers.
+# 2019_10_13 web v2.8 Add System Architecture to page.
+# 2020_01_13 web v2.9 Minor Appearance page change (Nb.Cpu and page width).
+#@2020_12_29 web v3.0 Main server page - Display the first 50 systems instead of 25.
+
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -52,7 +53,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 <script>
     $(document).ready(function() {
         $('#sadmTable').DataTable( {
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "lengthMenu": [[50, 100, -1], [50, 100, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,
@@ -68,7 +69,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG          = False ;                                               # Debug Activated True/False
-$WVER           = "2.10" ;                                              # Current version number
+$WVER           = "3.0" ;                                              # Current version number
 $URL_CREATE     = '/crud/srv/sadm_server_create.php';                   # Create Page URL
 $URL_UPDATE     = '/crud/srv/sadm_server_update.php';                   # Update Page URL
 $URL_DELETE     = '/crud/srv/sadm_server_delete.php';                   # Delete Page URL
@@ -100,7 +101,7 @@ function setup_table() {
     echo "\n<th class='dt-head-left'>Arch</th>";                        # Left Header Only
     echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
     echo "\n<th class='dt-head-center'>Version</th>";                   # Left Header Only
-    echo "\n<th class='dt-head-left'>Cat.</th>";                        # Left Align Cat
+    echo "\n<th class='dt-head-center'>Cat.</th>";                        # Left Align Cat
     echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
     echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
     echo "\n<th class='dt-head-center'>Status</th>";                    # Center Header & Body
@@ -118,7 +119,7 @@ function setup_table() {
     echo "\n<th class='dt-head-left'>Arch</th>";                        # Left Header Only
     echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
     echo "\n<th class='dt-head-center'>Version</th>";                   # Left Header Only
-    echo "\n<th class='dt-head-left'>Cat.</th>";                        # Left Align Cat
+    echo "\n<th class='dt-head-center'>Cat.</th>";                      # Category
     echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
     echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
     echo "\n<th class='dt-head-center'>Status</th>";                    # Center Header & Body
@@ -175,7 +176,7 @@ function display_data($count,$con,$row) {
     // echo "&value=" . $row['srv_osversion']  ."'>"  . $row['srv_osversion'] . "</a></td>";
 
     # Display Server Category
-    echo "\n<td class='dt-left'><a href='" . $URL_SERVER . "?selection=cat";
+    echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=cat";
     echo "&value=" . $row['srv_cat']  ."'>"  . $row['srv_cat'] . "</a></td>";
 
     # Display Server Memory
@@ -249,7 +250,7 @@ function display_data($count,$con,$row) {
     if ($DEBUG) { echo "<br>1st Parameter Received is " . $SELECTION; } # Under Debug Display Param.
     
 
-    # 2nd Paramaters is sometime used to specify the type of server received as 1st parameter.
+    # 2nd Parameters is sometime used to specify the type of server received as 1st parameter.
     # Example: http://sadmin/sadmin/sadm_view_servers.php?selection=os&value=centos
     #if (isset($_GET['value']) && !empty($_GET['value'])) {             # If Second Value Specified
     if (isset($_GET['value']))  {              # If Second Value Specified
@@ -342,7 +343,7 @@ function display_data($count,$con,$row) {
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
 
-    # LOOP THROUGH RETREIVED DATA AND DISPLAY EACH ROW
+    # LOOP THROUGH RETRIEVED DATA AND DISPLAY EACH ROW
     $count = 0 ;                                                        # Init server counter to 0
     while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
         display_data(++$count,$con,$row);                               # Display Row Data
