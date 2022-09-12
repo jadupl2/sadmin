@@ -21,15 +21,18 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 #
-# 2019_08_26 New: v1.0 Initial version of ReaR backup Status Page
-# 2019_08_26 New: v1.1 First Release of Rear Backup Status Page.
-# 2019_09_20 Update: v1.2 Show History (RCH) content using same uniform way.
-# 2019_10_15 Update: v1.3 Add Architecture, O/S Name, O/S Version to page
-# 2020_01_13 Update: v1.4 Change column disposition and show ReaR version no. of systems.
-# 2020_01_14 Update: v1.5 Don't show MacOS System on page (Not supported by ReaR).
-# 2020_03_05 Update: v1.6 When mouse over server name (Show more information).
-# 2020_07_29 Update: v1.7 Remove system description to allow more space on each line.
-# 2020_13_13 Update: v1.8 Add link in heading to view ReaR Daily Report.
+# 2019_08_26 web v1.0 Rear Backup Status page - Initial version of ReaR backup Status Page
+# 2019_08_26 web v1.1 Rear Backup Status page - First Release of Rear Backup Status Page.
+# 2019_09_20 web v1.2 Rear Backup Status page - Show History (RCH) content using same uniform way.
+# 2019_10_15 web v1.3 Rear Backup Status page - Add Architecture, O/S Name, O/S Version to page
+# 2020_01_13 web v1.4 Rear Backup Status page - Change column disposition and show ReaR version no. of systems.
+# 2020_01_14 web v1.5 Rear Backup Status page - Don't show MacOS System on page (Not supported by ReaR).
+# 2020_03_05 web v1.6 Rear Backup Status page - When mouse over server name (Show more information).
+# 2020_07_29 web v1.7 Rear Backup Status page - Remove system description to allow more space on each line.
+# 2020_13_13 web v1.8 Rear Backup Status page - Add link in heading to view ReaR Daily Report.
+#@2022_09_12 web v1.9 Rear Backup Status page - Show if schedule is activate or not on page.
+#@2022_09_12 web v2.0 Rear Backup Status page - Will show link to error log if it exist.
+#@2022_09_12 web v2.1 Rear Backup Status page - Display the first 50 systems instead of 25.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -43,7 +46,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 <script>
     $(document).ready(function() {
         $('#sadmTable').DataTable( {
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "lengthMenu": [[50, 100, -1], [50, 100, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,
@@ -58,7 +61,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "1.8" ;                                           # Current version number
+$WVER               = "2.1" ;                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -76,8 +79,10 @@ $URL_BACKUP_REPORT  = "/view/daily_backup_report.html";                 # Backup
 $URL_STORIX_REPORT  = "/view/daily_storix_report.html";                 # Storix Daily Report Page
 $URL_SCRIPTS_REPORT = "/view/daily_scripts_report.html";                # Scripts Daily Report Page
 $CREATE_BUTTON      = False ;                                           # Yes Display Create Button
-$BACKUP_RCH         = 'sadm_rear_backup.rch';                           # Rear BackupRCH Suffix name
-$BACKUP_LOG         = 'sadm_rear_backup.log';                           # Rear BackupLog Suffix name
+#
+$BACKUP_RCH         = 'sadm_rear_backup.rch';                           # Rear Backup RCH 
+$BACKUP_LOG         = 'sadm_rear_backup.log';                           # Rear Backup Log 
+$BACKUP_ELOG        = 'sadm_rear_backup_e.log';                         # Rear Backup Error LOG 
 
 
 #===================================================================================================
@@ -85,17 +90,15 @@ $BACKUP_LOG         = 'sadm_rear_backup.log';                           # Rear B
 #===================================================================================================
 function setup_table() {
 
-    # Table creation
     echo "<div id='SimpleTable'>"; 
     echo '<table id="sadmTable" class="display" row-border width="100%">';   
 
-    # Table Heading
     echo "<thead>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
-    #echo "<th class='dt-head-left'>Description</th>\n";
-    #echo "<th class='dt-head-left'>Arch</th>\n";
+    echo "<th class='dt-head-left'>Description</th>\n";
     echo "<th class='text-center'>O/S</th>\n";
+    echo "<th class='dt-head-center'>Schedule Active</th>\n";
     echo "<th class='text-center'>ReaR Ver.</th>\n";
     echo "<th class='text-center'>Last Execution</th>\n";
     echo "<th class='text-center'>Status</th>\n";
@@ -106,13 +109,12 @@ function setup_table() {
     echo "</tr>\n"; 
     echo "</thead>\n";
 
-    # Table Footer
     echo "<tfoot>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
-    #echo "<th class='dt-head-left'>Description</th>\n";
-    #echo "<th class='dt-head-left'>Arch</th>\n";
+    echo "<th class='dt-head-left'>Description</th>\n";
     echo "<th class='text-center'>O/S</th>\n";
+    echo "<th class='dt-head-center'>Schedule Active</th>\n";
     echo "<th class='text-center'>ReaR Ver.</th>\n";
     echo "<th class='text-center'>Last Execution</th>\n";
     echo "<th class='text-center'>Status</th>\n";
@@ -122,7 +124,6 @@ function setup_table() {
     echo "<th class='text-center'>Log / History</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
- 
     echo "<tbody>\n";
 }
 
@@ -133,12 +134,11 @@ function setup_table() {
 #===================================================================================================
 function display_data($count, $row) {
     global  $URL_HOST_INFO, $URL_VIEW_FILE, $URL_BACKUP, $URL_VIEW_RCH, 
-            $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG; 
+            $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG, $BACKUP_ELOG ;
     
-    # ReaR Not Supported on MacOS and Raspberry Pi
+    # ReaR Not Supported on MacOS and ARM system (Raspberry Pi)
     if (($row['srv_arch'] != "x86_64") and ($row['srv_arch'] != "i686")) { return ; } 
     if ($row['srv_ostype'] == "darwin") { return ; }
-
     
     # Server Name
     echo "<tr>\n";  
@@ -149,24 +149,23 @@ function display_data($count, $row) {
     echo $row['srv_name']  . "</a></td>\n";
 
     # Server Description
-    #echo "<td class='dt-body-left'>" . nl2br( $row['srv_desc']) . "</td>\n";  
-    
-    # Server Architecture  
-    #echo "<td class='dt-body-left'>" . ucfirst( $row['srv_arch']) . "</td>\n";  
-    
-    # Server O/S Name 
-    #echo "<td class='dt-body-center'>" . ucfirst( $row['srv_osname']) . "</td>\n";  
+    echo "<td class='dt-body-left'>" . nl2br( $row['srv_desc']) . "</td>\n";  
     
     # Display Operating System Logo
     $WOS   = sadm_clean_data($row['srv_osname']);
     sadm_show_logo($WOS);                                               # Show Distribution Logo
     
-    # Server O/S Version
-    #echo "<td class='dt-body-center'>" . nl2br( $row['srv_osversion']) . "</td>\n";  
+    # Schedule Active or not.
+    if ($row['srv_img_backup'] == TRUE ) {                              # If Schedule is activated
+        echo "\n<td class='dt-center'>";
+        echo "<a href='" .$URL_SERVER. "?selection=all_active'>Active</a></td>";
+    }else{                                                              # If not Activate
+        echo "\n<td class='dt-center'>";
+        echo "<a href='" .$URL_SERVER. "?selection=all_inactive'>Inactive</a></td>";
+    }
 
     # ReaR Server Version
     echo "<td class='dt-body-center'>" . nl2br( $row['srv_rear_ver']) . "</td>\n";  
-
 
     # Last Execution Rear Backup date & time
     echo "<td class='dt-center'>" ;
@@ -201,14 +200,12 @@ function display_data($count, $row) {
         }   
     }
 
-    
-    # Backup elapse time
+    # Backup execution time
     if (! file_exists($rch_file))  {                                    # If RCH File Not Found
         echo "\n<td class='dt-center'>&nbsp;</td>";
     }else{
         echo "<td class='dt-center'>" . nl2br($celapse) . "</td>\n";  
     }
-
 
     # Next Rear Backup Date
     echo "<td class='dt-center'>";
@@ -217,11 +214,9 @@ function display_data($count, $row) {
             $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
         echo $UPD_DATE_TIME ;
     }else{
-        echo "Not activated";
+        echo "Unknown";
     }
     echo "</td>\n";  
-
-
 
     # Rear Backup Occurrence
     echo "<td class='dt-center'>";
@@ -234,30 +229,33 @@ function display_data($count, $row) {
     }
     echo "</td>\n"; 
 
-
-
-
-
-    # Display link to view Rear Backup log and rch file
+    # Display link to view Rear Backup log
     echo "<td class='dt-center'>";
-    $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_" . $BACKUP_LOG;
+    $log_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_LOG;
     if (file_exists($log_name)) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
-        echo " title='View Backup Log'>[log]</a>&nbsp;&nbsp;&nbsp;";
+        echo " title='View Backup Log'>[log]</a>&nbsp;";
     }else{
-        echo " N/A ";
+        echo "[NoLog]&nbsp;";
     }
 
+    # Display link to view ReaR backup error log (If exist)
+    $elog_name = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_ELOG ;
+    if ((file_exists($elog_name)) and (file_exists($elog_name)) and (filesize($elog_name) != 0)) {
+        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $elog_name . "'" ;
+        echo " title='View ReaR error Log'>[elog]</a>&nbsp;";
+    }
+
+    # Display link to view Rear Backup rch file
     $rch_name = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/rch/" . $row['srv_name'] . "_" . $BACKUP_RCH;
     $rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
     if (file_exists($rch_name)) {
         echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
         echo " title='View Backup History (rch) file'>[rch]</a>";
     }else{
-        echo "N/A";
+        echo "&nbsp;[NoRCH]";
     }
-    echo "</td>\n";  
-    echo "</tr>\n"; 
+    echo "</td>\n</tr>\n"; 
 }
 
 
@@ -266,7 +264,7 @@ function display_data($count, $row) {
 # PHP MAIN START HERE
 # ==================================================================================================
 
-    # Get all active systenms from the SADMIN Database
+    # Get all active systems from the SADMIN Database
     $sql = "SELECT * FROM server where srv_active = True order by srv_name;";
     $result=mysqli_query($con,$sql) ;     
     $NUMROW = mysqli_num_rows($result);                                 # Get Nb of rows returned
@@ -281,7 +279,7 @@ function display_data($count, $row) {
     }
 
     # Show ReaR schedule page heading
-    $title1="ReaR Backup Schedule Status";                              # Page Title 1
+    $title1="ReaR Backup Status";                                       # Page Title 1
     $title2="";
     if (file_exists(SADM_WWW_DIR . "/view/daily_rear_report.html")) {
         $title2="<a href='" . $URL_REAR_REPORT . "'>View the ReaR Daily Report</a>"; 
@@ -297,7 +295,7 @@ function display_data($count, $row) {
     }
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
 
-    echo "<center>MacOS and Raspberry Pi aren't shown on this page because they are not supported by ReaR.</center>.";
+    echo "<center>MacOS and ARM systems aren't shown on this page because they are not supported by ReaR.</center>.";
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
