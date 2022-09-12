@@ -1,5 +1,4 @@
 <?php
-#
 # ==================================================================================================
 #   Author      :  Jacques Duplessis
 #   Title       :  sadm_view_schedule.php
@@ -22,22 +21,23 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # February 2017 - Jacques DUplessis
-# 2016_02_02    v1.0 Added options to edit server from that page, Added O/S Icons, Added VM or Phys
-# 2017_12_12    v2.0 Adapted for MySQL and various look enhancement
-# 2018_05_06    v2.1 Use Standard view file web page instead of custom vie log pageAdapted 
-#                    for MySQL and various look enhancement
-# 2018_06_06    v2.2 Correct problem with link to view the update log 
-# 2018_07_01    v2.3 Show Only Linux Server on this page (No Aix)
-# 2018_07_09    v2.4 Last Update time remove seconds & Change layout
-# 2018_07_09    v2.5 Change Layout of line (More Compact)
-# 2019_04_04 Update v2.6 Show Calculated Next O/S Update Date & update occurrence.
-# 2019_04_17 Update v2.7 Minor code cleanup and show "Manual, no schedule" when not in auto update.
-# 2019_05_04 Update v2.8 Added link to view rch file content for each server.
-# 2019_07_12 Update v2.9 Don't show MacOS and Aix status (Not applicable).
-# 2019_09_20 Update v2.10 Show History (RCH) content using same uniform way.
-# 2019_09_23 Update v2.11 When initiating Schedule change from here, return to this page when done.
-# 2019_12_29 Fix: v2.12 Bottom titles was different that the heading.
-# 2019_12_29 web v2.13 Heading modified and now on two rows.
+# 2016_02_02 web v1.0 View O/S Update Status - Added options to edit server from that page, 
+# 2017_12_12 web v2.0 View O/S Update Status - Adapted for MySQL and various look enhancement
+# 2018_05_06 web v2.1 View O/S Update Status - Use Standard view file web page instead of custom 
+# 2018_06_06 web v2.2 View O/S Update Status - Correct problem with link to view the update log 
+# 2018_07_01 web v2.3 View O/S Update Status - Show Only Linux Server on this page (No Aix)
+# 2018_07_09 web v2.4 View O/S Update Status - Last Update time remove seconds & Change layout
+# 2018_07_09 web v2.5 View O/S Update Status - Change Layout of line (More Compact)
+# 2019_04_04 web v2.6 View O/S Update Status - Show Calculated Next O/S Update Date & upd occurrence
+# 2019_04_17 web v2.7 View O/S Update Status - Minor code cleanup and show "Manual, no schedule" 
+# 2019_05_04 web v2.8 View O/S Update Status - Added link to view rch file content for each server.
+# 2019_07_12 web v2.9 View O/S Update Status - Don't show MacOS and Aix status (Not applicable).
+# 2019_09_20 web v2.10 View O/S Update Status - Show History (RCH) content using same uniform way.
+# 2019_09_23 web v2.11 View O/S Update Status - When initiating Schedule change from here, 
+# 2019_12_29 web v2.12 View O/S Update Status - Bottom titles was different that the heading.
+# 2019_12_29 web v2.13 View O/S Update Status - Heading modified and now on two rows.
+#@2022_09_12 web v2.14 View O/S Update Status - Will show link to error log if it exist.
+#@2022_09_12 web v2.15 View O/S Update Status - Display the first 50 systems instead of 25.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -51,7 +51,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 <script>
 $(document).ready(function() {
    $('#sadmTable').DataTable( {
-    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+    "lengthMenu": [[50, 100, -1], [50, 100, "All"]],
     "paging"    : true
    } );
 } );
@@ -73,7 +73,7 @@ $(document).ready(function() {
 #                                       Local Variables
 #===================================================================================================
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.13" ;                                               # Current version number
+$WVER          = "2.15" ;                                               # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
@@ -96,11 +96,7 @@ function setup_table() {
 
     # Table creation
     #echo "<div id='SimpleTable'>"; 
-    #echo '<table id="sadmTable" class="display" line-height=200% cell-border width="90%">';   
     echo '<table id="sadmTable" class="display compact stripe" width="90%">';   
-    #echo "\n<table width='90%'' align=center border=1 cellspacing=0 line-height=200%>";
-    #echo '<table id="sadmTable" class="display compact"  class="cell-border compact stripe" width="90%">';   
-#row-border class="display compact" class="cell-border compact stripe">
 
     # Table Heading
     echo "<thead>\n";
@@ -193,10 +189,10 @@ function display_data($count, $row) {
     # Last Update Status
     echo "<td class='dt-center'>";
     switch ( strtoupper($row['srv_update_status']) ) {
-        case 'S'  : echo "Success" ; break ;
-        case 'F'  : echo "Failed"  ; break ;
-        case 'R'  : echo "Running" ; break ;
-        default   : echo "Not Appl." ; break ;
+        case 'S'  : echo "Success"  ; break ;
+        case 'F'  : echo "Failed"   ; break ;
+        case 'R'  : echo "Running"  ; break ;
+        default   : echo "None yet" ; break ;
     }
     echo "</td>\n";  
 
@@ -236,9 +232,8 @@ function display_data($count, $row) {
     #echo "<td class='dt-center'>";
     $ELOGFILE = trim("${cserver}_${UPDATE_SCRIPT}_e.log");              # Add _e.log to Script Name
     $elog_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $ELOGFILE ;
-
-    $elog_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate.log";
-    if (file_exists($elog_name)) {
+#    $elog_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate_e.log";
+    if ((file_exists($elog_name)) and (file_exists($elog_name)) and (filesize($elog_name) != 0)) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $elog_name . "'" ;
         echo " title='View Error Log'>[elog]</a>&nbsp;";
     }else{
@@ -248,7 +243,7 @@ function display_data($count, $row) {
     # Display link to view o/s update rch file (If exist)
     $rch_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/rch/" . $row['srv_name'] . "_sadm_osupdate.rch";
     $rch_www_name  = $row['srv_name'] . "_sadm_osupdate.rch";
-    if (file_exists($rch_name)) {
+    if (file_exists($rch_name))  {
         echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
         echo " title='View Update rch file'>[rch]</a>";
     }else{
@@ -299,11 +294,11 @@ function display_data($count, $row) {
     switch ($SELECTION) {
         case 'all_servers'  : 
             $sql = "SELECT * FROM server where srv_active = True and srv_ostype = 'linux' order by srv_name;";
-            $TITLE = "O/S Update Schedule Status";
+            $TITLE = "O/S Update Status";
             break;
         case 'host'         : 
             $sql = "SELECT * FROM sadm.server where srv_name = '". $VALUE . "';";
-            $TITLE = "O/S Update Schedule for server " . ucwords($VALUE) . " Server";
+            $TITLE = "O/S Update Status for " . ucwords($VALUE) ;
             break;
         default             : 
             echo "<br>The sort order received (" . $SELECTION . ") is invalid<br>";
