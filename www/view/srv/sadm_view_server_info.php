@@ -39,6 +39,7 @@
 # 2020_07_12 web v2.14 System info page - Replace 'CRUD' button with 'Modify' directed to CRUD menu.
 # 2020_12_29 web v2.15 System info page - Date for starting & ending maintenance not show properly.
 # 2022_06_16 web v2.16 System info page - If O/S code name is empty, don't print empty parentheses.
+#@2022_09_12 web v2.17 System info page - Enhance buttons experience at the top of the page.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -82,7 +83,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.16" ;                                                       # Current version number
+$SVER  = "2.17" ;                                                       # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -537,7 +538,8 @@ function display_top_buttons ($wrow) {
     $wname = "/view/perf/sadm_server_perf.php?host=";                   # URL show Performance Graph
     $fname = SADM_WWW_DIR . "/rrd/" . $wrow['srv_name'] ."/". $wrow['srv_name'] . ".rrd";
     if (file_exists($fname)) {                                          # If rrd exist for server
-        $BUTTON_URL = "${wname}?filename=${fname} ";                    # Build URL to file
+        #BUTTON_URL = "${wname}?filename=${fname} ";                    # Build URL to file
+        $BUTTON_URL = "${wname}${wrow['srv_name']}";            #Build URL to file
         echo "\n<a href='" . $BUTTON_URL . "'>";                        # URL to See information
         echo "<span ' class='button' data-toggle='tooltip' title='View performance graph'>";  
         echo "<img src='/images/sadm_perf_1.png' ";                    # Show Info Icon
