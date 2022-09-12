@@ -569,7 +569,7 @@ function show_activity($con,$alert_file) {
     
         echo "\n<td align='center'>". $lcount . "</td>";                # Line counter
         
-        # Show server name with tooltip = Description of server.
+        # Show server name with tooltip (Server description)
         echo "\n<td align='center'><a href='" . $URL_HOST_INFO . "?sel=" . $cserver ;
         echo "' data-toggle='tooltip' title='" . $wdesc . "'>" . $cserver . "</a></td>";
 
