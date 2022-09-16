@@ -22,38 +22,13 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 #
-# Format on change log line : 
-# Field 1: 
-#   Date of change (YYY_MM_DD) prefix by '@' when you are adding change log line.
-#   - The '@' identify changes to be include in next release (To Create Change log).
-#   - The '@' will be removed automatically when new version is release.
-# Field 2: 
-#   | Section   | Description                           | 
-#   |:---       | :---                                  |
-#   | web       | Web Interface modification            | 
-#   | install   | Install,Uninstall & Update changes    | 
-#   | cmdline   | Command line tools changes            | 
-#   | lib       | Library,Templates,Libr demo           | 
-#   | mon       | System Monitor related                | 
-#   | backup    | Backup related modification or fixes  | 
-#   | config    | Config files modification             | 
-#   | server    | Server related modification or fixes  | 
-#   | client    | Server related modifications          | 
-#   | osupdate  | O/S Update modification or fixes      |  
-#
-# Field 3: Version number '999.999' (Max 7 Char., No spaces)
-# Field 4: Description of change (Up to 70 Characters)
-#
-# YYYY_MM_DD Type    vxx.xx 123456789*123456789*123456789*123456789*123456789*123456789*123456789*--
-#---------------------------------------------------------------------------------------------------
-# CHANGE LOG
+# ---CHANGE LOG---
 # 2021_07_01 lib v1.0  Initial Beta Version
 # 2021_09_25 lib v4.0 Added 'SADM_PDESC' that contain description of Script (Used in -v option).
 # 2022_05_25 lib v4.1 Added 'SADM_ROOT_ONLY' and 'SADM_SERVER_ONLY' checked before running script.
 # 2022_08_24 lib v4.2 Change the way temporary files are created ('mktemp').
 #@2022_09_07 lib v4.3 Make use of sadm_write_log() instead of sadm_write().
 #---------------------------------------------------------------------------------------------------
-#
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
      
