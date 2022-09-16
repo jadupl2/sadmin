@@ -35,6 +35,8 @@
 #@2021_05_13 Update: v3.14 Check if ntpdate is present before syncing time.
 #@2021_06_11 Update: v3.15 When syncing time with atomic clock redirect output to script log.
 #@2021_11_08 Update: v3.16 When system start, delete everything in $SADMIN/tmp.
+#@2022_07_24 startup/shutdown v3.17 Update SADMIN section to 1.51 and no-ip Client for Dynamic IP
+#@2022_09_15 startup/shutdown v3.18 When error feed error log and fix 'nmon' wasn't starting.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 
@@ -43,19 +45,17 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.50
+# SADMIN CODE SECTION 1.52
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
 
-# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    
-    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-         EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null 
-         if [ $? -eq 0 ]                                   # Found SADMIN in /etc/env.
-            then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                 printf "'SADMIN' environment variable temporarily set to ${SADMIN}.\n"
-            else exit 1                                    # No SADMIN Env. Var. Exit
+# MAKE SURE ENVIRONMENT VARIABLE 'SADMIN' IS DEFINED.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # SADMIN defined? Libr.exist   
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]     # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                                 # No SADMIN Env. Var. Exit
          fi
 fi 
 
@@ -65,38 +65,43 @@ export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without
 export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.16'                                      # Script Version
+export SADM_VER='3.18'                                     # Script version number
+export SADM_PDESC="Script is run when the system is started (via sadmin.service)." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
-export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy ?
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. LockFile
-export SADM_USE_RCH="Y"                                    # Update RCH HistoryFile 
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
-export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
-export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}_XXX" --suffix _1.tmp) 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}_XXX" --suffix _2.tmp) 
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}_XXX" --suffix _3.tmp) 
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # LOAD SADMIN Shell Library
+. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
-# THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Server
 # ---------------------------------------------------------------------------------------
+
 
 
 
@@ -107,71 +112,65 @@ export NTP_SERVER="68.69.221.61 162.159.200.1 205.206.70.2"             # Canada
 
 
 
+
 # --------------------------------------------------------------------------------------------------
 #                                S c r i p t    M a i n     P r o c e s s
 # --------------------------------------------------------------------------------------------------
 main_process()
 {
     ERROR_COUNT=0
-    sadm_writelog "*** Running SADM System Startup Script on $(sadm_get_fqdn)  ***"
-    sadm_writelog " "
+    sadm_write_log "*** Running SADM System Startup Script on $(sadm_get_fqdn)  ***"
+    sadm_write_log " "
     
-    sadm_writelog "Running Startup Standard Procedure"
-    sadm_writelog "  Removing files in '$SADMIN/tmp' ${SADM_TMP_DIR} directory."
-    rm -f ${SADM_TMP_DIR}/* >> $SADM_LOG 2>&1
+    sadm_write_log "Running Startup Standard Procedure"
+    sadm_write_log "  Removing files in '$SADMIN/tmp directory."
+    rm -f ${SADMIN}/tmp/* >> $SADM_LOG 2>>$SADM_ELOG
 
-    sadm_writelog "  Removing SADM System Monitor Lock File ${SADM_BASE_DIR}/sysmon.lock"
-    rm -f ${SADM_BASE_DIR}/sysmon.lock >> $SADM_LOG 2>&1
+    sadm_write_log "  Removing SADM System Monitor Lock File ${SADM_BASE_DIR}/sysmon.lock"
+    rm -f ${SADMIN}/sysmon.lock >> $SADM_LOG 2>>$SADM_ELOG
 
     if which ntpdate >/dev/null 2>&1
        then sleep 5                                                     # Wait network to come up
-            sadm_writelog "  Synchronize System Clock with NTP server $NTP_SERVER"
-            ntpdate -u $NTP_SERVER 2>&1 | tee -a $SADM_LOG
+            sadm_write_log "  Synchronize System Clock with NTP server $NTP_SERVER"
+            ntpdate -u $NTP_SERVER >> $SADM_LOG 2>>$SADM_ELOG
             if [ $? -ne 0 ] 
-               then sadm_writelog "  NTP Error Synchronizing Time with $NTP_SERVER" 
+               then sadm_write_err "   - [ ERROR ] Synchronizing Time with $NTP_SERVER" 
                     ERROR_COUNT=$(($ERROR_COUNT+1))
             fi
     fi 
-             
-    sadm_writelog "  Start 'nmon' performance system monitor tool"
-    ${SADM_BIN_DIR}/sadm_nmon_watcher.sh > /dev/null 2>&1
+
+    sadm_write_log "  Start 'nmon' performance system monitor tool"
+    ${SADMIN}/bin/sadm_nmon_watcher.sh >> $SADM_LOG 2>>$SADM_ELOG
     if [ $? -ne 0 ] 
-        then sadm_writelog "  Error starting 'nmon' System Monitor." 
+        then sadm_write_err "   - [ ERROR ] Starting 'nmon' System Monitor." 
              ERROR_COUNT=$(($ERROR_COUNT+1))
     fi
 
     # Special Operation for some particular System
-    sadm_writelog " "
-    sadm_writelog "Starting specific startup procedure for $SADM_HOSTNAME"
+    sadm_write_log " "
+    sadm_write_log "Starting specific startup procedure for $SADM_HOSTNAME"
     case "$SADM_HOSTNAME" in
-        "myhost" )      sadm_writelog "  Start SysInfo Web Server"
-                        /myapp/bin/start_httpd.sh >> $SADM_LOG 2>&1
-                        if [ $? -ne 0 ] 
-                            then sadm_writelog "  Error starting 'MyApp httpd' Service." 
-                                 ERROR_COUNT=$(($ERROR_COUNT+1))
-                        fi
+        "gandalf" )     sadm_write_log "  - Start 'noip2'to update dynamic DNS"
+                        /usr/local/bin/noip2
                         ;;
-                *)      sadm_writelog "  No particular procedure needed for $SADM_HOSTNAME"
+        *)      	    sadm_write_log "  No particular procedure needed for $SADM_HOSTNAME"
                         ;;
     esac
 
-    sadm_writelog " "
-    return $ERROR_COUNT                                              # Return Default return code
+    sadm_write_log " "
+    sadm_write_log "End of startup script."                              # End of Script Message
+    return $ERROR_COUNT                                                 # Return Default return code
 }
  
+
+
+
 # --------------------------------------------------------------------------------------------------
 # 	                          	S T A R T   O F   M A I N    P R O G R A M
 # --------------------------------------------------------------------------------------------------
 #
     sadm_start                                                          # Init Env Dir & RC/Log File
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
-    sadm_writelog "End of startup script."                              # End of Script Message
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
