@@ -6,17 +6,18 @@
 #   Synopsis:   This script is run when the sadmin.service is shutdown when server goes down.
 #               Called by /etc/systemd/system/sadmin.service (systemd) or /etc/init.d/sadmin (SysV)
 # --------------------------------------------------------------------------------------------------
-# Version 2.2 - Log Enhancement
-# Version 2.3 - Restructure to use the SADM Library and Send email on execution.
-# Version 2.4 - Add sleep of 5 sec. at the end, to allow completion of sending email before shutdown
-# Version 2.5 - Added code to run shutdown command based on Hostname
-# 2017_08_05    V2.6 Send email only on Execution Error
-# 2018_01_31    V2.7 Added execution of /etc/profile.d/sadmin.sh to have SADMIN Env. Var. Defined
-# 2018_09_19    V2.8 Added Alert Group Utilization
-# 2018_10_18    v2.9 Remove execution of /etc/profile.d/sadmin.sh (Don't need anymore)
-#@2019_03_29 Update: v2.10 Get SADMIN Directory Location from /etc/environment
-#@2020_05_27 Fix: v2.11 Force using bash instead of dash & problem setting SADMIN env. variable.
-#@2020_11_04 Minor: v2.12 Update SADMIN section & use env cmd to use proper bash shell.
+# 2015_01_09 startup/shutdown v2.2  Log Enhancement
+# 2015_02_09 startup/shutdown v2.3  Restructure to use the SADM Library and Send email on execution.
+# 2015_04_09 startup/shutdown v2.4  Add sleep of 5 sec. at the end, to allow completion shutdown
+# 2015_04_09 startup/shutdown v2.5  Added code to run shutdown command based on Hostname
+# 2017_08_05 startup/shutdown V2.6  Send email only on Execution Error
+# 2018_01_31 startup/shutdown V2.7  Added execution of /etc/profile.d/sadmin.sh to have SADMIN Var. 
+# 2018_09_19 startup/shutdown V2.8  Added Alert Group Utilization
+# 2018_10_18 startup/shutdown v2.9  Remove execution of /etc/profile.d/sadmin.sh(Don't need anymore)
+# 2019_03_29 startup/shutdown v2.10 Get SADMIN Directory Location from /etc/environment
+# 2020_05_27 startup/shutdown v2.11 Force using bash instead of dash & problem setting SADMIN var.
+# 2020_11_04 startup/shutdown v2.12 Update SADMIN section & use env cmd to use proper bash shell.
+#@2022_09_15 startup/shutdown v2.13 Update SADMIN section 1.52 & minor changes.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -84,36 +85,31 @@ export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access S
 
 
 
-
-# --------------------------------------------------------------------------------------------------
-#                                   This Script environment variables
-# --------------------------------------------------------------------------------------------------
-
-
-
-
 # --------------------------------------------------------------------------------------------------
 #                                S c r i p t    M a i n     P r o c e s s
 # --------------------------------------------------------------------------------------------------
 main_process()
 {
-    sadm_writelog "*** Running SADM System Shutdown Script on $(sadm_get_fqdn)  ***"
-    sadm_writelog " "
-
+    sadm_write_log "*** Running SADM System Shutdown Script on $(sadm_get_fqdn)  ***"
+    ERROR_COUNT=0
 
     # Special Operation for some particular System
-    sadm_writelog " "
-    sadm_writelog "Shutdown procedure for $SADM_HOSTNAME"
+    sadm_write_log " "
+    sadm_write_log "Shutdown procedure for $SADM_HOSTNAME"
     case "$SADM_HOSTNAME" in
-        "myhost" )      sadm_writelog "Stop MyApp Web Server ..."
-                        /myapp/bin/stop_httpd.sh >> $SADM_LOG 2>&1
-                        ;;
-                *)      sadm_writelog "  No particular shutdown procedure needed for $SADM_HOSTNAME"
-                        ;;
+        "myhost" )  sadm_write_log "Stop MyApp Web Server ..."
+                    /myapp/bin/stop_httpd.sh >> $SADM_LOG 2>&1
+                    if [ $? -ne 0 ] 
+                        then sadm_write_err "  [ ERROR ] Stopping Web Server ..." 
+                                 ERROR_COUNT=$(($ERROR_COUNT+1))
+                        fi  
+                    ;;
+                *)  sadm_write_log "  No particular shutdown procedure needed for $SADM_HOSTNAME"
+                    ;;
     esac
 
-    sadm_writelog " "
-    return 0                                                            # Return Default return code
+    sadm_write_log " "
+    return $ERROR_COUNT                                                 # Return Default return code
 }
 
 
@@ -123,15 +119,7 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 #
     sadm_start                                                          # Init Env Dir & RC/Log File
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-    
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
-    
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)

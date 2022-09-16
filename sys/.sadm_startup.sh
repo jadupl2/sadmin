@@ -9,32 +9,32 @@
 # --------------------------------------------------------------------------------------------------
 #set -x
 #
-# Change Log
-# 2017_06_06    V2.2 Log Enhancement
-# 2017_06_07    V2.3 Restructure to use the SADM Library and Send email on execution.
-# 2017_06_08    V2.4 Added removal of files in (pid) /sadmin/tmp at system boot
-# 2017_06_13    V2.5 Added removal of sysmon lock file (/sadmin/sysmon.lock) at system boot
-# 2017_06_21    V2.6 Added Clock Synchronization with 0.ca.pool.ntp.org
-# 2017_07_17    V2.7 Add Section to put command to execute on specified Systems
-# 2017_07_21    V2.8 Message display when starting Cosmetic Change 
-# 2017_08_03    V2.9 Bug Fix - Missing Quote
-# 2018_01_27    V3.0a Start 'nmon' as standard startup procedure 
-# 2018_01_31    V3.1 Added execution of /etc/profile.d/sadmin.sh to have SADMIN Env. Var. Defined
-# 2018_02_02    V3.2 Redirect output of starting nmon in the log (already log by sadm_nmon_watcher.sh).
-# 2018_02_04    V3.3 Remove all pid when starting server - Make sure there is no leftover.
-# 2018_06_22    V3.4 Remove output of ntpdate & Add Error Message when error synchronizing change.
-# 2018_09_19    V3.5 Updated to include the Alert Group
-# 2018_10_16    V3.6 Suppress Header and footer from the log (Cleaner Status display).
-# 2018_10_18    V3.7 Only send alert when exit with error.
-# 2018_11_02    V3.8 Added sleep before updating time clock (Raspbian Problem)
-# 2019_03_27 Update: v3.9 If 'ntpdate' report an error, show error message and add cosmetic messages
-# 2019_03_29 Update: v3.10 Get SADMIN Directory Location from /etc/environment
-# 2019_12_07 Update: v3.11 Avoid NTP Server name resolution (DNS not up), use IP Addr. now.
-# 2020_05_27 Fix: v3.12 Force using bash instead of dash & problem setting SADMIN env. variable.
-# 2020_11_04 Minor: v3.13 Update SADMIN section & use env cmd to use proper bash shell.
-#@2021_05_13 Update: v3.14 Check if ntpdate is present before syncing time.
-#@2021_06_11 Update: v3.15 When syncing time with atomic clock redirect output to script log.
-#@2021_11_08 Update: v3.16 When system start, delete everything in $SADMIN/tmp.
+# CHANGE LOG
+# ----------
+# 2017_06_06 startup/shutdown V2.2 Log Enhancement
+# 2017_06_07 startup/shutdown V2.3 Restructure to use the SADM Library and Send email on execution.
+# 2017_06_08 startup/shutdown V2.4 Added removal of files in (pid) /sadmin/tmp at system boot
+# 2017_06_13 startup/shutdown V2.5 Removal of sysmon lock file (/sadmin/sysmon.lock) at system boot.
+# 2017_06_21 startup/shutdown V2.6 Added Clock Synchronization with 0.ca.pool.ntp.org
+# 2017_07_17 startup/shutdown V2.7 Add Section to put command to execute on specified Systems
+# 2017_07_21 startup/shutdown V2.8 Message display when starting Cosmetic Change 
+# 2017_08_03 startup/shutdown V2.9 Bug Fix - Missing Quote
+# 2018_01_27 startup/shutdown V3.0a Start 'nmon' as standard startup procedure 
+# 2018_01_31 startup/shutdown V3.1 Execution of /etc/profile.d/sadmin.sh to set SADMIN Env. Variable
+# 2018_02_02 startup/shutdown V3.2 Redirect output of starting nmon in the log.
+# 2018_02_04 startup/shutdown V3.3 Remove all pid files when starting server
+# 2018_06_22 startup/shutdown V3.4 Add Error Message when error synchronizing change.
+# 2018_09_19 startup/shutdown V3.5 Updated to include the Alert Group
+# 2018_10_16 startup/shutdown V3.6 Suppress Header and footer from the log (Cleaner Status display).
+# 2018_10_18 startup/shutdown V3.7 Only send alert when exit with error.
+# 2018_11_02 startup/shutdown V3.8 Added sleep before updating time clock (Raspbian Problem)
+# 2019_03_27 startup/shutdown v3.9 If 'ntpdate' report an error, show error message.
+# 2020_05_27 startup/shutdown v3.10 Force using bash instead of dash (Problem on Ubuntu).
+# 2019_12_07 startup/shutdown v3.11 Avoid NTP Server name resolution (DNS not up), use IP Addr. now.
+# 2020_11_04 startup/shutdown v3.13 Update SADMIN section & use env cmd to use proper bash shell.
+#@2021_05_13 startup/shutdown v3.14 Check if ntpdate is present before syncing time.
+#@2021_06_11 startup/shutdown v3.15 When syncing time redirect output to script log.
+#@2022_04_06 startup/shutdown v3.16 Remove ip setting for raspi8
 #@2022_07_24 startup/shutdown v3.17 Update SADMIN section to 1.51 and no-ip Client for Dynamic IP
 #@2022_09_15 startup/shutdown v3.18 When error feed error log and fix 'nmon' wasn't starting.
 # --------------------------------------------------------------------------------------------------
