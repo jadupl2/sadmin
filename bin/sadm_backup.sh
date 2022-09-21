@@ -132,7 +132,7 @@ export SADM_SERVER_ONLY="N"                                # Run only on SADMIN 
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
@@ -437,7 +437,7 @@ create_backup()
                 sadm_write "\n"
                 sadm_write "${SADM_TEN_DASH}\n"                         # Line of 10 Dash in Log
                 sadm_write "Backup file: [${backup_line}]\n"            # Show Backup filename                 
-                BACK_LOG="${BACKUP_DIR}/${TIME_STAMP}_${BASE_NAME}.log" # Backup log file name
+                BACK_LOG="${BACKUP_DIR}/${TIME_STAMP}_${BASE_NAME}.log" # Backup log om NAS filename
                 echo "# $SADM_PN v$SADM_VER - $SADM_HOSTNAME - $(sadm_capitalize $SADM_OS_NAME) v$SADM_OS_VERSION " >>$BACK_LOG 2>&1
                 cd /                                                    # Be sure we are on /
                 if [ "$COMPRESS" == "ON" ]                              # If compression ON
@@ -519,6 +519,15 @@ create_backup()
 
         # Error 1 = File(s) changed while backup running, don't report that as an error.
         if [ $RC -eq 1 ] ; then RC=0 ; fi                               # File Changed while backup
+        if [ $RC -ne 0 ]                                                # If Error while Backup
+            then MESS="[ ERROR #${RC} ] while creating $BACK_FILE"       # Advise Backup Error
+                 sadm_write_err "${MESS}"                               # Advise User - Log Info
+                 RC=1                                                   # Make Sure Return Code is 0
+            else MESS="[ SUCCESS ] Creating Backup $BACK_FILE"            # Advise Backup Success
+                 sadm_writelog "${MESS}"                                # Advise User - Log Info
+                 RC=0                                                   # Make Sure Return Code is 0
+        fi
+
 
         # Create link to backup in the server latest directory
         cd ${LATEST_DIR}
@@ -531,16 +540,9 @@ create_backup()
         sadm_write_log "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}"
         ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}  >>$SADM_LOG 2>&1   # Run Soft Link Command
         if [ $? -ne 0 ]                                                 # If Error trying to link
-            then sadm_write_err "[ ERROR ] Creating link backup in latest directory."
-        fi
-        
-        if [ $RC -ne 0 ]                                                # If Error while Backup
-            then MESS="[ ERROR ] ${RC} while creating $BACK_FILE"       # Advise Backup Error
-                 sadm_write_err "${MESS}"                               # Advise User - Log Info
-                 RC=1                                                   # Make Sure Return Code is 0
-            else MESS="[ SUCCESS ] Creating Backup $BACK_FILE"            # Advise Backup Success
-                 sadm_writelog "${MESS}"                                # Advise User - Log Info
-                 RC=0                                                   # Make Sure Return Code is 0
+            then sadm_write_err "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}"
+                 sadm_write_err "[ ERROR ] Creating link backup in latest directory."
+                 RC=1
         fi
         TOTAL_ERROR=$(($TOTAL_ERROR+$RC))                               # Total = Cumulate RC Value
 
@@ -550,9 +552,9 @@ create_backup()
 
     # End of Backup
     cd $CUR_PWD                                                         # Restore Previous Cur Dir.
-    sadm_write_log " "                                                   # Insert Blank Line
-    sadm_write_log "${SADM_TEN_DASH}"                                    # Line of 10 Dash in Log
-    sadm_write_log " "                                                   # Insert Blank Line
+    sadm_write_log " "                                                  # Insert Blank Line
+    sadm_write_log "${SADM_TEN_DASH}"                                   # Line of 10 Dash in Log
+    sadm_write_log " "                                                  # Insert Blank Line
     sadm_write_log "Total error(s) while creating backup: ${TOTAL_ERROR}."
 
     # List Backup Directory
