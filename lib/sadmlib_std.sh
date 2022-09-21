@@ -187,6 +187,8 @@
 # 2022_08_25 lib v4.08 Change message of the system lock/unlock function.
 # 2022_08_26 lib v4.09 Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
 #@2022_09_04 lib v4.10 Replace 'sadm_writelog' by 'sadm_write_log' for standardization.
+#@2022_09_20 lib v4.11 MacOS 'arch' is returning i386, change 'sadm_server_arch' to use 'uname -m'.
+#@2022_09_20 lib v4.12 MacOS change 'sadm_get_osmajorversion' so it return and int after v10.
 #===================================================================================================
 
 
@@ -200,7 +202,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.10"                                              # This Library Version
+export SADM_LIB_VER="4.12"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -1008,7 +1010,9 @@ sadm_get_osmajorversion() {
                     ;;
         "AIX")      wosmajorversion=`uname -v`
                     ;;
-        "DARWIN")   wosmajorversion=`sw_vers -productVersion | awk -F '.' '{print $1 "." $2}'`
+        "DARWIN")   wosint=`sw_vers -productVersion | awk -F '.' '{print $1}'`
+                    wosmajorversion=`sw_vers -productVersion | awk -F '.' '{print $1 "." $2}'`
+                    if [ "$wosint" -gt 10 ] ; then wosmajorversion=$wosint ; fi
                     ;;
     esac
     echo "$wosmajorversion"
@@ -1058,8 +1062,9 @@ sadm_get_oscodename() {
                     if [ "$wver"  = "10.13" ] ; then oscode="High Sierra"      ;fi
                     if [ "$wver"  = "10.14" ] ; then oscode="Mojave"           ;fi
                     if [ "$wver"  = "10.15" ] ; then oscode="Catalina"         ;fi
-                    if [ "$wver"  = "10.16" ] ; then oscode="Big Sur"          ;fi
-                    if [ "$wver"  = "10.17" ] ; then oscode="Moyave"           ;fi
+                    if [ "$wver"  = "11" ]    ; then oscode="Big Sur"          ;fi
+                    if [ "$wver"  = "12" ]    ; then oscode="Monterey"         ;fi
+                    if [ "$wver"  = "13" ]    ; then oscode="Ventura"          ;fi
                     ;;
         "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
                        then oscode=$($SADM_LSB_RELEASE -sc)
@@ -1431,7 +1436,7 @@ sadm_server_arch() {
                     ;;
         "AIX")      warch=`uname -p`  
                     ;;
-        "DARWIN")   warch=$(arch)
+        "DARWIN")   warch=`uname -m`
                     ;;
     esac
     echo "$warch"
