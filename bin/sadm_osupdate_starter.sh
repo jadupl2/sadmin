@@ -115,7 +115,7 @@ export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN 
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
@@ -205,7 +205,7 @@ update_server_db()
 rcmd_osupdate()
 {
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, "
-    SQL2="srv_update_reboot, srv_sporadic, srv_active, srv_sadmin_dir from server "
+    SQL2="srv_update_reboot, srv_sporadic, srv_active, srv_sadmin_dir, srv_ssh_port from server "
     SQL3="where srv_ostype = 'linux' and srv_active = True "            # Got to Be a Linux & Active
     SQL4="and srv_name = '$ONE_SERVER' ;"                               # Select server to update
     SQL="${SQL1}${SQL2}${SQL3}${SQL4}"                                  # Build Final SQL Statement 
@@ -231,6 +231,7 @@ rcmd_osupdate()
     server_update_reboot=`      echo $wline|awk -F\; '{ print $5 }'`    # RebootAfter Upd 1=Yes 0=No
     server_sporadic=`           echo $wline|awk -F\; '{ print $6 }'`    # SporadicServer 1=Yes 0=No
     server_sadmin_dir=`         echo $wline|awk -F\; '{ print $8 }'`    # $SADMIN on remote Server
+    server_ssh_port=`           echo $wline|awk -F\; '{ print $9 }'`    # SSH port to system
     fqdn_server=`echo ${server_name}.${server_domain}`                  # Create FQN Server Name
         
     # Ping to server 
@@ -256,7 +257,7 @@ rcmd_osupdate()
 
     # Check existence of script on remote server and that it is executable.
     pgm="${server_sadmin_dir}/bin/$USCRIPT"                         # Path To o/s update script
-    response=$($SADM_SSH_CMD $fqdn_server "if [ -x $pgm ] ;then echo 'ok' ;else echo 'error' ;fi")
+    response=$($SADM_SSH -qnp $server_ssh_port $fqdn_server "if [ -x $pgm ] ;then echo 'ok' ;else echo 'error' ;fi")
     if [ "$response" != "ok" ]
         then sadm_write_err "${SADM_ERROR} '$pgm' don't exist or not executable on $fqdn_server."
              sadm_write_err "No O/S Update will be perform."
@@ -288,8 +289,8 @@ rcmd_osupdate()
     sadm_writelog " "
     sadm_writelog "Starting the O/S update on '${server_name}'."
     if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
-        then sadm_writelog "$SADM_SSH_CMD $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'"
-             $SADM_SSH_CMD $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
+        then sadm_writelog "$SADM_SSH -qnp $server_ssh_port $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'"
+             $SADM_SSH -qnp $server_ssh_port $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
              RC=$? 
         else sadm_writelog "Starting execution of ${server_sadmin_dir}/bin/$USCRIPT "
              ${server_sadmin_dir}/bin/$USCRIPT                       # Run Locally when on SADMIN

@@ -33,6 +33,7 @@
 #@2022_09_12 web v1.9 Rear Backup Status page - Show if schedule is activate or not on page.
 #@2022_09_12 web v2.0 Rear Backup Status page - Will show link to error log if it exist.
 #@2022_09_12 web v2.1 Rear Backup Status page - Display the first 50 systems instead of 25.
+#@2022_09_20 web v2.2 Rear Backup Status page - Move ReaR supported architecture msg to heading.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -61,7 +62,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "2.1" ;                                           # Current version number
+$WVER               = "2.2" ;                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -98,7 +99,7 @@ function setup_table() {
     echo "<th>Server</th>\n";
     echo "<th class='dt-head-left'>Description</th>\n";
     echo "<th class='text-center'>O/S</th>\n";
-    echo "<th class='dt-head-center'>Schedule Active</th>\n";
+    echo "<th class='dt-head-center'>Sched. Active</th>\n";
     echo "<th class='text-center'>ReaR Ver.</th>\n";
     echo "<th class='text-center'>Last Execution</th>\n";
     echo "<th class='text-center'>Status</th>\n";
@@ -114,7 +115,7 @@ function setup_table() {
     echo "<th>Server</th>\n";
     echo "<th class='dt-head-left'>Description</th>\n";
     echo "<th class='text-center'>O/S</th>\n";
-    echo "<th class='dt-head-center'>Schedule Active</th>\n";
+    echo "<th class='dt-head-center'>Sched. Active</th>\n";
     echo "<th class='text-center'>ReaR Ver.</th>\n";
     echo "<th class='text-center'>Last Execution</th>\n";
     echo "<th class='text-center'>Status</th>\n";
@@ -158,10 +159,12 @@ function display_data($count, $row) {
     # Schedule Active or not.
     if ($row['srv_img_backup'] == TRUE ) {                              # If Schedule is activated
         echo "\n<td class='dt-center'>";
-        echo "<a href='" .$URL_SERVER. "?selection=all_active'>Active</a></td>";
+        #echo "<a href='" .$URL_SERVER. "?selection=all_active'>Active</a></td>";
+        echo "<a href='" .$URL_SERVER. "?selection=all_active'>Yes</a></td>";
     }else{                                                              # If not Activate
         echo "\n<td class='dt-center'>";
-        echo "<a href='" .$URL_SERVER. "?selection=all_inactive'>Inactive</a></td>";
+        #echo "<a href='" .$URL_SERVER. "?selection=all_inactive'>Inactive</a></td>";
+        echo "<a href='" .$URL_SERVER. "?selection=all_inactive'>No</a></td>";
     }
 
     # ReaR Server Version
@@ -280,7 +283,7 @@ function display_data($count, $row) {
 
     # Show ReaR schedule page heading
     $title1="ReaR Backup Status";                                       # Page Title 1
-    $title2="";
+    $title2="MacOS and ARM systems aren't shown on this page because they are not supported by ReaR";
     if (file_exists(SADM_WWW_DIR . "/view/daily_rear_report.html")) {
         $title2="<a href='" . $URL_REAR_REPORT . "'>View the ReaR Daily Report</a>"; 
     }     

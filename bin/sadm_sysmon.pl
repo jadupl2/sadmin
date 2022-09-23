@@ -54,7 +54,8 @@
 use English;
 use Term::ANSIColor qw(:constants);
 use File::Basename;
-use POSIX qw(strftime);
+#use POSIX qw(strftime);
+use POSIX ;
 use Time::Local;
 use LWP::Simple qw($ua get head);
 
@@ -308,7 +309,7 @@ sub load_smon_file {
         print "------------------------------------------------------------------------------\n";
     }
 
-    print "\nLoading SysMon configuration file ${SYSMON_CFG_FILE}\n";
+    print "\nLoading SysMon configuration file : ${SYSMON_CFG_FILE}\n";
     # Check if `hostname`.smon already exist, if not copy .template.smon to `hostname`.smon
     if ( ! -e "$SYSMON_CFG_FILE"  ) {                                   # If hostname.smon not exist
         ($myear,$mmonth,$mday,$mhour,$mmin,$msec,$mepoch) = Today_and_Now(); # Get Date,Time, Epoch
@@ -351,7 +352,7 @@ sub load_smon_file {
     # IF IN DEBUG MODE DISPLAY NUMBER OF ELEMENT LOADED
     if ($SYSMON_DEBUG >= 5) {                                           # If in debug mode
         $nbline = @sysmon_array;                                        # Get Nb. of element loaded
-        print "File $SYSMON_CFG_FILE loaded in sysmon_array ($nbline lines loaded)\n";
+        print "Configuration file loaded in sysmon_array ($nbline lines loaded)\n";
     }
     if ($SYSMON_DEBUG >= 6)  { show_sysmon_array ; }                 # If Debug >=6 Display Array
 }
@@ -377,9 +378,13 @@ sub unload_smon_file {
     # GET ENDING TIME & WRITE SADM STATISTIC LINE AT THE EOF
     $end_time = time;                                                   # Get current time
     $xline1 = sprintf ("#SYSMON $VERSION_NUMBER $HOSTNAME - ");
-    my $uptime = `uptime -s`;
+    if ( $OSNAME eq "darwin" ) { 
+        my $uptime = `uptime \| awk -F, '{ print \$1\$2 }' \| cut -d ' ' -f 3- \| sed 's/^ *//g'`;
+    }else{
+        my $uptime = `uptime -s`;
+    }    
     chomp $uptime; 
-    $xline2 = sprintf ("Last Boot: %s - " , $uptime);
+    $xline2 = sprintf ("Uptime: %s - " , $uptime);
     $xline3 = sprintf ("%s" , scalar localtime(time));
     $xline4 = sprintf (" - Execution Time %2.2f seconds\n" ,$end_time - $start_time);
     printf (SADMTMP "${xline1}${xline2}${xline3}${xline4}");
@@ -1036,13 +1041,15 @@ sub check_load_average {
     print "\n\nChecking CPU Load Average ...";                          # Entering Load Average Test
 
     # Get Load Average - Via the uptime command
-    open (DB_FILE, "$CMD_UPTIME |");                                    # 'uptime' output to stdout
+    open (DB_FILE, "uptime \| awk '{print \$(NF-2)}' \|tr -d ',' |");                                    # 'uptime' output to stdout
     $load_line = <DB_FILE> ;                                            # Save output to load_line
-    @ligne = split ' ',$load_line;                                      # Split line based on space
-    @dummy = split ',',$ligne[11];                                      # Get 11th Parm/Recent Load
-    $load_average = int $dummy[0];                                      # Save Load Average
+    $load_average = sprintf "%.0f", $load_line ;                        # Rounded to nearest Int.
+    #$load_average = int $load_line;                                    # Save Load Average
+    #$load_average = ceil($load_line);                                  # Save Load Average
     if ($SYSMON_DEBUG >= 5) {                                           # Debug Level >= 5
-        printf "\nUptime line: $load_line";                            # Print uptime output line
+        $SYSUP = `uptime`;                                              # Print uptime output line
+        printf "\nUptime line : $SYSUP";                                # Print uptime output line
+        printf "Load average: $load_average";                           # Print uptime output line
     }
     close DB_FILE;                                                      # Close Output of command
     $SADM_RECORD->{SADM_CURVAL} = sprintf "%d" ,$load_average ;         # Put value in sysmon_array
@@ -1061,7 +1068,7 @@ sub check_load_average {
     $SMOD = "LOAD"                      ;                               # Sub-Module Category
     $STAT = $load_average               ;                               # Current Status Returned
     if ($SYSMON_DEBUG >= 5) {                                           # Debug Level at least 5
-        printf "Load Average is at $load_average - W: $WVAL E: $EVAL";  # Actual/Warning/Error Value
+        printf "\nLoad Average is at $load_average - W: $WVAL E: $EVAL";  # Actual/Warning/Error Value
     }
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
     return;                                                             # Return to Caller
@@ -1917,16 +1924,18 @@ sub end_of_sysmon {
     unlink "$SYSMON_LOCK_FILE" or die "Cannnot delete $SYSMON_LOCK_FILE: $!\n" ;
 
     # Print Execution time
-    if ($SYSMON_DEBUG >= 5) {
-        $end_time = time;                                                   # Get current time
-        $xline1 = sprintf ("#SYSMON $VERSION_NUMBER $HOSTNAME - ");         # Version & Hostname
-        my $uptime = `uptime -s`;
-        chomp $uptime; 
-        $xline2 = sprintf ("Last Boot: %s - " , $uptime);
-        $xline3 = sprintf ("%s" , scalar localtime(time));                  # Print Current Time
-        $xline4 = sprintf (" - Execution Time %2.2f seconds", ($end_time - $start_time));
-        printf ("\n${xline1}${xline2}${xline3}${xline4}\n\n");              # SADM Stat Line
-    }
+    $end_time = time;                                                   # Get current time
+    $xline1 = sprintf ("#SYSMON $VERSION_NUMBER $HOSTNAME - ");         # Version & Hostname
+    if ( $OSNAME eq "darwin" ) { 
+        $uptime = `uptime \| awk -F, '{ print \$1\$2 }' \| cut -d ' ' -f 3- \| sed 's/^ *//g'`;
+    }else{
+        $uptime = `uptime -s`;
+    }                             
+    chomp $uptime; 
+    $xline2 = sprintf ("Last Boot: %s - " , $uptime);
+    $xline3 = sprintf ("%s" , scalar localtime(time));                  # Print Current Time
+    $xline4 = sprintf (" - Execution Time %2.2f seconds", ($end_time - $start_time));
+    printf ("\n${xline1}${xline2}${xline3}${xline4}\n\n");              # SADM Stat Line
 }
 
 

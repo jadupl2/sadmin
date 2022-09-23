@@ -129,18 +129,28 @@ main_process()
     sadm_write_log "  Removing SADM System Monitor Lock File ${SADM_BASE_DIR}/sysmon.lock"
     rm -f ${SADMIN}/sysmon.lock >> $SADM_LOG 2>>$SADM_ELOG
 
-    if which ntpdate >/dev/null 2>&1
+    # Force Date/Time Synchronization at system startup with NTP servers.
+    if which ntpdate >/dev/null 2>&1                                    # If your using NTP Package
        then sleep 5                                                     # Wait network to come up
-            sadm_write_log "  Synchronize System Clock with NTP server $NTP_SERVER"
+            sadm_write_log "  Force system clock synchronization with NTP server $NTP_SERVER"
             ntpdate -u $NTP_SERVER >> $SADM_LOG 2>>$SADM_ELOG
             if [ $? -ne 0 ] 
                then sadm_write_err "   - [ ERROR ] Synchronizing Time with $NTP_SERVER" 
                     ERROR_COUNT=$(($ERROR_COUNT+1))
             fi
     fi 
+    if which chronyc >/dev/null 2>&1                                    # If using chrony package
+       then sleep 5                                                     # Wait network to come up
+            sadm_write_log "  Force system clock synchronization with \"chronyc 'burst 4/4'\""
+            chronyc 'burst 4/4' >> $SADM_LOG 2>>$SADM_ELOG
+            if [ $? -ne 0 ] 
+               then sadm_write_err "   - [ ERROR ] Synchronizing Time with \"chronyc 'burst 4/4'\"" 
+                    ERROR_COUNT=$(($ERROR_COUNT+1))
+            fi
+    fi 
 
     sadm_write_log "  Start 'nmon' performance system monitor tool"
-    ${SADMIN}/bin/sadm_nmon_watcher.sh >> $SADM_LOG 2>>$SADM_ELOG
+    ${SADMIN}/bin/sadm_nmon_watcher.sh >/dev/null 2>&1
     if [ $? -ne 0 ] 
         then sadm_write_err "   - [ ERROR ] Starting 'nmon' System Monitor." 
              ERROR_COUNT=$(($ERROR_COUNT+1))

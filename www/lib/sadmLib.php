@@ -613,6 +613,10 @@ function sadm_return_logo($WOS) {
             $iurl='https://www.ibm.com/docs/en/aix/7.2?topic=aix-pdfs' ;
             $ipath='/images/logo_aix.png';
             break;
+        case 'MACOS' :
+            $iurl='https://en.wikipedia.org/wiki/MacOS' ;
+            $ipath='/images/logo_apple.png';
+            break;
         default:
             $iurl='https://en.wikipedia.org/wiki/Linux' ;
             $ipath='/images/logo_linux.png';

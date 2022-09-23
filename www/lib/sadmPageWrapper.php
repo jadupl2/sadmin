@@ -1,7 +1,7 @@
 <?php
 # ==================================================================================================
 #   Author      :  Jacques Duplessis
-#   Title       :  sadm_view_sysmon.php
+#   Title       :  sadmPageWrapper.php
 #   Version     :  1.5
 #   Date        :  4 February 2017
 #   Requires    :  secure.php.net, mysql.org, getbootstrap.com, DataTables.net
@@ -23,54 +23,55 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-# 2018_01_04 Initial Version v1.0  
-# 2020_03_03 New: v1.1 Shortcut Menu added in page header for fast access within the site.
-# 2020_04_10 Update: v1.2 Add Network link shortcut at the top of each page.
-# 2020_04_25 Update: v1.3 Reduce Menu line in header to fit on Ipad.
-# 2020_09_23 Update: v1.4 Add Tooltips to Shortcut in the page header.
-# 2020_12_15 Update: v1.5 Add Storix Report Link in Header, only if Storix html file exist.
+# 2018_01_04 web Initial Version v1.0  
+# 2020_03_03 web v1.1 Shortcut Menu added in page header for fast access within the site.
+# 2020_04_10 web v1.2 Add Network link shortcut at the top of each page.
+# 2020_04_25 web v1.3 Reduce Menu line in header to fit on Ipad.
+# 2020_09_23 web v1.4 Add Tooltips to Shortcut in the page header.
+# 2020_12_15 web v1.5 Add Storix Report Link in Header, only if Storix html file exist.
 #
 # ==================================================================================================
 #
 $URL_STORIX_REPORT  = "/view/daily_storix_report.html";                 # Storix Daily Report Page
 
-
-
-    echo "</head>";
-    #echo "\n<body vlink='red'>\n";
-    echo "\n<body>\n";
-
-    echo "\n<div id='sadmWrapper'>                  <!-- Start Of sadmWrapper -->\n";
-    echo "\n<div id='sadmHeader'>                   <!-- Start Of sadmHeader  -->";
+echo "</head>";
+echo "\n<body>\n";
+echo "\n<div id='sadmWrapper'>                  <!-- Start Of sadmWrapper -->\n";
+echo "\n<div id='sadmHeader'>                   <!-- Start Of sadmHeader  -->";
 ?>
 
 
 <center>
 <table border=0 bgcolor="#124f44" cellspacing="1" cellpadding="3" width=98% >
 
-    <tr>
-        <td bgcolor="#124f44" rowspan="3" align="center" valign="middle" style="width:15%">
-            <span data-toggle='tooltip' title='Home Page'>
-            <a href="/index.php"><img width=90 height=90 src=/images/sadmin_logo.png></span></a>
-        </td>
-        <td bgcolor="#124f44" align="center" valign="middle">
-            <img width=645 height=69 src=/images/sadmin_new_text.png>
-        </td>
-        <td bgcolor="#124f44" align="right" valign="middle" style="width:15%">
-            <font size="3"><font color="#ffffff"><strong>
-            <?php
-             echo SADM_CIE_NAME ;
-             ?>
-             </strong></font>
-        </td>
-    </tr>
+<tr>
 
-    <tr>
+    <td bgcolor="#124f44" rowspan="3" align="vcenter" valign="middle" style="width:15%">
+        <span data-toggle='tooltip' title='Home Page'>
+        <a href="/index.php"><img width=90 height=90 src=/images/sadmin_logo.png></span></a>
+    </td>
 
-        <td  bgcolor="#124f44" align="center" valign="top">
-            <font size="2"><font color="#ffffff"><strong>
+    <td bgcolor="#124f44" align="center" valign="middle">
+        <img width=645 height=69 src=/images/sadmin_new_text.png>
+    </td>
+    
+    <td bgcolor="#124f44" align="right" valign="middle" style="width:15%">
+        <font size="3"><font color="#ffffff"><strong>
+        <?php
+         echo SADM_CIE_NAME ;
+         ?>
+         </strong></font>
+    </td>
+
+</tr>
+
+<tr>
+
+<td  bgcolor="#124f44" align="center" valign="top">
+    <font size="2"><strong>
         <div id='quick_link'>
-            <a href='/view/srv/sadm_view_servers.php?selection=all_servers'><span data-toggle='tooltip' title='List of all systems'>Systems</span></a>
+            <a href='/view/srv/sadm_view_servers.php?selection=all_servers'>
+                <span data-toggle='tooltip' title='List of all systems'>Systems</span></a>
             &nbsp;&nbsp;&nbsp;
             <a href='/view/rch/sadm_view_rch_summary.php?sel=all'><span data-toggle='tooltip' title='Status of all scripts'>Scripts</span></a>
             &nbsp;&nbsp;&nbsp;
@@ -83,17 +84,18 @@ $URL_STORIX_REPORT  = "/view/daily_storix_report.html";                 # Storix
             ?>
             &nbsp;&nbsp;&nbsp;
             <a href='/view/sys/sadm_view_backup.php'><span data-toggle='tooltip' title='Daily Backup Status'>Daily Backup</span></a>
-            &nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;
             <a href='/view/sys/sadm_view_rear.php'><span data-toggle='tooltip' title='Status of the ReaR Image Backup Schedule'>ReaR Backup</span></a>
-            &nbsp;&nbsp;&nbsp;
-            <a href='/view/perf/sadm_server_perf_menu.php'><span data-toggle='tooltip' title='Show Performance Graph of systems'>Performance</span></a>
-            &nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;
+            <a href='/view/perf/sadm_server_perf_adhoc_all.php'><span data-toggle='tooltip' title='Show Performance Graph of systems'>Performance</span></a>
+            </div>
             <?php
             if (file_exists(SADM_WWW_DIR . "/view/daily_storix_report.html")) {
                 echo "<a href='/view/daily_storix_report.html'><span data-toggle='tooltip' title='Show Storix Daily Report'>Storix</span></a>";
             }                
             ?>
         </div>
+    </font>
         </td>
 
         <td bgcolor="#124f44" align="right" valign="bottom">

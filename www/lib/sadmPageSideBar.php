@@ -430,7 +430,7 @@ function SideBar_OS_Summary() {
     echo '<input type="hidden" name="wperiod" value="yesterday">';
     echo '<input type="hidden" name="wservers" value="all_servers">';
     echo '<input type="hidden" name="wcat" value="all_cat">';
-    echo '<a href="#" onclick="this.parentNode.submit();">Perf. All Servers</a>';
+    echo '<a href="#" onclick="this.parentNode.submit();">Perf. All Systems</a>';
     echo "</form></div>";
     
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class

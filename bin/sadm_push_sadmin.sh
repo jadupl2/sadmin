@@ -53,6 +53,7 @@
 # 2022_05_24 server v2.34 Update to check if the SADMIN client is lock prior to push.
 # 2022_07_09 server v2.35 Now pushing email user password file ($SADMIN/cfg/.gmpw).
 # 2022_08_17 server v2.36 Updated with new SADMIN section v1.52
+#@2022_09_20 server v2.37 SSH to client is now using the port defined in each system.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -83,7 +84,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.36'                                     # Script Version
+export SADM_VER='2.37'                                     # Script Version
 export SADM_PDESC="Copy SADMIN version to all actives clients, without overwriting config files)."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -106,7 +107,7 @@ export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN 
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
@@ -151,53 +152,6 @@ show_usage()
 
 
 
-# --------------------------------------------------------------------------------------------------
-#                      Create Remote Directory - If it does not exist
-# --------------------------------------------------------------------------------------------------
-create_remote_dir()
-{
-    # Parameters received should always by two - If not write error to log and return to caller
-    if [ $# -ne 2 ]
-        then sadm_write "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters.\n"
-             sadm_write "Function received $* and that isn't valid.\n"
-             sadm_write "Should received 'ServerName' and 'Remote Directory'\n"
-             return 1
-    fi
-    REM_SERVER=$1                                                       # Remote server Name FQDN
-    REM_DIR=$2                                                          # Dir that should exist 
-
-    # List Directory Received on the remote server
-    if [ $SADM_DEBUG -gt 8 ]                                           # If Debug is Activated
-        then sadm_write "$SADM_SSH_CMD ${REM_SERVER} ls -l ${REM_DIR}\n"
-    fi
-    # ssh -n ${REM_SERVER} ls -l ${REM_DIR} >/dev/null 2>&1
-    $SADM_SSH_CMD ${REM_SERVER} ls -l ${REM_DIR} >/dev/null 2>&1
-    RC=$? 
-    
-    # If SSH Connection is OK and Directory exist on server, then OK
-    if [ $RC -eq 0 ]
-        then sadm_write "[ OK ] Directory ${REM_DIR} exist on ${REM_SERVER}\n"
-             return 0
-    fi 
-
-    # If SSH Connection is OK and BUT Directory doesn't exist on server, then create it
-    if [ $RC -eq 2 ]
-        then #ssh ${REM_SERVER} "mkdir -p ${REM_DIR}" >/dev/null 2>&1
-             $SADM_SSH_CMD  ${REM_SERVER} "mkdir -p ${REM_DIR}" >/dev/null 2>&1
-             if [ $RC -eq 0 ] || [ $RC -eq 2 ]
-                then sadm_write "[ OK ] Directory ${REM_DIR} exist on ${REM_SERVER}\n"
-                     RC=0
-                     return 0
-                else sadm_write "$SADM_ERROR ($RC) Couldn't create directory ${REM_DIR} on ${REM_SERVER}\n"
-                     return 1
-             fi
-    fi 
-    
-    sadm_write "$SADM_ERROR Couldn't check existence of ${REM_DIR} on ${REM_SERVER}\n"
-    return 1
-}
-
-
 
 
 # --------------------------------------------------------------------------------------------------
@@ -208,7 +162,7 @@ process_servers()
     WOSTYPE=$1                                                          # Should be aix or linux
 
     # MySQL Select All Actives Servers (Except SADMIN Server) & output result in $SADM_TMP_FILE.
-    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_sadmin_dir"
+    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_sadmin_dir,srv_ssh_port"
     SQL="${SQL} from server"
     #SQL="${SQL} where srv_active = True and srv_name <> '$SADM_HOSTNAME' "
     if [ "$SYNC_CLIENT" != "" ]
@@ -256,6 +210,7 @@ process_servers()
         server_monitor=` echo $wline|awk -F\; '{ print $4 }'`           # Monitor  t=True f=False
         server_sporadic=`echo $wline|awk -F\; '{ print $5 }'`           # Sporadic t=True f=False
         server_dir=`     echo $wline|awk -F\; '{ print $6 }'`           # Client SADMIN Install Dir.
+        server_ssh_port=`echo $wline|awk -F\; '{ print $7 }'`           # Client SSH port to use
         server_fqdn=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
         
         sadm_write "\n"                                                 # Blank Line
@@ -281,7 +236,7 @@ process_servers()
         fi                            # System Lock, Nxt Server
 
         # If SSH to server failed & it's a sporadic server = warning & next server
-        $SADM_SSH_CMD $server_fqdn date > /dev/null 2>&1                # SSH to Server for date
+        $SADM_SSH -qnp $server_ssh_port $server_fqdn date >/dev/null 2>&1 # SSH to Server for date
         RC=$?                                                           # Save Error Number
         if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "1" ]              # SSH don't work & Sporadic
            then sadm_writelog "[ WARNING ] Can't SSH to sporadic server ${server_fqdn}"
@@ -296,15 +251,15 @@ process_servers()
                while [ $RETRY -lt 3 ]                                   # Retry rsync 3 times
                   do
                   let RETRY=RETRY+1                                     # Incr Retry counter
-                  $SADM_SSH_CMD $server_fqdn date >/dev/null 2>&1       # SSH to Server for date
+                  $SADM_SSH -qnp $server_ssh_port $server_fqdn date >/dev/null 2>&1       # SSH to Server for date
                   RC=$?                                                 # Save Error Number
                   if [ $RC -ne 0 ]                                      # If Error doing ssh
                       then if [ $RETRY -lt 3 ]                          # If less than 3 retry
-                              then MSG="[ RETRY $RETRY ] $SADM_SSH_CMD $server_fqdn date"
+                              then MSG="[ RETRY $RETRY ] $SADM_SSH -qnp $server_ssh_port $server_fqdn date"
                                    sadm_writelog "${MSG}"               # Show Retry Count to User
                               else break                                # Break out after 3 attempts
                            fi
-                      else sadm_writelog "$SADM_OK $SADM_SSH_CMD $server_fqdn date " # Finally OK
+                      else sadm_writelog "$SADM_OK $SADM_SSH -qnp $server_ssh_port $server_fqdn date " # Finally OK
                            break                                        # Break out of loop RC=0
                   fi
                   done
@@ -324,7 +279,7 @@ process_servers()
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}"                       # Server Dir. on SADM Server
         if [ ! -d $WDIR ] ; then mkdir $WDIR ; chmod 775 $WDIR ; fi     # Create Dir. if don't exist 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then scp -P${SADM_SSH_PORT} ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
+            then scp -P${server_ssh_port} ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
             else cp /etc/environment ${WDIR} >/dev/null 2>&1  
         fi
         if [ $? -eq 0 ]                                                 # If file was transferred
@@ -370,9 +325,9 @@ process_servers()
           CFG_SRC="${SADM_CFG_DIR}/${WFILE}"
           CFG_DST="${server_fqdn}:${server_dir}/cfg/${WFILE}"
           #CFG_CMD="rsync -a ${CFG_SRC} ${CFG_DST}"
-          CFG_CMD="scp ${CFG_SRC} ${CFG_DST}"
+          CFG_CMD="scp -P $server_ssh_port ${CFG_SRC} ${CFG_DST}"
           if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CFG_CMD" ; fi 
-          scp ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
+          scp -P $server_ssh_port ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
           #rsync -a ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
           RC=$? 
           if [ $RC -ne 0 ]
@@ -466,8 +421,8 @@ process_servers()
           do
             CFG_SRC="${SADM_BASE_DIR}/${WFILE}"
             CFG_DST="${server_fqdn}:${server_dir}/${WFILE}"
-            CFG_CMD="scp ${CFG_SRC} ${CFG_DST}"
-            scp ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
+            CFG_CMD="scp -P $server_ssh_port ${CFG_SRC} ${CFG_DST}"
+            scp  -P $server_ssh_port ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
             RC=$?
             if [ $RC -ne 0 ]
                 then sadm_writelog "$SADM_ERROR ($RC) doing $CFG_CMD"

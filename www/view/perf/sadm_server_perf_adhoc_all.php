@@ -22,15 +22,12 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-#   2018_02_01 JDuplessis
-#       v1.0 Initial Version
-#   2018_02_02 JDuplessis
-#       v1.1 First Working version
-#   2018_02_03 JDuplessis
-#       v1.2 Change Titles and Bug Fixes
-#   2018_02_07 JDuplessis
-#       v1.3 Graph Tooltips Added - Network Graph Bug Fix - Titles Changed
+# 2018_02_01 web v1.0 Initial Version
+# 2018_02_02 web v1.1 First Working version
+# 2018_02_03 web v1.2 Change Titles and Bug Fixes
+# 2018_02_07 web v1.3 Graph Tooltips Added - Network Graph Bug Fix - Titles Changed
 # 2022_08_17 web v1.4 Fix Perf graph not showing under new PHP 8.
+#@2022_09_19 web v1.5 Performance All Systems - Preset default values for graphics. 
 # ==================================================================================================
 
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -46,7 +43,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.4" ;                                                        # Current version number
+$SVER  = "1.5" ;                                                        # Current version number
 
 
 # ==================================================================================================
@@ -236,10 +233,11 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
             default:                                                    # If not a valid Graph Type
                 echo "Graph type received is invalid ($WTYPE)";         # Inform User Msg
                 exit ;                                                  # End of the page 
-        }
+        }           
     }else{                                                              # If no Graph Type Received
-        echo "The WTYPE parameter was not set" ;                        # Inform User Message
-        exit ;                                                          # End of page
+        #echo "The WTYPE parameter was not set" ;                        # Inform User Message
+        $WTYPE = "cpu";
+        #exit ;                                                          # End of page
     }
 
     # Valid the Graph Period that is requested -----------------------------------------------------
@@ -256,17 +254,19 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
                 echo "The Period received is invalid ($WPERIOD)" ;      # Advise User
                 exit ;                                                  # End of page
         }
-    }else{                                                              # If no period was set
-        echo "The period parameter was not set" ;                       # Inform user message
-        exit ;                                                          # End of page
+    }else{   
+        $WPERIOD = "yesterday"  ;                                                       # If no period was set
+        #echo "The period parameter was not set" ;                       # Inform user message
+        #exit ;                                                          # End of page
     }
 
     # Validate the server category that is requested -----------------------------------------------
     if (isset($_POST['wcat']) ) {                                       # if the Category is defined
         $WCAT = $_POST['wcat'];                                         # Save Category Option
     }else{                                                              # No Category Option defined
-        echo "The Category parameter was not set" ;                     # Inform User message
-        exit ;                                                          # End of page
+        $WCAT = "all_cat" ;
+        #echo "The Category parameter was not set" ;                     # Inform User message
+        #exit ;                                                          # End of page
     }
 
 
@@ -274,9 +274,10 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
     if (isset($_POST['wservers']) ) {                                   # if Server Opt is defined
         $WSERVERS = $_POST['wservers'];                                 # Save Server Option
     }else{                                                              # No Server Option defined
-        echo "The Server parameter was not set" ;                       # Inform User message
-        exit ;                                                          # End of page
-    }
+        $WSERVERS = "all_servers" ;
+        #echo "The Server parameter was not set" ;                       # Inform User message
+        #exit ;                                                          # End of page
+    }  
 
     # Construct the select statement base on the parameters received -------------------------------
     $sql="SELECT * FROM server " ;                                      # Begin construct Select St.
@@ -335,7 +336,7 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
         exit;                                                            # Exit - Should not occurs
     }
     # DISPLAY SCREEN HEADING    
-    $title1="$WTITLE" ." performance graph of ". str_replace("_"," ",$WSERVERS) ." for ". ucfirst($WPERIOD) ;
+    $title1="$WTITLE" ." Performance graph of ". str_replace("_"," ",$WSERVERS) ." for ". ucfirst($WPERIOD) ;
     $title2="";
     display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
 

@@ -1,10 +1,10 @@
 #! /usr/bin/env bash
 #---------------------------------------------------------------------------------------------------
-#   Author      :   Your Name 
-#   Script Name :   XXXXXXXX.sh
-#   Date        :   2021/MM/DD
-#   Requires    :   sh and SADMIN Shell Library
-#   Description :   Template for starting a new shell script
+#   Author        : Your Name 
+#   Script Name   : XXXXXXXX.sh
+#   Creation Date : 2022/MM/DD
+#   Requires      : sh and SADMIN Shell Library
+#   Description   : Template for starting a new shell script
 #
 # Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
 #        have and use a 100 characters per line. Comments in script always begin at column 73. 
@@ -83,7 +83,7 @@ export SADM_SERVER_ONLY="N"                                # Run only on SADMIN 
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
@@ -134,7 +134,7 @@ process_servers()
     # Put the rows you want in the select. 
     # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir" 
-    SQL="${SQL},srv_backup,srv_img_backup "
+    SQL="${SQL},srv_backup,srv_img_backup,srv_ssh_port "
 
     # Build SQL to select active server(s) from Database.
     SQL="${SQL} from server"                                            # From the Server Table
@@ -162,6 +162,7 @@ process_servers()
         server_rootdir=$(   echo $wline|awk -F\; '{print $7}')          # Client SADMIN Root Dir.
         server_backup=$(    echo $wline|awk -F\; '{print $8}')          # Backup Schd 1=True 0=False
         server_img_backup=$(echo $wline|awk -F\; '{print $9}')          # ReaR Sched. 1=True 0=False
+        server_ssh_port=$(  echo $wline|awk -F\; '{print $10}')         # SSH port no. to System
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQDN Server Name
         sadm_write_log " "                                              # Blank Line
         sadm_write_log "${SADM_TEN_DASH}"                               # Ten Dashes Line    
@@ -178,9 +179,11 @@ process_servers()
         fi
 
         # Try a SSH to system
-        if [ $SADM_DEBUG -gt 0 ] ;then sadm_write_log "$SADM_SSH_CMD $fqdn_server date" ; fi 
+        if [ $SADM_DEBUG -gt 0 ] 
+            then sadm_write_log "$SADM_SSH -qnp $server_ssh_port $fqdn_server date" 
+        fi 
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Server
-            then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1       # SSH to system & Run 'date'
+            then $SADM_SSH -qnp $server_ssh_port $fqdn_server date > /dev/null 2>&1 # SSH to system
                  RC=$?                                                  # Save Return Code Number
             else RC=0                                                   # No SSH to SADMIN Server
         fi

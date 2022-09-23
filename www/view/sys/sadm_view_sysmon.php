@@ -352,7 +352,7 @@ function display_line($line,$BGCOLOR,$con)
 
     #----- Operating System Logo -----
     $WOS   = sadm_clean_data($row['srv_osname']);                       # Set Server O/S Name
-    list($ipath, $iurl, $ititle) = sadm_return_logo ($WOS) ;
+    list($ipath, $iurl, $ititle) = sadm_return_logo($WOS) ;
     echo "<td align='center' bgcolor=$BGCOLOR>";
     echo "<a href='". $iurl . "' title='" . $ititle . "'>";
     echo "<img src='" . $ipath . "' style='width:32px;height:32px;'></a></td>\n";

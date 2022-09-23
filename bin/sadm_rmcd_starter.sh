@@ -48,6 +48,7 @@
 # 2021_08_17 cmdline v1.4 Change to use Library System Lock 
 # 2022_05_23 cmdline v1.5 Do not to run remote script on system that are locked.
 # 2022_08_17 cmdline v1.6 Include new SADMIN section 1.52
+#@2022_09_20 cmdline v1.7 SSH to client is now using the port defined in each system.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -79,7 +80,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.6'                                       # Current Script Version
+export SADM_VER='1.7'                                       # Current Script Version
 export SADM_PDESC="Used to start a script on a remote system." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -102,7 +103,7 @@ export SADM_SERVER_ONLY="N"                                # Run only on SADMIN 
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
@@ -159,7 +160,7 @@ rmcd_start()
 
     # Get info about server in Database
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, "
-    SQL2="srv_update_reboot, srv_sporadic, srv_active, srv_sadmin_dir from server "
+    SQL2="srv_update_reboot, srv_sporadic, srv_active, srv_sadmin_dir,srv_ssh_port from server "
     SQL3="where srv_name = '$SERVER' ;"                                 # Select server to rmcmd
     SQL="${SQL1}${SQL2}${SQL3}"                                         # Build Final SQL Statement 
 
@@ -185,6 +186,7 @@ rmcd_start()
         server_update_reboot=`echo $wline|awk -F\; '{ print $5 }'`
         server_sporadic=`     echo $wline|awk -F\; '{ print $6 }'`
         server_sadmin_dir=`   echo $wline|awk -F\; '{ print $8 }'`
+        server_ssh_port=`     echo $wline|awk -F\; '{ print $9 }'`
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
 
         # Ping to server - Test if it is alive
@@ -224,8 +226,8 @@ rmcd_start()
         # Time to run the requested ${SCRIPT}.
         sadm_write_log " "
         sadm_write_log "${BOLD}Starting '$SCRIPT' on '${server_name}'.${NORMAL}"
-        sadm_write_log "$SADM_SSH_CMD ${SUSER}\@${fqdn_server} '${SCRIPT}'"
-        $SADM_SSH_CMD ${SUSER}\@${fqdn_server} ${SCRIPT} >>$SADM_LOG 2>&1 # SSH to Run Script
+        sadm_write_log "$SADM_SSH -p $server_ssh_port ${SUSER}\@${fqdn_server} '${SCRIPT}'"
+        $SADM_SSH -qnp $server_ssh_port ${SUSER}\@${fqdn_server} ${SCRIPT} >>$SADM_LOG 2>&1 
         RC=$? 
         if [ $RC -ne 0 ]                                                # Update went Successfully ?
            then sadm_write_err "[ ERROR ] Script completed with error no.$RC on '${server_name}'."

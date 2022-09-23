@@ -65,27 +65,28 @@ hr {
 
 /* Default Link Color */
 a:link {
-    color: Blue ;
+    color: blue ;
     background-color: transparent;
     /* text-decoration: none; */
   }
-  a:visited {
-    color: #FF9800;
+a:visited {
+    /* color: #FF9800; */
+    color: red ;
     background-color: transparent;
     /* text-decoration: none; */
 }
   
-  a:hover {
-    color: red;
+a:hover {
+    color: brown;
     background-color: transparent;
     text-decoration: underline;
-  }
+}
   
-  a:active {
-    color: yellow;
+a:active {
+    color: orange;
     background-color: transparent;
     text-decoration: underline;
-  }
+}
 
 
 /* CSS for Standard Table */
@@ -172,10 +173,10 @@ table thead td {
 /*  THIS SECTION IS USED FOR THE MENU LINE IN THE HEADING AT THE TOP OF PAGE OF EVERY WEB PAGE    */
 /* ---------------------------------------------------------------------------------------------- */
 
-#quick_link     a:visited {color : black  ; font-size : 14px;}
-#quick_link     a:link    {color : white  ; font-size : 14px;}
-#quick_link     a:hover   {color : yellow ; font-size : 14px;}
-#quick_link     a:active  {color : green  ; font-size : 14px;}
+#quick_link     a:visited {color : white ; font-size : 14px;}
+#quick_link     a:link    {color : orange   ; font-size : 14px;}
+#quick_link     a:hover   {color : brown   ; font-size : 14px;}
+#quick_link     a:active  {color : rgb(88, 71, 40)    ; font-size : 14px;}
 
 #sadmTopMenu{
     padding         :   2px;

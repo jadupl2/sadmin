@@ -149,7 +149,7 @@ export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN 
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
@@ -228,6 +228,7 @@ show_usage()
 #               If Position 0 = Y then will run every day of the week
 #               Position 1-7 Indicate a week day () Starting with Sunday
 #               Default is all Week (YNNNNNNN)
+# (8)           SSH port to communicate with the system
 # ---------
 # Example of line generated
 # 15 04 * * 06 root /sadmin/bin/sadm_osupdate_starter.sh nano >/dev/null 2>&1
@@ -241,6 +242,7 @@ update_osupdate_crontab ()
     cmonth=$5                                                           # Crontab Mth (YNNNN) Format
     cdom=$6                                                             # Crontab DOM (YNNNN) Format
     cdow=$7                                                             # Crontab DOW (YNNNN) Format
+    SSH_PORT=$8
 
     # To Display Parameters received - Used for Debugging Purpose ----------------------------------
     if [ $SADM_DEBUG -gt 5 ] 
@@ -363,6 +365,7 @@ update_osupdate_crontab ()
 #               If Position 0 = Y then will run every day of the week
 #               Position 1-7 Indicate a week day () Starting with Sunday
 #               Default is all Week (YNNNNNNN)
+# (8)           SSH port to communicate with the system
 # ---------
 # Example of line generated
 # 15 04 * * 06 root /sadmin/bin/sadm_osupdate_starter.sh nano >/dev/null 2>&1
@@ -376,6 +379,7 @@ update_rear_crontab ()
     cmonth=$5                                                           # Crontab Mth (YNNNN) Format
     cdom=$6                                                             # Crontab DOM (YNNNN) Format
     cdow=$7                                                             # Crontab DOW (YNNNN) Format
+    SSH_PORT=$8
 
     # To Display Parameters received - Used for Debugging Purpose ----------------------------------
     if [ $SADM_DEBUG -gt 5 ] 
@@ -471,7 +475,7 @@ update_rear_crontab ()
     # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN 
     # $SADM_TMP_DIR
     if [ "$SADM_HOSTNAME" != "$cserver" ]  
-        then cline="$cline $SADM_USER sudo $SADM_SSH_CMD $cserver \"$cscript\" >/dev/null 2>&1";
+        then cline="$cline $SADM_USER sudo ${SADM_SSH} -qnp $SSH_PORT $cserver \"$cscript\" >/dev/null 2>&1";
         else cline="$cline $SADM_USER sudo \"$cscript\" >/dev/null 2>&1";
     fi 
     if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
@@ -501,6 +505,7 @@ update_rear_crontab ()
 #               If Position 0 = Y then will run every day of the week
 #               Position 1-7 Indicate a week day () Starting with Sunday
 #               Default is all Week (YNNNNNNN)
+# (8)           SSH port to communicate with the system
 # ---------
 # Example of line generated
 # 15 04 * * 06 root /sadmin/bin/sadm_osupdate_starter.sh nano >/dev/null 2>&1
@@ -514,12 +519,13 @@ update_backup_crontab ()
     cmonth=$5                                                           # Crontab Mth (YNNNN) Format
     cdom=$6                                                             # Crontab DOM (YNNNN) Format
     cdow=$7                                                             # Crontab DOW (YNNNN) Format
+    SSH_PORT=$8 
 
     cline=`printf "%02d %02d" "$cmin" "$chour"`                         # Hour & Min. of Execution
     if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi   # Show Cron Line Now
     cline="$cline * * * "
     if [ "$SADM_HOSTNAME" != "$cserver" ]  
-        then cline="$cline $SADM_USER sudo $SADM_SSH_CMD $cserver \"$cscript\" >/dev/null 2>&1";
+        then cline="$cline $SADM_USER sudo ${SADM_SSH} -qnp $SSH_PORT $cserver \"$cscript\" >/dev/null 2>&1";
         else cline="$cline $SADM_USER sudo \"$cscript\" >/dev/null 2>&1"; 
     fi 
     echo "$cline" >> $SADM_BACKUP_NEWCRON                               # Output Line to Crontab cfg
@@ -690,6 +696,7 @@ create_crontab_files_header()
 # Validate SSH Server Connectivity 
 #  Parameters:
 #   1) Fully qualified domain name of the server to connect with SSH
+#   2) SSH port number used to communicate to system.
 #  Return Value:
 #   0) Server Accessible
 #   1) Error, go to next server (Can't SSH to Server, Missing Parameter rcv, Hostname Unresovable)
@@ -699,14 +706,15 @@ create_crontab_files_header()
 validate_server_connectivity()
 {
     # Validate number of parameter received
-    if [ $# -ne 1 ]
-        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 1 parameter."
+    if [ $# -ne 2 ]
+        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters."
              sadm_writelog "Function received $* and this isn't valid."
-             sadm_writelog "Should receive the fqdn of the server."
+             sadm_writelog "Should receive the fqdn of the server and the ssh port number."
              return 1
     fi
 
     FQDN_SNAME=$1                                                       # Server Name Full Qualified
+    SSH_PORT=$2                                                         # Port No. to SSH to system
 
     # Can we resolve the hostname ?
     if ! host $FQDN_SNAME >/dev/null 2>&1                               # Name is resolvable ? 
@@ -722,7 +730,7 @@ validate_server_connectivity()
 
     # Try to get uptime from system to test if ssh to system is working
     # -o ConnectTimeout=1 -o ConnectionAttempts=1 
-    wuptime=$($SADM_SSH_CMD -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
+    wuptime=$(${SADM_SSH} -qnp $SSH_PORT -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
     RC=$?                                                               # Save Error Number
     if [ $RC -eq 0 ]                                                    # If SSH Worked
         then GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
@@ -776,7 +784,8 @@ build_server_list()
     SQL="${SQL} srv_update_minute,srv_update_hour,srv_update_dom,srv_update_month,srv_update_dow,"
     SQL="${SQL} srv_update_auto,srv_backup,srv_backup_month,srv_backup_dom,srv_backup_dow,"
     SQL="${SQL} srv_backup_hour,srv_backup_minute,"
-    SQL="${SQL} srv_img_backup,srv_img_month,srv_img_dom,srv_img_dow,srv_img_hour,srv_img_minute "
+    SQL="${SQL} srv_img_backup,srv_img_month,srv_img_dom,srv_img_dow,srv_img_hour,srv_img_minute, "
+    SQL="${SQL} srv_ssh_port "
     SQL="${SQL} from server"
     SQL="${SQL} where srv_ostype = '${WOSTYPE}' and srv_active = True "
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
@@ -864,26 +873,34 @@ process_servers()
         rear_dow=`      echo $wline|awk -F\; '{ print $23 }'`           # Rear Crontab DOW field 
         rear_hrs=`      echo $wline|awk -F\; '{ print $24 }'`           # Rear Crontab Hrs field
         rear_min=`      echo $wline|awk -F\; '{ print $25 }'`           # Rear Crontab Min field
+        ssh_port=`      echo $wline|awk -F\; '{ print $26 }'`           # Port No. to SSH to System
         #
         sadm_writelog " "                                               # White Line
-        sadm_writelog "----- [$xcount] ${fqdn_server} -----"            # SHown count & Server Name
+        sadm_writelog "---- [$xcount ($server_os)] ${fqdn_server} ----" # Show count & ServerName
 
         # TO DISPLAY DATABASE COLUMN WE WILL USED, FOR DEBUGGING
-        if [ $SADM_DEBUG -gt 7 ] 
-            then sadm_writelog "Column Name and Value before processing them."
-                 sadm_writelog "server_name   = $server_name"           # Server Name to run script
-                 sadm_writelog "backup_auto   = $backup_auto"           # Run Backup ? 1=Yes 0=No 
-                 sadm_writelog "backup_mth    = $backup_mth"            # Month String YNYNYNYNYNY..
-                 sadm_writelog "backup_dom    = $backup_dom"            # Day of MOnth String YNYN..
-                 sadm_writelog "backup_dow    = $backup_dow"            # Day of Week String YNYN...
-                 sadm_writelog "backup_hrs    = $backup_hrs"            # Hour to run script
-                 sadm_writelog "backup_min    = $backup_min"            # Min. to run Script
-                 sadm_writelog "fqdn_server   = $fqdn_server"           # Name of Output file
+        if [ $SADM_DEBUG -gt 4 ] 
+            then sadm_write_log "Column Name and Value before processing them."
+                 sadm_write_log "server_name  = $server_name"           # Server Name to run script
+                 sadm_write_log "backup_auto  = $backup_auto"           # Run Backup ? 1=Yes 0=No 
+                 sadm_write_log "backup_mth   = $backup_mth"            # Month String YNYNYNYNYNY..
+                 sadm_write_log "backup_dom   = $backup_dom"            # Day of MOnth String YNYN..
+                 sadm_write_log "backup_dow   = $backup_dow"            # Day of Week String YNYN...
+                 sadm_write_log "backup_hrs   = $backup_hrs"            # Hour to run script
+                 sadm_write_log "backup_min   = $backup_min"            # Min. to run Script
+                 sadm_write_log "fqdn_server  = $fqdn_server"           # Name of Output file
+                 sadm_write_log "ssh_port     = $ssh_port"              # Port No. to ssh to system
+                 sadm_write_log "rear_auto    = $rear_auto "            # Rear Crontab 1=Yes 0=No 
+                 sadm_write_log "rear_mth     = $rear_mth  "            # Rear Crontab Mth field
+                 sadm_write_log "rear_dom     = $rear_dom  "            # Rear Crontab DOM field
+                 sadm_write_log "rear_dow     = $rear_dow  "            # Rear Crontab DOW field 
+                 sadm_write_log "rear_hrs     = $rear_hrs  "            # Rear Crontab Hrs field
+                 sadm_write_log "rear_min     = $rear_min  "            # Rear Crontab Min field
         fi
     
         # Test SSH connectivity and update uptime in Database 
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # Not on SADMIN Srv Test SSH
-            then validate_server_connectivity "$fqdn_server"            # Test SSH, Upd uptime in DB
+           then validate_server_connectivity "$fqdn_server" "$ssh_port" # Test SSH, Upd uptime in DB
                  RC=$?                                                  # Save function return code 
                  if [ $RC -eq 2 ] ; then continue ; fi                  # Sporadic,Monitor Off,OSUpd
                  if [ $RC -eq 1 ] || [ $RC -eq 3 ]                      # Error SSH or Update Uptime
@@ -897,17 +914,17 @@ process_servers()
 
         # On Linux & O/S AutoUpdate is ON, Generate Crontab entry in O/S Update crontab work file
         if [ "$WOSTYPE" = "linux" ] && [ "$db_updauto" -eq 1 ]          # If O/S Update Scheduled
-            then update_osupdate_crontab "$server_name" "\${SADMIN}/bin/$OS_SCRIPT" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
+            then update_osupdate_crontab "$server_name" "\${SADMIN}/bin/$OS_SCRIPT" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow" "$ssh_port"
         fi
 
         # Generate Crontab Entry for this server in Backup crontab work file
         if [ $backup_auto -eq 1 ]                                       # If Backup set to Yes 
-            then update_backup_crontab "$server_name" "${server_dir}/bin/$BA_SCRIPT" "$backup_min" "$backup_hrs" "$backup_mth" "$backup_dom" "$backup_dow"
+            then update_backup_crontab "$server_name" "${server_dir}/bin/$BA_SCRIPT" "$backup_min" "$backup_hrs" "$backup_mth" "$backup_dom" "$backup_dow" "$ssh_port"
         fi
 
         # Generate Crontab Entry for this server in ReaR crontab work file
         if [ "$WOSTYPE" = "linux" ] && [ $rear_auto -eq 1 ]            # If Rear Backup set to Yes 
-            then update_rear_crontab "$server_name" "${server_dir}/bin/$REAR_SCRIPT" "$rear_min" "$rear_hrs" "$rear_mth" "$rear_dom" "$rear_dow"
+            then update_rear_crontab "$server_name" "${server_dir}/bin/$REAR_SCRIPT" "$rear_min" "$rear_hrs" "$rear_mth" "$rear_dom" "$rear_dow" "$ssh_port"
         fi
                 
         # Set remote $SADMIN/cfg Dir. and local www/dat/${server_name}/cfg directory.
