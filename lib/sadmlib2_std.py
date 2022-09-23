@@ -315,16 +315,18 @@ def silentremove(filename : str):
 def trimfile(filename,nlines=500) :
     
     """ 
-        Trim the file received to the number of lines indicated in second parameter.
+    Trim the file received to the number of lines indicated in the second parameter.
+        - If 2nd parameter 'nlines' is omitted a value of 500 is use.
+        - If 2nd parameter 'nlines' is specified and is 0, then no trim is done on the file.
         
-        Args:
-            filename (str)  :   Full path of the file to trim.
-            nlines (int)    :   Keep the last "nlines" lines of the file.
-                                No trim is done if nlines equal 0.
+    Arguments:
+        filename (str)  :   Full path of the file to trim.
+        nlines (int)    :   Keep the last "nlines" lines of the file.
+                            No trim is done if nlines equal 0.
 
-        Returns:
-            returncode (int):   0 When command executed with success 
-                                1 When error occurred (Permission Error)
+    Returns:
+        returncode (int):   0 When command executed with success 
+                            1 When error occurred (Permission Error)
     """
     
     funcname = sys._getframe().f_code.co_name                           # Get Name current function
@@ -347,7 +349,7 @@ def trimfile(filename,nlines=500) :
     try:
         FN=open(tmpfile,'w')                                            # Open Temp file for output
     except IOError as e:                                                # If Can't open output file
-        print ("Error opening file %s" % filename)                      # Print FileName
+        print ("Error in '%s' function, opening file %s" % (funcname,filename))  
         return 1
 
     # Use line cache module to read the lines
@@ -360,23 +362,23 @@ def trimfile(filename,nlines=500) :
     try:
         os.remove(filename)                                             # Remove Original file
     except OSError as e:
-        print ("[ ERROR ] in %s function - removing %s" % (funcname,filename))
+        print ("Error in '%s' function, removing %s" % (funcname,filename))
         return 1
 
     try:
         shutil.move (tmpfile,filename)                                  # Rename tmp to original
     except OSError as e:
-        print ("[ ERROR ] in %s function - Error renaming %s to %s" % (funcname,tmpfile,filename))
+        print ("Error in '%s' function, renaming %s to %s" % (funcname,tmpfile,filename))
         print ("Rename Error: %s - %s." % (e.filename,e.strerror))
         return 1
 
     # Make Sure Owner/Group and permission of new trimmed file are the same as original file.
     try :
         if os.getuid() == 0: os.chown(filename,file_uid,file_gid)       # User & Group Original ID
-        os.chmod(filename,0o0664)                  # Change Perm on Trim file
+        os.chmod(filename,0o0664)                                       # Change Perm on Trim file
     except Exception as e:
-        msg = "Warning : Couldn't change owner or chmod of "            # Build Warning Message
-        print ("%s %s to %s.%s" % (msg,filename,sadm_user,sadm_group))
+        msg = "Error in '%s' function, couldn't change owner or chmod of %s " % (funcname,filename)
+        print ("%s to %s.%s" % (msg,sadm_user,sadm_group))
         print ("%s" % (e))
     return 0
 
@@ -2137,7 +2139,7 @@ def start(pver,pdesc) :
     # Check Files that are present ONLY ON SADMIN SERVER
     # Make sure the alert History file exist , if not use the history template to create it.
     if (get_fqdn() == sadm_server) :
-        if check_system_lock(phostname) :                                  # System is Lock on SADMIN
+        if check_system_lock(phostname) :                               # System is Lock on SADMIN
            stop(1)                                                      # Close SADMIN
            sys.exit(1)                                                  # Exit back to O/S,Abort
         if not os.path.exists(alert_hist):                              # AlertHistory Missing
