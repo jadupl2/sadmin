@@ -24,21 +24,21 @@
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
 #
-# 2015_10_10    v1.9 Restructure and redesign for modularity
-# 2017_12_17    v2.0 Restructure for combining Aix and Linux
-# 2017_12_23    v2.1 Modifications for using MySQL and logic Enhancements
-# 2018_01_08    v2.2 Update SADM Library insertion section & Minor correction
-# 2018_02_02    v2.3 Added Operation Separator in log 
-# 2018_02_08    v2.4 Fix compatibility problem with 'dash' shell
-# 2018_02_11    v2.5 Rsync locally for SADMN Server
-# 2018_05_01    v2.6 Don't return an error if no active server are found & remove unnecessary message
-# 2018_06_03    v2.7 Minor Corrections & Adapt to New SADM Shell Library.
-# 2018_06_09    v2.8 Change Script Name & Add Help and Version Function & Change Startup Order
-# 2018_06_11    v2.9 Change name for sadm_daily_farm_fetch.sh
-# 2018_06_30    v3.0 Now get /etc/environment from client to know where SADMIN is install for rsync
-# 2018_07_16    v3.1 Remove verbose when doing rsync
-# 2018_08_24    v3.2 If couldn't get /etc/environment from client, change Email format.
-# 2018_09_16    v3.3 Added Default Alert Group
+# 2015_10_10 server v1.9 Restructure and redesign for modularity
+# 2017_12_17 server v2.0 Restructure for combining Aix and Linux
+# 2017_12_23 server v2.1 Modifications for using MySQL and logic Enhancements
+# 2018_01_08 server v2.2 Update SADM Library insertion section & Minor correction
+# 2018_02_02 server v2.3 Added Operation Separator in log 
+# 2018_02_08 server v2.4 Fix compatibility problem with 'dash' shell
+# 2018_02_11 server v2.5 Rsync locally for SADMN Server
+# 2018_05_01 server v2.6 Don't return an error if no active server are found & remove unnecessary msg
+# 2018_06_03 server v2.7 Minor Corrections & Adapt to New SADM Shell Library.
+# 2018_06_09 server v2.8 Change Script Name & Add Help and Version Function & Change Startup Order
+# 2018_06_11 server v2.9 Change name for sadm_daily_farm_fetch.sh
+# 2018_06_30 server v3.0 Get /etc/environment from client to know where SADMIN is install for rsync
+# 2018_07_16 server v3.1 Remove verbose when doing rsync
+# 2018_08_24 server v3.2 If couldn't get /etc/environment from client, change Email format.
+# 2018_09_16 server v3.3 Added Default Alert Group
 # 2019_02_27 server v3.4 Change error message when ping to system don't work
 # 2019_05_07 server v3.5 Add 'W 5' ping option, should produce less false alert
 # 2020_02_25 server v3.6 Fix intermittent problem getting SADMIN value from /etc/environment.
@@ -55,9 +55,10 @@
 # 2021_06_03 nolog  v4.6 Update SADMIN section and minor code update
 # 2022_05_24 server v4.7 Updated to use the library 'check_lock_file()' function.
 # 2022_08_17 server v4.8 Update SADMIN section 2.2 and use error log when problem encountered.
+#@2022_09_23 server v4.9 Use SSH port specify per server & Update SADMIN section to v1.52.
 # --------------------------------------------------------------------------------------------------
 #
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
 
 
@@ -109,7 +110,7 @@ export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN 
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
@@ -158,7 +159,7 @@ process_servers()
     sadm_write "${BOLD}Processing All Actives Server(s)${NORMAL}\n"
 
     # BUILD THE SELECT STATEMENT FOR ACTIVE SERVER & OUTPUT RESULT IN CSV FORMAT TO $SADM_TMP_FILE1
-    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active"
+    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_ssh_port"
     SQL="${SQL} from server"                                            # From the Server Table
     SQL="${SQL} where srv_active = True"                                # Select only Active Servers
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
@@ -186,9 +187,10 @@ process_servers()
         server_domain=`  echo $wline|awk -F\; '{ print $3 }'`           # Extract Domain of Server
         server_monitor=` echo $wline|awk -F\; '{ print $4 }'`           # Monitor  t=True f=False
         server_sporadic=`echo $wline|awk -F\; '{ print $5 }'`           # Sporadic t=True f=False
+        server_ssh_port=`echo $wline|awk -F\; '{ print $6 }'`           # Server SSH Port to connect
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
         sadm_write "\n"
-        sadm_write "${BOLD}Processing ($xcount) ${fqdn_server}${NORMAL}\n" # Show Cur.Syst.
+        sadm_write "${BOLD}Processing [$xcount ($server_os)] ${fqdn_server}${NORMAL}\n"
         
         # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR TO USER AND CONTINUE WITH NEXT SYSTEM.
         if ! host $fqdn_server >/dev/null 2>&1
@@ -209,7 +211,7 @@ process_servers()
 
         # TEST SSH TO SERVER (IF NOT ON SADMIN SERVER)
         if [ "${server_name}" != "$SADM_HOSTNAME" ]                     # If not on SADMIN Server 
-            then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1       # Try SSH to Server for date
+            then $SADM_SSH -qnp $server_ssh_port $fqdn_server date > /dev/null 2>&1       # Try SSH to Server for date
                  RC=$?                                                  # Save Error Number
             else RC=0                                                   # RC=0 no SSH on SADMIN Srv
         fi 
@@ -242,7 +244,7 @@ process_servers()
         # Get the remote /etc/environment file to determine where SADMIN is install on remote
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}"
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then scp -P${SADM_SSH_PORT} ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
+            then scp -P $server_ssh_port ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
             else cp /etc/environment ${WDIR} >/dev/null 2>&1  
         fi
         if [ $? -eq 0 ]                                                 # If file was transferred
