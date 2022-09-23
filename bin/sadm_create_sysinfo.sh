@@ -546,8 +546,8 @@ create_linux_config_files()
 
 
     # Collect LVM Information ----------------------------------------------------------------------
-    write_file_header "Logical Volume" "$DISKS_FILE"
-    sadm_write "Creating $DISKS_FILE ...\n"
+    #write_file_header "Logical Volume" "$DISKS_FILE"
+    #sadm_write "Creating $DISKS_FILE ...\n"
     if [ "$PVS"       != "" ] ; then CMD="$PVS"       ; execute_command "$CMD" "$DISKS_FILE" ; fi
     if [ "$PVSCAN"    != "" ] ; then CMD="$PVSCAN"    ; execute_command "$CMD" "$DISKS_FILE" ; fi
     if [ "$PVDISPLAY" != "" ] ; then CMD="$PVDISPLAY" ; execute_command "$CMD" "$DISKS_FILE" ; fi
