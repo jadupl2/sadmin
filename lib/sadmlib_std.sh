@@ -2096,10 +2096,10 @@ sadm_start() {
             sadm_write_log " "
             sadm_write "Script '$SADM_PN' is already running ...\n"     # Script already running
             sadm_write "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N').\n" 
-            sadm_write "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid' exist, was created $pelapse seconds ago.\n"
+            sadm_write "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid', was created $pelapse seconds ago.\n"
             sadm_write "The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n"
             sadm_write_log " "
-            if [ ! -z "$SADM_PID_TIMEOUT" ] 
+            if [ -z "$SADM_PID_TIMEOUT" ] 
                 then sadm_write "Script can't run unless one of the following thing is done :\n"
                      sadm_write "  - Remove the PID File (\${SADMIN}/tmp/${SADM_INST}.pid).\n"
                      sadm_write "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script.\n"
