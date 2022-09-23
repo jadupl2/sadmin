@@ -380,7 +380,7 @@ run_dnf()
 # --------------------------------------------------------------------------------------------------
 run_apt_get()
 {
-    sadm_write "Starting $(sadm_get_osname) update process ...\n"
+    sadm_write_log "Starting $(sadm_get_osname) update process ..."
     
     CMD="DEBIAN_FRONTEND='noninteractive' apt -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade"
     sadm_write_log "Running: $CMD"
