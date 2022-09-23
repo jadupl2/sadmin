@@ -219,7 +219,8 @@ check_available_update()
                                  ;;
                         esac
                         ;;
-                * )     sadm_write "Checking if update are available, with 'dnf check-update'.\n"
+                * )     sadm_write_log "Checking if update are available, with 'dnf check-update'."
+                        sadm_write_log " "
                         dnf check-update >> $SADM_LOG 2>&1              # List Available update
                         rc=$?                                           # Save Exit Code
                         case $rc in
@@ -241,6 +242,7 @@ check_available_update()
             
         "FEDORA"|"ALMALINUX"|"ROCKY" )
             sadm_write_log "Checking for new update for $SADM_OS_NAME with 'dnf check-update'"
+            sadm_write_log " "
             dnf check-update >> $SADM_LOG 2>&1                          # List Available update
             rc=$?                                                       # Save Exit Code
             case $rc in
@@ -358,13 +360,13 @@ run_yum()
 # --------------------------------------------------------------------------------------------------
 run_dnf()
 {
-    sadm_write "${SADM_TEN_DASH}\n"
-    sadm_write "Starting $SADM_OS_NAME update process ...\n"
-    sadm_write "Running : dnf -y update\n"
+    sadm_write_log " "
+    sadm_write_log "Starting $SADM_OS_NAME update process ..."
+    sadm_write_log "Running : dnf -y update"
     dnf -y update  >>$SADM_LOG 2>>$SADM_ELOG 
     rc=$?
-    sadm_write "Return Code after dnf program update is ${rc}.\n"
-    sadm_write "${SADM_TEN_DASH}\n"
+    sadm_write_log "Return Code after 'dnf -y update' is ${rc}."
+    sadm_write_log " "
     return $rc
 }
 
