@@ -62,6 +62,7 @@
 # 2022_07_20 client v3.32 When using 'inxi' suppress color escape sequence from generated files.
 # 2022_07_21 client v3.33 Small enhancement in network information section.
 # 2022_08_25 client v3.34 Update to SADMIN Section 1.52
+#@2022_09_22 client v3.35 LVM information are now written into the Disk information file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # Intercept the ^C
 #set -x
@@ -94,7 +95,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.34'                                      # Script version number
+export SADM_VER='3.35'                                      # Script version number
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -545,17 +546,17 @@ create_linux_config_files()
 
 
     # Collect LVM Information ----------------------------------------------------------------------
-    write_file_header "Logical Volume" "$LVM_FILE"
-    sadm_write "Creating $LVM_FILE ...\n"
-    if [ "$PVS"       != "" ] ; then CMD="$PVS"       ; execute_command "$CMD" "$LVM_FILE" ; fi
-    if [ "$PVSCAN"    != "" ] ; then CMD="$PVSCAN"    ; execute_command "$CMD" "$LVM_FILE" ; fi
-    if [ "$PVDISPLAY" != "" ] ; then CMD="$PVDISPLAY" ; execute_command "$CMD" "$LVM_FILE" ; fi
-    if [ "$VGS"       != "" ] ; then CMD="$VGS"       ; execute_command "$CMD" "$LVM_FILE" ; fi
-    if [ "$VGSCAN"    != "" ] ; then CMD="$VGSCAN 2>/dev/null"    ; execute_command "$CMD" "$LVM_FILE" ; fi
-    if [ "$VGDISPLAY" != "" ] ; then CMD="$VGDISPLAY" ; execute_command "$CMD" "$LVM_FILE" ; fi
-    if [ "$LVS"       != "" ] ; then CMD="$LVS"       ; execute_command "$CMD" "$LVM_FILE" ; fi
-    if [ "$LVSCAN"    != "" ] ; then CMD="$LVSCAN"    ; execute_command "$CMD" "$LVM_FILE" ; fi
-    if [ "$LVDISPLAY" != "" ] ; then CMD="$LVDISPLAY" ; execute_command "$CMD" "$LVM_FILE" ; fi
+    write_file_header "Logical Volume" "$DISKS_FILE"
+    sadm_write "Creating $DISKS_FILE ...\n"
+    if [ "$PVS"       != "" ] ; then CMD="$PVS"       ; execute_command "$CMD" "$DISKS_FILE" ; fi
+    if [ "$PVSCAN"    != "" ] ; then CMD="$PVSCAN"    ; execute_command "$CMD" "$DISKS_FILE" ; fi
+    if [ "$PVDISPLAY" != "" ] ; then CMD="$PVDISPLAY" ; execute_command "$CMD" "$DISKS_FILE" ; fi
+    if [ "$VGS"       != "" ] ; then CMD="$VGS"       ; execute_command "$CMD" "$DISKS_FILE" ; fi
+    if [ "$VGSCAN"    != "" ] ; then CMD="$VGSCAN 2>/dev/null"    ; execute_command "$CMD" "$DISKS_FILE" ; fi
+    if [ "$VGDISPLAY" != "" ] ; then CMD="$VGDISPLAY" ; execute_command "$CMD" "$DISKS_FILE" ; fi
+    if [ "$LVS"       != "" ] ; then CMD="$LVS"       ; execute_command "$CMD" "$DISKS_FILE" ; fi
+    if [ "$LVSCAN"    != "" ] ; then CMD="$LVSCAN"    ; execute_command "$CMD" "$DISKS_FILE" ; fi
+    if [ "$LVDISPLAY" != "" ] ; then CMD="$LVDISPLAY" ; execute_command "$CMD" "$DISKS_FILE" ; fi
 
 
     # Collect Network Information ------------------------------------------------------------------
@@ -812,16 +813,16 @@ create_aix_config_files()
     fi
 
     # Collect LVM Information ----------------------------------------------------------------------
-    write_file_header "Logical Volume" "$LVM_FILE"
-    sadm_write "Creating $LVM_FILE ...\n"
+    write_file_header "Logical Volume" "$NET_FILE"
+    sadm_write "Creating $NET_FILE ...\n"
     
     if [ "$LSVG" != "" ]
         then CMD="lsvg"
-             execute_command "$CMD" "$LVM_FILE" 
+             execute_command "$CMD" "$NET_FILE" 
              CMD="lsvg -o | lsvg -i"
-             execute_command "$CMD" "$LVM_FILE" 
+             execute_command "$CMD" "$NET_FILE" 
              CMD="$LSVG | xargs $LSVG -l "
-             execute_command "$CMD" "$LVM_FILE" 
+             execute_command "$CMD" "$NET_FILE" 
     fi
 
 
@@ -965,6 +966,7 @@ function cmd_options()
         else create_linux_config_files                                  # Collect Linux/OSX Info
     fi
     
+    if [ -f "$LVM_FILE" ] ; then rm -f $LVM_FILE >/dev/null 2>&1 ; fi
     create_summary_file                                                 # Create Summary File for DB
     SADM_EXIT_CODE=$?                                                   # Save Function Return code
     sadm_stop $SADM_EXIT_CODE                                           # Upd RCH & Trim Log & RCH
