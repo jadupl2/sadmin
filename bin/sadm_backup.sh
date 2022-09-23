@@ -78,6 +78,7 @@
 # 2022_08_14 backup v3.34 Error message written to log and also to error log.
 # 2022_08_17 backup v3.35 Include new SADMIN section 1.52
 #@2022_09_04 backup v3.36 False Error message was written to script error log.
+#@2022_09_23 backup v3.37 Fix problem mounting NFS on newer version of MacOS.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -109,7 +110,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.36'                                     # Script version number
+export SADM_VER='3.37'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -132,7 +133,7 @@ export SADM_SERVER_ONLY="N"                                # Run only on SADMIN 
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "  # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
@@ -155,7 +156,7 @@ export CUR_DATE_NUM=`date +"%d"`                                        # Curren
 export CUR_MTH_NUM=`date +"%m"`                                         # Current Month Number
 export CUR_DATE=`date "+%C%y_%m_%d"`                                    # Date Format 2018_05_27
 if [ "$SADM_OS_TYPE" = "DARWIN" ]                                       # If on MacOS
-    then export LOCAL_MOUNT="/preserve/nfs"                             # NFS Mount Point for OSX
+    then export LOCAL_MOUNT="/tmp/nfs1"                                 # NFS Mount Point for MacOS
     else export LOCAL_MOUNT="/mnt/backup"                               # NFS Mount Point for Linux
 fi    
 export TODAY_ROOT_DIR=""                                                # Will be filled by Script
@@ -220,12 +221,12 @@ show_usage()
 #===================================================================================================
 backup_setup()
 {
-    sadm_write "\n"
-    sadm_write "Setup Backup Environment ...\n"                         # Advise User were Starting
+    sadm_write_log " "
+    sadm_write_log "Setup Backup Environment ..."                       # Advise User were Starting
 
     # Do Daily Backup Directory Exist
     if [ ! -d "${DAILY_DIR}" ]                                          # Daily Backup Dir. Exist ?
-        then sadm_write "Making Daily backup directory $DAILY_DIR \n"   # Show user what were doing
+        then sadm_write_log "Making Daily backup directory $DAILY_DIR"  # Show user what were doing
              mkdir -p $DAILY_DIR                                        # Create Directory
              if [ $? -ne 0 ] ; then sadm_write_err "[ ERROR ] mkdir $DAILY_DIR" ; return 1 ; fi
              chmod 775 $DAILY_DIR                                       # Read/Write to SADM Usr/Grp
@@ -234,7 +235,7 @@ backup_setup()
 
     # Do Weekly Backup Directory Exist
     if [ ! -d "${WEEKLY_DIR}" ]                                         # Daily Backup Dir. Exist ?
-        then sadm_write "Making Weekly backup directory $WEEKLY_DIR \n" # Show user what were doing
+        then sadm_write_log "Making weekly backup directory $WEEKLY_DIR" # Show what were doing
              mkdir -p $WEEKLY_DIR                                       # Create Directory
              if [ $? -ne 0 ] ; then sadm_write_err "[ ERROR ] mkdir $WEEKLY_DIR" ; return 1 ; fi
              chmod 775 $WEEKLY_DIR                                      # Read/Write to SADM Usr/Grp
@@ -243,7 +244,7 @@ backup_setup()
 
     # Do Monthly Backup Directory Exist
     if [ ! -d "${MONTHLY_DIR}" ]                                        # Monthly Backup Dir. Exist?
-        then sadm_write "Making Monthly backup directory $MONTHLY_DIR \n" # Show user what were doing
+        then sadm_write_log "Making Monthly backup directory $MONTHLY_DIR" # Show what were doing
              mkdir -p $MONTHLY_DIR                                      # Create Directory
              if [ $? -ne 0 ] ; then sadm_write_err "[ ERROR ] mkdir $MONTHLY_DIR" ; return 1 ; fi
              chmod 775 $MONTHLY_DIR                                     # Read/Write to SADM Usr/Grp
@@ -252,7 +253,7 @@ backup_setup()
 
     # Do Yearly Backup Directory Exist
     if [ ! -d "${YEARLY_DIR}" ]                                         # Yearly Backup Dir. Exist?
-        then sadm_write "Making Yearly backup directory $YEARLY_DIR \n" # Show user what were doing
+        then sadm_write_log "Making Yearly backup directory $YEARLY_DIR" # Show user what were doing
              mkdir -p $YEARLY_DIR                                       # Create Directory
              if [ $? -ne 0 ] ; then sadm_write_err "[ ERROR ] mkdir $YEARLY_DIR" ; return 1 ; fi
              chmod 775 $YEARLY_DIR                                      # Read/Write to SADM Usr/Grp
@@ -266,7 +267,7 @@ backup_setup()
 
     # Do Latest Backup Directory Exist
     if [ ! -d "${LATEST_DIR}" ]                                         # Latest Backup Dir Exist?
-        then sadm_write "Making latest backup directory $LATEST_DIR \n" # Show user what were doing
+        then sadm_write_log "Making latest backup directory $LATEST_DIR" # Show what were doing
              mkdir -p $LATEST_DIR                                       # Create Directory
              if [ $? -ne 0 ] ; then sadm_write_err "[ ERROR ] mkdir $LATEST" ; return 1 ; fi
              chmod 775 $LATEST_DIR                                      # R/W to SADM Usr/Grp
@@ -303,11 +304,11 @@ backup_setup()
     # Make sure the Server Backup Directory With Today's Date exist on NFS Drive -------------------
     BACKUP_DIR="${TODAY_ROOT_DIR}/${CUR_DATE}"                          # Set Today Backup Directory
     if [ ! -d ${BACKUP_DIR} ]                                           # Check if Server Dir Exist
-        then sadm_write "Making today backup directory $BACKUP_DIR \n"
+        then sadm_write_log "Making today backup directory $BACKUP_DIR"
              mkdir ${BACKUP_DIR}                                        # If Not Create it
              if [ $? -ne 0 ]                                            # If Error trying to mount
                 then sadm_write_err "[ ERROR ] Creating directory ${BACKUP_DIR}"
-                     sadm_write "        On the NFS server ${SADM_BACKUP_NFS_SERVER}\n"
+                     sadm_write_err "On the NFS server ${SADM_BACKUP_NFS_SERVER}"
                      return 1                                           # End Function with error
              fi
              #chown ${SADM_USER}:${SADM_GROUP} ${BACKUP_DIR}             # Assign it SADM USer&Group
@@ -317,12 +318,12 @@ backup_setup()
     # Make Sure backup file list exist.
     if [ ! -f "$SADM_BACKUP_LIST" ]
         then if [ -f "$SADM_BACKUP_LIST_INIT" ]                         # If Def. Backup List Exist
-                then sadm_write "Backup File List ($SADM_BACKUP_LIST) doesn't exist.\n"
-                     sadm_write "Using Default Backup List ($SADM_BACKUP_LIST_INIT) file.\n"
+                then sadm_write_log "Backup File List ($SADM_BACKUP_LIST) doesn't exist."
+                     sadm_write_log "Using Default Backup List ($SADM_BACKUP_LIST_INIT) file."
                      cp $SADM_BACKUP_LIST_INIT $SADM_BACKUP_LIST >>$SADM_LOG 2>&1
-                else sadm_write "No Backup List File ($SADM_BACKUP_LIST) or Default ($SADM_BACKUP_LIST_INIT).\n"
-                     sadm_write "Aborting Backup\n"
-                     sadm_write "Put Dir & files to backup in $SADM_BACKUP_LIST and retry\n"
+                else sadm_write_log "No Backup List File ($SADM_BACKUP_LIST) or Default ($SADM_BACKUP_LIST_INIT)."
+                     sadm_write_log "Aborting Backup"
+                     sadm_write_log "Put Dir & files to backup in $SADM_BACKUP_LIST and retry"
                      return 1                                           # Return Error to Caller
              fi
     fi
@@ -330,12 +331,12 @@ backup_setup()
     # Make Sure backup exclude list file exist.
     if [ ! -f "$SADM_BACKUP_EXCLUDE" ]
         then if [ -f "$SADM_BACKUP_EXCLUDE_INIT" ]                      # If Def. Backup List Exist
-                then sadm_write "Backup Exclude List File ($SADM_BACKUP_EXCLUDE) doesn't exist.\n"
-                     sadm_write "Using Default Backup Exclude List ($SADM_BACKUP_EXCLUDE_INIT) file.\n"
+                then sadm_write_log "Backup Exclude List File ($SADM_BACKUP_EXCLUDE) doesn't exist."
+                     sadm_write_log "Using Default Backup Exclude List ($SADM_BACKUP_EXCLUDE_INIT) file."
                      cp $SADM_BACKUP_EXCLUDE_INIT $SADM_BACKUP_EXCLUDE >>$SADM_LOG 2>&1
-                else sadm_write "No Backup Exclude list ($SADM_BACKUP_EXCLUDE) or Default ($SADM_BACKUP_EXCLUDE_INIT).\n"
-                     sadm_write "Aborting Backup\n"
-                     sadm_write "Put Dir & files to exclude in $SADM_BACKUP_EXCLUDE and retry.\n"
+                else sadm_write_log "No Backup exclude list ($SADM_BACKUP_EXCLUDE) or default ($SADM_BACKUP_EXCLUDE_INIT)."
+                     sadm_write_log "Aborting Backup"
+                     sadm_write_log "Put Dir & files to exclude in $SADM_BACKUP_EXCLUDE and retry."
                      return 1                                           # Return Error to Caller
              fi
     fi
@@ -358,16 +359,16 @@ backup_setup()
     #    then sadm_write " - Compress the backup file\n"
     #    else sadm_write " - Not compress the backup\n"
     #fi
-    sadm_write " - Keep $SADM_DAILY_BACKUP_TO_KEEP daily backups\n"
-    sadm_write " - Keep $SADM_WEEKLY_BACKUP_TO_KEEP weekly backups\n"
-    sadm_write " - Keep $SADM_MONTHLY_BACKUP_TO_KEEP monthly backups\n"
-    sadm_write " - Keep $SADM_YEARLY_BACKUP_TO_KEEP yearly backups\n"
-    sadm_write " - Do the weekly backup on ${WEEKDAY[$SADM_WEEKLY_BACKUP_DAY]}\n"
-    sadm_write " - Do the monthly backup on the $SADM_MONTHLY_BACKUP_DATE of every month\n"
-    sadm_write " - Do the yearly backup on the $SADM_YEARLY_BACKUP_DATE of ${MTH_NAME[$SADM_YEARLY_BACKUP_MONTH]} every year\n"
-    sadm_write " - Backup directory is ${BACKUP_DIR}\n"
-    sadm_write " - Using backup list file ${SADM_BACKUP_LIST}\n"
-    sadm_write " - Using backup exclude list file ${SADM_BACKUP_EXCLUDE}\n"
+    sadm_write_log " - Keep $SADM_DAILY_BACKUP_TO_KEEP daily backups"
+    sadm_write_log " - Keep $SADM_WEEKLY_BACKUP_TO_KEEP weekly backups"
+    sadm_write_log " - Keep $SADM_MONTHLY_BACKUP_TO_KEEP monthly backups"
+    sadm_write_log " - Keep $SADM_YEARLY_BACKUP_TO_KEEP yearly backups"
+    sadm_write_log " - Do the weekly backup on ${WEEKDAY[$SADM_WEEKLY_BACKUP_DAY]}"
+    sadm_write_log " - Do the monthly backup on the $SADM_MONTHLY_BACKUP_DATE of every month"
+    sadm_write_log " - Do the yearly backup on the $SADM_YEARLY_BACKUP_DATE of ${MTH_NAME[$SADM_YEARLY_BACKUP_MONTH]} every year"
+    sadm_write_log " - Backup directory is ${BACKUP_DIR}"
+    sadm_write_log " - Using backup list file ${SADM_BACKUP_LIST}"
+    sadm_write_log " - Using backup exclude list file ${SADM_BACKUP_EXCLUDE}"
     return 0
 }
 
@@ -587,21 +588,21 @@ clean_backup_dir()
     du -h . |while read ln ;do sadm_write "${ln}\n" ;done
     backup_count=`ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l` # Calc. Nb. Days of backup
     day2del=$(($backup_count-$SADM_DAILY_BACKUP_TO_KEEP))               # Calc. Nb. Days to remove
-    sadm_write "\n"
-    sadm_write "You have decided to keep only the last $SADM_DAILY_BACKUP_TO_KEEP days of each backup.\n"
-    sadm_write "You can change your choice by changing 'SADM_DAILY_BACKUP_TO_KEEP' value in \$SADMIN/cfg/sadmin.cfg\n"
-    sadm_write "We now have $backup_count days of backup(s).\n"         # Show Nb. Backup Days
+    sadm_write_log "\ "
+    sadm_write_log "You have decided to keep only the last $SADM_DAILY_BACKUP_TO_KEEP days of each backup."
+    sadm_write_log "You can change your choice by changing 'SADM_DAILY_BACKUP_TO_KEEP' value in \$SADMIN/cfg/sadmin.cfg"
+    sadm_write_log "You now have $backup_count days of backup(s)."         # Show Nb. Backup Days
 
     # If current number of backup days on disk is greater than nb. of backup to keep, then cleanup.
     if [ "$backup_count" -gt "$SADM_DAILY_BACKUP_TO_KEEP" ]
-        then sadm_write "So we need to delete $day2del day(s) of backup.\n"
+        then sadm_write_log "So we need to delete $day2del day(s) of backup."
              ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |tail -$day2del > $SADM_TMP_FILE3
-             cat $SADM_TMP_FILE3 |while read ln ;do sadm_write "Deleting ${ln}\n" ;rm -fr ${ln}* ;done
-             sadm_write "\n"
-             sadm_write "List of backup currently on disk:\n"
-             #ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_write "${ln}\n" ;done
-             du -h . |while read ln ;do sadm_write "${ln}\n" ;done
-        else sadm_write "No clean up needed\n"
+             cat $SADM_TMP_FILE3 |while read ln ;do sadm_write_log "Deleting ${ln}" ;rm -fr ${ln}* ;done
+             sadm_write_log " "
+             sadm_write_log "List of backup currently on disk:"
+             #ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_write_log "${ln}" ;done
+             du -h . |while read ln ;do sadm_write_log "${ln}" ;done
+        else sadm_write_log "No clean up needed"
     fi
 
     cd $CUR_PWD                                                         # Restore Previous Cur Dir.
@@ -616,10 +617,10 @@ mount_nfs()
 {
     # Make sur the Local Mount Point Exist ---------------------------------------------------------
     if [ ! -d ${LOCAL_MOUNT} ]                                          # Mount Point doesn't exist
-        then sadm_write "Create local mount point ${LOCAL_MOUNT}\n"     # Advise user we create Dir.
+        then sadm_write_log "Create local mount point ${LOCAL_MOUNT}"   # Advise user we create Dir.
              mkdir ${LOCAL_MOUNT}                                       # Create if not exist
              if [ $? -ne 0 ]                                            # If Error trying to mount
-                then sadm_write_err "[ ERROR ] Creating local mount point - Process aborted."
+                then sadm_write_err "[ ERROR ] Failed to create directory ${LOCAL_MOUNT}, process aborted."
                 return 1                                                # End Function with error
              fi
              chmod 775 ${LOCAL_MOUNT}                                   # Change Protection
@@ -630,24 +631,24 @@ mount_nfs()
     sadm_write "Mounting NFS Drive on ${SADM_BACKUP_NFS_SERVER}.\n"     # Show NFS Server Name
     umount ${LOCAL_MOUNT} > /dev/null 2>&1                              # Make sure not mounted
     if [ "$SADM_OS_TYPE" = "DARWIN" ]                                   # If on MacOS
-        then sadm_write "mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT}\n"
+        then sadm_write_log "mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT}"
              mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
-        else sadm_write "mount ${REM_MOUNT} ${LOCAL_MOUNT}\n"           # If on Linux/Aix
+        else sadm_write_log "mount ${REM_MOUNT} ${LOCAL_MOUNT}"         # If on Linux/Aix
              mount ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1         # Mount NFS Drive
     fi
     if [ $? -ne 0 ]                                                     # If Error trying to mount
         then sadm_write_err "[ ERROR ] Mount NFS Failed - Process Aborted" # Error - Advise User
              return 1                                                   # End Function with error
-        else sadm_writelog "[ SUCCESS ] NFS Mount Succeeded."             # NFS Mount Succeeded Msg
+        else sadm_write_log "[ SUCCESS ] NFS Mount Succeeded."          # NFS Mount Succeeded Msg
     fi
 
     # Create System Main Directory
     F="${LOCAL_MOUNT}/${SADM_HOSTNAME}"
     if [ ! -d ${F} ]                                                    # Check if Server Dir Exist
-        then sadm_write "Making System main backup directory $F \n"
+        then sadm_write_log "Making System main backup directory $F"
              mkdir ${F}                                                 # If Not Create it
              if [ $? -ne 0 ]                                            # If Error trying to mount
-                then sadm_writelog "[ ERROR ] Creating Main System Backup Directory ${F}"
+                then sadm_write_log "[ ERROR ] Creating Main System Backup Directory ${F}"
                      return 1                                           # End Function with error
              fi
             chmod 775 ${F}                                              # Assign Permission
@@ -662,8 +663,8 @@ mount_nfs()
 # ==================================================================================================
 umount_nfs()
 {
-    sadm_write "\n"
-    sadm_write "Unmounting NFS mount directory ${LOCAL_MOUNT}\n"
+    sadm_write_log " "
+    sadm_write_log "Unmounting NFS mount directory ${LOCAL_MOUNT}"
     umount $LOCAL_MOUNT >> $SADM_LOG 2>&1                               # Umount Just to make sure
     if [ $? -ne 0 ]                                                     # If Error trying to mount
         then sadm_write_err "[ ERROR ] Unmounting NFS Directory $LOCAL_MOUNT"   
