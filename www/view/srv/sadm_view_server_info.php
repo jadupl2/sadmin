@@ -41,6 +41,7 @@
 # 2022_06_16 web v2.16 System info page, If O/S code name is empty, don't print empty parentheses.
 #@2022_09_12 web v2.17 System info page, Enhance buttons look at the top of the page.
 #@2022_09_22 web v2.18 System info page, Add Backup button to give direct access to backup schedule
+#@2022_09_23 web v2.19 System info page, Add Rear & OS Update buttons,give direct access to schedule
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -84,7 +85,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.18" ;                                                       # Current version number
+$SVER  = "2.19" ;                                                       # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
