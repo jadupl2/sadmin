@@ -103,11 +103,11 @@ export SADM_SERVER_ONLY="N"                                # Run only on SADMIN 
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
-export SADM_ALERT_TYPE=3                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
@@ -290,7 +290,8 @@ check_available_update()
                     apt list --upgradable | tee -a  ${SADM_LOG}
                     NB_UPD=`apt list --upgradable 2>/dev/null | grep -iv 'Listing...' | wc -l`
                     if [ "$NB_UPD" -ne 0 ]
-                        then sadm_write_log "There are ${NB_UPD} update available."
+                        then sadm_write_log " " 
+                             sadm_write_log "There are ${NB_UPD} update available."
                              apt list --upgradable 2>/dev/null |grep -iv "listing"  >$SADM_TMP_FILE3 
                              if [ $? -ne 0 ] 
                                 then sadm_write_log "Error getting list of packages to update."
