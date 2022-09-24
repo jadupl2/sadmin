@@ -27,11 +27,12 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-# 2019_01_15 web v1.0 system removal - Create server data archive before deleting it.
-# 2019_08_17 web v1.1 system removal - New heading and return to Maintenance Server List
-# 2019_12_26 web v1.2 system removal - Deleted server now place in www/dat/archive directory.
-# 2021_06_07 web v1.3 system removal - Fix faulty message when deleting a client after creating it.
-# 2022_07_18 web v1.4 system removal - Fix delete permission problem & show archive file name.
+# 2019_01_15 web v1.0 client delete - Create server data archive before deleting it.
+# 2019_08_17 web v1.1 client delete - New heading and return to Maintenance Server List
+# 2019_12_26 web v1.2 client delete - Deleted server now place in www/dat/archive directory.
+# 2021_06_07 web v1.3 client delete - Fix faulty message when deleting a client after creating it.
+# 2022_07_18 web v1.4 client delete - Fix delete permission problem & show archive file name.
+#@2022_09_24 web v1.5 client delete - Change text in page header.
 #
 # ==================================================================================================
 #
@@ -48,7 +49,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.4" ;                                                        # Current version number
+$SVER  = "1.5" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -143,7 +144,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
     }
     
     # DISPLAY PAGE HEADING
-    $title1="System Deletion";                                          # Heading 1 Line
+    $title1="SADMIN client deletion confirmation";                                          # Heading 1 Line
     $title2="Last confirmation before deleting '" . $row['srv_name'] . "." . $row['srv_domain'] ;
     display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
 

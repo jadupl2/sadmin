@@ -22,23 +22,22 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-#   2017_11_15 - Jacques Duplessis
-#       V2.0 Restructure and modify to used to new web interface and MySQL Database.
-#   2018_02_02 - Jacques Duplessis
-#       V2.1 Added Column to specify if performance graph are to be displayed (Sporadic Server...)
-# 2018_10_01 v2.2 Remove Alert Group Field
-# 2018_12_15 v2.3 Add 'Darwin' as a choice for Operating System Type.
-# 2018_08_18 update: v2.4 Reduce screen size to 40 for the install directory field
+# 2017_11_15 web v2.0 client main form logic - Modify to used to new interface and MySQL Database.
+# 2018_02_02 web v2.1 client main form logic - Added Column to specify if performance graph are used
+# 2018_10_01 web v2.2 client main form logic - Remove Alert Group Field
+# 2018_12_15 web v2.3 client main form logic - Add 'Darwin' as a choice for Operating System Type.
+# 2018_08_18 web v2.4 client main form logic - Reduce screen size to 40 for install directory field
+#@2022_09_24 web v2.5 client main form logic - Add ssh port number to use to access the client
 # ==================================================================================================
  
 
 #===================================================================================================
-#                                      GLOBAL Variables//
-#======================================================//===========================
+#                                      GLOBAL Variables
+#===================================================================================================
 #
-$DEBUG = False ;                                       // Debug Activated True/False
-$SVER  = "2.4" ;                                       // Current version number
-$URL_CREATE = '/crud/srv/sadm_server_create.php';      // Create Page URL
+$DEBUG = False ;                                                        # Debug Activated True/False
+$SVER  = "2.5" ;                                                        # Current version number
+$URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
@@ -499,7 +498,28 @@ function display_srv_form ($con,$wrow,$mode) {
     echo "</span>";
     echo "\n</div>\n";                                                  # << End of double_input
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+
+        
+    # SSH Port number used to communicate with the client
+    echo "\n<div class='double_label'>SSH port</div>";                  # Display Name of Column
+    echo "\n<div class='double_input'>";                                # Class for Column Input
+    if ($smode == 'DISPLAY') {                                          # If Only Display no input
+       echo "\n<input type='text' name='scr_ssh_port' readonly ";       # Set Name and Read Only
+       echo " maxlength='5' size='5' ";                                 # Set Max. Length
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       echo " value='" . sadm_clean_data($wrow['srv_ssh_port']). "'/>"; # Show Current Value
+    }else{
+       echo "\n<input type='text' name='scr_ssh_port' ";                # Set Name & Col. is require
+       echo " placeholder='SSH port' ";                                 # Set Default
+       echo " maxlength='5' size='5' ";                                 # Set Max. Length
+       #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
+       echo " value='" . sadm_clean_data($wrow['srv_ssh_port']). "'/>"; # Show Current Value
+    }
+    echo "\n</div>";                                                    # << End of double_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
+    
+
     // echo "\n<hr/>";
 
     // # DISPLAY CREATION DATE 

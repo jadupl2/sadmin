@@ -22,13 +22,12 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-#   2017_03_09 - Jacques Duplessis
-#       V1.9 Add lot of comments in code and enhance code performance 
-#   2017_11_15 - Jacques Duplessis
-#       V2.0 Restructure and modify to used to new web interface and MySQL Database.
-#   2018_02_03 - Jacques Duplessis
-#       V2.1 Added Server Graph Display Option
-# 2019_08_29 Update: v2.2 New page heading, using the library heading function.
+# 2017_03_09 web v1.9 client creation page - Add lot of comment and enhance code performance 
+# 2017_11_15 web v2.0 client creation page - Modify to used to new web interface and MySQL Database.
+# 2018_02_03 web v2.1 client creation page - Added Server Graph Display Option
+# 2019_08_29 web v2.2 client creation page - New page heading, using the library heading function.
+#@2022_09_24 web v2.3 client creation page - Add SSH port to communicate with client.
+#@2022_09_24 web v2.4 client creation page - When add client, create client dir. in $SADMIN/www/dat.
 #
 # ==================================================================================================
 #
@@ -46,7 +45,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.2" ;                                                        # Current version number
+$SVER  = "2.4" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -64,8 +63,8 @@ $CREATE_BUTTON = False ;                                                # Don't 
         # Construct SQL to Insert row
         $sql = "INSERT INTO server ";                                   # Construct SQL Statement
         $sql = $sql . "(srv_name, srv_domain, srv_desc, srv_tag, srv_note, srv_active, ";
-        $sql = $sql . " srv_sporadic, srv_monitor, srv_alert_group, srv_graph, srv_cat, srv_group, srv_ostype, ";
-        $sql = $sql . " srv_date_creation) VALUES ('";
+        $sql = $sql . " srv_sporadic, srv_monitor, srv_alert_group, srv_graph, srv_cat, srv_group,";
+        $sql = $sql . "  srv_ostype, srv_ssh_port, srv_date_creation) VALUES ('";
         $sql = $sql . $_POST['scr_name']        . "','" ;
         $sql = $sql . $_POST['scr_domain']      . "','" ;
         $sql = $sql . $_POST['scr_desc']        . "','" ;
@@ -79,6 +78,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
         $sql = $sql . $_POST['scr_cat']         . "','" ;
         $sql = $sql . $_POST['scr_group']       . "','" ;
         $sql = $sql . $_POST['scr_ostype']      . "','" ;
+        $sql = $sql . $_POST['scr_ssh_port']    . "','" ;
         $sql = $sql . date( "Y-m-d H:i:s")      . "')"  ;
         if ($DEBUG) { echo "<br>SQL Command = $sql"; }                  # In Debug display SQL Stat.
 
@@ -91,6 +91,9 @@ $CREATE_BUTTON = False ;                                                # Don't 
             $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
             sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4); # Display Msg. Box for User
         }
+        # Make system data directory
+        $client_dir = SADM_WWW_DAT_DIR . "/" . $_POST['scr_name'];
+        mkdir($client_dir);
 
         # Back to Group List Page
         ?> <script> location.replace("/crud/srv/sadm_server_main.php"); </script><?php
@@ -104,17 +107,18 @@ $CREATE_BUTTON = False ;                                                # Don't 
     
     # START OF FORM - DISPLAY FORM READY TO ACCEPT DATA
     display_lib_heading("NotHome","Create SADMIN Client","",$SVER);       # Display Content Heading
+
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_srv_form ($con,$row,"Create");                              # Display Form Default Value
     echo "<input type='hidden' value='1' name='submitted' />";          # Set submitted var. to 1
     
     # Display Buttons (Create/Cancel) at the bottom of the form
     echo "\n\n<div class='two_buttons'>";
-    echo "\n<div class='first_button'>";
-    echo "<button type='submit'> Create </button></div>";
-    echo "\n<div class='second_button'>";
-    echo "<a href='" . $URL_MAIN . "'>";
-    echo "<button type='button'> Cancel </button></a>\n</div>";
+
+    echo "\n<div class='first_button'><button type='submit'> Create </button></div>\n";
+    echo "\n<div class='second_button'><a href='" . $URL_MAIN . "'>";
+    echo "\n     <button type='button'> Cancel </button></a>\n</div>";
+
     echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
     echo "\n</div>\n\n";
     

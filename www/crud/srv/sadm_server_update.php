@@ -22,13 +22,10 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-#   2017_03_09 - Jacques Duplessis
-#       V1.8 Add lot of comments in code and enhance code performance 
-#   2017_11_15 - Jacques Duplessis
-#       V2.0 Restructure and modify to used to new web interface and MySQL Database.
-#   2018_02_03 - Jacques Duplessis
-#       V2.1 Added Server Graph Display Option
-# 2019_08_17 Update: v2.2 Use new heading function, return to caller screen when exiting.
+# 2017_03_09 web v1.8 client update page - Add lot of comments in code and enhance code performance 
+# 2017_11_15 web v2.0 client update page - Restructure and modify to used to new web interface and MySQL Database.
+# 2018_02_03 web v2.1 client update page - Added Server Graph Display Option
+# 2019_08_17 web v2.2 client update page - Use new heading function, return to caller screen when exiting.
 # ==================================================================================================
 #
 #
@@ -87,6 +84,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
         $sql = $sql . "srv_cat = '"             . sadm_clean_data($_POST['scr_cat'])        ."', ";
         $sql = $sql . "srv_group = '"           . sadm_clean_data($_POST['scr_group'])      ."', ";
         $sql = $sql . "srv_ostype = '"          . sadm_clean_data($_POST['scr_ostype'])     ."', ";
+        $sql = $sql . "srv_ssh_port = '"        . sadm_clean_data($_POST['scr_ssh_port'])   ."', ";
         $sql = $sql . "srv_date_edit = '"       . date( "Y-m-d H:i:s")                      ."'  ";
         $sql = $sql . "WHERE srv_name = '" . sadm_clean_data($_POST['scr_name'])       ."'; ";
         if ($DEBUG) { echo "<br>Update SQL Command = $sql"; }

@@ -270,6 +270,10 @@ function display_left_side ($wrow)
     if ($wrow['srv_monitor'] == True) { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>"; 
     
+    # SSH Port used to connect to client.
+    echo "\n\n<div class='server_left_label'>SSH port</div>";
+    echo "\n<div class='server_left_data'>" . $wrow['srv_ssh_port'] . "</div>";
+
     # Alert Group
     #echo "\n\n<div class='server_left_label'>Alert Group</div>";
     #echo "\n<div class='server_left_data'>";
