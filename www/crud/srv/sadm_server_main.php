@@ -22,13 +22,12 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # =======================server===========================================================================
-# ChangeLog
-#   Version 2.0 - October 2017 
-#       - Replace PostGres Database with MySQL 
-#       - Web Interface changed for ease of maintenance and can concentrate on other things
-# 2019_01_11 Added: v2.1 Add Model and Serial No. in bubble while on server name.
-# 2019_08_17 Update: v2.2 New page heading and Logo of distribution inserted.
-# 2019_08_17 Fix: v2.3 Return to caller URL wasn't set properly.
+# ChangeLog create, read, update and delete. 
+# 2017_10_10 web v1.1 Client Main CRUD - Replace PostGres Database with MySQL 
+# 2019_01_11 web v2.1 Client Main CRUD - Add Model and Serial No. in bubble while on server name.
+# 2019_08_17 web v2.2 Client Main CRUD - New page heading and Logo of distribution inserted.
+# 2019_08_17 web v2.3 Client Main CRUD - Return to caller URL wasn't set properly.
+#@2022_09_24 web v2.4 Client Main CRUD - Change Page Header 
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
@@ -43,7 +42,7 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php')
 
 
         $('#sadmTable').DataTable( {
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, ,100, "All"]],
+            "lengthMenu": [[50, 100, -1], [50, ,100, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,
@@ -61,7 +60,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG         = False ;                                                # Debug Activated True/False
-$SVER          = "2.3" ;                                                # Current version number
+$SVER          = "2.4" ;                                                # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_OSUPDATE  = '/crud/srv/sadm_server_osupdate.php';                  # Update Page URL
@@ -196,7 +195,7 @@ function display_data($con,$row) {
 #
    
     # DISPLAY PAGE HEADING
-    $title1="SADMIN Client C.R.U.D.";                                       # Heading 1 Line
+    $title1="Client maintenance";                                       # Heading 1 Line
     $title2="[C]reate [R]ead [U]pdate [D]elete";                        # Heading 2 Line
     display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
 
