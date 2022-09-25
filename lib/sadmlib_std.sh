@@ -189,6 +189,7 @@
 #@2022_09_04 lib v4.10 Replace 'sadm_writelog' by 'sadm_write_log' for standardization.
 #@2022_09_20 lib v4.11 MacOS 'arch' is returning i386, change 'sadm_server_arch' to use 'uname -m'.
 #@2022_09_20 lib v4.12 MacOS change 'sadm_get_osmajorversion' so it return and int after v10.
+#@2022_09_25 lib v4.13 MacOS architecture was wrong in script header (arch command return i386 ?).
 #===================================================================================================
 
 
@@ -202,7 +203,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.12"                                              # This Library Version
+export SADM_LIB_VER="4.13"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -2060,7 +2061,7 @@ sadm_start() {
              if [ "$SADM_PDESC" ]                                       # If Script Desc. Not empty
                 then sadm_write_log "Desc: $SADM_PDESC"                  # Include it in log Header
              fi
-             sadm_write_log "Host: $(sadm_get_fqdn) - User: $SADM_USERNAME - Arch: $(arch) - SADMIN: $SADMIN"
+             sadm_write_log "Host: $(sadm_get_fqdn) - User: $SADM_USERNAME - Arch: $(sadm_server_arch) - SADMIN: $SADMIN"
              hline3="$(sadm_capitalize $(sadm_get_osname)) $(sadm_capitalize $(sadm_get_ostype))"
              hline3="${hline3} release $(sadm_get_osversion) - Kernel $(sadm_get_kernel_version)"
              sadm_write_log "$hline3"
