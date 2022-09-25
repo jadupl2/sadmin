@@ -90,7 +90,7 @@ export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. Sy
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}_XXX" --suffix _1.tmp) 
-export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}_XXX" --suffix _2.tmp) 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
 export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}_XXX" --suffix _3.tmp) 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
