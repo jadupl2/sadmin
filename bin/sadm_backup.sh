@@ -588,7 +588,7 @@ clean_backup_dir()
     du -h . |while read ln ;do sadm_write "${ln}\n" ;done
     backup_count=`ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l` # Calc. Nb. Days of backup
     day2del=$(($backup_count-$SADM_DAILY_BACKUP_TO_KEEP))               # Calc. Nb. Days to remove
-    sadm_write_log "\ "
+    sadm_write_log " "
     sadm_write_log "You have decided to keep only the last $SADM_DAILY_BACKUP_TO_KEEP days of each backup."
     sadm_write_log "You can change your choice by changing 'SADM_DAILY_BACKUP_TO_KEEP' value in \$SADMIN/cfg/sadmin.cfg"
     sadm_write_log "You now have $backup_count days of backup(s)."         # Show Nb. Backup Days
