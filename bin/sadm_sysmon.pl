@@ -49,6 +49,7 @@
 # 2021_07_05 sysmon v2.45 Added support to monitor 'http' and 'https' web site responsiveness.
 # 2021_07_06 sysmon v2.46 Change error messages syntax to be more descriptive.
 # 2022_07_02 sysmon v2.47 Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
+#@2022_09_24 sysmon v2.48 On MacOS review 'check_cpu_usage', 'check_load average' & filesystem check
 #===================================================================================================
 #
 use English;
@@ -63,7 +64,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.47";                                       # Version Number
+my $VERSION_NUMBER      = "2.48";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -504,8 +505,8 @@ sub filesystem_increase {
     if ( $src == -1 ) {                                                 # If FS Enlarge Failed
         print "\n  - [ERROR] Command failed: $!";                       # Advise USer
     }else{                                                              # If FS Enlarge Succeeded
-        print BOLD, GREEN, "\n  - [OK]", RESET;
-        #printf "\n  - [OK] Return Code: %d", $? >> 8;
+        #print BOLD, GREEN, "\n  - [OK]", RESET;
+        printf "\n  - [OK] Return Code: %d", $? >> 8;
     }
     return $src ;                                                       # Return Err. Code to Caller
 }
@@ -610,161 +611,159 @@ sub check_for_error {
     if ($alert_type eq "N") { return ; }                                # Return to caller
 
     ## Operating System Error Related Section
-    if (($MODULE eq "aix") || ($MODULE eq "linux")) {                   # If Module is aix or linux
 
-      ## Load average alert occured
-      if ($SUBMODULE eq "LOAD") {                                       # Check Uptime Load Average
-        ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();   # Get Date,Time,Epoch Time
-        if ($SYSMON_DEBUG >= 5) {                                       # If DEBUG Activated
-           print "\nActual Time: $year $month $day $hour $min $sec - $epoch"; # Actual Time & Epoch
-        }
-        # If it is the first occurence of the Error - Save Current Date and Time in RECORD
-        if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                                  # No Prev.Date/Time
-           $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day); # Save Excess Date
-           $SADM_RECORD->{SADM_TIME}=sprintf ("%02d%02d",$hour,$min,$sec);       # Save Excess Time
-        }
-        # Split Date and Time when the load began to exceed warning or error value
-        $wyear  =sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4);  # Extract Year Error started
-        $wmonth =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2);  # Extract Mth Error started
-        $wday   =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2);  # Extract Day Error Started
-        $whrs   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2);  # Extract Hrs Error Started
-        $wmin   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2);  # Extract Min Error Started
-        # Get Epoch Time of the last time we had a load exceeded
-        $last_epoch = get_epoch("$wyear", "$wmonth", "$wday", "$whrs", "$wmin", "0");
-        if ($SYSMON_DEBUG >= 5) {
-            print "\nLoad Average Alert started at $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch";
-        }
-        # Calculate number of seconds before SADM report the error (Min * 60 sec)
-        $elapse_second = $epoch - $last_epoch;                          # Cur. Epoch - $last_epoch
-        $max_second = $SADM_RECORD->{SADM_MINUTES} * 60 ;               # Min. Before alert in Sec.
-        if ($SYSMON_DEBUG >= 5) {                                       # Under Debug Mode
-           print "\nSo $epoch - $last_epoch = $elapse_second seconds";  # Sec. Elapse Since Started
-           print "\nYou asked to wait $max_second seconds before issuing alert";
-        }
-        # If number of second since the last error is greater than wanted - Issue Alert
-        if ( $elapse_second >= $max_second ) {                          # Problem Exceed Sec. Wait
-           $wmin = $SADM_RECORD->{SADM_MINUTES};                        # min. before issuing alert
-           $ERR_MESS = "Load Average at $WID & exceed $value_exceeded for more than $wmin Min";
-           write_rpt_file($alert_type,"$OSNAME","LOAD",$ERR_MESS);    # Go Reporting Alert
-           $SADM_RECORD->{SADM_DATE} = $SADM_RECORD->{SADM_TIME} = 0 ;  # Reset Last Alert Date/Time
-        }
+    ## Load average alert occured
+    if ($SUBMODULE eq "LOAD") {                                       # Check Uptime Load Average
+      ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();   # Get Date,Time,Epoch Time
+      if ($SYSMON_DEBUG >= 5) {                                       # If DEBUG Activated
+         print "\nActual Time: $year $month $day $hour $min $sec - $epoch"; # Actual Time & Epoch
       }
-
-      ## Paging alert occured
-      if ($SUBMODULE eq "PAGING") {                                     # When Paging Alert
-            $ERR_MESS = "Paging space at $ACTVAL% > $value_exceeded%" ; # Build Error Message
-            write_rpt_file($alert_type,"$OSNAME","PAGING",$ERR_MESS );# Go Report Alert
+      # If it is the first occurence of the Error - Save Current Date and Time in RECORD
+      if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                                  # No Prev.Date/Time
+         $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day); # Save Excess Date
+         $SADM_RECORD->{SADM_TIME}=sprintf ("%02d%02d",$hour,$min,$sec);       # Save Excess Time
       }
-
-      ## Multipath alert occured
-      if ($SUBMODULE eq "MULTIPATH")   {                                # When Multipath Alert
-         $ERR_MESS = "MultiPath Error - Status is $WID" ;               # Build Error Message
-         write_rpt_file($alert_type,"$OSNAME","MULTIPATH",$ERR_MESS );# Go Report Alert
+      # Split Date and Time when the load began to exceed warning or error value
+      $wyear  =sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4);  # Extract Year Error started
+      $wmonth =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2);  # Extract Mth Error started
+      $wday   =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2);  # Extract Day Error Started
+      $whrs   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2);  # Extract Hrs Error Started
+      $wmin   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2);  # Extract Min Error Started
+      # Get Epoch Time of the last time we had a load exceeded
+      $last_epoch = get_epoch("$wyear", "$wmonth", "$wday", "$whrs", "$wmin", "0");
+      if ($SYSMON_DEBUG >= 5) {
+          print "\nLoad Average Alert started at $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch";
       }
-
-      ## Cpu utilization percentage alert
-      if ($SUBMODULE eq "CPU") {                                        # When CPU Utilization Alert
-         ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get Date,Time, Epoch Time
-         if ($SYSMON_DEBUG >= 5) {                                      # IF Debug Level >= 5
-            print "\nActual Time is $year $month $day $hour $min $sec"; # Show Current Date/Time
-            print "\nActual epoch time is $epoch";                      # Show Current Epoch Time
-         }
-         # If it is the first occurence of the Error - Save Current Date and Time in RECORD
-         if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                                  # No Prev.Date/Time
-            $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day); # Save Excess Date
-            $SADM_RECORD->{SADM_TIME}=sprintf ("%02d%02d",$hour,$min,$sec);       # Save Excess Time
-         }
-         # Split Date and Time when the load began to exceed warning or error value
-         $wyear  =sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4);  # Extract Year Error started
-         $wmonth =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2);  # Extract Mth Error started
-         $wday   =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2);  # Extract Day Error Started
-         $whrs   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2);  # Extract Hrs Error Started
-         $wmin   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2);  # Extract Min Error Started
-         # Get Epoch Time of the last time we started to have an exceeding load
-         $last_epoch = get_epoch("$wyear","$wmonth","$wday","$whrs","$wmin","0");
-         if ($SYSMON_DEBUG >= 5) {
-             print "\nLoad on cpu started at $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch";
-         }
-         # Calculate number of seconds before SYSMON report the errors (Min * 60 sec)
-         $elapse_second = $epoch - $last_epoch;                         # Nb Sec. Since Load Started
-         $max_second = $SADM_RECORD->{SADM_MINUTES} * 60 ;
-         if ($SYSMON_DEBUG >= 5) {
-            print "\nSo $epoch - $last_epoch = $elapse_second seconds";
-            print "\nYou asked to wait $max_second seconds before report an error";
-         }
-        # If number of second since the last error is greater than wanted - Issue Alert
-        if ( $elapse_second >= $max_second ) {                          # Problem Exceed Sec. Wait
-           $wmin = $SADM_RECORD->{SADM_MINUTES};                        # min. before issuing alert
-           $ERR_MESS = sprintf("CPU at %-3d pct for more than %-3d min",$ACTVAL,$wmin);
-           write_rpt_file($alert_type,"$OSNAME","CPU",$ERR_MESS );      # Go Process Alert
-           $SADM_RECORD->{SADM_DATE} = $SADM_RECORD->{SADM_TIME} = 0 ;  # Reset Last Alert Date/Time
-        }
+      # Calculate number of seconds before SADM report the error (Min * 60 sec)
+      $elapse_second = $epoch - $last_epoch;                          # Cur. Epoch - $last_epoch
+      $max_second = $SADM_RECORD->{SADM_MINUTES} * 60 ;               # Min. Before alert in Sec.
+      if ($SYSMON_DEBUG >= 5) {                                       # Under Debug Mode
+         print "\nSo $epoch - $last_epoch = $elapse_second seconds";  # Sec. Elapse Since Started
+         print "\nYou asked to wait $max_second seconds before issuing alert";
       }
-
-      ## Filesystem alert occured
-      if (($SUBMODULE eq "FILESYSTEM") && ($MODULE eq "linux")) {       # If Filesystem SIze Alert
-         $ERR_MESS = "Filesystem $WID at $ACTVAL% $TEST $value_exceeded%";  # Set up Error Message
-         write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS);  # Go Report Alert
-
-         # If no script specified - Return to caller
-         if ((length $SADM_RECORD->{SADM_SCRIPT} == 0 ) || ($SADM_RECORD->{SADM_SCRIPT} eq "-") || ($SADM_RECORD->{SADM_SCRIPT} eq " ")) {
-            print "\nAutomatic filesystem increase script 'sadm_fs_incr.sh' not specified in ${SYSMON_CFG_FILE}.";
-            print "\nTherefore filesystem increase will not be performed.";
-            return 0 ;
-         }
-
-         ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get current epoch time
-         if ($SYSMON_DEBUG >= 5) {                                      # If Debug is ON
-            print "\n\nFilesystem Increase: $WID at $ACTVAL%";          # FileSystem Incr. Entered
-            print "\nActual Date and Time   : $year $month $day $hour $min $sec - $epoch";
-         }
-         # If it is the first occurence of the Error - Save Current Date and Time in RECORD
-         if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                                 # No Prev.Date/Time
-            $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day);# Save Excess Date
-            $SADM_RECORD->{SADM_TIME}=sprintf ("%02d%02d",$hour,$min,$sec);      # Save Excess Time
-         }
-         # Split Date and Time when the last file increase Happened
-         $wyear  =sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4); # Extract Year Error started
-         $wmonth =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2); # Extract Mth Error started
-         $wday   =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2); # Extract Day Error Started
-         $whrs   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2); # Extract Hrs Error Started
-         $wmin   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2); # Extract Min Error Started
-         $last_epoch = get_epoch("$wyear","$wmonth","$wday","$whrs","$wmin","0");
-         if ($SYSMON_DEBUG >= 5) {                                      # If DEBUG if ON
-            print "\nLast increase attempt  : $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch";
-         }
-         # Calculate the number of seconds since the last execution
-         $elapse_second = $epoch - $last_epoch;                          # Subs Act.epoch-Last epoch
-         if ($SYSMON_DEBUG >= 5) {                                       # If DEBUG Activated
-            print "\nSo $elapse_second seconds since last increase";     # Print Elapsed seconds
-         }
-         # If nb. of Seconds since last increase is greater than 1 Day (86400 Sec) = OK RUN
-         if ( $elapse_second >= $MINIMUM_SEC ) {                         # Elapsed Sec >= 86400 Sec.
-            ($year,$month,$day,$hour,$min,$sec,$epoch) =Today_and_Now(); # Get current epoch time
-            $SADM_RECORD->{SADM_DATE} = sprintf("%04d%02d%02d", $year,$month,$day);
-            $SADM_RECORD->{SADM_TIME} = sprintf("%02d%02d",$hour,$min,$sec);
-            $SADM_RECORD->{SADM_MINUTES} = "001";                        # First FS Increase Today
-            if ($SYSMON_DEBUG >= 5) { print "\nFirst filesystem increase in last 24 Hours"; }
-                filesystem_increase($WID);                               # Go Increase Filesystem
-         }else{
-            if (($SADM_RECORD->{SADM_MINUTES} + 1) > $MAX_FS_INCR){      # If FS Incr Counter > 2
-               if ($SYSMON_DEBUG >= 5) {                                 # If DEBUG Activated
-                  print "\nDone more than $MAX_FS_INCR Filesystem increase of $WID in last 24 Hrs";
-                  print "\nFilesystem increase will not be done.";       # Inform user not done
-               }
-               #$ERR_MESS = "FS $WID at $ACTVAL% > $value_exceeded%" ;    # Set up Error Message
-               #write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS); # Go Process Alert
-            }else{
-               $WORK = $SADM_RECORD->{SADM_MINUTES} + 1;                 # Incr. FS Counter
-               $SADM_RECORD->{SADM_MINUTES} = sprintf("%03d",$WORK);     # Insert Cnt in Array
-               if ($SYSMON_DEBUG >= 5) {                                 # If DEBUG Activated
-                  print "\nFilesystem increase counter: $SADM_RECORD->{SADM_MINUTES} ";
-               }
-               filesystem_increase($WID);                                # Go Increase Filesystem
-            }
-         }
+      # If number of second since the last error is greater than wanted - Issue Alert
+      if ( $elapse_second >= $max_second ) {                          # Problem Exceed Sec. Wait
+         $wmin = $SADM_RECORD->{SADM_MINUTES};                        # min. before issuing alert
+         $ERR_MESS = "Load Average at $WID & exceed $value_exceeded for more than $wmin Min";
+         write_rpt_file($alert_type,"$OSNAME","LOAD",$ERR_MESS);    # Go Reporting Alert
+         $SADM_RECORD->{SADM_DATE} = $SADM_RECORD->{SADM_TIME} = 0 ;  # Reset Last Alert Date/Time
       }
-    } # End of AIX/LINUX Module
+    }
+
+    ## Paging alert occured
+    if ($SUBMODULE eq "PAGING") {                                     # When Paging Alert
+          $ERR_MESS = "Paging space at $ACTVAL% > $value_exceeded%" ; # Build Error Message
+          write_rpt_file($alert_type,"$OSNAME","PAGING",$ERR_MESS );# Go Report Alert
+    }
+
+    ## Multipath alert occured
+    if ($SUBMODULE eq "MULTIPATH")   {                                # When Multipath Alert
+       $ERR_MESS = "MultiPath Error - Status is $WID" ;               # Build Error Message
+       write_rpt_file($alert_type,"$OSNAME","MULTIPATH",$ERR_MESS );# Go Report Alert
+    }
+
+    ## Cpu utilization percentage alert
+    if ($SUBMODULE eq "CPU") {                                        # When CPU Utilization Alert
+       ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get Date,Time, Epoch Time
+       if ($SYSMON_DEBUG >= 5) {                                      # IF Debug Level >= 5
+          print "\nActual Time is $year $month $day $hour $min $sec"; # Show Current Date/Time
+          print "\nActual epoch time is $epoch";                      # Show Current Epoch Time
+       }
+       # If it is the first occurence of the Error - Save Current Date and Time in RECORD
+       if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                                  # No Prev.Date/Time
+          $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day); # Save Excess Date
+          $SADM_RECORD->{SADM_TIME}=sprintf ("%02d%02d",$hour,$min,$sec);       # Save Excess Time
+       }
+       # Split Date and Time when the load began to exceed warning or error value
+       $wyear  =sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4);  # Extract Year Error started
+       $wmonth =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2);  # Extract Mth Error started
+       $wday   =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2);  # Extract Day Error Started
+       $whrs   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2);  # Extract Hrs Error Started
+       $wmin   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2);  # Extract Min Error Started
+       # Get Epoch Time of the last time we started to have an exceeding load
+       $last_epoch = get_epoch("$wyear","$wmonth","$wday","$whrs","$wmin","0");
+       if ($SYSMON_DEBUG >= 5) {
+           print "\nLoad on cpu started at $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch";
+       }
+       # Calculate number of seconds before SYSMON report the errors (Min * 60 sec)
+       $elapse_second = $epoch - $last_epoch;                         # Nb Sec. Since Load Started
+       $max_second = $SADM_RECORD->{SADM_MINUTES} * 60 ;
+       if ($SYSMON_DEBUG >= 5) {
+          print "\nSo $epoch - $last_epoch = $elapse_second seconds";
+          print "\nYou asked to wait $max_second seconds before report an error";
+       }
+      # If number of second since the last error is greater than wanted - Issue Alert
+      if ( $elapse_second >= $max_second ) {                          # Problem Exceed Sec. Wait
+         $wmin = $SADM_RECORD->{SADM_MINUTES};                        # min. before issuing alert
+         $ERR_MESS = sprintf("CPU at %-3d pct for more than %-3d min",$ACTVAL,$wmin);
+         write_rpt_file($alert_type,"$OSNAME","CPU",$ERR_MESS );      # Go Process Alert
+         $SADM_RECORD->{SADM_DATE} = $SADM_RECORD->{SADM_TIME} = 0 ;  # Reset Last Alert Date/Time
+      }
+    }
+
+    ## Filesystem alert occured
+    if ($SUBMODULE eq "FILESYSTEM") {                                   # If Filesystem SIze Alert
+       $ERR_MESS = "Filesystem $WID at $ACTVAL% $TEST $value_exceeded%";# Set up Error Message
+       write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS);    # Go Report Alert
+       if ($MODULE eq "darwin") { return 0 ; }                          # On MacOS no file increase
+
+       # If no script specified - Return to caller
+       if ((length $SADM_RECORD->{SADM_SCRIPT} == 0 ) || ($SADM_RECORD->{SADM_SCRIPT} eq "-") || ($SADM_RECORD->{SADM_SCRIPT} eq " ")) {
+          print "\nAutomatic filesystem increase script 'sadm_fs_incr.sh' not specified in ${SYSMON_CFG_FILE}.";
+          print "\nTherefore filesystem increase will not be performed.";
+          return 0 ;
+       }
+       ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get current epoch time
+       if ($SYSMON_DEBUG >= 5) {                                      # If Debug is ON
+          print "\n\nFilesystem Increase: $WID at $ACTVAL%";          # FileSystem Incr. Entered
+          print "\nActual Date and Time   : $year $month $day $hour $min $sec - $epoch";
+       }
+       # If it is the first occurence of the Error - Save Current Date and Time in RECORD
+       if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                                 # No Prev.Date/Time
+          $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day);# Save Excess Date
+          $SADM_RECORD->{SADM_TIME}=sprintf ("%02d%02d",$hour,$min,$sec);      # Save Excess Time
+       }
+       # Split Date and Time when the last file increase Happened
+       $wyear  =sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4); # Extract Year Error started
+       $wmonth =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2); # Extract Mth Error started
+       $wday   =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2); # Extract Day Error Started
+       $whrs   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2); # Extract Hrs Error Started
+       $wmin   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2); # Extract Min Error Started
+       $last_epoch = get_epoch("$wyear","$wmonth","$wday","$whrs","$wmin","0");
+       if ($SYSMON_DEBUG >= 5) {                                      # If DEBUG if ON
+          print "\nLast increase attempt  : $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch";
+       }
+       # Calculate the number of seconds since the last execution
+       $elapse_second = $epoch - $last_epoch;                          # Subs Act.epoch-Last epoch
+       if ($SYSMON_DEBUG >= 5) {                                       # If DEBUG Activated
+          print "\nSo $elapse_second seconds since last increase";     # Print Elapsed seconds
+       }
+       # If nb. of Seconds since last increase is greater than 1 Day (86400 Sec) = OK RUN
+       if ( $elapse_second >= $MINIMUM_SEC ) {                         # Elapsed Sec >= 86400 Sec.
+          ($year,$month,$day,$hour,$min,$sec,$epoch) =Today_and_Now(); # Get current epoch time
+          $SADM_RECORD->{SADM_DATE} = sprintf("%04d%02d%02d", $year,$month,$day);
+          $SADM_RECORD->{SADM_TIME} = sprintf("%02d%02d",$hour,$min,$sec);
+          $SADM_RECORD->{SADM_MINUTES} = "001";                        # First FS Increase Today
+          if ($SYSMON_DEBUG >= 5) { print "\nFirst filesystem increase in last 24 Hours"; }
+              filesystem_increase($WID);                               # Go Increase Filesystem
+       }else{
+          if (($SADM_RECORD->{SADM_MINUTES} + 1) > $MAX_FS_INCR){      # If FS Incr Counter > 2
+             if ($SYSMON_DEBUG >= 5) {                                 # If DEBUG Activated
+                print "\nDone more than $MAX_FS_INCR Filesystem increase of $WID in last 24 Hrs";
+                print "\nFilesystem increase will not be done.";       # Inform user not done
+             }
+             #$ERR_MESS = "FS $WID at $ACTVAL% > $value_exceeded%" ;    # Set up Error Message
+             #write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS); # Go Process Alert
+          }else{
+             $WORK = $SADM_RECORD->{SADM_MINUTES} + 1;                 # Incr. FS Counter
+             $SADM_RECORD->{SADM_MINUTES} = sprintf("%03d",$WORK);     # Insert Cnt in Array
+             if ($SYSMON_DEBUG >= 5) {                                 # If DEBUG Activated
+                print "\nFilesystem increase counter: $SADM_RECORD->{SADM_MINUTES} ";
+             }
+             filesystem_increase($WID);                                # Go Increase Filesystem
+          }
+       }
+    }
 
 
    ## Error detected for the Module name "NETWORK"
@@ -933,8 +932,7 @@ sub check_service {
 
     # Show Service Check Result
     if ($service_count >= 1) {                                          # At least 1 service running
-        #printf "\n[OK] Service is running - Total returned (%d)",$service_count;
-        printf "\n%s%s[OK]%s Service is running - Total returned (%d)", BOLD, GREEN, RESET, $service_count;
+        printf "\n[OK] Service is running - Total returned (%d)",$service_count;
     }else{                                                              # No Service are running
         printf "\n[ERROR] Service isn't running - Total returned (%d)",$service_count;
     }
@@ -986,8 +984,8 @@ sub check_daemon {
     $SMOD = "PROCESS"                   ;                               # Sub-Module Category
     $STAT = $pname                      ;                               # Name of deamon
     if ($CVAL > 0) {                                                    # At least 1 process running
-        #printf "\n[OK] Number of %s running is %d",$pname, $CVAL;       # Show number of Process
-        printf "\n%s%s[OK]%s Number of %s running is %d", BOLD, GREEN, RESET, $pname, $CVAL;
+        printf "\n[OK] Number of %s running is %d",$pname, $CVAL;       # Show number of Process
+        #printf "\n%s%s[OK]%s Number of %s running is %d", BOLD, GREEN, RESET, $pname, $CVAL;
     }else{                                                              # No Process running
         printf "\n[ERROR] No process named %s are running",$pname;      # Show No process are running
     }
@@ -1078,6 +1076,13 @@ sub check_load_average {
 
 #---------------------------------------------------------------------------------------------------
 # Check CPU (user + system) usage
+# DARWIN
+# $ iostat 1 2
+#              disk0       cpu    load average
+#    KB/t  tps  MB/s  us sy id   1m   5m   15m
+#   16.17   25  0.39   9  4 87  1.88 2.03 2.27
+#    0.00    0  0.00   0  1 99  1.88 2.03 2.27
+#
 #---------------------------------------------------------------------------------------------------
 sub check_cpu_usage {
     if ($SYSMON_DEBUG >= 5) { print "\n\nChecking CPU Usage ..."; }     # Entering CPU USage Check
@@ -1085,11 +1090,13 @@ sub check_cpu_usage {
     # Get User and System CPU Usage
     if ( $OSNAME eq "darwin" ) {                                        # Under MacOS use 'iostat'
         open (DB_FILE, "$CMD_IOSTAT 1 2 | $CMD_TAIL -1 |");             # Pipe last Line of iostat
+        $cpu_use = <DB_FILE> ;                                          # Open Stdout last Line
+        printf "\n'iostat 1 2' line:  %s" , $cpu_use;                   # Show User that last Line
     }else{                                                              # Under Linux or Aix
         open (DB_FILE, "$CMD_VMSTAT 1 2 | $CMD_TAIL -1 |");             # Linux/Aix vmstat last line
+        $cpu_use = <DB_FILE> ;                                          # Open Stdout last Line
+        printf "\n'vmstat 1 2' line:  %s" , $cpu_use;                   # Show User that last Line
     }
-    $cpu_use = <DB_FILE> ;                                              # Open Stdout last Line
-    printf "\nCPU Usage line:  %s\n" , $cpu_use;                        # Show User that last Line
     @ligne = split ' ',$cpu_use;                                        # Split Line based on space
     if ( $OSNAME eq "linux" ) {                                         # Under Linux
         $cpu_user   = int $ligne[12];                                   # Linux Get User CPU Usage
@@ -1100,8 +1107,8 @@ sub check_cpu_usage {
         $cpu_system = int $ligne[14];                                   # Aix Get User CPU Usage
     }
     if ( $OSNAME eq "darwin" ) {                                        # Under MacOS
-        $cpu_user   = int $ligne[3];                                    # MocOS Get User CPU Usage
-        $cpu_system = int $ligne[4];                                    # MocOS Get System CPU Usage
+        $cpu_user   = int $ligne[3];                                    # MacOS Get User CPU Usage
+        $cpu_system = int $ligne[4];                                    # MacOS Get System CPU Usage
     }
     $cpu_total  = $cpu_user + $cpu_system;                              # Add User+System CPU Usage
     close DB_FILE;
@@ -1138,6 +1145,9 @@ sub check_cpu_usage {
 
 #---------------------------------------------------------------------------------------------------
 # Check Swap Space Utilization
+# DARWIN
+# $ sysctl vm.swapusage
+# vm.swapusage: total = 1024.00M  used = 146.75M  free = 877.25M  (encrypted)
 #---------------------------------------------------------------------------------------------------
 sub check_swap_space  {
     if ($SYSMON_DEBUG >= 5) { print "\n\nChecking Swap Space ..." ;}    # Entering Swap Space Check
@@ -1225,10 +1235,8 @@ sub check_swap_space  {
 sub check_filesystems_usage  {
 
     if (substr($SADM_RECORD->{SADM_ID},2,6) eq "\/snap\/") {
-        $FSTAT = sprintf "%s%s[OK]%s", BOLD, GREEN, RESET;          # Default Status
         $MSG1  = sprintf "Filesystem %s disk usage aren't check",substr($SADM_RECORD->{SADM_ID},2); 
-        printf "\n$FSTAT $MSG1 (Snap package always at 100%)"; 
-#        printf "\n$FSTAT Filesystem %s disk usage aren't check (Snap package always at 100%)",substr($SADM_RECORD->{SADM_ID},2); 
+        printf "\n[ OK ] $MSG1 (Snap package always at 100%)"; 
         return;
     }
   
@@ -1249,10 +1257,10 @@ sub check_filesystems_usage  {
             $STAT = $fname                      ;                       # Current Value Returned
 
             # Set Status according to filesystem % usage and Print Filesystem status line
-            $FSTAT = sprintf "%s%s[OK]%s", BOLD, GREEN, RESET;          # Default Status
+            #$FSTAT = sprintf "%s%s[OK]%s", BOLD, GREEN, RESET;          # Default Status
             if ($CVAL >= $WVAL) { $FSTAT = sprintf "%s%s[WARNING]%s", BOLD, YELLOW, RESET; ;} 
             if ($CVAL >= $EVAL) { $FSTAT = sprintf "%s%s[ERROR]%s", BOLD, RED, RESET;   ;} 
-            print "\n$FSTAT Filesystem $fname at ${CVAL}% ... Warning: $WVAL - Error: $EVAL";
+            print "\n[ OK ] Filesystem $fname at ${CVAL}% ... Warning: $WVAL - Error: $EVAL";
 
             check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);  # Go Evaluate Error/Alert
             last;
@@ -1945,6 +1953,10 @@ sub end_of_sysmon {
 #---------------------------------------------------------------------------------------------------
 
     # Initializing SysMon
+    if ($SADM_UID != 0) {                           # Script MUST be run by root
+        print "\nThe SADMIN monitor need to be run by 'roor' user.\n\n" ;
+        exit 1;                                     # Exit with Error
+    }    
     init_process;                                   # Create lock file & do 'ps' commands to files
     $start_time = time;                             # Store Starting time - To calculate elapse time
     load_sadmin_cfg;                                # Load SADMIN Config file sadmin.cfg in Glob.Var
@@ -1957,14 +1969,10 @@ sub end_of_sysmon {
     loop_through_array;                             # Loop through Sadm Array line by line
 
     # Ending SysMon
-    close SADMRPT;                                  # Close SysMon report file
-    
-    # Make SysMon Report File Readable by everyone (If current user is root).
-    if ($SADM_UID == 0) {                                               # Script MUST be run by root
-        @cmd = ("$CMD_CP $SYSMON_RPT_FILE_TMP $SYSMON_RPT_FILE");       # Copy new rpt over old one
-        $return_code = 0xffff & system @cmd ;                           # Perform Command cp
-        unlink $SYSMON_RPT_FILE_TMP ;                                   # Delete Temporary file                
-        system ("chmod 664 $SYSMON_RPT_FILE");                          # File readable by group
-    }
+    close SADMRPT;                                  # Close SysMon tmp report file
+    @cmd = ("$CMD_CP $SYSMON_RPT_FILE_TMP $SYSMON_RPT_FILE"); # Copy new rpt over old one
+    $return_code = 0xffff & system @cmd ;           # Perform Command cp
+    unlink $SYSMON_RPT_FILE_TMP ;                   # Delete Temporary file                
+    system ("chmod 664 $SYSMON_RPT_FILE");          # File readable by group
     unload_smon_file;                               # Unload Update Array to hostname.smon file
     end_of_sysmon;                                  # Delete lock file - Print Elapse time
