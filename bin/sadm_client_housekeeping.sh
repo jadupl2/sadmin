@@ -69,6 +69,7 @@
 # 2022_07_02 client: v2.05 Set permission for new gmail passwd file ($SADMIN/cfg/.gmpw)
 # 2022_07_13 client: v2.06 Update new SADMIN section v1.51 and code revision..
 #@2022_09_20 client: v2.07 Use SSH port specify per server & Update SADMIN section to v1.52.
+#@2022_09_24 client: v2.08 MacOS Change mount point directory name (/preserve don't exist anymore)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -100,7 +101,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.07'                                      # Script version number
+export SADM_VER='2.08'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -315,8 +316,8 @@ dir_housekeeping()
     ERROR_COUNT=0                                                       # Reset Error Count
 
     # Path is needed to perform NFS Backup (It doesn't exist by default on Mac)
-    if [ "$SADM_OS_TYPE" = "DARWIN" ] && [ ! -d "/preserve/nfs" ]  # NFS Mount Point not exist
-        then mkdir -p /preserve/nfs && chmod 775 /preserve/nfs          # Create NFS mount point
+    if [ "$SADM_OS_TYPE" = "DARWIN" ] && [ ! -d "/tmp/nfs2" ]           # NFS Mount Point not exist
+        then mkdir -p /tmp/nfs2 && chmod 775 /tmp/nfs2                  # Create NFS mount point
     fi
 
     set_dir "$SADM_BASE_DIR"      "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN Base Dir
