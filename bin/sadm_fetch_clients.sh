@@ -9,79 +9,79 @@
 #   SCCS-Id. :  @(#) sadm_fetch_servers.sh 1.0 2015.09.06
 # --------------------------------------------------------------------------------------------------
 # Change Log
-# 2016_12_12  v1.6 Major changes to include ssh test to each server and alert when not working
-# 2017_02_09  v1.8 Change Script name and change SADM server default crontab
-# 2017_04_04  v1.9 Cosmetic - Remove blank lines inside processing servers
-# 2017_07_07  v2.0 Remove Ping before doing the SSH to each server (Not really needed)
-# 2017_07_20  v2.1 When Error Detected - The Error is included at the top of Email (Simplify Diag)
-# 2017_08_03  v2.2 Minor Bug Fix
-# 2017_08_24  v2.3 Rewrote section of code & Message more concise
-# 2017_08_29  v2.4 Bug Fix - Corrected problem when retrying rsync when failed
-# 2017_08_30  v2.5 If SSH test to server fail, try a second time (Prevent false Error)
-# 2017_12_17  v2.6 Modify to use MySQL instead of PostGres
-# 2018_02_08  v2.8 Fix compatibility problem with 'dash' shell
-# 2018_02_10  v2.9 Rsync on SADMIN server (locally) is not using ssh
-# 2018_04_05  v2.10 Do not copy web Interface crontab from backup unless file exist
-# 2018_05_06  v2.11 Remove URL from Email when Error are detecting while fetching data
-# 2018_05_06  v2.12 Small Modification for New Libr Version
-# 2018_06_29  v2.13 Use SADMIN Client Dir in Database instead of assuming /sadmin as root dir
-# 2018_07_08  v2.14 O/S Update crontab file is recreated and updated if needed at end of script.
-# 2018_07_14  v2.15 Fix Problem Updating O/S Update crontab when running with the dash shell.
-# 2018_07_21  v2.16 Give Explicit Error when cannot connect to Database
-# 2018_07_27  v2.17 O/S Update Script will store each server output log in $SADMIN/tmp for 7 days.
-# 2018_08_08  v2.18 Server not responding to SSH wasn't include in O/S update crontab,even active
-# 2018_09_14  v2.19 Alert are now send to Production Alert Group (sprod-->Slack Channel sadm_prod)
-# 2018_09_18  v2.20 Alert Minors fixes
-# 2018_09_26  v2.21 Include Subject Field in Alert and Add Info field from SysMon
-# 2018_09_26  v2.22 Reformat Error message for alerting system
-# 2018_10_04  v2.23 Supplemental message about o/s update crontab modification
-# 2018_11_28  v2.24 Added Fetch to MacOS Client 
-# 2018_12_30  Fixed: v2.25 Problem updating O/S Update crontab when some MacOS clients were used.
-# 2018_12_30  Added: sadm_fetch_clients.sh v2.26 - Diminish alert while system reboot after O/S Update.
-# 2019_01_05  Added: sadm_fetch_clients.sh v2.27 - Using sudo to start o/s update in cron file.
-# 2019_01_11  Feature: sadm_fetch_clients.sh v2.28 - Now update sadm_backup crontab when needed.
-# 2019_01_12  Feature: sadm_fetch_clients.sh v2.29 - Now update Backup List and Exclude on Clients.
-# 2019_01_18  Fix: sadm_fetch_clients.sh v2.30 - Fix O/S Update crontab generation.
-# 2019_01_26  Added: v2.31 Add to test if crontab file exist, when run for first time.
-# 2019_02_19  Added: v2.32 Copy script rch file in global dir after each run.
-# 2019_04_12  Fix: v2.33 Create Web rch directory, if not exist when script run for the first time.
-# 2019_04_17  Update: v2.34 Show Processing message only when active servers are found.
-# 2019_05_07  Update: v2.35 Change Send Alert parameters for Library 
-# 2019_05_23  Update: v2.36 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
-# 2019_06_06  Fix: v2.37 Fix problem sending alert when SADM_ALERT_TYPE was set 2 or 3.
-# 2019_06_07  New: v2.38 An alert status summary of all systems is displayed at the end.
-# 2019_06_19  Update: v2.39 Cosmetic change to alerts summary and alert subject.
-# 2019_07_12  Update: v3.00 Fix script path for backup and o/s update in respective crontab file.
-# 2019_07_24  Update: v3.1 Major revamp of code.
-# 2019_08_23  Update: v3.2 Remove Crontab work file (Cleanup)
-# 2019_08_29 Fix: v3.3 Correct problem with CR in site.conf 
-# 2019_08_31 Update: v3.4 More compact alert email subject.
-# 2019_12_01 Update: v3.5 Backup crontab will backup daily not to miss weekly,monthly and yearly.
-# 2020_01_12 Update: v3.6 Compact log produced by the script.
-# 2020_01_14 Update: v3.7 Don't use SSH when running daily backup and ReaR Backup for SADMIN server. 
-# 2020_02_19 Update: v3.8 Restructure & Create an Alert when can't SSH to client. 
-# 2020_03_21 Fix: v3.9 SSH error to client were not reported in System Monitor.
-# 2020_05_05 Fix: v3.10 Temp. file was not remove under certain circumstance.
-# 2020_05_13 Update: v3.11 Move processing command line switch to a function.
-# 2020_05_22 Update: v3.12 No longer report an error, if a system is rebooting because of O/S update.
-# 2020_07_20 Update: v3.13 Change email to have success or failure at beginning of subject.
-# 2020_07_29 Update: v3.14 Move location of o/s update is running indicator file to $SADMIN/tmp.
-# 2020_09_05 Update: v3.15 Minor Bug fix, Alert Msg now include Start/End?Elapse Script time
-# 2020_09_09 Update: v3.16 Modify Alert message when client is down.
-# 2020_10_29 Fix: v3.17 If comma was used in server description, it cause delimiter problem.
-# 2020_11_04 Update: v3.18 Reduce time allowed for O/S update to 1800sec. (30Min) & keep longer log.
-# 2020_11_05 Update: v3.19 Change msg written to log & no alert while o/s update is running.
-# 2020_11_24 Update: v3.20 Optimize code & Now calling new 'sadm_osupdate_starter' for o/s update.
-# 2020_12_02 Update: v3.21 New summary added to the log and Misc. fix.
-# 2020_12_12 Update: v3.22 Copy Site Common alert group and slack configuration files to client
-# 2020_12_19 Fix: v3.23 Don't copy alert group and slack configuration files, when on SADMIN Server.
-# 2020_12_19 Update: v3.24 Remove verbose on rsync
-# 2021_04_19 Update: v3.25 Change Include text in ReaR Config file.
-# 2021_05_10 nolog: v3.26 Error message change "sadm_osupdate_farm.sh" to "sadm_osupdate_starter"
-# 2021_06_06 server: v3.27 Change generation of /etc/cron.d/sadm_osupdate to use $SADMIN variable.
-# 2021_06_11 server: v3.28 Collect system uptime and store it in DB and update SADMIN section 
-# 2021_07_19 server: v3.29 Sleep 5 seconds between rsync retries, if first failed.
-# 2021_08_17 server: v3.30 Performance improvement et code restructure
+# 2016_12_12 server v1.6 Major changes to include ssh test to each server and alert when not working
+# 2017_02_09 server v1.8 Change Script name and change SADM server default crontab
+# 2017_04_04 server v1.9 Cosmetic - Remove blank lines inside processing servers
+# 2017_07_07 server v2.0 Remove Ping before doing the SSH to each server (Not really needed)
+# 2017_07_20 server v2.1 When Error Detected - The Error is included at the top of Email (Simplify Diag)
+# 2017_08_03 server v2.2 Minor Bug Fix
+# 2017_08_24 server v2.3 Rewrote section of code & Message more concise
+# 2017_08_29 server v2.4 Bug Fix - Corrected problem when retrying rsync when failed
+# 2017_08_30 server v2.5 If SSH test to server fail, try a second time (Prevent false Error)
+# 2017_12_17 server v2.6 Modify to use MySQL instead of PostGres
+# 2018_02_08 server v2.8 Fix compatibility problem with 'dash' shell
+# 2018_02_10 server v2.9 Rsync on SADMIN server (locally) is not using ssh
+# 2018_04_05 server v2.10 Do not copy web Interface crontab from backup unless file exist
+# 2018_05_06 server v2.11 Remove URL from Email when Error are detecting while fetching data
+# 2018_05_06 server v2.12 Small Modification for New Libr Version
+# 2018_06_29 server v2.13 Use SADMIN Client Dir in Database instead of assuming /sadmin as root dir
+# 2018_07_08 server v2.14 O/S Update crontab file is recreated and updated if needed at end of script.
+# 2018_07_14 server v2.15 Fix Problem Updating O/S Update crontab when running with the dash shell.
+# 2018_07_21 server v2.16 Give Explicit Error when cannot connect to Database
+# 2018_07_27 server v2.17 O/S Update Script will store each server output log in $SADMIN/tmp for 7 days.
+# 2018_08_08 server v2.18 Server not responding to SSH wasn't include in O/S update crontab,even active
+# 2018_09_14 server v2.19 Alert are now send to Production Alert Group (sprod-->Slack Channel sadm_prod)
+# 2018_09_18 server v2.20 Alert Minors fixes
+# 2018_09_26 server v2.21 Include Subject Field in Alert and Add Info field from SysMon
+# 2018_09_26 server v2.22 Reformat Error message for alerting system
+# 2018_10_04 server v2.23 Supplemental message about o/s update crontab modification
+# 2018_11_28 server v2.24 Added Fetch to MacOS Client 
+# 2018_12_30 server v2.25 Problem updating O/S Update crontab when some MacOS clients were used.
+# 2018_12_30 server v2.26 - Diminish alert while system reboot after O/S Update.
+# 2019_01_05 server v2.27 - Using sudo to start o/s update in cron file.
+# 2019_01_11 server v2.28 - Now update sadm_backup crontab when needed.
+# 2019_01_12 server v2.29 - Now update Backup List and Exclude on Clients.
+# 2019_01_18 server v2.30 - Fix O/S Update crontab generation.
+# 2019_01_26 server v2.31 Add to test if crontab file exist, when run for first time.
+# 2019_02_19 server v2.32 Copy script rch file in global dir after each run.
+# 2019_04_12 server v2.33 Create Web rch directory, if not exist when script run for the first time.
+# 2019_04_17 server v2.34 Show Processing message only when active servers are found.
+# 2019_05_07 server v2.35 Change Send Alert parameters for Library 
+# 2019_05_23 server v2.36 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
+# 2019_06_06 server v2.37 Fix problem sending alert when SADM_ALERT_TYPE was set 2 or 3.
+# 2019_06_07 server v2.38 An alert status summary of all systems is displayed at the end.
+# 2019_06_19 server v2.39 Cosmetic change to alerts summary and alert subject.
+# 2019_07_12 server v3.00 Fix script path for backup and o/s update in respective crontab file.
+# 2019_07_24 server v3.1 Major revamp of code.
+# 2019_08_23 server v3.2 Remove Crontab work file (Cleanup)
+# 2019_08_29 server v3.3 Correct problem with CR in site.conf 
+# 2019_08_31 server v3.4 More compact alert email subject.
+# 2019_12_01 server v3.5 Backup crontab will backup daily not to miss weekly,monthly and yearly.
+# 2020_01_12 server v3.6 Compact log produced by the script.
+# 2020_01_14 server v3.7 Don't use SSH when running daily backup and ReaR Backup for SADMIN server. 
+# 2020_02_19 server v3.8 Restructure & Create an Alert when can't SSH to client. 
+# 2020_03_21 server v3.9 SSH error to client were not reported in System Monitor.
+# 2020_05_05 server v3.10 Temp. file was not remove under certain circumstance.
+# 2020_05_13 server v3.11 Move processing command line switch to a function.
+# 2020_05_22 server v3.12 No longer report an error, if a system is rebooting because of O/S update.
+# 2020_07_20 server v3.13 Change email to have success or failure at beginning of subject.
+# 2020_07_29 server v3.14 Move location of o/s update is running indicator file to $SADMIN/tmp.
+# 2020_09_05 server v3.15 Minor Bug fix, Alert Msg now include Start/End?Elapse Script time
+# 2020_09_09 server v3.16 Modify Alert message when client is down.
+# 2020_10_29 server v3.17 If comma was used in server description, it cause delimiter problem.
+# 2020_11_04 server v3.18 Reduce time allowed for O/S update to 1800sec. (30Min) & keep longer log.
+# 2020_11_05 server v3.19 Change msg written to log & no alert while o/s update is running.
+# 2020_11_24 server v3.20 Optimize code & Now calling new 'sadm_osupdate_starter' for o/s update.
+# 2020_12_02 server v3.21 New summary added to the log and Misc. fix.
+# 2020_12_12 server v3.22 Copy Site Common alert group and slack configuration files to client
+# 2020_12_19 server v3.23 Don't copy alert group and slack configuration files, when on SADMIN Server.
+# 2020_12_19 server v3.24 Remove verbose on rsync
+# 2021_04_19 server v3.25 Change Include text in ReaR Config file.
+# 2021_05_10 nolog  v3.26 Error message change "sadm_osupdate_farm.sh" to "sadm_osupdate_starter"
+# 2021_06_06 server v3.27 Change generation of /etc/cron.d/sadm_osupdate to use $SADMIN variable.
+# 2021_06_11 server v3.28 Collect system uptime and store it in DB and update SADMIN section 
+# 2021_07_19 server v3.29 Sleep 5 seconds between rsync retries, if first failed.
+# 2021_08_17 server v3.30 Performance improvement et code restructure
 # 2021_08_27 server v3.31 Increase ssh connection Timeout "-o ConnectTimeout=3".
 # 2021_10_20 server v3.32 Remove syncing of depreciated file 'alert_slack.cfg'. 
 # 2021_11_15 server v3.33 Fix type error on comment line
@@ -95,6 +95,7 @@
 # 2022_07_01 server v3.41 Fix error updating crontab.
 # 2022_07_09 server v3.42 Updated to use new SADMIN section v1.52.
 # 2022_07_14 server v3.43 Change group to '$SADM_GROUP' in $SADMIN/www/dat (fix web ui problem).
+#@2022_09_29 server v3.44 Daily backup crontab update, check web option to compress backup it or not
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -126,7 +127,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.43'                                     # Script version number
+export SADM_VER='3.44'                                     # Script version number
 export SADM_PDESC="Get scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -519,14 +520,21 @@ update_backup_crontab ()
     cmonth=$5                                                           # Crontab Mth (YNNNN) Format
     cdom=$6                                                             # Crontab DOM (YNNNN) Format
     cdow=$7                                                             # Crontab DOW (YNNNN) Format
-    SSH_PORT=$8 
+    SSH_PORT=$8                                                         # SSH Port Number 
+    ccompress=$9                                                        # Compress Backup 1=Yes 0=No
 
     cline=`printf "%02d %02d" "$cmin" "$chour"`                         # Hour & Min. of Execution
     if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi   # Show Cron Line Now
     cline="$cline * * * "
     if [ "$SADM_HOSTNAME" != "$cserver" ]  
-        then cline="$cline $SADM_USER sudo ${SADM_SSH} -qnp $SSH_PORT $cserver \"$cscript\" >/dev/null 2>&1";
-        else cline="$cline $SADM_USER sudo \"$cscript\" >/dev/null 2>&1"; 
+        then if [ $ccompress -eq 1 ] 
+                then cline="$cline $SADM_USER sudo ${SADM_SSH} -qnp $SSH_PORT $cserver \"$cscript\" >/dev/null 2>&1";
+                else cline="$cline $SADM_USER sudo ${SADM_SSH} -qnp $SSH_PORT $cserver \"$cscript -n\" >/dev/null 2>&1";
+             fi                 
+        else if [ $ccompress -eq 1 ]
+                then cline="$cline $SADM_USER sudo \"$cscript\" >/dev/null 2>&1"; 
+                else cline="$cline $SADM_USER sudo \"$cscript -n\" >/dev/null 2>&1"; 
+             fi 
     fi 
     echo "$cline" >> $SADM_BACKUP_NEWCRON                               # Output Line to Crontab cfg
 }
@@ -785,7 +793,7 @@ build_server_list()
     SQL="${SQL} srv_update_auto,srv_backup,srv_backup_month,srv_backup_dom,srv_backup_dow,"
     SQL="${SQL} srv_backup_hour,srv_backup_minute,"
     SQL="${SQL} srv_img_backup,srv_img_month,srv_img_dom,srv_img_dow,srv_img_hour,srv_img_minute, "
-    SQL="${SQL} srv_ssh_port "
+    SQL="${SQL} srv_ssh_port, srv_backup_compress "
     SQL="${SQL} from server"
     SQL="${SQL} where srv_ostype = '${WOSTYPE}' and srv_active = True "
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
@@ -874,6 +882,7 @@ process_servers()
         rear_hrs=`      echo $wline|awk -F\; '{ print $24 }'`           # Rear Crontab Hrs field
         rear_min=`      echo $wline|awk -F\; '{ print $25 }'`           # Rear Crontab Min field
         ssh_port=`      echo $wline|awk -F\; '{ print $26 }'`           # Port No. to SSH to System
+        compress=`      echo $wline|awk -F\; '{ print $27 }'`           # Compress (1=Yes,0=No)
         #
         sadm_writelog " "                                               # White Line
         sadm_writelog "---- [$xcount ($server_os)] ${fqdn_server} ----" # Show count & ServerName
@@ -881,21 +890,22 @@ process_servers()
         # TO DISPLAY DATABASE COLUMN WE WILL USED, FOR DEBUGGING
         if [ $SADM_DEBUG -gt 4 ] 
             then sadm_write_log "Column Name and Value before processing them."
-                 sadm_write_log "server_name  = $server_name"           # Server Name to run script
-                 sadm_write_log "backup_auto  = $backup_auto"           # Run Backup ? 1=Yes 0=No 
-                 sadm_write_log "backup_mth   = $backup_mth"            # Month String YNYNYNYNYNY..
-                 sadm_write_log "backup_dom   = $backup_dom"            # Day of MOnth String YNYN..
-                 sadm_write_log "backup_dow   = $backup_dow"            # Day of Week String YNYN...
-                 sadm_write_log "backup_hrs   = $backup_hrs"            # Hour to run script
-                 sadm_write_log "backup_min   = $backup_min"            # Min. to run Script
-                 sadm_write_log "fqdn_server  = $fqdn_server"           # Name of Output file
-                 sadm_write_log "ssh_port     = $ssh_port"              # Port No. to ssh to system
-                 sadm_write_log "rear_auto    = $rear_auto "            # Rear Crontab 1=Yes 0=No 
-                 sadm_write_log "rear_mth     = $rear_mth  "            # Rear Crontab Mth field
-                 sadm_write_log "rear_dom     = $rear_dom  "            # Rear Crontab DOM field
-                 sadm_write_log "rear_dow     = $rear_dow  "            # Rear Crontab DOW field 
-                 sadm_write_log "rear_hrs     = $rear_hrs  "            # Rear Crontab Hrs field
-                 sadm_write_log "rear_min     = $rear_min  "            # Rear Crontab Min field
+                 sadm_write_log "server_name     = $server_name"        # Server Name to run script
+                 sadm_write_log "backup_auto     = $backup_auto"        # Run Backup ? 1=Yes 0=No 
+                 sadm_write_log "backup_mth      = $backup_mth"         # Month String YNYNYNYNYNY..
+                 sadm_write_log "backup_dom      = $backup_dom"         # Day of MOnth String YNYN..
+                 sadm_write_log "backup_dow      = $backup_dow"         # Day of Week String YNYN...
+                 sadm_write_log "backup_hrs      = $backup_hrs"         # Hour to run script
+                 sadm_write_log "backup_min      = $backup_min"         # Min. to run Script
+                 sadm_write_log "backup_compress = $compress"           # Compress Backup 1=Y 0=N)
+                 sadm_write_log "fqdn_server     = $fqdn_server"        # Name of Output file
+                 sadm_write_log "ssh_port        = $ssh_port"           # Port No. to ssh to system
+                 sadm_write_log "rear_auto       = $rear_auto "         # Rear Crontab 1=Yes 0=No 
+                 sadm_write_log "rear_mth        = $rear_mth  "         # Rear Crontab Mth field
+                 sadm_write_log "rear_dom        = $rear_dom  "         # Rear Crontab DOM field
+                 sadm_write_log "rear_dow        = $rear_dow  "         # Rear Crontab DOW field 
+                 sadm_write_log "rear_hrs        = $rear_hrs  "         # Rear Crontab Hrs field
+                 sadm_write_log "rear_min        = $rear_min  "         # Rear Crontab Min field
         fi
     
         # Test SSH connectivity and update uptime in Database 
@@ -919,7 +929,7 @@ process_servers()
 
         # Generate Crontab Entry for this server in Backup crontab work file
         if [ $backup_auto -eq 1 ]                                       # If Backup set to Yes 
-            then update_backup_crontab "$server_name" "${server_dir}/bin/$BA_SCRIPT" "$backup_min" "$backup_hrs" "$backup_mth" "$backup_dom" "$backup_dow" "$ssh_port"
+            then update_backup_crontab "$server_name" "${server_dir}/bin/$BA_SCRIPT" "$backup_min" "$backup_hrs" "$backup_mth" "$backup_dom" "$backup_dow" "$ssh_port" "$compress"
         fi
 
         # Generate Crontab Entry for this server in ReaR crontab work file
