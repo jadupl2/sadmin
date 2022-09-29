@@ -22,18 +22,19 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-# 2019_01_01 Added: sadm_server_backup.php v1.1 Each server backup schedule, can now be changed using the web interface.
-# 2019_01_12 Feature: sadm_server_backup.php v1.2 Client Backup List and Exclude list can be modified with Web Interface.
-# 2019_01_18 Added: v1.3 Hash of Backup List & Exclude list to check if were modified.
-# 2019_01_22 Added: v1.4 Add Dark Theme
-# 2019_08_14 Update: v1.5 Redesign page,show one line schedule,show backup policies, fit Ipad screen.
-# 2019_08_19 Update: v1.6 Some typo error and show 'Backup isn't activated' when no schedule define.
-# 2019_12_01 Update: v1.7 Backup will run daily (Remove entry fields for specify day of backup)
-#       If not run every day, they could miss the day of weekly & monthly and date of Yearly backup.
-# 2020_01_03 Update: v1.8 Web Page disposition and input was changed.
-# 2020_01_13 Update: v1.9 Enhance Web Appearance and color. 
-# 2020_01_18 Update: v2.0 Reduce width of text-area for include,exclude list to fit on Ipad.
-# 2021_05_25 web: v2.1 Replace php depreciated function 'eregi_replace' warning message.
+# 2019_01_01 web v1.1 BackupPage - Each server backup schedule, can be changed using web interface.
+# 2019_01_12 web v1.2 BackupPage - Client Backup List and Exclude list modified with Web Interface.
+# 2019_01_18 web v1.3 BackupPage - Hash of Backup List & Exclude list to check if were modified.
+# 2019_01_22 web v1.4 BackupPage - Add Dark Theme
+# 2019_08_14 web v1.5 BackupPage - Redesign page,show one line schedule,show backup policies.
+# 2019_08_19 web v1.6 BackupPage - Show 'Backup isn't activated' when no schedule define.
+# 2019_12_01 web v1.7 BackupPage - Backup will run daily (Del entry field for specify day of backup)
+# 2019_12_02 web v1.7 BackupPage - Run every day, so don't miss day/weekly/monthly and Yearly backup
+# 2020_01_03 web v1.8 BackupPage - Web Page disposition and input was changed.
+# 2020_01_13 web v1.9 BackupPage - Enhance Web Appearance and color. 
+# 2020_01_18 web v2.0 BackupPage - Reduce width of text-area for include/exclude list to fit on Ipad
+# 2021_05_25 web v2.1 BackupPage - Replace php depreciated function 'eregi_replace' warning message.
+#@2022_09_28 web v2.2 BackupPage - Add Possibility to compress or not the backup viw the web page.
 # ==================================================================================================
 #
 #
@@ -48,32 +49,25 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     color           :   White;   
     font-family     :   Verdana, Geneva, sans-serif;
     font-size       :   0.9em;
-    width           :   85%;
-    margin          :   0px 10px 10px 10px;
+    width           :   75%;
+    margin          :   auto;
     text-align      :   left;
     border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
     border-color    :   #000000;             border-radius: 10px;
     line-height     :   1.7;    
 }
-.backup_left_side   { width : 50%;  float : left;   margin : 10px 0px 10px 0px;    }
-.left_label         { float : left; width : 50%;  padding-left : 2%; margin-left :5 px;  text-align: left; font-weight : normal; }
-.left_input         { margin-bottom : 5px;  margin-left : 55%;  
+.backup_rectangle   { width : 70%;  float : left;   margin : 10px 0px 10px 0px;    }
+.left_label         { float : left; width : 38%;  padding-left : 2%; margin-left :5 px;  text-align: left; font-weight : normal; }
+.left_input         { margin-bottom : 5px;  margin-left : 40%;  
                       width : 50%; border-width: 0px;  border-style : solid;  border-color : #000000;
                       padding-left: 6px;
 }
-
-.backup_right_side  { width : 50%;  float : right;  margin : 10px 0px 10px 0px;    }
-.right_label        { float : left; width : 85%;    font-weight : normal; }
-.right_input        { margin-bottom : 4px;  margin-right : 10px;     
-                      float : left;  padding-left : 5px;  padding-right : 5px;  padding-top : 5px;
-                      border-width: 1px;  border-style : solid;  border-color : #000000;
-}                      
 .backup_policy {
     background-color:   #28866c;
     color           :   #F7FF00; 
     font-family     :   Verdana, Geneva, sans-serif;
     width           :   85%;
-    margin          :   0px 0px 0px 10px;
+    margin          :   auto;
     padding-top     :   10px;
     padding-left    :   15px; 
     text-align      :   left;
@@ -94,8 +88,8 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     border-color    :   #000000;             border-radius: 10px; */
     line-height     :   1.5;    
 }
-.deux_boutons   { width : 85%;  margin: 0px 0px 0px 0px;  } 
-.premier_bouton { width : 20%;  height : 20px ; float : left;   margin-left : 25%;  text-align : right ; }
+.deux_boutons   { width : 100%;  margin: 0px 0px 0px 0px;  } 
+.premier_bouton { width : 25%;  height : 25px ; float : left;   margin-left : 25%;  text-align : right ; }
 .second_bouton  { width : 20%;  float : right;  margin-right: 25%;  text-align : left  ; }
 </style>
 
@@ -110,7 +104,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.1" ;                                                        # Current version number
+$SVER  = "2.2" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -244,15 +238,10 @@ function display_backup_schedule($con,$wrow,$mode) {
     echo "\n\n<div class='backup_page'>\n                   <!-- Start backup_page Div -->";
     
     # BACKUP LEFT SIDE DIV
-    echo "\n\n<div class='backup_left_side'>                <!-- Start backup_left_side Div -->";
+    echo "\n\n<div class='backup_rectangle'>                <!-- Start backup_rectangle Div -->";
     display_left_side ($con,$wrow,$mode);
-    echo "\n\n</div>                                        <!-- End of backup_left_side Div -->";
-    
-    # BACKUP RIGHT SIDE DIV
-    #echo "\n\n<div class='backup_right_side'>               <!-- Start backup_right_side Div -->";
-    #display_right_side ($con,$wrow,$mode);
-    #echo "\n\n</div>                                        <!-- End of backup_right_side Div -->";
-    
+    echo "\n\n</div>                                        <!-- End of backup_rectangle Div -->";
+   
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     echo "\n</div>                                          <!-- End of backup_page Div -->";
     echo "\n<br>";
@@ -272,8 +261,8 @@ function display_left_side($con,$wrow,$mode) {
     global $BLHASH, $BEHASH ;
     $smode = strtoupper($mode);                                         # Make Sure Mode is Upcase
     
-    # WANT TO SCHEDULE A BACKUP REGULARLY (Yes/No) ?
-    echo "\n\n<div class='left_label'>Activate Backup</div>";
+    # Backup Activated or Not ? (Yes/No) (True/False)?
+    echo "\n\n<div class='left_label'>Daily backup activated ?</div>";
     echo "\n<div class='left_input'>";
     if ($mode == 'C') { $wrow['srv_backup'] = False ; }             # Default 
     switch ($mode) {
@@ -300,99 +289,8 @@ function display_left_side($con,$wrow,$mode) {
     }
     echo "\n</div>";
 
-    # Specify what month the Backup need to run - Default is All months
-    # srv_backup_month = 13 Char Array - Contain 'Y' if month is chosen for Backup and 'N' if not.
-    # If 1st Char is "Y" then this means that backup can run in any of the 12 months.
-    # If 1st Char is "N" then each of the following 12 months specify the month backup can run (Y).
-    # ----------------------------------------------------------------------------------------------
-    # echo "\n\n<div class='left_label'>Month to run Backup</div>";
-    # $mth_name = array('Any Months','January','February','March','April','May','June','July','August',
-    #     'September','October','November','December');
-    # echo "\n<div class='left_input'>";
-    # echo "<select name='scr_backup_month[]' multiple='multiple' size=6>";
-    # switch ($mode) {
-    #     case 'C' :  for ($i = 0; $i < 13; $i = $i + 1) {
-    #                     echo "\n<option value='$i' ";
-    #                     if ($i ==0) { echo "selected" ; }
-    #                     echo "/>" . $mth_name[$i] . "</option>";
-    #                 }
-    #                 break ;
-    #     default  :  for ($i = 0; $i < 13; $i = $i + 1) {
-    #                     echo "\n<option value='$i'" ;
-    #                     if (substr($wrow['srv_backup_month'],$i,1) == "Y") {echo " selected";}
-    #                     if ($mode == 'D') { echo " disabled" ; }
-    #                     echo "/>" . $mth_name[$i] . "</option>";
-    #                 }
-    #                 break;
-    # }
-    # echo "\n</select>";
-    # echo "\n</div>";
-
-
-    # Date Number in the month (dom) to run the Backup
-    # ----------------------------------------------------------------------------------------------
-    # echo "\n\n<div class='left_label'>Date of Backup</div>";
-    # echo "\n<div class='left_input'>";
-    # echo "\n<select name='scr_backup_dom[]' multiple='multiple' size=5>";
-    # switch ($mode) {
-    #     case 'C' :  for ($i = 0; $i < 32; $i = $i + 1) {
-    #                     echo "\n<option value='$i' selected/>" . sprintf("%02d",$i) . "</option>";
-    #                 }
-    #                 break ;
-    #     default  :  for ($i = 0; $i < 32; $i = $i + 1) {
-    #                     echo "\n<option value='$i'" ;
-    #                     if (substr($wrow['srv_backup_dom'],$i,1) == "Y") {echo " selected";}
-    #                     if ($mode == 'D') { echo " disabled" ; }
-    #                     echo ">";
-    #                     if ($i == 0) { echo " Any date of the month" ;}
-    #                     if ($i == 1) { echo " Run on 1st of the month" ;}
-    #                     if ($i == 2) { echo " Run on 2nd of the month" ;}
-    #                     if ($i == 3) { echo " Run on 3rd of the month" ;}
-    #                     if ($i >= 4) { echo " Run on " . $i . "th of the month" ;}
-    #                     echo "</option>";
-    #                 }
-    #                 break;
-    # }
-    # echo "\n</select>";
-    # echo "\n</div>";
-
-
-    # Day in the week (dow) to run the Backup
-    # srv_backup_dow = 8 Char Array - Contain 'Y' if the day is chosen for Backup and 'N' if not.
-    # If 1st Char is "Y" then this means that backup will run every day in the week.
-    # If 1st Char is "N" then each of the following 7 days specify the day the backup run (Y).
-    # 2nd to 8th Char. represent a day in the week.
-    # ----------------------------------------------------------------------------------------------
-    # echo "\n\n<div class='left_label'>Day to run Backup</div>";
-    # echo "\n<div class='left_input'>";
-    # $days = array('All','Sun','Mon','Tue','Wed','Thu','Fri','Sat');
-# 
-    # echo "\n<select name='scr_backup_dow[]' multiple='multiple' size=8>";
-    # switch ($mode) {
-    #     case 'C' :  for ($i = 0; $i < 8; $i = $i + 1) {
-    #                     echo "\n<option value='$i' ";
-    #                     if ($i == 7) { echo " selected"; }
-    #                     echo "/>" . $days[$i] . "</option>";
-    #                 }
-    #                 break ;
-    #     default  :  for ($i = 0; $i < 8; $i = $i + 1) {
-    #                     echo "\n<option value='$i' " ;
-    #                     if (substr($wrow['srv_backup_dow'],$i,1) == "Y") {echo " selected";}
-    #                     if ($mode == 'D') { echo " disabled" ; }
-    #                     echo "/>" . $days[$i];
-    #                     if ($i == 0) { echo "  (Every day of the week)" ;}
-    #                     echo "</option>";
-    #                 }
-    #                 break;
-    # }
-    # echo "\n</select>";
-    # echo "\n</div>";
-# 
-
-    # ----------------------------------------------------------------------------------------------
-    # Hour to Run the Backup
-    # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='left_label'>Daily Backup Time</div>";
+    # The Hour when to run the Backup
+    echo "\n\n<div class='left_label'>Daily backup time</div>";
     echo "\n<div class='left_input'>";
     echo "\n<select name='scr_backup_hour' size=1>";
     switch ($mode) {
@@ -415,10 +313,7 @@ function display_left_side($con,$wrow,$mode) {
     echo "\n</select>";
     echo " Hrs ";
 
-
-    # ----------------------------------------------------------------------------------------------
-    # Minute to run the backup
-    # ----------------------------------------------------------------------------------------------
+    # The Minute to run the backup
     echo "\n<select name='scr_backup_minute' size=1>";
     switch ($mode) {
         case 'C' :  for ($i = 0; $i < 60; $i = $i + 1) {
@@ -441,9 +336,39 @@ function display_left_side($con,$wrow,$mode) {
     echo " Min ";
     echo "\n</div>";
 
+    
+    # Compress the Backup or Not.
+    echo "\n\n<div class='left_label'>Compress backup</div>";
+    echo "\n<div class='left_input'>";
+    if ($mode == 'C') { $wrow['srv_backup_compress'] = False ; }             # Default 
+    switch ($mode) {
+        case 'D' : if ($wrow['srv_backup_compress'] == True) {
+                        echo "\n<input type='radio' name='scr_backup_compress' value='1' ";
+                        echo "onclick='javascript: return false;' checked> Yes  ";
+                        echo "\n<input type='radio' name='scr_backup_compress' value='0' ";
+                        echo "onclick='javascript: return false;'> No";
+                    }else{
+                        echo "\n<input type='radio' name='scr_backup_compress' value='1' ";
+                        echo "onclick='javascript: return false;'> Yes  ";
+                        echo "\n<input type='radio' name='scr_backup_compress' value='0' ";
+                        echo "onclick='javascript: return false;' checked > No ";
+                    }
+                    break;
+        default   : if ($wrow['srv_backup_compress'] == True) {
+                        echo "\n<input type='radio' name='scr_backup_compress' value='1' checked > Yes ";
+                        echo "\n<input type='radio' name='scr_backup_compress' value='0'> No  ";
+                    }else{
+                    echo "\n<input type='radio' name='scr_backup_compress' value='1'> Yes  ";
+                    echo "\n<input type='radio' name='scr_backup_compress' value='0' checked > <b>No</b>";
+                    }
+                    break;
+    }
+    echo "\n</div>";
+
+
 
     # Files and Directories to Backup
-    echo "\n\n<div class='left_label'>Backup List (Files & Dir.)</div>";
+    echo "\n\n<div class='left_label'>Dir. & file(s) to backup</div>";
     echo "\n<div class='left_input'>";
     echo "  <textarea rows='15' cols='60' name='backuplist' form='backup'>";
     $BLHASH = Read_BackupList($wrow);
@@ -451,7 +376,7 @@ function display_left_side($con,$wrow,$mode) {
     echo "\n</div>";
         
     # Files and Directories to Exclude from Backup
-    echo "\n\n<div class='left_label'>Exclude List (Files & Dir.)</div>";
+    echo "\n\n<div class='left_label'>Dir. & files(s) to exclude</div>";
     echo "\n<div class='left_input'>";
     echo "  <textarea rows='15' cols='60' name='backupexclude' form='backup'>";
     $BEHASH = Read_BackupExclude($wrow);
@@ -526,37 +451,6 @@ function show_backup_policy() {
 
 
 
-// ================================================================================================
-//                      DISPLAY RIGHT SIDE SERVER SCHEDULE FOR BACKUP
-// con   = Connector Object to Database
-// wrow  = Array containing table row keys/values
-// mode  = "Display" Will Only show row content - Can't modify any information
-//       = "Create"  Will display default values and user can modify all fields, except the row key
-//       = "Update"  Will display row content    and user can modify all fields, except the row key
-// ================================================================================================
-function display_right_side($con,$wrow,$mode) {
-    global $BLHASH, $BEHASH ;
-    
-    $smode = strtoupper($mode);                                         # Make Sure Mode is Upcase
-    
-    # Files and Directories to Backup
-    echo "\n\n<div class='right_label'>Backup List (Files & Dir. to Backup)</div>";
-    echo "\n<div class='right_input'>";
-    echo "  <textarea rows='12' cols='50' name='backuplist' form='backup'>";
-    $BLHASH = Read_BackupList($wrow);
-    echo "</textarea>";
-    echo "\n</div>";
-    
-    # Files and Directories to Exclude from Backup
-    echo "\n\n<div class='right_label'>Backup Exclude List (Files & Dir.)</div>";
-    echo "\n<div class='right_input'>";
-    echo "  <textarea rows='12' cols='50' name='backupexclude' form='backup'>";
-    $BEHASH = Read_BackupExclude($wrow);
-    echo "</textarea>";
-    echo "\n</div>";
-}
-
-
 
 
 #===================================================================================================
@@ -622,6 +516,9 @@ if (isset($_POST['submitted'])) {
     $sql = $sql . "srv_backup_dow = '"  . $wstr  ."', ";            # Insert in SQL Statement
     
     
+    # Compress backup or not -------------------------------------------------------------------
+    $sql = $sql . "srv_backup_compress = '" . sadm_clean_data($_POST['scr_backup_compress'])   ."', ";
+
     # Hour, Minute to perform the Backup -------------------------------------------------------
     $sql = $sql . "srv_backup_hour   = '" . sadm_clean_data($_POST['scr_backup_hour'])   ."', ";
     $sql = $sql . "srv_backup_minute = '" . sadm_clean_data($_POST['scr_backup_minute']) ."', ";
@@ -700,17 +597,17 @@ if (isset($_POST['submitted'])) {
         $row = mysqli_fetch_assoc($result);                             # Read the Associated row
     }
     
-    # DISPLAY SCREEN HEADING    
-    $title1="Daily backup schedule of '" . $row['srv_name'] . "." . $row['srv_domain'] . "'";
+    # Display Page Header   
+    $title1="Daily backup for '" . $row['srv_name'] . "." . $row['srv_domain'] . "'";
     if ($row['srv_backup'] == True) {
         list ($title2, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_backup_dom'], 
         $row['srv_backup_month'],$row['srv_backup_dow'], 
         $row['srv_backup_hour'], $row['srv_backup_minute']);
     }else{
-        $title2="Backup isn't activated";
+        $title2="Backup is not activated";
     }
     display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
-#    show_backup_policy();
+
     
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
     echo "\n\n<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' id='backup' method='POST'>";
