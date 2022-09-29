@@ -208,7 +208,7 @@ show_usage()
     printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
     printf "\n\t${BOLD}${YELLOW}-d${NORMAL} Set Debug (verbose) Level [0-9]"
     printf "\n\t${BOLD}${YELLOW}-h${NORMAL} Display this help message"
-    printf "\n\t${BOLD}${YELLOW}-n${NORMAL} Backup with NO compression"
+    printf "\n\t${BOLD}${YELLOW}-n${NORMAL} Backup with NO compression (default compress)"
     printf "\n\t${BOLD}${YELLOW}-v${NORMAL} Show script version info"
     printf "\n\n" 
 }
