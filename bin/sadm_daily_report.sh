@@ -16,38 +16,39 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-# 2015_12_14 V1.0 Initial Version
-# 2020_09_23 V1.1 In Progress September 
-# 2020_10_01 Update: v1.2 First Release
-# 2020_10_05 Update: v1.3 Daily Backup Report & ReaR Backup Report now available.
-# 2020_10_06 Fix: v1.4 Bug that get Current backup size in yellow, when shouldn't.
-# 2020_10_06 Update: v1.5 Minor Typo Corrections
-# 2020_10_29 Update: v1.6 Change CmdLine Switch & Storix Daily report is working
-# 2020_11_04 Update: v1.7 Added 1st draft of scripts html report.
-# 2020_11_07 New: v1.8 Exclude file can be use to exclude scripts or servers from daily report.
-# 2020_11_08 Updated: v1.9 Show Alert Group Name on Script Report
-# 2020_11_10 Fix: v1.10 Minor bug fixes.
-# 2020_11_13 New: v1.11 Email of each report now include a pdf of the report(if wkhtmltopdf install)
-# 2020_11_12 Updated v1.12 Warning in Yellow when backup outdated, bug fixes.
-# 2020_11_21 Updated v1.13 Insert Script execution Title.
-# 2020_12_12 Updated v1.14 Major revamp of HTML and PDF Report that are send via email to sysadmin.
-# 2020_12_15 Updated v1.15 Cosmetic changes to Daily Report.
-# 2020_12_26 Updated v1.16 Include link to web page in email.
-# 2020_12_26 Updated v1.17 Insert Header when reporting script error(s).
-# 2020_12_27 Updated v1.18 Insert Header when reporting script running.
-# 2021_01_13 Updated v1.19 Change reports heading color and font style.
-# 2021_01_17 Updated v1.20 Center Heading of scripts report.
-# 2021_01_23 Updated v1.21 SCRIPTS & SERVERS variables no longer in "sadm_daily_report_exclude.sh"
-# 2021_02_18 Updated v1.22 Added example to 'SERVERS' variable of system to be ignored from Report.
-# 2021_04_01 Fix: v1.23 Fix problem when the last line of *.rch was a blank line.
-# 2021_04_28 Fix: v1.24 Fix problem with the report servers exclude list.
-# 2021_06_08 nolog: v1.25 Remove from daily backup report system that the daily backup is disable.
-# 2021_06_08 nolog: v1.26 Remove from daily ReaR backup report system that the backup is disable.
-# 2021_06_10 server: v1.27 Show system backup in bold instead of having a yellow background.
-# 2021_08_07 server: v1.28 Help message was showing wrong command line options.w background.
-# 2022_06_09 server: v1.29 Added AlmaLinux and Rocky Logo for web interface.
-# 2022_07_18 server: v1.30 Remove unneeded work file at the end.
-# 2022_07_21 server: v1.31 Insert new SADMIN section v1.52.
+# 2015_12_14 server V1.0 Initial Version
+# 2020_09_23 server V1.1 In Progress September 
+# 2020_10_01 server v1.2 First Release
+# 2020_10_05 server v1.3 Daily Backup Report & ReaR Backup Report now available.
+# 2020_10_06 server v1.4 Bug that get Current backup size in yellow, when shouldn't.
+# 2020_10_06 server v1.5 Minor Typo Corrections
+# 2020_10_29 server v1.6 Change CmdLine Switch & Storix Daily report is working
+# 2020_11_04 server v1.7 Added 1st draft of scripts html report.
+# 2020_11_07 server v1.8 Exclude file can be use to exclude scripts or servers from daily report.
+# 2020_11_08 server v1.9 Show Alert Group Name on Script Report
+# 2020_11_10 server v1.10 Minor bug fixes.
+# 2020_11_13 server v1.11 Email of each report now include a pdf of the report(if wkhtmltopdf install)
+# 2020_11_12 server v1.12 Warning in Yellow when backup outdated, bug fixes.
+# 2020_11_21 server v1.13 Insert Script execution Title.
+# 2020_12_12 server v1.14 Major revamp of HTML and PDF Report that are send via email to sysadmin.
+# 2020_12_15 server v1.15 Cosmetic changes to Daily Report.
+# 2020_12_26 server v1.16 Include link to web page in email.
+# 2020_12_26 server v1.17 Insert Header when reporting script error(s).
+# 2020_12_27 server v1.18 Insert Header when reporting script running.
+# 2021_01_13 server v1.19 Change reports heading color and font style.
+# 2021_01_17 server v1.20 Center Heading of scripts report.
+# 2021_01_23 server v1.21 SCRIPTS & SERVERS variables no longer in "sadm_daily_report_exclude.sh"
+# 2021_02_18 server v1.22 Added example to 'SERVERS' variable of system to be ignored from Report.
+# 2021_04_01 Fix    v1.23 Fix problem when the last line of *.rch was a blank line.
+# 2021_04_28 Fix    v1.24 Fix problem with the report servers exclude list.
+# 2021_06_08 nolog  v1.25 Remove from daily backup report system that the daily backup is disable.
+# 2021_06_08 nolog  v1.26 Remove from daily ReaR backup report system that the backup is disable.
+# 2021_06_10 server v1.27 Show system backup in bold instead of having a yellow background.
+# 2021_08_07 server v1.28 Help message was showing wrong command line options.w background.
+# 2022_06_09 server v1.29 Added AlmaLinux and Rocky Logo for web interface.
+# 2022_07_18 server v1.30 Remove unneeded work file at the end.
+# 2022_07_21 server v1.31 Insert new SADMIN section v1.52.
+#@2022_09_30 server v1.32 Add link to system information page on system name.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -78,7 +79,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.31'                                      # Script version number
+export SADM_VER='1.32'                                      # Script version number
 export SADM_PDESC="Produce reports of the last 24 hrs activities and email it to the sysadmin."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -2016,20 +2017,20 @@ backup_line()
 {
     # Extract fields from parameters received.
     BACKUP_INFO=$*                                                      # Comma Sep. Info Line
-    WDATE1=$(     echo $BACKUP_INFO | awk -F\; '{ print $1 }')           # Backup Script RCH Line
-    WTIME1=$(     echo $BACKUP_INFO | awk -F\; '{ print $2 }')           # DB System Description
-    WELAPSE=$(    echo $BACKUP_INFO | awk -F\; '{ print $3 }')           # DB System Description
-    WSTATUS=$(    echo $BACKUP_INFO | awk -F\; '{ print $4 }')           # DB System Description
-    WSERVER=$(    echo $BACKUP_INFO | awk -F\; '{ print $5 }')           # DB System Description
-    WDESC=$(      echo $BACKUP_INFO | awk -F\; '{ print $6 }')           # DB System Description
-    WACT=$(       echo $BACKUP_INFO | awk -F\; '{ print $7 }')           # DB System Description
-    WCUR_TOTAL=$( echo $BACKUP_INFO | awk -F\; '{ print $8 }')           # Current Backup Total MB
-    WPRV_TOTAL=$( echo $BACKUP_INFO | awk -F\; '{ print $9 }')           # Yesterday Backup Total MB
-    WSPORADIC=$(  echo $BACKUP_INFO | awk -F\; '{ print $10 }')          # Sporadic Server=1 else=0
-    WREARVER=$(   echo $BACKUP_INFO | awk -F\; '{ print $11 }')          # Rear Version Number
-    WCOUNT=$(     echo $BACKUP_INFO | awk -F\; '{ print $12 }')          # Line Counter
-    HTML=$(       echo $BACKUP_INFO | awk -F\; '{ print $13 }')          # HTML Output File Name
-    RTYPE=$(      echo $BACKUP_INFO | awk -F\; '{ print $14 }')          # R=RearBackup B=DailyBackup
+    WDATE1=$(     echo $BACKUP_INFO | awk -F\; '{ print $1 }')          # Backup Script RCH Line
+    WTIME1=$(     echo $BACKUP_INFO | awk -F\; '{ print $2 }')          # DB System Description
+    WELAPSE=$(    echo $BACKUP_INFO | awk -F\; '{ print $3 }')          # DB System Description
+    WSTATUS=$(    echo $BACKUP_INFO | awk -F\; '{ print $4 }')          # DB System Description
+    WSERVER=$(    echo $BACKUP_INFO | awk -F\; '{ print $5 }')          # DB System Description
+    WDESC=$(      echo $BACKUP_INFO | awk -F\; '{ print $6 }')          # DB System Description
+    WACT=$(       echo $BACKUP_INFO | awk -F\; '{ print $7 }')          # DB System Description
+    WCUR_TOTAL=$( echo $BACKUP_INFO | awk -F\; '{ print $8 }')          # Current Backup Total MB
+    WPRV_TOTAL=$( echo $BACKUP_INFO | awk -F\; '{ print $9 }')          # Yesterday Backup Total MB
+    WSPORADIC=$(  echo $BACKUP_INFO | awk -F\; '{ print $10 }')         # Sporadic Server=1 else=0
+    WREARVER=$(   echo $BACKUP_INFO | awk -F\; '{ print $11 }')         # Rear Version Number
+    WCOUNT=$(     echo $BACKUP_INFO | awk -F\; '{ print $12 }')         # Line Counter
+    HTML=$(       echo $BACKUP_INFO | awk -F\; '{ print $13 }')         # HTML Output File Name
+    RTYPE=$(      echo $BACKUP_INFO | awk -F\; '{ print $14 }')         # R=RearBackup B=DailyBackup
 
     # Alternate background color at every line
     if (( $WCOUNT %2 == 0 ))                                            # Modulo on line counter
@@ -2095,8 +2096,13 @@ backup_line()
             echo "'title='Click to modify Backup Schedule'>Yes</font></a></td>"          >>$HTML
     fi
 
-    # Server Name & Descrition (From DB)
-    echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WSERVER</font></td>" >> $HTML
+    # Server Name 
+    SRVURL="http://sadmin.${SADM_DOMAIN}/view/srv/sadm_view_server_info.php?sel=$WSERVER" 
+    echo "<td align=center bgcolor=$BCOL>" >> $HTML
+    echo -n "<a href='$SRVURL "  >>$HTML
+    echo "' title='Click to system information page'><font color=$FCOL>$WSERVER</font></a></td>" >>$HTML
+
+    # Server Description
     echo "<td align=left bgcolor=$BCOL><font color=$FCOL>$WDESC</font></td>"     >> $HTML
 
     # Sporadic Server or Not 
