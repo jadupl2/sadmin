@@ -393,37 +393,40 @@ set_last_osupdate_date()
     fi
 
     # Get Last Update Date from Return History File
-    sadm_write "Getting last O/S Update date from $RCHFILE ...\n"
+    sadm_write_log "Getting last O/S Update date from $RCHFILE ..."
     OSUPDATE_DATE=`tail -1 ${RCHFILE} |awk '{printf "%s %s", $4,$5}'`
     if [ $? -ne 0 ]
-        then sadm_write "Can't determine last O/S Update Date ...\n"
-             sadm_write "You should run 'sadm_osupdate_starter.sh $(sadm_get_hostname)' on $SADM_SERVER to update this server.\n"
-             sadm_write "You will then get a valid 'rch' file ${RCHFILE}.\n\n"
+        then sadm_write_log "Can't determine last O/S Update Date ..."
+             sadm_write_log "You should run 'sadm_osupdate_starter.sh $(sadm_get_hostname)' on $SADM_SERVER to update this server."
+             sadm_write_log "You will then get a valid 'rch' file ${RCHFILE}."
              return 1
     fi
 
     # Get the Status of the last O/S update
     RCH_CODE=`tail -1 ${RCHFILE} |awk '{printf "%s", $NF}'`
     if [ $? -ne 0 ]
-        then sadm_write "Can't determine last O/S Update Status ...\n"
+        then sadm_write_log "Can't determine last O/S Update Status ..."
              return 1
     fi
     case "$RCH_CODE" in
         0)  OSUPDATE_STATUS="S"
-            sadm_write "$OSUPDATE_DATE - Success ...\n"
+            sadm_write_log "Last update done the $OSUPDATE_DATE & was successful ..."
             ;;
         1)  OSUPDATE_STATUS="F"
-            sadm_write "$OSUPDATE_DATE - Failed ...\n"
+            sadm_write_log "Last update done the $OSUPDATE_DATE & failed ..."
             ;;
         2)  OSUPDATE_STATUS="R"
-            sadm_write "$OSUPDATE_DATE - Running ...\n"
+            sadm_write_log "Last update done the $OSUPDATE_DATE & is actually running ..."
             ;;
       "*")  OSUPDATE_STATUS="U"
-            sadm_write "$OSUPDATE_DATE - Undefined Status ...\n"
+            sadm_write_log "Last update done the $OSUPDATE_DATE - Undefined Status ..."
             ;;
     esac
     return 0
 }
+
+
+
 
 # ==================================================================================================
 #               Print File Received (P1) to file received (P2)
@@ -432,8 +435,8 @@ print_file ()
 {
     # Parameters received should always by two - If not write error to log and return to caller
     if [ $# -ne 2 ]
-        then sadm_write "${SADM_ERROR} : Function ${FUNCNAME[0]} didn't receive 2 parameters.\n"
-             sadm_write "Function received $* and this isn't valid\n"
+        then sadm_write_err "${SADM_ERROR} : Function ${FUNCNAME[0]} didn't receive 2 parameters."
+             sadm_write_err "Function received $* and this isn't valid"
              return 1
     fi
 
@@ -442,7 +445,7 @@ print_file ()
 
     # Check if file to print is readable
     if [ ! -r $wfile ]                                                  # If file not readable
-        then sadm_write "File to print '$wfile' can be found.\n"        # Inform User
+        then sadm_write_err "File to print '$wfile' can be found."      # Inform User
              return 1
     fi
 
@@ -464,22 +467,20 @@ execute_command()
 {
     # Validate number of Parameters Received
     if [ $# -ne 2 ]
-        then sadm_write "$SADM_ERROR Function ${FUNCNAME[0]} didn't receive 2 parameters.\n"
-             sadm_write "Function received $* and this isn't valid.\n"
+        then sadm_write_err "$SADM_ERROR Function ${FUNCNAME[0]} didn't receive 2 parameters.\n"
+             sadm_write_err "Function received $* and this isn't valid.\n"
              return 1
     fi 
 
     ECMD=$1                                                             # Command to Execute
     EFILE=$2                                                            # Output Report File Name
 
-    echo "#"                        >> $EFILE
-    echo "#${DASH_LINE}"            >> $EFILE
-    echo "# Command: $ECMD"         >> $EFILE
+    echo " "                        >> $EFILE
+    echo "$ECMD"         >> $EFILE
     if [ $SADM_DEBUG -gt 4 ] ;then echo "Command executed is ${ECMD}." ; fi
     echo "#${DASH_LINE}"            >> $EFILE
-    echo "#"                        >> $EFILE
     eval $ECMD                      >> $EFILE 2>&1
-    echo "#"                        >> $EFILE
+    echo " "                        >> $EFILE
     return 0
 }
 
@@ -491,7 +492,7 @@ create_linux_config_files()
 
     # Collect Disk Information ---------------------------------------------------------------------
     write_file_header "Disks Information" "$DISKS_FILE"
-    sadm_write "Creating $DISKS_FILE ...\n"
+    sadm_write_log "Creating $DISKS_FILE ..."
 
     if [ "$INXI" != "" ]
         then CMD="$INXI -dc"
@@ -561,7 +562,7 @@ create_linux_config_files()
 
     # Collect Network Information ------------------------------------------------------------------
     write_file_header "Network Information" "$NET_FILE"
-    sadm_write "Creating $NET_FILE ...\n"
+    sadm_write_log "Creating $NET_FILE ..."
 
     if [ -r '/etc/hosts' ]              ; then print_file "/etc/hosts"              "$NET_FILE" ; fi
     if [ -r '/etc/resolv.conf' ]        ; then print_file "/etc/resolv.conf"        "$NET_FILE" ; fi
@@ -688,18 +689,32 @@ create_linux_config_files()
     if [ -r '/etc/sshd.conf' ]          ; then print_file "/etc/sshd.conf"          "$NET_FILE" ; fi
     if [ -r '/etc/ntp.conf' ]           ; then print_file "/etc/ntp.conf"           "$NET_FILE" ; fi
 
+    create_system_file                                                  # Collect System Information
 
-    # Collect System Information -------------------------------------------------------------------
-    write_file_header "System Information" "$SYSTEM_FILE"
-    sadm_write "Creating $SYSTEM_FILE ...\n"
-
-    if [ "$UNAME" != "" ]
-        then CMD="$UNAME -a"
-             execute_command "$CMD" "$SYSTEM_FILE" 
+    
+    # Create List of Hardware in HTML
+    if [ "$LSHW" != "" ]
+        then sadm_write_log "Creating $LSHW_FILE .."
+             $LSHW -html > $LSHW_FILE                                   # Create Hardware HTML File
     fi
 
+}
+
+
+# ==================================================================================================
+# Create System Information file
+# ==================================================================================================
+create_system_file()
+{
+    write_file_header "System Information" "$SYSTEM_FILE"
+    sadm_write_log "Creating $SYSTEM_FILE ..."
+
     if [ "$INXI" != "" ]
-        then CMD="$INXI -ac"
+        then CMD="$INXI -Mc"
+             execute_command "$CMD" "$SYSTEM_FILE" 
+             CMD="$INXI -bc"
+             execute_command "$CMD" "$SYSTEM_FILE" 
+             CMD="$INXI -ac"
              execute_command "$CMD" "$SYSTEM_FILE" 
              CMD="$INXI -mc"
              execute_command "$CMD" "$SYSTEM_FILE" 
@@ -707,7 +722,10 @@ create_linux_config_files()
              execute_command "$CMD" "$SYSTEM_FILE" 
              CMD="$INXI -Sc"
              execute_command "$CMD" "$SYSTEM_FILE" 
-             CMD="$INXI -Mc"
+    fi
+
+    if [ "$UNAME" != "" ]
+        then CMD="$UNAME -a"
              execute_command "$CMD" "$SYSTEM_FILE" 
     fi
 
@@ -766,14 +784,9 @@ create_linux_config_files()
              CMD="$LSPCI "
              execute_command "$CMD" "$SYSTEM_FILE" 
     fi
-    
-    # Create List of Hardware in HTML
-    if [ "$LSHW" != "" ]
-        then sadm_write "Creating $LSHW_FILE ...\n"
-             $LSHW -html > $LSHW_FILE                                   # Create Hardware HTML File
-    fi
 
 }
+
 
 
 # ==================================================================================================
@@ -785,7 +798,7 @@ create_aix_config_files()
 
     # Collect Disk Information ---------------------------------------------------------------------
     write_file_header "Disks Information" "$DISKS_FILE"
-    sadm_write "Creating $DISKS_FILE ...\n"
+    sadm_write_log "Creating $DISKS_FILE ..."
 
     if [ "$DF" != "" ]
         then CMD="$DF -m"
@@ -814,7 +827,7 @@ create_aix_config_files()
 
     # Collect LVM Information ----------------------------------------------------------------------
     write_file_header "Logical Volume" "$NET_FILE"
-    sadm_write "Creating $NET_FILE ...\n"
+    sadm_write_log "Creating $NET_FILE ..."
     
     if [ "$LSVG" != "" ]
         then CMD="lsvg"
@@ -828,7 +841,7 @@ create_aix_config_files()
 
     # Collect Network Information ------------------------------------------------------------------
     write_file_header "Network Information" "$NET_FILE"
-    sadm_write "Creating $NET_FILE ...\n"
+    sadm_write_log "Creating $NET_FILE ..."
 
     if [ "$IFCONFIG" != "" ]
         then CMD="$IFCONFIG -a"
@@ -862,7 +875,7 @@ create_aix_config_files()
 create_summary_file()
 {
 
-    sadm_write "Creating $HWD_FILE ...\n"
+    sadm_write_log "Creating $HWD_FILE ..."
     echo "# $SADM_CIE_NAME - SysInfo Report File v${SADM_VER} - `date`"              >  $HWD_FILE
     echo "# This file is use by 'sadm_database_update.py' to update the SADMIN database." >> $HWD_FILE
     echo "#                                                    "                     >> $HWD_FILE

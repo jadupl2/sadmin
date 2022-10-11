@@ -153,7 +153,7 @@ process_servers()
     xcount=0; ERROR_COUNT=0;                                            # Set Server & Error Counter
     while read wline                                                    # Read Tmp file Line by Line
         do
-        xcount=$(($xcount+1))                                           # Increase Server Counter
+        ((xcount++))                                                    # Increase Server Counter                       # Increase Error Counter
         server_name=$(      echo $wline|awk -F\; '{print $1}')          # Extract Server Name
         server_os=$(        echo $wline|awk -F\; '{print $2}')          # O/S (linux/aix/darwin)
         server_domain=$(    echo $wline|awk -F\; '{print $3}')          # Extract Domain of Server
@@ -164,8 +164,7 @@ process_servers()
         server_img_backup=$(echo $wline|awk -F\; '{print $9}')          # ReaR Sched. 1=True 0=False
         server_ssh_port=$(  echo $wline|awk -F\; '{print $10}')         # SSH port no. to System
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQDN Server Name
-        sadm_write_log " "                                              # Blank Line
-        sadm_write_log "${SADM_TEN_DASH}"                               # Ten Dashes Line    
+        sadm_write_log "\n${SADM_TEN_DASH}"                             # Ten Dashes Line    
         sadm_write_log "Processing ($xcount) ${fqdn_server}."           # Server Count & FQDN Name 
 
         # Check if server name can be resolve - If not, we won't be able to SSH to it.
@@ -173,7 +172,7 @@ process_servers()
         if (( $? ))                                                     # If hostname not resolvable
             then SMSG="$SADM_ERROR Can't process '$fqdn_server', hostname can't be resolved."
                  sadm_write_err "${SMSG}"                               # Advise user & Feed log
-                 ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
+                 ((ERROR_COUNT++))                                      # Increase Error Counter                        # Increase Error Counter
                  sadm_write_err "Total error(s) : ${ERROR_COUNT}"       # Show Total Error Count
                  continue                                               # Continue with next Server
         fi
@@ -207,7 +206,7 @@ process_servers()
         if (( $RC ))                                                    # If SSH to Server Failed
             then SMSG="$SADM_ERROR Can't SSH to '${fqdn_server}'"       # Problem with SSH
                  sadm_write_err "${SMSG}"                               # Show/Log Error Msg
-                 ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
+                 ((ERROR_COUNT++))                                      # Increase Error Counter                        # Increase Error Counter
                  sadm_write_err "Continuing with next system\n"         # Not Error if don't Monitor
                  sadm_write_err "Total error(s) : ${ERROR_COUNT}"       # Show Total Error Count
                  continue                                               # Continue with next system
@@ -237,8 +236,8 @@ main_process()
     # PROCESSING CAN BE PUT HERE
     # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
     # ........
-    sadm_sleep "10" "2"
-    sadm_write_log ""                                                   # Blank Line
+    sadm_sleep 10 2                                                     # Sleep 10Sec, 2sec interval
+    sadm_write_log ""                                                   # Write an empty line
     
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
 }

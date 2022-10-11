@@ -190,6 +190,7 @@
 #@2022_09_20 lib v4.11 MacOS 'arch' is returning i386, change 'sadm_server_arch' to use 'uname -m'.
 #@2022_09_20 lib v4.12 MacOS change 'sadm_get_osmajorversion' so it return and int after v10.
 #@2022_09_25 lib v4.13 MacOS architecture was wrong in script header (arch command return i386 ?).
+#@2202_10_06 lib v4.14 Change in 'sadm_write_log', message than begin with "@nolf" then no LF at EOL
 #===================================================================================================
 
 
@@ -203,7 +204,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.13"                                              # This Library Version
+export SADM_LIB_VER="4.14"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -283,20 +284,6 @@ export SADM_BACKUP_EXCLUDE_INIT="$SADM_CFG_DIR/.backup_exclude.txt"     # Defaul
 export SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                      # Default SADMIN Cfg File
 export SADM_DOCLINK="$SADM_WWW_DOC_DIR/pgm2doc_link.cfg"                # Script to Doc Link File
 export SADM_WEBSITE="https://sadmin.ca"                                 # sadmin website URL
-
-# Define 3 temporaries file name, that can be use by the user.
-# They are deleted automatically by the sadm_stop() function (If they exist).
-#TMP_FILE1="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE1  # Temp File 1
-#TMP_FILE2="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE2  # Temp File 2
-#if [ ! -z $SADM_TMP_FILE1 ] || [ -z "$SADM_TMP_FILE1" ]                 # Var blank or don't exist
-#   then export SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"       # Temp File 1 for you to use
-#fi 
-#if [ ! -z $SADM_TMP_FILE2 ] || [ -z "$SADM_TMP_FILE2" ]                 # Var blank or don't exist
-#   then export SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"       # Temp File 1 for you to use
-#fi 
-#if [ ! -z $SADM_TMP_FILE3 ] || [ -z "$SADM_TMP_FILE3" ]                 # Var blank or don't exist
-#   then export SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"       # Temp File 1 for you to use
-#fi 
 
 # Definition of SADMIN log, error log, Result Code  History (.rch) and Monitor report file (*.rpt).
 export SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"     # Script Output LOG
@@ -603,25 +590,41 @@ sadm_writelog() {
 
 
 
-# This function call sadm_writelog, it's is declare for uniformity with sadm_write_err.
-sadm_write_log() {
-
-    SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
-    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Log Message with Date/Time
+# New write_log
+#===================================================================================================
+sadm_write_log()
+{
+    SADM_SMSG="$@"                                                      # Screen Mess. no Time Stamp
+    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Log Mess. with Time Stamp
     if [ "$SADM_LOG_TYPE" = "" ] ; then SADM_LOG_TYPE="B" ; fi          # Log Type Default is Both
+
+    # By default at the end of the message a line-feed is added.
+    # But if the message begin with '@nolf' then no line feed is added at the End Of Line.
+    NOLF=false                                                          # Default, write msg with LF
+    PRECMD=$(echo ${SADM_SMSG:0:5}|/usr/bin/tr "[:upper:]" "[:lower:]") # Isolate 1st 5chr lowercase
+    if [ "$PRECMD" = "@nolf" ]                                          # If first 5 char = @nolf
+        then NOLF=true                                                  # Then No LineFeed at EOL
+             SADM_SMSG=${SADM_SMSG:5}                                   # Remove '@nolf' from Mess.
+    fi                  
+
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
-        s|S) printf "%-s\n" "$SADM_SMSG"                                # Write Msg To Screen
+        s|S) if $NOLF                                                   # If No LineFeed is True 
+                then printf -- "$SADM_SMSG"                             # Write Msg without LineFeed
+                else printf -- "$SADM_SMSG\n"                           # Write Msg with LineFeed
+             fi
              ;;
-        l|L) printf "%-s\n" "$SADM_LMSG" >> $SADM_LOG                   # Write Msg to Log File
+        l|L) printf -- "$SADM_LMSG\n" >> $SADM_LOG                      # Write Msg to Log File
              ;;
-        b|B) printf "%-s\n" "$SADM_SMSG"                                # Both = to Screen
-             printf "%-s\n" "$SADM_LMSG" >> $SADM_LOG                   # Both = to Log
+        b|B) if $NOLF                                                   # If No LineFeed is True 
+                then printf -- "$SADM_SMSG"                             # Write Msg without LineFeed
+                else printf -- "$SADM_SMSG\n"                           # Write Msg with LineFeed
+             fi
+             printf -- "$SADM_LMSG\n" >> $SADM_LOG                      # Write Msg to Log
              ;;
         *)   printf "Wrong value in \$SADM_LOG_TYPE ($SADM_LOG_TYPE)\n" # Advise User if Incorrect
              ;;
     esac
 }
-
 
 
 
@@ -827,7 +830,7 @@ sadm_sleep() {
     SLEEP_INTERVAL=$2                                                   # Interval show user count
     TIME_LEFT=$SLEEP_TIME                                               # Time Slept in Seconds
     printf "%d" $TIME_LEFT                                              # Time left to sleep
-    while [ $TIME_LEFT -gt 1 ]                                          # Loop Sleep time Exhaust
+    while [ $TIME_LEFT -gt 0 ]                                          # Loop Sleep time Exhaust
         do
         sleep $SLEEP_INTERVAL                                           # Sleep Interval Nb. Seconds
         TIME_LEFT=$(( $TIME_LEFT - $SLEEP_INTERVAL ))                   # Inc Slept Time by Interval
