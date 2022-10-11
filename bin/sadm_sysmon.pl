@@ -50,6 +50,7 @@
 # 2021_07_06 sysmon v2.46 Change error messages syntax to be more descriptive.
 # 2022_07_02 sysmon v2.47 Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
 #@2022_09_24 sysmon v2.48 On MacOS review 'check_cpu_usage', 'check_load average' & filesystem check
+#@2022_10_11 sysmon v2.49 Sysmon don't check capacity exceeded for '/snap/*' '/media/*' filesystem
 #===================================================================================================
 #
 use English;
@@ -64,7 +65,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.48";                                       # Version Number
+my $VERSION_NUMBER      = "2.49";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -344,7 +345,9 @@ sub load_smon_file {
     open (SMONFILE,"<$SYSMON_CFG_FILE") or die "Can't open $SYSMON_CFG_FILE: $!\n";
     $widx = 0;                                                          # Array Index
     while ($line = <SMONFILE>) {                                        # Read while end of file
-        next if $line =~ /^#SYSMON/ ;                                 # Don't load sysmon statline
+        next if $line =~ /^#SYSMON/ ;                                   # Don't load sysmon statline
+        next if $line =~ /^FS\/media\// ;                               # Don't load non-permanent
+        next if $line =~ /^FS\/snap\// ;                                # No snap always 100%
         $sysmon_array[$widx++] = $line ;                                # Load Line in Array
         if ($SYSMON_DEBUG >= 6) { print "Line loaded from cfg : $line" ; }
     }
@@ -1373,7 +1376,7 @@ sub check_for_new_filesystems  {
     if ($SYSMON_DEBUG >= 5) { print "\nChecking for new filesystems ..." };
 
     # First Get Actual Filesystem Info - Don't check cdrom (/dev/cd0) and NFS Filesystem (:)
-    open (DF_FILE, "/bin/df -hP | grep \"^\/\" | grep -v \"\/mnt\/\"| grep -v \"cdrom\"| grep -Ev \":\|//\" |");
+    open (DF_FILE, "/bin/df -hP | grep \"^\/\" | grep -Ev \"cdrom|:|\/mnt\/|\/media\/|\/snap\/\" |");
 
     # Then Compare Actual value versus Warning & Error Value.
     $newcount = 0 ;                                                     # New filesystem counter
@@ -1445,7 +1448,7 @@ sub load_df_in_array {
     if ($SYSMON_DEBUG >= 6) { print "\Collecting result of \"df\" in memory.\n" };
 
     # Execute the 'df -hP' command (Remove heading, cdrom and NFS mount) and pipe the output
-    open (DF_FILE, "/bin/df -hP | grep \"^\/\" | grep -v \"cdrom\"| grep -v \":\" |");
+    open (DF_FILE, "/bin/df -hP | grep \"^\/\" | grep -Ev \"cdrom|:|\/mnt\/|\/media\/|\/snap\/\" |");
     while ($filesys = <DF_FILE>) {                                      # Read 'df' result file
         @sysline = split ' ', $filesys;                                 # Split result base on space
         $fname = "FS" . "$sysline[5]";                                  # Build Ref Name in Array
