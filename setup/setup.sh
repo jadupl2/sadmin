@@ -381,7 +381,7 @@ install_python3()
     #   then echo "SADMIN requirement will not be met, then installation aborted." | tee -a $SLOG
     #        exit 0  
     #fi 
-    echo "Installing 'python3' requirements." | tee -a $SLOG
+    echo "Verifying 'python3' requirements." | tee -a $SLOG
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
@@ -441,7 +441,7 @@ check_python3()
     #fi
 
     # Check if python3 'pymsql' module is installed 
-    printf "Check if python3 'pymsql' module is installed ... \n" | tee -a $SLOG
+    printf "Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
@@ -460,7 +460,7 @@ check_python3()
     fi
 
     # Check if python3 'getmac' module is installed 
-    printf "Check if the python3 'getmac' module is installed ... \n" | tee -a $SLOG
+    printf "Making sure that python3 'getmac' module is installed ... " | tee -a $SLOG
     python3 -c "import getmac" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
@@ -488,16 +488,14 @@ check_python3()
 check_bind-utils()
 {
     # Check if python3 is installed 
-    printf "Check if 'bind-utils' is installed ..." | tee -a $SLOG
+    printf "Check if the 'host' command is present on this system ..." | tee -a $SLOG
 
     # python3 should now be installed, if not then install it or abort installation
     which host > /dev/null 2>&1
     if [ $? -eq 0 ]
         then echo " [ OK ] " | tee -a $SLOG
-        else echo "The 'host' is required on the system, this is a requirement."  | tee -a $SLOG
-             install_python3 
-             echo " [ OK ]" | tee -a $SLOG
              return 0
+        else printf "\nThe 'host' command is required on the system."  | tee -a $SLOG
     fi
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
