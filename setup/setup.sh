@@ -64,6 +64,7 @@
 # 2022_04_16 install v3.19 Misc. Fixes for CentOS 9, EPEL 9 and change UI a bit.
 # 2022_05_06 install v3.20 Fix some issue installing EPEL repositories on AlmaLinux & Rocky v9.
 # 2022_05_28 install v3.21 Make sure SELinux is set (temporarily) to Permissive during setup.
+#@2022_10_23 install v3.22 Check if command 'host' is installed (Not the case on Rocky Linux)
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -73,7 +74,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.21'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.22'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -103,6 +104,32 @@ blue=$(tput setaf 4)                            ; export blue           # Blue c
 magenta=$(tput setaf 5)                         ; export magenta        # Magenta color
 cyan=$(tput setaf 6)                            ; export cyan           # Cyan color
 white=$(tput setaf 7)                           ; export white          # White color
+
+
+# ==================================================================================================
+# Display Question (Receive as $1) and wait for response from user, Y/y (return 1) or N/n (return 0)
+# ==================================================================================================
+sadm_ask() {
+    wreturn=0
+    wmess="$1 [y,n] ? "                                                 # Add Y/N to Mess. Rcv
+    while :                                                             # While until good answer
+        do
+        printf "%s" "$wmess"                                            # Print "Question [Y/N] ?" 
+        read answer                                                     # Read User answer
+        case "$answer" in                                               # Test Answer
+           Y|y ) wreturn=1                                              # Yes = Return Value of 1
+                 break                                                  # Break of the loop
+                 ;;
+           n|N ) wreturn=0                                              # No = Return Value of 0
+                 break                                                  # Break of the loop
+                 ;;
+             * ) echo ""                                                # Blank Line
+                 ;;                                                     # Other stay in the loop
+         esac
+    done
+    return $wreturn                                                     # Return Answer to caller 
+}
+
 
 
 
@@ -153,46 +180,46 @@ add_epel_8_repo()
     # On RHEL 8 it is required to also enable the codeready-builder-for-rhel-8-*-rpms 
     # repository since EPEL packages may depend on packages from it:
     if [ "$SADM_OSNAME" = "REDHAT" ] 
-       then echo "On RHEL 8, it's required to also enable codeready-builder ..." 
-            echo "Since EPEL packages may depend on packages from it." 
+       then echo "On RHEL 8, it's required to also enable codeready-builder ..." |tee -a $SLOG
+            echo "Since EPEL packages may depend on packages from it." |tee -a $SLOG
             ARCH=$( /bin/arch )
             subscription-manager repos --enable "codeready-builder-for-rhel-8-${ARCH}-rpms"
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL codeready-builder repository" |tee -a $SLOG
-               else echo " [ OK ]"
+               else echo " [ OK ]" |tee -a $SLOG
             fi 
             epel="subscription-manager repos --enable codeready-builder-for-rhel-8-$(arch)-rpms"
             dnf -y install $epel 
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
                     return 1
-               else echo " [ OK ]"
+               else echo " [ OK ]" |tee -a $SLOG
             fi 
     fi
 
     # On CentOS 8 it is recommended to also enable the PowerTools repository since EPEL 
     # packages may depend on packages from it:
     if [ "$SADM_OSNAME" = "CENTOS" ] 
-       then printf "On CentOS 8, it's recommended to also enable the EPEL PowerTools Repository.\n"  
-            printf "dnf config-manager --set-enabled PowerTools" 
+       then printf "On CentOS 8, it's recommended to also enable the EPEL PowerTools Repository.\n"  |tee -a $SLOG
+            printf "dnf config-manager --set-enabled PowerTools" |tee -a $SLOG
             dnf config-manager --set-enabled PowerTools
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL PowerTools repository." | tee -a $SLOG
-               else echo " [ OK ]"
+               else echo " [ OK ]" |tee -a $SLOG
             fi 
             epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"  
             dnf -y install $epel >>$SLOG 2>&1 
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
                     return 1
-               else echo "Enable EPEL 8 repository [ OK ]"
+               else echo "Enable EPEL 8 repository [ OK ]" |tee -a $SLOG
             fi 
             epelnext="https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-8.noarch.rpm"
             dnf -y install $epelnext >>$SLOG 2>&1
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 Next repository" |tee -a $SLOG
                     return 1
-               else echo "Enable EPEL 8 Next repository [ OK ]"
+               else echo "Enable EPEL 8 Next repository [ OK ]" |tee -a $SLOG
             fi 
     fi
 
@@ -203,13 +230,13 @@ add_epel_8_repo()
             dnf config-manager --set-enabled PowerTools
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL PowerTools repository." | tee -a $SLOG
-               else echo " [ OK ]"
+               else echo " [ OK ]" |tee -a $SLOG
             fi 
             dnf -y install epel-release >>$SLOG 2>&1 
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
                     return 1
-               else echo "Enable EPEL 8 repository [ OK ]"
+               else echo "Enable EPEL 8 repository [ OK ]" |tee -a $SLOG
             fi 
     fi
 
@@ -218,7 +245,7 @@ add_epel_8_repo()
     if [ $? -ne 0 ]
        then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
             return 1
-       else echo "[ OK ]"
+       else echo "[ OK ]" |tee -a $SLOG
     fi 
 }
 
@@ -236,14 +263,14 @@ add_epel_9_repo()
              if [ $? -ne 0 ]
                 then echo "[ ERROR ] Couldn't enable EPEL repository." | tee -a $SLOG
                      return 1 
-                else echo " [ OK ]"
+                else echo " [ OK ]" |tee -a $SLOG
              fi 
              printf "Installing epel-release on Rocky Linux V9 ..." |tee -a $SLOG
              dnf -y install epel-release >>$SLOG 2>&1
              if [ $? -ne 0 ]
                 then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
                      return 1 
-                else echo " [ OK ]"
+                else echo " [ OK ]" |tee -a $SLOG
              fi
              return 0 
     fi 
@@ -255,14 +282,14 @@ add_epel_9_repo()
              if [ $? -ne 0 ]
                 then echo "[ ERROR ] Couldn't enable EPEL repository." | tee -a $SLOG
                      return 1 
-                else echo " [ OK ]"
+                else echo " [ OK ]" |tee -a $SLOG
              fi 
              printf "Installing epel-release on AlmaLinux V9 ..." |tee -a $SLOG
              dnf -y install epel-release >>$SLOG 2>&1
              if [ $? -ne 0 ]
                 then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
                      return 1 
-                else echo " [ OK ]"
+                else echo " [ OK ]" |tee -a $SLOG
              fi
              return 0 
     fi 
@@ -280,7 +307,7 @@ add_epel_9_repo()
              if [ $? -ne 0 ]
                 then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
                      return 1 
-                else echo " [ OK ]"
+                else echo " [ OK ]" |tee -a $SLOG
              fi
              printf "Installing epel-next-release CentOS/Redhat V9 ..." |tee -a $SLOG
              epelnxt="https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-9.noarch.rpm"
@@ -288,7 +315,7 @@ add_epel_9_repo()
              if [ $? -ne 0 ]
                 then echo "[Error] Adding epel-next-release V9 repository." |tee -a $SLOG
                      return 1 
-                else echo " [ OK ]"
+                else echo " [ OK ]" |tee -a $SLOG
              fi
     fi 
 
@@ -306,7 +333,7 @@ add_epel_9_repo()
              if [ $? -ne 0 ]
                 then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
                      return 1 
-                else echo " [ OK ]"
+                else echo " [ OK ]" |tee -a $SLOG
              fi
     fi 
 }
@@ -348,15 +375,25 @@ add_epel_repo()
 #===================================================================================================
 install_python3()
 {
-    echo "Installing python3." | tee -a $SLOG
+
+    sadm_ask "SADMIN require 'python3' to be install, proceed with installation" 
+    if [ $? -eq 1 ]                                                     # Replied Yes
+       then echo "SADMIN requirement will not be met, then installation aborted." | tee -a $SLOG
+            exit 0  
+    fi 
+    echo "Installing 'python3'" | tee -a $SLOG
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
-        then echo "Running 'yum --enablerepo=epel -y install python34 python34-setuptools python34-pip'" |tee -a $SLOG
-             yum --enablerepo=epel -y install python34 python34-setuptools python34-pip >>$SLOG 2>&1
+        then  if [ "$SADM_OSVERSION" -lt 8 ]
+                 then echo "Running 'yum -y install python3 python3-setuptools python3-pip'" |tee -a $SLOG
+                      yum -y install python3 python3-setuptools python3-pip  >> $SLOG 2>&1
+                 else echo "Running 'dnf -y install python3 python3-setuptools python3-pip'" |tee -a $SLOG
+                      dnf -y install python3 python3-setuptools python3-pip >>$SLOG 2>&1
+              fi 
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
         then apt-get update >> $SLOG 2>&1
-             echo "Running 'apt-get -y install python3 python3-pip'"| tee -a $SLOG
+             echo "Running 'apt-get -y install python3 python3-venv python3-pip'"| tee -a $SLOG
              apt-get -y install python3 python3-venv python3-pip >>$SLOG 2>&1
     fi 
     
@@ -365,45 +402,20 @@ install_python3()
     if [ $? -ne 0 ]
         then echo " " | tee -a $SLOG
              echo "----------" | tee -a $SLOG
-             echo "We are having problem installing python3" | tee -a $SLOG
-             echo "Please install python3 package" | tee -a $SLOG
+             echo "We had problem installing 'python3' package." | tee -a $SLOG
+             echo "Please try to install python3 package" | tee -a $SLOG
              echo "Then run this script again." | tee -a $SLOG 
              echo "----------" | tee -a $SLOG
              exit 1
     fi
-}
-
-
-# Install pip3 on system
-#===================================================================================================
-install_pip3()
-{
-    printf "Installing pip3 " | tee -a $SLOG
-
-    case "$SADM_OSNAME" in                                               # Test Answer
-         REDHAT|CENTOS|ROCKY|ALMALINUX )     if [ "$SADM_OSVERSION" -lt 8 ]
-                                           then yum -y install python3-pip >> $SLOG 2>&1
-                                           else dnf -y install python3-pip >> $SLOG 2>&1
-                                        fi
-                                        ;;
-         FEDORA)                        dnf -y install python3-pip >> $SLOG 2>&1
-                                        ;;
-         UBUNTU|DEBIAN|RASPBIAN|MINT)   apt-get update >> $SLOG 2>&1
-                                        apt-get -y install python3-pip >>$SLOG 2>&1
-                                        ;;
-         * )                            echo "O/S $SADM_OSNAME v$SADM_OSVERSION is not supported"
-                                        echo "Installation aborted ..."
-                                        exit 1
-                                        ;;
-    esac
     
     # pip3 should now be installed, if not then abort installation
     which pip3 > /dev/null 2>&1
     if [ $? -ne 0 ]
         then echo " " | tee -a $SLOG
              echo "----------" | tee -a $SLOG
-             echo "We are having problem installing pip3" | tee -a $SLOG
-             echo "Please install python-pip3 package" | tee -a $SLOG
+             echo "We had problem installing 'python3-pip' package." | tee -a $SLOG
+             echo "Please try to install 'python-pip3' package" | tee -a $SLOG
              echo "Then run this script again." | tee -a $SLOG 
              echo "----------" | tee -a $SLOG
              exit 1
@@ -428,20 +440,12 @@ check_python3()
              echo " [ OK ]" | tee -a $SLOG
     fi
 
-    # Check if pip3 is installed 
-    printf "Check if pip3 is installed ... " | tee -a $SLOG
-
-    # pip3 should be installed, if not then install it or abort installation
-    which pip3 > /dev/null 2>&1
-    if [ $? -ne 0 ] ; then install_pip3 ; fi                        
-    echo " [ OK ]" | tee -a $SLOG
-   
     # Check if python3 'pymsql' module is installed 
     printf "Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
-        else printf "Installing module " 
+        else printf "Installing module 'pymysql' - pip3 install pymysql" 
              pip3 install pymysql  > /dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo " " | tee -a $SLOG
@@ -456,11 +460,11 @@ check_python3()
     fi
 
     # Check if python3 'getmac' module is installed 
-    printf "Check if python3 'getmac' module is installed ... " | tee -a $SLOG
+    printf "Check if the python3 'getmac' module is installed ... " | tee -a $SLOG
     python3 -c "import getmac" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
-        else printf "Installing module " 
+        else printf "Installing module - pip3 install getmac" 
              pip3 install getmac  > /dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo " " | tee -a $SLOG
@@ -477,6 +481,57 @@ check_python3()
     return 0                                                            # Return No Error to Caller
 }
 
+
+
+# We need the 'host' command to get the system IP 
+#===================================================================================================
+check_bind-utils()
+{
+    # Check if python3 is installed 
+    printf "Check if 'bind-utils' is installed ..." | tee -a $SLOG
+
+    # python3 should now be installed, if not then install it or abort installation
+    which host > /dev/null 2>&1
+    if [ $? -eq 0 ]
+        then echo " [ OK ] " | tee -a $SLOG
+        else echo "The 'host' is required on the system, this is a requirement."  | tee -a $SLOG
+             install_python3 
+             echo " [ OK ]" | tee -a $SLOG
+    fi
+
+    if [ "$SADM_PACKTYPE" = "rpm" ] 
+        then PACKNAME="bind-utils" 
+             if [ "$SADM_OSVERSION" -lt 8 ]
+                 then echo "Running 'yum -y install bind-utils'" |tee -a $SLOG
+                      yum -y install bind-utils  >> $SLOG 2>&1
+                 else echo "Running 'dnf -y install bind-utils'" |tee -a $SLOG
+                      dnf -y install bind-utils >>$SLOG 2>&1
+             fi
+    fi 
+    if [ "$SADM_PACKTYPE" = "deb" ] 
+        then apt-get update >> $SLOG 2>&1
+             echo "Running 'apt-get -y install bind9-dnsutils'"| tee -a $SLOG
+             PACKNAME="bind9-dnsutils" 
+             apt-get -y install bind9-dnsutils >>$SLOG 2>&1
+    fi 
+
+
+    # Check if host command is installed
+    printf "Check if 'host' command is now installed ... " | tee -a $SLOG
+    which host > /dev/null 2>&1 
+    if [ $? -eq 0 ] 
+        then echo "[ OK ] " | tee -a $SLOG
+        else echo " " | tee -a $SLOG
+             echo "----------" | tee -a $SLOG
+             echo "We have problem installing the $PACKNAME package." | tee -a $SLOG
+             echo "Please try to install it manually." | tee -a $SLOG
+             echo "Then run this script again." | tee -a $SLOG 
+             echo "----------" | tee -a $SLOG
+             exit 1
+    fi
+
+    return 0                                                            # Return No Error to Caller
+}
 
 
 # Make sure we have no problem with SELinux
@@ -515,7 +570,7 @@ check_hostname()
     S_IPADDR=`ip addr show | grep global | head -1 | awk '{ print $2 }' |awk -F/ '{ print $1 }'`
 
     # Get Hostname as per name resolution of IP Address
-    host $S_IPADDR > /dev/null 2>&1
+    host "$S_IPADDR" > /dev/null 2>&1
     if [ $? -ne 0 ] 
        then echo " "
             echo "The current system ip '$S_IPADDR' is not resolvable to a name."
@@ -618,8 +673,9 @@ get_sysinfo()
                                      
 EOF
 
-    # Display OS Name and Version
-    get_sysinfo                                                         # Get OS Name,Version
+    # Get  OS Name, Version, package type
+    get_sysinfo                                                         # Get OS Name,Version,...
+    
     echo " " > $SLOG                                                    # Init the Log File
     echo "SADMIN Pre-installation verification v${SADM_VER}" | tee -a $SLOG
     echo "$SADM_OSTYPE $SADM_OSNAME v$SADM_OSVERSION with $SADM_PACKTYPE ($(arch)) as package format." | tee -a $SLOG
@@ -635,6 +691,9 @@ EOF
     # Make sure python 3 installed, if not install it.
     check_python3
 
+    # Check if command 'host'is installed by default (Not the case on Rocky Linux)
+    check_bind-utils
+    
     # Make sure current host is in /etc/hosts
     check_hostname
 
