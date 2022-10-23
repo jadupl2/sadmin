@@ -381,7 +381,7 @@ install_python3()
     #   then echo "SADMIN requirement will not be met, then installation aborted." | tee -a $SLOG
     #        exit 0  
     #fi 
-    echo "Installing 'python3'" | tee -a $SLOG
+    echo "Installing 'python3' requirements." | tee -a $SLOG
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
@@ -441,11 +441,11 @@ check_python3()
     #fi
 
     # Check if python3 'pymsql' module is installed 
-    printf "Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
+    printf "Check if python3 'pymsql' module is installed ... \n" | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
-        else printf "Installing module 'pymysql' - pip3 install pymysql" 
+        else printf "   - Installing module 'pymysql' - pip3 install pymysql" 
              pip3 install pymysql  > /dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo " " | tee -a $SLOG
@@ -460,11 +460,11 @@ check_python3()
     fi
 
     # Check if python3 'getmac' module is installed 
-    printf "Check if the python3 'getmac' module is installed ... " | tee -a $SLOG
+    printf "Check if the python3 'getmac' module is installed ... \n" | tee -a $SLOG
     python3 -c "import getmac" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
-        else printf "Installing module - pip3 install getmac" 
+        else printf "   - Installing module - pip3 install getmac" 
              pip3 install getmac  > /dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo " " | tee -a $SLOG
@@ -497,27 +497,28 @@ check_bind-utils()
         else echo "The 'host' is required on the system, this is a requirement."  | tee -a $SLOG
              install_python3 
              echo " [ OK ]" | tee -a $SLOG
+             return 0
     fi
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then PACKNAME="bind-utils" 
              if [ "$SADM_OSVERSION" -lt 8 ]
-                 then echo "Running 'yum -y install bind-utils'" |tee -a $SLOG
+                 then echo "   - Running 'yum -y install bind-utils'" |tee -a $SLOG
                       yum -y install bind-utils  >> $SLOG 2>&1
-                 else echo "Running 'dnf -y install bind-utils'" |tee -a $SLOG
+                 else echo "   - Running 'dnf -y install bind-utils'" |tee -a $SLOG
                       dnf -y install bind-utils >>$SLOG 2>&1
              fi
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
         then apt-get update >> $SLOG 2>&1
-             echo "Running 'apt-get -y install bind9-dnsutils'"| tee -a $SLOG
+             echo "   - Running 'apt-get -y install bind9-dnsutils'"| tee -a $SLOG
              PACKNAME="bind9-dnsutils" 
              apt-get -y install bind9-dnsutils >>$SLOG 2>&1
     fi 
 
 
     # Check if host command is installed
-    printf "Check if 'host' command is now installed ... " | tee -a $SLOG
+    printf "   - Check if 'host' command is now installed ... " | tee -a $SLOG
     which host > /dev/null 2>&1 
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
