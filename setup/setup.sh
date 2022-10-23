@@ -376,11 +376,11 @@ add_epel_repo()
 install_python3()
 {
 
-    sadm_ask "SADMIN require 'python3' to be install, proceed with installation" 
-    if [ $? -eq 1 ]                                                     # Replied Yes
-       then echo "SADMIN requirement will not be met, then installation aborted." | tee -a $SLOG
-            exit 0  
-    fi 
+    #sadm_ask "SADMIN require 'python3' to be install, proceed with installation" 
+    #if [ $? -eq 1 ]                                                     # Replied Yes
+    #   then echo "SADMIN requirement will not be met, then installation aborted." | tee -a $SLOG
+    #        exit 0  
+    #fi 
     echo "Installing 'python3'" | tee -a $SLOG
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
@@ -429,16 +429,16 @@ install_python3()
 check_python3()
 {
     # Check if python3 is installed 
-    printf "Check if python3 is installed ..." | tee -a $SLOG
+    #printf "Check if python3 is installed ..." | tee -a $SLOG
 
     # python3 should now be installed, if not then install it or abort installation
-    which python3 > /dev/null 2>&1
-    if [ $? -eq 0 ]
-        then echo " [ OK ] " | tee -a $SLOG
-        else echo "Python3 is not installed."  | tee -a $SLOG
-             install_python3 
-             echo " [ OK ]" | tee -a $SLOG
-    fi
+    #which python3 > /dev/null 2>&1
+    #if [ $? -eq 0 ]
+    #    then echo " [ OK ] " | tee -a $SLOG
+    #    else echo "Python3 is not installed."  | tee -a $SLOG
+    install_python3 
+    #         echo " [ OK ]" | tee -a $SLOG
+    #fi
 
     # Check if python3 'pymsql' module is installed 
     printf "Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
