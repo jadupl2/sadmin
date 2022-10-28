@@ -701,7 +701,7 @@ EOF
 
     # Ok Python3 is installed - Proceed with Main Setup Script
     echo "We will now proceed with main setup program ($SCRIPT)" >> $SLOG 
-    echo "All Verifications done with success ..." >> $SLOG
+    echo "All basic verifications done with success ..." >> $SLOG
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
     echo -e "\n" | tee -a $SLOG                                         # Blank Lines
     $SCRIPT 
