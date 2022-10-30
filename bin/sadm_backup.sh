@@ -79,6 +79,7 @@
 # 2022_08_17 backup v3.35 Include new SADMIN section 1.52
 #@2022_09_04 backup v3.36 False Error message was written to script error log.
 #@2022_09_23 backup v3.37 Fix problem mounting NFS on newer version of MacOS.
+#@2022_10_30 backup v3.38 After each backup show, the backup size in the log.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -110,7 +111,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.37'                                     # Script version number
+export SADM_VER='3.38'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -465,10 +466,11 @@ create_backup()
 
         # Backup Directory
         if [ -d ${backup_line} ]                                        # Dir to Backup Exist ?
-           then cd /                                                    # Make sure we are on /
-                sadm_writelog " "                                       # Insert Blank Line
-                sadm_write "${SADM_TEN_DASH}\n"                         # Line of 10 Dash in Log
-                sadm_write "Starting backup of [$backup_line]\n"        # Print Current Dir.
+           then sadm_write_log " "                                      # Insert Blank Line
+                sadm_write_log "${SADM_TEN_DASH}"                       # Line of 10 Dash in Log
+                sadm_write_log "Starting backup of [$backup_line]"      # Show Dir will backup
+                cd /                                                    # Make sure we are on /
+                sadm_write_log "Current Dir. is `pwd`"                  # Print Current Working Dir.
 
                 # Build Backup Exclude list to include Dir. Sockets file (Prevent false error)
                 find .$backup_line -type s -print > /tmp/exclude        # Put Dir Sockets in exclude
@@ -518,6 +520,11 @@ create_backup()
                 fi
         fi
 
+        # SHow backup tgz file size
+        BSIZE=$(${BACKUP_DIR}/${BACK_FILE})
+        BTOTAL=$(echo "$BSIZE /1024/1024" | bc)                             
+        sadm_write_log "Backup size is ${BTOTAL}MB."
+
         # Error 1 = File(s) changed while backup running, don't report that as an error.
         if [ $RC -eq 1 ] ; then RC=0 ; fi                               # File Changed while backup
         if [ $RC -ne 0 ]                                                # If Error while Backup
@@ -532,11 +539,7 @@ create_backup()
 
         # Create link to backup in the server latest directory
         cd ${LATEST_DIR}
-        if [ $SADM_DEBUG -gt 0 ] 
-            then sadm_write "Current directory: `pwd`\n"                # Print Current Dir.
-                 sadm_write "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}\n" # Command we'll execute
-        fi
-        sadm_write_log "Create link to latest backup of ${backup_line} in ${LATEST_DIR}"
+        sadm_write_log "\nCreate link to latest backup of ${backup_line} in ${LATEST_DIR}"
         sadm_write_log "Current directory: `pwd`"                       # Print Current Dir.
         sadm_write_log "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}"
         ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}  >>$SADM_LOG 2>&1   # Run Soft Link Command
@@ -544,6 +547,8 @@ create_backup()
             then sadm_write_err "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}"
                  sadm_write_err "[ ERROR ] Creating link backup in latest directory."
                  RC=1
+            else sadm_writelog "[ SUCCESS ] Creating link."             # Advise User - Log Info
+                 RC=0                                                   # Make Sure Return Code is 0
         fi
         TOTAL_ERROR=$(($TOTAL_ERROR+$RC))                               # Total = Cumulate RC Value
 
