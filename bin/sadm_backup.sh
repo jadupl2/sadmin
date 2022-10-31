@@ -521,7 +521,7 @@ create_backup()
         fi
 
         # SHow backup tgz file size
-        BSIZE=$(${BACKUP_DIR}/${BACK_FILE})
+        BSIZE=$(stat --format=%s ${BACKUP_DIR}/${BACK_FILE})
         BTOTAL=$(echo "$BSIZE /1024/1024" | bc)                             
         sadm_write_log "Backup size is ${BTOTAL}MB."
 
