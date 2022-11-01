@@ -36,6 +36,7 @@
 # 2022_08_24 lib v4.23 Fix crash when log or error file didn't have the right permission.
 # 2022_08_26 lib v4.24 Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
 # 2022_08_26 lib v4.25 Correct a typo at line 718.
+#@2022_11_01 lib v4.26 Minor change for MacOS Venture
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -71,7 +72,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.25"                                # This Library Version
+lib_ver             = "4.26"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -548,7 +549,7 @@ def load_config_file(cfg_file):
             sys.exit(1)                                                 # Exit to O/S with Error
         except Exception as e:                                          # If Can't open cfg file
             print(e)                                                    # Print Error Message
-            sys.exit(1)                                                 # Exit to O/S with Error            
+            sys.exit(1)                                                 # Exit to O/S with Error
         for dbline in dbpass_file_fh :                                  # Loop until on all lines
             wline = dbline.strip()                                      # Strip CR/LF & Trail spaces
             if (wline[0:1] == '#' or len(wline) == 0) :                 # If comment or blank line
@@ -797,13 +798,13 @@ def check_system_lock(fname, errmsg=True):
                 if errmsg : write_log("System '%s' is lock for more than %d seconds." % (fname,file_age))
                 if lock_timeout != 0 :
                     if errmsg : 
-                        write_log("Unlocking system '%s'." % (fname))
-                        write_log("We now restart to monitor this system as usual.")
+                       write_log("Unlocking system '%s'." % (fname))
+                       write_log("We now restart to monitor this system as usual.")
                     unlock_system(fname) 
                 else: 
                     if errmsg : 
-                        write_log("The 'sa.lock_timeout' is set to 0, meaning system will remain lock.")
-                        write_log("System %s will remain lock until you remove the lock file (%s)" % (fname,lock_file))
+                       write_log("The 'sa.lock_timeout' is set to 0, meaning system will remain lock.")
+                       write_log("System %s will remain lock until the lock file (%s) is remove." % (fname,lock_file))
         else:
             if errmsg : 
                 write_log("[ WARNING ] System '%s' is currently lock. "% (fname))
@@ -1081,7 +1082,7 @@ def get_kernel_bitmode():
     if ostype == "DARWIN" :                                             # Mac OS
        wbit = 64                                                        # MacOS Now only 64 bits
     if ostype == "WINDOWS" :                                            # Windows
-       wbit = platform.architecture()[0][0:2]                           # Return 32 or 64                                            # 
+       wbit = platform.architecture()[0][0:2]                           # Return 32 or 64 
     return(wbit)
 
 
@@ -1171,7 +1172,7 @@ def get_nb_cpu():
             Number of usable CPU on System (Returns None if undetermined).
     """
 
-    #ostype=get_ostype()                                                 # WINDOWS,LINUX,DARWIN,AIX    
+    #ostype=get_ostype()                                                 # WINDOWS,LINUX,DARWIN,AIX
     #os.cpu_count()
     #if ostype == "LINUX" :                                              # Under Linux
     #    ccode, cstdout, cstderr = oscommand("grep '^physical id' /proc/cpuinfo| wc -l| tr -d ' '")
@@ -1409,6 +1410,7 @@ def get_oscodename() :
         if (get_osmajorversion() == "10.15") : oscodename="Catalina"
         if (get_osmajorversion()[0:3] == "11.")  : oscodename="Big Sur"
         if (get_osmajorversion()[0:3] == "12.")  : oscodename="Monterey"
+        if (get_osmajorversion()[0:3] == "13.")  : oscodename="Ventura"
         #xstr='SOFTWARE LICENSE AGREEMENT FOR macOS'
         #xfile='/System/Library/CoreServices/Setup Assistant.app/Contents/Resources/en.lproj/OSXSoftwareLicense.rtf'
         #wcmd='grep  "$xstr" "$xfile" | awk -F "macOS "  { print $NF} '
