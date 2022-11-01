@@ -2550,13 +2550,13 @@ sadm_stop() {
                      chown $SADM_WWW_USER:$SADM_WWW_GROUP $WLOGDIR      # Own by Main User and Group
                      chmod 775 $WRCHDIR                                 # Make it accesible
                      chown $SADM_WWW_USER:$SADM_WWW_GROUP $WRCHDIR      # Own by Main User and Group
-                     if [ -f "${WLOG}" ] ; then chmod 666 ${WLOG} ; fi  # If log exist chmod                              # Make sure we can overwite
+                     if [ -f "${WLOG}" ] ; then chmod 666 ${WLOG} ; fi  # If log exist chmod 
                      cp $SADM_LOG $WLOG
                      chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WLOG}       # Good group
             fi
             if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]    # W  ant to Produce RCH File
                then if [ $(id -u) -eq 0 ] 
-                       then chmod 666 ${WRCH}                           # Make sure we can overwite
+                       then if [ -f "$WRCH" ] ;then chmod 666 $WRCH ;fi # Make sure we can overwite
                             cp $SADM_RCHLOG $WRCH
                             chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WRCH} # Good group
                     fi
