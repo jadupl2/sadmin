@@ -21,19 +21,19 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 #
-# 2019_08_26 web v1.0 Rear Backup Status page - Initial version of ReaR backup Status Page
-# 2019_08_26 web v1.1 Rear Backup Status page - First Release of Rear Backup Status Page.
-# 2019_09_20 web v1.2 Rear Backup Status page - Show History (RCH) content using same uniform way.
-# 2019_10_15 web v1.3 Rear Backup Status page - Add Architecture, O/S Name, O/S Version to page
-# 2020_01_13 web v1.4 Rear Backup Status page - Change column disposition and show ReaR version no. of systems.
-# 2020_01_14 web v1.5 Rear Backup Status page - Don't show MacOS System on page (Not supported by ReaR).
-# 2020_03_05 web v1.6 Rear Backup Status page - When mouse over server name (Show more information).
-# 2020_07_29 web v1.7 Rear Backup Status page - Remove system description to allow more space on each line.
-# 2020_13_13 web v1.8 Rear Backup Status page - Add link in heading to view ReaR Daily Report.
-#@2022_09_12 web v1.9 Rear Backup Status page - Show if schedule is activate or not on page.
-#@2022_09_12 web v2.0 Rear Backup Status page - Will show link to error log if it exist.
-#@2022_09_12 web v2.1 Rear Backup Status page - Display the first 50 systems instead of 25.
-#@2022_09_20 web v2.2 Rear Backup Status page - Move ReaR supported architecture msg to heading.
+# 2019_08_26 backup v1.0 ReaR backup status page - Initial version of ReaR backup Status Page
+# 2019_08_26 backup v1.1 ReaR backup status page - First Release of Rear Backup Status Page.
+# 2019_09_20 backup v1.2 ReaR backup status page - Show History (RCH) content using same uniform way.
+# 2019_10_15 backup v1.3 ReaR backup status page - Add Architecture, O/S Name, O/S Version to page
+# 2020_01_13 backup v1.4 ReaR backup status page - Change column disposition and show ReaR version no. of systems.
+# 2020_01_14 backup v1.5 ReaR backup status page - Don't show MacOS System on page (Not supported by ReaR).
+# 2020_03_05 backup v1.6 ReaR backup status page - When mouse over server name (Show more information).
+# 2020_07_29 backup v1.7 ReaR backup status page - Remove system description to allow more space on each line.
+# 2020_13_13 backup v1.8 ReaR backup status page - Add link in heading to view ReaR Daily Report.
+#@2022_09_12 backup v1.9 ReaR backup status page - Show if schedule is activated or not.
+#@2022_09_12 backup v2.0 ReaR backup status page - Show link to error log (if it exist.).
+#@2022_09_12 backup v2.1 ReaR backup status page - Display the first 50 systems instead of 25.
+#@2022_09_20 backup v2.2 ReaR backup status page - Move ReaR supported architecture msg to heading.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

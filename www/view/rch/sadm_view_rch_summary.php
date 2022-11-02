@@ -32,12 +32,12 @@
 # 2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
 # 2019_09_20 Update v2.5 Show History (RCH) content using same uniform way.
 # 2020_12_13 Update v2.6 Add link in the heading to view the Daily Scripts Report, if HTML exist.
-# 2021_08_18 web v2.7 Status of all Scripts - Add link to Script documentation.
-# 2021_08_18 web v2.8 Status of all Scripts - Show effective alert group name & members as tooltip
-# 2021_08_27 web v2.9 Status of all Scripts - Fix link to log & History file (*.rch).
-# 2021_08_29 web v2.10 Status of all Scripts - Show effective alert group name instead of 'default'.
-# 2021_08_29 web v2.11 Status of all Scripts - Show member(s) of alert group as tooltip. 
-#@2022_09_05 web v2.12 Add [doc] links & [elog] link to view error log if it contains something.
+# 2021_08_18 web v2.7  All Scripts status page - Add link to Script documentation.
+# 2021_08_18 web v2.8  All Scripts status page - Show effective alert group & members as tooltip
+# 2021_08_27 web v2.9  All Scripts status page - Fix link to log & History file (*.rch).
+# 2021_08_29 web v2.10 All Scripts status page - Show effective alert group name instead of 'default'.
+# 2021_08_29 web v2.11 All Scripts status page - Show member(s) of alert group as tooltip. 
+#@2022_09_05 web v2.12 All Scripts status page - Add [doc] & [elog] link to view error log (if exist).
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.

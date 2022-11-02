@@ -21,14 +21,14 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 #
-# 2019_07_06 web v1.0 Backup Status page - Initial version of backup Status Page
-# 2019_08_14 web v1.1 Backup Status page - Allow to return to this page when backup sched is updated
-# 2019_09_20 web v1.3 Backup Status page - Show History (RCH) content using same uniform way.
-# 2019_12_01 web v1.4 Backup Status page - Change Layout to align with daily backup schedule.
-# 2020_12_13 web v1.5 Backup Status page - Added link in Heading to view the Daily Backup Report
-#@2022_09_11 web v1.6 Backup Status page - Show if schedule is activate or not on page.
-#@2022_09_12 web v1.7 Backup Status page - Will show link to error log if it exist.
-#@2022_09_12 web v1.8 Backup Status page - Display the first 50 systems instead of 25.
+# 2019_07_06 backup v1.0 Backup status page - Initial version of backup Status Page
+# 2019_08_14 backup v1.1 Backup status page - Allow to return to this page when backup sched is updated
+# 2019_09_20 backup v1.3 Backup status page - Show History (RCH) content using same uniform way.
+# 2019_12_01 backup v1.4 Backup status page - Change Layout to align with daily backup schedule.
+# 2020_12_13 backup v1.5 Backup status page - Added link in Heading to view the Daily Backup Report
+#@2022_09_11 backup v1.6 Backup status page - Now show if schedule is activate or not.
+#@2022_09_12 backup v1.7 Backup status page - Will show link to error log (if it exist).
+#@2022_09_12 backup v1.8 Backup status page - Display the first 50 systems instead of 25.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

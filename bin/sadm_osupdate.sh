@@ -49,7 +49,7 @@
 # 2022_06_13 osupdate v3.30 Update to use 'sadm_sendmail()' instead  of mutt manually.
 # 2022_06_25 osupdate v3.31 Now list package to be updated when using apt format.
 # 2022_08_25 osupdate v3.32 Updated with new SADMIN SECTION V1.52.
-#@2022_09_04 osupdate v3.33 Revisited to use the new error log when error are encountered.
+#@2022_09_04 osupdate v3.33 Revisited to use the new error log when error is encountered.
 # --------------------------------------------------------------------------------------------------
 #set -x
 

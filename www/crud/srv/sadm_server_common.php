@@ -22,12 +22,12 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-# 2017_11_15 web v2.0 client main form logic - Modify to used to new interface and MySQL Database.
-# 2018_02_02 web v2.1 client main form logic - Added Column to specify if performance graph are used
-# 2018_10_01 web v2.2 client main form logic - Remove Alert Group Field
-# 2018_12_15 web v2.3 client main form logic - Add 'Darwin' as a choice for Operating System Type.
-# 2018_08_18 web v2.4 client main form logic - Reduce screen size to 40 for install directory field
-#@2022_09_24 web v2.5 client main form logic - Add ssh port number to use to access the client
+# 2017_11_15 web v2.0 CRUD_client - Modified to used to new interface and MySQL Database.
+# 2018_02_02 web v2.1 CRUD_client - Added Column to specify if performance graph are used
+# 2018_10_01 web v2.2 CRUD_client - Remove Alert Group Field
+# 2018_12_15 web v2.3 CRUD_client - Add 'Darwin' as a choice for Operating System Type.
+# 2018_08_18 web v2.4 CRUD_client - Reduce screen size to 40 for install directory field
+#@2022_09_24 web v2.5 CRUD_client - Add ssh port number to use to access the client.
 # ==================================================================================================
  
 

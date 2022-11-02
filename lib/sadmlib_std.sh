@@ -186,11 +186,10 @@
 # 2022_08_24 lib v4.07 Creation of $SADM_TMP_FILE1[1,2,3] done in SADMIN section & remove by stop().
 # 2022_08_25 lib v4.08 Change message of the system lock/unlock function.
 # 2022_08_26 lib v4.09 Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
-#@2022_09_04 lib v4.10 Replace 'sadm_writelog' by 'sadm_write_log' for standardization.
+#@2022_09_04 lib v4.10 Depreciate 'sadm_writelog' to 'sadm_write_log' for standardization.
 #@2022_09_20 lib v4.11 MacOS 'arch' is returning i386, change 'sadm_server_arch' to use 'uname -m'.
-#@2022_09_20 lib v4.12 MacOS change 'sadm_get_osmajorversion' so it return and int after v10.
-#@2022_09_25 lib v4.13 MacOS architecture was wrong in script header (arch command return i386 ?).
-#@2202_10_06 lib v4.14 Change in 'sadm_write_log', message than begin with "@nolf" then no LF at EOL
+#@2022_09_20 lib v4.12 MacOS change 'sadm_get_osmajorversion' so it return an integer after v10.
+#@2022_09_25 lib v4.13 MacOS architecture was wrong in script header ('arch' command return i386?).
 #===================================================================================================
 
 
@@ -204,7 +203,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.14"                                              # This Library Version
+export SADM_LIB_VER="4.13"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line

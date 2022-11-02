@@ -26,12 +26,12 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-# 2017_03_09 web v1.8 Client delete - Comments code and enhance code performance.
-# 2017_11_15 web v2.0 Client delete - Restructure & modify web interface & MySQL DB.
-# 2019_01_15 web v2.1 Client delete - Option to create server data archive before delete.
-# 2019_08_17 web v2.2 Client delete - New parameter, the URL where to go back after update.
-# 2019_12_26 web v2.3 Client delete - Deleted server now place in www/dat/archive directory.
-#@2022_09_24 web v2.4 Client delete - Change text in header
+# 2017_03_09 web v1.8 CRUD_client_delete - Comments code and enhance code performance.
+# 2017_11_15 web v2.0 CRUD_client_delete - Restructure & modify web interface & MySQL DB.
+# 2019_01_15 web v2.1 CRUD_client_delete - Option to create server data archive before delete.
+# 2019_08_17 web v2.2 CRUD_client_delete - New parameter, the URL where to go back after update.
+# 2019_12_26 web v2.3 CRUD_client_delete - Deleted server now place in www/dat/archive directory.
+#@2022_09_24 web v2.4 CRUD_client_delete - Change text in header
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.

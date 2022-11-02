@@ -22,19 +22,19 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-# 2019_01_01 web v1.1 BackupPage - Each server backup schedule, can be changed using web interface.
-# 2019_01_12 web v1.2 BackupPage - Client Backup List and Exclude list modified with Web Interface.
-# 2019_01_18 web v1.3 BackupPage - Hash of Backup List & Exclude list to check if were modified.
-# 2019_01_22 web v1.4 BackupPage - Add Dark Theme
-# 2019_08_14 web v1.5 BackupPage - Redesign page,show one line schedule,show backup policies.
-# 2019_08_19 web v1.6 BackupPage - Show 'Backup isn't activated' when no schedule define.
-# 2019_12_01 web v1.7 BackupPage - Backup will run daily (Del entry field for specify day of backup)
-# 2019_12_02 web v1.7 BackupPage - Run every day, so don't miss day/weekly/monthly and Yearly backup
-# 2020_01_03 web v1.8 BackupPage - Web Page disposition and input was changed.
-# 2020_01_13 web v1.9 BackupPage - Enhance Web Appearance and color. 
-# 2020_01_18 web v2.0 BackupPage - Reduce width of text-area for include/exclude list to fit on Ipad
-# 2021_05_25 web v2.1 BackupPage - Replace php depreciated function 'eregi_replace' warning message.
-#@2022_09_28 web v2.2 BackupPage - Add Possibility to compress or not the backup viw the web page.
+# 2019_01_01 backup v1.1 BackupPage - Each server backup schedule, can be changed using web interface.
+# 2019_01_12 backup v1.2 BackupPage - Client Backup List and Exclude list modified with Web Interface.
+# 2019_01_18 backup v1.3 BackupPage - Hash of Backup List & Exclude list to check if were modified.
+# 2019_01_22 backup v1.4 BackupPage - Add Dark Theme
+# 2019_08_14 backup v1.5 BackupPage - Redesign page,show one line schedule,show backup policies.
+# 2019_08_19 backup v1.6 BackupPage - Show 'Backup isn't activated' when no schedule define.
+# 2019_12_01 backup v1.7 BackupPage - Backup will run daily (Del entry field for specify day of backup)
+# 2019_12_02 backup v1.7 BackupPage - Run every day, so don't miss day/weekly/monthly and Yearly backup
+# 2020_01_03 backup v1.8 BackupPage - Web Page disposition and input was changed.
+# 2020_01_13 backup v1.9 BackupPage - Enhance Web Appearance and color. 
+# 2020_01_18 backup v2.0 BackupPage - Reduce width of text-area for include/exclude list to fit on Ipad
+# 2021_05_25 backup v2.1 BackupPage - Replace php depreciated function 'eregi_replace' warning message.
+#@2022_09_28 backup v2.2 BackupPage - Add possibility to compress or not the backup via the web page.
 # ==================================================================================================
 #
 #

@@ -23,11 +23,11 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # =======================server===========================================================================
 # ChangeLog create, read, update and delete. 
-# 2017_10_10 web v1.1 Client Main CRUD - Replace PostGres Database with MySQL 
-# 2019_01_11 web v2.1 Client Main CRUD - Add Model and Serial No. in bubble while on server name.
-# 2019_08_17 web v2.2 Client Main CRUD - New page heading and Logo of distribution inserted.
-# 2019_08_17 web v2.3 Client Main CRUD - Return to caller URL wasn't set properly.
-#@2022_09_24 web v2.4 Client Main CRUD - Change Page Header 
+# 2017_10_10 web v1.1 CURD_Client_Main - Replace PostGres Database with MySQL 
+# 2019_01_11 web v2.1 CURD_Client_Main - Add Model and Serial No. in bubble while on server name.
+# 2019_08_17 web v2.2 CURD_Client_Main - New page heading and Logo of distribution inserted.
+# 2019_08_17 web v2.3 CURD_Client_Main - Return to caller URL wasn't set properly.
+#@2022_09_24 web v2.4 CURD_Client_Main - Change Page Header 
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
