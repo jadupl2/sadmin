@@ -77,7 +77,7 @@
 # 2021_05_14 backup v3.33 Now the log include the size of each day of backup.
 # 2022_08_14 backup v3.34 Error message written to log and also to error log.
 # 2022_08_17 backup v3.35 Include new SADMIN section 1.52
-#@2022_09_04 backup v3.36 False Error message was written to error log.
+#@2022_09_04 backup v3.36 False error message was written to error log.
 #@2022_09_23 backup v3.37 Fix problem mounting NFS on newer version of MacOS.
 #@2022_10_30 backup v3.38 After each backup show, the backup size in the log.
 #===================================================================================================
