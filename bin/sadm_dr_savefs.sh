@@ -83,20 +83,19 @@
 #
 #===================================================================================================
 #
-# 2015_10 - 1.5 - Modify to create a copy of previous data into $SADMIN/sadm_dr_fs_save_info.prev 
-# 2015_11 - 1.6 - Remove RHEL3 Support - Now Support RHEL 4, 5, 6 and 7.
-# 2015_12 - 1.7 - Corrected bug with Swap Space
-# 2016_11 - 2.0 - Aix is now supported by the script - All VG Structure are store in *.savevg 
-#                 file under ${SADM_BASE_DIR}/dat/dr Directory 
-# 2018_06_04    v2.1 Change to Adapt to SADMIN New Libr (Support xfs)
-# 2018_06_09    v2.2 Add Help and Version function & Change Startup Order
-# 2018_07_11    v2.3 Was not showing if debug was activated or not
-# 2018_09_16    v2.4 Added Default Alert Group
-# 2018_10_28    v2.5 Change reference to script use for re-creating filesystem.
-# 2018_11_13    v2.6 Debug is now OFF by default
-# 2018_11_20 Fix v2.7 Bug fix, make copy of fstab, restructure code, remove support for RHEL3,RHEL4.
-# 2018_12_08 Fix v2.8 Fix bug with Debugging Level.
-#@2022_10_23 Tools v2.9 Update the Sadmin Code Section 1.52.
+# 2015_10_02 cmdline v1.5 Modify to create a copy of previous data into $SADMIN/sadm_dr_fs_save_info.prev 
+# 2015_11_11 cmdline v1.6 Remove RHEL3 Support - Now Support RHEL 4, 5, 6 and 7.
+# 2015_12_07-cmdline v1.7 Corrected bug with Swap Space
+# 2016_11_09 cmdline v2.0 Aix is now supported by the script - All VG Structure are store in *.savevg 
+# 2018_06_04 cmdline v2.1 Change to Adapt to SADMIN New Libr (Support xfs)
+# 2018_06_09 cmdline v2.2 Add Help and Version function & Change Startup Order
+# 2018_07_11 cmdline v2.3 Was not showing if debug was activated or not
+# 2018_09_16 cmdline v2.4 Added Default Alert Group
+# 2018_10_28 cmdline v2.5 Change reference to script use for re-creating filesystem.
+# 2018_11_13 cmdline v2.6 Debug is now OFF by default
+# 2018_11_20 cmdline v2.7 Bug fix, make copy of fstab, restructure code, remove support for RHEL3,RHEL4.
+# 2018_12_08 cmdline v2.8 Fix bug with Debugging Level.
+#@2022_10_23 cmdline v2.9 Update the Sadmin Code Section 1.52.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

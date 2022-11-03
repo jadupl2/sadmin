@@ -7,50 +7,50 @@
 #   Date     :  15 Janvier 2016
 #   Requires :  sh
 #===================================================================================================
-# 2017_12_30 V2.7 Change Config file extension to .smon & Defaut Virtual Machine presence to 'N'
-# 2017_12_30 V2.8 Change name of template file from sysmon.std to template.smon
-# 2017_12_30 V2.9 Change Message Sent to user when host.cfg file not there and using template file
-# 2018_05_07 V2.10 Bug Fixes - Code Revamp - Now read SADMIN config file
-# 2018_05_14 V2.11 MacOS/AIX Checking SwapSpac/Load Average/New Filesystem Enhancement
-# 2018_05_27 v2.12 Change Location of SysMon Scripts Directory to $SADMIN/usr/sysmon_scripts
-# 2018_06_03 v2.13 Change Location of SysMon Scripts Directory to $SADMIN/usr/mon
-# 2018_06_12 v2.14 Correct Problem with fileincrease and Filesystem Warning double error
-# 2018_06_14 v2.15 Load $SADMIN/sadmin.cfg before the hostname.smon file (So we know Email Address)
-# 2018_07_11 v2.16 Uptime/Load Average take last 5 min. values instead of current.
-# 2018_07_12 v2.17 Service Line now execute srestart.sh script to restart it & Alert Insertion
-# 2018_07_18 v2.18 Fix when filesystem exceed threshold try increase when no script specified
-# 2018_07_19 v2.19 Add Mail Mess when sadmin.cfg not found & Change Mess when host.smon not found
-# 2018_07_21 v2.20 Fix When executiong scripts from sysmon the log wasn't at proper place.
-# 2018_07_22 v2.21 Added Date and Time in mail messages sent.
-# 2018_09_14 v2.22 Take Default Alert Group from SADMIN configuration file.
-# 2018_09_18 v2.23 Error reported was stating > instead of >=
-# 2018_09_21 v2.24 Ping System 3 times before signaling an Error
-# 2018_10_16 v2.25 For initial host.smon file, default alert group are taken from host sadmin.cfg
-# 2018_10_16 v2.26 Change email sent when smon configuration isn't found.
-# 2018_12_29 v2.27 Enhance Performance checking service, chown & chmod only if running as root.
-# 2018_12_30 v2.28 Fix: problem when checking service using Sys V method.
-# 2019_03_09 Removed: v2.29 Remove DateTime Module (Not needed anymore)
+# 2017_12_30 mon V2.7 Change Config file extension to .smon & Defaut Virtual Machine presence to 'N'
+# 2017_12_30 mon V2.8 Change name of template file from sysmon.std to template.smon
+# 2017_12_30 mon V2.9 Change Message Sent to user when host.cfg file not there and using template file
+# 2018_05_07 mon V2.10 Bug Fixes - Code Revamp - Now read SADMIN config file
+# 2018_05_14 mon V2.11 MacOS/AIX Checking SwapSpac/Load Average/New Filesystem Enhancement
+# 2018_05_27 mon v2.12 Change Location of SysMon Scripts Directory to $SADMIN/usr/sysmon_scripts
+# 2018_06_03 mon v2.13 Change Location of SysMon Scripts Directory to $SADMIN/usr/mon
+# 2018_06_12 mon v2.14 Correct Problem with fileincrease and Filesystem Warning double error
+# 2018_06_14 mon v2.15 Load $SADMIN/sadmin.cfg before the hostname.smon file (So we know Email Address)
+# 2018_07_11 mon v2.16 Uptime/Load Average take last 5 min. values instead of current.
+# 2018_07_12 mon v2.17 Service Line now execute srestart.sh script to restart it & Alert Insertion
+# 2018_07_18 mon v2.18 Fix when filesystem exceed threshold try increase when no script specified
+# 2018_07_19 mon v2.19 Add Mail Mess when sadmin.cfg not found & Change Mess when host.smon not found
+# 2018_07_21 mon v2.20 Fix When executiong scripts from sysmon the log wasn't at proper place.
+# 2018_07_22 mon v2.21 Added Date and Time in mail messages sent.
+# 2018_09_14 mon v2.22 Take Default Alert Group from SADMIN configuration file.
+# 2018_09_18 mon v2.23 Error reported was stating > instead of >=
+# 2018_09_21 mon v2.24 Ping System 3 times before signaling an Error
+# 2018_10_16 mon v2.25 For initial host.smon file, default alert group are taken from host sadmin.cfg
+# 2018_10_16 mon v2.26 Change email sent when smon configuration isn't found.
+# 2018_12_29 mon v2.27 Enhance Performance checking service, chown & chmod only if running as root.
+# 2018_12_30 mon v2.28 Fix: problem when checking service using Sys V method.
+# 2019_03_09 mon v2.29 Remove DateTime Module (Not needed anymore)
 # 2019_03_20 nolog: v2.29 Mail message change
 # 2019_04_01 nolog: v2.30 Include color on status output.
-# 2019_04_17 sysmon v2.31 Get SADMIN Root Directory from /etc/environment.
-# 2019_04_19 sysmon v2.32 Produce customized Error Message, when running External Script.
-# 2019_05_13 sysmon v2.33 Don't abort if can't create sysmon.lock file, happen during setup.
-# 2019_07_07 sysmon v2.34 Update Filesystem Increase Message & verification.
-# 2019_07_25 sysmon v2.35 Now using a tmp rpt file and real rpt is replace at the end of execution.
-# 2019_10_25 sysmon v2.36 Don't check SNAP filesystem usage (snap filesystem always at 100%).
-# 2020_03_05 sysmon v2.37 Not getting 'SADMIN' variable content from /etc/environment (if export used).
-# 2020_03_28 sysmon v2.38 Fix problem when 'dmidecode' is not available on system.
-# 2020_07_27 sysmon v2.39 Used space of CIFS Mounted filesystem are no longer monitored.
-# 2020_10_01 sysmon v2.40 Write more elaborated email to user when restarting a service.
-# 2020_11_18 sysmon v2.41 Fix: Fix problem with iostat on MacOS.
-# 2020_11_30 sysmon v2.42 Fix: Fix problem reading SADMIN variable in /etc/environment.
-# 2021_06_12 sysmon v2.43 Add Date & Time of last boot on last line of hostname.smon file.
-# 2021_07_03 sysmon v2.44 Fix problem when trying to run custom script.
-# 2021_07_05 sysmon v2.45 Added support to monitor 'http' and 'https' web site responsiveness.
-# 2021_07_06 sysmon v2.46 Change error messages syntax to be more descriptive.
-# 2022_07_02 sysmon v2.47 Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
-#@2022_09_24 sysmon v2.48 On MacOS review 'check_cpu_usage', 'check_load average' & filesystem check
-#@2022_10_11 sysmon v2.49 Sysmon don't check capacity exceeded for '/snap/*' '/media/*' filesystem
+# 2019_04_17 mon v2.31 Get SADMIN Root Directory from /etc/environment.
+# 2019_04_19 mon v2.32 Produce customized Error Message, when running External Script.
+# 2019_05_13 mon v2.33 Don't abort if can't create sysmon.lock file, happen during setup.
+# 2019_07_07 mon v2.34 Update Filesystem Increase Message & verification.
+# 2019_07_25 mon v2.35 Now using a tmp rpt file and real rpt is replace at the end of execution.
+# 2019_10_25 mon v2.36 Don't check SNAP filesystem usage (snap filesystem always at 100%).
+# 2020_03_05 mon v2.37 Not getting 'SADMIN' variable content from /etc/environment (if export used).
+# 2020_03_28 mon v2.38 Fix problem when 'dmidecode' is not available on system.
+# 2020_07_27 mon v2.39 Used space of CIFS Mounted filesystem are no longer monitored.
+# 2020_10_01 mon v2.40 Write more elaborated email to user when restarting a service.
+# 2020_11_18 mon v2.41 Fix: Fix problem with iostat on MacOS.
+# 2020_11_30 mon v2.42 Fix: Fix problem reading SADMIN variable in /etc/environment.
+# 2021_06_12 mon v2.43 Add Date & Time of last boot on last line of hostname.smon file.
+# 2021_07_03 mon v2.44 Fix problem when trying to run custom script.
+# 2021_07_05 mon v2.45 Added support to monitor 'http' and 'https' web site responsiveness.
+# 2021_07_06 mon v2.46 Change error messages syntax to be more descriptive.
+# 2022_07_02 mon v2.47 Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
+#@2022_09_24 mon v2.48 On MacOS review 'check_cpu_usage', 'check_load average' & filesystem check
+#@2022_10_11 mon v2.49 Sysmon don't check capacity exceeded for '/snap/*' '/media/*' filesystem
 #===================================================================================================
 #
 use English;
