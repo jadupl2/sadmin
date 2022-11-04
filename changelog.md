@@ -1,5 +1,72 @@
 # SADMIN Full Changelog
  
+## Release [1.4.2](https://github.com/jadupl2/sadmin/releases) (2022-11-04)
+
+### Backup related
+  - [sadm_backup.sh](https://sadmin.ca/sadm-backupdb) (v3.36 2022/09/04) - False error message was written to error log.
+  - [sadm_backup.sh](https://sadmin.ca/sadm-backupdb) (v3.37 2022/09/23) - Fix problem mounting NFS on newer version of MacOS.
+  - [sadm_backup.sh](https://sadmin.ca/sadm-backupdb) (v3.38 2022/10/30) - After each backup show, the backup size in the log.
+  - sadm_server_backup.php (v2.2 2022/09/28) - Backup sched. page - Add possibility to compress or not the backup via the web page.
+  - sadm_view_backup.php (v1.6 2022/09/11) - Backup status page - Now show if schedule is activated or not.
+  - sadm_view_backup.php (v1.7 2022/09/12) - Backup status page - Will show link to error log (if it exist).
+  - sadm_view_backup.php (v1.8 2022/09/12) - Backup status page - Display the first 50 systems instead of 25.
+  - sadm_view_rear.php (v1.9 2022/09/12) - ReaR backup status page - Show if schedule is activated or not.
+  - sadm_view_rear.php (v2.0 2022/09/12) - ReaR backup status page - Show link to error log (if it exist.).
+  - sadm_view_rear.php (v2.1 2022/09/12) - ReaR backup status page - Display the first 50 systems instead of 25.
+  - sadm_view_rear.php (v2.2 2022/09/20) - ReaR backup status page - Move ReaR supported architecture msg to heading.
+
+### SADMIN Client related
+  - [sadm_client_housekeeping.sh](https://sadmin.ca/sadm-client-housekeeping) (v2.07 2022/09/20) - Use SSH port specify per server & update SADMIN section to v1.52.
+  - [sadm_client_housekeeping.sh](https://sadmin.ca/sadm-client-housekeeping) (v2.08 2022/09/24) - Change MacOS mount point name (/preserve don't exist anymore)
+  - [sadm_create_sysinfo.sh](https://sadmin.ca/sadm-create-sysinfo) (v3.35 2022/09/22) - LVM information are now written into the Disk information file.
+
+### Command line tools
+  - sadm_dr_savefs.sh (v2.9 2022/10/23) - Update the sadmin code section 1.52.
+  - [sadm_rmcd_starter.sh](https://sadmin.ca/sadm_rmcd_starter) (v1.7 2022/09/20) - SSH to client is now using the port defined in each system.
+
+### SADMIN Install, Uninstall & Update
+  - [setup.sh](https://sadmin.ca/_pages/install/#the-setup-script) (v3.22 2022/10/23) - Install 'host' command if not present on system.
+
+### Libraries, Scripts Templates, Demo
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.26 2022/11/01) - Minor change for MacOS Ventura.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.10 2022/09/04) - Depreciate 'sadm_writelog' to 'sadm_write_log' for standardization.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.11 2022/09/20) - MacOS 'arch' is returning i386, change 'sadm_server_arch' to use 'uname -m'.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.12 2022/09/20) - MacOS change 'sadm_get_osmajorversion' so it return an integer after v10.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.13 2022/09/25) - MacOS architecture was wrong in script header ('arch' command return i386?).
+  - [sadm_template.sh](https://sadmin.ca/sadm-template-sh) (v4.3 2022/09/07) - Make use of sadm_write_log() instead of sadm_write().
+
+### System Monitoring
+  - [sadm_sysmon.pl](https://sadmin.ca/sadm-sysmon) (v2.48 2022/09/24) - On MacOS review 'check_cpu_usage', 'check_load average' & filesystem check
+  - [sadm_sysmon.pl](https://sadmin.ca/sadm-sysmon) (v2.49 2022/10/11) - Sysmon don't check capacity exceeded for '/snap/*' '/media/*' filesystem
+  - [sadm_view_sysmon.php](https://sadmin.ca/sadm-system-monitor) (v2.33 2022/09/08) - System monitor page - Add current date/time and look enhancement.
+  - [sadm_view_sysmon.php](https://sadmin.ca/sadm-system-monitor) (v2.34 2022/09/11) - System monitor page - Modify to have a more pleasing look
+
+### Operating System Update
+  - sadm_osupdate.sh (v3.33 2022/09/04) - Revisited to use the new error log when error is encountered.
+  - sadm_view_schedule.php (v2.14 2022/09/12) - O/S update status page - Will show link to error log (if it exist).
+  - sadm_view_schedule.php (v2.15 2022/09/12) - O/S update status page - Display the first 50 systems instead of 25.
+
+### SADMIN Server related
+  - [sadm_daily_farm_fetch.sh](https://sadmin.ca/sadm_daily_farm_fetch) (v4.9 2022/09/23) - Use SSH port specify per server & update SADMIN section to v1.52.
+  - [sadm_daily_report.sh](https://sadmin.ca/sadm-daily-report) (v1.32 2022/09/30) - Add link to system information page on the system name.
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) (v3.44 2022/09/29) - Daily backup, check new web option to compress backup or not.
+  - sadm_push_sadmin.sh (v2.37 2022/09/20) - SSH to client is now using the port defined in each system.
+
+### Web interface
+  - [sadmPageSideBar.php](https://sadmin.ca/sadm-pagesidebar) (v3.0 2022/09/12) - SideBar - Move 'Server Attribute' section before 'Server Info'.
+  - sadm_server_common.php (v2.5 2022/09/24) - CRUD_client - Add ssh port number to use to access the client.
+  - sadm_server_create.php (v2.3 2022/09/24) - CRUD_client - Add SSH port to communicate with client.
+  - sadm_server_create.php (v2.4 2022/09/24) - CRUD_client - When ing a client, create client dir. in $SADMIN/www/dat.
+  - [sadm_server_delete_action.php](https://sadmin.ca/sadm-remove-client) (v1.5 2022/09/24) - CRUD_client_delete - Change text in page header.
+  - sadm_server_delete.php (v2.4 2022/09/24) - CRUD_client_delete - Change text in header
+  - sadm_server_main.php (v2.4 2022/09/24) - CURD_Client_Main - Change Page Header
+  - sadm_server_perf_adhoc_all.php (v1.5 2022/09/19) - All systems Perf. Graph - Change preset default values for graphics.
+  - sadm_view_rch_summary.php (v2.12 2022/09/05) - All Scripts status page - Add [doc] & [elog] link to view error log (if exist).
+  - [sadm_view_server_info.php](https://sadmin.ca/sadm-view-server-info) (v2.17 2022/09/12) - System info page - Enhance buttons look at the top of the page.
+  - [sadm_view_server_info.php](https://sadmin.ca/sadm-view-server-info) (v2.18 2022/09/22) - System info page - Add Backup button to give direct access to backup schedule.
+  - [sadm_view_server_info.php](https://sadmin.ca/sadm-view-server-info) (v2.19 2022/09/23) - System info page - Add Rear & OS Update buttons,give direct access to schedule.
+   
+ 
 ## Release [1.4.1](https://github.com/jadupl2/sadmin/releases) (2022-08-26)
    
 - [sadmlib2_std.py](https://sadmin.ca/sadmlib-std-py) (v4.25 2022/08/26) - Correct typo error on line 718.
