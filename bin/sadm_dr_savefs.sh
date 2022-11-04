@@ -95,7 +95,7 @@
 # 2018_11_13 cmdline v2.6 Debug is now OFF by default
 # 2018_11_20 cmdline v2.7 Bug fix, make copy of fstab, restructure code, remove support for RHEL3,RHEL4.
 # 2018_12_08 cmdline v2.8 Fix bug with Debugging Level.
-#@2022_10_23 cmdline v2.9 Update the Sadmin Code Section 1.52.
+#@2022_10_23 cmdline v2.9 Update the sadmin code section 1.52.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

@@ -2,10 +2,10 @@
 -- version 5.2.0-1.el9
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost
--- Generation Time: Aug 11, 2022 at 10:06 AM
--- Server version: 10.5.16-MariaDB
--- PHP Version: 8.0.13
+-- Hôte : localhost
+-- Généré le : ven. 04 nov. 2022 à 12:53
+-- Version du serveur : 10.5.16-MariaDB
+-- Version de PHP : 8.0.13
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `sadmin`
+-- Base de données : `sadmin`
 --
 CREATE DATABASE IF NOT EXISTS `sadmin` DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 USE `sadmin`;
@@ -26,7 +26,7 @@ USE `sadmin`;
 -- --------------------------------------------------------
 
 --
--- Table structure for table `script`
+-- Structure de la table `script`
 --
 
 CREATE TABLE IF NOT EXISTS `script` (
@@ -47,12 +47,15 @@ CREATE TABLE IF NOT EXISTS `script` (
   `scr_max_logline` int(11) NOT NULL DEFAULT 500 COMMENT 'Max. Lines in log',
   `scr_max_rchline` int(11) NOT NULL DEFAULT 35 COMMENT 'Max. lines in RCH',
   `scr_pid_timeout` int(11) NOT NULL DEFAULT 7200 COMMENT 'PID max. TTL',
-  `src_max_inactive_days` int(2) NOT NULL DEFAULT 31 COMMENT 'Days without run threshold before alert\r\n',
+  `src_max_inactive_days` int(3) NOT NULL DEFAULT 31 COMMENT 'Days without run threshold before alert (0=Do not check)\r\n\r\n',
   `scr_root_exec` tinyint(4) NOT NULL DEFAULT 0 COMMENT 'Need root(1) or not(0)',
   `scr_run_sadmin` tinyint(4) NOT NULL DEFAULT 0 COMMENT 'Run on SADMIN Server Only(1) or nay system(0)',
   `scr_os` varchar(10) NOT NULL DEFAULT 'any' COMMENT 'OS on whitch script can be run',
   `scr_last_activity` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'Last Activity date',
   `scr_severity` smallint(6) NOT NULL DEFAULT 1 COMMENT 'Alert severity (1,2,3,4) Error, Warning, Info, None',
+  `scr_exclude` set('0','1') NOT NULL DEFAULT '0' COMMENT '1=Exclude from report',
+  `scr_log_keepdays` smallint(6) NOT NULL DEFAULT 0 COMMENT 'Nb days to keep inactive log',
+  `scr_rch_keepdays` smallint(6) NOT NULL DEFAULT 0 COMMENT 'Nb. Days to keep inactive rch',
   PRIMARY KEY (`scr_id`),
   UNIQUE KEY `scr_name_key` (`scr_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Main Scripts Table';
@@ -60,16 +63,16 @@ CREATE TABLE IF NOT EXISTS `script` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `script_rch`
+-- Structure de la table `script_rch`
 --
 
 CREATE TABLE IF NOT EXISTS `script_rch` (
   `scrdet_host` varchar(15) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Script Host Name',
   `scrdet_name` varchar(40) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Script Name',
-  `scrdet_status` tinyint(2) NOT NULL DEFAULT 0 COMMENT 'Status last execution',
-  `scrdet_active` int(1) NOT NULL DEFAULT 1 COMMENT '1=Show in Monitor\r\n0=Was acknowledge by Sysadmin don''t show in Monitor',
   `srcdet_start` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT 'Start Date_Time',
   `srcdet_end` timestamp NULL DEFAULT NULL COMMENT 'End Date Time',
+  `scrdet_status` tinyint(2) NOT NULL DEFAULT 0 COMMENT 'Status last execution',
+  `scrdet_active` int(1) NOT NULL DEFAULT 1 COMMENT '1=Show in Monitor\r\n0=Was acknowledge by Sysadmin don''t show in Monitor',
   `srcdet_elapse` time DEFAULT NULL COMMENT 'Execution Elapse  Time',
   `scrdet_alertcode` tinyint(3) UNSIGNED DEFAULT NULL COMMENT 'Script alert code',
   `scrdet_alertgroup` varchar(30) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Script alert group',
@@ -78,7 +81,7 @@ CREATE TABLE IF NOT EXISTS `script_rch` (
 
 
 --
--- Table structure for table `server`
+-- Structure de la table `server`
 --
 
 CREATE TABLE IF NOT EXISTS `server` (
@@ -121,6 +124,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_disks_info` varchar(1024) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Disks Size Info',
   `srv_vgs_info` varchar(1024) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Volume Groups INfo',
   `srv_backup` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Daily Backup 0=No 1=Yes',
+  `srv_backup_compress` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Compress backup (tgz)',
   `srv_backup_month` varchar(13) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNN' COMMENT 'Backup Month YNNYNNYNNYNN',
   `srv_backup_dom` varchar(32) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN' COMMENT 'Backup DayofMonth YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN',
   `srv_backup_dow` varchar(8) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNN' COMMENT 'Backup DayOfWeek YNNNNNNN',
@@ -154,11 +158,11 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_lock` tinyint(4) NOT NULL DEFAULT 0 COMMENT 'Unlock(0) Lock(1)',
   PRIMARY KEY (`srv_id`),
   UNIQUE KEY `idx_srv_name` (`srv_name`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=97 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
+) ENGINE=InnoDB AUTO_INCREMENT=103 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
 
 
 --
--- Table structure for table `server_category`
+-- Structure de la table `server_category`
 --
 
 CREATE TABLE IF NOT EXISTS `server_category` (
@@ -170,11 +174,11 @@ CREATE TABLE IF NOT EXISTS `server_category` (
   `cat_default` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Default Category ?',
   PRIMARY KEY (`cat_id`),
   UNIQUE KEY `key_cat_code` (`cat_code`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Category Table';
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Category Table';
 
 
 --
--- Table structure for table `server_group`
+-- Structure de la table `server_group`
 --
 
 CREATE TABLE IF NOT EXISTS `server_group` (
@@ -190,7 +194,7 @@ CREATE TABLE IF NOT EXISTS `server_group` (
 
 
 --
--- Table structure for table `server_network`
+-- Structure de la table `server_network`
 --
 
 CREATE TABLE IF NOT EXISTS `server_network` (
@@ -206,8 +210,6 @@ CREATE TABLE IF NOT EXISTS `server_network` (
   UNIQUE KEY `key_ip_zero` (`net_ip_wzero`(15))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-
-COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
