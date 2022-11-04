@@ -153,7 +153,7 @@
 # 2021_08_17 lib v3.74 Performance improvement.
 # 2021_09_09 lib v3.75 'sadm_write_err $msg' function added to write to log and error log.
 # 2021_09_13 lib v3.76 Enhance script log header to be more concise, yet have more information.
-# 2021_09_14 lib v3.77 If script desc. "SADM_PDESC" v#@2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
+# 2021_09_14 lib v3.77 If script desc. "SADM_PDESC" v# 2022_08_22 lib v4.06 Update 'sadm_server_type()' better detection if physical or virtual system.
 # 2021_09_15 lib v3.78 Function "sadm_show_version" will show Script Desc. ($SADM_PDESC) if Avail.
 # 2021_09_30 lib v3.79 Various small little corrections.
 # 2021_10_20 lib v3.80 Merge 'slack channel file' with 'alert group' & change log footer.
@@ -186,10 +186,10 @@
 # 2022_08_24 lib v4.07 Creation of $SADM_TMP_FILE1[1,2,3] done in SADMIN section & remove by stop().
 # 2022_08_25 lib v4.08 Change message of the system lock/unlock function.
 # 2022_08_26 lib v4.09 Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
-#@2022_09_04 lib v4.10 Depreciate 'sadm_writelog' to 'sadm_write_log' for standardization.
-#@2022_09_20 lib v4.11 MacOS 'arch' is returning i386, change 'sadm_server_arch' to use 'uname -m'.
-#@2022_09_20 lib v4.12 MacOS change 'sadm_get_osmajorversion' so it return an integer after v10.
-#@2022_09_25 lib v4.13 MacOS architecture was wrong in script header ('arch' command return i386?).
+# 2022_09_04 lib v4.10 Depreciate 'sadm_writelog' to 'sadm_write_log' for standardization.
+# 2022_09_20 lib v4.11 MacOS 'arch' is returning i386, change 'sadm_server_arch' to use 'uname -m'.
+# 2022_09_20 lib v4.12 MacOS change 'sadm_get_osmajorversion' so it return an integer after v10.
+# 2022_09_25 lib v4.13 MacOS architecture was wrong in script header ('arch' command return i386?).
 #===================================================================================================
 
 

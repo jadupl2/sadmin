@@ -39,7 +39,7 @@
 # 2019_09_23 web v2.7 Add Distribution logo and Version for each servers.
 # 2019_10_13 web v2.8 Add System Architecture to page.
 # 2020_01_13 web v2.9 Minor Appearance page change (Nb.Cpu and page width).
-#@2020_12_29 web v3.0 Main server page - Display the first 50 systems instead of 25.
+# 2020_12_29 web v3.0 Main server page - Display the first 50 systems instead of 25.
 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

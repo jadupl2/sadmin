@@ -27,7 +27,7 @@
 # 2021_09_25 lib v4.0 Added 'SADM_PDESC' that contain description of Script (Used in -v option).
 # 2022_05_25 lib v4.1 Added 'SADM_ROOT_ONLY' and 'SADM_SERVER_ONLY' checked before running script.
 # 2022_08_24 lib v4.2 Change the way temporary files are created ('mktemp').
-#@2022_09_07 lib v4.3 Make use of sadm_write_log() instead of sadm_write().
+# 2022_09_07 lib v4.3 Make use of sadm_write_log() instead of sadm_write().
 #---------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x

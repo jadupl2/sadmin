@@ -55,7 +55,7 @@
 # 2021_06_03 nolog  v4.6 Update SADMIN section and minor code update
 # 2022_05_24 server v4.7 Updated to use the library 'check_lock_file()' function.
 # 2022_08_17 server v4.8 Update SADMIN section 2.2 and use error log when problem encountered.
-#@2022_09_23 server v4.9 Use SSH port specify per server & update SADMIN section to v1.52.
+# 2022_09_23 server v4.9 Use SSH port specify per server & update SADMIN section to v1.52.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C

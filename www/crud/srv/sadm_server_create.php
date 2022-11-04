@@ -26,8 +26,8 @@
 # 2017_11_15 web v2.0 CRUD_client - Modify to used to new web interface and MySQL Database.
 # 2018_02_03 web v2.1 CRUD_client - Added Server Graph Display Option
 # 2019_08_29 web v2.2 CRUD_client - New page heading, using the library heading function.
-#@2022_09_24 web v2.3 CRUD_client - Add SSH port to communicate with client.
-#@2022_09_24 web v2.4 CRUD_client - When ing a  client, create client dir. in $SADMIN/www/dat.
+# 2022_09_24 web v2.3 CRUD_client - Add SSH port to communicate with client.
+# 2022_09_24 web v2.4 CRUD_client - When ing a  client, create client dir. in $SADMIN/www/dat.
 #
 # ==================================================================================================
 #

@@ -37,7 +37,7 @@
 # 2021_08_27 web v2.9  All Scripts status page - Fix link to log & History file (*.rch).
 # 2021_08_29 web v2.10 All Scripts status page - Show effective alert group name instead of 'default'.
 # 2021_08_29 web v2.11 All Scripts status page - Show member(s) of alert group as tooltip. 
-#@2022_09_05 web v2.12 All Scripts status page - Add [doc] & [elog] link to view error log (if exist).
+# 2022_09_05 web v2.12 All Scripts status page - Add [doc] & [elog] link to view error log (if exist).
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.

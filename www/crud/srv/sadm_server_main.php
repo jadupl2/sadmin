@@ -27,7 +27,7 @@
 # 2019_01_11 web v2.1 CURD_Client_Main - Add Model and Serial No. in bubble while on server name.
 # 2019_08_17 web v2.2 CURD_Client_Main - New page heading and Logo of distribution inserted.
 # 2019_08_17 web v2.3 CURD_Client_Main - Return to caller URL wasn't set properly.
-#@2022_09_24 web v2.4 CURD_Client_Main - Change Page Header 
+# 2022_09_24 web v2.4 CURD_Client_Main - Change Page Header 
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.

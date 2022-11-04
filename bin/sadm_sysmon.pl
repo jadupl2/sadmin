@@ -49,8 +49,8 @@
 # 2021_07_05 mon v2.45 Added support to monitor 'http' and 'https' web site responsiveness.
 # 2021_07_06 mon v2.46 Change error messages syntax to be more descriptive.
 # 2022_07_02 mon v2.47 Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
-#@2022_09_24 mon v2.48 On MacOS review 'check_cpu_usage', 'check_load average' & filesystem check
-#@2022_10_11 mon v2.49 Sysmon don't check capacity exceeded for '/snap/*' '/media/*' filesystem
+# 2022_09_24 mon v2.48 On MacOS review 'check_cpu_usage', 'check_load average' & filesystem check
+# 2022_10_11 mon v2.49 Sysmon don't check capacity exceeded for '/snap/*' '/media/*' filesystem
 #===================================================================================================
 #
 use English;

@@ -36,8 +36,8 @@
 # 2019_09_23 osupdate v2.11 O/S update status page - When initiating Schedule change from here, 
 # 2019_12_29 osupdate v2.12 O/S update status page - Bottom titles was different that the heading.
 # 2019_12_29 osupdate v2.13 O/S update status page - Heading modified and now on two rows.
-#@2022_09_12 osupdate v2.14 O/S update status page - Will show link to error log (if it exist).
-#@2022_09_12 osupdate v2.15 O/S update status page - Display the first 50 systems instead of 25.
+# 2022_09_12 osupdate v2.14 O/S update status page - Will show link to error log (if it exist).
+# 2022_09_12 osupdate v2.15 O/S update status page - Display the first 50 systems instead of 25.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

@@ -26,9 +26,9 @@
 # 2019_09_20 backup v1.3 Backup status page - Show History (RCH) content using same uniform way.
 # 2019_12_01 backup v1.4 Backup status page - Change Layout to align with daily backup schedule.
 # 2020_12_13 backup v1.5 Backup status page - Added link in Heading to view the Daily Backup Report
-#@2022_09_11 backup v1.6 Backup status page - Now show if schedule is activated or not.
-#@2022_09_12 backup v1.7 Backup status page - Will show link to error log (if it exist).
-#@2022_09_12 backup v1.8 Backup status page - Display the first 50 systems instead of 25.
+# 2022_09_11 backup v1.6 Backup status page - Now show if schedule is activated or not.
+# 2022_09_12 backup v1.7 Backup status page - Will show link to error log (if it exist).
+# 2022_09_12 backup v1.8 Backup status page - Display the first 50 systems instead of 25.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

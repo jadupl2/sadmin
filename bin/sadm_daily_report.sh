@@ -48,7 +48,7 @@
 # 2022_06_09 server v1.29 Added AlmaLinux and Rocky Logo for web interface.
 # 2022_07_18 server v1.30 Remove unneeded work file at the end.
 # 2022_07_21 server v1.31 Insert new SADMIN section v1.52.
-#@2022_09_30 server v1.32 Add link to system information page on the system name.
+# 2022_09_30 server v1.32 Add link to system information page on the system name.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

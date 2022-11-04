@@ -36,7 +36,7 @@
 # 2020_04_17 web v2.9 Running script are now shown on the page.
 # 2021_08_06 web v2.10 Remove repetitive link to log.
 # 2021_08_29 web v2.11 Result Code History viewer, show effective alert group instead of 'default.'
-#@2021_00_05 web v2.13 RCH file viewer; Make rch line more compact.
+# 2021_00_05 web v2.13 RCH file viewer; Make rch line more compact.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

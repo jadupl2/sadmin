@@ -68,8 +68,8 @@
 # 2021_07_22 client: v2.04 Fix problem when run the 1st time during setup script.
 # 2022_07_02 client: v2.05 Set permission for new gmail passwd file ($SADMIN/cfg/.gmpw)
 # 2022_07_13 client: v2.06 Update new SADMIN section v1.51 and code revision..
-#@2022_09_20 client: v2.07 Use SSH port specify per server & update SADMIN section to v1.52.
-#@2022_09_24 client: v2.08 Change MacOS mount point name (/preserve don't exist anymore)
+# 2022_09_20 client: v2.07 Use SSH port specify per server & update SADMIN section to v1.52.
+# 2022_09_24 client: v2.08 Change MacOS mount point name (/preserve don't exist anymore)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x

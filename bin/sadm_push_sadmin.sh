@@ -53,7 +53,7 @@
 # 2022_05_24 server v2.34 Update to check if the SADMIN client is lock prior to push.
 # 2022_07_09 server v2.35 Now pushing email user password file ($SADMIN/cfg/.gmpw).
 # 2022_08_17 server v2.36 Updated with new SADMIN section v1.52
-#@2022_09_20 server v2.37 SSH to client is now using the port defined in each system.
+# 2022_09_20 server v2.37 SSH to client is now using the port defined in each system.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

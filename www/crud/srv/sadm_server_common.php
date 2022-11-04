@@ -27,7 +27,7 @@
 # 2018_10_01 web v2.2 CRUD_client - Remove Alert Group Field
 # 2018_12_15 web v2.3 CRUD_client - Add 'Darwin' as a choice for Operating System Type.
 # 2018_08_18 web v2.4 CRUD_client - Reduce screen size to 40 for install directory field
-#@2022_09_24 web v2.5 CRUD_client - Add ssh port number to use to access the client.
+# 2022_09_24 web v2.5 CRUD_client - Add ssh port number to use to access the client.
 # ==================================================================================================
  
 

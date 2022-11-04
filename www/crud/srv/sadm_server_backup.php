@@ -34,7 +34,7 @@
 # 2020_01_13 backup v1.9 Backup sched. page - Enhance Web Appearance and color. 
 # 2020_01_18 backup v2.0 Backup sched. page - Reduce width of text-area for include/exclude list to fit on Ipad
 # 2021_05_25 backup v2.1 Backup sched. page - Replace php depreciated function 'eregi_replace' warning message.
-#@2022_09_28 backup v2.2 Backup sched. page - Add possibility to compress or not the backup via the web page.
+# 2022_09_28 backup v2.2 Backup sched. page - Add possibility to compress or not the backup via the web page.
 # ==================================================================================================
 #
 #

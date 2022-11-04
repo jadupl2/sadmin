@@ -31,7 +31,7 @@
 # 2019_01_15 web v2.1 CRUD_client_delete - Option to create server data archive before delete.
 # 2019_08_17 web v2.2 CRUD_client_delete - New parameter, the URL where to go back after update.
 # 2019_12_26 web v2.3 CRUD_client_delete - Deleted server now place in www/dat/archive directory.
-#@2022_09_24 web v2.4 CRUD_client_delete - Change text in header
+# 2022_09_24 web v2.4 CRUD_client_delete - Change text in header
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.

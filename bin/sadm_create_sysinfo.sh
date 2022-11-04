@@ -62,7 +62,7 @@
 # 2022_07_20 client v3.32 When using 'inxi' suppress color escape sequence from generated files.
 # 2022_07_21 client v3.33 Small enhancement in network information section.
 # 2022_08_25 client v3.34 Update to SADMIN Section 1.52
-#@2022_09_22 client v3.35 LVM information are now written into the Disk information file.
+# 2022_09_22 client v3.35 LVM information are now written into the Disk information file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # Intercept the ^C
 #set -x

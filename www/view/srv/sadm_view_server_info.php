@@ -39,9 +39,9 @@
 # 2020_07_12 web v2.14 System info page - Replace 'CRUD' button with 'Modify' directed to CRUD menu.
 # 2020_12_29 web v2.15 System info page - Date for starting & ending maintenance not show properly.
 # 2022_06_16 web v2.16 System info page - If O/S code name is empty, don't print empty parentheses.
-#@2022_09_12 web v2.17 System info page - Enhance buttons look at the top of the page.
-#@2022_09_22 web v2.18 System info page - Add Backup button to give direct access to backup schedule.
-#@2022_09_23 web v2.19 System info page - Add Rear & OS Update buttons,give direct access to schedule.
+# 2022_09_12 web v2.17 System info page - Enhance buttons look at the top of the page.
+# 2022_09_22 web v2.18 System info page - Add Backup button to give direct access to backup schedule.
+# 2022_09_23 web v2.19 System info page - Add Rear & OS Update buttons,give direct access to schedule.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

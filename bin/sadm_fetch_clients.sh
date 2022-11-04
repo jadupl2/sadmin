@@ -95,7 +95,7 @@
 # 2022_07_01 server v3.41 Fix error updating crontab.
 # 2022_07_09 server v3.42 Updated to use new SADMIN section v1.52.
 # 2022_07_14 server v3.43 Change group to '$SADM_GROUP' in $SADMIN/www/dat (fix web ui problem).
-#@2022_09_29 server v3.44 Daily backup, check new web option to compress backup or not.
+# 2022_09_29 server v3.44 Daily backup, check new web option to compress backup or not.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x

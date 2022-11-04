@@ -57,8 +57,8 @@
 # 2022_05_26 nolog v2.30 System Monitor page - Fix intermittent problem creating tmp alert file.
 # 2022_05_26 mon v2.31 System monitor page - Rewrote some part of the code for new version of php
 # 2022_07_21 mon v2.32 System monitor page - Fix problem with recent scripts section
-#@2022_09_08 mon v2.33 System monitor page - Add current date/time and look enhancement.
-#@2022_09_11 mon v2.34 System monitor page - Modify to have a more pleasing look
+# 2022_09_08 mon v2.33 System monitor page - Add current date/time and look enhancement.
+# 2022_09_11 mon v2.34 System monitor page - Modify to have a more pleasing look
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.

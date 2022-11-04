@@ -30,10 +30,10 @@
 # 2020_03_05 backup v1.6 ReaR backup status page - When mouse over server name (Show more information).
 # 2020_07_29 backup v1.7 ReaR backup status page - Remove system description to allow more space on each line.
 # 2020_13_13 backup v1.8 ReaR backup status page - Add link in heading to view ReaR Daily Report.
-#@2022_09_12 backup v1.9 ReaR backup status page - Show if schedule is activated or not.
-#@2022_09_12 backup v2.0 ReaR backup status page - Show link to error log (if it exist.).
-#@2022_09_12 backup v2.1 ReaR backup status page - Display the first 50 systems instead of 25.
-#@2022_09_20 backup v2.2 ReaR backup status page - Move ReaR supported architecture msg to heading.
+# 2022_09_12 backup v1.9 ReaR backup status page - Show if schedule is activated or not.
+# 2022_09_12 backup v2.0 ReaR backup status page - Show link to error log (if it exist.).
+# 2022_09_12 backup v2.1 ReaR backup status page - Display the first 50 systems instead of 25.
+# 2022_09_20 backup v2.2 ReaR backup status page - Move ReaR supported architecture msg to heading.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

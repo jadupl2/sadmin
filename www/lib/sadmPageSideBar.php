@@ -40,7 +40,7 @@
 # 2022_06_02 web v2.14 SideBar - Change some syntax due to the new PHP v8 on RHEL9
 # 2022_07_13 web v2.15 SideBar - Show alert when final 'rch' summary file couldn't be opened.
 # 2022_07_18 web v2.16 SideBar - Fix problem, sidebar wouldn't displayed correctly.
-#@2022_09_12 web v3.0 SideBar - Move 'Server Attribute' section before 'Server Info'.
+# 2022_09_12 web v3.0 SideBar - Move 'Server Attribute' section before 'Server Info'.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
