@@ -80,6 +80,7 @@
 # 2022_09_04 backup v3.36 False error message was written to error log.
 # 2022_09_23 backup v3.37 Fix problem mounting NFS on newer version of MacOS.
 # 2022_10_30 backup v3.38 After each backup show, the backup size in the log.
+#@2022_11_11 backup v3.39 Add size of current & previous backup at end of log, used for backup page.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -111,7 +112,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.38'                                     # Script version number
+export SADM_VER='3.39'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -587,15 +588,44 @@ clean_backup_dir()
     # May need to delete some backup if more than $SADM_DAILY_BACKUP_TO_KEEP copies
     cd ${TODAY_ROOT_DIR}                                                # Change Dir. To Backup Dir.
 
+    # Determine of many copies we keep for the backup we are doing (Daily,Weekly,Monthly,Yearly)
+    case $BACKUP_TYPE in
+        D) sadm_writelog "For [Daily] backup, you asked to keep $SADM_DAILY_BACKUP_TO_KEEP copies." 
+           COPIES2KEEP=$SADM_DAILY_BACKUP_TO_KEEP
+           BTYPE="SADM_DAILY_BACKUP_TO_KEEP"
+           BID="Daily "
+           ;;
+        W) sadm_writelog "For [Weekly] backup, you asked to keep $SADM_WEEKLY_BACKUP_TO_KEEP copies." 
+           COPIES2KEEP=$SADM_WEEKLY_BACKUP_TO_KEEP
+           BTYPE="SADM_WEEKLY_BACKUP_TO_KEEP"
+           BID="Weekly "
+           ;;
+        M) sadm_writelog "For [Monthly] backup, you asked to keep $SADM_MONTHLY_BACKUP_TO_KEEP copies." 
+           COPIES2KEEP=$SADM_MONTHLY_BACKUP_TO_KEEP
+           BTYPE="SADM_MONTHLY_BACKUP_TO_KEEP"
+           BID="Monthly "
+           ;;
+        Y) sadm_writelog "For [Yearly] backup, you asked to keep $SADM_YEARLY_BACKUP_TO_KEEP copies." 
+           COPIES2KEEP=$SADM_YEARLY_BACKUP_TO_KEEP
+           BTYPE="SADM_YEARLY_BACKUP_TO_KEEP"
+           BID="Yearly "
+           ;;
+        *) sadm_writelog "Invalid Backup Type '$BACKUP_TYPE' should be D,W,M or Y."
+           COPIES2KEEP=4
+           sadm_writelog "Defaulting to $COPIES2KEEP copies to keep"
+           ;;
+    esac 
+
+
     # List Current backup days we have and Count Nb. how many we need to delete
     sadm_write "List of backup currently on disk:\n"
     #ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_write "${ln}\n" ;done
-    du -h . |while read ln ;do sadm_write "${ln}\n" ;done
-    backup_count=`ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l` # Calc. Nb. Days of backup
-    day2del=$(($backup_count-$SADM_DAILY_BACKUP_TO_KEEP))               # Calc. Nb. Days to remove
+    du -h . | grep -v '@eaDir' | while read ln ;do sadm_write "${ln}\n" ;done
+    backup_count=`ls -1| grep -v '@eaDir' | awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l`
+    day2del=$(($backup_count-$COPIES2KEEP))                             # Calc. Nb. Days to remove
     sadm_write_log " "
-    sadm_write_log "You have decided to keep only the last $SADM_DAILY_BACKUP_TO_KEEP days of each backup."
-    sadm_write_log "You can change your choice by changing 'SADM_DAILY_BACKUP_TO_KEEP' value in \$SADMIN/cfg/sadmin.cfg"
+    sadm_write_log "You have decided to keep only the last $COPIES2KEEP backup."
+    sadm_write_log "You can change your choice by changing '$BTYPE' value in \$SADMIN/cfg/sadmin.cfg."
     sadm_write_log "You now have $backup_count days of backup(s)."         # Show Nb. Backup Days
 
     # If current number of backup days on disk is greater than nb. of backup to keep, then cleanup.
@@ -606,9 +636,16 @@ clean_backup_dir()
              sadm_write_log " "
              sadm_write_log "List of backup currently on disk:"
              #ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_write_log "${ln}" ;done
-             du -h . |while read ln ;do sadm_write_log "${ln}" ;done
+             du -h . | grep -v '@eaDir' | while read ln ;do sadm_write "${ln}\n" ;done
         else sadm_write_log "No clean up needed"
     fi
+
+    # Create Line that is used by 'Daily Backup Status' web page to show size of last 2 backup.
+    most_recent=`du -h . | grep -v '@eaDir' | grep "20" | sort -r -k2 | head -1 | awk '{print $1}'`
+    previous=`du -h . | grep -v '@eaDir' | grep "20" | sort -r -k2 | head -2 | tail -1 | awk '{print $1}'`
+    sadm_write_log " "
+    sadm_write_log "${BID}current backup size : $most_recent"
+    sadm_write_log "${BID}previous backup size : $previous"
 
     cd $CUR_PWD                                                         # Restore Previous Cur Dir.
     return 0                                                            # Return to caller
