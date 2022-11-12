@@ -29,6 +29,9 @@
 # 2022_09_11 backup v1.6 Backup status page - Now show if schedule is activated or not.
 # 2022_09_12 backup v1.7 Backup status page - Will show link to error log (if it exist).
 # 2022_09_12 backup v1.8 Backup status page - Display the first 50 systems instead of 25.
+#@2022_11_12 backup v1.9 Backup status page - Now shows backup size of last & proceeding backup size.
+#@2022_11_12 backup v2.0 Backup status page - Show NFS server name & backup directory on backup page.
+#@2022_11_12 backup v2.1 Backup status page - Added column to show if system is online sporadically.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -42,7 +45,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 <script>
     $(document).ready(function() {
         $('#sadmTable').DataTable( {
-            "lengthMenu": [[50, 100, -1], [25, 50, 100, "All"]],
+            "lengthMenu": [[50, 100, -1], [50, 100, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,
@@ -57,7 +60,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "1.8" ;                                           # Current version number
+$WVER               = "2.1" ;                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -87,33 +90,42 @@ $BACKUP_ELOG        = 'sadm_backup_e.log';                              # Backup
 function setup_table() {
 
     echo "<div id='SimpleTable'>"; 
-    echo '<table id="sadmTable" class="display" row-border width="100%">';   
-
+    #echo '<table class="display" row-border width="100%">';   
+    echo '<table id="sadmTable" class="display" width="100%">';   
     echo "<thead>\n";
+
     echo "<tr>\n";
-    echo "<th>Server</th>\n";
+    echo "<th align='left'>System</th>\n";
     echo "<th class='dt-head-left'>Description</th>\n";
     echo "<th class='dt-head-center'>Schedule</th>\n";
-    echo "<th class='dt-head-center'>Backup Time</th>\n";
+    echo "<th class='dt-head-center'>Sporadic</th>\n";
+    echo "<th class='dt-head-center'>Time</th>\n";
     echo "<th class='text-center'>Last Backup</th>\n";
     echo "<th class='text-center'>Duration</th>\n";
     echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='text-center'>Log / History</th>\n";
+    echo "<th class='text-center'>Log/History</th>\n";
+    echo "<th align='center'>Backup Size</th>\n";
+    echo "<th class='text-center'>Prev. Size</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
 
     echo "<tfoot>\n";
     echo "<tr>\n";
-    echo "<th>Server</th>\n";
+    echo "<th align='left'>System</th>\n";
     echo "<th class='dt-head-left'>Description</th>\n";
     echo "<th class='dt-head-center'>Schedule</th>\n";
-    echo "<th class='dt-head-center'>Backup Time</th>\n";
+    echo "<th class='dt-head-center'>Sporadic</th>\n";
+    echo "<th class='dt-head-center'>Time</th>\n";
     echo "<th class='text-center'>Last Backup</th>\n";
     echo "<th class='text-center'>Duration</th>\n";
     echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='text-center'>Log / History</th>\n";
+    echo "<th class='text-center'>Log/History</th>\n";
+    echo "<th align='center'>Backup Size</th>\n";
+    echo "<th class='text-center'>Prev. Size</th>\n";
     echo "</tr>\n"; 
+    echo "</thead>\n";
     echo "</tfoot>\n";
+
     echo "<tbody>\n";
 }
 
@@ -123,79 +135,91 @@ function setup_table() {
 #                     Display Main Page Data from the row received in parameter
 #===================================================================================================
 function display_data($count, $row) {
+    
     global  $URL_HOST_INFO, $URL_VIEW_FILE, $URL_VIEW_RCH, $URL_BACKUP, 
             $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG, $BACKUP_ELOG ;
-    
-    echo "<tr>\n";  
+
+    $WOS  = $row['srv_osname'];                                         # Save OS Name
+    $WVER = $row['srv_osversion'];                                      # Save OS Version
     
     # Server Name
-    $WOS  = $row['srv_osname'];
-    $WVER = $row['srv_osversion'];
-    echo "<td class='dt-center'>";
-    echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP ;
-    echo "' title='$WOS $WVER server, ip address is " .$row['srv_ip']. ", click to edit schedule'>";
+    echo "<tr>\n";  
+    #echo "<td class='dt-center'>";
+    echo "<td>";
+    echo "<a href='" . $URL_HOST_INFO . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP ;
+    echo "' title='Click to view system info, $WOS $WVER server, ip address is " .$row['srv_ip']. "'>";
     echo $row['srv_name']  . "</a></td>\n";
     
     # Server Description
     echo "<td class='dt-body-left'>" . $row['srv_desc'] . "</td>\n";  
 
     # Schedule Active or not.
+    echo "\n<td class='dt-center'>";
     if ($row['srv_backup'] == TRUE ) {                                  # Is Server Active
-        echo "\n<td class='dt-center'>";
-        echo "<a href='" .$URL_SERVER. "?selection=all_active'>Active</a></td>";
+        echo "<a href='" .$URL_BACKUP. "?sel=" .$row['srv_name']. "&back=" .$URL_VIEW_BACKUP ;
+        echo "' title='Click to edit backup schedule of " .$row['srv_name']. " system.'>Active";
     }else{                                                              # If not Activate
-        echo "\n<td class='dt-center'>";
-        echo "<a href='" .$URL_SERVER. "?selection=all_inactive'>Inactive</a></td>";
+        echo "<a href='" .$URL_BACKUP. "?sel=" .$row['srv_name']. "&back=" .$URL_VIEW_BACKUP ;
+        echo "' title='Click to edit backup schedule of " .$row['srv_name']. " system.'>Inactive";
+    }
+    echo "</a></td>";
+
+    # Sporadic Server or not.
+    if ($row['srv_sporadic'] == TRUE ) {                                # Is Server Active
+        echo "\n<td class='dt-center'>Yes</a></td>";
+    }else{                                                              # If not Activate
+        echo "\n<td class='dt-center'>No</a></td>";
     }
 
     # Time of the O/S Backup
-    echo "<td class='dt-body-center'>";
+    echo "\n<td class='dt-body-center'>";
     if ($row['srv_backup'] == True ) { 
         list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_backup_dom'], $row['srv_backup_month'],
             $row['srv_backup_dow'], $row['srv_backup_hour'], $row['srv_backup_minute']);
         #echo $STR_SCHEDULE ;
         echo sprintf("%02d",$row['srv_backup_hour']) .":". sprintf("%02d",$row['srv_backup_minute']); 
     }else{
-        echo "Deactivated";
+        echo "<b>Deactivated</b>";
     }
     echo "</td>\n";  
 
-    # Last O/S Backup Date 
+    # Last Backup Date 
     echo "<td class='dt-center'>" ;
     $rch_dir  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/rch/" ;   # Set the RCH Directory Path
-    $rch_file = $rch_dir . $row['srv_name'] . "_" . $BACKUP_RCH;           # Set Full PathName of RCH
+    $rch_file = $rch_dir . $row['srv_name'] . "_" . $BACKUP_RCH;        # Set Full PathName of RCH
     if (! file_exists($rch_file))  {                                    # If RCH File Not Found
-        echo " ";  
+        echo "<b>Not run</b>";  
     }else{
         $file = file("$rch_file");                                      # Load RCH File in Memory
         $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
 
-        # Split the last line of the backup rch file.
-        # Example: centos6 2019.07.05 04:05:02 2019.07.05 04:21:31 00:16:29 sadm_backup default 1 0
+        # Split the last line of the rch file.
+        # Example: centos9 2019.07.05 04:05:02 2019.07.05 04:21:31 00:16:29 sadm_backup default 1 0
         list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapse,$cname,$calert,$ctype,$ccode) = explode(" ",$lastline);
-        echo "$cdate1" . ' ' . substr($ctime1,0,5) ;
+        #echo "$cdate1" . ' ' . substr($ctime1,0,5) ;
+        echo "$cdate1"  ;
     }
     echo "</td>\n";  
 
     # Backup duration time
     if (! file_exists($rch_file))  {                                    # If RCH File Not Found
-        echo "\n<td class='dt-center'>  </td>";
+        echo "\n<td class='dt-center'><b>No data</b></td>";
     }else{
         echo "<td class='dt-center'>" .$celapse . "</td>\n";  
     }
 
     # Last Backup Status
     if (! file_exists($rch_file))  {                                    # If RCH File Not Found
-        echo "\n<td class='dt-center'>  </td>";
+        echo "\n<td class='dt-center'><b>No data</b></td>";
     }else{
         switch ($ccode) {
             case 0:     echo "\n<td class='dt-center'>Success</td>";
                         break;
-            case 1:     echo "\n<td class='dt-center'>Failed</td>";
+            case 1:     echo "\n<td class='dt-center' bgcolor='Red'>Failed</td>";
                         break;
-            case 2:     echo "\n<td class='dt-center'>Running</td>";
+            case 2:     echo "\n<td class='dt-center' bgcolor='Green'>Running</td>";
                         break;
-            default:    echo "\n<td class='dt-center'>" . $ccode . "</td>";
+            default:    echo "\n<td class='dt-center'  bgcolor='Red'>" . $ccode . "</td>";
                         break;
         }   
     }
@@ -207,7 +231,7 @@ function display_data($count, $row) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
         echo " title='View Backup Log'>[log]</a>&nbsp;&nbsp;";
     }else{
-        echo "NoLog";
+        echo "<b>No data</b>";
     }
 
     # Display link to view backup error log (If exist)
@@ -225,10 +249,42 @@ function display_data($count, $row) {
     if (file_exists($rch_name)) {
         echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
         echo " title='View Backup History (rch) file'>[rch]</a>";
-    }else{
-        echo "NoRCH";
     }
-    echo "</td>\n</tr>\n"; 
+    echo "</td>\n"; 
+    
+    # Last Backup Size
+    echo "<td align='center'>" ;
+    $pattern = "/current backup size/i"; 
+    if (!file_exists($log_name))
+        {   echo "<b>No data</b>";
+        }else{
+            if (preg_grep($pattern, file($log_name)))
+               { $bstring = implode (" ", preg_grep($pattern, file($log_name)));
+                 $barray   = explode(" ", $bstring) ;
+                 echo $barray[count($barray)-1];
+               }else{
+                 echo "<b>No data</b>";
+               }
+        }
+    echo "</td>\n";  
+
+    # Previous Backup Size
+    echo "<td align='center'>" ;
+    $pattern = "/previous backup size/i"; 
+    if (!file_exists($log_name))
+        {   echo "<b>No data</b>";
+        }else{
+            if (preg_grep($pattern, file($log_name)))
+               { $bstring = implode (" ", preg_grep($pattern, file($log_name)));
+                 $barray   = explode(" ", $bstring) ;
+                 echo $barray[count($barray)-1];
+               }else{
+                 echo "<b>No data</b>";
+               }
+        }
+    echo "</td>\n";  
+
+    echo "</tr>\n"; 
 }
 
 
@@ -265,6 +321,8 @@ function display_data($count, $row) {
     if (file_exists(SADM_WWW_DIR . "/view/daily_backup_report.html")) {
        $title2="<a href='" . $URL_BACKUP_REPORT . "'>View the Backup Daily Report</a>"; 
     } 
+    $title2="Backup are recorded on '" . SADM_BACKUP_NFS_SERVER . "' in '" ;
+    $title2="$title2" . SADM_BACKUP_NFS_MOUNT_POINT . "' directory." ;
     display_lib_heading("NotHome","$title1","$title2",$WVER);           # Display Content Heading
 
     setup_table();                                                      # Create Table & Heading
@@ -277,5 +335,7 @@ function display_data($count, $row) {
     }
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
-    std_page_footer($con)                                               # Close MySQL & HTML Footer
+    std_page_footer($con);                                               # Close MySQL & HTML Footer
+    echo "<center><b>\nBackup are recorded on '" . SADM_BACKUP_NFS_SERVER . "' in '" ;
+    echo SADM_BACKUP_NFS_MOUNT_POINT . "' directory.\n</b></center" ;
 ?>
