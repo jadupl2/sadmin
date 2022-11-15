@@ -123,7 +123,7 @@ export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous co
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
 export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
-export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_DEBUG=6                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
@@ -344,19 +344,19 @@ backup_setup()
     fi
 
     # Show Backup Preferences
-    sadm_writelog " "
+    sadm_write_log " "
     case $BACKUP_TYPE in
-        D) sadm_writelog "Today `date` we are starting a [Daily] backup ..." 
+        D) sadm_write_log "Today `date` we are starting a [Daily] backup ..." 
            ;;
-        W) sadm_writelog "Today `date` we are starting a [Weekly] backup ..."
+        W) sadm_write_log "Today `date` we are starting a [Weekly] backup ..."
            ;;
-        M) sadm_writelog "Today `date` we are starting a [Monthly] backup ..."
+        M) sadm_write_log "Today `date` we are starting a [Monthly] backup ..."
            ;;
-        Y) sadm_writelog "Today `date` we are starting a [Yearly] backup ..."
+        Y) sadm_write_log "Today `date` we are starting a [Yearly] backup ..."
            ;;
     esac 
-    sadm_writelog " " 
-    sadm_writelog "Base on SADMIN configuration file, you have chosen to:"
+    sadm_write_log " " 
+    sadm_write_log "Base on SADMIN configuration file, you have chosen to:"
     #if [ "$COMPRESS" = 'ON' ]
     #    then sadm_write " - Compress the backup file\n"
     #    else sadm_write " - Not compress the backup\n"
@@ -385,11 +385,11 @@ create_backup()
 
     # Show Backup list content under Debug mode 
     if [ $SADM_DEBUG -gt 0 ] 
-       then sadm_writelog " " 
-            sadm_writelog "Content of backup list file ($SADM_BACKUP_LIST)" 
-            cat $SADM_BACKUP_LIST | while read ln ;do sadm_writelog "${ln}" ;done 
+       then sadm_write_log " " 
+            sadm_write_log "Content of backup list file ($SADM_BACKUP_LIST)" 
+            cat $SADM_BACKUP_LIST | while read ln ;do sadm_write_log "${ln}" ;done 
+            sadm_write_log " "
     fi 
-
 
     # Read one by one the line of the backup include file
     while read backup_line                                              # Loop Until EOF Backup List
@@ -404,29 +404,27 @@ create_backup()
         # If 1st character is a '$' it's consider an env. variable, resolve it and then continue.
         if [ "$FC" = "$" ]                                              # If 1st Char. is a variable
             then if [ $SADM_DEBUG -gt 0 ]                               # Show Line before resolve
-                     then sadm_writelog "Line before processing: [$backup_line]"
+                     then sadm_write_log "Processing line '$backup_line' in ${SADM_BACKUP_LIST}."
                  fi
                  backup_line=`echo "${backup_line:1}"`                  # Remove Dollar sign
                  eval "backup_line=\${$backup_line}"                    # Resolve Variable Content
                  if [ $SADM_DEBUG -gt 0 ]                               # Show Line after resolve
-                    then sadm_writelog "Line after processing [$backup_line]" # Show EnvVar. Content
+                    then sadm_write_log "Line became after processing [$backup_line]"
                  fi
         fi
 
         # Check if File or Directory to Backup and if they Exist
         if [ -d "${backup_line}" ]                                      # If line is a Dir. & Exist
-            then if [ $SADM_DEBUG -gt 0 ]                               # Under Debug show DirName
-                    then sadm_write "Directory to Backup : [${backup_line}]\n" # Processing Line
-                 fi
+            then sadm_write_log " "
             else if [ -f "$backup_line" ] && [ -r "$backup_line" ]      # If File to Backup Readable
                     then if [ $SADM_DEBUG -gt 0 ] 
-                            then sadm_write "File to Backup : [${backup_line}]\n" 
+                            then sadm_write_log "File to Backup : [${backup_line}]" 
                          fi
-                    else sadm_write "\n"
-                         sadm_write "${SADM_TEN_DASH}\n"                # Line of 10 Dash in Log
-                         sadm_write "Backup file: ${backup_line}\n"     # Show Backup filename     
-                         MESS="[$backup_line] doesn't exist on $SADM_HOSTNAME"
-                         sadm_write_log "[ WARNING ] ${MESS}"           # Advise User - Log Info
+                    else sadm_write_log " "
+                         sadm_write_log "${SADM_TEN_DASH}"              # Line of 10 Dash in Log
+                         MESS1="You asked to backup '$backup_line', "
+                         MESS2="but it doesn't exist on ${SADM_HOSTNAME}."
+                         sadm_write_err "[ WARNING ] ${MESS1}${MESS2}"  # Advise User - Log Info
                          continue                                       # Go Read Nxt Line to backup
                     fi
         fi
@@ -437,10 +435,10 @@ create_backup()
         # Backup File
         if [ -f "$backup_line" ] && [ -r "$backup_line" ]               # Line is a File & Readable
             then
-                sadm_write "\n"
-                sadm_write "${SADM_TEN_DASH}\n"                         # Line of 10 Dash in Log
-                sadm_write "Backup file: [${backup_line}]\n"            # Show Backup filename                 
-                BACK_LOG="${BACKUP_DIR}/${TIME_STAMP}_${BASE_NAME}.log" # Backup log om NAS filename
+                sadm_write_log " "
+                sadm_write_log "${SADM_TEN_DASH}"                       # Line of 10 Dash in Log
+                sadm_write_log "Backup file: [${backup_line}]"          # Show Backup filename                 
+                BACK_LOG="${BACKUP_DIR}/${TIME_STAMP}_${BASE_NAME}.log" # Backup log on NAS filename
                 echo "# $SADM_PN v$SADM_VER - $SADM_HOSTNAME - $(sadm_capitalize $SADM_OS_NAME) v$SADM_OS_VERSION " >>$BACK_LOG 2>&1
                 cd /                                                    # Be sure we are on /
                 if [ "$COMPRESS" == "ON" ]                              # If compression ON
@@ -487,8 +485,10 @@ create_backup()
 
                 # Show Exclude list Content under Debug mode 
                 if [ $SADM_DEBUG -gt 0 ] 
-                    then sadm_writelog "Content of exclude file(s), including socket file(s):" 
-                         cat /tmp/exclude| while read ln ;do sadm_writelog "${ln}" ;done 
+                    then sadm_write_log " "
+                         sadm_write_log "Content of exclude file(s), including socket file(s):" 
+                         cat /tmp/exclude| while read ln ;do sadm_write_log "${ln}" ;done 
+                         sadm_write_log " "
                 fi 
 
                 BACK_LOG="${BACKUP_DIR}/${TIME_STAMP}_${BASE_NAME}.log" 
@@ -497,10 +497,10 @@ create_backup()
                     then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"     # Final tgz Backup file name
                          sadm_write "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line\n"
                          echo "# Backup of .$backup_line started at `date`" >>$BACK_LOG 2>&1
-                         echo "#"  >>$BACK_LOG 2>&1
+                         echo " "  >>$BACK_LOG 2>&1
                          echo "# Exclude list content (/tmp/exclude) :" >>$BACK_LOG 2>&1
                          cat /tmp/exclude >>$BACK_LOG 2>&1
-                         echo "#"  >>$BACK_LOG 2>&1
+                         echo " "  >>$BACK_LOG 2>&1
                          echo "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line" >>$BACK_LOG 2>&1
                          echo "#"  >>$BACK_LOG 2>&1
                          tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line >>$BACK_LOG 2>&1
@@ -533,7 +533,7 @@ create_backup()
                  sadm_write_err "${MESS}"                               # Advise User - Log Info
                  RC=1                                                   # Make Sure Return Code is 0
             else MESS="[ SUCCESS ] Creating Backup $BACK_FILE"            # Advise Backup Success
-                 sadm_writelog "${MESS}"                                # Advise User - Log Info
+                 sadm_write_log "${MESS}"                                # Advise User - Log Info
                  RC=0                                                   # Make Sure Return Code is 0
         fi
 
@@ -548,7 +548,7 @@ create_backup()
             then sadm_write_err "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}"
                  sadm_write_err "[ ERROR ] Creating link backup in latest directory."
                  RC=1
-            else sadm_writelog "[ SUCCESS ] Creating link."             # Advise User - Log Info
+            else sadm_write_log "[ SUCCESS ] Creating link."             # Advise User - Log Info
                  RC=0                                                   # Make Sure Return Code is 0
         fi
         TOTAL_ERROR=$(($TOTAL_ERROR+$RC))                               # Total = Cumulate RC Value
@@ -590,29 +590,29 @@ clean_backup_dir()
 
     # Determine of many copies we keep for the backup we are doing (Daily,Weekly,Monthly,Yearly)
     case $BACKUP_TYPE in
-        D) sadm_writelog "For [Daily] backup, you asked to keep $SADM_DAILY_BACKUP_TO_KEEP copies." 
+        D) sadm_write_log "For [Daily] backup, you asked to keep $SADM_DAILY_BACKUP_TO_KEEP copies." 
            COPIES2KEEP=$SADM_DAILY_BACKUP_TO_KEEP
            BTYPE="SADM_DAILY_BACKUP_TO_KEEP"
            BID="Daily "
            ;;
-        W) sadm_writelog "For [Weekly] backup, you asked to keep $SADM_WEEKLY_BACKUP_TO_KEEP copies." 
+        W) sadm_write_log "For [Weekly] backup, you asked to keep $SADM_WEEKLY_BACKUP_TO_KEEP copies." 
            COPIES2KEEP=$SADM_WEEKLY_BACKUP_TO_KEEP
            BTYPE="SADM_WEEKLY_BACKUP_TO_KEEP"
            BID="Weekly "
            ;;
-        M) sadm_writelog "For [Monthly] backup, you asked to keep $SADM_MONTHLY_BACKUP_TO_KEEP copies." 
+        M) sadm_write_log "For [Monthly] backup, you asked to keep $SADM_MONTHLY_BACKUP_TO_KEEP copies." 
            COPIES2KEEP=$SADM_MONTHLY_BACKUP_TO_KEEP
            BTYPE="SADM_MONTHLY_BACKUP_TO_KEEP"
            BID="Monthly "
            ;;
-        Y) sadm_writelog "For [Yearly] backup, you asked to keep $SADM_YEARLY_BACKUP_TO_KEEP copies." 
+        Y) sadm_write_log "For [Yearly] backup, you asked to keep $SADM_YEARLY_BACKUP_TO_KEEP copies." 
            COPIES2KEEP=$SADM_YEARLY_BACKUP_TO_KEEP
            BTYPE="SADM_YEARLY_BACKUP_TO_KEEP"
            BID="Yearly "
            ;;
-        *) sadm_writelog "Invalid Backup Type '$BACKUP_TYPE' should be D,W,M or Y."
+        *) sadm_write_log "Invalid Backup Type '$BACKUP_TYPE' should be D,W,M or Y."
            COPIES2KEEP=4
-           sadm_writelog "Defaulting to $COPIES2KEEP copies to keep"
+           sadm_write_log "Defaulting to $COPIES2KEEP copies to keep"
            ;;
     esac 
 
@@ -737,7 +737,7 @@ function cmd_options()
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "Debug Level set to ${SADM_DEBUG}."               # Display Debug Level
+               printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
