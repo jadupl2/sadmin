@@ -177,7 +177,7 @@ function Write_RearExclude($server_name, $oldFileHash) {
 // ================================================================================================
 function display_rear_schedule($con,$wrow,$mode) {
     global $BEHASH ;
-    
+     
     # Server ReaR Schedule Page Info Div
     echo "\n\n<div class='rear_page'>\n                     <!-- Start rear_page Div -->";
     

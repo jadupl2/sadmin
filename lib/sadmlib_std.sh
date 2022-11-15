@@ -593,18 +593,32 @@ sadm_writelog() {
 #===================================================================================================
 sadm_write_log()
 {
-    SADM_SMSG="$@"                                                      # Screen Mess. no Time Stamp
-    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Log Mess. with Time Stamp
+    #SADM_SMSG="$@"                                                      # Screen Mess. no Time Stamp
+    SADM_SMSG="$1"                                                      # Screen Mess. no Time Stamp
+    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"               # Log Mess. with Time Stamp
     if [ "$SADM_LOG_TYPE" = "" ] ; then SADM_LOG_TYPE="B" ; fi          # Log Type Default is Both
+    NOLF=false                                                          # Default, write msg with LF
+
+    if [ $# -eq 2 ] && [ "$2" != "" ]                                                    # Should have rcv 1 Param
+       then WFCT=$(sadm_toupper "$2")
+            case "$WFCT" in
+                "NOLF" )    NOLF=true                                 # Default, write msg with LF
+                            ;;
+                *)          printf "${FUNCNAME}: Second paramneter is invalid '$2'.\n"
+                            printf "Valid function are : 'NOLF'\n"
+                            return 1                                                   # Return Error to Caller
+                            ;;
+            esac
+
+    fi    
 
     # By default at the end of the message a line-feed is added.
     # But if the message begin with '@nolf' then no line feed is added at the End Of Line.
-    NOLF=false                                                          # Default, write msg with LF
-    PRECMD=$(echo ${SADM_SMSG:0:5}|/usr/bin/tr "[:upper:]" "[:lower:]") # Isolate 1st 5chr lowercase
-    if [ "$PRECMD" = "@nolf" ]                                          # If first 5 char = @nolf
-        then NOLF=true                                                  # Then No LineFeed at EOL
-             SADM_SMSG=${SADM_SMSG:5}                                   # Remove '@nolf' from Mess.
-    fi                  
+    #PRECMD=$(echo ${SADM_SMSG:0:5}|/usr/bin/tr "[:upper:]" "[:lower:]") # Isolate 1st 5chr lowercase
+    #if [ "$PRECMD" = "@nolf" ]                                          # If first 5 char = @nolf
+    #    then NOLF=true                                                  # Then No LineFeed at EOL
+    #         SADM_SMSG=${SADM_SMSG:5}                                   # Remove '@nolf' from Mess.
+    #fi                  
 
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
         s|S) if $NOLF                                                   # If No LineFeed is True 

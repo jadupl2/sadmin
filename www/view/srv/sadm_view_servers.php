@@ -307,7 +307,7 @@ function display_data($count,$con,$row) {
             $sql = 'SELECT * FROM server where srv_vm = False order by srv_name;';
             $TITLE = "List of Physical Systems";
             break;
-            case 'all_sporadic' : 
+        case 'all_sporadic' : 
             $sql = 'SELECT * FROM server where srv_sporadic = True order by srv_name;';
             $TITLE = "List of Sporadic Systems";
             break;
