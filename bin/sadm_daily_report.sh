@@ -49,6 +49,7 @@
 # 2022_07_18 server v1.30 Remove unneeded work file at the end.
 # 2022_07_21 server v1.31 Insert new SADMIN section v1.52.
 # 2022_09_30 server v1.32 Add link to system information page on the system name.
+#@2022_11_15 server v1.33 Not producing 'DailyBackupReport' anymore since info are now on backup page.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -79,7 +80,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.32'                                      # Script version number
+export SADM_VER='1.33'                                      # Script version number
 export SADM_PDESC="Produce reports of the last 24 hrs activities and email it to the sysadmin."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -246,7 +247,7 @@ show_usage()
     printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
     printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
     printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
-    printf "\n   ${BOLD}${YELLOW}[-b]${NORMAL}\t\t\tDon't produce and email the Backup report"
+    #printf "\n   ${BOLD}${YELLOW}[-b]${NORMAL}\t\t\tDon't produce and email the Backup report"
     printf "\n   ${BOLD}${YELLOW}[-r]${NORMAL}\t\t\tDon't produce and email the ReaR report"
     printf "\n   ${BOLD}${YELLOW}[-s]${NORMAL}\t\t\tDon't produce and email the Scripts report"
     printf "\n\n" 
@@ -2238,9 +2239,9 @@ function cmd_options()
     OPTION_SELECTED=0                                                   # Default no option selected
     while getopts "hvd:brsx" opt ; do                                   # Loop to process Switch
         case $opt in
-            b) BACKUP_REPORT="OFF"                                      # De-Activate Backup report
-               OPTION_SELECTED=$(($OPTION_SELECTED+1))                  # Incr. Nb. Option Selected
-               ;;                                       
+            #b) BACKUP_REPORT="OFF"                                      # De-Activate Backup report
+            #   OPTION_SELECTED=$(($OPTION_SELECTED+1))                  # Incr. Nb. Option Selected
+            #   ;;                                       
             r) REAR_REPORT="OFF"                                        # De-Activate ReaR Report
                OPTION_SELECTED=$(($OPTION_SELECTED+1))                  # Incr. Nb. Option Selected
                ;;
@@ -2356,21 +2357,21 @@ main_process()
              sadm_write_log " "
     fi 
 
-    if [ "$BACKUP_REPORT" = "ON" ]                                      # If CmdLine -b was used
-        then backup_report                                              # Produce Backup Report 
-             RC=$?                                                      # Save the Return Code
-             SADM_EXIT_CODE=$(($SADM_EXIT_CODE+$RC))                    # Add ReturnCode to ExitCode
-    fi 
+    #if [ "$BACKUP_REPORT" = "ON" ]                                      # If CmdLine -b was used
+    #    then backup_report                                              # Produce Backup Report 
+    #         RC=$?                                                      # Save the Return Code
+    #         SADM_EXIT_CODE=$(($SADM_EXIT_CODE+$RC))                    # Add ReturnCode to ExitCode
+    #fi 
     if [ "$REAR_REPORT" = "ON" ]                                        # If CmdLine -r was used
         then rear_report                                                # Produce ReaR Backup Report 
              RC=$?                                                      # Save the Return Code
              SADM_EXIT_CODE=$(($SADM_EXIT_CODE+$RC))                    # Add ReturnCode to ExitCode
     fi 
-    if [ "$STORIX_REPORT" = "ON" ]                                      # If CmdLine -x was used
-        then storix_report                                              # Produce Storix Backup Rep. 
-             RC=$?                                                      # Save the Return Code
-             SADM_EXIT_CODE=$(($SADM_EXIT_CODE+$RC))                    # Add ReturnCode to ExitCode
-    fi 
+    #if [ "$STORIX_REPORT" = "ON" ]                                      # If CmdLine -x was used
+    #    then storix_report                                              # Produce Storix Backup Rep. 
+    #         RC=$?                                                      # Save the Return Code
+    #         SADM_EXIT_CODE=$(($SADM_EXIT_CODE+$RC))                    # Add ReturnCode to ExitCode
+    #fi 
 
     # Create an array containing the last line of each '*.rch' files 
     load_rch_array                                                      # Create rch last line array 
@@ -2389,8 +2390,7 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 #                       S T A R T     O F    T H E    S C R I P T 
 # --------------------------------------------------------------------------------------------------
-
-    cmd_options "$@"                                                    # Check command-line Options    
+    cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     main_process                                                        # Execute Main Function
