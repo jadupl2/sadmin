@@ -22,8 +22,9 @@
 
 # Exclude components from being backed up
 # Recreation information is active
-# EXCLUDE_BACKUP=()
+EXCLUDE_BACKUP=( ${EXCLUDE_BACKUP[@]} '/tmp' )
 
 # Exclude components during the restore phase.
 # Only used to exclude files from the restore. 
 # EXCLUDE_RESTORE=()
+
