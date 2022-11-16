@@ -516,7 +516,7 @@ function show_activity($con,$alert_file) {
     echo "<td widtd=90 align='center'><b>System</td>\n";
     echo "<td align='center'><b>Script Name</td>\n";
     echo "<td align='center'><b>Start Date/Time</td>\n";
-    echo "<td align='center'><b>End Date/Time</td>\n";
+    echo "<td align='center'><b>End Time</td>\n";
     echo "<td align='center'><b>Elapse</td>\n";
     echo "<td align='center'><b>Alert Group</td>\n";
     echo "<td align='center'><b>Alert Type</td>\n";
@@ -616,12 +616,13 @@ function show_activity($con,$alert_file) {
 
         # Display start date, start time
         echo "\n<td align='center'>" . $cdate1  . "&nbsp;" . $ctime1 . "</td>"; 
+
         # Display end date, end time and elapse script time
         if ($ccode == 2) {
             echo "\n<td align='center''>............</td>";       # Running - No End date Yet
             echo "\n<td align='center'>............</td>";       # Running - No End time Yet
         }else{
-            echo "\n<td align='center'>" . $cdate2 . "&nbsp;" . $ctime2 . "</td>";  
+            echo "\n<td align='center'>" . $ctime2 . "</td>";  
             echo "\n<td align='center'>" . $celapsed . "</td>";  # Script Elapse Time
         }
         

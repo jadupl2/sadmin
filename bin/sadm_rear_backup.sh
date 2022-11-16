@@ -461,7 +461,7 @@ rear_housekeeping()
     sadm_write_log "Content of ${SADM_HOSTNAME} ReaR backup directory after housekeeping."
     ls -ltrh ${REAR_NAME}* | while read wline ; do sadm_write "${wline}\n"; done
 
-    #TOTALK=$(du -k ${REAR_NAME}.* | awk '{sum+=$1} END{print sum}')
+     #TOTALK=$(du -k ${REAR_NAME}.* | awk '{sum+=$1} END{print sum}')
     #TOTALG=$(echo "$TOTALK /1024/1024" | $SADM_BC -l) 
     #TOTAL
 
