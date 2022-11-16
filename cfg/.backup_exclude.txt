@@ -1,4 +1,4 @@
-# V1.6 Initial Backup Exclude List 
+# V1.7 Initial Backup Exclude List 
 # Files extensions to exclude
 *.iso 
 *.pyc
@@ -6,13 +6,23 @@
 # Files to exclude
 sysmon.lock 
 
-# Directories to exclude
-__pycache__
-
 # Exclude Directories content
-*/tmp/*
-*/Trash/*
-*/tmp/*
-*/Trash/*
-*/.cache/*
-#
+*.iso
+*.pyc
+./*/sysmon.lock
+./*/tmp/*
+./*/Trash/*
+./*/.cache
+./*/.DS_Store
+./*/temp/*
+./var/cache/*
+./var/swap*
+./home/jacques/.tldr
+./home/jacques/Dropbox/*
+./home/jacques/Downloads/*
+./home/jacques/Pictures/*
+./home/jacques/Music/*
+./home/jacques/Videos/*
+./home/jacques/VirtualBox*
+./opt/sadmin/.git
+
