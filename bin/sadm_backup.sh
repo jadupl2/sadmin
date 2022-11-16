@@ -81,6 +81,7 @@
 # 2022_09_23 backup v3.37 Fix problem mounting NFS on newer version of MacOS.
 # 2022_10_30 backup v3.38 After each backup show, the backup size in the log.
 #@2022_11_11 backup v3.39 Add size of current & previous backup at end of log, used for backup page.
+#@2022_11_16 backup v3.40 Do not accept environment variables in backup or exclude list.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -112,7 +113,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.39'                                     # Script version number
+export SADM_VER='3.40'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -123,7 +124,7 @@ export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous co
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
 export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
-export SADM_DEBUG=6                                        # Debug Level(0-9) 0=NoDebug
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
@@ -383,13 +384,17 @@ create_backup()
     CUR_PWD=`pwd`                                                       # Save Current Working Dir.
     TOTAL_ERROR=0                                                       # Make Sure Variable is at 0
 
-    # Show Backup list content under Debug mode 
-    if [ $SADM_DEBUG -gt 0 ] 
-       then sadm_write_log " " 
-            sadm_write_log "Content of backup list file ($SADM_BACKUP_LIST)" 
-            cat $SADM_BACKUP_LIST | while read ln ;do sadm_write_log "${ln}" ;done 
-            sadm_write_log " "
-    fi 
+    # Show Backup list content
+    sadm_write_log " " 
+    sadm_write_log "Content of backup list file ($SADM_BACKUP_LIST)" 
+    cat $SADM_BACKUP_LIST | while read ln ; do sadm_write_log "${ln}" ;done 
+    sadm_write_log " "
+
+    # Show Backup exclude list 
+    sadm_write_log " " 
+    sadm_write_log "Content of backup exclude list file ($SADM_BACKUP_EXCLUDE)" 
+    cat $SADM_BACKUP_EXCLUDE | while read ln ; do sadm_write_log "${ln}" ;done 
+    sadm_write_log " "
 
     # Read one by one the line of the backup include file
     while read backup_line                                              # Loop Until EOF Backup List
@@ -401,23 +406,10 @@ create_backup()
             then continue                                               # Skip, Go read Next Line
         fi  
         
-        # If 1st character is a '$' it's consider an env. variable, resolve it and then continue.
-        if [ "$FC" = "$" ]                                              # If 1st Char. is a variable
-            then if [ $SADM_DEBUG -gt 0 ]                               # Show Line before resolve
-                     then sadm_write_log "Processing line '$backup_line' in ${SADM_BACKUP_LIST}."
-                 fi
-                 backup_line=`echo "${backup_line:1}"`                  # Remove Dollar sign
-                 eval "backup_line=\${$backup_line}"                    # Resolve Variable Content
-                 if [ $SADM_DEBUG -gt 0 ]                               # Show Line after resolve
-                    then sadm_write_log "Line became after processing [$backup_line]"
-                 fi
-        fi
-
-        # Check if File or Directory to Backup and if they Exist
         if [ -d "${backup_line}" ]                                      # If line is a Dir. & Exist
             then sadm_write_log " "
             else if [ -f "$backup_line" ] && [ -r "$backup_line" ]      # If File to Backup Readable
-                    then if [ $SADM_DEBUG -gt 0 ] 
+                    then if [ $SADM_DEBUG -gt 2 ] 
                             then sadm_write_log "File to Backup : [${backup_line}]" 
                          fi
                     else sadm_write_log " "
@@ -469,10 +461,10 @@ create_backup()
                 sadm_write_log "${SADM_TEN_DASH}"                       # Line of 10 Dash in Log
                 sadm_write_log "Starting backup of [$backup_line]"      # Show Dir will backup
                 cd /                                                    # Make sure we are on /
-                sadm_write_log "Current Dir. is `pwd`"                  # Print Current Working Dir.
+                sadm_write_log "Initiating backup from `pwd`"           # Print Current Working Dir.
 
                 # Build Backup Exclude list to include Dir. Sockets file (Prevent false error)
-                find .$backup_line -type s -print > /tmp/exclude        # Put Dir Sockets in exclude
+                find .$backup_line -type s -print > /tmp/exclude       # Put Dir Sockets in exclude
                 while read excl_line                                    # Loop Until EOF Excl. File
                     do
                     FC=`echo $excl_line | cut -c1`                      # Get First Char. of Line
@@ -482,9 +474,8 @@ create_backup()
                     echo "$excl_line" >> /tmp/exclude                   # Add Line to Exclude List
                     done < $SADM_BACKUP_EXCLUDE                         # Read Backup Exclude File
 
-
                 # Show Exclude list Content under Debug mode 
-                if [ $SADM_DEBUG -gt 0 ] 
+                if [ $SADM_DEBUG -gt 2 ] 
                     then sadm_write_log " "
                          sadm_write_log "Content of exclude file(s), including socket file(s):" 
                          cat /tmp/exclude| while read ln ;do sadm_write_log "${ln}" ;done 
@@ -521,11 +512,6 @@ create_backup()
                 fi
         fi
 
-        # SHow backup tgz file size
-        BSIZE=$(stat --format=%s ${BACKUP_DIR}/${BACK_FILE})
-        BTOTAL=$(echo "$BSIZE /1024/1024" | bc)                             
-        sadm_write_log "Backup size is ${BTOTAL}MB."
-
         # Error 1 = File(s) changed while backup running, don't report that as an error.
         if [ $RC -eq 1 ] ; then RC=0 ; fi                               # File Changed while backup
         if [ $RC -ne 0 ]                                                # If Error while Backup
@@ -537,6 +523,10 @@ create_backup()
                  RC=0                                                   # Make Sure Return Code is 0
         fi
 
+        # Show backup tgz file size
+        BSIZE=$(stat --format=%s ${BACKUP_DIR}/${BACK_FILE})
+        BTOTAL=$(echo "$BSIZE /1024/1024" | bc)                             
+        sadm_write_log "Backup size is ${BTOTAL}MB."
 
         # Create link to backup in the server latest directory
         cd ${LATEST_DIR}
@@ -548,13 +538,12 @@ create_backup()
             then sadm_write_err "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}"
                  sadm_write_err "[ ERROR ] Creating link backup in latest directory."
                  RC=1
-            else sadm_write_log "[ SUCCESS ] Creating link."             # Advise User - Log Info
+            else sadm_write_log "[ SUCCESS ] Creating link."            # Advise User - Log Info
                  RC=0                                                   # Make Sure Return Code is 0
         fi
         TOTAL_ERROR=$(($TOTAL_ERROR+$RC))                               # Total = Cumulate RC Value
-
         rm -f /tmp/exclude >/dev/null 2>&1                              # Remove socket tmp file
-        done < $SADM_BACKUP_LIST                                        # For Loop Read Backup List
+        done < $SADM_BACKUP_LIST                                          # For Loop Read Backup List
 
 
     # End of Backup
