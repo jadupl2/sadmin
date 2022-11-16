@@ -190,6 +190,7 @@
 # 2022_09_20 lib v4.11 MacOS 'arch' is returning i386, change 'sadm_server_arch' to use 'uname -m'.
 # 2022_09_20 lib v4.12 MacOS change 'sadm_get_osmajorversion' so it return an integer after v10.
 # 2022_09_25 lib v4.13 MacOS architecture was wrong in script header ('arch' command return i386?).
+#@2022_11_16 lib v4.14 Remove initialization of $SADM_DEBUG (Set in SADMIN section of your script).
 #===================================================================================================
 
 
@@ -203,13 +204,12 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.13"                                              # This Library Version
+export SADM_LIB_VER="4.14"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
 export SADM_TEN_DASH=`printf %10s |tr " " "-"`                          # 10 dashes line
 export SADM_STIME=""                                                    # Store Script Start Time
-export SADM_DEBUG=0                                                     # 0=NoDebug Higher=+Verbose
 export DELETE_PID="Y"                                                   # Default Delete PID On Exit
 export LIB_DEBUG=0                                                      # This Library Debug Level
 
@@ -598,6 +598,7 @@ sadm_write_log()
     SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"               # Log Mess. with Time Stamp
     if [ "$SADM_LOG_TYPE" = "" ] ; then SADM_LOG_TYPE="B" ; fi          # Log Type Default is Both
     NOLF=false                                                          # Default, write msg with LF
+
 
     if [ $# -eq 2 ] && [ "$2" != "" ]                                                    # Should have rcv 1 Param
        then WFCT=$(sadm_toupper "$2")
