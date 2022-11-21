@@ -5,7 +5,6 @@
 # Author     :  Jacques Duplessis
 # Date       :  2016-06-01
 # Requires   :  bash shell
-# SCCS-Id.   :  @(#) sam_menu_fs.sh 1.5 1-Jun-2016
 #
 #===================================================================================================
 #
@@ -14,15 +13,16 @@
 #
 #===================================================================================================
 # History    :
-#   1.0      Initial Version - Jun 2016 - Jacques Duplessis
-#   1.3      Revised for ext4 -Jul 2016 - Jacques Duplessis
-#   1.5      Revised for xfs -Jul 2016 - Jacques Duplessis
-#   2.0      Revisited to work with SADM environment - Jan 2017 - Jacques Duplessis
-#   2.1      Revisited to work with LinuxMint - April 2017 - Jacques Duplessis
-#   2.2      Correct cannot change filesystem type (always goes back to xfs)
-#   2.3      Fix problem with filesystem increase
-# 2019_02_25 Improvement: v2.4 SysAdmin Menu - (sadm command) Code revamp and add color to menu.
-# 2019_04_07 Update: v2.5 Use color variables from SADMIN Libr.
+# 2016_06_01 cmdline v1.00 Initial Version - Jun 2016 - Jacques Duplessis
+# 2016_07_07 cmdline v1.03 Revised for ext4 -Jul 2016 - Jacques Duplessis
+# 2016_07_09 cmdline v1.05 Revised for xfs -Jul 2016 - Jacques Duplessis
+# 2017_01_08 cmdline v2.00 Revisited to work with SADM environment - Jan 2017 - Jacques Duplessis
+# 2017_04_04 cmdline v2.01 Revisited to work with LinuxMint - April 2017 - Jacques Duplessis
+# 2017_04_23 cmdline v2.02 Correct cannot change filesystem type (always goes back to xfs)
+# 2018_05_21 cmdline v2.03 Fix problem with filesystem increase
+# 2019_02_25 cmdline v2.04 SysAdmin Menu - (sadm command) Code revamp and add color to menu.
+# 2019_04_07 cmdline v2.05 Use color variables from SADMIN Libr.
+#@2022_11_19 cmdline v2.06 sadm_menu filesystem_module fix problem when dealing with terabyte.
 #===================================================================================================
 
 # Load Filesystem Library Tools
@@ -34,7 +34,7 @@
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
 BATCH_MODE=0                        ; export BATCH_MODE                 # Batch mode OFF interactive
-export FS_VER="02.05"                                                   # Filesystem Menu Version
+export FS_VER="02.06"                                                   # Filesystem Menu Version
 export SADM_80_SPACES=`printf %80s  " "`                                # 80 spaces 
 
 #===================================================================================================

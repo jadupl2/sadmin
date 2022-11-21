@@ -6,18 +6,18 @@
 # Date       :	2016-06-01
 # Requires   :	bash shell - lvm installed
 # Category   :	filesystem tools
-# SCCS-Id.   :	@(#) sadmlib_fs.sh 1.5 June 2016
 #---------------------------------------------------------------------------------------------------
 # Description
 #   Library of functions to deal with various LVM commands
 #
 #---------------------------------------------------------------------------------------------------
-#   2.0      Revisited to work with SADM environment - Jan 2017 - Jacques Duplessis
-#   2.1      Added support for XFS Filesystem
-# 2018_05_18 v2.2 Adapted to be used by Auto Filesystem Increase
-# 2018_06_12 v2.3 Fix Problem with get_mntdata was not returning good lvsize (xfs only)
-# 2018_09_20 v2.4 Fix problem with filesystem commands options
-# 2019_02_25 Improvement: v2.5 SADMIN Filesystem Library - Major code revamp and bug fixes.
+# 2017_01_18 cmdline v2.0 Revisited to work with SADM environment - Jan 2017 - Jacques Duplessis
+# 2017_05_08 cmdline v2.1 Added support for XFS Filesystem
+# 2018_05_18 cmdline v2.2 Adapted to be used by Auto Filesystem Increase
+# 2018_06_12 cmdline v2.3 Fix Problem with get_mntdata was not returning good lvsize (xfs only)
+# 2018_09_20 cmdline v2.4 Fix problem with filesystem commands options
+# 2019_02_25 cmdline v2.5 SADMIN Filesystem Library - Major code revamp and bug fixes.
+#@2022_11_19 cmdline v2.6 sadm_menu filesystem_module fix problem when dealing with terabyte.
 #===================================================================================================
 # 
 #
@@ -30,6 +30,7 @@
 
 # Global Variables Logical Volume Information 
 #---------------------------------------------------------------------------------------------------
+LIBFS_VER="2.6"
 FSTAB=/etc/fstab                            ; export FSTAB              # Filesystem Table file
 WFSTAB=$SADM_TMP_DIR/fstab.wrk              ; export WFSTAB             # Filesystem Table Work file
 VGLIST="$SADM_TMP_DIR/vglist.$$"            ; export VGLIST             # Contain list of VG on system
@@ -247,8 +248,12 @@ get_mntdata()
    if [ "$LVUNIT" = "GB" ] || [ "$LVUNIT" = "GiB" ]
       then LVINT=`echo "$LVFLT * 1024" | /usr/bin/bc |awk -F'.' '{ print $1 }'`
            LVSIZE=$LVINT
-      else LVINT=$( echo $LVFLT | awk -F'.' '{ print $1 }' )
-           LVSIZE=$LVINT
+      else if [ "$LVUNIT" = "TB" ] || [ "$LVUNIT" = "TiB" ]
+              then LVINT=`echo "$LVFLT * 1024 * 1024" | /usr/bin/bc |awk -F'.' '{ print $1 }'`
+                   LVSIZE=$LVINT
+              else LVINT=$( echo $LVFLT | awk -F'.' '{ print $1 }' )
+                   LVSIZE=$LVINT
+           fi 
    fi
            
    LVOWNER=`ls -ld $LVMOUNT | awk '{ printf "%s", $3 }'`

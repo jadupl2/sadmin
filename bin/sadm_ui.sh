@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 #===================================================================================================
-# Title      :  sadm_ui.sh Systam ADMinistration Tool User Interface Main Menu
+# Title      :  sadm_ui.sh System ADMinistration Tool User Interface Main Menu
 # Version    :  1.5
 # Author     :  Jacques Duplessis
 # Date       :  2016-06-06
@@ -35,55 +35,69 @@
 # 2019_11_11 cmdline v2.8 Add RPM Tools option in menu.
 # 2019_11_21 cmdline v2.10 Minor correction to RPM Tools Menu
 # 2019_11_22 cmdline v2.11 Restrict RPM & DEV Menu when available only.
+#@2022_11_19 cmdline v2.12 Fix problem when dealing with tera bytes in Filesystem increase
 #=================================================================================================== 
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
 
 
-#===================================================================================================
-#               Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
-#
-    # Test if 'SADMIN' environment variable is defined
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
+# ---------------------------------------------------------------------------------------
+# SADMIN CODE SECTION 1.52
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
+# ---------------------------------------------------------------------------------------
 
-    # Test if 'SADMIN' Shell Library is readable 
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
+# MAKE SURE ENVIRONMENT VARIABLE 'SADMIN' IS DEFINED.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # SADMIN defined? Libr.exist   
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]     # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                                 # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='02.11'                             # Current Script Version
-    export SADM_LOG_TYPE="L"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="N"                          # Show/Generate Script Footer 
-    export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
+export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-#
-#---------------------------------------------------------------------------------------------------
-#
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But they can be overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#
-#===================================================================================================
+# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='2.12'                                     # Script version number
+export SADM_PDESC="SADM Tool Main Menu"                    # Script Optional Desc.(Not use if empty)
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="N"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="N"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
+export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
+export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+# ---------------------------------------------------------------------------------------
 #
 [ -f ${SADMIN}/lib/sadmlib_screen.sh ]  && . ${SADMIN}/lib/sadmlib_screen.sh  # Load SADM Screen Lib
 
@@ -103,22 +117,11 @@ export WDATA=""                                                         # Contai
 #            M A I N      S E C T I O N   -   P R O G R A M   S T A R T    H E R E 
 #===================================================================================================
 #
-    # Call SADMIN Initialization Procedure
-    sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
-
-    # If current user is not 'root', exit to O/S with error code 1 (Optional)
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then echo "Script can only be run by the 'root' user"           # Advise User Message
-             echo "Process aborted"                                     # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
-
+    sadm_start                                                          # Won't come back if error
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong 
     stty_orig=`stty -g`                                                 # Save stty setting    
     #stty erase "^H"                                                    # Make sure backspace work
     CURDIR=`pwd` ; export CURDIR                                        # Save Current Directory
-    
     
     # Display Menu and Process request
     while :

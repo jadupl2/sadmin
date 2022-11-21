@@ -5,7 +5,6 @@
 # Author     :  Jacques Duplessis
 # Date       :  2019_11_06
 # Requires   :  bash shell
-# SCCS-Id.   :  @(#) sam_ui_rpm.sh 1.0 06-Nov-2019
 #
 #===================================================================================================
 # Description 
@@ -13,10 +12,10 @@
 #
 #===================================================================================================
 # History    :
-# 2019_11_06 Added: v1.0 Initial version
-# 2019_11_11 Updated: v1.1 Revamp the RPM question & display of results.
-# 2019_11_11 Updated: v1.2 Fix problem with List of repositories.
-# 2019_11_12 Updated: v1.3 Production version
+# 2019_11_06 cmdline v1.00 Initial version
+# 2019_11_11 cmdline v1.01 Revamp the RPM question & display of results.
+# 2019_11_11 cmdline v1.02 Fix problem with List of repositories.
+# 2019_11_12 cmdline v1.03 Production version
 #
 #===================================================================================================
 trap 'exec $SADMIN/sadm' 2                                                # INTERCEPT  ^C
