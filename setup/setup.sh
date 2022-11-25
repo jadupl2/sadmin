@@ -258,7 +258,7 @@ add_epel_9_repo()
 {
 
     if [ "$SADM_OSNAME" = "ROCKY" ]
-        then printf "Enable 'crb' EPEL repository ..." |tee -a $SLOG
+        then printf "Enable 'crb' EPEL repository ...\n" |tee -a $SLOG
              dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
              if [ $? -ne 0 ]
                 then echo "[ ERROR ] Couldn't enable EPEL repository." | tee -a $SLOG
@@ -441,11 +441,11 @@ check_python3()
     #fi
 
     # Check if python3 'pymsql' module is installed 
-    printf "Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
+    printf "Check if python3 'pymsql' module is installed ..." | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
-        else printf "   - Installing module 'pymysql' - pip3 install pymysql" 
+        else printf "\n   - Installing module 'pymysql' - pip3 install pymysql" 
              pip3 install pymysql  > /dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo " " | tee -a $SLOG
@@ -464,7 +464,7 @@ check_python3()
     python3 -c "import getmac" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
-        else printf "   - Installing module - pip3 install getmac" 
+        else printf "\n   - Installing module - pip3 install getmac" 
              pip3 install getmac  > /dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo " " | tee -a $SLOG
