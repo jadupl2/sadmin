@@ -65,6 +65,7 @@
 # 2022_05_06 install v3.20 Fix some issue installing EPEL repositories on AlmaLinux & Rocky v9.
 # 2022_05_28 install v3.21 Make sure SELinux is set (temporarily) to Permissive during setup.
 # 2022_10_23 install v3.22 Install 'host' command if not present on system.
+#@2022_11_27 install v3.23 Fix problem when activating EPEL v9
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -74,7 +75,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.22'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.23'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -258,10 +259,10 @@ add_epel_9_repo()
 {
 
     if [ "$SADM_OSNAME" = "ROCKY" ]
-        then printf "Enable 'crb' EPEL repository ...\n" |tee -a $SLOG
+        then printf "Enable 'crb' repository ...\n" |tee -a $SLOG
              dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
              if [ $? -ne 0 ]
-                then echo "[ ERROR ] Couldn't enable EPEL repository." | tee -a $SLOG
+                then echo "[ ERROR ] Couldn't enable 'crb' repository." | tee -a $SLOG
                      return 1 
                 else echo " [ OK ]" |tee -a $SLOG
              fi 
@@ -277,13 +278,14 @@ add_epel_9_repo()
 
 
     if [ "$SADM_OSNAME" = "ALMALINUX" ] 
-        then printf "Enable 'crb' EPEL repository ..." |tee -a $SLOG
+        then printf "Enable 'crb' repository ..." |tee -a $SLOG
              dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
              if [ $? -ne 0 ]
-                then echo "[ ERROR ] Couldn't enable EPEL repository." | tee -a $SLOG
+                then echo "[ ERROR ] Couldn't enable 'crb' repository." | tee -a $SLOG
                      return 1 
                 else echo " [ OK ]" |tee -a $SLOG
              fi 
+
              printf "Installing epel-release on AlmaLinux V9 ..." |tee -a $SLOG
              dnf -y install epel-release >>$SLOG 2>&1
              if [ $? -ne 0 ]
@@ -295,17 +297,19 @@ add_epel_9_repo()
     fi 
 
     if [ "$SADM_OSNAME" = "CENTOS" ] 
-        then printf "Enable 'crb' EPEL repository ..." |tee -a $SLOG
+        then printf "Enable 'crb' repository ..." |tee -a $SLOG
              dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
              if [ $? -ne 0 ]
-                then echo "[ ERROR ] Couldn't enable EPEL repository." | tee -a $SLOG
+                then echo "[ ERROR ] Couldn't enable 'crb' repository." | tee -a $SLOG
                      return 1 
+                else echo " [ OK ]" |tee -a $SLOG
              fi 
-             printf "Installing epel-release CentOS/Redhat V9 ..." |tee -a $SLOG
+
+             printf "Installing epel-release CentOS V9 ..." |tee -a $SLOG
              epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"
              dnf -y install $epel >>$SLOG 2>&1
              if [ $? -ne 0 ]
-                then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
+                then echo "[ ERROR ] Adding epel-release V9 repository." |tee -a $SLOG
                      return 1 
                 else echo " [ OK ]" |tee -a $SLOG
              fi
@@ -313,7 +317,7 @@ add_epel_9_repo()
              epelnxt="https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-9.noarch.rpm"
              dnf -y install epel-next-release  >>$SLOG 2>&1
              if [ $? -ne 0 ]
-                then echo "[Error] Adding epel-next-release V9 repository." |tee -a $SLOG
+                then echo "[ ERROR ] Adding epel-next-release V9 repository." |tee -a $SLOG
                      return 1 
                 else echo " [ OK ]" |tee -a $SLOG
              fi
@@ -324,14 +328,14 @@ add_epel_9_repo()
         then printf "Enable 'codeready-builder' EPEL repository ..." |tee -a $SLOG
              subscription-manager repos --enable codeready-builder-beta-for-rhel-9-$(arch)-rpms >>$SLOG 2>&1 
              if [ $? -ne 0 ]
-                then echo "[ ERROR ] Couldn't enable'codeready-builder' EPEL repository." |tee -a $SLOG
+                then echo "[ ERROR ] Couldn't enable 'codeready-builder' EPEL repository." |tee -a $SLOG
                      return 1 
              fi 
              printf "Installing epel-release CentOS/Redhat V9 ..." |tee -a $SLOG
              epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"
              dnf -y install $epel >>$SLOG 2>&1
              if [ $? -ne 0 ]
-                then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
+                then echo "[ ERROR ] Adding epel-release V9 repository." |tee -a $SLOG
                      return 1 
                 else echo " [ OK ]" |tee -a $SLOG
              fi
