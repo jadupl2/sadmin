@@ -95,7 +95,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
     # DISPLAY PAGE HEADING
     $title1="SADMIN client deletion";
     $title2="Delete '" . $row['srv_name'] . "." . $row['srv_domain'] . "' system";
-    display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
+    display_lib_heading("NotHome","$title1","$title2"," ");           # Display Content Heading
 
     # Start of Form - Display row data and press 'Delete' or 'Cancel' Button
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
