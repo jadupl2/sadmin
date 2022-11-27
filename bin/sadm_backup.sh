@@ -530,7 +530,7 @@ create_backup()
 
         # Create link to backup in the server latest directory
         cd ${LATEST_DIR}
-        sadm_write_log "\nCreate link to latest backup of ${backup_line} in ${LATEST_DIR}"
+        sadm_write_log "Create link to latest backup of ${backup_line} in ${LATEST_DIR}"
         sadm_write_log "Current directory: `pwd`"                       # Print Current Dir.
         sadm_write_log "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}"
         ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}  >>$SADM_LOG 2>&1   # Run Soft Link Command
