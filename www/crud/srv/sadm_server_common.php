@@ -28,6 +28,7 @@
 # 2018_12_15 web v2.3 CRUD_client - Add 'Darwin' as a choice for Operating System Type.
 # 2018_08_18 web v2.4 CRUD_client - Reduce screen size to 40 for install directory field
 # 2022_09_24 web v2.5 CRUD_client - Add ssh port number to use to access the client.
+#@2022_11_25 web v2.6 CRUD client - When adding client,wasn't using default SSH port from sadmin.cfg
 # ==================================================================================================
  
 
@@ -36,7 +37,7 @@
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.5" ;                                                        # Current version number
+$SVER  = "2.6" ;                                                        # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -509,8 +510,8 @@ function display_srv_form ($con,$wrow,$mode) {
        #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_ssh_port']). "'/>"; # Show Current Value
     }else{
-       echo "\n<input type='text' name='scr_ssh_port' ";                # Set Name & Col. is require
-       echo " placeholder='SSH port' ";                                 # Set Default
+       echo "\n<input type='text' name='scr_ssh_port' value='" .SADM_SSH_PORT. "' ";
+       echo " placeholder='22' ";                                       # Set Default
        echo " maxlength='5' size='5' ";                                 # Set Max. Length
        #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['srv_ssh_port']). "'/>"; # Show Current Value
