@@ -583,11 +583,11 @@ function show_activity($con,$alert_file) {
             echo "\n<a href='" . $URL_VIEW_FILE . "?filename=" . 
             $log_name . "' data-toggle='tooltip' title='View script log file'>[log]</a>";
         }else{
-            echo "&nbsp;";                                      # If No log exist for script
+            echo "&nbsp;";                                              # If No log exist for script
         }
         
         # Show Link to error log if it exist on disk.
-        $ELOGFILE = trim("${cserver}_${cname}_e.log");                   # Add _e.log to Script Name
+        $ELOGFILE = trim("${LOGFILE}_e.log");                           # Add _e.log to Script Name
         $elog_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $ELOGFILE ;
         if ((file_exists($elog_name)) and (filesize($elog_name) != 0))  {
             echo "\n<a href='" . $URL_VIEW_FILE . "?filename=" ;
