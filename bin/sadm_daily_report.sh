@@ -129,19 +129,20 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 # SCRIPTS variable declare the script names you don't want to see in the
 # daily script web report.
-SCRIPTS="sadm_backup sadm_rear_backup sadm_nmon_watcher " 
+#SCRIPTS="sadm_backup sadm_rear_backup sadm_nmon_watcher " 
+SCRIPTS="sadm_nmon_watcher " 
 
-# Exclude scripts that are executing as part of sadm_client_sunset script.
+# Exclude scripts that are executing as part of 'sadm_client_sunset.sh' script.
 # Any error encountered by the scripts below, will be reported by sadm_client_sunset.
-SCRIPTS="$SCRIPTS sadm_dr_savefs sadm_create_sysinfo sadm_cfg2html"
+SCRIPTS="$SCRIPTS sadm_dr_savefs sadm_client_housekeeping sadm_create_sysinfo sadm_cfg2html"
 
-# Exclude scripts that are executing as part of sadm_server_sunrise script.
+# Exclude scripts that are executing as part of 'sadm_server_sunrise.sh' script.
 # Any error encountered by the scripts below, will be reported by sadm_server_sunrise.
 SCRIPTS="$SCRIPTS sadm_daily_farm_fetch sadm_database_update sadm_nmon_rrd_update "
 
 # Exclude System Startup and Shutdown Script for Daily scripts Report
 # This one is optional
-SCRIPTS="$SCRIPTS sadm_startup sadm_shutdown"
+#SCRIPTS="$SCRIPTS sadm_startup sadm_shutdown"
 
 # Exclude template scripts and demo scripts.
 SCRIPTS="$SCRIPTS sadm_template sadmlib_std_demo"
@@ -2058,7 +2059,7 @@ backup_line()
                then echo -n "<td title='No backup recorded' " >>$HTML 
                else echo -n "<td title='Last Backup done $days days ago' " >>$HTML   
             fi
-            if [ $WACT -eq 0 ]                                                  # If Backup Inactive
+            if [ $WACT -eq 0 ]                                                   # If Backup Inactive
                 then echo -n "align=center bgcolor=$BCOL>" >>$HTML               # Normal Backup
                      echo "<font color=$FCOL><strong>$WDATE1</strong></font></td>" >>$HTML # Date in Bold
                 else echo -n "align=center bgcolor='Yellow'>" >>$HTML            # Yellow Background
