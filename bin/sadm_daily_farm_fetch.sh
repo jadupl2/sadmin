@@ -156,7 +156,7 @@ show_usage()
 # --------------------------------------------------------------------------------------------------
 process_servers()
 {
-    sadm_write "${BOLD}Processing All Actives Server(s)${NORMAL}\n"
+    sadm_write_log "${BOLD}Processing All Actives Server(s)${NORMAL}"
 
     # BUILD THE SELECT STATEMENT FOR ACTIVE SERVER & OUTPUT RESULT IN CSV FORMAT TO $SADM_TMP_FILE1
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_ssh_port"
@@ -167,13 +167,13 @@ process_servers()
     # RUN THE SELECT STATEMENT
     CMDLINE1="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "        # MySQL & Use Read Only User  
     if [ $DEBUG_LEVEL -gt 5 ]                                           # If Debug Level > 5 
-        then sadm_write "$CMDLINE1 -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' |tr '/\t/' '/,/'\n"
+        then sadm_write_log "$CMDLINE1 -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' |tr '/\t/' '/,/'"
     fi
     $CMDLINE1 -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
 
     # IF FILE WAS NOT CREATED OR HAS A ZERO LENGTH THEN NO ACTIVES SERVERS WERE FOUND
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
-        then sadm_write "${BOLD}No Active Server were found.${NORMAL}\n" 
+        then sadm_write_log "${BOLD}No Active Server were found.${NORMAL}" 
              return 0 
     fi 
 
@@ -189,15 +189,15 @@ process_servers()
         server_sporadic=`echo $wline|awk -F\; '{ print $5 }'`           # Sporadic t=True f=False
         server_ssh_port=`echo $wline|awk -F\; '{ print $6 }'`           # Server SSH Port to connect
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
-        sadm_write "\n"
-        sadm_write "${BOLD}Processing [$xcount ($server_os)] ${fqdn_server}${NORMAL}\n"
+        sadm_write_log "  "
+        sadm_write_log "${BOLD}Processing [$xcount ($server_os)] ${fqdn_server}${NORMAL}"
         
         # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR TO USER AND CONTINUE WITH NEXT SYSTEM.
         if ! host $fqdn_server >/dev/null 2>&1
             then SMSG="${SADM_ERROR} Can't process '$fqdn_server', hostname can't be resolved."
-                 sadm_write_err "${SMSG}\n"                                 # Advise user
+                 sadm_write_err "${SMSG}"                               # Advise user
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
-                 sadm_write_err "Error Count is now at $ERROR_COUNT \n"
+                 sadm_write_err "Error Count is now at $ERROR_COUNT"
                  continue                                               # Continue with next Server
         fi
 
@@ -227,10 +227,10 @@ process_servers()
                         sadm_write_err "Continuing with next system"    # Not Error Monitoring Off
                         continue
                 fi 
-                if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_write "Return Code is $RC \n" ;fi 
-                sadm_write_err "$SADM_ERROR Can't SSH to ${fqdn_server} - Unable to process system."
+                if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_write_log "Return Code is $RC" ;fi 
+                sadm_write_err "$SADM_ERROR Can't SSH to ${fqdn_server} on port $server_ssh_port."
                 ERROR_COUNT=$(($ERROR_COUNT+1))
-                sadm_write_err "Error Count is now at $ERROR_COUNT \n"
+                sadm_write_err "Error Count is now at $ERROR_COUNT"
                 continue
         fi                                                              # OK SSH Worked the 1st time
 
@@ -273,9 +273,9 @@ process_servers()
         # Transfer $SADMIN/dat/dr (Disaster Recovery) from Remote to $SADMIN/www/dat/$server/dr Dir.
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/dr"                    # Local Receiving Dir.
-        #sadm_write "Make sure local directory $WDIR exist.\n"
+        #sadm_write_log "Make sure local directory $WDIR exist."
         if [ ! -d "${WDIR}" ]
-            then sadm_write "  - Creating ${WDIR} directory.\n"
+            then sadm_write_log "  - Creating ${WDIR} directory."
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
         fi
         REMDIR="${RDIR}/dat/dr" 
@@ -298,9 +298,9 @@ process_servers()
         # Transfer Remote $SADMIN/dat/nmon files to local $SADMIN/www/dat/$server_name/nmon  Dir
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/nmon"                     # Local Receiving Dir.
-        #sadm_write "Make sure local directory $WDIR exist.\n"
+        #sadm_write_log "Make sure local directory $WDIR exist."
         if [ ! -d "${WDIR}" ]
-            then sadm_write "  - Creating ${WDIR} directory.\n"
+            then sadm_write_log "  - Creating ${WDIR} directory."
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
         fi
         REMDIR="${RDIR}/dat/nmon" 
@@ -314,13 +314,14 @@ process_servers()
         if [ $RC -ne 0 ]
             then sadm_write_err "$SADM_ERROR ($RC) ${rcmd}"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
-            else sadm_writelog "${SADM_OK} ${rcmd}" 
+            else sadm_write_log "${SADM_OK} ${rcmd}" 
         fi
-        if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count is now at $ERROR_COUNT" ;fi
+        if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write_err "Error Count is now at $ERROR_COUNT" ;fi
 
         done < $SADM_TMP_FILE1
 
-    sadm_write "\n${SADM_TEN_DASH}\nFINAL number of Error(s) detected is $ERROR_COUNT \n"
+    sadm_write_log " "
+    sadm_write_log "${SADM_TEN_DASH}\nFINAL number of Error(s) detected is $ERROR_COUNT"
     return $ERROR_COUNT
 }
 
