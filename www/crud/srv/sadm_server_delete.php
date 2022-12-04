@@ -75,27 +75,27 @@ $CREATE_BUTTON = False ;                                                # Don't 
     }
 
     # CHECK IF THE SERVER KEY RECEIVED EXIST IN THE DATABASE AND RETRIEVE THE ROW DATA
-    $sql = "SELECT * FROM server WHERE srv_name = '" . $wkey . "'"; # SQL to Read Server Rcv Row
-    if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug Show SQL Command
-    $KeyExist=False;                                                # Assume Key not Found in DB
-    if ($result=mysqli_query($con,$sql)) {                          # Execute SQL Select
-        if($result->num_rows >= 1) {                                # Number of Row Match Key
-          $row = mysqli_fetch_assoc($result);                       # Read the Associated row
-          $KeyExist=True;                                           # Key Does Exist in Database
+    $sql = "SELECT * FROM server WHERE srv_name = '" . $wkey . "'";     # SQL to Read Server Rcv Row
+    if ($DEBUG) { echo "<br>SQL = $sql"; }                              # In Debug Show SQL Command
+    $KeyExist=False;                                                    # Assume Key not Found in DB
+    if ($result=mysqli_query($con,$sql)) {                              # Execute SQL Select
+        if($result->num_rows >= 1) {                                    # Number of Row Match Key
+          $row = mysqli_fetch_assoc($result);                           # Read the Associated row
+          $KeyExist=True;                                               # Key Does Exist in Database
         }
     }
-    if (! $KeyExist) {                                              # If Key was not found
-        $err_line = (__LINE__ -1) ;                                 # Error on line No.
-        $err_msg1 = "Server '" . $wkey . "' not found.";            # Row was not found Msg.
-        $err_msg2 = "\nAt line " .$err_line. " in " .basename(__FILE__); # Insert Filename 
-        sadm_alert ($err_msg1 . $err_msg2);                         # Display Msg. Box for User
+    if (! $KeyExist) {                                                  # If Key was not found
+        $err_line = (__LINE__ -1) ;                                     # Error on line No.
+        $err_msg1 = "Server '" . $wkey . "' not found.";                # Row was not found Msg.
+        $err_msg2 = "\nAt line " .$err_line. " in " .basename(__FILE__);# Insert Filename 
+        sadm_alert ($err_msg1 . $err_msg2);                             # Display Msg. Box for User
         echo "<script>location.replace('" . $BACKURL . "');</script>";  # Backup to Caller URL           
     }
 
     # DISPLAY PAGE HEADING
     $title1="SADMIN client deletion";
     $title2="Delete '" . $row['srv_name'] . "." . $row['srv_domain'] . "' system";
-    display_lib_heading("NotHome","$title1","$title2"," ");           # Display Content Heading
+    display_lib_heading("NotHome","$title1","$title2","$SVER");         # Display Content Heading
 
     # Start of Form - Display row data and press 'Delete' or 'Cancel' Button
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 

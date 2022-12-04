@@ -159,7 +159,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
     
     # Ask for Final Confirmation
     echo "<center>";
-    echo "<br>Are you sure you want to delete '" .$wkey. "' server from SADMIN ?<br>";
+    echo "<br>Are you sure you want to delete '" .$wkey. "' system from SADMIN ?<br>";
 
     # Display 'Yes' Button 
     echo "<br>\n\n<div class='two_buttons'>";
@@ -175,16 +175,11 @@ $CREATE_BUTTON = False ;                                                # Don't 
 
     # Display Note to user
     echo "<br><br>";
-    #echo "Archive name is $archive_name" ;
-    #echo "<br>";
-    #echo SADM_WWW_DAT_DIR . "/" . $wkey ;
-    if (file_exists(SADM_WWW_DAT_DIR . "/" . $wkey )) {
-       if (! file_exists($archive_name)) {                             # No Archive already exist ?
-          echo "Note: An archive of server data will be created in '" .SADM_WWW_ARC_DIR. "/' directory";
-          echo "<br>      The name of the archive will be '" .$wkey. ".tgz'";
-       }else{
-          echo "<br>An archive already exist for that server and it won't be overwritten.";
-       }
+    if (! file_exists($archive_name)) {                                 # No Archive already exist ?
+       echo "Note: An archive of server data will be created in '" .SADM_WWW_ARC_DIR. "/' directory";
+       echo "<br>      The name of the archive will be '" .$wkey. ".tgz'";
+    }else{
+       echo "<br>An archive already exist for that server and it won't be overwritten.";
     }
     echo "</center>";
      
