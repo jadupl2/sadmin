@@ -1,15 +1,7 @@
-# V1.7 Initial Backup Exclude List 
-# Files extensions to exclude
+# V2.0 Initial Backup Exclude List 
 *.iso 
 *.pyc
-
-# Files to exclude
-sysmon.lock 
-
-# Exclude Directories content
-*.iso
-*.pyc
-./*/sysmon.lock
+./*/sysmon.lock 
 ./*/tmp/*
 ./*/Trash/*
 ./*/.cache
