@@ -590,6 +590,7 @@ sadm_writelog() {
 
 
 # New write_log
+# Example: sadm_write_log "Starting Main Process ... " "NOLF"  
 #===================================================================================================
 sadm_write_log()
 {
@@ -2111,7 +2112,7 @@ sadm_start() {
        then pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Epoch time of PID File
             cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
-            sadm_write_log " "
+            #sadm_write_log " "
             sadm_write "Script '$SADM_PN' is already running ...\n"     # Script already running
             sadm_write "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N').\n" 
             sadm_write "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid', was created $pelapse seconds ago.\n"

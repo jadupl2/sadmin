@@ -232,12 +232,12 @@ process_servers()
 main_process()
 {
     sadm_write_log "Starting Main Process ..."                          # Starting processing Mess.
-    
+
     # PROCESSING CAN BE PUT HERE
     # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
     # ........
     sadm_sleep 10 2                                                     # Sleep 10Sec, 2sec interval
-    sadm_write_log ""                                                   # Write an empty line
+    sadm_write_log " "                                                  # Write an empty line
     
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
 }
@@ -286,7 +286,7 @@ function cmd_options()
     sadm_start                                                          # Won't come back if error
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong    
     main_process                                                        # Your PGM Main Process
-    process_servers                                                     # ssh to all actives clients
+    #process_servers                                                     # ssh to all actives clients
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
