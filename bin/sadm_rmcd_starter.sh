@@ -49,6 +49,7 @@
 # 2022_05_23 cmdline v1.5 Do not to run remote script on system that are locked.
 # 2022_08_17 cmdline v1.6 Include new SADMIN section 1.52
 # 2022_09_20 cmdline v1.7 SSH to client is now using the port defined in each system.
+#@2022_12_13 cmdline v1.8 Was crashing because of a typo error.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -80,7 +81,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.7'                                       # Current Script Version
+export SADM_VER='1.8'                                      # Current Script Version
 export SADM_PDESC="Used to start a script on a remote system." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -205,13 +206,14 @@ rmcd_start()
 
         
         # Check if the node is currently lock (Abort execution)
-        sadm_check_system_lock "${LOCKNODE}"                               # Check if node is lock
+        sadm_check_system_lock "${LOCKNODE}"                            # Check if node is lock
         if [ $? -eq 1 ]                                                 # If node is lock
-            sadm_write_err "The system '${SNAME}' is currently lock."
-            sadm_write_err "System normal monitoring will resume in ${sec_left} seconds."
-            sadm_write_err "Maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
-            ERROR_COUNT=$(($ERROR_COUNT+1))                             # Increment Error Counter
-            return 1                                                    # Return Error to caller
+           then sadm_write_err "The system '${SNAME}' is currently lock."
+                sadm_write_err "System normal monitoring will resume in ${sec_left} seconds."
+                sadm_write_err "Maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
+                ERROR_COUNT=$(($ERROR_COUNT+1))                             # Increment Error Counter
+                return 1                                                    # Return Error to caller
+        fi 
 
         # If requested (-l), created a server lock file, to prevent generation monitoring error.
         if [ "$LOCK" = "Y" ]                                            # cmdline option lock system
