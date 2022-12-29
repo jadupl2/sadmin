@@ -29,6 +29,7 @@
 # 2018_08_18 web v2.4 CRUD_client - Reduce screen size to 40 for install directory field
 # 2022_09_24 web v2.5 CRUD_client - Add ssh port number to use to access the client.
 #@2022_11_25 web v2.6 CRUD client - When adding client,wasn't using default SSH port from sadmin.cfg
+#@2022_12_29 web v2.7 CRUD client - Fix problem updating the SSH port number.
 # ==================================================================================================
  
 
@@ -37,7 +38,7 @@
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.6" ;                                                        # Current version number
+$SVER  = "2.7" ;                                                        # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -464,8 +465,6 @@ function display_srv_form ($con,$wrow,$mode) {
     # echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
 
 
-
-
     # Display Performance Graph for this server
     echo "\n<div class='double_label'>Collect System Performance</div>";    # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
@@ -504,17 +503,18 @@ function display_srv_form ($con,$wrow,$mode) {
     # SSH Port number used to communicate with the client
     echo "\n<div class='double_label'>SSH port</div>";                  # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
+    if ($smode == 'CREATE') { $wrow['srv_ssh_port'] = 22 ; }            # Default SSH Port is 22
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
        echo "\n<input type='text' name='scr_ssh_port' readonly ";       # Set Name and Read Only
        echo " maxlength='5' size='5' ";                                 # Set Max. Length
        #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
-       echo " value='" . sadm_clean_data($wrow['srv_ssh_port']). "'/>"; # Show Current Value
+       echo " value='" . $wrow['srv_ssh_port'] . "'/>";                 # Show Current Value
     }else{
-       echo "\n<input type='text' name='scr_ssh_port' value='" .SADM_SSH_PORT. "' ";
-       echo " placeholder='22' ";                                       # Set Default
+       echo "\n<input type='text' name='scr_ssh_port' ";
+       #echo " placeholder='22' ";                                       # Set Default
        echo " maxlength='5' size='5' ";                                 # Set Max. Length
        #echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
-       echo " value='" . sadm_clean_data($wrow['srv_ssh_port']). "'/>"; # Show Current Value
+       echo " value='" . $wrow['srv_ssh_port'] . "'/>";                 # Show Current Value
     }
     echo "\n</div>";                                                    # << End of double_input
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
