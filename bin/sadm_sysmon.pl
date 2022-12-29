@@ -985,7 +985,7 @@ sub check_daemon {
     $TEST = $SADM_RECORD->{SADM_TEST}   ;                               # Test Operator (=,<=,!=,..)
     $MOD  = "DAEMON"                    ;                               # Module Category
     $SMOD = "PROCESS"                   ;                               # Sub-Module Category
-    $STAT = $pname                      ;                               # Name of deamon
+    $STAT = $pname                      ;                               # Name of daemon
     if ($CVAL > 0) {                                                    # At least 1 process running
         printf "\n[OK] Number of %s running is %d",$pname, $CVAL;       # Show number of Process
         #printf "\n%s%s[OK]%s Number of %s running is %d", BOLD, GREEN, RESET, $pname, $CVAL;
@@ -1639,10 +1639,10 @@ sub write_rpt_file {
         ($myear,$mmonth,$mday,$mhour,$mmin,$msec,$mepoch) = Today_and_Now(); # Get Date,Time, Epoch
         my $mail_mess0 = "Dear user,\n";
         my $mail_mess1 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
-        my $mail_mess2 = "Daemon $daemon_name wasn't running on '${HOSTNAME}'.\n";
-        my $mail_mess3 = "The System Monitor executed the script : '$SADM_RECORD->{SADM_SCRIPT} $daemon_name' to restart it.\n";
+        my $mail_mess2 = "daemon '$daemon_name' wasn't running on '${HOSTNAME}'.\n";
+        my $mail_mess3 = "The system monitor executed the script : '$SADM_RECORD->{SADM_SCRIPT} $daemon_name' to restart it.\n";
         my $mail_mess4 = "This is the first time SysMon is restarting this service on this system today.\n\n";
-        my $mail_mess5 = "Have a good day\n";
+        my $mail_mess5 = "Have a good day.\n";
         my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}${mail_mess4}${mail_mess5}";
         my $mail_subject = "SADM: INFO $HOSTNAME daemon $daemon_name restarted";
         @args = ("echo \"$mail_message\" | $CMD_MUTT -s \"$mail_subject\" $SADM_MAIL_ADDR");
