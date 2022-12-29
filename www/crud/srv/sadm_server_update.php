@@ -107,7 +107,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
         exit;
     }
 
- 
+
 # ==================================================================================================
 # INITIAL PAGE EXECUTION - DISPLAY FORM WITH CORRESPONDING ROW DATA
 # ==================================================================================================
@@ -121,7 +121,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
         $sql = "SELECT * FROM server WHERE srv_name = '" . $wkey . "'";  
         if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug Display SQL Stat.   
         if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
-            $err_line = (__LINE__ -1) ;                                 # Error on preceeding line
+            $err_line = (__LINE__ -1) ;                                 # Error on preceding line
             $err_msg1 = "Server (" . $wkey . ") not found.\n";           # Row was not found Msg.
             $err_msg2 = strval(mysqli_errno($con)) . ") " ;             # Insert Err No. in Message
             $err_msg3 = mysqli_error($con) . "\nAt line "  ;            # Insert Err Msg and Line No 
