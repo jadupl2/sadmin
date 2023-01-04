@@ -299,7 +299,7 @@ function display_data($count, $row) {
 #===================================================================================================
 function backup_legend() {
     echo  "\n<br>\n<hr>\n<center><b>\n";
-    echo "The last backup date appear with a yellow background if it was not done today (Backup are done daily).<br>\n";
+    echo "The date of the last backup have a yellow background if it is not done today (Backup are done daily).<br>\n";
     echo "The backup status appear with a yellow background if it's different than 'Success'.<br>\n";
     echo "The backup schedule column appear in a yellow background if it's not active.<br>\n";
     echo "The backup size is zero or ${WPCT}% bigger or smaller than the previous backup.<br>\n";
