@@ -33,6 +33,7 @@
 #@2022_11_12 backup v2.0 Backup status page - Show NFS server name & backup directory on backup page.
 #@2022_11_12 backup v2.1 Backup status page - Added column to show if system is online sporadically.
 #@2022_11_20 backup v2.2 Backup status page - Backup error log link wasn't appearing when it should.
+#@2023_01_05 backup v2.3 Backup status page - Yellow alert if backup size is contrasting with previous.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -61,7 +62,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "2.2" ;                                           # Current version number
+$WVER               = "2.3" ;                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -148,11 +149,11 @@ function display_data($count, $row) {
     #echo "<td class='dt-center'>";
     echo "<td>";
     echo "<a href='" . $URL_HOST_INFO . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP ;
-    echo "' title='Click to view system info, $WOS $WVER server, ip address is " .$row['srv_ip']. "'>";
+    echo "' title='Click to view system info, $WOS $WVER system, ip address is " .$row['srv_ip']. "'>";
     echo $row['srv_name']  . "</a></td>\n";
     
     # Server Description
-    echo "<td class='dt-body-left'>" . $row['srv_desc'] . "</td>\n";  
+    echo "<td class='dt-body-left'>" . $row['srv_desc'] . "</td>";  
 
     # Schedule Active or Inactive.
     if ($row['srv_backup'] == TRUE ) {                                  # Is Server Active
@@ -211,7 +212,7 @@ function display_data($count, $row) {
     if (! file_exists($rch_file))  {                                    # If RCH File Not Found
         echo "\n<td class='dt-center' bgcolor='Yellow'><b>No data</b></td>";
     }else{
-        echo "<td class='dt-center'>" .$celapse . "</td>\n";  
+        echo "<td class='dt-center'>" .$celapse . "</td>";  
     }
 
     # Last Backup Status
@@ -219,13 +220,13 @@ function display_data($count, $row) {
         echo "\n<td class='dt-center' bgcolor='yellow'><b>No data</b></td>";
     }else{
         switch ($ccode) {
-            case 0:     echo "\n<td class='dt-center'>Success</td>";
+            case 0:     echo "\n<td class='dt-center'>Success</td>\n";
                         break;
-            case 1:     echo "\n<td class='dt-center' bgcolor='yellow'>Failed</td>";
+            case 1:     echo "\n<td class='dt-center' bgcolor='yellow'>Failed</td>\n";
                         break;
-            case 2:     echo "\n<td class='dt-center' bgcolor='yellow'>Running</td>";
+            case 2:     echo "\n<td class='dt-center' bgcolor='yellow'>Running</td>\n";
                         break;
-            default:    echo "\n<td class='dt-center' bgcolor='yellow'>" . $ccode . "</td>";
+            default:    echo "\n<td class='dt-center' bgcolor='yellow'>" . $ccode . "</td>\n";
                         break;
         }   
     }
@@ -258,37 +259,54 @@ function display_data($count, $row) {
     }
     echo "</td>\n"; 
     
-    # Last Backup Size
-    $pattern = "/current backup size/i"; 
-    if (!file_exists($log_name))
-        {   echo "<td align='center' bgcolor='yellow'><b>No data</b>";
-        }else{
-            if (preg_grep($pattern, file($log_name)))
-               { echo "<td align='center'>" ;
-                 $bstring = implode (" ", preg_grep($pattern, file($log_name)));
-                 $barray   = explode(" ", $bstring) ;
-                 echo $barray[count($barray)-1];
-               }else{
-                 echo "<td align='center' bgcolor='yellow'><b>No data</b>";
-               }
+    # Calculate Current Backup Size. 
+    $backup_size = 0 ; 
+    if (file_exists($log_name)) {
+        $pattern = "/current backup size/i"; 
+        if (preg_grep($pattern, file($log_name))) {
+            $bstring     = implode (" ", preg_grep($pattern, file($log_name)));
+            $barray      = explode (" ", $bstring) ;
+            $backup_size = $barray[count($barray)-1];
+            # remove all non-numeric characters from backup size
+            $num_backup_size = preg_replace("/[^0-9]/", "", $backup_size );
         }
-    echo "</td>\n";  
+    }
 
-    # Previous Backup Size
-    $pattern = "/previous backup size/i"; 
-    if (!file_exists($log_name))
-        {   echo "<td align='center' bgcolor='yellow'><b>No data</b>";
-        }else{
-            if (preg_grep($pattern, file($log_name)))
-               { echo "<td align='center'>" ;
-                 $bstring = implode (" ", preg_grep($pattern, file($log_name)));
-                 $barray   = explode(" ", $bstring) ;
-                 echo $barray[count($barray)-1];
-               }else{
-                 echo "<td align='center' bgcolor='yellow'><b>No data</b>"; 
-               }
+    # Calculate Previous Backup Size. 
+    $previous_size = 0 ; 
+    if (file_exists($log_name)) {
+        $pattern = "/previous backup size/i";
+        if (preg_grep($pattern, file($log_name))) {
+            $bstring       = implode (" ", preg_grep($pattern, file($log_name)));
+            $barray        = explode (" ", $bstring) ;
+            $previous_size = $barray[count($barray)-1];
+            # remove all non-numeric characters from backup size
+            $num_previous_size = preg_replace("/[^0-9]/", "", $previous_size );
         }
-    echo "</td>\n";  
+    }
+
+    # Show Backup Size
+    if (($num_backup_size == 0 || $num_previous_size == 0) && (SADM_BACKUP_DIF != 0)) {
+        echo "<td align='center' bgcolor='yellow'><b>" . $backup_size . "</b></td>\n";  
+    }else{
+        $PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100;
+        if (number_format($PCT,1) != 0.0) {
+            if ((number_format($PCT,0) >= SADM_BACKUP_DIF) || (number_format($PCT,0) <= (SADM_BACKUP_DIF * -1))) {
+                echo "<td align='center' bgcolor='yellow'><b>" . $backup_size . "&nbsp;" . number_format($PCT,1) . "%</b></td>\n"; 
+            }else{
+                echo "<td align='center'>" . $backup_size . "&nbsp;" . number_format($PCT,1) . "%</td>\n"; 
+            }
+        }else{
+            echo "<td align='center'>" . $backup_size . "</td>\n"; 
+        }
+    }
+
+    # Show Previous Backup Size
+    if (($num_backup_size == 0 || $num_previous_size == 0) && (SADM_BACKUP_DIF != 0)) {
+        echo "<td align='center' bgcolor='yellow'><b>" . $previous_size . "</b></td>\n";  
+    }else{
+        echo "<td align='center'>" . $previous_size . "</td>\n";
+    }
 
     echo "</tr>\n"; 
 }
@@ -298,12 +316,13 @@ function display_data($count, $row) {
 # Add legend at the bottom of the page
 #===================================================================================================
 function backup_legend() {
-    echo  "\n<br>\n<hr>\n<center><b>\n";
-    echo "The date of the last backup have a yellow background if it is not done today (Backup are done daily).<br>\n";
-    echo "The backup status appear with a yellow background if it's different than 'Success'.<br>\n";
-    echo "The backup schedule column appear in a yellow background if it's not active.<br>\n";
-    echo "The backup size is zero or ${WPCT}% bigger or smaller than the previous backup.<br>\n";
-    echo "The backup size is zero or ${WPCT}% bigger or smaller than the current backup.<br>\n";
+    echo  "\n<hr>\n<center><b>\n";
+    echo "If backup status isn't 'Success' it will have a yellow background.<br>\n";
+    echo "If the current backup size is zero or " . SADM_BACKUP_DIF . "% bigger or smaller than the previous backup, it will have a yellow background.<br>\n";
+    echo "If the previous backup size is zero or " . SADM_BACKUP_DIF . "% bigger or smaller than the current backup, it will have a yellow background.<br>\n";
+    echo "The " . SADM_BACKUP_DIF . "% can be change by modifying the 'SADM_BACKUP_DIF' variable in \$SADMIN/cfg/sadmin.cfg.<br>\n";
+    echo "If the backup schedule column is not 'Active', it will appear with a yellow background .<br>\n";
+    echo "If the date of the last backup is not today, it will have a yellow background (Backup are done daily).<br>\n";
     echo  "</center><br><br>\n";        
 }
 
