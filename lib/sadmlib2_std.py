@@ -146,7 +146,8 @@ sadm_yearly_backup_to_keep    = 3                           # Nb Yearly Backup t
 sadm_weekly_backup_day        = 5                           # Weekly Backup Day (1=Mon.)
 sadm_monthly_backup_date      = 1                           # Monthly Backup Date (1-28)
 sadm_yearly_backup_month      = 12                          # Yearly Backup Month (1-12)
-sadm_yearly_backup_date       = 31                          # Yearl Backup Date(1-31)
+sadm_yearly_backup_date       = 31                          # Yearly Backup Date(1-31)
+sadm_backup_diff              = 50                          # % Backup Size Diff. Alert
 sadm_rear_nfs_server          = ""                          # Rear NFS Server
 sadm_rear_nfs_mount_point     = ""                          # Rear NFS Mount Point
 sadm_rear_backup_to_keep      = 3                           # Nb of Rear Backup to keep
@@ -420,7 +421,7 @@ def load_config_file(cfg_file):
     sadm_network4                ,sadm_network5                 ,sadm_monitor_update_interval  ,\
     sadm_monitor_recent_count    ,sadm_monitor_recent_exclude   ,sadm_pid_timeout              ,\
     sadm_lock_timeout            ,sadm_max_logline              ,sadm_max_rchline              ,\
-    sadm_dr_script_maxage        ,sadm_dr_rear_interval         ,\
+    sadm_dr_script_maxage        ,sadm_dr_rear_interval         ,sadm_backup_diff              ,\
     sadm_dr_backup_dif           ,sadm_smtp_server              ,sadm_smtp_port                ,\
     sadm_smtp_sender             ,sadm_gmpw
 
@@ -509,6 +510,7 @@ def load_config_file(cfg_file):
         if "SADM_MONTHLY_BACKUP_DATE"      in CFG_NAME: sadm_monthly_backup_date     = int(CFG_VALUE)
         if "SADM_YEARLY_BACKUP_MONTH"      in CFG_NAME: sadm_yearly_backup_month     = int(CFG_VALUE)
         if "SADM_YEARLY_BACKUP_DATE"       in CFG_NAME: sadm_yearly_backup_date      = int(CFG_VALUE)
+        if "SADM_BACKUP_DIFF"              in CFG_NAME: sadm_backup_diff             = int(CFG_VALUE)
         if "SADM_REAR_NFS_SERVER"          in CFG_NAME: sadm_rear_nfs_server         = CFG_VALUE
         if "SADM_REAR_NFS_MOUNT_POINT"     in CFG_NAME: sadm_rear_nfs_mount_point    = CFG_VALUE
         if "SADM_REAR_BACKUP_TO_KEEP"      in CFG_NAME: sadm_rear_backup_to_keep     = int(CFG_VALUE)

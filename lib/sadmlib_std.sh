@@ -364,6 +364,7 @@ export SADM_WEEKLY_BACKUP_DAY=5                                         # 1=Mon,
 export SADM_MONTHLY_BACKUP_DATE=1                                       # Monthly Back Date
 export SADM_YEARLY_BACKUP_MONTH=12                                      # Yearly Backup Mth
 export SADM_YEARLY_BACKUP_DATE=31                                       # Yearly Backup Day
+export SADM_BACKUP_DIFF=50                                              # PCT Backup Size Diff
 export SADM_MKSYSB_NFS_SERVER=""                                        # Mksysb NFS Server
 export SADM_MKSYSB_NFS_MOUNT_POINT=""                                   # Mksysb Mnt Point
 export SADM_MKSYSB_NFS_TO_KEEP=2                                        # Mksysb Bb. Copy
@@ -1942,6 +1943,9 @@ sadm_load_config_file() {
         #
         echo "$wline" |grep -i "^SADM_YEARLY_BACKUP_DATE" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_YEARLY_BACKUP_DATE=`echo "$wline"   |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_BACKUP_DIFF" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_BACKUP_DIF=`echo "$wline"   |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_MKSYSB_NFS_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_MKSYSB_NFS_SERVER=`echo "$wline"    |cut -d= -f2 |tr -d ' '` ;fi
