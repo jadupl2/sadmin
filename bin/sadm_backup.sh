@@ -83,6 +83,7 @@
 #@2022_11_11 backup v3.39 Add size of current & previous backup at end of log, used for backup page.
 #@2022_11_16 backup v3.40 Do not accept environment variables in backup or exclude list.
 #@2023_01_06 backup v3.41 Added cmdline '-w' to suppress warning (dir. not exist) on output.
+#@2023_01_06 backup v3.42 Fix problem with format of 'stat' command on MacOS.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -114,7 +115,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.41'                                     # Script version number
+export SADM_VER='3.42'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -528,7 +529,10 @@ create_backup()
         fi
 
         # Show backup tgz file size
-        BSIZE=$(stat --format=%s ${BACKUP_DIR}/${BACK_FILE})
+        if [ "$SADM_OS_TYPE" = "DARWIN" ] 
+            then BSIZE=$(stat -f%z ${BACKUP_DIR}/${BACK_FILE})
+            else BSIZE=$(stat --format=%s ${BACKUP_DIR}/${BACK_FILE})
+        fi 
         BTOTAL=$(echo "$BSIZE /1024/1024" | bc)                             
         sadm_write_log "Backup size is ${BTOTAL}MB."
 
