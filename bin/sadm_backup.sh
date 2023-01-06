@@ -82,6 +82,7 @@
 # 2022_10_30 backup v3.38 After each backup show, the backup size in the log.
 #@2022_11_11 backup v3.39 Add size of current & previous backup at end of log, used for backup page.
 #@2022_11_16 backup v3.40 Do not accept environment variables in backup or exclude list.
+#@2023_01_06 backup v3.41 Added cmdline '-w' to suppress warning (dir. not exist) on output.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -113,7 +114,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.40'                                     # Script version number
+export SADM_VER='3.41'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -213,6 +214,7 @@ show_usage()
     printf "\n\t${BOLD}${YELLOW}-h${NORMAL} Display this help message"
     printf "\n\t${BOLD}${YELLOW}-n${NORMAL} Backup with NO compression (default compress)"
     printf "\n\t${BOLD}${YELLOW}-v${NORMAL} Show script version info"
+    printf "\n\t${BOLD}${YELLOW}-w${NORMAL} Don't show warning (dir. not exist)" 
     printf "\n\n" 
 }
 
@@ -412,11 +414,13 @@ create_backup()
                     then if [ $SADM_DEBUG -gt 2 ] 
                             then sadm_write_log "File to Backup : [${backup_line}]" 
                          fi
-                    else sadm_write_log " "
-                         sadm_write_log "${SADM_TEN_DASH}"              # Line of 10 Dash in Log
-                         MESS1="You asked to backup '$backup_line', "
-                         MESS2="but it doesn't exist on ${SADM_HOSTNAME}."
-                         sadm_write_err "[ WARNING ] ${MESS1}${MESS2}"  # Advise User - Log Info
+                    else if [ "$SHOW_WARNING" = "Y" ] 
+                            then sadm_write_log " "
+                                 sadm_write_log "${SADM_TEN_DASH}"      # Line of 10 Dash in Log
+                                 MESS1="You asked to backup '$backup_line', "
+                                 MESS2="but it doesn't exist on ${SADM_HOSTNAME}."
+                                 sadm_write_err "[ WARNING ] ${MESS1}${MESS2}" 
+                         fi 
                          continue                                       # Go Read Nxt Line to backup
                     fi
         fi
@@ -716,7 +720,7 @@ umount_nfs()
 function cmd_options()
 {
     COMPRESS="ON"                                                       # Backup Compression Default
-
+    SHOW_WARNING="N"                                                    # Don't show warning
     while getopts "d:hnv" opt ; do                                      # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
@@ -735,6 +739,8 @@ function cmd_options()
                exit 0                                                   # Back to shell
                ;;
             n) COMPRESS="OFF"                                           # No Compress backup
+               ;;               
+            w) SHOW_WARNING="Y"                                         # Show warning 
                ;;               
            \?) printf "\nInvalid option: -${OPTARG}.\n"                 # Invalid Option Message
                show_usage                                               # Display Help Usage
