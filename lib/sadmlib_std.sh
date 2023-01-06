@@ -191,6 +191,7 @@
 # 2022_09_20 lib v4.12 MacOS change 'sadm_get_osmajorversion' so it return an integer after v10.
 # 2022_09_25 lib v4.13 MacOS architecture was wrong in script header ('arch' command return i386?).
 #@2022_11_16 lib v4.14 Remove initialization of $SADM_DEBUG (Set in SADMIN section of your script).
+#@2022_01_06 lib v4.15 Possibility to set description in RCH file (New Var. SADM_RCH_DESC).
 #===================================================================================================
 
 
@@ -204,7 +205,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.14"                                              # This Library Version
+export SADM_LIB_VER="4.15"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -2393,7 +2394,11 @@ sadm_start() {
              [ $(id -u) -eq 0 ] && chmod 664 $SADM_RCHLOG               # Change protection on RCH
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}
              WDOT=".......... ........ ........"                        # End Time & Elapse = Dot
-             RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST"    # Format Part1 of RCH File
+             if [ "$SADM_RCH_DESC" = "" ]                               # If SADM_DESC is NOT blank 
+                then RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST" # Format Part1 RCH File
+                else SADM_RCH_DESC=`echo "${SADM_RCH_DESC}" |tr ' ' '_'` # Replace space=underscore
+                     RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT ${SADM_INST}_${SADM_RCH_DESC}" 
+             fi 
              RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE 2"    # Format Part2 of RCH File
              echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
     fi
@@ -2453,7 +2458,11 @@ sadm_stop() {
                      mv ${SADM_TMP_DIR}/xrch.$$ ${SADM_RCHLOG}          # Replace RCH without code 2
              fi                     
              RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
-             RCHLINE="$RCHLINE $sadm_elapse $SADM_INST"                 # Format Part2 of RCH File
+             if [ "$SADM_RCH_DESC" = "" ]                               # If SADM_DESC is NOT blank 
+                then RCHLINE="$RCHLINE $sadm_elapse $SADM_INST"         # Format Part2 RCH File
+                else SADM_RCH_DESC=`echo "${SADM_RCH_DESC}" |tr ' ' '_'` # Replace space=underscore
+                     RCHLINE="$RCHLINE $sadm_elapse ${SADM_INST}_${SADM_RCH_DESC}" 
+             fi 
              RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE"      # Format Part3 of RCH File
              RCHLINE="$RCHLINE $SADM_EXIT_CODE"                         # Format Part4 of RCH File
              if [ -w $SADM_RCHLOG ] 
