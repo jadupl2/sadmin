@@ -59,6 +59,7 @@
 # 2022_07_21 mon v2.32 System monitor page - Fix problem with recent scripts section
 # 2022_09_08 mon v2.33 System monitor page - Add current date/time and look enhancement.
 # 2022_09_11 mon v2.34 System monitor page - Modify to have a more pleasing look
+#@2023_01_06 mon v2.35 System monitor page - O/S update starter will show hostname being updated.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -95,7 +96,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.34" ;                                                       # Current version number
+$SVER  = "2.35" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
