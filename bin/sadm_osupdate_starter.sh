@@ -59,7 +59,7 @@
 # 2022_06_21 osupdate v4.8 Changes to use new functionalities of SADMIN code section v1.52
 # 2022_07_09 osupdate v4.9 Added more verbosity to screen and log
 # 2022_08_25 osupdate v5.0 Allow to run multiple instance of this script.
-#
+#@2023_01_06 osupdate v5.1 Add remote host name being updated in RCH file.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -69,7 +69,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.52
+# SADMIN CODE SECTION 1.53
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
@@ -92,8 +92,9 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='5.0'                                      # Script version number
+export SADM_VER='5.1'                                      # Script version number
 export SADM_PDESC="Run the O/S update script on the selected remote system."
+export SADM_RCH_DESC=""                                    # String that become desc in rch, if used
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -108,7 +109,7 @@ export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you t
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
 export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y]or[N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
@@ -286,8 +287,8 @@ rcmd_osupdate()
     fi
     
     # Go and Script the O/S Update on the selected system.
-    sadm_writelog " "
     sadm_writelog "Starting the O/S update on '${server_name}'."
+    sadm_writelog " "
     if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
         then sadm_writelog "$SADM_SSH -qnp $server_ssh_port $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'"
              $SADM_SSH -qnp $server_ssh_port $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
@@ -360,6 +361,12 @@ function cmd_options()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
+
+    if [ $# -ne 1 ]                                                     # MUST be hostname to update
+        then printf "\n${SADM_ERROR} Please specify the system name.\n" # Advise user of error
+             exit 1                                                     # Exit To O/S
+        else ONE_SERVER=$1                                              # Save Server Name to Update
+    fi 
     return 
 }
 
@@ -370,12 +377,7 @@ function cmd_options()
 #===================================================================================================
 #
     cmd_options "$@"                                                    # Check command-line Options
-    if [ $# -ne 1 ]                                                     # MUST be hostname to update
-        then printf "\n${SADM_ERROR} Please specify the system name.\n" # Advise user of error
-             exit 1                                                     # Exit To O/S
-        else ONE_SERVER=$1                                              # Save Server Name to Update
-    fi 
-    SADM_PDESC="Update operating system on system '$ONE_SERVER'"        # Desc of running program
+    SADM_RCH_DESC="$ONE_SERVER"                                         # Set Desc. to RCH file
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     rcmd_osupdate                                                       # Go Update Server
