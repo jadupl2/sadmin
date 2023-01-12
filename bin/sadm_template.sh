@@ -23,11 +23,7 @@
 # --------------------------------------------------------------------------------------------------
 #
 # ---CHANGE LOG---
-# 2021_07_01 lib v1.0  Initial Beta Version
-# 2021_09_25 lib v4.0 Added 'SADM_PDESC' that contain description of Script (Used in -v option).
-# 2022_05_25 lib v4.1 Added 'SADM_ROOT_ONLY' and 'SADM_SERVER_ONLY' checked before running script.
-# 2022_08_24 lib v4.2 Change the way temporary files are created ('mktemp').
-# 2022_09_07 lib v4.3 Make use of sadm_write_log() instead of sadm_write().
+#@2023_01_09 lib 1.53 Add 'SADM_RCH_DESC', use by 'sadm_osupdate_starter.sh' to add hostname in Desc
 #---------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -37,13 +33,13 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.52
+# SADMIN CODE SECTION 1.53
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
 
 # MAKE SURE ENVIRONMENT VARIABLE 'SADMIN' IS DEFINED.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # SADMIN defined? Libr.exist   
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # SADMIN defined? Libr.exist
     then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
          if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]     # Still not define = Error
             then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
@@ -62,6 +58,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='4.3'                                      # Script version number
 export SADM_PDESC="SADMIN template shell script"           # Script Optional Desc.(Not use if empty)
+export SADM_RCH_DESC=""                                    # Opt. Suffix to ScriptName in rch file
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
