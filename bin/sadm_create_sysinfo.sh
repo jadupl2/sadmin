@@ -63,6 +63,7 @@
 # 2022_07_21 client v3.33 Small enhancement in network information section.
 # 2022_08_25 client v3.34 Update to SADMIN Section 1.52
 # 2022_09_22 client v3.35 LVM information are now written into the Disk information file.
+#@2023_01_12 client v3.36 Fix error when collecting network information.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # Intercept the ^C
 #set -x
@@ -95,7 +96,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.35'                                      # Script version number
+export SADM_VER='3.36'                                     # Script version number
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -674,12 +675,15 @@ create_linux_config_files()
     wd="/etc/sysconfig/network-scripts" 
     if [ -d "$wd" ]
         then if [ "$(ls -A $wd)" ]
-                then for xfile in `ls -1 ${wd}/ifcfg*`
-                        do
-                        if [ "$xfile" != "/etc/sysconfig/network-scripts/ifcfg-lo" ]
-                            then print_file "$xfile" "$NET_FILE"
-                        fi 
-                        done
+                then ls -1 ${wd}/ifcfg* > /dev/null 2>&1 
+                     if [ $? -eq 0 ] 
+                        then for xfile in `ls -1 ${wd}/ifcfg*`
+                                do
+                                if [ "$xfile" != "/etc/sysconfig/network-scripts/ifcfg-lo" ]
+                                    then print_file "$xfile" "$NET_FILE"
+                                fi 
+                                done
+                     fi 
              fi
     fi
     
