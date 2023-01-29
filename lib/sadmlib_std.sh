@@ -191,7 +191,9 @@
 # 2022_09_20 lib v4.12 MacOS change 'sadm_get_osmajorversion' so it return an integer after v10.
 # 2022_09_25 lib v4.13 MacOS architecture was wrong in script header ('arch' command return i386?).
 #@2022_11_16 lib v4.14 Remove initialization of $SADM_DEBUG (Set in SADMIN section of your script).
-#@2022_01_06 lib v4.15 Possibility to set description in RCH file (New Var. SADM_RCH_DESC).
+#@2023_01_06 lib v4.15 Possibility to set description in RCH file (New Var. SADM_RCH_DESC).
+#@2023_01_27 lib v4.16 Optimize the start function.
+
 #===================================================================================================
 
 
@@ -205,12 +207,12 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.15"                                              # This Library Version
+export SADM_LIB_VER="4.16"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
 export SADM_TEN_DASH=`printf %10s |tr " " "-"`                          # 10 dashes line
-export SADM_STIME=""                                                    # Store Script Start Time
+export SADM_STIME=""                                                    # Script Start Time
 export DELETE_PID="Y"                                                   # Default Delete PID On Exit
 export LIB_DEBUG=0                                                      # This Library Debug Level
 
@@ -2045,6 +2047,70 @@ sadm_load_config_file() {
 
 
 # --------------------------------------------------------------------------------------------------
+# Setup basic SADMIN directories structure and permissions
+# --------------------------------------------------------------------------------------------------
+sadm_freshen_directories_structure() {
+
+    # Path is needed to perform NFS Backup (It doesn't exist by default on Mac)
+    if [ "$SADM_OS_TYPE" = "DARWIN" ] && [ ! -d "/tmp/nfs2" ]           # NFS Mount Point not exist
+        then mkdir -p /tmp/nfs2 && chmod 775 /tmp/nfs2                  # Create NFS mount point
+    fi
+
+    # $SADMIN directories creation (If do not exist and ignore error)
+    mkdir -p ${SADMIN}/{bin,lib,cfg,sys,doc,pkg,setup,dat,usr,log,www,tmp} > /dev/null 2>&1
+
+    # $SADMIN/dat directories creation (If do not exist and ignore error)
+    mkdir -p ${SADM_DAT_DIR}/{dr,dbb,net,nmon,rch,rpt} > /dev/null 2>&1
+
+    # $SADMIN/usr directories creation (If do not exist and ignore error)
+    mkdir -p ${SADM_USR_DIR}/{bin,cfg,doc,lib,mon} > /dev/null 2>&1
+
+    # $SADMIN/www directories creation (If do not exist and ignore error)
+    mkdir -p ${SADM_WWW_DIR}/{archive,crud,css,dat,doc,images,js,lib,rrd,tmp,view} > /dev/null 2>&1
+
+    if [ $(id -u) -eq 0 ]
+        then chmod 0775 $SADM_LIB_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LIB_DIR
+             chmod 0775 $SADM_CFG_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_CFG_DIR
+             chmod 0775 $SADM_SYS_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_DIR
+             chmod 0775 $SADM_DOC_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DOC_DIR
+             chmod 0775 $SADM_PKG_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_PKG_DIR
+             chmod 1777 $SADM_TMP_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_TMP_DIR
+             chmod 0775 $SADM_SETUP_DIR     ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SETUP_DIR
+             chmod 0775 $SADM_DAT_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DAT_DIR
+             chmod 0775 $SADM_NMON_DIR      ; chown ${SADM_USER}:${SADM_GROUP} $SADM_NMON_DIR
+             chmod 0775 $SADM_DR_DIR        ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DR_DIR
+             chmod 0775 $SADM_RPT_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_RPT_DIR
+             chmod 0775 $SADM_RCH_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_RCH_DIR
+             chmod 0775 $SADM_USR_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_USR_DIR
+             chmod 0775 $SADM_UBIN_DIR      ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UBIN_DIR
+             chmod 0775 $SADM_UCFG_DIR      ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UCFG_DIR
+             chmod 0775 $SADM_ULIB_DIR      ; chown ${SADM_USER}:${SADM_GROUP} $SADM_ULIB_DIR
+             chmod 0775 $SADM_UDOC_DIR      ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UDOC_DIR
+             chmod 0775 $SADM_UMON_DIR      ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UMON_DIR
+             chmod 0775 $SADM_NET_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_NET_DIR
+             chmod 0775 $SADM_DBB_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DBB_DIR
+             chmod 0775 $SADM_WWW_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DIR 
+             chmod 0775 $SADM_WWW_DAT_DIR   ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR 
+             chmod 0775 $SADM_WWW_ARC_DIR   ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_ARC_DIR 
+             chmod 0775 $SADM_WWW_DOC_DIR   ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DOC_DIR 
+             chmod 0775 $SADM_WWW_LIB_DIR   ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_LIB_DIR 
+             chmod 0775 $SADM_WWW_IMG_DIR   ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_IMG_DIR 
+             chmod 1777 $SADM_WWW_TMP_DIR   ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR 
+             chmod 0775 $SADM_LOG_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR
+             if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] 
+                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DIR
+                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR
+                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_ARC_DIR
+                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DOC_DIR
+                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_LIB_DIR
+                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_IMG_DIR
+                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR
+             fi 
+    fi
+}
+
+
+# --------------------------------------------------------------------------------------------------
 #                   SADM INITIALIZE FUNCTION - EXECUTE BEFORE DOING ANYTHING
 # What this function do.
 #   1) Make sure All SADM Directories and sub-directories exist and they have proper permission
@@ -2054,22 +2120,17 @@ sadm_load_config_file() {
 #   5) Add line in the [R]eturn [C]ode [H]istory file stating script is started (Code 2 = Running)
 #   6) Write HostName - Script name and version - O/S Name and version to the Log file ($SADM_LOG)
 # --------------------------------------------------------------------------------------------------
-# mkdir -p ${SADMIN}/{etc/x1,lib,usr/{x2,x3},bin,tmp/{Y1,Y2,Y3/z},opt,var}
-# mkdir -p -v /home/josevnz/tmp/{dir1,anotherdir,similardir}
-#$ mkdir {bananas,apples,oranges,peaches, kiwis}
-
 sadm_start() {
 
-    # Make sure log directory exist and have proper permissiget_osna
-    [ ! -d "$SADM_LOG_DIR" ] && mkdir -p $SADM_LOG_DIR                  # Log Dir. Got to exist
-    if [ $(id -u) -eq 0 ]                                               # Need good permission
-        then chmod 0775 $SADM_LOG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR
-    fi
+    sadm_freshen_directories_structure                                  # Chk Dir. Structure & Perm.
+
     # If new log is desired, remove old log and start new one.
-    if [ "$SADM_LOG_APPEND" = "N" ]                                    # Don't want to append Log
-        then if [ -e "$SADM_LOG" ]  ; then rm -f $SADM_LOG  > /dev/null 2>&1 ; fi
-             if [ -e "$SADM_ELOG" ] ; then rm -f $SADM_ELOG > /dev/null 2>&1 ; fi
+    if [ "$SADM_LOG_APPEND" = "N" ]                                     # New Log, No append to log
+        then if [ -e "$SADM_LOG" ]  ; then rm -f $SADM_LOG  > /dev/null 2>&1 ; fi # Remove old log
+             if [ -e "$SADM_ELOG" ] ; then rm -f $SADM_ELOG > /dev/null 2>&1 ; fi # Remove old elog
     fi
+
+    # Make sure log & error log exist and have proper permission
     [ ! -e "$SADM_LOG"  ] && touch $SADM_LOG                            # If Log File don't exist
     [ ! -e "$SADM_ELOG" ] && touch $SADM_ELOG                           # If Error Log don't exist
     if [ $(id -u) -eq 0 ]                                               # Need good permission
@@ -2077,12 +2138,12 @@ sadm_start() {
              chmod 666 $SADM_ELOG ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_ELOG}
     fi
 
-    # Write Starting Info in the Log
+    # Write Log Header
     if [ ! -z "$SADM_LOG_HEADER" ] && [ "$SADM_LOG_HEADER" = "Y" ]      # Script Want Log Header
-        then sadm_write_log "${SADM_80_DASH}"                            # Write 80 Dashes Line
+        then sadm_write_log "${SADM_80_DASH}"                           # Write 80 Dashes Line
              sadm_write_log "$(date +"%a %d %b %Y %T") - ${SADM_PN} v${SADM_VER} - Library v${SADM_LIB_VER}"
              if [ "$SADM_PDESC" ]                                       # If Script Desc. Not empty
-                then sadm_write_log "Desc: $SADM_PDESC"                  # Include it in log Header
+                then sadm_write_log "Desc: $SADM_PDESC"                 # Include it in log Header
              fi
              sadm_write_log "Host: $(sadm_get_fqdn) - User: $SADM_USERNAME - Arch: $(sadm_server_arch) - SADMIN: $SADMIN"
              hline3="$(sadm_capitalize $(sadm_get_osname)) $(sadm_capitalize $(sadm_get_ostype))"
@@ -2111,27 +2172,22 @@ sadm_start() {
              fi 
     fi
 
-
-    # If PID File exist and User want to run only 1 copy of the script - Abort Script
+    # If PID File exist and user want to run only 1 instance of the script - Abort Script
     if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]     # PIP Exist - Run One Copy
        then pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Epoch time of PID File
             cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
-            #sadm_write_log " "
             sadm_write "Script '$SADM_PN' is already running ...\n"     # Script already running
             sadm_write "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N').\n" 
             sadm_write "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid', was created $pelapse seconds ago.\n"
             sadm_write "The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n"
             sadm_write_log " "
-            if [ -z "$SADM_PID_TIMEOUT" ] 
-                then sadm_write "Script can't run unless one of the following thing is done :\n"
-                     sadm_write "  - Remove the PID File (\${SADMIN}/tmp/${SADM_INST}.pid).\n"
-                     sadm_write "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script.\n"
-                     sadm_write "  - You wait till PID timeout '\$SADM_PID_TIMEOUT' is reach.\n"
-                     sadm_write_log " "
-                     sadm_write_log " "
+            if [ -z "$SADM_PID_TIMEOUT" ]                               # Is SADM_PID_TIMEOUT define
+                then sadm_write_err "Script can't run unless one of the following thing is done :"
+                     sadm_write_err "  - Remove the PID File (\${SADMIN}/tmp/${SADM_INST}.pid)."
+                     sadm_write_err "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script."
+                     sadm_write_err "  - You wait till PID timeout '\$SADM_PID_TIMEOUT' is reach.\n"
                      DELETE_PID="N"                                     # No Del PID Since running
-                     #sadm_stop 1                                        # Close and Trim Log
                      exit 1                                             # Exit To O/S with Error
                 else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
                         then sadm_write "The PID file exceeded the time to live ('\$SADM_PID_TIMEOUT').\n"
@@ -2142,7 +2198,6 @@ sadm_start() {
                              touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
                              DELETE_PID="Y"                             # Del PID Since running
                         else DELETE_PID="N"                             # No Del PID Since running
-                             #sadm_stop 1                                # Close and Trim Log
                              exit 1                                     # Exit with Error
                      fi
             fi                                                          # Close and Trim Log
@@ -2150,119 +2205,7 @@ sadm_start() {
             DELETE_PID="Y"                                              # Del PID Since running
     fi
 
-    # ($SADMIN/tmp) If TMP Directory doesn't exist, create it.
-    [ ! -d "$SADM_TMP_DIR" ] && mkdir -p $SADM_TMP_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 1777 $SADM_TMP_DIR 
-             if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_TMP_DIR
-                else chown ${SADM_USER}:${SADM_GROUP} $SADM_TMP_DIR
-             fi
-    fi
-
-    # ($SADMIN/lib) If LIB Directory doesn't exist, create it.
-    [ ! -d "$SADM_LIB_DIR" ] && mkdir -p $SADM_LIB_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_LIB_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LIB_DIR
-    fi
-
-    # ($SADMIN/cfg) If Custom Configuration Directory doesn't exist, create it.
-    [ ! -d "$SADM_CFG_DIR" ] && mkdir -p $SADM_CFG_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_CFG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_CFG_DIR
-    fi
-
-    # ($SADMIN/sys) If System Startup/Shutdown Script Directory doesn't exist, create it.
-    [ ! -d "$SADM_SYS_DIR" ] && mkdir -p $SADM_SYS_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_SYS_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_DIR
-    fi
-
-    # ($SADMIN/doc) If Documentation Directory doesn't exist, create it.
-    [ ! -d "$SADM_DOC_DIR" ] && mkdir -p $SADM_DOC_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_DOC_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DOC_DIR
-    fi
-
-    # ($SADMIN/pkg) If Package Directory doesn't exist, create it.
-    [ ! -d "$SADM_PKG_DIR" ] && mkdir -p $SADM_PKG_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_PKG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_PKG_DIR
-    fi
-
-    # ($SADMIN/setup) If Setup Directory doesn't exist, create it.
-    [ ! -d "$SADM_SETUP_DIR" ] && mkdir -p $SADM_SETUP_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_SETUP_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SETUP_DIR
-    fi
-
-    # ($SADMIN/dat) If Data Directory doesn't exist, create it.
-    [ ! -d "$SADM_DAT_DIR" ] && mkdir -p $SADM_DAT_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_DAT_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DAT_DIR
-    fi
-
-    # ($SADMIN/dat/nmon) If NMON Directory doesn't exist, create it.
-    [ ! -d "$SADM_NMON_DIR" ] && mkdir -p $SADM_NMON_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_NMON_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_NMON_DIR
-    fi
-
-    # ($SADMIN/dat/dr) If Disaster Recovery Information Directory doesn't exist, create it.
-    [ ! -d "$SADM_DR_DIR" ] && mkdir -p $SADM_DR_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_DR_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DR_DIR
-    fi
-
-    # ($SADMIN/dat/rpt) If Sysmon Report Directory doesn't exist, create it.
-    [ ! -d "$SADM_RPT_DIR" ] && mkdir -p $SADM_RPT_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_RPT_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_RPT_DIR
-    fi
-
-    # ($SADMIN/dat/rch) If Return Code History Directory doesn't exist, create it.
-    [ ! -d "$SADM_RCH_DIR" ] && mkdir -p $SADM_RCH_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_RCH_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_RCH_DIR
-    fi
-
-    # ($SADMIN/usr) If User Directory doesn't exist, create it.
-    [ ! -d "$SADM_USR_DIR" ] && mkdir -p $SADM_USR_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_USR_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_USR_DIR
-    fi
-
-    # ($SADMIN/usr/bin) If User Bin Dir doesn't exist, create it.
-    [ ! -d "$SADM_UBIN_DIR" ] && mkdir -p $SADM_UBIN_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_UBIN_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UBIN_DIR
-    fi
-
-    # ($SADMIN/usr/cfg) If User cfg Dir doesn't exist, create it.
-    [ ! -d "$SADM_UCFG_DIR" ] && mkdir -p $SADM_UCFG_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_UCFG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UCFG_DIR
-    fi
-
-    # ($SADMIN/usr/lib) If User Lib Dir doesn't exist, create it.
-    [ ! -d "$SADM_ULIB_DIR" ] && mkdir -p $SADM_ULIB_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_ULIB_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_ULIB_DIR
-    fi
-
-    # ($SADMIN/usr/doc) If User Doc Directory doesn't exist, create it.
-    [ ! -d "$SADM_UDOC_DIR" ] && mkdir -p $SADM_UDOC_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_UDOC_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UDOC_DIR
-    fi
-
-    # ($SADMIN/usr/mon) If User SysMon Scripts Directory doesn't exist, create it.
-    [ ! -d "$SADM_UMON_DIR" ] && mkdir -p $SADM_UMON_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_UMON_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UMON_DIR
-    fi
-
-    # If System Startup Script does not exist - Create it from the startup template script
+    # If System Startup Script does not exist - Create one from the startup template script
     [ ! -r "$SADM_SYS_STARTUP" ] && cp $SADM_SYS_START $SADM_SYS_STARTUP
     if [ $(id -u) -eq 0 ]
         then chmod 0774 $SADM_SYS_STARTUP ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_STARTUP
@@ -2273,91 +2216,6 @@ sadm_start() {
     if [ $(id -u) -eq 0 ]
         then chmod 0774 $SADM_SYS_SHUTDOWN ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_SHUTDOWN
     fi
-
-    # ($SADMIN/dat/net) If Network/Subnet Info Directory doesn't exist, create it.
-    [ ! -d "$SADM_NET_DIR" ] && mkdir -p $SADM_NET_DIR
-    if [ $(id -u) -eq 0 ]
-        then chmod 0775 $SADM_NET_DIR
-             chown ${SADM_USER}:${SADM_GROUP} $SADM_NET_DIR
-    fi
-
-    # ($SADMIN/dat/dbb) If Database Backup Directory doesn't exist, create it.
-    [ ! -d "$SADM_DBB_DIR" ] && mkdir -p $SADM_DBB_DIR
-    if [ $(id -u) -eq 0 ]
-       then chmod 0775 $SADM_DBB_DIR
-            chown ${SADM_USER}:${SADM_GROUP} $SADM_DBB_DIR
-    fi
-
-    # $SADMIN/www Dir.
-    [ ! -d "$SADM_WWW_DIR" ] && mkdir -p $SADM_WWW_DIR
-    if [ $(id -u) -eq 0 ]
-       then chmod 0775 $SADM_WWW_DIR
-            if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DIR
-                else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DIR
-            fi
-    fi
-
-    # $SADMIN/www/dat Dir.
-    [ ! -d "$SADM_WWW_DAT_DIR" ] && mkdir -p $SADM_WWW_DAT_DIR
-    if [ $(id -u) -eq 0 ]
-       then chmod 0775 $SADM_WWW_DAT_DIR
-            if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR
-                else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR
-            fi
-    fi
-
-    # $SADMIN/www/dat/archive Dir.
-    [ ! -d "$SADM_WWW_ARC_DIR" ] && mkdir -p $SADM_WWW_ARC_DIR
-    if [ $(id -u) -eq 0 ]
-       then chmod 0775 $SADM_WWW_ARC_DIR
-            if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_ARC_DIR
-                else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_ARC_DIR
-            fi
-    fi
-
-    # $SADMIN/www/doc Dir.
-    [ ! -d "$SADM_WWW_DOC_DIR" ] && mkdir -p $SADM_WWW_DOC_DIR
-    if [ $(id -u) -eq 0 ]
-       then chmod 0775 $SADM_WWW_DOC_DIR
-            if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DOC_DIR
-                else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DOC_DIR
-            fi
-    fi
-
-    # $SADMIN/www/lib Dir.
-    [ ! -d "$SADM_WWW_LIB_DIR" ] && mkdir -p $SADM_WWW_LIB_DIR
-    if [ $(id -u) -eq 0 ]
-       then chmod 0775 $SADM_WWW_LIB_DIR
-            if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_LIB_DIR
-                else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_LIB_DIR
-            fi
-    fi
-
-    # $SADMIN/www/images Dir.
-    [ ! -d "$SADM_WWW_IMG_DIR" ] && mkdir -p $SADM_WWW_IMG_DIR
-    if [ $(id -u) -eq 0 ]
-       then chmod 0775 $SADM_WWW_IMG_DIR
-            if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_IMG_DIR
-                else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_IMG_DIR
-            fi
-    fi
-
-    # $SADMIN/www/tmp Dir.
-    [ ! -d "$SADM_WWW_TMP_DIR" ] && mkdir -p $SADM_WWW_TMP_DIR
-    if [ $(id -u) -eq 0 ]
-       then chmod 1777 $SADM_WWW_TMP_DIR
-            if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR
-                else chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR
-            fi
-    fi
-
 
     # Alert Group File ($SADMIN/cfg/alert_group.cfg) MUST be present.
     # If it doesn't exist, create it from initial file ($SADMIN/cfg/.alert_group.cfg)
