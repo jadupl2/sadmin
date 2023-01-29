@@ -133,29 +133,28 @@ pre_validation()
 {
 
     if [ $SADM_DEBUG -gt 0 ] 
-        then sadm_writelog "----------------------"
-             sadm_writelog "CURRENT EPOCH               = $EPOCH_NOW"
-             sadm_writelog "CURRENT DATE/TIME           = `date +"%Y.%m.%d %H:%M:%S"`"
-             sadm_writelog "END EPOCH                   = $EPOCH_END" 
-             sadm_writelog "END DATE/TIME               = $NOW"
-             sadm_writelog "SECONDS TILL 23:59:58       = $TOT_SEC" 
-             sadm_writelog "MINUTES TILL 23:59:58       = $TOT_MIN"
-             sadm_writelog "SECONDS BETWEEN SNAPSHOT    = 120"
-             sadm_writelog "Nb. SnapShot till 23:59:58  = $TOT_SNAPSHOT" 
-             sadm_writelog "----------------------"
-             sadm_writelog " "
+        then sadm_write_log "----------------------"
+             sadm_write_log "CURRENT EPOCH               = $EPOCH_NOW"
+             sadm_write_log "CURRENT DATE/TIME           = `date +"%Y.%m.%d %H:%M:%S"`"
+             sadm_write_log "END EPOCH                   = $EPOCH_END" 
+             sadm_write_log "END DATE/TIME               = $NOW"
+             sadm_write_log "SECONDS TILL 23:59:58       = $TOT_SEC" 
+             sadm_write_log "MINUTES TILL 23:59:58       = $TOT_MIN"
+             sadm_write_log "SECONDS BETWEEN SNAPSHOT    = 120"
+             sadm_write_log "Nb. SnapShot till 23:59:58  = $TOT_SNAPSHOT" 
+             sadm_write_log "----------------------"
+             sadm_write_log " "
     fi
     
     NMON=`which nmon >/dev/null 2>&1`                                   # Is nmon executable Avail.?
     if [ $? -eq 0 ]                                                     # If it is, Save Full Path 
-        then NMON=`which nmon`                                          # Save 'nmon' location 
-             export NMON                                                # Make Avail. to SubProcess
-             sadm_writelog "[OK] Yes, 'nmon' is available ($NMON)"      # Show user result OK
-        else sadm_writelog "[ERROR] The command 'nmon' was not found"   # Show User Error
+        then export NMON=`which nmon`                                   # Save 'nmon' location 
+             sadm_write_log "[OK] Yes, 'nmon' is available ($NMON)"     # Show user result OK
+        else sadm_write_err "[ERROR] The command 'nmon' was not found"  # Show User Error
              return 1                                                   # Return error to caller
     fi
     if [ ! -x $NMON ]                                                   # Is nmon executable ?
-       then sadm_writelog "'nmon' ($NMON) missing execution permission" # Advise User of error
+       then sadm_write_log "'nmon' ($NMON) missing execution permission" # Advise User of error
             return 1                                                    # Return Error to Caller
     fi
 
@@ -167,8 +166,8 @@ pre_validation()
                 then commented=`grep 'nmon-script' ${nmon_cron} |cut -d' ' -f1` # 1st Char nmon line
                      if [ "$commented" = "0" ]                          # Cron Line not in commented
                         then sed -i -e 's/^/#/' $nmon_cron              # Then Put line in comment
-                             sadm_writelog "$nmon_cron file was put in comment" # Advise user 
-                        else sadm_writelog "$nmon_cron file is in comment - OK" # Advise user 
+                             sadm_write_log "$nmon_cron file was put in comment" # Advise user 
+                        else sadm_write_log "$nmon_cron file is in comment - OK" # Advise user 
                      fi
              fi
     fi
@@ -200,70 +199,70 @@ check_nmon()
     nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s120 |wc -l |tr -d ' '`
     if [ $nmon_count -gt 1 ] 
         then #NMON_PID=`ps -ef | grep nmon |grep -v grep |grep s120 |awk '{ print $2 }'`
-             #sadm_writelog "Found another nmon process running at $NMON_PID"
-             sadm_writelog "Found another nmon process running with s120 parameter"
+             #sadm_write_log "Found another nmon process running at $NMON_PID"
+             sadm_write_log "Found another nmon process running with s120 parameter"
              ps -ef | grep nmon |grep -v grep |grep s120 | tee -a $SADM_LOG 2>&1
              ps -ef | grep nmon |grep -v grep |grep s120 | awk '{ print $2 }' | xargs kill -9
              #kill -9 "$NMON_PID"
-             sadm_writelog "We just kill them - Only one nmon process should be running"
+             sadm_write_log "We just kill them - Only one nmon process should be running"
     fi
              
  
     # Search Process Status (ps) and display number of nmon process running currently
-    sadm_writelog " "                                                   # Blank line in log
+    sadm_write_log " "                                                   # Blank line in log
     nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s120 |wc -l |tr -d ' '`
-    sadm_writelog "There is $nmon_count nmon process actually running"  # Show Nb. nmon Running
+    sadm_write_log "There is $nmon_count nmon process actually running"  # Show Nb. nmon Running
     ps -ef | grep -E "$WSEARCH" | grep 's120' | grep -v grep | nl | tee -a $SADM_LOG
 
     # nmon_count = 0 = Not running - Then we start it 
     # nmon_count = 1 = Running - Then OK
     # nmon_count = * = More than one running ? Kill them and then we start a fresh one
     # not running nmon, start it
-    sadm_writelog " "
+    sadm_write_log " "
     case $nmon_count in
-        0)  sadm_writelog "The nmon process is not running - Starting nmon daemon ..."
-            sadm_writelog "We will start a fresh one that will terminate at 23:55"
-            sadm_writelog "We calculated that there will be ${TOT_SNAPSHOT} snapshots till 23:55"
-            sadm_writelog "$SADM_NMON -f -s120 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR "
+        0)  sadm_write_log "The nmon process is not running - Starting nmon daemon ..."
+            sadm_write_log "We will start a fresh one that will terminate at 23:55"
+            sadm_write_log "We calculated that there will be ${TOT_SNAPSHOT} snapshots till 23:55"
+            sadm_write_log "$SADM_NMON -f -s120 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR "
             $SADM_NMON -f -s120 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR  >> $SADM_LOG 2>&1
             if [ $? -ne 0 ] 
-                then sadm_writelog "Error while starting - Not Started !" 
+                then sadm_write_log "Error while starting - Not Started !" 
                      SADM_EXIT_CODE=1 
             fi
-            sadm_writelog " "
+            sadm_write_log " "
             nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s120 |wc -l |tr -d ' '`
-            sadm_writelog "The number of nmon process running after restarting it is : $nmon_count"
+            sadm_write_log "The number of nmon process running after restarting it is : $nmon_count"
             ps -ef | grep -E "$WSEARCH" | grep -v grep | nl
             ;;
-        1)  sadm_writelog "Nmon already Running ... Nothing to Do."
+        1)  sadm_write_log "Nmon already Running ... Nothing to Do."
             SADM_EXIT_CODE=0
             ;;
-        *)  sadm_writelog "There seems to be more than one nmon process running ??"
+        *)  sadm_write_log "There seems to be more than one nmon process running ??"
             ps -ef | grep -E "$WSEARCH" | grep 's120' | grep -v grep | nl 
-            sadm_writelog "We will kill them both and start a fresh one that will terminate at 23:55"
+            sadm_write_log "We will kill them both and start a fresh one that will terminate at 23:55"
             ps -ef | grep -E "$WSEARCH" | grep -v grep |grep s120 |awk '{ print $2 }' |xargs kill -9 |tee -a $SADM_LOG 2>&1
-            sadm_writelog "We will start a fresh one that will terminate at 23:55"
-            sadm_writelog "We calculated that there will be ${TOT_SNAPSHOT} snapshots till 23:55"
-            sadm_writelog "$SADM_NMON -f -s120 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR "
+            sadm_write_log "We will start a fresh one that will terminate at 23:55"
+            sadm_write_log "We calculated that there will be ${TOT_SNAPSHOT} snapshots till 23:55"
+            sadm_write_log "$SADM_NMON -f -s120 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR "
             $SADM_NMON -f s120 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR >> $SADM_LOG 2>&1
             if [ $? -ne 0 ] 
-                then sadm_writelog "Error while starting - Not Started !" 
+                then sadm_write_log "Error while starting - Not Started !" 
                      SADM_EXIT_CODE=1 
                 else SADM_EXIT_CODE=0
             fi
             # Search Process Status (ps) and display number of nmon process running currently
-            sadm_writelog " "                                                   # Blank line in log
+            sadm_write_log " "                                                   # Blank line in log
             nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s120 |wc -l |tr -d ' '`
-            sadm_writelog "There is $nmon_count nmon process actually running"  # Show Nb. nmon Running
+            sadm_write_log "There is $nmon_count nmon process actually running"  # Show Nb. nmon Running
             ps -ef | grep -E "$WSEARCH" | grep 's120' | grep -v grep | nl | tee -a $SADM_LOG
             ;;
     esac
 
     # Display Last two nmon files created
-    sadm_writelog " "                                                   # Blank line in log
-    sadm_writelog "Last nmon files created"                             # SHow what were doing
-    ls -ltr $SADM_NMON_DIR | tail -2 |  while read wline ; do sadm_writelog "$wline"; done
-    sadm_writelog " "                                                   # Blank line in log
+    sadm_write_log " "                                                   # Blank line in log
+    sadm_write_log "Last nmon files created"                             # SHow what were doing
+    ls -ltr $SADM_NMON_DIR | tail -2 |  while read wline ; do sadm_write_log "$wline"; done
+    sadm_write_log " "                                                   # Blank line in log
 
     return $SADM_EXIT_CODE
 }
@@ -315,8 +314,8 @@ function cmd_options()
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
 
     if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # nmon not available on OSX
-        then sadm_writelog "The command nmon is not available on MacOS" # Advise user that won't run
-             sadm_writelog "Script can't continue"                      # Process can't continue
+        then sadm_write_log "Command 'nmon' isn't available on MacOS"   # Advise user that won't run
+             sadm_write_log "Script can't continue"                     # Process can't continue
              sadm_stop 0                                                # Close Everything Cleanly
              exit 0                                                     # Exit back to bash
     fi
@@ -331,7 +330,7 @@ function cmd_options()
     check_nmon                                                          # nmon not running start it
     SADM_EXIT_CODE=$?                                                   # Recuperate error code
     if [ $SADM_EXIT_CODE -ne 0 ]                                        # if error occurred
-        then sadm_writelog "Problem starting nmon ...."                 # Advise User
+        then sadm_write_log "Problem starting nmon ...."                # Advise User
     fi
     
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RC & Trim Log & Set RC
