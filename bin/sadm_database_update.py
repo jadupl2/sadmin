@@ -200,20 +200,20 @@ def update_row(wconn, wcur, wdict):
                 wdict['srv_vgs_info'],          wdict['srv_date_update'], \
                 wdict['srv_rear_ver'], \
                 wdict['srv_name'] )
-    except (TypeError, ValueError, IndexError) as error:                # Mismatch Between Num & Str
-        #enum, emsg = error.args                                         # Get Error No. & Message
+    except (KeyError, TypeError, ValueError, IndexError) as error:      # Mismatch Between Num & Str
+        #enum, emsg = error.args                                        # Get Error No. & Message
         enum=1
-        emsg=error                                                     # Get Error Message
-        sa.write_log(">>>>>>>>>>>>> (%s) %s " % (enum,error))            # Print Error No. & Message
+        emsg=error                                                      # Get Error Message
+        sa.write_log(">>>>>>>>>>>>> (%s) %s " % (enum,error))           # Print Error No. & Message
         sa.write_log("sql=%s" % (sql))
-        return(1)                                                      # return (1) to indicate Err
+        return(1)                                                       # return (1) to indicate Err
 
     # Execute the SQL Update Statement
     try:
         if pdebug > 4: sa.write_log("sql=%s" % (sql))
         wcur.execute(sql)                                               # Update Server Data
         wconn.commit()                                                  # Commit the transaction
-        sa.write_log("[OK] %s update Succeeded" % (wdict['srv_name']))   # Advise User Update is OK
+        sa.write_log("[OK] %s update Succeeded" % (wdict['srv_name']))  # Advise User Update is OK
         return (0)                                                      # return (0) Insert Worked
 
 
