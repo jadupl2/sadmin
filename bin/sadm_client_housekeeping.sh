@@ -315,95 +315,8 @@ dir_housekeeping()
     sadm_write "${BOLD}SADMIN Client Directories Housekeeping.${NORMAL}\n"
     ERROR_COUNT=0                                                       # Reset Error Count
 
-    # Path is needed to perform NFS Backup (It doesn't exist by default on Mac)
-    if [ "$SADM_OS_TYPE" = "DARWIN" ] && [ ! -d "/tmp/nfs2" ]           # NFS Mount Point not exist
-        then mkdir -p /tmp/nfs2 && chmod 775 /tmp/nfs2                  # Create NFS mount point
-    fi
-
-    set_dir "$SADM_BASE_DIR"      "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN Base Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_BIN_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN BIN Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_CFG_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN CFG Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_DAT_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN DAT Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_DOC_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN LIB Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_LIB_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN LIB Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_LOG_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN LOG Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_PKG_DIR"        "775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN PKG Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_SETUP_DIR"        "775" "$SADM_USER" "$SADM_GROUP"   # set Priv on setup Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_SYS_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN SYS Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_TMP_DIR"       "1777" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN TMP Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_USR_DIR"  "0775" "$SADM_USER" "$SADM_GROUP"          # set Priv User  Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_UBIN_DIR" "0775" "$SADM_USER" "$SADM_GROUP"          # set Priv User bin Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_ULIB_DIR" "0775" "$SADM_USER" "$SADM_GROUP"          # set Priv User lib Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_UDOC_DIR" "0775" "$SADM_USER" "$SADM_GROUP"          # set Priv User Doc Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_UMON_DIR" "0775" "$SADM_USER" "$SADM_GROUP"          # set SysMon Script User Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    # Subdirectories of $SADMIN/dat
-    set_dir "$SADM_NMON_DIR"      "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN NMON Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_DR_DIR"        "0775" "$SADM_USER" "$SADM_GROUP"     # set Disaster Recovery Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_RCH_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set SADMIN RCH Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_DBB_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # Database Backup Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
-
-    set_dir "$SADM_NET_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set SADMIN Network Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    if [ $ERROR_COUNT -ne 0 ] ; then sadm_write "Total Error Count at ${ERROR_COUNT}.\n" ;fi
+    # Setup basic SADMIN directories structure and permissions
+    sadm_freshen_directories_structure
 
     # Taking care of lost+found directory (If present) in AIX and Linux.
     if [ -d "$SADM_BASE_DIR/lost+found" ]
@@ -412,7 +325,6 @@ dir_housekeeping()
                 else set_dir "$SADM_BASE_DIR/lost+found" "4775" "root" "root"   
              fi
     fi
-
     return $ERROR_COUNT
 }
 
