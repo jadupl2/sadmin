@@ -190,7 +190,7 @@
 # 2022_09_20 lib v4.11 MacOS 'arch' is returning i386, change 'sadm_server_arch' to use 'uname -m'.
 # 2022_09_20 lib v4.12 MacOS change 'sadm_get_osmajorversion' so it return an integer after v10.
 # 2022_09_25 lib v4.13 MacOS architecture was wrong in script header ('arch' command return i386?).
-#@2022_11_16 lib v4.14 Remove initialization of $SADM_DEBUG (Set in SADMIN section of your script).
+#@2022_11_16 lib v4.14 Remove initialization of $SADM_DEBUG (Set in SADMIN section of script).
 #@2023_01_06 lib v4.15 Possibility to set description in RCH file (New Var. SADM_RCH_DESC).
 #@2023_01_27 lib v4.16 Optimize the start function.
 

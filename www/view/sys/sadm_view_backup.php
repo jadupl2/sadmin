@@ -29,10 +29,10 @@
 # 2022_09_11 web v1.6 Backup status page - Now show if schedule is activated or not.
 # 2022_09_12 web v1.7 Backup status page - Will show link to error log (if it exist).
 # 2022_09_12 web v1.8 Backup status page - Display the first 50 systems instead of 25.
-#@2022_11_12 web v1.9 Backup status page - Now shows backup size of last & proceeding backup size.
-#@2022_11_12 web v2.0 Backup status page - Show NFS server name & backup directory on backup page.
+#@2022_11_12 web v1.9 Backup status page - Now show current and previous backup size.
+#@2022_11_12 web v2.0 Backup status page - Show NFS server name & backup directory.
 #@2022_11_12 web v2.1 Backup status page - Added column to show if system is online sporadically.
-#@2022_11_20 web v2.2 Backup status page - Backup error log link wasn't appearing when it should.
+#@2022_11_20 web v2.2 Backup status page - Error log link now only appear when error occurred.
 #@2023_01_05 web v2.3 Backup status page - Yellow alert if backup size is contrasting with previous.
 # ==================================================================================================
 #

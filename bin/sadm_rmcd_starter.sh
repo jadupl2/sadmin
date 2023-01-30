@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_rmcmd_starter.sh
-#   Synopsis :  Used to start a script on a remote system.
+#   Synopsis :  Execute a defined script on a remote system.
 #   Version  :  1.0
 #   Date     :  8 Dec 2020  
 #   Requires :  sh
@@ -49,7 +49,7 @@
 # 2022_05_23 cmdline v1.5 Do not to run remote script on system that are locked.
 # 2022_08_17 cmdline v1.6 Include new SADMIN section 1.52
 # 2022_09_20 cmdline v1.7 SSH to client is now using the port defined in each system.
-#@2022_12_13 cmdline v1.8 Was crashing because of a typo error.
+#@2022_12_13 cmdline v1.8 Intermittent crash cause by a typo error.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -82,7 +82,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='1.8'                                      # Current Script Version
-export SADM_PDESC="Used to start a script on a remote system." 
+export SADM_PDESC="Execute a defined script on a remote system." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
