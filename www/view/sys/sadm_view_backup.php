@@ -21,19 +21,19 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 #
-# 2019_07_06 backup v1.0 Backup status page - Initial version of backup Status Page
-# 2019_08_14 backup v1.1 Backup status page - Allow to return to this page when backup sched is updated
-# 2019_09_20 backup v1.3 Backup status page - Show History (RCH) content using same uniform way.
-# 2019_12_01 backup v1.4 Backup status page - Change Layout to align with daily backup schedule.
-# 2020_12_13 backup v1.5 Backup status page - Added link in Heading to view the Daily Backup Report
-# 2022_09_11 backup v1.6 Backup status page - Now show if schedule is activated or not.
-# 2022_09_12 backup v1.7 Backup status page - Will show link to error log (if it exist).
-# 2022_09_12 backup v1.8 Backup status page - Display the first 50 systems instead of 25.
-#@2022_11_12 backup v1.9 Backup status page - Now shows backup size of last & proceeding backup size.
-#@2022_11_12 backup v2.0 Backup status page - Show NFS server name & backup directory on backup page.
-#@2022_11_12 backup v2.1 Backup status page - Added column to show if system is online sporadically.
-#@2022_11_20 backup v2.2 Backup status page - Backup error log link wasn't appearing when it should.
-#@2023_01_05 backup v2.3 Backup status page - Yellow alert if backup size is contrasting with previous.
+# 2019_07_06 web v1.0 Backup status page - Initial version of backup Status Page
+# 2019_08_14 web v1.1 Backup status page - Allow to return to this page when backup sched is updated
+# 2019_09_20 web v1.3 Backup status page - Show History (RCH) content using same uniform way.
+# 2019_12_01 web v1.4 Backup status page - Change Layout to align with daily backup schedule.
+# 2020_12_13 web v1.5 Backup status page - Added link in Heading to view the Daily Backup Report
+# 2022_09_11 web v1.6 Backup status page - Now show if schedule is activated or not.
+# 2022_09_12 web v1.7 Backup status page - Will show link to error log (if it exist).
+# 2022_09_12 web v1.8 Backup status page - Display the first 50 systems instead of 25.
+#@2022_11_12 web v1.9 Backup status page - Now shows backup size of last & proceeding backup size.
+#@2022_11_12 web v2.0 Backup status page - Show NFS server name & backup directory on backup page.
+#@2022_11_12 web v2.1 Backup status page - Added column to show if system is online sporadically.
+#@2022_11_20 web v2.2 Backup status page - Backup error log link wasn't appearing when it should.
+#@2023_01_05 web v2.3 Backup status page - Yellow alert if backup size is contrasting with previous.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
