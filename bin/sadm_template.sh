@@ -23,7 +23,7 @@
 # --------------------------------------------------------------------------------------------------
 #
 # ---CHANGE LOG---
-#@2023_01_09 lib 1.53 Add 'SADM_RCH_DESC', use by 'sadm_osupdate_starter.sh' to add hostname in Desc
+#@2023_01_09 lib 1.53 Add 'SADM_RCH_DESC', use by o/s update to add hostname in 'rch' description.
 #---------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
