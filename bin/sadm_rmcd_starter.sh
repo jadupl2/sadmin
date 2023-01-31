@@ -49,7 +49,7 @@
 # 2022_05_23 cmdline v1.5 Do not to run remote script on system that are locked.
 # 2022_08_17 cmdline v1.6 Include new SADMIN section 1.52
 # 2022_09_20 cmdline v1.7 SSH to client is now using the port defined in each system.
-#@2022_12_13 cmdline v1.8 Intermittent crash cause by a typo error.
+# 2022_12_13 cmdline v1.8 Intermittent crash cause by a typo error.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C

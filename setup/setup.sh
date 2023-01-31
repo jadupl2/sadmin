@@ -65,7 +65,7 @@
 # 2022_05_06 install v3.20 Fix some issue installing EPEL repositories on AlmaLinux & Rocky v9.
 # 2022_05_28 install v3.21 Make sure SELinux is set (temporarily) to Permissive during setup.
 # 2022_10_23 install v3.22 Install 'host' command if not present on system.
-#@2022_11_27 install v3.23 Correct problem when activating EPEL v9.
+# 2022_11_27 install v3.23 Correct problem when activating EPEL v9.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x

@@ -28,8 +28,8 @@
 # 2018_12_15 web v2.3 CRUD_client - Add 'Darwin' as a choice for Operating System Type.
 # 2018_08_18 web v2.4 CRUD_client - Reduce screen size to 40 for install directory field
 # 2022_09_24 web v2.5 CRUD_client - Add ssh port number to use to access the client.
-#@2022_11_25 web v2.6 CRUD client - New client, wasn't using default SSH port defined in sadmin.cfg.
-#@2022_12_29 web v2.7 CRUD client - Fix problem saving the SSH port number.
+# 2022_11_25 web v2.6 CRUD client - New client, wasn't using default SSH port defined in sadmin.cfg.
+# 2022_12_29 web v2.7 CRUD client - Fix problem saving the SSH port number.
 # ==================================================================================================
  
 

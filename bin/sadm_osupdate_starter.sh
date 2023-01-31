@@ -59,7 +59,7 @@
 # 2022_06_21 osupdate v4.8 Changes to use new functionalities of SADMIN code section v1.52
 # 2022_07_09 osupdate v4.9 Added more verbosity to screen and log
 # 2022_08_25 osupdate v5.0 Allow to run multiple instance of this script.
-#@2023_01_06 osupdate v5.1 Add remote host name being updated in RCH file.
+# 2023_01_06 osupdate v5.1 Add remote host name being updated in RCH file.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C

@@ -35,7 +35,7 @@
 # 2019_11_11 cmdline v2.8 Add RPM Tools option in menu.
 # 2019_11_21 cmdline v2.10 Minor correction to RPM Tools Menu
 # 2019_11_22 cmdline v2.11 Restrict RPM & DEV Menu when available only.
-#@2022_11_19 cmdline v2.12 Fix problem when dealing with terabyte filesystem increase.
+# 2022_11_19 cmdline v2.12 Fix problem when dealing with terabyte filesystem increase.
 #=================================================================================================== 
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x

@@ -80,10 +80,10 @@
 # 2022_09_04 backup v3.36 False error message was written to error log.
 # 2022_09_23 backup v3.37 Fix problem mounting NFS on newer version of MacOS.
 # 2022_10_30 backup v3.38 After each backup show, the backup size in the log.
-#@2022_11_11 backup v3.39 Add size of current & previous backup at end of log.
-#@2022_11_16 backup v3.40 Depreciate use of environment variable in backup or exclude list.
-#@2023_01_06 backup v3.41 Add cmdline '-w' to suppress warning (dir. not exist) on output.
-#@2023_01_06 backup v3.42 Fix problem with format of 'stat' command on MacOS.
+# 2022_11_11 backup v3.39 Add size of current & previous backup at end of log.
+# 2022_11_16 backup v3.40 Depreciate use of environment variable in backup or exclude list.
+# 2023_01_06 backup v3.41 Add cmdline '-w' to suppress warning (dir. not exist) on output.
+# 2023_01_06 backup v3.42 Fix problem with format of 'stat' command on MacOS.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
