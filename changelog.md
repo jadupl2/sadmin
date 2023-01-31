@@ -1,5 +1,53 @@
 # SADMIN Full Changelog
  
+## Release [1.4.4](https://github.com/jadupl2/sadmin/releases) (2023-01-31)
+
+### Backup related
+  - [sadm_backup.sh](https://sadmin.ca/sadm-backupdb) (v3.39 2022/11/11) - Add size of current & previous backup at end of log.
+  - [sadm_backup.sh](https://sadmin.ca/sadm-backupdb) (v3.40 2022/11/16) - Depreciate use of environment variable in backup or exclude list.
+  - [sadm_backup.sh](https://sadmin.ca/sadm-backupdb) (v3.41 2023/01/06) - Add cmdline '-w' to suppress warning (dir. not exist) on output.
+  - [sadm_backup.sh](https://sadmin.ca/sadm-backupdb) (v3.42 2023/01/06) - Fix problem with format of 'stat' command on MacOS.
+
+### SADMIN Client related
+  - [sadm_create_sysinfo.sh](https://sadmin.ca/sadm-create-sysinfo) (v3.36 2023/01/12) - Update gathering network information.
+
+### Command line tools
+  - sadmlib_fs.sh (v2.6 2022/11/19) - sadm_menu filesystem_module fix problem when dealing with terabyte.
+  - [sadm_rmcd_starter.sh](https://sadmin.ca/sadm_rmcd_starter) (v1.8 2022/12/13) - Intermittent crash cause by a typo error.
+  - sadm_ui_fsmenu.sh (v2.06 2022/11/19) - sadm_menu filesystem_module fix problem when dealing with terabyte.
+  - sadm_ui.sh (v2.12 2022/11/19) - Fix problem when dealing with terabyte filesystem increase.
+
+### Configuration files
+  - [.sadmin.cfg](https://sadmin.ca/sadmin-cfg) (v2.8 2023/01/05) - Add 'SADM_BACKUP_DIF' % to alert when size of backup is +/- % with previous.
+
+### SADMIN Install, Uninstall & Update
+  - [setup.sh](https://sadmin.ca/_pages/install/#the-setup-script) (v3.23 2022/11/27) - Correct problem when activating EPEL v9.
+
+### Libraries, Scripts Templates, Demo
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.14 2022/11/16) - Remove initialization of $SADM_DEBUG (Set in SADMIN section of script).
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.15 2023/01/06) - Can now add a suffix to script name in RCH file (Use var. SADM_RCH_DESC).
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.16 2023/01/27) - Optimize the start function.
+  - [sadm_template.sh](https://sadmin.ca/sadm-template-sh) (1.53 2023/01/09) - Add 'SADM_RCH_DESC', use by o/s update to add hostname in 'rch' description.
+
+### System Monitoring
+  - [sadm_view_sysmon.php](https://sadmin.ca/sadm-system-monitor) (v2.35 2023/01/06) - System monitor page - O/S update starter now show hostname being updated.
+
+### Operating System Update
+  - [sadm_osupdate_starter.sh](https://sadmin.ca/sadm-osupdate-starter) (v5.1 2023/01/06) - Add remote host name being updated in RCH file.
+
+### SADMIN Server related
+  - [sadm_daily_report.sh](https://sadmin.ca/sadm-daily-report) (v1.33 2022/11/15) - Remove 'DailyBackupReport' since all info are now on backup status page.
+
+### Web interface
+  - sadm_server_common.php (v2.6 2022/11/25) - CRUD client - New client, wasn't using default SSH port defined in sadmin.cfg.
+  - sadm_server_common.php (v2.7 2022/12/29) - CRUD client - Fix problem saving the SSH port number.
+  - sadm_view_backup.php (v1.9 2022/11/12) - Backup status page - Now show current and previous backup size.
+  - sadm_view_backup.php (v2.0 2022/11/12) - Backup status page - Show NFS server name & backup directory.
+  - sadm_view_backup.php (v2.1 2022/11/12) - Backup status page - Added column to identify system sporadically offline.
+  - sadm_view_backup.php (v2.2 2022/11/20) - Backup status page - Error log link now only appear when error occurred.
+  - sadm_view_backup.php (v2.3 2023/01/05) - Backup status page - Yellow alert if backup size is contrasting with previous.
+   
+ 
 ## Release [1.4.2](https://github.com/jadupl2/sadmin/releases) (2022-11-04)
 
 ### Backup related
