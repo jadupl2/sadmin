@@ -326,14 +326,13 @@ add_epel_9_repo()
 
     if [ "$SADM_OSNAME" = "REDHAT" ] 
         then printf "Enable 'codeready-builder' EPEL repository ..." |tee -a $SLOG
-             subscription-manager repos --enable codeready-builder-beta-for-rhel-9-$(arch)-rpms >>$SLOG 2>&1 
+             subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms >>$SLOG 2>&1 
              if [ $? -ne 0 ]
                 then echo "[ ERROR ] Couldn't enable 'codeready-builder' EPEL repository." |tee -a $SLOG
                      return 1 
              fi 
              printf "Installing epel-release CentOS/Redhat V9 ..." |tee -a $SLOG
-             epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"
-             dnf -y install $epel >>$SLOG 2>&1
+             dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm >>$SLOG 2>&1
              if [ $? -ne 0 ]
                 then echo "[ ERROR ] Adding epel-release V9 repository." |tee -a $SLOG
                      return 1 
