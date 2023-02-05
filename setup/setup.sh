@@ -66,6 +66,7 @@
 # 2022_05_28 install v3.21 Make sure SELinux is set (temporarily) to Permissive during setup.
 # 2022_10_23 install v3.22 Install 'host' command if not present on system.
 # 2022_11_27 install v3.23 Correct problem when activating EPEL v9.
+#@2023_02_04 install v3.24 Bug fix when installing on Red Hat v9.1
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -75,7 +76,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.23'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.24'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -139,21 +140,44 @@ sadm_ask() {
 #===================================================================================================
 add_epel_7_repo()
 {
+
+    if [ "$SADM_OSNAME" = "REDHAT" ] 
+        then rep1=' --enable rhel-*-optional-rpms'
+             rep2=' --enable rhel-*-extras-rpms'
+             rep3=' --enable rhel-ha-for-rhel-*-server-rpms'
+             printf "subscription-manager repos $rep1 $rep2 $rep3"
+             subscription-manager repos $rep1 $rep2 $rep3 >>$SLOG 2>&1
+             if [ $? -ne 0 ]
+                then echo "[ ERROR ] Couldn't enable EPEL repositories." |tee -a $SLOG
+                     return 1 
+                else echo "[ OK ]" |tee -a $SLOG
+             fi 
+        else printf "Enable 'yum install epel-release' repository ...\n" |tee -a $SLOG
+             printf "    - yum install epel-release " | tee -a $SLOG 
+             yum install epel-release   >>$SLOG 2>&1 
+             if [ $? -ne 0 ]
+                then echo "[ ERROR ] Couldn't enable 'epel-release' repository." | tee -a $SLOG
+                     return 1 
+                else echo "[ OK ]" |tee -a $SLOG
+                     return 0                                           # CentOS nothing more to do
+             fi 
+    fi 
+
     if [ ! -r /etc/yum.repos.d/epel.repo ]  
        then printf "Adding CentOS/Redhat V7 EPEL repository ..." |tee -a $SLOG
-            EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
-            yum install -y $EPEL >>$SLOG 2>&1
+            printf "yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm\n" >>$SLOG 2>&1
+            yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm >>$SLOG 2>&1
             if [ $? -ne 0 ]
-                then echo "[Error] Adding EPEL 7 repository." |tee -a $SLOG
+                then echo "[ ERROR ] Adding EPEL 7 repository." |tee -a $SLOG
                      return 1
             fi
-            printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
-            yum-config-manager --disable epel >/dev/null 2>&1
-            if [ $? -ne 0 ]
-               then echo "Couldn't disable EPEL 7 for version $SADM_OSVERSION" | tee -a $SLOG
-                    return 1
-               else echo "[ OK ]"
-            fi 
+            #printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
+            #yum-config-manager --disable epel >/dev/null 2>&1
+            #if [ $? -ne 0 ]
+            #   then echo "Couldn't disable EPEL 7 for version $SADM_OSVERSION" | tee -a $SLOG
+            #        return 1
+            #   else echo "[ OK ]"
+            #fi 
             return 0
     fi
 }
@@ -165,74 +189,47 @@ add_epel_7_repo()
 add_epel_8_repo()
 {
 
-    #printf "Checking if 'yum-utils' is installed ... "
-    #rpm -qi yum-utils >/dev/null 2>&1                          # Check dns-utils is install
-    #if [ $? -ne 0 ] 
-    #   then printf "Installing " | tee -a $LOG
-    #        dnf install -y yum-utils >/dev/null 2>&1
-    #        rpm -qi yum-utils >/dev/null 2>&1                  # dns-utils now installed ?
-    #        if [ $? -ne 0 ] 
-    #           then echo "[ WARNING ] Problem installing 'yum-utils'." | tee -a $LOG
-    #           else echo " [ OK ] "
-    #        fi
-    #    else echo " [ OK ] "
-    #fi
-
-    # On RHEL 8 it is required to also enable the codeready-builder-for-rhel-8-*-rpms 
-    # repository since EPEL packages may depend on packages from it:
     if [ "$SADM_OSNAME" = "REDHAT" ] 
-       then echo "On RHEL 8, it's required to also enable codeready-builder ..." |tee -a $SLOG
-            echo "Since EPEL packages may depend on packages from it." |tee -a $SLOG
-            ARCH=$( /bin/arch )
-            subscription-manager repos --enable "codeready-builder-for-rhel-8-${ARCH}-rpms"
-            if [ $? -ne 0 ]
-               then echo "[ WARNING ] Couldn't enable EPEL codeready-builder repository" |tee -a $SLOG
-               else echo " [ OK ]" |tee -a $SLOG
-            fi 
-            epel="subscription-manager repos --enable codeready-builder-for-rhel-8-$(arch)-rpms"
-            dnf -y install $epel 
+        then printf "Enable 'codeready-builder' EPEL repository ...\n" |tee -a $SLOG
+             printf "subscription-manager repos --enable codeready-builder-for-rhel-8-$(arch)-rpms " |tee -a $SLOG 
+             subscription-manager repos --enable codeready-builder-for-rhel-8-$(arch)-rpms >>$SLOG 2>&1 
+             if [ $? -ne 0 ]
+                then echo "[ ERROR ] Couldn't enable 'codeready-builder' EPEL repository." |tee -a $SLOG
+                     return 1 
+                else echo " [ OK ]" |tee -a $SLOG
+             fi 
+        else printf "Enable 'powertools' repository ...\n" |tee -a $SLOG
+             printf "    - dnf config-manager --set-enabled powertools " | tee -a $SLOG 
+             dnf config-manager --set-enabled powertools   >>$SLOG 2>&1 
+             if [ $? -ne 0 ]
+                then echo "[ ERROR ] Couldn't enable 'powertools' repository." | tee -a $SLOG
+                     return 1 
+                else echo " [ OK ]" |tee -a $SLOG
+             fi 
+    fi 
+
+    if [ "$SADM_OSNAME" = "REDHAT" ] 
+       then printf "dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm\n" >>$SLOG 2>&1
+            dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm >>$SLOG 2>&1
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
                     return 1
-               else echo " [ OK ]" |tee -a $SLOG
+               else echo "[ OK ]" |tee -a $SLOG
             fi 
     fi
 
-    # On CentOS 8 it is recommended to also enable the PowerTools repository since EPEL 
-    # packages may depend on packages from it:
     if [ "$SADM_OSNAME" = "CENTOS" ] 
-       then printf "On CentOS 8, it's recommended to also enable the EPEL PowerTools Repository.\n"  |tee -a $SLOG
-            printf "dnf config-manager --set-enabled PowerTools" |tee -a $SLOG
-            dnf config-manager --set-enabled PowerTools
+       then printf "dnf -y install dnf install epel-release epel-next-release\n"  >>$SLOG 2>&1
+            dnf -y install dnf install epel-release epel-next-release >>$SLOG 2>&1 
             if [ $? -ne 0 ]
-               then echo "[ WARNING ] Couldn't enable EPEL PowerTools repository." | tee -a $SLOG
-               else echo " [ OK ]" |tee -a $SLOG
-            fi 
-            epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"  
-            dnf -y install $epel >>$SLOG 2>&1 
-            if [ $? -ne 0 ]
-               then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
+               then echo "[ WARNING ] Couldn't enable EPEL 8 repositories" |tee -a $SLOG
                     return 1
-               else echo "Enable EPEL 8 repository [ OK ]" |tee -a $SLOG
-            fi 
-            epelnext="https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-8.noarch.rpm"
-            dnf -y install $epelnext >>$SLOG 2>&1
-            if [ $? -ne 0 ]
-               then echo "[ WARNING ] Couldn't enable EPEL 8 Next repository" |tee -a $SLOG
-                    return 1
-               else echo "Enable EPEL 8 Next repository [ OK ]" |tee -a $SLOG
+               else echo "[ OK ] Enable EPEL 8 repositories" |tee -a $SLOG
             fi 
     fi
 
-    # On Alma Linux and Rocky Linux 8 it is recommended to also enable the PowerTools repository 
-    # since EPEL packages may depend on packages from it:
     if [ "$SADM_OSNAME" = "ALMALINUX" ] || [ "$SADM_OSNAME" = "ROCKY" ]
-       then printf "dnf config-manager --set-enabled PowerTools" 
-            dnf config-manager --set-enabled PowerTools
-            if [ $? -ne 0 ]
-               then echo "[ WARNING ] Couldn't enable EPEL PowerTools repository." | tee -a $SLOG
-               else echo " [ OK ]" |tee -a $SLOG
-            fi 
+       then printf "dnf -y install epel-release"
             dnf -y install epel-release >>$SLOG 2>&1 
             if [ $? -ne 0 ]
                then echo "[ WARNING ] Couldn't enable EPEL 8 repository" |tee -a $SLOG
@@ -241,52 +238,46 @@ add_epel_8_repo()
             fi 
     fi
 
-    printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
-    dnf config-manager --disable epel >/dev/null 2>&1
-    if [ $? -ne 0 ]
-       then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
-            return 1
-       else echo "[ OK ]" |tee -a $SLOG
-    fi 
+    #printf "Disabling EPEL Repository (yum-config-manager --disable epel) " |tee -a $SLOG
+    #dnf config-manager --disable epel >/dev/null 2>&1
+    #if [ $? -ne 0 ]
+    #   then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
+    #        return 1
+    #   else echo "[ OK ]" |tee -a $SLOG
+    #fi 
 }
 
 
 
 #===================================================================================================
 # Add EPEL Repository on Redhat / CentOS 9 (but do not enable it)
+# Run this function only when on RedHat, Alma, Rocky, CentOS
 #===================================================================================================
 add_epel_9_repo()
 {
 
-    if [ "$SADM_OSNAME" = "ROCKY" ]
-        then printf "Enable 'crb' repository ...\n" |tee -a $SLOG
+    if [ "$SADM_OSNAME" = "REDHAT" ] 
+        then printf "Enable 'codeready-builder' EPEL repository ...\n" |tee -a $SLOG
+             printf "subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms " |tee -a $SLOG 
+             subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms >>$SLOG 2>&1 
+             if [ $? -ne 0 ]
+                then echo "[ ERROR ] Couldn't enable 'codeready-builder' EPEL repository." |tee -a $SLOG
+                     return 1 
+                else echo " [ OK ]" |tee -a $SLOG
+             fi 
+        else printf "Enable 'crb' repository ...\n" |tee -a $SLOG
+             printf "    - dnf config-manager --set-enabled crb " | tee -a $SLOG 
              dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
              if [ $? -ne 0 ]
                 then echo "[ ERROR ] Couldn't enable 'crb' repository." | tee -a $SLOG
                      return 1 
                 else echo " [ OK ]" |tee -a $SLOG
              fi 
-             printf "Installing epel-release on Rocky Linux V9 ..." |tee -a $SLOG
-             dnf -y install epel-release >>$SLOG 2>&1
-             if [ $? -ne 0 ]
-                then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
-                     return 1 
-                else echo " [ OK ]" |tee -a $SLOG
-             fi
-             return 0 
     fi 
 
-
-    if [ "$SADM_OSNAME" = "ALMALINUX" ] 
-        then printf "Enable 'crb' repository ..." |tee -a $SLOG
-             dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
-             if [ $? -ne 0 ]
-                then echo "[ ERROR ] Couldn't enable 'crb' repository." | tee -a $SLOG
-                     return 1 
-                else echo " [ OK ]" |tee -a $SLOG
-             fi 
-
-             printf "Installing epel-release on AlmaLinux V9 ..." |tee -a $SLOG
+    if [ "$SADM_OSNAME" = "ROCKY" ] || [ "$SADM_OSNAME" = "ALMALINUX" ] 
+        then printf "Installing epel-release on Rocky Linux V9 ..." | tee -a $SLOG
+             printf "    - dnf -y install epel-release " | tee -a $SLOG
              dnf -y install epel-release >>$SLOG 2>&1
              if [ $? -ne 0 ]
                 then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
@@ -297,46 +288,24 @@ add_epel_9_repo()
     fi 
 
     if [ "$SADM_OSNAME" = "CENTOS" ] 
-        then printf "Enable 'crb' repository ..." |tee -a $SLOG
-             dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
+        then printf "Installing epel-release & epel-next-release on CentOS V9 ... " |tee -a $SLOG
+             printf "    - dnf -y install dnf install epel-release epel-next-release" |tee -a $SLOG
+             dnf -y install dnf install epel-release epel-next-release  >>$SLOG 2>&1
              if [ $? -ne 0 ]
-                then echo "[ ERROR ] Couldn't enable 'crb' repository." | tee -a $SLOG
+                then printf "[ ERROR ] Adding epel-release V9 repository.\n" |tee -a $SLOG
                      return 1 
-                else echo " [ OK ]" |tee -a $SLOG
-             fi 
-
-             printf "Installing epel-release CentOS V9 ..." |tee -a $SLOG
-             epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"
-             dnf -y install $epel >>$SLOG 2>&1
-             if [ $? -ne 0 ]
-                then echo "[ ERROR ] Adding epel-release V9 repository." |tee -a $SLOG
-                     return 1 
-                else echo " [ OK ]" |tee -a $SLOG
-             fi
-             printf "Installing epel-next-release CentOS/Redhat V9 ..." |tee -a $SLOG
-             epelnxt="https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-9.noarch.rpm"
-             dnf -y install epel-next-release  >>$SLOG 2>&1
-             if [ $? -ne 0 ]
-                then echo "[ ERROR ] Adding epel-next-release V9 repository." |tee -a $SLOG
-                     return 1 
-                else echo " [ OK ]" |tee -a $SLOG
+                else printf " [ OK ]\n" |tee -a $SLOG
              fi
     fi 
 
-
     if [ "$SADM_OSNAME" = "REDHAT" ] 
-        then printf "Enable 'codeready-builder' EPEL repository ..." |tee -a $SLOG
-             subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms >>$SLOG 2>&1 
-             if [ $? -ne 0 ]
-                then echo "[ ERROR ] Couldn't enable 'codeready-builder' EPEL repository." |tee -a $SLOG
-                     return 1 
-             fi 
-             printf "Installing epel-release CentOS/Redhat V9 ..." |tee -a $SLOG
+        then printf "Installing epel-release CentOS/Redhat V9 ..." |tee -a $SLOG
+             printf "    - dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm " |tee -a $SLOG
              dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm >>$SLOG 2>&1
              if [ $? -ne 0 ]
-                then echo "[ ERROR ] Adding epel-release V9 repository." |tee -a $SLOG
+                then printf "[ ERROR ] Adding epel-release V9 repository.\n" |tee -a $SLOG
                      return 1 
-                else echo " [ OK ]" |tee -a $SLOG
+                else printf "[ OK ]\n" |tee -a $SLOG
              fi
     fi 
 }
@@ -444,7 +413,7 @@ check_python3()
     #fi
 
     # Check if python3 'pymsql' module is installed 
-    printf "Check if python3 'pymsql' module is installed ..." | tee -a $SLOG
+    printf "Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
@@ -541,7 +510,7 @@ check_bind-utils()
 check_selinux()
 {
 
-    printf "Checking SELinux Status ...\n" | tee -a $SLOG
+    printf "Checking SELinux status ...\n" | tee -a $SLOG
 
     selinuxenabled
     if [ $? -eq 0 ] 
@@ -554,7 +523,7 @@ check_selinux()
     printf "   - Current SELinux status is ${sestat}.\n"
     
     if [ "$sestat" == "Enforcing" ]
-       then printf "   - Temporarely (until reboot) setting it to 'Permissive'.\n"
+       then printf "   - Temporarily (until reboot) setting it to 'Permissive'.\n"
             setenforce 0
        else printf "   - Leave SELinux to ${sestat}.\n"
     fi 
@@ -682,7 +651,8 @@ EOF
     echo "SADMIN Pre-installation verification v${SADM_VER}" | tee -a $SLOG
     echo "$SADM_OSTYPE $SADM_OSNAME v$SADM_OSVERSION with $SADM_PACKTYPE ($(arch)) as package format." | tee -a $SLOG
     echo "Log file is $SLOG" | tee -a $SLOG 
-    echo "---------------------------------------------------------------------------"
+    echo "---------------------------------------------------------------------------"| tee -a $SLOG
+
 
     # Add EPEL for these dictribution
     if [ "$SADM_OSNAME" = "REDHAT" ] || [ "$SADM_OSNAME" = "CENTOS" ] ||  
@@ -704,7 +674,7 @@ EOF
 
     # Ok Python3 is installed - Proceed with Main Setup Script
     echo "We will now proceed with main setup program ($SCRIPT)" >> $SLOG 
-    echo "All basic verifications done with success ..." >> $SLOG
+    echo "All basic requirements was met with success ..." >> $SLOG
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
     echo -e "\n" | tee -a $SLOG                                         # Blank Lines
     $SCRIPT 
