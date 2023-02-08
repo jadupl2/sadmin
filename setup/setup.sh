@@ -299,15 +299,15 @@ add_epel_9_repo()
     fi 
 
     if [ "$SADM_OSNAME" = "REDHAT" ] 
-        then printf "Import EPEL 9 GPG Key ...\n" 
-             printf "rpm --import http://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9"
+        then printf "\nImport EPEL 9 GPG Key ...\n" |tee -a $SLOG
+             printf "rpm --import http://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9" |tee -a $SLOG 
              rpm --import http://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9
              if [ $? -ne 0 ]
                 then printf "[ ERROR ] Importing epel-release V9 GPG Key.\n" |tee -a $SLOG
                      return 1 
                 else printf "[ OK ]\n" |tee -a $SLOG
              fi
-             printf "Installing epel-release CentOS/Redhat V9 ...\n" |tee -a $SLOG
+             printf "\nInstalling epel-release CentOS/Redhat V9 ...\n" |tee -a $SLOG
              printf "    - dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm " |tee -a $SLOG
              dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm >>$SLOG 2>&1
              if [ $? -ne 0 ]
@@ -361,19 +361,19 @@ install_python3()
     #   then echo "SADMIN requirement will not be met, then installation aborted." | tee -a $SLOG
     #        exit 0  
     #fi 
-    echo "Verifying 'python3' requirements." | tee -a $SLOG
+    printf "\nVerifying 'python3' requirements." | tee -a $SLOG
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
-                 then echo "Running 'yum -y install python3 python3-setuptools python3-pip'" |tee -a $SLOG
+                 then echo "    - Running 'yum -y install python3 python3-setuptools python3-pip'" |tee -a $SLOG
                       yum -y install python3 python3-setuptools python3-pip  >> $SLOG 2>&1
-                 else echo "Running 'dnf -y install python3 python3-setuptools python3-pip'" |tee -a $SLOG
+                 else echo "    - Running 'dnf -y install python3 python3-setuptools python3-pip'" |tee -a $SLOG
                       dnf -y install python3 python3-setuptools python3-pip >>$SLOG 2>&1
               fi 
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
         then apt-get update >> $SLOG 2>&1
-             echo "Running 'apt-get -y install python3 python3-venv python3-pip'"| tee -a $SLOG
+             echo "    - Running 'apt-get -y install python3 python3-venv python3-pip'"| tee -a $SLOG
              apt-get -y install python3 python3-venv python3-pip >>$SLOG 2>&1
     fi 
     
@@ -468,7 +468,7 @@ check_python3()
 check_bind-utils()
 {
     # Check if python3 is installed 
-    printf "Check if the 'host' command is present on this system ..." | tee -a $SLOG
+    printf "\nCheck if the 'host' command is present on this system ..." | tee -a $SLOG
 
     # python3 should now be installed, if not then install it or abort installation
     which host > /dev/null 2>&1
