@@ -66,7 +66,7 @@
 # 2022_05_28 install v3.21 Make sure SELinux is set (temporarily) to Permissive during setup.
 # 2022_10_23 install v3.22 Install 'host' command if not present on system.
 # 2022_11_27 install v3.23 Correct problem when activating EPEL v9.
-#@2023_02_04 install v3.24 Bug fix when installing on Red Hat v9.1
+#@2023_02_08 install v3.24 Fix problem with GPG Key for EPEL v9.1
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -299,7 +299,15 @@ add_epel_9_repo()
     fi 
 
     if [ "$SADM_OSNAME" = "REDHAT" ] 
-        then printf "Installing epel-release CentOS/Redhat V9 ..." |tee -a $SLOG
+        then printf "Import EPEL 9 GPG Key ...\n" 
+             printf "rpm --import http://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9"
+             rpm --import http://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9
+             if [ $? -ne 0 ]
+                then printf "[ ERROR ] Importing epel-release V9 GPG Key.\n" |tee -a $SLOG
+                     return 1 
+                else printf "[ OK ]\n" |tee -a $SLOG
+             fi
+             printf "Installing epel-release CentOS/Redhat V9 ...\n" |tee -a $SLOG
              printf "    - dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm " |tee -a $SLOG
              dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm >>$SLOG 2>&1
              if [ $? -ne 0 ]
