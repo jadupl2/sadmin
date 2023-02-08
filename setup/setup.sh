@@ -365,9 +365,9 @@ install_python3()
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
-                 then printf "\n    - Running 'yum -y install python3 python3-setuptools python3-pip'" |tee -a $SLOG
+                 then printf "\n    - Running 'yum -y install python3 python3-setuptools python3-pip'\n" |tee -a $SLOG
                       yum -y install python3 python3-setuptools python3-pip  >> $SLOG 2>&1
-                 else printf "\n    - Running 'dnf -y install python3 python3-setuptools python3-pip'" |tee -a $SLOG
+                 else printf "\n    - Running 'dnf -y install python3 python3-setuptools python3-pip'\n" |tee -a $SLOG
                       dnf -y install python3 python3-setuptools python3-pip >>$SLOG 2>&1
               fi 
     fi 
@@ -425,7 +425,7 @@ check_python3()
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
-        else printf "\n   - Installing module 'pymysql' - pip3 install pymysql" 
+        else printf "\n    - Installing module 'pymysql' - pip3 install pymysql" 
              pip3 install pymysql  > /dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo " " | tee -a $SLOG
@@ -444,7 +444,7 @@ check_python3()
     python3 -c "import getmac" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
-        else printf "\n   - Installing module - pip3 install getmac" 
+        else printf "\n    - Installing module - pip3 install getmac" 
              pip3 install getmac  > /dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo " " | tee -a $SLOG
@@ -522,8 +522,8 @@ check_selinux()
 
     selinuxenabled
     if [ $? -eq 0 ] 
-        then printf "   - SELinux is currently enabled.\n"
-        else printf "   - SELinux is currently disabled.\n"
+        then printf "    - SELinux is currently enabled.\n"
+        else printf "    - SELinux is currently disabled.\n"
              return 0 
     fi 
 
@@ -656,9 +656,8 @@ EOF
     get_sysinfo                                                         # Get OS Name,Version,...
     
     echo " " > $SLOG                                                    # Init the Log File
-    echo "SADMIN Pre-installation verification v${SADM_VER}" | tee -a $SLOG
-    echo "$SADM_OSTYPE $SADM_OSNAME v$SADM_OSVERSION with $SADM_PACKTYPE ($(arch)) as package format." | tee -a $SLOG
-    echo "Log file is $SLOG" | tee -a $SLOG 
+    echo "SADMIN Pre-installation verification v${SADM_VER} - $SADM_OSTYPE $SADM_OSNAME v$SADM_OSVERSION" | tee -a $SLOG
+    echo "Log file is in ${SLOGDIR}." | tee -a $SLOG 
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
 
 
