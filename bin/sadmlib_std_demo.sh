@@ -1239,7 +1239,7 @@ print_start_stop()
     printf " # exit \$SADM_EXIT_CODE                               # Exit With Global Err (0/1)\n"
     printf "\n"
     printf "Function 'sadm_start()':\n"
-    printf "    Start and initialize SADMINenvironment - accept no parameter\n"
+    printf "    Start and initialize SADMIN environment - accept no parameter\n"
     printf "    If SADMIN env. variable is not set /opt/sadmin, make sure it's set to proper dir.\n"
     printf "    Call this function when your script is starting.\n"
     printf "    What this function will do for us :\n" 

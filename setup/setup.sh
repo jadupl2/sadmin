@@ -300,7 +300,7 @@ add_epel_9_repo()
 
     if [ "$SADM_OSNAME" = "REDHAT" ] 
         then printf "\nImport EPEL 9 GPG Key ...\n" |tee -a $SLOG
-             printf "rpm --import http://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9" |tee -a $SLOG 
+             printf "    - rpm --import http://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9 " |tee -a $SLOG 
              rpm --import http://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9
              if [ $? -ne 0 ]
                 then printf "[ ERROR ] Importing epel-release V9 GPG Key.\n" |tee -a $SLOG
@@ -365,9 +365,9 @@ install_python3()
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
-                 then echo "    - Running 'yum -y install python3 python3-setuptools python3-pip'" |tee -a $SLOG
+                 then printf "\n    - Running 'yum -y install python3 python3-setuptools python3-pip'" |tee -a $SLOG
                       yum -y install python3 python3-setuptools python3-pip  >> $SLOG 2>&1
-                 else echo "    - Running 'dnf -y install python3 python3-setuptools python3-pip'" |tee -a $SLOG
+                 else printf "\n    - Running 'dnf -y install python3 python3-setuptools python3-pip'" |tee -a $SLOG
                       dnf -y install python3 python3-setuptools python3-pip >>$SLOG 2>&1
               fi 
     fi 
@@ -421,7 +421,7 @@ check_python3()
     #fi
 
     # Check if python3 'pymsql' module is installed 
-    printf "Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
+    printf "\nCheck if python3 'pymsql' module is installed ... " | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
@@ -440,7 +440,7 @@ check_python3()
     fi
 
     # Check if python3 'getmac' module is installed 
-    printf "Making sure that python3 'getmac' module is installed ... " | tee -a $SLOG
+    printf "\nMaking sure that python3 'getmac' module is installed ... " | tee -a $SLOG
     python3 -c "import getmac" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
@@ -518,7 +518,7 @@ check_bind-utils()
 check_selinux()
 {
 
-    printf "Checking SELinux status ...\n" | tee -a $SLOG
+    printf "\nChecking SELinux status ...\n" | tee -a $SLOG
 
     selinuxenabled
     if [ $? -eq 0 ] 
@@ -566,7 +566,7 @@ check_hostname()
     # Get Domain Name f IP Address
     S_DOMAIN=`host $S_IPADDR |head -1 |awk '{ print $NF }' |awk -F\. '{printf "%s.%s\n", $2, $3}'` 
 
-    printf "Making sure '$SADM_HOSTNAME' is defined in /etc/hosts ... " | tee -a $SLOG
+    printf "\nMaking sure '$SADM_HOSTNAME' is defined in /etc/hosts ... " | tee -a $SLOG
 
     # Insert Server into /etc/hosts (If not already there)
     grep -Eiv "^${S_IPADDR}|${S_HOSTNAME}" /etc/hosts > /tmp/hosts.$$
