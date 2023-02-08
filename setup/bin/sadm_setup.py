@@ -52,10 +52,7 @@
 # 2019_03_08 Change: v3.15 Change related to RHEL/CentOS 8 and change some text messages.
 # 2019_03_17 Change: v3.16 Perl DateTime module no longer a requirement.
 # 2019_03_17 Change: v3.17 Default installation server group is 'Regular' instead of 'Service'.
-# 2019_03_17 Change: v3.18 If not already install 'curl' package will be intall by setup.
-# 2019_04_04 Fix: v3.19 Fix 'sadmin' user home directory and default password creation on Debian.
-# 2019_04_12 Update: v3.20 Check DD connection for user 'sadmin' & 'squery' & ask pwd if failed
-# 2019_04_14 Update: v3.21 Password for User sadmin and squery wasn't updating properly .dbpass file.
+# 2019_03_17 smtp.gmail.comUpdate: v3.21 Password for User sadmin and squery wasn't updating properly .dbpass file.
 # 2019_04_15 Fix: v3.22 File /etc/environment was not properly updated under certain condition.
 # 2019_04_15 Fix: v3.23 Fix 'squery' database user password typo error.
 # 2019_04_18 Update: v3.24 Release 0.97 Re-tested with Ubuntu version.
@@ -73,10 +70,7 @@
 # 2020_04_19 Update: v3.36 Minor adjustments.
 # 2020_04_21 Update: v3.37 Add syslinux,genisomage,rear packages req. & hwinfo to EPEL(RHEL/CentOS8)
 # 2020_04_23 Update: v3.38 Fix Renaming Apache config error.
-# 2020_04_27 Update: v3.39 Remove 'arp-scan' installation on server (no longer needed).
-# 2020_04_27 Fix: v3.40 Fix problem with typo error.
-# 2020_07_10 Update: v3.41 Assign temporary passwd to sadmin user.
-# 2020_07_11 Update: v3.42 Minor script changes.
+# 2020_04_27 Usmtp.gmail.compdate: v3.42 Minor script changes.
 # 2020_07_11 Update: v3.43 Added rsync package to client installation. 
 # 2020_09_05 Update: v3.44 Minor change to sadm_client crontab file.
 # 2020_11_09 New: v3.45 Add Daily Email Report to crontab of sadm_server.
@@ -114,6 +108,7 @@
 # 2022_06_18 install v3.77 Fix SSH port setting problem during installation on AlmaLinux v9.
 # 2022_07_02 install v3.78 Fix input problem related to smtp server data.
 # 2022_07_19 install v3.79 Update of the commands requirements.
+#@2023_02_08 install v3.80 Default smtp mail server is now 'smtp.gmail.com' and hide smtp password.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -130,7 +125,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.79"                                            # Setup Version Number
+sver                = "3.80"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -2199,7 +2194,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     # Accept smtp mail server, where to send email (Default smtp-gmail.com)
     # Use by python Library to send email
     while True :  
-        sdefault = "smtp.yourisp.com"                                   # Default Your ISP SMTP
+        sdefault = "smtp.gmail.com"                                     # Default Your ISP SMTP
         sprompt  = "Enter your ISP SMTP server name"                    # Prompt for Answer
         wsmtp_server = accept_field(sroot,"SADM_SMTP_SERVER",sdefault,sprompt)
         ccode,cstdout,cstderr = oscommand("host %s >/dev/null 2>&1" % (wsmtp_server))
@@ -2243,7 +2238,8 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     sdefault = ""                                                       # No Default for user pwd 
     sprompt  = "Enter SMTP user password "                              # Prompt for User password
     while True :  
-        wsmtp_pwd = accept_field(sroot,"SADM_SMTP_PWD",sdefault,sprompt,'A')
+        #wsmtp_pwd = accept_field(sroot,"SADM_SMTP_PWD",sdefault,sprompt,'A')
+        wsmtp_pwd = accept_field(sroot,"SADM_SMTP_PWD",sdefault,sprompt,'P')
         if len(wsmtp_pwd) < 1 :                                         # Need at least 1 Char
             writelog ("You need to give your user password")            # Advise user 
             continue 
@@ -2615,7 +2611,7 @@ def mainflow(sroot):
     writelog ('  ')
     writelog ('  ')
     writelog ('--------------------')
-    writelog ("Run Initial SADMIN Daily scripts to feed Database and Web Interface",'bold')
+    writelog ("Run initial SADMIN daily scripts to feed database and web interface",'bold')
     writelog ('  ')
     writelog ("Running Client Scripts",'bold')
     os.environ['SADMIN'] = sroot                                        # Define SADMIN For Scripts
