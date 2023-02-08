@@ -50,6 +50,7 @@
 # 2022_06_25 osupdate v3.31 Now list package to be updated when using apt format.
 # 2022_08_25 osupdate v3.32 Updated with new SADMIN SECTION V1.52.
 # 2022_09_04 osupdate v3.33 Revisited to use the new error log when error is encountered.
+#@2023_02_08 osupdate v3.34 Insert more info in email sent when update are kept-back.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -80,7 +81,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.33'                                     # Your Current Script Version
+export SADM_VER='3.34'                                     # Your Current Script Version
 export SADM_PDESC="Script is used to perform an O/S update on the system"
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -426,8 +427,11 @@ run_apt_get()
             body4=$(printf "\nSome dependencies may have changed on one of the packages you have installed, ")
             body5="or maybe some new package must be installed to perform the upgrade."
             body6="They are then listed as 'kept-back'."
-            body7="run apt-get install <list of packages kept back>."
-            mbody=`echo -e "${body1}\n${body2}\n${body3}\n${body4}\n${body5}\n${body6}\n\n${body7}\n\nHave a nice day."`
+            body7="Run one of the following command if you wish to upgrade these package(s)."
+            body8="'sudo apt-get install <list of packages kept back>'."
+            body9="or "
+            body10="'sudo aptitude safe-upgrade'."
+            mbody=`echo -e "${body1}\n${body2}\n${body3}\n${body4}\n${body5}\n${body6}\n\n${body7}\n${body8}\n${body9}\n${body10}\n\nHave a nice day."`
             #printf "%s" "$mbody" | $SADM_MUTT -s "$msub" "$SADM_MAIL_ADDR" >>$SADM_LOG 2>&1 
             sadm_sendmail "$SADM_MAIL_ADDR" "$msub" "$mbody" ""
     fi
