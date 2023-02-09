@@ -43,6 +43,7 @@
 # 2022_09_22 web v2.18 System info - Add Backup button to give direct access to backup schedule.
 # 2022_09_23 web v2.19 System info - Add Rear & OS Update buttons,give direct access to schedule.
 # 2022_11_15 web v2.20 System info - Button backup, OSupdate & ReaR wasn't returning to right page.
+#@2023_02_09 web v2.21 System info - Improve look of buttons at the top of the monitor page.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -58,18 +59,21 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     */
     background-color: #f37320;
     background-color: #9FBF8C;
+    background-color: #fbba00;
     color           : white;
     color           : black;
-    padding         : 5px 16px;
+    padding         : 4px 4px;
     text-align      : center;
     text-decoration : none;
     display         : inline-block;
-    font-size       : 13px;
+    font-size       : 12px;
     margin          : 2px 1px;
     cursor          : pointer;
-    border-style    :   solid;
-    border-color    :   #6b6c6f;
-    border-radius   :   10px;
+    border-style    : solid;
+    /* border-color    : #6b6c6f; */
+    border-color    : #fbba00; 
+    border-color    : #ffffff; 
+    border-radius   : 10px;
 }
 a:link      { color: #ffdfbd;   background-color: transparent; text-decoration: none; }
 a:visited   { color: pink;      background-color: transparent; text-decoration: none; }
@@ -86,7 +90,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.20" ;                                                       # Current version number
+$SVER  = "2.21" ;                                                       # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -517,7 +521,7 @@ function display_top_buttons ($wrow) {
         echo "\n<a href='" . $BUTTON_URL . "'>";                        # URL to See information
         echo "<span ' class='button' data-toggle='tooltip' title='View system information'>"; 
         echo "<img src='/images/server-icon.png' ";                 # Show Info Icon
-        echo "style='width:32px;height:32px;'></span></a>";
+        echo "style='width:32px;height:32px;'>Sysinfo</span></a>";
     }
 
     # Display Button to Display Network Information
@@ -528,7 +532,7 @@ function display_top_buttons ($wrow) {
         echo "\n<a href='" . $BUTTON_URL . "'>";                        # URL to See information
         echo "<span ' class='button' data-toggle='tooltip' title='View network information'>";  
         echo "<img src='/images/network_icon.png' ";                    # Show Info Icon
-        echo "style='width:32px;height:32px;'>&nbsp</span></a>";
+        echo "style='width:32px;height:32px;'>&nbsp Network</span></a>";
     }
 
     # Display Button to Display Disks Information
@@ -539,7 +543,7 @@ function display_top_buttons ($wrow) {
         echo "\n<a href='" . $BUTTON_URL . "'>";                        # URL to See information
         echo "<span ' class='button' data-toggle='tooltip' title='Disk information about $wserver'>";  
         echo "<img src='/images/disk00.png' ";                    # Show Info Icon
-        echo "style='width:32px;height:32px;'>&nbsp</span></a>";
+        echo "style='width:32px;height:32px;'>&nbsp Disk</span></a>";
     }
 
     # Display Button to Display System Summary Information
@@ -550,7 +554,7 @@ function display_top_buttons ($wrow) {
         echo "\n<a href='" . $BUTTON_URL . "'>";                        # URL to See information
         echo "<span ' class='button' data-toggle='tooltip' title='View system summary'>";  
         echo "<img src='/images/system_information02.png' ";                    # Show Info Icon
-        echo "style='width:32px;height:32px;'></span></a>";
+        echo "style='width:32px;height:32px;'>Summary</span></a>";
     }
 
     # Display Button to Display Performance Graph of server
@@ -561,8 +565,8 @@ function display_top_buttons ($wrow) {
         $BUTTON_URL = "${wname}${wrow['srv_name']}";            #Build URL to file
         echo "\n<a href='" . $BUTTON_URL . "'>";                        # URL to See information
         echo "<span ' class='button' data-toggle='tooltip' title='View performance graph'>";  
-        echo "<img src='/images/sadm_perf_1.png' ";                    # Show Info Icon
-        echo "style='width:32px;height:32px;'>&nbsp</span></a>";
+        echo "<img src='/images/sadm_perf.png' ";                    # Show Info Icon
+        echo "style='width:32px;height:32px;'>&nbsp Graph</span></a>";
     }
 
     # Display Button to Display CFG2HTML Information
@@ -572,7 +576,7 @@ function display_top_buttons ($wrow) {
         echo "\n<a href='" . $url . "'>";                               # Build URL 
         echo "<span ' class='button' data-toggle='tooltip' title='View cfg2html report'>";  
         echo "<img src='/images/sadm_cfg2html_0.png' ";                    # Show Info Icon
-        echo "style='width:32px;height:32px;'>&nbsp</span></a>";
+        echo "style='width:32px;height:32px;'>&nbsp cfg2html</span></a>";
     }
 
     # Display Button to Backup Schedule.
@@ -580,25 +584,26 @@ function display_top_buttons ($wrow) {
     $BUTTON_URL = "${URL_BACKUP}?sel=${wserver}&back=${URL_VIEW}";
     echo "\n<a href='" . $BUTTON_URL . "'>";                        
     echo "<span ' class='button' data-toggle='tooltip' title='Edit backup schedule of $wserver'>";  
-    echo "<img src='/images/backup2.png' style='width:32px;height:32px';>&nbsp</span></a>";
+    echo "<img src='/images/sadm_backup_b.png' style='width:32px;height:32px';>&nbsp Backup</span></a>";
+    #echo "<img src='/images/backup2.png' style='width:32px;height:32px';>&nbsp</span></a>";
 
     # Display Button to O/S Update Schedule.
     $BUTTON_URL="${URL_OSUPDATE}?sel=${wserver}&back=${URL_VIEW}";
     echo "\n<a href='" . $BUTTON_URL . "'>";                        
     echo "<span ' class='button' data-toggle='tooltip' title='O/S update schedule for $wserver'>";  
-    echo "<img src='/images/os.png' style='width:32px;height:32px';>&nbsp</span></a>";
+    echo "<img src='/images/os.png' style='width:32px;height:32px';>&nbsp Update</span></a>";
 
     # Display Button to Rear Image Backup Schedule.
     $BUTTON_URL = "${URL_REAR}?sel=${wserver}&back=${URL_VIEW}";
     echo "\n<a href='" . $BUTTON_URL . "'>";                        
     echo "<span ' class='button' data-toggle='tooltip' title='Update ReaR schedule for $wserver'>";  
-    echo "<img src='/images/rear2.png' style='width:32px;height:32px';>&nbsp</span></a>";
+    echo "<img src='/images/rear2.png' style='width:32px;height:32px';>&nbsp ReaR</span></a>";
 
     # Display the Update Button
     $BUTTON_URL = "${URL_UPDATE}?sel=${wserver}&back=${URL_VIEW}";
     echo "\n<a href='" . $BUTTON_URL . "'>";                        
     echo "<span ' class='button' data-toggle='tooltip' title='Edit $wserver static info'>";  
-    echo "<img src='/images/sadm_edit_0.png' style='width:32px;height:32px;'>&nbsp</span></a>";
+    echo "<img src='/images/sadm_edit_0.png' style='width:32px;height:32px;'>&nbsp Edit</span></a>";
 }
 
 
