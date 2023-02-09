@@ -108,7 +108,7 @@
 # 2022_06_18 install v3.77 Fix SSH port setting problem during installation on AlmaLinux v9.
 # 2022_07_02 install v3.78 Fix input problem related to smtp server data.
 # 2022_07_19 install v3.79 Update of the commands requirements.
-#@2023_02_08 install v3.80 Default smtp mail server is now 'smtp.gmail.com' and hide smtp password.
+# 2023_02_08 install v3.80 Default smtp mail server is now 'smtp.gmail.com' and hide smtp password.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3

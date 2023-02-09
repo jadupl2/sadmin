@@ -66,7 +66,7 @@
 # 2022_05_28 install v3.21 Make sure SELinux is set (temporarily) to Permissive during setup.
 # 2022_10_23 install v3.22 Install 'host' command if not present on system.
 # 2022_11_27 install v3.23 Correct problem when activating EPEL v9.
-#@2023_02_08 install v3.24 Fix problem with GPG Key for EPEL v9.1
+# 2023_02_08 install v3.24 Fix problem with GPG Key for EPEL v9.1
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
