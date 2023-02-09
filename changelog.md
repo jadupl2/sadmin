@@ -1,5 +1,18 @@
 # SADMIN Full Changelog
  
+## Release [1.4.05](https://github.com/jadupl2/sadmin/releases) (2023-02-09)
+
+### SADMIN Install, Uninstall & Update
+  - [sadm_setup.py](https://sadmin.ca/_pages/install/#the-setup-script) (v3.80 2023/02/08) - Default smtp mail server is now 'smtp.gmail.com' and hide smtp password.
+  - [setup.sh](https://sadmin.ca/_pages/install/#the-setup-script) (v3.24 2023/02/08) - Fix problem with GPG Key for EPEL v9.1
+
+### Operating System Update
+  - sadm_osupdate.sh (v3.34 2023/02/08) - Insert more info in email sent when update are kept-back.
+
+### Web interface
+  - [sadm_view_server_info.php](https://sadmin.ca/sadm-view-server-info) (v2.21 2023/02/09) - System info - Improve look of buttons at the top of the monitor page.
+   
+ 
 ## Release [1.4.4](https://github.com/jadupl2/sadmin/releases) (2023-01-31)
 
 ### Backup related
