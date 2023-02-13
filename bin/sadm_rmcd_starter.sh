@@ -279,8 +279,7 @@ function cmd_options()
                ;;
             n) SERVER=$OPTARG                                           # System to backup
                ;;
-            s) 
-               SCRIPT=$OPTARG                                           # Script to execute on system
+            s) SCRIPT=$OPTARG                                           # Script to execute on system
                ;;
             u) SUSER=$OPTARG                                            # User use to SSH to system
                ;;
