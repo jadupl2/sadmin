@@ -32,12 +32,13 @@
 # 2019_06_07 Update: v2.4 Add Alarm type to page (Deal with new format).
 # 2019_09_20 Update v2.5 Show History (RCH) content using same uniform way.
 # 2020_12_13 Update v2.6 Add link in the heading to view the Daily Scripts Report, if HTML exist.
-# 2021_08_18 web v2.7  All Scripts status page - Add link to Script documentation.
-# 2021_08_18 web v2.8  All Scripts status page - Show effective alert group & members as tooltip
-# 2021_08_27 web v2.9  All Scripts status page - Fix link to log & History file (*.rch).
-# 2021_08_29 web v2.10 All Scripts status page - Show effective alert group name instead of 'default'.
-# 2021_08_29 web v2.11 All Scripts status page - Show member(s) of alert group as tooltip. 
-# 2022_09_05 web v2.12 All Scripts status page - Add [doc] & [elog] link to view error log (if exist).
+# 2021_08_18 web v2.7  Scripts status page - Add link to Script documentation.
+# 2021_08_18 web v2.8  Scripts status page - Show effective alert group & members as tooltip
+# 2021_08_27 web v2.9  Scripts status page - Fix link to log & History file (*.rch).
+# 2021_08_29 web v2.10 Scripts status page - Show effective alert group name instead of 'default'.
+# 2021_08_29 web v2.11 Scripts status page - Show member(s) of alert group as tooltip. 
+# 2022_09_05 web v2.12 Scripts status page - Add [doc] & [elog] link to view error log (if exist).
+#@2023_02_14 web v2.13 Scripts status page - Remove 'sadm_nmon_watcher' from list if not in error.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -67,7 +68,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG              = False ;                                           # Debug Activated True/False
-$SVER               = "2.12" ;                                           # Current version number
+$SVER               = "2.13" ;                                           # Current version number
 $CREATE_BUTTON      = False ;                                           # Yes Display Create Button
 $URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
 $URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
@@ -136,11 +137,15 @@ function display_script_array($con,$wpage_type,$script_array) {
         list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode,$cfile) = 
             explode(",", $value);                                       # Split Script RCH Data Line
             
-        # IF PAGE TYPE SELECTED MATCH THE RETURN CODE OF RCH FILE OR ALL SCRIPT SELECTED, DISPLAY IT
+        # Don't show 'sadm_nmon_watcher' when it was terminated with success (Not necessary)
+        if (($ccode == 0) and ($cname == "sadm_nmon_watcher")) { continue; } 
+
+            # IF PAGE TYPE SELECTED MATCH THE RETURN CODE OF RCH FILE OR ALL SCRIPT SELECTED, DISPLAY IT
         if ((($wpage_type == "failed")  and ($ccode == 1)) or 
             (($wpage_type == "running") and ($ccode == 2)) or 
             (($wpage_type == "success") and ($ccode == 0)) or 
              ($wpage_type == "all")) {
+
 
             # GET SERVER DESCRIPTION FROM DATABASE (USE AS A TOOLTIP OVER THE SERVANE NAME) --------
             $sql = "SELECT * FROM server where srv_name = '$cserver' "; # Select Statement Read Srv
