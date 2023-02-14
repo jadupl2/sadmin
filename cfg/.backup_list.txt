@@ -1,15 +1,8 @@
-# v2.0 Initial Backup List - template
+# v2.1 Initial Backup List - template
 # Notes: Socket Files are automatically excluded
 # One file or directory per line - Change to your needs
-/opt/sadmin
-/sadmin
+/opt/sadmin/cfg
 /home 
 /etc 
 /root
 /var
-/sysadmin
-/wsadmin
-/linternux
-/wiki
-/install
-/psadmin
