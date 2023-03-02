@@ -18,7 +18,7 @@
 #   See the GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License along with this program.
-#   If not, see <http://www.gnu.org/licenses/>.
+#   If not, see <https://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # Change Log
 # 2016_11_11  v2.6 Insert Logic to Pass a param. (Y/N) to sadm_osupdate_client.sh to Reboot or not
@@ -64,7 +64,13 @@
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
-
+    
+# Making sure at least one parameter is received (Sould be the system name to update"
+if [ $# -ne 1 ]                                                         # MUST be hostname to update
+    then printf "[ ERROR ]Please specify the system name to update.\n\n"
+         exit 1                                                         # Exit To O/S
+    else export SYSTEM_NAME=$1                                          # Save Server Name to Update
+fi 
 
 
 
@@ -90,6 +96,14 @@ export SADM_TPID="$$"                                      # Script Process ID.
 export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
 export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
+
+# ---
+# SPECIAL DEROGATION TO INSERT THE NAME OF THE SYSTEM TO UPDATE IN THE FILENAME OF LOG AND RCH FILE.
+export SADM_EXT=$(echo "$SADM_PN" | cut -d'.' -f2)         # Save Script extension (sh, py, php,.)
+export SADM_INST="${SADM_INST}_${SYSTEM_NAME}"             # Insert VMName to export in rch & log
+export SADM_HOSTNAME="$SYSTEM_NAME"                        # SystemName that we are going to update
+export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with extension)
+# ---
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='5.1'                                      # Script version number
@@ -134,11 +148,10 @@ export SADM_MAX_RCLINE=60                                    # Nb Lines to trim(
 # --------------------------------------------------------------------------------------------------
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
-export ONE_SERVER=""                                                    # Name of server to update
 export USCRIPT="sadm_osupdate.sh"                                       # Script to execute on nodes
 
 # Seconds given for system reboot and to start applications.
-export REBOOT_TIME=600                                                  
+export REBOOT_TIME=480                                                  # 480 seconds is 8 minutes
 
 
 
@@ -148,7 +161,7 @@ export REBOOT_TIME=600
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\nUsage: %s%s%s%s [options]" "${BOLD}" "${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\nUsage: %s%s%s%s [options] [SystemName]" "${BOLD}" "${CYAN}" $(basename "$0") "${NORMAL}"
     printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
     printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
     printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
@@ -188,9 +201,9 @@ update_server_db()
     # Execute SQL to Update Server O/S Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e "$SQL" >>$SADM_LOG 2>&1
     if [ $? -ne 0 ]                                                     # If Error while updating
-        then sadm_write_err "${SADM_ERROR} O/S update status changed to 'Failed' in Database. \n"
+        then sadm_write_err "[ ERROR ] O/S update status changed to 'Failed' in Database. \n"
              RCU=1                                                      # Set Error Code
-        else sadm_write "${SADM_OK} O/S update status changed to 'Success' in Database.\n"
+        else sadm_write_log "[ OK ] O/S update status changed to 'Success' in Database.\n"
              RCU=0                                                      # Set Error Code = Success 
     fi
     return $RCU
@@ -208,7 +221,7 @@ rcmd_osupdate()
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, "
     SQL2="srv_update_reboot, srv_sporadic, srv_active, srv_sadmin_dir, srv_ssh_port from server "
     SQL3="where srv_ostype = 'linux' and srv_active = True "            # Got to Be a Linux & Active
-    SQL4="and srv_name = '$ONE_SERVER' ;"                               # Select server to update
+    SQL4="and srv_name = '$SYSTEM_NAME' ;"                               # Select server to update
     SQL="${SQL1}${SQL2}${SQL3}${SQL4}"                                  # Build Final SQL Statement 
     WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
@@ -220,7 +233,7 @@ rcmd_osupdate()
    
     # Result file not readable or is empty = Server Name not found in Database
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
-        then sadm_writelog "${SADM_ERROR} The system '$ONE_SERVER' was not found is the Database."
+        then sadm_write_err "[ ERROR ] System '$SYSTEM_NAME' is not a valid system, not in database."
              return 1                                                   # Return Error to Caller
     fi 
     
@@ -239,18 +252,18 @@ rcmd_osupdate()
     ping -c2 $fqdn_server >> /dev/null 2>&1
     if [ $? -ne 0 ]
         then if [ "$server_sporadic" = "1" ]
-                 then    sadm_writelog "${SADM_WARNING} Sporadic system now offline."
+                 then    sadm_write_log "[ WARNING ] Sporadic system is currently inaccessible."
                          return 0 
-                 else    sadm_write_err "${SADM_ERROR} Could not ping ${fqdn_server}."
+                 else    sadm_write_err "[ ERROR ] Could not ping ${fqdn_server}."
                          sadm_write_err "Update is not possible, process aborted."
                          return 1 
              fi
-        else sadm_writelog "${SADM_OK} Ping host $fqdn_server."
+        else sadm_write_log "[ OK ] Ping to host $fqdn_server."
     fi
 
     # If 'srv_update_auto' = 0 in Database for that server, it means no update allowed for server
     if [ "$server_update_auto" = "0" ]
-        then sadm_write_err "${SADM_WARNING} O/S Update for '${fqdn_server}' isn't activated."
+        then sadm_write_err "[ WARNING ]O/S Update for '${fqdn_server}' isn't activated."
              sadm_write_err "No O/S Update will be performed."
              sadm_write_err "Unless you check field 'Activate O/S Update Schedule' in the schedule."
              return 1
@@ -260,10 +273,10 @@ rcmd_osupdate()
     pgm="${server_sadmin_dir}/bin/$USCRIPT"                         # Path To o/s update script
     response=$($SADM_SSH -qnp $server_ssh_port $fqdn_server "if [ -x $pgm ] ;then echo 'ok' ;else echo 'error' ;fi")
     if [ "$response" != "ok" ]
-        then sadm_write_err "${SADM_ERROR} '$pgm' don't exist or not executable on $fqdn_server."
+        then sadm_write_err "[ ERROR ] '$pgm' don't exist or not executable on $fqdn_server."
              sadm_write_err "No O/S Update will be perform."
              return 1
-        else sadm_writelog "${SADM_OK} '$pgm' exist & executable on $fqdn_server."
+        else sadm_write_log "[ OK ] '$pgm' exist & executable on $fqdn_server."
     fi 
 
     # Activate or not the reboot at the end of the O/S Update.
@@ -287,16 +300,18 @@ rcmd_osupdate()
     fi
     
     # Go and Script the O/S Update on the selected system.
-    sadm_writelog "Starting the O/S update on '${server_name}'."
-    sadm_writelog " "
+    sadm_write_log "\nStarting the O/S update on '${server_name}'."
     if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
-        then sadm_writelog "$SADM_SSH -qnp $server_ssh_port $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'"
+        then sadm_write_log "$SADM_SSH -qnp $server_ssh_port $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'"
+             sadm_write_log "\n\n\n"
              $SADM_SSH -qnp $server_ssh_port $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
              RC=$? 
-        else sadm_writelog "Starting execution of ${server_sadmin_dir}/bin/$USCRIPT "
+        else sadm_write_log "Starting execution of ${server_sadmin_dir}/bin/${USCRIPT}.\n\n\n\n"
+             sadm_write_log "\n\n\n"
              ${server_sadmin_dir}/bin/$USCRIPT                       # Run Locally when on SADMIN
              RC=$?
     fi      
+    sadm_write_log " "
     if [ $RC -eq 0 ]
         then sadm_write_log "[ OK ] O/S update is terminated with success on $fqdn_server"
         else sadm_write_log "[ ERROR ] O/S update terminated with error on $fqdn_server"
@@ -304,13 +319,13 @@ rcmd_osupdate()
 
     # After the O/S update is terminated, a reboot will be done on some occasion.
     # If user requested a reboot after each update, see reboot option when scheduling the O/S Update
-    # We need to wait a moment to give the selected system time to reboot and become available again.
+    # We need to wait a moment to give time for the selected system to reboot and be available again
     # We will sleep 480 seconds (8 Min.) to give system time to restart and start it's app.
     if [ "$WREBOOT" != "" ]                                         # if Reboot requested
         then sadm_write_log "System $fqdn_server is now rebooting."
              sadm_write_log "We will sleep $REBOOT_TIME seconds, to give time for '${server_name}' to become available."
              # Sleep for $REBOOT_TIME seconds and update progress bar every 30 seconds.
-             sadm_sleep $REBOOT_TIME 60 
+             sadm_sleep $REBOOT_TIME 30 
     fi 
 
 
@@ -318,13 +333,14 @@ rcmd_osupdate()
     # Cause if script failed on remote, an alert has been generated for it, 
     # and we want only one alert for a failed update.
     #if [ $RC -ne 0 ]                                                    # Update went Successfully?
-    #   then sadm_write "${SADM_ERROR} O/S Update completed with error on '${server_name}'.\n"
+    #   then sadm_write "[ ERROR ] O/S Update completed with error on '${server_name}'.\n"
     #        update_server_db "${server_name}" "F"                       # Update Status False in DB
-    #   else sadm_write "${SADM_OK} O/S Update in now completed successfully on '${server_name}'.\n"
+    #   else sadm_write "[ OK ] O/S Update in now completed successfully on '${server_name}'.\n"
     #        update_server_db "${server_name}" "S"                      # Update Status Success 
     #fi
     sadm_write_log " "
     sadm_write_log "O/S Update is now completed on '${server_name}'."
+    sadm_unlock_system "${SYSTEM_NAME}"                                  # Go remove the lock file
     return 0
 }
 
@@ -343,11 +359,11 @@ function cmd_options()
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+                  then printf "\nDebug level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "Debug Level set to ${SADM_DEBUG}."               # Display Debug Level
+               printf "Debug level set to ${SADM_DEBUG}."               # Display Debug Level
                ;;                    
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -362,11 +378,6 @@ function cmd_options()
         esac                                                            # End of case
     done                                                                # End of while
 
-    if [ $# -ne 1 ]                                                     # MUST be hostname to update
-        then printf "\n${SADM_ERROR} Please specify the system name.\n" # Advise user of error
-             exit 1                                                     # Exit To O/S
-        else ONE_SERVER=$1                                              # Save Server Name to Update
-    fi 
     return 
 }
 
@@ -377,11 +388,9 @@ function cmd_options()
 #===================================================================================================
 #
     cmd_options "$@"                                                    # Check command-line Options
-    SADM_RCH_DESC="$ONE_SERVER"                                         # Set Desc. to RCH file
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     rcmd_osupdate                                                       # Go Update Server
     SADM_EXIT_CODE=$?                                                   # Save Exit Code
-    sadm_unlock_system "${ONE_SERVER}"                                  # Go remove the lock file
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)

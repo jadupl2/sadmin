@@ -17,7 +17,7 @@
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
 #   You should have received a copy of the GNU General Public License along with this program.
-#   If not, see <http://www.gnu.org/licenses/>.
+#   If not, see <https://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
 # 2018_01_18    v1.0 Initial Version
@@ -40,7 +40,7 @@
 # 2018_07_15    v3.3 Refuse SADM ServerName if resolve to localhost, Fix Server Crontab,
 # 2018_07_21    v3.4 Remove Some validation of SADMIN Server Name
 # 2018_07_30    v3.5 Add line 'Defaults !requiretty' to sudo file,so script can use sudo in crontab.
-# 2018_08_29    v3.6 http://sadmin.YourDomain is now the standard to access sadmin web Site.
+# 2018_08_29    v3.6 https://sadmin.YourDomain is now the standard to access sadmin web Site.
 # 2018_10_28    v3.7 Linefeed was missing in file '/etc/sudoers.d/033_sadmin-nopasswd'
 # 2018_11_24    v3.8 Added -e '' options for sadmin user creation
 # 2018_12_11    V3.9 When installing server, default alert group is set to sysadmin email.
@@ -2494,7 +2494,7 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog (" ")
     if (stype == "S") :
         writelog ("USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
-        writelog ("The Web interface is available at : http://sadmin.%s" % (sdomain))
+        writelog ("The Web interface is available at : https://sadmin.%s" % (sdomain))
         writelog ("  - Use it to add, update and delete server in your server farm.")
         writelog ("  - View performance graph of your servers up to two years in the past.")
         writelog ("  - If you want, you can schedule automatic O/S update of your servers.")

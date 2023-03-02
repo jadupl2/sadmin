@@ -212,7 +212,7 @@ check_available_update()
                                  sadm_write_log "[ OK ] Update available." # Update the log
                                  ;;
                             0)   UpdateStatus=1                         # No Update available
-                                 sadm_write "[ OK ] No Update available.\n"
+                                 sadm_write_log "[ OK ] No Update available."
                                  ;;
                             *)   UpdateStatus=2                         # Problem Abort Update
                                  sadm_write_err "[ ERROR ] encountered, update aborted.\n"  
@@ -221,7 +221,6 @@ check_available_update()
                         esac
                         ;;
                 * )     sadm_write_log "Checking if update are available, with 'dnf check-update'."
-                        sadm_write_log " "
                         dnf check-update >> $SADM_LOG 2>&1              # List Available update
                         rc=$?                                           # Save Exit Code
                         case $rc in
@@ -249,7 +248,7 @@ check_available_update()
             case $rc in
                 100) UpdateStatus=0                                     # Update Exist
                      dnf check-update                                   # List Available update
-                     sadm_write "[ OK ] Update available.\n"        # Update the log
+                     sadm_write "[ OK ] Update available.\n"            # Update the log
                      ;;
                   0) UpdateStatus=1                                     # No Update available
                      sadm_write "[ OK ] No Update available.\n"
@@ -364,7 +363,7 @@ run_dnf()
     sadm_write_log " "
     sadm_write_log "Starting $SADM_OS_NAME update process ..."
     sadm_write_log "Running : dnf -y update"
-    dnf -y update  >>$SADM_LOG 2>>$SADM_ELOG 
+    dnf -y update  | tee -a $SADM_LOG 
     rc=$?
     sadm_write_log "Return Code after 'dnf -y update' is ${rc}."
     sadm_write_log " "
@@ -511,6 +510,16 @@ perform_osupdate()
 #
 main_process()
 {
+    # Advise user that there will be a reboot or not.
+    SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'`         # SADMIN Hostname
+    if [ "$HOSTNAME" = "$SADM_SRV_NAME" ]                               # We are on SADM Master Srv
+       then  printf "No Automatic reboot on the SADMIN Main server - $SADM_SERVER \n"
+             printf "Automatic reboot cancelled for this server.\n"
+             printf "You will need to reboot system at your chosen time.\n\n"
+             WREBOOT="N"                                                # No Auto Reboot on SADM Srv
+       else  printf "Reboot requested after a successful update.\n"  
+    fi
+
     # Check for Automatic Update
     UPDATE_AVAILABLE="N"                                                # Assume No Upd. Available
     check_available_update                                              # Update Avail./apt-get upd
@@ -576,14 +585,6 @@ function cmd_options()
                exit 1                                                   # Exit with Error
                ;;
             r) WREBOOT="Y"                                              # Reboot after Upd. if allow
-               SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'` # SADMIN Hostname
-               if [ "$HOSTNAME" = "$SADM_SRV_NAME" ]                    # We are on SADM Master Srv
-                  then  printf "No Automatic reboot on the SADMIN Main server - $SADM_SERVER \n"
-                        printf "Automatic reboot cancelled for this server.\n"
-                        printf "You will need to reboot system at your chosen time.\n\n"
-                        WREBOOT="N"                                     # No Auto Reboot on SADM Srv
-                  else  printf "\nReboot requested after a successful update.\n"  
-               fi
                ;;
         esac                                                            # End of case
     done                                                                # End of while

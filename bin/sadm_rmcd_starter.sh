@@ -38,7 +38,7 @@
 #   See the GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License along with this program.
-#   If not, see <http://www.gnu.org/licenses/>.
+#   If not, see <https://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # Change Log
 # 2020_12_12 cmdline v1.0 Initial version.
@@ -88,10 +88,10 @@ export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og 
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
+export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
 export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
 export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
-export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
+export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
 export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
@@ -262,7 +262,7 @@ function cmd_options()
     while getopts ":u:l:n:s:hd:vp" opt; do 
         case "${opt}" in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               echo -e "\nDEBUG\n"
+               printf "\nDEBUG\n"
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid

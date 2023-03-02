@@ -193,7 +193,7 @@
 # 2022_11_16 lib v4.14 Remove initialization of $SADM_DEBUG (Set in SADMIN section of script).
 # 2023_01_06 lib v4.15 Can now add a suffix to script name in RCH file (Use var. SADM_RCH_DESC).
 # 2023_01_27 lib v4.16 Optimize the start function.
-
+#@2023_02_14 lib v4.17 Remove the usage of SADM_RCH_DESC.
 #===================================================================================================
 
 
@@ -207,7 +207,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.16"                                              # This Library Version
+export SADM_LIB_VER="4.17"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -247,7 +247,7 @@ export SADM_UMON_DIR="$SADM_USR_DIR/mon"                                # Script
 # SADMIN SERVER WEB SITE DIRECTORIES DEFINITION
 export SADM_WWW_DOC_DIR="$SADM_WWW_DIR/doc"                             # www Doc Dir
 export SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                             # www Dat Dir
-export SADM_WWW_ARC_DIR="$SADM_WWW_DIR/dat/archive"                     # www Dat Dir
+export SADM_WWW_ARC_DIR="$SADM_WWW_DAT_DIR/archive"                     # www archive Dir
 export SADM_WWW_RRD_DIR="$SADM_WWW_DIR/rrd"                             # www RRD Dir
 export SADM_WWW_CFG_DIR="$SADM_WWW_DIR/cfg"                             # www CFG Dir
 export SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                             # www Lib Dir
@@ -2066,7 +2066,7 @@ sadm_freshen_directories_structure() {
     mkdir -p ${SADM_USR_DIR}/{bin,cfg,doc,lib,mon} > /dev/null 2>&1
 
     # $SADMIN/www directories creation (If do not exist and ignore error)
-    mkdir -p ${SADM_WWW_DIR}/{archive,crud,css,dat,doc,images,js,lib,rrd,tmp,view} > /dev/null 2>&1
+    mkdir -p ${SADM_WWW_DIR}/{dat/archive,crud,css,dat,doc,images,js,lib,rrd,tmp,view} > /dev/null 2>&1
 
     if [ $(id -u) -eq 0 ]
         then chmod 0775 $SADM_LIB_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LIB_DIR
@@ -2252,11 +2252,7 @@ sadm_start() {
              [ $(id -u) -eq 0 ] && chmod 664 $SADM_RCHLOG               # Change protection on RCH
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}
              WDOT=".......... ........ ........"                        # End Time & Elapse = Dot
-             if [ "$SADM_RCH_DESC" = "" ]                               # If SADM_DESC is NOT blank 
-                then RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST" # Format Part1 RCH File
-                else SADM_RCH_DESC=`echo "${SADM_RCH_DESC}" |tr ' ' '_'` # Replace space=underscore
-                     RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT ${SADM_INST}_${SADM_RCH_DESC}" 
-             fi 
+             RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST" # Format Part1 RCH File
              RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE 2"    # Format Part2 of RCH File
              echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
     fi
@@ -2316,11 +2312,7 @@ sadm_stop() {
                      mv ${SADM_TMP_DIR}/xrch.$$ ${SADM_RCHLOG}          # Replace RCH without code 2
              fi                     
              RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
-             if [ "$SADM_RCH_DESC" = "" ]                               # If SADM_DESC is NOT blank 
-                then RCHLINE="$RCHLINE $sadm_elapse $SADM_INST"         # Format Part2 RCH File
-                else SADM_RCH_DESC=`echo "${SADM_RCH_DESC}" |tr ' ' '_'` # Replace space=underscore
-                     RCHLINE="$RCHLINE $sadm_elapse ${SADM_INST}_${SADM_RCH_DESC}" 
-             fi 
+             RCHLINE="$RCHLINE $sadm_elapse $SADM_INST"         # Format Part2 RCH File
              RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE"      # Format Part3 of RCH File
              RCHLINE="$RCHLINE $SADM_EXIT_CODE"                         # Format Part4 of RCH File
              if [ -w $SADM_RCHLOG ] 
@@ -2395,7 +2387,7 @@ sadm_stop() {
                      fi 
              fi 
              sadm_write "End of ${SADM_PN} - `date`\n"                  # Write End Time To Log
-             sadm_write "${SADM_80_DASH}\n\n\n"                         # Write 80 Dash Line
+             sadm_write "${SADM_80_DASH}\n\n\n\n\n"                     # Write 80 Dash Line
              cat $SADM_LOG > /dev/null                                  # Force buffer to flush
              if [ $SADM_MAX_LOGLINE -ne 0 ] && [ "$SADM_LOG_APPEND" = "Y" ] # Max Line in Log Not 0 
                 then sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"      # Trim the Log
@@ -2625,7 +2617,7 @@ sadm_lock_system()
              
         else echo "$SADM_INST - $(date +%Y%m%d%H%M%S)" > ${LOCK_FILE}   # Create Lock File 
              if [ $? -eq 0 ]                                            # Lock file created [ OK ]
-               then sadm_write_log "System '${SNAME}' is now lock."  
+               then sadm_write_log "[ OK ] System '${SNAME}' now lock."  
                else sadm_write_log "[ ERROR ] while locking the system '${SNAME}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
@@ -2661,11 +2653,11 @@ sadm_unlock_system() {
     if [ -w "$LOCK_FILE" ]                                              # Lock file exist ?
         then rm -f ${LOCK_FILE} >/dev/null 2>&1                         # Delete Lock file 
              if [ $? -eq 0 ]                                            # no error while updating
-               then sadm_write_log "System '$SNAME' is now unlocked."
+               then sadm_write_log "[ OK ] System '$SNAME' is now unlocked."
                else sadm_write_err "[ ERROR ] Unlocking '${SNAME}' - Can't remove '${LOCK_FILE}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
-        else sadm_write_log "System '$SNAME' is now unlocked."
+        else sadm_write_log "[ OK ] System '$SNAME' is now unlocked."
     fi 
     return $RC                                                          # Return to caller 
 } 

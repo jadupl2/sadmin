@@ -362,67 +362,67 @@ insert_logo()
 
     echo -n "<th class='dt-center' rowspan=2>" >> $WHTML 
     case $DB_OSNAME in 
-        'redhat')       echo -n "<a href='http://www.redhat.com' " >> $WHTML 
+        'redhat')       echo -n "<a href='https://www.redhat.com' " >> $WHTML 
                         echo -n "title='Server $whost is a RedHat server - Visit redhat.com'>" >> $WHTML
-                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_redhat.png' " >> $WHTML
+                        echo -n "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_redhat.png' " >> $WHTML
                         echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
                         ;;
         'fedora')       echo -n "<a href='https://getfedora.org' " >> $WHTML
                         echo -n "title='Server $whost is a Fedora server - Visit getfedora.org'>" >> $WHTML
-                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_fedora.png' " >> $WHTML
+                        echo -n "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_fedora.png' " >> $WHTML
                         echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
                         ;;
         'macosx')       echo -n "<a href='https://apple.com' " >> $WHTML
                         echo -n "title='Server $whost is an Apple System - Visit apple.com'>" >> $WHTML
-                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_apple.png' " >> $WHTML
+                        echo -n "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_apple.png' " >> $WHTML
                         echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
                         ;;
         'centos')       echo -n "<a href='https://www.centos.org' " >> $WHTML
                         echo -n "title='Server $whost is a CentOS server - Visit centos.org'>" >> $WHTML
-                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_centos.png' " >> $WHTML
+                        echo -n "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_centos.png' " >> $WHTML
                         echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
                         ;;
         'ubuntu')       echo -n "<a href='https://www.ubuntu.com/' " >> $WHTML
                         echo -n "title='Server $whost is a Ubuntu server - Visit ubuntu.com'>" >> $WHTML
-                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_ubuntu.png' " >> $WHTML
+                        echo -n "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_ubuntu.png' " >> $WHTML
                         echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
                         ;;
         'linuxmint')    echo -n "<a href='https://linuxmint.com/' " >> $WHTML
                         echo -n "title='Server $whost is a LinuxMint server - Visit linuxmint.com'>" >> $WHTML
-                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_linuxmint.png' " >> $WHTML
+                        echo -n "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_linuxmint.png' " >> $WHTML
                         echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
                         ;;
         'debian')       echo -n "<a href='https://www.debian.org/' " >> $WHTML
                         echo -n "title='Server $whost is a Debian server - Visit debian.org'>" >> $WHTML
-                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_debian.png' " >> $WHTML
+                        echo -n "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_debian.png' " >> $WHTML
                         echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
                         ;;
         'raspbian')     echo -n "<a href='https://www.raspbian.org/' " >> $WHTML
                         echo -n "title='Server $whost is a Raspbian server - Visit raspian.org'>" >> $WHTML
-                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_raspbian.png' " >> $WHTML
+                        echo -n "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_raspbian.png' " >> $WHTML
                         echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
                         ;;
         'almalinux')    echo -n "<a href='https://almalinux.org/' " >> $WHTML
                         echo -n "title='Server $whost is a AlmaLinux server - Visit almalinux.org'>" >> $WHTML
-                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_almalinux.png' " >> $WHTML
+                        echo -n "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_almalinux.png' " >> $WHTML
                         echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
                         ;;
         'rocky')        echo -n "<a href='https://rockylinux.org//' " >> $WHTML
                         echo -n "title='Server $whost is a Rocky Linux server - Visit rockylinux.org'>" >> $WHTML
-                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_rockylinux.png' " >> $WHTML
+                        echo -n "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_rockylinux.png' " >> $WHTML
                         echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
                         ;;
         'suse')         echo -n "<a href='https://www.opensuse.org/' " >> $WHTML
                         echo -n "title='Server $whost is a OpenSUSE server - Visit opensuse.org'>" >> $WHTML
-                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_suse.png' " >> $WHTML
+                        echo -n "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_suse.png' " >> $WHTML
                         echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
                         ;;
-        'aix')          echo -n "<a href='http://www-03.ibm.com/systems/power/software/aix/' " >> $WHTML
+        'aix')          echo -n "<a href='https://www-03.ibm.com/systems/power/software/aix/' " >> $WHTML
                         echo -n "title='Server $whost is an AIX server - Visit Aix Home Page'>" >> $WHTML
-                        echo -n "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_aix.png' " >> $WHTML
+                        echo -n "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_aix.png' " >> $WHTML
                         echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
                         ;;
-        *)              echo "<img src='http://sadmin.${SADM_DOMAIN}/images/logo_linux.png' style='width:32px;height:32px;'>" >> $WHTML
+        *)              echo "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_linux.png' style='width:32px;height:32px;'>" >> $WHTML
                         echo "${WOS}</th>\n" >> $WHTML
                         ;;
     esac
@@ -631,7 +631,7 @@ script_page_heading()
     echo -e "<p class='report_title'>${RTITLE}</p>" >> $HTML_SFILE      # Report Title
     #
     URL_SCRIPTS_REPORT="/view/daily_scripts_report.html"                # Scripts Daily Report Page
-    RURL="http://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
+    RURL="https://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
     TITLE2="View the web version of this report"                        # Link Description
     echo -e "</center>" >> $HTML_SFILE                                  # End Text Center
     echo -e "<div class='fs13px'><a href='${RURL}'>${TITLE2}</a></div>" >>$HTML_SFILE    # Insert Link on Page
@@ -734,7 +734,7 @@ script_line()
     echo -n "<td align=center bgcolor=$BCOL><font color=$FCOL>" >> $HTML_SFILE
     LOGFILE="${RCH_SERVER}_${RCH_SCRIPT}.log"                           # Assemble log Script Name
     LOGNAME="${SADM_WWW_DAT_DIR}/${RCH_SERVER}/log/${LOGFILE}"          # Add Dir. Path to Name
-    LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" # Url to View Log
+    LOGURL="https://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" # Url to View Log
     if [ -r "$LOGNAME" ]                                                # If log is Readable
         then echo -n "<a href='$LOGURL' "              >> $HTML_SFILE   # Link to Access the Log
              echo -n "title='View Script Log File'>"   >> $HTML_SFILE   # ToolTip to Show User
@@ -1035,7 +1035,7 @@ rear_heading()
     echo -e "<center>" >> $HTML                                         # Center what's coming
     echo -e "<p class='report_title'>${RTITLE}</p>" >> $HTML            # Report Title    
     URL_SCRIPTS_REPORT="/view/daily_rear_report.html"                   # Scripts Daily Report Page
-    RURL="http://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
+    RURL="https://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
     TITLE2="View the web version of this report"                        # Link Description
     echo -e "</center>" >> $HTML                                        # End Text Center
     echo -e "<div class='fs13px'><a href='${RURL}'>${TITLE2}</a></div>" >>$HTML # Insert Link on Page
@@ -1148,7 +1148,7 @@ rear_line()
     fi 
     LOGFILE="${WSERVER}_${WSCRIPT}.log"                                 # Assemble log Script Name
     LOGNAME="${SADM_WWW_DAT_DIR}/${WSERVER}/log/${LOGFILE}"             # Add Dir. Path to Name
-    LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}"  # Url to View Log
+    LOGURL="https://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}"  # Url to View Log
     if [ -r "$LOGNAME" ]                                                # If log is Readable
         then echo -n "<a href='$LOGURL 'title='View Backup Log File'>" >>$HTML
              echo "${WSTATUS}</font></a></td>" >>$HTML 
@@ -1159,10 +1159,10 @@ rear_line()
     URL_SCHED_UPDATE=$(echo "${URL_REAR_SCHED/SYSTEM/$WSERVER}") # URL To Modify Backup Schd
     if [ $WACT -eq 0 ]                                                  # If Backup Disable
        then echo "<td align=center bgcolor=$BCOL><font color=$FCOL>"         >>$HTML
-            echo -n "<a href='http://sadmin.${SADM_DOMAIN}/$URL_SCHED_UPDATE "  >>$HTML
+            echo -n "<a href='https://sadmin.${SADM_DOMAIN}/$URL_SCHED_UPDATE "  >>$HTML
             echo "'title='Schedule Deactivated, click to modify'><strong>No</strong></font></a></td>" >>$HTML
        else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>"            >>$HTML    
-            echo -n "<a href='http://sadmin.${SADM_DOMAIN}/$URL_SCHED_UPDATE "  >>$HTML
+            echo -n "<a href='https://sadmin.${SADM_DOMAIN}/$URL_SCHED_UPDATE "  >>$HTML
             echo "'title='Click to modify Backup Schedule'>Yes</font></a></td>"          >>$HTML
     fi
 
@@ -1528,7 +1528,7 @@ storix_heading()
     echo -e "<center>" >> $HTML_XFILE                                   # Center what's coming
     echo -e "<p class='report_title'>${RTITLE}</p>" >> $HTML_XFILE      # Report Title
     URL_SCRIPTS_REPORT="/view/daily_storix_report.html"                 # Scripts Daily Report Page
-    RURL="http://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
+    RURL="https://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
     TITLE2="View the web version of this report"                        # Link Description
     echo -e "</center>" >> $HTML_XFILE                                  # End Text Center
     echo -e "<div class='fs13px'><a href='${RURL}'>${TITLE2}</a></div>" >>$HTML_XFILE    # Insert Link on Page
@@ -1628,7 +1628,7 @@ storix_line()
     fi 
     LOGFILE="${WSERVER}_${WSCRIPT}.log"                                 # Assemble log Script Name
     LOGNAME="${SADM_WWW_DAT_DIR}/${WSERVER}/log/${LOGFILE}"             # Add Dir. Path to Name
-    LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}"  # Url to View Log
+    LOGURL="https://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}"  # Url to View Log
     if [ -r "$LOGNAME" ]                                                # If log is Readable
         then echo -n "<a href='$LOGURL 'title='View Backup Log File'>" >>$HTML_XFILE
              echo "${WSTATUS}</font></a></td>" >>$HTML_XFILE 
@@ -1974,7 +1974,7 @@ backup_heading()
     echo -e "<center>" >> $HTML                                         # Center what's coming
     echo -e "<p class='report_title'>${RTITLE}</p>" >> $HTML            # Report Title
     URL_SCRIPTS_REPORT="/view/daily_backup_report.html"                 # Scripts Daily Report Page
-    RURL="http://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
+    RURL="https://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
     TITLE2="View the web version of this report"                        # Link Description
     echo -e "</center>" >> $HTML                                        # End Text Center
     echo "<div class='fs13px'><a href='${RURL}'>${TITLE2}</a></div>" >>$HTML # Insert Link on Page
@@ -2079,7 +2079,7 @@ backup_line()
     fi 
     LOGFILE="${WSERVER}_${WSCRIPT}.log"                                 # Assemble log Script Name
     LOGNAME="${SADM_WWW_DAT_DIR}/${WSERVER}/log/${LOGFILE}"             # Add Dir. Path to Name
-    LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}"  # Url to View Log
+    LOGURL="https://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}"  # Url to View Log
     if [ -r "$LOGNAME" ]                                                # If log is Readable
         then echo -n "<a href='$LOGURL 'title='View Backup Log File'>" >>$HTML
              echo "${WSTATUS}</font></a></td>" >>$HTML 
@@ -2091,15 +2091,15 @@ backup_line()
     if [ $WACT -eq 0 ] 
        #then echo "<td align=center bgcolor='Yellow'><font color=$FCOL>"         >>$HTML
        then echo "<td align=center bgcolor=$BCOL><font color=$FCOL>"         >>$HTML
-            echo -n "<a href='http://sadmin.${SADM_DOMAIN}/$URL_SCHED_UPDATE "  >>$HTML
+            echo -n "<a href='https://sadmin.${SADM_DOMAIN}/$URL_SCHED_UPDATE "  >>$HTML
             echo "'title='Schedule Deactivated, click to modify'><strong>No</strong></font></a></td>" >>$HTML
        else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>"            >>$HTML    
-            echo -n "<a href='http://sadmin.${SADM_DOMAIN}/$URL_SCHED_UPDATE "  >>$HTML
+            echo -n "<a href='https://sadmin.${SADM_DOMAIN}/$URL_SCHED_UPDATE "  >>$HTML
             echo "'title='Click to modify Backup Schedule'>Yes</font></a></td>"          >>$HTML
     fi
 
     # Server Name 
-    SRVURL="http://sadmin.${SADM_DOMAIN}/view/srv/sadm_view_server_info.php?sel=$WSERVER" 
+    SRVURL="https://sadmin.${SADM_DOMAIN}/view/srv/sadm_view_server_info.php?sel=$WSERVER" 
     echo "<td align=center bgcolor=$BCOL>" >> $HTML
     echo -n "<a href='$SRVURL "  >>$HTML
     echo "' title='Click to system information page'><font color=$FCOL>$WSERVER</font></a></td>" >>$HTML

@@ -18,7 +18,7 @@
 #   See the GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License along with this program.
-#   If not, see <http://www.gnu.org/licenses/>.
+#   If not, see <https://www.gnu.org/licenses/>.
 # ==================================================================================================
 # February 2017 - Jacques DUplessis
 # 2016_02_02 osupdate v1.0  O/S update status page - Added options to edit server from that page, 
@@ -284,7 +284,7 @@ function display_data($count, $row) {
 
     
     # The 2nd Parameters is sometime used to specify the type of server received as 1st parameter.
-    # Example: http://sadmin/sadmin/sadm_view_servers.php?selection=host&value=gandalf
+    # Example: https://sadmin/sadmin/sadm_view_servers.php?selection=host&value=gandalf
     if (isset($_GET['value']) && !empty($_GET['value'])) {              # If Second Value Specified
         $VALUE = $_GET['value'];                                        # Save 2nd Parameter Value
         if ($DEBUG) { echo "<br>2nd Parameter received is " . $VALUE; } # Under Debug Show 2nd Parm.

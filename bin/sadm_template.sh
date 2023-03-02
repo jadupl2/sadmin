@@ -19,11 +19,10 @@
 #   See the GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License along with this program.
-#   If not, see <http://www.gnu.org/licenses/>.
+#   If not, see <https://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 #
 # ---CHANGE LOG---
-# 2023_01_09 lib 1.53 Add 'SADM_RCH_DESC', use by o/s update to add hostname in 'rch' description.
 #---------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -33,7 +32,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.53
+# SADMIN CODE SECTION 1.54
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
@@ -58,7 +57,6 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='4.3'                                      # Script version number
 export SADM_PDESC="SADMIN template shell script"           # Script Optional Desc.(Not use if empty)
-export SADM_RCH_DESC=""                                    # Opt. Suffix to ScriptName in rch file
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -253,11 +251,11 @@ function cmd_options()
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
                if [ "$num" = "" ]                            
-                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell

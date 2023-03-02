@@ -8606,9 +8606,9 @@ collect_java ()
   verbose_out "\n== JAVA =="
 
 # show link to IBM's Java page !! >AW064<
-# http://www.ibm.com/developerworks/java/jdk/aix/service.html
-# see http://www.ibm.com/xxxxxxxxxxxx
-  IBMJAVAURL="http://www.ibm.com/developerworks/java/jdk/aix/service.html"
+# https://www.ibm.com/developerworks/java/jdk/aix/service.html
+# see https://www.ibm.com/xxxxxxxxxxxx
+  IBMJAVAURL="https://www.ibm.com/developerworks/java/jdk/aix/service.html"
   AddText "See IBMs Java page: <A HREF=${IBMJAVAURL}> ${IBMJAVAURL} </A>"
 # ToDo 281-000 AddText / AddHTML
 # ToDo 281-000 AddURL()
@@ -12675,16 +12675,16 @@ run_collection ()
 
  echo "\n-=[ Run-Collection ]=-"
 #++ >AW077< start *HTML-NAV*------------------------------------------
-#§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§
-#§§§ HTML-NAV
-#§§§ create list of collectors which will be executed
-#§§§ so we know, which to include in nav
+#ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#ï¿½ï¿½ï¿½ HTML-NAV
+#ï¿½ï¿½ï¿½ create list of collectors which will be executed
+#ï¿½ï¿½ï¿½ so we know, which to include in nav
  collist=""
  if [[ "$COL_SYSTEM" = "yes" ]]   then collist=$collist"SYSTEM "   ; fi; # *col-01*
  if [[ "$COL_KERNEL" = "yes" ]]   then collist=$collist"Kernel "   ; fi; # *col-02*
  if [[ "$COL_HMC" = "yes" ]]      then collist=$collist"HMC "      ; fi; # *col-03*
  if [[ "$COL_FILESYS" = "yes" ]]  then collist=$collist"Filesys "  ; fi; # *col-04*
-#§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§
+#ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 #++ >AW077< end *HTML-NAV*--------------------------------------------
 
 # ToDo 000-000 c2h_USR_00 => ...

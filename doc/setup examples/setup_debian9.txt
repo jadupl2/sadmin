@@ -284,7 +284,7 @@ You need to logout/login before using SADMIN Tools or type the following command
 This will define SADMIN environment variable.
  
 USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
-The Web interface is available at : http://sadmin.maison.ca
+The Web interface is available at : https://sadmin.maison.ca
   - Use it to add, update and delete server in your server farm.
   - View performance graph of your servers up to two years in the past.
   - If you want, you can schedule automatic O/S update of your servers.

@@ -20,7 +20,7 @@
 #   See the GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License along with this program.
-#   If not, see <http://www.gnu.org/licenses/>.
+#   If not, see <https://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
 # 2017_10_27 mon v1.9 Replace PostGres Database with MySQL 

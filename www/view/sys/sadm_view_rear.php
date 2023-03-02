@@ -18,7 +18,7 @@
 #   See the GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License along with this program.
-#   If not, see <http://www.gnu.org/licenses/>.
+#   If not, see <https://www.gnu.org/licenses/>.
 # ==================================================================================================
 #
 # 2019_08_26 backup v1.0 ReaR backup status page - Initial version of ReaR backup Status Page
@@ -34,6 +34,7 @@
 # 2022_09_12 backup v2.0 ReaR backup status page - Show link to error log (if it exist.).
 # 2022_09_12 backup v2.1 ReaR backup status page - Display the first 50 systems instead of 25.
 # 2022_09_20 backup v2.2 ReaR backup status page - Move ReaR supported architecture msg to heading.
+# 2023_02_16 backup v2.3 ReaR backup status page - Revamp of the ReaR backup status page.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -62,7 +63,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "2.2" ;                                           # Current version number
+$WVER               = "2.3" ;                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -96,33 +97,33 @@ function setup_table() {
 
     echo "<thead>\n";
     echo "<tr>\n";
-    echo "<th>Server</th>\n";
-    echo "<th class='dt-head-left'>Description</th>\n";
-    echo "<th class='text-center'>O/S</th>\n";
-    echo "<th class='dt-head-center'>Sched. Active</th>\n";
-    echo "<th class='text-center'>ReaR Ver.</th>\n";
-    echo "<th class='text-center'>Last Execution</th>\n";
+    echo "<th>System</th>\n";
+    #echo "<th class='dt-head-left'>Description</th>\n";
+    #echo "<th class='text-center'>O/S</th>\n";
     echo "<th class='text-center'>Status</th>\n";
+    echo "<th class='dt-head-center'>Schedule</th>\n";
+    echo "<th class='text-center width=30px'>Ver.</th>\n";
+    echo "<th class='text-center'>Last Run</th>\n";
     echo "<th class='text-center'>Duration</th>\n";
     echo "<th class='text-center'>Next Backup</th>\n";
-    echo "<th class='text-center'>Backup Occurrence</th>\n";
-    echo "<th class='text-center'>Log / History</th>\n";
+    echo "<th class='text-center'>Occurrence</th>\n";
+    echo "<th class='text-center'>Log/History</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
 
     echo "<tfoot>\n";
     echo "<tr>\n";
-    echo "<th>Server</th>\n";
-    echo "<th class='dt-head-left'>Description</th>\n";
-    echo "<th class='text-center'>O/S</th>\n";
-    echo "<th class='dt-head-center'>Sched. Active</th>\n";
-    echo "<th class='text-center'>ReaR Ver.</th>\n";
-    echo "<th class='text-center'>Last Execution</th>\n";
+    echo "<th>System</th>\n";
+    #echo "<th class='dt-head-left'>Description</th>\n";
+    #echo "<th class='text-center'>O/S</th>\n";
     echo "<th class='text-center'>Status</th>\n";
+    echo "<th class='dt-head-center'>Schedule</th>\n";
+    echo "<th class='text-center width=30px'>Ver.</th>\n";
+    echo "<th class='text-center'>Last Run</th>\n";
     echo "<th class='text-center'>Duration</th>\n";
     echo "<th class='text-center'>Next Backup</th>\n";
-    echo "<th class='text-center'>Backup Occurrence</th>\n";
-    echo "<th class='text-center'>Log / History</th>\n";
+    echo "<th class='text-center'>Occurrence</th>\n";
+    echo "<th class='text-center'>Log/History</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
     echo "<tbody>\n";
@@ -136,35 +137,71 @@ function setup_table() {
 function display_data($count, $row) {
     global  $URL_HOST_INFO, $URL_VIEW_FILE, $URL_BACKUP, $URL_VIEW_RCH, 
             $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG, $BACKUP_ELOG ;
-    
+
+    $rch_dir  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/rch/" ;   # Set the RCH Directory Path
+    $rch_file = $rch_dir . $row['srv_name'] . "_" . $BACKUP_RCH;        # Set Full PathName of RCH
+
     # ReaR Not Supported on MacOS and ARM system (Raspberry Pi)
     if (($row['srv_arch'] != "x86_64") and ($row['srv_arch'] != "i686")) { return ; } 
     if ($row['srv_ostype'] == "darwin") { return ; }
     
     # Server Name
     echo "<tr>\n";  
-    echo "<td class='dt-center'>";
+    echo "<td class='dt-left'>";
     echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP ."'";
     echo " title='" .$row['srv_osname']. "-" .$row['srv_osversion']." - " ;
     echo $row['srv_ip']  . ", Click to edit the schedule.'>";
-    echo $row['srv_name']  . "</a></td>\n";
+    #echo $row['srv_name']  . "</a></td>\n";
+    echo $row['srv_name'] . "</a>" . " - " . nl2br( $row['srv_desc']) . "</td>\n";
 
     # Server Description
-    echo "<td class='dt-body-left'>" . nl2br( $row['srv_desc']) . "</td>\n";  
+    # echo "<td class='dt-body-left'>" . nl2br( $row['srv_desc']) . "</td>\n";  
     
     # Display Operating System Logo
-    $WOS   = sadm_clean_data($row['srv_osname']);
-    sadm_show_logo($WOS);                                               # Show Distribution Logo
+    #$WOS   = sadm_clean_data($row['srv_osname']);
+    #sadm_show_logo($WOS);                                               # Show Distribution Logo
     
+
+    # Last Backup Status
+    if (! file_exists($rch_file))  {                                    # If RCH File Not Found
+        echo "\n<td class='dt-center'>  </td>";
+    }else{
+        switch ($ccode) {
+            case 0:     #echo "\n<td class='dt-center'>Success</td>";
+                        $ipath='/images/success2.png';
+                        echo "<td class='dt-center'><img src='" . $ipath . "' ";
+                        echo "style='width:32px;height:32px;'>"; 
+                        echo "</a></td>\n";
+                        break;
+            case 1:     #echo "\n<td class='dt-center'>Failed</td>";
+                        $ipath='/images/error.png';
+                        echo "<td class='dt-center'><img src='" . $ipath . "' ";
+                        echo "style='width:32px;height:32px;'></a></td>\n";
+                        break;
+            case 2:     #echo "\n<td class='dt-center'>Running</td>";
+                        $ipath='/images/running2.jpg';
+                        echo "<td class='dt-center'><img src='" . $ipath . "' ";
+                        echo "style='width:32px;height:32px;'></a></td>\n";
+                        break;
+            default:    #echo "\n<td class='dt-center'>" . $ccode . "</td>";
+                        $ipath='/images/question_mark.jpg';
+                        echo "<td class='dt-center'><img src='" . $ipath . "' ";
+                        echo "style='width:32px;height:32px;'></a></td>\n";
+                        break;
+        }   
+    }
+
+
     # Schedule Active or not.
     if ($row['srv_img_backup'] == TRUE ) {                              # If Schedule is activated
-        echo "\n<td class='dt-center'>";
+        echo "\n<td class='dt-center'>Yes</td>";
         #echo "<a href='" .$URL_SERVER. "?selection=all_active'>Active</a></td>";
-        echo "<a href='" .$URL_SERVER. "?selection=all_active'>Yes</a></td>";
+        #echo "Yes</td>";
+        #echo "<a href='" .$URL_SERVER. "?selection=all_active'>Yes</a></td>";
     }else{                                                              # If not Activate
-        echo "\n<td class='dt-center'>";
+        echo "\n<td class='dt-center'>No</td>";
         #echo "<a href='" .$URL_SERVER. "?selection=all_inactive'>Inactive</a></td>";
-        echo "<a href='" .$URL_SERVER. "?selection=all_inactive'>No</a></td>";
+        #echo "<a href='" .$URL_SERVER. "?selection=all_inactive'>No</a></td>";
     }
 
     # ReaR Server Version
@@ -172,8 +209,7 @@ function display_data($count, $row) {
 
     # Last Execution Rear Backup date & time
     echo "<td class='dt-center'>" ;
-    $rch_dir  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/rch/" ;   # Set the RCH Directory Path
-    $rch_file = $rch_dir . $row['srv_name'] . "_" . $BACKUP_RCH;        # Set Full PathName of RCH
+
     if (! file_exists($rch_file))  {                                    # If RCH File Not Found
         echo " ";  
     }else{
@@ -187,21 +223,6 @@ function display_data($count, $row) {
     }
     echo "</td>\n";  
 
-    # Last Backup Status
-    if (! file_exists($rch_file))  {                                    # If RCH File Not Found
-        echo "\n<td class='dt-center'>  </td>";
-    }else{
-        switch ($ccode) {
-            case 0:     echo "\n<td class='dt-center'>Success</td>";
-                        break;
-            case 1:     echo "\n<td class='dt-center'>Failed</td>";
-                        break;
-            case 2:     echo "\n<td class='dt-center'>Running</td>";
-                        break;
-            default:    echo "\n<td class='dt-center'>" . $ccode . "</td>";
-                        break;
-        }   
-    }
 
     # Backup execution time
     if (! file_exists($rch_file))  {                                    # If RCH File Not Found
@@ -283,7 +304,7 @@ function display_data($count, $row) {
 
     # Show ReaR schedule page heading
     $title1="ReaR Backup Status";                                       # Page Title 1
-    $title2="MacOS and ARM systems aren't shown on this page because they are not supported by ReaR";
+    $title2="MacOS and ARM systems aren't shown on this page because they are not supported by <a href='https://relax-and-recover.org'>ReaR</a>";
     if (file_exists(SADM_WWW_DIR . "/view/daily_rear_report.html")) {
         $title2="<a href='" . $URL_REAR_REPORT . "'>View the ReaR Daily Report</a>"; 
     }     

@@ -19,7 +19,7 @@
 #   See the GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License along with this program.
-#   If not, see <http://www.gnu.org/licenses/>.
+#   If not, see <https://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # 2017_01_02 client v1.1 Cosmetic Log Output change
 # 2017_12_28 client v1.2 Adapted to MacOS to show Message non availability of nmon on OSX. 

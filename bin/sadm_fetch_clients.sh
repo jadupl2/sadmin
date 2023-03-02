@@ -1725,11 +1725,11 @@ sadm_send_alert()
             LOGFILE="${aserver}_${SNAME}.log"                           # Assemble log Script Name
             LOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}"     # Add Log Dir. Path 
             URL_VIEW_FILE='/view/log/sadm_view_file.php'                # View File Content URL
-            LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
+            LOGURL="https://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
             ELOGFILE="${aserver}_${SNAME}_e.log"                        # Assemble Error log Name
             ELOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${ELOGFILE}"   # Add Error log Dir. Path 
             if [ -s "$ELOGNAME" ]                                       # If Error log not empty
-                then ELOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${ELOGNAME}" 
+                then ELOGURL="https://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${ELOGNAME}" 
                      body=$(printf "${body}\nError log :\n${ELOGURL}\nView full log :\n${LOGURL}") 
                 else body=$(printf "${body}\nView full log :\n${LOGURL}") 
             fi 

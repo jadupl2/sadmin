@@ -18,7 +18,7 @@
 #   See the GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License along with this program.
-#   If not, see <http://www.gnu.org/licenses/>.
+#   If not, see <https://www.gnu.org/licenses/>.
 # ==================================================================================================
 #
 # 2019_07_06 web v1.0 Backup status page - Initial version of backup Status Page

@@ -342,7 +342,7 @@ rch2html()
         echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>" >> $HTML_FILE
         LOGFILE="${WSERVER}_${WSCRIPT}.log"                             # Assemble log Script Name
         LOGNAME="${SADM_WWW_DAT_DIR}/${WSERVER}/log/${LOGFILE}"         # Add Dir. Path to Name
-        LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" # Url to View Log
+        LOGURL="https://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" # Url to View Log
         if [ -r "$LOGNAME" ]                                            # If log is Readable
             then echo "<a href='$LOGURL' "            >> $HTML_FILE     # Link to Access the Log
                  echo "title='View Script Log File'>" >> $HTML_FILE     # ToolTip to Show User

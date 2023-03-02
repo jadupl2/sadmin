@@ -24,7 +24,7 @@
 #   See the GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License along with this program.
-#   If not, see <http://www.gnu.org/licenses/>.
+#   If not, see <https://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
 #  Version 2.0 - October 2017 
@@ -246,7 +246,7 @@ function display_data($count,$con,$row) {
     
 
     # 2nd Parameters is sometime used to specify the type of server received as 1st parameter.
-    # Example: http://sadmin/sadmin/sadm_view_servers.php?selection=os&value=centos
+    # Example: https://sadmin/sadmin/sadm_view_servers.php?selection=os&value=centos
     #if (isset($_GET['value']) && !empty($_GET['value'])) {             # If Second Value Specified
     if (isset($_GET['value']))  {              # If Second Value Specified
         if (!empty($_GET['value'])) {
