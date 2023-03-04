@@ -60,6 +60,7 @@
 # 2022_07_09 osupdate v4.9 Added more verbosity to screen and log
 # 2022_08_25 osupdate v5.0 Allow to run multiple instance of this script.
 # 2023_01_06 osupdate v5.1 Add remote host name being updated in RCH file.
+# 2023_03_04 osupdate v5.2 Last O/S update date & status was no longer updated in SADMIN database.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -106,7 +107,7 @@ export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with ex
 # ---
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='5.1'                                      # Script version number
+export SADM_VER='5.2'                                      # Script version number
 export SADM_PDESC="Run the O/S update script on the selected remote system."
 export SADM_RCH_DESC=""                                    # String that become desc in rch, if used
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
@@ -314,13 +315,15 @@ rcmd_osupdate()
     sadm_write_log " "
     if [ $RC -eq 0 ]
         then sadm_write_log "[ OK ] O/S update is terminated with success on $fqdn_server"
+             update_server_db "${server_name}" "S"                      # Update Status Success 
         else sadm_write_log "[ ERROR ] O/S update terminated with error on $fqdn_server"
+             update_server_db "${server_name}" "F"                       # Update Status False in DB
     fi 
 
     # After the O/S update is terminated, a reboot will be done on some occasion.
-    # If user requested a reboot after each update, see reboot option when scheduling the O/S Update
-    # We need to wait a moment to give time for the selected system to reboot and be available again
-    # We will sleep 480 seconds (8 Min.) to give system time to restart and start it's app.
+    # If user requested a reboot after each update (see reboot option when scheduling O/S Update)
+    # We need to wait a moment to give time for the selected system to reboot and be available again.
+    # We will sleep 480 seconds (8 Min.) to give system time to restart and start it's apps.
     if [ "$WREBOOT" != "" ]                                         # if Reboot requested
         then sadm_write_log "System $fqdn_server is now rebooting."
              sadm_write_log "We will sleep $REBOOT_TIME seconds, to give time for '${server_name}' to become available."
@@ -329,15 +332,7 @@ rcmd_osupdate()
     fi 
 
 
-    # Ignore if return an error.
-    # Cause if script failed on remote, an alert has been generated for it, 
-    # and we want only one alert for a failed update.
-    #if [ $RC -ne 0 ]                                                    # Update went Successfully?
-    #   then sadm_write "[ ERROR ] O/S Update completed with error on '${server_name}'.\n"
-    #        update_server_db "${server_name}" "F"                       # Update Status False in DB
-    #   else sadm_write "[ OK ] O/S Update in now completed successfully on '${server_name}'.\n"
-    #        update_server_db "${server_name}" "S"                      # Update Status Success 
-    #fi
+
     sadm_write_log " "
     sadm_write_log "O/S Update is now completed on '${server_name}'."
     sadm_unlock_system "${SYSTEM_NAME}"                                  # Go remove the lock file
