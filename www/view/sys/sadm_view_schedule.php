@@ -280,7 +280,7 @@ function display_data($count, $row) {
     }else{
         $SELECTION = 'all_servers';                                     # No Param.= "all_servers"
     }
-    if ($DEBUG) { echo "<br>1st Parameter Received is " . $SELECTION; } # Under Debug Display Param.
+    if ($DEBUG) { echo "<br>1st Parameter Received is '" . $SELECTION . "'"; } # Under Debug Display Param.
 
     
     # The 2nd Parameters is sometime used to specify the type of server received as 1st parameter.
