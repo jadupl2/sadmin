@@ -194,7 +194,8 @@
 # 2023_01_06 lib v4.15 Can now add a suffix to script name in RCH file (Use var. SADM_RCH_DESC).
 # 2023_01_27 lib v4.16 Optimize the start function.
 #@2023_02_14 lib v4.17 Remove the usage of SADM_RCH_DESC.
-#@2023_03_13 lib v4.18 sadm_start() now clear error log '*_e.log' even when 'SADM_LOG_APPEND="Y"'
+#@2023_03_03 lib v4.18 sadm_start() now clear error log '*_e.log' even when 'SADM_LOG_APPEND="Y"'
+#@2023_03_04 lib v4.19 Lock file content & owner updated. 
 #===================================================================================================
 
 
@@ -208,7 +209,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.18"                                              # This Library Version
+export SADM_LIB_VER="4.19"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -2609,20 +2610,20 @@ sadm_lock_system()
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
     if [ -r "$LOCK_FILE" ]                                              # Lock file already exist ?
         then sadm_write_log "System '${SNAME}' is already lock."
-             echo "$SADM_INST - $(date +%Y%m%d%H%M%S)" > ${LOCK_FILE}   # Update TimeStamp & Content
+             echo "$SADM_INST $(date +%Y_%m_%d_%H_%M_%S)" >${LOCK_FILE} # Update TimeStamp & Content
              if [ $? -eq 0 ]                                            # no error while updating
-               then sadm_write_log "Lock file time stamp updated."       # Advise user
+               then sadm_write_log "Lock file time stamp updated."      # Advise user
                else sadm_write_log "[ ERROR ] Updating '${SNAME}' lock file '${LOCK_FILE}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
-             
-        else echo "$SADM_INST - $(date +%Y%m%d%H%M%S)" > ${LOCK_FILE}   # Create Lock File 
+        else echo "$SADM_INST $(date +%Y_%m_%d_%H_%M_%S)" >${LOCK_FILE} # Create Lock File 
              if [ $? -eq 0 ]                                            # Lock file created [ OK ]
                then sadm_write_log "[ OK ] System '${SNAME}' now lock."  
                else sadm_write_log "[ ERROR ] while locking the system '${SNAME}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
     fi
+    [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${LOCK_FILE} # Change Log Owner
     return $RC                                                          # Return to caller 
 } 
 
