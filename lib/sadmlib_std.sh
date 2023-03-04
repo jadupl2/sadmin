@@ -194,6 +194,7 @@
 # 2023_01_06 lib v4.15 Can now add a suffix to script name in RCH file (Use var. SADM_RCH_DESC).
 # 2023_01_27 lib v4.16 Optimize the start function.
 #@2023_02_14 lib v4.17 Remove the usage of SADM_RCH_DESC.
+#@2023_03_13 lib v4.18 sadm_start() now clear error log '*_e.log' even when 'SADM_LOG_APPEND="Y"'
 #===================================================================================================
 
 
@@ -207,7 +208,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.17"                                              # This Library Version
+export SADM_LIB_VER="4.18"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -2126,9 +2127,9 @@ sadm_start() {
 
     # If new log is desired, remove old log and start new one.
     if [ "$SADM_LOG_APPEND" = "N" ]                                     # New Log, No append to log
-        then if [ -e "$SADM_LOG" ]  ; then rm -f $SADM_LOG  > /dev/null 2>&1 ; fi # Remove old log
-             if [ -e "$SADM_ELOG" ] ; then rm -f $SADM_ELOG > /dev/null 2>&1 ; fi # Remove old elog
+        then if [ -e "$SADM_LOG" ] ; then rm -f $SADM_LOG >/dev/null 2>&1 ;fi # Remove old log
     fi
+    if [ -e "$SADM_ELOG" ] ; then rm -f $SADM_ELOG > /dev/null 2>&1 ; fi # Remove old elog
 
     # Make sure log & error log exist and have proper permission
     [ ! -e "$SADM_LOG"  ] && touch $SADM_LOG                            # If Log File don't exist
