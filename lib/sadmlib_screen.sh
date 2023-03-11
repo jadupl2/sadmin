@@ -20,6 +20,7 @@
 # 2019_11_18 lib v2.1 Bug corrections and change heading colors.
 # 2019_11_22 lib v2.2 Change Menu color to fit with white and black background color.
 # 2021_05_10 lib v2.3 Version no. in 'sadm_display_heading' now align with first line.
+# 2023_03_11 lib v2.4 Fix bug concerning rpm "What package provide this file".
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
@@ -30,7 +31,7 @@
 # L O C A L    V A R I A B L E S    
 # --------------------------------------------------------------------------------------------------
 #
-export lib_screen_ver=2.3                                               # This Library Version
+export lib_screen_ver=2.4                                               # This Library Version
 export MAXCOL=80                                                        # Maximum NB Char. on a line
 
 
@@ -483,7 +484,7 @@ sadm_accept_data()
 
         # Test if length of data exceed what was requested
         if [ ${#WDATA} -gt ${WLEN} ]                                    # Data Entered Exceed Max.
-           then mess "A maximum of ${WLEN} characters is accepted for this field"
+           then sadm_mess "A maximum of ${WLEN} characters is accepted for this field"
                 continue                                                # Restart Loop
         fi
 
@@ -491,7 +492,7 @@ sadm_accept_data()
         if [ "$WTYPE" = "N" ]                                           # If Numeric was choosen
            then echo $WDATA | grep [^0-9] > /dev/null 2>&1              # Grep for Number
                 if [ "$?" -eq "0" ]
-                   then mess "Sorry, wanted a number"                   # Error Msg on Line 22
+                   then sadm_mess "Sorry, wanted a number"                   # Error Msg on Line 22
                    else break                                           # Ok we are finish
                 fi
            else break                                                   # If Alpha - were finish
