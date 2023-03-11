@@ -222,6 +222,8 @@ rmcd_start()
                    then ERROR_COUNT=$(($ERROR_COUNT+1))                 # Increment Error Counter
                         sadm_writelog "${SADM_ERROR} Aborting process for '${SERVER}'."
                         return 1                                        # Return Error to caller 
+                   else sadm_write_log "Show lock file" 
+                        ls -l $SADMIN/*.lock
                 fi
         fi
         
