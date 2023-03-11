@@ -30,6 +30,7 @@
 # 2021_08_17 lib v3.9 Added "SADM_MONITOR_UPDATE_INTERVAL" 
 # 2021_09_15 lib v3.10 Load new Var. SADM_MONITOR_RECENT_COUNT,SADM_MONITOR_RECENT_EXCLUDE
 # 2022_07_26 lib v3.11 Set the TimeZone to America/Toronto
+# 2023_03_11 lib v3.12 Load Rear backup diff & Interval at start, used on Rear Backup status page.
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
@@ -37,7 +38,7 @@ $DEBUG=False ;
 
 
     # Set SADMIN PHP Library Version NUmber
-    define("SADM_PHP_LIBVER","3.11");
+    define("SADM_PHP_LIBVER","3.12");
 
     # Setting the HOSTNAME Variable
     list($HOSTNAME) = explode ('.', gethostname());                     # HOSTNAME without domain
@@ -109,7 +110,7 @@ define("SADM_WWW_ARC_DIR"  , SADM_WWW_DAT_DIR  . "/archive");           # Web Se
 define("SADM_WWW_LIB_DIR"  , SADM_WWW_DIR  . "/lib");                   # Web Server Library Dir
 define("SADM_WWW_RRD_DIR"  , SADM_WWW_DIR  . "/rrd");                   # Web servers RRD Dir
 define("SADM_WWW_TMP_DIR"  , SADM_WWW_DIR  . "/tmp");                   # Web Server Temp Dir
-define("SADM_WWW_NET_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/net");    # Web net dir
+define("SADM_WWW_NET_DIR"  , SADM_WWW_DAT_DIR . "/" .$HOSTNAME. "/net");    # Web net dir
 #define("SADM_WWW_TMP_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/tmp");    # Web TMP Dir
 
 
@@ -196,6 +197,8 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_REAR_NFS_SERVER")        { define("SADM_REAR_NFS_SERVER"        , trim($fvalue));}
           if (trim($fname) == "SADM_REAR_NFS_MOUNT_POINT")   { define("SADM_REAR_NFS_MOUNT_POINT"   , trim($fvalue));}
           if (trim($fname) == "SADM_REAR_BACKUP_TO_KEEP")    { define("SADM_REAR_BACKUP_TO_KEEP"    , trim($fvalue));}
+          if (trim($fname) == "SADM_REAR_BACKUP_DIF")        { define("SADM_REAR_BACKUP_DIF"        , trim($fvalue));}
+          if (trim($fname) == "SADM_REAR_BACKUP_INTERVAL")   { define("SADM_REAR_BACKUP_INTERVAL"   , trim($fvalue));}
           if (trim($fname) == "SADM_MONITOR_UPDATE_INTERVAL") {define("SADM_MONITOR_UPDATE_INTERVAL", trim($fvalue));}
           if (trim($fname) == "SADM_MONITOR_RECENT_COUNT")   { define("SADM_MONITOR_RECENT_COUNT"   , trim($fvalue));}
           if (trim($fname) == "SADM_MONITOR_RECENT_EXCLUDE") { define("SADM_MONITOR_RECENT_EXCLUDE" , trim($fvalue));}
