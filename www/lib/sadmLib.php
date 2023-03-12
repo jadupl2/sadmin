@@ -566,7 +566,7 @@ function sadm_return_logo($WOS) {
     
     switch (strtoupper($WOS)) {
         case 'REDHAT' :
-            $iurl='https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux' ;
+            $iurl='https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9' ;
             $ipath='/images/logo_redhat.png';
             break;
         case 'FEDORA' :
