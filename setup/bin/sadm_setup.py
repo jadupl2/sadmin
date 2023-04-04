@@ -109,6 +109,7 @@
 # 2022_07_02 install v3.78 Fix input problem related to smtp server data.
 # 2022_07_19 install v3.79 Update of the commands requirements.
 # 2023_02_08 install v3.80 Default smtp mail server is now 'smtp.gmail.com' and hide smtp password.
+# 2023_04_04 install v3.81 Access to sadmin web interface is now done with https instead of http.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -125,7 +126,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.80"                                            # Setup Version Number
+sver                = "3.81"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -229,7 +230,9 @@ req_client = {
 req_server = {}                                                         # Require Packages Dict.
 req_server = { 
     'httpd'         :{ 'rpm':'httpd httpd-tools',                              'rrepo':'base',
-                       'deb':'apache2 apache2-utils libapache2-mod-php',       'drepo':'base'},
+                       'deb':'apache2 apache2-utils libapache2-mod-php ',      'drepo':'base'},
+    'openssl'       :{ 'rpm':'openssl mod_ssl',                                'rrepo':'base',
+                       'deb':'openssl',                                        'drepo':'base'},
     'rrdtool'       :{ 'rpm':'rrdtool',                                        'rrepo':'base',
                        'deb':'rrdtool',                                        'drepo':'base'},
     'fping'         :{ 'rpm':'fping',                                          'rrepo':'epel',
@@ -1413,13 +1416,52 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     # Set the name of Web Server Service depending on Linux O/S
     sservice = "httpd"
     if (spacktype == "deb" ) : sservice = "apache2" 
-    open("/var/log/%s/sadmin_error.log"  % (sservice),'a').close()      # Touch Apache SADMIN log
-    open("/var/log/%s/sadmin_access.log" % (sservice),'a').close()      # Touch Apache SADMIN log
-    
-    # Start Web Server
+    open("/var/log/%s/sadmin_error.log"  % (sservice),'a').close()      # Init Apache SADMIN err log
+    open("/var/log/%s/sadmin_access.log" % (sservice),'a').close()      # Init Apache SADMIN log
+
+# Set Path and Certicate related files.
+    if (spacktype == "deb" ) :
+        SSL_KEY_DIR = '/etc/ssl/private'
+        SSL_KEY     = SSL_KEY_DIR + "/sadmin.key"
+        SSL_CRT_DIR = '/etc/ssl/certs'
+        SSL_CRT     = SSL_CRT_DIR + "/sadmin.crt"
+        if not os.path.exists(SSL_KEY_DIR): os.makedirs(SSL_KEY_DIR)
+        if not os.path.exists(SSL_CRT_DIR): os.makedirs(SSL_CRT_DIR)
+    else:
+        SSL_KEY_DIR = '/etc/pki/tls/private'
+        SSL_KEY     = SSL_KEY_DIR + "/sadmin.key"
+        SSL_CRT_DIR = '/etc/pki/tls/certs' 
+        SSL_CRT     = SSL_CRT_DIR + "/sadmin.crt"
+        if not os.path.exists(SSL_KEY_DIR): os.makedirs(SSL_KEY_DIR)
+        if not os.path.exists(SSL_CRT_DIR): os.makedirs(SSL_CRT_DIR)
+
+# Generate https certificate
+    if not os.path.exists(SSL_KEY) : 
+        cmd1 = "openssl req -newkey rsa:2048 -nodes " 
+        cmd2 = "-keyout %s -x509 -days 3650 -out %s " % (SSL_KEY,SSL_CRT)
+        cmd3 = "-subj '/C=CA/ST=Quebec/L=Montreal/O=Personnal Home/OU=IT/CN=sadmin.%s'" % (sdomain)
+        cmd  = "%s%s%s" % (cmd1,cmd2,cmd3)
+        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute O/S Command
+        if (ccode != 0):                                                    # If problem creating user
+            writelog ("[ ERROR %d ] Generation sadmin SSL certificate.\n%s" % (ccode,cmd)) 
+            writelog ("Standard out is %s" % (cstdout)) 
+            writelog ("Standard error is %s" % (cstderr))
+    os.chmod(SSL_KEY, 0o640) 
+    if (spacktype == "deb" ) : 
+        stat_info = os.stat(SSL_KEY_DIR)
+        xuid = stat_info.st_uid
+        xgid = stat_info.st_gid
+        os.chown(SSL_KEY,xuid,xgid)
+
+# Verify now if the certificate files exist
+    if not os.path.exists(SSL_KEY) or  not os.path.exists(SSL_CRT) :
+        writelog ("[ ERROR ] Certificate file %s and %s are missing." % (SSL_KEY,SSL_CRT)) 
+        writelog ("The Web service may not start. ")
+
+# Start Web Server
     cmd = "systemctl restart %s" % (sservice)
     writelog ("  - Making sure Web Server is started - %s" % (cmd))
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Load DB
     if (ccode != 0):                                                    # If problem creating user
         writelog ("Problem Restarting Web Server - Error %d \n%s" % (ccode,cmd)) # Show Return Code No
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
@@ -1427,7 +1469,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
 
     # Get the httpd process owner
     time.sleep( 4 )                                                     # Wait Web Server to Start
-    cmd = "ps -ef | grep -Ev 'root|grep' | grep '%s' | awk '{ print $1 }' | sort | uniq" % (sservice)
+    cmd = "ps -ef | grep -Ev 'root| grep' |grep '%s' | awk '{ print $1 }' |sort |uniq" % (sservice)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute O/S Command
     apache_user = cstdout                                               # Get Apache Process Usr
     if (DEBUG):                                                         # If Debug Activated
@@ -1460,6 +1502,8 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         update_apache_config(sroot,apache2_file,"{EMAIL}",semail)       # Set WWW Admin Email
         update_apache_config(sroot,apache2_file,"{DOMAIN}",sdomain)     # Set WWW sadmin.{Domain}
         update_apache_config(sroot,apache2_file,"{SERVICE}",sservice)   # Set WWW sadmin log dir
+        update_apache_config(sroot,apache2_file,"{SSL_CRT}",scert)      # Set Certificate file
+        update_apache_config(sroot,apache2_file,"{SSL_KEY}",skey)       # Set Certificate Key File
         # Disable Default apache2 configuration
         cmd = "a2dissite 000-default.conf"                              # Disable default Web Site 
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute Command
