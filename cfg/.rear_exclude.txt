@@ -1,24 +1,24 @@
-# SADMIN ReaR template exclude options v1.5
-
-# On system using BTRFS filesystem (Fedora, Suse, ... ), 
-# separated filesystems must be explicitly specified.
-# BACKUP_PROG_INCLUDE=( ${BACKUP_PROG_EXCLUDE[@]} /home )
+# SADMIN ReaR template exclude options v2.0
 
 # Only include volume groups (opposite of EXCLUDE_VG)
-# ONLY_INCLUDE_VG=( "rootvg" "vg01" ) 
+# ONLY_INCLUDE_VG=( 'rootvg' ) 
 
 # Exclude Volume Group (and filesystem they include)
 # EXCLUDE_VG & EXCLUDE_MOUNTPOINTS automatically populated
-# EXCLUDE_VG=( datavg ) 
+# EXCLUDE_VG=( 'datavg' ) 
 
 # Exclude filesystems by specifying their mount points
 # Added automatically to the $BACKUP_PROG_EXCLUDE array 
-# EXCLUDE_MOUNTPOINTS=( /data )
+# EXCLUDE_MOUNTPOINTS=( '/data' )
+
+# On system using BTRFS filesystem (Fedora, Suse, ... ), 
+# separated filesystems must be explicitly specified.
+# BACKUP_PROG_INCLUDE=( "${BACKUP_PROG_INCLUDE[@]}" '/home' )
 
 # An array of strings written to backup-exclude.txt
 # file used in 'tar -X backup-exclude.txt'.
 # Proper quoting of BACKUP_PROG_EXCLUDE array is crucial.
-# BACKUP_PROG_EXCLUDE=( ${BACKUP_PROG_EXCLUDE[@]} '/tmp/*' '$HOME/.cache' )
+# BACKUP_PROG_EXCLUDE=( "${BACKUP_PROG_EXCLUDE[@]}" '/tmp/*' '/proc/*' '/sys/*' '/dev/*' )
 
 # Exclude components from being backed up
 # Recreation information is active
@@ -27,4 +27,3 @@ EXCLUDE_BACKUP=( ${EXCLUDE_BACKUP[@]} '/tmp' )
 # Exclude components during the restore phase.
 # Only used to exclude files from the restore. 
 # EXCLUDE_RESTORE=()
-
