@@ -37,7 +37,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
 
-# MAKE SURE ENVIRONMENT VARIABLE 'SADMIN' IS DEFINED.
+# Make Sure Environment Variable 'SADMIN' Is Defined.
 if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # SADMIN defined? Libr.exist
     then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
          if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]     # Still not define = Error
