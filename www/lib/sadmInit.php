@@ -188,6 +188,7 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_YEARLY_BACKUP_MONTH")    { define("SADM_YEARLY_BACKUP_MONTH"    , trim($fvalue));}
           if (trim($fname) == "SADM_YEARLY_BACKUP_DATE")     { define("SADM_YEARLY_BACKUP_DATE"     , trim($fvalue));}
           if (trim($fname) == "SADM_BACKUP_DIF")             { define("SADM_BACKUP_DIF"             , trim($fvalue));}
+          if (trim($fname) == "SADM_BACKUP_INTERVAL")        { define("SADM_BACKUP_INTERVAL"        , trim($fvalue));}
           if (trim($fname) == "SADM_MKSYSB_NFS_SERVER")      { define("SADM_MKSYSB_NFS_SERVER"      , trim($fvalue));}
           if (trim($fname) == "SADM_MKSYSB_NFS_MOUNT_POINT") { define("SADM_MKSYSB_NFS_MOUNT_POINT" , trim($fvalue));}
           if (trim($fname) == "SADM_MKSYSB_NFS_TO_KEEP")     { define("SADM_MKSYSB_NFS_TO_KEEP"     , trim($fvalue));}
@@ -203,9 +204,9 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_MONITOR_RECENT_COUNT")   { define("SADM_MONITOR_RECENT_COUNT"   , trim($fvalue));}
           if (trim($fname) == "SADM_MONITOR_RECENT_EXCLUDE") { define("SADM_MONITOR_RECENT_EXCLUDE" , trim($fvalue));}
     }
-    if ( ! defined(SADM_MONITOR_RECENT_COUNT))    {define("SADM_MONITOR_RECENT_COUNT" , 10);}
-    if ( ! defined(SADM_MONITOR_UPDATE_INTERVAL)) {define("SADM_MONITOR_UPDATE_INTERVAL", 60);}
-    if ( ! defined(SADM_MONITOR_RECENT_EXCLUDE))  {define("SADM_MONITOR_RECENT_EXCLUDE", "sadm_nmon_watcher");}
+    if (! defined('SADM_MONITOR_RECENT_COUNT'))    {define("SADM_MONITOR_RECENT_COUNT" , 10);}
+    if (! defined('SADM_MONITOR_UPDATE_INTERVAL')) {define("SADM_MONITOR_UPDATE_INTERVAL", 60);}
+    if (! defined('SADM_MONITOR_RECENT_EXCLUDE'))  {define("SADM_MONITOR_RECENT_EXCLUDE", "sadm_nmon_watcher");}
     define ("SADM_RRDTOOL" , '/usr/bin/rrdtool') ;
     fclose($handle);
 } else {
