@@ -10,9 +10,9 @@
     <meta name="author"                 content="Jacques Duplessis (sadmlinux@gmail.com)">
     <meta name="generator"              content="sadmin"/>
 
-    <script type="text/javascript"      charset="utf8" 	    src="/js/jquery.min.js"></script>
-    <script type="text/javascript"      charset="utf8" 	    src="/js/jquery.dataTables.min.js"></script>
-    <!-- <script type="text/javascript" charset="utf8" 	    src="/js/timepicker.min.js"></script> -->
+    <script type="text/javascript"      charset="utf8"      src="/js/jquery.min.js"></script>
+    <script type="text/javascript"      charset="utf8"      src="/js/jquery.dataTables.min.js"></script>
+    <!-- <script type="text/javascript" charset="utf8"      src="/js/timepicker.min.js"></script> -->
 
     <link rel="icon" 		            type="image/x-icon" href="/images/favicon.ico" />
     <link rel="stylesheet" 	            type="text/css"     href="/css/jquery.dataTables.min.css"/>
