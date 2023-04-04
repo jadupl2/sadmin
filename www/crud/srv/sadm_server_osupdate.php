@@ -422,7 +422,7 @@ function display_osschedule($con,$wrow,$mode) {
             $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
             sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4); # Display Msg. Box for User
         }else{                                                          # Update done with success
-            $err_msg = "Server '" . $_POST['scr_name'] . "' updated";   # Advise user of success Msg
+            $err_msg = "Server '" . $_POST['server_key'] . "' updated";   # Advise user of success Msg
             if ($DEBUG) { 
                 $err_msg = $err_msg ."\nUpdate SQL Command = ". $sql ;  # Include SQL Stat. in Mess.
                 sadm_alert ($err_msg) ;                                 # Msg. Error Box for User
