@@ -139,8 +139,8 @@ function display_data($con,$row) {
         echo "\n<td style='text-align: center'>No</td>";                # Display No in cell
     }
 
-    # CATEGORY STATUS (ACTIVE OR INACTIVE)
-    if ($row['cat_active'] == TRUE ) {                                  # Is Group Active
+    # GROUP STATUS (ACTIVE OR INACTIVE)
+    if ($row['grp_active'] == TRUE ) {                                  # Is Group Active
         echo "\n<td style='text-align: center'>Active</td>";            # If so display Active
     }else{                                                              # If not Activate
         echo "\n<td style='text-align: center'>Inactive</td>";          # Display Inactive in Cell
