@@ -441,7 +441,7 @@ function display_right_side($con,$wrow,$mode) {
 #===================================================================================================
 # Form is submitted - Process the Backup of the selected row
 if (isset($_POST['submitted'])) {
-    if ($DEBUG) { echo "<br>Submitted for " . $_POST['scr_name'];}  # Debug Info Start Submit
+    if ($DEBUG) { echo "<br>Submitted for " . $_POST['server_key'];}  # Debug Info Start Submit
     foreach($_POST AS $key => $value) { $_POST[$key] = $value; }    # Fill in Post Array
     
     # Construct SQL to Update row
@@ -515,7 +515,7 @@ if (isset($_POST['submitted'])) {
         $err_msg4 = $err_line . " in " . basename(__FILE__);            # Insert Filename in Mess.
         sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4);     # Display Msg. Box for User
         }else{                                                          # Update done with success
-            $err_msg = "Server '" .$_POST['scr_name']. "' updated";     # Advise user of success Msg
+            $err_msg = "Server '" .$_POST['server_key']. "' updated";
             if ($DEBUG) {
                 $err_msg = $err_msg ."\nUpdate SQL Command = ". $sql ;  # Include SQL Stat. in Mess.
                 sadm_alert ($err_msg) ;                                 # Msg. Error Box for User
