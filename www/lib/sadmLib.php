@@ -161,7 +161,8 @@ function netinfo ($ip_address,$ip_nmask) {
 # ==================================================================================================
 function get_alert_group_data ($calert) 
 {
-
+    global $DEBUG ;
+    
     # If 'default' alert group is used, get the real effective alert group name.
     if ($calert == "default") {                                         # If Alert Group is default
         $CMD="grep -i \"^default\" " . SADM_ALERT_FILE . " |awk '{print$3}' |tr -d ' '";
