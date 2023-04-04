@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-# SADMIN Service Definition V2.2 (Updated August 2019)
+# SADMIN Service Definition V2.3 (Updated March 2023)
 # If you modify this file, Run these commands to make your change effective
 #   Enter   'systemctl disable sadmin.service' 
 #           'systemctl enable  sadmin.service'
@@ -18,8 +18,8 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash -a -c 'source /etc/profile.d/sadmin.sh && exec $SADMIN/sys/sadm_startup.sh'
-ExecStop=/bin/bash  -a -c 'source /etc/profile.d/sadmin.sh && exec $SADMIN/sys/sadm_shutdown.sh'
+ExecStart=/bin/bash -a -c 'source /etc/environment && exec $SADMIN/sys/sadm_startup.sh'
+ExecStop=/bin/bash  -a -c 'source /etc/environment && exec $SADMIN/sys/sadm_shutdown.sh'
 RemainAfterExit=yes
 
 [Install]
