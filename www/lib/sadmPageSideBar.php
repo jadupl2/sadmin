@@ -57,7 +57,7 @@ echo "\n\n<div class='SideBar'>";
 #                                      GLOBAL Variables
 #===================================================================================================
 #
-$DEBUG = True ;                                                         # Debug Activated True/False
+$DEBUG = False;                                                         # Debug Activated True/False
 $SVER  = "3.0";                                                         # Current version number
 $URL_SERVER    = '/view/srv/sadm_view_servers.php';                     # Show Servers List URL
 $URL_OSUPDATE  = "/view/sys/sadm_view_schedule.php";                    # View O/S Update Status URL 
@@ -79,6 +79,8 @@ $URL_VIEW_REAR = "/view/sys/sadm_view_rear.php";                        # Rear B
 // ================================================================================================
 function build_sidebar_scripts_info()
 {
+    global $DEBUG; 
+
     #$DEBUG = False;                                                    # Activate/Deactivate Debug
     $count = 0;                                                         # Working Counter
     $script_array = [];                                                 # Define an Empty Array
@@ -93,7 +95,7 @@ function build_sidebar_scripts_info()
 
     # Create unique filename that will contains all servers *.rch filename
     $tmp_rch = tempnam($_SERVER['DOCUMENT_ROOT'] . "/tmp/", 'ref_rch_file_'); # Create unique file
-    chown ("$tmp_rch",SADM_GROUP);
+    #chown ("$tmp_rch",SADM_GROUP);
     chmod ("$tmp_rch",0664);
     if ($DEBUG) { echo "<br>Tmp filename : " . $tmp_rch ; }             # Show unique filename
 
@@ -123,7 +125,7 @@ function build_sidebar_scripts_info()
                 #echo "<br>A3C " . $num_tags . " Fields ";
                 if ($num_tags != 10) { continue ; }                     # Not 10 fields=Invalid Line
                 list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode) = explode(" ",$line_array[$last_index], 10);
-                $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdte2 .",". $ctime2 .",". $celapsed .",". $cname .",". $calert .",". $ctype . "," . trim($ccode) .",". basename($wfile) ."\n";
+                $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". $calert .",". $ctype . "," . trim($ccode) .",". basename($wfile) ."\n";
                 $count+=1;
                 $akey = $cdate1 ."_". $ctime1 ."_". basename($wfile);   # Key = Date+Time+FileName
                 if (array_key_exists("$akey",$script_array)) {          # If Key already exist
