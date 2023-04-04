@@ -108,11 +108,10 @@ function display_heading() {
 #  D I S P L A Y    R C H   (WFILE)   F O R    T H E   S E L E C T E D   H O S T
 # Parameters received : 
 #      1- For the received host ($WHOST) 
-#      2- Host Description is also received (WDESC)
-#      3- The Sorted and Purge RCH File Name (WFILE) file to display 
-#      4- The RCH File Name (WNAME)
+#      2- The Sorted and Purge RCH File Name (WFILE) file to display 
+#      3- The RCH File Name (WNAME)
 # =================================================================================================
-function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
+function display_rch_file ($WHOST,$WFILE,$WNAME) {
     global $URL_VIEW_FILE ;
     $count=0; $ddate = 0 ;                                              # Reset Counter & Var.
 
@@ -240,11 +239,9 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
             $row = mysqli_fetch_assoc($result);                         # Read the Associated row
         }
         $row = mysqli_fetch_assoc($result);                             # Get Column Row Array 
-        if ($row = FALSE) {                                             # If Now row Array
+        if ($row = false) {                                             # If Now row Array
             $msg = "Host $HOSTNAME is not a valid host";                 # Error Message to user
             sadm_fatal_error($msg);                                     # Display Error & Go Back
-        }else{
-            $HOSTDESC   = $row['srv_desc'];                             # Save Host Description
         }
     }
 
@@ -287,7 +284,7 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
     display_lib_heading("NotHome","[R]esult [C]ode [H]istory Viewer",$RCHFILE,$SVER);      
     display_heading();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
-    display_rch_file ($HOSTNAME, $HOSTDESC, $csv_sorted, $RCV_FILENAME);# Go Display RCH File
+    display_rch_file ($HOSTNAME, $csv_sorted, $RCV_FILENAME);# Go Display RCH File
     if ($DEBUG) { echo "<br>Final File " . $csv_sorted ; }              # Name of filename sorted
     #unlink($csv_sorted);                                                # Delete Tmp file Sorted
     

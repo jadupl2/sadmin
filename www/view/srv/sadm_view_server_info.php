@@ -439,7 +439,7 @@ function display_right_side ($wrow)
     # Server Maintenance Mode
     echo "\n\n<div class='server_right_label'>Maint. Mode</div>";
     echo "\n<div class='server_right_data'>";
-    if ($wrow['srv_maintenance'] == True)  { echo "Active" ; }else{ echo "Inactive" ; }
+    if ($wrow['srv_maint'] == True)  { echo "Active" ; }else{ echo "Inactive" ; }
     echo "</div>";
 
     # Date et Heure du debut de la maintenance
@@ -539,9 +539,9 @@ function display_top_buttons ($wrow) {
     $wname = "/view/log/sadm_view_file.php";                            # URL that display File Recv
     $fname = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . "_diskinfo.txt";
     if (file_exists($fname)) {                                          # If FileName Received exist
-        $BUTTON_URL = "${wname}?filename=${fname} ";                    # Build URL to file
+        $BUTTON_URL = $wname . "?filename=" . $fname;                     # Build URL to file
         echo "\n<a href='" . $BUTTON_URL . "'>";                        # URL to See information
-        echo "<span ' class='button' data-toggle='tooltip' title='Disk information about $wserver'>";  
+        echo "<span ' class='button' data-toggle='tooltip' title='Disk information about " .$wrow['srv_name']. "'>";  
         echo "<img src='/images/disk00.png' ";                    # Show Info Icon
         echo "style='width:32px;height:32px;'>&nbsp Disk</span></a>";
     }

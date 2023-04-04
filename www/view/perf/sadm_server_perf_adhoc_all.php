@@ -216,6 +216,7 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
     }
 
     # Validate the type of Graph Requested ---------------------------------------------------------
+    $WTYPE="";
     if (isset($_POST['wtype']) ) {                                      # If received type of Graph
         $WTYPE = $_POST['wtype'];                                       # Save type of Graph
         switch ($WTYPE) {                                               # Start Type Validation
@@ -336,7 +337,8 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
         exit;                                                            # Exit - Should not occurs
     }
     # DISPLAY SCREEN HEADING    
-    $title1="$WTITLE" ." Performance graph of ". str_replace("_"," ",$WSERVERS) ." for ". ucfirst($WPERIOD) ;
+    #$title1= $WTITLE . " Performance graph of ". str_replace("_"," ",$WSERVERS) ." for ". ucfirst($WPERIOD) ;
+    $title1="Performance graph of ". str_replace("_"," ",$WSERVERS) ." for ". ucfirst($WPERIOD) ;
     $title2="";
     display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
 

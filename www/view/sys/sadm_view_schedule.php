@@ -155,11 +155,12 @@ function setup_table() {
 #                     Display Main Page Data from the row received in parameter
 #===================================================================================================
 function display_data($count, $row) {
-    global $URL_HOST_INFO, $URL_VIEW_FILE, $URL_VIEW_RCH, $URL_OSUPDATE, $URL_VIEW_SCHED; 
+    global $URL_HOST_INFO, $URL_VIEW_FILE, $URL_VIEW_RCH, 
+           $URL_OSUPDATE,  $UPDATE_SCRIPT, $URL_VIEW_SCHED; 
     
     echo "<tr>\n";  
     
-    # Server Name
+# Server Name
     $WOS  = $row['srv_osname'];
     $WVER = $row['srv_osversion'];
     echo "<td class='dt-center'>";
@@ -167,17 +168,17 @@ function display_data($count, $row) {
     echo "' title='$WOS $WVER server, ip address is " .$row['srv_ip']. " ,Click to edit Schedule'>";
     echo $row['srv_name']  . "</a></td>\n";
 
-    # Display Operating System Logo
+# Display Operating System Logo
     $WOS   = sadm_clean_data($row['srv_osname']);
     sadm_show_logo($WOS);                                  
     
-    # Display O/S Version
+# Display O/S Version
     echo "\n<td class='dt-center'>" . $row['srv_osversion'] . "</td>";
 
-    # Server Category
+# Server Category
     #echo "<td class='dt-center'>" . nl2br( $row['srv_cat']) . "</td>\n";  
 
-    # Last O/S Update Date 
+# Last O/S Update Date 
     echo "<td class='dt-center'>" ;
     if (substr($row['srv_date_osupdate'],0,16) == "0000-00-00 00:00") {
         echo "None Yet";  
@@ -230,8 +231,8 @@ function display_data($count, $row) {
 
     # Display link to view o/s update error log file (If exist)
     #echo "<td class='dt-center'>";
-    $ELOGFILE = trim("${cserver}_${UPDATE_SCRIPT}_e.log");              # Add _e.log to Script Name
-    $elog_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $ELOGFILE ;
+    $ELOGFILE = $row['srv_name']  . "_" . $UPDATE_SCRIPT . "_e.log";
+    $elog_name = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . trim($ELOGFILE) ;
 #    $elog_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate_e.log";
     if ((file_exists($elog_name)) and (file_exists($elog_name)) and (filesize($elog_name) != 0)) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $elog_name . "'" ;
@@ -270,11 +271,11 @@ function display_data($count, $row) {
 
 
 
-# ==================================================================================================
-#                                      PROGRAM START HERE
+
+# PAGE START HERE
 # ==================================================================================================
 
-    # The "selection" (1st) parameter contains type of query that need to do (all_servers,os,...)   
+# The "selection" (1st) parameter contains type of query that need to do (all_servers,os,...)   
     if (isset($_GET['selection']) && !empty($_GET['selection'])) { 
         $SELECTION = $_GET['selection'];                                # If Rcv. Save in selection
     }else{

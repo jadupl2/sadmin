@@ -414,7 +414,7 @@ function display_line($line,$BGCOLOR,$con)
 
     # Event Alert Group Name
     $pieces = explode("/", $alert_group);
-    $str=preg_replace('/\s+/', '', $str);
+    #$str=preg_replace('/\s+/', '', $str);
     if ($DEBUG) { echo "pieces[0]=..$pieces[0].. pieces[1]=..$pieces[1].."; }               
     $alert_group = preg_replace('/\s+/', '', $pieces[0]);           # Isolate Alert Grp Name
     $org_alert_group = $alert_group;                                # Save Original AlertGrpName
@@ -460,12 +460,15 @@ function display_line($line,$BGCOLOR,$con)
             break;
         case 2 :                                                        # 2=Send Alert on Success
             $alert_type_msg="Alert on success(2)" ;                     # Mess to show on page
+            $etooltip="SADM_ALERT set to 2 in script " ;
             break;
         case 3 :                                                        # 3=Always Send Alert
             $alert_type_msg="Always alert(3)" ;                         # Mess to show on page
+            $etooltip="SADM_ALERT set to 3 in script " ;
             break;
         default:
             $alert_type_msg="Unknown code($alert_type)" ;               # Invalid Alert Group Type
+            $etooltip="Unknown code($alert_type) " ;
             break;
     }        
     echo "\n<td bgcolor=$BGCOLOR align='center'>" ;

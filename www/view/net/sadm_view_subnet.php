@@ -78,6 +78,7 @@ $URL_IPVIEW      = '/view/net/sadm_view_subnet.php';                    # Displa
 #             [used]  Display only the used IPs (respond to ping and have DNS entry)
 # ==================================================================================================
 function show_subnet($wsubnet,$woption,$con) {
+    global $URL_IPVIEW; 
 
     list($ipaddress,$cidr) = explode('/',$wsubnet);                     # Separate Network & Netmask
     $netmask = cidr2mask($cidr);                                        # Convert CIDR to Netmask
@@ -245,7 +246,7 @@ function show_heading() {
     }
        
     # DISPLAY STANDARD PAGE HEADING ----------------------------------------------------------------
-    $title1="Information about " . ucfirst($iptype) . " subnet ${SUBNET}";
+    $title1="Information about " . " subnet $SUBNET";
     $title2="";
     display_lib_heading("NotHome","$title1","$title2",$SVER); 
 
