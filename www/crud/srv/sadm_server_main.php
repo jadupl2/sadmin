@@ -179,12 +179,8 @@ function display_data($con,$row) {
 
     # DISPLAY DELETE BUTTON (IF NOT THE DEFAULT CATEGORY)
     echo "\n<td style='text-align: center'>";                           # Align Button in Center row
-    if ($row['srv_default'] != TRUE) {                                  # If not Default Group
-        echo "\n<a href='" . $URL_DELETE . "?sel=" . $row['srv_name'] ."'>";
-        echo "\n<button type='button'>Delete</button></a>";             # Display Delete Button
-    }else{
-        echo "<img src='/images/nodelete.png' style='width:24px;height:24px;'>\n"; # Show X Button
-    }
+    echo "\n<a href='" . $URL_DELETE . "?sel=" . $row['srv_name'] ."'>";
+    echo "\n<button type='button'>Delete</button></a>";             # Display Delete Button
     echo "\n</td>\n</tr>\n";                                            # End of Table Line
 }
 
