@@ -79,7 +79,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
         $sql = $sql . "srv_active = '"          . sadm_clean_data($_POST['scr_active'])     ."', ";
         $sql = $sql . "srv_sporadic = '"        . sadm_clean_data($_POST['scr_sporadic'])   ."', ";
         $sql = $sql . "srv_monitor = '"         . sadm_clean_data($_POST['scr_monitor'])    ."', ";
-        $sql = $sql . "srv_alert_group = '"     . sadm_clean_data($_POST['scr_alert_group'])       ."', ";
+        #$sql = $sql . "srv_alert_group = '"     . sadm_clean_data($_POST['scr_alert_group'])."', ";
         $sql = $sql . "srv_graph = '"           . sadm_clean_data($_POST['scr_graph'])      ."', ";
         $sql = $sql . "srv_cat = '"             . sadm_clean_data($_POST['scr_cat'])        ."', ";
         $sql = $sql . "srv_group = '"           . sadm_clean_data($_POST['scr_group'])      ."', ";
