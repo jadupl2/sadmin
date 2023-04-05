@@ -67,6 +67,7 @@
 # 2022_10_23 install v3.22 Install 'host' command if not present on system.
 # 2022_11_27 install v3.23 Correct problem when activating EPEL v9.
 # 2023_02_08 install v3.24 Fix problem with GPG Key for EPEL v9.1
+# 2023_04_05 install v3.25 Minor fixes
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -76,7 +77,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.24'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.25'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -164,7 +165,7 @@ add_epel_7_repo()
     fi 
 
     if [ ! -r /etc/yum.repos.d/epel.repo ]  
-       then printf "Adding CentOS/Redhat V7 EPEL repository ..." |tee -a $SLOG
+       then printf "Adding CentOS/Redhat V7 EPEL repository ...\n" |tee -a $SLOG
             printf "yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm\n" >>$SLOG 2>&1
             yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm >>$SLOG 2>&1
             if [ $? -ne 0 ]
@@ -276,7 +277,7 @@ add_epel_9_repo()
     fi 
 
     if [ "$SADM_OSNAME" = "ROCKY" ] || [ "$SADM_OSNAME" = "ALMALINUX" ] 
-        then printf "Installing epel-release on Rocky Linux V9 ..." | tee -a $SLOG
+        then printf "Installing epel-release on Rocky Linux V9 ...\n" | tee -a $SLOG
              printf "    - dnf -y install epel-release " | tee -a $SLOG
              dnf -y install epel-release >>$SLOG 2>&1
              if [ $? -ne 0 ]
@@ -288,7 +289,7 @@ add_epel_9_repo()
     fi 
 
     if [ "$SADM_OSNAME" = "CENTOS" ] 
-        then printf "Installing epel-release & epel-next-release on CentOS V9 ... " |tee -a $SLOG
+        then printf "Installing epel-release & epel-next-release on CentOS V9 ...\n" |tee -a $SLOG
              printf "    - dnf -y install dnf install epel-release epel-next-release" |tee -a $SLOG
              dnf -y install dnf install epel-release epel-next-release  >>$SLOG 2>&1
              if [ $? -ne 0 ]
