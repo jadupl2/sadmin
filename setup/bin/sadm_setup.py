@@ -1502,8 +1502,8 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         update_apache_config(sroot,apache2_file,"{EMAIL}",semail)       # Set WWW Admin Email
         update_apache_config(sroot,apache2_file,"{DOMAIN}",sdomain)     # Set WWW sadmin.{Domain}
         update_apache_config(sroot,apache2_file,"{SERVICE}",sservice)   # Set WWW sadmin log dir
-        update_apache_config(sroot,apache2_file,"{SSL_CRT}",scert)      # Set Certificate file
-        update_apache_config(sroot,apache2_file,"{SSL_KEY}",skey)       # Set Certificate Key File
+        update_apache_config(sroot,apache2_file,"{SSL_CRT}",SSL_CRT)    # Set Certificate file
+        update_apache_config(sroot,apache2_file,"{SSL_KEY}",SSL_KEY)    # Set Certificate Key File
         # Disable Default apache2 configuration
         cmd = "a2dissite 000-default.conf"                              # Disable default Web Site 
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute Command
