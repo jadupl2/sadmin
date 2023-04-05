@@ -1540,7 +1540,9 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         update_apache_config(sroot,apache2_config,"{EMAIL}",semail)     # Set WWW Admin Email
         update_apache_config(sroot,apache2_config,"{DOMAIN}",sdomain)   # Set WWW sadmin.{Domain}     
         update_apache_config(sroot,apache2_config,"{SERVICE}",sservice) # Set WWW sadmin log dir
- 
+        update_apache_config(sroot,apache2_config,"{SSL_CRT}",SSL_CRT)  # Set Certificate file
+        update_apache_config(sroot,apache2_config,"{SSL_KEY}",SSL_KEY)  # Set Certificate Key File
+
                
     # Update the sadmin.cfg with Web Server User and Group
     #writelog('')

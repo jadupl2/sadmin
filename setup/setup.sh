@@ -422,11 +422,11 @@ check_python3()
     #fi
 
     # Check if python3 'pymsql' module is installed 
-    printf "\nCheck if python3 'pymsql' module is installed ... " | tee -a $SLOG
+    printf "   - Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
-        else printf "\n    - Installing module 'pymysql' - pip3 install pymysql" 
+        else printf "\n   - Installing module 'pymysql' - pip3 install pymysql" 
              pip3 install pymysql  > /dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo " " | tee -a $SLOG
@@ -441,11 +441,11 @@ check_python3()
     fi
 
     # Check if python3 'getmac' module is installed 
-    printf "\nMaking sure that python3 'getmac' module is installed ... " | tee -a $SLOG
+    printf "   - Making sure that python3 'getmac' module is installed ... " | tee -a $SLOG
     python3 -c "import getmac" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
-        else printf "\n    - Installing module - pip3 install getmac" 
+        else printf "\n   - Installing module - pip3 install getmac" 
              pip3 install getmac  > /dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo " " | tee -a $SLOG
@@ -523,8 +523,8 @@ check_selinux()
 
     selinuxenabled
     if [ $? -eq 0 ] 
-        then printf "    - SELinux is currently enabled.\n"
-        else printf "    - SELinux is currently disabled.\n"
+        then printf "   - SELinux is currently enabled.\n"
+        else printf "   - SELinux is currently disabled.\n"
              return 0 
     fi 
 
