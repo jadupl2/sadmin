@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : localhost
--- Généré le : ven. 04 nov. 2022 à 12:53
+-- Généré le : mer. 05 avr. 2023 à 11:39
 -- Version du serveur : 10.5.16-MariaDB
--- Version de PHP : 8.0.13
+-- Version de PHP : 8.0.27
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS `script_rch` (
   PRIMARY KEY (`scrdet_host`,`scrdet_name`,`srcdet_start`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+-- --------------------------------------------------------
 
 --
 -- Structure de la table `server`
@@ -142,7 +143,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_maint_date_start` datetime DEFAULT NULL COMMENT 'Start Date/Time of Maint. Mode',
   `srv_maint_date_end` datetime DEFAULT NULL COMMENT 'End date/Time of Maintenance Mode',
   `srv_sadmin_dir` varchar(45) COLLATE utf8_unicode_ci NOT NULL DEFAULT '/opt/sadmin' COMMENT 'SADMIN Root Dir. on Client',
-  `srv_ssh_port` int(2) NOT NULL DEFAULT 22 COMMENT 'SSH Port to access server',
+  `srv_ssh_port` int(11) NOT NULL DEFAULT 22 COMMENT 'SSH Port to access server',
   `ssh_sudo_user` varchar(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'sadmin' COMMENT 'ssh sudo user to server',
   `srv_img_backup` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'ReaR Backup 0=No 1=Yes',
   `srv_img_month` varchar(13) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNN' COMMENT 'Image Backup Backup Month',
@@ -158,8 +159,9 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_lock` tinyint(4) NOT NULL DEFAULT 0 COMMENT 'Unlock(0) Lock(1)',
   PRIMARY KEY (`srv_id`),
   UNIQUE KEY `idx_srv_name` (`srv_name`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=103 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
+) ENGINE=InnoDB AUTO_INCREMENT=112 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
 
+-- --------------------------------------------------------
 
 --
 -- Structure de la table `server_category`
@@ -174,8 +176,22 @@ CREATE TABLE IF NOT EXISTS `server_category` (
   `cat_default` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Default Category ?',
   PRIMARY KEY (`cat_id`),
   UNIQUE KEY `key_cat_code` (`cat_code`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Category Table';
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Category Table';
 
+--
+-- Déchargement des données de la table `server_category`
+--
+
+INSERT IGNORE INTO `server_category` (`cat_id`, `cat_code`, `cat_desc`, `cat_active`, `cat_date`, `cat_default`) VALUES
+(2, 'Legacy', 'Legacy  System', 1, '2023-04-05 15:24:30', 0),
+(3, 'Dev', 'Development System', 1, '2023-04-05 15:24:45', 1),
+(5, 'Poc', 'Proof Of Concept System', 1, '2023-04-05 15:24:02', 0),
+(6, 'Prod', 'Production System', 1, '2023-04-05 15:24:17', 0),
+(13, 'Laptop', 'Mobile Laptop', 1, '2023-03-15 19:06:38', 0),
+(15, 'SBC', 'Single Board Computer', 1, '2023-04-05 15:25:49', 0),
+(16, 'Temp', 'Temporary System', 1, '2023-04-05 15:36:57', 0);
+
+-- --------------------------------------------------------
 
 --
 -- Structure de la table `server_group`
@@ -192,6 +208,17 @@ CREATE TABLE IF NOT EXISTS `server_group` (
   UNIQUE KEY `idx_grp_code` (`grp_code`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Group Table';
 
+--
+-- Déchargement des données de la table `server_group`
+--
+
+INSERT IGNORE INTO `server_group` (`grp_id`, `grp_code`, `grp_desc`, `grp_active`, `grp_date`, `grp_default`) VALUES
+(3, 'Service', 'Infrastructure Service', 1, '2017-11-07 05:00:00', 0),
+(4, 'Retired', 'System not in use', 1, '2023-04-05 15:26:50', 0),
+(5, 'Raspberry', 'Raspberry Pi', 1, '2019-03-17 18:38:24', 0),
+(6, 'Regular', 'Application system', 1, '2023-04-05 15:26:34', 1);
+
+-- --------------------------------------------------------
 
 --
 -- Structure de la table `server_network`
@@ -209,7 +236,7 @@ CREATE TABLE IF NOT EXISTS `server_network` (
   PRIMARY KEY (`net_ip`(15)),
   UNIQUE KEY `key_ip_zero` (`net_ip_wzero`(15))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-
+COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
