@@ -366,15 +366,15 @@ install_python3()
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
-                 then printf "\n    - Running 'yum -y install python3 python3-setuptools python3-pip'\n" |tee -a $SLOG
+                 then printf "\n   - Running 'yum -y install python3 python3-setuptools python3-pip'\n" |tee -a $SLOG
                       yum -y install python3 python3-setuptools python3-pip  >> $SLOG 2>&1
-                 else printf "\n    - Running 'dnf -y install python3 python3-setuptools python3-pip'\n" |tee -a $SLOG
+                 else printf "\n   - Running 'dnf -y install python3 python3-setuptools python3-pip'\n" |tee -a $SLOG
                       dnf -y install python3 python3-setuptools python3-pip >>$SLOG 2>&1
               fi 
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
         then apt-get update >> $SLOG 2>&1
-             echo "\n    - Running 'apt-get -y install python3 python3-venv python3-pip'"| tee -a $SLOG
+             echo "\n   - Running 'apt-get -y install python3 python3-venv python3-pip'"| tee -a $SLOG
              apt-get -y install python3 python3-venv python3-pip >>$SLOG 2>&1
     fi 
     
@@ -567,7 +567,7 @@ check_hostname()
     # Get Domain Name f IP Address
     S_DOMAIN=`host $S_IPADDR |head -1 |awk '{ print $NF }' |awk -F\. '{printf "%s.%s\n", $2, $3}'` 
 
-    printf "\nMaking sure '$SADM_HOSTNAME' is defined in /etc/hosts ... " | tee -a $SLOG
+    printf "Making sure '$SADM_HOSTNAME' is defined in /etc/hosts ... " | tee -a $SLOG
 
     # Insert Server into /etc/hosts (If not already there)
     grep -Eiv "^${S_IPADDR}|${S_HOSTNAME}" /etc/hosts > /tmp/hosts.$$
