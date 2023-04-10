@@ -37,6 +37,7 @@
 # 2022_08_26 lib v4.24 Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
 # 2022_08_26 lib v4.25 Correct a typo at line 718.
 # 2022_11_01 lib v4.26 Minor change for MacOS Ventura.
+#@2023_04_10 lib v4.27 Set gmail password global variable 'sadm_gmpw' only on SADMIN server.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -72,7 +73,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.26"                                # This Library Version
+lib_ver             = "4.27"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -570,7 +571,7 @@ def load_config_file(cfg_file):
     # Get SMTP User mail password        
     sadm_gmpw=""
     try : 
-        if os.path.exists(gmpw_file):
+        if ((get_fqdn() == sadm_server ) and (os.path.exists(gmpw_file))):
             with open(gmpw_file) as f:
                 sadm_gmpw = f.readline().strip()
     except (IOError, FileNotFoundError) as e:                       # Can't open SMTP Pwd file
