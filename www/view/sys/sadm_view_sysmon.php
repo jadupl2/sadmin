@@ -60,6 +60,7 @@
 # 2022_09_08 mon v2.33 System monitor page - Add current date/time and look enhancement.
 # 2022_09_11 mon v2.34 System monitor page - Modify to have a more pleasing look
 # 2023_01_06 mon v2.35 System monitor page - O/S update starter now show hostname being updated.
+#@2023_04_10 mon v2.36 System monitor page - Bug fix when no rch and rpt files were present.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -96,7 +97,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.35" ;                                                       # Current version number
+$SVER  = "2.36" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -119,39 +120,41 @@ $alert_file = SADM_WWW_TMP_DIR . "/sysmon_alert_file_" . getmypid() ;   # File B
 
 
 # Create one output file ($alert_file) that contain scripts errors & system monitor alerts.
-# 1-Create alert file containing all *.rpt in $SADMIN/www/dat directories.
-# 2-Then add last line of all to the *.rch in $SADMIN/www/dat that Failed(Code 1) or Running(Code 2)
+#   1-Create alert file containing all *.rpt in $SADMIN/www/dat directories.
+#   2-Add last line of all to the *.rch in $SADMIN/www/dat that Failed(Code 1) or Running(Code 2)
 #---------------------------------------------------------------------------------------------------
 function create_alert_file() {
     global $DEBUG, $tmp_file1, $tmp_file2, $alert_file ;
     #$DEBUG = True;
-    # Create the Alert file from all SYSTEM MONITOR REPORT FILE (*.RPT) in $SADM_WWW_DAT_DIR. 
-    # Get content of all *.rpt files (Contain Error,Warning,Info reported by System Monitor)
-    # EXAMPLE OF RPT LINE BELOW : 
-    # Warning;holmes;2021.07.24;10:15;linux;FILESYSTEM;Filesystem /wsadmin at 82% >= 80%;default;default
 
+# Make sure we begin with a new empty file ($alert_file).
     if (file_exists($alert_file)) { unlink($path_user.$path); }         # Delete Alert file if exist
     touch($alert_file);                                                 # Create empty file
     chmod($alert_file,0666);                                            # Set Permission on file
+    chown($alert_file,SADM_WWW_USER) ;
+    chgrp($alert_file,SADM_WWW_GROUP) ;
 
+# Get content of all *.rpt files (Contain Error,Warning,Info reported by System Monitor)
+# Example Of Rpt Line Below : 
+# Warning;holmes;2021.07.24;10:15;linux;FILESYSTEM;Filesystem /opt at 82% >= 80%;default;default
     $CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rpt' -exec cat {} \; >> $alert_file";
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }        # Show Cmd that we execute
     $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute the find command
     if ($DEBUG) {                                                       # Debug then,show cmd result
         echo "\n<br>Return code of command is : " . $RCODE ;            # Command return code
-        echo "\n<br>Content of resulting file :";                       # Alert file heading
+        if (filesize($alert_file) == 0) { echo "\n<br>File $alert_file is empty" ; }
+        echo "\n<br>Content of resulting file - $alert_file :";         # Alert file heading
         $orig = file_get_contents($alert_file);                         # Read Alert file content
         $a = htmlentities($orig);                                       # Char. to HTML entities
         echo '<code><pre>';                                             # Code to be displayed
         echo $a;                                                        # Show Alert file
         echo '</pre></code>';                                           # End of code display
     }
-    #fflush($file);                                                      # Fluch cache to disk
 
-    # Get last line of ALL SCRIPT RESULT FILES (*.RCH) that finished with error or that are running.
-    # Results will go into $tmp_file2 file.
-    # EXAMPLE OF A RCH LINE BELOW :
-    # ubuntu2104 2021.07.05 05:11:23 2021.07.05 05:11:32 00:00:09 sadm_backupdb default 1 0
+
+# Get the last line of ALL *.rch that finished with error or actually running output to $tmp_file2
+# Example Of A Rch Line Below :
+# ubuntu2104 2021.07.05 05:11:23 2021.07.05 05:11:32 00:00:09 sadm_backupdb default 1 0
     $CMD_PART1="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \;" ;
     $CMD_PART2=" | awk 'match($10,/[1-2]/) { print }' > $tmp_file2 ";
     $CMD="$CMD_PART1 $CMD_PART2";                                       # Combine 2 long commands
@@ -159,8 +162,9 @@ function create_alert_file() {
     $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute the find command
     if ($DEBUG) {                                                       # Debug then,show cmd result
         echo "\n<br>Return code of command is : " . $RCODE ;            # Command return code
-        echo "\n<br>Content of resulting file :";                       # Alert file heading
-        $orig = file_get_contents($tmp_file2);                          # Read Alert file content
+        if (filesize($tmp_file2) == 0) { echo "\n<br>File $tmp_file2 is empty" ; }
+        echo "\n<br>Content of resulting file - $tmp_file2 :";         # Alert file heading
+        $orig = file_get_contents($tmp_file2);                         # Read Alert file content
         $a = htmlentities($orig);                                       # Char. to HTML entities
         echo '<code><pre>';                                             # Code to be displayed
         echo $a;                                                        # Show Alert file
@@ -168,22 +172,27 @@ function create_alert_file() {
     }
 
     # Open the alert file, ready to be put in converted RCH to RPT Format.
-    if ( file_exists ($alert_file) and (filesize($alert_file) > 0) ) 
-    {
+    if ($DEBUG) {
+        if ( file_exists($alert_file) )   { echo "\n<br>File $alert_file exist."; }
+        if ( ! file_exists($alert_file) ) { echo "\n<br>File $alert_file don't exist."; }
+        if ( filesize($alert_file) == 0)  { echo "\n<br>File $alert_file is empty" ; }
+    }   
+    if ( ! file_exists($alert_file) ) {
+        if ($DEBUG) { echo "\n<br>Opening alert file in write mode"; }        
+        $afile = fopen("$alert_file", 'w')  or die("Can't open in write mode file " . $alert_file );
+    }else{
         if ($DEBUG) { echo "\n<br>Opening alert file in append mode"; }        
         $afile = fopen("$alert_file","a+") or die("can't open in append mode file " . $alert_file );
-    }else{
-        if ($DEBUG) { echo "\n<br>Opening alert file in write mode"; }        
-        $afile = fopen("$alert_file","w"); 
-        if ( !$afile ) {
-            $arrayFiles = scandir( SADM_WWW_TMP_DIR );
-            echo "\n<br>Files contained in \$SADMIN/tmp : " . $arrayFiles . "<br>\n";
-            die("can't open in write mode file " . $alert_file );          
-        }  
     }
 
+#    if ( ! $afile ) {
+#        $arrayFiles = scandir( SADM_WWW_TMP_DIR );
+#        echo "\n<br>Files contained in \$SADMIN/tmp : " . $arrayFiles . "<br>\n";
+#        die("can't open in write mode file " . $alert_file );          
+#    }  
+    
     # Convert the global RCH file just created ($tmp_file2) to a RPT format kind of lines 
-    # raspi2 2018.09.29 23:25:00 2018.09.29 23:25:17 00:00:17 sadm_client_housekeeping default 1 1
+    # raspi4 2018.09.29 23:25:00 2018.09.29 23:25:17 00:00:17 sadm_client_housekeeping default 1 1
     #   1        2         3         4        5        6               7                  8    9 10
     # To this type of lines (RPT)
     # Error;raspi2;2018.09.29;23:25;SADM;SCRIPT;sadm_client_housekeeping;sadm/1;sadm/1;
@@ -209,11 +218,11 @@ function create_alert_file() {
         $rhost      = trim($whost);                                     # Host Name
         $rmod       = "SADM";                                           # Event Module name = SADM
         $rsubmod    = "SCRIPT";                                         # Event Sub-Module = SCRIPT
-        $ragroup    = "${walert}";                                      # Alert Group 
-        $ratype     = "${gtype}";                                       # Alert Type
-        $ralert     = "${walert}/${gtype}";                             # Alert Group & Alert Type
+        $ragroup    = "$walert";                                        # Alert Group 
+        $ratype     = "$gtype";                                         # Alert Type
+        $ralert     = "$walert/$gtype";                                 # Alert Group & Alert Type
         $rdesc      = $wscript ;                                        # Script Name 
-        $LINE="${rtype};${rhost};${rdate};${rtime};${rmod};${rsubmod};${rdesc};${ralert};${ralert}\n";
+        $LINE="$rtype;$rhost;$rdate;$rtime;$rmod;$rsubmod;$rdesc;$ralert;$ralert\n";
         if ($DEBUG) { echo "\n<br>RCH After conversion :<code><pre>" .$LINE. '</pre></code>'; }
         fwrite($afile,$LINE);                                           # Write reformatted line
     }
