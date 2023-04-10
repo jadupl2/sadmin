@@ -70,6 +70,7 @@
 # 2022_07_13 client: v2.06 Update new SADMIN section v1.51 and code revision..
 # 2022_09_20 client: v2.07 Use SSH port specify per server & update SADMIN section to v1.52.
 # 2022_09_24 client: v2.08 Change MacOS mount point name (/preserve don't exist anymore)
+# 2022_04_10_client: v2.09 Remove the gMail password file on the client.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -101,7 +102,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.08'                                      # Script version number
+export SADM_VER='2.09'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -399,6 +400,16 @@ file_housekeeping()
     set_file "/etc/cron.d/sadm_osupdate"     "0644" "root" "root"
     set_file "/etc/cron.d/sadm_backup"       "0644" "root" "root"
     set_file "/etc/cron.d/sadm_rear_backup"  "0644" "root" "root"
+
+    # On SADMIN client: if GMail user password file exist then delete it for security reason.
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] && [ -r "$GMPW_FILE" ]
+        then rm -f $GMPW_FILE > /dev/null 2>&1 
+    fi
+
+    # If old file '.rch_conversion_done' exist, then delete it (Not needed anymore)
+    if [ -r "$SADM_CFG_DIR/.rch_conversion_done" ]
+        then rm -f $SADM_CFG_DIR/.rch_conversion_done > /dev/null 2>&1 
+    fi
 
     # SADMIN Readme, changelog and license file.
     set_file "${SADM_BASE_DIR}/readme.md"    "0664" "${SADM_USER}" "${SADM_GROUP}" 
