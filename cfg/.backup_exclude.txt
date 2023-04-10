@@ -2,7 +2,6 @@
 *.iso 
 *.swap
 *.pyc
-./*/sysmon.lock 
 ./*/tmp/*
 ./*/Trash/*
 ./*/.cache
