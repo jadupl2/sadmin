@@ -196,6 +196,7 @@
 #@2023_02_14 lib v4.17 Remove the usage of SADM_RCH_DESC.
 #@2023_03_03 lib v4.18 sadm_start() now clear error log '*_e.log' even when 'SADM_LOG_APPEND="Y"'
 #@2023_03_04 lib v4.19 Lock file content & owner updated. 
+#@2023_04_10 lib v4.20 Fix problem when using only 3 parameters when calling 'sadm_sendmail'.
 #===================================================================================================
 
 
@@ -209,7 +210,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.19"                                              # This Library Version
+export SADM_LIB_VER="4.20"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -2037,10 +2038,10 @@ sadm_load_config_file() {
              SADM_RO_DBPWD=`grep "^${SADM_RO_DBUSER}," $DBPASSFILE |awk -F, '{ print $2 }'` # RO PWD
     fi
 
-    # Get Tead/Write and Read/Only User Password from pasword file (If on SADMIN Server)
-    SADM_GMPW=""                                                        # Default smtp sender PWD
+    # Read and Set Gmail account password (If on SADMIN Server)
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] && [ -r "$GMPW_FILE" ]   # On Server & smtp pwd file
         then SADM_GMPW=`cat $GMPW_FILE | head -1`                       # Read smtp sender passwd 
+        else SADM_GMPW=""
     fi
 
     return 0
@@ -2468,8 +2469,8 @@ sadm_sendmail() {
 
     RC=0                                                                # Function Return Code
     #LIB_DEBUG=5                                                        # Debug Library Level
-    if [ $# -le 3 ]                                                     # Invalid No. of Parameter
-        then sadm_write_log "Invalid number of argument received by function ${FUNCNAME}."
+    if [ $# -lt 3 ] || [ $# -gt 4 ]                                     # Invalid No. of Parameter
+        then sadm_write_log "Invalid number of argument, $# arguments received by function ${FUNCNAME}."
              sadm_write_log "Should be 3 or 4 we received $# : $* "      # Show what received
              return 1                                                   # Return Error to caller
     fi
