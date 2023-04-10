@@ -54,6 +54,7 @@
 # 2022_07_09 server v2.35 Now pushing email user password file ($SADMIN/cfg/.gmpw).
 # 2022_08_17 server v2.36 Updated with new SADMIN section v1.52
 # 2022_09_20 server v2.37 SSH to client is now using the port defined in each system.
+# 2023_04_10 server v2.38 Don't push the gmail password file to client.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -84,7 +85,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.37'                                     # Script Version
+export SADM_VER='2.38'                                     # Script Version
 export SADM_PDESC="Copy SADMIN version to all actives clients, without overwriting config files)."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -319,7 +320,8 @@ process_servers()
 
 
         # Copy Site Common configuration files to client
-        rem_cfg_files=(alert_group.cfg .gmpw )
+        #rem_cfg_files=(alert_group.cfg .gmpw )
+        rem_cfg_files=(alert_group.cfg )
         for WFILE in "${rem_cfg_files[@]}"
           do
           CFG_SRC="${SADM_CFG_DIR}/${WFILE}"
