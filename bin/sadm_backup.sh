@@ -84,7 +84,9 @@
 # 2022_11_16 backup v3.40 Depreciate use of environment variable in backup or exclude list.
 # 2023_01_06 backup v3.41 Add cmdline '-w' to suppress warning (dir. not exist) on output.
 # 2023_01_06 backup v3.42 Fix problem with format of 'stat' command on MacOS.
-# 2023_03_26 backup v3.43 Write current, previous and host total backup size in log for reference.
+#@2023_03_26 backup v3.43 Write current, previous and host total backup size in log for reference.
+#@2023_04_10 backup v3.44 Fix backup calculating total size occupied by host.
+#@2023_04_11 backup v3.45 Previous & Total backup size wasn't always right & added more info in log.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -93,17 +95,17 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.52
+# SADMIN CODE SECTION 1.54
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
 
-# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
-    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
-         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+# Make Sure Environment Variable 'SADMIN' Is Defined.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # SADMIN defined? Libr.exist
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]     # Still not define = Error
             then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-                 exit 1                                    # No SADMIN Env. Var. Exit
+                 exit 1                                                 # No SADMIN Env. Var. Exit
          fi
 fi 
 
@@ -116,7 +118,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.43'                                     # Script version number
+export SADM_VER='3.45'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -128,9 +130,9 @@ export SADM_PID_TIMEOUT=7200                               # Sec. before PID Loc
 export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
-export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
-export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 
@@ -139,7 +141,7 @@ export SADM_SERVER_ONLY="N"                                # Run only on SADMIN 
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
-#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "  # SSH CMD to Access Systems
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
 # VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
 # BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
@@ -618,6 +620,8 @@ clean_backup_dir()
 # List Current backup days we have and Count Nb. how many we need to delete
     sadm_write "List of backup currently on disk:\n"
     du -h . | grep -v '@eaDir' | while read ln ;do sadm_write "${ln}\n" ;done
+    #find . -type d -name "20*" 2>/dev/null -exec du -h {} \; | while read ln ;do sadm_write "${ln}\n" ;done
+
     backup_count=`ls -1| grep -v '@eaDir' | awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l`
     day2del=$(($backup_count-$COPIES2KEEP))                             # Calc. Nb. Days to remove
     sadm_write_log " "
@@ -637,14 +641,41 @@ clean_backup_dir()
         else sadm_write_log "No clean up needed"
     fi
 
+# Create a list of all directories that begin with "20*" in system backup directory
+# We end up with a file with line like this "16G	./daily/2023_04_09"  (Size and dir. name)
+    cd ${LOCAL_MOUNT}/${SADM_HOSTNAME}
+    sadm_write_log " "
+    sadm_write_log " "
+    sadm_write_log "List of backup directories for $SADM_HOSTNAME"
+    find . -type d -name "20*" 2>/dev/null -exec du -h {} \; 
+    find . -type d -name "20*" 2>/dev/null -exec du -h {} \; > $SADM_TMP_FILE1
+    sadm_write_log " "
+   
+# Get the last two backup date and size
+    last2date=$(find . -type d -name "20*" 2>/dev/null -exec du -h {} \; |awk -F'/' '{print $3}' |sort |tail -2)
+    last_date=$(echo $last2date | awk '{ print $2 }')
+    last_size=$(grep "$last_date" $SADM_TMP_FILE1 | awk '{print $1}')
+    prev_date=$(echo $last2date | awk '{ print $1 }')
+    prev_size=$(grep "$prev_date" $SADM_TMP_FILE1 | awk '{print $1}')
+    if [ $SADM_DEBUG -gt 2 ] 
+        then sadm_write_log " "
+             sadm_write_log "last2date : $last2date"
+             sadm_write_log "last_date : $last_date - last_size: $last_size"
+             sadm_write_log "prev_date : $prev_date - prev_size: $prev_size"
+             sadm_write_log " "
+    fi 
+
 # Create Line that is used by 'Daily Backup Status' web page to show size of last 2 backup.
     most_recent=`du -h . |grep -v '@eaDir' |grep "20" |sort -r -k2 |head -1 |awk '{print $1}'`
     previous=`du -h . |grep -v '@eaDir' |grep "20" |sort -r -k2 |head -2 |tail -1 | awk '{print $1}'`
-    cd ${LOCAL_MOUNT}/${HOSTNAME}
-    total_size=`du -hs . | awk '{print $1}'`
     sadm_write_log " "
-    sadm_write_log "${BID}current backup size = $most_recent"
-    sadm_write_log "${BID}previous backup size = $previous"
+    sadm_write_log "List of backup directories for $SADM_HOSTNAME sorted by date."
+    find . -type d -name "20*" 2>/dev/null -exec du -h {} \; |awk -F'/' '{print $3}' |sort | tee -a $SADM_LOG
+    #find . -type d -name "20*" 2>/dev/null| awk -F'/' '{print $3}'| sort | tee -a $SADM_LOG 
+    sadm_write_log " "
+    total_size=`du -hs . | awk '{print $1}'`
+    sadm_write_log "${BID}current backup size = $last_size"
+    sadm_write_log "${BID}previous backup size = $prev_size"
     sadm_write_log "Total backup size = $total_size"
 
     cd $CUR_PWD                                                         # Restore Previous Cur Dir.
