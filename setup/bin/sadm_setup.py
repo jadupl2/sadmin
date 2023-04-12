@@ -109,7 +109,7 @@
 # 2022_07_02 install v3.78 Fix input problem related to smtp server data.
 # 2022_07_19 install v3.79 Update of the commands requirements.
 # 2023_02_08 install v3.80 Default smtp mail server is now 'smtp.gmail.com' and hide smtp password.
-# 2023_04_04 install v3.81 Access to sadmin web interface is now done with https instead of http.
+#@2023_04_04 install v3.81 Access to sadmin web interface is now done with https instead of http.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -551,9 +551,9 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("PATH=%s\n" % (os.environ["PATH"]))
     hcron.write ("SADMIN=%s\n" % (sroot))
     hcron.write ("# \n")
-    #hcron.write ("# \n")
-    #hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
-    #hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
+    hcron.write ("# \n")
+    hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
+    hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
     hcron.write ("# \n")
     #
     hcron.write ("# Rsync all *.rch,*.log,*.rpt files from all actives clients.\n")
@@ -580,7 +580,7 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("# Daily push of /opt/sadmin/(lib,bin,cfg/.*) to all active servers (Optional)\n")
     hcron.write ("#   -s To include push of /opt/sadmin/sys\n")
     hcron.write ("#   -u To include push of /opt/sadmin/(usr/bin usr/lib usr/cfg)\n")
-    hcron.write ("#30 15 * * * %s %s\n" % (wuser,cscript))
+    hcron.write ("#10 13,21 * * * %s %s\n" % (wuser,cscript))
     hcron.write ("#\n")
     #
     hcron.close()                                                       # Close SADMIN Crontab file

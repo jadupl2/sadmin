@@ -342,28 +342,28 @@ function display_data($count, $row)
 
 # Show current backup Size
     if (($num_backup_size == 0 || $num_previous_size == 0) && (SADM_BACKUP_DIF != 0)) {
-        echo "<td align='center' bgcolor='yellow'><b>" . number_format($num_backup_size,3) . "</b></td>\n";
+        echo "<td align='center' bgcolor='yellow'><b>" . number_format($num_backup_size,2) . "</b></td>\n";
     } else {
         $PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100;
         #echo "$PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100";
         if (number_format($PCT, 1) != 0.0) {
             if (number_format($PCT, 0) >= SADM_BACKUP_DIF) {
-                echo "<td align='center' bgcolor='yellow'><b>" . number_format($num_backup_size,3). "&nbsp;(+" . number_format($PCT, 1) . "%)</b></td>\n";
+                echo "<td align='center' bgcolor='yellow'><b>" . number_format($num_backup_size,2). "&nbsp;(+" . number_format($PCT, 1) . "%)</b></td>\n";
             } elseif (number_format($PCT, 0) <= (SADM_BACKUP_DIF * -1)) {
-                echo "<td align='center' bgcolor='yellow'><b>" . number_format($num_backup_size,3) . "&nbsp;(" . number_format($PCT, 1) . "%)</b></td>\n";
+                echo "<td align='center' bgcolor='yellow'><b>" . number_format($num_backup_size,2) . "&nbsp;(" . number_format($PCT, 1) . "%)</b></td>\n";
             }else{    
-                echo "<td align='center'>" . number_format($num_backup_size,3) . "</td>\n";
+                echo "<td align='center'>" . number_format($num_backup_size,2) . "</td>\n";
             }
         }else{
-            echo "<td align='center'>" . number_format($num_backup_size,3) . "</td>\n";
+            echo "<td align='center'>" . number_format($num_backup_size,2) . "</td>\n";
         }
     }
 
 # Show Previous Backup Size
     if (($num_backup_size == 0 || $num_previous_size == 0) && (SADM_BACKUP_DIF != 0)) {
-        echo "<td align='center' bgcolor='yellow'><b>" . $num_previous_size . "</b></td>\n";
+        echo "<td align='center' bgcolor='yellow'><b>" . number_format($num_previous_size,2) . "</b></td>\n";
     } else {
-        echo "<td align='center'>" . number_format($num_previous_size,3) . "</td>\n";
+        echo "<td align='center'>" . number_format($num_previous_size,2) . "</td>\n";
     }
 
 # Show Total backup space occupied by this host in GB.
@@ -394,7 +394,7 @@ function display_data($count, $row)
     #echo "<br>2- num_total_size:" . $num_total_size;
     #echo "<br>2- total_size :" . $total_size;
     #echo "<br>2- total_unit :" . $total_unit;
-    echo "<td align='center'>" . number_format($num_total_size,3) . "</td>\n";
+    echo "<td align='center'>" . number_format($num_total_size,2) . "</td>\n";
 
 # Show [log] to view backup log
     if (file_exists($log_name)) {
