@@ -133,6 +133,7 @@ www/doc/md/
 # All files in cfg directory excluded, except the one specified
 cfg/*
 !cfg/.sadmin.cfg
+!cfg/sadmin_client.cfg
 !cfg/.alert_group.cfg
 !cfg/.alert_slack.cfg
 !cfg/.alert_history.txt
