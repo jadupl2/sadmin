@@ -1409,7 +1409,7 @@ main_process()
     if [ $(sadm_get_ostype) = "LINUX" ] ; then crontab_update ; fi      # Update crontab if needed
     
     # To prevent this script from showing very often on the monitor (This script is run every 5 min)
-    # we copy the updated .rch file in the SADMIN main web central directory. 
+    # we copy immediatly the updated .rch file in the SADMIN main web central directory. 
     if [ ! -d ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ]                # Web RCH repo Dir not exist
         then mkdir -p ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch          # Create it
     fi
