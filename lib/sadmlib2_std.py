@@ -38,6 +38,9 @@
 # 2022_08_26 lib v4.25 Correct a typo at line 718.
 # 2022_11_01 lib v4.26 Minor change for MacOS Ventura.
 #@2023_04_10 lib v4.27 Set gmail password global variable 'sadm_gmpw' only on SADMIN server.
+#@2023_04_13 lib v4.28 Old Python Library 'sadmlib_std.py' is now depreciated use 'sadmlib2_std.py'.
+#@2023_04_13 lib v4.29 Load new variables 'SADM_REAR_DIF' 'SADM_REAR_INTERVAL' from sadmin.cfg.
+#@2023_04_13 lib v4.30 Load new variable 'SADM_BACKUP_INTERVAL' from sadmin.cfg use on backup page.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -73,7 +76,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.27"                                # This Library Version
+lib_ver             = "4.30"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -148,16 +151,13 @@ sadm_weekly_backup_day        = 5                           # Weekly Backup Day 
 sadm_monthly_backup_date      = 1                           # Monthly Backup Date (1-28)
 sadm_yearly_backup_month      = 12                          # Yearly Backup Month (1-12)
 sadm_yearly_backup_date       = 31                          # Yearly Backup Date(1-31)
-sadm_backup_diff              = 50                          # % Backup Size Diff. Alert
+sadm_backup_dif               = 40                          # % Backup Size Diff. Alert
+sadm_backup_interval          = 7                           # Days before yellow alert
 sadm_rear_nfs_server          = ""                          # Rear NFS Server
 sadm_rear_nfs_mount_point     = ""                          # Rear NFS Mount Point
 sadm_rear_backup_to_keep      = 3                           # Nb of Rear Backup to keep
-sadm_storix_nfs_server        = ""                          # Storix Nfs Server
-sadm_storix_nfs_mount_point   = ""                          # Storix NFS Mount Point
-sadm_storix_backup_to_keep    = 3                           # Nb Stousedbrix Backup to Keep
-sadm_mksysb_nfs_server        = ""                          # Aix Mksysb Nfs Server
-sadm_mksysb_nfs_mount_point   = ""                          # Aix Mksysb NFS Mount Point
-sadm_mksysb_backup_to_keep    = 3                           # Aix Mksysb Backup to Keep
+sadm_rear_backup_dif          = 25                          # % size diff cur. vs prev.
+sadm_rear_backup_interval     = 7                           # Alert when 7 days without
 sadm_network1                 = ""                          # Network Subnet 1 to report
 sadm_network2                 = ""                          # Network Subnet 2 to report
 sadm_network3                 = ""                          # Network Subnet 3 to report
@@ -170,9 +170,6 @@ sadm_pid_timeout             = 7200                         # PID File TTL defau
 sadm_lock_timeout            = 3600                         # Host Lock File TTL 
 sadm_max_logline             = 500                          # Max Nb. Lines in LOG
 sadm_max_rchline             = 100                          # Max Nb. Lines in RCH file
-sadm_dr_script_maxage        = 30                           # Exec. days before yellow
-sadm_dr_rear_interval        = 7                            # Max Days between backup
-sadm_dr_backup_dif           = 50                           # Max % different BackupSize 
 sadm_smtp_server             = "smtp.gmail.com"             # smtp host relay name
 sadm_smtp_port               = 587                          # smtp relay host port
 sadm_smtp_sender             = "sender@gmail.com"           # smtp sender account
@@ -416,14 +413,12 @@ def load_config_file(cfg_file):
     sadm_monthly_backup_to_keep  ,sadm_yearly_backup_to_keep    ,sadm_weekly_backup_day        ,\
     sadm_monthly_backup_date     ,sadm_yearly_backup_month      ,sadm_yearly_backup_date       ,\
     sadm_rear_nfs_server         ,sadm_rear_nfs_mount_point     ,sadm_rear_backup_to_keep      ,\
-    sadm_storix_nfs_server       ,sadm_storix_nfs_mount_point   ,sadm_storix_backup_to_keep    ,\
-    sadm_mksysb_nfs_server       ,sadm_mksysb_nfs_mount_point   ,sadm_mksysb_backup_to_keep    ,\
+    sadm_rear_backup_dif         ,sadm_rear_backup_interval                                    ,\
     sadm_network1                ,sadm_network2                 ,sadm_network3                 ,\
     sadm_network4                ,sadm_network5                 ,sadm_monitor_update_interval  ,\
     sadm_monitor_recent_count    ,sadm_monitor_recent_exclude   ,sadm_pid_timeout              ,\
     sadm_lock_timeout            ,sadm_max_logline              ,sadm_max_rchline              ,\
-    sadm_dr_script_maxage        ,sadm_dr_rear_interval         ,sadm_backup_diff              ,\
-    sadm_dr_backup_dif           ,sadm_smtp_server              ,sadm_smtp_port                ,\
+    sadm_smtp_server             ,sadm_smtp_port                ,\
     sadm_smtp_sender             ,sadm_gmpw
 
     if lib_debug > 4 :
@@ -503,6 +498,8 @@ def load_config_file(cfg_file):
         if "SADM_RO_DBUSER"                in CFG_NAME: sadm_ro_dbuser               = CFG_VALUE
         if "SADM_BACKUP_NFS_SERVER"        in CFG_NAME: sadm_backup_nfs_server       = CFG_VALUE
         if "SADM_BACKUP_NFS_MOUNT_POINT"   in CFG_NAME: sadm_backup_nfs_mount_point  = CFG_VALUE
+        if "SADM_BACKUP_DIF"               in CFG_NAME: sadm_backup_dif              = int(CFG_VALUE)
+        if "SADM_BACKUP_INTERVAL"          in CFG_NAME: sadm_backup_interval         = int(CFG_VALUE)
         if "SADM_DAILY_BACKUP_TO_KEEP"     in CFG_NAME: sadm_daily_backup_to_keep    = int(CFG_VALUE)
         if "SADM_WEEKLY_BACKUP_TO_KEEP"    in CFG_NAME: sadm_weekly_backup_to_keep   = int(CFG_VALUE)
         if "SADM_MONTHLY_BACKUP_TO_KEEP"   in CFG_NAME: sadm_monthly_backup_to_keep  = int(CFG_VALUE)
@@ -511,16 +508,11 @@ def load_config_file(cfg_file):
         if "SADM_MONTHLY_BACKUP_DATE"      in CFG_NAME: sadm_monthly_backup_date     = int(CFG_VALUE)
         if "SADM_YEARLY_BACKUP_MONTH"      in CFG_NAME: sadm_yearly_backup_month     = int(CFG_VALUE)
         if "SADM_YEARLY_BACKUP_DATE"       in CFG_NAME: sadm_yearly_backup_date      = int(CFG_VALUE)
-        if "SADM_BACKUP_DIFF"              in CFG_NAME: sadm_backup_diff             = int(CFG_VALUE)
         if "SADM_REAR_NFS_SERVER"          in CFG_NAME: sadm_rear_nfs_server         = CFG_VALUE
         if "SADM_REAR_NFS_MOUNT_POINT"     in CFG_NAME: sadm_rear_nfs_mount_point    = CFG_VALUE
         if "SADM_REAR_BACKUP_TO_KEEP"      in CFG_NAME: sadm_rear_backup_to_keep     = int(CFG_VALUE)
-        if "SADM_STORIX_NFS_SERVER"        in CFG_NAME: sadm_storix_nfs_server       = CFG_VALUE
-        if "SADM_STORIX_NFS_MOUNT_POINT"   in CFG_NAME: sadm_storix_nfs_mount_point  = CFG_VALUE
-        if "SADM_STORIX_BACKUP_TO_KEEP"    in CFG_NAME: sadm_storix_backup_to_keep   = int(CFG_VALUE)
-        if "SADM_MKSYSB_NFS_SERVER"        in CFG_NAME: sadm_mksysb_nfs_server       = CFG_VALUE
-        if "SADM_MKSYSB_NFS_MOUNT_POINT"   in CFG_NAME: sadm_mksysb_nfs_mount_point  = CFG_VALUE
-        if "SADM_MKSYSB_BACKUP_TO_KEEP"    in CFG_NAME: sadm_mksysb_backup_to_keep   = int(CFG_VALUE)
+        if "SADM_REAR_BACKUP_DIFF"         in CFG_NAME: sadm_rear_backup_dif         = int(CFG_VALUE)
+        if "SADM_REAR_BACKUP_INTERVAL"     in CFG_NAME: sadm_rear_backup_interval    = int(CFG_VALUE)
         if "SADM_NETWORK1"                 in CFG_NAME: sadm_network1                = CFG_VALUE
         if "SADM_NETWORK2"                 in CFG_NAME: sadm_network2                = CFG_VALUE
         if "SADM_NETWORK3"                 in CFG_NAME: sadm_network3                = CFG_VALUE
@@ -531,9 +523,6 @@ def load_config_file(cfg_file):
         if "SADM_MONITOR_UPDATE_INTERVAL"  in CFG_NAME: sadm_monitor_update_interval = int(CFG_VALUE)
         if "SADM_MONITOR_RECENT_COUNT"     in CFG_NAME: sadm_monitor_recent_count    = int(CFG_VALUE)
         if "SADM_MONITOR_RECENT_EXCLUDE"   in CFG_NAME: sadm_monitor_recent_exclude  = CFG_VALUE
-        if "SADM_DR_SCRIPT_MAXAGE"         in CFG_NAME: sadm_dr_script_maxage        = int(CFG_VALUE)
-        if "SADM_DR_REAR_INTERVAL"         in CFG_NAME: sadm_dr_rear_interval        = int(CFG_VALUE)
-        if "SADM_DR_BACKUP_DIF"            in CFG_NAME: sadm_dr_backup_dif           = int(CFG_VALUE)
         if "SADM_SMTP_SERVER"              in CFG_NAME: sadm_smtp_server             = CFG_VALUE
         if "SADM_SMTP_PORT"                in CFG_NAME: sadm_smtp_port               = int(CFG_VALUE)
         if "SADM_SMTP_SENDER"              in CFG_NAME: sadm_smtp_sender             = CFG_VALUE

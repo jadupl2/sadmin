@@ -196,13 +196,14 @@
 #@2023_02_14 lib v4.17 Remove the usage of SADM_RCH_DESC.
 #@2023_03_03 lib v4.18 sadm_start() now clear error log '*_e.log' even when 'SADM_LOG_APPEND="Y"'
 #@2023_03_04 lib v4.19 Lock file content & owner updated. 
-#@2023_04_10 lib v4.20 Fix problem when using only 3 parameters when calling 'sadm_sendmail'.
+#@2023_04_13 lib v4.20 Load new variables 'SADM_REAR_DIF' 'SADM_REAR_INTERVAL' from sadmin.cfg.
+#@2023_04_13 lib v4.21 Load new variable 'SADM_BACKUP_INTERVAL' from sadmin.cfg use on backup page.
 #===================================================================================================
 
 
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
- 
+
 
  
 # --------------------------------------------------------------------------------------------------
@@ -210,7 +211,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.20"                                              # This Library Version
+export SADM_LIB_VER="4.21"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -357,11 +358,11 @@ export SADM_SSH_PORT=""                                                 # Defaul
 export SADM_REAR_NFS_SERVER=""                                          # ReaR NFS Server
 export SADM_REAR_NFS_MOUNT_POINT=""                                     # ReaR Mount Point
 export SADM_REAR_BACKUP_TO_KEEP=3                                       # Rear Nb.Copy
-export SADM_STORIX_NFS_SERVER=""                                        # Storix NFS Server
-export SADM_STORIX_NFS_MOUNT_POINT=""                                   # Storix Mnt Point
-export SADM_STORIX_BACKUP_TO_KEEP=3                                     # Storix Nb. Copy
+export SADM_REAR_BACKUP_DIF=25                                          # % size diff cur. vs prev.
+export SADM_REAR_BACKUP_INTERVAL=7                                      # Alert when 7 days without 
 export SADM_BACKUP_NFS_SERVER=""                                        # Backup NFS Server
 export SADM_BACKUP_NFS_MOUNT_POINT=""                                   # Backup Mnt Point
+export SADM_BACKUP_INTERVAL=7                                           # Days before yellow alert
 export SADM_DAILY_BACKUP_TO_KEEP=3                                      # Daily to Keep
 export SADM_WEEKLY_BACKUP_TO_KEEP=3                                     # Weekly to Keep
 export SADM_MONTHLY_BACKUP_TO_KEEP=2                                    # Monthly to Keep
@@ -370,18 +371,11 @@ export SADM_WEEKLY_BACKUP_DAY=5                                         # 1=Mon,
 export SADM_MONTHLY_BACKUP_DATE=1                                       # Monthly Back Date
 export SADM_YEARLY_BACKUP_MONTH=12                                      # Yearly Backup Mth
 export SADM_YEARLY_BACKUP_DATE=31                                       # Yearly Backup Day
-export SADM_BACKUP_DIFF=50                                              # PCT Backup Size Diff
-export SADM_MKSYSB_NFS_SERVER=""                                        # Mksysb NFS Server
-export SADM_MKSYSB_NFS_MOUNT_POINT=""                                   # Mksysb Mnt Point
-export SADM_MKSYSB_NFS_TO_KEEP=2                                        # Mksysb Bb. Copy
+export SADM_BACKUP_DIF=40                                               # % size diff cur. vs prev.
 export SADM_PID_TIMEOUT=7200                                            # PID File TTL default
 export SADM_LOCK_TIMEOUT=3600                                           # Host Lock File TTL           
-export SADM_MONITOR_UPDATE_INTERVAL=60                                  # Sysmon sec. refresh rate
 export SADM_MONITOR_RECENT_COUNT=10                                     # SysMon Nb Recent Script
 export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"                  # SysMon Recent list Exclude
-export SADM_DR_SCRIPT_MAXAGE=30                                         # Exec. days before yellow
-export SADM_DR_REAR_INTERVAL=7                                          # Max Days between backup      
-export SADM_DR_BACKUP_DIF=50                                            # Max % different BackupSize
 export SADM_SMTP_SERVER="smtp.gmail.com"                                # smtp mail relay host name
 export SADM_SMTP_PORT=587                                               # smtp port(25,465,587,2525)
 export SADM_SMTP_SENDER="sadmin.gmail.com"                              # Email address of sender 
@@ -1808,8 +1802,8 @@ sadm_server_vg() {
 sadm_load_config_file() {
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "sadm_load_config_file\n" ; fi
 
-    # SADMIN Configuration file MUST be present.
-    # If not, then create sadmin.cfg from .sadmin.cfg.
+    # SADMIN Configuration file '$SADMIN/cfg/sadmin.cfg' MUST be present.
+    # If not, then create $SADMIN/cfg/sadmin.cfg from the template '$SADMIN/cfg/.sadmin.cfg'.
     if [ ! -r "$SADM_CFG_FILE" ]                                        # If $SADMIN/cfg/sadmin.cfg
         then if [ ! -r "$SADM_CFG_HIDDEN" ]                             # Initial Cfg file not exist
                 then echo "****************************************************************"
@@ -1837,7 +1831,7 @@ sadm_load_config_file() {
     while read wline
         do
         FC=`echo $wline | cut -c1`
-        if [ "$FC" = "#" ] || [ ${#wline} -eq 0 ] ; then continue ; fi
+        if [ "$FC" = "#" ] || [ ${#wline} -eq 0 ] ; then continue ; fi # Skip comment & blank lines
         #
         echo "$wline" |grep -i "^SADM_MAIL_ADDR" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_MAIL_ADDR=`echo "$wline"     | cut -d= -f2 |tr -d ' '` ; fi
@@ -1926,6 +1920,9 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_BACKUP_NFS_MOUNT_POINT" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_BACKUP_NFS_MOUNT_POINT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
         #
+        echo "$wline" |grep -i "^SADM_BACKUP_INTERVAL" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_BACKUP_INTERVAL=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        #
         echo "$wline" |grep -i "^SADM_DAILY_BACKUP_TO_KEEP" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_DAILY_BACKUP_TO_KEEP=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
         #
@@ -1950,26 +1947,8 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_YEARLY_BACKUP_DATE" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_YEARLY_BACKUP_DATE=`echo "$wline"   |cut -d= -f2 |tr -d ' '` ;fi
         #
-        echo "$wline" |grep -i "^SADM_BACKUP_DIFF" > /dev/null 2>&1
+        echo "$wline" |grep -i "^SADM_BACKUP_DIF" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_BACKUP_DIF=`echo "$wline"   |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_MKSYSB_NFS_SERVER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_MKSYSB_NFS_SERVER=`echo "$wline"    |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_MKSYSB_NFS_MOUNT_POINT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_MKSYSB_NFS_MOUNT_POINT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_MKSYSB_BACKUP_TO_KEEP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_MKSYSB_BACKUP_TO_KEEP=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_STORIX_NFS_SERVER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_STORIX_NFS_SERVER=`echo "$wline"     |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_STORIX_NFS_MOUNT_POINT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_STORIX_NFS_MOUNT_POINT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_STORIX_BACKUP_TO_KEEP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_STORIX_BACKUP_TO_KEEP=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_REAR_NFS_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_REAR_NFS_SERVER=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
@@ -1979,6 +1958,12 @@ sadm_load_config_file() {
         #
         echo "$wline" |grep -i "^SADM_REAR_BACKUP_TO_KEEP" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_REAR_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_REAR_BACKUP_DIF" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_REAR_BACKUP_DIF=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_REAR_BACKUP_INTERVAL" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_REAR_BACKUP_INTERVAL=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_NETWORK1" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_NETWORK1=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
@@ -2009,15 +1994,6 @@ sadm_load_config_file() {
         #
         echo "$wline" |grep -i "^SADM_LOCK_TIMEOUT" > /dev/null 2>&1
         if [ $? -eq 0 ] ;then SADM_LOCK_TIMEOUT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_DR_SCRIPT_MAXAGE" > /dev/null 2>&1
-        if [ $? -eq 0 ] ;then SADM_DR_SCRIPT_MAXAGE=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_DR_REAR_INTERVAL" > /dev/null 2>&1
-        if [ $? -eq 0 ] ;then SADM_DR_REAR_INTERVAL=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_DR_BACKUP_DIF" > /dev/null 2>&1
-        if [ $? -eq 0 ] ;then SADM_DR_BACKUP_DIF=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_SMTP_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ;then SADM_SMTP_SERVER=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
@@ -2724,10 +2700,11 @@ sadm_check_system_lock() {
 # Things to do when first called
 # --------------------------------------------------------------------------------------------------
     export SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`                     # Save Script Startup Time
-    export SADM_ETCENV="/etc/environment"                               # Common file needed     
+    export SADM_ETCENV="/etc/environment"                               # Common env. file needed     
     if [ ! -r "$SADM_ETCENV" ]                                          # /etc/environment can't read
         then printf "\n\nFile $SADM_ETCENV is missing & it's needed."   # Inform User 
-             print "\nCannot continue, aborting"                        # We are aborting
+             printf "\nCannot continue, aborting"                       # We are aborting
+             printf "\nFor more info: https://sadmin.ca/sadm-section/#environment\n"
              exit 1                                                     # Exit with error
     fi 
 
@@ -2742,12 +2719,11 @@ sadm_check_system_lock() {
             if [ $(id -u) -ne 0 ]                                       # If user is not 'root' user
                then usrname=$(id -un)                                   # Get Current User Name
                     if ! id -nG "$usrname" | grep -qw "$SADM_GROUP"     # User part of sadmin group?
-                       then echo " "
-                            echo "User '$(id -un)' doesn't belong to the '$SADM_GROUP' group."   
-                            echo "Non 'root' user MUST be part of the '$SADM_GROUP' group."
-                            echo "The '$SADM_GROUP' group is specified in $SADM_CFG_FILE file."
-                            echo "Script aborted ..."
-                            echo " "
+                       then printf "\nUser '$(id -un)' doesn't belong to the '$SADM_GROUP' group." 
+                            printf "\nNon 'root' user MUST be part of the '$SADM_GROUP' group."
+                            printf "\nThe '$SADM_GROUP' group is specified in $SADM_CFG_FILE file."
+                            printf "\nMore info at https://sadmin.ca/sadmin-cfg/#sadmin-default-user-and-group-name"
+                            printf "\nScript aborted ...\n\n"
                             exit 1                                      # Exit with Error
                     fi 
             fi

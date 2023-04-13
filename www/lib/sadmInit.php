@@ -30,7 +30,7 @@
 # 2021_08_17 lib v3.9 Added "SADM_MONITOR_UPDATE_INTERVAL" 
 # 2021_09_15 lib v3.10 Load new Var. SADM_MONITOR_RECENT_COUNT,SADM_MONITOR_RECENT_EXCLUDE
 # 2022_07_26 lib v3.11 Set the TimeZone to America/Toronto
-# 2023_03_11 lib v3.12 Load Rear backup diff & Interval at start, used on Rear Backup status page.
+#@2023_03_11 lib v3.12 Load Rear backup diff & Interval at start, used on Rear Backup status page.
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
@@ -189,12 +189,6 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_YEARLY_BACKUP_DATE")     { define("SADM_YEARLY_BACKUP_DATE"     , trim($fvalue));}
           if (trim($fname) == "SADM_BACKUP_DIF")             { define("SADM_BACKUP_DIF"             , trim($fvalue));}
           if (trim($fname) == "SADM_BACKUP_INTERVAL")        { define("SADM_BACKUP_INTERVAL"        , trim($fvalue));}
-          if (trim($fname) == "SADM_MKSYSB_NFS_SERVER")      { define("SADM_MKSYSB_NFS_SERVER"      , trim($fvalue));}
-          if (trim($fname) == "SADM_MKSYSB_NFS_MOUNT_POINT") { define("SADM_MKSYSB_NFS_MOUNT_POINT" , trim($fvalue));}
-          if (trim($fname) == "SADM_MKSYSB_NFS_TO_KEEP")     { define("SADM_MKSYSB_NFS_TO_KEEP"     , trim($fvalue));}
-          if (trim($fname) == "SADM_STORIX_NFS_SERVER")      { define("SADM_STORIX_NFS_SERVER"      , trim($fvalue));}
-          if (trim($fname) == "SADM_STORIX_NFS_MOUNT_POINT") { define("SADM_STORIX_NFS_MOUNT_POINT" , trim($fvalue));}
-          if (trim($fname) == "SADM_STORIX_NFS_TO_KEEP")     { define("SADM_STORIX_NFS_TO_KEEP"     , trim($fvalue));}
           if (trim($fname) == "SADM_REAR_NFS_SERVER")        { define("SADM_REAR_NFS_SERVER"        , trim($fvalue));}
           if (trim($fname) == "SADM_REAR_NFS_MOUNT_POINT")   { define("SADM_REAR_NFS_MOUNT_POINT"   , trim($fvalue));}
           if (trim($fname) == "SADM_REAR_BACKUP_TO_KEEP")    { define("SADM_REAR_BACKUP_TO_KEEP"    , trim($fvalue));}

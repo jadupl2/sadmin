@@ -1287,455 +1287,455 @@ rear_legend()
 
 
 
-#===================================================================================================
-# Produce the Storix Image Backup report and email it to the SADMIN Administrator.
-#===================================================================================================
-storix_report()
-{
-    storix_error=0                                                      # Set to 1 if error in func.
-    if [ -f "$SADM_TMP_FILE2" ] ; then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1 ; fi 
-    if [ -f "$HTML_XFILE" ] ; then rm -f $HTML_XFILE >/dev/null 2>&1 ; fi     
-    sadm_write "${BOLD}${YELLOW}Creating the Storix Daily Backup Report${NORMAL}\n" 
-
-    # Put Rows you want in the select. 
-    # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
-    SQL="SELECT srv_name,srv_desc,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active" 
-    SQL="${SQL},srv_sadmin_dir,srv_backup,srv_img_backup,srv_arch "
-
-    # Build SQL to select active server(s) from Database.
-    SQL="${SQL} from server"                                            # From the Server Table
-    SQL="${SQL} where srv_ostype = 'linux'"                             # ReaR Avail. Only on Linux
-    SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
-    
-    # Execute SQL Query to Create CSV in SADM Temporary work file ($SADM_TMP_FILE1)
-    CMDLINE="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL Auth/Read Only User
-    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
-    if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
-        then sadm_write "$SADM_WARNING No Active Server were found.\n"  # Not Active Server MSG
-             return 0                                                   # Return Status to Caller
-    fi 
-    if [ "$SADM_DEBUG" -gt 4 ]                                          # If Debug Show SQL Results
-       then sadm_writelog " "                                           # Space line
-            sadm_writelog "Output of the SQL Query for producing the Backup Report."
-            cat $SADM_TMP_FILE1 | while read wline ; do sadm_writelog "${wline}"; done
-            sadm_writelog " "                                           # Space line
-    fi
-
-    # Mount NFS Storix Backup Location
-    NFSMOUNT="${SADM_STORIX_NFS_SERVER}:${SADM_STORIX_NFS_MOUNT_POINT}" # Remote NFS Mount Point
-    mount_nfs "$NFSMOUNT"                                               # Go and Mount NFS Dir.
-    if [ $? -ne 0 ] ; then return 1 ; fi                                # Can't Mount back to caller
-
-    # Exclude the servers to exclude specify in sadmin.cfg from the report
-    for server in $SERVERS                                              # For All in Exclude List
-    	do 
-        grep -iq "^${server};" $SADM_TMP_FILE1
-        if [ $? -eq 0 ]                                                 # Server in Exclude List 
-            then grep -iv "^$server" $SADM_TMP_FILE1 > $SADM_TMP_FILE2  # Remove it from file
-                 mv $SADM_TMP_FILE2 $SADM_TMP_FILE1                     # Copy work to Server List
-    	fi
-	    done
-    chmod 664 $SADM_TMP_FILE1                                           # So everybody can read it.
-
-    # Produce the report Heading
-    storix_heading "SADMIN Storix Report - `date '+%a %C%y.%m.%d %H:%M:%S'`" # Produce Page Heading
-    xcount=0                                                            # Set Server & Error Counter
-    while read wline                                                    # Read Tmp file Line by Line
-        do
-        server_name=$(echo $wline      |awk -F\; '{print $1}')          # Extract Server Name
-        server_desc=$(echo $wline      |awk -F\; '{print $2}')          # Extract Server Description
-        server_os=$(echo $wline        |awk -F\; '{print $3}')          # O/S (linux/aix/darwin)
-        server_domain=$(echo $wline    |awk -F\; '{print $4}')          # Extract Domain of Server
-        server_monitor=$(echo $wline   |awk -F\; '{print $5}')          # Monitor  1=True 0=False
-        server_sporadic=$(echo $wline  |awk -F\; '{print $6}')          # Sporadic 1=True 0=False
-        server_active=$(echo $wline    |awk -F\; '{print $7}')          # Active   1=Yes  0=No
-        server_rootdir=$(echo $wline   |awk -F\; '{print $8}')          # Client SADMIN Root Dir.
-        server_backup=$(echo $wline    |awk -F\; '{print $9}')          # Backup Schd 1=True 0=False
-        server_img_backup=$(echo $wline|awk -F\; '{print $10}')         # ReaR Sched. 1=True 0=False
-        server_arch=$(      echo $wline|awk -F\; '{print $11}')         # Server Architecture        
-        fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQDN Server Name
-        
-        if [ "$SADM_DEBUG" -gt 4 ]                                      # If Debug Show System name
-           then sadm_writelog "Handling ${server_name} ${server_arch}"  # Server Name & Architecture
-        fi 
- 
-        # ReaR Backup only Supported under these Architecture
-        if [ "$server_arch" != "x86_64" ] && [ "$server_arch" != "i686" ] && 
-           [ "$server_arch" != "i386" ]
-           then continue                                                # Storix run Intel Platform
-        fi 
-
-        # Get Information about Storix ISO 
-        ISO_NAME="No ISO" ; ISO_SIZE=0 ; ISO_DATE="N/A" ; ISO_EPOCH=0   # Default if no ISO found
-        if [ -d ${LOCAL_MOUNT}/${ISODIR} ]                              # If Server Backup Dir Exist
-           then ls -l ${LOCAL_MOUNT}/${ISODIR}/*.iso | grep -i ${server_name} > /dev/null 2>&1
-                if [ $? -eq 0 ]                                         # ISO exist for server ?
-                   then ISO_NAME=$(ls -1 ${LOCAL_MOUNT}/${ISODIR}/*.iso | grep -i ${server_name} |head -1)
-                        ISO_SIZE=$(stat  --format=%s ${ISO_NAME})
-                        ISO_SIZE=$(echo "$ISO_SIZE /1024/1024" | bc)    # Convert Backup Size in MB
-                        ISO_DATE=$(stat  --format=%y ${ISO_NAME} | awk '{print $1}')
-                        ISO_EPOCH=$(stat --format=%Y ${ISO_NAME} | awk '{print $1}')
-                   else sadm_writelog "${SADM_WARNING} - No ISO was found for system ${server_name}"
-                fi 
-           else sadm_writelog "${SADM_ERROR} - ISO Directory doesn't exist (${LOCAL_MOUNT}/${ISODIR})"
-        fi
-        if [ $SADM_DEBUG -gt 0 ] 
-            then sadm_writelog "ISO_NAME=$ISO_NAME  SIZE=$ISO_SIZE  DATE=$ISO_DATE  EPOCH=$ISO_EPOCH"
-        fi 
-        
-        # Check if at least one TOC file exist for the current server
-        STTOT=0                                                         # Defaut Storix Backup Size
-        SAVPWD=`pwd`                                                    # Save Current Working Dir.
-        cd ${LOCAL_MOUNT}/${IMGDIR}                                     # Move into Image Directory
-        ls -1tr SB*${server_name}*:TOC:* > /dev/null 2>&1               # At Least 1 TOC For System?
-        if [ $? -ne 0 ]                                                 # Bo TOC = No Backup
-           then sadm_writelog "${SADM_WARNING} - No Storix image found for system ${server_name}"
-           else STTOC=$(ls -1tr SB*${server_name}*:TOC:* | tail -1)     # Get lastest TOC FileName
-                ST_DATE=$(stat  --format=%y ${STTOC} |awk '{print $1}') # Get TOC Modifcation Date
-                STSEQ=$(echo $STTOC | awk -F: '{print $5}')             # Get Backup ID Number
-                bsize="${SADM_TMP_DIR}/daily_storix.size"               # WorkFile, Calc Backup Size
-                rm -f $bsize > /dev/null 2>&1                           # Del. Size Work File
-                find ${LOCAL_MOUNT}/${IMGDIR} -name "SB*" -exec ls -l {} \; |grep "${STSEQ}" >$bsize
-                if [ -s $bsize ]                                        # Backup File Not Found or 0
-                   then TOTAL=$(awk '{sum += $5} END {print sum}' $bsize)  # Add each file size 
-                        STTOT=$(echo "$TOTAL /1024/1024" | bc)          # Convert Backup Size in MB
-                fi 
-        fi 
-        cd ${SAVPWD}                                                    # Move out of NFS Directory
-
-        # Get the last line of the backup RCH file for the system.
-        RCH_FILE="${SADM_WWW_DAT_DIR}/${server_name}/rch/${server_name}_storix_client_post_job.rch"
-        if [ -s $RCH_FILE ]                                             # If System Backup RCH Exist
-            then RCH_LINE=$(tail -3 $RCH_FILE | sort | tail -1)         # Get last line in RCH File
-            else #echo "RCH file ${RCH_FILE} not found or is empty."    # Advise user no RCH File
-                 start_end="---------- -------- ---------- -------- --------" # Start/End Date/Time
-                 RCH_LINE="${server_name} ${start_end} ${backup_script_name} default 1 3" 
-        fi 
-
-        # The RCH line should have 10 ($FIELD_IN_RCH) fields, if not set error to 1 & advise user.
-        NBFIELD=`echo $RCH_LINE | awk '{ print NF }'`                   # How many fields on line ?
-        if [ "${NBFIELD}" != "${FIELD_IN_RCH}" ]                        # If abnormal nb. of field
-           then sadm_write "${SADM_ERROR} Format error in this RCH file : ${RCH_FILE}\n"
-                sadm_write "Line below have ${NBFIELD} but it should have ${FIELD_IN_RCH}.\n"
-                sadm_write "The backup for this server is skipped: ${RCH_LINE}\n"
-                sadm_write "\n"
-                storix_error=1                                          # Func. Return Code now at 1
-                continue 
-        fi        
-        if [ $SADM_DEBUG -gt 5 ] 
-            then printf "The RCH Filename of ${server_name} backup of is ${RCH_FILE}\n"
-                 printf "The last Line in the file is : ${RCH_LINE}\n"
-        fi 
-
-        # Split the RCH Line 
-        WSERVER=` echo -e $RCH_LINE | awk '{ print $1 }'`               # Extract Server Name
-        WDATE1=`  echo -e $RCH_LINE | awk '{ print $2 }'`               # Extract Date Started
-        WTIME1=`  echo -e $RCH_LINE | awk '{ print $3 }'`               # Extract Time Started
-        WDATE2=`  echo -e $RCH_LINE | awk '{ print $4 }'`               # Extract Date Started
-        WTIME2=`  echo -e $RCH_LINE | awk '{ print $5 }'`               # Extract Time Ended
-        WELAPSE=` echo -e $RCH_LINE | awk '{ print $6 }'`               # Extract Time Ended
-        WSCRIPT=` echo -e $RCH_LINE | awk '{ print $7 }'`               # Extract Script Name
-        WALERT=`  echo -e $RCH_LINE | awk '{ print $8 }'`               # Extract Alert Group Name
-        WTYPE=`   echo -e $RCH_LINE | awk '{ print $9 }'`               # Extract Alert Group Type
-        WRCODE=`  echo -e $RCH_LINE | awk '{ print $10 }'`              # Extract Return Code 
-
-        # Set the backup Status Description
-        case "$WRCODE" in                                               # Case on RCH Return Code
-            0 ) WSTATUS="Success" 
-                ;; 
-            1 ) WSTATUS="Failed"
-                ;;
-            2 ) WSTATUS="Running"
-                ;;
-            3 ) WSTATUS="No Backup"
-                ;;
-            * ) WRDESC="CODE $WRCODE ?"                                 # Illegal Code  Desc
-                ;;                                                          
-        esac
-        
-        # Build backup line to be written to work file (Will then be sorted later)
-        BLINE="${WDATE1};${WTIME1};${WELAPSE};${WSTATUS};${server_name}" 
-        BLINE="${BLINE};${server_desc};${server_backup};${STTOT};${ISO_SIZE}"
-        BLINE="${BLINE};${server_sporadic};${ISO_DATE};${ST_DATE}"
-        echo "${BLINE}" >> $SADM_TMP_FILE2                                # Write Info to work file
-        done < $SADM_TMP_FILE1
-
-    # Umount NFS Mount point, Sort the Work File (By Date/Time) then produce report it HTML format.
-    unmount_nfs                                                         # UnMount NFS Backup Dir.
-    sort $SADM_TMP_FILE2 > $SADM_TMP_FILE1                              # Sort Tmp file by Date/Time
-    while read wline                                                    # Read Tmp file Line by Line
-        do
-        xcount=$(($xcount+1))                                           # Increase Line Counter
-        storix_line "${wline};${xcount}"                                # Insert line in HTML Page
-        done < $SADM_TMP_FILE1                                          # Read Sorted file
-    echo -e "</table>\n" >> $HTML_XFILE                                 # End of storix section
-    storix_legend                                                       # Add Legend at page bottom
-    echo -e "</body>\n</html>" >> $HTML_XFILE                           # End of Storix Page
-
-    # Set Report by Email to SADMIN Administrator
-    subject="SADMIN Storix Report"                                      # Send Backup Report by mail
-    export EMAIL="$SADM_MAIL_ADDR"                                      # Set the FROM Email 
-    if [ "$WKHTMLTOPDF" != "" ]                                         # If wkhtmltopdf on System
-        then $WKHTMLTOPDF -O landscape $HTML_XFILE $PDF_XFILE > /dev/null 2>&1 # Convert HTML to PDF
-             mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR -a $PDF_XFILE < $HTML_XFILE
-             SADM_EXIT_CODE=$?                                          # Save mutt return Code.
-        else mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_XFILE
-             SADM_EXIT_CODE=$?                                          # Save mutt return Code.
-    fi 
-    if [ $SADM_EXIT_CODE -eq 0 ]                                        # If mail sent successfully
-        then sadm_writelog "${SADM_OK} Daily Backup Report sent to $SADM_MAIL_ADDR"      
-        else sadm_writelog "${SADM_ERROR} Failed to send the Daily Backup Report to $SADM_MAIL_ADDR"
-    fi
-
-    # End of Storix Report
-    sadm_write "${BOLD}${YELLOW}End of Daily Backup Report ...${NORMAL}\n"   
-    sadm_write "\n"                                                     # White line in log & Screen
-    return $SADM_EXIT_CODE                                              # Return Err Count to caller
-}
-
-
-#===================================================================================================
-# Report Heading
-#===================================================================================================
-storix_heading()
-{
-    RTITLE=$1                                                           # Report Title
-
-    echo -e "<!DOCTYPE html><html>" > $HTML_XFILE
-    echo -e "<head>" >> $HTML_XFILE
-    echo -e "\n<meta charset='utf-8' />" >> $HTML_XFILE
-    #
-    echo -e "\n<style>" >> $HTML_XFILE
-    echo -e "th { color: white; background-color: #0000ff; padding: 0px; }" >> $HTML_XFILE
-    echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }" >> $HTML_XFILE
-    echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }" >> $HTML_XFILE
-    echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML_XFILE
-    echo -e "div.fs150   { font-size: 150%; }"                  >> $HTML_XFILE
-    echo -e "div.fs13px  { text-align: left; font-size: 13px; }"                  >> $HTML_XFILE
-    echo -e "\n/* Dashed red border */" >> $HTML_XFILE
-    echo -e "hr.dash        { border-top: 1px dashed red; }" >> $HTML_XFILE
-    echo -e "/* Large rounded green border */" >> $HTML_XFILE
-    echo -e "hr.large_green { border: 3px solid green; border-radius: 5px; }" >> $HTML_XFILE
-    echo -e "p.report_title {" >> $HTML_XFILE
-    echo -e "   font-family:Helvetica,Arial;color:blue;font-size:25px;font-weight:bold;" >> $HTML_XFILE
-    echo -e "}" >> $HTML_XFILE
-    echo -e "</style>" >> $HTML_XFILE
-    #
-    echo -e "\n<title>$RTITLE</title>" >> $HTML_XFILE
-    echo -e "</head>\n" >> $HTML_XFILE
-    echo -e "<body>" >> $HTML_XFILE
-
-    echo -e "<center>" >> $HTML_XFILE                                   # Center what's coming
-    echo -e "<p class='report_title'>${RTITLE}</p>" >> $HTML_XFILE      # Report Title
-    URL_SCRIPTS_REPORT="/view/daily_storix_report.html"                 # Scripts Daily Report Page
-    RURL="https://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
-    TITLE2="View the web version of this report"                        # Link Description
-    echo -e "</center>" >> $HTML_XFILE                                  # End Text Center
-    echo -e "<div class='fs13px'><a href='${RURL}'>${TITLE2}</a></div>" >>$HTML_XFILE    # Insert Link on Page
-    echo -e "\n<hr class="large_green">\n"              >> $HTML_XFILE
-    echo -e "\n<center><table border=0>" >> $HTML_XFILE
-    #
-    echo -e "\n<thead>" >> $HTML_XFILE
-    echo -e "<tr>" >> $HTML_XFILE
-    echo -e "<th colspan=1 dt-head-center></th>" >> $HTML_XFILE
-    echo -e "<th colspan=4 align=center>Last Backup Execution</th>" >> $HTML_XFILE
-    echo -e "<th colspan=2></th>" >> $HTML_XFILE
-    echo -e "<th align=center>System</th>" >> $HTML_XFILE
-    echo -e "<th align=center>Backup</th>" >> $HTML_XFILE
-    echo -e "<th align=center>Backup</th>" >> $HTML_XFILE
-    echo -e "<th align=center>ISO</th>" >> $HTML_XFILE
-    echo -e "<th align=center>ISO</th>" >> $HTML_XFILE
-    echo -e "</tr>" >> $HTML_XFILE
-    #
-    echo -e "<tr>" >> $HTML_XFILE
-    echo -e "<th align=center>No</th>" >> $HTML_XFILE
-    echo -e "<th align=center>Date</th>" >> $HTML_XFILE
-    echo -e "<th align=center>Time</th>" >> $HTML_XFILE
-    echo -e "<th align=center>Elapse</th>" >> $HTML_XFILE
-    echo -e "<th align=center>Status</th>"  >> $HTML_XFILE
-    echo -e "<th align=center>System</th>" >> $HTML_XFILE
-    echo -e "<th align=left>Description</th>" >> $HTML_XFILE    
-    echo -e "<th align=left>Sporadic</th>" >> $HTML_XFILE
-    echo -e "<th align=center>Date</th>" >> $HTML_XFILE
-    echo -e "<th align=center>Size</th>" >> $HTML_XFILE
-    echo -e "<th align=center>Date</th>" >> $HTML_XFILE
-    echo -e "<th align=center>Size</th>" >> $HTML_XFILE
-    echo -e "</tr>" >> $HTML_XFILE
-    echo -e "</thead>\n" >> $HTML_XFILE
-    return 0
-}
-
-
-#===================================================================================================
-# Add the receiving line into the Storix report page
-#===================================================================================================
-storix_line()
-{
-    # Extract fields from parameters received.
-    BACKUP_INFO=$*                                                      # Comma Sep. Info Line
-    WDATE1=$(      echo $BACKUP_INFO | awk -F\; '{ print $1 }')         # Most Recent Backup Date
-    WTIME1=$(      echo $BACKUP_INFO | awk -F\; '{ print $2 }')         # Most Recent Backup Time
-    WELAPSE=$(     echo $BACKUP_INFO | awk -F\; '{ print $3 }')         # Recent Backup Elapse Time
-    WSTATUS=$(     echo $BACKUP_INFO | awk -F\; '{ print $4 }')         # Storix Backup Status
-    WSERVER=$(     echo $BACKUP_INFO | awk -F\; '{ print $5 }')         # Server System Name
-    WDESC=$(       echo $BACKUP_INFO | awk -F\; '{ print $6 }')         # Server System Description
-    WACT=$(        echo $BACKUP_INFO | awk -F\; '{ print $7 }')         # DB System Description
-    BACKUP_SIZE=$( echo $BACKUP_INFO | awk -F\; '{ print $8 }')         # Current Backup Total MB
-    ISO_SIZE=$(    echo $BACKUP_INFO | awk -F\; '{ print $9 }')         # ISO Size MB
-    WSPORADIC=$(   echo $BACKUP_INFO | awk -F\; '{ print $10 }')        # Sporadic Server=1 else=0
-    ISO_DATE=$(    echo $BACKUP_INFO | awk -F\; '{ print $11 }')        # Date ISO was created
-    ST_DATE=$(     echo $BACKUP_INFO | awk -F\; '{ print $12 }')        # Date of Storix TOC File
-    WCOUNT=$(      echo $BACKUP_INFO | awk -F\; '{ print $13 }')        # Line Counter
-
-    # Alternate background color at every line
-    if (( $WCOUNT %2 == 0 ))                                            # Modulo on line counter
-       then BCOL="#00FFFF" ; FCOL="#000000"                             # Pair count color
-       else BCOL="#F0FFFF" ; FCOL="#000000"                             # Impair line color
-    fi
-
-    # Beginning to Insert Line in HTML_XFILE Table
-    echo -e "<tr>"  >> $HTML_XFILE                                      # Begin backup line
-    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WCOUNT</font></td>"  >> $HTML_XFILE
-
-    # Backup older than $STWARN = yellow background & tooltips indicate nb days elapse since backup
-    ebackup_date=`echo "$WDATE1" | sed 's/\./\//g'`                     # Replace dot by '/' in date
-    backup_date=`echo "$WDATE1" | sed 's/\./-/g'`                       # Replace dot by '-' in date
-    epoch_backup=`date -d "$ebackup_date" "+%s"`                        # Backup Date in Epoch Time
-    epoch_now=`date "+%s"`                                              # Today in Epoch Time
-    diff=$(($epoch_now - $epoch_backup))                                # Nb. Seconds between
-    days=$(($diff/(60*60*24)))                                          # Convert Sec. to Days
-    if [ $days -gt $STWARN ]                                            # Backup taken too far away
-       then echo -n "<td title='Storix backup done $days days ago, warning at $STWARN days.' " >>$HTML_XFILE 
-            echo -n "align=center bgcolor='Yellow'>" >>$HTML_XFILE      # Yellow Background
-            echo "<font color=$FCOL>$backup_date</font></td>" >>$HTML_XFILE
-       else if [ "$backup_date" != "$ST_DATE" ] ||  [ "$backup_date" != "$ISO_DATE" ] 
-               then echo -n "<td title='Storix backup date different than ISO or image date' " >>$HTML_XFILE 
-                    echo -n "align=center bgcolor='Yellow'>" >>$HTML_XFILE      # Yellow Background
-                    echo "<font color=$FCOL>$backup_date</font></td>" >>$HTML_XFILE  # Show Backup Date
-               else echo -n "<td title='Storix backup done $days days ago, warning at $STWARN days.' " >>$HTML_XFILE 
-                    echo "align=center bgcolor=$BCOL><font color=$FCOL>$backup_date</font></td>" >>$HTML_XFILE
-            fi
-    fi 
-
-    # Backup Time & Elapse time
-    echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WTIME1</font></td>"  >> $HTML_XFILE
-    echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WELAPSE</font></td>" >> $HTML_XFILE
-
-    # Backup Status
-    if [ "$WSTATUS" != "Success" ]
-        then echo -e "<td align=center bgcolor='Yellow'><font color=$FCOL>" >> $HTML_XFILE
-        else echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>"    >> $HTML_XFILE
-    fi 
-    LOGFILE="${WSERVER}_${WSCRIPT}.log"                                 # Assemble log Script Name
-    LOGNAME="${SADM_WWW_DAT_DIR}/${WSERVER}/log/${LOGFILE}"             # Add Dir. Path to Name
-    LOGURL="https://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}"  # Url to View Log
-    if [ -r "$LOGNAME" ]                                                # If log is Readable
-        then echo -n "<a href='$LOGURL 'title='View Backup Log File'>" >>$HTML_XFILE
-             echo "${WSTATUS}</font></a></td>" >>$HTML_XFILE 
-        else echo -e "${WSTATUS}</font></td>" >> $HTML_XFILE            # No Log = No LInk
-    fi
-
-    # Server Name & Descrition 
-    echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WSERVER</font></td>" >> $HTML_XFILE
-    echo "<td align=left bgcolor=$BCOL><font color=$FCOL>$WDESC</font></td>"     >> $HTML_XFILE
-
-    # Show if Server is Sporadic or not.
-    if [ "$WSPORADIC" =  "0" ] 
-       then echo "<td align=center bgcolor=$BCOL><font color=$FCOL>No</font></td>"  >>$HTML_XFILE
-       else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>Yes</font></td>" >>$HTML_XFILE
-    fi
-
-    # Show Date and Size of Storix Backup
-    if [ "$backup_date" != "$ST_DATE" ] 
-        then echo -n "<td title='Execution Backup Date different than Image file date' " >>$HTML_XFILE 
-             echo " align=center bgcolor='Yellow'><font color=$FCOL>$ST_DATE</font></td>" >>$HTML_XFILE
-        else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$ST_DATE</font></td>" >>$HTML_XFILE
-    fi 
-    if [ $BACKUP_SIZE -eq 0 ] 
-        then echo "<td align=center bgcolor='Yellow'><font color=$FCOL>$BACKUP_SIZE MB</font></td>" >>$HTML_XFILE
-        else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$BACKUP_SIZE MB</font></td>" >>$HTML_XFILE
-    fi 
-
-    # Show Storix Date & ISO Size
-    if [ "$backup_date" != "$ISO_DATE" ] 
-        then echo -n "<td title='Execution Backup Date different than ISO file date' " >>$HTML_XFILE
-             echo " align=center bgcolor='Yellow'><font color=$FCOL>$ISO_DATE</font></td>" >>$HTML_XFILE
-        else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$ISO_DATE</font></td>" >>$HTML_XFILE
-    fi 
-    if [ $ISO_SIZE -eq 0 ]                                
-        then echo -en "<td title='No ISO was found' align=center bgcolor='Yellow'>" >>$HTML_XFILE
-             echo -e "<font color=$FCOL>${ISO_SIZE} MB</font></td>" >> $HTML_XFILE
-        else echo -en "<td align=center bgcolor=$BCOL><font color=$FCOL> " >> $HTML_XFILE
-             echo -e " ${ISO_SIZE} MB</font></td>" >> $HTML_XFILE
-    fi 
-
-    echo -e "</tr>\n" >> $HTML_XFILE
-    return 
-} 
-
-
-
-#===================================================================================================
-# Add legend at the bottom of the Storix report page
-#===================================================================================================
-storix_legend()
-{
-    echo -e "\n<br>\n<hr class="dash">\n" >> $HTML_XFILE                # Horizontal Dashed Line
-    echo -e "\n\n<br><table cellspacing="0" cellpadding="0" border=0>\n"  >> $HTML_XFILE 
-    BCOL="#ffffff"                                                      # Background color (White)
-    FCOL="#000000"                                                      # Font Color (Black)
-
-    echo -e "<tr>"  >> $HTML_XFILE                                      # Heading rows
-    DATA="Column Name"
-    echo -e "<th align=center colspan=8>$DATA</th>" >> $HTML_XFILE
-    echo -e "<th align=center colspan=4>Column have a yellow background when ...</td>" >>$HTML_XFILE
-    echo -e "</tr>"  >> $HTML_XFILE                                      # Begin Legend Row
-
-    echo -e "<tr>"  >> $HTML_XFILE                                      # Begin Legend Row
-    DATA="Backup execution date"
-    echo -e "<td align=left colspan=4 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
-    DATA="The backup date is older than $STWARN days or when it's different than backup or ISO date."
-    echo -e "<td align=left colspan=8 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
-    echo -e "</tr>"  >> $HTML_XFILE 
-
-    echo -e "<tr>"  >> $HTML_XFILE                                      # Begin Legend Row
-    DATA="Backup status"
-    echo -e "<td align=left colspan=4 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
-    DATA="The backup status is different than 'Success'."
-    echo -e "<td align=left colspan=8 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
-    echo -e "</tr>"  >> $HTML_XFILE 
-
-    echo -e "<tr>"  >> $HTML_XFILE                                      # Begin Legend Row
-    DATA="Backup date"
-    echo -e "<td align=left colspan=4 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
-    DATA="The backup date is different than execution date."
-    echo -e "<td align=left colspan=8 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
-    echo -e "</tr>"  >> $HTML_XFILE 
-
-    echo -e "<tr>"  >> $HTML_XFILE                                      # Begin Legend Row
-    DATA="Backup size"
-    echo -e "<td align=left colspan=4 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
-    DATA="The size of the backup is zero."
-    echo -e "<td align=left colspan=8 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
-    echo -e "</tr>"  >> $HTML_XFILE 
-
-    echo -e "<tr>"  >> $HTML_XFILE                                      # Begin Legend Row
-    DATA="ISO date"
-    echo -e "<td align=left colspan=4 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
-    DATA="The date of the ISO file is different than the execution date."
-    echo -e "<td align=left colspan=8 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
-    echo -e "</tr>"  >> $HTML_XFILE 
-
-    echo -e "<tr>"  >> $HTML_XFILE                                      # Begin Legend Row
-    DATA="ISO size"
-    echo -e "<td align=left colspan=4 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
-    DATA="The size of the ISO file is zero."
-    echo -e "<td align=left colspan=8 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
-    echo -e "</tr>"  >> $HTML_XFILE 
-    echo -e "</table>\n<br><br>\n" >> $HTML_XFILE                       # End of Legend Section
-}
-
-
+##===================================================================================================
+## Produce the Storix Image Backup report and email it to the SADMIN Administrator.
+##===================================================================================================
+#storix_report()
+#{
+#    storix_error=0                                                      # Set to 1 if error in func.
+#    if [ -f "$SADM_TMP_FILE2" ] ; then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1 ; fi 
+#    if [ -f "$HTML_XFILE" ] ; then rm -f $HTML_XFILE >/dev/null 2>&1 ; fi     
+#    sadm_write "${BOLD}${YELLOW}Creating the Storix Daily Backup Report${NORMAL}\n" 
+#
+#    # Put Rows you want in the select. 
+#    # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
+#    SQL="SELECT srv_name,srv_desc,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active" 
+#    SQL="${SQL},srv_sadmin_dir,srv_backup,srv_img_backup,srv_arch "
+#
+#    # Build SQL to select active server(s) from Database.
+#    SQL="${SQL} from server"                                            # From the Server Table
+#    SQL="${SQL} where srv_ostype = 'linux'"                             # ReaR Avail. Only on Linux
+#    SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
+#    
+#    # Execute SQL Query to Create CSV in SADM Temporary work file ($SADM_TMP_FILE1)
+#    CMDLINE="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL Auth/Read Only User
+#    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
+#    if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
+#        then sadm_write "$SADM_WARNING No Active Server were found.\n"  # Not Active Server MSG
+#             return 0                                                   # Return Status to Caller
+#    fi 
+#    if [ "$SADM_DEBUG" -gt 4 ]                                          # If Debug Show SQL Results
+#       then sadm_writelog " "                                           # Space line
+#            sadm_writelog "Output of the SQL Query for producing the Backup Report."
+#            cat $SADM_TMP_FILE1 | while read wline ; do sadm_writelog "${wline}"; done
+#            sadm_writelog " "                                           # Space line
+#    fi
+#
+#    # Mount NFS Storix Backup Location
+#    NFSMOUNT="${SADM_STORIX_NFS_SERVER}:${SADM_STORIX_NFS_MOUNT_POINT}" # Remote NFS Mount Point
+#    mount_nfs "$NFSMOUNT"                                               # Go and Mount NFS Dir.
+#    if [ $? -ne 0 ] ; then return 1 ; fi                                # Can't Mount back to caller
+#
+#    # Exclude the servers to exclude specify in sadmin.cfg from the report
+#    for server in $SERVERS                                              # For All in Exclude List
+#    	do 
+#        grep -iq "^${server};" $SADM_TMP_FILE1
+#        if [ $? -eq 0 ]                                                 # Server in Exclude List 
+#            then grep -iv "^$server" $SADM_TMP_FILE1 > $SADM_TMP_FILE2  # Remove it from file
+#                 mv $SADM_TMP_FILE2 $SADM_TMP_FILE1                     # Copy work to Server List
+#    	fi
+#	    done
+#    chmod 664 $SADM_TMP_FILE1                                           # So everybody can read it.
+#
+#    # Produce the report Heading
+#    storix_heading "SADMIN Storix Report - `date '+%a %C%y.%m.%d %H:%M:%S'`" # Produce Page Heading
+#    xcount=0                                                            # Set Server & Error Counter
+#    while read wline                                                    # Read Tmp file Line by Line
+#        do
+#        server_name=$(echo $wline      |awk -F\; '{print $1}')          # Extract Server Name
+#        server_desc=$(echo $wline      |awk -F\; '{print $2}')          # Extract Server Description
+#        server_os=$(echo $wline        |awk -F\; '{print $3}')          # O/S (linux/aix/darwin)
+#        server_domain=$(echo $wline    |awk -F\; '{print $4}')          # Extract Domain of Server
+#        server_monitor=$(echo $wline   |awk -F\; '{print $5}')          # Monitor  1=True 0=False
+#        server_sporadic=$(echo $wline  |awk -F\; '{print $6}')          # Sporadic 1=True 0=False
+#        server_active=$(echo $wline    |awk -F\; '{print $7}')          # Active   1=Yes  0=No
+#        server_rootdir=$(echo $wline   |awk -F\; '{print $8}')          # Client SADMIN Root Dir.
+#        server_backup=$(echo $wline    |awk -F\; '{print $9}')          # Backup Schd 1=True 0=False
+#        server_img_backup=$(echo $wline|awk -F\; '{print $10}')         # ReaR Sched. 1=True 0=False
+#        server_arch=$(      echo $wline|awk -F\; '{print $11}')         # Server Architecture        
+#        fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQDN Server Name
+#        
+#        if [ "$SADM_DEBUG" -gt 4 ]                                      # If Debug Show System name
+#           then sadm_writelog "Handling ${server_name} ${server_arch}"  # Server Name & Architecture
+#        fi 
+# 
+#        # ReaR Backup only Supported under these Architecture
+#        if [ "$server_arch" != "x86_64" ] && [ "$server_arch" != "i686" ] && 
+#           [ "$server_arch" != "i386" ]
+#           then continue                                                # Storix run Intel Platform
+#        fi 
+#
+#        # Get Information about Storix ISO 
+#        ISO_NAME="No ISO" ; ISO_SIZE=0 ; ISO_DATE="N/A" ; ISO_EPOCH=0   # Default if no ISO found
+#        if [ -d ${LOCAL_MOUNT}/${ISODIR} ]                              # If Server Backup Dir Exist
+#           then ls -l ${LOCAL_MOUNT}/${ISODIR}/*.iso | grep -i ${server_name} > /dev/null 2>&1
+#                if [ $? -eq 0 ]                                         # ISO exist for server ?
+#                   then ISO_NAME=$(ls -1 ${LOCAL_MOUNT}/${ISODIR}/*.iso | grep -i ${server_name} |head -1)
+#                        ISO_SIZE=$(stat  --format=%s ${ISO_NAME})
+#                        ISO_SIZE=$(echo "$ISO_SIZE /1024/1024" | bc)    # Convert Backup Size in MB
+#                        ISO_DATE=$(stat  --format=%y ${ISO_NAME} | awk '{print $1}')
+#                        ISO_EPOCH=$(stat --format=%Y ${ISO_NAME} | awk '{print $1}')
+#                   else sadm_writelog "${SADM_WARNING} - No ISO was found for system ${server_name}"
+#                fi 
+#           else sadm_writelog "${SADM_ERROR} - ISO Directory doesn't exist (${LOCAL_MOUNT}/${ISODIR})"
+#        fi
+#        if [ $SADM_DEBUG -gt 0 ] 
+#            then sadm_writelog "ISO_NAME=$ISO_NAME  SIZE=$ISO_SIZE  DATE=$ISO_DATE  EPOCH=$ISO_EPOCH"
+#        fi 
+#        
+#        # Check if at least one TOC file exist for the current server
+#        STTOT=0                                                         # Defaut Storix Backup Size
+#        SAVPWD=`pwd`                                                    # Save Current Working Dir.
+#        cd ${LOCAL_MOUNT}/${IMGDIR}                                     # Move into Image Directory
+#        ls -1tr SB*${server_name}*:TOC:* > /dev/null 2>&1               # At Least 1 TOC For System?
+#        if [ $? -ne 0 ]                                                 # Bo TOC = No Backup
+#           then sadm_writelog "${SADM_WARNING} - No Storix image found for system ${server_name}"
+#           else STTOC=$(ls -1tr SB*${server_name}*:TOC:* | tail -1)     # Get lastest TOC FileName
+#                ST_DATE=$(stat  --format=%y ${STTOC} |awk '{print $1}') # Get TOC Modifcation Date
+#                STSEQ=$(echo $STTOC | awk -F: '{print $5}')             # Get Backup ID Number
+#                bsize="${SADM_TMP_DIR}/daily_storix.size"               # WorkFile, Calc Backup Size
+#                rm -f $bsize > /dev/null 2>&1                           # Del. Size Work File
+#                find ${LOCAL_MOUNT}/${IMGDIR} -name "SB*" -exec ls -l {} \; |grep "${STSEQ}" >$bsize
+#                if [ -s $bsize ]                                        # Backup File Not Found or 0
+#                   then TOTAL=$(awk '{sum += $5} END {print sum}' $bsize)  # Add each file size 
+#                        STTOT=$(echo "$TOTAL /1024/1024" | bc)          # Convert Backup Size in MB
+#                fi 
+#        fi 
+#        cd ${SAVPWD}                                                    # Move out of NFS Directory
+#
+#        # Get the last line of the backup RCH file for the system.
+#        RCH_FILE="${SADM_WWW_DAT_DIR}/${server_name}/rch/${server_name}_storix_client_post_job.rch"
+#        if [ -s $RCH_FILE ]                                             # If System Backup RCH Exist
+#            then RCH_LINE=$(tail -3 $RCH_FILE | sort | tail -1)         # Get last line in RCH File
+#            else #echo "RCH file ${RCH_FILE} not found or is empty."    # Advise user no RCH File
+#                 start_end="---------- -------- ---------- -------- --------" # Start/End Date/Time
+#                 RCH_LINE="${server_name} ${start_end} ${backup_script_name} default 1 3" 
+#        fi 
+#
+#        # The RCH line should have 10 ($FIELD_IN_RCH) fields, if not set error to 1 & advise user.
+#        NBFIELD=`echo $RCH_LINE | awk '{ print NF }'`                   # How many fields on line ?
+#        if [ "${NBFIELD}" != "${FIELD_IN_RCH}" ]                        # If abnormal nb. of field
+#           then sadm_write "${SADM_ERROR} Format error in this RCH file : ${RCH_FILE}\n"
+#                sadm_write "Line below have ${NBFIELD} but it should have ${FIELD_IN_RCH}.\n"
+#                sadm_write "The backup for this server is skipped: ${RCH_LINE}\n"
+#                sadm_write "\n"
+#                storix_error=1                                          # Func. Return Code now at 1
+#                continue 
+#        fi        
+#        if [ $SADM_DEBUG -gt 5 ] 
+#            then printf "The RCH Filename of ${server_name} backup of is ${RCH_FILE}\n"
+#                 printf "The last Line in the file is : ${RCH_LINE}\n"
+#        fi 
+#
+#        # Split the RCH Line 
+#        WSERVER=` echo -e $RCH_LINE | awk '{ print $1 }'`               # Extract Server Name
+#        WDATE1=`  echo -e $RCH_LINE | awk '{ print $2 }'`               # Extract Date Started
+#        WTIME1=`  echo -e $RCH_LINE | awk '{ print $3 }'`               # Extract Time Started
+#        WDATE2=`  echo -e $RCH_LINE | awk '{ print $4 }'`               # Extract Date Started
+#        WTIME2=`  echo -e $RCH_LINE | awk '{ print $5 }'`               # Extract Time Ended
+#        WELAPSE=` echo -e $RCH_LINE | awk '{ print $6 }'`               # Extract Time Ended
+#        WSCRIPT=` echo -e $RCH_LINE | awk '{ print $7 }'`               # Extract Script Name
+#        WALERT=`  echo -e $RCH_LINE | awk '{ print $8 }'`               # Extract Alert Group Name
+#        WTYPE=`   echo -e $RCH_LINE | awk '{ print $9 }'`               # Extract Alert Group Type
+#        WRCODE=`  echo -e $RCH_LINE | awk '{ print $10 }'`              # Extract Return Code 
+#
+#        # Set the backup Status Description
+#        case "$WRCODE" in                                               # Case on RCH Return Code
+#            0 ) WSTATUS="Success" 
+#                ;; 
+#            1 ) WSTATUS="Failed"
+#                ;;
+#            2 ) WSTATUS="Running"
+#                ;;
+#            3 ) WSTATUS="No Backup"
+#                ;;
+#            * ) WRDESC="CODE $WRCODE ?"                                 # Illegal Code  Desc
+#                ;;                                                          
+#        esac
+#        
+#        # Build backup line to be written to work file (Will then be sorted later)
+#        BLINE="${WDATE1};${WTIME1};${WELAPSE};${WSTATUS};${server_name}" 
+#        BLINE="${BLINE};${server_desc};${server_backup};${STTOT};${ISO_SIZE}"
+#        BLINE="${BLINE};${server_sporadic};${ISO_DATE};${ST_DATE}"
+#        echo "${BLINE}" >> $SADM_TMP_FILE2                                # Write Info to work file
+#        done < $SADM_TMP_FILE1
+#
+#    # Umount NFS Mount point, Sort the Work File (By Date/Time) then produce report it HTML format.
+#    unmount_nfs                                                         # UnMount NFS Backup Dir.
+#    sort $SADM_TMP_FILE2 > $SADM_TMP_FILE1                              # Sort Tmp file by Date/Time
+#    while read wline                                                    # Read Tmp file Line by Line
+#        do
+#        xcount=$(($xcount+1))                                           # Increase Line Counter
+#        storix_line "${wline};${xcount}"                                # Insert line in HTML Page
+#        done < $SADM_TMP_FILE1                                          # Read Sorted file
+#    echo -e "</table>\n" >> $HTML_XFILE                                 # End of storix section
+#    storix_legend                                                       # Add Legend at page bottom
+#    echo -e "</body>\n</html>" >> $HTML_XFILE                           # End of Storix Page
+#
+#    # Set Report by Email to SADMIN Administrator
+#    subject="SADMIN Storix Report"                                      # Send Backup Report by mail
+#    export EMAIL="$SADM_MAIL_ADDR"                                      # Set the FROM Email 
+#    if [ "$WKHTMLTOPDF" != "" ]                                         # If wkhtmltopdf on System
+#        then $WKHTMLTOPDF -O landscape $HTML_XFILE $PDF_XFILE > /dev/null 2>&1 # Convert HTML to PDF
+#             mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR -a $PDF_XFILE < $HTML_XFILE
+#             SADM_EXIT_CODE=$?                                          # Save mutt return Code.
+#        else mutt -e 'set content_type=text/html' -s "$subject" $SADM_MAIL_ADDR < $HTML_XFILE
+#             SADM_EXIT_CODE=$?                                          # Save mutt return Code.
+#    fi 
+#    if [ $SADM_EXIT_CODE -eq 0 ]                                        # If mail sent successfully
+#        then sadm_writelog "${SADM_OK} Daily Backup Report sent to $SADM_MAIL_ADDR"      
+#        else sadm_writelog "${SADM_ERROR} Failed to send the Daily Backup Report to $SADM_MAIL_ADDR"
+#    fi
+#
+#    # End of Storix Report
+#    sadm_write "${BOLD}${YELLOW}End of Daily Backup Report ...${NORMAL}\n"   
+#    sadm_write "\n"                                                     # White line in log & Screen
+#    return $SADM_EXIT_CODE                                              # Return Err Count to caller
+#}
+#
+#
+##===================================================================================================
+## Report Heading
+##===================================================================================================
+#storix_heading()
+#{
+#    RTITLE=$1                                                           # Report Title
+#
+#    echo -e "<!DOCTYPE html><html>" > $HTML_XFILE
+#    echo -e "<head>" >> $HTML_XFILE
+#    echo -e "\n<meta charset='utf-8' />" >> $HTML_XFILE
+#    #
+#    echo -e "\n<style>" >> $HTML_XFILE
+#    echo -e "th { color: white; background-color: #0000ff; padding: 0px; }" >> $HTML_XFILE
+#    echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }" >> $HTML_XFILE
+#    echo -e "tr:nth-child(odd)  { background-color: #F5F5F5; }" >> $HTML_XFILE
+#    echo -e "table, th, td { border: 1px solid black; border-collapse: collapse; }" >> $HTML_XFILE
+#    echo -e "div.fs150   { font-size: 150%; }"                  >> $HTML_XFILE
+#    echo -e "div.fs13px  { text-align: left; font-size: 13px; }"                  >> $HTML_XFILE
+#    echo -e "\n/* Dashed red border */" >> $HTML_XFILE
+#    echo -e "hr.dash        { border-top: 1px dashed red; }" >> $HTML_XFILE
+#    echo -e "/* Large rounded green border */" >> $HTML_XFILE
+#    echo -e "hr.large_green { border: 3px solid green; border-radius: 5px; }" >> $HTML_XFILE
+#    echo -e "p.report_title {" >> $HTML_XFILE
+#    echo -e "   font-family:Helvetica,Arial;color:blue;font-size:25px;font-weight:bold;" >> $HTML_XFILE
+#    echo -e "}" >> $HTML_XFILE
+#    echo -e "</style>" >> $HTML_XFILE
+#    #
+#    echo -e "\n<title>$RTITLE</title>" >> $HTML_XFILE
+#    echo -e "</head>\n" >> $HTML_XFILE
+#    echo -e "<body>" >> $HTML_XFILE
+#
+#    echo -e "<center>" >> $HTML_XFILE                                   # Center what's coming
+#    echo -e "<p class='report_title'>${RTITLE}</p>" >> $HTML_XFILE      # Report Title
+#    URL_SCRIPTS_REPORT="/view/daily_storix_report.html"                 # Scripts Daily Report Page
+#    RURL="https://sadmin.${SADM_DOMAIN}/${URL_SCRIPTS_REPORT}"           # Full URL to HTML report 
+#    TITLE2="View the web version of this report"                        # Link Description
+#    echo -e "</center>" >> $HTML_XFILE                                  # End Text Center
+#    echo -e "<div class='fs13px'><a href='${RURL}'>${TITLE2}</a></div>" >>$HTML_XFILE    # Insert Link on Page
+#    echo -e "\n<hr class="large_green">\n"              >> $HTML_XFILE
+#    echo -e "\n<center><table border=0>" >> $HTML_XFILE
+#    #
+#    echo -e "\n<thead>" >> $HTML_XFILE
+#    echo -e "<tr>" >> $HTML_XFILE
+#    echo -e "<th colspan=1 dt-head-center></th>" >> $HTML_XFILE
+#    echo -e "<th colspan=4 align=center>Last Backup Execution</th>" >> $HTML_XFILE
+#    echo -e "<th colspan=2></th>" >> $HTML_XFILE
+#    echo -e "<th align=center>System</th>" >> $HTML_XFILE
+#    echo -e "<th align=center>Backup</th>" >> $HTML_XFILE
+#    echo -e "<th align=center>Backup</th>" >> $HTML_XFILE
+#    echo -e "<th align=center>ISO</th>" >> $HTML_XFILE
+#    echo -e "<th align=center>ISO</th>" >> $HTML_XFILE
+#    echo -e "</tr>" >> $HTML_XFILE
+#    #
+#    echo -e "<tr>" >> $HTML_XFILE
+#    echo -e "<th align=center>No</th>" >> $HTML_XFILE
+#    echo -e "<th align=center>Date</th>" >> $HTML_XFILE
+#    echo -e "<th align=center>Time</th>" >> $HTML_XFILE
+#    echo -e "<th align=center>Elapse</th>" >> $HTML_XFILE
+#    echo -e "<th align=center>Status</th>"  >> $HTML_XFILE
+#    echo -e "<th align=center>System</th>" >> $HTML_XFILE
+#    echo -e "<th align=left>Description</th>" >> $HTML_XFILE    
+#    echo -e "<th align=left>Sporadic</th>" >> $HTML_XFILE
+#    echo -e "<th align=center>Date</th>" >> $HTML_XFILE
+#    echo -e "<th align=center>Size</th>" >> $HTML_XFILE
+#    echo -e "<th align=center>Date</th>" >> $HTML_XFILE
+#    echo -e "<th align=center>Size</th>" >> $HTML_XFILE
+#    echo -e "</tr>" >> $HTML_XFILE
+#    echo -e "</thead>\n" >> $HTML_XFILE
+#    return 0
+#}
+#
+#
+##===================================================================================================
+## Add the receiving line into the Storix report page
+##===================================================================================================
+#storix_line()
+#{
+#    # Extract fields from parameters received.
+#    BACKUP_INFO=$*                                                      # Comma Sep. Info Line
+#    WDATE1=$(      echo $BACKUP_INFO | awk -F\; '{ print $1 }')         # Most Recent Backup Date
+#    WTIME1=$(      echo $BACKUP_INFO | awk -F\; '{ print $2 }')         # Most Recent Backup Time
+#    WELAPSE=$(     echo $BACKUP_INFO | awk -F\; '{ print $3 }')         # Recent Backup Elapse Time
+#    WSTATUS=$(     echo $BACKUP_INFO | awk -F\; '{ print $4 }')         # Storix Backup Status
+#    WSERVER=$(     echo $BACKUP_INFO | awk -F\; '{ print $5 }')         # Server System Name
+#    WDESC=$(       echo $BACKUP_INFO | awk -F\; '{ print $6 }')         # Server System Description
+#    WACT=$(        echo $BACKUP_INFO | awk -F\; '{ print $7 }')         # DB System Description
+#    BACKUP_SIZE=$( echo $BACKUP_INFO | awk -F\; '{ print $8 }')         # Current Backup Total MB
+#    ISO_SIZE=$(    echo $BACKUP_INFO | awk -F\; '{ print $9 }')         # ISO Size MB
+#    WSPORADIC=$(   echo $BACKUP_INFO | awk -F\; '{ print $10 }')        # Sporadic Server=1 else=0
+#    ISO_DATE=$(    echo $BACKUP_INFO | awk -F\; '{ print $11 }')        # Date ISO was created
+#    ST_DATE=$(     echo $BACKUP_INFO | awk -F\; '{ print $12 }')        # Date of Storix TOC File
+#    WCOUNT=$(      echo $BACKUP_INFO | awk -F\; '{ print $13 }')        # Line Counter
+#
+#    # Alternate background color at every line
+#    if (( $WCOUNT %2 == 0 ))                                            # Modulo on line counter
+#       then BCOL="#00FFFF" ; FCOL="#000000"                             # Pair count color
+#       else BCOL="#F0FFFF" ; FCOL="#000000"                             # Impair line color
+#    fi
+#
+#    # Beginning to Insert Line in HTML_XFILE Table
+#    echo -e "<tr>"  >> $HTML_XFILE                                      # Begin backup line
+#    echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WCOUNT</font></td>"  >> $HTML_XFILE
+#
+#    # Backup older than $STWARN = yellow background & tooltips indicate nb days elapse since backup
+#    ebackup_date=`echo "$WDATE1" | sed 's/\./\//g'`                     # Replace dot by '/' in date
+#    backup_date=`echo "$WDATE1" | sed 's/\./-/g'`                       # Replace dot by '-' in date
+#    epoch_backup=`date -d "$ebackup_date" "+%s"`                        # Backup Date in Epoch Time
+#    epoch_now=`date "+%s"`                                              # Today in Epoch Time
+#    diff=$(($epoch_now - $epoch_backup))                                # Nb. Seconds between
+#    days=$(($diff/(60*60*24)))                                          # Convert Sec. to Days
+#    if [ $days -gt $STWARN ]                                            # Backup taken too far away
+#       then echo -n "<td title='Storix backup done $days days ago, warning at $STWARN days.' " >>$HTML_XFILE 
+#            echo -n "align=center bgcolor='Yellow'>" >>$HTML_XFILE      # Yellow Background
+#            echo "<font color=$FCOL>$backup_date</font></td>" >>$HTML_XFILE
+#       else if [ "$backup_date" != "$ST_DATE" ] ||  [ "$backup_date" != "$ISO_DATE" ] 
+#               then echo -n "<td title='Storix backup date different than ISO or image date' " >>$HTML_XFILE 
+#                    echo -n "align=center bgcolor='Yellow'>" >>$HTML_XFILE      # Yellow Background
+#                    echo "<font color=$FCOL>$backup_date</font></td>" >>$HTML_XFILE  # Show Backup Date
+#               else echo -n "<td title='Storix backup done $days days ago, warning at $STWARN days.' " >>$HTML_XFILE 
+#                    echo "align=center bgcolor=$BCOL><font color=$FCOL>$backup_date</font></td>" >>$HTML_XFILE
+#            fi
+#    fi 
+#
+#    # Backup Time & Elapse time
+#    echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WTIME1</font></td>"  >> $HTML_XFILE
+#    echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WELAPSE</font></td>" >> $HTML_XFILE
+#
+#    # Backup Status
+#    if [ "$WSTATUS" != "Success" ]
+#        then echo -e "<td align=center bgcolor='Yellow'><font color=$FCOL>" >> $HTML_XFILE
+#        else echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>"    >> $HTML_XFILE
+#    fi 
+#    LOGFILE="${WSERVER}_${WSCRIPT}.log"                                 # Assemble log Script Name
+#    LOGNAME="${SADM_WWW_DAT_DIR}/${WSERVER}/log/${LOGFILE}"             # Add Dir. Path to Name
+#    LOGURL="https://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}"  # Url to View Log
+#    if [ -r "$LOGNAME" ]                                                # If log is Readable
+#        then echo -n "<a href='$LOGURL 'title='View Backup Log File'>" >>$HTML_XFILE
+#             echo "${WSTATUS}</font></a></td>" >>$HTML_XFILE 
+#        else echo -e "${WSTATUS}</font></td>" >> $HTML_XFILE            # No Log = No LInk
+#    fi
+#
+#    # Server Name & Descrition 
+#    echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$WSERVER</font></td>" >> $HTML_XFILE
+#    echo "<td align=left bgcolor=$BCOL><font color=$FCOL>$WDESC</font></td>"     >> $HTML_XFILE
+#
+#    # Show if Server is Sporadic or not.
+#    if [ "$WSPORADIC" =  "0" ] 
+#       then echo "<td align=center bgcolor=$BCOL><font color=$FCOL>No</font></td>"  >>$HTML_XFILE
+#       else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>Yes</font></td>" >>$HTML_XFILE
+#    fi
+#
+#    # Show Date and Size of Storix Backup
+#    if [ "$backup_date" != "$ST_DATE" ] 
+#        then echo -n "<td title='Execution Backup Date different than Image file date' " >>$HTML_XFILE 
+#             echo " align=center bgcolor='Yellow'><font color=$FCOL>$ST_DATE</font></td>" >>$HTML_XFILE
+#        else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$ST_DATE</font></td>" >>$HTML_XFILE
+#    fi 
+#    if [ $BACKUP_SIZE -eq 0 ] 
+#        then echo "<td align=center bgcolor='Yellow'><font color=$FCOL>$BACKUP_SIZE MB</font></td>" >>$HTML_XFILE
+#        else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$BACKUP_SIZE MB</font></td>" >>$HTML_XFILE
+#    fi 
+#
+#    # Show Storix Date & ISO Size
+#    if [ "$backup_date" != "$ISO_DATE" ] 
+#        then echo -n "<td title='Execution Backup Date different than ISO file date' " >>$HTML_XFILE
+#             echo " align=center bgcolor='Yellow'><font color=$FCOL>$ISO_DATE</font></td>" >>$HTML_XFILE
+#        else echo "<td align=center bgcolor=$BCOL><font color=$FCOL>$ISO_DATE</font></td>" >>$HTML_XFILE
+#    fi 
+#    if [ $ISO_SIZE -eq 0 ]                                
+#        then echo -en "<td title='No ISO was found' align=center bgcolor='Yellow'>" >>$HTML_XFILE
+#             echo -e "<font color=$FCOL>${ISO_SIZE} MB</font></td>" >> $HTML_XFILE
+#        else echo -en "<td align=center bgcolor=$BCOL><font color=$FCOL> " >> $HTML_XFILE
+#             echo -e " ${ISO_SIZE} MB</font></td>" >> $HTML_XFILE
+#    fi 
+#
+#    echo -e "</tr>\n" >> $HTML_XFILE
+#    return 
+#} 
+#
+#
+#
+##===================================================================================================
+## Add legend at the bottom of the Storix report page
+##===================================================================================================
+#storix_legend()
+#{
+#    echo -e "\n<br>\n<hr class="dash">\n" >> $HTML_XFILE                # Horizontal Dashed Line
+#    echo -e "\n\n<br><table cellspacing="0" cellpadding="0" border=0>\n"  >> $HTML_XFILE 
+#    BCOL="#ffffff"                                                      # Background color (White)
+#    FCOL="#000000"                                                      # Font Color (Black)
+#
+#    echo -e "<tr>"  >> $HTML_XFILE                                      # Heading rows
+#    DATA="Column Name"
+#    echo -e "<th align=center colspan=8>$DATA</th>" >> $HTML_XFILE
+#    echo -e "<th align=center colspan=4>Column have a yellow background when ...</td>" >>$HTML_XFILE
+#    echo -e "</tr>"  >> $HTML_XFILE                                      # Begin Legend Row
+#
+#    echo -e "<tr>"  >> $HTML_XFILE                                      # Begin Legend Row
+#    DATA="Backup execution date"
+#    echo -e "<td align=left colspan=4 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
+#    DATA="The backup date is older than $STWARN days or when it's different than backup or ISO date."
+#    echo -e "<td align=left colspan=8 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
+#    echo -e "</tr>"  >> $HTML_XFILE 
+#
+#    echo -e "<tr>"  >> $HTML_XFILE                                      # Begin Legend Row
+#    DATA="Backup status"
+#    echo -e "<td align=left colspan=4 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
+#    DATA="The backup status is different than 'Success'."
+#    echo -e "<td align=left colspan=8 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
+#    echo -e "</tr>"  >> $HTML_XFILE 
+#
+#    echo -e "<tr>"  >> $HTML_XFILE                                      # Begin Legend Row
+#    DATA="Backup date"
+#    echo -e "<td align=left colspan=4 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
+#    DATA="The backup date is different than execution date."
+#    echo -e "<td align=left colspan=8 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
+#    echo -e "</tr>"  >> $HTML_XFILE 
+#
+#    echo -e "<tr>"  >> $HTML_XFILE                                      # Begin Legend Row
+#    DATA="Backup size"
+#    echo -e "<td align=left colspan=4 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
+#    DATA="The size of the backup is zero."
+#    echo -e "<td align=left colspan=8 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
+#    echo -e "</tr>"  >> $HTML_XFILE 
+#
+#    echo -e "<tr>"  >> $HTML_XFILE                                      # Begin Legend Row
+#    DATA="ISO date"
+#    echo -e "<td align=left colspan=4 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
+#    DATA="The date of the ISO file is different than the execution date."
+#    echo -e "<td align=left colspan=8 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
+#    echo -e "</tr>"  >> $HTML_XFILE 
+#
+#    echo -e "<tr>"  >> $HTML_XFILE                                      # Begin Legend Row
+#    DATA="ISO size"
+#    echo -e "<td align=left colspan=4 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
+#    DATA="The size of the ISO file is zero."
+#    echo -e "<td align=left colspan=8 bgcolor=$BCOL><font color=$FCOL>$DATA</td>" >> $HTML_XFILE
+#    echo -e "</tr>"  >> $HTML_XFILE 
+#    echo -e "</table>\n<br><br>\n" >> $HTML_XFILE                       # End of Legend Section
+#}
+#
+#
 
 
 #===================================================================================================
