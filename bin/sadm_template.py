@@ -82,11 +82,11 @@ sa.cmd_ssh_full      = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port) # SSH Cmd 
 # You can change them to fit your need
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
-#sa.pid_timeout      = 7200       # PID File Default Time to Live in seconds.
-#sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
 #sa.max_logline      = 500        # Max. lines to keep in log (0=No trim) after execution.
 #sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
 #sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
+#sa.pid_timeout      = 7200       # PID File Default Time to Live in seconds.
+#sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
 # ==================================================================================================
 
 
