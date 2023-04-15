@@ -701,6 +701,7 @@ def update_sudo_file(logfile,wuser) :
     hsudo.write ('Defaults  !requiretty')                               # Session don't require tty
     hsudo.write ('\nDefaults  env_keep += "SADMIN"')                    # Keep Env. Var. SADMIN 
     hsudo.write ("\n%s ALL=(ALL) NOPASSWD: ALL\n" % (wuser))            # No Passwd for SADMIN User
+    hsudo.write ("\nDefaults secure_path='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/sadmin/bin'")
     hsudo.close()                                                       # Close SADMIN sudo  file
 
     # Change sudo file permission to 440
@@ -1286,7 +1287,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
                 else:
                     password_ok = True                                  # Ok Exit the loop
         else:                                                           # Database user don't exist
-            writelog ("User '%s' don't exist in database, will now create it." % (uname))   # Show user was found
+            writelog ("User '%s' don't exist in database, will create it now." % (uname))   # Show user was found
             wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
             writelog ("Creating 'sadmin' user ... ",'nonl')             # Show User Creating DB Usr
             sql =  "drop user 'sadmin'@'localhost'; flush privileges; " # Drop Usr,ByPass Bug Debian
@@ -1342,7 +1343,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
                 else:
                     password_ok = True                                  # Ok Exit the loop
         else:                                                           # Database user don't exist
-            writelog ("User '%s' don't exist in database, will now be created." % (uname))   # Show user was found
+            writelog ("User '%s' don't exist in database, will created now." % (uname))   # Show user was found
             wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Accept user pwd
             writelog ("Creating '%s' user ... " % (uname),'nonl')       # Show User Creating DB Usr
             sql =  "drop user 'squery'@'localhost'; flush privileges; " # Drop User - ByPass Bug Deb
@@ -2294,16 +2295,16 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,sosname) 
 
     # Accept the maximum number of lines we want in every log produce
-    #sdefault = 500                                                      # No Default value 
-    #sprompt  = "Maximum number of lines in LOG file"                    # Prompt for Answer
-    #wcfg_max_logline = accept_field(sroot,"SADM_MAX_LOGLINE",sdefault,sprompt,"I",1,10000)
-    #update_sadmin_cfg(sroot,"SADM_MAX_LOGLINE",wcfg_max_logline)        # Update Value in sadmin.cfg
+    sdefault = 500                                                      # No Default value 
+    sprompt  = "Maximum number of lines in LOG files"                   # Prompt for Answer
+    wcfg_max_logline = accept_field(sroot,"SADM_MAX_LOGLINE",sdefault,sprompt,"I",1,10000)
+    update_sadmin_cfg(sroot,"SADM_MAX_LOGLINE",wcfg_max_logline)        # Update Value in sadmin.cfg
 
     # Accept the maximum number of lines we want in every RCH file produce
-    #sdefault = 125                                                      # No Default value 
-    #sprompt  = "Maximum number of lines in RCH file"                    # Prompt for Answer
-    #wcfg_max_rchline = accept_field(sroot,"SADM_MAX_RCHLINE",sdefault,sprompt,"I",1,300)
-    #update_sadmin_cfg(sroot,"SADM_MAX_RCHLINE",wcfg_max_rchline)        # Update Value in sadmin.cfg
+    sdefault = 35                                                       # No Default value 
+    sprompt  = "Maximum number of lines in history (.rch) files"        # Prompt for Answer
+    wcfg_max_rchline = accept_field(sroot,"SADM_MAX_RCHLINE",sdefault,sprompt,"I",1,300)
+    update_sadmin_cfg(sroot,"SADM_MAX_RCHLINE",wcfg_max_rchline)        # Update Value in sadmin.cfg
 
 
     # Accept the Default User Group
@@ -2544,9 +2545,9 @@ def end_message(sroot,sdomain,sserver,stype):
         writelog ("  - Use it to add, update and delete server in your server farm.")
         writelog ("  - View performance graph of your servers up to two years in the past.")
         writelog ("  - If you want, you can schedule automatic O/S update of your servers.")
-        writelog ("  - Have server configuration on hand, usefull in case of a Disaster Recovery.")
+        writelog ("  - Have server configuration on hand, useful in case of a Disaster Recovery.")
         writelog ("  - View your servers farm subnet utilization and see what IP are free to use.")
-        writelog ("  - SADMIN is tested without SELinux 'SELINUX=disable' in /etc/selinux/config.")
+        writelog ("  - SADMIN is tested without SELinux 'SELINUX=disabled' in /etc/selinux/config.")
         writelog ("  - If you must use it,modify the configuration to make the web interface work.")
     writelog (" ")
     writelog ("CREATE YOUR OWN SCRIPT USING SADMIN TEMPLATES",'bold')

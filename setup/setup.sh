@@ -68,6 +68,7 @@
 # 2022_11_27 install v3.23 Correct problem when activating EPEL v9.
 # 2023_02_08 install v3.24 Fix problem with GPG Key for EPEL v9.1
 #@2023_04_05 install v3.25 Minor fixes
+#@2023_04_15 install v3.26 Offer choice to disable SElinux temporarily or permanently during setup.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -77,7 +78,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.25'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.26'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -532,10 +533,27 @@ check_selinux()
     printf "   - Current SELinux status is ${sestat}.\n"
     
     if [ "$sestat" == "Enforcing" ]
-       then printf "   - Temporarily (until reboot) setting it to 'Permissive'.\n"
-            setenforce 0
-       else printf "   - Leave SELinux to ${sestat}.\n"
+       then while true
+                do
+                ans=""
+                printf "   - SElinux need to be disable during installation.\n"
+                printf "   - Do you wish to disable SElinux [T]emporarily or [P]ermanently [T/P] ? "
+                read -t 0.50 -N 1 ans
+                ans=`echo "$ans" | tr '[:lower:]' '[:upper:]'`
+                if [ "$ans" == "T" ]] 
+                    then setenforce 0
+                         printf "   - SELinux is now disable temporarily.\n"
+                         break
+                    else if [ "$ans" == "P" ]]
+                            then sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+                                 setenforce 0
+                                 printf "   - SELinux is now disable.\n"
+                             break
+                         fi 
+                fi 
+                done
     fi 
+    
 }
 
 
