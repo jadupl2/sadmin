@@ -52,6 +52,8 @@
 # 2022_05_25 lib v3.16 Added fields 'sa.proot_only' & 'sa.psadm_server_only' to output.
 # 2022_08_14 lib v3.17 Output updated with all the latest functions & global variables.
 #@2023_04_13 lib v3.18 Add 'sadm_rear_dif', 'sadm_rear_interval', 'sadm_backup_interval' to output.
+#@2023_04_14 lib v3.19 Email account password now be taken from /etc/postfix/sasl_passwd.
+#@2023_04_14 lib v3.20 $SADMIN/cfg/.gmpw password file not used anymore.
 #==================================================================================================
 #
 try :
@@ -80,7 +82,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "3.18"                                                  # Program version no.
+pver        = "3.20"                                                  # Program version no.
 pdesc       = "Demonstrate functions & variables available to developers using SADMIN Tools"
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
 pdb_conn    = None                                                   # Database connector
