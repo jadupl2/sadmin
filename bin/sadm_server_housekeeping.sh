@@ -36,6 +36,7 @@
 # 2021_08_17 nolog  v2.10 chmod 1777 $SADM_WWW_TMP_DIR 
 # 2022_05_03 server v2.11 Secure email passwd file ($SADMIN/cfg/.gmpw).
 # 2022_07_13 server v2.12 Fix typo that was preventing script from running under certain condition.
+#@2023_04_17 server v2.13 Secure permission on email password files ($SADMIN/cfg/.gmpw & .gmpw64).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -66,7 +67,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.12'                                     # Script version number
+export SADM_VER='2.13'                                     # Script version number
 export SADM_PDESC="Set owner,group,permission on www sub-directories and archive old alerts."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -390,7 +391,8 @@ file_housekeeping()
     chmod 1777 $SADM_WWW_TMP_DIR  
 
     if [ -f "$DBPASSFILE" ] ; then chmod 644 $DBPASSFILE ; fi 
-    if [ -f "$GMPW_FILE" ]  ; then chmod 640 $GMPW_FILE ; fi 
+    if [ -f "$GMPW_FILE_TXT" ]  ; then chmod 600 $GMPW_FILE_TXT ; fi 
+    if [ -f "$GMPW_FILE_B64" ]  ; then chmod 644 $GMPW_FILE_B64 ; fi 
     
     return $ERROR_COUNT
 }
