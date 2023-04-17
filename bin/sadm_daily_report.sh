@@ -422,6 +422,13 @@ insert_logo()
                         echo -n "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_aix.png' " >> $WHTML
                         echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
                         ;;
+        'MACOS')        $iurl='https://en.wikipedia.org/wiki/MacOS' ;
+                        $ipath='/images/logo_apple.png';
+                        echo -n "<a href='$iurl/' " >> $WHTML
+                        echo -n "title='Server $whost is an AIX server - Visit Aix Home Page'>" >> $WHTML
+                        echo -n "<img src='$ipath' " >> $WHTML
+                        echo -e "style='width:32px;height:32px;'></a></th>\n" >> $WHTML
+                        ;;   
         *)              echo "<img src='https://sadmin.${SADM_DOMAIN}/images/logo_linux.png' style='width:32px;height:32px;'>" >> $WHTML
                         echo "${WOS}</th>\n" >> $WHTML
                         ;;
@@ -2368,11 +2375,6 @@ main_process()
              RC=$?                                                      # Save the Return Code
              SADM_EXIT_CODE=$(($SADM_EXIT_CODE+$RC))                    # Add ReturnCode to ExitCode
     fi 
-    #if [ "$STORIX_REPORT" = "ON" ]                                      # If CmdLine -x was used
-    #    then storix_report                                              # Produce Storix Backup Rep. 
-    #         RC=$?                                                      # Save the Return Code
-    #         SADM_EXIT_CODE=$(($SADM_EXIT_CODE+$RC))                    # Add ReturnCode to ExitCode
-    #fi 
 
     # Create an array containing the last line of each '*.rch' files 
     load_rch_array                                                      # Create rch last line array 
