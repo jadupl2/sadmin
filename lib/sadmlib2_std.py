@@ -42,7 +42,7 @@
 #@2023_04_13 lib v4.29 Load new variables 'SADM_REAR_DIF' 'SADM_REAR_INTERVAL' from sadmin.cfg.
 #@2023_04_13 lib v4.30 Load new variable 'SADM_BACKUP_INTERVAL' from sadmin.cfg use on backup page.
 #@2023_04_14 lib v4.31 Email account password now encrypted in $SADMIN/cfg/.gmpw64 (base64)
-#@2023_04_14 lib v4.32 Change email password only on SADM server in $SADMIN/cfg/.gmpw password file.
+#@2023_04_14 lib v4.32.1 Change email password only on SADM server in $SADMIN/cfg/.gmpw password file.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -79,7 +79,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.32"                                # This Library Version
+lib_ver             = "4.32.1"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -569,17 +569,26 @@ def load_config_file(cfg_file):
             byte_pw       = wpwd.encode('ascii')
             base64_bytes  = base64.b64encode(byte_pw)
             base64_string = base64_bytes.decode('ascii')
-            fpw = open(gmpw_file_b64,'w')                                          
-            fpw.write (base64_string)                                               
-            fpw.close()                                                        
+            try: 
+                os.remove(gmpw_file_b64)                                    # Just in case 
+                fpw = open(gmpw_file_b64,'w')                                          
+                fpw.write (base64_string)                                               
+                fpw.close()                                                        
+            except (IOError, FileNotFoundError) as e:                       # Can't open SMTP Pwd file
+                print("Error opening new password file %s" % (gmpw_file_b64))
+                print("Error Line No. : %d" % (inspect.currentframe().f_back.f_lineno)) # Print LineNo
+                print("Function Name  : %s" % (sys._getframe().f_code.co_name)) # Get cur function Name
+                print("Error Number   : %d" % (e.errno))                    # write_log Error Number
+                print("Error Text     : %s" % (e.strerror))                 # write_log Error Message
+                sys.exit(1)    
             os.chmod(gmpw_file_b64, 0o600)
-            if ((get_fqdn() != sadm_server ) :
+            if (get_fqdn() != sadm_server ) :
                 try:                                                        
                     os.remove(gmpw_file_txt)                            # Remove txt password file
                 except :                                                # If not then it's OK
                     pass                                                # If didn't work it is ok.
         except (IOError, FileNotFoundError) as e:                       # Can't open SMTP Pwd file
-            print("Error opening smtp sender password file %s" % (gmpw_file_txt)) 
+            print("Error opening password file %s" % (gmpw_file_txt)) 
             print("Error Line No. : %d" % (inspect.currentframe().f_back.f_lineno)) # Print LineNo
             print("Function Name  : %s" % (sys._getframe().f_code.co_name)) # Get cur function Name
             print("Error Number   : %d" % (e.errno))                    # write_log Error Number
@@ -597,7 +606,7 @@ def load_config_file(cfg_file):
                  data_bytes   = base64.b64decode(base64_bytes)
                  sadm_gmpw    = data_bytes.decode('ascii')
     except (IOError, FileNotFoundError) as e:                       # Can't open SMTP Pwd file
-        print("Error opening smtp sender password file %s" % (gmpw_file_b64)) 
+        print("Error opening smtp encrypted password file %s" % (gmpw_file_b64)) 
         print("Error Line No. : %d" % (inspect.currentframe().f_back.f_lineno)) # Print LineNo
         print("Function Name  : %s" % (sys._getframe().f_code.co_name)) # Get cur function Name
         print("Error Number   : %d" % (e.errno))                    # write_log Error Number

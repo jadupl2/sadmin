@@ -230,7 +230,7 @@ if (!is_readable(SADM_ALERT_FILE)) {
     define("SADM_RO_DBUSER" , 'squery');                                # DB Read Only User
     $squery_pwd = "";                                                   # DB Read Only Default Pwd
     if (file_exists(SADM_DBPASS_FILE)) {                                # If .dbpass file exist
-        $file = fopen(SADM_DBPASS_FILE, "r") or exit ("Unable to open .dbpass file !");
+        $file = fopen(SADM_DBPASS_FILE, "r") or exit ("Unable to open " .SADM_DBPASS_FILE. " file, check permission.");
         while(!feof($file)) {                                           # Read File Until EndOfFile
             $line = trim(fgets($file));                                 # Read Line and trim it
             if ((strpos(trim($line),'#') === 0) or (strlen($line) < 2)) # If 1st Non-WhiteSpace is #
