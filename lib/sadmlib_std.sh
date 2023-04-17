@@ -198,8 +198,8 @@
 #@2023_03_04 lib v4.19 Lock file content & owner updated. 
 #@2023_04_13 lib v4.20 Load new variables 'SADM_REAR_DIF' 'SADM_REAR_INTERVAL' from sadmin.cfg.
 #@2023_04_13 lib v4.21 Load new variable 'SADM_BACKUP_INTERVAL' from sadmin.cfg use on backup page.
-#@2023_04_14 lib v4.22 Email account password now be taken from /etc/postfix/sasl_passwd.
-#@2023_04_14 lib v4.23 Depreciated $SADMIN/cfg/.gmpw password file not used anymore.
+#@2023_04_14 lib v4.22 Email account password now encrypted in $SADMIN/cfg/.gmpw64 (base64)
+#@2023_04_14 lib v4.23 Change email password only on SADM server in $SADMIN/cfg/.gmpw password file.
 #===================================================================================================
 
 
@@ -213,7 +213,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.21"                                              # This Library Version
+export SADM_LIB_VER="4.23"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -354,7 +354,8 @@ export SADM_MONITOR_UPDATE_INTERVAL=60                                  # Monito
 export SADM_MONITOR_RECENT_COUNT=10                                     # Sysmon Nb. Recent Scripts 
 export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"                  # Exclude from SysMon Recent
 export DBPASSFILE="${SADM_CFG_DIR}/.dbpass"                             # MySQL Passwd File
-export GMPW_FILE="/etc/postfix/sasl_passwd"                             # SMTP sender passwd file
+export GMPW_FILE_TXT="${SADM_CFG_DIR}/.gmpw"                            # SMTP Unencrypted PasswdFile
+export GMPW_FILE_B64="${SADM_CFG_DIR}/.gmpw64"                              # SMTP Encrypted PasswdFile
 export SADM_RELEASE=`cat $SADM_REL_FILE`                                # SADM Release Ver. Number
 export SADM_SSH_PORT=""                                                 # Default SSH Port
 export SADM_REAR_NFS_SERVER=""                                          # ReaR NFS Server
@@ -2016,11 +2017,16 @@ sadm_load_config_file() {
              SADM_RO_DBPWD=`grep "^${SADM_RO_DBUSER}," $DBPASSFILE |awk -F, '{ print $2 }'` # RO PWD
     fi
 
-    # Read and Set Email account password 
-    if [ -r "$GMPW_FILE" ]  
-        then SADM_GMPW=`awk -F: '{print $NF}' $GMPW_FILE`
-        else SADM_GMPW=""
-    fi
+# If old unencrypted email account password file exist, create an encrypted one & delete the old one
+    if [ -r "$GMPW_FILE_TXT" ]                                          
+        then base64 $GMPW_FILE_B64_TXT > $GMPW_FILE
+             if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] ; then rm -f GMPW_FILE_TXT >>/dev/null ;fi
+             chmod 644 $GMPW_FILE_B64
+    fi 
+
+# Set Email Account password from encrypted email account password file.
+    SADM_GMPW=""
+    if [ -r "$GMPW_FILE_B64" ] ; then SADM_GMPW=$(base64 -d $GMPW_FILE_B64) ; fi
     return 0
 }
 
