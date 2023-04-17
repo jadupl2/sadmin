@@ -70,7 +70,8 @@
 # 2022_07_13 client: v2.06 Update new SADMIN section v1.51 and code revision..
 # 2022_09_20 client: v2.07 Use SSH port specify per server & update SADMIN section to v1.52.
 # 2022_09_24 client: v2.08 Change MacOS mount point name (/preserve don't exist anymore)
-#@2023_04_10_client: v2.09 Remove the gMail password file on the client.
+#@2023_04_10_client: v2.09 Remove text email pwd file ($SADMIN/cfg/.gmpw) on client (not on server).
+#@2023_04_16_client: v2.10 On client using encrypted email pwd file '$SADMIN/cfg/.gmpw64'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -102,7 +103,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.09'                                      # Script version number
+export SADM_VER='2.10'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -385,10 +386,14 @@ file_housekeeping()
     if [ ! -f "${SADM_UCFG_DIR}/.gitkeep" ] ; then touch ${SADM_UCFG_DIR}/.gitkeep ; fi 
     if [ ! -f "${SADM_UDOC_DIR}/.gitkeep" ] ; then touch ${SADM_UDOC_DIR}/.gitkeep ; fi 
 
-    # Remove files that should only be there on the SADMIN Server not the client.
+    # - Remove files that should only be there on the SADMIN Server not the client.
+    # - Delete plain text email password file on client
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]
        then afile="$SADM_WWW_LIB_DIR/.crontab.txt"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            if [ -f $afile ]         ; then rm -f $afile         >/dev/null 2>&1 ; fi
+            if [ -f $GMPW_FILE_TXT ] ; then rm -f $GMPW_FILE_TXT >/dev/null 2>&1 ; fi
+       else set_file "${SADM_CFG_DIR}/.gmpw" "0600" "${SADM_USER}" "${SADM_GROUP}"
+
     fi
 
     # Remove default crontab job - We want to run the ReaR Backup from the sadm_rear_backup crontab.
@@ -401,29 +406,10 @@ file_housekeeping()
     set_file "/etc/cron.d/sadm_backup"       "0644" "root" "root"
     set_file "/etc/cron.d/sadm_rear_backup"  "0644" "root" "root"
 
-    # On SADMIN client: if GMail user password file exist then delete it for security reason.
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] && [ -r "$GMPW_FILE" ]
-        then rm -f $GMPW_FILE > /dev/null 2>&1 
-    fi
-
     # If old file '.rch_conversion_done' exist, then delete it (Not needed anymore)
     if [ -r "$SADM_CFG_DIR/.rch_conversion_done" ]
         then rm -f $SADM_CFG_DIR/.rch_conversion_done > /dev/null 2>&1 
     fi
-
-    # SADMIN Readme, changelog and license file.
-    set_file "${SADM_BASE_DIR}/readme.md"    "0664" "${SADM_USER}" "${SADM_GROUP}" 
-    set_file "${SADM_BASE_DIR}/readme.html"  "0644" "${SADM_USER}" "${SADM_GROUP}" 
-    set_file "${SADM_BASE_DIR}/readme.pdf"   "0644" "${SADM_USER}" "${SADM_GROUP}" 
-    set_file "${SADM_BASE_DIR}/LICENSE"      "0664" "${SADM_USER}" "${SADM_GROUP}" 
-    set_file "${SADM_BASE_DIR}/license"      "0664" "${SADM_USER}" "${SADM_GROUP}" 
-    set_file "${SADM_BASE_DIR}/changelog.md" "0664" "${SADM_USER}" "${SADM_GROUP}" 
-    
-    # Password files
-    set_file "${SADM_CFG_DIR}/.dbpass"       "0640" "${SADM_USER}" "${SADM_GROUP}"
-    set_file "${SADM_CFG_DIR}/.gmpw"         "0640" "${SADM_USER}" "${SADM_GROUP}"
-    set_file "/etc/postfix/sasl_passwd"      "0600"  "root" "root"
-    set_file "/etc/postfix/sasl_passwd.db"   "0600"  "root" "root"
     
     set_files_recursive "$SADM_TMP_DIR"        "1777" "${SADM_USER}" "${SADM_GROUP}" 
     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
@@ -460,6 +446,22 @@ file_housekeeping()
 
     set_files_recursive "$SADM_PKG_DIR"        "0755" "${SADM_USER}" "${SADM_GROUP}" 
     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
+
+
+    # SADMIN Readme, changelog and license file.
+    set_file "${SADM_BASE_DIR}/readme.md"    "0664" "${SADM_USER}" "${SADM_GROUP}" 
+    set_file "${SADM_BASE_DIR}/readme.html"  "0644" "${SADM_USER}" "${SADM_GROUP}" 
+    set_file "${SADM_BASE_DIR}/readme.pdf"   "0644" "${SADM_USER}" "${SADM_GROUP}" 
+    set_file "${SADM_BASE_DIR}/LICENSE"      "0664" "${SADM_USER}" "${SADM_GROUP}" 
+    set_file "${SADM_BASE_DIR}/license"      "0664" "${SADM_USER}" "${SADM_GROUP}" 
+    set_file "${SADM_BASE_DIR}/changelog.md" "0664" "${SADM_USER}" "${SADM_GROUP}" 
+    
+    # Password files
+    set_file "${SADM_CFG_DIR}/.dbpass"       "0640" "${SADM_USER}" "${SADM_GROUP}"
+    set_file "${SADM_CFG_DIR}/.gmpw"         "0600" "${SADM_USER}" "${SADM_GROUP}"
+    set_file "${SADM_CFG_DIR}/.gmpw64"       "0644" "${SADM_USER}" "${SADM_GROUP}"
+    set_file "/etc/postfix/sasl_passwd"      "0600"  "root" "root"
+    set_file "/etc/postfix/sasl_passwd.db"   "0600"  "root" "root"
 
     sadm_write "\n"
     sadm_write "${BOLD}SADMIN Files Pruning.${NORMAL}\n"
