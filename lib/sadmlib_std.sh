@@ -2019,8 +2019,8 @@ sadm_load_config_file() {
 
 # If old unencrypted email account password file exist, create an encrypted one & delete the old one
     if [ -r "$GMPW_FILE_TXT" ]                                          
-        then base64 $GMPW_FILE_B64_TXT > $GMPW_FILE
-             if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] ; then rm -f GMPW_FILE_TXT >>/dev/null ;fi
+        then base64 $GMPW_FILE_TXT >$GMPW_FILE_B64
+             if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] ; then rm -f $GMPW_FILE_TXT >>/dev/null ;fi
              chmod 644 $GMPW_FILE_B64
     fi 
 
