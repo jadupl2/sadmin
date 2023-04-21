@@ -255,7 +255,7 @@ rel_file           = dir_cfg + '/.release'                              # SADMIN
 dbpass_file        = dir_cfg + '/.dbpass'                               # SADMIN DB User/Pwd file
 dbpass_file_fh     = ""                                                 # SADMIN DB User/Pwd Handler
 gmpw_file_txt      = dir_cfg + '/.gmpw'                                 # SMTP old password file
-gmpw_file_b64       = dir_cfg + '/.gmpw64'                               # SMTP new password file
+gmpw_file_b64      = dir_cfg + '/.gmpw64'                               # SMTP new password file
 gmpw_file_fh       = ""                                                 # SMTP Passwd file Handler
 log_file           = dir_log + '/' + phostname + '_' + pinst + '.log'   # Log File Name
 log_file_fh        = ""                                                 # Log File Handler
@@ -565,6 +565,7 @@ def load_config_file(cfg_file):
 # If old unencrypted email account password file exist, create an encrypted one & delete the old one
     if os.path.exists(gmpw_file_txt):
         try: 
+            os.chmod(gmpw_file_txt, 0o666)
             with open(gmpw_file_txt) as f: wpwd = f.readline().strip()
             byte_pw       = wpwd.encode('ascii')
             base64_bytes  = base64.b64encode(byte_pw)
@@ -581,12 +582,14 @@ def load_config_file(cfg_file):
                 print("Error Number   : %d" % (e.errno))                    # write_log Error Number
                 print("Error Text     : %s" % (e.strerror))                 # write_log Error Message
                 sys.exit(1)    
-            os.chmod(gmpw_file_b64, 0o600)
+            os.chmod(gmpw_file_b64, 0o644)
             if (get_fqdn() != sadm_server ) :
                 try:                                                        
                     os.remove(gmpw_file_txt)                            # Remove txt password file
                 except :                                                # If not then it's OK
                     pass                                                # If didn't work it is ok.
+            else:
+                os.chmod(gmpw_file_txt, 0o600)
         except (IOError, FileNotFoundError) as e:                       # Can't open SMTP Pwd file
             print("Error opening password file %s" % (gmpw_file_txt)) 
             print("Error Line No. : %d" % (inspect.currentframe().f_back.f_lineno)) # Print LineNo
