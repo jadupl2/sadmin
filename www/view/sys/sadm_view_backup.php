@@ -35,6 +35,7 @@
 # 2022_11_20 web v2.2 Backup status page - Error log link now only appear when error occurred.
 # 2023_01_05 web v2.3 Backup status page - Yellow alert if backup size is contrasting with previous.
 #@2023_03_23 web v2.4 Backup status page - Lot of changes to this page, have a look.
+#@2023_04_22 web v2.5 Backup status page - Alert are now shown in Red instead of Yellow background.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -66,7 +67,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/lib/sadmPageWrapper.php');    # Headi
 # Local Variables
 #===================================================================================================
 $DEBUG              = False;                                           # Debug Activated True/False
-$WVER               = "2.4";                                           # Current version number
+$WVER               = "2.5";                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -109,9 +110,9 @@ function setup_table()
     echo "<th class='dt-head-center'>Status</th>\n";
     echo "<th class='dt-head-center'>Schedule</th>\n";
     echo "<th class='dt-head-center'>Sporadic</th>\n";
-    echo "<th align='center'>Backup Size GB</th>\n";
-    echo "<th class='text-center'>Prev. Size GB</th>\n";
-    echo "<th class='text-center'>Total Host Size GB</th>\n";
+    echo "<th align='center'>Backup<br>Size in GB</th>\n";
+    echo "<th class='text-center'>Previous<br>Size in GB</th>\n";
+    echo "<th class='text-center'>Host Total<br>Size in GB</th>\n";
     echo "<th class='text-center'>Log/Hist</th>\n";
     echo "</tr>\n";
     echo "</thead>\n";
@@ -125,9 +126,9 @@ function setup_table()
     echo "<th class='dt-head-center'>Status</th>\n";
     echo "<th class='dt-head-center'>Schedule</th>\n";
     echo "<th class='dt-head-center'>Sporadic</th>\n";
-    echo "<th align='center'>Backup Size GB</th>\n";
-    echo "<th class='text-center'>Prev. Size GB</th>\n";
-    echo "<th class='text-center'>Total Host Size GB</th>\n";
+    echo "<th align='center'>Backup<br>Size in GB</th>\n";
+    echo "<th class='text-center'>Previous<br>Size in GB</th>\n";
+    echo "<th class='text-center'>Host Total<br>Size in GB</th>\n";
     echo "<th class='text-center'>Log/Hist</th>\n";
     echo "</tr>\n";
     echo "</tfoot>\n";
@@ -158,7 +159,7 @@ function display_data($count, $row)
 
 # Date of the Last Backup
     if (!file_exists($rch_name)) {                                    # If RCH File doesn't exist
-        echo "<td class='dt-center' bgcolor='Yellow'><b>Not run</b></td>\n";
+        echo "<td class='dt-center'><font color='red'><b>Not run</b></font></td>\n";
     } else {
         $file = file("$rch_name");                                      # Load RCH File in Memory
         $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
@@ -169,11 +170,11 @@ function display_data($count, $row)
         $backup_age = round($datediff / (60 * 60 * 24));
         if ($backup_age > SADM_BACKUP_INTERVAL) {
             $tooltip = "Backup is " . $backup_age . " days old, greater than the threshold of " . SADM_BACKUP_INTERVAL . " days.";
-            echo "<td class='dt-center' bgcolor='yellow'><b>";
+            echo "<td class='dt-center'><font color='red'><b>";
             echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
             echo "$cdate1</span>";
         } else {
-            $tooltip = "Backup is " . $backup_age . " days old, would turn yellow if greater than " . SADM_BACKUP_INTERVAL . " days.";
+            $tooltip = "Backup is " . $backup_age . " days old, would turn red if greater than " . SADM_BACKUP_INTERVAL . " days.";
             if (date("Y.m.d") != $cdate1) {
                 echo "<td class='dt-center'><b>";
             } else {
@@ -342,15 +343,15 @@ function display_data($count, $row)
 
 # Show current backup Size
     if (($num_backup_size == 0 || $num_previous_size == 0) && (SADM_BACKUP_DIF != 0)) {
-        echo "<td align='center' bgcolor='yellow'><b>" . number_format($num_backup_size,2) . "</b></td>\n";
+        echo "<td align='center'><font color='red'><b>" . number_format($num_backup_size,2) . "</b></td>\n";
     } else {
         $PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100;
         #echo "$PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100";
         if (number_format($PCT, 1) != 0.0) {
             if (number_format($PCT, 0) >= SADM_BACKUP_DIF) {
-                echo "<td align='center' bgcolor='yellow'><b>" . number_format($num_backup_size,2). "&nbsp;(+" . number_format($PCT, 1) . "%)</b></td>\n";
+                echo "<td align='center'><font color='red'><b>" . number_format($num_backup_size,2). "&nbsp;(+" . number_format($PCT, 1) . "%)</b></td>\n";
             } elseif (number_format($PCT, 0) <= (SADM_BACKUP_DIF * -1)) {
-                echo "<td align='center' bgcolor='yellow'><b>" . number_format($num_backup_size,2) . "&nbsp;(" . number_format($PCT, 1) . "%)</b></td>\n";
+                echo "<td align='center'><font color='red'><b>" . number_format($num_backup_size,2) . "&nbsp;(" . number_format($PCT, 1) . "%)</b></td>\n";
             }else{    
                 echo "<td align='center'>" . number_format($num_backup_size,2) . "</td>\n";
             }
@@ -361,7 +362,7 @@ function display_data($count, $row)
 
 # Show Previous Backup Size
     if (($num_backup_size == 0 || $num_previous_size == 0) && (SADM_BACKUP_DIF != 0)) {
-        echo "<td align='center' bgcolor='yellow'><b>" . number_format($num_previous_size,2) . "</b></td>\n";
+        echo "<td align='center'><font color='red'><b>" . number_format($num_previous_size,2) . "</b></td>\n";
     } else {
         echo "<td align='center'>" . number_format($num_previous_size,2) . "</td>\n";
     }
@@ -402,7 +403,7 @@ function display_data($count, $row)
         echo "\n<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'";
         echo " title='View Backup Log'>[log]</a>&nbsp;";
     } else {
-        echo "<td class='dt-center' bgcolor='yellow'><b>No data</b>";
+        echo "<td class='dt-center'><font color='red'><b>No data</b>";
     }
 
 # Show [elog] to view backup error log (If exist)
@@ -432,11 +433,10 @@ function backup_legend()
 {
     echo  "\n<hr>\n<center><b>\n";
     echo "If backup status isn't 'Success' it will have a yellow background.<br>\n";
-    echo "If the current backup size is zero or " . SADM_BACKUP_DIF . "% bigger or smaller than the previous backup, it will have a yellow background.<br>\n";
-    echo "If the previous backup size is zero or " . SADM_BACKUP_DIF . "% bigger or smaller than the current backup, it will have a yellow background.<br>\n";
+    echo "If the current backup size is zero or " . SADM_BACKUP_DIF . "% bigger or smaller than the previous backup, it will be in red.<br>\n";
+    echo "If the previous backup size is zero or " . SADM_BACKUP_DIF . "% bigger or smaller than the current backup, it will be in red.<br>\n";
     echo "The " . SADM_BACKUP_DIF . "% can be change by modifying the 'SADM_BACKUP_DIF' variable in \$SADMIN/cfg/sadmin.cfg.<br>\n";
-    echo "If the backup schedule column is not 'Active', it will have a 'X' beside the 'Update' button.<br>\n";
-    echo "If the date of the last backup is not today, it will have a yellow background (Backup are done daily).<br>\n";
+    echo "If the date of the last backup is not today, it will have the last backup date in red.<br>\n";
     echo  "</center><br><br>\n";
 }
 
