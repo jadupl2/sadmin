@@ -2501,7 +2501,7 @@ sadm_sendmail() {
                              sadm_write_err "$emsg"                     # Avise user of error
                              mbody=$(printf "\n${mbody}\n\n${emsg}\n") 
                              RC=1                                       # Set Error return code
-                        else opt_a="$opt_a -a $file "                       # Add -a attach Cmd Option
+                        else opt_a="$opt_a -a $file "                   # Add -a attach Cmd Option
                              #echo "opt_a = $opt_a"
                    fi 
                 done
