@@ -43,6 +43,7 @@
 # 2022_04_10 install v1.11 Depreciated `lsb_release` for AlmaLinux 9, RHEL 9, Rocky 9 CentOS 9.
 # 2022_05_10 install v1.12 Using now 'mutt' instead of 'mail'.
 # 2022_07_19 install v1.13 Update of the list of commands and package require by SADMIN.
+#@2023_04_27 install v1.14 Add 'base64' command to requirement list.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -73,7 +74,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.13'                                     # Your Current Script Version
+export SADM_VER='1.14'                                     # Your Current Script Version
 export SADM_PDESC="Check if all SADMIN Tools requirement are present (-i install missing package).s"
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -591,7 +592,7 @@ check_sadmin_requirements() {
             fi
 
             command_available "ethtool"     ; SADM_ETHTOOL=$SPATH       # Save Command Path Returned
-            if [ "$SADM_NMON" = "" ] && [ "$INSTREQ" -eq 1 ]            # Cmd not found & Inst Req. 
+            if [ "$SADM_ETHTOOL" = "" ] && [ "$INSTREQ" -eq 1 ]         # Cmd not found & Inst Req. 
                 then install_package "ethtool" "ethtool"                # Install Package (rpm,deb)
                      command_available "ethtool" ; SADM_ETHTOOL=$SPATH  # Recheck Should be install
             fi
@@ -614,6 +615,12 @@ check_sadmin_requirements() {
             if [ "$SADM_LSHW" = "" ] && [ "$INSTREQ" -eq 1 ]            # Cmd not found & Inst Req.
                 then install_package "lshw" "lshw"                      # Install Package (rpm,deb)
                      command_available "lshw"     ; SADM_LSHW=$SPATH    # Recheck Should be install
+            fi
+
+            command_available "base64"     ; SADM_BASE64=$SPATH         # Save Command Path Returned
+            if [ "$SADM_BASE64" = "" ] && [ "$INSTREQ" -eq 1 ]          # Cmd not found & Inst Req.
+                then install_package "coreutils" "coreutils"            # Install Package (rpm,deb)
+                     command_available "base64"   ; SADM_LSHW=$SPATH    # Recheck Should be install
             fi
 
             command_available "ifconfig"     ; SADM_IFCONFIG=$SPATH     # Save Command Path Returned
