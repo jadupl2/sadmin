@@ -37,6 +37,7 @@
 # 2023_02_16 backup v2.3 ReaR backup status page - Revamp of the ReaR backup status page.
 #@2023_04_22 backup v2.4 ReaR backup status page - Alert are shown in Red instead of Yellow background.
 #@2023_04_23 backup v2.5 ReaR backup status page - Now include size of backup & new layout.
+#@2023_04_27 backup v2.6 ReaR backup status page - Combine 'Last Backup Date' & 'Duration'.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -100,8 +101,8 @@ function setup_table() {
 
     echo "<thead>\n";
     echo "<tr>\n";
-    echo "<th class='text-left'>Last Backup</th>\n";
-    echo "<th class='text-center'>Duration</th>\n";
+    echo "<th class='text-left'>Last Backup Date Duration</th>\n";
+    #echo "<th class='text-center'>Duration</th>\n";
     echo "<th class='text-left'>System</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='dt-head-center'>Schedule</th>\n";
@@ -117,8 +118,8 @@ function setup_table() {
 
     echo "<tfoot>\n";
     echo "<tr>\n";
-    echo "<th class='text-left'>Last Backup</th>\n";
-    echo "<th class='text-center'>Duration</th>\n";
+    echo "<th class='text-left'>Last Backup Date Duration</th>\n";
+    #echo "<th class='text-center'>Duration</th>\n";
     echo "<th class='text-left'>System</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='dt-head-center'>Schedule</th>\n";
@@ -183,13 +184,16 @@ function display_data($count, $row) {
             echo "</span>"; 
         }
     }
-    echo "</font></td>\n";  
+    #echo "</font></td>\n";  
+    echo "</b></font>\n";  
 
 # Backup duration time
     if (! file_exists($rch_name))  {                                    # If RCH File Not Found
-        echo "\n<td class='dt-center'>&nbsp;</td>";
+        #echo "\n<td class='dt-center'>&nbsp;</td>";
+        echo "&nbsp;</td>";
     }else{
-        echo "<td class='dt-center'>" . nl2br($celapse) . "</td>\n";  
+        #echo "<td class='dt-center'>" . nl2br($celapse) . "</td>\n";  
+        echo "<br>" . nl2br($celapse) . "</td>\n";  
     }
 
 # Show System name
