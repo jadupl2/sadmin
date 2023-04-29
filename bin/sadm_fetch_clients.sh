@@ -654,8 +654,8 @@ update_rear_site_conf()
     cat $REAR_TMP $REAR_USER_EXCLUDE | tr -d '\r' > $REAR_CFG           # Concat & Remove CR in file
     #cat $REAR_TMP $REAR_USER_EXCLUDE > $REAR_CFG           # Concat & Remove CR in file
 
-    #sadm_writelog "scp -P${SADM_SSH_PORT} $REAR_CFG ${WSERVER}:/etc/rear/site.conf" 
-    #scp -P${SADM_SSH_PORT}  $REAR_CFG ${WSERVER}:/etc/rear/site.conf
+    #sadm_writelog "scp -CqP${SADM_SSH_PORT} $REAR_CFG ${WSERVER}:/etc/rear/site.conf" 
+    #scp -CqP${SADM_SSH_PORT}  $REAR_CFG ${WSERVER}:/etc/rear/site.conf
     #if [ $? -eq 0 ] ; then sadm_writelog "[OK] /etc/rear/site.conf is updated on ${WSERVER}" ;fi
 }
 
