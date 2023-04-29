@@ -57,6 +57,7 @@
 #@2023_04_10 server v2.38 Don't push the gmail password file to client.
 #@2023_04_12 server v2.39 Add '-c' option to push 'sadmin.client.cfg' to 'sadmin.cfg' on all clients.
 #@2023_04_17 server v2.40 Push encrypted email password file ($SADMIN/cfg/.gmpw64) to all clients.
+#@2023_04_29 server v2.41 Increase speed of files copy from clients to SADMIN server.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -88,7 +89,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.40'                                     # Script Version
+export SADM_VER='2.41'                                     # Script Version
 export SADM_PDESC="Copy SADMIN version to all actives clients, without overwriting config files)."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -283,7 +284,7 @@ process_servers()
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}"                       # Server Dir. on SADM Server
         if [ ! -d $WDIR ] ; then mkdir $WDIR ; chmod 775 $WDIR ; fi     # Create Dir. if don't exist 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then scp -P${server_ssh_port} ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
+            then scp -CqP ${server_ssh_port} ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
             else cp /etc/environment ${WDIR} >/dev/null 2>&1  
         fi
         if [ $? -eq 0 ]                                                 # If file was transferred
@@ -329,9 +330,9 @@ process_servers()
           CFG_SRC="${SADM_CFG_DIR}/${WFILE}"
           CFG_DST="${server_fqdn}:${server_dir}/cfg/${WFILE}"
           #CFG_CMD="rsync -a ${CFG_SRC} ${CFG_DST}"
-          CFG_CMD="scp -P $server_ssh_port ${CFG_SRC} ${CFG_DST}"
+          CFG_CMD="scp -CqP $server_ssh_port ${CFG_SRC} ${CFG_DST}"
           if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CFG_CMD" ; fi 
-          scp -P $server_ssh_port ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
+          scp -CqP $server_ssh_port ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
           #rsync -a ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
           RC=$? 
           if [ $RC -ne 0 ]
@@ -350,8 +351,8 @@ process_servers()
         if [ "$SYNC_CFG" = "Y" ]
             then sadmin_common="${SADM_CFG_DIR}/sadmin_client.cfg"
                  sadmin_destination="${server_fqdn}:${server_dir}/cfg/sadmin.cfg"
-                 CMD="scp -P $server_ssh_port ${sadmin_common} ${sadmin_destination}"
-                 scp -P $server_ssh_port ${sadmin_common} ${sadmin_destination} >> $SADM_LOG 2>&1
+                 CMD="scp -CqP $server_ssh_port ${sadmin_common} ${sadmin_destination}"
+                 scp -CqP $server_ssh_port ${sadmin_common} ${sadmin_destination} >> $SADM_LOG 2>&1
                  RC=$? 
                  if [ $RC -ne 0 ]
                     then sadm_writelog "[ ERROR ] $CMD"
@@ -440,8 +441,8 @@ process_servers()
           do
             CFG_SRC="${SADM_BASE_DIR}/${WFILE}"
             CFG_DST="${server_fqdn}:${server_dir}/${WFILE}"
-            CFG_CMD="scp -P $server_ssh_port ${CFG_SRC} ${CFG_DST}"
-            scp  -P $server_ssh_port ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
+            CFG_CMD="scp -CqP $server_ssh_port ${CFG_SRC} ${CFG_DST}"
+            scp  -CqP $server_ssh_port ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
             RC=$?
             if [ $RC -ne 0 ]
                 then sadm_writelog "[ ERROR ] ($RC) doing $CFG_CMD"
