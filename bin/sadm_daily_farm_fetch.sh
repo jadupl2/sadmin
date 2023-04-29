@@ -56,6 +56,7 @@
 # 2022_05_24 server v4.7 Updated to use the library 'check_lock_file()' function.
 # 2022_08_17 server v4.8 Update SADMIN section 2.2 and use error log when problem encountered.
 # 2022_09_23 server v4.9 Use SSH port specify per server & update SADMIN section to v1.52.
+#@2023_04_29 server v4.10 Increase speed of files copy from clients to SADMIN server.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -87,7 +88,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.8'                                      # Script version number
+export SADM_VER='4.10'                                      # Script version number
 export SADM_PDESC="Collect hardware/software/performance info data from all active servers"
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -244,7 +245,7 @@ process_servers()
         # Get the remote /etc/environment file to determine where SADMIN is install on remote
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}"
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then scp -P $server_ssh_port ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
+            then scp -CqP $server_ssh_port ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
             else cp /etc/environment ${WDIR} >/dev/null 2>&1  
         fi
         if [ $? -eq 0 ]                                                 # If file was transferred
