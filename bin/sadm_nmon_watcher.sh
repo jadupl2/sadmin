@@ -315,7 +315,7 @@ function cmd_options()
 
     if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # nmon not available on OSX
         then sadm_write_log "Command 'nmon' isn't available on MacOS"   # Advise user that won't run
-             sadm_write_log "Script can't continue"                     # Process can't continue
+             sadm_write_log "Script can't continue, terminating. "      # Process can't continue
              sadm_stop 0                                                # Close Everything Cleanly
              exit 0                                                     # Exit back to bash
     fi

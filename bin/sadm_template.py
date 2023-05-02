@@ -243,15 +243,15 @@ def cmd_options(argv):
 # --------------------------------------------------------------------------------------------------
 def main(argv):
     global pdb_conn, pdb_cur                                            # DB Connection & Cursor
-    (pdebug) = cmd_options(argv)                                        # Analyse cmdline options
+    (pdebug) = cmd_options(argv)                                        # Analyze cmdline options
 
     pexit_code = 0                                                      # Pgm Exit Code Default
     sa.start(pver, pdesc)                                               # Initialize SADMIN env.
 
     # Execute script main function (Choose one of the two functions to execute)
     # (1) 'process_servers' : Loop through your actives systems and do a 'ssh date' on each of them.
-    #      Uncomment 'sa.db_used = True' in SADMIN section at the begiing of this script.
-    # (2) 'main_Process'    : Process not related to DB, you decide what you put in there.
+    #      Change 'sa.db_used = True' in SADMIN section at the beginning of this script.
+    # (2) 'main_Process'    : Process don't need to use SADMIN Database.
     if sa.get_fqdn() == sa.sadm_server and sa.db_used :                 # On SADMIN srv & usedb True
         (pexit_code, pdb_conn, pdb_cur) = sa.db_connect('sadmin')       # Connect to SADMIN Database
         if pexit_code == 0:                                             # If Connection to DB is OK
