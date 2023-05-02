@@ -72,6 +72,7 @@
 # 2022_09_24 client: v2.08 Change MacOS mount point name (/preserve don't exist anymore)
 #@2023_04_10_client: v2.09 Remove text email pwd file ($SADMIN/cfg/.gmpw) on client (not on server).
 #@2023_04_16_client: v2.10 On client using encrypted email pwd file '$SADMIN/cfg/.gmpw64'.
+#@2023_05_02_client: v2.11 Solved permission problem on email password file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -103,7 +104,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.10'                                      # Script version number
+export SADM_VER='2.11'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -457,8 +458,8 @@ file_housekeeping()
     set_file "${SADM_BASE_DIR}/changelog.md" "0664" "${SADM_USER}" "${SADM_GROUP}" 
     
     # Password files
-    set_file "${SADM_CFG_DIR}/.dbpass"       "0640" "${SADM_USER}" "${SADM_GROUP}"
-    set_file "${SADM_CFG_DIR}/.gmpw"         "0600" "${SADM_USER}" "${SADM_GROUP}"
+    set_file "${SADM_CFG_DIR}/.dbpass"       "0644" "${SADM_USER}" "${SADM_GROUP}"
+    set_file "${SADM_CFG_DIR}/.gmpw"         "0644" "${SADM_USER}" "${SADM_GROUP}"
     set_file "${SADM_CFG_DIR}/.gmpw64"       "0644" "${SADM_USER}" "${SADM_GROUP}"
     set_file "/etc/postfix/sasl_passwd"      "0600"  "root" "root"
     set_file "/etc/postfix/sasl_passwd.db"   "0600"  "root" "root"
