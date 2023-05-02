@@ -355,7 +355,7 @@ export SADM_MONITOR_RECENT_COUNT=10                                     # Sysmon
 export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"                  # Exclude from SysMon Recent
 export DBPASSFILE="${SADM_CFG_DIR}/.dbpass"                             # MySQL Passwd File
 export GMPW_FILE_TXT="${SADM_CFG_DIR}/.gmpw"                            # SMTP Unencrypted PasswdFile
-export GMPW_FILE_B64="${SADM_CFG_DIR}/.gmpw64"                              # SMTP Encrypted PasswdFile
+export GMPW_FILE_B64="${SADM_CFG_DIR}/.gmpw64"                          # SMTP Encrypted PasswdFile
 export SADM_RELEASE=`cat $SADM_REL_FILE`                                # SADM Release Ver. Number
 export SADM_SSH_PORT=""                                                 # Default SSH Port
 export SADM_REAR_NFS_SERVER=""                                          # ReaR NFS Server
@@ -2009,7 +2009,7 @@ sadm_load_config_file() {
         #
         done < $SADM_CFG_FILE
 
-    # Get Tead/Write and Read/Only User Password from pasword file (If on SADMIN Server)
+# Get Read/Write and Read/Only User Password from pasword file (Only on SADMIN Server)
     SADM_RW_DBPWD=""                                                    # Default Write Pwd is Blank
     SADM_RO_DBPWD=""                                                    # Default ReadOnly Pwd Blank
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] && [ -r "$DBPASSFILE" ]  # If on Server & pwd file

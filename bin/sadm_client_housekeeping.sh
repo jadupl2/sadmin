@@ -457,8 +457,8 @@ file_housekeeping()
     set_file "${SADM_BASE_DIR}/changelog.md" "0664" "${SADM_USER}" "${SADM_GROUP}" 
     
     # Password files
-    set_file "${SADM_CFG_DIR}/.dbpass"       "0640" "${SADM_USER}" "${SADM_GROUP}"
-    set_file "${SADM_CFG_DIR}/.gmpw"         "0600" "${SADM_USER}" "${SADM_GROUP}"
+    set_file "${SADM_CFG_DIR}/.dbpass"       "0644" "${SADM_USER}" "${SADM_GROUP}"
+    set_file "${SADM_CFG_DIR}/.gmpw"         "0640" "${SADM_USER}" "${SADM_GROUP}"
     set_file "${SADM_CFG_DIR}/.gmpw64"       "0644" "${SADM_USER}" "${SADM_GROUP}"
     set_file "/etc/postfix/sasl_passwd"      "0600"  "root" "root"
     set_file "/etc/postfix/sasl_passwd.db"   "0600"  "root" "root"

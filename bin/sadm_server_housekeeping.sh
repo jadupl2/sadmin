@@ -390,8 +390,10 @@ file_housekeeping()
     # $SADMIN/www/tmp writable by everyone (If not cause intermittent problem with monitor page refresh)
     chmod 1777 $SADM_WWW_TMP_DIR  
 
-    if [ -f "$DBPASSFILE" ] ; then chmod 644 $DBPASSFILE ; fi 
-    if [ -f "$GMPW_FILE_TXT" ]  ; then chmod 600 $GMPW_FILE_TXT ; fi 
+    if [ -f "$DBPASSFILE" ]     ; then chmod 644 $DBPASSFILE ; fi 
+    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] && [ -r "$GMPW_FILE_TXT" ] # Mail Password plain text
+        then rm -f "$GMPW_FILE_TXT" >/dev/null 2>&1
+    fi 
     if [ -f "$GMPW_FILE_B64" ]  ; then chmod 644 $GMPW_FILE_B64 ; fi 
     
     return $ERROR_COUNT
