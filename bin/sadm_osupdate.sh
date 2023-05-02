@@ -17,32 +17,32 @@
 # 2016_12_12    v2.8 Correction minor bug with shutdown reboot command on Raspberry Pi
 #                    Now Checking if Script is running of SADMIN server at the beginning
 #                    No automatic reboot on SADMIN server while it is use to start update on client
-# 2017_04_09    v2.9 Added Support for Linux Mint
-# 2017_04_10    v3.0 Not detecting Error correctly on Debian Family update, Add Error Message in Log
-# 2017_07_08    v3.2 Now using DNF instead of yum for updating Fedora 25 and beyond.
-# 2017_12_10    v3.4 No longer Support Redhat/CentOS 3 and 4
-# 2018_06_05    v3.5 Adapt to new SADMIN Libr.
-# 2018_06_09    v3.6 Change name of this script from sadm_osupdate_client to sadm_client_osupdate
-# 2018_06_10    v3.7 Switch back to old name 
-# 2018_07_11    v3.8 Code cleanup
-# 2018_09_19    v3.9 Include Alert Group 
-# 2018_10_24    v3.10 Command line option -d -r -h -v added.
-# 2019_01_16 Improvement: v3.11 Add 'apt-get autoremove' when 'deb' package is use.
-# 2019_05_23 Update: v3.12 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
-# 2019_07_12 Update: v3.13 O/S update script now update the date and status in sysinfo.txt. 
-# 2019_07_17 Update: v3.14 O/S update script now perform apt-get clean before update start on *.deb
-# 2019_11_21 Update: v3.15 Add 'export DEBIAN_FRONTEND=noninteractive' prior to 'apt-get upgrade'.
-# 2019_11_21 Update: v3.16 Email sent to SysAdmin if some package are kept back from update.
-# 2020_01_18 Update: v3.17 Include everything in script log while running 'apt-get upgrade'. 
-# 2020_01_21 Update: v3.18 Enhance the update checking process.
-# 2020_02_17 Update: v3.19 Add error message when problem getting the list of package to update.
-# 2020_03_03 Update: v3.20 Restructure some code and change help message. 
-# 2020_04_01 Update: v3.21 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-# 2020_04_28 Update: v3.22 Use 'apt-get dist-upgrade' instead of 'apt-get -y upgrade' on deb system.
-# 2020_05_23 Update: v3.23 Replace 'reboot' instruction with 'shutdown -r' (Problem on some OS).
-# 2020_07_29 Update: v3.24 Minor adjustments to screen and log presentation.
-# 2020_12_12 Update: v3.25 Minor adjustments.
-# 2021_05_04 Update: v3.26 Adjust some message format of the log.
+# 2017_04_09 osupdate: v2.9 Added Support for Linux Mint
+# 2017_04_10 osupdate: v3.0 Not detecting Error correctly on Debian Family update, Add Error Message in Log
+# 2017_07_08 osupdate: v3.2 Now using DNF instead of yum for updating Fedora 25 and beyond.
+# 2017_12_10 osupdate: v3.4 No longer Support Redhat/CentOS 3 and 4
+# 2018_06_05 osupdate: v3.5 Adapt to new SADMIN Libr.
+# 2018_06_09 osupdate: v3.6 Change name of this script from sadm_osupdate_client to sadm_client_osupdate
+# 2018_06_10 osupdate: v3.7 Switch back to old name 
+# 2018_07_11 osupdate: v3.8 Code cleanup
+# 2018_09_19 osupdate: v3.9 Include Alert Group 
+# 2018_10_24 osupdate: v3.10 Command line option -d -r -h -v added.
+# 2019_01_16 osupdate: v3.11 Add 'apt-get autoremove' when 'deb' package is use.
+# 2019_05_23 osupdate: v3.12 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
+# 2019_07_12 osupdate: v3.13 O/S update script now update the date and status in sysinfo.txt. 
+# 2019_07_17 osupdate: v3.14 O/S update script now perform apt-get clean before update start on *.deb
+# 2019_11_21 osupdate: v3.15 Add 'export DEBIAN_FRONTEND=noninteractive' prior to 'apt-get upgrade'.
+# 2019_11_21 osupdate: v3.16 Email sent to SysAdmin if some package are kept back from update.
+# 2020_01_18 osupdate: v3.17 Include everything in script log while running 'apt-get upgrade'. 
+# 2020_01_21 osupdate: v3.18 Enhance the update checking process.
+# 2020_02_17 osupdate: v3.19 Add error message when problem getting the list of package to update.
+# 2020_03_03 osupdate: v3.20 Restructure some code and change help message. 
+# 2020_04_01 osupdate: v3.21 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2020_04_28 osupdate: v3.22 Use 'apt-get dist-upgrade' instead of 'apt-get -y upgrade' on deb system.
+# 2020_05_23 osupdate: v3.23 Replace 'reboot' instruction with 'shutdown -r' (Problem on some OS).
+# 2020_07_29 osupdate: v3.24 Minor adjustments to screen and log presentation.
+# 2020_12_12 osupdate: v3.25 Minor adjustments.
+# 2021_05_04 osupdate: v3.26 Adjust some message format of the log.
 # 2021_08_19 osupdate v3.27 Fix prompting issue on '.deb' distributions.
 # 2022_04_27 osupdate v3.28 Use apt command instead of apt-get
 # 2022_06_10 osupdate v3.29 Now list package to be updated when using rpm format.
@@ -51,24 +51,24 @@
 # 2022_08_25 osupdate v3.32 Updated with new SADMIN SECTION V1.52.
 # 2022_09_04 osupdate v3.33 Revisited to use the new error log when error is encountered.
 # 2023_02_08 osupdate v3.34 Insert more info in email sent when update are kept-back.
+#@2023_05_02 osupdate v3.35 Fix problem with check update availability that wasn't returning error.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
 
 
-
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.52
+# SADMIN CODE SECTION 1.55
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
 
-# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
-    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
-         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+# Make Sure Environment Variable 'SADMIN' Is Defined.
+if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # SADMIN defined? Libr.exist
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
+         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]     # Still not define = Error
             then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-                 exit 1                                    # No SADMIN Env. Var. Exit
+                 exit 1                                                 # No SADMIN Env. Var. Exit
          fi
 fi 
 
@@ -81,7 +81,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.34'                                     # Your Current Script Version
+export SADM_VER='3.35'                                     # Your Current Script Version
 export SADM_PDESC="Script is used to perform an O/S update on the system"
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -89,8 +89,6 @@ export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=Crea
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
-export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
@@ -113,6 +111,8 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 # ---------------------------------------------------------------------------------------
 
 
@@ -197,13 +197,13 @@ check_available_update()
     
     case "$(sadm_get_osname)" in
 
-        "REDHAT"|"CENTOS" ) 
+        "REDHAT"|"CENTOS"|"ALMALINUX"|"ROCKY" ) 
             case "$(sadm_get_osmajorversion)" in
-                [2-5])  UpdateStatus=1                                  # No Update available
+                [2-6])  UpdateStatus=1                                  # No Update available
                         sadm_write_log "No more update for $SADM_OS_NAME v$(sadm_get_osmajorversion)"
                         sadm_write_log "This version have reach end of life."
                         ;;
-                [6-7])  sadm_write_log "Checking update availability for $SADM_OS_NAME, with 'yum check-update'."
+                7)      sadm_write_log "Checking update availability for $SADM_OS_NAME, with 'yum check-update'."
                         yum check-update >> $SADM_LOG 2>&1              # List Available update
                         rc=$?                                           # Save Exit Code
                         case $rc in
@@ -240,7 +240,7 @@ check_available_update()
             esac
             ;;
             
-        "FEDORA"|"ALMALINUX"|"ROCKY" )
+        "FEDORA"    )
             sadm_write_log "Checking for new update for $SADM_OS_NAME with 'dnf check-update'"
             sadm_write_log " "
             dnf check-update >> $SADM_LOG 2>&1                          # List Available update
@@ -451,13 +451,16 @@ update_sysinfo_file()
     if [ $SADM_DEBUG -gt 0 ] 
         then sadm_write "Updating 'O/S Update' date & status in ${HWD_FILE}.\n"
     fi
+
     grep -vi "SADM_OSUPDATE_" $HWD_FILE > $SADM_TMP_FILE1               # Remove lines to update
-    if [ "$SADM_EXIT_CODE" -eq 0 ]                                      # O/S Update was a success
+    if [ "$FINAL_CODE" -eq 0 ]                                          # O/S Update was a success
         then echo "SADM_OSUPDATE_STATUS                  = S"  >> $SADM_TMP_FILE1   # Success
         else echo "SADM_OSUPDATE_STATUS                  = F"  >> $SADM_TMP_FILE1   # Failed
     fi
+    
     TODAY=`date "+%Y.%m.%d %H:%M:%S"`                                   # Get Current Date/Time
     echo "SADM_OSUPDATE_DATE                    = $TODAY"  >> $SADM_TMP_FILE1 # Last OS Update Date
+    
     rm -f  $HWD_FILE  >/dev/null 2>&1                                   # Remove sysinfo.txt file
     cp $SADM_TMP_FILE1 $HWD_FILE                                        # Replace with updated one
 }
@@ -533,8 +536,6 @@ main_process()
             ;;
         2)  SADM_EXIT_CODE=1                                            # Error Encountered set to 1
             ;;
-      100)  SADM_EXIT_CODE=1                                            # Problem with repo
-            ;;
         *)  SADM_EXIT_CODE=1                                            # Error Encountered set to 1
             sadm_write "Check_available_update return code is invalid (${RC}).\n"
             ;;
@@ -544,13 +545,13 @@ main_process()
     update_sysinfo_file $SADM_EXIT_CODE                                 # Upd. Sysinfo Date & Status
 
     # If Reboot was requested and update were available and update was successful, then reboot.
-    SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'`         # Need a No FQDN of SADM Srv
+    SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'`         # SADM srvname with no domain
     if [ "$WREBOOT" = "Y" ] && [ "$UPDATE_AVAILABLE" = "Y" ] && [ "$SADM_EXIT_CODE" -eq 0 ]     
         then sadm_write "Update successful, system will reboot in 1 Minute.\n"
              shutdown -r +1 "System will reboot in 1 minute."           # Issue Shutdown & Reboot
     fi
 
-    return $SADM_EXIST_CODE
+    return $SADM_EXIT_CODE
 }
 
 
