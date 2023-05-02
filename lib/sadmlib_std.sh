@@ -198,8 +198,8 @@
 #@2023_03_04 lib v4.19 Lock file content & owner updated. 
 #@2023_04_13 lib v4.20 Load new variables 'SADM_REAR_DIF' 'SADM_REAR_INTERVAL' from sadmin.cfg.
 #@2023_04_13 lib v4.21 Load new variable 'SADM_BACKUP_INTERVAL' from sadmin.cfg use on backup page.
-#@2023_04_14 lib v4.22 Email account password now encrypted in $SADMIN/cfg/.gmpw64 (base64)
-#@2023_04_14 lib v4.23 Change email password only on SADM server in $SADMIN/cfg/.gmpw password file.
+#@2023_04_14 lib v4.22 Email account password now encrypted in $SADMIN/cfg/.gmpw64 (base64).
+#@2023_04_14 lib v4.23 Change email pwd ($SADMIN/cfg/.gmpw) on SADM server to generate new .gmpw64.
 #===================================================================================================
 
 
@@ -2017,11 +2017,14 @@ sadm_load_config_file() {
              SADM_RO_DBPWD=`grep "^${SADM_RO_DBUSER}," $DBPASSFILE |awk -F, '{ print $2 }'` # RO PWD
     fi
 
-# If old unencrypted email account password file exist, create an encrypted one & delete the old one
-    if [ -r "$GMPW_FILE_TXT" ]                                          
-        then base64 $GMPW_FILE_TXT >$GMPW_FILE_B64
-             if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] ; then rm -f $GMPW_FILE_TXT >>/dev/null ;fi
-             chmod 644 $GMPW_FILE_B64
+# If on client delete plain text email pwd file
+# On SADMIN Server recreate encrypted email pwd file from plaintext file.
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # If on a SADMIN client
+        then rm -f $GMPW_FILE_TXT >>/dev/null                           # Del plain test email pwd
+        else if [ -r "$GMPW_FILE_TXT" ]                                 # On SADM srv & Text pwdfile         
+                then base64 $GMPW_FILE_TXT >$GMPW_FILE_B64              # Recreate encrypt pwd file
+                     chmod 644 $GMPW_FILE_B64                           # Make file readable
+             fi 
     fi 
 
 # Set Email Account password from encrypted email account password file.
