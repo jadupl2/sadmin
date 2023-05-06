@@ -51,6 +51,7 @@
 # 2022_07_02 mon v2.47 Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
 # 2022_09_24 mon v2.48 On MacOS review 'check_cpu_usage', 'check_load average' & filesystem check
 # 2022_10_11 mon v2.49 Sysmon don't check capacity exceeded for '/snap/*' '/media/*' filesystem
+#@2023_05_06 mon v2.50 Reduce ping wait time to speed up processing.
 #===================================================================================================
 #
 use English;
@@ -65,7 +66,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.49";                                       # Version Number
+my $VERSION_NUMBER      = "2.50";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -1281,7 +1282,7 @@ sub ping_ip  {
     $ipname = $dummy[1];                                                # Extract Name/IP to ping
     print "\n\nTest ping to $ipname ... ";                              # Show to User Name/IP
 
-    $PCMD = "ping -c3 $ipname >/dev/null 2>&1" ;                        # Build ping command
+    $PCMD = "ping -c2 -W2 $ipname >/dev/null 2>&1" ;                        # Build ping command
     @args = ("$PCMD"); system(@args) ;                                  # Perform the ping operation
     $src = $? >> 8;                                                     # Get Ping Result
     $SADM_RECORD->{SADM_CURVAL}=$src;                                   # Save Result Code to CurVal
