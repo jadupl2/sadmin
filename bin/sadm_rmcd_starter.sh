@@ -50,6 +50,7 @@
 # 2022_08_17 cmdline v1.6 Include new SADMIN section 1.52
 # 2022_09_20 cmdline v1.7 SSH to client is now using the port defined in each system.
 # 2022_12_13 cmdline v1.8 Intermittent crash cause by a typo error.
+#@2023_05_06 cmdline v1.9 Reduce ping wait time to speed up processing.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -81,7 +82,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.8'                                      # Current Script Version
+export SADM_VER='1.9'                                      # Current Script Version
 export SADM_PDESC="Execute a defined script on a remote system." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -191,7 +192,7 @@ rmcd_start()
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
 
         # Ping to server - Test if it is alive
-        ping -c2 $fqdn_server >> /dev/null 2>&1
+        ping -c2 -W2 $fqdn_server >> /dev/null 2>&1
         if [ $? -ne 0 ]
             then sadm_write_err "${SADM_ERROR} Can't ping $fqdn_server."
                  return 1                                               # Return to Caller
