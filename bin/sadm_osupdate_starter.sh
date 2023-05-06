@@ -61,6 +61,7 @@
 # 2022_08_25 osupdate v5.0 Allow to run multiple instance of this script.
 # 2023_01_06 osupdate v5.1 Add remote host name being updated in RCH file.
 # 2023_03_04 osupdate v5.2 Last O/S update date & status was no longer updated in SADMIN database.
+#@2023_05_06 osupdate v5.3 Reduce ping wait time to speed up processing.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -107,7 +108,7 @@ export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with ex
 # ---
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='5.2'                                      # Script version number
+export SADM_VER='5.3'                                      # Script version number
 export SADM_PDESC="Run the O/S update script on the selected remote system."
 export SADM_RCH_DESC=""                                    # String that become desc in rch, if used
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
@@ -249,8 +250,8 @@ rcmd_osupdate()
     server_ssh_port=`           echo $wline|awk -F\; '{ print $9 }'`    # SSH port to system
     fqdn_server=`echo ${server_name}.${server_domain}`                  # Create FQN Server Name
         
-    # Ping to server 
-    ping -c2 $fqdn_server >> /dev/null 2>&1
+    # Ping to server (-c2 send two packets, -W2 Timeout waiting for response)
+    ping -c2 -W2 $fqdn_server >> /dev/null 2>&1     
     if [ $? -ne 0 ]
         then if [ "$server_sporadic" = "1" ]
                  then    sadm_write_log "[ WARNING ] Sporadic system is currently inaccessible."
