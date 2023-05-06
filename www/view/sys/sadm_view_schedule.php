@@ -38,7 +38,8 @@
 # 2019_12_29 osupdate v2.13 O/S update status page - Heading modified and now on two rows.
 # 2022_09_12 osupdate v2.14 O/S update status page - Will show link to error log (if it exist).
 # 2022_09_12 osupdate v2.15 O/S update status page - Display the first 50 systems instead of 25.
-#@2023_05_01 osupdate v2.16 O/S update status page - Enhance functionality and bug fix.
+# 2023_05_01 osupdate v2.16 O/S update status page - Enhance functionality and bug fix.
+#@2023_05_06 osupdate v2.17 O/S update status page - Enhance functionality and bug fix.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -74,7 +75,7 @@ $(document).ready(function() {
 #                                       Local Variables
 #===================================================================================================
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.16" ;                                               # Current version number
+$WVER          = "2.17" ;                                               # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
@@ -149,7 +150,7 @@ function display_data($count, $row) {
     echo "<tr>\n";  
     echo "<td class='dt-left'>";
     echo "<a href='" . $URL_HOST_INFO . "?sel=" . $WSYSTEM . "&back=" . $URL_VIEW_SCHED ;
-    echo "' title='$WOS $WVER system ,click to view system info'>";
+    echo "' title='$WOS $WVER system, click to view system info.'>";
     echo $WSYSTEM  ."<br></a>" .$row['srv_desc']. "</td>\n";
 
 # Last O/S Update Date 
@@ -158,6 +159,23 @@ function display_data($count, $row) {
         $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
         list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapse,$cname,$calert,$ctype,$ccode) = explode(" ",$lastline);
         $WLAST_UPDATE = "$cdate1 $ctime1";
+        $now = time(); 
+        $your_date = strtotime(str_replace(".", "-",$cdate1));
+        $datediff  = $now - $your_date;
+        $backup_age = round($datediff / (60 * 60 * 24));
+        if ($backup_age > 30) { 
+            $tooltip = "Last O/S update was done " .$backup_age. " days ago.";
+            echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>";
+            echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
+            echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ;
+            echo "</font></span></td>"; 
+        }else{
+            $tooltip = "Last O/S update was done " .$backup_age. " days ago.";
+            echo "<td align='center'>";
+            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
+            echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ; 
+            echo "</span></td>"; 
+        }
     }else{
         $WLAST_UPDATE = "$cdate1 $ctime1";
         if (substr($row['srv_date_osupdate'],0,16) == "0000-00-00 00:00") {
@@ -165,8 +183,8 @@ function display_data($count, $row) {
         }else{
             $WLAST_UPDATE = substr($row['srv_date_osupdate'],0,16) ;
         }
+        echo $WLAST_UPDATE . "</td>\n";  
     }
-    echo "<td class='dt-center'>" .$WLAST_UPDATE. "</td>\n";  
     
 # Last Update Status
     if (file_exists($rch_name)) {
@@ -176,12 +194,16 @@ function display_data($count, $row) {
     } else {
         $ccode = 9;                                                     # No Log, Backup never ran
     }
-    echo "<td class='dt-center'>";
+    
     switch ( strtoupper($row['srv_update_status']) ) {
-        case 'S'  : echo "Success"  ; break ;
-        case 'F'  : echo "Failed"   ; break ;
-        case 'R'  : echo "Running"  ; break ;
-        default   : echo "None yet" ; break ;
+        case 'S'  : echo "<td class='dt-center'>Success"; 
+                    break ;
+        case 'F'  : echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>Failed</b>"; 
+                    break ;
+        case 'R'  : echo "<td class='dt-center' style='bgcolor='#33ffca'><b>Running</b>"; 
+                    break ;
+        default   : echo "<td class='dt-center'>None yet"; 
+                    break ;
     }
     echo "</td>\n";  
 
@@ -196,13 +218,13 @@ function display_data($count, $row) {
     echo "\n<td class='dt-center'>" . $row['srv_osversion'] . "</td>";
 
 # Next Update Date
-    echo "<td class='dt-center'>";
     if ($row['srv_update_auto']   == True ) { 
+        echo "<td class='dt-center'>";
         list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
             $row['srv_update_dow'], $row['srv_update_hour'], $row['srv_update_minute']);
         echo $UPD_DATE_TIME ;
     }else{
-        echo "<B><I>Manual, no schedule</I></B>";
+        echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><B><I>Manual update</I></B>";
     }
     echo "</td>\n";  
 
@@ -210,22 +232,29 @@ function display_data($count, $row) {
     $ipath = '/images/UpdateButton.png';
     if ($row['srv_update_auto'] == True) {                                  # Is Server Active
         $tooltip = 'Schedule is active, click to edit the schedule.';
-        echo "\n<td style='color: green' class='dt-center'><b>Y&nbsp;&nbsp;";
     } else {                                                              # If not Activate
         $tooltip = 'Schedule is inactive, click to edit the schedule.';
-        echo "\n<td style='color: red' class='dt-center'><b>N&nbsp;&nbsp;";
     }
-    echo "<a href='" . $URL_OSUPDATE ."?sel=". $row['srv_name'] ."&back=". $URL_VIEW_SCHED . "'>";
-    echo "\n<span data-toggle='tooltip' title='" . $tooltip . "'>";
-    echo "\n<button type='button'>Update</button>";             # Display Delete Button
-    echo "</a></span></b><br>";
     if ($row['srv_update_auto']   == True ) { 
+        echo "\n<td class='dt-center'>";
         list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
         $row['srv_update_dow'], $row['srv_update_hour'], $row['srv_update_minute']);
         echo $STR_SCHEDULE ;
     }else{
-        echo "<B><I>Manual, no schedule</I></B>";
+        echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><B><I>Schedule deactivated</I></B>";
     }
+    echo "<br>";
+    if ($row['srv_update_auto'] == True) {                                  # Is Server Active
+        $tooltip = 'Schedule is active, click to edit the schedule.';
+        echo "\nY ";
+    } else {                                                              # If not Activate
+        $tooltip = 'Schedule is inactive, click to edit the schedule.';
+        echo "\n<b><font color='red'>N </font></b>";
+    }
+    echo "<a href='" . $URL_OSUPDATE ."?sel=". $row['srv_name'] ."&back=". $URL_VIEW_SCHED . "'>";
+    echo "\n<span data-toggle='tooltip' title='" . $tooltip . "'>";
+    echo "\n<button type='button'>Update</button>";  
+    echo "</a></span>";
     echo "</td>\n";  
 
 # Display link to view o/s update log file (If exist)
@@ -239,7 +268,6 @@ function display_data($count, $row) {
     }
 
 # Display link to view o/s update error log file (If exist)
-    #echo "<td class='dt-center'>";
     $ELOGFILE = $row['srv_name']  . "_" . $UPDATE_SCRIPT . "_e.log";
     $elog_name = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . trim($ELOGFILE) ;
 #    $elog_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate_e.log";
@@ -297,7 +325,7 @@ function display_data($count, $row) {
     switch ($SELECTION) {
         case 'all_servers'  : 
             $sql = "SELECT * FROM server where srv_active = True and srv_ostype = 'linux' order by srv_name;";
-            $TITLE = "O/S Update Status";
+            $TITLE = "Operating System Update Status";
             break;
         case 'host'         : 
             $sql = "SELECT * FROM sadm.server where srv_name = '". $VALUE . "';";
