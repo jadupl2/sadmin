@@ -111,6 +111,7 @@
 # 2023_02_08 install v3.80 Default smtp mail server is now 'smtp.gmail.com' and hide smtp password.
 #@2023_04_04 install v3.81 Access to sadmin web interface is now done with https instead of http.
 #@2023_04_29 install v3.82 Ensure that 'coreutils' package are installed.
+#@2023_05_19 install v3.83 Making sure isohybrid is installed (Needed to produce Rear bootable USB).
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -127,7 +128,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.82"                                            # Setup Version Number
+sver                = "3.83"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -188,7 +189,7 @@ req_client = {
     'coreutils'  :{ 'rpm':'coreutils',                      'rrepo':'base',  
                     'deb':'coreutils',                      'drepo':'base'},
     'syslinux'   :{ 'rpm':'syslinux',                       'rrepo':'base',  
-                    'deb':'syslinux',                       'drepo':'base'},
+                    'deb':'syslinux-utils',                 'drepo':'base'},
     'genisoimage':{ 'rpm':'genisoimage',                    'rrepo':'base',  
                     'deb':'genisoimage',                    'drepo':'base'},
     'rsync'      :{ 'rpm':'rsync',                          'rrepo':'base',  
