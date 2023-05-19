@@ -218,13 +218,13 @@ rmcd_start()
 
         # If requested (-l), created a server lock file, to prevent generation monitoring error.
         if [ "$LOCK" = "Y" ]                                            # cmdline option lock system
-           then sadm_lock_system "${LOCKNODE}"                      # Create System Lock File
+           then sadm_lock_system "${LOCKNODE}"                          # Create System Lock File
                 if [ $? -ne 0 ]                                         # Unable to Lock Node
                    then ERROR_COUNT=$(($ERROR_COUNT+1))                 # Increment Error Counter
                         sadm_writelog "${SADM_ERROR} Aborting process for '${SERVER}'."
                         return 1                                        # Return Error to caller 
-                   else sadm_write_log "Show lock file" 
-                        ls -l $SADMIN/*.lock
+#                   else sadm_write_log "Show lock file" 
+#                        ls -l $SADMIN/*.lock
                 fi
         fi
         
