@@ -34,15 +34,13 @@
 # 2022_06_10 server v3.5 Update to use the new SADMIN Python Library v2
 # 2022_07_27 server v3.6 Bug fix when ping were reported when it wasn't.
 # 2022_08_17 nolog  v3.7 Remove debug info & update to use the new SADMIN Python Library v2.2
+#@2023_05_19 server v3.8 Correct problem when running at installation time 
 # --------------------------------------------------------------------------------------------------
 #
 try :
-    import os,time,argparse,sys,pdb,socket,datetime,pwd,grp,pymysql,subprocess,ipaddress 
-    from subprocess import Popen, PIPE    
+    import os,time,argparse,sys,pdb,socket,datetime,pwd,grp,pymysql,subprocess,ipaddress,re
+    from subprocess import Popen, PIPE   
     from getmac import get_mac_address                                  # For Getting IP Mac Address
-    SADM = os.environ.get('SADMIN')                                     # Get SADMIN Root Dir. Name
-    sys.path.insert(0,os.path.join(SADM,'lib'))                         # Add SADMIN to sys.path
-    import sadmlib_std as sadm                                          # Import SADMIN Python Libr.
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -58,20 +56,39 @@ netdict = {}                                                            # Networ
 
 
 # --------------------------------------------------------------------------------------------------
-# SADMIN CODE SECTION v2.2
+# SADMIN CODE SECTION v2.3
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # --------------------------------------------------------------------------------------------------
+# Making sure the 'SADMIN' environment variable is defined, abort if it isn't. 
+if (os.getenv("SADMIN",default="X") == "X"):                            # SADMIN Env.Var. Not Define
+    print("\nThe 'SADMIN' environment variable isn't defined.")         # SADMIN Var MUST be defined
+    print("It must specify the directory where you installed the SADMIN Tools.")
+    fenv = "/etc/environment" 
+    if os.path.exists(fenv):                                            
+        with open(fenv,"r") as file:
+            for line in file:
+                if re.search('SADMIN', line):
+                    split_line = line.split('=')
+                    os.environ['SADMIN'] = str(split_line[1]).strip()  
+                    print ("For the moment, I took the location of 'SADMIN' from '%s'.\n" % fenv)   
+                    break
+        if (os.getenv("SADMIN",default="X") == "X"):          
+            print ("Variable 'SADMIN' wasn't even found in '%s', script aborted.\n" % fenv) 
+            sys.exit(1)  
+    else: 
+        print ("File '%s' doesn't exist, script aborted.\n" % fenv)
+        sys.exit(1)    
 try:
-    SADM = os.environ.get('SADMIN')                                     # Get SADMIN Env. Var. Dir.
-    sys.path.insert(0, os.path.join(SADM, 'lib'))                       # Add lib dir to sys.path
-    import sadmlib2_std as sa                                           # Load SADMIN Python Library
-except ImportError as e:                                                # If Error importing SADMIN
-    print("Import error : SADMIN module: %s " % e)                      # Advise User of Error
-    sys.exit(1)                                                         # Go Back to O/S with Error
+    sys.path.insert(0, os.path.join(os.environ.get('SADMIN'), 'lib'))# Add $SADMIN/lib to sys.path
+    import sadmlib2_std as sa                                        # Load SADMIN Python Library
+except ImportError as e:                                             # If Error importing SADMIN
+    print("Import error : SADMIN module: %s " % e)                   # Advise User of Error
+    sys.exit(1)  
+
 
 # Local variables local to this script.
-pver        = "3.7"                                                     # Program version
+pver        = "3.8"                                                     # Program version
 pdesc       = "Produce Web network page that list IP, name and mac usage for subnet you specified."
 phostname   = sa.get_hostname()                                         # Get current `hostname -s`
 pdb_conn    = None                                                      # Database connector
