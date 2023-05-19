@@ -27,12 +27,13 @@
 # ------------------
 # 2022_05_09 lib v1.0 New Python template using V2 of SADMIN python library.
 # 2022_05_25 lib v1.1 Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
+#@2023_05_19 lib v1.2 If SADMIN env. var. isn't define, check /etc/environment to SADMIN directory.
 #
 # --------------------------------------------------------------------------------------------------
 #
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
 try:
-    import os, sys, argparse, time, datetime, socket, platform      # Import Std Python3 Modules
+    import os, sys, argparse, time, datetime, socket, platform, re  # Import Std Python3 Modules
     import pymysql                                                  # Use for MySQL DB
 #   import pdb                                                      # Python Debugger (If needed)
 except ImportError as e:                                            # Trap Import Error
@@ -40,24 +41,45 @@ except ImportError as e:                                            # Trap Impor
     sys.exit(1)                                                     # Back to O/S With Error Code 1
 #pdb.set_trace()                                                    # Activate Python Debugging
 
-
+ 
 
 
 # --------------------------------------------------------------------------------------------------
-# SADMIN CODE SECTION v2.2a
+# SADMIN CODE SECTION v2.3
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your Python code.    
 # --------------------------------------------------------------------------------------------------
+
+# Making sure the 'SADMIN' environment variable is defined, abort if it isn't.
+if (os.getenv("SADMIN",default="X") == "X"):                            # SADMIN Env.Var. Not Define
+    print("\nThe 'SADMIN' environment variable isn't defined.")         # SADMIN Var MUST be defined
+    print("It must specify the SADMIN installation directory.")         # Must define env.var.SADMIN
+    fenv = "/etc/environment"                                           # Alternative to get SADMIN
+    if os.path.exists(fenv):                                            # if environment file exist
+        with open(fenv,"r") as file:                                    # Open /etc/environment
+            for line in file:                                           # Loop to read line by line
+                if re.search('SADMIN', line):                           # If found 'SADMIN'in line
+                    split_line = line.split('=')                        # SPlit line by '=' sign
+                    os.environ['SADMIN'] = str(split_line[1]).strip()   # Get SADMIN Directory
+                    print ("For the moment, I took the location of 'SADMIN' from '%s'.\n" % fenv)   
+                    break                                               # Break out of loop
+        if (os.getenv("SADMIN",default="X") == "X"):                    # Test a last time SADMIN
+            print ("Variable 'SADMIN' wasn't even found in '%s', script aborted.\n" % fenv) 
+            sys.exit(1)                                                 # Back to shell with error
+    else: 
+        print ("File '%s' doesn't exist, script aborted.\n" % fenv)     # File environment not exist
+        sys.exit(1)                                                     # Back to shell with error
+
+# Import SADMIN Library
 try:
-    SADM = os.environ.get('SADMIN')                                  # Get SADMIN Env. Var. Dir.
-    sys.path.insert(0, os.path.join(SADM, 'lib'))                    # Add $SADMIN/lib to sys.path
+    sys.path.insert(0, os.path.join(os.environ.get('SADMIN'),'lib')) # Add $SADMIN/lib to sys.path
     import sadmlib2_std as sa                                        # Load SADMIN Python Library
 except ImportError as e:                                             # If Error importing SADMIN
     print("Import error : SADMIN module: %s " % e)                   # Advise User of Error
-    sys.exit(1)                                                      # Go Back to O/S with Error
+    sys.exit(1)                                                      # Back to shell with error
 
 # Local variables local to this script.
-pver        = "1.1"                                                  # Program version no.
+pver        = "1.2"                                                  # Program version no.
 pdesc       = "Update 'pdesc' variable & put a description of your script."
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
 pdb_conn    = None                                                   # Database connector
@@ -68,7 +90,7 @@ pexit_code  = 0                                                      # Script de
 # Uncomment anyone to change them to influence execution of SADMIN standard library.
 sa.proot_only        = True       # Pgm run by root only ?
 sa.psadm_server_only = True       # Run only on SADMIN server ?
-sa.db_used           = True       # Open/Use Database(True) or Don't Need DB(False)
+sa.db_used           = False       # Open/Use Database(True) or Don't Need DB(False)
 sa.use_rch           = True       # Generate entry in Result Code History (.rch)
 sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
 sa.log_append        = False      # Append Existing Log(True) or Create New One(False)
@@ -76,7 +98,7 @@ sa.log_header        = True       # Show/Generate Header in script log (.log)
 sa.log_footer        = True       # Show/Generate Footer in script log (.log)
 sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
 sa.db_silent         = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
-sa.cmd_ssh_full      = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port) # SSH Cmd to access clients
+sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
 # You can change them to fit your need
