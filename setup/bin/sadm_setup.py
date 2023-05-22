@@ -112,6 +112,7 @@
 #@2023_04_04 install v3.81 Access to sadmin web interface is now done with https instead of http.
 #@2023_04_29 install v3.82 Ensure that 'coreutils' package are installed.
 #@2023_05_19 install v3.83 Making sure isohybrid is installed (Needed to produce Rear bootable USB).
+#@2023_05_20 install v3.84 Add extlinux package to client that is sometime used by ReaR backup.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -128,7 +129,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.83"                                            # Setup Version Number
+sver                = "3.84"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -184,12 +185,14 @@ req_client = {
                     'deb':'nmon',                           'drepo':'base'},
     'ethtool'    :{ 'rpm':'ethtool',                        'rrepo':'base',  
                     'deb':'ethtool',                        'drepo':'base'},
-    'rear'       :{ 'rpm':'rear',                           'rrepo':'base',  
-                    'deb':'rear',                           'drepo':'base'},
+    'rear'       :{ 'rpm':'rear xorriso',                   'rrepo':'base',  
+                    'deb':'rear xorriso',                   'drepo':'base'},
     'coreutils'  :{ 'rpm':'coreutils',                      'rrepo':'base',  
                     'deb':'coreutils',                      'drepo':'base'},
-    'syslinux'   :{ 'rpm':'syslinux',                       'rrepo':'base',  
+    'syslinux'   :{ 'rpm':'syslinux ',                       'rrepo':'base',  
                     'deb':'syslinux-utils',                 'drepo':'base'},
+    'extlinux'   :{ 'rpm':'syslinux-extlinux ',             'rrepo':'base',  
+                    'deb':'extlinux',                       'drepo':'base'},
     'genisoimage':{ 'rpm':'genisoimage',                    'rrepo':'base',  
                     'deb':'genisoimage',                    'drepo':'base'},
     'rsync'      :{ 'rpm':'rsync',                          'rrepo':'base',  
