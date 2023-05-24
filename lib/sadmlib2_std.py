@@ -44,6 +44,10 @@
 #@2023_04_14 lib v4.31 Email account password now encrypted in $SADMIN/cfg/.gmpw64 (base64)
 #@2023_04_14 lib v4.32 Change email password only on SADM server in $SADMIN/cfg/.gmpw password file.
 #@2023_05_02 lib v4.33 Fix when dealing with email password on SADMIN sever.
+#@2023_05_23 lib v4.34 Distribution Name was not shown in header under RedHat (lsb_release removed).
+#@2023_05_24 lib v4.35 New function added "getUmask()", returning current umas.
+#@2023_05_24 lib v4.36 Umask in not shown in the script header output.
+#@2023_05_24 lib v4.37 Fix permission problem with mail password file ($SADMIN/cfg/.gmpw).
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -80,7 +84,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.33"                                # This Library Version
+lib_ver             = "4.37"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -312,6 +316,21 @@ def silentremove(filename : str):
         except OSError as e: 
             pass
     return(0)
+
+
+
+
+def getUmask():
+        
+    """ 
+        Args:
+            No argument needed.
+        Returns:
+            current_umask (int):    Return the current umask.
+    """
+    current_umask = os.umask(0)
+    os.umask(current_umask)
+    return (current_umask )
 
 
 
@@ -564,10 +583,10 @@ def load_config_file(cfg_file):
 
 
 # If old unencrypted email account password file exist and on a SADMIN client remove the file.
-# If old unencrypted email account password file exist and on SADMIN server create an encrypted pwd.
     if os.path.isfile(gmpw_file_txt) and get_fqdn() != sadm_server :
        os.remove(gmpw_file_txt)      
 
+# If old unencrypted email account password file exist and on SADMIN server create an encrypted pwd.
     if os.path.isfile(gmpw_file_txt) and get_fqdn() == sadm_server :
         try: 
             with open(gmpw_file_txt) as f: 
@@ -575,6 +594,7 @@ def load_config_file(cfg_file):
                 byte_pw       = wpwd.encode('ascii')
                 base64_bytes  = base64.b64encode(byte_pw)
                 base64_string = base64_bytes.decode('ascii')
+            os.remove(gmpw_file_b64)      
             fpw = open(gmpw_file_b64,'w')                                          
             fpw.write (base64_string)                                               
             fpw.close()                                                        
@@ -1113,7 +1133,7 @@ def get_kernel_bitmode():
 
 #---------------------------------------------------------------------------------------------------
 def get_osname(): 
-    
+    global cmd_lsb_release 
     """ 
         Return O/S name in uppercase 
 
@@ -1133,14 +1153,14 @@ def get_osname():
         if cmd_lsb_release != "" :
             wcmd = "%s %s" % (cmd_lsb_release," -si")
             ccode, cstdout, cstderr = oscommand(wcmd)
-            osname=cstdout
+            osname=cstdout.upper()
         else:
-            osname=os_dict['ID'].upper()
-            if osname == "REDHATENTERPRISESERVER" : osname="REDHAT"
-            if osname == "RHEL"                   : osname="REDHAT"
-            if osname == "REDHATENTERPRISEAS"     : osname="REDHAT"
-            if osname == "REDHATENTERPRISE"       : osname="REDHAT"
-            if osname == "CENTOSSTREAM"           : osname="CENTOS"
+            osname = os_dict['ID'].upper()
+    if osname == "REDHATENTERPRISESERVER" : osname="REDHAT"
+    if osname == "RHEL"                   : osname="REDHAT"
+    if osname == "REDHATENTERPRISEAS"     : osname="REDHAT"
+    if osname == "REDHATENTERPRISE"       : osname="REDHAT"
+    if osname == "CENTOSSTREAM"           : osname="CENTOS"
     #
     if ostype == "AIX" :
         osname="AIX"
@@ -2134,14 +2154,14 @@ def start(pver,pdesc) :
         write_log (wmess)                                               # Write 1st Header Line
         if (pdesc != "") :                                              # If script Desc. not blank
             write_log ("Desc.: %s" % (pdesc))                           # 2nd line Write Desc to Log
-        wmess = "%s - User: %s - " % (get_fqdn(),pusername)             # 3th line part 1 
-        wmess += "Arch: %s - SADMIN: %s" % (get_arch(),dir_base)        # 3th line part 2
+        wmess = "%s - User: %s - Umask: %04d - " % (get_fqdn(),pusername,getUmask()) # 3th line part 1 
+        wmess += "Arch: %s " % (get_arch())        # 3th line part 2
         write_log (wmess)                                               # Write 3th Line to log
-        wmess  = "%s " % (get_osname().upper())                         # 4th Line O/S Distr. Name
+        wmess  = "%s " % (get_osname().capitalize())                    # 4th Line O/S Distr. Name
         wmess += "(%s) " % (get_oscodename().capitalize())              # 4th Line O/S Code Name 
         wmess += "%s " % (get_ostype().capitalize())                    # 4th Line O/S Type Linux/Aix
         wmess += "release %s " % (get_osversion())                      # 4th Line O/S Version
-        wmess += "- Kernel %s" % (get_kernel_version())                 # 4th Line Kernel Version
+        wmess += "- Kernel %s - SADMIN: %s" % (get_kernel_version(),dir_base) # 4th Line Kernel
         write_log (wmess)                                               # Write 4th Line to Log
         write_log ('='*50)                                              # 50 '=' Lines
         write_log (" ")                                                 # Space Line in the LOG
@@ -2521,3 +2541,4 @@ load_cmd_path()                                                         # Load C
 dict_alert = load_alert_file()                                          # Load Alert group in dict
 if (lib_debug > 0) : 
     print_dict_alert()                                                  # Print Alert Group Dict
+print (get_osname())
