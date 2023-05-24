@@ -57,6 +57,7 @@
 # 2022_08_17 server v4.8 Update SADMIN section 2.2 and use error log when problem encountered.
 # 2022_09_23 server v4.9 Use SSH port specify per server & update SADMIN section to v1.52.
 #@2023_04_29 server v4.10 Increase speed of files copy from clients to SADMIN server.
+#@2023_05_24 server v4.11 Remove repeating error count in the error log.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -88,7 +89,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.10'                                      # Script version number
+export SADM_VER='4.11'                                      # Script version number
 export SADM_PDESC="Collect hardware/software/performance info data from all active servers"
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -128,12 +129,16 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-HW_DIR="$SADM_DAT_DIR/hw"	                     ; export HW_DIR        # Hardware Data collected
-ERROR_COUNT=0                                    ; export ERROR_COUNT   # Global Error Counter
-TOTAL_AIX=0                                      ; export TOTAL_AIX     # Nb Error in Aix Function
-TOTAL_LINUX=0                                    ; export TOTAL_LINUX   # Nb Error in Linux Function
-SADM_STAR=`printf %80s |tr " " "*"`              ; export SADM_STAR     # 80 * line
-DEBUG_LEVEL=0                                    ; export DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
+export HW_DIR="$SADM_DAT_DIR/hw"	                                    # Hardware Data collected
+export ERROR_COUNT=0                                                    # Global Error Counter
+export TOTAL_AIX=0                                                      # Nb Error in Aix Function
+export TOTAL_LINUX=0                                                    # Nb Error in Linux Function
+export SADM_STAR=`printf %80s |tr " " "*"`                              # 80 * line
+export DEBUG_LEVEL=0                                                    # 0=NoDebug Higher=+Verbose
+export ETCENV="/etc/environment"                                
+
+
+
 
 # --------------------------------------------------------------------------------------------------
 # Show Script command line options
@@ -212,18 +217,18 @@ process_servers()
 
         # TEST SSH TO SERVER (IF NOT ON SADMIN SERVER)
         if [ "${server_name}" != "$SADM_HOSTNAME" ]                     # If not on SADMIN Server 
-            then $SADM_SSH -qnp $server_ssh_port $fqdn_server date > /dev/null 2>&1       # Try SSH to Server for date
+            then $SADM_SSH -qnp $server_ssh_port $fqdn_server date > /dev/null 2>&1  # Try SSH date
                  RC=$?                                                  # Save Error Number
             else RC=0                                                   # RC=0 no SSH on SADMIN Srv
         fi 
 
-        if [ $RC -ne 0 ]                                                # If SSH didn't worked
+        if [ $RC -ne 0 ]                                                # If SSH failed
            then if [ "$server_sporadic" = "1" ]                         # If Error on Sporadic Host
                    then sadm_write_err "[ WARNING ]  Can't SSH to ${fqdn_server} (Sporadic System)."
                         sadm_write_err "Continuing with next system"    # Not Error if Sporadic Srv. 
                         continue
                 fi 
-                if [ "$server_monitor" = "0" ]                 # If Error & Monitor is OFF
+                if [ "$server_monitor" = "0" ]                          # If Error & Monitor is OFF
                    then sadm_write_err "[ WARNING ] Can't SSH to ${fqdn_server} (Monitoring is OFF)."
                         sadm_write_err "Continuing with next system"    # Not Error Monitoring Off
                         continue
@@ -245,14 +250,14 @@ process_servers()
         # Get the remote /etc/environment file to determine where SADMIN is install on remote
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}"
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then scp -CqP $server_ssh_port ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
-            else cp /etc/environment ${WDIR} >/dev/null 2>&1  
+            then scp -CqP $server_ssh_port ${server_name}:${ETCENV} ${WDIR} >/dev/null 2>&1  
+            else cp $ETCENV ${WDIR} >/dev/null 2>&1  
         fi
         if [ $? -eq 0 ]                                                 # If file was transferred
             then RDIR=`grep "SADMIN=" $WDIR/environment |sed 's/export //g' |awk -F= '{print $2}'|tail -1`
                  if [ "$RDIR" != "" ]                                   # No Remote Dir. Set
                     then sadm_writelog "SADMIN installed in ${RDIR} on ${server_name}."
-                    else sadm_write_err "$SADM_WARNING Couldn't get /etc/environment."
+                    else sadm_write_err "$SADM_WARNING Couldn't get $ETCENV."
                          if [ "$server_sporadic" = "1" ]                # SSH don't work & Sporadic
                             then sadm_write_log "${server_name} is a sporadic system."
                             else ERROR_COUNT=$(($ERROR_COUNT+1))        # Add 1 to Error Count
@@ -261,7 +266,7 @@ process_servers()
                          sadm_write_err "Continuing with next system."  # Advise we are skipping srv
                          continue                                       # Go process next system
                  fi 
-            else sadm_write_err "$SADM_ERROR Couldn't get /etc/environment on ${server_name}."
+            else sadm_write_err "$SADM_ERROR Couldn't get $ETCENV on ${server_name}."
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Add 1 to Error Count
                  sadm_write_err "Error Count is now at $ERROR_COUNT "
                  sadm_write_err "Continuing with next system."          # Advise we are skipping srv
@@ -317,7 +322,7 @@ process_servers()
                  ERROR_COUNT=$(($ERROR_COUNT+1))
             else sadm_write_log "${SADM_OK} ${rcmd}" 
         fi
-        if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write_err "Error Count is now at $ERROR_COUNT" ;fi
+        #if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write_err "Error Count is now at $ERROR_COUNT" ;fi
 
         done < $SADM_TMP_FILE1
 
