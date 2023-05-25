@@ -88,9 +88,9 @@ pdebug      = 0                                                      # Debug lev
 pexit_code  = 0                                                      # Script default exit code
 
 # Uncomment anyone to change them to influence execution of SADMIN standard library.
-sa.proot_only        = True       # Pgm run by root only ?
-sa.psadm_server_only = True       # Run only on SADMIN server ?
-sa.db_used           = False       # Open/Use Database(True) or Don't Need DB(False)
+sa.proot_only        = False      # Pgm run by root only ?
+sa.psadm_server_only = False      # Run only on SADMIN server ?
+sa.db_used           = False      # Open/Use Database(True) or Don't Need DB(False)
 sa.use_rch           = True       # Generate entry in Result Code History (.rch)
 sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
 sa.log_append        = False      # Append Existing Log(True) or Create New One(False)

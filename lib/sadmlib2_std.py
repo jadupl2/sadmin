@@ -2536,4 +2536,3 @@ load_cmd_path()                                                         # Load C
 dict_alert = load_alert_file()                                          # Load Alert group in dict
 if (lib_debug > 0) : 
     print_dict_alert()                                                  # Print Alert Group Dict
-print (get_osname())
