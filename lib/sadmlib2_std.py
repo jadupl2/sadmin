@@ -48,6 +48,7 @@
 #@2023_05_24 lib v4.35 New function added "getUmask()", returning current umas.
 #@2023_05_24 lib v4.36 Umask in not shown in the script header output.
 #@2023_05_24 lib v4.37 Fix permission problem with mail password file ($SADMIN/cfg/.gmpw).
+#@2023_05_25 lib v4.38 Improve function 'locate_command()' & fix intermittent problem.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -84,7 +85,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.37"                                # This Library Version
+lib_ver             = "4.38"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -193,6 +194,10 @@ if platform.system().upper() != "DARWIN":                   # If not on MAc
            if line[0].strip == "#" : continue               # Skip line beginning with #
            k,v = line.rstrip().split("=")                   # Get Key,Value of each line
            os_dict[k] = v.strip('"')                        # Store info in Dictionary
+    if lib_debug: 
+        for key, value in os_dict.items() :
+            print("%-40s : %s" % ("os_dict['"+str(key)+"']",str(value)))
+
 
 # O/S Path to various commands used by SADM Tools
 cmd_which           = "/usr/bin/which"                     # which Path - Required
@@ -320,6 +325,7 @@ def silentremove(filename : str):
 
 
 
+# --------------------------------------------------------------------------------------------------
 def getUmask():
         
     """ 
@@ -1133,7 +1139,7 @@ def get_kernel_bitmode():
 
 #---------------------------------------------------------------------------------------------------
 def get_osname(): 
-    global cmd_lsb_release 
+
     """ 
         Return O/S name in uppercase 
 
@@ -1494,20 +1500,9 @@ def locate_command(cmd) :
             cmd_path (str)  :   Full path of the command or "" if not found.
     """
 
-    cmd_path=""                                                     # Cmd Path Null when Not fnd
-    ostype=get_ostype()                                             # AIX, WINDOWS,LINUX or DARWIN
-    if ostype == "WINDOWS": return(cmd_path)                        # Function not use in Windows
-
-    if cmd == "lsb_release" : 
-        ccode,cstdout,cstderr = oscommand("%s %s" % (cmd_locate,cmd))   # Try to Locate Command
-        #print ("cstdout = %s - ccode = %d" % (cstdout,ccode))
-        if ccode == 0 : 
-            cmd_path = cstdout                              # Save command Path when found
-            return(cmd_path)                                                   
-
-    ccode,cstdout,cstderr = oscommand("%s %s" % (cmd_which,cmd))    # Try to Locate Command
-    if ccode == 0 : 
-        cmd_path = cstdout                              # Save command Path when found
+    cmd_path = shutil.which(cmd)
+    if cmd_path == None : 
+        cmd_path='' 
     return(cmd_path)                                                   
 
 
@@ -2035,7 +2030,7 @@ def start(pver,pdesc) :
     uid = pwd.getpwnam(sadm_user).pw_uid                                # Get UID User in sadmin.cfg
     gid = grp.getgrnam(sadm_group).gr_gid                               # Get GID User in sadmin.cfg
 
-    # Open the SCRIPT LOG file.
+    # Open LOG file.
     try:                                                                # Try to Open/Create Log
         if not os.path.exists(dir_log)  : os.mkdir(dir_log,2775)        # Create SADM Log Dir
         if (log_append):                                                # User Want to Append to Log
@@ -2056,7 +2051,7 @@ def start(pver,pdesc) :
         os.chown(log_file,uid,gid)                                      # Set Owner of log file
         os.chmod(log_file,0o664)                                        # Chg log file Perm.
 
-    # Open the script ERROR LOG file. 
+    # Open script ERROR log file. 
     try: 
         if (log_append):                                                # User Want to Append to Log
             err_file_fh=open(err_file,'a')                              # Open ErrLog append  mode
@@ -2176,7 +2171,7 @@ def start(pver,pdesc) :
 
     # If this script can only be run on the SADMIN server
     if psadm_server_only and get_fqdn() != sadm_server :                # Only run on SADMIN
-        print("This script can only be run on SADMIN server (%s)" % (sa.sadm_server))
+        print("This script can only be run on SADMIN server (%s)" % (sadm_server))
         print("Process aborted")                                        # Abort advise message
         stop(1)                                                         # Close SADMIN 
         sys.exit(1)                                                     # Back to O/S 
