@@ -200,6 +200,7 @@
 #@2023_04_13 lib v4.21 Load new variable 'SADM_BACKUP_INTERVAL' from sadmin.cfg use on backup page.
 #@2023_04_14 lib v4.22 Email account password now encrypted in $SADMIN/cfg/.gmpw64 (base64).
 #@2023_04_14 lib v4.23 Change email pwd ($SADMIN/cfg/.gmpw) on SADM server to generate new .gmpw64.
+#@2023_05_24 lib v4.24 Umask in not shown in the script header output.
 #===================================================================================================
 
 
@@ -213,7 +214,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.23"                                              # This Library Version
+export SADM_LIB_VER="4.24"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -2134,9 +2135,10 @@ sadm_start() {
              if [ "$SADM_PDESC" ]                                       # If Script Desc. Not empty
                 then sadm_write_log "Desc: $SADM_PDESC"                 # Include it in log Header
              fi
-             sadm_write_log "Host: $(sadm_get_fqdn) - User: $SADM_USERNAME - Arch: $(sadm_server_arch) - SADMIN: $SADMIN"
+             sadm_write_log "$(sadm_get_fqdn) - User: $SADM_USERNAME - Umask : $(umask) - Arch: $(sadm_server_arch)"
              hline3="$(sadm_capitalize $(sadm_get_osname)) $(sadm_capitalize $(sadm_get_ostype))"
-             hline3="${hline3} release $(sadm_get_osversion) - Kernel $(sadm_get_kernel_version)"
+             hline3="${hline3} v$(sadm_get_osversion) - Kernel $(sadm_get_kernel_version)"
+             hline3="${hline3} - SADMIN: $SADMIN"
              sadm_write_log "$hline3"
              sadm_write_log "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
              sadm_write_log " "                                          # White space line
