@@ -49,6 +49,8 @@
 #@2023_05_24 lib v4.36 Umask in not shown in the script header output.
 #@2023_05_24 lib v4.37 Fix permission problem with mail password file ($SADMIN/cfg/.gmpw).
 #@2023_05_25 lib v4.38 Improve function 'locate_command()' & fix intermittent problem.
+#@2023_05_25 lib v4.39 Header now include for kernel version number.
+
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -85,7 +87,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.38"                                # This Library Version
+lib_ver             = "4.39"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -1196,7 +1198,8 @@ def get_kernel_version():
     ostype=get_ostype()                                             # Return WINDOWS,LINUX,DARWIN
     cstdout = "unknown"
     if ostype == "LINUX" :                                    # Under Linux
-        ccode, cstdout, cstderr = oscommand("uname -r | cut -d. -f1-3")
+#        ccode, cstdout, cstderr = oscommand("uname -r | cut -d. -f1-3")
+        ccode, cstdout, cstderr = oscommand("uname -r")
     if ostype == "AIX" :                                      # Under AIX
         ccode, cstdout, cstderr = oscommand("uname -r")
     if ostype == "DARWIN" :                                   # Under MacOS
@@ -2152,10 +2155,10 @@ def start(pver,pdesc) :
         wmess = "%s - User: %s - Umask: %04d - " % (get_fqdn(),pusername,getUmask()) # 3th line part 1 
         wmess += "Arch: %s " % (get_arch())        # 3th line part 2
         write_log (wmess)                                               # Write 3th Line to log
-        wmess  = "%s " % (get_osname().capitalize())                    # 4th Line O/S Distr. Name
-        wmess += "(%s) " % (get_oscodename().capitalize())              # 4th Line O/S Code Name 
-        wmess += "%s " % (get_ostype().capitalize())                    # 4th Line O/S Type Linux/Aix
-        wmess += "release %s " % (get_osversion())                      # 4th Line O/S Version
+        wmess  = "%s "  % (get_osname().capitalize())                   # 4th Line O/S Distr. Name
+        #wmess += "%s "  % (get_oscodename().capitalize())               # 4th Line O/S Code Name 
+        wmess += "%s "  % (get_ostype().capitalize())                   # 4th Line O/S Type Linux/Aix
+        wmess += "v%s " % (get_osversion())                             # 4th Line O/S Version
         wmess += "- Kernel %s - SADMIN: %s" % (get_kernel_version(),dir_base) # 4th Line Kernel
         write_log (wmess)                                               # Write 4th Line to Log
         write_log ('='*50)                                              # 50 '=' Lines
