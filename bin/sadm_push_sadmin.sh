@@ -58,6 +58,7 @@
 #@2023_04_12 server v2.39 Add '-c' option to push 'sadmin.client.cfg' to 'sadmin.cfg' on all clients.
 #@2023_04_17 server v2.40 Push encrypted email password file ($SADMIN/cfg/.gmpw64) to all clients.
 #@2023_04_29 server v2.41 Increase speed of files copy from clients to SADMIN server.
+#@2023_05_26 server v2.42 If /etc/environment is not present on client, proceed with the next one.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -89,7 +90,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.41'                                     # Script Version
+export SADM_VER='2.42'                                     # Script Version
 export SADM_PDESC="Copy SADMIN version to all actives clients, without overwriting config files)."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -289,16 +290,18 @@ process_servers()
         fi
         if [ $? -eq 0 ]                                                 # If file was transferred
             then server_dir=`grep "SADMIN=" $WDIR/environment |awk -F= '{print $2}'` # Set Remote Dir.
-                 if [ "$server_dir" != "" ]                                   # No Remote Dir. Set
+                 if [ "$server_dir" != "" ]                             # No Remote Dir. Set
                     then sadm_writelog "[ OK ] SADMIN is install in ${server_dir}."
                     else sadm_writelog "[ ERROR ] Couldn't get /etc/environment."
                          ERROR_COUNT=$(($ERROR_COUNT+1))
+                         sadm_writelog "Continue with next server."
                          continue
                  fi 
             else sadm_writelog "[ ERROR ] - Couldn't get /etc/environment on ${server_name}"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
                  #server_dir="/opt/sadmin" 
                  sadm_writelog "Continue with next server."
+                 continue
         fi
 
 
