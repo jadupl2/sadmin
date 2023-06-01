@@ -282,8 +282,8 @@ process_servers()
         sadm_writelog "[ OK ] SSH to $server_fqdn"                      # Good SSH Work
 
 # Get the remote /etc/environment file to determine where SADMIN is install on remote system
-        WDIR="${SADM_WWW_DAT_DIR}/${server_name}"                       # Server Dir. on SADM Server
-        if [ ! -d $WDIR ] ; then mkdir $WDIR ; chmod 775 $WDIR ; fi     # Create Dir. if don't exist 
+        WDIR="${SADM_WWW_DAT_DIR}/${server_name}"                       # Local Dir. on SADM Server
+        if [ ! -d $WDIR ] ; then mkdir $WDIR ; chmod 775 $WDIR ; fi     # Local Dir. if don't exist 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
             then scp -CqP ${server_ssh_port} ${server_name}:/etc/environment ${WDIR} >/dev/null 2>&1  
             else cp /etc/environment ${WDIR} >/dev/null 2>&1  
@@ -292,15 +292,16 @@ process_servers()
             then server_dir=`grep "SADMIN=" $WDIR/environment |awk -F= '{print $2}'` # Set Remote Dir.
                  if [ "$server_dir" != "" ]                             # No Remote Dir. Set
                     then sadm_writelog "[ OK ] SADMIN is install in ${server_dir}."
-                    else sadm_writelog "[ ERROR ] Couldn't get /etc/environment."
+                    else sadm_write_err "[ ERROR ] Couldn't get /etc/environment."
                          ERROR_COUNT=$(($ERROR_COUNT+1))
-                         sadm_writelog "Continue with next server."
+                         sadm_write_err "Continue with next server."
                          continue
                  fi 
-            else sadm_writelog "[ ERROR ] - Couldn't get /etc/environment on ${server_name}"
+            else sadm_write_err "scp -CqP ${server_ssh_port} ${server_name}:/etc/environment ${WDIR}"
+                 sadm_write_err "[ ERROR ] - Couldn't get /etc/environment on ${server_name}"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
                  #server_dir="/opt/sadmin" 
-                 sadm_writelog "Continue with next server."
+                 sadm_write_err "Continue with next server."
                  continue
         fi
 
@@ -316,9 +317,9 @@ process_servers()
           RC=$? 
           if [ $RC -ne 0 ]
              then if [ $RC -eq 23 ] 
-                     then sadm_writelog "[ WARNING ] Error code 23 denotes a partial transfer ..." 
+                     then sadm_write_log "[ WARNING ] Error code 23 denotes a partial transfer ..." 
                           WARNING_COUNT=$(($WARNING_COUNT+1))           # Increase Warning Counter
-                     else sadm_writelog "[ ERROR ] ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
+                     else sadm_write_err "[ ERROR ] ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
                           ERROR_COUNT=$(($ERROR_COUNT+1))               # Increase Error Counter
                   fi 
              else sadm_writelog "[ OK ] rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
