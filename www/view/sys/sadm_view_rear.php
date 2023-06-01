@@ -172,7 +172,7 @@ function display_data($count, $row) {
         $backup_age = round($datediff / (60 * 60 * 24));
         if ($backup_age > SADM_REAR_BACKUP_INTERVAL) { 
             $tooltip = "Backup is " .$backup_age. " days old, greater than the threshold of " .SADM_REAR_BACKUP_INTERVAL. " days.";
-            echo "<td class='dt-center'><font color='red'><b>";
+            echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>";
             echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
             echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ;
             echo "</span>"; 
@@ -222,19 +222,19 @@ function display_data($count, $row) {
             break;
         case 1:
             $tooltip = 'ReaR backup terminated with error.';
-            echo "\n<td class='dt-center' <font color='red'><b>";
+            echo "\n<td class='dt-center'  style='color:red' bgcolor='#DAF7A6'><b>";
             echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
             echo "Failed</span></b>\n";
             break;
         case 2:
             $tooltip = 'ReaR backup is actually running.';
-            echo "\n<td style='color: green' class='dt-center'>";
+            echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'>";
             echo "<span data-toggle='tooltip'  title='" . $tooltip . "'>";
             echo "Running</span>";
             break;
         default:
             $tooltip = "Unknown status - code: " . $ccode;
-            echo "\n<td class='dt-center'>";
+            echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'>";
             echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
             echo "Unknown</span>";
             break;
@@ -245,12 +245,10 @@ function display_data($count, $row) {
     $ipath = '/images/UpdateButton.png';
     if ($row['srv_img_backup'] == TRUE) {                                  # Is Server Active
         $tooltip = 'Schedule is active, click to edit backup configuration.';
-        #echo "\n<td style='color: green' class='dt-center'><b>&radic;";
         echo "\n<td style='color: green' class='dt-center'><b>Y ";
     } else {                                                              # If not Activate
         $tooltip = 'Schedule is inactive, click to edit backup configuration.';
-        #echo "\n<td style='color: red' class='dt-center'><b>&Chi; ";
-        echo "\n<td style='color: red' class='dt-center'><b>N ";
+        echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>N ";
     }
     echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'>";
     echo "\n<span data-toggle='tooltip' title='" . $tooltip . "'>";
@@ -320,7 +318,7 @@ function display_data($count, $row) {
 
 # Show Backup Size
     if (($num_backup_size == 0 || $num_previous_size == 0) && (SADM_REAR_BACKUP_DIF != 0)) {
-            echo "<td align='center'><font color='red'><b>" . $backup_size . "</b></td>\n";  
+            echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" . $backup_size . "</b></td>\n";  
     }else{
         #echo "PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100";
         $PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100;
@@ -328,10 +326,10 @@ function display_data($count, $row) {
             echo "<td align='center'>" . $backup_size . "</td>\n"; 
         }else{
             if (number_format($PCT,0) >= SADM_REAR_BACKUP_DIF) {
-                echo "<td align='center'><font color='red'><b>" . $backup_size . "&nbsp;(+" .number_format($PCT,1). "%)</b></td>\n"; 
+                echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" . $backup_size . "&nbsp;(+" .number_format($PCT,1). "%)</b></td>\n"; 
             }else{
                 if (number_format($PCT,0) <= (SADM_REAR_BACKUP_DIF * -1)) {
-                    echo "<td align='center'><font color='red'><b>" . $backup_size . "&nbsp;("  .number_format($PCT,1). "%)</b></td>\n";
+                    echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" . $backup_size . "&nbsp;("  .number_format($PCT,1). "%)</b></td>\n";
                 }else{
                     if ($PCT < 0) {
                         echo "<td align='center'>" . $backup_size . "&nbsp;("  .number_format($PCT,1). "%)</td>\n"; 
@@ -345,7 +343,7 @@ function display_data($count, $row) {
 
 # Show Previous Backup Size
     if (($num_backup_size == 0 || $num_previous_size == 0) && (SADM_REAR_BACKUP_DIF != 0)) {
-        echo "<td align='center'><font color='red'><b>" . $previous_size . "</b></td>\n";  
+        echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" . $previous_size . "</b></td>\n";  
     }else{
         echo "<td align='center'>" . $previous_size . "</td>\n";
     }

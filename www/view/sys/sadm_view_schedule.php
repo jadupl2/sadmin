@@ -201,9 +201,9 @@ function display_data($count, $row) {
                     break ;
         case 'F'  : echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>Failed</b>"; 
                     break ;
-        case 'R'  : echo "<td class='dt-center' style='bgcolor='#33ffca'><b>Running</b>"; 
+        case 'R'  : echo "<td class='dt-center' style='bgcolor='#DAF7A6'><b>Running</b>"; 
                     break ;
-        default   : echo "<td class='dt-center'>None yet"; 
+        default   : echo "<td class='dt-center' style='bgcolor='#DAF7A6'>None yet"; 
                     break ;
     }
     echo "</td>\n";  
