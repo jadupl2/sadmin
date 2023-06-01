@@ -87,7 +87,7 @@ function table_heading_and_footer() {
 
 # Table creation
     #echo "<div id='SimpleTable'>"; 
-    echo '<table id="sadmTable" class="display compact stripe" width="90%">';   
+    echo '<table id="sadmTable" class="display compact stripe" width="100%">';   
 
 # Table Heading
     echo "<thead>\n";
@@ -144,9 +144,9 @@ function display_data($count, $row) {
     $rch_name = SADM_WWW_DAT_DIR  ."/".  $row['srv_name'] ."/rch/". $row['srv_name'] ."_". $OSUPDATE_RCH;
     $WOS            = $row['srv_osname'];                               # O/S Name
     $WVER           = $row['srv_osversion'];                            # O/S Version Number
+    $OSUPDATE_DAYS  = 45 ;                                              # Max Days without osupdate
     
-    
-# Server Name
+# System Name
     echo "<tr>\n";  
     echo "<td class='dt-left'>";
     echo "<a href='" . $URL_HOST_INFO . "?sel=" . $WSYSTEM . "&back=" . $URL_VIEW_SCHED ;
@@ -162,21 +162,22 @@ function display_data($count, $row) {
         $now = time(); 
         $your_date = strtotime(str_replace(".", "-",$cdate1));
         $datediff  = $now - $your_date;
-        $backup_age = round($datediff / (60 * 60 * 24));
-        if ($backup_age > 30) { 
-            $tooltip = "Last O/S update was done " .$backup_age. " days ago.";
+        $osupdate_age = round($datediff / (60 * 60 * 24));
+        if ($osupdate_age > $OSUPDATE_DAYS) { 
+            $tooltip = "Last O/S update was done " .$osupdate_age. " days ago, threshold at " .$OSUPDATE_DAYS. " days.";
             echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>";
             echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
             echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ;
             echo "</font></span></td>"; 
         }else{
-            $tooltip = "Last O/S update was done " .$backup_age. " days ago.";
+            $tooltip = "Last O/S update was done " .$osupdate_age. " days ago, threshold at " .$OSUPDATE_DAYS. " days.";
             echo "<td align='center'>";
             echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
             echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ; 
             echo "</span></td>"; 
         }
     }else{
+        echo "<td align='center'>";
         $WLAST_UPDATE = "$cdate1 $ctime1";
         if (substr($row['srv_date_osupdate'],0,16) == "0000-00-00 00:00") {
             $WLAST_UPDATE = "None Yet";  
