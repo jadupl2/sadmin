@@ -49,34 +49,19 @@ except ImportError as e:                                            # Trap Impor
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your Python code.    
 # --------------------------------------------------------------------------------------------------
-
-# Making sure the 'SADMIN' environment variable is defined, abort if it isn't.
-if (os.getenv("SADMIN",default="X") == "X"):                            # SADMIN Env.Var. Not Define
-    print("\nThe 'SADMIN' environment variable isn't defined.")         # SADMIN Var MUST be defined
-    print("It must specify the SADMIN installation directory.")         # Must define env.var.SADMIN
-    fenv = "/etc/environment"                                           # Alternative to get SADMIN
-    if os.path.exists(fenv):                                            # if environment file exist
-        with open(fenv,"r") as file:                                    # Open /etc/environment
-            for line in file:                                           # Loop to read line by line
-                if re.search('SADMIN', line):                           # If found 'SADMIN'in line
-                    split_line = line.split('=')                        # SPlit line by '=' sign
-                    os.environ['SADMIN'] = str(split_line[1]).strip()   # Get SADMIN Directory
-                    print ("For the moment, I took the location of 'SADMIN' from '%s'.\n" % fenv)   
-                    break                                               # Break out of loop
-        if (os.getenv("SADMIN",default="X") == "X"):                    # Test a last time SADMIN
-            print ("Variable 'SADMIN' wasn't even found in '%s', script aborted.\n" % fenv) 
-            sys.exit(1)                                                 # Back to shell with error
-    else: 
-        print ("File '%s' doesn't exist, script aborted.\n" % fenv)     # File environment not exist
-        sys.exit(1)                                                     # Back to shell with error
-
-# Import SADMIN Library
 try:
-    sys.path.insert(0, os.path.join(os.environ.get('SADMIN'),'lib')) # Add $SADMIN/lib to sys.path
+    SADM = os.environ['SADMIN']                                      # Get SADMIN Env. Var. Dir.
+except KeyError as e:                                                # If SADMIN is not define
+    print("Please make sure 'SADMIN' environment variable is define.\n%s\n" % e)                           
+    sys.exit(1)                                                      # Go Back to O/S with Error
+
+try: 
+    sys.path.insert(0, os.path.join(SADM, 'lib'))                    # Add lib dir to sys.path
     import sadmlib2_std as sa                                        # Load SADMIN Python Library
 except ImportError as e:                                             # If Error importing SADMIN
     print("Import error : SADMIN module: %s " % e)                   # Advise User of Error
-    sys.exit(1)                                                      # Back to shell with error
+    print("Please make sure the 'SADMIN' environment variable is defined.")
+    sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
 pver        = "1.2"                                                  # Program version no.
