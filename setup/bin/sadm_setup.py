@@ -113,6 +113,9 @@
 #@2023_04_29 install v3.82 Ensure that 'coreutils' package are installed.
 #@2023_05_19 install v3.83 Making sure isohybrid is installed (Needed to produce Rear bootable USB).
 #@2023_05_20 install v3.84 Add extlinux package to client that is sometime used by ReaR backup.
+#@2023_06_03 install v3.85 Fix intermittent problem when validating the FQDN of the SADMIN server.
+#@2023_06_03 install v3.86 Daily email report is now depreciated, the web interface have more info.
+#
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -129,7 +132,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.84"                                            # Setup Version Number
+sver                = "3.86`"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -325,6 +328,7 @@ def open_logfile(sroot):
     return (fhlog,logfile)                                              # Return File Handle
 
 
+
 #===================================================================================================
 #                           Write Log to Log File, Screen or Both
 #===================================================================================================
@@ -340,6 +344,8 @@ def writelog(sline,stype="normal"):
         print (sline,end='') 
     if (stype == "bold") : 
         print ( color.DARKCYAN + color.BOLD + sline + color.END)
+
+
 
 
 #===================================================================================================
@@ -576,17 +582,19 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("# Early morning daily run, Collect Perf data - Update Database, Housekeeping\n")
     hcron.write ("08 05 * * * %s %s\n" % (wuser,cscript))
     #
-    cscript="sudo ${SADMIN}/bin/sadm_daily_report.sh >/dev/null 2>&1"
-    hcron.write ("#\n")
-    hcron.write ("# Daily SADMIN Report by Email\n")
-    hcron.write ("07 07 * * * %s %s\n" % (wuser,cscript))    
-    hcron.write ("#\n")
+    # Report email is now depreciated.
+    #cscript="sudo ${SADMIN}/bin/sadm_daily_report.sh >/dev/null 2>&1"
+    #hcron.write ("#\n")
+    #hcron.write ("# Daily SADMIN Report by Email\n")
+    #hcron.write ("07 07 * * * %s %s\n" % (wuser,cscript))    
+    #hcron.write ("#\n")
     #
     cscript="sudo ${SADMIN}/bin/sadm_push_sadmin.sh >/dev/null 2>&1"
     hcron.write ("#\n")
-    hcron.write ("# Daily push of /opt/sadmin/(lib,bin,cfg/.*) to all active servers (Optional)\n")
-    hcron.write ("#   -s To include push of /opt/sadmin/sys\n")
-    hcron.write ("#   -u To include push of /opt/sadmin/(usr/bin usr/lib usr/cfg)\n")
+    hcron.write ("# Daily default push of \$SADMIN/(lib,bin,cfg/.*) to all active servers.\n")
+    hcron.write ("#   -c to push \$SADMIN/cfg/sadmin_client.cfg to active sadmin clients.\n")
+    hcron.write ("#   -s to push \$SADMIN/sys to active sadmin clients.\n")
+    hcron.write ("#   -u to push \$SADMIN/(usr/bin usr/lib usr/cfg) to active sadmin clients.\n")
     hcron.write ("#10 13,21 * * * %s %s\n" % (wuser,cscript))
     hcron.write ("#\n")
     #
@@ -2213,16 +2221,23 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     while True:                                                         # Accept until valid server
         wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt)# Accept SADMIN Server Name
         writelog ("Validating server name ...")                         # Advise User Validating
-        ccode,SADM_IP,cstderr = oscommand("host %s |awk '{ print $4 }' |head -1" % (wcfg_server))
-        #writelog ("wcfg_server = %s SADM_IP = %s ccode = %s cstderr = %s" % (wcfg_server,SADM_IP,ccode,cstderr))
+        try : 
+            SADM_IP = socket.gethostnyname(wcfg_server)
+        except (socket.gaierror) as error :                             # If Can't - domain invalid
+            writelog ("  ")
+            writelog ("[ ERROR ] The SADMIN server name '%s' isn't valid." % (wcfg_server,'bold') # Advise Usr
+            writelog ("The SADMIN server name '%s' can't be resolve." % (wcfg_server))
+            writelog ("SADMIN clients will not be able to get to the SADMIN Server.")
+            writelog ("As a temporary measure, you can add '%s' to the /etc/hosts file." % (wcfg_server))
+            continue   
         digit1=SADM_IP.split('.')[0]                                    # 1st Digit=127 = Invalid
         if ((digit1 == "127") or (SADM_IP.count(".") != 3)):            # If Resolve to loopback IP
             writelog ("  ")
             writelog ("SADM_IP.count %s" % (SADM_IP.count(".")))
-            writelog ("*** ERROR ***")
-            writelog ("SADMIN server name '%s' can't be resolve." %(wcfg_server))
-            writelog ("SADMIN clients would not be able to get to the SADMIN Server.")
-            writelog ("SADMIN Server name must resolve to an IP other than in 127.0.0.0/24 subnet.")
+            writelog ("[ ERROR ] SADMIN server name '%s' can't be resolve." % (wcfg_server))
+            writelog ("SADMIN clients will not be able to get to the SADMIN Server.")
+            writelog ("As a temporary measure, you can add '%s' to the /etc/hosts file." % (wcfg_server))
+            writelog ("SADMIN Server name must resolve to an IP (other than in 127.0.0.0/24 subnet).")
             writelog ("You may need to press CTRL-C to abort installation and correct the situation.")
             writelog ("Once resolve, just execute the setup program again or enter a valid hostname.")
             continue                                                    # Go Re-Accept Server Name
