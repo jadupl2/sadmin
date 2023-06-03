@@ -50,6 +50,7 @@
 #@2023_05_24 lib v4.37 Fix permission problem with mail password file ($SADMIN/cfg/.gmpw).
 #@2023_05_25 lib v4.38 Improve function 'locate_command()' & fix intermittent problem.
 #@2023_05_25 lib v4.39 Header now include for kernel version number.
+#@2023_06_03 lib v4.40 Change method of getting username, was a problem with 'os.getlogin()'.
 
 # --------------------------------------------------------------------------------------------------
 #
@@ -87,7 +88,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.39"                                # This Library Version
+lib_ver             = "4.40"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -102,7 +103,7 @@ pdesc               = "Description of script '%s'" % (pn)   # Program Descriptio
 pinst               = pn.split('.')[0]                      # Pgm name without Ext
 ppid                = os.getpid()                           # Get Current Process ID.
 phostname           = platform.node().split('.')[0].strip() # Get current hostname
-pusername           = os.getlogin()                         # Get Current User Name
+pusername           = pwd.getpwuid(os.getuid())[0]          # Get Current User Name
 pdb_conn            = None                                  # Database Connector
 pdb_cur             = None                                  # Database cursor
 pdebug              = 0                                     # Debug Level 0-9
