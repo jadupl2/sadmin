@@ -33,8 +33,8 @@
 # 2021_06_02 server v3.4 Added command line options and major code review
 # 2022_06_10 server v3.5 Update to use the new SADMIN Python Library v2
 # 2022_07_27 server v3.6 Bug fix when ping were reported when it wasn't.
-# 2022_08_17 nolog  v3.7 Remove debug info & update to use the new SADMIN Python Library v2.2
-#@2023_05_19 server v3.8 Correct problem when running at installation time 
+# 2022_08_17 nolog  v3.7 Remove debug info & update to use the new SADMIN Python Library v2.2.
+#@2023_05_19 server v3.8 Correct problem when running at installation time (SADMIN not set yet).
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -47,16 +47,14 @@ except ImportError as e:
     #pdb.set_trace()                                                    # Activate Python
 
 
-#===================================================================================================
-#                                 Local Variables used by this script
-#===================================================================================================
-#
-netdict = {}                                                            # Network Work Dictionary
-
 
 
 # --------------------------------------------------------------------------------------------------
-# SADMIN CODE SECTION v2.3
+# This script in ran near the end of installation and SADMIN env. variable is not yet define.
+# So the code below use the SADMIN variable define in /etc/environment has a plan b.
+# For all others python script it is not necessary, because 'SADMIN' env. variable will be defined.
+#
+# SADMIN CODE SECTION v2.3 ---- DO NOT UPDATE SADMIN SECTION IN THIS SCRIPT
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # --------------------------------------------------------------------------------------------------
@@ -85,7 +83,6 @@ try:
 except ImportError as e:                                             # If Error importing SADMIN
     print("Import error : SADMIN module: %s " % e)                   # Advise User of Error
     sys.exit(1)  
-
 
 # Local variables local to this script.
 pver        = "3.8"                                                     # Program version
@@ -119,6 +116,16 @@ sa.max_logline      = 600        # Max. lines to keep in log (0=No trim) after e
 sa.cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
 #
 # ==================================================================================================
+
+
+
+
+#===================================================================================================
+#                                 Local Variables used by this script
+#===================================================================================================
+#
+netdict = {}                                                            # Network Work Dictionary
+
 
 
 
