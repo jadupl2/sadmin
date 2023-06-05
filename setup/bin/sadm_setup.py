@@ -194,6 +194,8 @@ req_client = {
                     'deb':'coreutils',                      'drepo':'base'},
     'syslinux'   :{ 'rpm':'syslinux ',                       'rrepo':'base',  
                     'deb':'syslinux-utils',                 'drepo':'base'},
+    'dig'        :{ 'rpm':'bind-utils ',                    'rrepo':'base',  
+                    'deb':'bind9-dnsutils',                 'drepo':'base'},
     'extlinux'   :{ 'rpm':'syslinux-extlinux ',             'rrepo':'base',  
                     'deb':'extlinux',                       'drepo':'base'},
     'genisoimage':{ 'rpm':'genisoimage',                    'rrepo':'base',  
