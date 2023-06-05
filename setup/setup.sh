@@ -71,6 +71,7 @@
 #@2023_04_15 install v3.26 Offer choice to disable SElinux temporarily or permanently during setup.
 #@2023_05_19 install v3.27 Fix bug when asking selinux question
 #@2023_05_20 nolog   v3.28 Typo Error when asking selinux question
+#@2023_06_05 install v3.29 Remove the need for 'bind-utils/bind9-dnsutils' package during install.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -80,7 +81,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.28'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.29'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
