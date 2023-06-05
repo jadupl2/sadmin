@@ -115,6 +115,7 @@
 #@2023_05_20 install v3.84 Add extlinux package to client that is sometime used by ReaR backup.
 #@2023_06_03 install v3.85 Fix intermittent problem when validating the FQDN of the SADMIN server.
 #@2023_06_03 install v3.86 Daily email report is now depreciated, the web interface have more info.
+#@2023_06_05 install v3.87 Minor corrections after testing installation on Debian 11.
 #
 # ==================================================================================================
 #
@@ -132,7 +133,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.86`"                                            # Setup Version Number
+sver                = "3.87"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
