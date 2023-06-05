@@ -493,7 +493,7 @@ check_bind-utils()
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
         then apt-get update >> $SLOG 2>&1
-             echo "   - Running 'apt-get -y install bind9-dnsutils'"| tee -a $SLOG
+             echo "   - Running 'apt-get -y install '"| tee -a $SLOG
              PACKNAME="bind9-dnsutils" 
              apt-get -y install bind9-dnsutils >>$SLOG 2>&1
     fi 
@@ -692,7 +692,7 @@ EOF
     check_python3
 
     # Check if command 'host'is installed by default (Not the case on Rocky Linux)
-    check_bind-utils
+    #check_bind-utils
     
     # Make sure current host is in /etc/hosts
     check_hostname
