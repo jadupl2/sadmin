@@ -425,7 +425,7 @@ check_python3()
     #fi
 
     # Check if python3 'pymsql' module is installed 
-    printf "   - Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
+    printf "\n   - Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
