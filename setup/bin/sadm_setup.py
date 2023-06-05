@@ -2225,7 +2225,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
             SADM_IP = socket.gethostnyname(wcfg_server)
         except (socket.gaierror) as error :                             # If Can't - domain invalid
             writelog ("  ")
-            writelog ("[ ERROR ] The SADMIN server name '%s' isn't valid." % (wcfg_server,'bold') # Advise Usr
+            writelog ("[ ERROR ] The SADMIN server name '%s' isn't valid." % wcfg_server) 
             writelog ("The SADMIN server name '%s' can't be resolve." % (wcfg_server))
             writelog ("SADMIN clients will not be able to get to the SADMIN Server.")
             writelog ("As a temporary measure, you can add '%s' to the /etc/hosts file." % (wcfg_server))

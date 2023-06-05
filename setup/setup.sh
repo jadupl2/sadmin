@@ -377,7 +377,7 @@ install_python3()
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
         then apt-get update >> $SLOG 2>&1
-             echo "\n   - Running 'apt-get -y install python3 python3-venv python3-pip'"| tee -a $SLOG
+             printf "\n   - Running 'apt-get -y install python3 python3-venv python3-pip'"| tee -a $SLOG
              apt-get -y install python3 python3-venv python3-pip >>$SLOG 2>&1
     fi 
     
