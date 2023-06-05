@@ -2224,7 +2224,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
         wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt)# Accept SADMIN Server Name
         writelog ("Validating server name ...")                         # Advise User Validating
         try : 
-            SADM_IP = socket.gethostnyname(wcfg_server)
+            SADM_IP = socket.gethostbyname(wcfg_server)
         except (socket.gaierror) as error :                             # If Can't - domain invalid
             writelog ("  ")
             writelog ("[ ERROR ] The SADMIN server name '%s' isn't valid." % wcfg_server) 
