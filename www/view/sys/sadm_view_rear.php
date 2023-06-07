@@ -35,7 +35,7 @@
 # 2022_09_12 backup v2.1 ReaR backup status page - Display the first 50 systems instead of 25.
 # 2022_09_20 backup v2.2 ReaR backup status page - Move ReaR supported architecture msg to heading.
 # 2023_02_16 backup v2.3 ReaR backup status page - Revamp of the ReaR backup status page.
-#@2023_04_22 backup v2.4 ReaR backup status page - Alert are shown in Red instead of Yellow background.
+#@2023_04_22 backup v2.4 ReaR backup status page - Alert are now shown in a tinted background from emphasis.
 #@2023_04_23 backup v2.5 ReaR backup status page - Now include size of backup & new layout.
 #@2023_04_27 backup v2.6 ReaR backup status page - Combine 'Last Backup Date' & 'Duration'.
 # ==================================================================================================
