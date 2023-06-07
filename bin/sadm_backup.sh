@@ -85,8 +85,8 @@
 # 2023_01_06 backup v3.41 Add cmdline '-w' to suppress warning (dir. not exist) on output.
 # 2023_01_06 backup v3.42 Fix problem with format of 'stat' command on MacOS.
 #@2023_03_26 backup v3.43 Write current, previous and host total backup size in log for reference.
-#@2023_04_10 backup v3.44 Fix backup calculating total size occupied by host.
-#@2023_04_11 backup v3.45 Previous & Total backup size wasn't always right & added more info in log.
+# 2023_04_10 backup v3.44 Fix backup calculating total size occupied by host.
+# 2023_04_11 backup v3.45 Previous & Total backup size wasn't always right & added more info in log.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x

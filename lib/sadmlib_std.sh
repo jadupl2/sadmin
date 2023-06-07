@@ -199,7 +199,7 @@
 #@2023_04_13 lib v4.20 Load new variables 'SADM_REAR_DIF' 'SADM_REAR_INTERVAL' from sadmin.cfg.
 #@2023_04_13 lib v4.21 Load new variable 'SADM_BACKUP_INTERVAL' from sadmin.cfg use on backup page.
 #@2023_04_14 lib v4.22 SADMIN server email account pwd now taken from $SADMIN/cfg/.gmpw.
-#@2023_04_14 lib v4.23 SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64.#@2023_04_14 lib v4.22 Email account password now encrypted in $SADMIN/cfg/.gmpw64 (base64).
+#@2023_04_14 lib v4.23 SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64.
 #@2023_04_14 lib v4.24 Change email pwd ($SADMIN/cfg/.gmpw) on SADM server to generate new .gmpw64.
 #@2023_05_24 lib v4.25 Umask is now shown in the script header output.
 #@2023_06_06 lib v4.26 Set file permission on email password file to prevent problem.

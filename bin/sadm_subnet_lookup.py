@@ -34,7 +34,7 @@
 # 2022_06_10 server v3.5 Update to use the new SADMIN Python Library v2
 # 2022_07_27 server v3.6 Bug fix when ping were reported when it wasn't.
 # 2022_08_17 nolog  v3.7 Remove debug info & update to use the new SADMIN Python Library v2.2.
-#@2023_05_19 server v3.8 Correct problem when running at installation time (SADMIN not set yet).
+#@2023_05_19 server v3.8 Correct problem when running at installation time ($SADMIN not set yet).
 # --------------------------------------------------------------------------------------------------
 #
 try :
