@@ -201,6 +201,7 @@
 #@2023_04_14 lib v4.22 Email account password now encrypted in $SADMIN/cfg/.gmpw64 (base64).
 #@2023_04_14 lib v4.23 Change email pwd ($SADMIN/cfg/.gmpw) on SADM server to generate new .gmpw64.
 #@2023_05_24 lib v4.24 Umask in not shown in the script header output.
+#@2023_06_06 lib v4.25 Set email password file permission are properly set to prevent problem.
 #===================================================================================================
 
 
@@ -214,7 +215,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.24"                                              # This Library Version
+export SADM_LIB_VER="4.25"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -2024,13 +2025,24 @@ sadm_load_config_file() {
         then rm -f $GMPW_FILE_TXT >>/dev/null                           # Del plain test email pwd
         else if [ -r "$GMPW_FILE_TXT" ]                                 # On SADM srv & Text pwdfile         
                 then base64 $GMPW_FILE_TXT >$GMPW_FILE_B64              # Recreate encrypt pwd file
-                     chmod 644 $GMPW_FILE_B64                           # Make file readable
+                     if [ $(id -u) -eq 0 ]
+                        then chmod 0664 $GMPW_FILE_B64 >/dev/null 2>&1
+                             chmod 0640 $GMPW_FILE_TXT >/dev/null 2>&1
+                             chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_B64 >/dev/null 2>&1
+                             chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_TXT >/dev/null 2>&1
+                     fi
              fi 
     fi 
 
 # Set Email Account password from encrypted email account password file.
     SADM_GMPW=""
-    if [ -r "$GMPW_FILE_B64" ] ; then SADM_GMPW=$(base64 -d $GMPW_FILE_B64) ; fi
+    if [ -r "$GMPW_FILE_B64" ] 
+        then SADM_GMPW=$(base64 -d $GMPW_FILE_B64) 
+             if [ $(id -u) -eq 0 ]
+                then chmod 0664 $GMPW_FILE_B64 >/dev/null 2>&1
+                     chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_B64 >/dev/null 2>&1
+             fi 
+    fi
     return 0
 }
 
