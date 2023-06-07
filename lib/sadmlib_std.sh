@@ -198,10 +198,11 @@
 #@2023_03_04 lib v4.19 Lock file content & owner updated. 
 #@2023_04_13 lib v4.20 Load new variables 'SADM_REAR_DIF' 'SADM_REAR_INTERVAL' from sadmin.cfg.
 #@2023_04_13 lib v4.21 Load new variable 'SADM_BACKUP_INTERVAL' from sadmin.cfg use on backup page.
-#@2023_04_14 lib v4.22 Email account password now encrypted in $SADMIN/cfg/.gmpw64 (base64).
-#@2023_04_14 lib v4.23 Change email pwd ($SADMIN/cfg/.gmpw) on SADM server to generate new .gmpw64.
-#@2023_05_24 lib v4.24 Umask in not shown in the script header output.
-#@2023_06_06 lib v4.25 Set email password file permission are properly set to prevent problem.
+#@2023_04_14 lib v4.22 SADMIN server email account pwd now taken from $SADMIN/cfg/.gmpw.
+#@2023_04_14 lib v4.23 SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64.#@2023_04_14 lib v4.22 Email account password now encrypted in $SADMIN/cfg/.gmpw64 (base64).
+#@2023_04_14 lib v4.24 Change email pwd ($SADMIN/cfg/.gmpw) on SADM server to generate new .gmpw64.
+#@2023_05_24 lib v4.25 Umask is now shown in the script header output.
+#@2023_06_06 lib v4.26 Set file permission on email password file to prevent problem.
 #===================================================================================================
 
 
@@ -215,7 +216,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.25"                                              # This Library Version
+export SADM_LIB_VER="4.26"                                              # This Library Version
 export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
 export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
 export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
@@ -2027,7 +2028,7 @@ sadm_load_config_file() {
                 then base64 $GMPW_FILE_TXT >$GMPW_FILE_B64              # Recreate encrypt pwd file
                      if [ $(id -u) -eq 0 ]
                         then chmod 0664 $GMPW_FILE_B64 >/dev/null 2>&1
-                             chmod 0640 $GMPW_FILE_TXT >/dev/null 2>&1
+                             chmod 0644 $GMPW_FILE_TXT >/dev/null 2>&1
                              chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_B64 >/dev/null 2>&1
                              chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_TXT >/dev/null 2>&1
                      fi

@@ -67,9 +67,9 @@
 # 2022_10_23 install v3.22 Install 'host' command if not present on system.
 # 2022_11_27 install v3.23 Correct problem when activating EPEL v9.
 # 2023_02_08 install v3.24 Fix problem with GPG Key for EPEL v9.1
-#@2023_04_05 install v3.25 Minor fixes
+# 2023_04_05 install v3.25 Minor fixes
 #@2023_04_15 install v3.26 Offer choice to disable SElinux temporarily or permanently during setup.
-#@2023_05_19 install v3.27 Fix bug when asking selinux question
+#@2023_05_19 install v3.27 Resolve problem when asking 'selinux' question.
 #@2023_05_20 nolog   v3.28 Typo Error when asking selinux question
 #@2023_06_05 install v3.29 Remove the need for 'bind-utils/bind9-dnsutils' package during install.
 # --------------------------------------------------------------------------------------------------
