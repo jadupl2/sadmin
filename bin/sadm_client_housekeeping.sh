@@ -392,10 +392,18 @@ file_housekeeping()
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]
        then afile="$SADM_WWW_LIB_DIR/.crontab.txt"
             if [ -f $afile ]         ; then rm -f $afile         >/dev/null 2>&1 ; fi
-            if [ -f $GMPW_FILE_TXT ] ; then rm -f $GMPW_FILE_TXT >/dev/null 2>&1 ; fi
+     
        else set_file "${SADM_CFG_DIR}/.gmpw" "0600" "${SADM_USER}" "${SADM_GROUP}"
-
     fi
+
+    # Remove default crontab job - We want to run the ReaR Backup from the sadm_rear_backup crontab.
+    if [ -f "$GMPW_FILE_B64" ] 
+        then chmod 664 $GMPW_FILE_B64
+             chown  ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_B64
+    fi 
+    
+    # No Password file ($SADMIN/cfg/.gmpw)non encrypted on client, remote it.
+    if [ -f $GMPW_FILE_TXT ] ; then rm -f $GMPW_FILE_TXT >/dev/null 2>&1 ; fi
 
     # Remove default crontab job - We want to run the ReaR Backup from the sadm_rear_backup crontab.
     if [ -r /etc/cron.d/rear ] ; then rm -f /etc/cron.d/rear >/dev/null 2>&1; fi
