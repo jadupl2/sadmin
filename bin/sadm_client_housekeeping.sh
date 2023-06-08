@@ -19,60 +19,60 @@
 # Developer Web Site : https://sadmin.ca
 #   
 # --------------------------------------------------------------------------------------------------
-# 2017_08_08    v1.7 Add /sadmin/jac in the housekeeping and change 600 to 644 for configuration file
-# 2017-10-10    v1.8 Remove deletion of release file on sadm client in /sadmin/cfg
-# 2018-01-02    v1.9 Delete file not needed anymore
-# 2018_05_14    v1.10 Correct problem on MacOS with change owner/group command
-# 2018_06_04    v1.11 Add User Directories, Database Backup Directory, New Backup Cfg Files
-# 2018_06_05    v1.12 Enhance Ouput Display - Add Missing Setup Dir, Review Purge Commands
-# 2018_06_09    v1.13 Add Help and Version Function - Change Startup Order
-# 2018_06_13    v1.14 Change all files in $SADMIN/cfg to 664.
-# 2018_07_30    v1.15 Make sure sadmin crontab files in /etc/cron.d have proper owner & permission.
-# 2018_09_16    v1.16 Include Cleaning of alert files needed only on SADMIN server.
-# 2018_09_28    v1.17 Code Optimize and Cleanup
-# 2018_10_27    v1.18 Remove old dir. not use anymore (if exist)
-# 2018_11_02    v1.19 Code Maint. & Comment
-# 2018_11_23    v1.20 An error is signal when the 'sadmin' account is lock, preventing cron to run.
-# 2018_11_24    v1.21 Check SADM_USER status, give more precise explanation & corrective cmd if lock.
-# 2018_12_15    v1.22 Fix Error Message on MacOS trying to find SADMIN User in /etc/passwd.
-# 2018_12_18    v1.23 Don't delete SADMIN server directories if SADM_HOST_TYPE='D' in sadmin.cfg
-# 2018_12_19    v1.24 Fix typo Error & Enhance log output
-# 2018_12_22    v1.25 Minor change - More Debug info.
-# 2019_01_28 Change: v1.26 Add readme.pdf and readme.html to housekeeping
-# 2019_03_03 Change: v1.27 Make sure .gitkeep files exist in important directories
-# 2019_04_17 Update: v1.28 Make 'sadmin' account & password never expire (Solve Acc. & sudo Lock)
-# 2019_05_19 Update: v1.29 Change for lowercase readme.md,license,changelog.md files and bug fixes.
-# 2019_06_03 Update: v1.30 Include logic to convert RCH file format to the new one, if not done.
-# 2019_07_14 Update: v1.31 Add creation of Directory /preserve/mnt if it doesn't exist (Mac Only)
-# 2019_07_23 Update: v1.32 Remove utilization of history sequence number file.
-# 2019_08_19 Update: v1.33 Check /etc/cron.d/sadm_rear_backup permission & remove /etc/cron.d/rear
-# 2019_11_25 Fix: v1.34 Remove deletion of $SADMIN/www on SADMIN client.
-# 2020_01_21 Update: v1.35 Remove alert_group.cfg and alert_slack.cfg, if present in $SADMIN/cfg
-# 2020_04_01 Update: v1.36 Code rewrite for better performance and maintenance. 
-# 2020_04_04 Update: v1.37 Fix minor bugs & Restructure log presentation
-# 2020_04_28 Update: v1.38 Update readme file permission from 0644 to 0664
-# 2020_05_08 Update: v1.39 Update Change permission change on $SADMIN/usr/bin from 0755 to 775.
-# 2020_07_10 Update: v1.40 If no password have been assigned to 'sadmin' a temporary one is assigned. 
-# 2020_07_20 Update: v1.41 Change permission of log and rch to allow normal user to run script.
-# 2020_09_10 Update: v1.42 Make sure permission are ok in user library directory ($SADMIN/usr/lib).
-# 2020_09_12 Update: v1.43 Make sure that "${SADM_UCFG_DIR}/.gitkeep" exist to be part of git clone.
-# 2020_09_20 Update: v1.44 Minor adjustments to log entries.
-# 2020_11_07 Update: v1.45 Remove old rch conversion code execution.
-# 2020_12_16 Update: v1.46 Minor code change (Isolate the check for sadmin user and group)
-# 2020_12_26 Fix: v1.47 Doesn't delete Database Password File, cause problem during server setup.
-# 2021_05_23 client: v1.48 Remove conversion of old history file format (not needed anymore).
-# 2021_06_06 client: v2.00 Make sure that sadm_client crontab run 'sadm_nmon_watcher.sh' regularly.
-# 2021_06_06 mon: v2.01 Remove script that run 'swatch_nmon.sh' from system monitor config file.
-# 2021_06_06 client: v2.02 Fix problem related to system monitor file update.
-# 2021_06_10 client: v2.03 Fix problem removing 'nmon' watcher from monitor file.
-# 2021_07_22 client: v2.04 Fix problem when run the 1st time during setup script.
-# 2022_07_02 client: v2.05 Set permission for new gmail passwd file ($SADMIN/cfg/.gmpw)
-# 2022_07_13 client: v2.06 Update new SADMIN section v1.51 and code revision..
-# 2022_09_20 client: v2.07 Use SSH port specify per server & update SADMIN section to v1.52.
-# 2022_09_24 client: v2.08 Change MacOS mount point name (/preserve don't exist anymore)
-#@2023_04_10 client: v2.09 Remove text email pwd file ($SADMIN/cfg/.gmpw) on client (not on server).
-#@2023_04_16 client: v2.10 On client using encrypted email pwd file '$SADMIN/cfg/.gmpw64'.
-#@2023_05_02 client: v2.11 Solved permission problem on email password file.
+# 2017_08_08 client v1.7 Add /sadmin/jac in the housekeeping and change 600 to 644 for configuration file
+# 2017-10-10 client v1.8 Remove deletion of release file on sadm client in /sadmin/cfg
+# 2018-01-02 client v1.9 Delete file not needed anymore
+# 2018_05_14 client v1.10 Correct problem on MacOS with change owner/group command
+# 2018_06_04 client v1.11 Add User Directories, Database Backup Directory, New Backup Cfg Files
+# 2018_06_05 client v1.12 Enhance Output Display - Add Missing Setup Dir, Review Purge Commands
+# 2018_06_09 client v1.13 Add Help and Version Function - Change Startup Order
+# 2018_06_13 client v1.14 Change all files in $SADMIN/cfg to 664.
+# 2018_07_30 client v1.15 Make sure sadmin crontab files in /etc/cron.d have proper owner & permission.
+# 2018_09_16 client v1.16 Include Cleaning of alert files needed only on SADMIN server.
+# 2018_09_28 client v1.17 Code Optimize and Cleanup
+# 2018_10_27 client v1.18 Remove old dir. not use anymore (if exist)
+# 2018_11_02 client v1.19 Code Maint. & Comment
+# 2018_11_23 client v1.20 An error is signal when the 'sadmin' account is lock, preventing cron to run.
+# 2018_11_24 client v1.21 Check SADM_USER status, give more precise explanation & corrective cmd if lock.
+# 2018_12_15 client v1.22 Fix Error Message on MacOS trying to find SADMIN User in /etc/passwd.
+# 2018_12_18 client v1.23 Don't delete SADMIN server directories if SADM_HOST_TYPE='D' in sadmin.cfg
+# 2018_12_19 client v1.24 Fix typo Error & Enhance log output
+# 2018_12_22 client v1.25 Minor change - More Debug info.
+# 2019_01_28 client v1.26 Add readme.pdf and readme.html to housekeeping
+# 2019_03_03 client v1.27 Make sure .gitkeep files exist in important directories
+# 2019_04_17 client v1.28 Make 'sadmin' account & password never expire (Solve Acc. & sudo Lock)
+# 2019_05_19 client v1.29 Change for lowercase readme.md,license,changelog.md files and bug fixes.
+# 2019_06_03 client v1.30 Include logic to convert RCH file format to the new one, if not done.
+# 2019_07_14 client v1.31 Add creation of Directory /preserve/mnt if it doesn't exist (Mac Only)
+# 2019_07_23 client v1.32 Remove utilization of history sequence number file.
+# 2019_08_19 client v1.33 Check /etc/cron.d/sadm_rear_backup permission & remove /etc/cron.d/rear
+# 2019_11_25 client v1.34 Remove deletion of $SADMIN/www on SADMIN client.
+# 2020_01_21 client v1.35 Remove alert_group.cfg and alert_slack.cfg, if present in $SADMIN/cfg
+# 2020_04_01 client v1.36 Code rewrite for better performance and maintenance. 
+# 2020_04_04 client v1.37 Fix minor bugs & Restructure log presentation
+# 2020_04_28 client v1.38 Update readme file permission from 0644 to 0664
+# 2020_05_08 client v1.39 Update Change permission change on $SADMIN/usr/bin from 0755 to 775.
+# 2020_07_10 client v1.40 If no password have been assigned to 'sadmin' a temporary one is assigned. 
+# 2020_07_20 client v1.41 Change permission of log and rch to allow normal user to run script.
+# 2020_09_10 client v1.42 Make sure permission are ok in user library directory ($SADMIN/usr/lib).
+# 2020_09_12 client v1.43 Make sure that "${SADM_UCFG_DIR}/.gitkeep" exist to be part of git clone.
+# 2020_09_20 client v1.44 Minor adjustments to log entries.
+# 2020_11_07 client v1.45 Remove old rch conversion code execution.
+# 2020_12_16 client v1.46 Minor code change (Isolate the check for sadmin user and group)
+# 2020_12_26 client v1.47 Doesn't delete Database Password File, cause problem during server setup.
+# 2021_05_23 client v1.48 Remove conversion of old history file format (not needed anymore).
+# 2021_06_06 client v2.00 Make sure that sadm_client crontab run 'sadm_nmon_watcher.sh' regularly.
+# 2021_06_06 client v2.01 Remove script that run 'swatch_nmon.sh' from system monitor config file.
+# 2021_06_06 client v2.02 Fix problem related to system monitor file update.
+# 2021_06_10 client v2.03 Fix problem removing 'nmon' watcher from monitor file.
+# 2021_07_22 client v2.04 Fix problem when run the 1st time during setup script.
+# 2022_07_02 client v2.05 Set permission for new gmail passwd file ($SADMIN/cfg/.gmpw)
+# 2022_07_13 client v2.06 Update new SADMIN section v1.51 and code revision..
+# 2022_09_20 client v2.07 Use SSH port specify per server & update SADMIN section to v1.52.
+# 2022_09_24 client v2.08 Change MacOS mount point name (/preserve don't exist anymore)
+#@2023_04_10 client v2.09 Remove unencrypted email pwd file ($SADMIN/cfg/.gmpw) on client (not on server).
+#@2023_04_16 client v2.10 On client using encrypted email pwd file '$SADMIN/cfg/.gmpw64'.
+#@2023_05_02 nolog  v2.11 Solved permission problem on email password file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x

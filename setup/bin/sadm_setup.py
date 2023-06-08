@@ -111,7 +111,7 @@
 # 2023_02_08 install v3.80 Default smtp mail server is now 'smtp.gmail.com' and hide smtp password.
 #@2023_04_04 install v3.81 Access to sadmin web interface is now done using https.
 #@2023_04_29 install v3.82 Ensure that 'coreutils' package are installed.
-#@2023_05_19 install v3.83 Make sure 'isohybrid' is installed (Needed to produce Rear bootable USB).
+#@2023_05_19 install v3.83 Make sure 'isohybrid' is installed (Needed to produce ReaR bootable USB).
 #@2023_05_20 install v3.84 Add 'extlinux' package to client that is sometime used by ReaR backup.
 #@2023_06_03 install v3.85 Fix intermittent problem when validating the FQDN of the SADMIN server.
 #@2023_06_03 install v3.86 Daily email report is now depreciated, the web interface have all info.
