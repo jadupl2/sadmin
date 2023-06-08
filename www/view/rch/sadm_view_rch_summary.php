@@ -38,7 +38,7 @@
 # 2021_08_29 web v2.10 Scripts status page - Show effective alert group name instead of 'default'.
 # 2021_08_29 web v2.11 Scripts status page - Show member(s) of alert group as tooltip. 
 # 2022_09_05 web v2.12 Scripts status page - Add [doc] & [elog] link to view error log (if exist).
-#@2023_02_14 web v2.13 Scripts status page - Remove 'sadm_nmon_watcher' from list if not in error.
+# 2023_02_14 web v2.13 Scripts status page - Remove 'sadm_nmon_watcher' from list if not in error.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.

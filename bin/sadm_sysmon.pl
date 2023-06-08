@@ -51,7 +51,7 @@
 # 2022_07_02 mon v2.47 Replace 'mail' command (not avail on RHEL 9) by 'mutt'.
 # 2022_09_24 mon v2.48 On MacOS review 'check_cpu_usage', 'check_load average' & filesystem check
 # 2022_10_11 mon v2.49 Sysmon don't check capacity exceeded for '/snap/*' '/media/*' filesystem
-#@2023_05_06 mon v2.50 Reduce ping wait time to speed up processing.
+# 2023_05_06 mon v2.50 Reduce ping wait time to speed up processing.
 #===================================================================================================
 #
 use English;

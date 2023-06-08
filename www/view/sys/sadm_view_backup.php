@@ -34,8 +34,8 @@
 # 2022_11_12 web v2.1 Backup status page - Added column to identify system sporadically offline.
 # 2022_11_20 web v2.2 Backup status page - Error log link now only appear when error occurred.
 # 2023_01_05 web v2.3 Backup status page - Yellow alert if backup size is contrasting with previous.
-#@2023_03_23 web v2.4 Backup status page - Lot of changes to this page, have a look.
-#@2023_04_22 web v2.5 Backup status page - Alert are now shown in a tinted background for emphasis.
+# 2023_03_23 web v2.4 Backup status page - Lot of changes to this page, have a look.
+# 2023_04_22 web v2.5 Backup status page - Alert are now shown in a tinted background for emphasis.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

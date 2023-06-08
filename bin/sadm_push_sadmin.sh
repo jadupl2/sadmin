@@ -54,10 +54,10 @@
 # 2022_07_09 server v2.35 Now pushing email user password file ($SADMIN/cfg/.gmpw).
 # 2022_08_17 server v2.36 Updated with new SADMIN section v1.52
 # 2022_09_20 server v2.37 SSH to client is now using the port defined in each system.
-#@2023_04_10 server v2.38 Don't push gmail text password file ($SADMIN/cfg/.gmpw) to client.
-#@2023_04_12 server v2.39 Add '-c' option to push 'sadmin.client.cfg' to 'sadmin.cfg' to all clients.
-#@2023_04_17 server v2.40 Push encrypted email password file ($SADMIN/cfg/.gmpw64) to all clients.
-#@2023_04_29 server v2.41 Increase speed of files copy from clients to SADMIN server.
+# 2023_04_10 server v2.38 Don't push gmail text password file ($SADMIN/cfg/.gmpw) to client.
+# 2023_04_12 server v2.39 Add '-c' option to push 'sadmin.client.cfg' to 'sadmin.cfg' to all clients.
+# 2023_04_17 server v2.40 Push encrypted email password file ($SADMIN/cfg/.gmpw64) to all clients.
+# 2023_04_29 server v2.41 Increase speed of files copy from clients to SADMIN server.
 # 2023_05_26 server v2.42 If /etc/environment is not present on client, proceed with the next system.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C

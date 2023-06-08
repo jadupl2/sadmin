@@ -70,9 +70,9 @@
 # 2022_07_13 client v2.06 Update new SADMIN section v1.51 and code revision..
 # 2022_09_20 client v2.07 Use SSH port specify per server & update SADMIN section to v1.52.
 # 2022_09_24 client v2.08 Change MacOS mount point name (/preserve don't exist anymore)
-#@2023_04_10 client v2.09 Remove unencrypted email pwd file ($SADMIN/cfg/.gmpw) on client (not on server).
-#@2023_04_16 client v2.10 On client using encrypted email pwd file '$SADMIN/cfg/.gmpw64'.
-#@2023_05_02 nolog  v2.11 Solved permission problem on email password file.
+# 2023_04_10 client v2.09 Remove unencrypted email pwd file ($SADMIN/cfg/.gmpw) on client (not on server).
+# 2023_04_16 client v2.10 On client using encrypted email pwd file '$SADMIN/cfg/.gmpw64'.
+# 2023_05_02 nolog  v2.11 Solved permission problem on email password file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x

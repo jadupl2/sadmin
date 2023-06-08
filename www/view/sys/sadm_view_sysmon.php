@@ -60,7 +60,7 @@
 # 2022_09_08 web v2.33 System monitor page - Add current date/time and look enhancement.
 # 2022_09_11 web v2.34 System monitor page - Modify to have a more pleasing look
 # 2023_01_06 web v2.35 System monitor page - O/S update starter now show hostname being updated.
-#@2023_04_10 web v2.36 System monitor page - Bug fix when no rch and rpt files were present.
+# 2023_04_10 web v2.36 System monitor page - Bug fix when no rch and rpt files were present.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.

@@ -61,7 +61,7 @@
 # 2022_08_25 osupdate v5.0 Allow to run multiple instance of this script.
 # 2023_01_06 osupdate v5.1 Add remote host name being updated in RCH file.
 # 2023_03_04 osupdate v5.2 Last O/S update date & status was no longer updated in SADMIN database.
-#@2023_05_06 osupdate v5.3 Reduce ping wait time to speed up processing.
+# 2023_05_06 osupdate v5.3 Reduce ping wait time to speed up processing.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C

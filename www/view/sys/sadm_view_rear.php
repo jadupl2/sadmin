@@ -35,9 +35,9 @@
 # 2022_09_12 web v2.1 ReaR backup status page - Display the first 50 systems instead of 25.
 # 2022_09_20 web v2.2 ReaR backup status page - Move ReaR supported architecture msg to heading.
 # 2023_02_16 web v2.3 ReaR backup status page - Revamp of the ReaR backup status page.
-#@2023_04_22 web v2.4 ReaR backup status page - Alert are now shown in a tinted background for emphasis.
-#@2023_04_23 web v2.5 ReaR backup status page - Now include size of backup & new layout.
-#@2023_04_27 web v2.6 ReaR backup status page - Combine 'Last Backup Date' & 'Duration'.
+# 2023_04_22 web v2.4 ReaR backup status page - Alert are now shown in a tinted background for emphasis.
+# 2023_04_23 web v2.5 ReaR backup status page - Now include size of backup & new layout.
+# 2023_04_27 web v2.6 ReaR backup status page - Combine 'Last Backup Date' & 'Duration'.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

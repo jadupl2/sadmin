@@ -56,8 +56,8 @@
 # 2022_05_24 server v4.7 Updated to use the library 'check_lock_file()' function.
 # 2022_08_17 server v4.8 Update SADMIN section 2.2 and use error log when problem encountered.
 # 2022_09_23 server v4.9 Use SSH port specify per server & update SADMIN section to v1.52.
-#@2023_04_29 server v4.10 Increase speed of files copy from clients to SADMIN server.
-#@2023_05_24 server v4.11 Remove repeating error count in the error log.
+# 2023_04_29 server v4.10 Increase speed of files copy from clients to SADMIN server.
+# 2023_05_24 server v4.11 Remove repeating error count in the error log.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C

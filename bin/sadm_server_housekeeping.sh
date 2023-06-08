@@ -36,7 +36,7 @@
 # 2021_08_17 nolog  v2.10 chmod 1777 $SADM_WWW_TMP_DIR 
 # 2022_05_03 server v2.11 Secure email passwd file ($SADMIN/cfg/.gmpw).
 # 2022_07_13 server v2.12 Fix typo that was preventing script from running under certain condition.
-#@2023_04_17 server v2.13 Secure permission on email password files ($SADMIN/cfg/.gmpw & .gmpw64).
+# 2023_04_17 server v2.13 Secure permission on email password files ($SADMIN/cfg/.gmpw & .gmpw64).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x

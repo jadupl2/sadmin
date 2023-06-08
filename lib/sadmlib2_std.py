@@ -37,20 +37,20 @@
 # 2022_08_26 lib v4.24 Lock file move from $SADMIN/tmp to $SADMIN so it's not remove upon startup.
 # 2022_08_26 lib v4.25 Correct a typo at line 718.
 # 2022_11_01 lib v4.26 Minor change for MacOS Ventura.
-#@2023_04_10 lib v4.27 Set gmail password global variable 'sadm_gmpw'. 
-#@2023_04_13 lib v4.28 Old Python Library 'sadmlib_std.py' is now depreciated use 'sadmlib2_std.py'.
-#@2023_04_13 lib v4.29 Load new variables 'SADM_REAR_DIF' & 'SADM_REAR_INTERVAL' from sadmin.cfg.
-#@2023_04_13 lib v4.30 Load new variable 'SADM_BACKUP_INTERVAL' from sadmin.cfg use on backup page.
-#@2023_04_14 lib v4.31 Email account password now encrypted in $SADMIN/cfg/.gmpw64 (base64)
-#@2023_04_14 lib v4.32 Change email password file on SADM server ($SADMIN/cfg/.gmpw) encrypt automatically .gmpw64.
-#@2023_05_02 lib v4.33 Fix when dealing with email password on SADMIN sever.
-#@2023_05_23 lib v4.34 Distribution name wasn't shown in header in RedHat (lsb_release removed from distr.).
-#@2023_05_24 lib v4.35 New function added "getUmask()", returning current umask.
-#@2023_05_24 lib v4.36 Umask now shown in script header.
-#@2023_05_24 lib v4.37 Fix permission problem with mail password file ($SADMIN/cfg/.gmpw).
-#@2023_05_25 lib v4.38 Improve function 'locate_command()' & fix intermittent problem.
-#@2023_05_25 lib v4.39 Header now include for kernel version number.
-#@2023_06_03 lib v4.40 Change method of getting username, was a problem with 'os.getlogin()'.
+# 2023_04_10 lib v4.27 Set gmail password global variable 'sadm_gmpw'. 
+# 2023_04_13 lib v4.28 Old Python Library 'sadmlib_std.py' is now depreciated use 'sadmlib2_std.py'.
+# 2023_04_13 lib v4.29 Load new variables 'SADM_REAR_DIF' & 'SADM_REAR_INTERVAL' from sadmin.cfg.
+# 2023_04_13 lib v4.30 Load new variable 'SADM_BACKUP_INTERVAL' from sadmin.cfg use on backup page.
+# 2023_04_14 lib v4.31 Email account password now encrypted in $SADMIN/cfg/.gmpw64 (base64)
+# 2023_04_14 lib v4.32 Change email password file on SADM server ($SADMIN/cfg/.gmpw) encrypt automatically .gmpw64.
+# 2023_05_02 lib v4.33 Fix when dealing with email password on SADMIN sever.
+# 2023_05_23 lib v4.34 Distribution name wasn't shown in header in RedHat (lsb_release removed from distr.).
+# 2023_05_24 lib v4.35 New function added "getUmask()", returning current umask.
+# 2023_05_24 lib v4.36 Umask now shown in script header.
+# 2023_05_24 lib v4.37 Fix permission problem with mail password file ($SADMIN/cfg/.gmpw).
+# 2023_05_25 lib v4.38 Improve function 'locate_command()' & fix intermittent problem.
+# 2023_05_25 lib v4.39 Header now include for kernel version number.
+# 2023_06_03 lib v4.40 Change method of getting username, was a problem with 'os.getlogin()'.
 #
 # --------------------------------------------------------------------------------------------------
 #

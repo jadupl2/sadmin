@@ -32,11 +32,11 @@
 # 2020_05_27 startup/shutdown v3.10 Force using bash instead of dash (Problem on Ubuntu).
 # 2019_12_07 startup/shutdown v3.11 Avoid NTP Server name resolution (DNS not up), use IP Addr. now.
 # 2020_11_04 startup/shutdown v3.13 Update SADMIN section & use env cmd to use proper bash shell.
-#@2021_05_13 startup/shutdown v3.14 Check if ntpdate is present before syncing time.
-#@2021_06_11 startup/shutdown v3.15 When syncing time redirect output to script log.
-#@2022_04_06 startup/shutdown v3.16 Remove ip setting for raspi8
-#@2022_07_24 startup/shutdown v3.17 Update SADMIN section to 1.51 and no-ip Client for Dynamic IP
-#@2022_09_15 startup/shutdown v3.18 When error feed error log and fix 'nmon' wasn't starting.
+# 2021_05_13 startup/shutdown v3.14 Check if ntpdate is present before syncing time.
+# 2021_06_11 startup/shutdown v3.15 When syncing time redirect output to script log.
+# 2022_04_06 startup/shutdown v3.16 Remove ip setting for raspi8
+# 2022_07_24 startup/shutdown v3.17 Update SADMIN section to 1.51 and no-ip Client for Dynamic IP
+# 2022_09_15 startup/shutdown v3.18 When error feed error log and fix 'nmon' wasn't starting.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 

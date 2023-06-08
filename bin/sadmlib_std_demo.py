@@ -51,9 +51,9 @@
 # 2022_05_21 lib v3.15 Late Adjustment & Minor changes
 # 2022_05_25 lib v3.16 Added fields 'sa.proot_only' & 'sa.psadm_server_only' to output.
 # 2022_08_14 lib v3.17 Output updated with all the latest functions & global variables.
-#@2023_04_13 lib v3.18 Add 'sadm_rear_dif', 'sadm_rear_interval', 'sadm_backup_interval' to output.
-#@2023_04_14 lib v3.19 SADMIN server email account pwd now taken from $SADMIN/cfg/.gmpw.
-#@2023_04_14 lib v3.20 SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64. 
+# 2023_04_13 lib v3.18 Add 'sadm_rear_dif', 'sadm_rear_interval', 'sadm_backup_interval' to output.
+# 2023_04_14 lib v3.19 SADMIN server email account pwd now taken from $SADMIN/cfg/.gmpw.
+# 2023_04_14 lib v3.20 SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64. 
 #==================================================================================================
 #
 try :

@@ -17,7 +17,7 @@
 # 2019_03_29 startup/shutdown v2.10 Get SADMIN Directory Location from /etc/environment
 # 2020_05_27 startup/shutdown v2.11 Force using bash instead of dash & problem setting SADMIN var.
 # 2020_11_04 startup/shutdown v2.12 Update SADMIN section & use env cmd to use proper bash shell.
-#@2022_09_15 startup/shutdown v2.13 Update SADMIN section 1.52 & minor changes.
+# 2022_09_15 startup/shutdown v2.13 Update SADMIN section 1.52 & minor changes.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x

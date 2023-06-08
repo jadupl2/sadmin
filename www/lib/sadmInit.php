@@ -30,7 +30,7 @@
 # 2021_08_17 web v3.9 Added "SADM_MONITOR_UPDATE_INTERVAL" 
 # 2021_09_15 web v3.10 Load new Var. SADM_MONITOR_RECENT_COUNT,SADM_MONITOR_RECENT_EXCLUDE
 # 2022_07_26 web v3.11 Set the TimeZone to America/Toronto
-#@2023_03_11 web v3.12 Load Rear backup diff & Interval at start, used on Rear Backup status page.
+# 2023_03_11 web v3.12 Load Rear backup diff & Interval at start, used on Rear Backup status page.
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #

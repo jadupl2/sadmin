@@ -39,7 +39,7 @@
 # 2022_09_12 web v2.14 O/S update status page - Will show link to error log (if it exist).
 # 2022_09_12 web v2.15 O/S update status page - Display the first 50 systems instead of 25.
 # 2023_05_01 web v2.16 O/S update status page - Enhance functionality and bug fix.
-#@2023_05_06 web v2.17 O/S update status page - Enhance functionality and bug 
+# 2023_05_06 web v2.17 O/S update status page - Enhance functionality and bug 
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
