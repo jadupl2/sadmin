@@ -21,25 +21,25 @@
 #   If not, see <https://www.gnu.org/licenses/>.
 # ==================================================================================================
 # February 2017 - Jacques DUplessis
-# 2016_02_02 osupdate v1.0  O/S update status page - Added options to edit server from that page, 
-# 2017_12_12 osupdate v2.0  O/S update status page - Adapted for MySQL and various look enhancement
-# 2018_05_06 osupdate v2.1  O/S update status page - Use Standard view file web page instead of custom 
-# 2018_06_06 osupdate v2.2  O/S update status page - Correct problem with link to view the update log 
-# 2018_07_01 osupdate v2.3  O/S update status page - Show Only Linux Server on this page (No Aix)
-# 2018_07_09 osupdate v2.4  O/S update status page - Last Update time remove seconds & Change layout
-# 2018_07_09 osupdate v2.5  O/S update status page - Change Layout of line (More Compact)
-# 2019_04_04 osupdate v2.6  O/S update status page - Show Calculated Next O/S Update Date & upd occurrence
-# 2019_04_17 osupdate v2.7  O/S update status page - Minor code cleanup and show "Manual, no schedule" 
-# 2019_05_04 osupdate v2.8  O/S update status page - Added link to view rch file content for each server.
-# 2019_07_12 osupdate v2.9  O/S update status page - Don't show MacOS and Aix status (Not applicable).
-# 2019_09_20 osupdate v2.10 O/S update status page - Show History (RCH) content using same uniform way.
-# 2019_09_23 osupdate v2.11 O/S update status page - When initiating Schedule change from here, 
-# 2019_12_29 osupdate v2.12 O/S update status page - Bottom titles was different that the heading.
-# 2019_12_29 osupdate v2.13 O/S update status page - Heading modified and now on two rows.
-# 2022_09_12 osupdate v2.14 O/S update status page - Will show link to error log (if it exist).
-# 2022_09_12 osupdate v2.15 O/S update status page - Display the first 50 systems instead of 25.
-# 2023_05_01 osupdate v2.16 O/S update status page - Enhance functionality and bug fix.
-#@2023_05_06 osupdate v2.17 O/S update status page - Enhance functionality and bug fix.
+# 2016_02_02 web v1.0  O/S update status page - Added options to edit server from that page, 
+# 2017_12_12 web v2.0  O/S update status page - Adapted for MySQL and various look enhancement
+# 2018_05_06 web v2.1  O/S update status page - Use Standard view file web page instead of custom 
+# 2018_06_06 web v2.2  O/S update status page - Correct problem with link to view the update log 
+# 2018_07_01 web v2.3  O/S update status page - Show Only Linux Server on this page (No Aix)
+# 2018_07_09 web v2.4  O/S update status page - Last Update time remove seconds & Change layout
+# 2018_07_09 web v2.5  O/S update status page - Change Layout of line (More Compact)
+# 2019_04_04 web v2.6  O/S update status page - Show Calculated Next O/S Update Date & upd occurrence
+# 2019_04_17 web v2.7  O/S update status page - Minor code cleanup and show "Manual, no schedule" 
+# 2019_05_04 web v2.8  O/S update status page - Added link to view rch file content for each server.
+# 2019_07_12 web v2.9  O/S update status page - Don't show MacOS and Aix status (Not applicable).
+# 2019_09_20 web v2.10 O/S update status page - Show History (RCH) content using same uniform way.
+# 2019_09_23 web v2.11 O/S update status page - When initiating Schedule change from here, 
+# 2019_12_29 web v2.12 O/S update status page - Bottom titles was different that the heading.
+# 2019_12_29 web v2.13 O/S update status page - Heading modified and now on two rows.
+# 2022_09_12 web v2.14 O/S update status page - Will show link to error log (if it exist).
+# 2022_09_12 web v2.15 O/S update status page - Display the first 50 systems instead of 25.
+# 2023_05_01 web v2.16 O/S update status page - Enhance functionality and bug fix.
+#@2023_05_06 web v2.17 O/S update status page - Enhance functionality and bug 
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

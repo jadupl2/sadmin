@@ -23,44 +23,44 @@
 #   If not, see <https://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-# 2017_10_27 mon v1.9 Replace PostGres Database with MySQL 
-# 2017_11_03 mon v2.0 Changed for ease of maintenance and can concentrate on other things
-# 2018_02_12 mon v2.1 Added Some Debugging Information
-# 2018_05_06 mon v2.2 Use Standard view file web page instead of custom view log page
-# 2018_08_14 mon v2.3 Added Alert Group associated with event
-# 2018_09_30 mon v2.4 Enhance Performance, New Page Layout and Fix issue with rch new format.
-# 2019_06_07 mon v2.5 Add Alarm type to page (Deal with new format).
-# 2019_08_04 mon v2.6 Add Distribution Logo and modify status icons.
-# 2019_09_25 mon v2.7 Page has become starting page and change page Title.
-# 2019_10_01 mon v2.8 Page Added links to log, rch and script documentation.
-# 2019_10_15 mon v2.9 Add Architecture, O/S Name, O/S Version to page
-# 2019_11_26 mon v2.10 Fix problem with temp files (Change from $SADMIN/tmp to $SADMIN/www/tmp)
-# 2019_11_27 mon v2.11 Fix 'open append failed', when no *.rpt exist or are all empty.
-# 2020_01_11 mon v2.12 Remove Arch,Category and OS Version to make space on Line.
-# 2020_01_13 mon v2.13 Bug fix, displaying empty error line.
-# 2020_03_03 mon v2.14 Server Description displayed when mouse over server name.
-# 2020_05_13 mon v2.15 Customize message when nothing to report.
-# 2020_05_13 mon v2.16 server name link was not displayed properly.
-# 2020_09_23 mon v2.17 Add Home button in the page heading.
-# 2021_07_24 mon v2.18 System monitor page - Each alert now show effective group name (not 'default').
-# 2021_08_06 mon v2.19 System monitor page - Alert type now show description and tooltip.
-# 2021_08_07 mon v2.20 System monitor page - Warning, Error, Info now have separate section.
-# 2021_08_17 mon v2.21 System monitor page - Use the refresh interval from SADMIN configuration file. 
-# 2021_08_18 mon v2.22 System monitor page - Section heading are spread on two lines.
-# 2021_08_29 mon v2.23 System monitor page - Show alert group member(s) as tooltip.
-# 2021_09_14 mon v2.24 System monitor page - New section that list recent scripts execution.
-# 2021_09_15 mon v2.25 System monitor page - Recent scripts section won't show if SADM_MONITOR_RECENT_COUNT=0
-# 2021_09_30 mon v2.26 System monitor page - Show recent activities even when no alert to report
-# 2022_02_16 mon v2.27 System monitor page - Monitor tmp file was not deleted after use.
+# 2017_10_27 web v1.9 Replace PostGres Database with MySQL 
+# 2017_11_03 web v2.0 Changed for ease of maintenance and can concentrate on other things
+# 2018_02_12 web v2.1 Added Some Debugging Information
+# 2018_05_06 web v2.2 Use Standard view file web page instead of custom view log page
+# 2018_08_14 web v2.3 Added Alert Group associated with event
+# 2018_09_30 web v2.4 Enhance Performance, New Page Layout and Fix issue with rch new format.
+# 2019_06_07 web v2.5 Add Alarm type to page (Deal with new format).
+# 2019_08_04 web v2.6 Add Distribution Logo and modify status icons.
+# 2019_09_25 web v2.7 Page has become starting page and change page Title.
+# 2019_10_01 web v2.8 Page Added links to log, rch and script documentation.
+# 2019_10_15 web v2.9 Add Architecture, O/S Name, O/S Version to page
+# 2019_11_26 web v2.10 Fix problem with temp files (Change from $SADMIN/tmp to $SADMIN/www/tmp)
+# 2019_11_27 web v2.11 Fix 'open append failed', when no *.rpt exist or are all empty.
+# 2020_01_11 web v2.12 Remove Arch,Category and OS Version to make space on Line.
+# 2020_01_13 web v2.13 Bug fix, displaying empty error line.
+# 2020_03_03 web v2.14 Server Description displayed when mouse over server name.
+# 2020_05_13 web v2.15 Customize message when nothing to report.
+# 2020_05_13 web v2.16 server name link was not displayed properly.
+# 2020_09_23 web v2.17 Add Home button in the page heading.
+# 2021_07_24 web v2.18 System monitor page - Each alert now show effective group name (not 'default').
+# 2021_08_06 web v2.19 System monitor page - Alert type now show description and tooltip.
+# 2021_08_07 web v2.20 System monitor page - Warning, Error, Info now have separate section.
+# 2021_08_17 web v2.21 System monitor page - Use the refresh interval from SADMIN configuration file. 
+# 2021_08_18 web v2.22 System monitor page - Section heading are spread on two lines.
+# 2021_08_29 web v2.23 System monitor page - Show alert group member(s) as tooltip.
+# 2021_09_14 web v2.24 System monitor page - New section that list recent scripts execution.
+# 2021_09_15 web v2.25 System monitor page - Recent scripts section won't show if SADM_MONITOR_RECENT_COUNT=0
+# 2021_09_30 web v2.26 System monitor page - Show recent activities even when no alert to report
+# 2022_02_16 web v2.27 System monitor page - Monitor tmp file was not deleted after use.
 # 2022_02_17 nolog v2.28 System Monitor page - Added a test to delete only when tmp file exist
 # 2022_05_26 nolog v2.29 System Monitor page - Fix intermittent problem creating tmp alert file.
 # 2022_05_26 nolog v2.30 System Monitor page - Fix intermittent problem creating tmp alert file.
-# 2022_05_26 mon v2.31 System monitor page - Rewrote some part of the code for new version of php
-# 2022_07_21 mon v2.32 System monitor page - Fix problem with recent scripts section
-# 2022_09_08 mon v2.33 System monitor page - Add current date/time and look enhancement.
-# 2022_09_11 mon v2.34 System monitor page - Modify to have a more pleasing look
-# 2023_01_06 mon v2.35 System monitor page - O/S update starter now show hostname being updated.
-#@2023_04_10 mon v2.36 System monitor page - Bug fix when no rch and rpt files were present.
+# 2022_05_26 web v2.31 System monitor page - Rewrote some part of the code for new version of php
+# 2022_07_21 web v2.32 System monitor page - Fix problem with recent scripts section
+# 2022_09_08 web v2.33 System monitor page - Add current date/time and look enhancement.
+# 2022_09_11 web v2.34 System monitor page - Modify to have a more pleasing look
+# 2023_01_06 web v2.35 System monitor page - O/S update starter now show hostname being updated.
+#@2023_04_10 web v2.36 System monitor page - Bug fix when no rch and rpt files were present.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.

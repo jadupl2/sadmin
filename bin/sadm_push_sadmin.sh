@@ -58,7 +58,7 @@
 #@2023_04_12 server v2.39 Add '-c' option to push 'sadmin.client.cfg' to 'sadmin.cfg' to all clients.
 #@2023_04_17 server v2.40 Push encrypted email password file ($SADMIN/cfg/.gmpw64) to all clients.
 #@2023_04_29 server v2.41 Increase speed of files copy from clients to SADMIN server.
-#@2023_05_26 server v2.42 If /etc/environment is not present on client, proceed with the next system.
+# 2023_05_26 server v2.42 If /etc/environment is not present on client, proceed with the next system.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
