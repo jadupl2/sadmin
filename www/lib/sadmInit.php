@@ -9,28 +9,28 @@
 #   Requires :  sh
 # --------------------------------------------------------------------------------------------------
 # Change Log
-# 2017_12_31 lib V2.2 Define New Variable loaded from sadmin.cfg 
-# 2017_11_11 lib V2.1 Switching from PostGres to MySQL
-# 2018_01_10 lib V2.3 Correct Problem When SADMIN Env. Variable was not pointing to /sadmin  
-# 2018_01_25 lib V2.4 Add RRD Tools Variable 
-# 2018_03_13 lib V2.5 Get Root directory of SADMIN from /etc/environment
-# 2018_04_02 lib V2.6 Get SADMIN Environment Variable from /etc/profile.d/samin.sh now
-# 2018_04_04 lib V2.8 Message when error while reading sadmin.cfg and sadmin.sh
-# 2018_05_04 lib V2.9 User/Password for Database access moved from sadmin.cfg to .dbpass file
-# 2018_05_28 lib V3.0 Added Load Backup Parameters coming from sadmin.cfg now
-# 2018_06_10 lib V3.1 Change name of O/S Update script 
-# 2018_11_22 lib v3.2 Read SADMIN root directory from /etc/environment on all platform now.
-# 2019_01_11 lib v3.3 Definitions of Backup List & Backup Exclude file.
-# 2019_02_11 lib v3.4 Add $SADMIN/www to PHP Path
-# 2019_07_16 lib Remove repeating error message when not connecting to Database.
-# 2019_08_16 lib v3.5 Correct Typo for number of rear backup to keep
-# 2019_08_19 lib v3.6 Added Global Var. SADM_REAR_EXCLUDE_INIT for Rear Initial Options file.
-# 2020_12_26 lib v3.7 Added Global Var. SADM_WWW_ARC_DIR for Server archive when deleted.
-# 2021_08_02 lib v3.8 Added 'SADM_PGM2DOC' for Doc to Links file definition.
-# 2021_08_17 lib v3.9 Added "SADM_MONITOR_UPDATE_INTERVAL" 
-# 2021_09_15 lib v3.10 Load new Var. SADM_MONITOR_RECENT_COUNT,SADM_MONITOR_RECENT_EXCLUDE
-# 2022_07_26 lib v3.11 Set the TimeZone to America/Toronto
-#@2023_03_11 lib v3.12 Load Rear backup diff & Interval at start, used on Rear Backup status page.
+# 2017_12_31 web V2.2 Define New Variable loaded from sadmin.cfg 
+# 2017_11_11 web V2.1 Switching from PostGres to MySQL
+# 2018_01_10 web V2.3 Correct Problem When SADMIN Env. Variable was not pointing to /sadmin  
+# 2018_01_25 web V2.4 Add RRD Tools Variable 
+# 2018_03_13 web V2.5 Get Root directory of SADMIN from /etc/environment
+# 2018_04_02 web V2.6 Get SADMIN Environment Variable from /etc/profile.d/samin.sh now
+# 2018_04_04 web V2.8 Message when error while reading sadmin.cfg and sadmin.sh
+# 2018_05_04 web V2.9 User/Password for Database access moved from sadmin.cfg to .dbpass file
+# 2018_05_28 web V3.0 Added Load Backup Parameters coming from sadmin.cfg now
+# 2018_06_10 web V3.1 Change name of O/S Update script 
+# 2018_11_22 web v3.2 Read SADMIN root directory from /etc/environment on all platform now.
+# 2019_01_11 web v3.3 Definitions of Backup List & Backup Exclude file.
+# 2019_02_11 web v3.4 Add $SADMIN/www to PHP Path
+# 2019_07_16 web Remove repeating error message when not connecting to Database.
+# 2019_08_16 web v3.5 Correct Typo for number of rear backup to keep
+# 2019_08_19 web v3.6 Added Global Var. SADM_REAR_EXCLUDE_INIT for Rear Initial Options file.
+# 2020_12_26 web v3.7 Added Global Var. SADM_WWW_ARC_DIR for Server archive when deleted.
+# 2021_08_02 web v3.8 Added 'SADM_PGM2DOC' for Doc to Links file definition.
+# 2021_08_17 web v3.9 Added "SADM_MONITOR_UPDATE_INTERVAL" 
+# 2021_09_15 web v3.10 Load new Var. SADM_MONITOR_RECENT_COUNT,SADM_MONITOR_RECENT_EXCLUDE
+# 2022_07_26 web v3.11 Set the TimeZone to America/Toronto
+#@2023_03_11 web v3.12 Load Rear backup diff & Interval at start, used on Rear Backup status page.
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
