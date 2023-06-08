@@ -1,5 +1,94 @@
 # SADMIN Full Changelog
  
+## Release [1.4.7](https://github.com/jadupl2/sadmin/releases) (2023-06-08)
+
+### Backup related
+  - [sadm_backup.sh](https://sadmin.ca/sadm-backupdb) (v3.43 2023/03/26) - Write current, previous and host total backup size in log for reference.
+
+### SADMIN Client related
+  - [sadm_client_housekeeping.sh](https://sadmin.ca/sadm-client-housekeeping) (v2.09 2023/04/10) - Remove unencrypted email pwd file ($SADMIN/cfg/.gmpw) on client (not on server).
+  - [sadm_client_housekeeping.sh](https://sadmin.ca/sadm-client-housekeeping) (v2.10 2023/04/16) - On client using encrypted email pwd file '$SADMIN/cfg/.gmpw64'.
+
+### Command line tools
+  - [sadm_rmcd_starter.sh](https://sadmin.ca/sadm_rmcd_starter) (v1.9 2023/05/06) - Reduce ping wait time to speed up processing.
+
+### Configuration files
+  - [.sadmin.cfg](https://sadmin.ca/sadmin-cfg) (v2.9 2023/10/12) - Document and update all fields definitions.
+  - sadmin_client.cfg (v2.9 2023/10/12) - SADMIN client config. file that can be copied to clients (sadm_push_sadmin.sh)
+
+### SADMIN Install, Uninstall & Update
+  - [sadm_requirements.sh](https://sadmin.ca/sadm-requirements) (v1.14 2023/04/27) - Add 'base64' command to requirement list.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install/#the-setup-script) (v3.81 2023/04/04) - Access to sadmin web interface is now done using https.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install/#the-setup-script) (v3.82 2023/04/29) - Ensure that 'coreutils' package are installed.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install/#the-setup-script) (v3.83 2023/05/19) - Make sure 'isohybrid' is installed (Needed to produce ReaR bootable USB).
+  - [sadm_setup.py](https://sadmin.ca/_pages/install/#the-setup-script) (v3.84 2023/05/20) - Add 'extlinux' package to client that is sometime used by ReaR backup.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install/#the-setup-script) (v3.85 2023/06/03) - Fix intermittent problem when validating the FQDN of the SADMIN server.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install/#the-setup-script) (v3.86 2023/06/03) - Daily email report is now depreciated, the web interface have all info.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install/#the-setup-script) (v3.87 2023/06/05) - Minor corrections after testing installation on Debian 11.
+  - [setup.sh](https://sadmin.ca/_pages/install/#the-setup-script) (v3.26 2023/04/15) - Offer choice to disable SElinux temporarily or permanently during setup.
+  - [setup.sh](https://sadmin.ca/_pages/install/#the-setup-script) (v3.27 2023/05/19) - Resolve problem when asking 'selinux' question.
+  - [setup.sh](https://sadmin.ca/_pages/install/#the-setup-script) (v3.29 2023/06/05) - Remove the need for 'bind-utils/bind9-dnsutils' package during install.
+
+### Libraries, Scripts Templates, Demo
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.27 2023/04/10) - Set gmail password global variable 'sadm_gmpw'.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.28 2023/04/13) - Old Python Library 'sadmlib_std.py' is now depreciated use 'sadmlib2_std.py'.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.29 2023/04/13) - Load new variables 'SADM_REAR_DIF' & 'SADM_REAR_INTERVAL' from sadmin.cfg.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.30 2023/04/13) - Load new variable 'SADM_BACKUP_INTERVAL' from sadmin.cfg use on backup page.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.31 2023/04/14) - Email account password now encrypted in $SADMIN/cfg/.gmpw64 (base64)
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.32 2023/04/14) - Change email password file on SADM server ($SADMIN/cfg/.gmpw) encrypt automatically .gmpw64.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.33 2023/05/02) - Fix when dealing with email password on SADMIN sever.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.34 2023/05/23) - Distribution name wasn't shown in header in RedHat (lsb_release removed from distr.).
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.35 2023/05/24) - New function added "getUmask()", returning current umask.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.36 2023/05/24) - Umask now shown in script header.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.37 2023/05/24) - Fix permission problem with mail password file ($SADMIN/cfg/.gmpw).
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.38 2023/05/25) - Improve function 'locate_command()' & fix intermittent problem.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.39 2023/05/25) - Header now include for kernel version number.
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) (v4.40 2023/06/03) - Change method of getting username, was a problem with 'os.getlogin()'.
+  - [sadmlib_std_demo.py](https://sadmin.ca/sadmlib-std-py-demo) (v3.18 2023/04/13) - Add 'sadm_rear_dif', 'sadm_rear_interval', 'sadm_backup_interval' to output.
+  - [sadmlib_std_demo.py](https://sadmin.ca/sadmlib-std-py-demo) (v3.19 2023/04/14) - SADMIN server email account pwd now taken from $SADMIN/cfg/.gmpw.
+  - [sadmlib_std_demo.py](https://sadmin.ca/sadmlib-std-py-demo) (v3.20 2023/04/14) - SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64.
+  - [sadmlib_std_demo.sh](https://sadmin.ca/sadmlib-std-sh-demo) (v3.25 2023/04/13) - Add 'SADM_REAR_DIF', 'SADM_REAR_INTERVAL', 'SADM_BACKUP_INTERVAL' to output.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.17 2023/02/14) - Remove the usage of SADM_RCH_DESC.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.18 2023/03/03) - sadm_start() now clear error log '*_e.log' even when 'SADM_LOG_APPEND="Y"'
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.19 2023/03/04) - Lock file content & owner updated.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.20 2023/04/13) - Load new variables 'SADM_REAR_DIF' 'SADM_REAR_INTERVAL' from sadmin.cfg.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.21 2023/04/13) - Load new variable 'SADM_BACKUP_INTERVAL' from sadmin.cfg use on backup page.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.22 2023/04/14) - SADMIN server email account pwd now taken from $SADMIN/cfg/.gmpw.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.23 2023/04/14) - SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.24 2023/04/14) - Change email pwd ($SADMIN/cfg/.gmpw) on SADM server to generate new .gmpw64.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.25 2023/05/24) - Umask is now shown in the script header output.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) (v4.26 2023/06/06) - Set file permission on email password file to prevent problem.
+  - [sadm_template.py](https://sadmin.ca/sadm-template-py) (v1.2 2023/05/19) - If SADMIN env. var. isn't define, check /etc/environment to SADMIN directory.
+
+### System Monitoring
+  - [sadm_sysmon.pl](https://sadmin.ca/sadm-sysmon) (v2.50 2023/05/06) - Reduce ping wait time to speed up processing.
+
+### Operating System Update
+  - sadm_osupdate.sh (v3.35 2023/05/02) - Check update availability on some occasion wasn't returning an error.
+  - [sadm_osupdate_starter.sh](https://sadmin.ca/sadm-osupdate-starter) (v5.3 2023/05/06) - Reduce ping wait time to speed up processing.
+
+### SADMIN Server related
+  - [sadm_daily_farm_fetch.sh](https://sadmin.ca/sadm_daily_farm_fetch) (v4.10 2023/04/29) - Increase speed of files copy from clients to SADMIN server.
+  - [sadm_daily_farm_fetch.sh](https://sadmin.ca/sadm_daily_farm_fetch) (v4.11 2023/05/24) - Remove repeating error count in the error log.
+  - sadm_push_sadmin.sh (v2.38 2023/04/10) - Don't push gmail text password file ($SADMIN/cfg/.gmpw) to client.
+  - sadm_push_sadmin.sh (v2.39 2023/04/12) - Add '-c' option to push 'sadmin.client.cfg' to 'sadmin.cfg' to all clients.
+  - sadm_push_sadmin.sh (v2.40 2023/04/17) - Push encrypted email password file ($SADMIN/cfg/.gmpw64) to all clients.
+  - sadm_push_sadmin.sh (v2.41 2023/04/29) - Increase speed of files copy from clients to SADMIN server.
+  - sadm_server_housekeeping.sh (v2.13 2023/04/17) - Secure permission on email password files ($SADMIN/cfg/.gmpw & .gmpw64).
+  - sadm_subnet_lookup.py (v3.8 2023/05/19) - Correct problem when running at installation time ($SADMIN not set yet).
+
+### Web interface
+  - sadmInit.php (v3.12 2023/03/11) - Load Rear backup diff & Interval at start, used on Rear Backup status page.
+  - sadm_view_backup.php (v2.4 2023/03/23) - Backup status page - Lot of changes to this page, have a look.
+  - sadm_view_backup.php (v2.5 2023/04/22) - Backup status page - Alert are now shown in a tinted background for emphasis.
+  - sadm_view_rch_summary.php (v2.13 2023/02/14) - Scripts status page - Remove 'sadm_nmon_watcher' from list if not in error.
+  - sadm_view_rear.php (v2.4 2023/04/22) - ReaR backup status page - Alert are now shown in a tinted background for emphasis.
+  - sadm_view_rear.php (v2.5 2023/04/23) - ReaR backup status page - Now include size of backup & new layout.
+  - sadm_view_rear.php (v2.6 2023/04/27) - ReaR backup status page - Combine 'Last Backup Date' & 'Duration'.
+  - sadm_view_schedule.php (v2.17 2023/05/06) - O/S update status page - Enhance functionality and bug
+  - [sadm_view_sysmon.php](https://sadmin.ca/sadm-system-monitor) (v2.36 2023/04/10) - System monitor page - Bug fix when no rch and rpt files were present.
+   
+ 
 ## Release [1.4.05](https://github.com/jadupl2/sadmin/releases) (2023-02-09)
 
 ### SADMIN Install, Uninstall & Update
