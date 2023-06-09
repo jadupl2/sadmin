@@ -174,9 +174,9 @@ function display_data($count, $row)
             echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
             echo "$cdate1</span>";
         } else {
-            $tooltip = "Backup is " . $backup_age . " days old, would turn red if greater than " . SADM_BACKUP_INTERVAL . " days.";
+            $tooltip = "Backup is " . $backup_age . " days old, background will be tinted, if greater than " . SADM_BACKUP_INTERVAL . " days.";
             if (date("Y.m.d") != $cdate1) {
-                echo "<td class='dt-center'><b>";
+                echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>";
             } else {
                 echo "<td class='dt-center'>";
             }
@@ -188,8 +188,9 @@ function display_data($count, $row)
     }
 
 # Time of the last Backup
-    echo "\n<td class='dt-center'>";
+    #echo "\n<td class='dt-center'>";
     if ($row['srv_backup'] == True) {
+        echo "\n<td class='dt-center'>";
         list($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT(
             $row['srv_backup_dom'],
             $row['srv_backup_month'],
@@ -200,6 +201,7 @@ function display_data($count, $row)
         #echo $STR_SCHEDULE ;
         echo sprintf("%02d", $row['srv_backup_hour']) . ":" . sprintf("%02d", $row['srv_backup_minute']);
     } else {
+        echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'>";
         echo "<b>Deactivated</b>";
     }
     echo "</td>\n";
@@ -397,11 +399,11 @@ function display_data($count, $row)
 
 # Show [log] to view backup log
     if (file_exists($log_name)) {
-        echo "<td class='dt-center'>";
+        echo "<td class='dt-center'  style='color:blue' >";
         echo "\n<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'";
         echo " title='View Backup Log'>[log]</a>&nbsp;";
     } else {
-        echo "<td class='dt-center'><font color='red'><b>No data</b>";
+        echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>No data</b>";
     }
 
 # Show [elog] to view backup error log (If exist)
