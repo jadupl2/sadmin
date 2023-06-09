@@ -177,7 +177,7 @@ function display_data($count, $row) {
             echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ;
             echo "</span>"; 
         }else{
-            $tooltip = "Backup is " .$backup_age. " days old, will turn red  if greater than " .SADM_REAR_BACKUP_INTERVAL. "days.";
+            $tooltip = "Backup is " .$backup_age. " days old, will have a tinted background, if greater than " .SADM_REAR_BACKUP_INTERVAL. " days.";
             echo "<td align='center'>";
             echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
             echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ; 
