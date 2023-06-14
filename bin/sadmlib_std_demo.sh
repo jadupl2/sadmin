@@ -868,7 +868,7 @@ print_sadmin_cfg()
     
     pexample="\$SADM_RW_DBUSER"                                         # Directory Variable Name
     pdesc="SADMIN Database Read/Write User"                         
-    result="$SADM_RW_DBUSER"                                  # Actual Content of Variable
+    presult="$SADM_RW_DBUSER"                                            # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_RW_DBPWD"                                          # Directory Variable Name
