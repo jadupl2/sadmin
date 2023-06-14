@@ -344,7 +344,7 @@ export SADM_DBHOST="sadmin.maison.ca"                                   # MySQL 
 export SADM_DBPORT=3306                                                 # MySQL Listening Port
 export SADM_RW_DBUSER=""                                                # MySQL Read/Write User
 export SADM_RW_DBPWD=""                                                 # MySQL Read/Write Passwd
-export SADM_RO_DBUSER=""  False                                              # MySQL Read Only User
+export SADM_RO_DBUSER=""                                                # MySQL Read Only User
 export SADM_RO_DBPWD=""                                                 # MySQL Read Only Passwd
 export SADM_SERVER=""                                                   # Server FQDN Name
 export SADM_DOMAIN=""                                                   # Default Domain Name
@@ -2159,9 +2159,11 @@ sadm_start() {
 
     # Check if this script to be run only by root user
     if [ ! -z "$SADM_ROOT_ONLY" ] && [ $SADM_ROOT_ONLY == "Y" ] &&  [ $(id -u) -ne 0 ]  
-        then sadm_write_err "Script can only be run by the 'root' user" # Advise User Message
+        then sadm_write_err " "
+             sadm_write_err "Script can only be run by the 'root' user" # Advise User Message
              sadm_write_err "Try 'sudo ${0##*/}'"                       # Suggest using sudo
              sadm_write_err "Process aborted"                           # Abort advise message
+             sadm_write_err " "
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S with Error
     fi
