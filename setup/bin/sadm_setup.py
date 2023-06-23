@@ -116,7 +116,7 @@
 # 2023_06_03 install v3.85 Fix intermittent problem when validating the FQDN of the SADMIN server.
 # 2023_06_03 install v3.86 Daily email report is now depreciated, the web interface have all info.
 # 2023_06_05 install v3.87 Minor corrections after testing installation on Debian 11.
-#
+#@2023_06_20 install v3.88 Add $SADMIN/usr/bin to sudo secure path.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -133,7 +133,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.87"                                            # Setup Version Number
+sver                = "3.88"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -688,7 +688,7 @@ def special_install(lpacktype,sosname,logfile) :
 #===================================================================================================
 # MAKE SURE SADMIN SUDO FILE IS IN PLACE
 #===================================================================================================
-def update_sudo_file(logfile,wuser) :
+def update_sudo_file(sroot,logfile,wuser) :
 
     writelog('')
     writelog('--------------------')
@@ -719,7 +719,7 @@ def update_sudo_file(logfile,wuser) :
     hsudo.write ('Defaults  !requiretty')                               # Session don't require tty
     hsudo.write ('\nDefaults  env_keep += "SADMIN"')                    # Keep Env. Var. SADMIN 
     hsudo.write ("\n%s ALL=(ALL) NOPASSWD: ALL\n" % (wuser))            # No Passwd for SADMIN User
-    hsudo.write ("\nDefaults secure_path='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/sadmin/bin'")
+    hsudo.write ("\nDefaults secure_path='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:%s/bin:%s/usr/bin'" % (sroot,sroot))
     hsudo.close()                                                       # Close SADMIN sudo  file
 
     # Change sudo file permission to 440
@@ -2663,7 +2663,7 @@ def mainflow(sroot):
     # special_install(packtype,sosname,logfile)                           # Install pymysql module
 
     # Create SADMIN user sudo file
-    update_sudo_file(logfile,uuser)                                     # Create User sudo file
+    update_sudo_file(sroot,logfile,uuser)                                     # Create User sudo file
 
     # Create SADMIN User crontab file
     update_client_crontab_file(logfile,sroot,wostype,uuser)             # Create SADM User Crontab 
