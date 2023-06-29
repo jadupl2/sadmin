@@ -34,6 +34,7 @@
 try:
     import os, sys, argparse, time, datetime, socket, platform      # Import Std Python3 Modules
     import pymysql                                                  # Use for MySQL DB
+    from psutil import process_iter
 #   import pdb                                                      # Python Debugger (If needed)
 except ImportError as e:                                            # Trap Import Error
     print("Import Error : %s " % e)                                 # Print Import Error Message
@@ -91,16 +92,41 @@ sa.cmd_ssh_full      = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port) # SSH Cmd 
 
 
 
-
-# Scripts Global Variables
+# Global Variables Definition
 # --------------------------------------------------------------------------------------------------
+nmon_name="nmon"                                                        # Nmon process name
 
 
 
 
+# Check if process name received is running
+# --------------------------------------------------------------------------------------------------
+def is_process_running(pname): 
 
+    """
+    Trim the file received to the number of lines indicated in the second parameter.
+        - If 2nd parameter 'nlines' is omitted a value of 500 is use.
+        - If 2nd parameter 'nlines' is specified and is 0, then no trim is done on the file.
+        
+    Arguments:
+        pname (str) :  Name of process to verify
 
+    Returns:
+        returncode (bool) : 
+            - True, when process is running.
+            - Flase, when Process isn't running.
+    """ 
 
+    names = []
+    ids   = []
+
+    for proc in process_iter():
+        name = proc.name()
+        id   = proc.pid
+        if len(proc.name()) == len(pname) and (proc.name() == nmon_name):
+            print ("Found",proc.name(),"- it have pid", id)
+            return(0)
+    return(1)
 
 
 
@@ -109,11 +135,7 @@ sa.cmd_ssh_full      = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port) # SSH Cmd 
 # --------------------------------------------------------------------------------------------------
 def main_process():
 
-    if sa.get_osname() == "DARWIN" :                                    # nmon not available on OSX
-        sa.write_log ("Command 'nmon' isn't available on MacOS")        # Advise user that won't run
-        sa.write_log ("Script can't continue, terminating.")            # Process can't continue
-        return(0)                                                       # Return to caller
-
+    is_process_running(nmon_name)
 
     return(pexit_code)
 
