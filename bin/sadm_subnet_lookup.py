@@ -35,12 +35,12 @@
 # 2022_07_27 server v3.6 Bug fix when ping were reported when it wasn't.
 # 2022_08_17 nolog  v3.7 Remove debug info & update to use the new SADMIN Python Library v2.2.
 # 2023_05_19 server v3.8 Correct problem when running at installation time ($SADMIN not set yet).
+#@2023_07_09 server v3.9 Change code to get the mac address of ip (Remove python module getmac)
 # --------------------------------------------------------------------------------------------------
 #
 try :
     import os,time,argparse,sys,pdb,socket,datetime,pwd,grp,pymysql,subprocess,ipaddress,re
     from subprocess import Popen, PIPE   
-    #from getmac import get_mac_address                                  # For Getting IP Mac Address
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -85,7 +85,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)  
 
 # Local variables local to this script.
-pver        = "3.8"                                                     # Program version
+pver        = "3.9"                                                     # Program version
 pdesc       = "Produce Web network page that list IP, name and mac usage for subnet you specified."
 phostname   = sa.get_hostname()                                         # Get current `hostname -s`
 pdb_conn    = None                                                      # Database connector
@@ -334,6 +334,8 @@ def scan_network(snet,wconn,wcur) :
     fp = open(fpingfile,'r')
     ping_array = fp.read()
     #print("The Array is: \n", ping_array) #printing the array
+
+
     # ITERATING THROUGH THE USABLE ADDRESSES ON A NETWORK:
     for ip in NET4.hosts():                                             # Loop through possible IP
         hip = str(ipaddress.ip_address(ip))                             # Save processing IP
@@ -353,13 +355,12 @@ def scan_network(snet,wconn,wcur) :
             hactive = 0                                                 # IP is not Reachable
             sa.write_log("%-16s Command 'fping' say it's not active." % (hip)) 
 
-        # Get the Mac Address of IP
+# Get the Mac Address of IP
         hmac = ''                                                       # Clear Work Mac Address
         hmac = sa.get_mac_address(hip)                                  # Get Mac Address of IP 
-        if pdebug > 4 : print ( "get_mac_address returned '%s'" % (hmac)) # Show debug info
+        if pdebug > 4 : print ("get_mac_address is '%s'" % (hmac))      # Show debug info
         if hmac == "<incomplete>" : hmac = ""
-                #if hmac == "00:00:00:00:00:00" : hmac=""                        # If can't get Mac Address
-        if pdebug > 4 : print ( "The working Mac is : .%s." % (hmac))     # Print Final hmac Content
+        if pdebug > 4 : print ( "The working Mac is : .%s." % (hmac))   # Print Final hmac Content
 
         # Create an IP field with leading zero
         (ip1,ip2,ip3,ip4) = hip.split('.')                              # Split IP Address
@@ -381,9 +382,9 @@ def scan_network(snet,wconn,wcur) :
             cdata = [hip,zip,hname,hmac,hmanu,hactive]                  # Data to Insert
             dberr = db_insert(wconn,wcur,hip,cdata,False)               # Insert New IP in Table
             if (dberr != 0) :                                           # Did the insert went well ?
-                sa.write_log("[ Error ] %d adding '%s' to database" % (dberr,hip))
+                sa.write_log("%-16s [ Error ] %d adding to database" % (hip,dberr))
             else :
-                sa.write_log("[ OK ] %s inserted in database" % (hip))
+                sa.write_log("%-16s [ OK ] inserted in database" % (hip))
                 if (pdebug > 4) :
                     sa.write_log("Data inserted: IP:%s Host:%s Mac:%s Vend:%s Active:%d" 
                     % (hip,hname,hmac,hmanu,hactive))

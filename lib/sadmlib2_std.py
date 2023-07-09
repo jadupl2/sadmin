@@ -51,7 +51,7 @@
 # 2023_05_25 lib v4.38 Improve function 'locate_command()' & fix intermittent problem.
 # 2023_05_25 lib v4.39 Header now include for kernel version number.
 # 2023_06_03 lib v4.40 Change method of getting username, was a problem with 'os.getlogin()'.
-#
+#@2023_07_09 lib v4.41 Added function 'get_mac_address', to get mac address of an ip.
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -87,7 +87,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.40"                                # This Library Version
+lib_ver             = "4.41"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -732,6 +732,7 @@ def oscommand (command : str) :
 
 
 
+# --------------------------------------------------------------------------------------------------
 # Function that return the Mac Address of the received IP address.
 def get_mac_address(ip_address):
 
@@ -750,11 +751,12 @@ def get_mac_address(ip_address):
         mac_address = ""  
     else :
         mac_address = cstdout.split()[3]
+    if mac_address == "<incomplete>" : mac_address = ""
     return mac_address
 
 
 
-
+# --------------------------------------------------------------------------------------------------
 # Function will Sleep for a number of seconds.
 #   - 1st parameter is the time to sleep in seconds.
 #   - 2nd Parameter is the interval in seconds, user will be showed the elapse number of seconds.

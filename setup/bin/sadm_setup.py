@@ -117,6 +117,7 @@
 # 2023_06_03 install v3.86 Daily email report is now depreciated, the web interface have all info.
 # 2023_06_05 install v3.87 Minor corrections after testing installation on Debian 11.
 #@2023_06_20 install v3.88 Add $SADMIN/usr/bin to sudo secure path.
+#@2023_07_09 install v3.89 Fix problem with sadmin web server config on Debian 12.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -133,7 +134,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.88"                                            # Setup Version Number
+sver                = "3.89"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -1478,6 +1479,15 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         writelog ("The Web service may not start. ")
 
 # Start Web Server
+    if (spacktype == "deb" ) : 
+        cmd = "a2enmod ssl" 
+        writelog ("  - Activate Apache encryption module - %s" % (cmd))
+        ccode,cstdout,cstderr = oscommand(cmd)
+        if (ccode != 0):                                                    # If problem creating user
+            writelog ("Problem Activating apache2 encryption module.")      # Show Return Code No
+            writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+            writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+
     cmd = "systemctl restart %s" % (sservice)
     writelog ("  - Making sure Web Server is started - %s" % (cmd))
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Load DB
