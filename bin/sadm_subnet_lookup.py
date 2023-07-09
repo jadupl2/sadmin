@@ -202,7 +202,7 @@ def db_insert(wconn,wcur,tbkey,tbdata,dbsilent=False):
     wdate = time.strftime('%Y-%m-%d %H:%M:%S')                          # Save Current Date & Time
 
     # If IP is pingable then update the last ping date
-    if (tbdata[5] == True):                                             # If IP Was pingable
+    if (tbdata[5] == 1 ) :                                              # If IP active
         wpingdate = wdate                                               # Pingable Update Ping Date
     else:                                                               # If IP is not pingable
         wpingdate = '0000-00-00 00:00:00'                               # No Ping Date by Default
