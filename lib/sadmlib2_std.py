@@ -701,6 +701,60 @@ def write_err (wline, lf=True ):
     return(0) 
 
 
+
+# --------------------------------------------------------------------------------------------------
+def oscommand (command : str) :
+    
+    """ 
+        Execute the O/S command received.
+    
+    Args:
+        command (str): The command to execute.
+
+    Returns:
+        returncode (int) :  0 When command executed with no error.
+                            1 When error occurred when executing the command
+        out (str)        :  Contain the stdout of the command executed
+        err (str)        :  Contain the stderr of the command executed
+    """
+
+    if lib_debug > 8 : write_log ("oscommand function to run command : %s" % (command))
+    #p = subprocess.Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    out = p.stdout.read().strip().decode()
+    err = p.stderr.read().strip().decode()
+    returncode = p.wait()
+    if lib_debug > 8 :
+        write_log ("oscommand function stdout is     : %s" % (out))
+        write_log ("oscommand function stderr is     : %s" % (err))
+        write_log ("oscommand function returncode is : %s" % (returncode))
+    return (returncode,out,err)
+
+
+
+# Function that return the Mac Address of the received IP address.
+def get_mac_address(ip_address):
+
+    """ 
+        get_mac_address (ip_address) 
+        Return the Mac Address of the IP received.
+        
+        Args:
+            ip_address (str) : IP address to get the mac address.
+        Returns:
+            The mac address of the IP or blank "" if not found.
+    """
+
+    ccode, cstdout, cstderr = oscommand("arp -a %s" % (ip_address))
+    if 'no match found' in cstdout : 
+        mac_address = ""  
+    else :
+        mac_address = cstdout.split()[3]
+    return mac_address
+
+
+
+
 # Function will Sleep for a number of seconds.
 #   - 1st parameter is the time to sleep in seconds.
 #   - 2nd Parameter is the interval in seconds, user will be showed the elapse number of seconds.
@@ -962,34 +1016,6 @@ def touch_file (filename : str) :
     return(rc)
 
 
-
-# --------------------------------------------------------------------------------------------------
-def oscommand (command : str) :
-    
-    """ 
-        Execute the O/S command received.
-    
-    Args:
-        command (str): The command to execute.
-
-    Returns:
-        returncode (int) :  0 When command executed with no error.
-                            1 When error occurred when executing the command
-        out (str)        :  Contain the stdout of the command executed
-        err (str)        :  Contain the stderr of the command executed
-    """
-
-    if lib_debug > 8 : write_log ("oscommand function to run command : %s" % (command))
-    #p = subprocess.Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
-    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    out = p.stdout.read().strip().decode()
-    err = p.stderr.read().strip().decode()
-    returncode = p.wait()
-    if lib_debug > 8 :
-        write_log ("oscommand function stdout is     : %s" % (out))
-        write_log ("oscommand function stderr is     : %s" % (err))
-        write_log ("oscommand function returncode is : %s" % (returncode))
-    return (returncode,out,err)
 
 
 

@@ -430,39 +430,39 @@ check_python3()
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
-        else printf "\n   - Installing module 'pymysql' - pip3 install pymysql" 
-             pip3 install pymysql  > /dev/null 2>&1
-             if [ $? -ne 0 ]
-                then echo " " | tee -a $SLOG
-                     echo "----------" | tee -a $SLOG
-                     echo "We have problem installing python module 'pymysql'." | tee -a $SLOG
-                     echo "Please install pymysql package (pip3 install pymysql)" | tee -a $SLOG
-                     echo "Then run this script again." | tee -a $SLOG 
-                     echo "----------" | tee -a $SLOG
-                     exit 1
-                else echo " [ OK ] " | tee -a $SLOG
-             fi
-    fi
+             return 0
+    fi 
 
-    # Check if python3 'getmac' module is installed 
-    printf "   - Making sure that python3 'getmac' module is installed ... " | tee -a $SLOG
-    python3 -c "import getmac" > /dev/null 2>&1
-    if [ $? -eq 0 ] 
-        then echo "[ OK ] " | tee -a $SLOG
-        else printf "\n   - Installing module - pip3 install getmac" 
-             pip3 install getmac  > /dev/null 2>&1
-             if [ $? -ne 0 ]
-                then echo " " | tee -a $SLOG
-                     echo "----------" | tee -a $SLOG
-                     echo "We have problem installing python module 'getmac'." | tee -a $SLOG
-                     echo "Please install getmac package (pip3 install getmac)" | tee -a $SLOG
-                     echo "Then run this script again." | tee -a $SLOG 
-                     echo "----------" | tee -a $SLOG
-                     exit 1
-                else echo " [ OK ] " | tee -a $SLOG
-             fi
-    fi
 
+    printf "\n   - Installing module 'pymysql' - pip3 install pymysql" 
+
+    if [ "$SADM_PACKTYPE" = "rpm" ] 
+        then  if [ "$SADM_OSVERSION" -lt 8 ]
+                 then printf "\n   - Running 'yum -y install python3-pymysql'\n" |tee -a $SLOG
+                      yum -y install python3-pymysql  >> $SLOG 2>&1
+                 else printf "\n   - Running 'dnf -y install python3-pymysql'\n" |tee -a $SLOG
+                      dnf -y install python3-pymysql >>$SLOG 2>&1
+              fi 
+    fi 
+    
+    if [ "$SADM_PACKTYPE" = "deb" ] 
+        then apt-get update >> $SLOG 2>&1
+             printf "\n   - Running 'apt-get -y install python3-pymysql'"| tee -a $SLOG
+             apt-get -y install python3-pymysql>>$SLOG 2>&1
+    fi 
+    
+    # Test if install succeeded
+    python3 -c "import pymysql" > /dev/null 2>&1  > /dev/null 2>&1
+    if [ $? -ne 0 ]
+       then echo " " | tee -a $SLOG
+            echo "----------" | tee -a $SLOG
+            echo "We have problem installing python module 'pymysql'." | tee -a $SLOG
+            echo "Please install pymysql package (pip3 install pymysql)" | tee -a $SLOG
+            echo "Then run this script again." | tee -a $SLOG 
+            echo "----------" | tee -a $SLOG
+            exit 1
+       else echo " [ OK ] " | tee -a $SLOG
+    fi
     return 0                                                            # Return No Error to Caller
 }
 

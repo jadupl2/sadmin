@@ -40,7 +40,7 @@
 try :
     import os,time,argparse,sys,pdb,socket,datetime,pwd,grp,pymysql,subprocess,ipaddress,re
     from subprocess import Popen, PIPE   
-    from getmac import get_mac_address                                  # For Getting IP Mac Address
+    #from getmac import get_mac_address                                  # For Getting IP Mac Address
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -298,7 +298,9 @@ def db_update(wconn,wcur,wip,wzero,wname,wmac,wman,wping,wdateping,wdatechange):
 def scan_network(snet,wconn,wcur) :
     global pdebug
 
-    # GET MAIN NETWORK INTERFACE NAME 
+    scan_status = 0                                                     # 0=No error 1=Error in func
+
+# GET MAIN NETWORK INTERFACE NAME 
     cmd = "route -n |grep '^0.0.0.0' |awk '{ print $NF }'"              # Get Default Route DevName
     ccode,cstdout,cstderr = sa.oscommand(cmd)                           # Run the arp-scan command
     if (ccode != 0):                                                    # If Error running command
@@ -317,7 +319,7 @@ def scan_network(snet,wconn,wcur) :
     snetmask = NET4.netmask                                             # Save Network Netmask
     sa.write_log ("Network netmask                 : %s" % (snetmask))  # Show User Netmask
 
-    # Run fping on Subnet and generate a file containing that IP of servers alive.
+# Run fping on Subnet and generate a file containing that IP of servers alive.
     fpingfile = "%s/fping.txt" % (sa.dir_net)                           # fping result file name
     cmd  = "fping -aq -r1 -g %s 2>/dev/null |tee %s" % (snet,fpingfile) # fping cmd
     sa.write_log ("\nRunning fping and output to %s" % (fpingfile))     # Show fping output filename
@@ -346,31 +348,32 @@ def scan_network(snet,wconn,wcur) :
         #print("The search ip is : ...%s...\n" % (search_ip)) 
         if search_ip in ping_array:
             hactive = 1                                                 # IP is reachable
-            sa.write_log("%-16s fping say it is active" % (hip))   
+            sa.write_log("%-16s Command 'fping' say it's active." % (hip))   
         else: 
             hactive = 0                                                 # IP is not Reachable
-            sa.write_log("%-16s fping say it isn't active" % (hip)) 
+            sa.write_log("%-16s Command 'fping' say it's not active." % (hip)) 
 
         # Get the Mac Address of IP
         hmac = ''                                                       # Clear Work Mac Address
-        hmac = get_mac_address(ip=hip, network_request=True)            # Get Mac Address of IP 
-        if pdebug > 4 : print ( "get_mac_address returned .%s." % (hmac)) # Show debug info
-        if hmac == "00:00:00:00:00:00" : hmac=""                        # If can't get Mac Address
+        hmac = sa.get_mac_address(hip)                                  # Get Mac Address of IP 
+        if pdebug > 4 : print ( "get_mac_address returned '%s'" % (hmac)) # Show debug info
+        if hmac == "<incomplete>" : hmac = ""
+                #if hmac == "00:00:00:00:00:00" : hmac=""                        # If can't get Mac Address
         if pdebug > 4 : print ( "The working Mac is : .%s." % (hmac))     # Print Final hmac Content
 
         # Create an IP field with leading zero
         (ip1,ip2,ip3,ip4) = hip.split('.')                              # Split IP Address
         zip = "%03d.%03d.%03d.%03d" % (int(ip1),int(ip2),int(ip3),int(ip4)) # Ip with Leading Zero
 
-        # Card manufacturer
+# Card manufacturer
         hmanu = ''                                                      # Clear Work Vendor
 
-        # Format info and insert it in the 'netdict' array
+# Format info and insert it in the 'netdict' array
         WLINE = "%s,%s,%s,%s,%d" % (zip, hname, hmac, hmanu, hactive)   # Format Output file Line
         netdict[hip] = WLINE                                            # Put Line in Dictionary
         if (pdebug > 4) : sa.write_log ("Put %s info '%s' in array" % (hip,WLINE))
 
-        # Verify if IP is in the SADMIN database
+# Verify if IP is in the SADMIN database
         if (pdebug > 4) : sa.write_log("Checking if IP '%s' exist in database" % (hip))   
         (dberr,dbrow) = db_readkey(wconn,wcur,hip,True)                 # Read IP Row if Exist
         if (dberr != 0):                                                # If IP Not in Database
@@ -386,7 +389,7 @@ def scan_network(snet,wconn,wcur) :
                     % (hip,hname,hmac,hmanu,hactive))
             continue                                                    # Continue with next IP
 
-        # IP was found - Get existing IP data
+# IP was found - Get existing IP data
         #pdb.set_trace()                                                # Activate Python debugging
         row_hostname = dbrow['net_hostname']                            # Save Hostname
         row_mac      = dbrow['net_mac']                                 # Save DB Mac Adress
@@ -399,41 +402,46 @@ def scan_network(snet,wconn,wcur) :
             % (row_hostname,row_mac,row_ping,row_pingdate,row_datechg))
         wdate = time.strftime('%Y-%m-%d %H:%M:%S')                      # Format Current Date & Time
 
-        # If IP Pingable save ping date and ping status
+# Show ping date - If IP Pingable save ping date and ping status
         if (hactive == 1) :                                             # If IP is pingable now
             row_ping = 1                                                # Update Row Ping Info work
-            sa.write_log("%-16s Ping worked, update ping date from %s to %s" % (hip,row_pingdate,wdate))
+            sa.write_log("%-16s Ping worked - Update last ping date from %s to %s" % (hip,row_pingdate,wdate))
             row_pingdate = wdate                                        # Update Last Ping Date
         else:
             row_ping = 0                                                # Upd. Row Info not pingable
-            sa.write_log("%-16s Ping didn't worked, leave last ping date as it is." % (hip))
+            sa.write_log("%-16s Ping didn't worked - Leave last ping date as it is '%s'." % (hip,row_pingdate))
 
 
-        # If MAC have changed, update MAC and last change date/time.
+# If MAC have changed, update MAC and last change date/time.
+        if row_mac == "<incomplete>" : row_mac = hmac = ""
         if row_mac != hmac :                                            # If MAC Changed
-            if hmac == "" or hmac is None :                             # If No MAC (No card)
-                sa.write_log("%-16s No MAC address for the moment" % (hip))
+            if hmac == "" or hmac is None :                             # If No MAC (No card or off)
+                hmac = "" 
+                sa.write_log("%-16s No MAC address change, still at %s." % (hip,row_mac))
             else:
                 if hmac is not None : 
-                    sa.write_log("%-16s >>>> Mac address changed from '%s' to '%s'" % (hip,row_mac,hmac))
+                    sa.write_log("%-16s >>>>> Mac address changed from '%s' to '%s'." % (hip,row_mac,hmac))
                     row_datechg = wdate                                 # MAC Changed Upd. Date Chng
                     row_mac = hmac                                      # Update IP Mac Address
+                    sa.write_log("%-16s Keep old mac at '%s' since new mac is the same '%s'." % (hip,row_mac,hmac))
                 else :
-                    sa.write_log("%-16s Keep old mac at '%s' since new mac is '%s'" % (hip,row_mac,hmac))
+                    sa.write_log("%-16s Keep old mac at '%s' since new mac is the same '%s'." % (hip,row_mac,hmac))
         else :
-            sa.write_log ("%-16s No MAC address changed ('%s')" % (hip,hmac))
+            #sa.write_log ("%-16s No MAC address changed ('%s')" % (hip,hmac))
+            sa.write_log ("%-16s No MAC address changed, still at '%s'." % (hip,row_mac))
     
-        # If actual hostname is different from the last execution, update last change date
+# If actual hostname is different from the last execution, update last change date
         if (row_hostname != hname):
-            sa.write_log("%-16s >>>> Host Name changed from '%s' to '%s'" % (hip,row_hostname,hname))
+            sa.write_log("%-16s >>>>> Host Name changed from '%s' to '%s'" % (hip,row_hostname,hname))
             row_datechg = wdate                                         # Hostname Chg Upd Date Chng
             row_hostname = hname                                        # Update IP new hostname
 
-        # GO UPDATE DATABASE
+# GO UPDATE DATABASE
         if (pdebug > 4) : sa.write_log ("Updating '%s' data" % (hip))
         dberr = db_update(wconn,wcur,hip,zip,row_hostname,row_mac,row_manu,row_ping,row_pingdate,row_datechg)
         if (dberr != 0) :                                               # If no Error updating IP
             sa.write_log("%-16s [ ERROR ] Updating databse" % (hip))    # Advise User Update Error
+            scan_status = 1
         else :
             if (pdebug > 4) : 
                 sa.write_log("Update: IP:%s Host:%s Mac.%s Vend:%s Active:%d PingDate:%s ChangeDate:%s" 
@@ -441,7 +449,7 @@ def scan_network(snet,wconn,wcur) :
             sa.write_log("%-16s [ OK ] Database updated\n" % (hip))       # Advise User Update Error
     
     #close(fp)
-    return(0)                                                           # Return to Caller
+    return(scan_status)                                                           # Return to Caller
 
 #===================================================================================================
 #                                  M A I N     P R O G R A M
