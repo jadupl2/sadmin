@@ -36,8 +36,6 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
-#@2023_06_13 lib v 1.56 Replace 'if [ -z $SADMIN ]' by 'if [ -z "$SADMIN" ]' '
-# ---------------------------------------------------------------------------------------
 
 # Make Sure Environment Variable 'SADMIN' Is Defined.
 if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
