@@ -52,7 +52,7 @@ except ImportError as e:                                            # Trap Impor
 try:
     SADM = os.environ['SADMIN']                                      # Get SADMIN Env. Var. Dir.
 except KeyError as e:                                                # If SADMIN is not define
-    print("Please make sure 'SADMIN' environment variable is define.\n%s\n" % e)                           
+    print("Please make sure 'SADMIN' environment variable is defined.\n%s\nScript aborted.\n" % e) 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 try: 
@@ -67,8 +67,8 @@ except ImportError as e:                                             # If Error 
 pver        = "1.2"                                                  # Program version no.
 pdesc       = "Update 'pdesc' variable & put a description of your script."
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
-pdb_conn    = None                                                   # Database connector
-pdb_cur     = None                                                   # Database cursor
+pdb_conn    = None                                                   # Database connector when used
+pdb_cur     = None                                                   # Database cursor when used
 pdebug      = 0                                                      # Debug level from 0 to 9
 pexit_code  = 0                                                      # Script default exit code
 
@@ -213,10 +213,10 @@ def cmd_options(argv):
               [-h]      Show this help message
               [-v]      Show script version information
         Returns:
-            sadm_debug (int)          : Set to the debug level [0-9] (Default is 0)
+            debug_opt (int)          : Set to the debug level [0-9] (Default is 0)
     """
 
-    sadm_debug = 0                                                      # Script Debug Level (0-9)
+    debug_opt = 0                                                      # Script Debug Level (0-9)
     parser = argparse.ArgumentParser(description=pdesc)                 # Desc. is the script name
 
     # Declare Arguments
@@ -227,20 +227,20 @@ def cmd_options(argv):
     parser.add_argument("-d",
                         metavar="0-9",
                         type=int,
-                        dest='sadm_debug',
+                        dest='debug_opt',
                         help="debug/verbose level from 0 to 9",
                         default=0)
     
     args = parser.parse_args()                                          # Parse the Arguments
 
     # Set return values accordingly.
-    if args.sadm_debug:                                                 # Debug Level -d specified
-        sadm_debug = args.sadm_debug                                    # Save Debug Level
-        print("Debug Level is now set at %d" % (sadm_debug))            # Show user debug Level
+    if args.debug_opt:                                                  # Debug Level -d specified
+        debug_opt = args.debug_opt                                      # Save Debug Level
+        print("Debug Level is now set at %d" % (debug_opt))             # Show user debug Level
     if args.version:                                                    # If -v specified
         sa.show_version(pver)                                           # Show Custom Show Version
         sys.exit(0)                                                     # Exit with code 0
-    return(sadm_debug)                                                  # Return opt values
+    return(debug_opt)                                                   # Return opt values
 
 
 
