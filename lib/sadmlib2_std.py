@@ -52,6 +52,7 @@
 # 2023_05_25 lib v4.39 Header now include for kernel version number.
 # 2023_06_03 lib v4.40 Change method of getting username, was a problem with 'os.getlogin()'.
 #@2023_07_09 lib v4.41 Added function 'get_mac_address', to get mac address of an ip.
+#@2023_07_11 lib v4.42 Fix minor bugs
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -87,7 +88,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.41"                                # This Library Version
+lib_ver             = "4.42"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -118,7 +119,7 @@ log_footer          = True                                  # True = Produce Log
 multiple_exec       = False                                 # Allow running multiple Instance ?
 db_used             = False                                 # Use or Not MySQL DB ?
 db_silent           = False                                 # Show ErrMsg when error
-use_rch            = True                                   # True = Use RCH File ?
+use_rch             = True                                  # True = Use RCH File ?
 pid_timeout         = 7200                                  # PID File TTL default
 lock_timeout        = 3600                                  # Host Lock File TTL 
 max_logline         = 500                                   # Max Nb. Lines in LOG
@@ -1098,7 +1099,7 @@ def get_ostype():
             None
         Return:
             Return The OS Type (LINUX, AIX, DARWIN, WINDOWS)
-            Result are always returned in Uppercase 
+            Result are always returned in Uppercase. 
             If couldn't determine O/S type, an empty string is returned.
     """
     
@@ -1721,7 +1722,7 @@ def load_cmd_path():
         if cmd_fdisk       == "" : requisites_status=False              # if blank didn't find it
         cmd_dmidecode       = locate_command('dmidecode')               # Locate dmidecode command
         if cmd_dmidecode   == "" : requisites_status=False              # if blank didn't find it
-        cmd_parted          = locate_command('parted')                  # Locate the nmon command
+        cmd_parted          = locate_command('parted')                  # Locate the parted command
         if cmd_parted      == "" : requisites_status=False              # if blank didn't find it
         cmd_lscpu           = locate_command('lscpu')                   # Locate the lscpu command
         if cmd_lscpu       == "" : requisites_status=False              # if blank didn't find it
@@ -1737,7 +1738,7 @@ def load_cmd_path():
     if cmd_ssh   == "" : requisites_status=False                        # If blank didn't find it
     cmd_perl     = locate_command('perl')                               # Locate the perl command
     if cmd_perl  == "" : requisites_status=False                        # if blank didn't find it
-    cmd_nmon     = locate_command('perl')                               # Locate the perl command
+    cmd_nmon     = locate_command('nmon')                               # Locate the nmon command
     if cmd_nmon  == "" : requisites_status=False                        # if blank didn't find it
     cmd_ethtool  = locate_command('ethtool')                            # Locate the ethtool command
     if cmd_ethtool == "" : requisites_status=False                      # if blank didn't find it
