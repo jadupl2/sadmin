@@ -437,7 +437,7 @@ check_python3()
     fi 
 
 
-    printf "\n   - Installing module 'pymysql'." 
+    printf "\n   - Installing Python module 'pymysql'." 
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
