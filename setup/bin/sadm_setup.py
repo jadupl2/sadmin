@@ -118,6 +118,7 @@
 # 2023_06_05 install v3.87 Minor corrections after testing installation on Debian 11.
 #@2023_06_20 install v3.88 Add $SADMIN/usr/bin to sudo secure path.
 #@2023_07_09 install v3.89 Fix problem with sadmin web server config on Debian 12.
+#@2023_07_12 install v3.90 Initial 'sadm_client' crontab now using python ver. of 'sadm_nmon_watcher'.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -134,7 +135,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.89"                                            # Setup Version Number
+sver                = "3.90"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -458,8 +459,8 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     #hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
     #hcron.write ("# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
     hcron.write ("# \n")
-    hcron.write ("# Every 45 Min, this script make sure the 'nmon' performance collector is running.\n")
-    hcron.write ("*/45 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.sh > /dev/null 2>&1\n" % (wuser))
+    hcron.write ("# Every 30 Min, this script make sure the 'nmon' performance collector is running.\n")
+    hcron.write ("*/30 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.py > /dev/null 2>&1\n" % (wuser))
     hcron.write ("# \n")
     hcron.write ("# \n")
     hcron.write ("# Run these four scripts in sequence, just before midnight every day:\n")
