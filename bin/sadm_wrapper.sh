@@ -14,16 +14,16 @@
 #                  Let's say you are on host 'server1' and you want to run a script name 'test.sh' 
 #                  located in $SADMIN/bin you would run it like this:
 #
-#                       # $SADMIN/bin/sadm_wrapper.sh "$SADMIN/bin/test.sh"
+#                       # $SADMIN/bin/sadm_wrapper.sh "$SADMIN/usr/bin/sadm_test.sh"
 #
 #                   After execution of your script you could check the log generated :
 #
-#                       # $SADMIN/log/server1_sadm_test.log
+#                       # cat $SADMIN/log/${ServerName}_sadm_test.log
 #
 #                   Also you could see if your script succeeded and see starting, ending 
 #                     and execution time 
 #
-#                       # cat $SADMIN/dat/rch/server1_sadm_test.rch
+#                       # cat $SADMIN/dat/rch/${ServerName}_sadm_test.rch
 #                           server1 2018.01.07 22:30:03 .......... ........ ........ test 2
 #                           server1 2018.01.07 22:30:03 2018.01.07 22:39:03 00:09:00 test 0
 #       
@@ -43,75 +43,100 @@
 #
 # ==================================================================================================
 # Changelog
-# 2018_01_09 V1.5 New Version - Script Restructure, Usage Instructions & Work with new Library
-# 2018_09_19 V1.6 Update for Alert Group and new LIbrary
-# 2020_04_02 Update: v1.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+# 2018_01_09 lib v1.5 New Version - Script Restructure, Usage Instructions & Work with new Library
+# 2018_09_19 lib v1.6 Update for Alert Group and new LIbrary
+# 2020_04_02 lib v1.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
+#@2023_07_14 lib v1.7 Update with latest SADMIN section.
 # ==================================================================================================
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
-#===================================================================================================
-# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
-#
-    if [ -z "$SADMIN" ]                                 # Test If SADMIN Environment Var. is present
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
 
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN Shell Library not readable ?
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
 
-    # You can use variable below BUT DON'T CHANGE THEM - They are used by SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
-    export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.6'                               # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
-    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+# ---------------------------------------------------------------------------------------
+# SADMIN CODE SECTION 1.56
+# Setup for Global Variables and load the SADMIN standard library.
+# To use SADMIN tools, this section MUST be present near the top of your code.    
+# ---------------------------------------------------------------------------------------
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-#---------------------------------------------------------------------------------------------------
-# Value for these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# But they can be overridden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
-    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used for Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # At end of script Trim log to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#===================================================================================================
+# Make Sure Environment Variable 'SADMIN' Is Defined.
+if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
+         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                                 # No SADMIN Env. Var. Exit
+         fi
+fi 
+
+# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
+export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
+
+# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='1.7'                                      # Script version number
+export SADM_PDESC="Want to use SADM Tools but don't want to modify your script, this is for you."
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
+export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
+export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+# ---------------------------------------------------------------------------------------
+
+
 
 
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+
 
 
 
 # --------------------------------------------------------------------------------------------------
-#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# Show script command line options
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\nUsage:\n${SADM_PN} 'name-of-script-to-run' ['parameter(s) to your script']"
-    printf "\n\t-d   (Debug Level [0-9])"
-    printf "\n\t-h   (Display this help message)"
-    printf "\n\t-v   (Show Script Version Info)"
+    printf "\nUsage: %s%s%s%s 'name-of-script-to-run' ['parameter(s) to your script']" "${BOLD}" "${CYAN}" "$(basename "$0")" "${NORMAL}"
+    printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
+    printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
+    printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
+    printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
+    printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
     printf "\n\n" 
 }
+
 
 
 
@@ -134,7 +159,7 @@ check_script()
 
     # The script specified must exist in path specified
     if [ ! -e "$SCRIPT" ]
-       then     echo "[ERROR] The script $SCRIPT doesn't exist" 
+       then     echo "[ERROR] The script '$SCRIPT' doesn't exist" 
                 show_usage 
                 echo "Job aborted"
                 return 1
@@ -142,7 +167,7 @@ check_script()
 
     # The Script Name must executable
     if [ ! -x "$SCRIPT" ]
-       then     echo "[ERROR] script $SCRIPT is not executable ?" 
+       then     echo "[ERROR] script '$SCRIPT' is not executable ?" 
                 show_usage 
                 echo "Job aborted"
                 return 1
@@ -162,8 +187,8 @@ check_script()
              exit 1                                                     # Exit Script with Error
         else SCRIPT="$1" ; export SCRIPT                                # Script uith pathname
              shift                                                      # Keep only argument(if any)    
-             SADM_PN=`basename "$SCRIPT"`                               # Keep Script without Path
-             SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`                 # Script name without ext.
+             SADM_PN=$(basename "$SCRIPT")                              # Keep Script without Path
+             SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)                # Script name without ext.
              source ${SADMIN}/lib/sadmlib_std.sh                        # Load SADMIN Std Library
              SADM_ALERT_TYPE=1           ; export SADM_ALERT_TYPE       # 0=No 1=OnErr 2=OnOK  3=All
              SADM_ALERT_GROUP='default'  ; export SADM_ALERT_GROUP      # Alert Group to Alert
@@ -173,14 +198,6 @@ check_script()
     if [ $? -ne 0 ] ; then exit 1 ;fi                                   # Exit if Problem  
     sadm_start                                                          # Init Env. Dir. & RC/Log
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
-
-    # If normal user can run your script, put the lines below in comment
-    if [ "$(whoami)" != "root" ]                                        # Is it root running script?
-        then sadm_write "Script can only be run user 'root'.\n"         # Advise User should be root
-             sadm_write "Process aborted.\n"                            # Abort advise message
-             sadm_stop 1                                                # Close/Trim Log & Upd. RCH
-             exit 1                                                     # Exit To O/S
-    fi
     sadm_write "\nExecuting $SCRIPT $@ \n"                              # Write script name to log
     $SCRIPT "$@" >> $SADM_LOG 2>&1                                      # Run selected user script
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
