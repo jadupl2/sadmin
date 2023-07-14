@@ -73,6 +73,7 @@
 # 2023_05_20 nolog   v3.28 Typo Error when asking selinux question
 # 2023_06_05 install v3.29 Remove the need for 'bind-utils/bind9-dnsutils' package during install.
 #@2023_07_09 install v3.30 Due to Debian 12, I change the way to install the 'pymysql' python module.
+#@2023_07_14 install v3.31 Loose IP vs hostname when DNS is not present.
 
 
 # --------------------------------------------------------------------------------------------------
@@ -84,7 +85,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.30'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.31'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -437,20 +438,20 @@ check_python3()
     fi 
 
 
-    printf "\n   - Installing Python module 'pymysql'." 
+    printf "\n      - Installing Python module 'pymysql'." 
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
-                 then printf "\n   - Running 'yum -y install python3-pymysql'\n" |tee -a $SLOG
+                 then printf "\n      - Running 'yum -y install python3-pymysql'\n" |tee -a $SLOG
                       yum -y install python3-pymysql  >> $SLOG 2>&1
-                 else printf "\n   - Running 'dnf -y install python3-pymysql'\n" |tee -a $SLOG
+                 else printf "\n      - Running 'dnf -y install python3-pymysql'\n" |tee -a $SLOG
                       dnf -y install python3-pymysql >>$SLOG 2>&1
               fi 
     fi 
     
     if [ "$SADM_PACKTYPE" = "deb" ] 
         then apt-get update >> $SLOG 2>&1
-             printf "\n   - Running 'apt-get -y install python3-pymysql'"| tee -a $SLOG
+             printf "\n      - Running 'apt-get -y install python3-pymysql'"| tee -a $SLOG
              apt-get -y install python3-pymysql>>$SLOG 2>&1
     fi 
     
@@ -571,38 +572,16 @@ check_selinux()
 check_hostname()
 {
     # Get current IP Address of Server
-    S_IPADDR=`ip addr show | grep global | head -1 | awk '{ print $2 }' |awk -F/ '{ print $1 }'`
-
-    # Get Hostname as per name resolution of IP Address
-    host "$S_IPADDR" > /dev/null 2>&1
-    if [ $? -ne 0 ] 
-       then echo " "
-            echo "The current system ip '$S_IPADDR' is not resolvable to a name."
-            echo "This need to be resolved before continuing."
-            echo "The SADMIN server will not be able to reach this system, if this is not resolve."
-            echo "When you type the command 'host $S_IPADDR' the last column must not be '3(NXDOMAIN)'"     
-            echo "Correct this situation and run 'setup.sh' again."
-            echo " " 
-            exit 1
-       else S_HOSTNAME=`host $S_IPADDR | head -1 | awk '{ print $NF }' | cut -d. -f1` 
-            S_DOMAIN=`host $S_IPADDR |head -1 |awk '{ print $NF }' |awk -F\. '{printf "%s.%s\n", $2, $3}'` 
-    fi 
-
-    # Get Domain Name f IP Address
-    S_DOMAIN=`host $S_IPADDR |head -1 |awk '{ print $NF }' |awk -F\. '{printf "%s.%s\n", $2, $3}'` 
-
+    S_IPADDR=$(ip addr show | grep global | head -1 | awk '{ print $2 }' |awk -F/ '{ print $1 }')
     printf "Making sure '$SADM_HOSTNAME' is defined in /etc/hosts ... " | tee -a $SLOG
 
     # Insert Server into /etc/hosts (If not already there)
-    grep -Eiv "^${S_IPADDR}|${S_HOSTNAME}" /etc/hosts > /tmp/hosts.$$
-    echo "$S_IPADDR    ${SADM_HOSTNAME}.${S_DOMAIN}    ${SADM_HOSTNAME}" >> /tmp/hosts.$$
+    grep -Eiq "^$S_IPADDR     ${SADM_HOSTNAME}" /etc/hosts
+    if [ $? -ne 0 ] 
+        then if [ ! -f /etc/hosts.org ] ; then cp /etc/hosts /etc/hosts.org ; fi
+             echo "$S_IPADDR     ${SADM_HOSTNAME}" >> /etc/hosts
+    fi
 
-    # Make Backup of /etc/hosts in /etc/host.org (If not already exist)
-    if [ ! -f /etc/hosts.org ] ; then cp /etc/hosts /etc/hosts.org ; fi
-
-    # Put New /etc/hosts in Place.
-    cp /tmp/hosts.$$ /etc/hosts ; chmod 644 /etc/hosts ; chown root:root /etc/hosts 
-    rm -f /tmp/hosts.$$
     echo "[ OK ] " | tee -a $SLOG
 }
 
