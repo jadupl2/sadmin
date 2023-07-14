@@ -472,55 +472,6 @@ check_python3()
 
 
 
-# We need the 'host' command to get the system IP 
-#===================================================================================================
-check_bind-utils()
-{
-    # Check if python3 is installed 
-    printf "\nCheck if the 'host' command is present on this system ..." | tee -a $SLOG
-
-    # python3 should now be installed, if not then install it or abort installation
-    which host > /dev/null 2>&1
-    if [ $? -eq 0 ]
-        then echo " [ OK ] " | tee -a $SLOG
-             return 0
-        else printf "\nThe 'host' command is required on the system."  | tee -a $SLOG
-    fi
-
-    if [ "$SADM_PACKTYPE" = "rpm" ] 
-        then PACKNAME="bind-utils" 
-             if [ "$SADM_OSVERSION" -lt 8 ]
-                 then echo "   - Running 'yum -y install bind-utils'" |tee -a $SLOG
-                      yum -y install bind-utils  >> $SLOG 2>&1
-                 else echo "   - Running 'dnf -y install bind-utils'" |tee -a $SLOG
-                      dnf -y install bind-utils >>$SLOG 2>&1
-             fi
-    fi 
-    if [ "$SADM_PACKTYPE" = "deb" ] 
-        then apt-get update >> $SLOG 2>&1
-             echo "   - Running 'apt-get -y install '"| tee -a $SLOG
-             PACKNAME="bind9-dnsutils" 
-             apt-get -y install bind9-dnsutils >>$SLOG 2>&1
-    fi 
-
-
-    # Check if host command is installed
-    printf "   - Check if 'host' command is now installed ... " | tee -a $SLOG
-    which host > /dev/null 2>&1 
-    if [ $? -eq 0 ] 
-        then echo "[ OK ] " | tee -a $SLOG
-        else echo " " | tee -a $SLOG
-             echo "----------" | tee -a $SLOG
-             echo "We have problem installing the $PACKNAME package." | tee -a $SLOG
-             echo "Please try to install it manually." | tee -a $SLOG
-             echo "Then run this script again." | tee -a $SLOG 
-             echo "----------" | tee -a $SLOG
-             exit 1
-    fi
-
-    return 0                                                            # Return No Error to Caller
-}
-
 
 # Make sure we have no problem with SELinux
 #===================================================================================================
@@ -576,10 +527,10 @@ check_hostname()
     printf "Making sure '$SADM_HOSTNAME' is defined in /etc/hosts ... " | tee -a $SLOG
 
     # Insert Server into /etc/hosts (If not already there)
-    grep -Eiq "^$S_IPADDR     ${SADM_HOSTNAME}" /etc/hosts
+    grep -Eiq "^$S_IPADDR   ${SADM_HOSTNAME}" /etc/hosts
     if [ $? -ne 0 ] 
         then if [ ! -f /etc/hosts.org ] ; then cp /etc/hosts /etc/hosts.org ; fi
-             echo "$S_IPADDR     ${SADM_HOSTNAME}" >> /etc/hosts
+             echo "$S_IPADDR   ${SADM_HOSTNAME}" >> /etc/hosts
     fi
 
     echo "[ OK ] " | tee -a $SLOG
@@ -674,9 +625,6 @@ EOF
     # Make sure python 3 installed, if not install it.
     check_python3
 
-    # Check if command 'host'is installed by default (Not the case on Rocky Linux)
-    #check_bind-utils
-    
     # Make sure current host is in /etc/hosts
     check_hostname
 
