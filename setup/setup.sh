@@ -87,8 +87,8 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 SADM_VER='3.31'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
-SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
+SADM_HOSTNAME=$(hostname -s)                ; export SADM_HOSTNAME      # Current Host name
+SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1) ; export SADM_INST          # Script name without ext.
 SADM_TPID="$$"                              ; export SADM_TPID          # Script PID
 SADM_EXIT_CODE=0                            ; export SADM_EXIT_CODE     # Script Exit Return Code
 SCRIPT="$(dirname "$0")/bin/sadm_setup.py"  ; export SCRIPT             # Main Setup SCRIPT Next
