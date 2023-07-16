@@ -119,13 +119,15 @@
 #@2023_06_20 install v3.88 Add $SADMIN/usr/bin to sudo secure path.
 #@2023_07_09 install v3.89 Fix problem with sadmin web server config on Debian 12.
 #@2023_07_12 install v3.90 Initial 'sadm_client' crontab now using python ver. of 'sadm_nmon_watcher'.
+#@2023_07_16 install v3.91 To ease name resolution, accept sadmin server IP instead of it FQDN.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
     import os,time,sys,pdb,socket,datetime,glob,fnmatch,shutil,getpass  # Import Std Python3 Modules
-    from subprocess import Popen, PIPE
-    import pymysql,platform
+    import subprocess 
+    #from subprocess import Popen
+    import pymysql, platform, PIPE
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -135,7 +137,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.90"                                            # Setup Version Number
+sver                = "3.91"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -262,6 +264,15 @@ req_server = {
                        'deb':'mariadb-server mariadb-client',                  'drepo':'base'}
 }
 
+
+#===================================================================================================
+# Ping the specified host (Return 0 if ping work else 1)
+#===================================================================================================
+def ping(host):
+    param = "-n" if platform.system().lower() == "windows" else "-c"
+    command = ["ping", param, "1", host]
+    return subprocess.call(command) == 0
+
 #===================================================================================================
 #                   Print [ERROR] in Red, followed by a the message received
 #===================================================================================================
@@ -358,7 +369,7 @@ def writelog(sline,stype="normal"):
 #===================================================================================================
 def oscommand(command) :
     if DEBUG : print ("In sadm_oscommand function to run command : %s" % (command))
-    p = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     out = p.stdout.read().strip().decode()
     err = p.stderr.read().strip().decode()
     returncode = p.wait()
@@ -2230,38 +2241,25 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
 
     # Accept the SADMIN FQDN Server name
     sdefault = ""                                                       # No Default value 
-    #if (stype == "S"): sdefault = socket.getfqdn()                      # Server Install=Hostname
-    sprompt  = "Enter SADMIN server name (FQDN)"                        # Prompt for Answer
+    sprompt  = "Enter SADMIN server IP address "    
     while True:                                                         # Accept until valid server
-        wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt)# Accept SADMIN Server Name
-        writelog ("Validating server name ...")                         # Advise User Validating
-        try : 
-            SADM_IP = socket.gethostbyname(wcfg_server)
-        except (socket.gaierror) as error :                             # If Can't - domain invalid
+        wcfg_ip = accept_field(sroot,"SADM_SERVER",sdefault,sprompt)    # Accept SADMIN Server Name
+        isSuccessful = ping(wcfg_ip) 
+        if not isSuccessful :
             writelog ("  ")
-            writelog ("[ ERROR ] The SADMIN server name '%s' isn't valid." % wcfg_server) 
-            writelog ("The SADMIN server name '%s' can't be resolve." % (wcfg_server))
-            writelog ("SADMIN clients will not be able to get to the SADMIN Server.")
-            writelog ("As a temporary measure, you can add '%s' to the /etc/hosts file." % (wcfg_server))
-            continue   
-        digit1=SADM_IP.split('.')[0]                                    # 1st Digit=127 = Invalid
-        if ((digit1 == "127") or (SADM_IP.count(".") != 3)):            # If Resolve to loopback IP
+            writelog ("[ ERROR ] Was not able to ping this ip, please retry.")
+            continue
+        digit1=wcfg_ip.split('.')[0]                                    # 1st Digit=127 = Invalid
+        if ((digit1 == "127") or (wcfg_ip.count(".") != 3)):            # If Resolve to loopback IP
             writelog ("  ")
-            writelog ("SADM_IP.count %s" % (SADM_IP.count(".")))
-            writelog ("[ ERROR ] SADMIN server name '%s' can't be resolve." % (wcfg_server))
-            writelog ("SADMIN clients will not be able to get to the SADMIN Server.")
-            writelog ("As a temporary measure, you can add '%s' to the /etc/hosts file." % (wcfg_server))
-            writelog ("SADMIN Server name must resolve to an IP (other than in 127.0.0.0/24 subnet).")
-            writelog ("You may need to press CTRL-C to abort installation and correct the situation.")
-            writelog ("Once resolve, just execute the setup program again or enter a valid hostname.")
-            continue                                                    # Go Re-Accept Server Name
-        sname=wcfg_server.split('.')                                    # Split Server Name in Array
-        if (len(sname) != 3):                                           # If not 3 Fields not FQDN
-            writelog ("  ")
-            writelog ("*** ERROR ***")
-            writelog ("SADMIN server name must be fully qualified, please specify domain name")
-            continue                                                    # Go Re-Accept Server Name
-        break                                                           # Ok Name pass the test
+            writelog ("[ ERROR ] There is not 3 period in IP, you have %d." % (wcfg_ip.count(".")))
+            writelog ("          Or you specify a loopback address witch is invalid.")
+            continue
+        break                                                  # Go Re-Accept Server Name
+    host_line = "%s   sadmin.%s   sadmin" % (wcfg_ip, wcfg_domain)
+    with open('/etc/hosts', 'a') as file: file.write(host_line)
+    writelog ("Line '%s' was added to /etc/hosts." % (host_line))
+    wcfg_server = "sadmin.%s" % wcfg_domain
     update_sadmin_cfg(sroot,"SADM_SERVER",wcfg_server)                  # Update Value in sadmin.cfg
 
 

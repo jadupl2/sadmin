@@ -74,6 +74,7 @@
 # 2023_06_05 install v3.29 Remove the need for 'bind-utils/bind9-dnsutils' package during install.
 #@2023_07_09 install v3.30 Due to Debian 12, I change the way to install the 'pymysql' python module.
 #@2023_07_14 install v3.31 Loose IP vs hostname when DNS is not present.
+#@2023_07_16 install v3.32 Remove one unnecessary line in the log.
 
 
 # --------------------------------------------------------------------------------------------------
@@ -85,7 +86,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.31'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.32'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=$(hostname -s)                ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1) ; export SADM_INST          # Script name without ext.
@@ -436,9 +437,6 @@ check_python3()
         then echo "[ OK ] " | tee -a $SLOG
              return 0
     fi 
-
-
-    printf "\n      - Installing Python module 'pymysql'." 
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
