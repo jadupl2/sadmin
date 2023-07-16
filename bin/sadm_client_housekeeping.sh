@@ -74,6 +74,7 @@
 # 2023_04_16 client v2.10 On client using encrypted email pwd file '$SADMIN/cfg/.gmpw64'.
 # 2023_05_02 nolog  v2.11 Solved permission problem on email password file.
 #@2023_07_11 client v2.12 Update sadm_client crontab to use the new python 'sadm_nmon_watcher.py'.
+#@2023_07_12 client v2.13 Remove duplicated lines in /etc/cron.d/sadm_client file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -104,7 +105,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.12'                                      # Script version number
+export SADM_VER='2.13'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -246,6 +247,11 @@ set_new_nmon_watcher()
     if [[ -f "/etc/cron.d/sadm_client" ]]
        then sed -i 's/sadm_nmon_watcher.sh/sadm_nmon_watcher.py/' /etc/cron.d/sadm_client 
     fi 
+
+    # This is to eliminate the duplicate lines in /etc/cron.d/sadm_client
+    # Because of an earlier bug, line for sadm_nmon_watcher were added more than once.
+    awk -i inplace '!sadm_nmon_watcher[$0]++' /etc/cron.d/sadm_client
+
     return 0 
 }
 
@@ -645,15 +651,15 @@ function check_sadm_client_crontab()
     # Grep crontab for nmon watcher script
     sadm_writelog "  - Make sure sadm_client crontab ($ccron_file) have 'sadm_nmon_watcher.sh' line."
     if [ -f "$ccron_file" ]                                             # Do we have crontab file ?
-       then grep -q "sadm_nmon_watcher.sh" $ccron_file                  # grep for watcher script
+       then grep -q "sadm_nmon_watcher.py" $ccron_file                  # grep for watcher script
             if [ $? -ne 0 ]                                             # If watcher not there
                then echo "# " >> $ccron_file                          # Add to crontab
                     echo "# Every 45 Min, make sure 'nmon' performance collector is running." >> $ccron_file
-                    echo "*/45 * * * *  $SADM_USER sudo \${SADMIN}/bin/sadm_nmon_watcher.sh >/dev/null 2>&1" >> $ccron_file
+                    echo "*/45 * * * *  $SADM_USER sudo \${SADMIN}/bin/sadm_nmon_watcher.py >/dev/null 2>&1" >> $ccron_file
                     echo "# " >> $ccron_file
                     echo "# " >> $ccron_file 
-                    sadm_writelog "  - Crontab ($ccron_file) was updated with 'sadm_nmon_watcher.sh' line." 
-               else sadm_writelog "  - Yes, crontab ($ccron_file) already got 'sadm_nmon_watcher.sh' line." 
+                    sadm_writelog "  - Crontab ($ccron_file) was updated with 'sadm_nmon_watcher.py' line." 
+               else sadm_writelog "  - Yes, crontab ($ccron_file) already got 'sadm_nmon_watcher.py' line." 
             fi
        else sadm_writelog "  - There were no crontab file ($ccron_file) present on system ?" 
             return 1
