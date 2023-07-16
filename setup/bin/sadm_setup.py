@@ -2457,7 +2457,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     else:
         wcfg_ssh_port=22
         
-    return(wcfg_server,SADM_IP,wcfg_domain,wcfg_mail_addr,wcfg_user,wcfg_group,wcfg_ssh_port) 
+    return(wcfg_server,wcfg_ip,wcfg_domain,wcfg_mail_addr,wcfg_user,wcfg_group,wcfg_ssh_port) 
     wcfg_ssh_port
 
 
