@@ -127,7 +127,7 @@ try :
     import os,time,sys,pdb,socket,datetime,glob,fnmatch,shutil,getpass  # Import Std Python3 Modules
     import subprocess 
     #from subprocess import Popen
-    import pymysql, platform, PIPE
+    import pymysql, platform
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
