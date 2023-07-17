@@ -18,6 +18,7 @@
 # 2020_05_27 startup/shutdown v2.11 Force using bash instead of dash & problem setting SADMIN var.
 # 2020_11_04 startup/shutdown v2.12 Update SADMIN section & use env cmd to use proper bash shell.
 # 2022_09_15 startup/shutdown v2.13 Update SADMIN section 1.52 & minor changes.
+#@2023_07_17 startup/shutdown v2.14 Update SADMIN section 1.56 & minor changes.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -25,39 +26,37 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.52
+# SADMIN CODE SECTION 1.56
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
 
-# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
-    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
-         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+# Make Sure Environment Variable 'SADMIN' Is Defined.
+if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
+         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
             then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-                 exit 1                                    # No SADMIN Env. Var. Exit
+                 exit 1                                                 # No SADMIN Env. Var. Exit
          fi
 fi 
 
 # USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
 export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 export SADM_TPID="$$"                                      # Script Process ID.
-export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
-export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
+export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.13'                                     # Script version number
-export SADM_PDESC="Run when the sadmin.service is shutdown when server goes down."
+export SADM_VER='2.14'                                     # Script version number
+export SADM_PDESC="Executed when the system is brought down by the sadmin.service."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
-export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
@@ -67,7 +66,7 @@ export SADM_ROOT_ONLY="Y"                                  # Run only by root ? 
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
@@ -80,7 +79,10 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 # ---------------------------------------------------------------------------------------
+
 
 
 
@@ -118,7 +120,8 @@ main_process()
 # 	                          	S T A R T   O F   M A I N    P R O G R A M
 # --------------------------------------------------------------------------------------------------
 #
-    sadm_start                                                          # Init Env Dir & RC/Log File
+    sadm_start                                                          # Won't come back if error
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong 
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log

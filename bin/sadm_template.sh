@@ -148,7 +148,7 @@ process_servers()
     xcount=0; ERROR_COUNT=0;                                            # Set Server & Error Counter
     while read wline                                                    # Read Tmp file Line by Line
         do
-        ((xcount++))                                                    # Increase Server Counter                       # Increase Error Counter
+        ((xcount++))                                                    # Increase Server Counter                      
         server_name=$(      echo "$wline"|awk -F\; '{print $1}')        # Extract Server Name
         server_os=$(        echo "$wline"|awk -F\; '{print $2}')        # O/S (linux/aix/darwin)
         server_domain=$(    echo "$wline"|awk -F\; '{print $3}')        # Extract Domain of Server
