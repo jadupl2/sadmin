@@ -59,6 +59,7 @@
 # 2023_04_17 server v2.40 Push encrypted email password file ($SADMIN/cfg/.gmpw64) to all clients.
 # 2023_04_29 server v2.41 Increase speed of files copy from clients to SADMIN server.
 # 2023_05_26 server v2.42 If /etc/environment is not present on client, proceed with the next system.
+#@2023_07_18 server v2.43 Fix problem when not using the standard ssh port (22) for some clients.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -83,14 +84,14 @@ fi
 
 # USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
 export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 export SADM_TPID="$$"                                      # Script Process ID.
-export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
-export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
+export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.42'                                     # Script Version
+export SADM_VER='2.43'                                     # Script Version
 export SADM_PDESC="Copy SADMIN version to all actives clients, without overwriting config files)."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -167,7 +168,6 @@ show_usage()
 # --------------------------------------------------------------------------------------------------
 process_servers()
 {
-    WOSTYPE=$1                                                          # Should be aix or linux
 
 # MySQL Select All Actives Servers (Except SADMIN Server) & output result in $SADM_TMP_FILE.
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_sadmin_dir,srv_ssh_port"
@@ -207,17 +207,18 @@ process_servers()
     fi
 
 # Process each actives servers
-    while read wline                                                    # Then Read Line by Line
+    xcount=0; ERROR_COUNT=0;                                            # Set Server & Error Counter
+    while read wline                                                    # Read Tmp file Line by Line
         do
-        xcount=`expr $xcount + 1`                                       # Server Counter
-        server_name=`    echo $wline|awk -F\; '{ print $1 }'`           # Extract Server Name
-        server_os=`      echo $wline|awk -F\; '{ print $2 }'`           # Extract O/S (linux/aix)
-        server_domain=`  echo $wline|awk -F\; '{ print $3 }'`           # Extract Domain of Server
-        server_monitor=` echo $wline|awk -F\; '{ print $4 }'`           # Monitor  t=True f=False
-        server_sporadic=`echo $wline|awk -F\; '{ print $5 }'`           # Sporadic t=True f=False
-        server_dir=`     echo $wline|awk -F\; '{ print $6 }'`           # Client SADMIN Install Dir.
-        server_ssh_port=`echo $wline|awk -F\; '{ print $7 }'`           # Client SSH port to use
-        server_fqdn=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
+        ((xcount++))                                                    # Increase Server Counter                      
+        server_name=$(      echo "$wline"|awk -F\; '{print $1}')        # Extract Server Name
+        server_os=$(        echo "$wline"|awk -F\; '{print $2}')        # O/S (linux/aix/darwin)
+        server_domain=$(    echo "$wline"|awk -F\; '{print $3}')        # Extract Domain of Server
+        server_monitor=$(   echo "$wline"|awk -F\; '{print $4}')        # Monitor  1=True 0=False
+        server_sporadic=$(  echo "$wline"|awk -F\; '{print $5}')        # Sporadic 1=True 0=False
+        server_dir=$(       echo "$wline"|awk -F\; '{ print $6 }')      # Client SADMIN Install Dir.
+        server_ssh_port=$(  echo "$wline"|awk -F\; '{ print $7 }')      # Client SSH port to use
+        server_fqdn="$server_name.$server_domain"                       # Create FQN Server Name
         
         sadm_write "\n"                                                 # Blank Line
         sadm_write "${SADM_TEN_DASH}\n"
@@ -227,7 +228,7 @@ process_servers()
         if ! host $server_fqdn >/dev/null 2>&1
            then SMSG="[ ERROR ] Can't process '$server_fqdn', hostname can't be resolved."
                 sadm_write "${SMSG}\n"                                  # Advise user
-                ERROR_COUNT=$(($ERROR_COUNT+1))                         # Consider Error -Incr Cntr
+                ((ERROR_COUNT++))                                       # Consider Error -Incr Cntr
                 sadm_write "Total Error(s) now at ${ERROR_COUNT}\n"     # Show Error count
                 continue                                                # skip this server
         fi
@@ -236,17 +237,17 @@ process_servers()
         sadm_check_system_lock "$server_name"                           # Check lock file status
         if [ $? -ne 0 ] 
             then sadm_writelog "[ WARNING ] System ${server_fqdn} is currently lock."
-                 WARNING_COUNT=$(($WARNING_COUNT+1))                    # Increase Warning Counter
+                 ((WARNING_COUNT++))                                    # Increase Warning Counter
                  sadm_writelog "$SADM_WARNING at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT}"
                  continue                                               # Go process next server
         fi
 
 # If SSH to server failed & it's a sporadic server = warning & next server
-        $SADM_SSH -qnp $server_ssh_port $server_fqdn date >/dev/null 2>&1 # SSH to Server for date
+        ${SADM_SSH} -qnp $server_ssh_port $server_fqdn date >/dev/null 2>&1
         RC=$?                                                           # Save Error Number
         if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "1" ]              # SSH don't work & Sporadic
            then sadm_writelog "[ WARNING ] Can't SSH to sporadic server ${server_fqdn}"
-                WARNING_COUNT=$(($WARNING_COUNT+1))                     # Increase Warning Counter
+                ((WARNING_COUNT++))                                     # Increase Warning Counter
                 sadm_writelog "$SADM_WARNING at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT}"
                 continue                                                # Go process next server
         fi
@@ -256,8 +257,8 @@ process_servers()
           then RETRY=0                                                  # Set Retry counter to zero
                while [ $RETRY -lt 3 ]                                   # Retry rsync 3 times
                   do
-                  let RETRY=RETRY+1                                     # Incr Retry counter
-                  $SADM_SSH -qnp $server_ssh_port $server_fqdn date >/dev/null 2>&1 
+                  ((RETRY++))                                           # Incr Retry counter
+                  ${SADM_SSH} -qnp $server_ssh_port $server_fqdn date >/dev/null 2>&1
                   RC=$?                                                 # Save Error Number
                   if [ $RC -ne 0 ]                                      # If Error doing ssh
                       then if [ $RETRY -lt 3 ]                          # If less than 3 retry
@@ -275,7 +276,7 @@ process_servers()
         if [ $RC -ne 0 ]   
            then SMSG="[ ERROR ] Can't SSH to server '${server_fqdn}'"  
                 sadm_writelog "${SMSG}"                                 # Display Error Msg
-                ERROR_COUNT=$(($ERROR_COUNT+1))                         # Consider Error -Incr Cntr
+                ((ERROR_COUNT++))                                       # Consider Error -Incr Cntr
                 sadm_writelog "Total Error(s) now at ${ERROR_COUNT}"    # Show Error count
                 continue                                                # Continue with next server
         fi
@@ -293,13 +294,13 @@ process_servers()
                  if [ "$server_dir" != "" ]                             # No Remote Dir. Set
                     then sadm_writelog "[ OK ] SADMIN is install in ${server_dir}."
                     else sadm_write_err "[ ERROR ] Couldn't get /etc/environment."
-                         ERROR_COUNT=$(($ERROR_COUNT+1))
+                         ((ERROR_COUNT++))
                          sadm_write_err "Continue with next server."
                          continue
                  fi 
             else sadm_write_err "scp -CqP ${server_ssh_port} ${server_name}:/etc/environment ${WDIR}"
                  sadm_write_err "[ ERROR ] - Couldn't get /etc/environment on ${server_name}"
-                 ERROR_COUNT=$(($ERROR_COUNT+1))
+                 ((ERROR_COUNT++))
                  #server_dir="/opt/sadmin" 
                  sadm_write_err "Continue with next server."
                  continue
@@ -311,18 +312,18 @@ process_servers()
         for WDIR in "${rem_std_dir_to_rsync[@]}"                        # Loop through Array
           do
           if [ $SADM_DEBUG -gt 5 ]                                      # If Debug is Activated
-              then sadm_writelog "rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
+              then sadm_writelog "rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
           fi
-          rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
+          rsync -ar -e "ssh -p $server_ssh_port" --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
           RC=$? 
           if [ $RC -ne 0 ]
              then if [ $RC -eq 23 ] 
                      then sadm_write_log "[ WARNING ] Error code 23 denotes a partial transfer ..." 
-                          WARNING_COUNT=$(($WARNING_COUNT+1))           # Increase Warning Counter
-                     else sadm_write_err "[ ERROR ] ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
-                          ERROR_COUNT=$(($ERROR_COUNT+1))               # Increase Error Counter
+                          ((WARNING_COUNT++))                           # Increase Warning Counter
+                     else sadm_write_err "[ ERROR ] ($RC) doing rsync -ar  -e 'ssh -p $server_ssh_port' --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
+                          ((ERROR_COUNT++))                             # Increase Error Counter
                   fi 
-             else sadm_writelog "[ OK ] rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
+             else sadm_writelog "[ OK ] rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
           fi
           done             
 
@@ -333,18 +334,16 @@ process_servers()
           do
           CFG_SRC="${SADM_CFG_DIR}/${WFILE}"
           CFG_DST="${server_fqdn}:${server_dir}/cfg/${WFILE}"
-          #CFG_CMD="rsync -a ${CFG_SRC} ${CFG_DST}"
           CFG_CMD="scp -CqP $server_ssh_port ${CFG_SRC} ${CFG_DST}"
           if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CFG_CMD" ; fi 
           scp -CqP $server_ssh_port ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
-          #rsync -a ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
           RC=$? 
           if [ $RC -ne 0 ]
              then if [ $RC -eq 23 ] 
                      then sadm_writelog "[ WARNING ] Error code 23 denotes a partial transfer ..." 
-                          WARNING_COUNT=$(($WARNING_COUNT+1))           # Increase Warning Counter
+                          ((WARNING_COUNT++))                           # Increase Warning Counter
                      else sadm_writelog "[ ERROR ] ($RC) doing ${CFG_CMD}"
-                          ERROR_COUNT=$(($ERROR_COUNT+1))
+                          ((ERROR_COUNT++))
                   fi 
              else sadm_writelog "[ OK ] ${CFG_CMD}" 
           fi
@@ -360,7 +359,7 @@ process_servers()
                  RC=$? 
                  if [ $RC -ne 0 ]
                     then sadm_writelog "[ ERROR ] $CMD"
-                         ERROR_COUNT=$(($ERROR_COUNT+1))
+                         ((ERROR_COUNT++))
                     else sadm_writelog "[ OK ] $CMD" 
                  fi
         fi
@@ -372,18 +371,18 @@ process_servers()
                  for WDIR in "${rem_usr_dir_to_rsync[@]}"
                     do
                     if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
-                        then sadm_write "rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/\n"
+                        then sadm_write "rsync -ar  -e 'ssh -p $server_ssh_port' --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/\n"
                     fi
-                    rsync -ar --delete  ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
+                    rsync -ar -e "ssh -p $server_ssh_port" --delete  ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
                     RC=$? 
                     if [ $RC -ne 0 ]
                         then if [ $RC -eq 23 ] 
                                 then sadm_writelog "[ WARNING ] Error 23 - Partial rsync ..." 
-                                     WARNING_COUNT=$(($WARNING_COUNT+1)) # Increase Warning Counter
+                                     ((WARNING_COUNT++)) # Increase Warning Counter
                                 else sadm_writelog "[ ERROR ] ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
-                                     ERROR_COUNT=$(($ERROR_COUNT+1))    # Increase Error Counter
+                                     ((ERROR_COUNT++))    # Increase Error Counter
                              fi 
-                        else sadm_writelog "[ OK ] rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
+                        else sadm_writelog "[ OK ] rsync -ar  -e 'ssh -p $server_ssh_port' --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
                     fi
                     done             
         fi
@@ -391,51 +390,51 @@ process_servers()
 # Rsync All Dot Configuration (Templates) Files In $SADMIN/cfg To All Actives Clients
         CFG_EXCL="--exclude .dbpass "
         if [ $SADM_DEBUG -gt 5 ]                                        # If Debug is Activated
-            then sadm_write "rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/\n"
+            then sadm_write "rsync -ar -e 'ssh -p $server_ssh_port' --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/\n"
         fi
-        rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/
+        rsync -ar -e "ssh -p $server_ssh_port" --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/
         RC=$? 
         if [ $RC -ne 0 ]
             then if [ $RC -eq 23 ] 
                     then sadm_writelog "[ WARNING ] Error 23 - Partial rsync ..." 
-                         WARNING_COUNT=$(($WARNING_COUNT+1))            # Increase Warning Counter
-                    else sadm_writelog "[ ERROR ] ($RC) doing rsync -ar --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/"
-                         ERROR_COUNT=$(($ERROR_COUNT+1))                # Increase Error Counter
+                         ((WARNING_COUNT++))            # Increase Warning Counter
+                    else sadm_writelog "[ ERROR ] ($RC) doing rsync -ar -e 'ssh -p $server_ssh_port' --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/"
+                         ((ERROR_COUNT++))                # Increase Error Counter
                  fi
-           else sadm_writelog "[ OK ] rsync -ar --delete ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/" 
+           else sadm_writelog "[ OK ] rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/" 
         fi
 
 # If User Choose To Rsync $SADMIN/sys To All Actives Clients, Then Do It Here.
         if [ "$SYNC_SYS" = "Y" ] 
             then if [ $SADM_DEBUG -gt 5 ]                               # If Debug is Activated
-                    then sadm_write "rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/\n"
+                    then sadm_write "rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/\n"
                  fi
-                 rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/
+                 rsync -ar -e "ssh -p $server_ssh_port" --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/
                  RC=$? 
                  if [ $RC -ne 0 ]
                     then if [ $RC -eq 23 ] 
                             then sadm_writelog "[ WARNING ] Error 23 - Partial rsync ..." 
-                                 WARNING_COUNT=$(($WARNING_COUNT+1))    # Increase Warning Counter
-                            else sadm_writelog "[ ERROR ] ($RC) doing rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/"
-                                 ERROR_COUNT=$(($ERROR_COUNT+1))        # Increase Error Counter
+                                 ((WARNING_COUNT++))    # Increase Warning Counter
+                            else sadm_writelog "[ ERROR ] ($RC) doing rsync -ar  -e 'ssh -p $server_ssh_port' --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/"
+                                 ((ERROR_COUNT++))        # Increase Error Counter
                          fi
-                    else sadm_writelog "[ OK ] rsync -ar --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/" 
+                    else sadm_writelog "[ OK ] rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/" 
                  fi
 
             else # RSYNC STARTUP/SHUTDOWN TEMPLATE SCRIPT FILES IN $SADMIN/SYS TO ALL ACTIVES CLIENTS
                  if [ $SADM_DEBUG -gt 5 ]                               # If Debug is Activated
-                    then sadm_write "rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/\n"
+                    then sadm_write "rsync -ar  -e 'ssh -p $server_ssh_port' --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/\n"
                  fi
-                 rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/
+                 rsync -ar  -e "ssh -p $server_ssh_port" --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/
                  RC=$? 
                  if [ $RC -ne 0 ]
                     then if [ $RC -eq 23 ] 
                             then sadm_writelog "[ WARNING ] Error 23 - Partial rsync ..." 
-                                 WARNING_COUNT=$(($WARNING_COUNT+1))    # Increase Warning Counter
-                            else sadm_writelog "[ ERROR ] ($RC) doing rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/"
-                                 ERROR_COUNT=$(($ERROR_COUNT+1))        # Increase Error Counter
+                                 ((WARNING_COUNT++))    # Increase Warning Counter
+                            else sadm_writelog "[ ERROR ] ($RC) doing rsync -ar  -e 'ssh -p $server_ssh_port' --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/"
+                                 ((ERROR_COUNT++))        # Increase Error Counter
                          fi
-                    else sadm_writelog "[ OK ] rsync -ar --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/" 
+                    else sadm_writelog "[ OK ] rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/" 
                  fi
         fi
 
@@ -450,7 +449,7 @@ process_servers()
             RC=$?
             if [ $RC -ne 0 ]
                 then sadm_writelog "[ ERROR ] ($RC) doing $CFG_CMD"
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ((ERROR_COUNT++))
                 else sadm_writelog "[ OK ] $CFG_CMD"  
             fi
           done             
