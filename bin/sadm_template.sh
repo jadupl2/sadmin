@@ -167,7 +167,7 @@ process_servers()
         if [[ $? -ne 0 ]]                                               # If hostname not resolvable
             then SMSG="$SADM_ERROR Can't process '$fqdn_server', hostname can't be resolved."
                  sadm_write_err "${SMSG}"                               # Advise user & Feed log
-                 ((ERROR_COUNT++))                                      # Increase Error Counter                        # Increase Error Counter
+                 ((ERROR_COUNT++))                                      # Increase Error Counter 
                  sadm_write_err "Total error(s) : ${ERROR_COUNT}"       # Show Total Error Count
                  continue                                               # Continue with next Server
         fi
@@ -186,6 +186,7 @@ process_servers()
         # If SSH failed and it's a Sporadic Server, Show Warning and continue with next system.
         if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]               # SSH don't work & Sporadic
             then sadm_write_err "[ WARNING ] Can't SSH to sporadic system ${fqdn_server}."
+                 ((warning_count++))                                    # Increase Warning Counter
                  sadm_write_err "Continuing with next system"           # Not Error if Sporadic Srv. 
                  continue                                               # Continue with next system
         fi
@@ -193,6 +194,7 @@ process_servers()
         # If SSH Failed & Monitoring is Off, Show Warning and continue with next system.
         if [[ $RC -ne 0 ]] &&  [[ "$server_monitor" = "0" ]]            # SSH don't work/Monitor OFF
             then sadm_write_err "[ WARNING ] Can't SSH to $fqdn_server - Monitoring is OFF"
+                 ((warning_count++))                                    # Increase Warning Counter
                  sadm_write_err "Continuing with next system\n"         # Not Error if don't Monitor
                  continue                                               # Continue with next system
         fi
@@ -211,12 +213,12 @@ process_servers()
         sadm_check_system_lock "$server_name"                           # Check lock file status
         if [[ $? -ne 0 ]] 
             then sadm_write_err "[ WARNING ] System ${server_fqdn} is currently lock."
-                 warning_count=$((warning_count+1))                     # Increase Warning Counter
+                 ((warning_count++))                                    # Increase Warning Counter
                  sadm_write_err "Continuing with next system"           # Not Error if Sporadic Srv. 
                  continue                                               # Go process next server
         fi
 
-        if [[ "$fqdn_server" != "$SADM_SERVER" ]]                         # If not on SADMIN Server
+        if [[ "$fqdn_server" != "$SADM_SERVER" ]]                       # If not on SADMIN Server
             then sadm_write_log "[ OK ] SSH to ${fqdn_server} work"     # Good SSH Work on Client
             else sadm_write_log "[ OK ] No SSH using 'root' on the SADMIN Server ($SADM_SERVER)"
         fi

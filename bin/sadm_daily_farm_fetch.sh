@@ -58,6 +58,7 @@
 # 2022_09_23 server v4.9 Use SSH port specify per server & update SADMIN section to v1.52.
 # 2023_04_29 server v4.10 Increase speed of files copy from clients to SADMIN server.
 # 2023_05_24 server v4.11 Remove repeating error count in the error log.
+#@2023_07_18 server v4.12 Fix problem when not using the standard ssh port (22) for some clients.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -66,49 +67,47 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 # ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.52
+# SADMIN CODE SECTION 1.56
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # ---------------------------------------------------------------------------------------
 
-# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
-    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
-         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+# Make Sure Environment Variable 'SADMIN' Is Defined.
+if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
+         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
             then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-                 exit 1                                    # No SADMIN Env. Var. Exit
+                 exit 1                                                 # No SADMIN Env. Var. Exit
          fi
 fi 
 
 # USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
 export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 export SADM_TPID="$$"                                      # Script Process ID.
-export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
-export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
+export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.11'                                      # Script version number
-export SADM_PDESC="Collect hardware/software/performance info data from all active servers"
+export SADM_VER='4.12'                                     # Script version number
+export SADM_PDESC="Collect hardware/software/performance info data from all active systems."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
-export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
-export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
-export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
@@ -121,7 +120,11 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 # ---------------------------------------------------------------------------------------
+
+
 
 
 
@@ -133,7 +136,7 @@ export HW_DIR="$SADM_DAT_DIR/hw"	                                    # Hardware 
 export ERROR_COUNT=0                                                    # Global Error Counter
 export TOTAL_AIX=0                                                      # Nb Error in Aix Function
 export TOTAL_LINUX=0                                                    # Nb Error in Linux Function
-export SADM_STAR=`printf %80s |tr " " "*"`                              # 80 * line
+export SADM_STAR=$(printf %80s |tr " " "*")                             # 80 * line
 export DEBUG_LEVEL=0                                                    # 0=NoDebug Higher=+Verbose
 export ETCENV="/etc/environment"                                
 
@@ -184,10 +187,10 @@ process_servers()
     fi 
 
     # PROCESS EACH SYSTEM PRESENT IN THE FILE CREATED BY THE SELECT STATEMENT
-    xcount=0; ERROR_COUNT=0;                                            # Reset Server/Error Counter
+    xcount=0; ERROR_COUNT=0; warning_count=0                            # Reset Server/Error Counter
     while read wline                                                    # Then Read Line by Line
         do
-        xcount=`expr $xcount + 1`                                       # Server Counter
+        ((xcount++))
         server_name=`    echo $wline|awk -F\; '{ print $1 }'`           # Extract Server Name
         server_os=`      echo $wline|awk -F\; '{ print $2 }'`           # Extract O/S (linux/aix)
         server_domain=`  echo $wline|awk -F\; '{ print $3 }'`           # Extract Domain of Server
@@ -202,7 +205,7 @@ process_servers()
         if ! host $fqdn_server >/dev/null 2>&1
             then SMSG="${SADM_ERROR} Can't process '$fqdn_server', hostname can't be resolved."
                  sadm_write_err "${SMSG}"                               # Advise user
-                 ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
+                 ((ERROR_COUNT++))                        # Increase Error Counter
                  sadm_write_err "Error Count is now at $ERROR_COUNT"
                  continue                                               # Continue with next Server
         fi
@@ -210,14 +213,15 @@ process_servers()
         # Check if System is Locked.
         sadm_check_system_lock "$server_name"                              # Check lock file status
         if [ $? -eq 1 ] 
-            then sadm_write_err "System $server_name is currently lock."
+            then sadm_write_err "[ WARNING ] System $server_name is currently lock."
                  sadm_write_err "Continue with next system."
+                 ((warning_count++))                                    # Increase Warning Counter
                  continue
         fi                                                              # System Lock, Nxt Server
 
         # TEST SSH TO SERVER (IF NOT ON SADMIN SERVER)
         if [ "${server_name}" != "$SADM_HOSTNAME" ]                     # If not on SADMIN Server 
-            then $SADM_SSH -qnp $server_ssh_port $fqdn_server date > /dev/null 2>&1  # Try SSH date
+            then $SADM_SSH -qnp "$server_ssh_port" "$fqdn_server" date > /dev/null 2>&1
                  RC=$?                                                  # Save Error Number
             else RC=0                                                   # RC=0 no SSH on SADMIN Srv
         fi 
@@ -226,16 +230,18 @@ process_servers()
            then if [ "$server_sporadic" = "1" ]                         # If Error on Sporadic Host
                    then sadm_write_err "[ WARNING ]  Can't SSH to ${fqdn_server} (Sporadic System)."
                         sadm_write_err "Continuing with next system"    # Not Error if Sporadic Srv. 
+                        ((warning_count++))                             # Increase Warning Counter
                         continue
                 fi 
                 if [ "$server_monitor" = "0" ]                          # If Error & Monitor is OFF
                    then sadm_write_err "[ WARNING ] Can't SSH to ${fqdn_server} (Monitoring is OFF)."
                         sadm_write_err "Continuing with next system"    # Not Error Monitoring Off
+                        ((warning_count++))                             # Increase Warning Counter
                         continue
                 fi 
                 if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_write_log "Return Code is $RC" ;fi 
                 sadm_write_err "$SADM_ERROR Can't SSH to ${fqdn_server} on port $server_ssh_port."
-                ERROR_COUNT=$(($ERROR_COUNT+1))
+                ((ERROR_COUNT++))
                 sadm_write_err "Error Count is now at $ERROR_COUNT"
                 continue
         fi                                                              # OK SSH Worked the 1st time
@@ -250,24 +256,25 @@ process_servers()
         # Get the remote /etc/environment file to determine where SADMIN is install on remote
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}"
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then scp -CqP $server_ssh_port ${server_name}:${ETCENV} ${WDIR} >/dev/null 2>&1  
-            else cp $ETCENV ${WDIR} >/dev/null 2>&1  
+            then scp -CqP "$server_ssh_port" "${server_name}:${ETCENV}" "${WDIR}" >/dev/null 2>&1
+            else cp "$ETCENV" "${WDIR}" >/dev/null 2>&1
         fi
         if [ $? -eq 0 ]                                                 # If file was transferred
-            then RDIR=`grep "SADMIN=" $WDIR/environment |sed 's/export //g' |awk -F= '{print $2}'|tail -1`
+            then RDIR=$(grep "SADMIN=" $WDIR/environment |sed 's/export //g' |awk -F= '{print $2}'|tail -1)
                  if [ "$RDIR" != "" ]                                   # No Remote Dir. Set
                     then sadm_writelog "SADMIN installed in ${RDIR} on ${server_name}."
-                    else sadm_write_err "$SADM_WARNING Couldn't get $ETCENV."
+                    else sadm_write_err "[ WARNING } Couldn't get $ETCENV."
                          if [ "$server_sporadic" = "1" ]                # SSH don't work & Sporadic
                             then sadm_write_log "${server_name} is a sporadic system."
-                            else ERROR_COUNT=$(($ERROR_COUNT+1))        # Add 1 to Error Count
+                            else ((ERROR_COUNT++))        # Add 1 to Error Count
                                  sadm_write_err "Error Count is now at $ERROR_COUNT"
                          fi
                          sadm_write_err "Continuing with next system."  # Advise we are skipping srv
+                         ((warning_count++))                             # Increase Warning Counter
                          continue                                       # Go process next system
                  fi 
-            else sadm_write_err "$SADM_ERROR Couldn't get $ETCENV on ${server_name}."
-                 ERROR_COUNT=$(($ERROR_COUNT+1))                        # Add 1 to Error Count
+            else sadm_write_err "[ ERROR ] Couldn't get $ETCENV on ${server_name}."
+                 ((ERROR_COUNT++))                        # Add 1 to Error Count
                  sadm_write_err "Error Count is now at $ERROR_COUNT "
                  sadm_write_err "Continuing with next system."          # Advise we are skipping srv
                  continue                                               # Go process next system
@@ -284,19 +291,20 @@ process_servers()
             then sadm_write_log "  - Creating ${WDIR} directory."
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
         fi
+
         REMDIR="${RDIR}/dat/dr" 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then rcmd="rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ "
-                 rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
-            else rcmd="rsync -ar --delete  ${REMDIR}/ $WDIR/ "
-                 rsync -ar --delete ${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
+            then rcmd="rsync -ar -e ssh -p $server_ssh_port --delete ${server_name}:${REMDIR}/ $WDIR/ "
+                 rsync -ar -e "ssh -p $server_ssh_port" --delete "${server_name}:${REMDIR}/" "$WDIR/" >>"$SADM_LOG" 2>&1
+            else rcmd="rsync -ar -e ssh -p $server_ssh_port --delete  ${REMDIR}/ $WDIR/ "
+                 rsync -ar -e "ssh -p $server_ssh_port" --delete "${REMDIR}/" "$WDIR/" >>"$SADM_LOG" 2>&1
         fi
         RC=$?
         if [ $RC -ne 0 ]
-            then sadm_write_err "$SADM_ERROR ($RC) ${rcmd}"
-                 ERROR_COUNT=$(($ERROR_COUNT+1))
+            then sadm_write_err "[ ERROR ] ($RC) ${rcmd}"
+                 ((ERROR_COUNT++))
                  sadm_write_err "Error Count is now at $ERROR_COUNT"
-            else sadm_writelog "${SADM_OK} ${rcmd}"
+            else sadm_writelog "[ OK ] ${rcmd}"
         fi
  
 
@@ -304,30 +312,36 @@ process_servers()
         # Transfer Remote $SADMIN/dat/nmon files to local $SADMIN/www/dat/$server_name/nmon  Dir
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/nmon"                     # Local Receiving Dir.
-        #sadm_write_log "Make sure local directory $WDIR exist."
         if [ ! -d "${WDIR}" ]
             then sadm_write_log "  - Creating ${WDIR} directory."
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
         fi
+
         REMDIR="${RDIR}/dat/nmon" 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then rcmd="rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ "
-                 rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
-            else rcmd="rsync -ar --delete ${REMDIR}/ $WDIR/ "
-                 rsync -ar --delete ${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
+            then rcmd="rsync -ar -e ssh -p $server_ssh_port --delete ${server_name}:${REMDIR}/ $WDIR/ "
+                 rsync -ar -e "ssh -p $server_ssh_port" --delete ${server_name}:${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
+            else rcmd="rsync -ar -e ssh -p $server_ssh_port --delete ${REMDIR}/ $WDIR/ "
+                 rsync -ar -e "ssh -p $server_ssh_port"  -delete ${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
         fi
         RC=$?
         if [ $RC -ne 0 ]
-            then sadm_write_err "$SADM_ERROR ($RC) ${rcmd}"
-                 ERROR_COUNT=$(($ERROR_COUNT+1))
-            else sadm_write_log "${SADM_OK} ${rcmd}" 
+            then sadm_write_err "[ ERROR ] ($RC) ${rcmd}"
+                 ((ERROR_COUNT++))
+            else sadm_write_log "[ OK ] ${rcmd}" 
         fi
         #if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write_err "Error Count is now at $ERROR_COUNT" ;fi
 
         done < $SADM_TMP_FILE1
 
+# Show Total Error Count After Processing Each Server
+    sadm_writelog " "
+    sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "Total Error(s) count   : ${ERROR_COUNT}"
+    sadm_writelog "Total Warning(s) count : ${warning_count}"
+    sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog " "
     sadm_write_log " "
-    sadm_write_log "${SADM_TEN_DASH}\nFINAL number of Error(s) detected is $ERROR_COUNT"
     return $ERROR_COUNT
 }
 
@@ -343,7 +357,7 @@ function cmd_options()
     while getopts "d:hv" opt ; do                                       # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               num=$(echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$)  # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage

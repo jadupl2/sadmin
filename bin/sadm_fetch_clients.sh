@@ -96,6 +96,7 @@
 # 2022_07_09 server v3.42 Updated to use new SADMIN section v1.52.
 # 2022_07_14 server v3.43 Change group to '$SADM_GROUP' in $SADMIN/www/dat (fix web ui problem).
 # 2022_09_29 server v3.44 Daily backup, check new web option to compress backup or not.
+#@2023_07_18 server v3.45 Fix problem when not using the standard ssh port (22) for some clients.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -127,7 +128,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.44'                                     # Script version number
+export SADM_VER='3.45'                                     # Script version number
 export SADM_PDESC="Get scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -578,7 +579,7 @@ rsync_function()
     while [ $RETRY -lt 3 ]                                              # Retry rsync 3 times
         do
         RETRY=`expr $RETRY + 1`                                         # Incr Retry counter.
-        rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR} >/dev/null 2>&1  # rsync selected directory
+        rsync -ar -e "ssh -p $ssh_port" --delete ${REMOTE_DIR} ${LOCAL_DIR} >/dev/null 2>&1  # rsync selected directory
         RC=$?                                                           # save error number
 
         # Consider Error 24 as none critical (Partial transfer due to vanished source files)
@@ -587,11 +588,11 @@ rsync_function()
         if [ $RC -ne 0 ]                                                # If Error doing rsync
            then if [ $RETRY -lt 3 ]                                     # If less than 3 retry
                    then sleep 5                                        # Sleep 5Sec. between retries
-                        sadm_writelog "[ RETRY $RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
-                   else sadm_writelog "$SADM_ERROR [ $RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+                        sadm_writelog "[ RETRY $RETRY ] rsync -ar -e "ssh -p $ssh_port" --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+                   else sadm_writelog "$SADM_ERROR [ $RETRY ] rsync -ar -e "ssh -p $ssh_port" --delete ${REMOTE_DIR} ${LOCAL_DIR}"
                         break
                 fi
-           else sadm_writelog "$SADM_OK rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+           else sadm_writelog "$SADM_OK rsync -ar -e "ssh -p $ssh_port" --delete ${REMOTE_DIR} ${LOCAL_DIR}"
                 break
         fi
     done
@@ -762,7 +763,7 @@ validate_server_connectivity()
     sadm_write_err "[ ERROR ] ${FQDN_SNAME} unresponsive (Can't SSH to it)." 
     
     # Create Error Line in Global Error Report File (rpt)
-    ADATE=`date "+%Y.%m.%d;%H:%M"`                                      # Current Date/Time
+    ADATE=$(date "+%Y.%m.%d;%H:%M")                                     # Current Date/Time
     RPTLINE="Error;${SNAME};${ADATE};linux;NETWORK"                     # Date/Time,Module,SubModule
     RPTLINE="${RPTLINE};${FQDN_SNAME} unresponsive (Can't SSH to it)"   # Monitor Error Message
     RPTLINE="${RPTLINE};${SADM_ALERT_GROUP};${SADM_ALERT_GROUP}"        # Set Alert group to notify
@@ -944,8 +945,8 @@ process_servers()
         # If client backup list was modified on master (if backup_list.tmp exist) then update client.
         if [ -r "$LDIR/backup_list.tmp" ]                               # If backup list was modify
            then if [ "$fqdn_server" != "$SADM_SERVER" ]                 # If Not on SADMIN Server
-                   then rsync $LDIR/backup_list.tmp ${server_name}:$RDIR/backup_list.txt # Rem.Rsync
-                   else rsync $LDIR/backup_list.tmp $SADM_CFG_DIR/backup_list.txt  # Local Rsync 
+                   then rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_list.tmp ${server_name}:$RDIR/backup_list.txt # Rem.Rsync
+                   else rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_list.tmp $SADM_CFG_DIR/backup_list.txt  # Local Rsync 
                 fi
                 RC=$?                                                   # Save Command Return Code
                 if [ $RC -eq 0 ]                                        # If copy to client Worked
@@ -958,8 +959,8 @@ process_servers()
         # If backup exclude list was modified on master (if backup_exclude.tmp exist), update client
         if [ -r "$LDIR/backup_exclude.tmp" ]                            # Backup Exclude list modify
            then if [ "$fqdn_server" != "$SADM_SERVER" ]                 # If Not on SADMIN Server
-                   then rsync $LDIR/backup_exclude.tmp ${server_name}:$RDIR/backup_exclude.txt 
-                   else rsync $LDIR/backup_exclude.tmp $SADM_CFG_DIR/backup_exclude.txt # LocalRsync 
+                   then rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_exclude.tmp ${server_name}:$RDIR/backup_exclude.txt 
+                   else rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_exclude.tmp $SADM_CFG_DIR/backup_exclude.txt # LocalRsync 
                 fi
                 RC=$?                                                   # Save Command Return Code
                 if [ $RC -eq 0 ]                                        # If copy to client Worked
@@ -977,7 +978,7 @@ process_servers()
            then update_rear_site_conf ${server_name}
                 if [ "$fqdn_server" != "$SADM_SERVER" ]                 # If Not on SADMIN Server
                    then #sadm_writelog "rsync -var $REAR_CFG ${server_name}:/etc/rear/site.conf "
-                        rsync $REAR_CFG ${server_name}:/etc/rear/site.conf 
+                        rsync -ar -e "ssh -p $ssh_port" $REAR_CFG ${server_name}:/etc/rear/site.conf 
                         if [ $? -eq 0 ] 
                             then sadm_writelog "$SADM_OK /etc/rear/site.conf updated on ${server_name}"
                             else sadm_writelog "$SADM_ERROR Trying to update /etc/rear/site.conf on ${server_name}"
@@ -985,14 +986,14 @@ process_servers()
                         fi
                         #
                         #sadm_writelog "rsync -var $REAR_USER_EXCLUDE ${server_name}:${RDIR}/rear_exclude.txt" 
-                        rsync $REAR_USER_EXCLUDE ${server_name}:${RDIR}/rear_exclude.txt 
+                        rsync -ar -e "ssh -p $ssh_port" "$REAR_USER_EXCLUDE" "${server_name}:${RDIR}/rear_exclude.txt"
                         if [ $? -eq 0 ] 
                             then sadm_writelog "$SADM_OK ${RDIR}/rear_exclude.txt updated on ${server_name}"
                             else sadm_writelog "$SADM_ERROR Trying to update ${RDIR}/rear_exclude.txt on ${server_name}"
                                  if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi  
                         fi
                    else #sadm_writelog "rsync -var $REAR_CFG /etc/rear/site.conf" 
-                        rsync $REAR_CFG /etc/rear/site.conf
+                        rsync -ar -e "ssh -p $ssh_port" $REAR_CFG /etc/rear/site.conf
                         if [ $? -eq 0 ] 
                             then sadm_writelog "$SADM_OK /etc/rear/site.conf updated on ${server_name}"
                             else sadm_writelog "$SADM_ERROR Trying to update /etc/rear/site.conf on ${server_name}"
@@ -1000,7 +1001,7 @@ process_servers()
                         fi
                         #
                         #sadm_writelog "rsync $REAR_USER_EXCLUDE ${SADM_CFG_DIR}/rear_exclude.txt" 
-                        rsync $REAR_USER_EXCLUDE ${SADM_CFG_DIR}/rear_exclude.txt
+                        rsync -ar -e "ssh -p $ssh_port" "$REAR_USER_EXCLUDE" "${SADM_CFG_DIR}/rear_exclude.txt"
                         if [ $? -eq 0 ] 
                             then sadm_writelog "$SADM_OK ${SADM_CFG_DIR}/rear_exclude.txt updated on ${server_name}"
                             else sadm_writelog "$SADM_ERROR Trying to update ${SADM_CFG_DIR}/rear_exclude.txt on ${server_name}"
@@ -1017,9 +1018,9 @@ process_servers()
                    do
                    CFG_SRC="${SADM_CFG_DIR}/${WFILE}" 
                    CFG_DST="${fqdn_server}:${server_dir}/cfg/${WFILE}"
-                   CFG_CMD="rsync ${CFG_SRC} ${CFG_DST}"
+                   CFG_CMD="rsync -ar -e ssh -p $ssh_port ${CFG_SRC} ${CFG_DST}"
                    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CFG_CMD" ; fi 
-                   rsync ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
+                   rsync -ar -e "ssh -p $ssh_port" "${CFG_SRC}" "${CFG_DST}" >> "$SADM_LOG" 2>&1
                    RC=$? 
                    if [ $RC -ne 0 ]
                       then sadm_writelog "$SADM_ERROR ($RC) doing ${CFG_CMD}"
