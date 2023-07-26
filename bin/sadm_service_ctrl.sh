@@ -55,6 +55,7 @@
 # 2021_05_23 cmdline v2.10 Change switch from -d (disable) to -u (unset) and -s(status) to -l (List)
 # 2021_06_13 cmdline v2.11 When using an invalid command line option, PID file wasn't removed.
 # 2023_03_31 cmdline v2.12 Fix problem that could prevent SADMIN startup/shutdown script to executed
+#@2023_07_26 cmdline v2.13 Correct typo that correct problem declaring cmdline option.
 #--------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -85,7 +86,7 @@ export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DA
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.12'                                      # Script version number
+export SADM_VER='2.13'                                      # Script version number
 export SADM_PDESC="Script to enable or disable execution of SADMIN startup/shutdown script."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -435,7 +436,7 @@ service_start()
 
     # Optional Command line switches    
     P_DISABLE="OFF" ; P_ENABLE="OFF" ; P_STATUS="OFF"                   # Set Switch Default Value
-    while getopts "dsuvlh " opt ; do                                    # Loop to process Switch
+    while getopts "dsuvlh" opt ; do                                    # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
