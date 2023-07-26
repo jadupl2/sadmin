@@ -66,7 +66,6 @@ try :
     import inspect                                          # Check Object Type
     import time                                             # Time access & conversions
     import socket                                           # LowLevel network interface
-    import pymysql                                          # Connect & Use MySQL DB
     import subprocess                                       # Subprocess management
     import smtplib,ssl                                      # SMTP/SSL protocol client
     from email.mime.multipart import MIMEMultipart          # Use for sending email
@@ -78,13 +77,18 @@ try :
     import subprocess                                       # Subprocess management
     import multiprocessing                                  # Process-based parallelism
 #   import pdb                                              # Python Debugger
+    import pymysql 
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
 #pdb.set_trace()                                            # Activate Python Debugging
 
-
-
+#if ((get_fqdn() == sadm_server ) and (db_used)) : 
+#    try: 
+#        import pymysql 
+#    except ImportError as e:
+#        print ("Import Error : %s " % e)
+#        sys.exit(1)
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
@@ -301,6 +305,74 @@ tmp_file3          = "%s_3.%s" % (tmp_file_prefix,ppid)                 # Temp3 
 # The SSH command used to communicate with all the systems.
 cmd_ssh_full = "%s -qnp %s " % (cmd_ssh,sadm_ssh_port) 
 
+
+
+
+#---------------------------------------------------------------------------------------------------
+def write_log (wline, lf=True ):
+    
+    """ 
+        Write a string in log file and/or the screen.
+        Depend on log_type: [B]oth,[L]og,[S]creen.
+        
+        Args:
+            wline (str) : Line to write to log (with time stamp)
+                          For log file, all "\n" are replace by " " in wline (Except for EOL)
+                          Line write to screen are untouched (with no time stamp)
+            lf (boolean): Include or not a line feed at the EOL on screen.
+                          True or False (True Default).
+        Returns:
+            None
+    """
+
+    global log_file_fh                                                  # Log file File Handle
+
+    now = datetime.datetime.now()                                       # Get current Time
+    logLine = now.strftime("%Y.%m.%d %H:%M:%S") + " - " + wline         # Add Date/Time to Log Line
+    if (log_type.upper() == "L") or (log_type.upper() == "B") :         # Output to Log or Both
+        logLine=logLine.replace("\n"," ").strip()                       # Replace \n by " " in Log
+        log_file_fh.write ("%s\n" % (logLine))                          # Write to Log
+    if (log_type.upper() == "S") or (log_type.upper() == "B") :         # Output to Screen
+        if (lf) :                                                       # If EOL Line feed requested
+            print ("%s" % wline)                                        # Line with LineFeed
+        else :                                                          # No LineFeed requested
+            print ("%s" % wline, end='')                                # Line without LineFeed
+    return(0)
+
+
+
+#---------------------------------------------------------------------------------------------------
+def write_err (wline, lf=True ):
+    
+    """ 
+        Write a string in error log file and/or the screen.
+        Depend on log_type: [B]oth,[L]og,[S]creen.
+        
+        Args:
+            wline (str) : Line to write to log (with time stamp)
+                          When writing to error (and log) file, all "\n" are replace by " " in wline 
+                          (Except for EOL).
+                          Line to write to screen untouch (with no time stamp)
+            lf (boolean): Include or not a line feed at EOL on the screen.
+                          True or False (True Default).
+        Returns:
+            None
+    """
+
+    global log_file_fh, err_file_fh                                     # Log & Error File Handle
+    
+    now = datetime.datetime.now()                                       # Get current Time
+    logLine = now.strftime("%Y.%m.%d %H:%M:%S") + " - " + wline         # Add Date/Time to Log Line
+    if (log_type.upper() == "L") or (log_type.upper() == "B") :         # Output to Log or Both
+        logLine=logLine.replace("\n"," ").strip()                       # Replace \n by " " in Log
+        log_file_fh.write ("%s\n" % (logLine))                          # Write to log file
+        err_file_fh.write ("%s\n" % (logLine))                          # Write to error file
+    if (log_type.upper() == "S") or (log_type.upper() == "B") :         # Output to Screen
+        if (lf) :                                                       # If EOL Line feed requested
+            print ("%s" % wline)                                        # Line with LineFeed
+        else :                                                          # No LineFeed requested
+            print ("%s" % wline, end='')                                # Line without LineFeed
+    return(0) 
 
 
 
@@ -635,74 +707,6 @@ def load_config_file(cfg_file):
     return 
 
 
-#---------------------------------------------------------------------------------------------------
-def write_log (wline, lf=True ):
-    
-    """ 
-        Write a string in log file and/or the screen.
-        Depend on log_type: [B]oth,[L]og,[S]creen.
-        
-        Args:
-            wline (str) : Line to write to log (with time stamp)
-                          For log file, all "\n" are replace by " " in wline (Except for EOL)
-                          Line write to screen are untouched (with no time stamp)
-            lf (boolean): Include or not a line feed at the EOL on screen.
-                          True or False (True Default).
-        Returns:
-            None
-    """
-
-    global log_file_fh                                                  # Log file File Handle
-
-    now = datetime.datetime.now()                                       # Get current Time
-    logLine = now.strftime("%Y.%m.%d %H:%M:%S") + " - " + wline         # Add Date/Time to Log Line
-    if (log_type.upper() == "L") or (log_type.upper() == "B") :         # Output to Log or Both
-        logLine=logLine.replace("\n"," ").strip()                       # Replace \n by " " in Log
-        log_file_fh.write ("%s\n" % (logLine))                          # Write to Log
-    if (log_type.upper() == "S") or (log_type.upper() == "B") :         # Output to Screen
-        if (lf) :                                                       # If EOL Line feed requested
-            print ("%s" % wline)                                        # Line with LineFeed
-        else :                                                          # No LineFeed requested
-            print ("%s" % wline, end='')                                # Line without LineFeed
-    return(0)
-
-
-
-#---------------------------------------------------------------------------------------------------
-def write_err (wline, lf=True ):
-    
-    """ 
-        Write a string in error log file and/or the screen.
-        Depend on log_type: [B]oth,[L]og,[S]creen.
-        
-        Args:
-            wline (str) : Line to write to log (with time stamp)
-                          When writing to error (and log) file, all "\n" are replace by " " in wline 
-                          (Except for EOL).
-                          Line to write to screen untouch (with no time stamp)
-            lf (boolean): Include or not a line feed at EOL on the screen.
-                          True or False (True Default).
-        Returns:
-            None
-    """
-
-    global log_file_fh, err_file_fh                                     # Log & Error File Handle
-    
-    now = datetime.datetime.now()                                       # Get current Time
-    logLine = now.strftime("%Y.%m.%d %H:%M:%S") + " - " + wline         # Add Date/Time to Log Line
-    if (log_type.upper() == "L") or (log_type.upper() == "B") :         # Output to Log or Both
-        logLine=logLine.replace("\n"," ").strip()                       # Replace \n by " " in Log
-        log_file_fh.write ("%s\n" % (logLine))                          # Write to log file
-        err_file_fh.write ("%s\n" % (logLine))                          # Write to error file
-    if (log_type.upper() == "S") or (log_type.upper() == "B") :         # Output to Screen
-        if (lf) :                                                       # If EOL Line feed requested
-            print ("%s" % wline)                                        # Line with LineFeed
-        else :                                                          # No LineFeed requested
-            print ("%s" % wline, end='')                                # Line without LineFeed
-    return(0) 
-
-
-
 # --------------------------------------------------------------------------------------------------
 def oscommand (command : str) :
     
@@ -718,13 +722,14 @@ def oscommand (command : str) :
         out (str)        :  Contain the stdout of the command executed
         err (str)        :  Contain the stderr of the command executed
     """
-
+    #lib_debug=9
     if lib_debug > 8 : write_log ("oscommand function to run command : %s" % (command))
     #p = subprocess.Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     out = p.stdout.read().strip().decode()
     err = p.stderr.read().strip().decode()
     returncode = p.wait()
+
     if lib_debug > 8 :
         write_log ("oscommand function stdout is     : %s" % (out))
         write_log ("oscommand function stderr is     : %s" % (err))
@@ -2280,8 +2285,8 @@ def start(pver,pdesc) :
             os.chown(rch_file,uid,gid)                                  # Chg History File Owner
             os.chmod(rch_file,0o0664)                                   # Chg History File Perm.  
 
-    # If database SADMIN is used.
-    #if db_used :
+    # If database SADMIN is used .
+    #if db_used : 
     #    (db_err,pdb_conn,pdb_cur) = db_connect('sadmin') 
     #    if db_err != 0 :
     #        rcode = 1
@@ -2556,7 +2561,7 @@ def print_dict_alert():
 
 # Making sure the 'SADMIN' environment variable is defined, abort if it isn't.
 if (os.getenv("SADMIN",default="X") == "X"):                            # SADMIN Env.Var. Not Define
-    print("'SADMIN' Environment Variable isn't defined.")               # SADMIN Var MUST be defined
+    print("'SADMIN' environment variable isn't defined.")               # SADMIN Var MUST be defined
     print("It specify the directory where you installed the SADMIN Tools.")
     print("Add this line at the end of /etc/environment file")          # Show Where to Add Env. Var
     print("SADMIN='/[dir-where-you-install-sadmin]'")                   # Show What to Add.
@@ -2566,5 +2571,16 @@ if (os.getenv("SADMIN",default="X") == "X"):                            # SADMIN
 load_config_file(cfg_file)                                              # Load sadmin.cfg in Dict.
 load_cmd_path()                                                         # Load Cmd Path Variables
 dict_alert = load_alert_file()                                          # Load Alert group in dict
+
+# If DB is set to be use and on the SADMIN server (Where the Database is), then import MySQL Module
+if ((get_fqdn() == sadm_server ) and (db_used)) : 
+    try: 
+        import pymysql 
+    except ImportError as e:
+        print ("Import Error : %s " % e)
+        sys.exit(1)
+    #(pexit_code, pdb_conn, pdb_cur) = sa.db_connect('sadmin')           # Connect to SADMIN Database
+
+# Print Alert Dictionnary under Debug
 if (lib_debug > 0) : 
     print_dict_alert()                                                  # Print Alert Group Dict
