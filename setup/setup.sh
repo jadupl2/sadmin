@@ -75,8 +75,6 @@
 #@2023_07_09 install v3.30 Due to Debian 12, I change the way to install the 'pymysql' python module.
 #@2023_07_14 install v3.31 Loose IP vs hostname when DNS is not present.
 #@2023_07_16 install v3.32 Remove one unnecessary line in the log.
-
-
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -375,16 +373,16 @@ install_python3()
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
-                 then printf "\n   - Running 'yum -y install python3 python3-setuptools python3-pip'\n" |tee -a $SLOG
-                      yum -y install python3 python3-setuptools python3-pip  >> $SLOG 2>&1
-                 else printf "\n   - Running 'dnf -y install python3 python3-setuptools python3-pip'\n" |tee -a $SLOG
-                      dnf -y install python3 python3-setuptools python3-pip >>$SLOG 2>&1
+                 then printf "\n   - Running 'yum -y install python3 python3-setuptools python3-pip python3-PyMySQL'\n" |tee -a $SLOG
+                      yum -y install python3 python3-setuptools python3-pip  python3-PyMySQL >> $SLOG 2>&1
+                 else printf "\n   - Running 'dnf -y install python3 python3-setuptools python3-pip python3-PyMySQL'\n" |tee -a $SLOG
+                      dnf -y install python3 python3-setuptools python3-pip python3-PyMySQL >>$SLOG 2>&1
               fi 
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
         then apt-get update >> $SLOG 2>&1
-             printf "\n   - Running 'apt-get -y install python3 python3-venv python3-pip'"| tee -a $SLOG
-             apt-get -y install python3 python3-venv python3-pip >>$SLOG 2>&1
+             printf "\n   - Running 'apt-get -y install python3 python3-venv python3-pip python3-pymysql'"| tee -a $SLOG
+             apt-get -y install python3 python3-venv python3-pip python3-pymysql >>$SLOG 2>&1
     fi 
     
     # python3 should now be installed, if not then abort installation
@@ -418,17 +416,7 @@ install_python3()
 #===================================================================================================
 check_python3()
 {
-    # Check if python3 is installed 
-    #printf "Check if python3 is installed ..." | tee -a $SLOG
-
-    # python3 should now be installed, if not then install it or abort installation
-    #which python3 > /dev/null 2>&1
-    #if [ $? -eq 0 ]
-    #    then echo " [ OK ] " | tee -a $SLOG
-    #    else echo "Python3 is not installed."  | tee -a $SLOG
     install_python3 
-    #         echo " [ OK ]" | tee -a $SLOG
-    #fi
 
     # Check if python3 'pymsql' module is installed 
     printf "\n   - Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
@@ -620,7 +608,7 @@ EOF
         then add_epel_repo                                               
     fi 
     
-    # Make sure python 3 installed, if not install it.
+    # Make sure python 3 installed, and the module need for SADMIN to work.
     check_python3
 
     # Make sure current host is in /etc/hosts

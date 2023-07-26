@@ -120,6 +120,7 @@
 #@2023_07_09 install v3.89 Fix problem with sadmin web server config on Debian 12.
 #@2023_07_12 install v3.90 Initial 'sadm_client' crontab now using python ver. of 'sadm_nmon_watcher'.
 #@2023_07_16 install v3.91 To ease name resolution, accept sadmin server IP instead of it FQDN.
+#@2023_07_26 install v3.92 Minor modification.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -137,7 +138,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.91"                                            # Setup Version Number
+sver                = "3.92"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -193,16 +194,10 @@ req_client = {
                     'deb':'nmon',                           'drepo':'base'},
     'ethtool'    :{ 'rpm':'ethtool',                        'rrepo':'base',  
                     'deb':'ethtool',                        'drepo':'base'},
-    'rear'       :{ 'rpm':'rear xorriso',                   'rrepo':'base',  
-                    'deb':'rear xorriso',                   'drepo':'base'},
     'coreutils'  :{ 'rpm':'coreutils',                      'rrepo':'base',  
                     'deb':'coreutils',                      'drepo':'base'},
-    'syslinux'   :{ 'rpm':'syslinux ',                       'rrepo':'base',  
-                    'deb':'syslinux-utils',                 'drepo':'base'},
     'dig'        :{ 'rpm':'bind-utils ',                    'rrepo':'base',  
                     'deb':'bind9-dnsutils',                 'drepo':'base'},
-    'extlinux'   :{ 'rpm':'syslinux-extlinux ',             'rrepo':'base',  
-                    'deb':'extlinux',                       'drepo':'base'},
     'genisoimage':{ 'rpm':'genisoimage',                    'rrepo':'base',  
                     'deb':'genisoimage',                    'drepo':'base'},
     'rsync'      :{ 'rpm':'rsync',                          'rrepo':'base',  
@@ -217,8 +212,8 @@ req_client = {
                     'deb':'lshw',                           'drepo':'base'},
     'parted'     :{ 'rpm':'parted',                         'rrepo':'base',  
                     'deb':'parted',                         'drepo':'base'},
-#    'mail'       :{ 'rpm':'mailx',                          'rrepo':'base',
-#                    'deb':'mailutils',                      'drepo':'base'},
+    'rear   '    :{ 'rpm':'rear' 'xorriso' 'syslinux' 'syslinux-extlinux ', 'rrepo':'base',
+                    'deb':'rear' 'xorriso' 'syslinux-utils' 'extlinux'    , 'drepo':'base'},
     'mutt'       :{ 'rpm':'mutt',                           'rrepo':'base',
                     'deb':'mutt',                           'drepo':'base'},
     'gawk'       :{ 'rpm':'gawk',                           'rrepo':'base',
@@ -2571,7 +2566,7 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("SADMIN TOOLS Successfully Installed")
     writelog ("===========================================================================")
     writelog ("You need to logout & log back in before using SADMIN or type the command :")
-    writelog ("'. /etc/profile.d/sadmin.sh', this define 'SADMIN' environment variable.")
+    writelog ("'. /etc/profile.d/sadmin.sh', this will define 'SADMIN' environment variable.")
     writelog (" ")
     if (stype == "S") :
         writelog ("USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
@@ -2599,7 +2594,7 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog (" ")
     if (stype == "C") :
         writelog ("WANT TO ADD A CLIENT ON THE SADMIN SERVER",'bold')
-        writelog ("  - See instruction on this page : https://www.sadmin.ca/www/client_add.php")
+        writelog ("  - See instruction on this page : https://sadmin.ca/www/client_add.php")
         writelog (" ")
     writelog ("\n===========================================================================")
     writelog ("ENJOY !!",'bold')
@@ -2613,10 +2608,10 @@ def end_message(sroot,sdomain,sserver,stype):
 #===================================================================================================
 #
 def sadmin_service(sroot):
-    cmd = "%s/bin/sadm_service_ctrl.sh -s" % (sroot)                    # Enable SADMIN Service 
     writelog (" ") 
     writelog (" ")
     writelog ("----------")
+    cmd = "%s/bin/sadm_service_ctrl.sh -s" % (sroot)                    # Enable SADMIN Service 
     writelog ("Enabling SADMIN Service - %s ... " % (cmd),"nonl")       # Inform User
     ccode,cstdout,cstderr = oscommand(cmd)                              # Enable MariaDB Server
     if (ccode != 0):                                                    # Problem Enabling Service
