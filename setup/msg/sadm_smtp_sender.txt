@@ -1,5 +1,4 @@
 # sadmin.cfg SADM_SMTP_SENDER Documentation
-# Revise 2022_05_03
+# Revise 2023_07_21
 # ----------------------------------------------------------------------------
 This field indicate the email address of the sender.
-Password use by this email address will be store in $SADMIN/cfg/.gmpw file.

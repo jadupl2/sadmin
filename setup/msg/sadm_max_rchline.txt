@@ -1,13 +1,12 @@
 # sadmin.cfg SADM_MAX_RCHLINE Documentation
-# Revise 2018_02_14
+# Revise 2023_07_21
 # ----------------------------------------------------------------------------
 When a (python or shell) script using the SADMIN tools start and ends, it 
 record the date/time and the ending status of your script in what we call
 a RCH file ([R]eturn [C]ode [H]istory]) file. 
-
     - The RCH file name are "[HOSTNAME]_[NAME_OF_SCRIPT].rch"
     - They are located in the directory ${SADMIN}/dat/rch.
     - RCH file are trim automatically at the end of script execution.
     - It indicate the maximum of lines you want to keep in each RCH file.
-    - This help keeping our log to a reasonnable size.     
-    - The default value is 100 lines, this keep an history of ~50 days.
+    - This help keeping our log to a reasonable size.     
+    - The default value is 35 lines (0 if you don't want to trim).
