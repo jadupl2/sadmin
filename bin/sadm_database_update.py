@@ -46,6 +46,7 @@
 # 2022_03_28 server v3.17 Give a warning instead of an error when O/S update is not yet run.
 # 2022_08_17 server v3.18 Updated to use the new SADMIN Python Library v2.
 # 2022_08_25 server v3.19 Fix a 'KeyError' that could cause problem.
+#@2023_07_26 server v3.20 Restrict execution, will run only on the SADMIN server.
 # 
 # ==================================================================================================
 #
@@ -73,7 +74,7 @@ except ImportError as e:                                                # If Err
     sys.exit(1)                                                         # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "3.19"                                                     # Program version
+pver        = "3.20"                                                     # Program version
 pdesc       = "Update SADMIN database with information collected from each system."
 phostname   = sa.get_hostname()                                         # Get current `hostname -s`
 pdb_conn    = None                                                      # Database connector
@@ -85,7 +86,7 @@ pexit_code  = 0                                                         # Script
 # Uncomment anyone to change them and influence execution of SADMIN standard library.
 #
 sa.proot_only        = True       # Pgm run by root only ?
-sa.psadm_server_only = False      # Run only on SADMIN server ?
+sa.psadm_server_only = True      # Run only on SADMIN server ?
 sa.db_used           = True       # Open/Use Database(True) or Don't Need DB(False)
 #sa.db_silent        = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
