@@ -28,14 +28,13 @@
 # 2022_05_09 lib v1.0 New Python template using V2 of SADMIN python library.
 # 2022_05_25 lib v1.1 Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
 #@2023_07_11 lib v1.2 'sadm_nmon_watcher' rewritten in Python, lot more faster.
+#@2023_07_26 lib v1.3 Correct problem detecting 'nmon' instance (performance collector).
 # --------------------------------------------------------------------------------------------------
 #
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
 try:
-    #import os,sys,argparse,time,datetime,socket,platform            # Import Std Python3 Modules
     import os,sys,argparse,datetime,time                             # Import Std Python3 Modules
-    #import pymysql                                                  # Use for MySQL DB
-    from psutil import process_iter
+    #from psutil import process_iter
 #   import pdb                                                      # Python Debugger (If needed)
 except ImportError as e:                                            # Trap Import Error
     print("Import Error : %s " % e)                                 # Print Import Error Message
@@ -64,7 +63,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "1.2"                                                  # Program version no.
+pver        = "1.3"                                                  # Program version no.
 pdesc       = "Make sure the 'nmon' performance monitor is running."
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
 pdb_conn    = None                                                   # Database connector when used
@@ -118,12 +117,20 @@ def is_process_running(pname):
     Return:
         ppid (Int)  : If the process is running it will return it PID, otherwise a zero.
     """ 
+    ccode = cstdout = cstderr = "" 
+    ccode,cstdout,cstderr = sa.oscommand("ps -ef |grep '/nmon '| grep -v grep")
+    if ccode != 0 : return(0)
+
+    ccode,cstdout,cstderr = sa.oscommand("ps -ef |grep '/nmon '|grep -v grep |awk '{ print $2 }'")
     
-    for proc in process_iter():
-        if len(proc.name()) == len(pname) and (proc.name() == pname):
-            if pdebug > 4 : print ("Process %s - PID %d\n" % (proc.name(),proc.pid))
-            return(proc.pid)
-    return(0)
+    return(cstdout)
+    
+    
+    #for proc in process_iter():
+    #    if len(proc.name()) == len(pname) and (proc.name() == pname):
+    #        if pdebug > 4 : print ("Process %s - PID %d\n" % (proc.name(),proc.pid))
+    #        return(proc.pid)
+    #return(0)
 
 
 
@@ -142,7 +149,9 @@ def main_process():
     # Check if nmon is running
     wpid = is_process_running(nmon_name)
     if wpid != 0 :
-        sa.write_log("Process '%s' is running and have a PID of %d\n" % (nmon_name,wpid))
+        sa.write_log("Process '%s' is running and have a PID of %s." % (nmon_name,wpid))
+        ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
+        sa.write_log(cstdout)
         return(0)
     else : 
         sa.write_log("The process named '%s' is not running\n" % (nmon_name))
@@ -211,7 +220,9 @@ def main_process():
     # Check if nmon is running
     wpid = is_process_running(nmon_name)
     if wpid != 0 :
-        sa.write_log("[ OK ] Process named '%s' is running and have a PID of %d\n" % (nmon_name,wpid))
+        sa.write_log("[ OK ] Process named '%s' is running and have a PID of %s\n" % (nmon_name,wpid))
+        ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
+        sa.write_log(cstdout)
         return(0)
     else : 
         pexit_code = 1 
@@ -229,7 +240,7 @@ def cmd_options(argv):
     """ Command line Options functions - Evaluate Command Line Switch Options
 
         Args:
-            (argv): Arguments pass on the comand line.
+            (argv): Arguments pass on the command line.
               [-d 0-9]  Set Debug (verbose) Level
               [-h]      Show this help message
               [-v]      Show script version information
