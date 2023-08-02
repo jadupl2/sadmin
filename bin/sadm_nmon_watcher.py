@@ -64,24 +64,26 @@ except ImportError as e:                                             # If Error 
 
 # Local variables local to this script.
 pver        = "1.3"                                                  # Program version no.
-pdesc       = "Make sure the 'nmon' performance monitor is running."
+pdesc       = "This script ensure that 'nmon' performance monitor is running."
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
-pdb_conn    = None                                                   # Database connector when used
-pdb_cur     = None                                                   # Database cursor when used
+db_conn    = None                                                   # Database connector when used
+db_cur     = None                                                   # Database cursor when used
 pdebug      = 0                                                      # Debug level from 0 to 9
 pexit_code  = 0                                                      # Script default exit code
 
 # Uncomment anyone to change them to influence execution of SADMIN standard library.
 sa.proot_only        = False      # Pgm run by root only ?
 sa.psadm_server_only = False      # Run only on SADMIN server ?
-sa.db_used           = False      # Open/Use Database(True) or Don't Need DB(False)
+sa.db_used           = False      # Use (True) or not SADMIN Database (False)
+sa.db_silent         = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
+sa.db_conn           = None       # Database connector when used
+sa.db_cur            = None       # Database cursor when used
 sa.use_rch           = True       # Generate entry in Result Code History (.rch)
 sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
 sa.log_append        = False      # Append Existing Log(True) or Create New One(False)
 sa.log_header        = True       # Show/Generate Header in script log (.log)
 sa.log_footer        = True       # Show/Generate Footer in script log (.log)
 sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
-sa.db_silent         = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
 sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
@@ -122,7 +124,6 @@ def is_process_running(pname):
     if ccode != 0 : return(0)
 
     ccode,cstdout,cstderr = sa.oscommand("ps -ef |grep '/nmon '|grep -v grep |awk '{ print $2 }'")
-    
     return(cstdout)
     
     
@@ -282,7 +283,10 @@ def cmd_options(argv):
 # --------------------------------------------------------------------------------------------------
 def main(argv):
     pdebug = cmd_options(argv)                                          # Analyze cmdline options
-    sa.start(pver, pdesc)                                               # Initialize SADMIN env.
+    if sa.db_used : 
+        sa.db_conn,sa.db_cur=sa.start(pver, pdesc)                    # Initialize SADMIN env.
+    else : 
+        sa.start(pver, pdesc)                                               # Initialize SADMIN env.
     pexit_code = main_process()                                         # Main Process
     sa.stop(pexit_code)                                                 # Gracefully exit SADMIN
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code

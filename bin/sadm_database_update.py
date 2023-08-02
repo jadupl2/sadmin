@@ -77,8 +77,8 @@ except ImportError as e:                                                # If Err
 pver        = "3.20"                                                     # Program version
 pdesc       = "Update SADMIN database with information collected from each system."
 phostname   = sa.get_hostname()                                         # Get current `hostname -s`
-pdb_conn    = None                                                      # Database connector
-pdb_cur     = None                                                      # Database cursor
+db_conn    = None                                                      # Database connector
+db_cur     = None                                                      # Database cursor
 pdebug      = 0                                                         # Debug level from 0 to 9
 pexit_code  = 0                                                         # Script default exit code
 
@@ -259,7 +259,7 @@ def update_row(wconn, wcur, wdict):
 # Process all your active(s) server(s) in the Database (Used if want to process selected servers)
 # --------------------------------------------------------------------------------------------------
 def process_servers(wconn, wcur):
-    #global pdb_conn, pdb_cur                                            # DB Connection & Cursor
+    #global db_conn, db_cur                                            # DB Connection & Cursor
 
     sa.write_log ("Processing all actives systems")
 
@@ -548,15 +548,15 @@ def cmd_options(argv):
 # Main Function
 # --------------------------------------------------------------------------------------------------
 def main(argv):
-    global pdb_conn, pdb_cur                                            # DB Connection & Cursor
+    global db_conn, db_cur                                            # DB Connection & Cursor
     (pdebug) = cmd_options(argv)                                        # Analyse cmdline options
     pexit_code = 0                                                      # Pgm Exit Code Default
     sa.start(pver, pdesc)                                               # Initialize SADMIN env.
 
-    (pexit_code, pdb_conn, pdb_cur) = sa.db_connect('sadmin')           # Connect to SADMIN Database
+    (pexit_code, db_conn, db_cur) = sa.db_connect('sadmin')           # Connect to SADMIN Database
     if pexit_code == 0:                                                 # If Connection to DB is OK
-        pexit_code = process_servers(pdb_conn, pdb_cur)                 # Loop All Active systems
-        sa.db_close(pdb_conn, pdb_cur)                                  # Close connection to DB
+        pexit_code = process_servers(db_conn, db_cur)                 # Loop All Active systems
+        sa.db_close(db_conn, db_cur)                                  # Close connection to DB
 
     sa.stop(pexit_code)                                                 # Gracefully exit SADMIN
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code

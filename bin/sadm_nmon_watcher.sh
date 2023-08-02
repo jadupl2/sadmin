@@ -196,7 +196,7 @@ check_nmon()
     
     # Kill any nmon running without the option -s120 (Our switch) - Want only one nmon running
     # This will eliminate the nmon running from the crontab with rpm installation
-    nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s120 |wc -l |tr -d ' '`
+    nmon_count=$(ps -ef | grep -E "$WSEARCH" |grep -v grep |grep -c s120 |tr -d ' '`
     if [ $nmon_count -gt 1 ] 
         then #NMON_PID=`ps -ef | grep nmon |grep -v grep |grep s120 |awk '{ print $2 }'`
              #sadm_write_log "Found another nmon process running at $NMON_PID"
@@ -210,7 +210,7 @@ check_nmon()
  
     # Search Process Status (ps) and display number of nmon process running currently
     sadm_write_log " "                                                   # Blank line in log
-    nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s120 |wc -l |tr -d ' '`
+    nmon_count=$(ps -ef | grep -E "$WSEARCH" |grep -v grep |grep -c s120 |tr -d ' ')
     sadm_write_log "There is $nmon_count nmon process actually running"  # Show Nb. nmon Running
     ps -ef | grep -E "$WSEARCH" | grep 's120' | grep -v grep | nl | tee -a $SADM_LOG
 

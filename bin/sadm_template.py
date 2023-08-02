@@ -67,8 +67,8 @@ except ImportError as e:                                             # If Error 
 pver        = "1.2"                                                  # Program version no.
 pdesc       = "Update 'pdesc' variable & put a description of your script."
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
-pdb_conn    = None                                                   # Database connector when used
-pdb_cur     = None                                                   # Database cursor when used
+db_conn    = None                                                   # Database connector when used
+db_cur     = None                                                   # Database cursor when used
 pdebug      = 0                                                      # Debug level from 0 to 9
 pexit_code  = 0                                                      # Script default exit code
 
@@ -112,7 +112,7 @@ sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (s
 # Process all your active(s) server(s) in the Database (Used if want to process selected servers)
 # --------------------------------------------------------------------------------------------------
 def process_servers():
-    global pdb_conn, pdb_cur                                            # DB Connection & Cursor
+    global db_conn, db_cur                                            # DB Connection & Cursor
 
     sa.write_log("Processing All Actives Server(s)")                    # Enter Servers Processing
     if (sa.get_fqdn() != sa.sadm_server) or (sa.db_used == False):      # Not SADMIN srv,usedb False
@@ -125,8 +125,8 @@ def process_servers():
     sql = "SELECT * FROM server WHERE srv_active = %s order by srv_name;" % ('True')
 
     try:
-        pdb_cur.execute(sql)                                            # Execute SQL Statement
-        rows = pdb_cur.fetchall()                                       # Retrieve All Rows
+        db_cur.execute(sql)                                            # Execute SQL Statement
+        rows = db_cur.fetchall()                                       # Retrieve All Rows
     except(pymysql.err.InternalError, pymysql.err.IntegrityError, pymysql.err.DataError) as error:
         enum, emsg = error.args                                         # Get Error No. & Message
         sa.write_err("Error: Retrieving all active systems rows.")      # User error message
@@ -249,7 +249,7 @@ def cmd_options(argv):
 # Main Function
 # --------------------------------------------------------------------------------------------------
 def main(argv):
-    global pdb_conn, pdb_cur                                            # DB Connection & Cursor
+    global db_conn, db_cur                                            # DB Connection & Cursor
     (pdebug) = cmd_options(argv)                                        # Analyze cmdline options
 
     pexit_code = 0                                                      # Pgm Exit Code Default
@@ -260,10 +260,10 @@ def main(argv):
     #      Change 'sa.db_used = True' in SADMIN section at the beginning of this script.
     # (2) 'main_Process'    : Process don't need to use SADMIN Database.
     if sa.get_fqdn() == sa.sadm_server and sa.db_used :                 # On SADMIN srv & usedb True
-        (pexit_code, pdb_conn, pdb_cur) = sa.db_connect('sadmin')       # Connect to SADMIN Database
+        (pexit_code, db_conn, db_cur) = sa.db_connect('sadmin')       # Connect to SADMIN Database
         if pexit_code == 0:                                             # If Connection to DB is OK
             pexit_code = process_servers()                              # Loop All Active systems
-            sa.db_close(pdb_conn, pdb_cur)                              # Close connection to DB
+            sa.db_close(db_conn, db_cur)                              # Close connection to DB
     else: 
         pexit_code = main_process()                                     # Main Process without DB
 

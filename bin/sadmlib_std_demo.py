@@ -85,8 +85,8 @@ except ImportError as e:                                             # If Error 
 pver        = "3.20"                                                  # Program version no.
 pdesc       = "Demonstrate functions & variables available to developers using SADMIN Tools"
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
-pdb_conn    = None                                                   # Database connector
-pdb_cur     = None                                                   # Database cursor
+db_conn    = None                                                   # Database connector
+db_cur     = None                                                   # Database cursor
 pdebug      = 0                                                      # Debug level from 0 to 9
 pexit_code  = 0                                                      # Script default exit code
 
@@ -325,7 +325,7 @@ def print_python_function():
     presult="1=OK 1=Error,conn_obj,con_cursor"                          # Return 3 Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
                  
-    pexample="sa.db_close(pdb_conn,pdb_cur):"           
+    pexample="sa.db_close(db_conn,db_cur):"           
     pdesc="Close connection with database."                             # Function Description
     presult="0=Connection close 1=Error"                                # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
@@ -1148,7 +1148,7 @@ def print_db_variables():
 
     # Test Database Connection
     if ((sa.get_fqdn() == sa.sadm_server) and (sa.db_used)):            # On SADMIN srv & usedb True
-        (pexit_code,pdb_conn,pdb_cur) = sa.db_connect('sadmin')         # Connect to SADMIN Database
+        (pexit_code,db_conn,db_cur) = sa.db_connect('sadmin')         # Connect to SADMIN Database
         sa.write_log ("Database connection succeeded")                  # Show COnnect to DB Worked
         
         print ("\n\nShow SADMIN Tables:")
@@ -1233,8 +1233,8 @@ def print_db_variables():
         (returncode,stdout,stderr)=sa.oscommand(cmd)
         print (stdout);
         
-        sa.write_log ("Closing Database pdb_connection")                # Show we are closing DB
-        sa.db_close(pdb_conn,pdb_cur)                                   # Close the Database
+        sa.write_log ("Closing Database db_connection")                # Show we are closing DB
+        sa.db_close(db_conn,db_cur)                                   # Close the Database
         sa.write_log (" ")                                              # Blank Line
 
 
@@ -1299,7 +1299,7 @@ def cmd_options(argv):
 #===================================================================================================
 #
 def main(argv):
-    global show_password, pdb_conn, pdb_cur                             # Global Variables
+    global show_password, db_conn, db_cur                             # Global Variables
 
     (pdebug,show_password) = cmd_options(argv)                          # Analyse cmdline options
     pexit_code = 0                                                      # Pgm Exit Code Default

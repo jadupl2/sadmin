@@ -88,8 +88,8 @@ except ImportError as e:                                             # If Error 
 pver        = "3.9"                                                     # Program version
 pdesc       = "Produce Web network page that list IP, name and mac usage for subnet you specified."
 phostname   = sa.get_hostname()                                         # Get current `hostname -s`
-pdb_conn    = None                                                      # Database connector
-pdb_cur     = None                                                      # Database cursor
+db_conn    = None                                                      # Database connector
+db_cur     = None                                                      # Database cursor
 pdebug      = 0                                                         # Debug level from 0 to 9
 pexit_code  = 0                                                         # Script default exit code
 
@@ -457,7 +457,7 @@ def scan_network(snet,wconn,wcur) :
 #===================================================================================================
 #
 def main_process(wconn,wcur):
-    global pdb_conn, pdb_cur , pdebug                                 # DB Connection & Cursor
+    global db_conn, db_cur , pdebug                                 # DB Connection & Cursor
     
     if pdebug > 4 : sa.write_log("Processing Network1 = _%s_" % (sa.sadm_network1))
     if (sa.sadm_network1 != "") :
@@ -531,16 +531,16 @@ def cmd_options(argv):
 #===================================================================================================
 #
 def main(argv):
-    global pdb_conn, pdb_cur                                            # DB Connection & Cursor
+    global db_conn, db_cur                                            # DB Connection & Cursor
     pdebug = cmd_options(argv)                                          # Analyse cmdline options
 
     pexit_code = 0                                                      # Pgm Exit Code Default
     sa.start(pver, pdesc)                                               # Initialize SADMIN env.
     if sa.get_fqdn() == sa.sadm_server and sa.db_used :                 # On SADMIN srv & usedb True
-        (pexit_code, pdb_conn, pdb_cur) = sa.db_connect('sadmin')       # Connect to SADMIN Database
+        (pexit_code, db_conn, db_cur) = sa.db_connect('sadmin')       # Connect to SADMIN Database
         if pexit_code == 0:                                             # If Connection to DB is OK
-           pexit_code = main_process(pdb_conn, pdb_cur)                 # Use Subnet in sadmin.cfg
-           sa.db_close(pdb_conn, pdb_cur)                               # Close connection to DB
+           pexit_code = main_process(db_conn, db_cur)                 # Use Subnet in sadmin.cfg
+           sa.db_close(db_conn, db_cur)                               # Close connection to DB
     sa.stop(pexit_code)                                                 # Gracefully exit SADMIN
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code
 
