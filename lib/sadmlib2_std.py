@@ -118,8 +118,8 @@ db_name             = ""                                    # Database Name "sad
 #
 pdebug              = 0                                     # Debug Level 0-9
 pexit_code          = 0                                     # Script Default Return Code
-proot_only          = False                                 # Pgm run by root only ?
-psadm_server_only   = False                                 # Pgm run on SADMIN server only?
+proot_only          = False                                 # Can run by root only ?
+psadm_server_only   = False                                 # Can run on SADMIN server only?
 
 # Start Function Arguments Definitions
 log_type            = "B"                                   # S=Screen L=Log B=Both
