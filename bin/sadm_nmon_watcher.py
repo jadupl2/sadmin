@@ -29,12 +29,12 @@
 # 2022_05_25 lib v1.1 Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
 #@2023_07_11 lib v1.2 'sadm_nmon_watcher' rewritten in Python, lot more faster.
 #@2023_07_26 lib v1.3 Correct problem detecting 'nmon' instance (performance collector).
+#@2023_08_14 lib v1.4 Make sure only one instance of 'nmon' in running.
 # --------------------------------------------------------------------------------------------------
 #
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
 try:
     import os,sys,argparse,datetime,time                             # Import Std Python3 Modules
-    #from psutil import process_iter
 #   import pdb                                                      # Python Debugger (If needed)
 except ImportError as e:                                            # Trap Import Error
     print("Import Error : %s " % e)                                 # Print Import Error Message
@@ -63,7 +63,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "1.3"                                                  # Program version no.
+pver        = "1.4"                                                  # Program version no.
 pdesc       = "This script ensure that 'nmon' performance monitor is running."
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
 db_conn    = None                                                   # Database connector when used
@@ -99,16 +99,16 @@ sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (s
 
 
 
-
-
 # Global Variables Definition
 # --------------------------------------------------------------------------------------------------
 nmon_name="nmon"                                                        # Nmon process name
 
 
-# Check if process name received is running
+
+
+# Check if process name received is running and return number of process running it.
 # --------------------------------------------------------------------------------------------------
-def is_process_running(pname): 
+def count_process(pname): 
 
     """
     Check if the name of the process received is running.
@@ -117,21 +117,14 @@ def is_process_running(pname):
         pname (str) :  Name of process to verify.
 
     Return:
-        ppid (Int)  : If the process is running it will return it PID, otherwise a zero.
+        pcount (Int): Is the number of 'pname' running (0 if none).
     """ 
-    ccode = cstdout = cstderr = "" 
-    ccode,cstdout,cstderr = sa.oscommand("ps -ef |grep '/nmon '| grep -v grep")
+    ccode,cstdout,cstderr = sa.oscommand("pgrep -c %s" % pname)  
+    pcount=int(cstdout)
+    #sa.write_log ("There is %d '%s' process running." % (pcount,pname))
     if ccode != 0 : return(0)
+    return(pcount)
 
-    ccode,cstdout,cstderr = sa.oscommand("ps -ef |grep '/nmon '|grep -v grep |awk '{ print $2 }'")
-    return(cstdout)
-    
-    
-    #for proc in process_iter():
-    #    if len(proc.name()) == len(pname) and (proc.name() == pname):
-    #        if pdebug > 4 : print ("Process %s - PID %d\n" % (proc.name(),proc.pid))
-    #        return(proc.pid)
-    #return(0)
 
 
 
@@ -145,26 +138,16 @@ def main_process():
     if sa.get_ostype() == "DARWIN"  :                                   # nmon not available on OSX
         sa.write_log("Command 'nmon' isn't available on MacOS.")        # Advise user that won't run
         sa.write_log("Script terminating.")                             # Process can't continue
-        return(pexit_code)                                              # Return to caller, no error
+        return(0)                                                       # Return to caller, no error
 
-    # Check if nmon is running
-    wpid = is_process_running(nmon_name)
-    if wpid != 0 :
-        sa.write_log("Process '%s' is running and have a PID of %s." % (nmon_name,wpid))
-        ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
-        sa.write_log(cstdout)
-        return(0)
-    else : 
-        sa.write_log("The process named '%s' is not running\n" % (nmon_name))
-
-    # Let's restart it 
+    # If 'nmon' package is not installed 
     if sa.cmd_nmon == "" :
-        sa.write_log("The 'nmon' monitoring command is not available on this system.")
+        sa.write_log("The 'nmon' package is not installed on this system.")
         sa.write_log("Script aborted.")
-        return(1)
+        return(1)                                                       # Return error to caller
 
     # If nmon is started by cron - Put crontab line in comment
-    # What to make sure that only one nmon is running and it's the one controlled by SADMIN.
+    # Want to make sure that only one 'nmon' is running and it's the one controlled by SADMIN.
     nmon_cron='/etc/cron.d/nmon-script'                                 # Name of the nmon cron file
     if os.path.exists(nmon_cron) :                                      # Does nmon cron file exist
         f = open(nmon_cron, "r")                                        # Open the nmon cron file
@@ -181,6 +164,26 @@ def main_process():
         f.write("\n".join(output_lines))                                # Write output array to it
         f.close()                                                       # Close new nmon cron file.
 
+    # Check how many 'nmon' process are running
+    pcount = count_process(nmon_name)
+    if pcount == 1 :
+        sa.write_log("There is %d process of '%s' running." % (pcount,nmon_name))
+        ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
+        sa.write_log(cstdout)
+        return(0)
+
+    # If more than one process: Kill them for now and will return it later on
+    if pcount > 1: 
+        sa.write_log("There should be only 1 '%s' process running, we now have %d." % (nmon_name,pcount))
+        sa.write_log("We will stop them all and restart a fresh copy of '%s' daemon." % (nmon_name))
+        ccode = cstdout = cstderr = "" 
+        ccode,cstdout,cstderr = sa.oscommand("pkill -9 nmon")
+        if pdebug > 0 or ccode != 0 : 
+            sa.write_log ("oscommand function stdout is     : %s" % (cstdout))
+            sa.write_log ("oscommand function stderr is     : %s" % (cstderr))
+            sa.write_log ("oscommand function returncode is : %s" % (ccode))
+        if ccode != 0 : return(1)
+
 
     # Current date/time and epoch time
     current_epoch = sa.get_epoch_time()                                 # Cur. epoch time
@@ -196,7 +199,7 @@ def main_process():
     total_minutes = int(total_seconds / 60)                             # Nb of Minutes till 23:59
     total_snapshots = int(total_minutes / 2)                            # Nb. of 2 Min till 23:59
 
-    if pdebug > 4 : 
+    if pdebug > 0 : 
         sa.write_log ("----------------------")
         sa.write_log ("current_epoch                  = %d" % current_epoch)
         sa.write_log ("current_date                   = %s" % current_date)
@@ -209,8 +212,8 @@ def main_process():
         sa.write_log (" ")
 
 
-    sa.write_log ("The nmon process is not running.")
-    sa.write_log ("Starting 'nmon' daemon ...")
+    #sa.write_log ("The 'nmon' daemon is not running.")
+    #sa.write_log ("Starting 'nmon' daemon ...")
     sa.write_log ("We will start a fresh one that will terminate at 23:59.")
     sa.write_log ("We calculated that there will be %d snapshots till then." % (total_snapshots))
 
@@ -219,16 +222,15 @@ def main_process():
     ccode, cstdout, cstderr = sa.oscommand(CMD)                    
 
     # Check if nmon is running
-    wpid = is_process_running(nmon_name)
-    if wpid != 0 :
-        sa.write_log("[ OK ] Process named '%s' is running and have a PID of %s\n" % (nmon_name,wpid))
+    pcount = count_process(nmon_name)
+    if pcount == 1 :
+        sa.write_log("[ OK ] Process named '%s' is now running." % (nmon_name))
         ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
         sa.write_log(cstdout)
         return(0)
     else : 
         pexit_code = 1 
         sa.write_log("[ ERROR ] 'nmon' daemon could not be started")
-
     return(pexit_code)
 
 
