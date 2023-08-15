@@ -191,7 +191,7 @@ def main_process():
 
     # End of day date/Time (Today at 23:59:00) to close and restart nmon 
     i = datetime.datetime.now()                                         # Get Current Date/Time
-    end_of_day_date = i.strftime('%Y.%m.%d') + " 23:59:20"              # Today at 23:59:20
+    end_of_day_date = i.strftime('%Y.%m.%d') + " 23:58:00"              # Today at 23:58:00
     end_of_day_epoch = sa.date_to_epoch(end_of_day_date)                # End of day epoch 
 
     # Calculated number of snapshot from now to end of day at 23:59¨20)
@@ -205,16 +205,16 @@ def main_process():
         sa.write_log ("current_date                   = %s" % current_date)
         sa.write_log ("end_of_day_date                = %s" % end_of_day_date)
         sa.write_log ("end_of_day_epoch               = %d" % end_of_day_epoch)
-        sa.write_log ("total_seconds till 23:59:20    = %d" % total_seconds)
-        sa.write_log ("total_minutes 23:59:20         = %d" % total_minutes)
-        sa.write_log ("total_snapshots till 23:59:20  = %d" % total_snapshots)
+        sa.write_log ("total_seconds till 23:58:00    = %d" % total_seconds)
+        sa.write_log ("total_minutes 23:58:00         = %d" % total_minutes)
+        sa.write_log ("total_snapshots till 23:58:00  = %d" % total_snapshots)
         sa.write_log ("----------------------")
         sa.write_log (" ")
 
 
     #sa.write_log ("The 'nmon' daemon is not running.")
     #sa.write_log ("Starting 'nmon' daemon ...")
-    sa.write_log ("We will start a fresh one that will terminate at 23:59.")
+    sa.write_log ("We will start a fresh one that will terminate at 23:58.")
     sa.write_log ("We calculated that there will be %d snapshots till then." % (total_snapshots))
 
     CMD = "%s -f -s120 -c%d -t -m %s " % (sa.cmd_nmon,total_snapshots,sa.dir_nmon)
