@@ -36,6 +36,7 @@
 # 2022_08_17 nolog  v3.7 Remove debug info & update to use the new SADMIN Python Library v2.2.
 # 2023_05_19 server v3.8 Correct problem when running at installation time ($SADMIN not set yet).
 #@2023_07_09 server v3.9 Change code to get the mac address of ip (Remove python module getmac)
+#@2023_08_18 server v4.0 Change code to adapt to the fact that start & stop function open/close DB.
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -47,74 +48,60 @@ except ImportError as e:
     #pdb.set_trace()                                                    # Activate Python
 
 
-
-
 # --------------------------------------------------------------------------------------------------
-# This script in ran near the end of installation and SADMIN env. variable is not yet define.
-# So the code below use the SADMIN variable define in /etc/environment has a plan b.
-# For all others python script it is not necessary, because 'SADMIN' env. variable will be defined.
-#
-# SADMIN CODE SECTION v2.3 ---- DO NOT UPDATE SADMIN SECTION IN THIS SCRIPT
+# SADMIN CODE SECTION v2.3
 # Setup for Global Variables and load the SADMIN standard library.
-# To use SADMIN tools, this section MUST be present near the top of your code.    
+# To use SADMIN tools, this section MUST be present near the top of your Python code.    
 # --------------------------------------------------------------------------------------------------
-# Making sure the 'SADMIN' environment variable is defined, abort if it isn't. 
-if (os.getenv("SADMIN",default="X") == "X"):                            # SADMIN Env.Var. Not Define
-    print("\nThe 'SADMIN' environment variable isn't defined.")         # SADMIN Var MUST be defined
-    print("It must specify the directory where you installed the SADMIN Tools.")
-    fenv = "/etc/environment" 
-    if os.path.exists(fenv):                                            
-        with open(fenv,"r") as file:
-            for line in file:
-                if re.search('SADMIN', line):
-                    split_line = line.split('=')
-                    os.environ['SADMIN'] = str(split_line[1]).strip()  
-                    print ("For the moment, I took the location of 'SADMIN' from '%s'.\n" % fenv)   
-                    break
-        if (os.getenv("SADMIN",default="X") == "X"):          
-            print ("Variable 'SADMIN' wasn't even found in '%s', script aborted.\n" % fenv) 
-            sys.exit(1)  
-    else: 
-        print ("File '%s' doesn't exist, script aborted.\n" % fenv)
-        sys.exit(1)    
 try:
-    sys.path.insert(0, os.path.join(os.environ.get('SADMIN'), 'lib'))# Add $SADMIN/lib to sys.path
-    import sadmlib2_std as sa                                        # Load SADMIN Python Library
+    SADM = os.environ['SADMIN']                                      # Get SADMIN Env. Var. Dir.
+except KeyError as e:                                                # If SADMIN is not define
+    print("Environment variable 'SADMIN' is not defined.\n%s\nScript aborted.\n" % e) 
+    sys.exit(1)                                                      # Go Back to O/S with Error
+
+try: 
+    sys.path.insert(0, os.path.join(SADM, 'lib'))                    # Add lib dir to sys.path
+    import sadmlib2_std as sa                                        # Import SADMIN Python Library
 except ImportError as e:                                             # If Error importing SADMIN
     print("Import error : SADMIN module: %s " % e)                   # Advise User of Error
-    sys.exit(1)  
+    print("Please make sure the 'SADMIN' environment variable is defined.")
+    sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
 pver        = "3.9"                                                     # Program version
 pdesc       = "Produce Web network page that list IP, name and mac usage for subnet you specified."
 phostname   = sa.get_hostname()                                         # Get current `hostname -s`
-db_conn    = None                                                      # Database connector
-db_cur     = None                                                      # Database cursor
 pdebug      = 0                                                         # Debug level from 0 to 9
 pexit_code  = 0                                                         # Script default exit code
 
+# Fields used by sa.start() & sa.stop() functions to influence execution of SADMIN standard library.
+# Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
+sa.db_used        = True          # Open/Use DB(True), No DB needed (False), sa.start() auto connect
+sa.db_silent      = False          # When DB Error Return(Error), True = NoErrMsg, False = ShowErrMsg
+sa.db_conn        = None           # Use this Database Connector when using DB,  set by sa.start()
+sa.db_cur         = None           # Use this Database cursor if you use the DB, set by sa.start()
+sa.db_name        = ""             # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
+sa.db_errno       = 0              # Database Error Number
+sa.db_errmsg      = ""             # Database Error Message
+sa.use_rch           = True       # Generate entry in Result Code History (.rch)
+sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
+sa.log_append        = False      # Append Existing Log(True) or Create New One(False)
+sa.log_header        = True       # Show/Generate Header in script log (.log)
+sa.log_footer        = True       # Show/Generate Footer in script log (.log)
+sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
+sa.proot_only        = False      # Pgm run by root only ?
+sa.psadm_server_only = False      # Run only on SADMIN server ?
+sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
+
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
-# Uncomment anyone to change them and influence execution of SADMIN standard library.
-#
-sa.proot_only        = True       # Pgm run by root only ?
-sa.psadm_server_only = True      # Run only on SADMIN server ?
-sa.db_used           = True       # Open/Use Database(True) or Don't Need DB(False)
-#sa.db_silent        = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
+# Change them to fit your need, they influence execution of SADMIN standard library
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
+#sa.max_logline      = 500        # Max. lines to keep in log (0=No trim) after execution.
+#sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
+#sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
 #sa.pid_timeout      = 7200       # PID File Default Time to Live in seconds.
 #sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
-sa.max_logline      = 600        # Max. lines to keep in log (0=No trim) after execution.
-#sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
-#sa.log_type         = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
-#sa.log_append       = False      # Append Existing Log(True) or Create New One(False)
-#sa.log_header       = True       # Show/Generate Header in script log (.log)
-#sa.log_footer       = True       # Show/Generate Footer in script log (.log)
-#sa.multiple_exec    = "Y"        # Allow running multiple copy at same time ?
-#sa.use_rch         = True       # Generate entry in Result Code History (.rch)
-#sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
-sa.cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
-#
 # ==================================================================================================
 
 
@@ -138,7 +125,7 @@ netdict = {}                                                            # Networ
 #   - wcon = Connection Object to Database
 #   - wcur = Cursor Object on Database
 #   - tbkey = IP (Ex: 192.168.1.145) to check existence in Network Table
-#   - dbsilent = if True (Default), return error code and no error message.
+#   - msg_silent = if True (Default), return error code and no error message.
 #                if False return error code and if Error show Error message returned I/O.
 #
 # Return 2 parameters :
@@ -146,28 +133,26 @@ netdict = {}                                                            # Networ
 #   2 = If Row was found then return row data as a tuple.
 #       If Row was not found 'None' is returned as the second parameter
 # ----------------------------------------------------------------------------------------------
-def db_readkey(wconn,wcur,tbkey,dbsilent=True):
-    global pdebug
-    
+def db_readkey(tbkey,msg_silent=True):
 
     sql = "SELECT * FROM server_network WHERE net_ip='%s'" % (tbkey)    # Build select statement
     try :
-        number_of_rows = wcur.execute(sql)                              # Execute the Select Stat.
+        number_of_rows = sa.db_cur.execute(sql)                              # Execute the Select Stat.
         if (number_of_rows == 0):                                       # If IP Not found
-            if not dbsilent :                                           # If not in Silent Mode
+            if not msg_silent :                                           # If not in Silent Mode
                 emsg = "Key '%s' not found in table" % (tbkey)          # Build Error Message
                 sa.write_log(">>>>>>>>>>>>> %d %s" % (1,emsg))          # Show Error No. & Message
             return(1,None)                                              # Return Error No. & No Data
 
-        dbrow = wcur.fetchone()                                         # Get one row base on key
+        dbrow = sa.db_cur.fetchone()                                         # Get one row base on key
         if (dbrow == None) :                                            # If not row returned
-            if not dbsilent :                                           # If not in Silent Mode
+            if not msg_silent :                                           # If not in Silent Mode
                 emsg = "No row found with matching key '%s'" % (tbkey)
                 sa.write_log(">>>>>>>>>>>>> %d %s" % (1,emsg))          # Show Error No. & Message
             return(1,None)                                              # Return Error No. & No Data
 
     except (pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as e:
-        if not dbsilent :                                               # If not in Silent Mode
+        if not msg_silent :                                               # If not in Silent Mode
             enum, emsg = e.args                                         # Get Error No. & Message
             sa.write_log(">>>>>>>>>>>>> %d %s" % (enum,emsg))           # Show Error No. & Message
             return(1,None)                                              # Return Error No. & No Data
@@ -188,14 +173,14 @@ def db_readkey(wconn,wcur,tbkey,dbsilent=True):
 #       Example of tbdata received
 #       ['192.168.1.1','192.168.001.001','Router','b8:27:eb:9e:77:81','Y',\
 #       '2018-04-18 21:09:58','2018-04-18 21:09:58']
-#   - dbsilent = if True, return error code and no error message.
+#   - msg_silent = if True, return error code and no error message.
 #                if False (Default) return error code and if Error show Error message returned I/O.
 #
 # Return parameter :
 #   0 = Update Succeeded     
 #   1 = Update Failed 
 #-----------------------------------------------------------------------------------------------
-def db_insert(wconn,wcur,tbkey,tbdata,dbsilent=False):
+def db_insert(tbkey,tbdata,msg_silent=False):
     global pdebug
 
     if pdebug > 4 : sa.write_log("Inserting IP: %s " % tbkey);          # Show key to Insert
@@ -217,18 +202,18 @@ def db_insert(wconn,wcur,tbkey,tbdata,dbsilent=False):
     except (TypeError, ValueError, IndexError) as error:                # Mismatch Between Num & Str
         enum=1                                                          # Set Class Error Number
         emsg=error                                                      # Get Error Message
-        if not dbsilent:                                                # If not in Silent Mode
+        if not msg_silent:                                                # If not in Silent Mode
             sa.write_log(">>>>>>>>>>>>>",enum,error)                    # Print Error No. & Message
             return(enum)                                                # return (1) indicate Error
 
     # Execute the insert statement
     try:
-        wcur.execute(sql)                                               # Insert new Data
-        wconn.commit()                                                  # Commit the transaction
+        sa.db_cur.execute(sql)                                          # Insert new Data
+        sa.db_conn.commit()                                             # Commit the transaction
     except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
-        if not dbsilent :                                               # If not in Silent Mode
+        if not msg_silent :                                               # If not in Silent Mode
             enum, emsg = error.args                                     # Get Error No. & Message
-            sa.write_log(">>>>>>>>>>>>> %d %s" % (enum,emsg))            # Show Error No. & Message
+            sa.write_log(">>>>>>>>>>>>> %d %s" % (enum,emsg))           # Show Error No. & Message
         return(enum)                                                    # return Error Number
 
     return(0)                                                           # return (0) Insert Worked
@@ -254,8 +239,7 @@ def db_insert(wconn,wcur,tbkey,tbdata,dbsilent=False):
 #   1 = Update Failed 
 #===================================================================================================
 #
-def db_update(wconn,wcur,wip,wzero,wname,wmac,wman,wping,wdateping,wdatechange):
-    global pdebug
+def db_update(wip,wzero,wname,wmac,wman,wping,wdateping,wdatechange):
 
     # Update Server Row With Info collected from the sysinfo.txt file
     try:
@@ -273,8 +257,8 @@ def db_update(wconn,wcur,wip,wzero,wname,wmac,wman,wping,wdateping,wdatechange):
 
     # Execute the SQL Update Statement
     try:
-        wcur.execute(sql)                                               # Update Server Data
-        wconn.commit()                                                  # Commit the transaction
+        sa.db_cur.execute(sql)                                               # Update Server Data
+        sa.db_conn.commit()                                                  # Commit the transaction
     except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
         enum, emsg = error.args                                         # Get Error No. & Message
         sa.write_log("[ERROR] (%s) %s " % (enum,error))                 # Print Error No. & Message
@@ -295,7 +279,7 @@ def db_update(wconn,wcur,wip,wzero,wname,wmac,wman,wping,wdateping,wdatechange):
 #                            Scan The Network Received (Example: "192.168.1.0/24")
 #===================================================================================================
 #
-def scan_network(snet,wconn,wcur) :
+def scan_network(snet) :
     global pdebug
 
     scan_status = 0                                                     # 0=No error 1=Error in func
@@ -376,11 +360,11 @@ def scan_network(snet,wconn,wcur) :
 
 # Verify if IP is in the SADMIN database
         if (pdebug > 4) : sa.write_log("Checking if IP '%s' exist in database" % (hip))   
-        (dberr,dbrow) = db_readkey(wconn,wcur,hip,True)                 # Read IP Row if Exist
+        (dberr,dbrow) = db_readkey(hip,True)                            # Read IP Row if Exist
         if (dberr != 0):                                                # If IP Not in Database
             if (pdebug > 4) : sa.write_log("IP %s doesn't exist in database" % (hip)) # Advise Usr of flow
             cdata = [hip,zip,hname,hmac,hmanu,hactive]                  # Data to Insert
-            dberr = db_insert(wconn,wcur,hip,cdata,False)               # Insert New IP in Table
+            dberr = db_insert(hip,cdata,False)               # Insert New IP in Table
             if (dberr != 0) :                                           # Did the insert went well ?
                 sa.write_log("%-16s [ Error ] %d adding to database" % (hip,dberr))
             else :
@@ -439,7 +423,7 @@ def scan_network(snet,wconn,wcur) :
 
 # GO UPDATE DATABASE
         if (pdebug > 4) : sa.write_log ("Updating '%s' data" % (hip))
-        dberr = db_update(wconn,wcur,hip,zip,row_hostname,row_mac,row_manu,row_ping,row_pingdate,row_datechg)
+        dberr = db_update(hip,zip,row_hostname,row_mac,row_manu,row_ping,row_pingdate,row_datechg)
         if (dberr != 0) :                                               # If no Error updating IP
             sa.write_log("%-16s [ ERROR ] Updating databse" % (hip))    # Advise User Update Error
             scan_status = 1
@@ -456,27 +440,26 @@ def scan_network(snet,wconn,wcur) :
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
-def main_process(wconn,wcur):
-    global db_conn, db_cur , pdebug                                 # DB Connection & Cursor
+def main_process():
     
     if pdebug > 4 : sa.write_log("Processing Network1 = _%s_" % (sa.sadm_network1))
     if (sa.sadm_network1 != "") :
-        scan_network(sa.sadm_network1,wconn,wcur)                     # Network Subnet 1 to report
+        scan_network(sa.sadm_network1)                       # Network Subnet 1 to report
 
     if pdebug > 4 : sa.write_log("Processing Network2 = _%s_" % (sa.sadm_network2))
     if (sa.sadm_network2 != "") :
-        scan_network(sa.sadm_network2,wconn,wcur)                     # Network Subnet 2 to report
+        scan_network(sa.sadm_network2)                       # Network Subnet 2 to report
 
     if pdebug > 4 : sa.write_log("Processing Network3 = _%s_" % (sa.sadm_network3))
     if (sa.sadm_network3 != "") :
-        scan_network(sa.sadm_network3,wconn,wcur)                     # Network Subnet 3 to report
+        scan_network(sa.sadm_network3)                       # Network Subnet 3 to report
 
     if pdebug > 4 : sa.write_log("Processing Network4 = _%s_" % (sa.sadm_network4))
     if (sa.sadm_network4 != "") :
-        scan_network(sa.sadm_network4,wconn,wcur)                     # Network Subnet 4 to report
+        scan_network(sa.sadm_network4)                       # Network Subnet 4 to report
 
     if pdebug > 4 : sa.write_log("Processing Network5 = _%s_" % (sa.sadm_network5))
-    if (sa.sadm_network5 != "") : scan_network(sa.sadm_network5)       # Network Subnet 5 to report
+    if (sa.sadm_network5 != "") : scan_network(sa.sadm_network5)        # Network Subnet 5 to report
 
     return(0)
 
@@ -531,16 +514,10 @@ def cmd_options(argv):
 #===================================================================================================
 #
 def main(argv):
-    global db_conn, db_cur                                            # DB Connection & Cursor
     pdebug = cmd_options(argv)                                          # Analyse cmdline options
-
     pexit_code = 0                                                      # Pgm Exit Code Default
     sa.start(pver, pdesc)                                               # Initialize SADMIN env.
-    if sa.get_fqdn() == sa.sadm_server and sa.db_used :                 # On SADMIN srv & usedb True
-        (pexit_code, db_conn, db_cur) = sa.db_connect('sadmin')       # Connect to SADMIN Database
-        if pexit_code == 0:                                             # If Connection to DB is OK
-           pexit_code = main_process(db_conn, db_cur)                 # Use Subnet in sadmin.cfg
-           sa.db_close(db_conn, db_cur)                               # Close connection to DB
+    pexit_code = main_process()                                         # Use Subnet in sadmin.cfg
     sa.stop(pexit_code)                                                 # Gracefully exit SADMIN
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code
 
