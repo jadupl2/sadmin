@@ -30,6 +30,7 @@
 #@2023_07_11 lib v1.2 'sadm_nmon_watcher' rewritten in Python, lot more faster.
 #@2023_07_26 lib v1.3 Correct problem detecting 'nmon' instance (performance collector).
 #@2023_08_14 lib v1.4 Make sure only one instance of 'nmon' in running.
+#@2023_08_17 lib v1.5 Update to SADMIN section v2.3 & Fix problem using pymysql.
 # --------------------------------------------------------------------------------------------------
 #
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
@@ -51,43 +52,45 @@ except ImportError as e:                                            # Trap Impor
 try:
     SADM = os.environ['SADMIN']                                      # Get SADMIN Env. Var. Dir.
 except KeyError as e:                                                # If SADMIN is not define
-    print("Please make sure 'SADMIN' environment variable is defined.\n%s\nScript aborted.\n" % e) 
+    print("Environment variable 'SADMIN' is not defined.\n%s\nScript aborted.\n" % e) 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 try: 
     sys.path.insert(0, os.path.join(SADM, 'lib'))                    # Add lib dir to sys.path
-    import sadmlib2_std as sa                                        # Load SADMIN Python Library
+    import sadmlib2_std as sa                                        # Import SADMIN Python Library
 except ImportError as e:                                             # If Error importing SADMIN
     print("Import error : SADMIN module: %s " % e)                   # Advise User of Error
     print("Please make sure the 'SADMIN' environment variable is defined.")
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "1.4"                                                  # Program version no.
+pver        = "1.5"                                                  # Program version no.
 pdesc       = "This script ensure that 'nmon' performance monitor is running."
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
-db_conn    = None                                                   # Database connector when used
-db_cur     = None                                                   # Database cursor when used
 pdebug      = 0                                                      # Debug level from 0 to 9
 pexit_code  = 0                                                      # Script default exit code
 
-# Uncomment anyone to change them to influence execution of SADMIN standard library.
-sa.proot_only        = False      # Pgm run by root only ?
-sa.psadm_server_only = False      # Run only on SADMIN server ?
-sa.db_used           = False      # Use (True) or not SADMIN Database (False)
-sa.db_silent         = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
-sa.db_conn           = None       # Database connector when used
-sa.db_cur            = None       # Database cursor when used
+# Fields used by sa.start(), sa.stop() & DB functions to influence execution of SADMIN library
+sa.db_used     = False          # Open/Use DB(True), No DB needed (False), sa.start() auto connect
+sa.db_silent   = False          # When DB Error Return(Error), True = NoErrMsg, False = ShowErrMsg
+sa.db_conn     = None           # Use this Database Connector when using DB,  set by sa.start()
+sa.db_cur      = None           # Use this Database cursor if you use the DB, set by sa.start()
+sa.db_name     = "sadmin"       # Database Name taken from $SADMIN/cfg/sadmin.cfg 
+sa.db_errno    = 0              # Database Error Number
+sa.db_errmsg   = ""             # Database Error Message
+#
 sa.use_rch           = True       # Generate entry in Result Code History (.rch)
 sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
 sa.log_append        = False      # Append Existing Log(True) or Create New One(False)
 sa.log_header        = True       # Show/Generate Header in script log (.log)
 sa.log_footer        = True       # Show/Generate Footer in script log (.log)
 sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
+sa.proot_only        = False      # Pgm run by root only ?
+sa.psadm_server_only = False      # Run only on SADMIN server ?
 sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
-# You can change them to fit your need
+# Change them to fit your need, they influence execution of SADMIN standard library
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
 #sa.max_logline      = 500        # Max. lines to keep in log (0=No trim) after execution.
@@ -136,14 +139,14 @@ def main_process():
 
     # If we are on MacOS, don't watch the nmon daemon and exit to O/S.
     if sa.get_ostype() == "DARWIN"  :                                   # nmon not available on OSX
-        sa.write_log("Command 'nmon' isn't available on MacOS.")        # Advise user that won't run
-        sa.write_log("Script terminating.")                             # Process can't continue
+        sa.write_err("Command 'nmon' isn't available on MacOS.")        # Advise user that won't run
+        sa.write_err("Script terminating.")                             # Process can't continue
         return(0)                                                       # Return to caller, no error
 
     # If 'nmon' package is not installed 
     if sa.cmd_nmon == "" :
-        sa.write_log("The 'nmon' package is not installed on this system.")
-        sa.write_log("Script aborted.")
+        sa.write_err("The 'nmon' package is not installed on this system.")
+        sa.write_err("Script aborted.")
         return(1)                                                       # Return error to caller
 
     # If nmon is started by cron - Put crontab line in comment
@@ -182,7 +185,9 @@ def main_process():
             sa.write_log ("oscommand function stdout is     : %s" % (cstdout))
             sa.write_log ("oscommand function stderr is     : %s" % (cstderr))
             sa.write_log ("oscommand function returncode is : %s" % (ccode))
-        if ccode != 0 : return(1)
+        if ccode != 0 : 
+            sa.write_err ("Wasn't able to kill all 'nmon' instance.")
+            return(1)
 
 
     # Current date/time and epoch time
@@ -230,7 +235,9 @@ def main_process():
         return(0)
     else : 
         pexit_code = 1 
-        sa.write_log("[ ERROR ] 'nmon' daemon could not be started")
+        sa.write_err("[ ERROR ] 'nmon' daemon could not be started")
+        sa.write.err("%s - %s" % (cstdout,cstderr))
+
     return(pexit_code)
 
 
@@ -285,10 +292,7 @@ def cmd_options(argv):
 # --------------------------------------------------------------------------------------------------
 def main(argv):
     pdebug = cmd_options(argv)                                          # Analyze cmdline options
-    if sa.db_used : 
-        sa.db_conn,sa.db_cur=sa.start(pver, pdesc)                    # Initialize SADMIN env.
-    else : 
-        sa.start(pver, pdesc)                                               # Initialize SADMIN env.
+    sa.start(pver, pdesc)                                               # Initialize SADMIN env.
     pexit_code = main_process()                                         # Main Process
     sa.stop(pexit_code)                                                 # Gracefully exit SADMIN
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code
