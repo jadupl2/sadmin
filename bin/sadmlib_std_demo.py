@@ -54,6 +54,7 @@
 # 2023_04_13 lib v3.18 Add 'sadm_rear_dif', 'sadm_rear_interval', 'sadm_backup_interval' to output.
 # 2023_04_14 lib v3.19 SADMIN server email account pwd now taken from $SADMIN/cfg/.gmpw.
 # 2023_04_14 lib v3.20 SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64. 
+#@2023_08_19 lib v3.21 Adapt code, now that if on SADMIN server & db_used=True, auto connect to DB.
 #==================================================================================================
 #
 try :
@@ -68,44 +69,55 @@ except ImportError as e:
 
 
 
+
 # --------------------------------------------------------------------------------------------------
-# SADMIN CODE SECTION v2.2a
+# SADMIN CODE SECTION v2.3
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your Python code.    
 # --------------------------------------------------------------------------------------------------
 try:
-    SADM = os.environ.get('SADMIN')                                  # Get SADMIN Env. Var. Dir.
-    sys.path.insert(0, os.path.join(SADM, 'lib'))                    # Add $SADMIN/lib to sys.path
-    import sadmlib2_std as sa                                        # Load SADMIN Python Library
+    SADM = os.environ['SADMIN']                                      # Get SADMIN Env. Var. Dir.
+except KeyError as e:                                                # If SADMIN is not define
+    print("Environment variable 'SADMIN' is not defined.\n%s\nScript aborted.\n" % e) 
+    sys.exit(1)                                                      # Go Back to O/S with Error
+
+try: 
+    sys.path.insert(0, os.path.join(SADM, 'lib'))                    # Add lib dir to sys.path
+    import sadmlib2_std as sa                                        # Import SADMIN Python Library
 except ImportError as e:                                             # If Error importing SADMIN
     print("Import error : SADMIN module: %s " % e)                   # Advise User of Error
+    print("Please make sure the 'SADMIN' environment variable is defined.")
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "3.20"                                                  # Program version no.
+pver        = "3.21"                                                  # Program version no.
 pdesc       = "Demonstrate functions & variables available to developers using SADMIN Tools"
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
-db_conn    = None                                                   # Database connector
-db_cur     = None                                                   # Database cursor
 pdebug      = 0                                                      # Debug level from 0 to 9
 pexit_code  = 0                                                      # Script default exit code
 
-# Uncomment anyone to change them to influence execution of SADMIN standard library.
-sa.proot_only        = True       # Pgm run by root only ?
-sa.psadm_server_only = False      # Run only on SADMIN server ?
-sa.db_used           = True       # Open/Use Database(True) or Don't Need DB(False)
+# Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
+sa.db_used           = True       # Open/Use DB(True), No DB needed (False), sa.start() auto connect
+sa.db_silent         = False      # When DB Error Return(Error), True = NoErrMsg, False = ShowErrMsg
+sa.db_conn           = None       # Use this Database Connector when using DB,  set by sa.start()
+sa.db_cur            = None       # Use this Database cursor if you use the DB, set by sa.start()
+sa.db_name           = ""         # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
+sa.db_errno          = 0          # Database Error Number
+sa.db_errmsg         = ""         # Database Error Message
+#
 sa.use_rch           = True       # Generate entry in Result Code History (.rch)
 sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
 sa.log_append        = False      # Append Existing Log(True) or Create New One(False)
 sa.log_header        = True       # Show/Generate Header in script log (.log)
 sa.log_footer        = True       # Show/Generate Footer in script log (.log)
 sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
-sa.db_silent         = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
-sa.cmd_ssh_full      = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port) # SSH Cmd to access clients
+sa.proot_only        = True       # Pgm run by root only ?
+sa.psadm_server_only = False      # Run only on SADMIN server ?
+sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
-# You can change them to fit your need
-#sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
+# Change them to fit your need, they are use by start() & stop() functions of SADMIN Python Libr.
+# sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
 #sa.max_logline      = 500        # Max. lines to keep in log (0=No trim) after execution.
 #sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
@@ -325,7 +337,7 @@ def print_python_function():
     presult="1=OK 1=Error,conn_obj,con_cursor"                          # Return 3 Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
                  
-    pexample="sa.db_close(db_conn,db_cur):"           
+    pexample="sa.db_close():"           
     pdesc="Close connection with database."                             # Function Description
     presult="0=Connection close 1=Error"                                # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
@@ -865,30 +877,30 @@ def print_sadmin_cfg():
     presult=sa.sadm_network1                                            # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
-    pexample="sa.sadm_network2"                                          # Variable Name
+    pexample="sa.sadm_network2"                                         # Variable Name
     pdesc="Network/Netmask 2 inv. IP/Name/Mac"                          # Function Description
-    presult=sa.sadm_network2                                             # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    presult=sa.sadm_network2                                            # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
-    pexample="sa.sadm_network3"                                          # Variable Name
+    pexample="sa.sadm_network3"                                         # Variable Name
     pdesc="Network/Netmask 3 inv. IP/Name/Mac"                          # Function Description
-    presult=sa.sadm_network3                                             # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    presult=sa.sadm_network3                                            # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
-    pexample="sa.sadm_network4"                                          # Variable Name
-    pdesc="Network/Netmask 4 inv. IP/Name/Mac"                          # Function Description
-    presult=sa.sadm_network4                                             # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    pexample="sa.sadm_network4"                                         
+    pdesc="Network/Netmask 4 inv. IP/Name/Mac"                          
+    presult=sa.sadm_network4                                            
+    printline (pexample,pdesc,presult)                                  
 
-    pexample="sa.sadm_network5"                                          # Variable Name
+    pexample="sa.sadm_network5"                                         # Variable Name
     pdesc="Network/Netmask 5 inv. IP/Name/Mac"                          # Function Description
-    presult=sa.sadm_network5                                             # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    presult=sa.sadm_network5                                            # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
-    pexample="sa.sadm_rear_nfs_server"                                   # Variable Name
+    pexample="sa.sadm_rear_nfs_server"                                  # Variable Name
     pdesc="ReaR NFS Server IP or Name"                                  # Function Description
-    presult=sa.sadm_rear_nfs_server                                      # Return Value(s)
-    printline (pexample,pdesc,presult)                               # Print Example Line
+    presult=sa.sadm_rear_nfs_server                                     # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.sadm_rear_nfs_mount_point"                             # Variable Name
     pdesc="ReaR NFS Mount Point"                                        # Function Description
@@ -1137,19 +1149,19 @@ def print_db_variables():
     printheader ("Database Information","Description","  This System Result")
          
     pexample="sa.db_silent"                                             # Variable Name
-    pdesc="When DBerror, No ErrMsg (Just ErrNo)"                        # Function Description
+    pdesc="When True, No db_errmsg (Just db_errno)"                     # Function Description
     presult=sa.db_silent                                                # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
                  
     pexample="sa.db_used"                                               # Variable Name
-    pdesc="Script need (Open/Close) Database ?"                         # Function Description
+    pdesc="Script using Database ?"                                     # Function Description
     presult=sa.db_used                                                  # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     # Test Database Connection
     if ((sa.get_fqdn() == sa.sadm_server) and (sa.db_used)):            # On SADMIN srv & usedb True
-        (pexit_code,db_conn,db_cur) = sa.db_connect('sadmin')         # Connect to SADMIN Database
-        sa.write_log ("Database connection succeeded")                  # Show COnnect to DB Worked
+        #(pexit_code,db_conn,db_cur) = sa.db_connect('sadmin')         # Connect to SADMIN Database
+        #sa.write_log ("Database connection succeeded")                  # Show COnnect to DB Worked
         
         print ("\n\nShow SADMIN Tables:")
         sql="show tables;" 
@@ -1234,7 +1246,6 @@ def print_db_variables():
         print (stdout);
         
         sa.write_log ("Closing Database db_connection")                # Show we are closing DB
-        sa.db_close(db_conn,db_cur)                                   # Close the Database
         sa.write_log (" ")                                              # Blank Line
 
 
@@ -1299,7 +1310,7 @@ def cmd_options(argv):
 #===================================================================================================
 #
 def main(argv):
-    global show_password, db_conn, db_cur                             # Global Variables
+    global show_password                                                # Global Variables
 
     (pdebug,show_password) = cmd_options(argv)                          # Analyse cmdline options
     pexit_code = 0                                                      # Pgm Exit Code Default
