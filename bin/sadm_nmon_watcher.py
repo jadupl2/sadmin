@@ -30,7 +30,7 @@
 #@2023_07_11 lib v1.2 'sadm_nmon_watcher' rewritten in Python, lot more faster.
 #@2023_07_26 lib v1.3 Correct problem detecting 'nmon' instance (performance collector).
 #@2023_08_14 lib v1.4 Make sure only one instance of 'nmon' in running.
-#@2023_08_17 lib v1.5 Update to SADMIN section v2.3 & Fix problem using pymysql.
+#@2023_08_17 lib v1.5 Update to SADMIN section v2.3 & Fix pymysql error msg & Added verbosity.
 # --------------------------------------------------------------------------------------------------
 #
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
@@ -178,6 +178,8 @@ def main_process():
     # If more than one process: Kill them for now and will return it later on
     if pcount > 1: 
         sa.write_log("There should be only 1 '%s' process running, we now have %d." % (nmon_name,pcount))
+        ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
+        sa.write_log(cstdout)
         sa.write_log("We will stop them all and restart a fresh copy of '%s' daemon." % (nmon_name))
         ccode = cstdout = cstderr = "" 
         ccode,cstdout,cstderr = sa.oscommand("pkill -9 nmon")
