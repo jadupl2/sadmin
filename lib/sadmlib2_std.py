@@ -54,6 +54,7 @@
 #@2023_07_09 lib v4.41 Added function 'get_mac_address', to get mac address of an ip.
 #@2023_07_11 lib v4.42 Fix minor bugs
 #@2023_08_01 lib v4.43 Added database name 'db_name' for future use ('sadmin' by default)
+#@2023_08_19 lib v4.44 start() & stop() functions now connect/close DB automatically (if db_used=True).
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -84,16 +85,9 @@ except ImportError as e:
     sys.exit(1)
 #pdb.set_trace()                                            # Activate Python Debugging
 
-#if ((get_fqdn() == sadm_server ) and (db_used)) : 
-#    try: 
-#        import pymysql 
-#    except ImportError as e:
-#        print ("Import Error : %s " % e)
-#        sys.exit(1)
-
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.43"                                # This Library Version
+lib_ver             = "4.44"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -110,13 +104,17 @@ ppid                = os.getpid()                           # Get Current Proces
 phostname           = platform.node().split('.')[0].strip() # Get current hostname
 pusername           = pwd.getpwuid(os.getuid())[0]          # Get Current User Name
 #
-db_used             = False                                 # Use or Not MySQL DB ?
-db_silent           = False                                 # Show ErrMsg when error
-db_conn             = None                                  # Database Connector
-db_cur              = None                                  # Database cursor
-db_name             = ""                                    # Database Name "sadnin" by default
 #
-pdebug              = 0                                     # Debug Level 0-9
+# Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
+db_used        = True           # Open/Use DB(True), No DB needed (False), sa.start() auto connect
+db_silent      = False          # When DB Error Return(Error), True = NoErrMsg, False = ShowErrMsg
+db_conn        = None           # Use this Database Connector when using DB,  set by sa.start()
+db_cur         = None           # Use this Database cursor if you use the DB, set by sa.start()
+db_name        = ""             # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
+db_errno       = 0              # Database Error Number
+db_errmsg      = ""             # Database Error Message
+#
+debug              = 0                                     # Debug Level 0-9
 pexit_code          = 0                                     # Script Default Return Code
 proot_only          = False                                 # Can run by root only ?
 psadm_server_only   = False                                 # Can run on SADMIN server only?
@@ -356,7 +354,7 @@ def write_err (wline, lf=True ):
             wline (str) : Line to write to log (with time stamp)
                           When writing to error (and log) file, all "\n" are replace by " " in wline 
                           (Except for EOL).
-                          Line to write to screen untouch (with no time stamp)
+                          Line to write to screen untouched (with no time stamp)
             lf (boolean): Include or not a line feed at EOL on the screen.
                           True or False (True Default).
         Returns:
@@ -367,10 +365,12 @@ def write_err (wline, lf=True ):
     
     now = datetime.datetime.now()                                       # Get current Time
     logLine = now.strftime("%Y.%m.%d %H:%M:%S") + " - " + wline         # Add Date/Time to Log Line
+
     if (log_type.upper() == "L") or (log_type.upper() == "B") :         # Output to Log or Both
         logLine=logLine.replace("\n"," ").strip()                       # Replace \n by " " in Log
         log_file_fh.write ("%s\n" % (logLine))                          # Write to log file
         err_file_fh.write ("%s\n" % (logLine))                          # Write to error file
+    
     if (log_type.upper() == "S") or (log_type.upper() == "B") :         # Output to Screen
         if (lf) :                                                       # If EOL Line feed requested
             print ("%s" % wline)                                        # Line with LineFeed
@@ -1764,32 +1764,31 @@ def load_cmd_path():
 
 
 # --------------------------------------------------------------------------------------------------
-def db_close(db_conn,db_cur):
+def db_close():
     
     """ 
         Close the Database.
         
         Args:            
-            db_conn (obj)   :   Connector to database.
-            db_cur (obj)    :   Database cursor.
+            None 
     
         Returns: (db_err)
             db_err (int)    :   Return 0 mean database is closed.
                                 Return 1 when error closing connection with database.
     """    
+    global db_conn,db_cur
     
-    if lib_debug > 4 : 
-        write_err("Closing Database. %s" % (sadm_dbname))
-        write_log("\n0 type db_conn = ",db_conn,"\nType db_cur = ",db_cur,"\n")
     try:
         db_cur.close()
         db_conn.close()
     except Exception as e:
         if not db_silent :
-            #(enum,emsg) = e.args                                         # Get Error No. & Message
-            write_err("Error closing database '%s'" % (sadm_dbname)) 
-            write_err(">>>>>>>>>>>>> '%s'" % (e))          # Error Message
-            #write_err(">>>>>>>>>>>>> '%s' '%s'" % (enum,emsg))          # Error Message
+            (enum,emsg) = e.args                                        # Get Error No. & Message
+            write_err("[ ERROR ] Error closing database '%s'" % (db_name)) 
+            #write_err(">>>>>>>>>>>>> '%s'" % (e))                      # Error Message
+            write_err(">>>>>>>>>>>>> '%s' '%s'" % (enum,emsg))          # Error Message
+        db_errno=1                                                      # Set DB Error
+        db_errmsg=emsg                                                  # Set Error Message
         return(1)                                                       # return (1) to Show Error
     return(0)
 
@@ -1826,10 +1825,7 @@ def stop(pexit_code) :
     global pn,log_file_fh,err_file_fh,sadm_alert_type,start_time,start_epoch,delete_pid,dict_alert
            #db_conn,       db_cur
     
-    # Close Database if was used
-    #if get_fqdn() == sadm_server and db_used :                          # If Database was Used
-    #    db_close (db_conn,db_cur)                                     # Close Database
-
+ 
     # Making sure exit code is either 0 (Success) or 1 (error).
     if pexit_code != 0 : pexit_code =1 
 
@@ -2032,6 +2028,10 @@ def stop(pexit_code) :
                     shutil.copyfile(err_file,welog)                     # Copy Now log to www
             except Exception as e:
                 print ("Couldn't copy %s to %s\n%s\n" % (err_file,welog,e))
+
+    # Close Database if was used
+    if get_fqdn() == sadm_server and db_used :                          # If Database was Used
+       db_close ()                                                      # Close Database
 
     return
 
@@ -2236,7 +2236,7 @@ def start(pver,pdesc) :
             os.chown(alert_hist,uid,gid)                                # Chg History File Owner
             os.chmod(alert_hist,0o0664)                                 # Chg History File Perm.
 
-    # If the PID file already exist - Script is alstart()ready Running, check for how long it's running
+    # If the PID file already exist - Script is already Running, check for how long it's running
     if os.path.exists(pid_file) and not multiple_exec  :                # PID Exist & NoMultiRun
         pepoch = int(os.path.getmtime(pid_file))                        # pid file mod EpochTime
         pelapse = int(start_epoch - pepoch)                             # seconds since creation
@@ -2288,16 +2288,10 @@ def start(pver,pdesc) :
             os.chown(rch_file,uid,gid)                                  # Chg History File Owner
             os.chmod(rch_file,0o0664)                                   # Chg History File Perm.  
 
-    # If database SADMIN is used .
-    #if db_used : 
-    #    (db_err,db_conn,db_cur) = db_connect('sadmin') 
-    #    if db_err != 0 :
-    #        rcode = 1
-    #else:
-    #    db_conn = None
-    #    db_cur  = None
-    #return (db_conn,db_cur)                              # DB Connector & Cursor
-    return()
+    # If user specified he want to use the Database and we are on the SADMIN server, connect to DB.
+    if db_used and (get_fqdn() == sadm_server): 
+        db_connect(db_name) 
+    return(0)
 
 
 
@@ -2372,64 +2366,6 @@ def load_alert_file():
 
 
 
-
-
-# --------------------------------------------------------------------------------------------------
-def db_connect(dbname):
-    
-    """ Open a connection to the Database (sadmin).
-        
-        Args: None
-    
-        Returns: (db_err, db_conn, db_cur)
-            db_err (int)    :   Return 0 when connected to database
-                                Return 1 when error connecting to database
-            db_conn (obj)   :   Connector to database.
-            db_cur (obj)    :   Database cursor.
-    """
-    
-    db_err = 0                                                          # Default function exit code
-    db_conn = None                                                     # Default DB connection Obj
-    db_cur  = None                                                     # Default DB cursor Obj
-
-    # No Connection to Database is possible if not on the SADMIN Server
-    if get_fqdn() != sadm_server :                                      # Use only on SADMIN server
-       if not db_silent :                                               # Want to show error Msg.
-           write_err("DB can't be used on '%s', only on '%s' system." % (sadm_server,get_fqdn()))
-       return(1,db_conn,db_cur)
-
-    # User decided not to use Database, No Connection to Database
-    if not db_used :                                                    # User Want to use DB
-       if not db_silent :
-          write_err("[ Error ] Connection to Database only possible when db_used is set to True")
-       return(1,db_conn,db_cur)
-
-    # Open a connection to Database
-    try :
-        db_conn = pymysql.connect(
-                    host=sadm_dbhost,
-                    user=sadm_rw_dbuser,
-                    password=sadm_rw_dbpwd,
-                    database=dbname,
-                    cursorclass=pymysql.cursors.DictCursor)
-    except (pymysql.err.OperationalError, pymysql.err.InternalError) as e : 
-        if not db_silent :
-            (enum,emsg) = e.args                                        # Get Error No. & Message
-            write_err("Connection error to database '%s'" % (sadm_dbname))
-            write_err("Error: '%s' '%s'" % (enum,emsg))                 # Error Message 
-        return(1,db_conn,db_cur)                                      # Return Error to caller
-
-    # Define a cursor object using cursor() method
-    try :
-        db_cur = db_conn.cursor()                                     # Create Database cursor
-    except Exception as e:
-        if not db_silent :
-            enum, emsg = e.args                                         # Get Error No. & Message
-            write_err("Problem creating database cursor for '%s'" % (sadm_dbname)) 
-            write_err("Error: '%s' '%s'" % (enum,emsg))                 # Error Message 
-        return(1,db_conn,db_cur)                                      # Return Error to caller
-
-    return (db_err,db_conn,db_cur)
 
 
 
@@ -2557,6 +2493,73 @@ def print_dict_alert():
 
 
 
+# --------------------------------------------------------------------------------------------------
+def db_connect(DB):
+    
+    """ Open a connection to the Database (sadmin).
+        
+        Args: Name of the Database to connect to..
+              If not specified, 'sadmin' is the assume.
+    
+        Returns: (db_err, db_conn, db_cur)
+            db_err (int)    :   Return 0 when connected to database
+                                Return 1 when error connecting to database
+            db_conn (obj)   :   Connector to database.
+            db_cur (obj)    :   Database cursor.
+    """
+    global db_name, db_conn, db_cur, db_errno, db_errmsg
+
+    if db_name == "" : db_name = "sadmin"
+    db_conn     = None                                                  # Database connector Obj
+    db_cur      = None                                                  # Database cursor Obj
+    db_errno    = 0                                                     # Error No to return
+    db_errmsg   = ""                                                    # Error Mess. to return
+
+    # No Connection to Database is possible if not on the SADMIN Server
+    if get_fqdn() != sadm_server :                                      # Use only on SADMIN server
+       if not db_silent :                                               # Want to show error Msg.
+           write_err("DB can't be used on '%s', only on '%s' system." % (sadm_server,get_fqdn()))
+       db_errno = 1                                                 # Error number
+       db_errmsg = "DB can't be used on '%s', only on '%s' system." % (sadm_server,get_fqdn())
+       return(1)
+
+    # User decided not to use Database, No Connection to Database
+    if not db_used :                                                    # User Want to use DB
+       if not db_silent :
+          write_err("[ Error ] Connection to Database only possible when db_used is set to True")
+       db_errno = 1                                                 # Error number
+       db_errmsg = "[ Error ] Connection to Database only possible when db_used is set to True"
+       return(1)
+
+    # Open a connection to Database
+    try :
+        #db_conn = pymysql.connect(host=sadm_dbhost,user=sadm_rw_dbuser,password=sadm_rw_dbpwd,database=db_name,cursorclass=pymysql.cursors.DictCursor)
+        db_conn = pymysql.connect(host=sadm_dbhost,user=sadm_rw_dbuser,password=sadm_rw_dbpwd,database=db_name,cursorclass=pymysql.cursors.DictCursor)
+        #except (NameError, pymysql.err.OperationalError, pymysql.err.InternalError) as e : 
+    except Exception as e:
+        if not db_silent :
+            (enum,emsg) = e.args                                        # Get Error No. & Message
+            write_err("Connection error to database '%s'" % (db_name))
+            write_err("[ ERROR ] '%s' '%s'" % (enum,emsg))                 # Error Message 
+        db_errno = enum
+        db_errmsg = emsg
+        return(1)
+
+    # Define a cursor object using cursor() method
+    try :
+        db_cur = db_conn.cursor()                                     # Create Database cursor
+    except Exception as e:
+        if not db_silent :
+            enum, emsg = e.args                                         # Get Error No. & Message
+            write_err("[ ERROR ] Problem creating database cursor for '%s'" % (db_name)) 
+            write_err("[ ERROR ] '%s' '%s'" % (enum,emsg))                 # Error Message 
+        db_errno = enum
+        db_errmsg = emsg
+        return(1)
+
+    return (0)
+
+
 
 # --------------------------------------------------------------------------------------------------
 # Things to do when the module is loaded
@@ -2575,14 +2578,6 @@ load_config_file(cfg_file)                                              # Load s
 load_cmd_path()                                                         # Load Cmd Path Variables
 dict_alert = load_alert_file()                                          # Load Alert group in dict
 
-# If DB is set to be use and on the SADMIN server (Where the Database is), then import MySQL Module
-if ((get_fqdn() == sadm_server ) and (db_used)) : 
-    try: 
-        import pymysql 
-    except ImportError as e:
-        print ("Import Error : %s " % e)
-        sys.exit(1)
-    #(pexit_code, db_conn, db_cur) = sa.db_connect('sadmin')           # Connect to SADMIN Database
 
 # Print Alert Dictionnary under Debug
 if (lib_debug > 0) : 
