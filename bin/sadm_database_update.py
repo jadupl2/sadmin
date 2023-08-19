@@ -47,6 +47,7 @@
 # 2022_08_17 server v3.18 Updated to use the new SADMIN Python Library v2.
 # 2022_08_25 server v3.19 Fix a 'KeyError' that could cause problem.
 #@2023_07_26 server v3.20 Restrict execution, will run only on the SADMIN server.
+#@2023_08_18 server v3.21 Update to SADMIN section v2.3 & update database I/O functions.
 # 
 # ==================================================================================================
 #
@@ -61,7 +62,7 @@ except ImportError as e:
 
 
 # --------------------------------------------------------------------------------------------------
-# SADMIN CODE SECTION v2.2
+# SADMIN CODE SECTION v2.3
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your code.    
 # --------------------------------------------------------------------------------------------------
@@ -74,44 +75,46 @@ except ImportError as e:                                                # If Err
     sys.exit(1)                                                         # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "3.20"                                                     # Program version
+pver        = "3.21"                                                    # Program version
 pdesc       = "Update SADMIN database with information collected from each system."
 phostname   = sa.get_hostname()                                         # Get current `hostname -s`
-db_conn    = None                                                      # Database connector
-db_cur     = None                                                      # Database cursor
 pdebug      = 0                                                         # Debug level from 0 to 9
 pexit_code  = 0                                                         # Script default exit code
 
-# The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
-# Uncomment anyone to change them and influence execution of SADMIN standard library.
+# Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
+sa.db_used        = True           # Open/Use DB(True), No DB needed (False), sa.start() auto connect
+sa.db_silent      = False          # When DB Error Return(Error), True = NoErrMsg, False = ShowErrMsg
+sa.db_conn        = None           # Use this Database Connector when using DB,  set by sa.start()
+sa.db_cur         = None           # Use this Database cursor if you use the DB, set by sa.start()
+sa.db_name        = ""             # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
+sa.db_errno       = 0              # Database Error Number
+sa.db_errmsg      = ""             # Database Error Message
 #
-sa.proot_only        = True       # Pgm run by root only ?
-sa.psadm_server_only = True      # Run only on SADMIN server ?
-sa.db_used           = True       # Open/Use Database(True) or Don't Need DB(False)
-#sa.db_silent        = False      # When DB Error, False=ShowErrMsg, True=NoErrMsg
+sa.use_rch           = True       # Generate entry in Result Code History (.rch)
+sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
+sa.log_append        = False      # Append Existing Log(True) or Create New One(False)
+sa.log_header        = True       # Show/Generate Header in script log (.log)
+sa.log_footer        = True       # Show/Generate Footer in script log (.log)
+sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
+sa.proot_only        = False      # Pgm run by root only ?
+sa.psadm_server_only = False      # Run only on SADMIN server ?
+sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
+
+# The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
+# Change them to fit your need, they influence execution of SADMIN standard library
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
-#sa.pid_timeout      = 7200       # PID File Default Time to Live in seconds.
-#sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
 #sa.max_logline      = 500        # Max. lines to keep in log (0=No trim) after execution.
 #sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
-#sa.log_type         = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
-#sa.log_append       = False      # Append Existing Log(True) or Create New One(False)
-#sa.log_header       = True       # Show/Generate Header in script log (.log)
-#sa.log_footer       = True       # Show/Generate Footer in script log (.log)
-#sa.multiple_exec    = "Y"        # Allow running multiple copy at same time ?
-#sa.use_rch         = True       # Generate entry in Result Code History (.rch)
 #sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
-sa.cmd_ssh_full = "%s -qnp %s " % (sa.cmd_ssh, sa.sadm_ssh_port)           # SSH Cmd to access clients
-#
+#sa.pid_timeout      = 7200       # PID File Default Time to Live in seconds.
+#sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
 # ==================================================================================================
 
 
 
+# Global Variables Definition use on a per script basis
 #===================================================================================================
-#                      Global Variables Definition use on a per script basis
-#===================================================================================================
-#
 wdict           = {}                                                    # Dict for Server Columns
 
 
@@ -119,11 +122,9 @@ wdict           = {}                                                    # Dict f
 
 
 
+# UPDATE ROW INTO FROM THE WROW DICTIONNARY THE SERVER TABLE
 #===================================================================================================
-#                   UPDATE ROW INTO FROM THE WROW DICTIONNARY THE SERVER TABLE
-#===================================================================================================
-#
-def update_row(wconn, wcur, wdict):
+def update_row(wdict):
     sa.write_log ("Updating %s.%s data in Database" % (wdict['srv_name'],wdict['srv_domain']))
 
 
@@ -134,7 +135,7 @@ def update_row(wconn, wcur, wdict):
     if sa.get_release() < "1.3.4" :                                            # Change made in 1.3.3
         sql="ALTER TABLE server MODIFY COLUMN srv_kernel_version VARCHAR(40);"
         try:
-            wcur.execute(sql);                                              # Execute the Select SQL
+            sa.db_cur.execute(sql);                                         # Execute the Select SQL
         except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
             enum, emsg = error.args                                         # Get Error No. & Msg
             print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Msg
@@ -142,7 +143,7 @@ def update_row(wconn, wcur, wdict):
         #
         sql="ALTER TABLE server MODIFY COLUMN srv_model VARCHAR(30);"
         try:
-            wcur.execute(sql);                                              # Execute the Select SQL
+            sa.db_cur.execute(sql);                                         # Execute the Select SQL
         except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
             enum, emsg = error.args                                         # Get Error No. & Msg
             print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Msg
@@ -150,7 +151,7 @@ def update_row(wconn, wcur, wdict):
         #
         sql="ALTER TABLE server MODIFY COLUMN srv_uptime VARCHAR(25);"      # Modify from 20 to 25Ch
         try:
-            wcur.execute(sql);                                              # Execute the Select SQL
+            sa.db_cur.execute(sql);                                         # Execute the Select SQL
         except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
             enum, emsg = error.args                                         # Get Error No. & Msg
             print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Msg
@@ -158,10 +159,10 @@ def update_row(wconn, wcur, wdict):
         #
         sql="ALTER TABLE server ADD COLUMN srv_boot_date datetime AFTER srv_rear_ver;"
         try:
-            wcur.execute(sql);                                              # Execute the Select SQL
+            sa.db_cur.execute(sql);                                         # Execute the Select SQL
         except(pymysql.err.OperationalError,pymysql.err.InternalError,
             pymysql.err.IntegrityError,pymysql.err.DataError) as error:
-            pass                                                            # Skip duplicate error
+            pass                                                             # Skip duplicate error
             #enum, emsg = error.args                                         # Get Error No. & Msg
             #print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Msg
             #return (1)                                                      # Return Error to caller
@@ -212,12 +213,10 @@ def update_row(wconn, wcur, wdict):
     # Execute the SQL Update Statement
     try:
         if pdebug > 4: sa.write_log("sql=%s" % (sql))
-        wcur.execute(sql)                                               # Update Server Data
-        wconn.commit()                                                  # Commit the transaction
+        sa.db_cur.execute(sql)                                          # Update Server Data
+        sa.db_conn.commit()                                             # Commit the transaction
         sa.write_log("[OK] %s update Succeeded" % (wdict['srv_name']))  # Advise User Update is OK
         return (0)                                                      # return (0) Insert Worked
-
-
     except pymysql.DataError as e:
         print("DataError")
         print(e)
@@ -243,13 +242,13 @@ def update_row(wconn, wcur, wdict):
     #    enum, emsg = error.args                                         # Get Error No. & Message
     #    sa.write_log("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
     #    if pdebug > 4: sa.write_log("sql=%s" % (sql))
-    #    wconn.rollback()                                                # RollBack Transaction
+    #    sa.db_conn.rollback()                                                # RollBack Transaction
     #    return (1)                                                      # return (1) to indicate Err
     #except Exception as error:
     #    enum, emsg = error.args                                         # Get Error No. & Message
     #    sa.write_log("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
     #    if pdebug > 4: sa.write_log("sql=%s" % (sql))
-    #    wconn.rollback()                                                # RollBack Transaction
+    #    sa.db_conn.rollback()                                                # RollBack Transaction
     #    return (1)                                                      # return (1) to indicate Err
     return(0)                                                           # Return 0 = update went OK
 
@@ -258,8 +257,7 @@ def update_row(wconn, wcur, wdict):
 
 # Process all your active(s) server(s) in the Database (Used if want to process selected servers)
 # --------------------------------------------------------------------------------------------------
-def process_servers(wconn, wcur):
-    #global db_conn, db_cur                                            # DB Connection & Cursor
+def process_servers():
 
     sa.write_log ("Processing all actives systems")
 
@@ -268,8 +266,8 @@ def process_servers(wconn, wcur):
     sql += " FROM server WHERE srv_active = %s " % ('True')
     sql += " order by srv_name;"
     try :
-        wcur.execute(sql)
-        rows = wcur.fetchall()
+        sa.db_cur.execute(sql)
+        rows = sa.db_cur.fetchall()
     except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
         enum,emsg = error.args                                          # Get Error No. & Message
         print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Message
@@ -490,7 +488,7 @@ def process_servers(wconn, wcur):
                 total_error = total_error + 1                           # Add 1 To Total Error
                 sa.stop(1)
                 sys.exit(1)
-            RC = update_row(wconn, wcur, wdict)                         # Go Update Row
+            RC = update_row(wdict)                         # Go Update Row
             total_error = total_error + RC                              # RC=0=Success RC=1=Error
             if (total_error != 0):                                      # Not SHow if Total Error=0
                 sa.write_log(" ")                                       # Space line
@@ -548,16 +546,10 @@ def cmd_options(argv):
 # Main Function
 # --------------------------------------------------------------------------------------------------
 def main(argv):
-    global db_conn, db_cur                                            # DB Connection & Cursor
     (pdebug) = cmd_options(argv)                                        # Analyse cmdline options
     pexit_code = 0                                                      # Pgm Exit Code Default
     sa.start(pver, pdesc)                                               # Initialize SADMIN env.
-
-    (pexit_code, db_conn, db_cur) = sa.db_connect('sadmin')           # Connect to SADMIN Database
-    if pexit_code == 0:                                                 # If Connection to DB is OK
-        pexit_code = process_servers(db_conn, db_cur)                 # Loop All Active systems
-        sa.db_close(db_conn, db_cur)                                  # Close connection to DB
-
+    pexit_code = process_servers()                                      # Loop All Active systems
     sa.stop(pexit_code)                                                 # Gracefully exit SADMIN
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code
 
