@@ -1961,6 +1961,11 @@ sub end_of_sysmon {
         print "\nThe SADMIN monitor need to be run by 'roor' user.\n\n" ;
         exit 1;                                     # Exit with Error
     }    
+    #
+    #my $random_number = rand(120);                  # Get a random number between 0 and 120
+    #print "Execution will start in $random_number seconds.\n";
+    #sleep($random_number);
+
     init_process;                                   # Create lock file & do 'ps' commands to files
     $start_time = time;                             # Store Starting time - To calculate elapse time
     load_sadmin_cfg;                                # Load SADMIN Config file sadmin.cfg in Glob.Var
@@ -1980,3 +1985,4 @@ sub end_of_sysmon {
     system ("chmod 664 $SYSMON_RPT_FILE");          # File readable by group
     unload_smon_file;                               # Unload Update Array to hostname.smon file
     end_of_sysmon;                                  # Delete lock file - Print Elapse time
+
