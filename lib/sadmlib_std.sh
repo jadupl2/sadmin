@@ -203,24 +203,22 @@
 # 2023_04_14 lib v4.24 Change email pwd ($SADMIN/cfg/.gmpw) on SADM server to generate new .gmpw64.
 # 2023_05_24 lib v4.25 Umask is now shown in the script header output.
 # 2023_06_06 lib v4.26 Set file permission on email password file to prevent problem.
+#@2023_08_20 lib v4.27 Code optimization, Library will now load a lot faster.
 #===================================================================================================
-
-
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
 
 
- 
+
 # --------------------------------------------------------------------------------------------------
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
-#
-export SADM_HOSTNAME=`hostname -s`                                      # Current Host name
-export SADM_LIB_VER="4.26"                                              # This Library Version
-export SADM_DASH=`printf %80s |tr " " "="`                              # 80 equals sign line
-export SADM_FIFTY_DASH=`printf %50s |tr " " "="`                        # 50 equals sign line
-export SADM_80_DASH=`printf %80s |tr " " "="`                           # 80 equals sign line
-export SADM_TEN_DASH=`printf %10s |tr " " "-"`                          # 10 dashes line
+export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
+export SADM_LIB_VER="4.27"                                              # This Library Version
+export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
+export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
+export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
+export SADM_TEN_DASH=$(printf %10s |tr " " "-")                         # 10 dashes line
 export SADM_STIME=""                                                    # Script Start Time
 export DELETE_PID="Y"                                                   # Default Delete PID On Exit
 export LIB_DEBUG=0                                                      # This Library Debug Level
@@ -359,7 +357,7 @@ export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"                  # Exclud
 export DBPASSFILE="${SADM_CFG_DIR}/.dbpass"                             # MySQL Passwd File
 export GMPW_FILE_TXT="${SADM_CFG_DIR}/.gmpw"                            # SMTP Unencrypted PasswdFile
 export GMPW_FILE_B64="${SADM_CFG_DIR}/.gmpw64"                          # SMTP Encrypted PasswdFile
-export SADM_RELEASE=`cat $SADM_REL_FILE`                                # SADM Release Ver. Number
+export SADM_RELEASE=$(cat $SADM_REL_FILE)                               # SADM Release Ver. Number
 export SADM_SSH_PORT=""                                                 # Default SSH Port
 export SADM_REAR_NFS_SERVER=""                                          # ReaR NFS Server
 export SADM_REAR_NFS_MOUNT_POINT=""                                     # ReaR Mount Point
@@ -546,12 +544,12 @@ sadm_write() {
     SADM_LMSG="$SADM_SMSG"                                              # Log Mess. = Screen Mess
 
     # Replace special status and put them in color.
-    SADM_SMSG=`echo "${SADM_SMSG//'[ OK ]'/$SADM_SOK}"`                 # Put OK in Green 
-    SADM_SMSG=`echo "${SADM_SMSG//'[ ERROR ]'/$SADM_SERROR}"`           # Put ERROR in Red
-    SADM_SMSG=`echo "${SADM_SMSG//'[ WARNING ]'/$SADM_SWARNING}"`       # Put WARNING in Yellow
-    SADM_SMSG=`echo "${SADM_SMSG//'[ FAILED '/$SADM_SFAILED}"`          # Put FAILED in Red
-    SADM_SMSG=`echo "${SADM_SMSG//'[ SUCCESS ]'/$SADM_SSUCCESS}"`       # Put Success in Green
-    SADM_SMSG=`echo "${SADM_SMSG//'[ INFO ]'/$SADM_SINFO}"`             # Put INFO in Blue
+    SADM_SMSG=$(echo "${SADM_SMSG//'[ OK ]'/$SADM_SOK}")                # Put OK in Green 
+    SADM_SMSG=$(echo "${SADM_SMSG//'[ ERROR ]'/$SADM_SERROR}")          # Put ERROR in Red
+    SADM_SMSG=$(echo "${SADM_SMSG//'[ WARNING ]'/$SADM_SWARNING}")      # Put WARNING in Yellow
+    SADM_SMSG=$(echo "${SADM_SMSG//'[ FAILED '/$SADM_SFAILED}")         # Put FAILED in Red
+    SADM_SMSG=$(echo "${SADM_SMSG//'[ SUCCESS ]'/$SADM_SSUCCESS}")      # Put Success in Green
+    SADM_SMSG=$(echo "${SADM_SMSG//'[ INFO ]'/$SADM_SINFO}")            # Put INFO in Blue
     if [ "${SADM_SMSG:0:1}" != "[" ]                                    # 1st Char. of Mess. Not [
         then SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_LMSG"      # Insert Date/Time in Log
     fi 
@@ -1814,20 +1812,17 @@ sadm_load_config_file() {
         then if [ ! -r "$SADM_CFG_HIDDEN" ]                             # Initial Cfg file not exist
                 then echo "****************************************************************"
                      echo "SADMIN configuration file $SADM_CFG_FILE doesn't exist."
-                     echo "Even the config template file can't be found - $SADM_CFG_HIDDEN"
-                     echo "Copy both files from another system to this server"
-                     echo "Or restore the files from a backup"
-                     echo "Don't forget to review the file content."
+                     echo "Even the config template file '$SADM_CFG_HIDDEN' can't be found."
+                     echo "Copy '$SADM_CFG_HIDDEN' from SADMIN server to this system."
                      echo "Job aborted."
                      echo "****************************************************************"
-                     sadm_stop 1                                        # Exit to O/S with Error
+                     sadm_stop 1
                      exit 1
                 else echo "****************************************************************"
                      echo "SADMIN configuration file $SADM_CFG_FILE doesn't exist."
-                     echo "Will continue using template configuration file $SADM_CFG_HIDDEN"
-                     echo "Please review the configuration file ($SADM_CFG_FILE)."
-                     echo "cp $SADM_CFG_HIDDEN $SADM_CFG_FILE"          # Install Initial cfg file
-                     cp $SADM_CFG_HIDDEN $SADM_CFG_FILE                 # Install Default cfg file
+                     echo "I'm recreating it from the template '$SADM_CFG_HIDDEN'."
+                     echo "cp $SADM_CFG_HIDDEN $SADM_CFG_FILE" 
+                     cp $SADM_CFG_HIDDEN $SADM_CFG_FILE 
                      echo "****************************************************************"
              fi
     fi
@@ -1836,212 +1831,159 @@ sadm_load_config_file() {
     # Loop for reading the sadmin configuration file
     while read wline
         do
-        FC=`echo $wline | cut -c1`
-        if [ "$FC" = "#" ] || [ ${#wline} -eq 0 ] ; then continue ; fi # Skip comment & blank lines
+        if [ "${wline:0:1}" = "#" ] || [ ${#wline} -eq 0 ]              # Skip comment & blank lines
+            then continue
+            else KEY=$(echo ${wline}   | cut -d " " -f1)
+                 VALUE=$(echo ${wline} | cut -d= -f2 |tr -d ' ')
+        fi 
         #
-        echo "$wline" |grep -i "^SADM_MAIL_ADDR" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_MAIL_ADDR=`echo "$wline"     | cut -d= -f2 |tr -d ' '` ; fi
-        #
-        echo "$wline" |grep -i "^SADM_CIE_NAME" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_CIE_NAME=`echo "$wline" |cut -d= -f2 |sed -e 's/^[ \t]*//'` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_ALERT_TYPE" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_ALERT_TYPE=`echo "$wline"    |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_ALERT_GROUP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_ALERT_GROUP=`echo "$wline"   |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_ALERT_REPEAT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_ALERT_REPEAT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_TEXTBELT_KEY" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_TEXTBELT_KEY=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_TEXTBELT_URL" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_TEXTBELT_URL=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_SERVER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_SERVER=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_HOST_TYPE" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_HOST_TYPE=`echo "$wline"     |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_DOMAIN" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_DOMAIN=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_USER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_USER=`echo "$wline"          |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_GROUP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_GROUP=`echo "$wline"         |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_WWW_USER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_WWW_USER=`echo "$wline"      |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_WWW_GROUP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_WWW_GROUP=`echo "$wline"     |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_MAX_LOGLINE" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_MAX_LOGLINE=`echo "$wline"   |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_MAX_RCHLINE" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_MAX_RCLINE=`echo "$wline"    |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_NMON_KEEPDAYS" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_NMON_KEEPDAYS=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_RCH_KEEPDAYS" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RCH_KEEPDAYS=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_LOG_KEEPDAYS" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_LOG_KEEPDAYS=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_DBNAME" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_DBNAME=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_DBHOST" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_DBHOST=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_DBPORT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_DBPORT=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_RW_DBUSER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RW_DBUSER=`echo "$wline"     |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_RW_DBPWD" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RW_DBPWD=`echo "$wline"      |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_RO_DBUSER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RO_DBUSER=`echo "$wline"     |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_RO_DBPWD" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RO_DBPWD=`echo "$wline"      |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_SSH_PORT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_SSH_PORT=`echo "$wline"      |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_BACKUP_NFS_SERVER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_BACKUP_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_BACKUP_NFS_MOUNT_POINT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_BACKUP_NFS_MOUNT_POINT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_BACKUP_INTERVAL" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_BACKUP_INTERVAL=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_DAILY_BACKUP_TO_KEEP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_DAILY_BACKUP_TO_KEEP=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_WEEKLY_BACKUP_TO_KEEP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_WEEKLY_BACKUP_TO_KEEP=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_MONTHLY_BACKUP_TO_KEEP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_MONTHLY_BACKUP_TO_KEEP=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_YEARLY_BACKUP_TO_KEEP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_YEARLY_BACKUP_TO_KEEP=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_WEEKLY_BACKUP_DAY" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_WEEKLY_BACKUP_DAY=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_MONTHLY_BACKUP_DATE" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_MONTHLY_BACKUP_DATE=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_YEARLY_BACKUP_MONTH" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_YEARLY_BACKUP_MONTH=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_YEARLY_BACKUP_DATE" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_YEARLY_BACKUP_DATE=`echo "$wline"   |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_BACKUP_DIF" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_BACKUP_DIF=`echo "$wline"   |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_REAR_NFS_SERVER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_REAR_NFS_SERVER=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_REAR_NFS_MOUNT_POINT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_REAR_NFS_MOUNT_POINT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_REAR_BACKUP_TO_KEEP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_REAR_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_REAR_BACKUP_DIF" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_REAR_BACKUP_DIF=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_REAR_BACKUP_INTERVAL" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_REAR_BACKUP_INTERVAL=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_NETWORK1" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_NETWORK1=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_NETWORK2" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_NETWORK2=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_NETWORK3" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_NETWORK3=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_NETWORK4" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_NETWORK4=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_NETWORK5" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_NETWORK5=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_MONITOR_UPDATE_INTERVAL" > /dev/null 2>&1
-        if [ $? -eq 0 ] ;then SADM_MONITOR_UPDATE_INTERVAL=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_MONITOR_RECENT_COUNT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ;then SADM_MONITOR_RECENT_COUNT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_MONITOR_RECENT_EXCLUDE" > /dev/null 2>&1
-        if [ $? -eq 0 ] ;then SADM_MONITOR_RECENT_EXCLUDE=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_PID_TIMEOUT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ;then SADM_PID_TIMEOUT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_LOCK_TIMEOUT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ;then SADM_LOCK_TIMEOUT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_SMTP_SERVER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ;then SADM_SMTP_SERVER=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_SMTP_PORT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ;then SADM_SMTP_PORT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_SMTP_SENDER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ;then SADM_SMTP_SENDER=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
-        #
+        case $KEY in
+            "SADM_MAIL_ADDR")               SADM_MAIL_ADDR=$VALUE
+                                            ;;
+            "SADM_CIE_NAME")                SADM_CIE_NAME=$VALUE
+                                            ;;
+            "SADM_ALERT_TYPE")              SADM_ALERT_TYPE=$VALUE
+                                            ;;
+            "SADM_ALERT_GROUP")             SADM_ALERT_GROUP=$VALUE
+                                            ;;
+            "SADM_ALERT_REPEAT")            SADM_ALERT_REPEAT=$VALUE
+                                            ;;
+            "SADM_TEXTBELT_KEY")            SADM_TEXTBELT_KEY=$VALUE
+                                            ;;
+            "SADM_TEXTBELT_URL")            SADM_TEXTBELT_URL=$VALUE
+                                            ;;
+            "SADM_SERVER")                  SADM_SERVER=$VALUE
+                                            ;;
+            "SADM_HOST_TYPE")               SADM_HOST_TYPE=$VALUE
+                                            ;;
+            "SADM_DOMAIN")                  SADM_DOMAIN=$VALUE
+                                            ;;
+            "SADM_USER")                    SADM_USER=$VALUE
+                                            ;;
+            "SADM_GROUP")                   SADM_GROUP=$VALUE
+                                            ;;
+            "SADM_WWW_USER")                SADM_WWW_USER=$VALUE
+                                            ;;
+            "SADM_WWW_GROUP")               SADM_WWW_GROUP=$VALUE
+                                            ;;
+            "SADM_MAX_LOGLINE")             SADM_MAX_LOGLINE=$VALUE
+                                            ;;
+            "SADM_MAX_RCLINE")              SADM_MAX_RCLINE=$VALUE
+                                            ;;
+            "SADM_NMON_KEEPDAYS")           SADM_NMON_KEEPDAYS=$VALUE
+                                            ;;
+            "SADM_RCH_KEEPDAYS")            SADM_RCH_KEEPDAYS=$VALUE
+                                            ;;
+            "SADM_LOG_KEEPDAYS")            SADM_LOG_KEEPDAYS=$VALUE
+                                            ;;
+            "SADM_DBNAME")                  SADM_DBNAME=$VALUE
+                                            ;;
+            "SADM_DBHOST")                  SADM_DBHOST=$VALUE
+                                            ;;
+            "SADM_DBPORT")                  SADM_DBPORT=$VALUE
+                                            ;;
+            "SADM_RW_DBUSER")               SADM_RW_DBUSER=$VALUE
+                                            ;;
+            "SADM_RW_DBPWD")                SADM_RW_DBPWD=$VALUE
+                                            ;;
+            "SADM_RO_DBUSER")               SADM_RO_DBUSER=$VALUE
+                                            ;;
+            "SADM_RO_DBPWD")                SADM_RO_DBPWD=$VALUE
+                                            ;;
+            "SADM_SSH_PORT")                SADM_SSH_PORT=$VALUE
+                                            ;;
+            "SADM_BACKUP_NFS_SERVER")       SADM_BACKUP_NFS_SERVER=$VALUE
+                                            ;;
+            "SADM_BACKUP_NFS_MOUNT_POINT")  SADM_BACKUP_NFS_MOUNT_POINT=$VALUE
+                                            ;;
+            "SADM_BACKUP_INTERVAL")         SADM_BACKUP_INTERVAL=$VALUE
+                                            ;;
+            "SADM_DAILY_BACKUP_TO_KEEP")    SADM_DAILY_BACKUP_TO_KEEP=$VALUE
+                                            ;;
+            "SADM_WEEKLY_BACKUP_TO_KEEP")   SADM_WEEKLY_BACKUP_TO_KEEP=$VALUE
+                                            ;;
+            "SADM_MONTHLY_BACKUP_TO_KEEP")  SADM_MONTHLY_BACKUP_TO_KEEP=$VALUE
+                                            ;;
+            "SADM_YEARLY_BACKUP_TO_KEEP")   SADM_YEARLY_BACKUP_TO_KEEP=$VALUE
+                                            ;;
+            "SADM_WEEKLY_BACKUP_DAY")       SADM_WEEKLY_BACKUP_DAY=$VALUE
+                                            ;;
+            "SADM_MONTHLY_BACKUP_DATE")     SADM_MONTHLY_BACKUP_DATE=$VALUE
+                                            ;;
+            "SADM_YEARLY_BACKUP_MONTH")     SADM_YEARLY_BACKUP_MONTH=$VALUE
+                                            ;;
+            "SADM_YEARLY_BACKUP_DATE")      SADM_YEARLY_BACKUP_DATE=$VALUE
+                                            ;;
+            "SADM_BACKUP_DIF")              SADM_BACKUP_DIF=$VALUE
+                                            ;;
+            "SADM_REAR_NFS_SERVER")         SADM_REAR_NFS_SERVER=$VALUE
+                                            ;;
+            "SADM_REAR_NFS_MOUNT_POINT")    SADM_REAR_NFS_MOUNT_POINT=$VALUE
+                                            ;;
+            "SADM_REAR_BACKUP_TO_KEEP")     SADM_REAR_BACKUP_TO_KEEP=$VALUE
+                                            ;;
+            "SADM_REAR_BACKUP_DIF")         SADM_REAR_BACKUP_DIF=$VALUE
+                                            ;;
+            "SADM_REAR_BACKUP_INTERVAL")    SADM_REAR_BACKUP_INTERVAL=$VALUE
+                                            ;;
+            "SADM_NETWORK1")                SADM_NETWORK1=$VALUE
+                                            ;;
+            "SADM_NETWORK2")                SADM_NETWORK2=$VALUE
+                                            ;;
+            "SADM_NETWORK3")                SADM_NETWORK3=$VALUE
+                                            ;;
+            "SADM_NETWORK4")                SADM_NETWORK4=$VALUE
+                                            ;;
+            "SADM_NETWORK5")                SADM_NETWORK5=$VALUE
+                                            ;;
+            "SADM_MONITOR_UPDATE_INTERVAL") SADM_MONITOR_UPDATE_INTERVAL=$VALUE
+                                            ;;
+            "SADM_MONITOR_RECENT_COUNT")    SADM_MONITOR_RECENT_COUNT=$VALUE
+                                            ;;
+            "SADM_MONITOR_RECENT_EXCLUDE")  SADM_MONITOR_RECENT_EXCLUDE=$VALUE
+                                            ;;
+            "SADM_PID_TIMEOUT")             SADM_PID_TIMEOUT=$VALUE
+                                            ;;
+            "SADM_LOCK_TIMEOUT")            SADM_LOCK_TIMEOUT=$VALUE
+                                            ;;
+            "SADM_SMTP_SERVER")             SADM_SMTP_SERVER=$VALUE
+                                            ;;
+            "SADM_SMTP_PORT")               SADM_SMTP_PORT=$VALUE
+                                            ;;
+            "SADM_SMTP_SENDER")             SADM_SMTP_SENDER=$VALUE
+                                            ;;
+        esac
         done < $SADM_CFG_FILE
 
-# Get Read/Write and Read/Only User Password from pasword file (Only on SADMIN Server)
+# Get Read/Write and Read/Only Database User Password from pasword file (Only on SADMIN Server)
     SADM_RW_DBPWD=""                                                    # Default Write Pwd is Blank
     SADM_RO_DBPWD=""                                                    # Default ReadOnly Pwd Blank
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] && [ -r "$DBPASSFILE" ]  # If on Server & pwd file
-        then SADM_RW_DBPWD=`grep "^${SADM_RW_DBUSER}," $DBPASSFILE |awk -F, '{ print $2 }'` # RW PWD
-             SADM_RO_DBPWD=`grep "^${SADM_RO_DBUSER}," $DBPASSFILE |awk -F, '{ print $2 }'` # RO PWD
+        then SADM_RW_DBPWD=$(grep "^${SADM_RW_DBUSER}," "$DBPASSFILE" |awk -F, '{ print $2 }') 
+             SADM_RO_DBPWD=$(grep "^${SADM_RO_DBUSER}," "$DBPASSFILE" |awk -F, '{ print $2 }') 
     fi
 
 # If on client delete plain text email pwd file
 # On SADMIN Server recreate encrypted email pwd file from plaintext file.
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # If on a SADMIN client
-        then rm -f $GMPW_FILE_TXT >>/dev/null                           # Del plain test email pwd
-        else if [ -r "$GMPW_FILE_TXT" ]                                 # On SADM srv & Text pwdfile         
-                then base64 $GMPW_FILE_TXT >$GMPW_FILE_B64              # Recreate encrypt pwd file
-                     if [ $(id -u) -eq 0 ]
-                        then chmod 0664 $GMPW_FILE_B64 >/dev/null 2>&1
-                             chmod 0644 $GMPW_FILE_TXT >/dev/null 2>&1
-                             chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_B64 >/dev/null 2>&1
-                             chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_TXT >/dev/null 2>&1
-                     fi
-             fi 
-    fi 
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # If NOT on Admin Server
+        then rm -f $GMPW_FILE_TXT >>/dev/null                           # Del plain text email pwd
+        elif [ -r "$GMPW_FILE_TXT" ]                                    # On SADM srv & Text pwdfile         
+             then base64 $GMPW_FILE_TXT >$GMPW_FILE_B64                 # Recreate encrypt pwd file
+                  if [ $(id -u) -eq 0 ]
+                     then chmod 0664 $GMPW_FILE_B64 >/dev/null 2>&1
+                          chmod 0644 $GMPW_FILE_TXT >/dev/null 2>&1
+                          chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_B64 >/dev/null 2>&1
+                          chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_TXT >/dev/null 2>&1
+                  fi
+    fi
 
 # Set Email Account password from encrypted email account password file.
     SADM_GMPW=""
     if [ -r "$GMPW_FILE_B64" ] 
-        then SADM_GMPW=$(base64 -d $GMPW_FILE_B64) 
+        then SADM_GMPW=$(base64 -d "$GMPW_FILE_B64") 
              if [ $(id -u) -eq 0 ]
-                then chmod 0664 $GMPW_FILE_B64 >/dev/null 2>&1
-                     chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_B64 >/dev/null 2>&1
+                then chmod 0664 "$GMPW_FILE_B64" >/dev/null 2>&1
+                     chown "${SADM_USER}":"${SADM_GROUP}" "$GMPW_FILE_B64" >/dev/null 2>&1
              fi 
     fi
     return 0
@@ -2726,12 +2668,16 @@ sadm_check_system_lock() {
 # --------------------------------------------------------------------------------------------------
 # Things to do when first called
 # --------------------------------------------------------------------------------------------------
+    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
+        then printf "$(date "+%C%y.%m.%d %H:%M:%S") Starting ...\n"     # Show reference point #1
+    fi
+
     export SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`                     # Save Script Startup Time
     export SADM_ETCENV="/etc/environment"                               # Common env. file needed     
     if [ ! -r "$SADM_ETCENV" ]                                          # /etc/environment can't read
         then printf "\n\nFile $SADM_ETCENV is missing & it's needed."   # Inform User 
              printf "\nCannot continue, aborting"                       # We are aborting
-             printf "\nFor more info: https://sadmin.ca/sadm-section/#environment\n"
+             printf "\nFor more info: https://sadmin.ca/sadm-section/#environment \n"
              exit 1                                                     # Exit with error
     fi 
 
@@ -2756,8 +2702,20 @@ sadm_check_system_lock() {
             fi
     fi 
 
-    sadm_load_config_file                                               # Load sadmin.cfg file
+    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
+        then printf "$(date "+%C%y.%m.%d %H:%M:%S") Loading $SADM_CFG_FILE ...\n"
+    fi
+    sadm_load_config_file                  
+                                 # Load sadmin.cfg file
     if [ -r "$SADM_SLACK_FILE" ] ; then merge_alert_files ; fi          # If old version
+    
+    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
+        then printf "$(date "+%C%y.%m.%d %H:%M:%S") Loading command path ...\n"
+    fi
     sadm_load_cmd_path                                                  # Load Cmd Path Variables
     if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Error while checking
+
     export SADM_SSH_CMD="${SADM_SSH} -qnp${SADM_SSH_PORT}"              # SSH Command to SSH CLient
+    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
+        then printf "$(date "+%C%y.%m.%d %H:%M:%S") Library Loaded ...\n"
+    fi
