@@ -120,7 +120,7 @@
 #@2023_07_09 install v3.89 Fix problem with sadmin web server config on Debian 12.
 #@2023_07_12 install v3.90 Initial 'sadm_client' crontab now using python ver. of 'sadm_nmon_watcher'.
 #@2023_07_16 install v3.91 To ease name resolution, accept sadmin server IP instead of it FQDN.
-#@2023_07_26 install v3.92 Minor modification.
+#@2023_07_26 install v3.92 Modification of package require for the 'rear' backup.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -212,8 +212,8 @@ req_client = {
                     'deb':'lshw',                           'drepo':'base'},
     'parted'     :{ 'rpm':'parted',                         'rrepo':'base',  
                     'deb':'parted',                         'drepo':'base'},
-    'rear   '    :{ 'rpm':'rear' 'xorriso' 'syslinux' 'syslinux-extlinux ', 'rrepo':'base',
-                    'deb':'rear' 'xorriso' 'syslinux-utils' 'extlinux'    , 'drepo':'base'},
+    'rear   '    :{ 'rpm':'rear xorriso syslinux syslinux-extlinux', 'rrepo':'base',
+                    'deb':'rear xorriso syslinux-utils extlinux'   , 'drepo':'base'},
     'mutt'       :{ 'rpm':'mutt',                           'rrepo':'base',
                     'deb':'mutt',                           'drepo':'base'},
     'gawk'       :{ 'rpm':'gawk',                           'rrepo':'base',
