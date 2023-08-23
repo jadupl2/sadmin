@@ -121,6 +121,7 @@
 #@2023_07_12 install v3.90 Initial 'sadm_client' crontab now using python ver. of 'sadm_nmon_watcher'.
 #@2023_07_16 install v3.91 To ease name resolution, accept sadmin server IP instead of it FQDN.
 #@2023_07_26 install v3.92 Modification of package require for the 'rear' backup.
+#@2023_08_23 install v3.93 Under certain conditions, failed to detect if package is installed.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -138,7 +139,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.92"                                            # Setup Version Number
+sver                = "3.93"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -232,6 +233,8 @@ req_client = {
                     'deb':'perl-base',                      'drepo':'base'},
     'iostat'     :{ 'rpm':'sysstat',                        'rrepo':'base',  
                     'deb':'sysstat',                        'drepo':'base'},
+    'apt-file'   :{ 'rpm':'none',                           'rrepo':'base',  
+                    'deb':'apt-file',                       'drepo':'base'},
     'libwww'     :{ 'rpm':'perl-libwww-perl ',              'rrepo':'base',
                     'deb':'libwww-perl ',                   'drepo':'base'},
     'lscpu'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
@@ -829,8 +832,8 @@ def locate_command(lcmd) :
 #       This function verify if the Package Received in parameter is available on the server 
 # 
 # Parameters : 
-#   lpacktype = Package Type rpm, deb or cus (Custom from local directory)
 #   lpackages = Package Name
+#   lpacktype = Package Type rpm, deb or cus (Custom from local directory)
 #===================================================================================================
 def locate_package(lpackages,lpacktype) :
 
@@ -845,7 +848,7 @@ def locate_package(lpackages,lpacktype) :
     found = True                                                        # Assume will found Package
     for pack in lpackages.split(" "):                                   # Split Packages List
         if (lpacktype == "deb") :                                       # If Debian Package Style
-            COMMAND = "dpkg-query -W %s  >/dev/null 2>&1" % (pack)      # Check if Package Installed
+            COMMAND = "dpkg -s %s  >/dev/null 2>&1" % (pack)            # Check if Package Installed
             if (DEBUG): print ("O/S command : %s " % (COMMAND))         # Debug: Show Command used
             ccode,cstdout,cstderr = oscommand(COMMAND)                  # Try to Locate Command
             if (ccode != 0):                                            # If Package wasn't found
@@ -884,7 +887,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
 
     # If Debian Package, Refresh The Local Repository 
     if (packtype == "deb"):                                             # Is Debian Style Package
-        cmd =  "apt-get -y update >> %s 2>&1" % (logfile)               # Build Refresh Pack Cmd
+        cmd =  "apt-get -y update >> %s 2>&1" % (logfile)               # Refresh Cache
         if (DRYRUN):                                                    # If Running if DRY-RUN Mode
             print ("DryRun - Would run : %s" % (cmd))                   # Only shw cmd we would run
         else:                                                           # If running in normal mode
@@ -912,6 +915,10 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             needed_packages = pkginfo['rpm']                            # Save Packages to install
             needed_repo = pkginfo['rrepo']                              # Packages Repository to use
 
+        if needed_packages == "none" : 
+            writelog ("....") 
+            continue               
+
         # Verify if needed package is installed
         pline = "Checking for %s ... " % (needed_packages)		        # Show What were looking for
         writelog (pline,'nonl')                                         # Show What were looking for
@@ -934,6 +941,10 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
         if locate_package(needed_packages,packtype) :                   # If Package is installed
             writelog (" Ok ")                                           # Show User Check Result
             continue                                                    # Proceed with Next Package
+
+        if needed_packages == "" :
+            writelog ("[ OK ] Not available on %s" % (sosname))
+            continue
 
         # Install Missing Packages - Setup command to install missing package
         writelog ("Installing %s ... " % (needed_packages),'nonl')      # Show user what installing
@@ -2252,7 +2263,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
             continue
         break                                                  # Go Re-Accept Server Name
     host_line = "%s   sadmin.%s   sadmin" % (wcfg_ip, wcfg_domain)
-    with open('/etc/hosts', 'a') as file: file.write(host_line)
+    with open('/etc/hosts', 'a') as file: file.write("%s\n" % (host_line))
     writelog ("Line '%s' was added to /etc/hosts." % (host_line))
     wcfg_server = "sadmin.%s" % wcfg_domain
     update_sadmin_cfg(sroot,"SADM_SERVER",wcfg_server)                  # Update Value in sadmin.cfg
@@ -2729,7 +2740,7 @@ def main():
    
     # Insure that this script is only run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
-       print ("This script must be run by the 'root' user")             # Advise User Message / Log
+       print ("This script must be run by the 'root' user.")            # Advise User Message / Log
        print ("Try sudo ./%s" % (pn))                                   # Suggest to use 'sudo'
        print ("Process aborted")                                        # Process Aborted Msg
        sys.exit(1)                                                      # Exit with Error Code
