@@ -369,7 +369,7 @@ install_python3()
     #   then echo "SADMIN requirement will not be met, then installation aborted." | tee -a $SLOG
     #        exit 0  
     #fi 
-    printf "\nVerifying 'python3' requirements." | tee -a $SLOG
+    printf "\nInstalling 'python3' requirements." | tee -a $SLOG
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
