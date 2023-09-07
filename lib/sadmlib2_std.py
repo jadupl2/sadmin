@@ -1858,7 +1858,7 @@ def stop(pexit_code) :
         write_log (msg)
 
     # Update the [R]eturn [C]ode [H]istory File and trim it if needed.
-    if (use_rch) :                                                     # If User use RCH File
+    if (use_rch) :                                                      # If User use RCH File
         rch_exists = os.path.isfile(rch_file)                           # Do we have existing rch ?
         if rch_exists :                                                 # If we do, del code2 line?
             with open(rch_file) as xrch:                                # Open rch file
