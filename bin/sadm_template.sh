@@ -32,11 +32,9 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 
 
-# ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.56
-# Setup for Global Variables and load the SADMIN standard library.
-# To use SADMIN tools, this section MUST be present near the top of your code.    
-# ---------------------------------------------------------------------------------------
+# ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
+# v1.56 - Setup for Global Variables and load the SADMIN standard library.
+#       - To use SADMIN tools, this section MUST be present near the top of your code.    
 
 # Make Sure Environment Variable 'SADMIN' Is Defined.
 if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
@@ -47,7 +45,7 @@ if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN
          fi
 fi 
 
-# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
 export SADM_PN=${0##*/}                                    # Script name(with extension)
 export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 export SADM_TPID="$$"                                      # Script Process ID.
@@ -55,9 +53,11 @@ export SADM_HOSTNAME=$(hostname -s)                        # Host name without D
 export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
-# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='4.3'                                      # Script version number
 export SADM_PDESC="SADMIN template shell script"           # Script Optional Desc.(Not use if empty)
+export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -69,8 +69,6 @@ export SADM_DEBUG=0                                        # Debug Level(0-9) 0=
 export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
 export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
 export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
-export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
@@ -88,7 +86,8 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
 #export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
 #export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
-# ---------------------------------------------------------------------------------------
+# --------------- ---  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+
 
 
   
