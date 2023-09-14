@@ -41,6 +41,7 @@
 # 2022_07_13 web v2.15 SideBar - Show alert when final 'rch' summary file couldn't be opened.
 # 2022_07_18 web v2.16 SideBar - Fix problem, sidebar wouldn't displayed correctly.
 # 2022_09_12 web v3.0 SideBar - Move 'Server Attribute' section before 'Server Info'.
+#@2023_09_12 web v3.1 SideBar - Side Bar modification & enhancement
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -74,16 +75,17 @@ $URL_PERF_DAY  = '/view/perf/sadm_server_perf_adhoc_all.php';           # Yester
 $URL_VIEW_REAR = "/view/sys/sadm_view_rear.php";                        # Rear Back Status Page
 
 
+
+
 // ================================================================================================
 //                   Build Array Used by SideBar for Scripts Status 
 // ================================================================================================
 function build_sidebar_scripts_info()
 {
-    global $DEBUG; 
-
-    #$DEBUG = False;                                                    # Activate/Deactivate Debug
     $count = 0;                                                         # Working Counter
     $script_array = [];                                                 # Define an Empty Array
+
+    # Define RCH_ROOT where all systems rch files exist.
     $RCH_ROOT = $_SERVER['DOCUMENT_ROOT'] . "/dat";                     # $SADMIN/www/dat
     if ($DEBUG) { echo "<br>Opening $RCH_ROOT directory "; }            # Debug Display RCH Root Dir
     if (! is_dir($RCH_ROOT)) {                                          # /opt/sadmin/www/dat!=exist
@@ -95,67 +97,62 @@ function build_sidebar_scripts_info()
 
     # Create unique filename that will contains all servers *.rch filename
     $tmp_rch = tempnam($_SERVER['DOCUMENT_ROOT'] . "/tmp/", 'ref_rch_file_'); # Create unique file
-    #chown ("$tmp_rch",SADM_GROUP);
     chmod ("$tmp_rch",0664);
     if ($DEBUG) { echo "<br>Tmp filename : " . $tmp_rch ; }             # Show unique filename
 
     # Create a list of all rch files for all systems in $tmp_rch
     $CMD="find " . $RCH_ROOT . " -name '*.rch' -type f  > $tmp_rch ";  
     if ($DEBUG) { echo "<br>\nCommand executed is : " . $CMD . "\n"; }  # Show command constructed
-    #unset($name_array);            UNUSED                                     # Clear output Array
     $last_line = system ("$CMD",$RCODE);                                # Execute find command
     if ($DEBUG) { echo "<br>Return code of command is : " . $RCODE ; }  # Display Return Code
-    #echo "<br>A1a ";
-
-    # Loop through filename list in the file
+    
+    # Open list of rch file.
     $fh = fopen($tmp_rch,"r");
-    #echo "<br>A2 ";
-    if ($fh) {
-        #echo "<br>A3 ";
-        while ($line = fgets($fh)) {
-            #echo "<br>A3A ProcessLine";
-            $wfile = trim($line);                                       # Read rch filename line
-            #echo "<br>A3AA ". $wfile;
-            if (file_exists($wfile)) {                                  # If file still exist
-                #echo "<br>A3B File Exist";
-                $line_array = file($wfile);                             # Put all rch file in array
-                $last_index = count($line_array) - 1;                   # Nb. of lines -1 (lastLine)
-                $tag = explode(" ",$line_array[$last_index]);           # Split Line space delimited
-                $num_tags = count($tag);                                # Nb Elements on lines
-                #echo "<br>A3C " . $num_tags . " Fields ";
-                if ($num_tags != 10) { continue ; }                     # Not 10 fields=Invalid Line
-                list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode) = explode(" ",$line_array[$last_index], 10);
-                $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". $calert .",". $ctype . "," . trim($ccode) .",". basename($wfile) ."\n";
-                $count+=1;
-                $akey = $cdate1 ."_". $ctime1 ."_". basename($wfile);   # Key = Date+Time+FileName
-                if (array_key_exists("$akey",$script_array)) {          # If Key already exist
-                   $script_array[$akey] = $outline . "_" . $count ;     # Store line with count
-                }else{                                                  # If Key doesn't exist
-                   $script_array[$akey] = $outline ;                    # Store line in Array
-                }
-                #echo "<br>A3D EndOfFileExist";
-            }
-            #echo "<br>A3E GotoNxtLine";
-        }
-        fclose($fh);
-        #echo "<br>A4 ";
-    }else{
-        $errStr = "Failed to open '{$tmp_rch}' for read.";
+    if (! $fh) {
+        $errStr = "Failed to open the list of all rch '{$tmp_rch}'.";
         sadm_alert ("$errStr"); 
         unlink($tmp_rch);                                               # Delete Temp File
-        #echo "<br>A5 ";
         return $script_array;
     }
-    #echo "<br>A6 ";
+
+    # Loop through filename list in the file
+    while (!feof($fh)) {
+        $line = fgets($fh, 4096);                                       # Read rch filename line
+        $wfile = trim($line);                                           # Remove all spaces
+        if (! file_exists($wfile)) { continue ; }                       # If rch file don't exist
+        $line_array = file($wfile);                                     # Put all rch file in array
+        $last_index = count($line_array) - 1;                           # Nb. of lines -1 (lastLine)
+        $rch_array  = explode(" ",$line_array[$last_index]);            # Split Line into rch_array
+        $num_tags   = count($rch_array);                                # Nb Elements in rch array
+
+        # Reject invalid line (Line that doesn't contain 10 fields), go read next line.
+        if ($num_tags != 10) { echo "<br>NoFld " . $num_tags . " " . $wfile ; continue ; } 
+
+        #print_r($rch_array); 
+        $outline = $rch_array[0] .",". $rch_array[1] .",". $rch_array[2] .",". $rch_array[3] ;
+        $outline = $outline      .",". $rch_array[4] .",". $rch_array[5] .",". $rch_array[6] ;
+        $outline = $outline      .",". $rch_array[7] .",". $rch_array[8] .",". trim($rch_array[9]) ;
+        $outline = $outline      .",". basename($wfile) ."\n";
+        $count+=1;
+
+        # Key is "StartDate_StartTime_ScriptName"
+        $akey = $rch_array[1] ."_". $rch_array[2] ."_". basename($wfile); # Key = Date+Time+FileName
+        if (array_key_exists("$akey",$script_array)) {                  # If Key already exist
+           $script_array[$akey] = $outline . "_" . $count ;             # Store line with count
+        }else{                                                          # If Key doesn't exist
+           $script_array[$akey] = $outline ;                            # Store line in Array
+        }
+    }
+
+    fclose($fh);
     krsort($script_array);                                              # Reverse Sort Array on Keys
     unlink($tmp_rch);                                                   # Delete Temp File
-    #echo "<br>A7 ";
     
     # Under Debug - Display The Array Used to build the SideBar
     #if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key,value $key,$value";}}
-    #$DEBUG = False;      
     return $script_array;
 }
+
 
 
 
@@ -266,19 +263,18 @@ function SideBar_OS_Summary() {
 }
 
 
-
-
 # ==================================================================================================
 # Start of SADM SideBar
 # ==================================================================================================
 #
-    $sadm_array = SideBar_OS_Summary();                                 # Build sadm_array Used 
+    # Go read last line of all rch files and create an array with info collected.
+    $sadm_array = SideBar_OS_Summary();                                 
+    #show_OS_Ditribution();
 
     # PRINT SERVER O/S DISTRIBUTION 
     $SERVER_COUNT=0;                                                    # Total Servers Reset
     echo "\n<div class='SideBarTitle'>O/S Distribution</div>";          # SideBar Section Title
-    foreach($sadm_array as $key=>$value)                                
-    {
+    foreach($sadm_array as $key=>$value) {                                
         list($kpart1,$kpart2) = explode(",",$key);                      # Split Array Key and Value 
         if ($kpart1 == "srv_osname") {                                  # Here Process O/s Name Only
             echo "\n<div class='SideBarItem'>";                         # SideBar Item Div Class
@@ -297,16 +293,21 @@ function SideBar_OS_Summary() {
     # Print Total Servers 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_SERVER . "?selection=all_servers'";         # View server O/S URL           
-    echo ">All (" . $SERVER_COUNT . ") Servers</a></div>";              # Display Server Count
-    echo "\n<hr/>";                                                     # Print Horizontal Line
-    
+    echo ">Total " .$SERVER_COUNT. " systems</a></div>";                 # Display Server Count
+    echo "\n<hr/>"; 
+
+
+
+
+
 
 	# ---------------------------   SCRIPTS STATUS SIDEBAR      ------------------------------------
     echo "\n<div class='SideBarTitle'>Scripts Status</div>";            # SideBar Section Title
 	$script_array = build_sidebar_scripts_info();                       # Build $script_array
-    #echo "<br>A99 ";
-    $TOTAL_SCRIPTS=count($script_array);                                # Get Nb. Scripts in Array
     $TOTAL_FAILED=0; $TOTAL_SUCCESS=0; $TOTAL_RUNNING=0;                # Initialize Total to Zero
+
+#    $TOTAL_SCRIPTS=count($script_array);                                # Get Nb. Scripts in Array
+	#echo $TOTAL_SCRIPTS . " scripts<br>";              # Display Script Total Count
 
     # Loop through Script Array to count Different Return Code
     foreach($script_array as $key=>$value) {
@@ -317,9 +318,9 @@ function SideBar_OS_Summary() {
     }
 
     # Display Total number of Scripts
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_RCH_SUMM . "?sel=all'>";                    # URL To View O/S Upd. Page
-	echo "All (" . $TOTAL_SCRIPTS . ") Scripts</a></div>";              # Display Script Total Count
+    #echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    #echo "<a href='" . $URL_RCH_SUMM . "?sel=all'>";                    # URL To View O/S Upd. Page
+	#echo "All " . $TOTAL_SCRIPTS . " scripts</a></div>";              # Display Script Total Count
 
     # Display Total Number of Succeeded Scripts
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
@@ -333,25 +334,26 @@ function SideBar_OS_Summary() {
     # Display Total Number of Failed Scripts
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_RCH_SUMM . "?sel=failed'>";                 # URL To View O/S Upd. Page
-    if ( $TOTAL_FAILED == 0 ) {                                         # If None Succeeded
-        echo "None Failed</a></div>";                                   # No Scripts Failed
-    }else{
-        echo "$TOTAL_FAILED Failed</a></div>";                          # Display Total Script Fail
-    }
+    echo "$TOTAL_FAILED Failed</a></div>";                              # Display Total Script Fail
 
     # Display Total Number of Running Scripts
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_RCH_SUMM . "?sel=running'>";                # URL To View O/S Upd. Page
-    if ( $TOTAL_RUNNING == 0 ) {                                        # If No Script is running
-        echo "None Running</a></div>";                                  # Display None Running
-    }else{
-        echo "$TOTAL_RUNNING Running</a></div>";                        # Display Total Running Scr.
-    }
+    echo "$TOTAL_RUNNING Running</a></div>";                            # Display Total Running Scr.
+
+    # Display Total number of Scripts
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    $TOTAL_SCRIPTS=count($script_array);                                # Get Nb. Scripts in Array
+    echo "<a href='" . $URL_RCH_SUMM . "?sel=all'>";                    # URL To View O/S Upd. Page
+    echo "Total " . $TOTAL_SCRIPTS . " scripts</a></div>";              # Display Script Total Count
     echo "\n<hr/>";                                                     # Print Horizontal Line
     
 
+
+
+
     # SERVER ATTRIBUTE HEADER
-    echo "\n<div class='SideBarTitle'>Server Attribute</div>";          # SideBar Section Title
+    echo "\n<div class='SideBarTitle'>Systems Attribute</div>";          # SideBar Section Title
 
 	# DISPLAY NUMBER OF ACTIVE SERVER
     $kpart2 = $sadm_array["srv_active,"];                               # Array Key for Act. Server
@@ -432,7 +434,7 @@ function SideBar_OS_Summary() {
     echo '<input type="hidden" name="wperiod" value="yesterday">';
     echo '<input type="hidden" name="wservers" value="all_servers">';
     echo '<input type="hidden" name="wcat" value="all_cat">';
-    echo '<a href="#" onclick="this.parentNode.submit();">Perf. All Systems</a>';
+    echo '<a href="#" onclick="this.parentNode.submit();">Performance Graph</a>';
     echo "</form></div>";
     
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
@@ -481,9 +483,6 @@ function SideBar_OS_Summary() {
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_EDIT_GRP . "'>Group</a></div>";        # URL To Start Edit Group
     echo "\n<hr/>";                                                     # Print Horizontal Line
-    
-
-
     
     echo "\n</div> <!-- End of SideBar  -->\n\n\n"                      # End of Left Column Div
 ?> 
