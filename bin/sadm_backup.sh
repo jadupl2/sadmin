@@ -87,6 +87,7 @@
 # 2023_03_26 backup v3.43 Write current, previous and host total backup size in log for reference.
 # 2023_04_10 backup v3.44 Fix backup calculating total size occupied by host.
 # 2023_04_11 backup v3.45 Previous & Total backup size wasn't always right & added more info in log.
+#@2023_09_13 backup v3.46 Speed, Log & cleaning improvement.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -111,14 +112,14 @@ fi
 
 # USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
 export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 export SADM_TPID="$$"                                      # Script Process ID.
-export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
-export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
+export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.45'                                     # Script version number
+export SADM_VER='3.46'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -387,7 +388,7 @@ backup_setup()
 # --------------------------------------------------------------------------------------------------
 create_backup()
 {
-    CUR_PWD=`pwd`                                                       # Save Current Working Dir.
+    CUR_PWD=$(pwd)                                                      # Save Current Working Dir.
     TOTAL_ERROR=0                                                       # Make Sure Variable is at 0
 
     # Show Backup list content
@@ -429,8 +430,8 @@ create_backup()
                     fi
         fi
 
-        BASE_NAME=`echo "$backup_line" | sed -e 's/^\///'| sed -e 's#/$##'| tr -s '/' '_' `
-        TIME_STAMP=`date "+%C%y_%m_%d-%H_%M_%S"`                        # Current Date & Time
+        BASE_NAME=$(echo "$backup_line" | sed -e 's/^\///'| sed -e 's#/$##'| tr -s '/' '_' )
+        TIME_STAMP=$(date "+%C%y_%m_%d-%H_%M_%S")                       # Current Date & Time
 
         # Backup File
         if [ -f "$backup_line" ] && [ -r "$backup_line" ]               # Line is a File & Readable
@@ -450,7 +451,7 @@ create_backup()
                          sadm_write "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} .$backup_line \n"
                          tar -cvzf ${BACKUP_DIR}/${BACK_FILE} .$backup_line >>$BACK_LOG 2>&1
                          RC=$?                                          # Save Return Code
-                         echo "Backup ended at `date` with exit code of $RC"  >>$BACK_LOG 2>&1
+                         echo "Backup ended at $(date) with exit code of $RC"  >>$BACK_LOG 2>&1
                     else BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"     # Final tar Backup file name
                          echo "# Backup of .$backup_line started at `date`" >>$BACK_LOG 2>&1
                          echo "#"  >>$BACK_LOG 2>&1
@@ -475,7 +476,7 @@ create_backup()
                 find .$backup_line -type s -print > /tmp/exclude  2>/dev/null  # Sockets in exclude
                 while read excl_line                                    # Loop Until EOF Excl. File
                     do
-                    FC=`echo $excl_line | cut -c1`                      # Get First Char. of Line
+                    FC=$(echo $excl_line | cut -c1)                     # Get First Char. of Line
                     if [ "$FC" = "#" ] || [ ${#excl_line} -eq 0 ]       # Skip Comment or Blank Line
                         then continue                                   # Blank or Comment = NxtLine
                     fi
@@ -520,7 +521,7 @@ create_backup()
                 fi
         fi
 
-# Error 1 = File(s) changed while backup running, don't report that as an error.
+        # Error 1 = File(s) changed while backup running, don't report that as an error.
         if [ $RC -eq 1 ] ; then RC=0 ; fi                               # File Changed while backup
         if [ $RC -ne 0 ]                                                # If Error while Backup
             then MESS="[ ERROR #${RC} ] while creating $BACK_FILE"      # Advise Backup Error
@@ -531,7 +532,7 @@ create_backup()
                  RC=0                                                   # Make Sure Return Code is 0
         fi
 
-# Show backup tgz file size
+        # Show backup tgz file size
         if [ "$SADM_OS_TYPE" = "DARWIN" ] 
             then BSIZE=$(stat -f%z ${BACKUP_DIR}/${BACK_FILE})
             else BSIZE=$(stat --format=%s ${BACKUP_DIR}/${BACK_FILE})
@@ -539,7 +540,7 @@ create_backup()
         BTOTAL=$(echo "$BSIZE /1024/1024" | bc)                             
         sadm_write_log "Backup size is ${BTOTAL}MB."
 
-# Create link to backup in the server latest directory
+        # Create link to backup in the server latest directory
         cd ${LATEST_DIR}
         sadm_write_log "Create link to latest backup of ${backup_line} in ${LATEST_DIR}"
         sadm_write_log "Current directory: `pwd`"                       # Print Current Dir.
@@ -557,21 +558,23 @@ create_backup()
         done < $SADM_BACKUP_LIST                                          # For Loop Read Backup List
 
 
-# End of Backup
-    cd $CUR_PWD                                                         # Restore Previous Cur Dir.
-    sadm_write_log " "                                                  # Insert Blank Line
-    sadm_write_log "${SADM_TEN_DASH}"                                   # Line of 10 Dash in Log
+    # End of Backup
+    cd "$CUR_PWD"                                                       # Restore Previous Cur Dir.
     sadm_write_log " "                                                  # Insert Blank Line
     sadm_write_log "Total error(s) while creating backup: ${TOTAL_ERROR}."
+    sadm_write_log "${SADM_TEN_DASH}"                                   # Line of 10 Dash in Log
+    sadm_write_log " "                                                  # Insert Blank Line
 
-# List Backup Directory
-    sadm_write_log " "
-    sadm_write_log "Content of today backup directory (${BACKUP_DIR}):"
-    ls -l ${BACKUP_DIR}
-    sadm_write_log " "
+    # List Backup Directory
+    #sadm_write_log " "
+    #sadm_write_log "Content of today backup directory (${BACKUP_DIR}):"
+    #ls -l ${BACKUP_DIR} | while read wline ; do write_log "$wline"; done
+    #sadm_write_log " "
 
     return $TOTAL_ERROR                                                 # Return Total of Error
 }
+
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -581,104 +584,104 @@ clean_backup_dir()
 {
     TOTAL_ERROR=0                                                       # Reset Total of error
     sadm_write "\n"
-    sadm_write "Applying chosen retention policy to ${TODAY_ROOT_DIR} directory\n"
-    CUR_PWD=`pwd`                                                       # Save Current Working Dir.
+    CUR_PWD=$(pwd)                                                       # Save Current Working Dir.
 
-# Enter Server Backup Directory
-# May need to delete some backup if more than $SADM_DAILY_BACKUP_TO_KEEP copies
-    cd ${TODAY_ROOT_DIR}                                                # Change Dir. To Backup Dir.
+    BTYPE="SADM_DAILY_BACKUP_TO_KEEP"
+    BID="Daily"
+    BDIR="$DAILY_DIR"
+    BKEEP="$SADM_DAILY_BACKUP_TO_KEEP"
+    purge_dir "$BTYPE" "$BID" "$BDIR" "$BKEEP" 
 
-# Determine of many copies we keep for the backup we are doing (Daily,Weekly,Monthly,Yearly)
-    case $BACKUP_TYPE in
-        D) sadm_write_log "For [Daily] backup, you asked to keep $SADM_DAILY_BACKUP_TO_KEEP copies." 
-           COPIES2KEEP=$SADM_DAILY_BACKUP_TO_KEEP
-           BTYPE="SADM_DAILY_BACKUP_TO_KEEP"
-           BID="Daily "
-           ;;
-        W) sadm_write_log "For [Weekly] backup, you asked to keep $SADM_WEEKLY_BACKUP_TO_KEEP copies." 
-           COPIES2KEEP=$SADM_WEEKLY_BACKUP_TO_KEEP
-           BTYPE="SADM_WEEKLY_BACKUP_TO_KEEP"
-           BID="Weekly "
-           ;;
-        M) sadm_write_log "For [Monthly] backup, you asked to keep $SADM_MONTHLY_BACKUP_TO_KEEP copies." 
-           COPIES2KEEP=$SADM_MONTHLY_BACKUP_TO_KEEP
-           BTYPE="SADM_MONTHLY_BACKUP_TO_KEEP"
-           BID="Monthly "
-           ;;
-        Y) sadm_write_log "For [Yearly] backup, you asked to keep $SADM_YEARLY_BACKUP_TO_KEEP copies." 
-           COPIES2KEEP=$SADM_YEARLY_BACKUP_TO_KEEP
-           BTYPE="SADM_YEARLY_BACKUP_TO_KEEP"
-           BID="Yearly "
-           ;;
-        *) sadm_write_log "Invalid Backup Type '$BACKUP_TYPE' should be D,W,M or Y."
-           COPIES2KEEP=4
-           sadm_write_log "Defaulting to $COPIES2KEEP copies to keep"
-           ;;
-    esac 
+    BTYPE="SADM_WEEKLY_BACKUP_TO_KEEP"
+    BID="Weekly"
+    BDIR="$WEEKLY_DIR"
+    BKEEP="$SADM_WEEKLY_BACKUP_TO_KEEP"
+    purge_dir "$BTYPE" "$BID" "$BDIR" "$BKEEP" 
 
-
-# List Current backup days we have and Count Nb. how many we need to delete
-    sadm_write "List of backup currently on disk:\n"
-    du -h . | grep -v '@eaDir' | while read ln ;do sadm_write "${ln}\n" ;done
-    #find . -type d -name "20*" 2>/dev/null -exec du -h {} \; | while read ln ;do sadm_write "${ln}\n" ;done
-
-    backup_count=`ls -1| grep -v '@eaDir' | awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l`
-    day2del=$(($backup_count-$COPIES2KEEP))                             # Calc. Nb. Days to remove
-    sadm_write_log " "
-    sadm_write_log "You have decided to keep only the last $COPIES2KEEP backup."
-    sadm_write_log "You can change your choice by changing '$BTYPE' value in \$SADMIN/cfg/sadmin.cfg."
-    sadm_write_log "You now have $backup_count days of backup(s)."         # Show Nb. Backup Days
-
-# If current number of backup days on disk is greater than nb. of backup to keep, then cleanup.
-    if [ "$backup_count" -gt "$SADM_DAILY_BACKUP_TO_KEEP" ]
-        then sadm_write_log "So we need to delete $day2del day(s) of backup."
-             ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |tail -$day2del > $SADM_TMP_FILE3
-             cat $SADM_TMP_FILE3 |while read ln ;do sadm_write_log "Deleting ${ln}" ;rm -fr ${ln}* ;done
-             sadm_write_log " "
-             sadm_write_log "List of backup currently on disk:"
-             #ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_write_log "${ln}" ;done
-             du -h . | grep -v '@eaDir' | while read ln ;do sadm_write "${ln}\n" ;done
-        else sadm_write_log "No clean up needed"
-    fi
-
-# Create a list of all directories that begin with "20*" in system backup directory
-# We end up with a file with line like this "16G	./daily/2023_04_09"  (Size and dir. name)
-    cd ${LOCAL_MOUNT}/${SADM_HOSTNAME}
-    sadm_write_log " "
-    sadm_write_log " "
-    sadm_write_log "List of backup directories for $SADM_HOSTNAME"
-    find . -type d -name "20*" 2>/dev/null -exec du -h {} \; 
-    find . -type d -name "20*" 2>/dev/null -exec du -h {} \; > $SADM_TMP_FILE1
-    sadm_write_log " "
+    BTYPE="SADM_MONTHLY_BACKUP_TO_KEEP"
+    BID="Monthly"
+    BDIR="$MONTHLY_DIR"
+    BKEEP="$SADM_MONTHLY_BACKUP_TO_KEEP"
+    purge_dir "$BTYPE" "$BID" "$BDIR" "$BKEEP" 
+    
+    BTYPE="SADM_YEARLY_BACKUP_TO_KEEP"
+    BID="Yearly"
+    BDIR="$YEARLY_DIR"
+    BKEEP="$SADM_YEARLY_BACKUP_TO_KEEP"
+    purge_dir "$BTYPE" "$BID" "$BDIR" "$BKEEP" 
+    
+    # Create a list of all directories that begin with "20*" in system backup directory
+    # We end up with a file with line like this "16G	./daily/2023_04_09"  (Size and dir. name)
+    cd "${LOCAL_MOUNT}/${SADM_HOSTNAME}"
+    sadm_write_log "List of all backup directories for $SADM_HOSTNAME in ${LOCAL_MOUNT}/${SADM_HOSTNAME}"
+    find . -type d -name "20*" 2>/dev/null -exec du -h {} \; |nl| while read wline ; do sadm_write_log "$wline"; done
    
-# Get the last two backup date and size
+    # Get the last two backup date and size
+    find . -type d -name "20*" 2>/dev/null -exec du -h {} \; > $SADM_TMP_FILE1
     last2date=$(find . -type d -name "20*" 2>/dev/null -exec du -h {} \; |awk -F'/' '{print $3}' |sort |tail -2)
     last_date=$(echo $last2date | awk '{ print $2 }')
     last_size=$(grep "$last_date" $SADM_TMP_FILE1 | awk '{print $1}')
     prev_date=$(echo $last2date | awk '{ print $1 }')
     prev_size=$(grep "$prev_date" $SADM_TMP_FILE1 | awk '{print $1}')
-    if [ $SADM_DEBUG -gt 2 ] 
-        then sadm_write_log " "
-             sadm_write_log "last2date : $last2date"
-             sadm_write_log "last_date : $last_date - last_size: $last_size"
-             sadm_write_log "prev_date : $prev_date - prev_size: $prev_size"
-             sadm_write_log " "
-    fi 
 
-# Create Line that is used by 'Daily Backup Status' web page to show size of last 2 backup.
-    most_recent=`du -h . |grep -v '@eaDir' |grep "20" |sort -r -k2 |head -1 |awk '{print $1}'`
-    previous=`du -h . |grep -v '@eaDir' |grep "20" |sort -r -k2 |head -2 |tail -1 | awk '{print $1}'`
+    # Create Line that is used by 'Daily Backup Status' web page to show size of last 2 backup.
     sadm_write_log " "
-    sadm_write_log "List of backup directories for $SADM_HOSTNAME sorted by date."
-    find . -type d -name "20*" 2>/dev/null -exec du -h {} \; |awk -F'/' '{print $3}' |sort | tee -a $SADM_LOG
-    #find . -type d -name "20*" 2>/dev/null| awk -F'/' '{print $3}'| sort | tee -a $SADM_LOG 
-    sadm_write_log " "
-    total_size=`du -hs . | awk '{print $1}'`
-    sadm_write_log "${BID}current backup size = $last_size"
-    sadm_write_log "${BID}previous backup size = $prev_size"
+    sadm_write_log "${SADM_TEN_DASH}"                                   # Line of 10 Dash in Log
+    total_size=$(du -hs . | awk '{print $1}')
+    sadm_write_log "current backup size = $last_size"
+    sadm_write_log "previous backup size = $prev_size"
     sadm_write_log "Total backup size = $total_size"
 
-    cd $CUR_PWD                                                         # Restore Previous Cur Dir.
+    cd "$CUR_PWD"
+    return 0
+} 
+
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Keep only the number of backup copies specified in $SADM_DAILY_BACKUP_TO_KEEP
+#    BTYPE="SADM_YEARLY_BACKUP_TO_KEEP"
+#    BID="Yearly "
+#    BDIR="$YEARLY_DIR"
+#    BKEEP=$SADM_YEARLY_BACKUP_TO_KEEP
+#    purge_dir "$BTYPE" "$BID" "$BDIR" "BKEEP" 
+# --------------------------------------------------------------------------------------------------
+purge_dir()
+{
+    BTYPE="$1"                                                          # Nb Copy var. in sadmin.cfg
+    BID="$2"                                                            # Daily,Weekly,Monthly,Yearly
+    BDIR="$3"                                                           # Directory where backup are
+    BKEEP="$4"                                                          # Nb copies a preserver
+  
+    cd "$BDIR"                                                          # Go in Backup Directory
+    if [ $? -ne 0 ] ; then sadm_write_err "Can't change to directory $BDIR - No purge" ;return 1 ;fi
+    
+    sadm_write_log "List of '$BID' backup currently on disk:"
+    du -h . | grep -v '@eaDir' | nl | while read ln ;do sadm_write_log "${ln}" ;done
+    sadm_write_log " "
+    sadm_write_log "For '$BID' backup, you asked to keep '$BKEEP' copies." 
+    sadm_write_log "You can modify this value by changing '$BTYPE' value in \$SADMIN/cfg/sadmin.cfg."
+
+    backup_count=$(ls -1| grep -v '@eaDir' | awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l)
+    b2del=$(($backup_count - $BKEEP))                                     # Calc. Nb. Days to remove
+    #sadm_write_log " "
+    sadm_write_log "You now have currently $backup_count copies of $BID backup(s)."
+
+    # If current number of backup days on disk is greater than nb. of backup to keep, then cleanup.
+    if [ "$backup_count" -gt "$BKEEP" ]
+        then sadm_write_log "So we need to delete $b2del copy of '$BID' backup."
+             ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |tail -$b2del > $SADM_TMP_FILE3
+             cat $SADM_TMP_FILE3 |while read ln ;do sadm_write_log "Deleting ${ln}" ;rm -fr ${ln}* ;done
+             sadm_write_log " "
+             sadm_write_log "List of '$BID' backup currently on disk after cleanup."
+             du -h . | grep -v '@eaDir' | while read ln ;do sadm_write "${ln}\n" ;done
+        else sadm_write_log "No clean up needed"
+    fi
+    sadm_write_log " "
+    sadm_write_log "${SADM_TEN_DASH}"                                   # Line of 10 Dash in Log
+    sadm_write_log " "                                                  # Insert Blank Line
     return 0                                                            # Return to caller
 }
 
