@@ -1374,23 +1374,23 @@ sadm_server_model() {
                              else fmodel="/sys/devices/virtual/dmi/id/product_name"
                                   if [ -r $fmodel ] 
                                      then wmodel=$(cat $fmodel)
-                                     else sadm_sm=`${SADM_DMIDECODE} |grep -i "Product Name:" |head -1 |awk -F: '{print $2}'`
-                                          sadm_sm=`echo ${sadm_sm}| sed 's/ProLiant//'`
-                                          sadm_sm=`echo ${sadm_sm}|sed -e 's/^[ \t]*//' |sed 's/^[ \t]*//;s/[ \t]*$//' `
+                                     else sadm_sm=$(${SADM_DMIDECODE} |grep -i "Product Name:" |head -1 |awk -F: '{print $2}')
+                                          sadm_sm=$(echo ${sadm_sm}| sed 's/ProLiant//')
+                                          sadm_sm=$(echo ${sadm_sm}|sed -e 's/^[ \t]*//' |sed 's/^[ \t]*//;s/[ \t]*$//' )
                                           wmodel="${sadm_sm}"
                                   fi 
                           fi 
                      else wmodel="VM"                                # Default Virtual Model 
-                          A=`dmidecode -s system-manufacturer | awk '{print $1}' |tr [A-Z] [a-z]`
+                          A=$(dmidecode -s system-manufacturer | awk '{print $1}' |tr [A-Z] [a-z])
                           if [ "$A" = "vmware," ]    ; then wmodel="VMWARE"     ; fi
-                          A=`dmidecode -s bios-version | tr [A-Z] [a-z]`     
+                          A=$(dmidecode -s bios-version | tr [A-Z] [a-z])
                           if [ "$A" = "virtualbox" ] ; then wmodel="VIRTUALBOX" ; fi 
                  fi
                  ;;
-        "AIX")   wmodel=`uname -M | sed 's/IBM,//'`
+        "AIX")   wmodel=$(uname -M | sed 's/IBM,//')
                  ;;
        "DARWIN") syspro="system_profiler SPHardwareDataType"
-                 wmodel=`$syspro |grep 'Ident' |awk -F: '{ print $2 }' |tr -d ' '`
+                 wmodel=$($syspro |grep 'Ident' |awk -F: '{ print $2 }' |tr -d ' ')
                  ;;
     esac
     echo "$wmodel"
