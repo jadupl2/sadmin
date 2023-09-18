@@ -76,6 +76,7 @@
 #@2023_07_11 client v2.12 Update sadm_client crontab to use the new python 'sadm_nmon_watcher.py'.
 #@2023_07_12 client v2.13 Remove duplicated lines in /etc/cron.d/sadm_client file.
 #@2023_07_12 client v2.14 If not on SADMIN server, remove Gmail text pwd file '.gmpw' (if exist). 
+#@2023_09_18 client v2.15 Update SADMIN section and minor improvement.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -106,7 +107,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.14'                                      # Script version number
+export SADM_VER='2.15'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -279,7 +280,7 @@ set_dir()
              chmod $VAL_OCTAL $VAL_DIR  >>$SADM_LOG 2>&1
              if [ $? -ne 0 ]
                 then sadm_write "${SADM_ERROR} On 'chmod' operation for ${VALDIR}.\n"
-                     ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
+                     ((ERROR_COUNT++))                                  # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
                 else sadm_write "${SADM_OK}\n"
              fi
@@ -287,7 +288,7 @@ set_dir()
              chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR >>$SADM_LOG 2>&1
              if [ $? -ne 0 ]
                 then sadm_write "${SADM_ERROR} On 'chown' operation for ${VALDIR}.\n"
-                     ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
+                     ((ERROR_COUNT++))                                  # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
                 else sadm_write "${SADM_OK}\n"
              fi
@@ -315,7 +316,7 @@ set_files_recursive()
              find $VAL_DIR -type f -exec chown ${VAL_OWNER}:${VAL_GROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_write "${SADM_ERROR} On 'chown' operation of ${VALDIR}.\n"
-                     ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
+                     ((ERROR_COUNT++))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
                 else sadm_write "${SADM_OK}\n"
              fi
@@ -323,7 +324,7 @@ set_files_recursive()
              find $VAL_DIR -type f -exec chmod $VAL_OCTAL {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_write "${SADM_ERROR} On 'chmod' operation of ${VALDIR}.\n"
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ((ERROR_COUNT++))
                 else sadm_write "${SADM_OK}\n"
                      RETURN_CODE=1                                      # Error = Return Code to 1
              fi
@@ -374,7 +375,7 @@ set_file()
              chmod ${VAL_OCTAL} ${VAL_FILE}
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] On 'chmod' operation on ${VAL_FILE}."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
+                     ((ERROR_COUNT++))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
                 else sadm_write_log "[ OK ]"
              fi
@@ -382,7 +383,7 @@ set_file()
              chown ${VAL_OWNER}:${VAL_GROUP} ${VAL_FILE}
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] On 'chown' operation on ${VAL_FILE}."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
+                     ((ERROR_COUNT++))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
                 else sadm_write_log "[ OK ]"
              fi
@@ -511,7 +512,7 @@ file_housekeeping()
              find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_write " ${SADM_ERROR} On last pruning operation.\n"
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ((ERROR_COUNT++))
                 else sadm_write " ${SADM_OK}\n"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
              fi
@@ -520,7 +521,7 @@ file_housekeeping()
              find $SADM_TMP_DIR  -type f -name "*.pid" -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_write "${SADM_ERROR} On last pruning operation.\n"
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ((ERROR_COUNT++))
                 else sadm_write "${SADM_OK}\n"
              fi
              if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
@@ -536,7 +537,7 @@ file_housekeeping()
              find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
                 then sadm_write " ${SADM_ERROR} On last operation.\n"
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ((ERROR_COUNT++))
                 else sadm_write " ${SADM_OK}\n"
              fi
              if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
@@ -551,7 +552,7 @@ file_housekeeping()
              find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
                 then sadm_write "${SADM_ERROR} On last operation.\n"
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ((ERROR_COUNT++))
                 else sadm_write "${SADM_OK}\n"
              fi
              if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
@@ -566,7 +567,7 @@ file_housekeeping()
              find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec rm {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_write "${SADM_ERROR} On last operation.\n"
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ((ERROR_COUNT++))
                 else sadm_write "${SADM_OK}\n"
              fi
              if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
@@ -622,6 +623,8 @@ function check_sadm_client_crontab()
 {
     sadm_write "\n"
     sadm_write "${BOLD}Check SADMIN client '$SADM_USER' crontab & System monitor config file ...${NORMAL}\n"     
+    ccron_file="/etc/cron.d/sadm_client"                                # Default crontab file name
+
 
     # Setup crontab filename under linux
     if [ "$(sadm_get_ostype)" == "LINUX" ]                              # Under Linux
@@ -656,7 +659,7 @@ function check_sadm_client_crontab()
     if [ -f "$ccron_file" ]                                             # Do we have crontab file ?
        then grep -q "sadm_nmon_watcher.py" $ccron_file                  # grep for watcher script
             if [ $? -ne 0 ]                                             # If watcher not there
-               then echo "# " >> $ccron_file                          # Add to crontab
+               then echo "# " >> $ccron_file                            # Add to crontab
                     echo "# Every 45 Min, make sure 'nmon' performance collector is running." >> $ccron_file
                     echo "*/45 * * * *  $SADM_USER sudo \${SADMIN}/bin/sadm_nmon_watcher.py >/dev/null 2>&1" >> $ccron_file
                     echo "# " >> $ccron_file
