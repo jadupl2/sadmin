@@ -181,10 +181,9 @@ process_servers()
                  RC=$?                                                  # Save Return Code Number
             else RC=0                                                   # No SSH to SADMIN Server
         fi
-        if [ $SADM_DEBUG -gt 0 ] ;then sadm_write_log "Return Code: ${RC}\n" ;fi
 
         # If SSH failed and it's a Sporadic Server, Show Warning and continue with next system.
-        if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]               # SSH don't work & Sporadic
+        if [ $RC -ne 0 ] && [ "$server_sporadic" = "1" ]                # SSH don't work & Sporadic
             then sadm_write_err "[ WARNING ] Can't SSH to sporadic system '${fqdn_server}'."
                  ((warning_count++))                                    # Increase Warning Counter
                  sadm_write_err "Continuing with next system."          # Not Error if Sporadic Srv. 
@@ -192,7 +191,7 @@ process_servers()
         fi
 
         # If SSH Failed & Monitoring is Off, Show Warning and continue with next system.
-        if [[ $RC -ne 0 ]] &&  [[ "$server_monitor" = "0" ]]            # SSH don't work/Monitor OFF
+        if [[ $RC -ne 0 ]] && [[ "$server_monitor" = "0" ]]             # SSH don't work/Monitor OFF
             then sadm_write_err "[ WARNING ] Can't SSH to $fqdn_server - Monitoring is OFF"
                  ((warning_count++))                                    # Increase Warning Counter
                  sadm_write_err "Continuing with next system."          # Not Error if don't Monitor
