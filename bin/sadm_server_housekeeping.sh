@@ -400,6 +400,20 @@ file_housekeeping()
              fi
     fi 
 
+    # Delete *.nmon files older than 1 days in $SADMIN/dat/nmon
+    if [ -d "$SADM_NMON_DIR" ]
+        then sadm_write_log " " 
+             sadm_write_log "Delete *.nmon files older than $SADM_NMON_KEEPDAYS days ('SADM_NMON_KEEPDAYS') in ${SADM_WWW_TMP_DIR}."
+             CMD="find $SADM_NMON_DIR -type f -mtime +${SADM_NMON_KEEPDAYS} -exec rm -f {} \;"
+             find $SADM_NMON_DIR  -type f -mtime +${SADM_NMON_KEEPDAYS} -exec rm -f {} \; >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then sadm_write_err "[ ERROR ] running ${CMD}"
+                     ((ERROR_COUNT++))
+                else sadm_write_log "${SADM_OK} ${CMD}"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
+             fi
+    fi 
+
     # $SADMIN/www/tmp writable by everyone (If not cause intermittent problem with monitor page refresh)
     chmod 1777 $SADM_WWW_TMP_DIR  
 
