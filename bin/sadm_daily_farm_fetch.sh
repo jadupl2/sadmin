@@ -59,6 +59,7 @@
 # 2023_04_29 server v4.10 Increase speed of files copy from clients to SADMIN server.
 # 2023_05_24 server v4.11 Remove repeating error count in the error log.
 #@2023_07_18 server v4.12 Fix problem when not using the standard ssh port (22) for some clients.
+#@2023_09_18 server v4.13 Don't use SSH to rsync when syncing the SADMIN server.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -90,8 +91,8 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.12'                                     # Script version number
-export SADM_PDESC="Collect hardware/software/performance info data from all active systems."
+export SADM_VER='4.13'                                     # Script version number
+export SADM_PDESC="Collect hardware,software,performance info data from all active systems."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -296,10 +297,11 @@ process_servers()
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
             then rcmd="rsync -ar -e ssh -p $server_ssh_port --delete ${server_name}:${REMDIR}/ $WDIR/ "
                  rsync -ar -e "ssh -p $server_ssh_port" --delete "${server_name}:${REMDIR}/" "$WDIR/" >>"$SADM_LOG" 2>&1
-            else rcmd="rsync -ar -e ssh -p $server_ssh_port --delete  ${REMDIR}/ $WDIR/ "
-                 rsync -ar -e "ssh -p $server_ssh_port" --delete "${REMDIR}/" "$WDIR/" >>"$SADM_LOG" 2>&1
+                 RC=$?
+            else rcmd="rsync -ar --delete  ${REMDIR}/ $WDIR/ "
+                 rsync -ar --delete "${REMDIR}/" "$WDIR/" >>"$SADM_LOG" 2>&1
+                 RC=$?
         fi
-        RC=$?
         if [ $RC -ne 0 ]
             then sadm_write_err "[ ERROR ] ($RC) ${rcmd}"
                  ((ERROR_COUNT++))
@@ -321,10 +323,11 @@ process_servers()
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
             then rcmd="rsync -ar -e ssh -p $server_ssh_port --delete ${server_name}:${REMDIR}/ $WDIR/ "
                  rsync -ar -e "ssh -p $server_ssh_port" --delete ${server_name}:${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
-            else rcmd="rsync -ar -e ssh -p $server_ssh_port --delete ${REMDIR}/ $WDIR/ "
-                 rsync -ar -e "ssh -p $server_ssh_port"  -delete ${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
+                 RC=$?
+            else rcmd="rsync -ar --delete ${REMDIR}/ $WDIR/ "
+                 rsync -ar -delete ${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
+                 RC=$?
         fi
-        RC=$?
         if [ $RC -ne 0 ]
             then sadm_write_err "[ ERROR ] ($RC) ${rcmd}"
                  ((ERROR_COUNT++))
