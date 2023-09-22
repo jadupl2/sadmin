@@ -92,7 +92,7 @@ function build_sidebar_scripts_info()
         $msg="\nThe directory $RCH_ROOT doesn't exist !\nCorrect the situation & retry operation\n";
         sadm_alert ("$msg");                                            # Display Alert Box with msg
         ?><script type="text/javascript">history.go(-1);</script><?php
-        echo "A0"; exit;
+        exit;
     }
 
     # Create unique filename that will contains all servers *.rch filename
@@ -107,28 +107,21 @@ function build_sidebar_scripts_info()
     if ($DEBUG) { echo "<br>Return code of command is : " . $RCODE ; }  # Display Return Code
     
     # Open list of rch file.
-    echo "B ". $tmp_rch ;
     $fh = fopen($tmp_rch,"r");
     if (! $fh) {
         $errStr = "Failed to open the list of all rch '{$tmp_rch}'.";
         sadm_alert ("$errStr"); 
-        #unlink($tmp_rch);                                               # Delete Temp File
-        echo "jd!NotOpen";
+        unlink($tmp_rch);                                               # Delete Temp File
         return $script_array;
-    }else{
-        echo "jdOpened";
     }
     
 	$xcount = count(file($tmp_rch));
-    echo "C ". $xcount ;
     
     # Loop through filename list in the file
     while (!feof($fh)) {
         $line = fgets($fh, 4096);                                       # Read rch filename line
         $wfile = trim($line);                                           # Remove all spaces
-        if (! file_exists($wfile)) { 
-            echo "<br>J file don't exist '" . basename($wfile) . "'.<BR>";  continue ;
-        }                       # If rch file don't exist
+        if (! file_exists($wfile)) { continue ; }                       # If rch file don't exist
         $line_array = file($wfile);                                     # Put all rch file in array
         $last_index = count($line_array) - 1;                           # Nb. of lines -1 (lastLine)
         $rch_array  = explode(" ",$line_array[$last_index]);            # Split Line into rch_array
@@ -143,7 +136,6 @@ function build_sidebar_scripts_info()
         $outline = $outline      .",". $rch_array[7] .",". $rch_array[8] .",". trim($rch_array[9]) ;
         $outline = $outline      .",". basename($wfile) ."\n";
         $count+=1;
-        echo "<br>K" . $count . " " . basename($wfile);
 
         # Key is "StartDate_StartTime_ScriptName"
         $akey = $rch_array[1] ."_". $rch_array[2] ."_". basename($wfile); # Key = Date+Time+FileName
@@ -152,12 +144,10 @@ function build_sidebar_scripts_info()
         }else{                                                          # If Key doesn't exist
            $script_array[$akey] = $outline ;                            # Store line in Array
         }
-        #echo "N";
     }
-    echo "<br>X end of file";
     fclose($fh);
     krsort($script_array);                                              # Reverse Sort Array on Keys
-    #unlink($tmp_rch);                                                   # Delete Temp File
+    unlink($tmp_rch);                                                   # Delete Temp File
     
     # Under Debug - Display The Array Used to build the SideBar
     #if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key,value $key,$value";}}
@@ -317,7 +307,6 @@ function SideBar_OS_Summary() {
 	$script_array = build_sidebar_scripts_info();                       # Build $script_array
     $TOTAL_FAILED=0; $TOTAL_SUCCESS=0; $TOTAL_RUNNING=0;                # Initialize Total to Zero
 
-    echo "Y " . count($script_array);
     # Loop through Script Array to count Different Return Code
     foreach($script_array as $key=>$value) {
         list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode,$cfile) = explode(",", $value);
