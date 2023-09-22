@@ -204,6 +204,7 @@
 # 2023_05_24 lib v4.25 Umask is now shown in the script header output.
 # 2023_06_06 lib v4.26 Set file permission on email password file to prevent problem.
 #@2023_08_20 lib v4.27 Code optimization, Library will now load a lot faster.
+#@2023_09_22 lib v4.28 Change recommended value of SADM_*_KEEPDAYS.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -214,7 +215,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.27"                                              # This Library Version
+export SADM_LIB_VER="4.28"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -332,11 +333,11 @@ export SADM_USER="sadmin"                                               # sadmin
 export SADM_GROUP="sadmin"                                              # sadmin group account
 export SADM_WWW_USER="apache"                                           # /sadmin/www owner
 export SADM_WWW_GROUP="apache"                                          # /sadmin/www group
-export SADM_MAX_LOGLINE=5000                                            # Max Nb. Lines in LOG
-export SADM_MAX_RCLINE=100                                              # Max Nb. Lines in RCH file
-export SADM_NMON_KEEPDAYS=60                                            # Days to keep old *.nmon
-export SADM_RCH_KEEPDAYS=60                                             # Days to keep old *.rch
-export SADM_LOG_KEEPDAYS=60                                             # Days to keep old *.log
+export SADM_MAX_LOGLINE=500                                             # Max Nb. Lines in LOG
+export SADM_MAX_RCLINE=35                                               # Max Nb. Lines in RCH file
+export SADM_NMON_KEEPDAYS=20                                            # Days to keep old *.nmon
+export SADM_RCH_KEEPDAYS=35                                             # Days to keep old *.rch
+export SADM_LOG_KEEPDAYS=35                                             # Days to keep old *.log
 export SADM_DBNAME="sadmin"                                             # MySQL DataBase Name
 export SADM_DBHOST="sadmin.maison.ca"                                   # MySQL DataBase Host
 export SADM_DBPORT=3306                                                 # MySQL Listening Port
