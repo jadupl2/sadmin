@@ -654,14 +654,14 @@ function check_sadm_client_crontab()
             fi
     fi
 
-    # Grep crontab for nmon watcher script
-    sadm_writelog "  - Make sure sadm_client crontab ($ccron_file) have 'sadm_nmon_watcher.sh' line."
+    # Grep crontab for new Python sadm_nmon_watcher, if not in there, add it to cron file.
+    sadm_writelog "  - Make sure sadm_client crontab ($ccron_file) have 'sadm_nmon_watcher.py' line."
     if [ -f "$ccron_file" ]                                             # Do we have crontab file ?
-       then grep -q "sadm_nmon_watcher.py" $ccron_file                  # grep for watcher script
+       then grep -q "sadm_nmon_watcher.py" "$ccron_file"                # grep for watcher script
             if [ $? -ne 0 ]                                             # If watcher not there
-               then echo "# " >> $ccron_file                            # Add to crontab
-                    echo "# Every 45 Min, make sure 'nmon' performance collector is running." >> $ccron_file
-                    echo "*/45 * * * *  $SADM_USER sudo \${SADMIN}/bin/sadm_nmon_watcher.py >/dev/null 2>&1" >> $ccron_file
+               then echo "# " >> "$ccron_file"                          # Add to crontab
+                    echo "# Every 45 Min, make sure 'nmon' performance collector is running." >> "$ccron_file"
+                    echo "*/45 * * * *  $SADM_USER sudo \${SADMIN}/bin/sadm_nmon_watcher.py >/dev/null 2>&1" >> "$ccron_file"
                     echo "# " >> $ccron_file
                     echo "# " >> $ccron_file 
                     sadm_writelog "  - Crontab ($ccron_file) was updated with 'sadm_nmon_watcher.py' line." 
@@ -681,8 +681,6 @@ function check_sadm_client_crontab()
                         then grep -v "script:swatch_nmon.sh" $nmon_file >temp2 && mv temp2 $nmon_file
                         else sed -i '/^script:swatch_nmon.sh/d' $nmon_file
                      fi 
-                     #sadm_writelog "  - Line with 'script:swatch_nmon.sh' removed from $nmon_file."
-                #else sadm_writelog "  - Yes, the 'script:swatch_nmon.sh' is no longer in $nmon_file." 
             fi
             grep -q "^# SADMIN Script Don" $nmon_file
             if [ $? -eq 0 ] 
@@ -690,7 +688,6 @@ function check_sadm_client_crontab()
                         then grep -v "# SADMIN Script Don" $nmon_file >temp2 && mv temp2 $nmon_file
                         else sed -i '/^# SADMIN Script Don/d' $nmon_file
                      fi 
-                     #sadm_writelog "  - Line with '# SADMIN Script Don' removed from $nmon_file."
             fi            
     fi 
     return 0
