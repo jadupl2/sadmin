@@ -55,6 +55,7 @@
 #@2023_07_11 lib v4.42 Fix minor bugs
 #@2023_08_01 lib v4.43 Added database name 'db_name' for future use ('sadmin' by default)
 #@2023_08_19 lib v4.44 start() & stop() functions now connect/close DB automatically (if db_used=True).
+#@2023_09_22 lib v4.45 Lower recommended value of SADM_*_KEEPDAYS to save space.
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -87,7 +88,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.44"                                # This Library Version
+lib_ver             = "4.45"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -129,7 +130,7 @@ use_rch             = True                                  # True = Use RCH Fil
 pid_timeout         = 7200                                  # PID File TTL default
 lock_timeout        = 3600                                  # Host Lock File TTL 
 max_logline         = 500                                   # Max Nb. Lines in LOG
-max_rchline         = 100                                   # Max Nb. Lines in RCH file
+max_rchline         = 35                                    # Max Nb. Lines in RCH file
 mail_addr           = ""                                    # Default is in sadmin.cfg
 
 
@@ -146,9 +147,9 @@ sadm_mail_addr                = ""                          # Default is in sadm
 sadm_cie_name                 = ""                          # Company Name
 sadm_user                     = ""                          # sadmin user account
 sadm_group                    = ""                          # sadmin user group
-sadm_nmon_keepdays            = 60                          # Days to keep old *.nmon
-sadm_rch_keepdays             = 60                          # Days to keep old *.rch
-sadm_log_keepdays             = 60                          # Days to keep old *.log
+sadm_nmon_keepdays            = 20                          # Days to keep old *.nmon
+sadm_rch_keepdays             = 35                          # Days to keep old *.rch
+sadm_log_keepdays             = 35                          # Days to keep old *.log
 sadm_www_user                 = ""                          # Http web user
 sadm_www_group                = ""                          # Http web user group
 sadm_dbname                   = ""                          # MySQL Database Name
