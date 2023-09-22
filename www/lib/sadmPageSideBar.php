@@ -42,6 +42,7 @@
 # 2022_07_18 web v2.16 SideBar - Fix problem, sidebar wouldn't displayed correctly.
 # 2022_09_12 web v3.0 SideBar - Move 'Server Attribute' section before 'Server Info'.
 #@2023_09_12 web v3.1 SideBar - Side Bar modification & enhancement
+#@2023_09_21 web v3.2 SideBar - Remove some debugging information.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -59,7 +60,7 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False;                                                         # Debug Activated True/False
-$SVER  = "3.0";                                                         # Current version number
+$SVER  = "3.2";                                                         # Current version number
 $URL_SERVER    = '/view/srv/sadm_view_servers.php';                     # Show Servers List URL
 $URL_OSUPDATE  = "/view/sys/sadm_view_schedule.php";                    # View O/S Update Status URL 
 $URL_BACKUP    = "/view/sys/sadm_view_backup.php";                      # View Backup Status URL 
