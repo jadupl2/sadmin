@@ -285,7 +285,7 @@ function cmd_options()
 
 
 #===================================================================================================
-# MAIN CODE START HERE
+# Main Code Start Here
 #===================================================================================================
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Won't come back if error
