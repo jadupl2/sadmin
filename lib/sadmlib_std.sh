@@ -205,6 +205,7 @@
 # 2023_06_06 lib v4.26 Set file permission on email password file to prevent problem.
 #@2023_08_20 lib v4.27 Code optimization, Library will now load a lot faster.
 #@2023_09_22 lib v4.28 Change recommended value of SADM_*_KEEPDAYS.
+#@2023_09_26 lib v4.29 Modification to function "sadm_get_command_path".
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -215,7 +216,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.28"                                              # This Library Version
+export SADM_LIB_VER="4.29"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -497,7 +498,7 @@ sadm_tolower() {
 
 # Function return the string received to with the first character in uppercase
 sadm_capitalize() {
-    C=`echo $1 | tr "[:upper:]" "[:lower:]"`
+    C=$(echo $1 | tr "[:upper:]" "[:lower:]")
     premier=$(echo ${C:0:1} | tr  "[:lower:]" "[:upper:]")
     echo "${premier}${C:1}"
     #echo "${C^}"
@@ -740,18 +741,22 @@ sadm_trimfile() {
 #---------------------------------------------------------------------------------------------------
 sadm_get_command_path() {
     SADM_CMD=$1                                                         # Save Parameter received
-    if ${SADM_WHICH} ${SADM_CMD} >/dev/null 2>&1                        # Command is found ?
-        then CMD_PATH=`${SADM_WHICH} ${SADM_CMD}`                       # Store Path in Cmd path
-             echo "$CMD_PATH"                                           # echo the Command Path 
-             return 0  
-        else if [ "${SADM_CMD}" == "lsb_release" ] && [ -f /usr/lib/dkms/lsb_release ] # dkms rpm
+
+    # If command received was not found on system
+    if [ "$(command -v ${SADM_CMD})" = "" ]                             # Command not found ?
+        then if [ "${SADM_CMD}" == "lsb_release" ] && [ -f /usr/lib/dkms/lsb_release ] # dkms rpm
                 then CMD_PATH="/usr/lib/dkms/lsb_release"
                      echo "$CMD_PATH"
-                     return 0 
-             fi
-    fi
-    echo ""                                                             # Return empty str as path
-    return 1                                                            # Return 1 if Cmd not Found
+                     return 0
+                else echo ""                                            # Return empty str as path
+                     return 1                                           # Return 1 if Cmd not Found
+             fi 
+    fi 
+    
+    # Command exist, return full path to command
+    CMD_PATH=$(command -v ${SADM_CMD})                                  # Store Path in Cmd path
+    echo "$CMD_PATH"                                                    # echo the Command Path 
+    return 0  
 }
 
 
