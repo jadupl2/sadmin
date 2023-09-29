@@ -51,11 +51,11 @@
 # 2023_05_25 lib v4.38 Improve function 'locate_command()' & fix intermittent problem.
 # 2023_05_25 lib v4.39 Header now include for kernel version number.
 # 2023_06_03 lib v4.40 Change method of getting username, was a problem with 'os.getlogin()'.
-#@2023_07_09 lib v4.41 Added function 'get_mac_address', to get mac address of an ip.
-#@2023_07_11 lib v4.42 Fix minor bugs
-#@2023_08_01 lib v4.43 Added database name 'db_name' for future use ('sadmin' by default)
+#@2023_07_09 lib v4.41 New function 'get_mac_address()': Get mac address of an IP.
+#@2023_07_11 lib v4.42 Fix minor bugs.
+#@2023_08_01 lib v4.43 Added 'db_name' variable that hold 'SADMIN' database name (or yours).
 #@2023_08_19 lib v4.44 start() & stop() functions now connect/close DB automatically (if db_used=True).
-#@2023_09_22 lib v4.45 Lower recommended value of SADM_*_KEEPDAYS to save space.
+#@2023_09_22 lib v4.45 Reduce recommended SADM_*_KEEPDAYS values of  to save disk space.
 # --------------------------------------------------------------------------------------------------
 #
 try :

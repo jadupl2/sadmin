@@ -46,7 +46,7 @@
 # 2022_03_28 server v3.17 Give a warning instead of an error when O/S update is not yet run.
 # 2022_08_17 server v3.18 Updated to use the new SADMIN Python Library v2.
 # 2022_08_25 server v3.19 Fix a 'KeyError' that could cause problem.
-#@2023_07_26 server v3.20 Restrict execution, will run only on the SADMIN server.
+#@2023_07_26 server v3.20 Restrict execution on the SADMIN server only.
 #@2023_08_18 server v3.21 Update to SADMIN section v2.3 & update database I/O functions.
 # 
 # ==================================================================================================

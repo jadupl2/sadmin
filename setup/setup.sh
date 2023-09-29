@@ -72,9 +72,9 @@
 # 2023_05_19 install v3.27 Resolve problem when asking 'selinux' question.
 # 2023_05_20 nolog   v3.28 Typo Error when asking selinux question
 # 2023_06_05 install v3.29 Remove the need for 'bind-utils/bind9-dnsutils' package during install.
-#@2023_07_09 install v3.30 Due to Debian 12, I change the way to install the 'pymysql' python module.
-#@2023_07_14 install v3.31 Loose IP vs hostname when DNS is not present.
-#@2023_07_16 install v3.32 Remove one unnecessary line in the log.
+#@2023_07_09 install v3.30 Changed the way to install 'pymysql' python module (Debian 12).
+#@2023_07_14 install v3.31 Hostname lookup, will verify /etc/hosts & DNS (if present).
+#@2023_07_16 install v3.32 Cosmetic change writing the script log.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x

@@ -96,8 +96,8 @@
 # 2022_07_09 server v3.42 Updated to use new SADMIN section v1.52.
 # 2022_07_14 server v3.43 Change group to '$SADM_GROUP' in $SADMIN/www/dat (fix web ui problem).
 # 2022_09_29 server v3.44 Daily backup, check new web option to compress backup or not.
-#@2023_07_18 server v3.45 Fix problem when not using the standard ssh port (22) for some clients.
-#@2023_09_18 server v3.46 Old file *.nmon was not clean up properly.
+#@2023_07_18 server v3.45 Fix problem when not using the standard ssh port (22) on clients.
+#@2023_09_18 server v3.46 Purge of old '*.nmon' files  wasn't done properly.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x

@@ -46,7 +46,7 @@
 # 2018_01_09 lib v1.5 New Version - Script Restructure, Usage Instructions & Work with new Library
 # 2018_09_19 lib v1.6 Update for Alert Group and new LIbrary
 # 2020_04_02 lib v1.7 Replace function sadm_writelog() with N/L incl. by sadm_write() No N/L Incl.
-#@2023_07_14 lib v1.7 Update with latest SADMIN section.
+#@2023_07_14 lib v1.7 Update with latest SADMIN section(v1.56).
 # ==================================================================================================
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -185,7 +185,7 @@ check_script()
         then echo "No arguments provided"                               # Advise User
              show_usage                                                 # Show Script Usage
              exit 1                                                     # Exit Script with Error
-        else SCRIPT="$1" ; export SCRIPT                                # Script uith pathname
+        else export SCRIPT="$1"                                         # Script uith pathname
              shift                                                      # Keep only argument(if any)    
              SADM_PN=$(basename "$SCRIPT")                              # Keep Script without Path
              SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)                # Script name without ext.

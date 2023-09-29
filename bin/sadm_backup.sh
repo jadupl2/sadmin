@@ -87,7 +87,7 @@
 # 2023_03_26 backup v3.43 Write current, previous and host total backup size in log for reference.
 # 2023_04_10 backup v3.44 Fix backup calculating total size occupied by host.
 # 2023_04_11 backup v3.45 Previous & Total backup size wasn't always right & added more info in log.
-#@2023_09_13 backup v3.46 Speed, Log & cleaning improvement.
+#@2023_09_13 backup v3.46 More info in log, backup size and cleaning improvement.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x

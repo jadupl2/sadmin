@@ -31,7 +31,7 @@
 # 2019_06_07 cmdline v2.3 Updated to adapt to the new format of the '.rch' file.
 # 2022_08_17 cmdline v2.4 Updated with new SADMIN section v1.52
 # 2022_08_21 cmdline v2.5 Fix problem when running on other system than SADMIN Server
-#@2023_09_22 cmdline v2.6 Updated with new SADMIN section v1.56
+#@2023_09_22 cmdline v2.6 Update SADMIN section (v1.56) and minor improvement.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x

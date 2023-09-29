@@ -62,7 +62,7 @@
 # 2023_01_06 osupdate v5.1 Add remote host name being updated in RCH file.
 # 2023_03_04 osupdate v5.2 Last O/S update date & status was no longer updated in SADMIN database.
 # 2023_05_06 osupdate v5.3 Reduce ping wait time to speed up processing.
-#@2023_09_13 osupdate v5.4 Update SADMIN section 
+#@2023_09_13 osupdate v5.4 Update with latest SADMIN section(v1.56).
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C

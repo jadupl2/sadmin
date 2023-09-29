@@ -54,7 +54,7 @@
 # 2023_04_13 lib v3.18 Add 'sadm_rear_dif', 'sadm_rear_interval', 'sadm_backup_interval' to output.
 # 2023_04_14 lib v3.19 SADMIN server email account pwd now taken from $SADMIN/cfg/.gmpw.
 # 2023_04_14 lib v3.20 SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64. 
-#@2023_08_19 lib v3.21 Adapt code, now that if on SADMIN server & db_used=True, auto connect to DB.
+#@2023_08_19 lib v3.21 start() function auto connect to DB, if on SADMIN server & db_used=True.
 #==================================================================================================
 #
 try :

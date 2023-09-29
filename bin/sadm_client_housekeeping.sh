@@ -73,10 +73,10 @@
 # 2023_04_10 client v2.09 Remove unencrypted email pwd file ($SADMIN/cfg/.gmpw) on client (not on server).
 # 2023_04_16 client v2.10 On client using encrypted email pwd file '$SADMIN/cfg/.gmpw64'.
 # 2023_05_02 nolog  v2.11 Solved permission problem on email password file.
-#@2023_07_11 client v2.12 Update sadm_client crontab to use the new python 'sadm_nmon_watcher.py'.
+#@2023_07_11 client v2.12 Modify sadm_client crontab to use new python 'sadm_nmon_watcher.py'.
 #@2023_07_12 client v2.13 Remove duplicated lines in /etc/cron.d/sadm_client file.
-#@2023_07_12 client v2.14 If not on SADMIN server, remove Gmail text pwd file '.gmpw' (if exist). 
-#@2023_09_18 client v2.15 Update SADMIN section and minor improvement.
+#@2023_07_12 client v2.14 If gmail text pwd file '\$SADMIN/cfg/.gmpw' exist, remove it. 
+#@2023_09_18 client v2.15 Update SADMIN section (v1.56) and minor improvement.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x

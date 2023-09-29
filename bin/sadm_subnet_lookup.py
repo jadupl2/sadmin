@@ -35,8 +35,8 @@
 # 2022_07_27 server v3.6 Bug fix when ping were reported when it wasn't.
 # 2022_08_17 nolog  v3.7 Remove debug info & update to use the new SADMIN Python Library v2.2.
 # 2023_05_19 server v3.8 Correct problem when running at installation time ($SADMIN not set yet).
-#@2023_07_09 server v3.9 Change code to get the mac address of ip (Remove python module getmac)
-#@2023_08_18 server v4.0 Change code to adapt to the fact that start & stop function open/close DB.
+#@2023_07_09 server v3.9 Modify code to get the mac address of ip (Depreciate python module 'getmac´)
+#@2023_08_18 server v4.0 Adapt code to the fact that sa.start() & sa.stop() function open/close DB.
 # --------------------------------------------------------------------------------------------------
 #
 try :

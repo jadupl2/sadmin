@@ -28,7 +28,7 @@
 # 2022_05_09 lib v1.0 New Python template using V2 of SADMIN python library.
 # 2022_05_25 lib v1.1 Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
 # 2023_05_19 lib v1.2 If SADMIN env. var. isn't define, check /etc/environment to SADMIN directory.
-#@2023_08_19 lib v1.3 Update of SADMIN section (Add more fields sa.db_errno, sa.db_errmsg)
+#@2023_08_19 lib v1.3 Update SADMIN section (More fields sa.db_errno, sa.db_errmsg, sa.db_name)
 #
 # --------------------------------------------------------------------------------------------------
 #
