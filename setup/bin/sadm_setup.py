@@ -118,7 +118,7 @@
 # 2023_06_05 install v3.87 Minor corrections after testing installation on Debian 11.
 #@2023_06_20 install v3.88 Add $SADMIN/usr/bin to sudo secure path.
 #@2023_07_09 install v3.89 Update sadmin web server config for Debian 12.
-#@2023_07_12 install v3.90 Initial 'sadm_client' crontab, to use python ver. of 'sadm_nmon_watcher'.
+#@2023_07_12 install v3.90 Initial 'sadm_client' crontab, now use python ver. of 'sadm_nmon_watcher'.
 #@2023_07_16 install v3.91 Ask for the SADMIN server IP instead of FQDN.
 #@2023_07_26 install v3.92 Adjust list of packages required to use 'ReaR' image backup (+xorriso).
 #@2023_08_23 install v3.93 Package detection, was failing under certain condition.

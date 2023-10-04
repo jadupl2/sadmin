@@ -55,7 +55,7 @@
 # 2021_05_23 cmdline v2.10 Change switch from -d (disable) to -u (unset) and -s(status) to -l (List)
 # 2021_06_13 cmdline v2.11 When using an invalid command line option, PID file wasn't removed.
 # 2023_03_31 cmdline v2.12 Fix problem that could prevent SADMIN startup/shutdown script to executed
-#@2023_07_26 cmdline v2.13 Correct problem when some option are used.
+#@2023_07_26 cmdline v2.13 Fix problem when some option are used.
 #--------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x

@@ -58,8 +58,8 @@
 # 2022_09_23 server v4.9 Use SSH port specify per server & update SADMIN section to v1.52.
 # 2023_04_29 server v4.10 Increase speed of files copy from clients to SADMIN server.
 # 2023_05_24 server v4.11 Remove repeating error count in the error log.
-#@2023_07_18 server v4.12 Fix problem when not using the standard ssh port (22) for some clients.
-#@2023_09_18 server v4.13 Don't use SSH to rsync when syncing to the SADMIN server.
+#@2023_07_18 server v4.12 Fix problem when not using the standard ssh port (22).
+#@2023_09_18 server v4.13 When syncing to the SADMIN server, don't use SSH to rsync .
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
