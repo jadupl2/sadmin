@@ -69,7 +69,7 @@ except ImportError as e:                                             # If Error 
 
 # Local variables local to this script.
 pver        = "3.9"                                                     # Program version
-pdesc       = "Produce Web network page that list IP, name and mac usage for subnet you specified."
+pdesc       = "Create web page showing IP address usage with hostname, MAC address of subnet."
 phostname   = sa.get_hostname()                                         # Get current `hostname -s`
 pdebug      = 0                                                         # Debug level from 0 to 9
 pexit_code  = 0                                                         # Script default exit code
