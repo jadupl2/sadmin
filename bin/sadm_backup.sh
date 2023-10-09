@@ -762,7 +762,7 @@ function cmd_options()
 {
     COMPRESS="ON"                                                       # Backup Compression Default
     SHOW_WARNING="N"                                                    # Don't show warning
-    while getopts "d:hnv" opt ; do                                      # Loop to process Switch
+    while getopts "d:hnvw" opt ; do                                     # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
