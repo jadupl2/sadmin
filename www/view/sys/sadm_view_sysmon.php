@@ -61,6 +61,7 @@
 # 2022_09_11 web v2.34 System monitor page - Modify to have a more pleasing look
 # 2023_01_06 web v2.35 System monitor page - O/S update starter now show hostname being updated.
 # 2023_04_10 web v2.36 System monitor page - Bug fix when no rch and rpt files were present.
+#@2023_10_17 web v2.37 System monitor page - Minor adjustments.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -97,7 +98,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #---------------------------------------------------------------------------------------------------
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.36" ;                                                       # Current version number
+$SVER  = "2.37" ;                                                       # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -128,15 +129,16 @@ function create_alert_file() {
     #$DEBUG = True;
 
 # Make sure we begin with a new empty file ($alert_file).
-    if (file_exists($alert_file)) { unlink($path_user.$path); }         # Delete Alert file if exist
+    if (file_exists($alert_file)) { unlink($alert_file); }              # Delete Alert file if exist
     touch($alert_file);                                                 # Create empty file
     chmod($alert_file,0666);                                            # Set Permission on file
-    chown($alert_file,SADM_WWW_USER) ;
-    chgrp($alert_file,SADM_WWW_GROUP) ;
+    chown($alert_file,SADM_WWW_USER) ;                                  # chown on new alert file
+    chgrp($alert_file,SADM_WWW_GROUP) ;                                 # chgrp on new alert file 
 
-# Get content of all *.rpt files (Contain Error,Warning,Info reported by System Monitor)
-# Example Of Rpt Line Below : 
-# Warning;holmes;2021.07.24;10:15;linux;FILESYSTEM;Filesystem /opt at 82% >= 80%;default;default
+# Create a list of all *.rpt file name and output it to $alert_file.
+#   - Example of rpt format line below : 
+#   - Warning;holmes;2021.07.24;10:15;linux;FILESYSTEM;Filesystem /opt at 82% >= 80%;default;default
+
     $CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rpt' -exec cat {} \; >> $alert_file";
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }        # Show Cmd that we execute
     $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute the find command
@@ -152,45 +154,40 @@ function create_alert_file() {
     }
 
 
-# Get the last line of ALL *.rch that finished with error or actually running output to $tmp_file2
-# Example Of A Rch Line Below :
-# ubuntu2104 2021.07.05 05:11:23 2021.07.05 05:11:32 00:00:09 sadm_backupdb default 1 0
+# Get last line of ALL *.rch that terminated with error(1) or is actually running(2) to $tmp_file2
+#   - Example Of a rch Line Below :
+#   - ubuntu2104 2021.07.05 05:11:23 2021.07.05 05:11:32 00:00:09 sadm_backupdb default 1 0
+
     $CMD_PART1="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \;" ;
-    $CMD_PART2=" | awk 'match($10,/[1-2]/) { print }' > $tmp_file2 ";
+    $CMD_PART2=" | grep -E '1$|2$' > $tmp_file2 ";                      # Lines ending with 1 or 2
     $CMD="$CMD_PART1 $CMD_PART2";                                       # Combine 2 long commands
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }        # Show Cmd that we execute
     $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute the find command
     if ($DEBUG) {                                                       # Debug then,show cmd result
         echo "\n<br>Return code of command is : " . $RCODE ;            # Command return code
         if (filesize($tmp_file2) == 0) { echo "\n<br>File $tmp_file2 is empty" ; }
-        echo "\n<br>Content of resulting file - $tmp_file2 :";         # Alert file heading
-        $orig = file_get_contents($tmp_file2);                         # Read Alert file content
+        echo "\n<br>Content of resulting file - $tmp_file2 :";          # Alert file heading
+        $orig = file_get_contents($tmp_file2);                          # Read Alert file content
         $a = htmlentities($orig);                                       # Char. to HTML entities
         echo '<code><pre>';                                             # Code to be displayed
         echo $a;                                                        # Show Alert file
         echo '</pre></code>';                                           # End of code display
     }
 
-    # Open the alert file, ready to be put in converted RCH to RPT Format.
+    # Open the alert file, ready to be converted from RCH to RPT Format.
     if ($DEBUG) {
         if ( file_exists($alert_file) )   { echo "\n<br>File $alert_file exist."; }
         if ( ! file_exists($alert_file) ) { echo "\n<br>File $alert_file don't exist."; }
-        if ( filesize($alert_file) == 0)  { echo "\n<br>File $alert_file is empty" ; }
+        if ( filesize($alert_file) == 0)  { echo "\n<br>File $alert_file but is empty." ; }
     }   
     if ( ! file_exists($alert_file) ) {
         if ($DEBUG) { echo "\n<br>Opening alert file in write mode"; }        
-        $afile = fopen("$alert_file", 'w')  or die("Can't open in write mode file " . $alert_file );
+        $afile = fopen("$alert_file",'w')  or die("Can't open in write mode file "  . $alert_file);
     }else{
         if ($DEBUG) { echo "\n<br>Opening alert file in append mode"; }        
-        $afile = fopen("$alert_file","a+") or die("can't open in append mode file " . $alert_file );
+        $afile = fopen("$alert_file","a+") or die("can't open in append mode file " . $alert_file);
     }
 
-#    if ( ! $afile ) {
-#        $arrayFiles = scandir( SADM_WWW_TMP_DIR );
-#        echo "\n<br>Files contained in \$SADMIN/tmp : " . $arrayFiles . "<br>\n";
-#        die("can't open in write mode file " . $alert_file );          
-#    }  
-    
     # Convert the global RCH file just created ($tmp_file2) to a RPT format kind of lines 
     # raspi4 2018.09.29 23:25:00 2018.09.29 23:25:17 00:00:17 sadm_client_housekeeping default 1 1
     #   1        2         3         4        5        6               7                  8    9 10
@@ -199,7 +196,7 @@ function create_alert_file() {
     #   1    2       3        4      5       6             7                     8     9
     $lines = file($tmp_file2);                                          # Load RCH Line into Array
     foreach ($lines as $line_num => $line) {                            # Process Each line in array
-        if ($DEBUG) { echo "\n<br>RCH Before conversion :<code><pre>" .$line. '</pre></code>'; }
+        if ($DEBUG) { echo "\n<br><br>RCH Before conversion :<br>" .$line ; }
         list($whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$walert,$gtype,$wcode) = explode(" ",$line);
         $rdate = trim($wdate2);                                         # Event Date = Finish Date
         $rtime = substr(trim($wtime2),0,-3);                            # Event Time = Finish Time
@@ -223,7 +220,7 @@ function create_alert_file() {
         $ralert     = "$walert/$gtype";                                 # Alert Group & Alert Type
         $rdesc      = $wscript ;                                        # Script Name 
         $LINE="$rtype;$rhost;$rdate;$rtime;$rmod;$rsubmod;$rdesc;$ralert;$ralert\n";
-        if ($DEBUG) { echo "\n<br>RCH After conversion :<code><pre>" .$LINE. '</pre></code>'; }
+        if ($DEBUG) { echo "\n<br>RCH After conversion :<br>" .$LINE ; }
         fwrite($afile,$LINE);                                           # Write reformatted line
     }
     fclose($afile);                                                     # Close the ALert File
@@ -235,6 +232,7 @@ function create_alert_file() {
     if (file_exists($tmp_file1)) { unlink($tmp_file1); }                # Delete Work File 1
     if (file_exists($tmp_file2)) { unlink($tmp_file2); }                # Delete Work File 2
     #$DEBUG = False;
+    #echo "<br>end of create alert"; 
 }
 
 
@@ -249,7 +247,7 @@ function sysmon_page_heading($HEAD_TYPE)
     if (!$HEAD_TYPE) {
         echo "<br><b><font color='red'>";
         echo "Function sysmon_page_heading : Did not receive any parameter ?";
-        echo "</b></font>";
+        echo "</b></font><br>";
         exit;
     }
 
@@ -489,11 +487,15 @@ function display_line($line,$BGCOLOR,$con)
 
 
 
-# Show the scripts execution history - Show result line of last $SADM_MONITOR_HISTORY_SIZE scripts.
-# $SADM_MONITOR_HISTORY_SIZE is define in $SADMIN/cfg/sadmin.cfg
+# Show the scripts execution history.
+#   - Show most recent result lines.
+#   - Number of lines displayed is controled by the value of $SADM_MONITOR_HISTORY_SIZE.
+#   - $SADM_MONITOR_HISTORY_SIZE is define in $SADMIN/cfg/sadmin.cfg
 #---------------------------------------------------------------------------------------------------
 function show_activity($con,$alert_file) {
     global $DEBUG, $tmp_file1, $tmp_file2, $URL_HOST_INFO, $URL_VIEW_RCH, $URL_WEB, $URL_VIEW_FILE ;
+
+    $DEBUG = False ;
 
     $wdate=date('Y.m.d');
     if ($DEBUG) { 
@@ -507,7 +509,7 @@ function show_activity($con,$alert_file) {
 
     # Get the last $SADM_MONITOR_RECENT_COUNT scripts than have ran.
     $CMD_PART1="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \;" ;
-    $CMD_PART2=" | grep $wdate |sort -t' ' -k3,3r  >$tmp_file2";
+    $CMD_PART2=" |sort -t' ' -k4,4r -k5,5r  >$tmp_file2";
     $CMD="$CMD_PART1 $CMD_PART2";                                       # Combine 2 long commands
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }        # Show Cmd that we execute
     $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute the find command
@@ -528,8 +530,8 @@ function show_activity($con,$alert_file) {
     echo "<td width=25 align='center'><b>No</td>\n";    
     echo "<td widtd=90 align='center'><b>System</td>\n";
     echo "<td align='center'><b>Script Name</td>\n";
-    echo "<td align='center'><b>Start Date/Time</td>\n";
     echo "<td align='center'><b>End Time</td>\n";
+    echo "<td align='center'><b>Start Date/Time</td>\n";
     echo "<td align='center'><b>Elapse</td>\n";
     echo "<td align='center'><b>Alert Group</td>\n";
     echo "<td align='center'><b>Alert Type</td>\n";
@@ -549,7 +551,7 @@ function show_activity($con,$alert_file) {
         if ($DEBUG) { 
             echo "\n<br><code><pre>"; 
             echo "SADM_MONITOR_RECENT_EXCLUDE = " . SADM_MONITOR_RECENT_EXCLUDE ;
-            echo "</pre></code><br>\n"; 
+            echo "</pre></code>\n"; 
         }
         $script_exclude = explode(",",SADM_MONITOR_RECENT_EXCLUDE);
         $sfound=False; 
@@ -627,15 +629,21 @@ function show_activity($con,$alert_file) {
         }
         echo "</td>" ;
 
+        # End Time
+        if ($ccode == 2) {
+            echo "\n<td align='center'>............</td>";       # Running - No End time Yet
+        }else{
+            echo "\n<td align='center'>" . $ctime2 . "</td>";  
+        }
+
+
         # Display start date, start time
         echo "\n<td align='center'>" . $cdate1  . "&nbsp;" . $ctime1 . "</td>"; 
 
         # Display end date, end time and elapse script time
         if ($ccode == 2) {
             echo "\n<td align='center''>............</td>";       # Running - No End date Yet
-            echo "\n<td align='center'>............</td>";       # Running - No End time Yet
         }else{
-            echo "\n<td align='center'>" . $ctime2 . "</td>";  
             echo "\n<td align='center'>" . $celapsed . "</td>";  # Script Elapse Time
         }
         
@@ -665,8 +673,8 @@ function show_activity($con,$alert_file) {
                 $etooltip="SADM_ALERT is set to 3 in script " . $cname ;
                 break;
             default:
-                $alert_type_msg="Unknown code($alert_type)" ;       # Invalid Alert Group Type
-                $etooltip="SADM_ALERT set to ($alert_type) in script " . $cname ;
+                $alert_type_msg="Unknown code($ctype)" ;            # Invalid Alert Group Type
+                $etooltip="SADM_ALERT set to ($ctype) in script " . $cname ;
                 break;
         }        
         echo "\n<td align='center'>";
@@ -825,40 +833,36 @@ function display_data($con,$alert_file) {
     #$DEBUG = True ;
 
     echo "\n<tbody style: font-family: 'Ubuntu', sans-serif;>\n";       # Start of Table Body
+
+    #echo "\nNb Lines in " . $alert_file . " is " . count(file($alert_file)) . "\n<br>" ; 
+    $array_sysmon = array();                                            # Create an empty Array
     $array_sysmon = file($alert_file);                                  # Put Alert file in Array
     natsort($array_sysmon);                                             # Natural Sort Array 
-    if ($DEBUG) { echo "\n2- FINAL ARRAY CONTENT\n<br>" ; var_dump ($array_sysmon); echo "\n<br>" ; }  
-    #echo "\nFINAL ARRAY CONTENT\n<br>" ; var_dump ($array_sysmon); echo "\n<br>" ; 
+    if ($DEBUG) { echo "\n2- FINAL ARRAY CONTENT\n<br>" ; var_dump ($array_sysmon); echo "\n<br>"; }  
 
-    # If nothing to report
+    # Show any alerts, Scripts Error,Warning or Running.
     if ($DEBUG) { echo "\nSize of array is " . sizeof($array_sysmon) . "\n<br>" ; }
-    if (sizeof($array_sysmon) == 0) {                                   # Array Empty everything OK
-        echo "<center><strong>At this moment, no error or warning to report</strong></center>" ;
-        if (file_exists($alert_file)) { unlink($alert_file); }          # Delete Work Alert File
-        if (SADM_MONITOR_RECENT_COUNT != 0) {                           # History of script activity
-            show_activity($con,$alert_file);
-        }
-        echo "\n</table>\n" ;
-        echo "\n</tbody>\n";                                            # End of tbody
-        if (file_exists($alert_file)) { unlink($alert_file); }          # Delete Work Alert File
-        return;                                                         # Return to Caller 
+    if (sizeof($array_sysmon) > 0) {                                    # Array is not Empty 
+        display_alert_section($con,$alert_file);                        # Show Error,Warning,Running
     }else{
-        display_alert_section($con,$alert_file);
+        echo "<center><strong>At this moment, no error or warning to report</strong></center>" ;
     }
-    
+
     # Show History of recent scripts activity
-    if (SADM_MONITOR_RECENT_COUNT != 0) {
-        show_activity($con,$alert_file);
-    }
+    if (SADM_MONITOR_RECENT_COUNT > 0) { show_activity($con,$alert_file); }
+
+    # CleanUp and return to caller
     echo "\n</table>\n" ;
     echo "\n</tbody>\n";                                                # End of tbody
     if (file_exists($alert_file)) { unlink($alert_file); }              # Delete Work Alert File
+    return ;
 }
 
 
 #---------------------------------------------------------------------------------------------------
 # Main Page Logic start here 
 #---------------------------------------------------------------------------------------------------
+    set_time_limit(100);                                                # maximum execution time sec
     $title1="Systems Monitor Status";                                   # Page Title
     $title2 = date("Y-m-d h:i:s");
     display_lib_heading("HOME","$title1","$title2",$SVER);              # Display Page Heading+Date
