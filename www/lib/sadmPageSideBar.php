@@ -43,6 +43,7 @@
 # 2022_09_12 web v3.0 SideBar - Move 'Server Attribute' section before 'Server Info'.
 #@2023_09_12 web v3.1 SideBar - Side Bar modification & enhancement
 #@2023_09_21 web v3.2 SideBar - Remove some debugging information.
+#@2023_10_17 web v3.3 SideBar - PHP Code Optimization.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -60,7 +61,7 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False;                                                         # Debug Activated True/False
-$SVER  = "3.2";                                                         # Current version number
+$SVER  = "3.3";                                                         # Current version number
 $URL_SERVER    = '/view/srv/sadm_view_servers.php';                     # Show Servers List URL
 $URL_OSUPDATE  = "/view/sys/sadm_view_schedule.php";                    # View O/S Update Status URL 
 $URL_BACKUP    = "/view/sys/sadm_view_backup.php";                      # View Backup Status URL 
@@ -74,7 +75,7 @@ $URL_NETWORK   = '/view/net/sadm_view_subnet.php';                      # Networ
 $URL_PERF      = '/view/perf/sadm_server_perf_menu.php';                # Performance Graph Menu URL
 $URL_PERF_DAY  = '/view/perf/sadm_server_perf_adhoc_all.php';           # Yesterday Servers CPU Perf
 $URL_VIEW_REAR = "/view/sys/sadm_view_rear.php";                        # Rear Back Status Page
-
+$sadm_array    = array() ;                                              # Create an empty array
 
 
 
@@ -84,16 +85,16 @@ $URL_VIEW_REAR = "/view/sys/sadm_view_rear.php";                        # Rear B
 function build_sidebar_scripts_info()
 {
     $count = 0;                                                         # Working Counter
-    $script_array = [];                                                 # Define an Empty Array
+    $script_array = array();                                            # Define an Empty Array
 
-    # Define RCH_ROOT where all systems rch files exist.
+    # Define RCH_ROOT where all systems rch files exist and if it doesn't exist show error msg.
     $RCH_ROOT = $_SERVER['DOCUMENT_ROOT'] . "/dat";                     # $SADMIN/www/dat
     if ($DEBUG) { echo "<br>Opening $RCH_ROOT directory "; }            # Debug Display RCH Root Dir
     if (! is_dir($RCH_ROOT)) {                                          # /opt/sadmin/www/dat!=exist
         $msg="\nThe directory $RCH_ROOT doesn't exist !\nCorrect the situation & retry operation\n";
         sadm_alert ("$msg");                                            # Display Alert Box with msg
         ?><script type="text/javascript">history.go(-1);</script><?php
-        exit;
+        return $script_array;
     }
 
     # Create unique filename that will contains all servers *.rch filename
@@ -105,9 +106,11 @@ function build_sidebar_scripts_info()
     $CMD="find " . $RCH_ROOT . " -name '*.rch' -type f  | sort > $tmp_rch ";  
     if ($DEBUG) { echo "<br>\nCommand executed is : " . $CMD . "\n"; }  # Show command constructed
     $last_line = system ("$CMD",$RCODE);                                # Execute find command
-    if ($DEBUG) { echo "<br>Return code of command is : " . $RCODE ; }  # Display Return Code
-    
-    # Open list of rch file.
+    if ($DEBUG) { echo "<br>Return code is : " . $RCODE  ; }            # Display Return Code
+	$xcount = count(file($tmp_rch));                                    # Get nb of rch file
+    if ($DEBUG) { echo "<br>Nb of rch file is " .$xcount ; }            # Show Nb of rch file in tmp
+
+    # Open list of rch file and put it in $rch_filename_array.
     $fh = fopen($tmp_rch,"r");
     if (! $fh) {
         $errStr = "Failed to open the list of all rch '{$tmp_rch}'.";
@@ -115,22 +118,22 @@ function build_sidebar_scripts_info()
         unlink($tmp_rch);                                               # Delete Temp File
         return $script_array;
     }
-    
-	$xcount = count(file($tmp_rch));
-    
-    # Loop through filename list in the file
-    while (!feof($fh)) {
-        $line = fgets($fh, 4096);                                       # Read rch filename line
-        $wfile = trim($line);                                           # Remove all spaces
-        if (! file_exists($wfile)) { continue ; }                       # If rch file don't exist
-        $line_array = file($wfile);                                     # Put all rch file in array
-        $last_index = count($line_array) - 1;                           # Nb. of lines -1 (lastLine)
-        $rch_array  = explode(" ",$line_array[$last_index]);            # Split Line into rch_array
-        $num_tags   = count($rch_array);                                # Nb Elements in rch array
+    $rch_filename_array = explode("\n", fread($fh, filesize($tmp_rch)));
+    fclose($fh);
 
-        # Reject invalid line (Line that doesn't contain 10 fields), go read next line.
+    foreach($rch_filename_array as $rch_file) {
+        $wfile = trim($rch_file);                                       # Remove all spaces
+        if (! file_exists($wfile)) { continue ; }                       # If rch file don't exist
+
+        $line_array = file($wfile);                                     # Put rch file content array
+        $last_index = count($line_array) - 1;                           # Nb. of lines -1 (lastLine)
+        $rch_array  = explode(" ",$line_array[$last_index]);            # rch last line in array
+        
+        # Reject invalid rch line (Line that doesn't contain 10 fields), go read next line.
+        $num_tags   = count($rch_array);                                # Nb Elements on rch line
         if ($num_tags != 10) { echo "<br>NoFld " . $num_tags . " " . $wfile ; continue ; } 
 
+        # Convert rch line format to rpt line format 
         #print_r($rch_array); 
         $outline = $rch_array[0] .",". $rch_array[1] .",". $rch_array[2] .",". $rch_array[3] ;
         $outline = $outline      .",". $rch_array[4] .",". $rch_array[5] .",". $rch_array[6] ;
@@ -146,8 +149,8 @@ function build_sidebar_scripts_info()
            $script_array[$akey] = $outline ;                            # Store line in Array
         }
     }
-    fclose($fh);
-    krsort($script_array);                                              # Reverse Sort Array on Keys
+
+    #krsort($script_array);                                              # Reverse Sort Array on Keys
     unlink($tmp_rch);                                                   # Delete Temp File
     
     # Under Debug - Display The Array Used to build the SideBar
@@ -162,8 +165,8 @@ function build_sidebar_scripts_info()
 # This function read the server table and collect info to build the SideBar (Except Scripts Status)
 # The function return an array with the information needed to display the SideBar info
 # ==================================================================================================
-function SideBar_OS_Summary() {
-    global $con;                                                        # Global Database Conn. Obj.
+function build_sadm_array_from_db() {
+    global $con, $sadm_array ;                                          # Global Database Conn. Obj.
 
     # Loop Through Retrieved Data and Display each Row
     $sql = "SELECT * FROM server ;";                                    # Construct SQL Statement
@@ -255,6 +258,7 @@ function SideBar_OS_Summary() {
     # Array is loaded Now - Activate Debug below to print the Array
     ksort($sadm_array);                                                 # Sort Array Based on Keys
     $DEBUG=False;                                                       # Put True to view Array
+
     # Under Debug - Display The Array Used to build the SideBar
     if ($DEBUG) {                                                       # If Debug is activated
         foreach($sadm_array as $key=>$value) {                          # For each item in Array
@@ -266,14 +270,11 @@ function SideBar_OS_Summary() {
 
 
 # ==================================================================================================
-# Start of SADM SideBar
+# Show O/S Distribution
 # ==================================================================================================
-#
-    # Go read last line of all rch files and create an array with info collected.
-    $sadm_array = SideBar_OS_Summary();                                 
-    #show_OS_Distribution();
+function show_os_distribution() {
+    global $sadm_array, $URL_SERVER;                                    # Global Database Conn. Obj.
 
-    # PRINT SERVER O/S DISTRIBUTION 
     $SERVER_COUNT=0;                                                    # Total Servers Reset
     echo "\n<div class='SideBarTitle'>O/S Distribution</div>";          # SideBar Section Title
     foreach($sadm_array as $key=>$value) {                                
@@ -297,57 +298,16 @@ function SideBar_OS_Summary() {
     echo "<a href='" . $URL_SERVER . "?selection=all_servers'";         # View server O/S URL           
     echo ">Total " .$SERVER_COUNT. " systems</a></div>";                 # Display Server Count
     echo "\n<hr/>"; 
+}
 
 
 
+# Show Systems attributes
+# ==================================================================================================
+function show_server_attribute() {
+    global $sadm_array, $URL_SERVER;                                    # Global Database Conn. Obj.
 
-
-
-	# ---------------------------   SCRIPTS STATUS SIDEBAR      ------------------------------------
-    echo "\n<div class='SideBarTitle'>Scripts Status</div>";            # SideBar Section Title
-	$script_array = build_sidebar_scripts_info();                       # Build $script_array
-    $TOTAL_FAILED=0; $TOTAL_SUCCESS=0; $TOTAL_RUNNING=0;                # Initialize Total to Zero
-
-    # Loop through Script Array to count Different Return Code
-    foreach($script_array as $key=>$value) {
-        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode,$cfile) = explode(",", $value);
-        if ($ccode == 0) { $TOTAL_SUCCESS += 1; }
-        if ($ccode == 1) { $TOTAL_FAILED  += 1; }
-        if ($ccode == 2) { $TOTAL_RUNNING += 1; }
-    }
-
-    # Display Total Number of Succeeded Scripts
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_RCH_SUMM . "?sel=success'>";                # URL To View O/S Upd. Page
-    if ( $TOTAL_SUCCESS == 0 ) {                                        # If None Succeeded
-        echo "No Script Succeeded</a></div>";                           # Advise user
-    }else{                                                              # If Some Scripts succeeded
-        echo "$TOTAL_SUCCESS Success</a></div>";                        # Display Total Succeeded
-    }
-
-    # Display Total Number of Failed Scripts
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_RCH_SUMM . "?sel=failed'>";                 # URL To View O/S Upd. Page
-    echo "$TOTAL_FAILED Failed</a></div>";                              # Display Total Script Fail
-
-    # Display Total Number of Running Scripts
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_RCH_SUMM . "?sel=running'>";                # URL To View O/S Upd. Page
-    echo "$TOTAL_RUNNING Running</a></div>";                            # Display Total Running Scr.
-
-    # Display Total number of Scripts
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    $TOTAL_SCRIPTS=count($script_array);                                # Get Nb. Scripts in Array
-    echo "<a href='" . $URL_RCH_SUMM . "?sel=all'>";                    # URL To View O/S Upd. Page
-    echo "Total " . $TOTAL_SCRIPTS . " scripts</a></div>";              # Display Script Total Count
-    echo "\n<hr/>";                                                     # Print Horizontal Line
-    
-
-
-
-
-    # SERVER ATTRIBUTE HEADER
-    echo "\n<div class='SideBarTitle'>Systems Attribute</div>";          # SideBar Section Title
+    echo "\n<div class='SideBarTitle'>Systems Attribute</div>";         # SideBar Section Title
 
 	# DISPLAY NUMBER OF ACTIVE SERVER
     $kpart2 = $sadm_array["srv_active,"];                               # Array Key for Act. Server
@@ -404,9 +364,59 @@ function SideBar_OS_Summary() {
         echo "0 Sporadic</div>";                                        # Print Nb. of Sporadic Srv.
     }
     echo "\n<hr/>";                                                     # Print Horizontal Line
-    
+}
 
-	# ---------------------------   SERVERS STATUS SIDEBAR      ------------------------------------
+
+
+
+# Show scripts status
+# ==================================================================================================
+function show_scripts_status() {
+    global $sadm_array, $URL_RCH_SUMM ;
+
+    echo "\n<div class='SideBarTitle'>Scripts Status</div>";            # SideBar Section Title
+	$script_array = build_sidebar_scripts_info();                       # Build $script_array
+    $TOTAL_FAILED=0; $TOTAL_SUCCESS=0; $TOTAL_RUNNING=0;                # Initialize Total to Zero
+
+    # Loop through Script Array to count Different Return Code
+    foreach($script_array as $key=>$value) {
+        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ctype,$ccode,$cfile) = explode(",", $value);
+        if ($ccode == 0) { $TOTAL_SUCCESS += 1; }
+        if ($ccode == 1) { $TOTAL_FAILED  += 1; }
+        if ($ccode == 2) { $TOTAL_RUNNING += 1; }
+    }
+
+    # Display Total Number of Succeeded Scripts
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "<a href='" . $URL_RCH_SUMM . "?sel=success'>";                # URL To View O/S Upd. Page
+    echo "$TOTAL_SUCCESS Success</a></div>";                                # Display Total Succeeded
+
+    # Display Total Number of Failed Scripts
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "<a href='" . $URL_RCH_SUMM . "?sel=failed'>";                 # URL To View O/S Upd. Page
+    echo "$TOTAL_FAILED Failed</a></div>";                              # Display Total Script Fail
+
+    # Display Total Number of Running Scripts
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "<a href='" . $URL_RCH_SUMM . "?sel=running'>";                # URL To View O/S Upd. Page
+    echo "$TOTAL_RUNNING Running</a></div>";                            # Display Total Running Scr.
+
+    # Display Total number of Scripts
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "<a href='" . $URL_RCH_SUMM . "?sel=all'>";                    # URL To View O/S Upd. Page
+    echo "Total " . count($script_array) . " scripts</a></div>";        # Display Script Total Count
+    echo "\n<hr/>";                                                     # Print Horizontal Line
+}
+
+
+
+# Show server information.
+# ==================================================================================================
+function show_server_info() {
+    global  $sadm_array, $URL_RCH_SUMM, $URL_OSUPDATE, $URL_BACKUP, $URL_VIEW_REAR, $URL_MONITOR, 
+            $URL_PERF_DAY, $URL_PERF ;
+
+
     echo "\n<div class='SideBarTitle'>Server Info</div>";               # SideBar Section Title
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
@@ -434,11 +444,17 @@ function SideBar_OS_Summary() {
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_PERF    . "'>Adhoc Perf. Graph</a></div>";        # URL to System Monitor Page
     echo "\n<hr/>";                                                     # Print Horizontal Line
-    
-    
+}
 
-	# ----------------------------------   Network SIDEBAR   ---------------------------------------
+
+# ==================================================================================================
+# Show IP utilization
+# ==================================================================================================
+function show_ip_usage() {
+    global  $sadm_array, $URL_NETWORK ;
+
     echo "\n<div class='SideBarTitle'>IP Utilization</div>";            # SideBar Section Title
+
     if (SADM_NETWORK1 != "") {
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK1 ;     # URL To Network 1 Page
@@ -465,18 +481,34 @@ function SideBar_OS_Summary() {
         echo "&option=all'>" . SADM_NETWORK5 . "</a></div>";            # URL To Network 5 Page
     }
     echo "\n<hr/>";                                                     # Print Horizontal Line
+}
 
 
 
-	# ----------------------------------   EDIT SIDEBAR   ------------------------------------------
-    echo "\n<div class='SideBarTitle'>CRUD Operation</div>";           # SideBar Section Title
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_EDIT_SRV . "'>Server</a></div>";       # URL To Start Edit Server
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_EDIT_CAT . "'>Category</a></div>";     # URL To Start Edit Cat.
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_EDIT_GRP . "'>Group</a></div>";        # URL To Start Edit Group
-    echo "\n<hr/>";                                                     # Print Horizontal Line
-    
+
+# Show CRUD Operation
+# ==================================================================================================
+function show_crud_operation() {
+    global $URL_EDIT_SRV, $URL_EDIT_CAT, $URL_EDIT_GRP ;
+    echo "\n<div class='SideBarTitle'>CRUD Operation</div>";
+    echo "\n<div class='SideBarItem'><a href='" . $URL_EDIT_SRV . "'>Server</a></div>  ";
+    echo "\n<div class='SideBarItem'><a href='" . $URL_EDIT_CAT . "'>Category</a></div>";
+    echo "\n<div class='SideBarItem'><a href='" . $URL_EDIT_GRP . "'>Group</a></div>   ";
+    echo "\n<hr/>";
+}
+
+
+
+
+# Start of SADM SideBar
+# ==================================================================================================
+    $sadm_array = build_sadm_array_from_db();                                 
+    show_os_distribution();
+    show_server_attribute();
+    show_scripts_status(); 
+    show_server_info();
+    show_ip_usage();
+    show_crud_operation();
     echo "\n</div> <!-- End of SideBar  -->\n\n\n"                      # End of Left Column Div
+
 ?> 
