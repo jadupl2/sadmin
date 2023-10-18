@@ -27,10 +27,10 @@
 # ------------------
 # 2022_05_09 lib v1.0 New Python template using V2 of SADMIN python library.
 # 2022_05_25 lib v1.1 Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
-#@2023_07_11 lib v1.2 Complete rewrite, new version in Python (lot more faster).
-#@2023_07_26 lib v1.3 Enhance 'nmon' instance detection.
-#@2023_08_14 lib v1.4 Make sure only one instance of 'nmon' in running.
-#@2023_08_17 lib v1.5 Update to SADMIN section v2.3, fix 'pymysql' error msg & added log verbosity.
+# 2023_07_11 lib v1.2 Complete rewrite, new version in Python (lot more faster).
+# 2023_07_26 lib v1.3 Enhance 'nmon' instance detection.
+# 2023_08_14 lib v1.4 Make sure only one instance of 'nmon' in running.
+# 2023_08_17 lib v1.5 Update to SADMIN section v2.3, fix 'pymysql' error msg & added log verbosity.
 # --------------------------------------------------------------------------------------------------
 #
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.

@@ -37,7 +37,7 @@
 # 2022_04_06 startup/shutdown v3.16 Remove ip setting for raspi8
 # 2022_07_24 startup/shutdown v3.17 Update SADMIN section to 1.51 and no-ip Client for Dynamic IP
 # 2022_09_15 startup/shutdown v3.18 When error feed error log and fix 'nmon' wasn't starting.
-#@2023_07_17 startup/shutdown v3.19 Updated to use faster python version of 'sadm_nmon_watcher'.
+# 2023_07_17 startup/shutdown v3.19 Updated to use faster python version of 'sadm_nmon_watcher'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 

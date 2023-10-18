@@ -59,8 +59,8 @@
 # 2023_04_17 server v2.40 Push encrypted email password file ($SADMIN/cfg/.gmpw64) to all clients.
 # 2023_04_29 server v2.41 Increase speed of files copy from clients to SADMIN server.
 # 2023_05_26 server v2.42 If /etc/environment isn't present on client, proceed with the next system.
-#@2023_07_18 server v2.43 Fix problem when not using the standard ssh port (22).
-#@2023_10_04 server v2.44 Error were not recorded in the error log.
+# 2023_07_18 server v2.43 Fix problem when not using the standard ssh port (22).
+# 2023_10_04 server v2.44 Error were not recorded in the error log.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

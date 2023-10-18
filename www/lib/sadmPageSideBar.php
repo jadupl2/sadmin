@@ -41,9 +41,9 @@
 # 2022_07_13 web v2.15 SideBar - Show alert when final 'rch' summary file couldn't be opened.
 # 2022_07_18 web v2.16 SideBar - Fix problem, sidebar wouldn't displayed correctly.
 # 2022_09_12 web v3.0 SideBar - Move 'Server Attribute' section before 'Server Info'.
-#@2023_09_12 web v3.1 SideBar - Side Bar modification & enhancement
-#@2023_09_21 web v3.2 SideBar - Remove some debugging information.
-#@2023_10_17 web v3.3 SideBar - PHP Code Optimization.
+# 2023_09_12 web v3.1 SideBar - Side Bar modification & enhancement
+# 2023_09_21 web v3.2 SideBar - Remove some debugging information.
+# 2023_10_17 web v3.3 SideBar - PHP Code Optimization.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library

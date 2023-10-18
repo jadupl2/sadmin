@@ -37,7 +37,7 @@
 # 2022_05_03 server v2.11 Secure email passwd file ($SADMIN/cfg/.gmpw).
 # 2022_07_13 server v2.12 Fix typo that was preventing script from running under certain condition.
 # 2023_04_17 server v2.13 Secure permission on email password files ($SADMIN/cfg/.gmpw & .gmpw64).
-#@2023_09_17 server v2.14 Add removal of file older than 1 day in $SADMIN/www/tmp directory.
+# 2023_09_17 server v2.14 Add removal of file older than 1 day in $SADMIN/www/tmp directory.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x

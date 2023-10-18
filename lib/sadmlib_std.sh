@@ -203,9 +203,9 @@
 # 2023_04_14 lib v4.24 Change email pwd ($SADMIN/cfg/.gmpw) on SADM server to generate new .gmpw64.
 # 2023_05_24 lib v4.25 Umask is now shown in the script header output.
 # 2023_06_06 lib v4.26 Set file permission on email password file to prevent problem.
-#@2023_08_20 lib v4.27 Code optimization, LIBRARY LOAD A LOT FASTER (So scripts run faster).
-#@2023_09_22 lib v4.28 Change default values of SADM_*_KEEPDAYS.
-#@2023_09_26 lib v4.29 Code optimization : To function "sadm_get_command_path()".
+# 2023_08_20 lib v4.27 Code optimization, LIBRARY LOAD A LOT FASTER (So scripts run faster).
+# 2023_09_22 lib v4.28 Change default values of SADM_*_KEEPDAYS.
+# 2023_09_26 lib v4.29 Code optimization : To function "sadm_get_command_path()".
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
