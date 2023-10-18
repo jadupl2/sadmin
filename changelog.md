@@ -1,5 +1,104 @@
 # SADMIN Full Changelog
  
+## Release [1.4.9](https://github.com/jadupl2/sadmin/releases) (2023-10-17)
+
+### Backup related
+  - [sadm_backup.sh](https://sadmin.ca/sadm-backupdb) 
+	  - v3.46 - Record backup size, more info in log & apply cleaning to all backup type.
+
+### SADMIN Client related
+  - [sadm_client_housekeeping.sh](https://sadmin.ca/sadm-client-housekeeping) 
+	  - v2.12 - Modify sadm_client crontab to use new python 'sadm_nmon_watcher.py'.
+	  - v2.13 - Remove duplicated lines in /etc/cron.d/sadm_client file.
+	  - v2.14 - If gmail text pwd file '$SADMIN/cfg/.gmpw' exist, remove it.
+	  - v2.15 - Update SADMIN section (v1.56) and minor improvement.
+
+### Command line tools
+  - [sadm_service_ctrl.sh](https://sadmin.ca/sadm-service-ctrl) 
+	  - v2.13 - Fix problem when some option are used.
+  - [sadm_sysmon_cli.sh](https://sadmin.ca/sadm-sysmon-cli) 
+	  - v2.6 - Update SADMIN section (v1.56) and minor improvement.
+
+### Configuration files
+  - [.sadmin.cfg](https://sadmin.ca/sadmin-cfg) 
+	  - v2.10 - Change default value of SADM_NMON_KEEPDAYS from 40 to 15 days.
+  - sadmin_client.cfg 
+	  - v2.10 - Change recommended value of SADM_NMON_KEEPDAYS from 40 to 15 days.
+
+### SADMIN Install, Uninstall & Update
+  - [sadm_setup.py](https://sadmin.ca/_pages/install/#the-setup-script) 
+	  - v3.88 - Add $SADMIN/usr/bin to sudo secure path.
+	  - v3.89 - Update sadmin web server config for Debian 12.
+	  - v3.90 - Initial 'sadm_client' crontab, now use python ver. of 'sadm_nmon_watcher'.
+	  - v3.91 - Ask for the SADMIN server IP instead of FQDN.
+	  - v3.92 - Adjust list of packages required to use 'ReaR' image backup (+xorriso).
+	  - v3.93 - Package detection, was failing under certain condition.
+  - [setup.sh](https://sadmin.ca/_pages/install/#the-setup-script) 
+	  - v3.30 - Changed the way to install 'pymysql' python module (Debian 12).
+	  - v3.31 - Hostname lookup, will verify /etc/hosts & DNS (if present).
+	  - v3.32 - Cosmetic change to the script log.
+
+### Libraries, Scripts Templates, Demo
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py.md) 
+	  - v4.41 - New function 'get_mac_address()': Get mac address of an IP.
+	  - v4.42 - Fix minor bugs.
+	  - v4.43 - Added 'db_name' variable that hold 'SADMIN' database name (or yours).
+	  - v4.44 - start() & stop() functions now connect/close DB automatically (if db_used=True).
+	  - v4.45 - Reduce recommended SADM_*_KEEPDAYS values of to save disk space.
+  - [sadmlib_std_demo.py](https://sadmin.ca/sadmlib-std-py-demo) 
+	  - v3.21 - start() function auto connect to DB, if on SADMIN server & db_used=True.
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) 
+	  - v4.27 - Code optimization, LIBRARY LOAD A LOT FASTER (So scripts run faster).
+	  - v4.28 - Change default values of SADM_*_KEEPDAYS.
+	  - v4.29 - Code optimization : To function "sadm_get_command_path()".
+  - [sadm_nmon_watcher.py](https://sadmin.ca/sadm-nmon-watcher) 
+	  - v1.2 - Complete rewrite, new version in Python (lot more faster).
+	  - v1.3 - Enhance 'nmon' instance detection.
+	  - v1.4 - Make sure only one instance of 'nmon' in running.
+	  - v1.5 - Update to SADMIN section v2.3, fix 'pymysql' error msg & added log verbosity.
+  - [sadm_template.py](https://sadmin.ca/sadm-template-py) 
+	  - v1.3 - Update SADMIN section (More fields sa.db_errno, sa.db_errmsg, sa.db_name)
+  - [sadm_wrapper.sh](https://sadmin.ca/sadm-wrapper) 
+	  - v1.7 - Update with latest SADMIN section(v1.56).
+
+### Operating System Update
+  - [sadm_osupdate_starter.sh](https://sadmin.ca/sadm-osupdate-starter) 
+	  - v5.4 - Update with latest SADMIN section(v1.56).
+
+### SADMIN Server related
+  - [sadm_daily_farm_fetch.sh](https://sadmin.ca/sadm_daily_farm_fetch) 
+	  - v4.12 - Fix problem when not using the standard ssh port (22).
+	  - v4.13 - When syncing to the SADMIN server, don't use SSH to rsync .
+  - [sadm_database_update.py](https://sadmin.ca/sadm-database-update) 
+	  - v3.20 - Restrict execution on the SADMIN server only.
+	  - v3.21 - Update to SADMIN section v2.3 & update database I/O functions.
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) 
+	  - v3.45 - Fix when not using the standard ssh port (22).
+	  - v3.46 - Enhance purge of old '*.nmon' files.
+  - [sadm_push_sadmin.sh](https://sadmin.ca/sadm-push-sadmin) 
+	  - v2.43 - Fix problem when not using the standard ssh port (22).
+	  - v2.44 - Error were not recorded in the error log.
+  - [sadm_server_housekeeping.sh](https://sadmin.ca/sadm-server-housekeeping) 
+	  - v2.14 - Add removal of file older than 1 day in $SADMIN/www/tmp directory.
+  - [sadm_subnet_lookup.py](https://sadmin.ca/sadm-subnet-lookup) 
+	  - v3.9 - Modify code to get the mac address of ip (Depreciate python module 'getmac´)
+	  - v4.0 - Adapt code to the fact that sa.start() & sa.stop() function open/close DB.
+
+### Start & Shutdown script
+  - [.sadm_shutdown.sh](https://sadmin.ca/sadm-service-ctrl) 
+	  - v2.14 - Update with latest SADMIN section(v1.56).
+  - [.sadm_startup.sh](https://sadmin.ca/sadm-service-ctrl) 
+	  - v3.19 - Updated to use faster python version of 'sadm_nmon_watcher'.
+
+### Web interface
+  - [sadmPageSideBar.php](https://sadmin.ca/sadm-pagesidebar) 
+	  - v3.1 - SideBar - Side Bar modification & enhancement
+	  - v3.2 - SideBar - Remove some debugging information.
+	  - v3.3 - SideBar - PHP Code Optimization.
+  - [sadm_view_sysmon.php](https://sadmin.ca/sadm-system-monitor) 
+	  - v2.37 - System monitor page - Minor adjustments.
+   
+ 
 ## Release [1.4.7](https://github.com/jadupl2/sadmin/releases) (2023-06-08)
 
 ### Backup related
