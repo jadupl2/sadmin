@@ -32,6 +32,7 @@
 # 2022_08_17 cmdline v2.4 Updated with new SADMIN section v1.52
 # 2022_08_21 cmdline v2.5 Fix problem when running on other system than SADMIN Server
 # 2023_09_22 cmdline v2.6 Update SADMIN section (v1.56) and minor improvement.
+#@2023_10_23 cmdline v2.7 Remove header and footer from the log.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -60,17 +61,17 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.6'                                      # Script version number
+export SADM_VER='2.7'                                      # Script version number
 export SADM_PDESC="Run SADMIN System Monitor and display result file (hostname.rpt)."
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
-export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
-export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
+export SADM_LOG_HEADER="N"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="N"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
-export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
+export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
 export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
@@ -109,7 +110,6 @@ bold=$(tput bold)                               ; export bold           # bold a
 bell=`tput bel`                                 ; export bell           # Ring the bell
 reverse=`tput rev`                              ; export reverse        # rev. video attrib.
 underline=$(tput sgr 0 1)                       ; export underline      # UnderLine
-home=`tput home`                                ; export home           # home cursor
 up=`tput cuu1`                                  ; export up             # cursor up
 down=`tput cud1`                                ; export down           # cursor down
 right=`tput cub1`                               ; export right          # cursor right
@@ -170,8 +170,8 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
     $SADM_BIN_DIR/sadm_sysmon.pl
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
     if [ "$SADM_EXIT_CODE" -ne "0" ] 
-        then echo "System Monitor (sadm_sysmon.pl) is running" 
-             echo "Try running 'smon' in a couple of seconds"
+        then echo "System Monitor (sadm_sysmon.pl) is already running." 
+             echo "Try running it again in a couple of seconds."
              sadm_stop 0                                                # Upd. RCH File & Trim Log 
              exit 0    
     fi
