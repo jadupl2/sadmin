@@ -37,7 +37,7 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');# <head>
 <script>
     $(document).ready(function() {
         $('#sadmTable').DataTable( {
-            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,

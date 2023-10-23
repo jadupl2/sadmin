@@ -2711,15 +2711,14 @@ sadm_check_system_lock() {
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
         then printf "$(date "+%C%y.%m.%d %H:%M:%S") Loading $SADM_CFG_FILE ...\n"
     fi
-    sadm_load_config_file                  
-                                 # Load sadmin.cfg file
+    sadm_load_config_file                                               # Load sadmin.cfg file
     if [ -r "$SADM_SLACK_FILE" ] ; then merge_alert_files ; fi          # If old version
-    
+
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
         then printf "$(date "+%C%y.%m.%d %H:%M:%S") Loading command path ...\n"
     fi
     sadm_load_cmd_path                                                  # Load Cmd Path Variables
-    if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Error while checking
+    if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement not met
 
     export SADM_SSH_CMD="${SADM_SSH} -qnp${SADM_SSH_PORT}"              # SSH Command to SSH CLient
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly

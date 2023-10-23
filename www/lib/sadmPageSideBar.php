@@ -86,6 +86,7 @@ function build_sidebar_scripts_info()
 {
     $count = 0;                                                         # Working Counter
     $script_array = array();                                            # Define an Empty Array
+    $DEBUG = False; 
 
     # Define RCH_ROOT where all systems rch files exist and if it doesn't exist show error msg.
     $RCH_ROOT = $_SERVER['DOCUMENT_ROOT'] . "/dat";                     # $SADMIN/www/dat
@@ -97,52 +98,36 @@ function build_sidebar_scripts_info()
         return $script_array;
     }
 
-    # Create unique filename that will contains all servers *.rch filename
-    $tmp_rch = tempnam($_SERVER['DOCUMENT_ROOT'] . "/tmp/", 'ref_rch_file_'); # Create unique file
+    # Create file that will contains the last line of all *.rch.
+    $tmp_rch = tempnam($_SERVER['DOCUMENT_ROOT'] . "/tmp/", 'ref_rch_file_'); 
     chmod ("$tmp_rch",0664);
     if ($DEBUG) { echo "<br>Tmp filename : " . $tmp_rch ; }             # Show unique filename
-
-    # Create a list of all rch files for all systems in $tmp_rch
-    $CMD="find " . $RCH_ROOT . " -name '*.rch' -type f  | sort > $tmp_rch ";  
+    $CMD = "find " .$RCH_ROOT. " -name '*.rch' -type f -exec tail -1 {} \\; > $tmp_rch" ;
     if ($DEBUG) { echo "<br>\nCommand executed is : " . $CMD . "\n"; }  # Show command constructed
     $last_line = system ("$CMD",$RCODE);                                # Execute find command
-    if ($DEBUG) { echo "<br>Return code is : " . $RCODE  ; }            # Display Return Code
-	$xcount = count(file($tmp_rch));                                    # Get nb of rch file
-    if ($DEBUG) { echo "<br>Nb of rch file is " .$xcount ; }            # Show Nb of rch file in tmp
 
-    # Open list of rch file and put it in $rch_filename_array.
+    # Open list of rch file and put it in $rch_lines.
     $fh = fopen($tmp_rch,"r");
     if (! $fh) {
-        $errStr = "Failed to open the list of all rch '{$tmp_rch}'.";
+        $errStr = "Failed to open temporary rch work file '{$tmp_rch}'.";
         sadm_alert ("$errStr"); 
         unlink($tmp_rch);                                               # Delete Temp File
         return $script_array;
     }
-    $rch_filename_array = explode("\n", fread($fh, filesize($tmp_rch)));
+    $rch_lines = explode("\n", fread($fh, filesize($tmp_rch)));
     fclose($fh);
+    if ($DEBUG) { echo "<br>rch_lines size : " . count($rch_lines) ; }  # Show Nb of rch line in tmp
 
-    foreach($rch_filename_array as $rch_file) {
-        $wfile = trim($rch_file);                                       # Remove all spaces
-        if (! file_exists($wfile)) { continue ; }                       # If rch file don't exist
-
-        $line_array = file($wfile);                                     # Put rch file content array
-        $last_index = count($line_array) - 1;                           # Nb. of lines -1 (lastLine)
-        $rch_array  = explode(" ",$line_array[$last_index]);            # rch last line in array
-        
-        # Reject invalid rch line (Line that doesn't contain 10 fields), go read next line.
+    foreach($rch_lines as $rch_line) {
+        $rch_array  = explode(" ",$rch_line);                           # rch last line in array
         $num_tags   = count($rch_array);                                # Nb Elements on rch line
-        if ($num_tags != 10) { echo "<br>NoFld " . $num_tags . " " . $wfile ; continue ; } 
-
-        # Convert rch line format to rpt line format 
-        #print_r($rch_array); 
+        if (($num_tags != 10) or ($num_tags == 0)) { continue ; }       # Skip invalid format file
         $outline = $rch_array[0] .",". $rch_array[1] .",". $rch_array[2] .",". $rch_array[3] ;
         $outline = $outline      .",". $rch_array[4] .",". $rch_array[5] .",". $rch_array[6] ;
         $outline = $outline      .",". $rch_array[7] .",". $rch_array[8] .",". trim($rch_array[9]) ;
-        $outline = $outline      .",". basename($wfile) ."\n";
+        $outline = $outline      .",". $rch_array[0] ."_". $rch_array[6] ."\n";
         $count+=1;
-
-        # Key is "StartDate_StartTime_ScriptName"
-        $akey = $rch_array[1] ."_". $rch_array[2] ."_". basename($wfile); # Key = Date+Time+FileName
+        $akey = $rch_array[1] ."_". $rch_array[2] ."_". $rch_array[0] ."_". $rch_array[6]; # Date+Time+FileName
         if (array_key_exists("$akey",$script_array)) {                  # If Key already exist
            $script_array[$akey] = $outline . "_" . $count ;             # Store line with count
         }else{                                                          # If Key doesn't exist
@@ -150,11 +135,11 @@ function build_sidebar_scripts_info()
         }
     }
 
-    #krsort($script_array);                                              # Reverse Sort Array on Keys
+    krsort($script_array);                                              # Reverse Sort Array on Keys
     unlink($tmp_rch);                                                   # Delete Temp File
-    
-    # Under Debug - Display The Array Used to build the SideBar
+    #if ($DEBUG) { echo "<br>script_array : " .count($script_array); }  # Show Nb of rch line in tmp
     #if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key,value $key,$value";}}
+    $DEBUG = False ; 
     return $script_array;
 }
 

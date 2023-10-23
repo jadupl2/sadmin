@@ -707,16 +707,15 @@ function show_activity($con,$alert_file) {
 
 
 
-# Display <strong> section : Running(Green), Warning(Yellow), Error(Red) and Info(Blue) section.
+# Display Alert section : Running(Green), Warning(Yellow), Error(Red) and Info(Blue) section.
 #---------------------------------------------------------------------------------------------------
 function display_alert_section($con,$alert_file) {
     global $DEBUG, $URL_HOST_INFO, $URL_VIEW_FILE, $URL_WEB, $URL_VIEW_RCH, $URL_DOC_DIR;
 
-    if ($DEBUG) { echo "\nI am in display_alert_section\n\n"; }
     echo "\n<tbody style: font-family: 'Arial', 'Ubuntu', sans-serif;>\n";  
     $array_sysmon = file($alert_file);                                  # Put Alert file in Array
     natsort($array_sysmon);                                             # Sort Array 
-    if ($DEBUG) { echo "\n1- FINAL ARRAY CONTENT\n<br>" ; var_dump ($array_sysmon); echo "\n<br>" ; }  
+    if ($DEBUG) { echo "\n1- FINAL ARRAY CONTENT\n<br>" ; var_dump ($array_sysmon); echo "\n<br>" ;}
 
     # If nothing to report
     if (sizeof($array_sysmon) == 0) {                                   # Array Empty everything OK

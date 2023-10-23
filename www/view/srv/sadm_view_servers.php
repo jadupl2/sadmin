@@ -101,7 +101,8 @@ function setup_table() {
     echo "\n<th class='dt-head-left'>Arch</th>";                        # Left Header Only
     echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
     echo "\n<th class='dt-head-center'>Version</th>";                   # Left Header Only
-    echo "\n<th class='dt-head-center'>Cat.</th>";                        # Left Align Cat
+    echo "\n<th class='dt-head-center'>Group</th>";                     # Left Align Group
+    echo "\n<th class='dt-head-center'>Cat.</th>";                      # Left Align Cat
     echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
     echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
     echo "\n<th class='dt-head-center'>Status</th>";                    # Center Header & Body
@@ -119,6 +120,7 @@ function setup_table() {
     echo "\n<th class='dt-head-left'>Arch</th>";                        # Left Header Only
     echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
     echo "\n<th class='dt-head-center'>Version</th>";                   # Left Header Only
+    echo "\n<th class='dt-head-center'>Group</th>";                     # Group
     echo "\n<th class='dt-head-center'>Cat.</th>";                      # Category
     echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
     echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
@@ -169,6 +171,10 @@ function display_data($count,$con,$row) {
     // # Display O/S Version
     // echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=osv";  
     // echo "&value=" . $row['srv_osversion']  ."'>"  . $row['srv_osversion'] . "</a></td>";
+
+    # Display Server Group
+    echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=group";
+    echo "&value=" . $row['srv_group']  ."'>"  . $row['srv_group'] . "</a></td>";
 
     # Display Server Category
     echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=cat";
@@ -232,8 +238,8 @@ function display_data($count,$con,$row) {
 }
 
 
-# ==================================================================================================
-#*                                      PROGRAM START HERE
+
+#                       P R O G R A M    S T A R T     H E R E 
 # ==================================================================================================
 #
     # 1st parameter contains type of query that need to be done (all_servers,os,...)   
@@ -247,17 +253,15 @@ function display_data($count,$con,$row) {
 
     # 2nd Parameters is sometime used to specify the type of server received as 1st parameter.
     # Example: https://sadmin/sadmin/sadm_view_servers.php?selection=os&value=centos
-    #if (isset($_GET['value']) && !empty($_GET['value'])) {             # If Second Value Specified
-    if (isset($_GET['value']))  {              # If Second Value Specified
-        if (!empty($_GET['value'])) {
-            $VALUE = $_GET['value'];                                    # Save 2nd Parameter Value
-        }else{
-            $VALUE = NULL;
-        }
-    if ($DEBUG) { echo "<br>2nd Parameter Received is " . $VALUE; }     # Under Debug Show 2nd Parm.
+    if (isset($_GET['value']) && !empty($_GET['value']) ) {
+        $VALUE = $_GET['value'];                                        # Save 2nd Parameter Value
+    }else{
+        $VALUE = NULL;
     }
+    if ($DEBUG) { echo "<br>2nd Parameter Received is " . $VALUE; }     # Under Debug Show 2nd Parm.
+ 
 
-    # Validate the view option received, Set Page Heading and Retreive Selected Data from Database
+    # Validate the view option received, Set Page Heading and retrieve selected data from database
     switch ($SELECTION) {
         case 'all_servers'  : 
             $sql = 'SELECT * FROM server order by srv_name;';
