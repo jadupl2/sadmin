@@ -56,6 +56,7 @@
 # 2023_08_01 lib v4.43 Added 'db_name' variable that hold 'SADMIN' database name (or yours).
 # 2023_08_19 lib v4.44 start() & stop() functions now connect/close DB automatically (if db_used=True).
 # 2023_09_22 lib v4.45 Reduce recommended SADM_*_KEEPDAYS values of  to save disk space.
+#@2023_10_23 lib v4.46 Fix crash when running a script that need to be run by 'root' and was not.
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -88,7 +89,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.45"                                # This Library Version
+lib_ver             = "4.46"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -1766,7 +1767,7 @@ def load_cmd_path():
 
 # --------------------------------------------------------------------------------------------------
 def db_close():
-    
+
     """ 
         Close the Database.
         
@@ -1774,14 +1775,41 @@ def db_close():
             None 
     
         Returns: (db_err)
-            db_err (int)    :   Return 0 mean database is closed.
+            db_err (int)    :   Return 0 mean database is closed (Default).
                                 Return 1 when error closing connection with database.
     """    
     global db_conn,db_cur
-    
+    db_err = 0                                                          # Set default return value
+
+    # No Connection to Database is possible if not on the SADMIN Server
+    if get_fqdn() != sadm_server :                                      # Use only on SADMIN server
+        db_errmsg = "DB can't be used on '%s', only on '%s' system." % (sadm_server,get_fqdn())
+        db_errno = 1
+        if not db_silent : write_err(db_errmsg)
+        return(db_errno)
+
+    # User decided not to use Database, No Connection to Database
+    if not db_used :                                                    # User Want to use DB
+       db_errmsg = "[ Error ] Connection to Database only possible when db_used is set to True"
+       db_errno = 1 
+       if not db_silent : write_err(db_errmsg)
+       return(db_errno)
+
+    #print ("\ndb_cur = %s - db_conn = %s\n" % (db_cur,db_conn) )
+
+    if db_cur == None or db_conn == None :
+        db_errmsg = "Database already disconnected."
+        db_errno  = 0 
+        return(db_errno)
+
     try:
         db_cur.close()
         db_conn.close()
+
+    except (AttributeError,NameError) as ne:
+        if not db_silent :
+            print(ne)
+        return(1)
     except Exception as e:
         if not db_silent :
             (enum,emsg) = e.args                                        # Get Error No. & Message
@@ -2032,8 +2060,7 @@ def stop(pexit_code) :
 
     # Close Database if was used
     if get_fqdn() == sadm_server and db_used :                          # If Database was Used
-       db_close ()                                                      # Close Database
-
+       db_close()                                                       # Close Database
     return
 
 
@@ -2520,7 +2547,7 @@ def db_connect(DB):
     if get_fqdn() != sadm_server :                                      # Use only on SADMIN server
        if not db_silent :                                               # Want to show error Msg.
            write_err("DB can't be used on '%s', only on '%s' system." % (sadm_server,get_fqdn()))
-       db_errno = 1                                                 # Error number
+       db_errno = 1                                                     # Error number
        db_errmsg = "DB can't be used on '%s', only on '%s' system." % (sadm_server,get_fqdn())
        return(1)
 
@@ -2528,7 +2555,7 @@ def db_connect(DB):
     if not db_used :                                                    # User Want to use DB
        if not db_silent :
           write_err("[ Error ] Connection to Database only possible when db_used is set to True")
-       db_errno = 1                                                 # Error number
+       db_errno = 1                                                     # Error number
        db_errmsg = "[ Error ] Connection to Database only possible when db_used is set to True"
        return(1)
 
