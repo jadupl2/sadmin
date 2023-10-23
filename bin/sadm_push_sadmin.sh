@@ -60,7 +60,7 @@
 # 2023_04_29 server v2.41 Increase speed of files copy from clients to SADMIN server.
 # 2023_05_26 server v2.42 If /etc/environment isn't present on client, proceed with the next system.
 # 2023_07_18 server v2.43 Fix problem when not using the standard ssh port (22).
-# 2023_10_04 server v2.44 Error were not recorded in the error log.
+# 2023_10_04 server v2.44 Some error were recorded in standard log instead of the error log.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -383,7 +383,7 @@ process_servers()
                                 else sadm_write_err "[ ERROR ] ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
                                      ((ERROR_COUNT++))    # Increase Error Counter
                              fi 
-                        else sadm_write_err "[ OK ] rsync -ar  -e 'ssh -p $server_ssh_port' --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
+                        else sadm_write_log "[ OK ] rsync -ar  -e 'ssh -p $server_ssh_port' --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
                     fi
                     done             
         fi
