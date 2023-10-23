@@ -1958,7 +1958,7 @@ sub end_of_sysmon {
 
     # Initializing SysMon
     if ($SADM_UID != 0) {                           # Script MUST be run by root
-        print "\nThe SADMIN monitor need to be run by 'roor' user.\n\n" ;
+        print "\nThe SADMIN monitor need to be run by 'root' user.\n\n" ;
         exit 1;                                     # Exit with Error
     }    
     #
