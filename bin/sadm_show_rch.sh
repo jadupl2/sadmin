@@ -37,6 +37,7 @@
 # 2020_05_23 cmdline v1.18 Changing the way to get SADMIN variable in /etc/environment 
 # 2022_05_11 cmdline v1.19 Replace "sadm_send_alert()" call by "sadm_sendmail()". 
 # 2022_08_17 cmdline v1.20 Updated with new SADMIN section v1.52
+#@2023_10_27 cmdline v1.21 Exclude script specify in 'SADM_MONITOR_RECENT_EXCLUDE' in sadmin.cfg.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -44,50 +45,47 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
-# ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.52
-# Setup for Global Variables and load the SADMIN standard library.
-# To use SADMIN tools, this section MUST be present near the top of your code.    
-# ---------------------------------------------------------------------------------------
 
-# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
-    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
-         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+# ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
+# v1.56 - Setup for Global Variables and load the SADMIN standard library.
+#       - To use SADMIN tools, this section MUST be present near the top of your code.    
+
+# Make Sure Environment Variable 'SADMIN' Is Defined.
+if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
+         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
             then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-                 exit 1                                    # No SADMIN Env. Var. Exit
+                 exit 1                                                 # No SADMIN Env. Var. Exit
          fi
 fi 
 
-# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
 export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 export SADM_TPID="$$"                                      # Script Process ID.
-export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
-export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
+export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
-# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.20'                                     # Script version number
-export SADM_PDESC="Display summary of all result file (RCH)."  
+# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='1.21'                                     # Script version number
+export SADM_PDESC="Scripts monitoring from command line that show status of all result file (RCH)."  
+export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="N"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="N"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
-export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
-export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
-export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
-export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
@@ -100,7 +98,11 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-# ---------------------------------------------------------------------------------------
+#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+# --------------- ---  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+
+
 
 
 
@@ -117,7 +119,7 @@ xline_count=0                                   ; export xline_count    # Line d
 HTML_FILE="${SADM_TMP_DIR}/${SADM_INST}.html"   ; export HTML_FILE      # HTML File sent to user
 DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 URL_VIEW_FILE='/view/log/sadm_view_file.php'    ; export URL_VIEW_FILE  # View File Content URL
-
+SADM_TMP_FILE4=$(mktemp "$SADMIN/tmp/${SADM_INST}4_XXX") 
 
 
 # --------------------------------------------------------------------------------------------------
@@ -213,15 +215,23 @@ display_detail_line()
 #===================================================================================================
 load_array()
 {
-    # SADMIN Server get ReturnCodeHistory (RCH) files from all clients via "sadm_fetch_clients.sh" 
-    # This is done at regular interval from the server crontab,(/etc/cron.d/sadm_server)
-    # A Temp file that containing the LAST line of each *.rch file present in ${SADMIN}/www/dat dir.
+    # SADMIN Server get ReturnCodeHistory (RCH) files from all clients via "sadm_fetch_clients.sh".
+    # This is done at regular interval from the server crontab,(/etc/cron.d/sadm_server).
+    # A temp file containing the LAST line of each *.rch file present in ${SADMIN}/www/dat dir.
     # ----------------------------------------------------------------------------------------------
     find $SADM_WWW_DAT_DIR -type f -name "*.rch" -exec tail -1 {} \; > $SADM_TMP_FILE2
-    #sort -t' ' -rk9,9 -k2,3 -k7,7 $SADM_TMP_FILE2 > $SADM_TMP_FILE1     # Sort by Return Code & date
-    sort -t' ' -rk10,10 -k2,3 -k7,7 $SADM_TMP_FILE2 > $SADM_TMP_FILE1     # Sort by Return Code & date
+    sort -t' ' -rk10,10 -k2,3 -k7,7 $SADM_TMP_FILE2 > $SADM_TMP_FILE1   # Sort by Return Code & date
+    
+    # Don´t shown script name specify in $SADMIN/cfg/sadmin.cfg under 'SADM_MONITOR_RECENT_EXCLUDE'
+    for i in ${SADM_MONITOR_RECENT_EXCLUDE//,/ }
+        do
+        #sed "'/$i/d'" "$SADM_TMP_FILE1"
+        grep -vi "$i" $SADM_TMP_FILE1 >  $SADM_TMP_FILE4
+        cp $SADM_TMP_FILE4 $SADM_TMP_FILE1
+    done
 
-    # If Option -s was used on the command line to get the report for only the one specified.
+
+    # If Option '-s hostname' use on the command line to get the report for only one system.
     if [ "$SERVER_NAME" != "" ]                                         # CmdLine -s 1 server Report
         then sadm_write "Searching for $SERVER_NAME in RCH files.\n"    # Search ServerName in RCH
              grep -i "$SERVER_NAME" $SADM_TMP_FILE1 > $SADM_TMP_FILE2   # Keep only that server
@@ -531,7 +541,6 @@ main_process()
 
 
 
-
 # --------------------------------------------------------------------------------------------------
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
@@ -544,26 +553,14 @@ function cmd_options()
 
     while getopts "hvd:epmws:" opt ; do                                 # Loop to process Switch
         case $opt in
-            m) MAIL_ONLY="ON"                                           # Output goes to sysadmin
-               PAGER="OFF"                                              # Mail need pager to be off
-               ;;                                       
-            e) ERROR_ONLY="ON"                                          # Display Only Error file 
-               ;;
-            s) SERVER_NAME="$OPTARG"                                    # Display Only Server Name
-               ;;
-            w) WATCH="ON"                                               # Display 1st page Only        
-               PAGER="OFF"                                              # Watch need pager to be off
-               ;;                                                       # And it's refresh every Min
-            p) PAGER="OFF"                                              # Display Continiously    
-               ;;                                                       # No stop after each page
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
                if [ "$num" = "" ]                            
-                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -571,6 +568,18 @@ function cmd_options()
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
+            m) MAIL_ONLY="ON"                                           # Output goes to sysadmin
+               PAGER="OFF"                                              # Mail need pager to be off
+               ;;                                       
+            e) ERROR_ONLY="ON"                                          # Display Only Error file 
+               ;;
+            s) SERVER_NAME="$OPTARG"                                    # Display One Server Name
+               ;;
+            w) WATCH="ON"                                               # Display 1st page Only        
+               PAGER="OFF"                                              # Watch need pager to be off
+               ;;                                                       # And it's refresh every Min
+            p) PAGER="OFF"                                              # Display Continiously    
+               ;;                                                       # No stop after each page
            \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
@@ -579,6 +588,8 @@ function cmd_options()
     done                                                                # End of while
     return 
 }
+
+
 
 
 # --------------------------------------------------------------------------------------------------
