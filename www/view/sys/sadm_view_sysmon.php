@@ -505,7 +505,7 @@ function show_activity($con,$alert_file) {
 
     # Header of the Section
     $HEADS=" Most recent scripts execution" ;
-    echo "\n<br><br><h3><strong>". SADM_MONITOR_RECENT_COUNT . "${HEADS}</strong></h3>\n" ;
+    echo "\n<br><h3><strong>". SADM_MONITOR_RECENT_COUNT . "${HEADS}</strong></h3>\n" ;
 
     # Get the last $SADM_MONITOR_RECENT_COUNT scripts than have ran.
     $CMD_PART1="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \;" ;

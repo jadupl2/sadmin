@@ -530,7 +530,7 @@ sadm_ask() {
                  ;;
              * ) echo ""                                                # Blank Line
                  ;;                                                     # Other stay in the loop
-         esac
+        esac
     done
     return $wreturn                                                     # Return Answer to caller 
 }
