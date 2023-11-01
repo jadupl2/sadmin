@@ -487,25 +487,25 @@ function display_line($line,$BGCOLOR,$con)
 
 
 
-# Show the scripts execution history.
-#   - Show most recent result lines.
-#   - Number of lines displayed is controled by the value of $SADM_MONITOR_HISTORY_SIZE.
-#   - $SADM_MONITOR_HISTORY_SIZE is define in $SADMIN/cfg/sadmin.cfg
+
+# Show XX Most recent scripts execution
+#   - XX is $SADM_MONITOR_HISTORY_SIZE defined in $SADMIN/cfg/sadmin.cfg.
 #---------------------------------------------------------------------------------------------------
 function show_activity($con,$alert_file) {
     global $DEBUG, $tmp_file1, $tmp_file2, $URL_HOST_INFO, $URL_VIEW_RCH, $URL_WEB, $URL_VIEW_FILE ;
-
     $DEBUG = False ;
 
-    $wdate=date('Y.m.d');
+    $wdate=date('Y.m.d');                                               # 2023.10.29
+    $today=date("jS F, Y");                                             # 
     if ($DEBUG) { 
         echo "<br>\nSADM_MONITOR_RECENT_COUNT " . SADM_MONITOR_RECENT_COUNT . "\n<br>" ; 
         echo "<br>\nCurrent date : " . $wdate . "\n<br>"; 
+        echo "<br>\n" .$today. "\n<br>"; 
     }
 
     # Header of the Section
     $HEADS=" Most recent scripts execution" ;
-    echo "\n<br><h3><strong>". SADM_MONITOR_RECENT_COUNT . "${HEADS}</strong></h3>\n" ;
+    echo "\n<br><h3><strong><center>". SADM_MONITOR_RECENT_COUNT . "$HEADS</strong></center></h3>\n" ;
 
     # Get the last $SADM_MONITOR_RECENT_COUNT scripts than have ran.
     $CMD_PART1="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \;" ;
@@ -523,9 +523,9 @@ function show_activity($con,$alert_file) {
         echo '</pre></code>';                                           # End of code display
     }
     
-    echo "\n<table  align=center border=0 width='95%'>" ;
-    #$HCOLOR='#0e8420';
-    $HCOLOR='#000000';
+    echo "\n<table  align=center border=1 width='95%'>" ;
+    $HCOLOR='#68c174';
+    #$HCOLOR='#000000';
     echo "<tr style='background-color:$HCOLOR ; color:white ; line-height:200%'>\n";
     echo "<td width=25 align='center'><b>No</td>\n";    
     echo "<td widtd=90 align='center'><b>System</td>\n";
@@ -577,9 +577,11 @@ function show_activity($con,$alert_file) {
 
         # Alternate color at each line.
         if ($lcount % 2 == 0) {                                         # If even lines count
-            echo "\n<tr style='background-color:#cccccc ; line-height:150% ; color:black'>\n";
+            #echo "\n<tr style='background-color:#cccccc ; line-height:150% ; color:black'>\n";
+            echo "\n<tr style='background-color:#fbfbfb ; line-height:150% ; color:black'>\n";
         }else{
-            echo "\n<tr style='background-color:#ffffff ; line-height:150% ; color:black'>\n";
+            #echo "\n<tr style='background-color:#ffffff ; line-height:150% ; color:black'>\n";
+            echo "\n<tr style='background-color:#f1f1f1 ; line-height:150% ; color:black'>\n";
         }
     
         echo "\n<td align='center'>". $lcount . "</td>";                # Line counter
@@ -844,7 +846,7 @@ function display_data($con,$alert_file) {
     if (sizeof($array_sysmon) > 0) {                                    # Array is not Empty 
         display_alert_section($con,$alert_file);                        # Show Error,Warning,Running
     }else{
-        echo "<center><strong>At this moment, no error or warning to report</strong></center>" ;
+        echo "<h4><center><strong>Nothing to report at the moment</strong></center></h4>";
     }
 
     # Show History of recent scripts activity
@@ -861,16 +863,16 @@ function display_data($con,$alert_file) {
 #---------------------------------------------------------------------------------------------------
 # Main Page Logic start here 
 #---------------------------------------------------------------------------------------------------
-    set_time_limit(100);                                                # maximum execution time sec
+    #set_time_limit(100);                                               # maximum execution time sec
     $title1="Systems Monitor Status";                                   # Page Title
     $title2 = date("Y-m-d h:i:s");
-    display_lib_heading("HOME","$title1","$title2",$SVER);              # Display Page Heading+Date
+    display_lib_heading("HOME","$title1","Last update $title2",$SVER);  # Display Page Heading+Date
     create_alert_file();                                                # Cr. AlertFile from RPT/RCH
     display_data($con,$alert_file);                                     # Display SysMon Array
     
     # Page footer
-    echo "\n<br><center>\n" ;
+    echo "\n<br><center>\n<strong>" ;
     echo "Page will refresh every " . SADM_MONITOR_UPDATE_INTERVAL . " seconds." ;
-    echo "\n</center><br>\n";
+    echo "\n</center></strong><br>\n";
     std_page_footer($con) ;                                              # Close MySQL & HTML Footer
 ?>
