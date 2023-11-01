@@ -99,7 +99,8 @@ $CREATE_BUTTON = False ;                                                # Don't 
                 $CMD = "rm -fr " . $server_dir ;
                 exec($CMD,$output,$rc);
                 if ($rc <> 0) { 
-                    sadm_alert("Error ".$rc." while removing system data directory $server_dir ");
+                    sadm_alert("Error removing system data directory $server_dir");
+                    sadm_alert("You can safely remove it manually."); 
                 }
             }
         }

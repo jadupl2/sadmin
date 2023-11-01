@@ -33,19 +33,21 @@ body,html{
 h1 {
 	font-size       :   28px;
 	font-weight     :   bold;
+    font-family     :   Helvetica, Arial, sans-serif, Verdana ;
 	margin          :   6px 20px 10px 0px;
 }
 /* Heading 2 */
 h2 {
 	font-size       :   26px;
 	font-weight     :   normal;
+    font-family     :   Helvetica, Arial, sans-serif, Verdana ;
 	margin          :   6px 20px 10px 0px;
 }
 /* Heading 3 */
 h3 {
 	font-size       :   22px;
-    font-family     :   Arial, sans-serif, Verdana,  Helvetica ;    
-    font-style      :   italic;
+    font-family     :   Helvetica, Arial, sans-serif, Verdana ;
+    font-style      :   normal;
     font-weight     :   bold;
     color           :   #124f44;
     /* color          : #ff0000 */
