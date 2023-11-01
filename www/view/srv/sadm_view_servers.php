@@ -96,8 +96,8 @@ function setup_table() {
     # PAGE TABLE HEADING
     echo "\n<thead>";
     echo "\n<tr>";
-    echo "\n<th class='dt-head-left'>Name</th>";                        # Left Align Header & Body
-    echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
+    echo "\n<th class='dt-head-left'>Name/Description</th>";            # Left Align Header & Body
+    #echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
     echo "\n<th class='dt-head-left'>Arch</th>";                        # Left Header Only
     echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
     echo "\n<th class='dt-head-center'>Version</th>";                   # Left Header Only
@@ -115,8 +115,8 @@ function setup_table() {
     # PAGE TABLE FOOTER
     echo "\n<tfoot>";
     echo "\n<tr>";
-    echo "\n<th class='dt-head-left'>Name</th>";                        # Left Align Header & Body
-    echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
+    echo "\n<th class='dt-head-left'>Name/Description</th>";            # Left Align Header & Body
+    #echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
     echo "\n<th class='dt-head-left'>Arch</th>";                        # Left Header Only
     echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
     echo "\n<th class='dt-head-center'>Version</th>";                   # Left Header Only
@@ -146,13 +146,14 @@ function display_data($count,$con,$row) {
     #echo "\n<td class='dt-left'>" ;
     echo "\n<td>" ;
     echo "<a href='" . $URL_HOST_INFO . "?sel=" . $row['srv_name'];
-    echo "' data-toggle='tooltip' title='";
-    if ($row['srv_model']  != "") { echo "Model "  . $row['srv_model']  . " - " ;} 
-    if ($row['srv_serial'] != "") { echo "Serial " . $row['srv_serial'] . " - " ;} 
-    echo "IP " . $row['srv_ip'] ."'>" .$row['srv_name']. "</a></td>";
+    echo "' data-toggle='tooltip' title='" ;
+    if ($row['srv_note'] != "") { echo $row['srv_note']. " - " ; } 
+    echo "IP " . $row['srv_ip'] ."'>" .$row['srv_name']. "</a>";
+    #"</td>";
 
     # Display Server Desc.
-    echo "\n<td class='dt-left'>"    . $row['srv_desc']   . "</td>";    # Display Description
+    #echo "\n<td class='dt-left'>"    . $row['srv_desc']   . "</td>";    # Display Description
+    echo "\n<br>" . $row['srv_desc']  . "</td>";   
 
     # Server Architecture  
     echo "<td class='dt-body-left'>" . $row['srv_arch'] . "</td>\n";  
