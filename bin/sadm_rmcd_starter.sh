@@ -51,57 +51,53 @@
 # 2022_09_20 cmdline v1.7 SSH to client is now using the port defined in each system.
 # 2022_12_13 cmdline v1.8 Intermittent crash cause by a typo error.
 # 2023_05_06 cmdline v1.9 Reduce ping wait time to speed up processing.
+#@2023_11_05 cmdline v2.0 Add option to ssh command '-o ConnectTimeout=10 -o BatchMode=yes'.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
 
 
+# ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
+# v1.56 - Setup for Global Variables and load the SADMIN standard library.
+#       - To use SADMIN tools, this section MUST be present near the top of your code.    
 
-# ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.52
-# Setup for Global Variables and load the SADMIN standard library.
-# To use SADMIN tools, this section MUST be present near the top of your code.    
-# ---------------------------------------------------------------------------------------
-
-# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
-    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
-         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+# Make Sure Environment Variable 'SADMIN' Is Defined.
+if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
+         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
             then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-                 exit 1                                    # No SADMIN Env. Var. Exit
+                 exit 1                                                 # No SADMIN Env. Var. Exit
          fi
 fi 
 
-# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
 export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 export SADM_TPID="$$"                                      # Script Process ID.
-export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
-export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
+export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
-# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.9'                                      # Current Script Version
-export SADM_PDESC="Execute a defined script on a remote system." 
+# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='2.0'                                      # Current Script Version
+export SADM_PDESC="Execute an existing script on a remote system." 
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
-export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
-export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
+export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
-export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
-export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
-export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
@@ -114,7 +110,9 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-# ---------------------------------------------------------------------------------------
+#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+# --------------- ---  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
 
 
 
@@ -122,15 +120,15 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 # --------------------------------------------------------------------------------------------------
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
-ERROR_COUNT=0                               ; export ERROR_COUNT        # Nb. of update failed
-STAR_LINE=`printf %80s |tr " " "*"`         ; export STAR_LINE          # 80 equals sign line
+export ERROR_COUNT=0                                                    # Nb. of update failed
+export STAR_LINE=$(printf %80s |tr " " "*")                             # 80 equals sign line
 
-# Script Variable needed to run the script on the remote client.
+# Script Variables needed to run the script on the remote client.
 export SCRIPT=""                                                        # Script to execute 
-export SERVER=""                                                        # Server Where script reside
+export SERVER=""                                                        # System where execute script
 export LOCK="N"                                                         # Lock=No Monitor during run
-export LOCKNODE=""                                                      # Server name to Lock
-export SUSER=""                                                         # UserName Used to SSH Remote
+export LOCKNODE=""                                                      # System name to Lock
+export SUSER=""                                                         # UserName used to run script
 
 
 
@@ -141,17 +139,19 @@ export SUSER=""                                                         # UserNa
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${BOLD}${SADM_PN} [-d Level] [-h] [-v] [-l systemName ] [-u username] [-s scriptName] [-n systemName]${NORMAL}" 
-    printf "\n\t${BOLD}-d${NORMAL}   (Debug Level [0-9])"
-    printf "\n\t${BOLD}-h${NORMAL}   (Display this help message)"
-    printf "\n\t${BOLD}-v${NORMAL}   (Show Script Version Info)"
-    printf "\n\t${BOLD}-n${NORMAL}   (System Name where script reside)"
-    printf "\n\t${BOLD}-l${NORMAL}   (Lock System (no monitoring) while script is running)"
-    printf "\n\t${BOLD}-s${NORMAL}   (Script Name to execute)"
-    printf "\n\t${BOLD}-u${NORMAL}   (User Name use to ssh on remote system)"
-    printf "\n\t${BOLD}-p${NORMAL}   (Prefix script Name with path of $SADMIN on remote system)"
+    printf "\n${BOLD}${SADM_PN} [-d level] [-h] [-v] [-l hostname ] [-u username] [-s scriptName] [-n remote_hostname]${NORMAL}" 
+    printf "\n\t${BOLD}-d${NORMAL}   (Debug level [0-9])"
+    printf "\n\t${BOLD}-h${NORMAL}   (Display this help message)."
+    printf "\n\t${BOLD}-v${NORMAL}   (Show script version info)."
+    printf "\n\t${BOLD}-n${NORMAL}   (Remote system name where script reside)."
+    printf "\n\t${BOLD}-l${NORMAL}   (System name to lock while script is running)."
+    printf "\n\t${BOLD}-s${NORMAL}   (Script name and parameter(s) (if needed) to execute)."
+    printf "\n\t${BOLD}-u${NORMAL}   (User name use by ssh to log on remote system)."
+    printf "\n\t${BOLD}-p${NORMAL}   (Prefix script name with path of $SADMIN on remote system)."
     printf "\n\n" 
 }
+
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -159,20 +159,20 @@ show_usage()
 # --------------------------------------------------------------------------------------------------
 rmcd_start()
 {
-
-    # Get info about server in Database
+    # Get info about systems in Database
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, "
     SQL2="srv_update_reboot, srv_sporadic, srv_active, srv_sadmin_dir,srv_ssh_port from server "
     SQL3="where srv_name = '$SERVER' ;"                                 # Select server to rmcmd
     SQL="${SQL1}${SQL2}${SQL3}"                                         # Build Final SQL Statement 
 
+    # Does the requested system is defined in SADMIN database.
     WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL'"        # Build Full Command Line
     if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
    
-    # Result file not readable or is empty = Server Name not found in Database
+    # If resulting file is not readable or is empty.
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
         then sadm_write_err "${SADM_ERROR} The system '$SERVER' wasn't found is Database."
              return 1                                                   # Return Error to Caller
@@ -181,58 +181,57 @@ rmcd_start()
     # Process the server
     while read wline
         do
-        server_name=`         echo $wline|awk -F\; '{ print $1 }'`
-        server_os=`           echo $wline|awk -F\; '{ print $2 }'`
-        server_domain=`       echo $wline|awk -F\; '{ print $3 }'`
-        server_update_auto=`  echo $wline|awk -F\; '{ print $4 }'`
-        server_update_reboot=`echo $wline|awk -F\; '{ print $5 }'`
-        server_sporadic=`     echo $wline|awk -F\; '{ print $6 }'`
-        server_sadmin_dir=`   echo $wline|awk -F\; '{ print $8 }'`
-        server_ssh_port=`     echo $wline|awk -F\; '{ print $9 }'`
-        fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
+        server_name=$(          echo $wline|awk -F\; '{ print $1 }')
+        server_os=$(            echo $wline|awk -F\; '{ print $2 }')
+        server_domain=$(        echo $wline|awk -F\; '{ print $3 }')
+        server_update_auto=$(   echo $wline|awk -F\; '{ print $4 }')
+        server_update_reboot=$( echo $wline|awk -F\; '{ print $5 }')
+        server_sporadic=$(      echo $wline|awk -F\; '{ print $6 }')
+        server_sadmin_dir=$(    echo $wline|awk -F\; '{ print $8 }')
+        server_ssh_port=$(      echo $wline|awk -F\; '{ print $9 }')
+        fqdn_server=$(echo ${server_name}.${server_domain})             # Create FQN System Name
 
-        # Ping to server - Test if it is alive
+        # Ping the remote system - Test if it is alive
         ping -c2 -W2 $fqdn_server >> /dev/null 2>&1
         if [ $? -ne 0 ]
             then sadm_write_err "${SADM_ERROR} Can't ping $fqdn_server."
                  return 1                                               # Return to Caller
-            else sadm_writelog "${SADM_OK} Ping host $fqdn_server."
+            else sadm_writelog "${SADM_OK} Ping remote system '$fqdn_server' worked."
         fi
 
         # If prefix requested (-p), Add the $SADMIN PATH before the script name.
-        if [ "$PREFIX" = "Y" ]
+        if [ "$PREFIX" = "Y" ]                                          # Script Path Prefix added ?
            then SCRIPT="${server_sadmin_dir}/${SCRIPT}"                 # Add $SADMIN System to Name
                 sadm_write "${SADM_OK} SADMIN Path added to script name, now changed to $SCRIPT'.\n" 
         fi
 
-        
-        # Check if the node is currently lock (Abort execution)
+        # Check if the remote system is currently lock (Abort execution)
         sadm_check_system_lock "${LOCKNODE}"                            # Check if node is lock
         if [ $? -eq 1 ]                                                 # If node is lock
-           then sadm_write_err "The system '${SNAME}' is currently lock."
-                sadm_write_err "System normal monitoring will resume in ${sec_left} seconds."
-                sadm_write_err "Maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
-                ERROR_COUNT=$(($ERROR_COUNT+1))                             # Increment Error Counter
-                return 1                                                    # Return Error to caller
+           then sadm_write_err "The system '$SNAME' is currently lock."
+                sadm_write_err "System normal monitoring will resume in $sec_left seconds."
+                sadm_write_err "Maximum lock time allowed is $SADM_LOCK_TIMEOUT seconds."
+                ERROR_COUNT=$(($ERROR_COUNT+1))                         # Increment Error Counter
+                return 1                                                # Return Error to caller
         fi 
 
-        # If requested (-l), created a server lock file, to prevent generation monitoring error.
+        # If requested (-l) then create a system lock file, to prevent generating monitoring error.
         if [ "$LOCK" = "Y" ]                                            # cmdline option lock system
-           then sadm_lock_system "${LOCKNODE}"                          # Create System Lock File
+           then sadm_lock_system "$LOCKNODE"                            # Create System Lock File
                 if [ $? -ne 0 ]                                         # Unable to Lock Node
                    then ERROR_COUNT=$(($ERROR_COUNT+1))                 # Increment Error Counter
-                        sadm_writelog "${SADM_ERROR} Aborting process for '${SERVER}'."
+                        sadm_writelog "${SADM_ERROR} Aborting process for '$SERVER'."
                         return 1                                        # Return Error to caller 
-#                   else sadm_write_log "Show lock file" 
-#                        ls -l $SADMIN/*.lock
                 fi
         fi
         
         # Time to run the requested ${SCRIPT}.
         sadm_write_log " "
         sadm_write_log "${BOLD}Starting '$SCRIPT' on '${server_name}'.${NORMAL}"
-        sadm_write_log "$SADM_SSH -p $server_ssh_port ${SUSER}\@${fqdn_server} '${SCRIPT}'"
-        $SADM_SSH -qnp $server_ssh_port ${SUSER}\@${fqdn_server} ${SCRIPT} >>$SADM_LOG 2>&1 
+        #ssh -o ConnectTimeout=10 -o BatchMode=yes raspi5 ; echo $?
+
+        sadm_write_log "$SADM_SSH -p -qnp $server_ssh_port -o ConnectTimeout=10 -o BatchMode=yes ${SUSER}\@${fqdn_server} '${SCRIPT}'"
+        $SADM_SSH -qnp $server_ssh_port -o ConnectTimeout=10 -o BatchMode=yes ${SUSER}\@${fqdn_server} ${SCRIPT} >>$SADM_LOG 2>&1 
         RC=$? 
         if [ $RC -ne 0 ]                                                # Update went Successfully ?
            then sadm_write_err "[ ERROR ] Script completed with error no.$RC on '${server_name}'."
