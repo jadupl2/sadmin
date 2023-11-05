@@ -185,7 +185,7 @@ update_server_db()
 {
     WSERVER=$1                                                          # Server Name to Update
     WSTATUS=$2                                                          # Status of OS Update (F/S)
-    WCURDAT=`date "+%C%y.%m.%d %H:%M:%S"`                               # Get & Format Update Date
+    WCURDAT=$(date "+%C%y.%m.%d %H:%M:%S")                              # Get & Format Update Date
 
     # Construct SQL Update Statement
     #if [ "$WSTATUS" = "F" ]
