@@ -122,6 +122,7 @@
 # 2023_07_16 install v3.91 Ask for the SADMIN server IP instead of FQDN.
 # 2023_07_26 install v3.92 Adjust list of packages required to use 'ReaR' image backup (+xorriso).
 # 2023_08_23 install v3.93 Package detection, was failing under certain condition.
+#@2023_11_06 install v3.94 Misc. typo change & minor fixes.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -139,7 +140,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.93"                                            # Setup Version Number
+sver                = "3.94"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -2295,7 +2296,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     # Accept smtp server port (25, 465, 587 or 2525)
     # For Google it's 'smtp.gmail.com'
     sdefault = 587                                                      # Default SMTP Port No.
-    sprompt  = "Enter SMTP port number "                                # Prompt for Answer
+    sprompt  = "Enter SMTP port number"                                 # Prompt for Answer
     while True :  
         wsmtp_port = accept_field(sroot,"SADM_SMTP_PORT",sdefault,sprompt,'I',25,2525)
         if wsmtp_port != 25 and wsmtp_port != 465 and wsmtp_port != 587 and wsmtp_port != 2525 :
@@ -2329,20 +2330,20 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
         #wsmtp_pwd = accept_field(sroot,"SADM_SMTP_PWD",sdefault,sprompt,'A')
         wsmtp_pwd = accept_field(sroot,"SADM_SMTP_PWD",sdefault,sprompt,'P')
         if len(wsmtp_pwd) < 1 :                                         # Need at least 1 Char
-            writelog ("You need to give your user password")            # Advise user 
+            writelog ("You need to give your user password.")           # Advise user 
             continue 
         break
     writelog(" ")
     setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,sosname) 
 
     # Accept the maximum number of lines we want in every log produce
-    sdefault = 500                                                      # No Default value 
+    sdefault = 400                                                      # No Default value 
     sprompt  = "Maximum number of lines in LOG files"                   # Prompt for Answer
     wcfg_max_logline = accept_field(sroot,"SADM_MAX_LOGLINE",sdefault,sprompt,"I",1,10000)
     update_sadmin_cfg(sroot,"SADM_MAX_LOGLINE",wcfg_max_logline)        # Update Value in sadmin.cfg
 
     # Accept the maximum number of lines we want in every RCH file produce
-    sdefault = 35                                                       # No Default value 
+    sdefault = 20                                                       # No Default value 
     sprompt  = "Maximum number of lines in history (.rch) files"        # Prompt for Answer
     wcfg_max_rchline = accept_field(sroot,"SADM_MAX_RCHLINE",sdefault,sprompt,"I",1,300)
     update_sadmin_cfg(sroot,"SADM_MAX_RCHLINE",wcfg_max_rchline)        # Update Value in sadmin.cfg
@@ -2418,7 +2419,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
             cmd = "usermod -p '$6$gfz87SfX$XA2N1ZXl79D3Z2C/gtp1d1rba7TenH2XzweeF9oKGIMGzdabzxKF8f9SCsu7m304BoCjal.h/UGMJ4UUKMuF4/' %s" % (wcfg_user)
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Assign Password
             writelog ("The password 'Gotham20!' have been assign to '%s' user." % (wcfg_user),'bold') 
-            writelog ("We strongly recommend you change it after installation.",'bold') # Inform user to change pwd
+            writelog ("We strongly recommend that you change it after installation.",'bold') 
         if wostype == "AIX" :                                           # Under AIX
             cmd = "mkuser pgrp='%s' -s /bin/ksh " % (wcfg_group)        # Build mkuser command
             cmd += " home='%s' " % (os.environ.get('SADMIN'))           # Set Home Directory
@@ -2433,7 +2434,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     # Change owner of all files in $SADMIN
     writelog (" ")
     writelog ("----------")
-    writelog ("Please wait while we set owner and group in %s directory ..." % (sroot))
+    writelog ("Please wait while we set the owner and group of %s directories ..." % (sroot))
     cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
     if (DEBUG):
         writelog (" ")                                                  # White Line
@@ -2579,8 +2580,8 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("===========================================================================")
     writelog ("You need to logout & log back in before using SADMIN or type the command :")
     writelog ("'. /etc/profile.d/sadmin.sh', this will define 'SADMIN' environment variable.")
-    writelog (" ")
     if (stype == "S") :
+        writelog (" ")
         writelog ("USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
         writelog ("The Web interface is available at : https://sadmin.%s" % (sdomain))
         writelog ("  - Use it to add, update and delete server in your server farm.")
@@ -2598,15 +2599,15 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("Copy the templates, run them and modify them to your need.") 
     writelog (" ")
     writelog ("SEE SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :",'bold')
-    writelog ("  - %s/bin/sadmlib_std_demo.sh" % (sroot))
-    writelog ("  - %s/bin/sadmlib_std_demo.py" % (sroot))
+    writelog ("  - sudo %s/bin/sadmlib_std_demo.sh" % (sroot))
+    writelog ("  - sudo %s/bin/sadmlib_std_demo.py" % (sroot))
     writelog (" ")
     writelog ("USE THE SADMIN WRAPPER TO RUN YOUR EXISTING SCRIPT",'bold')
     writelog ("  - %s/bin/sadm_wrapper.sh YourScript.sh" % (sroot))
     writelog (" ")
     if (stype == "C") :
         writelog ("WANT TO ADD A CLIENT ON THE SADMIN SERVER",'bold')
-        writelog ("  - See instruction on this page : https://sadmin.ca/www/client_add.php")
+        writelog ("  - See instruction on this page : https://sadmin.ca/sadm-add-client/")
         writelog (" ")
     writelog ("\n===========================================================================")
     writelog ("ENJOY !!",'bold')

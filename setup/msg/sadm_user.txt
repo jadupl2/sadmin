@@ -1,5 +1,5 @@
 # sadmin.cfg SADM_USER Documentation
-# Revise 2019_03_07
+# Revise 2022_11_06
 # ----------------------------------------------------------------------------
 This is SADMIN main user name.
     - This user will have access to all SADMIN directories & files.

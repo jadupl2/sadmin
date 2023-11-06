@@ -1,5 +1,5 @@
 # sadmin.cfg SADM_SMTP_SERVER Documentation
-# Revise 2023_07-21
+# Revise 2023_11-06
 # ----------------------------------------------------------------------------
 This field specify your Internet Service Provider (ISP) smtp server name.
-It's use by SADMIN to send report and alert by email.
+It's use by SADMIN to send report and alert via email.
