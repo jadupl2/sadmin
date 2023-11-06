@@ -846,7 +846,7 @@ function display_data($con,$alert_file) {
     if (sizeof($array_sysmon) > 0) {                                    # Array is not Empty 
         display_alert_section($con,$alert_file);                        # Show Error,Warning,Running
     }else{
-        echo "<h4><center><strong>Nothing to report at the moment</strong></center></h4>";
+        echo "<h3><center><strong><font color='#124f44'>***Nothing to report at the moment***</font></strong></center></h3>";
     }
 
     # Show History of recent scripts activity
