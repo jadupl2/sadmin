@@ -404,13 +404,15 @@ def update_host_file(wdomain,wip) :
     except :
         writelog("Error Opening /etc/hosts file")
         sys.exit(1)
-    eline = "%s    sadmin.%s   sadmin " % (wip,wdomain)                 # Line that should be hosts
+
+    # Add SADMIN server IP and name to /etc/hosts        
+    eline = "%s    sadmin.%s   sadmin " % (wip,wdomain)                 # Line to add to /etc/hosts
     found_line = False                                                  # Assume sadmin line not in
     for line in hf:                                                     # Read Input file until EOF
         if (eline.rstrip() == line.rstrip()):                           # Line already there    
             found_line = True                                           # Line is Found 
     if not found_line:                                                  # If line was not found
-        hf.write ("%s\n" % (eline))                                     # Write SADMIN line to hosts
+        hf.write ("#\n%s\n#\n" % (eline))                               # Write SADMIN line to hosts
     hf.close()                                                          # Close /etc/hosts file
     return()                                                            # Return Cmd Path
 
