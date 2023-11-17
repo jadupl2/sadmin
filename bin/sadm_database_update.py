@@ -122,7 +122,7 @@ wdict           = {}                                                    # Dict f
 
 
 
-# UPDATE ROW INTO FROM THE WROW DICTIONNARY THE SERVER TABLE
+# UPDATE ROW INTO FROM THE WROW DICTIONARY THE SERVER TABLE
 #===================================================================================================
 def update_row(wdict):
     sa.write_log ("Updating %s.%s data in Database" % (wdict['srv_name'],wdict['srv_domain']))
@@ -555,4 +555,3 @@ def main(argv):
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == "__main__": main(sys.argv)
-                                                    # Exit To O/S
