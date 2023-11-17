@@ -865,7 +865,7 @@ function display_data($con,$alert_file) {
 #---------------------------------------------------------------------------------------------------
     #set_time_limit(100);                                               # maximum execution time sec
     $title1="Systems Monitor Status";                                   # Page Title
-    $title2 = date("Y-m-d h:i:s");
+    $title2 = date("Y-m-d H:i:s");
     display_lib_heading("HOME","$title1","Last update $title2",$SVER);  # Display Page Heading+Date
     create_alert_file();                                                # Cr. AlertFile from RPT/RCH
     display_data($con,$alert_file);                                     # Display SysMon Array
