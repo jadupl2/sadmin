@@ -57,6 +57,7 @@
 # 2023_08_19 lib v4.44 start() & stop() functions now connect/close DB automatically (if db_used=True).
 # 2023_09_22 lib v4.45 Reduce recommended SADM_*_KEEPDAYS values of  to save disk space.
 #@2023_10_23 lib v4.46 Fix crash when running a script that need to be run by 'root' and was not.
+#@2023_11_17 lib v4.47 Fix error in db_close(), when trying to close a connection that isn't open.
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -89,7 +90,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.46"                                # This Library Version
+lib_ver             = "4.47"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -1781,26 +1782,9 @@ def db_close():
     global db_conn,db_cur
     db_err = 0                                                          # Set default return value
 
-    # No Connection to Database is possible if not on the SADMIN Server
-    if get_fqdn() != sadm_server :                                      # Use only on SADMIN server
-        db_errmsg = "DB can't be used on '%s', only on '%s' system." % (sadm_server,get_fqdn())
-        db_errno = 1
-        if not db_silent : write_err(db_errmsg)
-        return(db_errno)
-
-    # User decided not to use Database, No Connection to Database
-    if not db_used :                                                    # User Want to use DB
-       db_errmsg = "[ Error ] Connection to Database only possible when db_used is set to True"
-       db_errno = 1 
-       if not db_silent : write_err(db_errmsg)
-       return(db_errno)
-
-    #print ("\ndb_cur = %s - db_conn = %s\n" % (db_cur,db_conn) )
-
-    if db_cur == None or db_conn == None :
-        db_errmsg = "Database already disconnected."
-        db_errno  = 0 
-        return(db_errno)
+    # Connection.open field will be 1 if the connection is open and 0 otherwise.
+    if not db_conn.open :                                               # If no Database connection 
+        return(0)                                                       # No need to close
 
     try:
         db_cur.close()
@@ -1808,13 +1792,12 @@ def db_close():
 
     except (AttributeError,NameError) as ne:
         if not db_silent :
-            print(ne)
+            write_err("[ ERROR ] Error closing database '%s' - '%s'" % (db_name,ne))
         return(1)
     except Exception as e:
         if not db_silent :
             (enum,emsg) = e.args                                        # Get Error No. & Message
             write_err("[ ERROR ] Error closing database '%s'" % (db_name)) 
-            #write_err(">>>>>>>>>>>>> '%s'" % (e))                      # Error Message
             write_err(">>>>>>>>>>>>> '%s' '%s'" % (enum,emsg))          # Error Message
         db_errno=1                                                      # Set DB Error
         db_errmsg=emsg                                                  # Set Error Message
@@ -1937,13 +1920,13 @@ def stop(pexit_code) :
             wgrp_dest = dict_alert[wgrp_name][2].lower().strip()
             #print('%s - %s - %s ' % (wgrp_name, wgrp_type, wgrp_dest))
     if wgrp_type == 'm':
-        grp_desc = "by email to '%s'." % (wgrp_name)
+        grp_desc = "by email to group '%s'." % (wgrp_name)
     if wgrp_type == 's':
         grp_desc = "using Slack to '%s' channel)" % (wgrp_name) 
     if wgrp_type == 'c':
-        grp_desc = "to Cell. '%s'" % (wgrp_name)
+        grp_desc = "to Cell. group '%s'" % (wgrp_name)
     if wgrp_type == 't':
-        grp_desc = "by SMS to '%s'" % (wgrp_name)
+        grp_desc = "by SMS to group '%s'" % (wgrp_name)
     if wgrp_type != 'm' and wgrp_type != 's' and wgrp_type != 'c' and   wgrp_type != 't': 
         grp_desc = "Group '%s' invalid" % (wgrp_name)
 
@@ -2554,22 +2537,30 @@ def db_connect(DB):
     # User decided not to use Database, No Connection to Database
     if not db_used :                                                    # User Want to use DB
        if not db_silent :
-          write_err("[ Error ] Connection to Database only possible when db_used is set to True")
+          write_err("[ Error ] Connection to database only possible when 'sa.db_used' is set to True")
        db_errno = 1                                                     # Error number
-       db_errmsg = "[ Error ] Connection to Database only possible when db_used is set to True"
+       db_errmsg = "[ Error ] Connection to database only possible when 'sa.db_used' is set to True"
        return(1)
 
     # Open a connection to Database
     try :
-        #db_conn = pymysql.connect(host=sadm_dbhost,user=sadm_rw_dbuser,password=sadm_rw_dbpwd,database=db_name,cursorclass=pymysql.cursors.DictCursor)
-        db_conn = pymysql.connect(host=sadm_dbhost,user=sadm_rw_dbuser,password=sadm_rw_dbpwd,database=db_name,cursorclass=pymysql.cursors.DictCursor)
-        #except (NameError, pymysql.err.OperationalError, pymysql.err.InternalError) as e : 
+        #write_log("host=%s - user=%s - password=%s - database=%s" % (sadm_dbhost,sadm_rw_dbuser,sadm_rw_dbpwd,db_name))
+        db_conn = pymysql.connect( 
+            host=sadm_dbhost, 
+            user=sadm_rw_dbuser,  
+            password=sadm_rw_dbpwd, 
+            db=db_name,
+            cursorclass=pymysql.cursors.DictCursor
+        )
     except Exception as e:
         if not db_silent :
-            (enum,emsg) = e.args                                        # Get Error No. & Message
+            #(enum,emsg) = e.args                                        # Get Error No. & Message
+            emsg = e                                        # Get Error No. & Message
             write_err("Connection error to database '%s'" % (db_name))
-            write_err("[ ERROR ] '%s' '%s'" % (enum,emsg))                 # Error Message 
-        db_errno = enum
+            write_err("[ ERROR ] '%s' " % (e))                # Error Message 
+            #write_err("[ ERROR ] '%s' '%s'" % (enum,emsg))                 # Error Message 
+        #db_errno = enum
+        db_errno = 1
         db_errmsg = emsg
         return(1)
 
