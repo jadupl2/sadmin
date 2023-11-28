@@ -621,11 +621,10 @@ update_rear_site_conf()
     
     # Start creating a new ReaR site.conf file into a temp. file for now.
     echo  "#${SADM_DASH}" > $REAR_TMP
-    echo  "# This file have generated on `date '+%C%y.%m.%d %H:%M:%S'` by 'sadm_fetch_clients.sh'." >> $REAR_TMP
+    echo  "# File generated on $(date '+%C%y.%m.%d %H:%M:%S') by 'sadm_fetch_clients.sh'." >> $REAR_TMP
     echo  "# Every time you modify the '${WSERVER}' ReaR backup or ReaR backup exclude list, "  >> $REAR_TMP
     echo  "# your changes are copied from the sadmin server ($SADM_SERVER) to ${WSERVER} shortly after (Max 5min). " >> $REAR_TMP
     echo  "#${SADM_DASH}" >> $REAR_TMP
-    echo  "# " >> $REAR_TMP
     echo  "# " >> $REAR_TMP
     echo  "# Create a bootable ISO9660 image on disk as rear-$(hostname).iso" >> $REAR_TMP
     echo  "OUTPUT=ISO" >> $REAR_TMP
