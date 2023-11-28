@@ -70,7 +70,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='3.19'                                     # Script version number
-export SADM_PDESC="Script is run when the system is started (via sadmin.service)." 
+export SADM_PDESC="Script run at the system startup (via sadmin.service)." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
@@ -113,6 +113,26 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 export NTP_SERVER="68.69.221.61 162.159.200.1 205.206.70.2"             # Canada NTP Pool
 
 
+# Send email when the system is back online
+# --------------------------------------------------------------------------------------------------
+poweron_mail()
+{
+    sadm_write_log " "
+    sadm_write_log "Send 'Startup' email to $SADM_MAIL_ADDR"
+
+    ws="System $SADM_HOSTNAME has just rebooted." 
+    wb=$(printf "System '${SADM_HOSTNAME}' $(sadm_get_host_ip) is now back online.\n$(date)\nHave a nice day from ${SADM_PN}.\nSee you soon !")
+    we="$SADM_MAIL_ADDR"
+    
+    #sadm_write_log "sadm_sendmail \"$we\" \"$ws\" \"$wb\""
+    sadm_sendmail "$we" "$ws" "$wb"
+    RC=$?
+    if [ $RC -eq 0 ] 
+        then sadm_write_log "[ OK ] Mail sent successfully to $we"
+        else sadm_write_err "[ ERROR ] Problem sending email to $we" 
+    fi 
+    return $RC 
+}
 
 
 # --------------------------------------------------------------------------------------------------
@@ -123,8 +143,11 @@ main_process()
     ERROR_COUNT=0
     sadm_write_log "*** Running SADM System Startup Script on $(sadm_get_fqdn)  ***"
     sadm_write_log " "
-    
     sadm_write_log "Running Startup Standard Procedure"
+    
+    sadm_write_log "  Remove system lock file ('${SADMIN}/${SADM_HOSTNAME}.lock')."
+    rm -f "${SADMIN}/${SADM_HOSTNAME}.lock" >> $SADM_LOG 2>>$SADM_ELOG
+
     sadm_write_log "  Removing files in '$SADMIN/tmp directory."
     rm -f ${SADMIN}/tmp/* >> $SADM_LOG 2>>$SADM_ELOG
 
@@ -171,6 +194,10 @@ main_process()
 
     sadm_write_log " "
     sadm_write_log "End of startup script."                              # End of Script Message
+
+    #poweron_mail    
+    #if [ $? -ne 0 ] ; then ((ERROR_COUNT++)) ; fi
+        
     return $ERROR_COUNT                                                 # Return Default return code
 }
  
