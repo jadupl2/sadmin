@@ -41,6 +41,7 @@
 # 2022_06_16 lib v3.23 Added fields 'sa.proot_only' & 'sa.psadm_server_only' to output.
 # 2022_08_14 lib v3.24 Output updated with all the latest functions & global variables.
 # 2023_04_13 lib v3.25 Add 'SADM_REAR_DIF', 'SADM_REAR_INTERVAL', 'SADM_BACKUP_INTERVAL' to output.
+#@2023_11_29 lib v3.26 Change to not update 'rch' file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -76,9 +77,9 @@ export SADM_PDESC="Demonstrate functions & variables available to developers usi
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
-export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
-export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
+export SADM_LOG_HEADER="N"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="N"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
 export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
