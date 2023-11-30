@@ -31,6 +31,7 @@
 # 2023_07_26 lib v1.3 Enhance 'nmon' instance detection.
 # 2023_08_14 lib v1.4 Make sure only one instance of 'nmon' in running.
 # 2023_08_17 lib v1.5 Update to SADMIN section v2.3, fix 'pymysql' error msg & added log verbosity.
+#@2023_11_29 lib v1.6 Crash when could not start 'nmon' (performance monitor).
 # --------------------------------------------------------------------------------------------------
 #
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
@@ -64,7 +65,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "1.5"                                                  # Program version no.
+pver        = "1.6"                                                  # Program version no.
 pdesc       = "This script ensure that 'nmon' performance monitor is running."
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
 pdebug      = 0                                                      # Debug level from 0 to 9
@@ -183,7 +184,7 @@ def main_process():
         sa.write_log("We will stop them all and restart a fresh copy of '%s' daemon." % (nmon_name))
         ccode = cstdout = cstderr = "" 
         ccode,cstdout,cstderr = sa.oscommand("pkill -9 nmon")
-        if pdebug > 0 or ccode != 0 : 
+        if pdebug > 0 : 
             sa.write_log ("oscommand function stdout is     : %s" % (cstdout))
             sa.write_log ("oscommand function stderr is     : %s" % (cstderr))
             sa.write_log ("oscommand function returncode is : %s" % (ccode))
@@ -238,7 +239,7 @@ def main_process():
     else : 
         pexit_code = 1 
         sa.write_err("[ ERROR ] 'nmon' daemon could not be started")
-        sa.write.err("%s - %s" % (cstdout,cstderr))
+        sa.write_err("%s - %s" % (cstdout,cstderr))
 
     return(pexit_code)
 
