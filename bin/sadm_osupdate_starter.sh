@@ -155,7 +155,7 @@ export SADM_MAX_RCLINE=60                                  # Nb Lines to trim(0=
 export USCRIPT="sadm_osupdate.sh"                                       # Script to execute on nodes
 
 # Seconds given for system reboot and to start applications.
-export REBOOT_TIME=480                                                  # 480 seconds is 8 minutes
+export REBOOT_TIME=240                                                  # 480 seconds is 8 minutes
 
 
 
