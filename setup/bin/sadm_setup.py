@@ -466,23 +466,23 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("# \n")
     hcron.write ("PATH=%s\n" % (os.environ["PATH"]))
     hcron.write ("SADMIN=%s\n" % (sroot))
-    hcron.write ("# \n")
-    hcron.write ("# \n")
+    hcron.write ("#    \n")
+    hcron.write ("#    \n")
     hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
     hcron.write ("# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
-    hcron.write ("# \n")
-    hcron.write ("# \n")
+    hcron.write ("#    \n")
+    hcron.write ("#    \n")
     hcron.write ("# Every 30 Min, this script make sure the 'nmon' performance collector is running.\n")
     hcron.write ("*/30 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.py > /dev/null 2>&1\n" % (wuser))
-    hcron.write ("# \n")
-    hcron.write ("# \n")
+    hcron.write ("#    \n")
+    hcron.write ("#    \n")
     hcron.write ("# Run these four scripts in sequence, just before midnight every day:\n")
     hcron.write ("# (1) sadm_housekeeping_client.sh (Make sure files in $SADMIN have proper owner:group & permission)\n")
     hcron.write ("# (2) sadm_dr_savefs.sh (Save lvm filesystems metadata to recreate them easily in Disaster Recovery)\n")
     hcron.write ("# (3) sadm_create_cfg2html.sh (Run cfg2html tool - Produce system configuration web page).\n")
     hcron.write ("# (4) sadm_create_sysinfo.sh (Collect hardware & software info of system to update SADMIN database).\n")
     hcron.write ("23 23 * * *  %s sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1\n" % (wuser))
-    hcron.write ("# \n")
+    hcron.write ("#    \n")
 
     # Insert line that run System monitor every 5 minutes.
     chostname = socket.gethostname().split('.')[0]
@@ -516,6 +516,14 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     else:                                                               # Did not went well
         writelog ("Problem changing ownership of client crontab file")  # Had an error on chown cmd
         writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
+
+
+    # Show sadm_client cron file content
+    writelog ("Content of %s" % (ccron))
+    hcron = open(ccron_file,'r')
+    for line in hcron:                                                  # Read sadm_client cron
+        writelog (line)                                                 # Write line to output file
+    hcron.close()
 
     return()                                                            # Return Cmd Path
 
@@ -609,7 +617,7 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     #
     cscript="sudo ${SADMIN}/bin/sadm_push_sadmin.sh >/dev/null 2>&1"
     hcron.write ("#\n")
-    hcron.write ("# Daily default push of \$SADMIN/(lib,bin,cfg/.*) to all active servers.\n")
+    hcron.write ("# Daily default push of \$SADMIN/(lib,bin,cfg/.*) to all active systems.\n")
     hcron.write ("#   -c to push \$SADMIN/cfg/sadmin_client.cfg to active sadmin clients.\n")
     hcron.write ("#   -s to push \$SADMIN/sys to active sadmin clients.\n")
     hcron.write ("#   -u to push \$SADMIN/(usr/bin usr/lib usr/cfg) to active sadmin clients.\n")
