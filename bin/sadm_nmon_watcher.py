@@ -32,6 +32,7 @@
 # 2023_08_14 lib v1.4 Make sure only one instance of 'nmon' in running.
 # 2023_08_17 lib v1.5 Update to SADMIN section v2.3, fix 'pymysql' error msg & added log verbosity.
 #@2023_11_29 lib v1.6 Crash when could not start 'nmon' (performance monitor).
+#@2023_12_03 lib v1.7 Fix problem starting 'nmon' at system startup.
 # --------------------------------------------------------------------------------------------------
 #
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
@@ -65,7 +66,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "1.6"                                                  # Program version no.
+pver        = "1.7"                                                  # Program version no.
 pdesc       = "This script ensure that 'nmon' performance monitor is running."
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
 pdebug      = 0                                                      # Debug level from 0 to 9
@@ -82,7 +83,7 @@ sa.db_errmsg   = ""             # Database Error Message
 #
 sa.use_rch           = True       # Generate entry in Result Code History (.rch)
 sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
-sa.log_append        = False      # Append Existing Log(True) or Create New One(False)
+sa.log_append        = True       # Append Existing Log(True) or Create New One(False)
 sa.log_header        = True       # Show/Generate Header in script log (.log)
 sa.log_footer        = True       # Show/Generate Footer in script log (.log)
 sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
@@ -94,7 +95,7 @@ sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (s
 # Change them to fit your need, they influence execution of SADMIN standard library
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
-#sa.max_logline      = 500        # Max. lines to keep in log (0=No trim) after execution.
+sa.max_logline      = 400        # Max. lines to keep in log (0=No trim) after execution.
 #sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
 #sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
 #sa.pid_timeout      = 7200       # PID File Default Time to Live in seconds.
@@ -138,7 +139,7 @@ def count_process(pname):
 def main_process():
     pexit_code = 0 
 
-    # If we are on MacOS, don't watch the nmon daemon and exit to O/S.
+    # If we are on MacOS (nmon not available), don't watch the nmon daemon and exit to O/S.
     if sa.get_ostype() == "DARWIN"  :                                   # nmon not available on OSX
         sa.write_err("Command 'nmon' isn't available on MacOS.")        # Advise user that won't run
         sa.write_err("Script terminating.")                             # Process can't continue
@@ -146,11 +147,11 @@ def main_process():
 
     # If 'nmon' package is not installed 
     if sa.cmd_nmon == "" :
-        sa.write_err("The 'nmon' package is not installed on this system.")
+        sa.write_err("The 'nmon' package isn't installed on this system.")
         sa.write_err("Script aborted.")
         return(1)                                                       # Return error to caller
 
-    # If nmon is started by cron - Put crontab line in comment
+    # If nmon is started by cron within /etc/cron.d/nmon-script - Put crontab line in comment
     # Want to make sure that only one 'nmon' is running and it's the one controlled by SADMIN.
     nmon_cron='/etc/cron.d/nmon-script'                                 # Name of the nmon cron file
     if os.path.exists(nmon_cron) :                                      # Does nmon cron file exist
@@ -190,6 +191,8 @@ def main_process():
             sa.write_log ("oscommand function returncode is : %s" % (ccode))
         if ccode != 0 : 
             sa.write_err ("Wasn't able to kill all 'nmon' instance.")
+            ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
+            sa.write_err(cstdout)
             return(1)
 
 
@@ -220,16 +223,15 @@ def main_process():
         sa.write_log (" ")
 
 
-    #sa.write_log ("The 'nmon' daemon is not running.")
-    #sa.write_log ("Starting 'nmon' daemon ...")
+    sa.write_log ("The 'nmon' daemon is not running.")
     sa.write_log ("We will start a fresh one that will terminate at 23:58.")
     sa.write_log ("We calculated that there will be %d snapshots till then." % (total_snapshots))
 
     CMD = "%s -f -s120 -c%d -t -m %s " % (sa.cmd_nmon,total_snapshots,sa.dir_nmon)
     sa.write_log ("Running : %s" % (CMD))
-    ccode, cstdout, cstderr = sa.oscommand(CMD)                    
-
-    # Check if nmon is running
+    sa.write_log ("Starting 'nmon' daemon ...")
+    ccode, std_out, std_err = sa.oscommand(CMD)                    
+    time.sleep(3)
     pcount = count_process(nmon_name)
     if pcount == 1 :
         sa.write_log("[ OK ] Process named '%s' is now running." % (nmon_name))
@@ -239,7 +241,9 @@ def main_process():
     else : 
         pexit_code = 1 
         sa.write_err("[ ERROR ] 'nmon' daemon could not be started")
-        sa.write_err("%s - %s" % (cstdout,cstderr))
+        ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
+        sa.write_log(cstdout)
+        sa.write_err("%s - %s" % (std_out,std_err))
 
     return(pexit_code)
 
