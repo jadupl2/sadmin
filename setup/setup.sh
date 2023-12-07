@@ -75,6 +75,7 @@
 # 2023_07_09 install v3.30 Changed the way to install 'pymysql' python module (Debian 12).
 # 2023_07_14 install v3.31 Hostname lookup, will verify /etc/hosts & DNS (if present).
 # 2023_07_16 install v3.32 Cosmetic change to the script log.
+#@2023_12_07 install v3.33 Minor adjustments.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -84,7 +85,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.32'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.33'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=$(hostname -s)                ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1) ; export SADM_INST          # Script name without ext.
@@ -273,7 +274,7 @@ add_epel_9_repo()
                      return 1 
                 else echo " [ OK ]" |tee -a $SLOG
              fi 
-        else printf "Enable 'crb' repository ...\n" |tee -a $SLOG
+        else printf "Enabling 'crb' repository ...\n" |tee -a $SLOG
              printf "    - dnf config-manager --set-enabled crb " | tee -a $SLOG 
              dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
              if [ $? -ne 0 ]
@@ -284,7 +285,7 @@ add_epel_9_repo()
     fi 
 
     if [ "$SADM_OSNAME" = "ROCKY" ] || [ "$SADM_OSNAME" = "ALMALINUX" ] 
-        then printf "Installing epel-release on Rocky Linux V9 ...\n" | tee -a $SLOG
+        then printf "\nInstalling epel-release on Rocky Linux V9 ...\n" | tee -a $SLOG
              printf "    - dnf -y install epel-release " | tee -a $SLOG
              dnf -y install epel-release >>$SLOG 2>&1
              if [ $? -ne 0 ]
@@ -296,7 +297,7 @@ add_epel_9_repo()
     fi 
 
     if [ "$SADM_OSNAME" = "CENTOS" ] 
-        then printf "Installing epel-release & epel-next-release on CentOS V9 ...\n" |tee -a $SLOG
+        then printf "\nInstalling epel-release & epel-next-release on CentOS V9 ...\n" |tee -a $SLOG
              printf "    - dnf -y install dnf install epel-release epel-next-release" |tee -a $SLOG
              dnf -y install dnf install epel-release epel-next-release  >>$SLOG 2>&1
              if [ $? -ne 0 ]
@@ -419,7 +420,7 @@ check_python3()
     install_python3 
 
     # Check if python3 'pymsql' module is installed 
-    printf "\n   - Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
+    printf "   - Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
@@ -510,7 +511,7 @@ check_hostname()
 {
     # Get current IP Address of Server
     S_IPADDR=$(ip addr show | grep global | head -1 | awk '{ print $2 }' |awk -F/ '{ print $1 }')
-    printf "Making sure '$SADM_HOSTNAME' is defined in /etc/hosts ... " | tee -a $SLOG
+    printf "\nMaking sure '$SADM_HOSTNAME' is defined in /etc/hosts ... " | tee -a $SLOG
 
     # Insert Server into /etc/hosts (If not already there)
     grep -Eiq "^$S_IPADDR   ${SADM_HOSTNAME}" /etc/hosts
@@ -598,11 +599,11 @@ EOF
     
     echo " " > $SLOG                                                    # Init the Log File
     echo "SADMIN Pre-installation verification v${SADM_VER} - $SADM_OSTYPE $SADM_OSNAME v$SADM_OSVERSION" | tee -a $SLOG
-    echo "Log file is in ${SLOGDIR}." | tee -a $SLOG 
+    echo "Log file is ${SLOGDIR}." | tee -a $SLOG 
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
 
 
-    # Add EPEL for these dictribution
+    # Add EPEL for these distribution
     if [ "$SADM_OSNAME" = "REDHAT" ] || [ "$SADM_OSNAME" = "CENTOS" ] ||  
        [ "$SADM_OSNAME" = "ROCKY" ]  || [ "$SADM_OSNAME" = "ALMALINUX" ] 
         then add_epel_repo                                               
@@ -614,7 +615,7 @@ EOF
     # Make sure current host is in /etc/hosts
     check_hostname
 
-    # If SELinux present and activated, make it temporarely permissive until next reboot
+    # If SELinux present and activated, make it temporarily permissive until next reboot
     if [ "$SADM_PACKTYPE" = "rpm" ] ; then check_selinux ; fi
 
     # Ok Python3 is installed - Proceed with Main Setup Script
