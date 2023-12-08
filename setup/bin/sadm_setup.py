@@ -519,11 +519,11 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
 
 
     # Show sadm_client cron file content
-    writelog ("Content of %s" % (ccron_file))
-    hcron = open(ccron_file,'r')
-    for line in hcron:                                                  # Read sadm_client cron
-        writelog (line)                                                 # Write line to output file
-    hcron.close()
+    #writelog ("Content of %s" % (ccron_file))
+    #hcron = open(ccron_file,'r')
+    #for line in hcron:                                                  # Read sadm_client cron
+    #    writelog (line)                                                 # Write line to output file
+    #hcron.close()
 
     return()                                                            # Return Cmd Path
 

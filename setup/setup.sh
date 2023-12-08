@@ -484,7 +484,7 @@ check_selinux()
                 printf "   - SElinux need to be disable during installation.\n"
                 printf "   - Do you wish to disable SElinux [T]emporarily or [P]ermanently [T/P] ? "
                 read ans
-                ans=`echo "$ans" | tr '[:lower:]' '[:upper:]'`
+                ans=$(echo "$ans" | tr '[:lower:]' '[:upper:]')
                 if [ "$ans" == "T" ]
                     then setenforce 0
                          printf "   - SELinux is now disable temporarily.\n"
