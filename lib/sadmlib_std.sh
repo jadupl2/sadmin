@@ -2076,10 +2076,8 @@ sadm_start() {
     sadm_freshen_directories_structure                                  # Chk Dir. Structure & Perm.
 
     # If new log is desired, remove old log and start new one.
-    if [ "$SADM_LOG_APPEND" = "N" ]                                     # New Log, No append to log
-        then if [ -e "$SADM_LOG" ] ; then rm -f $SADM_LOG >/dev/null 2>&1 ;fi # Remove old log
-    fi
-    if [ -e "$SADM_ELOG" ] ; then rm -f $SADM_ELOG > /dev/null 2>&1 ; fi # Remove old elog
+    if [ "$SADM_LOG_APPEND" = "N" ] ; then rm -f $SADM_LOG  >/dev/null 2>&1  ; fi # Remove old log
+    if [ -e "$SADM_ELOG" ]          ; then rm -f $SADM_ELOG > /dev/null 2>&1 ; fi # Remove old elog
 
     # Make sure log & error log exist and have proper permission
     [ ! -e "$SADM_LOG"  ] && touch $SADM_LOG                            # If Log File don't exist
@@ -2087,6 +2085,10 @@ sadm_start() {
     if [ $(id -u) -eq 0 ]                                               # Need good permission
         then chmod 666 $SADM_LOG  ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}
              chmod 666 $SADM_ELOG ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_ELOG}
+        else if [ "$SADM_LOG_APPEND" = "N" ] 
+                then chmod 666 $SADM_LOG  ; chgrp ${SADM_GROUP} ${SADM_LOG}
+             fi
+             chmod 666 $SADM_ELOG ; chgrp ${SADM_GROUP} ${SADM_ELOG}
     fi
 
     # Write Log Header
