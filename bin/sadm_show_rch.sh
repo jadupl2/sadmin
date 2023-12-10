@@ -149,7 +149,7 @@ show_usage()
 display_heading()
 {
     if [ "$PAGER" = "ON" ] || ( [ "$PAGER" = "OFF" ]  &&  [ "$WATCH" = "ON" ] )
-        then tput clear ; 
+        then #tput clear ; 
              #echo -e "`date +%Y/%m/%d`                           Server Farm Scripts Summary Report \c"
              #echo -e "                            `date +%H:%M:%S`"  
              htitle="Server Farm Scripts Summary Report v${SADM_VER}"
@@ -615,7 +615,7 @@ function cmd_options()
              printf "\n-----\n$wsubject\n"                              # Display Msg to user
              nl $SADM_TMP_FILE3                                         # Display file content
              wmess="See attachment for the list of lines without $FIELD_IN_RCH fields."
-             wtime=`date "+%Y.%m.%d %H:%M"`
+             wtime=$(date "+%Y.%m.%d %H:%M")
              sadm_sendmail "$SADM_MAIL_ADDR" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
     fi
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
