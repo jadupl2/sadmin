@@ -123,6 +123,7 @@
 # 2023_07_26 install v3.92 Adjust list of packages required to use 'ReaR' image backup (+xorriso).
 # 2023_08_23 install v3.93 Package detection, was failing under certain condition.
 #@2023_11_06 install v3.94 Misc. typo change & minor fixes.
+#@2023_12_10 install v3.95 Added install of package 'nfs-utils (rpm) and 'nfs-common' (deb).
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -140,7 +141,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.94"                                            # Setup Version Number
+sver                = "3.95"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -156,7 +157,7 @@ fhlog               = ""                                                # Log Fi
 logfile             = ""                                                # Log FileName
 req_work            = {}                                                # Active Requirement Dict.
 
-# Logic to get O/S Distribution Information into Dictionnary os_dict
+# Logic to get O/S Distribution Information into Dictionary os_dict
 osrelease           = "/etc/os-release"                                 # Distribution Info file
 os_dict             = {}                                                # Dict. for O/S Info
 with open(osrelease) as f:                                              # Open /etc/os-release as f
@@ -212,6 +213,8 @@ req_client = {
                     'deb':'sudo',                           'drepo':'base'},
     'lshw'       :{ 'rpm':'lshw',                           'rrepo':'base',  
                     'deb':'lshw',                           'drepo':'base'},
+    'mount.nfs'  :{ 'rpm':'nfs-utils',                      'rrepo':'base',  
+                    'deb':'nfs-common',                     'drepo':'base'},
     'parted'     :{ 'rpm':'parted',                         'rrepo':'base',  
                     'deb':'parted',                         'drepo':'base'},
     'rear   '    :{ 'rpm':'rear xorriso syslinux syslinux-extlinux', 'rrepo':'base',
