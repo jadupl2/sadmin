@@ -206,6 +206,7 @@
 # 2023_08_20 lib v4.27 Code optimization, LIBRARY LOAD A LOT FASTER (So scripts run faster).
 # 2023_09_22 lib v4.28 Change default values of SADM_*_KEEPDAYS.
 # 2023_09_26 lib v4.29 Code optimization : To function "sadm_get_command_path()".
+#@2023_12_14 lib v4.30 'SADM_HOST_TYPE' in 'sadmin.cfg', decide if system is a client or the server.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -216,7 +217,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.29"                                              # This Library Version
+export SADM_LIB_VER="4.30"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -701,20 +702,20 @@ sadm_trimfile() {
     wfile=$1 ; maxline=$2                                               # Save FileName & Trim Num.
     wreturn_code=0                                                      # Default Return Code 
     if [ $# -ne 2 ]                                                     # Should have rcv 1 Param
-        then sadm_write "${FUNCNAME}: Should receive 2 Parameters\n"    # Show User Info on Error
-             sadm_write "Have received $# parameters ($*)\n"            # Advise User to Correct
+        then sadm_write_err "${FUNCNAME}: Should receive 2 Parameters"  # Show User Info on Error
+             sadm_write_err "Have received $# parameters ($*)"          # Advise User to Correct
              return 1                                                   # Return Error to Caller
     fi
 
     if [ ! -r "$wfile" ]                                                # Check if File Rcvd Exist
-        then sadm_write "sadm_trimfile : Can't read file $wfile\n"      # Advise user
+        then sadm_write_err "sadm_trimfile : Can't read file $wfile"    # Advise user
              return 1                                                   # Return Error to Caller
     fi
 
     sadm_isnumeric "$maxline"                                           # Test if an Integer
     if [ $? -ne 0 ]                                                     # If not an Integer
         then wreturn_code=1                                             # Return Code report error
-             sadm_write "${FUNCNAME}: Nb of line invalid ($maxline)\n"  # Advise User
+             sadm_write_err "${FUNCNAME}: Invalid nb. of line ($maxline)"  # Advise User
              return 1                                                   # Return Error to Caller
     fi
 
@@ -821,9 +822,9 @@ sadm_load_cmd_path() {
                     NMON_EXE="nmon_aix$(sadm_get_osmajorversion)$(sadm_get_osminorversion)"
                     NMON_USE="${NMON_WDIR}${NMON_EXE}"                  # Use exec. of your version
                     if [ ! -x "$NMON_USE" ]                             # nmon exist and executable
-                        then sadm_write "'nmon' for AIX $(sadm_get_osversion) isn't available\n"
-                             sadm_write "The nmon executable we need is ${NMON_USE}\n"
-                        else sadm_write "ln -s ${NMON_USE} /usr/bin/nmon\n"
+                        then sadm_write_log "'nmon' for AIX $(sadm_get_osversion) isn't available"
+                             sadm_write_log "The nmon executable we need is ${NMON_USE}"
+                        else sadm_write_log "ln -s ${NMON_USE} /usr/bin/nmon"
                              ln -s ${NMON_USE} /usr/bin/nmon            # Link nmon avail to user
                              if [ $? -eq 0 ] ; then SADM_NMON="/usr/bin/nmon" ; fi # Set SADM_NMON
                     fi
@@ -880,8 +881,8 @@ sadm_get_epoch_time() {
 sadm_epoch_to_date() {
 
     if [ $# -ne 1 ]                                                     # Should have rcv 1 Param
-        then sadm_write "No Parameter received by $FUNCNAME function\n" # Show User Info on Error
-             sadm_write "Please correct your script - Script Aborted\n" # Advise User to Correct
+        then sadm_write_err "No parameter received by $FUNCNAME function" # Show User Info on Error
+             sadm_write_err "Please correct your script - Script Aborted" # Advise User to Correct
              sadm_stop 1                                                # Prepare to exit gracefully
              exit 1                                                     # Terminate the script
     fi
@@ -890,9 +891,9 @@ sadm_epoch_to_date() {
     # Verify if parameter received is all numeric - If not advice user and exit
     echo $wepoch | grep [^0-9] > /dev/null 2>&1                         # Grep for Number
     if [ "$?" -eq "0" ]                                                 # Not All Number
-        then sadm_write "Incorrect parameter received by \"sadm_epoch_to_date\" function\n"
-             sadm_write "Should recv. epoch time & received ($wepoch)\n" # Advise User
-             sadm_write "Please correct situation - Script Aborted\n"    # Advise that will abort
+        then sadm_write_err "Incorrect parameter received by \"sadm_epoch_to_date\" function"
+             sadm_write_err "Should recv. epoch time & received ($wepoch)" # Advise User
+             sadm_write_err "Please correct situation - Script Aborted"    # Advise that will abort
              sadm_stop 1                                                # Prepare to exit gracefully
              exit 1                                                     # Terminate the script
     fi
@@ -926,8 +927,8 @@ sadm_epoch_to_date() {
 # --------------------------------------------------------------------------------------------------
 sadm_date_to_epoch() {
     if [ $# -ne 1 ]                                                     # Should have rcv 1 Param
-        then sadm_write "No Parameter received by $FUNCNAME function\n" # Log Error Mess,
-             sadm_write "Please correct script please,script aborted\n" # Advise that will abort
+        then sadm_write_err "No Parameter received by $FUNCNAME function." # Log Error Mess,
+             sadm_write_err "Please correct script please,script aborted." # Advise that will abort
              sadm_stop 1                                                # Prepare to exit gracefully
              exit 1                                                     # Terminate the script
     fi
@@ -974,8 +975,8 @@ sadm_date_to_epoch() {
 # --------------------------------------------------------------------------------------------------
 sadm_elapse() {
     if [ $# -ne 2 ]                                                     # Should have rcv 1 Param
-        then sadm_write "Invalid number of parameter received by $FUNCNAME function\n"
-             sadm_write "Please correct script please, script aborted\n" # Advise that will abort
+        then sadm_write_err "Invalid number of parameter received by $FUNCNAME function."
+             sadm_write_err "Please correct script please, script aborted." # Advise that will abort
              sadm_stop 1                                                # Prepare to exit gracefully
              exit 1                                                     # Terminate the script
     fi
@@ -1810,7 +1811,7 @@ sadm_server_vg() {
 #            LOAD SADMIN CONFIGURATION FILE AND SET GLOBAL VARIABLES ACCORDINGLY
 # --------------------------------------------------------------------------------------------------
 sadm_load_config_file() {
-    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "sadm_load_config_file\n" ; fi
+    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write_log "sadm_load_config_file" ; fi
 
     # SADMIN Configuration file '$SADMIN/cfg/sadmin.cfg' MUST be present.
     # If not, then create $SADMIN/cfg/sadmin.cfg from the template '$SADMIN/cfg/.sadmin.cfg'.
@@ -1860,7 +1861,7 @@ sadm_load_config_file() {
                                             ;;
             "SADM_SERVER")                  SADM_SERVER=$VALUE
                                             ;;
-            "SADM_HOST_TYPE")               SADM_HOST_TYPE=$VALUE
+            "SADM_HOST_TYPE")               SADM_HOST_TYPE=$(sadm_toupper $VALUE)
                                             ;;
             "SADM_DOMAIN")                  SADM_DOMAIN=$VALUE
                                             ;;
@@ -1964,14 +1965,14 @@ sadm_load_config_file() {
 # Get Read/Write and Read/Only Database User Password from pasword file (Only on SADMIN Server)
     SADM_RW_DBPWD=""                                                    # Default Write Pwd is Blank
     SADM_RO_DBPWD=""                                                    # Default ReadOnly Pwd Blank
-    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] && [ -r "$DBPASSFILE" ]  # If on Server & pwd file
+    if [ "$SADM_HOST_TYPE" = "S" ] && [ -r "$DBPASSFILE" ]              # If on Server & pwd file
         then SADM_RW_DBPWD=$(grep "^${SADM_RW_DBUSER}," "$DBPASSFILE" |awk -F, '{ print $2 }') 
              SADM_RO_DBPWD=$(grep "^${SADM_RO_DBUSER}," "$DBPASSFILE" |awk -F, '{ print $2 }') 
     fi
 
 # If on client delete plain text email pwd file
 # On SADMIN Server recreate encrypted email pwd file from plaintext file.
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # If NOT on Admin Server
+    if [ "$(sadm_host_type)" != "S" ]                                   # If NOT on Admin Server
         then rm -f $GMPW_FILE_TXT >>/dev/null                           # Del plain text email pwd
         elif [ -r "$GMPW_FILE_TXT" ]                                    # On SADM srv & Text pwdfile         
              then base64 $GMPW_FILE_TXT >$GMPW_FILE_B64                 # Recreate encrypt pwd file
@@ -2048,7 +2049,7 @@ sadm_freshen_directories_structure() {
              chmod 0775 $SADM_WWW_IMG_DIR   ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_IMG_DIR 
              chmod 1777 $SADM_WWW_TMP_DIR   ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR 
              chmod 0775 $SADM_LOG_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR
-             if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] 
+             if [ "$SADM_HOST_TYPE" = "S" ] 
                 then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DIR
                      chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR
                      chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_ARC_DIR
@@ -2101,7 +2102,7 @@ sadm_start() {
              sadm_write_log "$(sadm_get_fqdn) - User: $SADM_USERNAME - Umask : $(umask) - Arch: $(sadm_server_arch)"
              hline3="$(sadm_capitalize $(sadm_get_osname)) $(sadm_capitalize $(sadm_get_ostype))"
              hline3="${hline3} v$(sadm_get_osversion) - Kernel $(sadm_get_kernel_version)"
-             hline3="${hline3} - SADMIN: $SADMIN"
+             hline3="${hline3} - SADMIN($SADM_HOST_TYPE): $SADMIN"
              sadm_write_log "$hline3"
              sadm_write_log "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
              sadm_write_log " "                                          # White space line
@@ -2119,13 +2120,11 @@ sadm_start() {
     fi
 
     # Check if this script to be run only on the SADMIN server.
-    if [ ! -z "$SADM_SERVER_ONLY" ] && [ "$SADM_SERVER_ONLY" == "Y" ] 
-        then if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] 
-                then sadm_write_err "Script can only run on ${SADM_SERVER}"
-                     sadm_write_err "Process aborted"                   # Abort advise message
-                     sadm_stop 1                                        # Close and Trim Log
-                     exit 1                                             # Exit To O/S
-             fi 
+    if [ ! -z "$SADM_SERVER_ONLY" ] && [ "$SADM_SERVER_ONLY" == "Y" ] && [ "$SADM_HOST_TYPE" != "S" ]
+        then sadm_write_err "Script can only run on a SADMIN server (With SADM_HOST_TYPE = "S")."
+             sadm_write_err "Process aborted."                          # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
     fi
 
     # If PID File exist and user want to run only 1 instance of the script - Abort Script
@@ -2133,10 +2132,10 @@ sadm_start() {
        then pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Epoch time of PID File
             cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
-            sadm_write "Script '$SADM_PN' is already running ...\n"     # Script already running
-            sadm_write "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N').\n" 
-            sadm_write "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid', was created $pelapse seconds ago.\n"
-            sadm_write "The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n"
+            sadm_write_log "Script '$SADM_PN' is already running ...\n" # Script already running
+            sadm_write_log "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N').\n" 
+            sadm_write_log "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid', was created $pelapse seconds ago.\n"
+            sadm_write_log "The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n"
             sadm_write_log " "
             if [ -z "$SADM_PID_TIMEOUT" ]                               # Is SADM_PID_TIMEOUT define
                 then sadm_write_err "Script can't run unless one of the following thing is done :"
@@ -2146,9 +2145,9 @@ sadm_start() {
                      DELETE_PID="N"                                     # No Del PID Since running
                      exit 1                                             # Exit To O/S with Error
                 else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
-                        then sadm_write "The PID file exceeded the time to live ('\$SADM_PID_TIMEOUT').\n"
-                             sadm_write "Assuming script was aborted abnormally.\n"
-                             sadm_write "Script execution is now resume and the PID file recreated.\n"
+                        then sadm_write_log "The PID file exceeded the time to live ('\$SADM_PID_TIMEOUT').\n"
+                             sadm_write_log "Assuming script was aborted abnormally.\n"
+                             sadm_write_log "Script execution is now resume and the PID file recreated.\n"
                              sadm_write_log " "
                              sadm_write_log " "
                              touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
@@ -2177,13 +2176,13 @@ sadm_start() {
     # If it doesn't exist, create it from initial file ($SADMIN/cfg/.alert_group.cfg)
     if [ ! -f "$SADM_ALERT_FILE" ]                                      # alert_group.cfg not Exist
        then if [ ! -f "$SADM_ALERT_INIT" ]                              # .alert_group.cfg not Exist
-               then sadm_write "********************************************************\n"
-                    sadm_write "SADMIN Alert Group file not found - $SADM_ALERT_FILE \n"
-                    sadm_write "Even Alert Group Template file is missing - $SADM_ALERT_INIT\n"
-                    sadm_write "Copy both files from another system to this server\n"
-                    sadm_write "Or restore them from a backup\n"
-                    sadm_write "Don't forget to review the file content.\n"
-                    sadm_write "********************************************************\n"
+               then sadm_write_log "********************************************************\n"
+                    sadm_write_log "SADMIN Alert Group file not found - $SADM_ALERT_FILE \n"
+                    sadm_write_log "Even Alert Group Template file is missing - $SADM_ALERT_INIT\n"
+                    sadm_write_log "Copy both files from another system to this server\n"
+                    sadm_write_log "Or restore them from a backup\n"
+                    sadm_write_log "Don't forget to review the file content.\n"
+                    sadm_write_log "********************************************************\n"
                     sadm_stop 1                                         # Exit to O/S with Error
                     exit 1
                else cp $SADM_ALERT_INIT $SADM_ALERT_FILE                # Copy Template as initial
@@ -2192,7 +2191,7 @@ sadm_start() {
     fi
 
     # Check Files that are present ONLY ON SADMIN SERVER
-    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
+    if [ "$SADM_HOST_TYPE" = "S" ]
         then if [ ! -r "$SADM_ALERT_HIST" ]                             # If Alert History Missing
                 then if [ ! -r "$SADM_ALERT_HINI" ]                     # If Alert Init File not Fnd
                         then touch $SADM_ALERT_HIST                     # Create a Blank One
@@ -2236,8 +2235,8 @@ sadm_start() {
 sadm_stop() {
     if [ $# -eq 0 ]                                                     # If No status Code Received
         then SADM_EXIT_CODE=1                                           # Assume Error if none given
-             sadm_write "Function '${FUNCNAME[0]}' expect one parameter.\n"
-             sadm_write "${SADM_ERROR} Received None.\n"                # Advise User
+             sadm_write_log "Function '${FUNCNAME[0]}' expect one parameter.\n"
+             sadm_write_log "${SADM_ERROR} Received None.\n"                # Advise User
         else SADM_EXIT_CODE=$1                                          # Save Exit Code Received
     fi
     if [ "$SADM_EXIT_CODE" -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi         # Making Sure code is 1 or 0
@@ -2248,13 +2247,13 @@ sadm_stop() {
 
     # Write script exit code and execution time to log (If user ask for a log footer) 
     if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ]      # Want to Produce Log Footer
-        then sadm_write "\n"                                            # Blank Line
-             sadm_write "${SADM_FIFTY_DASH}\n"                          # Dash Line
+        then sadm_write_log "\n"                                            # Blank Line
+             sadm_write_log "${SADM_FIFTY_DASH}\n"                          # Dash Line
              if [ $SADM_EXIT_CODE -eq 0 ]                               # If script succeeded
                 then foot1="Script exit code is ${SADM_EXIT_CODE} (Success)" # Success 
                 else foot1="Script exit code is ${SADM_EXIT_CODE} (Failed)"  # Failed 
              fi 
-             sadm_write "$foot1 and execution time is ${sadm_elapse}\n" # Write the Elapse Time
+             sadm_write_log "$foot1 and execution time is ${sadm_elapse}\n" # Write the Elapse Time
     fi
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
@@ -2268,7 +2267,7 @@ sadm_stop() {
                      mv ${SADM_TMP_DIR}/xrch.$$ ${SADM_RCHLOG}          # Replace RCH without code 2
              fi                     
              RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
-             RCHLINE="$RCHLINE $sadm_elapse $SADM_INST"         # Format Part2 RCH File
+             RCHLINE="$RCHLINE $sadm_elapse $SADM_INST"                 # Format Part2 RCH File
              RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE"      # Format Part3 of RCH File
              RCHLINE="$RCHLINE $SADM_EXIT_CODE"                         # Format Part4 of RCH File
              if [ -w $SADM_RCHLOG ] 
@@ -2279,11 +2278,11 @@ sadm_stop() {
                 then if [ "$SADM_MAX_RCLINE" -ne 0 ]                    # User want to trim rch file
                         then if [ -w $SADM_RCHLOG ]                     # If History RCH Writable
                                 then mtmp1="History file '\$SADMIN/dat/rch/${SADM_HOSTNAME}_${SADM_INST}.rch' trim to ${SADM_MAX_RCLINE} lines."
-                                     sadm_write "${mtmp1}\n"            # Write rch trim context 
+                                     sadm_write_log "${mtmp1}"          # Write rch trim context 
                                      sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE" 
                              fi
                         else mtmp="Script is set not to trim history file (\$SADM_MAX_RCLINE=0)"
-                             sadm_write "${mtmp}.\n" 
+                             sadm_write_log "${mtmp}." 
                      fi
              fi
              [ $(id -u) -eq 0 ] && chmod 664 ${SADM_RCHLOG}             # R/W Owner/Group R by World
@@ -2312,37 +2311,37 @@ sadm_stop() {
              esac
 
              case $SADM_ALERT_TYPE in
-                0)  sadm_write "Regardless of it termination status, this script is set to never send alert.\n"
+                0)  sadm_write_log "Regardless of it termination status, this script is set to never send alert."
                     ;;
-                1)  sadm_write "Script is set to send an alert only when it terminate with error.\n"
-                    if [ "$SADM_EXIT_CODE" -ne 0 ]
-                        then sadm_write "Script failed, alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}.\n"
-                        else sadm_write "Script succeeded, no alert will be send (\$SADM_ALERT_TYPE=1).\n"
+                1)  sadm_write_log "Script is set to send an alert only when it terminate with error."
+                    if [ "$SADM_EXIT_CODE" -ne ]
+                        then sadm_write_log "Script failed, alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}."
+                        else sadm_write_log "Script succeeded, no alert will be send (\$SADM_ALERT_TYPE=1)."
                     fi
                     ;;
-                2)  sadm_write "Script is set to send an alert only when it terminate with success.\n"
+                2)  sadm_write_log "Script is set to send an alert only when it terminate with success."
                     if [ "$SADM_EXIT_CODE" -eq 0 ]
-                        then sadm_write "Script succeeded, alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}.\n"
-                        else sadm_write "Script failed, no alert will be send to '$SADM_ALERT_GROUP' alert group.\n"
+                        then sadm_write_log "Script succeeded, alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}."
+                        else sadm_write_log "Script failed, no alert will be send to '$SADM_ALERT_GROUP' alert group."
                     fi
                     ;;
-                3)  sadm_write "This script is set to always send an alert with termination status.\n"
-                    sadm_write "Alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}.\n"
+                3)  sadm_write_log "This script is set to always send an alert with termination status."
+                    sadm_write_log "Alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}."
                     ;;
-                *)  sadm_write "Invalid '\$SADM_ALERT_TYPE' value, should be between 0 and 3.\n"
-                    sadm_write "It's set to '$SADM_ALERT_TYPE', changing it to 3.\n"
+                *)  sadm_write_log "Invalid '\$SADM_ALERT_TYPE' value, should be between 0 and 3."
+                    sadm_write_log "It's set to '$SADM_ALERT_TYPE', changing it to 3."
                     SADM_ALERT_TYPE=3
                     ;;
              esac
 
              if [ "$SADM_LOG_APPEND" = "N" ]                            # If New log Every Execution
-                then sadm_write "New log created '\$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log'.\n"
-                else if [ $SADM_MAX_LOGLINE -eq 0 ]                     # MaxTrimLog=0 then no Trim
-                        then sadm_write "Log \$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log is not trimmed (\$SADM_MAX_LOGLINE=0).\n"
-                        else sadm_write "Log \$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log trim to ${SADM_MAX_LOGLINE} lines.\n" 
+                then sadm_write_log "New log created '\$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log'."
+                else if [ $SADM_MAX_LOGLINE -eq 0 ]                     # MaxTrimLog=0hen no Trim
+                        then sadm_write_log "Log \$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log is not trimmed (\$SADM_MAX_LOGLINE=0)."
+                        else sadm_write_log "Log \$SADMIN/log/${SADM_HOSTNAME}_${SADM_INST}.log trim to ${SADM_MAX_LOGLINE} lines." 
                      fi 
              fi 
-             sadm_write "End of ${SADM_PN} - `date`\n"                  # Write End Time To Log
+             sadm_write_log "End of ${SADM_PN} - `date`"                # Write End Time To Log
              sadm_write "${SADM_80_DASH}\n\n\n\n\n"                     # Write 80 Dash Line
              cat $SADM_LOG > /dev/null                                  # Force buffer to flush
              if [ $SADM_MAX_LOGLINE -ne 0 ] && [ "$SADM_LOG_APPEND" = "Y" ] # Max Line in Log Not 0 
@@ -2372,7 +2371,7 @@ sadm_stop() {
 
     # If script is running on the SADMIN server, copy script final log and rch to web data section.
     # If we don't do that, log look incomplete & script seem to be always running on web interface.
-    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only run on SADMIN 
+    if [ "$SADM_HOST_TYPE" = "S" ]                                      # Only run on SADMIN server
        then WLOGDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log"          # Host Main LOG Directory
             WLOG="${WLOGDIR}/${SADM_HOSTNAME}_${SADM_INST}.log"         # LOG File Name in Main Dir
             WRCHDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"          # Host Main RCH Directory
