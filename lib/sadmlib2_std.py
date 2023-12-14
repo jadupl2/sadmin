@@ -59,6 +59,7 @@
 #@2023_10_23 lib v4.46 Fix crash when running a script that need to be run by 'root' and was not.
 #@2023_11_17 lib v4.47 Fix error in db_close(), when trying to close a connection that isn't open.
 #@2023_12_14 lib v4.48 'SADM_HOST_TYPE' in 'sadmin.cfg', decide if system is a client or the server.
+# 2023_12_14 lib v4.48 Correct some type in the header
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -2199,16 +2200,19 @@ def start(pver,pdesc) :
         wmess += "v%s " % (pver)                                        # 1st line Script Version
         wmess += "- Library v%s" % (lib_ver)                            # 1st line SADM Library Ver.
         write_log (wmess)                                               # Write 1st Header Line
+        # 
         if (pdesc != "") :                                              # If script Desc. not blank
-            write_log ("Desc.: %s" % (pdesc))                           # 2nd line Write Desc to Log
+            write_log ("%s" % (pdesc))                                  # 2nd line Write Desc to Log
+        #
         wmess = "%s - User: %s - Umask: %04d - " % (get_fqdn(),pusername,getUmask()) # 3th line part 1 
         wmess += "Arch: %s " % (get_arch())        # 3th line part 2
         write_log (wmess)                                               # Write 3th Line to log
+        #
         wmess  = "%s "  % (get_osname().capitalize())                   # 4th Line O/S Distr. Name
         #wmess += "%s "  % (get_oscodename().capitalize())               # 4th Line O/S Code Name 
         wmess += "%s "  % (get_ostype().capitalize())                   # 4th Line O/S Type Linux/Aix
         wmess += "v%s " % (get_osversion())                             # 4th Line O/S Version
-        wmess += "- Kernel %s - SADMIN(%s): %s" % (get_kernel_version(),dir_base,sadm_host_type)
+        wmess += "- Kernel %s - SADMIN(%s): %s" % (get_kernel_version(),sadm_host_type,dir_base)
         write_log (wmess)                                               # Write 4th Line to Log
         write_log ('='*50)                                              # 50 '=' Lines
         write_log (" ")                                                 # Space Line in the LOG
@@ -2228,7 +2232,7 @@ def start(pver,pdesc) :
         stop(1)                                                         # Close SADMIN 
         sys.exit(1)                                                     # Back to O/S 
     
-    # Check Files that are present ONLY ON SADMIN SERVER
+    # Check Files that should be present ONLY ON SADMIN SERVER
     # Make sure the alert History file exist , if not use the history template to create it.
     if (sadm_host_type == "S") :
         if check_system_lock(phostname) :                               # System is Lock on SADMIN
