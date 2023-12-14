@@ -207,6 +207,7 @@
 # 2023_09_22 lib v4.28 Change default values of SADM_*_KEEPDAYS.
 # 2023_09_26 lib v4.29 Code optimization : To function "sadm_get_command_path()".
 #@2023_12_14 lib v4.30 'SADM_HOST_TYPE' in 'sadmin.cfg', decide if system is a client or the server.
+# 2023_12_14 lib v4.30 Correct some type in the header
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -1861,7 +1862,7 @@ sadm_load_config_file() {
                                             ;;
             "SADM_SERVER")                  SADM_SERVER=$VALUE
                                             ;;
-            "SADM_HOST_TYPE")               SADM_HOST_TYPE=$(sadm_toupper $VALUE)
+            "SADM_HOST_TYPE")               SADM_HOST_TYPE=$(sadm_toupper "$VALUE")
                                             ;;
             "SADM_DOMAIN")                  SADM_DOMAIN=$VALUE
                                             ;;
@@ -1972,7 +1973,7 @@ sadm_load_config_file() {
 
 # If on client delete plain text email pwd file
 # On SADMIN Server recreate encrypted email pwd file from plaintext file.
-    if [ "$(sadm_host_type)" != "S" ]                                   # If NOT on Admin Server
+    if [ "$SADM_HOST_TYPE" != "S" ]                                   # If NOT on Admin Server
         then rm -f $GMPW_FILE_TXT >>/dev/null                           # Del plain text email pwd
         elif [ -r "$GMPW_FILE_TXT" ]                                    # On SADM srv & Text pwdfile         
              then base64 $GMPW_FILE_TXT >$GMPW_FILE_B64                 # Recreate encrypt pwd file
@@ -2247,13 +2248,13 @@ sadm_stop() {
 
     # Write script exit code and execution time to log (If user ask for a log footer) 
     if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ]      # Want to Produce Log Footer
-        then sadm_write_log "\n"                                            # Blank Line
-             sadm_write_log "${SADM_FIFTY_DASH}\n"                          # Dash Line
+        then sadm_write_log "\n"                                        # Blank Line
+             sadm_write_log "${SADM_FIFTY_DASH}"                        # Dash Line
              if [ $SADM_EXIT_CODE -eq 0 ]                               # If script succeeded
                 then foot1="Script exit code is ${SADM_EXIT_CODE} (Success)" # Success 
                 else foot1="Script exit code is ${SADM_EXIT_CODE} (Failed)"  # Failed 
              fi 
-             sadm_write_log "$foot1 and execution time is ${sadm_elapse}\n" # Write the Elapse Time
+             sadm_write_log "$foot1 and execution time was ${sadm_elapse}" # Write the Elapse Time
     fi
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
@@ -2313,8 +2314,8 @@ sadm_stop() {
              case $SADM_ALERT_TYPE in
                 0)  sadm_write_log "Regardless of it termination status, this script is set to never send alert."
                     ;;
-                1)  sadm_write_log "Script is set to send an alert only when it terminate with error."
-                    if [ "$SADM_EXIT_CODE" -ne ]
+                1)  sadm_write_log "Script is set to only send an alert when it terminate with error."
+                    if [ "$SADM_EXIT_CODE" -ne 0 ]
                         then sadm_write_log "Script failed, alert will be send to '$SADM_ALERT_GROUP' alert group ${GRP_DESC}."
                         else sadm_write_log "Script succeeded, no alert will be send (\$SADM_ALERT_TYPE=1)."
                     fi
