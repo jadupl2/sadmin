@@ -894,19 +894,19 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
     writelog ("--------------------")
     if (stype == 'C'):
         req_work = req_client                                           # Move CLient Dict in WDict.
-        writelog ("Checking SADMIN Client Package requirement",'bold')  # Show User what we do
+        writelog ("Verifying SADMIN Client Package requirements",'bold')  # Show User what we do
     else:
         req_work = req_server                                           # Move Server Dict in WDict.
-        writelog ("Checking SADMIN Server Package requirement",'bold')  # Show User what we do
+        writelog ("Verifying SADMIN Server package requirements",'bold')  # Show User what we do
     writelog (" ")
 
     # If Debian Package, Refresh The Local Repository 
     if (packtype == "deb"):                                             # Is Debian Style Package
-        cmd =  "apt-get -y update >> %s 2>&1" % (logfile)               # Refresh Cache
+        cmd =  "apt -y update >> %s 2>&1" % (logfile)                   # Refresh Cache
         if (DRYRUN):                                                    # If Running if DRY-RUN Mode
-            print ("DryRun - Would run : %s" % (cmd))                   # Only shw cmd we would run
+            print ("DryRun - would run : %s" % (cmd))                   # Only shw cmd we would run
         else:                                                           # If running in normal mode
-            writelog ("Running apt-get update...",'nonl')               # Show what we are running
+            writelog ("Running apt update...",'nonl')                   # Show what we are running
             (ccode, cstdout, cstderr) = oscommand(cmd)                  # Run the apt-get command
             if (ccode == 0) :                                           # If command went ok
                 writelog (" Done ")                                     # Print DOne
@@ -935,26 +935,26 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             continue               
 
         # Verify if needed package is installed
-        pline = "Checking for %s ... " % (needed_packages)		        # Show What were looking for
-        writelog (pline,'nonl')                                         # Show What were looking for
+        pline = "Checking availability of '%s' ... " % (needed_packages) # Show what we are doing
+        writelog (pline,'nonl')                                          # Show What is looking for
 
         # Rear Only available on Intel platform Architecture
         if needed_packages == "rear" and sosarch not in rear_supported_architecture :
-            writelog (" Ok, 'rear' isn't supported on this platform (%s)" % (sosarch)) 
+            writelog ("[ OK ] 'rear' isn't supported on this platform (%s)" % (sosarch)) 
             continue                                                  # Proceed with Next Package
 
         # lsb_release package is depreciated on Centos,Rhel,AlmaLinux,Rocky 9, so fail is Ok
         if (needed_packages == "lsb_release" and sosname != "FEDORA") and (sosname in rhel_family and sosver >= 9):
-            writelog (" Ok, 'lsb_release' is depreciated on '%s' V%s." % (sosname,sosver)) 
+            writelog ("[ OK ] 'lsb_release' is depreciated on '%s' V%s." % (sosname,sosver)) 
             continue                                                  # Proceed with Next Package
 
         # Syslinux Only available on Intel platform Architecture
         if needed_packages == "syslinux" and sosarch not in syslinux_supported_architecture :
-            writelog (" Ok, 'syslinux' isn't supported on this platform (%s)" % (sosarch)) 
+            writelog ("[ OK ] 'syslinux' isn't supported on this platform (%s)" % (sosarch)) 
             continue                                                  # Proceed with Next Package
 
         if locate_package(needed_packages,packtype) :                   # If Package is installed
-            writelog (" Ok ")                                           # Show User Check Result
+            writelog ("[ OK ] ")                                        # Show User Check Result
             continue                                                    # Proceed with Next Package
 
         if needed_packages == "" :
@@ -965,7 +965,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
         writelog ("Installing %s ... " % (needed_packages),'nonl')      # Show user what installing
         if (packtype == "deb") :                                        # If Package type is '.deb'
             icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
-            icmd += "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
+            icmd += "apt -y install %s >>%s 2>&1" % (needed_packages,logfile)
         if (packtype == "rpm") :                                        # If Package type is '.rpm'
             if (needed_repo == "epel") and (sosname != "FEDORA"):       # Repo needed is EPEL
                 writelog (" from EPEL ... ",'nonl')                 
@@ -1013,7 +1013,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             else :
                 writelog (" Done ")
                 continue
-        writelog   ("Warning: Was unable to install package %s." % (needed_packages),'bold')
+        writelog   ("Warning: Unable to install package '%s'." % (needed_packages),'bold')
             
 
 
@@ -1097,7 +1097,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     server    = sserver.split('.')                                      # Split FQDN Server Name
     sname     = server[0]                                               # Only Keep Server Name
     writelog('')
-    writelog("Inserting server '%s' in SADMIN Database ... " % (sname),'bold') # Show adding Server
+    writelog("Inserting server '%s' in database ... " % (sname),'bold') # Show adding Server
     #
     cnow    = datetime.datetime.now()                                   # Get Current Time
     curdate = cnow.strftime("%Y-%m-%d")                                 # Format Current date
