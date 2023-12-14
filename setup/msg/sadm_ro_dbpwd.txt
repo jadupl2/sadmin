@@ -1,5 +1,5 @@
 # sadmin.cfg SADM_RO_DBPWD Documentation
-# Revise 2019_03_08
+# Revise 2023-12-10
 #----------------------------------------------------------------------------
-This is the read only user ("squery") password  in the SADMIN database.
-Give this password to people you want to consult server information.
+This is the read-only user ("squery") password in SADMIN database.
+Give this password to people(s) you allow to consult server information.

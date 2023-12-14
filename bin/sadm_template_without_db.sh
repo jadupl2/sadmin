@@ -118,117 +118,6 @@ show_usage()
 
 
 
-#===================================================================================================
-# Process all your active(s) server(s) found in Database 
-# Modify SQL statement to your needs.
-#===================================================================================================
-process_servers()
-{
-    sadm_write "${BOLD}${YELLOW}Processing All Active(s) Server(s) ...${NORMAL}\n"
-
-    # Put the rows you want in the select. 
-    # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
-    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir" 
-    SQL="${SQL},srv_backup,srv_img_backup,srv_ssh_port "
-
-    # Build SQL to select active server(s) from Database.
-    SQL="${SQL} from server"                                            # From the Server Table
-    SQL="${SQL} where srv_active = True"                                # Select only Active Servers
-    SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
-    
-    # Execute SQL Query to Create CSV in SADM Temporary work file ($SADM_TMP_FILE1)
-    CMDLINE="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL Auth/Read Only User
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "${CMDLINE}\n" ; fi  # Debug Show Auth cmdline
-    $CMDLINE -h "$SADM_DBHOST" "$SADM_DBNAME" -Ne "$SQL" | tr '/\t/' '/;/' > "$SADM_TMP_FILE1"
-    if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
-        then sadm_write_log "[ WARNING ] No Active Server were found"   # Not Active Server MSG
-             return 0                                                   # Return Status to Caller
-    fi 
-    
-    xcount=0; error_count=0;                                            # Set Server & Error Counter
-    while read wline                                                    # Read Tmp file Line by Line
-        do
-        ((xcount++))                                                    # Increase Server Counter                      
-        server_name=$(      echo "$wline"|awk -F\; '{print $1}')        # Extract Server Name
-        server_os=$(        echo "$wline"|awk -F\; '{print $2}')        # O/S (linux/aix/darwin)
-        server_domain=$(    echo "$wline"|awk -F\; '{print $3}')        # Extract Domain of Server
-        server_monitor=$(   echo "$wline"|awk -F\; '{print $4}')        # Monitor  1=True 0=False
-        server_sporadic=$(  echo "$wline"|awk -F\; '{print $5}')        # Sporadic 1=True 0=False
-        server_rootdir=$(   echo "$wline"|awk -F\; '{print $7}')        # Client SADMIN Root Dir.
-        server_backup=$(    echo "$wline"|awk -F\; '{print $8}')        # Backup Schd 1=True 0=False
-        server_img_backup=$(echo "$wline"|awk -F\; '{print $9}')        # ReaR Sched. 1=True 0=False
-        server_ssh_port=$(  echo "$wline"|awk -F\; '{print $10}')       # SSH port no. to System
-        fqdn_server="${server_name}.${server_domain}"                   # Create FQDN Server Name
-        sadm_write_log "\n${SADM_TEN_DASH}"                             # Ten Dashes Line    
-        sadm_write_log "Processing ($xcount) ${fqdn_server}."           # Server Count & FQDN Name 
-
-        # Check if server name can be resolve - If not, we won't be able to SSH to it.
-        host  "$fqdn_server" >/dev/null 2>&1                            # Try to resolve Hostname
-        if [[ $? -ne 0 ]]                                               # If hostname not resolvable
-            then SMSG="[ ERROR ] Can't process '$fqdn_server', hostname can't be resolved."
-                 sadm_write_err "${SMSG}"                               # Advise user & Feed log
-                 ((error_count++))                                      # Increase Error Counter 
-                 sadm_write_err "Continuing with next system."          # Not Error if Sporadic Srv. 
-                 continue                                               # Continue with next Server
-        fi
-
-        # Try a SSH to system
-        if [ $SADM_DEBUG -gt 0 ] 
-            then sadm_write_log "$SADM_SSH -qnp $server_ssh_port $fqdn_server date" 
-        fi 
-        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Server
-            then $SADM_SSH -qnp "$server_ssh_port" "$fqdn_server" date > /dev/null 2>&1
-                 RC=$?                                                  # Save Return Code Number
-            else RC=0                                                   # No SSH to SADMIN Server
-        fi
-
-        # If SSH failed and it's a Sporadic Server, Show Warning and continue with next system.
-        if [ $RC -ne 0 ] && [ "$server_sporadic" = "1" ]                # SSH don't work & Sporadic
-            then sadm_write_err "[ WARNING ] Can't SSH to sporadic system '${fqdn_server}'."
-                 ((warning_count++))                                    # Increase Warning Counter
-                 sadm_write_err "Continuing with next system."          # Not Error if Sporadic Srv. 
-                 continue                                               # Continue with next system
-        fi
-
-        # If SSH Failed & Monitoring is Off, Show Warning and continue with next system.
-        if [[ $RC -ne 0 ]] && [[ "$server_monitor" = "0" ]]             # SSH don't work/Monitor OFF
-            then sadm_write_err "[ WARNING ] Can't SSH to $fqdn_server - Monitoring is OFF"
-                 ((warning_count++))                                    # Increase Warning Counter
-                 sadm_write_err "Continuing with next system."          # Not Error if don't Monitor
-                 continue                                               # Continue with next system
-        fi
-
-        # If All SSH test failed, Issue Error Message and continue with next system
-        if [[ "$RC" -ne 0 ]]                                            # If SSH to Server Failed
-            then sadm_write_err "[ ERROR ] Can't SSH to '${fqdn_server}'" 
-                 ((error_count++))                                      # Increase Error Counter 
-                 sadm_write_err "Continuing with next system."          # Not Error if don't Monitor
-                 continue                                               # Continue with next system
-        fi
-
-        # Check if System is Locked.
-        sadm_check_system_lock "$server_name"                           # Check lock file status
-        if [[ $? -ne 0 ]]                                               # If system is lock
-            then sadm_write_err "[ WARNING ] System $server_name is currently lock."
-                 ((warning_count++))                                    # Increase Warning Counter
-                 sadm_write_err "Continuing with next system."          # Not Error if Sporadic Srv. 
-                 continue                                               # Go process next server
-        fi
-
-        if [[ "$fqdn_server" != "$SADM_SERVER" ]]                       # If not on SADMIN Server
-            then sadm_write_log "[ OK ] SSH to ${fqdn_server} work."    # Good SSH Work on Client
-            else sadm_write_log "[ OK ] No SSH using 'root' on the SADMIN server '$SADM_SERVER'."
-        fi
-
-        # PROCESSING CAN BE PUT HERE
-        # ........
-        # ........
-
-        done < "$SADM_TMP_FILE1"                                          # Read SQL Result file
-    return "$error_count"                                                 # Return Err Count to caller
-}
-
-
 
 #===================================================================================================
 # Script Main Processing Function
@@ -240,7 +129,6 @@ main_process()
     # PROCESSING CAN BE PUT HERE
     # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
     # ........
-
     sadm_sleep 10 2                                                     # Sleep 10Sec, 2sec interval
     sadm_write_log " "                                                  # Write an empty line
     
@@ -291,7 +179,6 @@ function cmd_options()
     sadm_start                                                          # Won't come back if error
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong    
     main_process                                                        # Your PGM Main Process
-    process_servers                                                     # ssh to all actives clients
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
