@@ -58,6 +58,7 @@
 # 2023_09_22 lib v4.45 Reduce recommended SADM_*_KEEPDAYS values of  to save disk space.
 #@2023_10_23 lib v4.46 Fix crash when running a script that need to be run by 'root' and was not.
 #@2023_11_17 lib v4.47 Fix error in db_close(), when trying to close a connection that isn't open.
+#@2023_12_14 lib v4.48 'SADM_HOST_TYPE' in 'sadmin.cfg', decide if system is a client or the server.
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -90,7 +91,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.47"                                # This Library Version
+lib_ver             = "4.48"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -590,7 +591,7 @@ def load_config_file(cfg_file):
         if "SADM_ALERT_REPEAT"             in CFG_NAME: sadm_alert_repeat            = int(CFG_VALUE)
         if "SADM_TEXTBELT_KEY"             in CFG_NAME: sadm_textbelt_key            = CFG_VALUE
         if "SADM_TEXTBELT_URL"             in CFG_NAME: sadm_textbelt_url            = CFG_VALUE
-        if "SADM_HOST_TYPE"                in CFG_NAME: sadm_host_type               = CFG_VALUE
+        if "SADM_HOST_TYPE"                in CFG_NAME: sadm_host_type               = CFG_VALUE.upper()
         if "SADM_SERVER"                   in CFG_NAME: sadm_server                  = CFG_VALUE
         if "SADM_DOMAIN"                   in CFG_NAME: sadm_domain                  = CFG_VALUE
         if "SADM_USER"                     in CFG_NAME: sadm_user                    = CFG_VALUE
@@ -641,7 +642,7 @@ def load_config_file(cfg_file):
     cfg_file_fh.close()
 
     # Get Database User Password from .dbpass file (Read/Write Acc. 'sadmin' and 'squery' Read Only)
-    if ((get_fqdn() == sadm_server ) and (sadm_host_type == "S")):         
+    if (sadm_host_type == "S"):         
         try:
             dbpass_file_fh = open(dbpass_file,'r')                      # Open DB Password File
         except (IOError, FileNotFoundError) as e:                       # If Can't open cfg file
@@ -671,11 +672,11 @@ def load_config_file(cfg_file):
 
 
 # If old unencrypted email account password file exist and on a SADMIN client remove the file.
-    if os.path.isfile(gmpw_file_txt) and get_fqdn() != sadm_server :
+    if os.path.isfile(gmpw_file_txt) and sadm_host_type == "S"  :
        os.remove(gmpw_file_txt)      
 
 # If old unencrypted email account password file exist and on SADMIN server create an encrypted pwd.
-    if os.path.isfile(gmpw_file_txt) and get_fqdn() == sadm_server :
+    if os.path.isfile(gmpw_file_txt) and sadm_host_type == "S" :
         try: 
             with open(gmpw_file_txt) as f: 
                 wpwd = f.readline().strip()
@@ -2013,8 +2014,8 @@ def stop(pexit_code) :
         silentremove (pid_file)                                         # Delete PID File
 
     # Copy RCH & LOG files to Server Central Directory to be available to monitor quickly
-    if (get_fqdn() == sadm_server  and os.getuid() == 0 ) :             # If on SADMIN Server
-        if (use_rch) :                                                 # Copy Now rch to www
+    if (sadm_host_type == "S" and os.getuid() == 0 ) :                  # If on SADMIN Server
+        if (use_rch) :                                                  # Copy Now rch to www
             try:
                 woutput = dir_www_host + "/rch"  + '/' + phostname + '_' + pinst + '.rch'      
                 if os.getuid() == 0 and os.path.exists(woutput): os.chmod(woutput, 0o0660) 
@@ -2026,7 +2027,7 @@ def stop(pexit_code) :
             silentremove(rch_file)                                      # Then Delete it 
 
     # If on SADMIN Server, copy immediately rch, log and elog to server central directories.
-    if (get_fqdn() == sadm_server and os.getuid() == 0 ) :              # If on SADMIN Server
+    if (sadm_host_type == "S" and os.getuid() == 0 ) :              # If on SADMIN Server
         if log_footer :
             try:
                 woutput = dir_www_host + "/log"  + '/' + phostname + '_' + pinst + '.log'
@@ -2042,7 +2043,7 @@ def stop(pexit_code) :
                 print ("Couldn't copy %s to %s\n%s\n" % (err_file,welog,e))
 
     # Close Database if was used
-    if get_fqdn() == sadm_server and db_used :                          # If Database was Used
+    if sadm_host_type == "S" and db_used :                          # If Database was Used
        db_close()                                                       # Close Database
     return
 
@@ -2113,7 +2114,7 @@ def start(pver,pdesc) :
         print("Check & change permission on the file or run this script with 'sudo'.\n")
         sys.exit(1)                                                     # Back to O/S 
     except IOError as e:                                                # If Can't Create or open
-        print("Error opening error log file %s" % (err_file))           # write_log Error Log FileName
+        print("Error opening error log file %s" % (err_file))           # write_log Error Log File
         print("Error Line No.: %d" % (inspect.currentframe().f_back.f_lineno)) # Line Number
         print("Function Name : %s" % (sys._getframe().f_code.co_name))  # Current function Name
         print("Error No. %d - %s" % (e.errno,e.strerror))               # Print Error Number
@@ -2175,7 +2176,7 @@ def start(pver,pdesc) :
     if os.getuid() == 0: os.chown(dir_usr_mon, uid, gid)                # Change owner/group
 
     # Web Directories
-    if (get_fqdn() == sadm_server) :
+    if (sadm_host_type == "S") :
         wgid = grp.getgrnam(sadm_www_group).gr_gid                      # Get GID User of Web Group
         wuid = pwd.getpwnam(sadm_www_user).pw_uid                       # Get UID User of Web User
         list1 = [ dir_www, dir_www_net, dir_www_doc, dir_www_dat ]      # List #1 Dir. to create
@@ -2207,7 +2208,7 @@ def start(pver,pdesc) :
         #wmess += "%s "  % (get_oscodename().capitalize())               # 4th Line O/S Code Name 
         wmess += "%s "  % (get_ostype().capitalize())                   # 4th Line O/S Type Linux/Aix
         wmess += "v%s " % (get_osversion())                             # 4th Line O/S Version
-        wmess += "- Kernel %s - SADMIN: %s" % (get_kernel_version(),dir_base) # 4th Line Kernel
+        wmess += "- Kernel %s - SADMIN(%s): %s" % (get_kernel_version(),dir_base,sadm_host_type)
         write_log (wmess)                                               # Write 4th Line to Log
         write_log ('='*50)                                              # 50 '=' Lines
         write_log (" ")                                                 # Space Line in the LOG
@@ -2221,15 +2222,15 @@ def start(pver,pdesc) :
         sys.exit(1)                                                     # Back to O/S 
 
     # If this script can only be run on the SADMIN server
-    if psadm_server_only and get_fqdn() != sadm_server :                # Only run on SADMIN
-        print("This script can only be run on SADMIN server (%s)" % (sadm_server))
-        print("Process aborted")                                        # Abort advise message
+    if psadm_server_only and sadm_host_type != "S"   :                  # Only run on SADMIN
+        print("Script can only be run on a SADMIN server (when sadm_host_type is 'S').")
+        print("Process aborted.")                                       # Abort advise message
         stop(1)                                                         # Close SADMIN 
         sys.exit(1)                                                     # Back to O/S 
     
     # Check Files that are present ONLY ON SADMIN SERVER
     # Make sure the alert History file exist , if not use the history template to create it.
-    if (get_fqdn() == sadm_server) :
+    if (sadm_host_type == "S") :
         if check_system_lock(phostname) :                               # System is Lock on SADMIN
            stop(1)                                                      # Close SADMIN
            sys.exit(1)                                                  # Exit back to O/S,Abort
@@ -2300,7 +2301,7 @@ def start(pver,pdesc) :
             os.chmod(rch_file,0o0664)                                   # Chg History File Perm.  
 
     # If user specified he want to use the Database and we are on the SADMIN server, connect to DB.
-    if db_used and (get_fqdn() == sadm_server): 
+    if db_used and sadm_host_type == "S" : 
         db_connect(db_name) 
     return(0)
 
@@ -2527,19 +2528,19 @@ def db_connect(DB):
     db_errmsg   = ""                                                    # Error Mess. to return
 
     # No Connection to Database is possible if not on the SADMIN Server
-    if get_fqdn() != sadm_server :                                      # Use only on SADMIN server
+    if sadm_host_type != "S" :                                          # Use only on SADMIN server
+       db_errmsg = "[ ERROR ] This system is a SADMIN client, DB can't be used on this system."
        if not db_silent :                                               # Want to show error Msg.
-           write_err("DB can't be used on '%s', only on '%s' system." % (sadm_server,get_fqdn()))
+           write_err(db_errmsg)
        db_errno = 1                                                     # Error number
-       db_errmsg = "DB can't be used on '%s', only on '%s' system." % (sadm_server,get_fqdn())
        return(1)
 
     # User decided not to use Database, No Connection to Database
     if not db_used :                                                    # User Want to use DB
        if not db_silent :
-          write_err("[ Error ] Connection to database only possible when 'sa.db_used' is set to True")
+          write_err("[ ERROR ] Connection to database only possible when 'sa.db_used' is set to True")
        db_errno = 1                                                     # Error number
-       db_errmsg = "[ Error ] Connection to database only possible when 'sa.db_used' is set to True"
+       db_errmsg = "[ ERROR ] Connection to database only possible when 'sa.db_used' is set to True"
        return(1)
 
     # Open a connection to Database
