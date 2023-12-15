@@ -2133,22 +2133,22 @@ sadm_start() {
        then pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Epoch time of PID File
             cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
-            sadm_write_log "Script '$SADM_PN' is already running ...\n" # Script already running
-            sadm_write_log "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N').\n" 
-            sadm_write_log "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid', was created $pelapse seconds ago.\n"
-            sadm_write_log "The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds.\n"
-            sadm_write_log " "
+            sadm_write_err "Script '$SADM_PN' is already running ..." # Script already running
+            sadm_write_err "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
+            sadm_write_err "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid', was created $pelapse seconds ago."
+            sadm_write_err "The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds."
+            sadm_write_err " "
             if [ -z "$SADM_PID_TIMEOUT" ]                               # Is SADM_PID_TIMEOUT define
                 then sadm_write_err "Script can't run unless one of the following thing is done :"
                      sadm_write_err "  - Remove the PID File (\${SADMIN}/tmp/${SADM_INST}.pid)."
                      sadm_write_err "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script."
-                     sadm_write_err "  - You wait till PID timeout '\$SADM_PID_TIMEOUT' is reach.\n"
+                     sadm_write_err "  - You wait till PID timeout '\$SADM_PID_TIMEOUT' is reach."
                      DELETE_PID="N"                                     # No Del PID Since running
                      exit 1                                             # Exit To O/S with Error
                 else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
-                        then sadm_write_log "The PID file exceeded the time to live ('\$SADM_PID_TIMEOUT').\n"
-                             sadm_write_log "Assuming script was aborted abnormally.\n"
-                             sadm_write_log "Script execution is now resume and the PID file recreated.\n"
+                        then sadm_write_log "The PID file exceeded the time to live ('\$SADM_PID_TIMEOUT')."
+                             sadm_write_log "Assuming script was aborted abnormally."
+                             sadm_write_log "Script execution is now resume and the PID file recreated."
                              sadm_write_log " "
                              sadm_write_log " "
                              touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
