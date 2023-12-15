@@ -738,7 +738,12 @@ validate_server_connectivity()
 
     # Try to get uptime from system to test if ssh to system is working
     # -o ConnectTimeout=1 -o ConnectionAttempts=1 
-    wuptime=$(${SADM_SSH} -qnp $SSH_PORT -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
+    if [ "$SADM_HOST_TYPE" != "S" ] 
+        then wuptime=$(${SADM_SSH} -qnp $SSH_PORT -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
+             RC=$?
+        else wuptime=$(uptime 2>/dev/null)
+             RC=$?
+    fi
     RC=$?                                                               # Save Error Number
     if [ $RC -eq 0 ]                                                    # If SSH Worked
         then GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
@@ -909,7 +914,7 @@ process_servers()
         fi
     
         # Test SSH connectivity and update uptime in Database 
-        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # Not on SADMIN Srv Test SSH
+        if [ "$SADM_HOST_TYPE" != "S" ]                         # Not on SADMIN Srv Test SSH
            then validate_server_connectivity "$fqdn_server" "$ssh_port" # Test SSH, Upd uptime in DB
                  RC=$?                                                  # Save function return code 
                  if [ $RC -eq 2 ] ; then continue ; fi                  # Sporadic,Monitor Off,OSUpd
@@ -943,7 +948,7 @@ process_servers()
 
         # If client backup list was modified on master (if backup_list.tmp exist) then update client.
         if [ -r "$LDIR/backup_list.tmp" ]                               # If backup list was modify
-           then if [ "$fqdn_server" != "$SADM_SERVER" ]                 # If Not on SADMIN Server
+           then if [ "$SADM_HOST_TYPE" != "S" ]                 # If Not on SADMIN Server
                    then rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_list.tmp ${server_name}:$RDIR/backup_list.txt # Rem.Rsync
                    else rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_list.tmp $SADM_CFG_DIR/backup_list.txt  # Local Rsync 
                 fi
@@ -957,7 +962,7 @@ process_servers()
 
         # If backup exclude list was modified on master (if backup_exclude.tmp exist), update client
         if [ -r "$LDIR/backup_exclude.tmp" ]                            # Backup Exclude list modify
-           then if [ "$fqdn_server" != "$SADM_SERVER" ]                 # If Not on SADMIN Server
+           then if [ "$SADM_HOST_TYPE" != "S" ]                 # If Not on SADMIN Server
                    then rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_exclude.tmp ${server_name}:$RDIR/backup_exclude.txt 
                    else rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_exclude.tmp $SADM_CFG_DIR/backup_exclude.txt # LocalRsync 
                 fi
@@ -975,7 +980,7 @@ process_servers()
         # Check if ReaR backup exclude list was modified (if backup_exclude.tmp exist), update client
         if [ -r "$REAR_USER_EXCLUDE" ]                                  # Rear Exclude option modify
            then update_rear_site_conf ${server_name}
-                if [ "$fqdn_server" != "$SADM_SERVER" ]                 # If Not on SADMIN Server
+                if [ "$SADM_HOST_TYPE" != "S" ]                         # If Not on SADMIN Server
                    then #sadm_writelog "rsync -var $REAR_CFG ${server_name}:/etc/rear/site.conf "
                         rsync -ar -e "ssh -p $ssh_port" $REAR_CFG ${server_name}:/etc/rear/site.conf 
                         if [ $? -eq 0 ] 
@@ -1011,7 +1016,7 @@ process_servers()
         fi
 
         # Copy Site Common configuration files to client (If not on server)
-        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Server
+        if [ "$SADM_HOST_TYPE" != "S" ]                         # If Not on SADMIN Server
             then rem_cfg_files=( alert_group.cfg )
                  for WFILE in "${rem_cfg_files[@]}"
                    do
@@ -1030,7 +1035,7 @@ process_servers()
         fi 
 
         # Get remote $SADMIN/cfg Dir. and update local www/dat/${server_name}/cfg directory.
-        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
+        if [ "$SADM_HOST_TYPE" != "S" ]                         # If Not on SADMIN Try SSH 
             then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
@@ -1041,7 +1046,7 @@ process_servers()
         # Get remote $SADMIN/log Dir. and update local www/dat/${server_name}/log directory.
         LDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"                   # Local Receiving Dir.
         RDIR="${server_dir}/log"                                        # Remote log Directory
-        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
+        if [ "$SADM_HOST_TYPE" != "S" ]                         # If Not on SADMIN Try SSH 
             then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
@@ -1052,7 +1057,7 @@ process_servers()
        # Rsync remote rch dir. onto local web rch dir/ (${SADMIN}/www/dat/${server_name}/rch) 
         LDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                   # Local Receiving Dir. Path
         RDIR="${server_dir}/dat/rch"                                    # Remote RCH Directory Path
-        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
+        if [ "$SADM_HOST_TYPE" != "S" ]                         # If Not on SADMIN Try SSH 
             then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
@@ -1064,7 +1069,7 @@ process_servers()
         # Get remote $SADMIN/dat/rpt Dir. and update local www/dat/${server_name}/rpt directory.
         LDIR="$SADM_WWW_DAT_DIR/${server_name}/rpt"                     # Local www Receiving Dir.
         RDIR="${server_dir}/dat/rpt"                                    # Remote log Directory
-        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
+        if [ "$SADM_HOST_TYPE" != "S" ]                         # If Not on SADMIN Try SSH 
             then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
             #else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
