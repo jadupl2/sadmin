@@ -60,6 +60,7 @@
 # 2023_05_24 server v4.11 Remove repeating error count in the error log.
 # 2023_07_18 server v4.12 Fix problem when not using the standard ssh port (22).
 # 2023_09_18 server v4.13 When syncing to the SADMIN server, don't use SSH to rsync .
+#@2023_12_14 server v4.14 'SADM_HOST_TYPE' in 'sadmin.cfg', decide if system is a client or a server.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -91,7 +92,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.13'                                     # Script version number
+export SADM_VER='4.14'                                     # Script version number
 export SADM_PDESC="Collect hardware,software,performance info data from all active systems."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -221,7 +222,7 @@ process_servers()
         fi                                                              # System Lock, Nxt Server
 
         # TEST SSH TO SERVER (IF NOT ON SADMIN SERVER)
-        if [ "${server_name}" != "$SADM_HOSTNAME" ]                     # If not on SADMIN Server 
+        if [ "$SADM_HOST_TYPE" != "S" ]                     # If not on SADMIN Server 
             then $SADM_SSH -qnp "$server_ssh_port" "$fqdn_server" date > /dev/null 2>&1
                  RC=$?                                                  # Save Error Number
             else RC=0                                                   # RC=0 no SSH on SADMIN Srv
@@ -256,7 +257,7 @@ process_servers()
 
         # Get the remote /etc/environment file to determine where SADMIN is install on remote
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}"
-        if [ "${server_name}" != "$SADM_HOSTNAME" ]
+        if [ "$SADM_HOST_TYPE" != "S" ]
             then scp -CqP "$server_ssh_port" "${server_name}:${ETCENV}" "${WDIR}" >/dev/null 2>&1
             else cp "$ETCENV" "${WDIR}" >/dev/null 2>&1
         fi
@@ -294,7 +295,7 @@ process_servers()
         fi
 
         REMDIR="${RDIR}/dat/dr" 
-        if [ "${server_name}" != "$SADM_HOSTNAME" ]
+        if [ "$SADM_HOST_TYPE" != "S" ]
             then rcmd="rsync -ar -e ssh -p $server_ssh_port --delete ${server_name}:${REMDIR}/ $WDIR/ "
                  rsync -ar -e "ssh -p $server_ssh_port" --delete "${server_name}:${REMDIR}/" "$WDIR/" >>"$SADM_LOG" 2>&1
                  RC=$?
@@ -320,7 +321,7 @@ process_servers()
         fi
 
         REMDIR="${RDIR}/dat/nmon" 
-        if [ "${server_name}" != "$SADM_HOSTNAME" ]
+        if [ "$SADM_HOST_TYPE" != "S" ]
             then rcmd="rsync -ar -e ssh -p $server_ssh_port --delete ${server_name}:${REMDIR}/ $WDIR/ "
                  rsync -ar -e "ssh -p $server_ssh_port" --delete ${server_name}:${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
                  RC=$?
