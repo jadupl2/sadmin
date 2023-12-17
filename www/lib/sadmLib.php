@@ -588,7 +588,7 @@ function sadm_return_logo($WOS) {
             break;
         case 'ROCKY' :
             $iurl='https://docs.rockylinux.org/' ;
-            $ipath='/images/logo_rockylinux.png ';
+            $ipath='/images/logo_rockylinux.png';
             break;
         case 'UBUNTU' :
             $iurl='https://help.ubuntu.com/' ;
