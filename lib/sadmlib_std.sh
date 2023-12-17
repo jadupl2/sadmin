@@ -206,12 +206,10 @@
 # 2023_08_20 lib v4.27 Code optimization, LIBRARY LOAD A LOT FASTER (So scripts run faster).
 # 2023_09_22 lib v4.28 Change default values of SADM_*_KEEPDAYS.
 # 2023_09_26 lib v4.29 Code optimization : To function "sadm_get_command_path()".
-#@2023_12_14 lib v4.30 'SADM_HOST_TYPE' in 'sadmin.cfg', decide if system is a client or the server.
-# 2023_12_14 lib v4.30 Correct some type in the header
+#@2023_12_14 lib v4.30 Set SADM_SERVER_OK (Default 'N') - Set to 'Y', if 'SADM_SERVER' IP is on system.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
-
 
 
 # --------------------------------------------------------------------------------------------------
@@ -388,6 +386,9 @@ export SADM_SMTP_SERVER="smtp.gmail.com"                                # smtp m
 export SADM_SMTP_PORT=587                                               # smtp port(25,465,587,2525)
 export SADM_SMTP_SENDER="sadmin.gmail.com"                              # Email address of sender 
 export SADM_GMPW=""                                                     # smtp sender gmail passwd
+
+# To be a valid SADMIN server 'SADM_HOST_TYPE' must be "S" and 'SADM_SERVER' IP must exist on host.
+export SADM_SERVER_OK="N"                                               # Valid SADM Server
 
 # Array of O/S Supported & Package Family
 #export SADM_OS_SUPPORTED=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMALINUX' 'ROCKY'
@@ -1011,7 +1012,7 @@ sadm_elapse() {
 
 # Function Determine The O/S Version Number
 sadm_get_osversion() {
-    wosversion="0.0"                                                    # Default Value
+    #wosversion="0.0"                                                    # Default Value
     case "$(sadm_get_ostype)" in
         "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
                        then osver=$($SADM_LSB_RELEASE -rs)
@@ -1139,10 +1140,14 @@ sadm_get_osname() {
                             fi 
                     fi 
                     wosname=$(echo $wosname | tr '[:lower:]' '[:upper:]')
+                    # RockyLinux returned by lsb_release and /etc/os-release ID=Rocky, make it ROCKY
+                    if [ "$wosname" = "ROCKYLINUX" ]             ; then wosname="ROCKY"    ;fi
+                    # RedHat ID can be different accross time , making REDHAT
                     if [ "$wosname" = "REDHATENTERPRISESERVER" ] ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "REDHATENTERPRISE" ]       ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "RHEL" ]                   ; then wosname="REDHAT"   ;fi
+                    # Rename CENTOSSTREAM MAKING it CENTOS
                     if [ "$wosname" = "CENTOSSTREAM" ]           ; then wosname="CENTOS"   ;fi
                     if [ -f /usr/bin/raspi-config ]              ; then wosname="RASPBIAN" ;fi
                     ;;
@@ -2111,8 +2116,7 @@ sadm_start() {
 
     # Check if this script to be run only by root user
     if [ ! -z "$SADM_ROOT_ONLY" ] && [ $SADM_ROOT_ONLY == "Y" ] &&  [ $(id -u) -ne 0 ]  
-        then sadm_write_err " "
-             sadm_write_err "Script can only be run by the 'root' user" # Advise User Message
+        then sadm_write_err "Script can only be run by the 'root' user" # Advise User Message
              sadm_write_err "Try 'sudo ${0##*/}'"                       # Suggest using sudo
              sadm_write_err "Process aborted"                           # Abort advise message
              sadm_write_err " "
@@ -2124,6 +2128,7 @@ sadm_start() {
     if [ ! -z "$SADM_SERVER_ONLY" ] && [ "$SADM_SERVER_ONLY" == "Y" ] && [ "$SADM_HOST_TYPE" != "S" ]
         then sadm_write_err "Script can only run on a SADMIN server (With SADM_HOST_TYPE = "S")."
              sadm_write_err "Process aborted."                          # Abort advise message
+             sadm_write_err " "
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
@@ -2133,7 +2138,7 @@ sadm_start() {
        then pepoch=$(stat --format="%Y" $SADM_PID_FILE)                 # Epoch time of PID File
             cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
-            sadm_write_err "Script '$SADM_PN' is already running ..." # Script already running
+            sadm_write_err "[ ERROR ] Script '$SADM_PN' is already running ..."
             sadm_write_err "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
             sadm_write_err "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid', was created $pelapse seconds ago."
             sadm_write_err "The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds."
@@ -2710,6 +2715,9 @@ sadm_check_system_lock() {
             fi
     fi 
 
+
+
+# Load $SADMIN/cfg/sadmin.cfg
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
         then printf "$(date "+%C%y.%m.%d %H:%M:%S") Loading $SADM_CFG_FILE ...\n"
     fi
@@ -2719,9 +2727,17 @@ sadm_check_system_lock() {
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
         then printf "$(date "+%C%y.%m.%d %H:%M:%S") Loading command path ...\n"
     fi
+
+# Check if SADM_SERVER IP is defined on this system and set SADM_SERVER_OK accordingly.
+    server_ip=$(getent hosts $SADM_SERVER | tail -1 | awk  '{ print $1 }')
+    ip a | grep -q $server_ip 
+    if [ $? -eq 0 ] ; then SADM_SERVER_OK="Y" ; else SADM_SERVER_OK="N" ; fi
+
+# Load the path of commands used in SADMIN
     sadm_load_cmd_path                                                  # Load Cmd Path Variables
     if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement not met
 
+# Build SSH command according to Path and Port used
     export SADM_SSH_CMD="${SADM_SSH} -qnp${SADM_SSH_PORT}"              # SSH Command to SSH CLient
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
         then printf "$(date "+%C%y.%m.%d %H:%M:%S") Library Loaded ...\n"
