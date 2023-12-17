@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Your Name
 #   Script Name :   XXXXXXXX.py
-#   Date        :   YYYY/MM/DD
+#   Date        :   2024/MM/DD
 #   Requires    :   python3 and SADMIN Python Library
 #   Description :   Your description of what this script is doing.
 # ---------------------------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ pdebug      = 0                                                      # Debug lev
 pexit_code  = 0                                                      # Script default exit code
 
 # Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
-sa.db_used           = True       # Open/Use DB(True), No DB needed (False), sa.start() auto connect
+sa.db_used           = False       # Open/Use DB(True), No DB needed (False), sa.start() auto connect
 sa.db_silent         = False      # When DB Error Return(Error), True = NoErrMsg, False = ShowErrMsg
 sa.db_conn           = None       # Use this Database Connector when using DB,  set by sa.start()
 sa.db_cur            = None       # Use this Database cursor if you use the DB, set by sa.start()
@@ -110,85 +110,6 @@ sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (s
 
 
 
-
-
-
-
-
-# Process all your active(s) server(s) in the Database (Used if want to process selected servers)
-# --------------------------------------------------------------------------------------------------
-def process_servers():
-    global db_conn, db_cur                                            # DB Connection & Cursor
-
-    sa.write_log("Processing All Actives Server(s)")                    # Enter Servers Processing
-    if (sa.get_fqdn() != sa.sadm_server) or (sa.db_used == False):      # Not SADMIN srv,usedb False
-        print("Can't use function 'process_servers' : ")    
-        print("   1) If 'sa.db_used' is set to 'False'.")
-        print("   2) If you're not on the SADMIN server (%s)." % (sa.sadm_server))
-        return(1)
-    
-    # See columns available in 'table_structure_server.pdf' in $SADMIN/doc/pdf/database directory
-    sql = "SELECT * FROM server WHERE srv_active = %s order by srv_name;" % ('True')
-
-    try:
-        sa.db_cur.execute(sql)                                            # Execute SQL Statement
-        rows = sa.db_cur.fetchall()                                       # Retrieve All Rows
-    except(pymysql.err.InternalError, pymysql.err.IntegrityError, pymysql.err.DataError) as error:
-        enum, emsg = error.args                                         # Get Error No. & Message
-        sa.write_err("Error: Retrieving all active systems rows.")      # User error message
-        sa.write_err("%s %s" % (enum, emsg))                            # Print Error No. & Message
-        return (1)                                                      # Return error to caller
-
-    # Process each Active Servers
-    lineno = 1                                                          # System Counter Start at 1
-    error_count = 0                                                     # Error Counter
-    for row in rows:                                                    # Process each server row
-        wname = row['srv_name']                                         # Extract Server Name
-        wdesc = row['srv_desc']                                         # Extract Server Desc.
-        wdomain = row['srv_domain']                                     # Extract Server Domain Name
-        wos = row['srv_osname']                                         # Extract Server O/S Name
-        wsporadic = row['srv_sporadic']                                 # Extract Server Sporadic ?
-        wmonitor = row['srv_monitor']                                   # Extract Server Monitored ?
-        wosversion = row['srv_osversion']                               # Extract Server O/S Version
-        wfqdn = "%s.%s" % (wname, wdomain)                              # Construct FQDN
-        sa.write_log("\n%s" % ('-' * 40))                               # Insert 40 Dashes Line
-        sa.write_log("Processing (%d) %-15s - %s %s" % (lineno, wfqdn, wos, wosversion))  
-        sa.write_log(wdesc)                                             # Host Desciption
-
-        # Check if system name can be resolved,
-        try:
-            hostip = socket.gethostbyname(wfqdn)                        # Resolve Server Name ?
-        except socket.gaierror:                                         # Hostname can't be resolve
-            sa.write_err("[ ERROR ] Can't process %s, hostname can't be resolved" % (wfqdn))
-            error_count += 1                                            # Increase Error Counter
-            if (error_count != 0):                                      # If Error count not at zero
-                sa.write_log("Total error(s) : %s" % (error_count))     # Show Total Error Count
-            continue                                                    # Go read Next Server
-
-        # Check if System is Locked.
-        if sa.check_system_lock(wname) != 0:                               # If System is Lock
-            sa.write_err("[ WARNING ] System '%s' is currently lock." % (wname))
-            sa.write_log("Continuing with next system")                 # Not Error if system lock
-            continue                                                    # Go read Next Server
-
-        # Perform a SSH to system currently processing
-        wcommand = "%s %s %s" % (sa.cmd_ssh_full, wfqdn, "date")           # SSH Cmd to Server for date
-        sa.write_log("Command is %s" % (wcommand))                      # Show User what will do
-        ccode, cstdout, cstderr = sa.oscommand("%s" % (wcommand))       # Execute O/S CMD
-        if (ccode == 0):                                                # If ssh Worked
-            sa.write_log("[OK] SSH Worked")                             # Inform User SSH Worked
-        else:                                                           # If ssh didn't work
-            if wsporadic:                                               # Is it a Sporadic Server
-                sa.write_err("[ WARNING ] Can't SSH to sporadic system %s" % (wfqdn))
-                sa.write_log("Continuing with next system")             # Not Error if Sporadic Srv.
-                continue                                                # Continue with next system
-            else:
-                error_count += 1                                        # Increase Error Counter
-                sa.write_err("[ ERROR ] SSH Error %d %s" % (ccode, cstderr))  
-        if (error_count != 0):                                          # If Error count not at zero
-            sa.write_log("Total error(s) : %s" % (error_count))         # Show Total Error Count
-        lineno += 1                                                     # Increase Server Counter
-    return (error_count)                                                # Return Err.Count to caller
 
 
 
@@ -257,10 +178,7 @@ def cmd_options(argv):
 def main(argv):
     (pdebug) = cmd_options(argv)                                        # Analyze cmdline options
     sa.start(pver, pdesc)                                               # Initialize SADMIN env.
-
-    #pexit_code = process_servers()                                     # Loop All Active systems
     pexit_code = main_process()                                         # Main Process without DB
-
     sa.stop(pexit_code)                                                 # Gracefully exit SADMIN
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code
 

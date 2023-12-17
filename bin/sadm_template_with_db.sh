@@ -2,7 +2,7 @@
 #---------------------------------------------------------------------------------------------------
 #   Author        : Your Name 
 #   Script Name   : XXXXXXXX.sh
-#   Creation Date : 2023/MM/DD
+#   Creation Date : 2024/MM/DD
 #   Requires      : sh and SADMIN Shell Library
 #   Description   : Template for starting a new shell script
 #
@@ -55,9 +55,9 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='4.3'                                      # Script version number
-export SADM_PDESC="SADMIN template shell script"           # Script Optional Desc.(Not use if empty)
+export SADM_PDESC="SADMIN template shell script that use SADMIN database."
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -230,25 +230,6 @@ process_servers()
 
 
 
-#===================================================================================================
-# Script Main Processing Function
-#===================================================================================================
-main_process()
-{
-    sadm_write_log "Starting Main Process ..."                          # Starting processing Mess.
-
-    # PROCESSING CAN BE PUT HERE
-    # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
-    # ........
-
-    sadm_sleep 10 2                                                     # Sleep 10Sec, 2sec interval
-    sadm_write_log " "                                                  # Write an empty line
-    
-    return "$SADM_EXIT_CODE"                                              # Return ErrorCode to Caller
-}
-
-
-
 # --------------------------------------------------------------------------------------------------
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
@@ -290,7 +271,6 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Won't come back if error
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong    
-    main_process                                                        # Your PGM Main Process
     process_servers                                                     # ssh to all actives clients
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID

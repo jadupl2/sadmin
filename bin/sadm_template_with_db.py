@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Your Name
 #   Script Name :   XXXXXXXX.py
-#   Date        :   YYYY/MM/DD
+#   Date        :   2024/MM/DD
 #   Requires    :   python3 and SADMIN Python Library
 #   Description :   Your description of what this script is doing.
 # ---------------------------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ sa.log_header        = True       # Show/Generate Header in script log (.log)
 sa.log_footer        = True       # Show/Generate Footer in script log (.log)
 sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
 sa.proot_only        = False      # Pgm run by root only ?
-sa.psadm_server_only = False      # Run only on SADMIN server ?
+sa.psadm_server_only = True       # Run only on SADMIN server ?
 sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
@@ -194,20 +194,6 @@ def process_servers():
 
 
 
-# Main Process (Used to run script on current server)
-# --------------------------------------------------------------------------------------------------
-def main_process():
-
-    # Insert your code HERE !
-    sa.sleep(8,2)
-
-    # Return Err. Code To Caller
-    return(pexit_code)
-
-
-
-
-
 # Command line Options
 # --------------------------------------------------------------------------------------------------
 def cmd_options(argv):
@@ -257,10 +243,7 @@ def cmd_options(argv):
 def main(argv):
     (pdebug) = cmd_options(argv)                                        # Analyze cmdline options
     sa.start(pver, pdesc)                                               # Initialize SADMIN env.
-
-    #pexit_code = process_servers()                                     # Loop All Active systems
-    pexit_code = main_process()                                         # Main Process without DB
-
+    pexit_code = process_servers()                                     # Loop All Active systems
     sa.stop(pexit_code)                                                 # Gracefully exit SADMIN
     sys.exit(pexit_code)                                                # Back to O/S with Exit Code
 
