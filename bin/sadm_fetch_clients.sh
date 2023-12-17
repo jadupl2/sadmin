@@ -98,6 +98,7 @@
 # 2022_09_29 server v3.44 Daily backup, check new web option to compress backup or not.
 # 2023_07_18 server v3.45 Fix when not using the standard ssh port (22).
 # 2023_09_18 server v3.46 Enhance purge of old '*.nmon' files.
+#@2023_12_17 server v3.47 Modification that allow SADMIN server IP to ba an alias.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -127,7 +128,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.46'                                     # Script version number
+export SADM_VER='3.47'                                     # Script version number
 export SADM_PDESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -568,9 +569,8 @@ rsync_function()
     fi
 
     # Save rsync information
-    REMOTE_DIR=$1                                                       # user@host:remote directory
-    LOCAL_DIR=$2                                                        # Local Directory
-
+    REMOTE_DIR="$1"                                                     # user@host:remote directory
+    LOCAL_DIR="$2"                                                      # Local Directory
     # If Local directory doesn't exist create it 
     if [ ! -d "${LOCAL_DIR}" ] ; then mkdir -p ${LOCAL_DIR} ; chmod 2775 ${LOCAL_DIR} ; fi
 
@@ -578,8 +578,8 @@ rsync_function()
     RETRY=0                                                             # Set Retry counter to zero
     while [ $RETRY -lt 3 ]                                              # Retry rsync 3 times
         do
-        RETRY=`expr $RETRY + 1`                                         # Incr Retry counter.
-        rsync -ar -e "ssh -p $ssh_port" --delete ${REMOTE_DIR} ${LOCAL_DIR} >/dev/null 2>&1  # rsync selected directory
+        RETRY=$((RETRY + 1))
+        rsync -ar -e "ssh -p $ssh_port" --delete ${REMOTE_DIR} ${LOCAL_DIR} >/dev/null 2>&1 
         RC=$?                                                           # save error number
 
         # Consider Error 24 as none critical (Partial transfer due to vanished source files)
@@ -587,9 +587,9 @@ rsync_function()
 
         if [ $RC -ne 0 ]                                                # If Error doing rsync
            then if [ $RETRY -lt 3 ]                                     # If less than 3 retry
-                   then sleep 5                                        # Sleep 5Sec. between retries
-                        sadm_writelog "[ RETRY $RETRY ] rsync -ar -e "ssh -p $ssh_port" --delete ${REMOTE_DIR} ${LOCAL_DIR}"
-                   else sadm_writelog "$SADM_ERROR [ $RETRY ] rsync -ar -e "ssh -p $ssh_port" --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+                   then sleep 5                                         # Sleep 5Sec. between retries
+                        sadm_write_log "[ RETRY $RETRY ] rsync -ar -e "ssh -p $ssh_port" --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+                   else sadm_write_err "$SADM_ERROR [ $RETRY ] rsync -ar -e "ssh -p $ssh_port" --delete ${REMOTE_DIR} ${LOCAL_DIR}"
                         break
                 fi
            else sadm_writelog "$SADM_OK rsync -ar -e "ssh -p $ssh_port" --delete ${REMOTE_DIR} ${LOCAL_DIR}"
@@ -702,9 +702,11 @@ create_crontab_files_header()
 
 # --------------------------------------------------------------------------------------------------
 # Validate SSH Server Connectivity 
+#
 #  Parameters:
 #   1) Fully qualified domain name of the server to connect with SSH
 #   2) SSH port number used to communicate to system.
+#
 #  Return Value:
 #   0) Server Accessible
 #   1) Error, go to next server (Can't SSH to Server, Missing Parameter rcv, Hostname Unresovable)
@@ -713,16 +715,15 @@ create_crontab_files_header()
 # --------------------------------------------------------------------------------------------------
 validate_server_connectivity()
 {
-    # Validate number of parameter received
+    # If parameters received is not 2, return error to caller
     if [ $# -ne 2 ]
         then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters."
              sadm_writelog "Function received $* and this isn't valid."
              sadm_writelog "Should receive the fqdn of the server and the ssh port number."
              return 1
     fi
-
-    FQDN_SNAME=$1                                                       # Server Name Full Qualified
-    SSH_PORT=$2                                                         # Port No. to SSH to system
+    FQDN_SNAME="$1"                                                     # Server Name Full Qualified
+    SSH_PORT="$2"                                                       # Port No. to SSH to system
 
     # Can we resolve the hostname ?
     if ! host $FQDN_SNAME >/dev/null 2>&1                               # Name is resolvable ? 
@@ -730,22 +731,21 @@ validate_server_connectivity()
                 sadm_write_err "[ ERROR ] ${SMSG}"                      # Advise user
                 return 1                                                # Return Error to Caller
     fi
-    SNAME=$(echo "$FQDN_SNAME" | awk -F\. '{print $1}')                 # System Name without Domain
 
     # Check if System is Locked.
-    sadm_check_system_lock "$SNAME"                                        # Check lock file status
-    if [ $? -eq 1 ] ; then return 2 ; fi                                # System Lock, Nxt Server
+    SNAME=$(echo "$FQDN_SNAME" | awk -F\. '{print $1}')                 # System Name without Domain
+    sadm_check_system_lock "$SNAME"                                     # Check lock file status
+    if [ $? -eq 1 ] ; then return 2 ; fi                                # System Lock return error
 
     # Try to get uptime from system to test if ssh to system is working
     # -o ConnectTimeout=1 -o ConnectionAttempts=1 
-    if [ "$SADM_HOST_TYPE" != "S" ] 
-        then wuptime=$(${SADM_SSH} -qnp $SSH_PORT -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
+    if [ "$SADM_SERVER_OK" = "Y" ]                                      # On a Valid SADMIN server
+        then wuptime=$(uptime 2>/dev/null)                              # No need to use SSH
              RC=$?
-        else wuptime=$(uptime 2>/dev/null)
+        else wuptime=$(${SADM_SSH} -qnp $SSH_PORT -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
              RC=$?
     fi
-    RC=$?                                                               # Save Error Number
-    if [ $RC -eq 0 ]                                                    # If SSH Worked
+    if [ $RC -eq 0 ]                                                    # Can connect to Dest. Host!
         then GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
              update_server_uptime "$SNAME" "$GLOB_UPTIME"               # Update Server Uptime in DB
              if [ $? -eq 0 ] ; then return 0 ; else return 3 ; fi       # Return ErrorCode to caller
@@ -772,6 +772,11 @@ validate_server_connectivity()
     RPTLINE="${RPTLINE};${FQDN_SNAME} unresponsive (Can't SSH to it)"   # Monitor Error Message
     RPTLINE="${RPTLINE};${SADM_ALERT_GROUP};${SADM_ALERT_GROUP}"        # Set Alert group to notify
     echo "$RPTLINE" >> $FETCH_RPT_LOCAL                                 # SADMIN Server Monitor RPT
+    if [ ! -d "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" ]              # Create Global rpt Dir.
+        then mkdir -p "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" 
+             chown $SADM_WWW_USER:$SADM_GROUP  "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"  
+             chmod 777 "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"
+    fi 
     echo "$RPTLINE" >> $FETCH_RPT_GLOBAL                                # SADMIN All System rpt 
     return 1    
 }
@@ -914,17 +919,17 @@ process_servers()
         fi
     
         # Test SSH connectivity and update uptime in Database 
-        if [ "$SADM_HOST_TYPE" != "S" ]                         # Not on SADMIN Srv Test SSH
+        if [ "$SADM_SERVER_OK" != "Y" ]                                # Not on valid SADMIN Server
            then validate_server_connectivity "$fqdn_server" "$ssh_port" # Test SSH, Upd uptime in DB
-                 RC=$?                                                  # Save function return code 
-                 if [ $RC -eq 2 ] ; then continue ; fi                  # Sporadic,Monitor Off,OSUpd
-                 if [ $RC -eq 1 ] || [ $RC -eq 3 ]                      # Error SSH or Update Uptime
-                    then ERROR_COUNT=$(($ERROR_COUNT+1))                # Error - Incr Error counter
-                         sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
-                         continue                                       # Not accessible, Nxt Server
-                 fi 
-            else GLOB_UPTIME=$(uptime |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
-                 update_server_uptime "$server_name" "$GLOB_UPTIME"           # Update Server Uptime in DB
+                RC=$?                                                  # Save function return code 
+                if [ $RC -eq 2 ] ; then continue ; fi                  # Sporadic,Monitor Off,OSUpd.
+                if [ $RC -eq 1 ] || [ $RC -eq 3 ]                      # Error SSH or Update Uptime
+                   then ERROR_COUNT=$(($ERROR_COUNT+1))                # Error - Incr Error counter
+                        sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
+                        continue                                       # Not accessible, Nxt Server
+                fi 
+            else GLOB_UPTIME=$(uptime |awk -F, '{print $1}' | awk '{gsub(/^[ ]+/,""); print $0}')
+                 update_server_uptime "$server_name" "$GLOB_UPTIME"    # Update Server Uptime in DB
         fi                            
 
         # On Linux & O/S AutoUpdate is ON, Generate Crontab entry in O/S Update crontab work file
@@ -948,7 +953,7 @@ process_servers()
 
         # If client backup list was modified on master (if backup_list.tmp exist) then update client.
         if [ -r "$LDIR/backup_list.tmp" ]                               # If backup list was modify
-           then if [ "$SADM_HOST_TYPE" != "S" ]                 # If Not on SADMIN Server
+           then if [ "$SADM_SERVER_OK" != "Y" ]                         # Not on SADMIN Server
                    then rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_list.tmp ${server_name}:$RDIR/backup_list.txt # Rem.Rsync
                    else rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_list.tmp $SADM_CFG_DIR/backup_list.txt  # Local Rsync 
                 fi
@@ -962,7 +967,7 @@ process_servers()
 
         # If backup exclude list was modified on master (if backup_exclude.tmp exist), update client
         if [ -r "$LDIR/backup_exclude.tmp" ]                            # Backup Exclude list modify
-           then if [ "$SADM_HOST_TYPE" != "S" ]                 # If Not on SADMIN Server
+           then if [ "$SADM_SERVER_OK" != "Y" ]                         # Not on SADMIN Server
                    then rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_exclude.tmp ${server_name}:$RDIR/backup_exclude.txt 
                    else rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_exclude.tmp $SADM_CFG_DIR/backup_exclude.txt # LocalRsync 
                 fi
@@ -980,7 +985,7 @@ process_servers()
         # Check if ReaR backup exclude list was modified (if backup_exclude.tmp exist), update client
         if [ -r "$REAR_USER_EXCLUDE" ]                                  # Rear Exclude option modify
            then update_rear_site_conf ${server_name}
-                if [ "$SADM_HOST_TYPE" != "S" ]                         # If Not on SADMIN Server
+                if [ "$SADM_SERVER_OK" != "Y" ]                         # Not on SADMIN Server
                    then #sadm_writelog "rsync -var $REAR_CFG ${server_name}:/etc/rear/site.conf "
                         rsync -ar -e "ssh -p $ssh_port" $REAR_CFG ${server_name}:/etc/rear/site.conf 
                         if [ $? -eq 0 ] 
@@ -1016,7 +1021,9 @@ process_servers()
         fi
 
         # Copy Site Common configuration files to client (If not on server)
-        if [ "$SADM_HOST_TYPE" != "S" ]                         # If Not on SADMIN Server
+        LDIR="${SADM_WWW_DAT_DIR}/${server_name}/cfg"                   # Local cfg Receiving Dir.
+        RDIR="${server_dir}/cfg"                                        # Remote cfg Directory        
+        if [ "$SADM_SERVER_OK" != "Y" ]                                 # Not on SADMIN Server
             then rem_cfg_files=( alert_group.cfg )
                  for WFILE in "${rem_cfg_files[@]}"
                    do
@@ -1035,7 +1042,7 @@ process_servers()
         fi 
 
         # Get remote $SADMIN/cfg Dir. and update local www/dat/${server_name}/cfg directory.
-        if [ "$SADM_HOST_TYPE" != "S" ]                         # If Not on SADMIN Try SSH 
+        if [ "$SADM_SERVER_OK" != "Y" ]                                 # Not on SADMIN Server
             then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
@@ -1046,8 +1053,8 @@ process_servers()
         # Get remote $SADMIN/log Dir. and update local www/dat/${server_name}/log directory.
         LDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"                   # Local Receiving Dir.
         RDIR="${server_dir}/log"                                        # Remote log Directory
-        if [ "$SADM_HOST_TYPE" != "S" ]                         # If Not on SADMIN Try SSH 
-            then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
+        if [ "$SADM_SERVER_OK" != "Y" ]                                 # Not on SADMIN Server
+            then rsync_function "${fqdn_server}:${RDIR}/" "$LDIR/"    # Remote to Local rsync
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
@@ -1057,7 +1064,7 @@ process_servers()
        # Rsync remote rch dir. onto local web rch dir/ (${SADMIN}/www/dat/${server_name}/rch) 
         LDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                   # Local Receiving Dir. Path
         RDIR="${server_dir}/dat/rch"                                    # Remote RCH Directory Path
-        if [ "$SADM_HOST_TYPE" != "S" ]                         # If Not on SADMIN Try SSH 
+        if [ "$SADM_SERVER_OK" != "Y" ]                                 # Not on SADMIN Server
             then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
@@ -1069,7 +1076,7 @@ process_servers()
         # Get remote $SADMIN/dat/rpt Dir. and update local www/dat/${server_name}/rpt directory.
         LDIR="$SADM_WWW_DAT_DIR/${server_name}/rpt"                     # Local www Receiving Dir.
         RDIR="${server_dir}/dat/rpt"                                    # Remote log Directory
-        if [ "$SADM_HOST_TYPE" != "S" ]                         # If Not on SADMIN Try SSH 
+        if [ "$SADM_SERVER_OK" != "Y" ]                                 # Not on SADMIN Server
             then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
             #else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
@@ -1388,6 +1395,11 @@ main_process()
 {
     # Process All Active Linux/Aix servers
     > $FETCH_RPT_LOCAL                                                  # Create Monitor Empty RPT
+    if [ ! -d "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" ]              # Create Global rpt Dir.
+        then mkdir -p "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" 
+             chown $SADM_WWW_USER:$SADM_GROUP  "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"  
+             chmod 777 "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"
+    fi     
     > $FETCH_RPT_GLOBAL                                                 # Create Mon. in Glocal Dir
     LINUX_ERROR=0; AIX_ERROR=0 ; MAC_ERROR=0                            # Init. Error count to 0
 
@@ -1413,8 +1425,8 @@ main_process()
     # Go and check if crontabs need to be updated (sadm_backup, sadm_osupdate, sadm_rear_backup)
     if [ $(sadm_get_ostype) = "LINUX" ] ; then crontab_update ; fi      # Update crontab if needed
     
-    # To prevent this script from showing very often on the monitor (This script is run every 5 min)
-    # we copy immediatly the updated .rch file in the SADMIN main web central directory. 
+    # To prevent this script from showing very often on the monitor (This script run every 5 min)
+    # We copy immediatly the updated .rch file in the SADMIN main web central directory. 
     if [ ! -d ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ]                # Web RCH repo Dir not exist
         then mkdir -p ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch          # Create it
     fi
@@ -1454,7 +1466,7 @@ update_server_uptime()
 {
     WSERVER=$1                                                          # Server Name to Update
     WUPTIME=$2                                                          # Uptime value to store
-    WCURDAT=`date "+%C%y.%m.%d %H:%M:%S"`                               # Get & Format Update Date
+    WCURDAT=$(date "+%C%y.%m.%d %H:%M:%S")                              # Get & Format Update Date
 
     SQL1="UPDATE server SET "                                           # SQL Update Statement
     SQL2="srv_uptime = '$WUPTIME', "                                    # System uptime value
@@ -1672,15 +1684,15 @@ sadm_send_alert()
                      fi
                      return 2                                           # Return 2 = Alreay Sent
              fi 
-            WaitSec=`echo "$acounter * $SADM_ALERT_REPEAT" | $SADM_BC`  # Next Alert Elapse Seconds
-            if [ $aage -le $WaitSec ]                                   # Repeat Time not reached
+             WaitSec=`echo "$acounter * $SADM_ALERT_REPEAT" | $SADM_BC`  # Next Alert Elapse Seconds
+             if [ $aage -le $WaitSec ]                                   # Repeat Time not reached
                 then xcount=`expr $WaitSec - $aage`                     # Sec till nxt alarm is sent
                      nxt_epoch=`expr $cepoch + $xcount`                 # Next Alarm Epoch
                      nxt_time=$(sadm_epoch_to_date "$nxt_epoch")        # Next Alarm Date/Time
                      msg="Waiting - Next alert will be send in $xcount seconds around ${nxt_time}."
                      if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "${msg}\n" ;fi 
                      return 2                                            # Return 2 =Duplicate Alert
-            fi 
+             fi 
     fi  
 
     # Update Alarm Counter 
