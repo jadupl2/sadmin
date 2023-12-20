@@ -409,7 +409,7 @@ def update_host_file(wdomain,wip) :
         sys.exit(1)
 
     # Add SADMIN server IP and name to /etc/hosts        
-    eline = "%s    sadmin.%s   sadmin " % (wip,wdomain)                 # Line to add to /etc/hosts
+    eline = "%s     sadmin.%s     sadmin " % (wip,wdomain)              # Line to add to /etc/hosts
     found_line = False                                                  # Assume sadmin line not in
     for line in hf:                                                     # Read Input file until EOF
         if (eline.rstrip() == line.rstrip()):                           # Line already there    
@@ -469,23 +469,24 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("# \n")
     hcron.write ("PATH=%s\n" % (os.environ["PATH"]))
     hcron.write ("SADMIN=%s\n" % (sroot))
-    hcron.write ("#    \n")
-    hcron.write ("#    \n")
+    hcron.write ("# \n")
+    hcron.write ("# \n")
     hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
     hcron.write ("# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
-    hcron.write ("#    \n")
-    hcron.write ("#    \n")
+    hcron.write ("# \n")
+    hcron.write ("# \n")
     hcron.write ("# Every 30 Min, this script make sure the 'nmon' performance collector is running.\n")
     hcron.write ("*/30 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.py > /dev/null 2>&1\n" % (wuser))
-    hcron.write ("#    \n")
-    hcron.write ("#    \n")
-    hcron.write ("# Run these four scripts in sequence, just before midnight every day:\n")
+    hcron.write ("# \n")
+    hcron.write ("# \n")
+    hcron.write ("# sadm_client_sunset.sh, run these four scripts in sequence, just before midnight every day:\n")
     hcron.write ("# (1) sadm_housekeeping_client.sh (Make sure files in $SADMIN have proper owner:group & permission)\n")
     hcron.write ("# (2) sadm_dr_savefs.sh (Save lvm filesystems metadata to recreate them easily in Disaster Recovery)\n")
     hcron.write ("# (3) sadm_create_cfg2html.sh (Run cfg2html tool - Produce system configuration web page).\n")
     hcron.write ("# (4) sadm_create_sysinfo.sh (Collect hardware & software info of system to update SADMIN database).\n")
     hcron.write ("23 23 * * *  %s sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1\n" % (wuser))
-    hcron.write ("#    \n")
+    hcron.write ("# \n")
+    hcron.write ("# \n")
 
     # Insert line that run System monitor every 5 minutes.
     chostname = socket.gethostname().split('.')[0]
@@ -2277,11 +2278,12 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
             writelog ("          Or you specify a loopback address witch is invalid.")
             continue
         break                                                  # Go Re-Accept Server Name
-    host_line = "%s   sadmin.%s   sadmin" % (wcfg_ip, wcfg_domain)
+    host_line = "%s     sadmin.%s     sadmin" % (wcfg_ip, wcfg_domain)
     with open('/etc/hosts', 'a') as file: file.write("%s\n" % (host_line))
     writelog ("Line '%s' was added to /etc/hosts." % (host_line))
-    wcfg_server = "sadmin.%s" % wcfg_domain
-    update_sadmin_cfg(sroot,"SADM_SERVER",wcfg_server)                  # Update Value in sadmin.cfg
+    wcfg_server = "%s.%s" % (phostname,wcfg_domain)
+    sadmin_server= "sadmin.%s" % wcfg_domain
+    update_sadmin_cfg(sroot,"SADM_SERVER",sadmin_server)                 # Update Value in sadmin.cfg
 
 
     # Accept PostFix RelayHost
@@ -2700,7 +2702,7 @@ def mainflow(sroot):
 
     # Functions excuted if only installing a SADMIN Server .
     if (stype == 'S') :                                                 # If install SADMIN Server
-        update_host_file(udomain,uip)                                   # Update /etc/hosts file
+        #update_host_file(udomain,uip)                                   # Update /etc/hosts file
         satisfy_requirement('S',sroot,packtype,logfile,sosname,sosver,sosbits,sosarch) 
         if (packtype == "rpm"): rpm_firewall_rule(ussh_port)            # Open HTTP/HTTPS/SSH Ports
         setup_mysql(sroot,userver,udomain,sosname)                      # Setup/Load MySQL Database
