@@ -266,7 +266,7 @@ add_epel_9_repo()
 {
 
     if [ "$SADM_OSNAME" = "REDHAT" ] 
-        then printf "Enable 'codeready-builder' EPEL repository ...\n" |tee -a $SLOG
+        then printf "Enable 'codeready-builder' EPEL repository for $SADM_OSNAME ...\n" |tee -a $SLOG
              printf "subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms " |tee -a $SLOG 
              subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms >>$SLOG 2>&1 
              if [ $? -ne 0 ]
@@ -274,7 +274,7 @@ add_epel_9_repo()
                      return 1 
                 else echo " [ OK ]" |tee -a $SLOG
              fi 
-        else printf "Enabling 'crb' repository ...\n" |tee -a $SLOG
+        else printf "Enabling 'crb' repository for $SADM_OSNAME ...\n" |tee -a $SLOG
              printf "    - dnf config-manager --set-enabled crb " | tee -a $SLOG 
              dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
              if [ $? -ne 0 ]
@@ -285,26 +285,37 @@ add_epel_9_repo()
     fi 
 
     if [ "$SADM_OSNAME" = "ROCKY" ] || [ "$SADM_OSNAME" = "ALMALINUX" ] 
-        then printf "\nInstalling epel-release on Rocky Linux V9 ...\n" | tee -a $SLOG
-             printf "    - dnf -y install epel-release " | tee -a $SLOG
-             dnf -y install epel-release >>$SLOG 2>&1
-             if [ $? -ne 0 ]
-                then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
-                     return 1 
-                else echo " [ OK ]" |tee -a $SLOG
+        then dnf repolist | grep -q "^epel "
+             if [ $? -ne 0 ] 
+                then printf "\nInstalling epel-release on $SADM_OSNAME V9 ...\n" | tee -a $SLOG
+                     printf "    - dnf -y install epel-release " | tee -a $SLOG
+                     dnf -y install epel-release >>$SLOG 2>&1
+                     if [ $? -ne 0 ]
+                        then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
+                             return 1 
+                        else echo " [ OK ]" |tee -a $SLOG
+                     fi
+                else printf "\nRepository epel-release for $SADM_OSNAME V9 already installed ...\n"  |tee -a $SLOG
              fi
              return 0 
     fi 
 
     if [ "$SADM_OSNAME" = "CENTOS" ] 
-        then printf "\nInstalling epel-release & epel-next-release on CentOS V9 ...\n" |tee -a $SLOG
-             printf "    - dnf -y install dnf install epel-release epel-next-release" |tee -a $SLOG
-             dnf -y install dnf install epel-release epel-next-release  >>$SLOG 2>&1
-             if [ $? -ne 0 ]
-                then printf "[ ERROR ] Adding epel-release V9 repository.\n" |tee -a $SLOG
-                     return 1 
-                else printf " [ OK ]\n" |tee -a $SLOG
-             fi
+        then ins_count=0
+             dnf repolist | grep -q "^epel " 
+             if [ $? -ne 0 ] ; then ((ins_count++)) ; fi
+             dnf repolist | grep -q "^epel-next "
+             if [ $? -ne 0 ] ; then ((ins_count++)) ; fi
+             if [ $ins_count -ne 0 ] 
+                then printf "\nInstalling epel-release & epel-next-release on CentOS V9 ...\n" |tee -a $SLOG
+                     printf "    - dnf -y install dnf install epel-release epel-next-release" |tee -a $SLOG
+                     dnf -y install dnf install epel-release epel-next-release  >>$SLOG 2>&1
+                     if [ $? -ne 0 ]
+                        then printf "[ ERROR ] Adding epel-release V9 repository.\n" |tee -a $SLOG
+                             return 1 
+                        else printf " [ OK ]\n" |tee -a $SLOG
+                     fi
+                else printf "\nRepositories epel-release & epel-next-release already installed on CentOS V9\n" |tee -a $SLOG
     fi 
 
     if [ "$SADM_OSNAME" = "REDHAT" ] 
@@ -316,14 +327,17 @@ add_epel_9_repo()
                      return 1 
                 else printf "[ OK ]\n" |tee -a $SLOG
              fi
-             printf "\nInstalling epel-release CentOS/Redhat V9 ...\n" |tee -a $SLOG
-             printf "    - dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm " |tee -a $SLOG
-             dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm >>$SLOG 2>&1
-             if [ $? -ne 0 ]
-                then printf "[ ERROR ] Adding epel-release V9 repository.\n" |tee -a $SLOG
-                     return 1 
-                else printf "[ OK ]\n" |tee -a $SLOG
-             fi
+             dnf repolist | grep -q "^epel "
+             if [ $? -ne 0 ] 
+                then printf "\nInstalling epel-release CentOS/Redhat V9 ...\n" |tee -a $SLOG
+                     printf "    - dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm " |tee -a $SLOG
+                     dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm >>$SLOG 2>&1
+                     if [ $? -ne 0 ]
+                        then printf "[ ERROR ] Adding epel-release V9 repository.\n" |tee -a $SLOG
+                             return 1 
+                        else printf "[ OK ]\n" |tee -a $SLOG
+                     fi
+                else printf "\nRepository epel-release already installed on $SADM_OSNAME V9 ...\n" |tee -a $SLOG
     fi 
 }
 
