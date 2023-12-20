@@ -29,6 +29,7 @@
 # 2022_05_25 lib v1.1 Two new variables 'sa.proot_only' & 'sa.psadm_server_only' control pgm env.
 # 2023_05_19 lib v1.2 If SADMIN env. var. isn't define, check /etc/environment to SADMIN directory.
 # 2023_08_19 lib v1.3 Update SADMIN section (More fields sa.db_errno, sa.db_errmsg, sa.db_name)
+#@2023_12_19 lib v1.4 New template to be used when you need to access info in SADMIN database.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -65,7 +66,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "1.3"                                                  # Program version no.
+pver        = "1.4"                                                  # Program version no.
 pdesc       = "Put here a description of your script."
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
 pdebug      = 0                                                      # Debug level from 0 to 9
@@ -89,6 +90,7 @@ sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
 sa.proot_only        = False      # Pgm run by root only ?
 sa.psadm_server_only = True       # Run only on SADMIN server ?
 sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
+
 
 # The values of fields below, are loaded from sadmin.cfg when you import the SADMIN library.
 # Change them to fit your need, they are use by start() & stop() functions of SADMIN Python Libr.
@@ -118,13 +120,16 @@ sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (s
 # Process all your active(s) server(s) in the Database (Used if want to process selected servers)
 # --------------------------------------------------------------------------------------------------
 def process_servers():
-    global db_conn, db_cur                                            # DB Connection & Cursor
+    global db_conn, db_cur                                              # DB Connection & Cursor
 
     sa.write_log("Processing All Actives Server(s)")                    # Enter Servers Processing
-    if (sa.get_fqdn() != sa.sadm_server) or (sa.db_used == False):      # Not SADMIN srv,usedb False
-        print("Can't use function 'process_servers' : ")    
-        print("   1) If 'sa.db_used' is set to 'False'.")
-        print("   2) If you're not on the SADMIN server (%s)." % (sa.sadm_server))
+
+    if sa.on_sadmin_server() == "N" and sa.psadm_server_only :
+        print("You're not on a SADMIN server (%s).")
+        return(1)
+    
+    if (sa.db_used == False) :
+        print("The variable 'sa.db_used' must be set to 'True' to have access to the database")
         return(1)
     
     # See columns available in 'table_structure_server.pdf' in $SADMIN/doc/pdf/database directory
@@ -166,25 +171,31 @@ def process_servers():
             continue                                                    # Go read Next Server
 
         # Check if System is Locked.
-        if sa.check_system_lock(wname) != 0:                               # If System is Lock
+        if sa.check_system_lock(wname) != 0:                            # Is System Lock ?
             sa.write_err("[ WARNING ] System '%s' is currently lock." % (wname))
             sa.write_log("Continuing with next system")                 # Not Error if system lock
             continue                                                    # Go read Next Server
 
         # Perform a SSH to system currently processing
-        wcommand = "%s %s %s" % (sa.cmd_ssh_full, wfqdn, "date")           # SSH Cmd to Server for date
-        sa.write_log("Command is %s" % (wcommand))                      # Show User what will do
-        ccode, cstdout, cstderr = sa.oscommand("%s" % (wcommand))       # Execute O/S CMD
-        if (ccode == 0):                                                # If ssh Worked
-            sa.write_log("[OK] SSH Worked")                             # Inform User SSH Worked
-        else:                                                           # If ssh didn't work
-            if wsporadic:                                               # Is it a Sporadic Server
-                sa.write_err("[ WARNING ] Can't SSH to sporadic system %s" % (wfqdn))
-                sa.write_log("Continuing with next system")             # Not Error if Sporadic Srv.
-                continue                                                # Continue with next system
-            else:
-                error_count += 1                                        # Increase Error Counter
-                sa.write_err("[ ERROR ] SSH Error %d %s" % (ccode, cstderr))  
+        
+        if sa.on_sadmin_server() == "Y" :                                 # SADMIN Server don't use ssh
+            #sa.write_log("Valid SADMIN Server.")
+            pass            
+        else:                                                           # Not SADMIN server use ssh
+            #sa.write_log("Not Valid SADMIN Server.")
+            wcommand = "%s %s %s" % (sa.cmd_ssh_full, wfqdn, "date")    # SSH Cmd to Server for date
+            sa.write_log("Command is %s" % (wcommand))                  # Show User what will do
+            ccode, cstdout, cstderr = sa.oscommand("%s" % (wcommand))   # Execute O/S CMD
+            if (ccode == 0):                                            # If ssh Worked
+                sa.write_log("[OK] SSH Worked")                         # Inform User SSH Worked
+            else:                                                       # If ssh didn't work
+                if wsporadic:                                           # Is it a Sporadic Server
+                    sa.write_err("[ WARNING ] Can't SSH to sporadic system %s" % (wfqdn))
+                    sa.write_log("Continuing with next system")         # Not Error if Sporadic Srv.
+                    continue                                            # Continue with next system
+                else:
+                    error_count += 1                                        # Increase Error Counter
+                    sa.write_err("[ ERROR ] SSH Error %d %s" % (ccode, cstderr))  
         if (error_count != 0):                                          # If Error count not at zero
             sa.write_log("Total error(s) : %s" % (error_count))         # Show Total Error Count
         lineno += 1                                                     # Increase Server Counter
@@ -200,7 +211,7 @@ def cmd_options(argv):
     """ Command line Options functions - Evaluate Command Line Switch Options
 
         Args:
-            (argv): Arguments pass on the comand line.
+            (argv): Arguments pass on the command line.
               [-d 0-9]  Set Debug (verbose) Level
               [-h]      Show this help message
               [-v]      Show script version information
