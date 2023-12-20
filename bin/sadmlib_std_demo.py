@@ -55,6 +55,7 @@
 # 2023_04_14 lib v3.19 SADMIN server email account pwd now taken from $SADMIN/cfg/.gmpw.
 # 2023_04_14 lib v3.20 SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64. 
 # 2023_08_19 lib v3.21 start() function auto connect to DB, if on SADMIN server & db_used=True.
+#@2023_12_19 liv v3.22 Fix minor problem
 #==================================================================================================
 #
 try :
@@ -90,7 +91,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "3.21"                                                  # Program version no.
+pver        = "3.22"                                                  # Program version no.
 pdesc       = "Demonstrate functions & variables available to developers using SADMIN Tools"
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
 pdebug      = 0                                                      # Debug level from 0 to 9
@@ -1159,10 +1160,7 @@ def print_db_variables():
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     # Test Database Connection
-    if ((sa.get_fqdn() == sa.sadm_server) and (sa.db_used)):            # On SADMIN srv & usedb True
-        #(pexit_code,db_conn,db_cur) = sa.db_connect('sadmin')         # Connect to SADMIN Database
-        #sa.write_log ("Database connection succeeded")                  # Show COnnect to DB Worked
-        
+    if ((sa.on_sadmin_server == "Y") and (sa.db_used)):                 # On SADMIN srv & usedb True
         print ("\n\nShow SADMIN Tables:")
         sql="show tables;" 
         cmd =  "mysql -t -u%s -p%s -h%s" % (sa.sadm_ro_dbuser,sa.sadm_ro_dbpwd,sa.sadm_dbhost)
@@ -1323,7 +1321,7 @@ def main(argv):
     print_directories()                                                 # Show Client Dir. Variables
     print_file_variable()                                               # Show Files Variables
     print_command_path()                                                # Show Command Path
-    if ((sa.get_fqdn() == sa.sadm_server) and (sa.sadm_host_type == "S")): # Only on SADMIN & Use DB
+    if sa.on_sadmin_server() == "Y" :                                   # Only on SADMIN & Use DB
         print_db_variables()                                            # Show Database Information
     #print_env()                                                        # Show Env. Variables
     sa.stop(sa.pexit_code)                                              # Close SADM Environment
