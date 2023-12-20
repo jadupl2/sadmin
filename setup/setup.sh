@@ -510,14 +510,16 @@ check_selinux()
 check_hostname()
 {
     # Get current IP Address of Server
-    S_IPADDR=$(ip addr show | grep global | head -1 | awk '{ print $2 }' |awk -F/ '{ print $1 }')
-    printf "\nMaking sure '$SADM_HOSTNAME' is defined in /etc/hosts ... " | tee -a $SLOG
+    S_IPADDR=$(ip a s | grep global | head -1 | awk '{ print $2 }' |awk -F/ '{ print $1 }')
+    S_DOMAIN=$(domainname -d)
+
+    printf "\nMaking sure '$SADM_HOSTNAME.$S_DOMAIN' is defined in /etc/hosts ... " | tee -a $SLOG
 
     # Insert Server into /etc/hosts (If not already there)
-    grep -Eiq "^$S_IPADDR   ${SADM_HOSTNAME}" /etc/hosts
+    grep -Ei "^$S_IPADDR " /etc/hosts | grep -q $SADM_HOSTNAME
     if [ $? -ne 0 ] 
         then if [ ! -f /etc/hosts.org ] ; then cp /etc/hosts /etc/hosts.org ; fi
-             echo "$S_IPADDR   ${SADM_HOSTNAME}" >> /etc/hosts
+             echo "$S_IPADDR     $SADM_HOSTNAME.$S_DOMAIN     $SADM_HOSTNAME" >> /etc/hosts
     fi
 
     echo "[ OK ] " | tee -a $SLOG
@@ -622,5 +624,5 @@ EOF
     echo "We will now proceed with main setup program ($SCRIPT)" >> $SLOG 
     echo "All basic requirements were met with success ..." >> $SLOG
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
-    echo -e "\n" | tee -a $SLOG                                         # Blank Lines
+    echo -e "\n" | tee -a $SLOG 
     $SCRIPT 
