@@ -60,6 +60,7 @@
 #@2023_11_17 lib v4.47 Fix error in db_close(), when trying to close a connection that isn't open.
 #@2023_12_14 lib v4.48 'SADM_HOST_TYPE' in 'sadmin.cfg', decide if system is a client or the server.
 # 2023_12_14 lib v4.48 Correct some type in the header
+#@2023_12_19 lib v4.49 New function 'on_sadmin_server()' Return "Y" if on SADMIN server or "N" .
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -68,6 +69,7 @@ try :
     import datetime                                         # Date & Time Module
     import shutil                                           # HighLevel File Operations
     import platform                                         # Platform identifying data
+    import psutil                                           # Get all IPs defined on host
     import pwd                                              # Pwd /etc/passwd Database 
     import base64                                           # To Encrypt, decrypt password file
     import inspect                                          # Check Object Type
@@ -92,7 +94,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.48"                                # This Library Version
+lib_ver             = "4.49"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -119,7 +121,7 @@ db_name        = ""             # Database Name default to name define in $SADMI
 db_errno       = 0              # Database Error Number
 db_errmsg      = ""             # Database Error Message
 #
-debug              = 0                                     # Debug Level 0-9
+debug               = 0                                     # Debug Level 0-9
 pexit_code          = 0                                     # Script Default Return Code
 proot_only          = False                                 # Can run by root only ?
 psadm_server_only   = False                                 # Can run on SADMIN server only?
@@ -197,6 +199,7 @@ sadm_smtp_server             = "smtp.gmail.com"             # smtp host relay na
 sadm_smtp_port               = 587                          # smtp relay host port
 sadm_smtp_sender             = "sender@gmail.com"           # smtp sender account
 sadm_gmpw                    = ""                           # smtp sender password
+
 
 # Logic to get O/S Distribution Information into Dictionary os_dict
 if platform.system().upper() != "DARWIN":                   # If not on MAc
@@ -731,18 +734,16 @@ def oscommand (command : str) :
         out (str)        :  Contain the stdout of the command executed
         err (str)        :  Contain the stderr of the command executed
     """
-    #lib_debug=9
-    if lib_debug > 8 : write_log ("oscommand function to run command : %s" % (command))
-    #p = subprocess.Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     out = p.stdout.read().strip().decode()
     err = p.stderr.read().strip().decode()
     returncode = p.wait()
 
     if lib_debug > 8 :
-        write_log ("oscommand function stdout is     : %s" % (out))
-        write_log ("oscommand function stderr is     : %s" % (err))
-        write_log ("oscommand function returncode is : %s" % (returncode))
+        write_log ("oscommand: command       : %s" % (command))
+        write_log ("oscommand: stdout is     : %s" % (out))
+        write_log ("oscommand: stderr is     : %s" % (err))
+        write_log ("oscommand: returncode is : %s" % (returncode))
     return (returncode,out,err)
 
 
@@ -2221,13 +2222,18 @@ def start(pver,pdesc) :
     if proot_only and os.getuid() != 0:                                 # UID of user is not 'root'
         print("This script can only be run by the 'root' user.")        # Advise User Message / Log
         print("Try 'sudo %s'" % (os.path.basename(sys.argv[0])))        # Suggest to use 'sudo'
+        print ("Or change the value of 'sa.proot_only' to 'False'.")    # Choice of user
         print("Process aborted.")                                       # Process Aborted Msg
         stop(1)                                                         # Close SADMIN 
         sys.exit(1)                                                     # Back to O/S 
 
     # If this script can only be run on the SADMIN server
-    if psadm_server_only and sadm_host_type != "S"   :                  # Only run on SADMIN
-        print("Script can only be run on a SADMIN server (when sadm_host_type is 'S').")
+    if on_sadmin_server() == "N" and psadm_server_only : 
+        print("Script can only run on a SADMIN server.")
+        print("Must met these conditions :")
+        print(" - Variable 'SADM_HOST_TYPE' in $SADMIN/cfg/sadmin.cfg must be 'S'.")
+        print(" - The IP of the host 'sadmin' must refer to an ip define on this host.")
+        print(" - The 'sadmin' MySQL database must be present on this host.") 
         print("Process aborted.")                                       # Abort advise message
         stop(1)                                                         # Close SADMIN 
         sys.exit(1)                                                     # Back to O/S 
@@ -2584,6 +2590,54 @@ def db_connect(DB):
     return (0)
 
 
+# --------------------------------------------------------------------------------------------------
+def get_ip_addresses(family):
+    """
+        Return a list with all defined IP on the current host
+    
+        Args    : Constant AF_INET (IPv4) or AF_INET6 (IPv6).
+
+        Returns : A List of IP defined on host.
+    """
+
+    for interface, snics in psutil.net_if_addrs().items():
+        for snic in snics:
+            if snic.family == family:
+                yield (interface, snic.address)
+
+
+
+# --------------------------------------------------------------------------------------------------
+def on_sadmin_server():
+    
+    """ 
+        Check if the IP assigned to 'sadmin' is defined on the current system.
+        
+        Return True or False
+    
+            "Y"     : System is a valid SADMIN server,
+                        - System have "SADM_HOST_TYPE" equal to "S" in $SADMIN/cfg/sadmin.cfg.
+                        - The 'sadmin' host resolved to an IP present on the current system.
+                          This permit to use an IP other than the main system IP address.
+            "N"     : Mean that current is not a SADMIN server.
+                      
+    """
+    valid_server="N"                                                    # Default, Not SADMIN server
+    if (sadm_host_type != "S") : return(valid_server)
+        
+    try : 
+        server_ip = socket.gethostbyname("sadmin")                      # get 'sadmin' IP
+    except Exception as e:
+        print("\nCould not determine IP of 'sadmin'.\n")
+        print ("%s" % (e))
+        return(valid_server)
+
+    ipv4s = list(get_ip_addresses(socket.AF_INET))
+    for x in ipv4s:
+        if x[1] == server_ip : valid_server = "Y"  
+    return(valid_server)
+
+
 
 # --------------------------------------------------------------------------------------------------
 # Things to do when the module is loaded
@@ -2591,18 +2645,15 @@ def db_connect(DB):
 
 # Making sure the 'SADMIN' environment variable is defined, abort if it isn't.
 if (os.getenv("SADMIN",default="X") == "X"):                            # SADMIN Env.Var. Not Define
-    print("'SADMIN' environment variable isn't defined.")               # SADMIN Var MUST be defined
-    print("It specify the directory where you installed the SADMIN Tools.")
-    print("Add this line at the end of /etc/environment file")          # Show Where to Add Env. Var
-    print("SADMIN='/[dir-where-you-install-sadmin]'")                   # Show What to Add.
-    print("Then logout and log back in and run the script again.")      # Show what to do 
+    print("\n'SADMIN' environment variable isn't defined.")             # SADMIN Var MUST be defined
+    print("\nIt specify the directory where you installed the SADMIN Tools.")
+    print("\nAdd this line at the end of /etc/environment file")        # Show Where to Add Env. Var
+    print("\nSADMIN='/[dir-where-you-install-sadmin]'")                 # Show What to Add.
+    print("\nThen logout and log back in and run the script again.")    # Show what to do 
     sys.exit(1)  
 
 load_config_file(cfg_file)                                              # Load sadmin.cfg in Dict.
 load_cmd_path()                                                         # Load Cmd Path Variables
 dict_alert = load_alert_file()                                          # Load Alert group in dict
-
-
-# Print Alert Dictionnary under Debug
-if (lib_debug > 0) : 
+if (lib_debug > 0) :                                                    # Under debugging
     print_dict_alert()                                                  # Print Alert Group Dict
