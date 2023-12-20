@@ -206,7 +206,7 @@
 # 2023_08_20 lib v4.27 Code optimization, LIBRARY LOAD A LOT FASTER (So scripts run faster).
 # 2023_09_22 lib v4.28 Change default values of SADM_*_KEEPDAYS.
 # 2023_09_26 lib v4.29 Code optimization : To function "sadm_get_command_path()".
-#@2023_12_14 lib v4.30 Set SADM_SERVER_OK (Default 'N') - Set to 'Y', if 'SADM_SERVER' IP is on system.
+#@2023_12_14 lib v4.30 Set SADM_ON_SADMIN_SERVER (Default 'N') - Set to 'Y', if 'SADM_SERVER' IP exist on system.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -388,7 +388,7 @@ export SADM_SMTP_SENDER="sadmin.gmail.com"                              # Email 
 export SADM_GMPW=""                                                     # smtp sender gmail passwd
 
 # To be a valid SADMIN server 'SADM_HOST_TYPE' must be "S" and 'SADM_SERVER' IP must exist on host.
-export SADM_SERVER_OK="N"                                               # Valid SADM Server
+export SADM_ON_SADMIN_SERVER="N"                                        # On a valid SADMIN Server 
 
 # Array of O/S Supported & Package Family
 #export SADM_OS_SUPPORTED=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMALINUX' 'ROCKY'
@@ -2116,7 +2116,7 @@ sadm_start() {
 
     # Check if this script to be run only by root user
     if [ ! -z "$SADM_ROOT_ONLY" ] && [ $SADM_ROOT_ONLY == "Y" ] &&  [ $(id -u) -ne 0 ]  
-        then sadm_write_err "Script can only be run by the 'root' user" # Advise User Message
+        then sadm_write_err "Script can only be run by the 'root' user." # Advise User Message
              sadm_write_err "Try 'sudo ${0##*/}'"                       # Suggest using sudo
              sadm_write_err "Process aborted"                           # Abort advise message
              sadm_write_err " "
@@ -2125,8 +2125,9 @@ sadm_start() {
     fi
 
     # Check if this script to be run only on the SADMIN server.
-    if [ ! -z "$SADM_SERVER_ONLY" ] && [ "$SADM_SERVER_ONLY" == "Y" ] && [ "$SADM_HOST_TYPE" != "S" ]
-        then sadm_write_err "Script can only run on a SADMIN server (With SADM_HOST_TYPE = "S")."
+    if [ "$SADM_ON_SADMIN_SERVER" = "N" ] &&  [ "$SADM_SERVER_ONLY" = "Y" ]  # Use ssh ?    
+        then sadm_write_err "This script only run on SADMIN server '$SADM_SERVER'."
+             sadm_write_err "   - The variable 'SADM_SERVER_ONLY' to 'Y'"
              sadm_write_err "Process aborted."                          # Abort advise message
              sadm_write_err " "
              sadm_stop 1                                                # Close and Trim Log
@@ -2197,7 +2198,7 @@ sadm_start() {
     fi
 
     # Check Files that are present ONLY ON SADMIN SERVER
-    if [ "$SADM_HOST_TYPE" = "S" ]
+    if [ "$SADM_ON_SADMIN_SERVER" = "Y" ]
         then if [ ! -r "$SADM_ALERT_HIST" ]                             # If Alert History Missing
                 then if [ ! -r "$SADM_ALERT_HINI" ]                     # If Alert Init File not Fnd
                         then touch $SADM_ALERT_HIST                     # Create a Blank One
@@ -2377,7 +2378,7 @@ sadm_stop() {
 
     # If script is running on the SADMIN server, copy script final log and rch to web data section.
     # If we don't do that, log look incomplete & script seem to be always running on web interface.
-    if [ "$SADM_HOST_TYPE" = "S" ]                                      # Only run on SADMIN server
+    if [ "$SADM_ON_SADMIN_SERVER" = "Y" ]                                      # Only run on SADMIN server
        then WLOGDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log"          # Host Main LOG Directory
             WLOG="${WLOGDIR}/${SADM_HOSTNAME}_${SADM_INST}.log"         # LOG File Name in Main Dir
             WRCHDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"          # Host Main RCH Directory
@@ -2677,6 +2678,31 @@ sadm_check_system_lock() {
 
 
 
+# Check if the IP assigned to 'sadmin' is defined on the current system.
+# 
+# Return True or False
+#     "1"     : System is a valid SADMIN server,
+#                 - System have "SADM_HOST_TYPE" equal to "S" in $SADMIN/cfg/sadmin.cfg.
+#                 - The 'sadmin' host resolved to an IP present on the current system.
+#                   This permit to use an IP other than the main system IP address.
+#     "0"     : Mean that current is not a SADMIN server.
+#               
+# --------------------------------------------------------------------------------------------------
+sadm_on_sadmin_server() {
+
+    wreturn=0                                                           # Default, No = Return 1
+    if [ "$SADM_HOST_TYPE" != "S" ] ; then return "$wreturn" ; fi
+    
+    # Check if SADM_SERVER IP is defined on this system and set SADM_ON_SADMIN_SERVER accordingly.
+    server_ip=$(getent ahostsv4 $SADM_SERVER | tail -1 | awk  '{ print $1 }')  
+    ip a | grep -q $server_ip 
+    if [ $? -eq 0 ] ; then wreturn=1 ; fi                               # System is a SADMIN server
+    return $wreturn
+}
+
+
+
+
 
 # --------------------------------------------------------------------------------------------------
 # Things to do when first called
@@ -2716,7 +2742,6 @@ sadm_check_system_lock() {
     fi 
 
 
-
 # Load $SADMIN/cfg/sadmin.cfg
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
         then printf "$(date "+%C%y.%m.%d %H:%M:%S") Loading $SADM_CFG_FILE ...\n"
@@ -2724,16 +2749,15 @@ sadm_check_system_lock() {
     sadm_load_config_file                                               # Load sadmin.cfg file
     if [ -r "$SADM_SLACK_FILE" ] ; then merge_alert_files ; fi          # If old version
 
-    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
-        then printf "$(date "+%C%y.%m.%d %H:%M:%S") Loading command path ...\n"
-    fi
-
-# Check if SADM_SERVER IP is defined on this system and set SADM_SERVER_OK accordingly.
-    server_ip=$(getent hosts $SADM_SERVER | tail -1 | awk  '{ print $1 }')
-    ip a | grep -q $server_ip 
-    if [ $? -eq 0 ] ; then SADM_SERVER_OK="Y" ; else SADM_SERVER_OK="N" ; fi
+# Check if on a valid SADMIN server and set SADM_ON_SADMIN_SERVER to "Y" or "N" 
+    sadm_on_sadmin_server                                               # SADMIN Server? 0=No 1=Yes
+    if [ $? -eq 0 ] ; then SADM_ON_SADMIN_SERVER="N" ; else SADM_ON_SADMIN_SERVER="Y" ; fi 
 
 # Load the path of commands used in SADMIN
+    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
+        then printf "$(date "+%C%y.%m.%d %H:%M:%S") Loading command path ...\n"
+             printf "SADM_ON_SADMIN_SERVER = $SADM_ON_SADMIN_SERVER \n"
+    fi
     sadm_load_cmd_path                                                  # Load Cmd Path Variables
     if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement not met
 
