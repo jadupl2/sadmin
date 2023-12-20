@@ -152,3 +152,4 @@ setup/update/*
 !setup/update/.gitkeep
 
 docs/*
+cfg/sadmin_client.cfg
