@@ -924,7 +924,7 @@ process_servers()
         fi
     
         # Test SSH connectivity and update uptime in Database 
-        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "sadmin" ] # Use ssh or not
+        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ] # Use ssh or not
            then check_host_connectivity "$fqdn_server" "$ssh_port"     # Test SSH, Upd uptime in DB
                 RC=$?                                                  # Save function return code 
                 if [ $RC -eq 2 ] ; then continue ; fi                  # Sporadic,Monitor Off,OSUpd.
@@ -958,7 +958,7 @@ process_servers()
 
         # If client backup list was modified on master (if backup_list.tmp exist) then update client.
         if [ -r "$LDIR/backup_list.tmp" ]                               # If backup list was modify
-           then if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "sadmin" ] # Use ssh ?
+           then if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ] # Use ssh or not
                    then rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_list.tmp ${server_name}:$RDIR/backup_list.txt # Rem.Rsync
                         RC=$?                                           # Save Command Return Code
                    else rsync -ar $LDIR/backup_list.tmp $SADM_CFG_DIR/backup_list.txt  # Local Rsync 
@@ -973,7 +973,7 @@ process_servers()
 
         # If backup exclude list was modified on master (if backup_exclude.tmp exist), update client
         if [ -r "$LDIR/backup_exclude.tmp" ]                            # Backup Exclude list modify
-           then if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "sadmin" ] # Use ssh ?
+           then if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ] # Use ssh or not
                    then rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_exclude.tmp ${server_name}:$RDIR/backup_exclude.txt 
                         RC=$?                                           # Save Command Return Code
                    else rsync -ar $LDIR/backup_exclude.tmp $SADM_CFG_DIR/backup_exclude.txt # LocalRsync 
@@ -1030,7 +1030,7 @@ process_servers()
         # Copy Site Common configuration files to client (If not on server)
         LDIR="${SADM_WWW_DAT_DIR}/${server_name}/cfg"                   # Local cfg Receiving Dir.
         RDIR="${server_dir}/cfg"                                        # Remote cfg Directory        
-        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "sadmin" ] # Use ssh ?
+        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ] # Use ssh or not
             then rem_cfg_files=( alert_group.cfg )
                  for WFILE in "${rem_cfg_files[@]}"
                    do
@@ -1050,7 +1050,7 @@ process_servers()
 
         # Get remote $SADMIN/cfg Dir. and update local www/dat/${server_name}/cfg directory.
         #sadm_write_log "SADM_ON_SADMIN_SERVER = $SADM_ON_SADMIN_SERVER"
-        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "sadmin" ] # Use ssh ?
+        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ] # Use ssh or not
             then rsync_function "$fqdn_server:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
                  RC=$?                                                  # Save Command Return Code
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
@@ -1063,7 +1063,7 @@ process_servers()
         # Get remote $SADMIN/log Dir. and update local www/dat/${server_name}/log directory.
         LDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"                   # Local Receiving Dir.
         RDIR="${server_dir}/log"                                        # Remote log Directory
-        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "sadmin" ] # Use ssh ?
+        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ] # Use ssh or not
             then rsync_function "${fqdn_server}:${RDIR}/" "$LDIR/"      # Remote to Local rsync
                  RC=$?                                                  # Save Command Return Code
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
@@ -1076,7 +1076,7 @@ process_servers()
        # Rsync remote rch dir. onto local web rch dir/ (${SADMIN}/www/dat/${server_name}/rch) 
         LDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                   # Local Receiving Dir. Path
         RDIR="${server_dir}/dat/rch"                                    # Remote RCH Directory Path
-        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "sadmin" ] # Use ssh ?
+        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ] # Use ssh or not
             then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
                  RC=$?                                                  # Save Command Return Code
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
@@ -1090,7 +1090,7 @@ process_servers()
         # Get remote $SADMIN/dat/rpt Dir. and update local www/dat/${server_name}/rpt directory.
         LDIR="$SADM_WWW_DAT_DIR/${server_name}/rpt"                     # Local www Receiving Dir.
         RDIR="${server_dir}/dat/rpt"                                    # Remote log Directory
-        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "sadmin" ] # Use ssh ?
+        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ] # Use ssh or not
             then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
                  RC=$?                                                  # Save Command Return Code
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master

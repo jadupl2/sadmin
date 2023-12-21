@@ -295,7 +295,7 @@ add_epel_9_repo()
                              return 1 
                         else echo " [ OK ]" |tee -a $SLOG
                      fi
-                else printf "\nRepository epel-release for $SADM_OSNAME V9 already installed ...\n"  |tee -a $SLOG
+                else printf "\nRepository epel-release is already installed ...\n"  |tee -a $SLOG
              fi
              return 0 
     fi 
@@ -315,8 +315,9 @@ add_epel_9_repo()
                              return 1 
                         else printf " [ OK ]\n" |tee -a $SLOG
                      fi
-                else printf "\nRepositories epel-release & epel-next-release already installed on CentOS V9\n" |tee -a $SLOG
-    fi 
+                else printf "\nRepositories epel-release & epel-next-release are already installed.\n" |tee -a $SLOG
+             fi 
+    fi  
 
     if [ "$SADM_OSNAME" = "REDHAT" ] 
         then printf "\nImport EPEL 9 GPG Key ...\n" |tee -a $SLOG
@@ -337,7 +338,8 @@ add_epel_9_repo()
                              return 1 
                         else printf "[ OK ]\n" |tee -a $SLOG
                      fi
-                else printf "\nRepository epel-release already installed on $SADM_OSNAME V9 ...\n" |tee -a $SLOG
+                else printf "\nRepository epel-release already installed.\n" |tee -a $SLOG
+             fi 
     fi 
 }
 
