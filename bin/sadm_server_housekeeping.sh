@@ -38,6 +38,7 @@
 # 2022_07_13 server v2.12 Fix typo that was preventing script from running under certain condition.
 # 2023_04_17 server v2.13 Secure permission on email password files ($SADMIN/cfg/.gmpw & .gmpw64).
 # 2023_09_17 server v2.14 Add removal of file older than 1 day in $SADMIN/www/tmp directory.
+# 2023_12_20 server v2.15 If Daily report line still in sadm_server crontab, remove it (depreciated).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -66,7 +67,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.14'                                     # Script version number
+export SADM_VER='2.15'                                     # Script version number
 export SADM_PDESC="Set owner in www directories and remove old files in /www/tmp & www/tmp/perf dir."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -431,16 +432,10 @@ file_housekeeping()
 # --------------------------------------------------------------------------------------------------
 function adjust_server_crontab()
 {
-    # Make sure the Daily Email Report is in the SADMIN server crontab.
+    # If Daily report line still in sadm_server crontab, remove it.
     F="/etc/cron.d/sadm_server"
     grep -q 'sadm_daily_report.sh' "$F" 
-    if [ $? -ne 0 ] 
-       then echo "#" >> $F 
-            echo "# SADMIN Daily Email Report about Scripts, ReaR and Daily Backup" >> $F 
-            echo "04 07 * * * root $SADMIN/bin/sadm_daily_report.sh > /dev/null 2>&1" >> $F 
-            echo "#" >> $F  
-            sadm_write "${BOLD}${YELLOW}Daily Email Report added to ${F}${NORMAL}.\n" 
-    fi 
+    if [ $? -ne 0 ] ; then sed -i '/sadm_daily_report/d' $F ; fi
 
     # Create cron entry to push server $SADMIN/bin $SADMIN/lib $SADMIN/.*.cfg to all actives clients.
     # -s To include push of $SADMIN/sys
@@ -450,6 +445,7 @@ function adjust_server_crontab()
     if [ $? -ne 0 ] 
        then echo "#" >> $F 
             echo "# Daily push of $SADMIN/\(lib,bin,/cfg/\.\*\) to all active servers - Optional" >>$F 
+            echo "#   -c to push \$SADMIN/cfg/sadmin_client.cfg to active sadmin clients."  >> $F
             echo "#   -s To include push of $SADMIN/sys" >> $F
             echo "#   -u To include push of $SADMIN/\(usr/bin usr/lib usr/cfg\)" >> $F 
             echo "#30 11,20 * * * root ${SADMIN}/bin/sadm_push_sadmin.sh > /dev/null 2>&1" >>$F 
