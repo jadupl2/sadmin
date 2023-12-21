@@ -124,6 +124,8 @@
 # 2023_08_23 install v3.93 Package detection, was failing under certain condition.
 #@2023_11_06 install v3.94 Misc. typo change & minor fixes.
 #@2023_12_10 install v3.95 Added install of package 'nfs-utils (rpm) and 'nfs-common' (deb).
+#@2023_12_20 install v3.96 Remove 'wkhtmltopdf' requirement package.
+#@2023_12_20 install v3.97 Remove 'sadm_daily_report.sh' from sadm_server crontab (depreciated).
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -141,7 +143,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.95"                                            # Setup Version Number
+sver                = "3.97"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -258,8 +260,8 @@ req_server = {
                        'deb':'fping monitoring-plugins-standard',              'drepo':'base'},
 #    'arp-scan'      :{ 'rpm':'arp-scan',                                       'rrepo':'epel',
 #                       'deb':'arp-scan',                                       'drepo':'base'},
-    'wkhtmltopdf'   :{ 'rpm':'wkhtmltopdf',                                    'rrepo':'epel',  
-                       'deb':'wkhtmltopdf',                                    'drepo':'base'},
+#    'wkhtmltopdf'   :{ 'rpm':'wkhtmltopdf',                                    'rrepo':'epel',  
+#                       'deb':'wkhtmltopdf',                                    'drepo':'base'},
     'php'           :{ 'rpm':'php php-common php-cli php-mysqlnd php-mbstring','rrepo':'base', 
                        'deb':'php php-common php-cli php-mysql php-mbstring',  'drepo':'base'},
     'mysql'         :{ 'rpm':'mariadb-server ',                                'rrepo':'base',
@@ -469,36 +471,43 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("# \n")
     hcron.write ("PATH=%s\n" % (os.environ["PATH"]))
     hcron.write ("SADMIN=%s\n" % (sroot))
-    hcron.write ("# \n")
-    hcron.write ("# \n")
+    hcron.write ("## " + '\n')
+    hcron.write ("## " + '\n')
     hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
     hcron.write ("# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
-    hcron.write ("# \n")
-    hcron.write ("# \n")
+    hcron.write ("## " + '\n')
+    hcron.write ("#  " + '\n')
     hcron.write ("# Every 30 Min, this script make sure the 'nmon' performance collector is running.\n")
     hcron.write ("*/30 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.py > /dev/null 2>&1\n" % (wuser))
-    hcron.write ("# \n")
-    hcron.write ("# \n")
+    hcron.write ("## " + '\n')
+    hcron.write ("#  " + '\n')
     hcron.write ("# sadm_client_sunset.sh, run these four scripts in sequence, just before midnight every day:\n")
     hcron.write ("# (1) sadm_housekeeping_client.sh (Make sure files in $SADMIN have proper owner:group & permission)\n")
     hcron.write ("# (2) sadm_dr_savefs.sh (Save lvm filesystems metadata to recreate them easily in Disaster Recovery)\n")
     hcron.write ("# (3) sadm_create_cfg2html.sh (Run cfg2html tool - Produce system configuration web page).\n")
     hcron.write ("# (4) sadm_create_sysinfo.sh (Collect hardware & software info of system to update SADMIN database).\n")
     hcron.write ("23 23 * * *  %s sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1\n" % (wuser))
-    hcron.write ("# \n")
-    hcron.write ("# \n")
+    hcron.write ("## " + '\n')
+    hcron.write ("## " + '\n')
 
     # Insert line that run System monitor every 5 minutes.
     chostname = socket.gethostname().split('.')[0]
     cscript="sudo ${SADMIN}/bin/sadm_sysmon.pl" 
     clog=">${SADMIN}/log/%s_sadm_sysmon.log 2>&1" % (chostname)
     if wostype == "AIX" : 
+        hcron.write ("## " + '\n')
+        hcron.write ("## " + '\n')
         hcron.write ("# Run SADMIN System Monitoring every 5 minutes (*/5 Don't work on Aix)\n")
         hcron.write ("2,7,12,17,22,27,32,37,42,47,52,57 * * * * %s %s %s\n" % (wuser,cscript,clog))
+        hcron.write ("## " + '\n')
+        hcron.write ("## " + '\n')
     else:
+        hcron.write ("## " + '\n')
+        hcron.write ("## " + '\n')
         hcron.write ("# Run SADMIN System Monitoring every 5 minutes\n")
         hcron.write ("*/5 * * * * %s %s %s\n"  % (wuser,cscript,clog))
-    hcron.write ("#\n")
+        hcron.write ("## " + '\n')
+        hcron.write ("## " + '\n')
     hcron.close()                                                       # Close SADMIN Crontab file
 
     # Change Client Crontab file permission to 644
@@ -590,10 +599,10 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     # Populate SADMIN Server Crontab File
     hcron.write ("# SADMIN Server Crontab File \n")
     #hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
-    hcron.write ("# \n")
+    hcron.write ("## " + '\n')
     hcron.write ("PATH=%s\n" % (os.environ["PATH"]))
     hcron.write ("SADMIN=%s\n" % (sroot))
-    hcron.write ("# \n")
+    hcron.write ("## " + '\n')
     hcron.write ("# \n")
     hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
     hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
