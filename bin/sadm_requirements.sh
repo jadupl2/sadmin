@@ -44,56 +44,56 @@
 # 2022_05_10 install v1.12 Using now 'mutt' instead of 'mail'.
 # 2022_07_19 install v1.13 Update of the list of commands and package require by SADMIN.
 # 2023_04_27 install v1.14 Add 'base64' command to requirement list.
+#@2023_12_21 install v1.15 Adjust the packages requirements.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT LE ^C
 #set -x
      
 
 
-# ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.52
-# Setup for Global Variables and load the SADMIN standard library.
-# To use SADMIN tools, this section MUST be present near the top of your code.    
-# ---------------------------------------------------------------------------------------
 
-# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist   
-    then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
-         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
+
+
+# ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
+# v1.56 - Setup for Global Variables and load the SADMIN standard library.
+#       - To use SADMIN tools, this section MUST be present near the top of your code.    
+
+# Make Sure Environment Variable 'SADMIN' Is Defined.
+if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
+         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
             then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-                 exit 1                                    # No SADMIN Env. Var. Exit
+                 exit 1                                                 # No SADMIN Env. Var. Exit
          fi
 fi 
 
-# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
 export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 export SADM_TPID="$$"                                      # Script Process ID.
-export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
-export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
+export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
-# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.14'                                     # Your Current Script Version
-export SADM_PDESC="Check if all SADMIN Tools requirement are present (-i install missing package).s"
+# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='1.15'                                     # Your Current Script Version
+export SADM_PDESC="Check if all SADMIN Tools requirement are present (-i install missing packages)."
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
-export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
-export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
+export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
+export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
-export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
-export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
-export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
@@ -106,10 +106,13 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
 #export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-# ---------------------------------------------------------------------------------------
+#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+# --------------- ---  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
 
 
-  
+
+
 
 #===================================================================================================
 # Scripts Variables 
@@ -178,11 +181,6 @@ install_package()
                             [89])   sadm_write "Running \"dnf -y install ${PACKAGE_RPM}\"\n" 
                                     yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List update
                                     rc=$?                                            # Save ExitCode
-                                    if [ $rc -ne 0 ] && [ "$PACKAGE_RPM" = "wkhtmltopdf" ]
-                                       then sadm_write "Running \"dnf -y install $SADMIN/pkg/wkhtmltopdf/*centos8*\"\n" 
-                                            dnf -y install $SADMIN/pkg/wkhtmltopdf/*centos8* >> $SADM_LOG 2>&1
-                                            rc=$?
-                                    fi 
                                     sadm_write "Return Code after in installation of ${PACKAGE_RPM} is ${rc}.\n"
                                     ;;
                             *)      lmess="The version $(sadm_get_osmajorversion) of"
@@ -629,11 +627,11 @@ check_sadmin_requirements() {
                      command_available "ifconfig" ;SADM_IFCONFIG=$SPATH # Recheck Should be install
             fi
 
-            #command_available "sar"     ; SADM_SAR=$SPATH               # Save Command Path Returned
-            #if [ "$SADM_SAR" = "" ] && [ "$INSTREQ" -eq 1 ]             # Cmd not found & Inst Req.
-            #    then install_package "sysstat" "sysstat"                # Install Package (rpm,deb)
-            #         command_available "sar"  ; SADM_SAR=$SPATH         # Recheck Should be install
-            #fi
+            command_available "sar"     ; SADM_SAR=$SPATH               # Save Command Path Returned
+            if [ "$SADM_SAR" = "" ] && [ "$INSTREQ" -eq 1 ]             # Cmd not found & Inst Req.
+                then install_package "sysstat" "sysstat"                # Install Package (rpm,deb)
+                     command_available "sar"  ; SADM_SAR=$SPATH         # Recheck Should be install
+            fi
 
             command_available "parted"      ; SADM_PARTED=$SPATH        # Save Command Path Returned
             if [ "$SADM_PARTED" = "" ] && [ "$INSTREQ" -eq 1 ]          # Cmd not found & Inst Req.
@@ -743,7 +741,7 @@ check_sadmin_requirements() {
 
 
     # If on the SADMIN Server mysql MUST be present - Check Availibility of the mysql command.
-    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] || [ "$CHK_SERVER" = "Y" ] # Check Server Req.
+    if [ "$SADM_ON_SADMIN_SERVER" = "Y" ] || [ "$CHK_SERVER" = "Y" ] # Check Server Req.
         then sadm_write "\n${YELLOW}${BOLD}SADMIN server requirements.${NORMAL}\n"
              command_available "mysql" ; SADM_MYSQL=$SPATH              # Get mysql cmd path  
              if [ "$SADM_MYSQL" = "" ] && [ "$INSTREQ" -eq 1 ]          # Cmd not found & Inst Req.
@@ -767,14 +765,6 @@ check_sadmin_requirements() {
                         then install_package "--enablerepo=epel python34-pip" "python3-pip" 
                      fi 
                      command_available "pip3" ; SADM_PIP3=$SPATH        # Recheck Should be install
-             fi    
-             command_available "wkhtmltopdf" ; SADM_WKHTMLTOPDF=$SPATH  # Get cmd path  
-             if [ "$SADM_WKHTMLTOPDF" = "" ] && [ "$INSTREQ" -eq 1 ]    # Cmd not found & Inst Req.
-                then install_package "wkhtmltopdf" "wkhtmltopdf"        # Install package (rpm,deb)
-                     if [ $? -ne 0 ] 
-                        then install_package "--enablerepo=epel wkhtmltopdf" "wkhtmltopdf"
-                     fi 
-                     command_available "wkhtmltopdf" ; SADM_WKHTMLTOPDF=$SPATH # Recheck if install
              fi    
              command_available "php" ; SADM_PHP=$SPATH                  # Get  cmd path  
              if [ "$SADM_PHP" = "" ] && [ "$INSTREQ" -eq 1 ]            # Cmd not found & Inst Req.
