@@ -193,7 +193,7 @@ debian_family = ["DEBIAN","UBUNTU","LINUXMINT","RASPBIAN"]
 # Command and package require by SADMIN Client to work correctly
 req_client = {}                                                         # Require Packages Dict.
 req_client = { 
-    'lsb_release':{ 'rpm':'redhat-lsb-core',                'rrepo':'base',  
+    'lsb_release':{ 'rpm':'lsb-release',                    'rrepo':'base',  
                     'deb':'lsb-release',                    'drepo':'base'},
     'nmon'       :{ 'rpm':'nmon',                           'rrepo':'epel',  
                     'deb':'nmon',                           'drepo':'base'},
@@ -260,8 +260,6 @@ req_server = {
                        'deb':'fping monitoring-plugins-standard',              'drepo':'base'},
 #    'arp-scan'      :{ 'rpm':'arp-scan',                                       'rrepo':'epel',
 #                       'deb':'arp-scan',                                       'drepo':'base'},
-#    'wkhtmltopdf'   :{ 'rpm':'wkhtmltopdf',                                    'rrepo':'epel',  
-#                       'deb':'wkhtmltopdf',                                    'drepo':'base'},
     'php'           :{ 'rpm':'php php-common php-cli php-mysqlnd php-mbstring','rrepo':'base', 
                        'deb':'php php-common php-cli php-mysql php-mbstring',  'drepo':'base'},
     'mysql'         :{ 'rpm':'mariadb-server ',                                'rrepo':'base',
@@ -982,14 +980,6 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
                 icmd = "yum install --enablerepo=epel -y %s >>%s 2>&1" % (needed_packages,logfile)
             else:
                 icmd = "yum install -y %s >>%s 2>&1" % (needed_packages,logfile)
-
-            # wkhtmltopdf package available for all version except CentOS,Redhat Version 8 9
-            # Install it from SADMIN package directory
-            if (needed_packages == "wkhtmltopdf") :
-               if (sosname in rhel_family) and (int(float(sosver)) >= 8) and (sosname != "FEDORA") :
-                  package_dir="%s/pkg/%s/%s/%s/%s" % (sroot,needed_packages,sosname.lower(),int(float(sosver)),sosarch)
-                  icmd = "dnf -y install %s/wkhtmltox*  >>%s 2>&1" % (package_dir,logfile)
-                  #writelog("imcd = %s" % icmd)
 
         writelog ("-----------------------",'log')
         writelog (icmd,'log')
