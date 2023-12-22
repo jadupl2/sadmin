@@ -2377,9 +2377,8 @@ sadm_stop() {
     # If error log is empty, we can delete it
     if [ ! -s "$SADM_ELOG" ] ; then rm -f $SADM_ELOG >/dev/null 2>&1 ; fi
 
-    # If script is running on the SADMIN server, copy script final log and rch to web data section.
-    # If we don't do that, log look incomplete & script seem to be always running on web interface.
-    if [ "$SADM_ON_SADMIN_SERVER" = "Y" ]                                      # Only run on SADMIN server
+    # If script is running on the SADMIN server, copy log and rch immediatly to web data dir.
+    if [ "$SADM_ON_SADMIN_SERVER" = "Y" ]                               # Only run on SADMIN server
        then WLOGDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log"          # Host Main LOG Directory
             WLOG="${WLOGDIR}/${SADM_HOSTNAME}_${SADM_INST}.log"         # LOG File Name in Main Dir
             WRCHDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"          # Host Main RCH Directory
@@ -2391,14 +2390,14 @@ sadm_stop() {
                      chown $SADM_WWW_USER:$SADM_WWW_GROUP $WLOGDIR      # Own by Main User and Group
                      chmod 775 $WRCHDIR                                 # Make it accesible
                      chown $SADM_WWW_USER:$SADM_WWW_GROUP $WRCHDIR      # Own by Main User and Group
-                     if [ ! -f "$WLOG" ] ; then touch "$WLOG" ; fi      # Make sure web log exist
+                     touch "$WLOG"                                      # Make sure web log exist
                      chmod 666 ${WLOG}                                  # make it readable
                      chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WLOG}       # Good group
                      cp $SADM_LOG $WLOG                                 # Copy result to web dir
             fi
             if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]    # W  ant to Produce RCH File
                then if [ $(id -u) -eq 0 ] 
-                       then if [ ! -f "$WRCH" ] ;then touch "$WRCH" ;fi # Make sure web rch exist
+                       then touch "$WRCH"                               # Make sure web rch exist
                             chmod 666 $WRCH                             # Make sure we can overwite
                             chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WRCH} # Good group
                             cp $SADM_RCHLOG $WRCH
