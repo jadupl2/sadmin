@@ -388,18 +388,20 @@ function cmd_options()
 #===================================================================================================
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Won't come back if error
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong    
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong   
+
     if [ $DRYRUN -eq 1 ]                                                # Dry Run Activated
         then printf "${BOLD}${YELLOW}Dry Run activated"                 # Inform User
-             printf "\nUse '-y' to really remove 'SADMIN' from this system${NORMAL}\n"
+             printf "\nUse '-y' to really remove 'SADMIN' from this system.${NORMAL}\n"
         else if [ "$SADM_HOST_TYPE" = "S" ] ;then STYPE="Server" ;else STYPE="Client" ;fi
-             ask_user "This will remove 'SADMIN ${STYPE}' from this system, Are you sure" # Not DryRun
+             ask_user "This will remove 'SADMIN ${STYPE}' from this system, Are you sure"
              if [ $? -eq 0 ]                                            # don't want to Del SADMIN
                 then sadm_stop 0                                        # Close log,rch - rm tmp&pid
                      exit $SADM_EXIT_CODE                               # Exit to O/S
              fi
     fi 
     main_process                                                        # Main Process
+    
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                  # Only in DryMode Else Error
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
