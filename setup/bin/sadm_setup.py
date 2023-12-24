@@ -126,6 +126,7 @@
 #@2023_12_10 install v3.95 Added install of package 'nfs-utils (rpm) and 'nfs-common' (deb).
 #@2023_12_20 install v3.96 Remove 'wkhtmltopdf' requirement package.
 #@2023_12_20 install v3.97 Remove 'sadm_daily_report.sh' from sadm_server crontab (depreciated).
+#@2023_12_24 install v3.98 Change for Alma,Rocky Linux and small change to 'sadm_client' crontab.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -143,7 +144,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.97"                                            # Setup Version Number
+sver                = "3.98"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -492,19 +493,17 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     cscript="sudo ${SADMIN}/bin/sadm_sysmon.pl" 
     clog=">${SADMIN}/log/%s_sadm_sysmon.log 2>&1" % (chostname)
     if wostype == "AIX" : 
-        hcron.write ("## " + '\n')
-        hcron.write ("## " + '\n')
         hcron.write ("# Run SADMIN System Monitoring every 5 minutes (*/5 Don't work on Aix)\n")
         hcron.write ("2,7,12,17,22,27,32,37,42,47,52,57 * * * * %s %s %s\n" % (wuser,cscript,clog))
-        hcron.write ("## " + '\n')
-        hcron.write ("## " + '\n')
+        hcron.write ("# " + '\n')
+        hcron.write ("# " + '\n')
     else:
-        hcron.write ("## " + '\n')
-        hcron.write ("## " + '\n')
+        hcron.write ("# " + '\n')
+        hcron.write ("# " + '\n')
         hcron.write ("# Run SADMIN System Monitoring every 5 minutes\n")
         hcron.write ("*/5 * * * * %s %s %s\n"  % (wuser,cscript,clog))
-        hcron.write ("## " + '\n')
-        hcron.write ("## " + '\n')
+        hcron.write ("# " + '\n')
+        hcron.write ("# " + '\n')
     hcron.close()                                                       # Close SADMIN Crontab file
 
     # Change Client Crontab file permission to 644
@@ -1118,6 +1117,8 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     if osdist == "RHEL"                   : osdist="REDHAT"
     if osdist == "REDHATENTERPRISE"       : osdist="REDHAT"
     if osdist == "CENTOSSTREAM"           : osdist="CENTOS"    
+    if osdist == "ROCKYLINUX"             : osdist="ROCKY"    
+    if osdist == "ALMALINUX"              : osdist="ALMA"    
     
     # Get O/S Version
     if os.path.isfile('/usr/bin/lsb_release') : 
