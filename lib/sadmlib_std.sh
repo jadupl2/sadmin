@@ -208,6 +208,7 @@
 # 2023_09_26 lib v4.29 Code optimization : To function "sadm_get_command_path()".
 #@2023_12_14 lib v4.30 Set SADM_ON_SADMIN_SERVER (Default 'N') - Set to 'Y', if 'SADM_SERVER' IP exist on system.
 #@2023_12_21 lib v4.31 Fix problem when copying log and rch when initially created.
+#@2023_12_22 lib v4.32 Eliminate 'cp' error message in stop function, when file is missing.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -217,7 +218,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.31"                                              # This Library Version
+export SADM_LIB_VER="4.32"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -2393,14 +2394,14 @@ sadm_stop() {
                      touch "$WLOG"                                      # Make sure web log exist
                      chmod 666 ${WLOG}                                  # make it readable
                      chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WLOG}       # Good group
-                     cp $SADM_LOG $WLOG                                 # Copy result to web dir
+                     if [ -f "$SADM_LOG" ] ;then cp $SADM_LOG $WLOG ;fi # Copy result to web dir
             fi
             if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]    # W  ant to Produce RCH File
                then if [ $(id -u) -eq 0 ] 
                        then touch "$WRCH"                               # Make sure web rch exist
                             chmod 666 $WRCH                             # Make sure we can overwite
                             chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WRCH} # Good group
-                            cp $SADM_RCHLOG $WRCH
+                            if [ -f "$SADM_RCHLOG" ] ; then cp $SADM_RCHLOG $WRCH ; fi
                     fi
             fi 
     fi
