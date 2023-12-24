@@ -77,6 +77,7 @@
 # 2023_07_12 client v2.13 Remove duplicated lines in /etc/cron.d/sadm_client file.
 # 2023_07_12 client v2.14 If gmail text pwd file '\$SADMIN/cfg/.gmpw' exist, remove it. 
 # 2023_09_18 client v2.15 Update SADMIN section (v1.56) and minor improvement.
+#@2023_12_22 client v2.16 Fix bug with client crontab.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -107,7 +108,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.15'                                      # Script version number
+export SADM_VER='2.16'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -252,7 +253,7 @@ set_new_nmon_watcher()
 
     # This is to eliminate the duplicate lines in /etc/cron.d/sadm_client
     # Because of an earlier bug, line for sadm_nmon_watcher were added more than once.
-    awk -i inplace '!sadm_nmon_watcher[$0]++' /etc/cron.d/sadm_client
+    #awk -i inplace '!sadm_nmon_watcher[$0]++' /etc/cron.d/sadm_client
 
     return 0 
 }
@@ -615,9 +616,10 @@ function check_sadmin_user()
 
 
 # --------------------------------------------------------------------------------------------------
-# Inspect sadm_client crontab to make sure that this line is in it. 
-# "*/45 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.sh > /dev/null 2>&1"
-# The script check if 'nmon. is running, if isn't the script will start it with the right parameters
+# Inspect sadm_client crontab to make sure that the line below is in it. 
+# "*/45 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.py > /dev/null 2>&1"
+#
+# The script check if 'nmon. is running, if isn't we will start it with the right parameters.
 # --------------------------------------------------------------------------------------------------
 function check_sadm_client_crontab()
 {
@@ -625,8 +627,7 @@ function check_sadm_client_crontab()
     sadm_write "${BOLD}Check SADMIN client '$SADM_USER' crontab & System monitor config file ...${NORMAL}\n"     
     ccron_file="/etc/cron.d/sadm_client"                                # Default crontab file name
 
-
-    # Setup crontab filename under linux
+    # Setup SADMIN crontab filename under linux
     if [ "$(sadm_get_ostype)" == "LINUX" ]                              # Under Linux
        then ccron_file="/etc/cron.d/sadm_client"                        # Client Crontab File Name
             if [ ! -d "/etc/cron.d" ]                                   # Test if Dir. Exist
@@ -635,7 +636,8 @@ function check_sadm_client_crontab()
                      return 1                                           # Return to Caller with Err.
             fi 
     fi
-    # Setup crontab filename under Aix    
+
+    # Setup SADMIN crontab filename under aix
     if [ "$(sadm_get_ostype)" == "AIX" ]                                # Under Aix
        then ccron_file="/var/spool/cron/crontabs/${SADM_USER}"          # Client Crontab File Name
             if [ ! -d "/var/spool/cron/crontabs" ]                      # Test if Dir. Exist
@@ -644,7 +646,8 @@ function check_sadm_client_crontab()
                      return 1                                           # Return to Caller with Err.
             fi
     fi
-    # Setup crontab filename under MacOS
+    
+    # Setup SADMIN crontab filename MacOS
     if [ "$(sadm_get_ostype)" == "DARWIN" ]                             # Under MacOS
        then ccron_file="/var/at/tabs/${SADM_USER}"                      # Client Crontab Name
             if [ ! -d "/var/at/tabs" ]                                  # Test if Dir. Exist
@@ -660,10 +663,11 @@ function check_sadm_client_crontab()
        then grep -q "sadm_nmon_watcher.py" "$ccron_file"                # grep for watcher script
             if [ $? -ne 0 ]                                             # If watcher not there
                then echo "# " >> "$ccron_file"                          # Add to crontab
-                    echo "# Every 45 Min, make sure 'nmon' performance collector is running." >> "$ccron_file"
-                    echo "*/45 * * * *  $SADM_USER sudo \${SADMIN}/bin/sadm_nmon_watcher.py >/dev/null 2>&1" >> "$ccron_file"
-                    echo "# " >> $ccron_file
-                    echo "# " >> $ccron_file 
+                    echo "# " >> "$ccron_file"
+                    echo "# Every 30 Min, make sure 'nmon' performance collector is running." >> "$ccron_file"
+                    echo "*/30 * * * *  $SADM_USER sudo \${SADMIN}/bin/sadm_nmon_watcher.py >/dev/null 2>&1" >> "$ccron_file"
+                    echo "# " >> "$ccron_file"
+                    echo "# " >> "$ccron_file" 
                     sadm_writelog "  - Crontab ($ccron_file) was updated with 'sadm_nmon_watcher.py' line." 
                else sadm_writelog "  - Yes, crontab ($ccron_file) already got 'sadm_nmon_watcher.py' line." 
             fi
@@ -671,7 +675,7 @@ function check_sadm_client_crontab()
             return 1
     fi
 
-    # Remove line in System monitor file, that ran a script 'swatch_nmon.sh' to check/restart nmon
+    # Remove line in sadmin System monitor file, that ran a script 'swatch_nmon.sh' to check/restart nmon
     nmon_file="${SADMIN}/cfg/${SADM_HOSTNAME}.smon"
     sadm_writelog "  - Making sure that "script:swatch_nmon.sh" is no longer in $nmon_file" 
     if [ -f "$nmon_file" ] 
@@ -737,13 +741,6 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-
-    # If current user is not 'root', exit to O/S with error code 1 (Optional)
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_write "Only 'root' user can run this script.\n"       # Advise User Message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
     #
     check_sadmin_user                                                   # Check SADMIN Usr & Grp
     dir_housekeeping                                                    # Do Dir HouseKeeping
