@@ -187,7 +187,7 @@ rear_supported_architecture     = ["i686","i386","x86_64","amd64"]
 syslinux_supported_architecture = ["i686","i386","x86_64","amd64"] 
 
 # Supported Distribution by SADMIN
-rhel_family = ["RHEL","FEDORA","CENTOS","ALMALINUX","ROCKY"]
+rhel_family   = ["RHEL","FEDORA","CENTOS","ALMALINUX","ROCKY"]
 debian_family = ["DEBIAN","UBUNTU","LINUXMINT","RASPBIAN"]
 
 # Command and package require by SADMIN Client to work correctly
@@ -952,9 +952,9 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             continue                                                  # Proceed with Next Package
 
         # lsb_release package is depreciated on Centos,Rhel,AlmaLinux,Rocky 9, so fail is Ok
-        if (needed_packages == "lsb_release" and sosname != "FEDORA") and (sosname in rhel_family and sosver >= 9):
-            writelog ("[ OK ] 'lsb_release' is depreciated on '%s' V%s." % (sosname,sosver)) 
-            continue                                                  # Proceed with Next Package
+        if (needed_packages == "lsb_release" and sosname != "FEDORA") : 
+            if (sosname in rhel_family and sosver < 9) : 
+                needed_packages = "redhat-lsb-core" 
 
         # Syslinux Only available on Intel platform Architecture
         if needed_packages == "syslinux" and sosarch not in syslinux_supported_architecture :
