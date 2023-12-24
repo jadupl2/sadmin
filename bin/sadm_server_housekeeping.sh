@@ -38,7 +38,8 @@
 # 2022_07_13 server v2.12 Fix typo that was preventing script from running under certain condition.
 # 2023_04_17 server v2.13 Secure permission on email password files ($SADMIN/cfg/.gmpw & .gmpw64).
 # 2023_09_17 server v2.14 Add removal of file older than 1 day in $SADMIN/www/tmp directory.
-# 2023_12_20 server v2.15 If Daily report line still in sadm_server crontab, remove it (depreciated).
+#@2023_12_20 server v2.15 If Daily report line still in sadm_server crontab, remove it (depreciated).
+#@2023_12_24 server v2.16 Code optimization and minor bug fix.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -67,7 +68,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.15'                                     # Script version number
+export SADM_VER='2.16'                                     # Script version number
 export SADM_PDESC="Set owner in www directories and remove old files in /www/tmp & www/tmp/perf dir."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -128,42 +129,6 @@ show_usage()
     printf "\n\n" 
 }
 
-
-
-# --------------------------------------------------------------------------------------------------
-#                             General Directories Owner/Group and Privilege
-# --------------------------------------------------------------------------------------------------
-set_dir()
-{
-     VAL_DIR=$1 ; VAL_OCTAL=$2 ; VAL_OWNER=$3 ; VAL_GROUP=$4
-     RETURN_CODE=0
-
-    if [ -d "$VAL_DIR" ]
-        then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "Change $VAL_DIR to $VAL_OCTAL"
-             chmod $VAL_OCTAL $VAL_DIR
-             if [ $? -ne 0 ]
-                then sadm_writelog "Error occurred on 'chmod' operation for $VALDIR"
-                     ((ERROR_COUNT++))                    # Add Return Code To ErrCnt
-                     RETURN_CODE=1                                      # Error = Return Code to 1
-             fi
-             sadm_writelog "Change chmod gou-s $VAL_DIR"
-             chmod gou-s $VAL_DIR
-             if [ $? -ne 0 ]
-                then sadm_writelog "Error occurred on 'chmod' operation for $VALDIR"
-                     ((ERROR_COUNT++))                    # Add Return Code To ErrCnt
-                     RETURN_CODE=1                                      # Error = Return Code to 1
-             fi
-             sadm_writelog "Change $VAL_DIR owner to ${VAL_OWNER}.${VAL_GROUP}"
-             chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR
-             if [ $? -ne 0 ]
-                then sadm_writelog "Error occurred on 'chown' operation for $VALDIR"
-                     ((ERROR_COUNT++))                    # Add Return Code To ErrCnt
-                     RETURN_CODE=1                                      # Error = Return Code to 1
-             fi
-    fi
-    return $RETURN_CODE
-}
 
 
 
@@ -229,26 +194,37 @@ dir_housekeeping()
 {
     sadm_write "\n"
     sadm_write "Server Directories HouseKeeping.\n"
+    if [ ! -d "$SADM_WWW_DIR" ] ; then return $ERROR_COUNT ; fi 
 
     # Reset privilege on WWW Directory files
-    if [ -d "$SADM_WWW_DIR" ]
-        then CMD="find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \;"
-             find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \; >/dev/null 2>&1
-             if [ $? -ne 0 ]
-                then sadm_write_err "[ ERROR ] running ${CMD}\n"
-                     ((ERROR_COUNT++))
-                else sadm_write "${SADM_OK} ${CMD}\n"
-                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
-             fi
-             CMD="find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_GROUP} {} \;"
-             find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_GROUP} {} \;>/dev/null 2>&1
-             if [ $? -ne 0 ]
-                then sadm_write_err "[ ERROR ] running ${CMD}"
-                     ((ERROR_COUNT++))
-                else sadm_write "${SADM_OK} ${CMD}\n"
-                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
-             fi
+    CMD="find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \;"
+    find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \; >/dev/null 2>&1
+    if [ $? -ne 0 ]
+       then sadm_write_err "[ ERROR ] running ${CMD}\n"
+            ((ERROR_COUNT++))
+       else sadm_write "${SADM_OK} ${CMD}\n"
+            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
     fi
+
+    CMD="find $SADM_WWW_DIR -type f -exec chown ${SADM_WWW_USER}:${SADM_GROUP} {} \; "
+    find "$SADM_WWW_DIR" -type f -exec chown $SADM_WWW_USER:$SADM_GROUP {} \; 
+    if [ $? -ne 0 ]
+       then sadm_write_err "[ ERROR ] running ${CMD}"
+            ((ERROR_COUNT++))
+       else sadm_write "${SADM_OK} ${CMD}\n"
+            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
+    fi
+
+    CMD="find $SADM_WWW_DAT_DIR -type f -exec chmod 0664 {}\; "
+    find "$SADM_WWW_DAT_DIR" -type f -exec chmod 0664 {} \; 
+    if [ $? -ne 0 ]
+       then sadm_write_err "[ ERROR ] running ${CMD}"
+            ((ERROR_COUNT++))
+       else sadm_write "${SADM_OK} ${CMD}\n"
+            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
+    fi
+    
+    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
     return $ERROR_COUNT
 }
 
@@ -299,78 +275,6 @@ file_housekeeping()
                 else sadm_write_log "${SADM_OK} running ${CMD}"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
              fi
-    fi
-
-    # Set Permission on all files in the images directory.
-    sadm_write "\n"
-    sadm_write "Setting permissions in the website directories.\n"
-    CMD="find $SADM_WWW_IMG_DIR -type f -exec chmod 664 {} \;"
-    find $SADM_WWW_IMG_DIR -type f -exec chmod 664 {} \; >/dev/null 2>&1
-    if [ $? -ne 0 ]
-       then sadm_write_err "$SADM_ERROR running ${CMD}"
-            ((ERROR_COUNT++))
-       else sadm_write_log "${SADM_OK} running ${CMD}"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-    fi
-
-    # Set Permission on all *.php files 
-    CMD="find $SADM_WWW_DIR -type f -name '*.php' -exec chmod 664 {} \;"
-    find $SADM_WWW_DIR -type f -name '*.php' -exec chmod 664 {} \; >/dev/null 2>&1
-    if [ $? -ne 0 ]
-       then sadm_write_err "$SADM_ERROR running ${CMD}"
-            ((ERROR_COUNT++))
-       else sadm_write_log "${SADM_OK} running ${CMD}"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-    fi
-
-    # Set Permission on all *.css files 
-    CMD="find $SADM_WWW_DIR -type f -name '*.css' -exec chmod 664 {} \;"
-    find $SADM_WWW_DIR -type f -name '*.css' -exec chmod 664 {} \; >/dev/null 2>&1
-    if [ $? -ne 0 ]
-       then sadm_write_err "$SADM_ERROR running ${CMD}"
-            ((ERROR_COUNT++))
-       else sadm_write_log "${SADM_OK} running ${CMD}"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-    fi
-
-    # Set Permission on all *.js files 
-    CMD="find $SADM_WWW_DIR -type f -name '*.js' -exec chmod 664 {} \;"
-    find $SADM_WWW_DIR -type f -name '*.js' -exec chmod 664 {} \; >/dev/null 2>&1
-    if [ $? -ne 0 ]
-       then sadm_write_err "$SADM_ERROR running ${CMD}"
-            ((ERROR_COUNT++))
-       else sadm_write_log "${SADM_OK} running ${CMD}"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-    fi
-
-    # Set Permission on all *.rrd files 
-    CMD="find $SADM_WWW_DIR -type f -name '*.rrd' -exec chmod 664 {} \;"
-    find $SADM_WWW_DIR -type f -name '*.rrd' -exec chmod 664 {} \; >/dev/null 2>&1
-    if [ $? -ne 0 ]
-       then sadm_write_err "$SADM_ERROR running ${CMD}"
-            ((ERROR_COUNT++))
-       else sadm_write_log "${SADM_OK} running ${CMD}"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-    fi
-
-    # Set Permission on all *.pdf files 
-    CMD="find $SADM_WWW_DIR -type f -name '*.pdf' -exec chmod 664 {} \;"
-    find $SADM_WWW_DIR -type f -name '*.pdf' -exec chmod 664 {} \; >/dev/null 2>&1
-    if [ $? -ne 0 ]
-       then sadm_write_err "$SADM_ERROR running ${CMD}"
-            ((ERROR_COUNT++))
-       else sadm_write_log "${SADM_OK} running ${CMD}"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-    fi
-
-    # Set Permission on all files in www/dat directories.
-    CMD="find $SADM_WWW_DAT_DIR -type f -exec chmod 664 {} \;"
-    find $SADM_WWW_DAT_DIR -type f -exec chmod 664 {} \; >/dev/null 2>&1
-    if [ $? -ne 0 ]
-       then sadm_write_err "$SADM_ERROR running ${CMD}"
-            ((ERROR_COUNT++))
-       else sadm_write_log "${SADM_OK} running ${CMD}"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
     fi
 
     # Delete performance graph (*.png) generated by web interface older than 5 days.
