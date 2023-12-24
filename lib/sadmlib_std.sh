@@ -208,7 +208,8 @@
 # 2023_09_26 lib v4.29 Code optimization : To function "sadm_get_command_path()".
 #@2023_12_14 lib v4.30 Set SADM_ON_SADMIN_SERVER (Default 'N') - Set to 'Y', if 'SADM_SERVER' IP exist on system.
 #@2023_12_21 lib v4.31 Fix problem when copying log and rch when initially created.
-#@2023_12_22 lib v4.32 Eliminate 'cp' error message in stop function, when file is missing.
+#@2023_12_22 lib v4.32 Eliminate 'cp' error message in 'sadm_stop()'' function, when file is missing.
+#@2023_12_22 lib v4.33 Add message when user is not part if the SADMIN group.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -218,7 +219,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.32"                                              # This Library Version
+export SADM_LIB_VER="4.33"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -2738,6 +2739,7 @@ sadm_on_sadmin_server() {
                             printf "\nNon 'root' user MUST be part of the '$SADM_GROUP' group."
                             printf "\nThe '$SADM_GROUP' group is specified in $SADM_CFG_FILE file."
                             printf "\nMore info at https://sadmin.ca/sadmin-cfg/#sadmin-default-user-and-group-name"
+                            printf "\nAdd '$usrname' to '$SADM_GROUP' group (sudo usermod -a -G $SADM_GROUP $usrname)." 
                             printf "\nScript aborted ...\n\n"
                             exit 1                                      # Exit with Error
                     fi 
