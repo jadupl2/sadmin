@@ -237,7 +237,7 @@ add_epel_8_repo()
             fi 
     fi
 
-    if [ "$SADM_OSNAME" = "ALMALINUX" ] || [ "$SADM_OSNAME" = "ROCKY" ]
+    if [ "$SADM_OSNAME" = "ALMA" ] || [ "$SADM_OSNAME" = "ROCKY" ]
        then printf "dnf -y install epel-release"
             dnf -y install epel-release >>$SLOG 2>&1 
             if [ $? -ne 0 ]
@@ -284,7 +284,7 @@ add_epel_9_repo()
              fi 
     fi 
 
-    if [ "$SADM_OSNAME" = "ROCKY" ] || [ "$SADM_OSNAME" = "ALMALINUX" ] 
+    if [ "$SADM_OSNAME" = "ROCKY" ] || [ "$SADM_OSNAME" = "ALMA" ] 
         then dnf repolist | grep -q "^epel "
              if [ $? -ne 0 ] 
                 then printf "\nInstalling epel-release on $SADM_OSNAME V9 ...\n" | tee -a $SLOG
@@ -551,14 +551,17 @@ get_sysinfo()
     # Get O/S Name (REDHAT,UBUNTU,CENTOS,...) and O/S Major Number
     OS_FILE="/etc/os-release"
     SADM_OSNAME=$(awk -F= '/^ID=/ {print $2}' $OS_FILE |tr -d '"' |tr '[:lower:]' '[:upper:]')         
-    if [ "$SADM_OSNAME" = "REDHATENTERPRISESERVER" ] ; then SADM_OSNAME="REDHAT" ; fi
-    if [ "$SADM_OSNAME" = "REDHATENTERPRISEAS" ]     ; then SADM_OSNAME="REDHAT" ; fi
-    if [ "$SADM_OSNAME" = "REDHATENTERPRISE" ]       ; then SADM_OSNAME="REDHAT" ; fi
-    if [ "$SADM_OSNAME" = "RHEL" ]                   ; then SADM_OSNAME="REDHAT" ; fi
-    if [ "$SADM_OSNAME" = "CENTOSSTREAM" ]           ; then SADM_OSNAME="CENTOS" ; fi
+    if [ "$SADM_OSNAME" = "REDHATENTERPRISESERVER" ] ; then SADM_OSNAME="REDHAT"   ;fi
+    if [ "$SADM_OSNAME" = "REDHATENTERPRISEAS" ]     ; then SADM_OSNAME="REDHAT"   ;fi
+    if [ "$SADM_OSNAME" = "REDHATENTERPRISE" ]       ; then SADM_OSNAME="REDHAT"   ;fi
+    if [ "$SADM_OSNAME" = "RHEL" ]                   ; then SADM_OSNAME="REDHAT"   ;fi
+    if [ "$SADM_OSNAME" = "CENTOSSTREAM" ]           ; then SADM_OSNAME="CENTOS"   ;fi
+    if [ "$SADM_OSNAME" = "ROCKYLINUX" ]             ; then SADM_OSNAME="ROCKY"    ;fi
+    if [ "$SADM_OSNAME" = "ALMALINUX" ]              ; then SADM_OSNAME="ALMA"     ;fi
+    if [ -f /usr/bin/raspi-config ]                  ; then SADM_OSNAME="RASPBIAN" ;fi
     if [ "$SADM_OSNAME" != "REDHAT" ] && [ "$SADM_OSNAME" != "CENTOS" ] && [ "$SADM_OSNAME" != "FEDORA" ] &&
        [ "$SADM_OSNAME" != "UBUNTU" ] && [ "$SADM_OSNAME" != "DEBIAN" ] && [ "$SADM_OSNAME" != "RASPBIAN" ] &&
-       [ "$SADM_OSNAME" != "ALMALINUX" ] && [ "$SADM_OSNAME" != "ROCKY"  ] && [ "$SADM_OSNAME" != "LINUXMINT" ]
+       [ "$SADM_OSNAME" != "ALMA"   ] && [ "$SADM_OSNAME" != "ROCKY"  ] && [ "$SADM_OSNAME" != "MINT" ]
        then printf "This distribution of Linux ($SADM_OSNAME) is currently not supported.\n"
             exit 1
     fi
@@ -575,7 +578,7 @@ get_sysinfo()
     echo "Your System is running $SADM_OSNAME Version $SADM_OSVERSION ..." >> $SLOG
     
     # Get O/S Type (LINUX,AIX,DARWIN,SUNOS)
-    SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`                 # OS(AIX/LINUX/DARWIN/SUNOS)
+    SADM_OSTYPE=$(uname -s | tr '[:lower:]' '[:upper:]')                # OS(AIX/LINUX/DARWIN/SUNOS)
 
     # Determine Package format in use on this system (rpm,deb,aix,dmg)
     SADM_PACKTYPE=""                                                    # Initial Package Type None
@@ -623,7 +626,7 @@ EOF
 
     # Add EPEL for these distribution
     if [ "$SADM_OSNAME" = "REDHAT" ] || [ "$SADM_OSNAME" = "CENTOS" ] ||  
-       [ "$SADM_OSNAME" = "ROCKY" ]  || [ "$SADM_OSNAME" = "ALMALINUX" ] 
+       [ "$SADM_OSNAME" = "ROCKY" ]  || [ "$SADM_OSNAME" = "ALMA" ] 
         then add_epel_repo                                               
     fi 
     

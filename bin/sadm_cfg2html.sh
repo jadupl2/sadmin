@@ -170,7 +170,7 @@ function main_process()
                     sadm_write "We will install it now.\n"              # Not Found inform user
                     if [ "$(sadm_get_osname)"  = "REDHAT" ]     || 
                         [ "$(sadm_get_osname)" = "CENTOS" ]     || 
-                        [ "$(sadm_get_osname)" = "ALMALINUX" ]  || 
+                        [ "$(sadm_get_osname)" = "ALMA" ]       || 
                         [ "$(sadm_get_osname)" = "ROCKY" ]      || 
                         [ "$(sadm_get_osname)" = "FEDORA" ]
                         then rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm
@@ -178,7 +178,7 @@ function main_process()
                     if [ "$(sadm_get_osname)" = "UBUNTU" ]   || 
                        [ "$(sadm_get_osname)" = "DEBIAN" ]   ||
                        [ "$(sadm_get_osname)" = "RASPBIAN" ] ||
-                       [ "$(sadm_get_osname)" = "LINUXMINT" ]
+                       [ "$(sadm_get_osname)" = "MINT" ]
                        then dpkg --install --force-confold ${SADM_PKG_DIR}/cfg2html/cfg2html.deb
                     fi
                     CFG2HTML=`which cfg2html >/dev/null 2>&1`           # Try Again to Locate cfg2html

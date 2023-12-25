@@ -391,13 +391,13 @@ export SADM_SMTP_SENDER="sadmin.gmail.com"                              # Email 
 export SADM_GMPW=""                                                     # smtp sender gmail passwd
 
 # To be a valid SADMIN server 'SADM_HOST_TYPE' must be "S" and 'SADM_SERVER' IP must exist on host.
-export SADM_ON_SADMIN_SERVER="N"                                        # On a valid SADMIN Server 
+export SADM_ON_SADMIN_SERVER="N"                                        # Valid SADMIN Server Y/N ?
 
 # Array of O/S Supported & Package Family
-#export SADM_OS_SUPPORTED=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMALINUX' 'ROCKY'
-#                           'DEBIAN' 'RASPBIAN' 'UBUNTU' 'LINUXMINT' 'AIX' )
-#export SADM_REDHAT_FAMILY=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMALINUX' 'ROCKY' )
-#export SADM_DEBIAN_FAMILY=( 'DEBIAN' 'RASPBIAN' 'UBUNTU' 'LINUXMINT' )
+#export SADM_OS_SUPPORTED=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMA' 'ROCKY'
+#                           'DEBIAN' 'RASPBIAN' 'UBUNTU' 'MINT' 'AIX' )
+#export SADM_REDHAT_FAMILY=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMA' 'ROCKY' )
+#export SADM_DEBIAN_FAMILY=( 'DEBIAN' 'RASPBIAN' 'UBUNTU' 'MINT' )
 export OS_REL="/etc/os-release"                                         # O/S Release File
 
 
@@ -1145,14 +1145,15 @@ sadm_get_osname() {
                     wosname=$(echo $wosname | tr '[:lower:]' '[:upper:]')
                     # RockyLinux returned by lsb_release and /etc/os-release ID=Rocky, make it ROCKY
                     if [ "$wosname" = "ROCKYLINUX" ]             ; then wosname="ROCKY"    ;fi
+                    if [ "$wosname" = "ALMALINUX"  ]             ; then wosname="ALMA"     ;fi
+                    if [ "$wosname" = "CENTOSSTREAM" ]           ; then wosname="CENTOS"   ;fi
+                    if [ -f /usr/bin/raspi-config ]              ; then wosname="RASPBIAN" ;fi
                     # RedHat ID can be different accross time , making REDHAT
                     if [ "$wosname" = "REDHATENTERPRISESERVER" ] ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "REDHATENTERPRISE" ]       ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "RHEL" ]                   ; then wosname="REDHAT"   ;fi
                     # Rename CENTOSSTREAM MAKING it CENTOS
-                    if [ "$wosname" = "CENTOSSTREAM" ]           ; then wosname="CENTOS"   ;fi
-                    if [ -f /usr/bin/raspi-config ]              ; then wosname="RASPBIAN" ;fi
                     ;;
         "AIX")      wosname="AIX"
                     ;;

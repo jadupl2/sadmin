@@ -582,7 +582,7 @@ function sadm_return_logo($WOS) {
             $iurl='https://docs.centos.org/en-US/docs/' ;
             $ipath='/images/logo_centos.png';
             break;
-        case 'ALMALINUX' :
+        case 'ALMA' :
             $iurl='https://wiki.almalinux.org/' ;
             $ipath='/images/logo_almalinux.png';
             break;
@@ -594,7 +594,7 @@ function sadm_return_logo($WOS) {
             $iurl='https://help.ubuntu.com/' ;
             $ipath='/images/logo_ubuntu.png';
             break;
-        case 'LINUXMINT' :
+        case 'MINT' :
             $iurl='https://linuxmint.com/documentation.php' ;
             $ipath='/images/logo_linuxmint.png';
             break;

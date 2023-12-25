@@ -49,7 +49,8 @@ set_creation_default()
     CR_NS="0"                                   ; export CR_NS
     CR_SS="0"                                   ; export CR_SS
     case "$(sadm_get_osname)" in                                       
-        "REDHAT"|"CENTOS")      CR_FT="ext4"
+        "REDHAT"|"CENTOS"|"ROCKY"|"ALMA")      
+                                CR_FT="ext4"
                                 if [ "$(sadm_get_osmajorversion)" -lt 6 ] 
                                     then CR_FT="ext3" 
                                 fi
@@ -59,7 +60,7 @@ set_creation_default()
                                 ;;
         "FEDORA")               CR_FT="xfs" 
                                 ;;
-        "UBUNTU"|"DEBIAN"|"RASPBIAN"|"LINUXMINT") CR_FT="ext4" 
+        "UBUNTU"|"DEBIAN"|"RASPBIAN"|"MINT") CR_FT="ext4" 
                                 ;;
         "*" )                   sadm_write "O/S $(sadm_get_osname) not supported yet.\n" 
                                 ;;

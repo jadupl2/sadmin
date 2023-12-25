@@ -456,7 +456,7 @@ rear_housekeeping()
         else sadm_write_err "[ WARNING ] USB Boot image not created."
              sadm_write_err "The command 'isohybrid' not installed on '${SADM_HOSTNAME}'."
              sadm_write_err " - On debian,ubuntu,Mint use     : 'sudo apt install syslinux-utils'"
-             sadm_write_err " - On fedora,rhel,alma,rocky use : 'dnf install syslinux'" 
+             sadm_write_err " - On fedora,rhel,alma,rocky use : 'sudo dnf install syslinux'" 
     fi 
 
 

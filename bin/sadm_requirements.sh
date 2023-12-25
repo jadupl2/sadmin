@@ -540,7 +540,7 @@ check_sadmin_requirements() {
     sadm_write "${YELLOW}${BOLD}SADMIN client requirements${NORMAL}\n"
 
     if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] ||
-       [ "$(sadm_get_osname)" = "ROCKY" ]  || [ "$(sadm_get_osname)" = "ALMALINUX" ]
+       [ "$(sadm_get_osname)" = "ROCKY" ]  || [ "$(sadm_get_osname)" = "ALMA" ]
        then if [ $INSTREQ -eq 1 ] 
                 then add_epel_repo
                 else sadm_write_log "I would install EPEL repositories, if not already installed."

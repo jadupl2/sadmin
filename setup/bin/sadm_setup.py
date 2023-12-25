@@ -188,8 +188,8 @@ rear_supported_architecture     = ["i686","i386","x86_64","amd64"]
 syslinux_supported_architecture = ["i686","i386","x86_64","amd64"] 
 
 # Supported Distribution by SADMIN
-rhel_family   = ["RHEL","FEDORA","CENTOS","ALMALINUX","ROCKY"]
-debian_family = ["DEBIAN","UBUNTU","LINUXMINT","RASPBIAN"]
+rhel_family   = ["RHEL","FEDORA","CENTOS","ALMA","ROCKY"]
+debian_family = ["DEBIAN","UBUNTU","MINT","RASPBIAN"]
 
 # Command and package require by SADMIN Client to work correctly
 req_client = {}                                                         # Require Packages Dict.
@@ -1111,7 +1111,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
         try: 
             osdist=os_dict['ID'].upper()
         except KeyError as e:     
-            writelog('Cannot determine O/S distrobution')
+            writelog('Cannot determine O/S distribution')
     if osdist == "REDHATENTERPRISESERVER" : osdist="REDHAT"
     if osdist == "REDHATENTERPRISEAS"     : osdist="REDHAT"
     if osdist == "RHEL"                   : osdist="REDHAT"
@@ -1119,6 +1119,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     if osdist == "CENTOSSTREAM"           : osdist="CENTOS"    
     if osdist == "ROCKYLINUX"             : osdist="ROCKY"    
     if osdist == "ALMALINUX"              : osdist="ALMA"    
+    if osdist == "LINUXMINT"              : osdist="MINT"    
     
     # Get O/S Version
     if os.path.isfile('/usr/bin/lsb_release') : 
@@ -2144,11 +2145,7 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,s
     update_postfix_cf(sroot,"smtp_sasl_auth_enable","yes")
     update_postfix_cf(sroot,"smtp_sasl_security_options"," ")
     update_postfix_cf(sroot,"smtp_sasl_password_maps","hash:/etc/postfix/sasl_passwd")
-    #if (sosname == "REDHAT") or (sosname == "CENTOS") or (sosname == "FEDORA") or \
-    #   (sosname == "ALMALINUX") or (sosname == "ROCKY") :     
-    #   update_postfix_cf(sroot,"smtp_tls_CAfile","/etc/ssl/certs/ca-bundle.crt")  
-    #else: 
-    #   update_postfix_cf(sroot,"smtp_tls_CAfile","etc/ssl/certs/ca-certificates.crt")  
+ 
     relayhost =  "[%s]:%d" % (wsmtp_server,wsmtp_port)  
     update_postfix_cf(sroot,"relayhost",relayhost)
     
@@ -2488,7 +2485,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
 #
 # Return :
 #   Package Type (deb,rpm,dmg,aix)
-#   O/S Name (AIX/CENTOS/REDHAT,UBUNTU,ROCKY,ALMALINUX,DEBIAN,RASPBIAN,...)
+#   O/S Name (AIX/CENTOS/REDHAT,UBUNTU,ROCKY,ALMA,DEBIAN,RASPBIAN,...)
 #   O/S Major Version Number
 #   O/S Running in 32 or 64 bits (32,64)
 #   O/S Architecture (Aarch64,Armv6l,Armv7l,I686,X86_64)

@@ -1213,6 +1213,9 @@ def get_osname():
     if osname == "REDHATENTERPRISEAS"     : osname="REDHAT"
     if osname == "REDHATENTERPRISE"       : osname="REDHAT"
     if osname == "CENTOSSTREAM"           : osname="CENTOS"
+    if osname == "ROCKYLINUX"             : osname="ROCKY"
+    if osname == "ALMALINUX"              : osname="ALMA"
+    if osname == "LINUXMINT"              : osname="MINT"
     #
     if ostype == "AIX" :
         osname="AIX"

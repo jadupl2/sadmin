@@ -197,7 +197,7 @@ check_available_update()
     
     case "$(sadm_get_osname)" in
 
-        "REDHAT"|"CENTOS"|"ALMALINUX"|"ROCKY" ) 
+        "REDHAT"|"CENTOS"|"ALMA"|"ROCKY" ) 
             case "$(sadm_get_osmajorversion)" in
                 [2-6])  UpdateStatus=1                                  # No Update available
                         sadm_write_log "No more update for $SADM_OS_NAME v$(sadm_get_osmajorversion)"
@@ -473,7 +473,7 @@ update_sysinfo_file()
 perform_osupdate()
 {
     case "$(sadm_get_osname)" in                                        # Test OS Name
-        "REDHAT"|"CENTOS"|"ALMALINUX"|"ROCKY" )
+        "REDHAT"|"CENTOS"|"ALMA"|"ROCKY" )
             case "$(sadm_get_osmajorversion)" in
                 [2-4])  sadm_write "No more update for $SADM_OS_NAME v$(sadm_get_osmajorversion).\n"
                         sadm_write "This version have reach end of life.\n"
