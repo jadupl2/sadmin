@@ -534,7 +534,7 @@ package_available() {
 
 
 # THIS FUNCTION MAKE SURE THAT ALL SADM SHELL LIBRARIES (LIB/SADM_*) REQUIREMENTS ARE MET BEFORE USE
-# IF THE REQUIRENMENT ARE NOT MET, THEN THE SCRIPT WILL ABORT INFORMING USER TO CORRECT SITUATION
+# IF THE REQUIREMENTS ARE NOT MET, THEN THE SCRIPT WILL ABORT INFORMING USER TO CORRECT SITUATION
 # --------------------------------------------------------------------------------------------------
 check_sadmin_requirements() {
     sadm_write "${YELLOW}${BOLD}SADMIN client requirements${NORMAL}\n"
