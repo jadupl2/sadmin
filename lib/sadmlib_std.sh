@@ -210,6 +210,7 @@
 #@2023_12_21 lib v4.31 Fix problem when copying log and rch when initially created.
 #@2023_12_22 lib v4.32 Eliminate 'cp' error message in 'sadm_stop()'' function, when file is missing.
 #@2023_12_22 lib v4.33 Add message when user is not part if the SADMIN group.
+#@2023_12_26 lib v4.34 Minor fix, file permission verification.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -219,7 +220,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.33"                                              # This Library Version
+export SADM_LIB_VER="4.34"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -2086,11 +2087,7 @@ sadm_start() {
 
     sadm_freshen_directories_structure                                  # Chk Dir. Structure & Perm.
 
-    # If new log is desired, remove old log and start new one.
-    if [ "$SADM_LOG_APPEND" = "N" ] ; then rm -f $SADM_LOG  >/dev/null 2>&1  ; fi # Remove old log
-    if [ -e "$SADM_ELOG" ]          ; then rm -f $SADM_ELOG > /dev/null 2>&1 ; fi # Remove old elog
-
-    # Make sure log & error log exist and have proper permission
+   # Make sure log & error log exist and have proper permission
     [ ! -e "$SADM_LOG"  ] && touch $SADM_LOG                            # If Log File don't exist
     [ ! -e "$SADM_ELOG" ] && touch $SADM_ELOG                           # If Error Log don't exist
     if [ $(id -u) -eq 0 ]                                               # Need good permission
@@ -2101,6 +2098,14 @@ sadm_start() {
              fi
              chmod 666 $SADM_ELOG ; chgrp ${SADM_GROUP} ${SADM_ELOG}
     fi
+
+    # Initialize the script log 
+    if [ "$SADM_LOG_APPEND" = "N" ]                                     # User don't want append log
+        then rm -f $SADM_LOG  >/dev/null 2>&1                           # Remove old log
+             touch $SADM_LOG  >/dev/null 2>&1                           # Create an empty script log
+    fi 
+    chmod 666 $SADM_LOG                                                 # Read/Write Everyone
+    chgrp $SADM_GROUP $SADM_LOG                                         # Script log => SADMIN Group
 
     # Write Log Header
     if [ ! -z "$SADM_LOG_HEADER" ] && [ "$SADM_LOG_HEADER" = "Y" ]      # Script Want Log Header
@@ -2115,15 +2120,14 @@ sadm_start() {
              hline3="${hline3} - SADMIN($SADM_HOST_TYPE): $SADMIN"
              sadm_write_log "$hline3"
              sadm_write_log "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
-             sadm_write_log " "                                          # White space line
+             sadm_write_log " "                                         
     fi
 
     # Check if this script to be run only by root user
     if [ ! -z "$SADM_ROOT_ONLY" ] && [ $SADM_ROOT_ONLY == "Y" ] &&  [ $(id -u) -ne 0 ]  
-        then sadm_write_err "Script can only be run by the 'root' user." # Advise User Message
-             sadm_write_err "Try 'sudo ${0##*/}'"                       # Suggest using sudo
-             sadm_write_err "Process aborted"                           # Abort advise message
-             sadm_write_err " "
+        then sadm_write_err "Script can only be run by the 'root' user."
+             sadm_write_err "Try 'sudo ${0##*/}'."                      # Suggest using sudo
+             sadm_write_err "Process aborted."                          # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S with Error
     fi
@@ -2131,12 +2135,29 @@ sadm_start() {
     # Check if this script to be run only on the SADMIN server.
     if [ "$SADM_ON_SADMIN_SERVER" = "N" ] &&  [ "$SADM_SERVER_ONLY" = "Y" ]  # Use ssh ?    
         then sadm_write_err "This script only run on SADMIN server '$SADM_SERVER'."
-             sadm_write_err "   - The variable 'SADM_SERVER_ONLY' to 'Y'"
+             sadm_write_err "   - The variable 'SADM_SERVER_ONLY' to 'Y'."
              sadm_write_err "Process aborted."                          # Abort advise message
              sadm_write_err " "
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
+
+    # User got to be part of the SADMIN Group specified in $SADMIN/cfg/sadmin.cfg
+    if [ -r $SADMIN/cfg/sadmin.cfg ]
+       then SADM_GROUP=`awk -F= '/^SADM_GROUP/ {print $2}' $SADMIN/cfg/sadmin.cfg | tr -d ' '` 
+            if [ $(id -u) -ne 0 ]                                       # If user is not 'root' user
+               then usrname=$(id -un)                                   # Get Current User Name
+                    if ! id -nG "$usrname" | grep -qw "$SADM_GROUP"     # User part of sadmin group?
+                       then printf "\nUser '$(id -un)' doesn't belong to the '$SADM_GROUP' group." 
+                            printf "\nNon 'root' user MUST be part of the '$SADM_GROUP' group."
+                            printf "\nThe '$SADM_GROUP' group is specified in $SADM_CFG_FILE file."
+                            printf "\nMore info at https://sadmin.ca/sadmin-cfg/#sadmin-default-user-and-group-name"
+                            printf "\nAdd '$usrname' to '$SADM_GROUP' group (sudo usermod -a -G $SADM_GROUP $usrname)." 
+                            printf "\nScript aborted ...\n\n"
+                            exit 1                                      # Exit with Error
+                    fi 
+            fi
+    fi 
 
     # If PID File exist and user want to run only 1 instance of the script - Abort Script
     if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]     # PIP Exist - Run One Copy
@@ -2247,7 +2268,7 @@ sadm_stop() {
     if [ $# -eq 0 ]                                                     # If No status Code Received
         then SADM_EXIT_CODE=1                                           # Assume Error if none given
              sadm_write_log "Function '${FUNCNAME[0]}' expect one parameter.\n"
-             sadm_write_log "${SADM_ERROR} Received None.\n"                # Advise User
+             sadm_write_log "${SADM_ERROR} Received None.\n"            # Advise User
         else SADM_EXIT_CODE=$1                                          # Save Exit Code Received
     fi
     if [ "$SADM_EXIT_CODE" -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi         # Making Sure code is 1 or 0
@@ -2258,7 +2279,7 @@ sadm_stop() {
 
     # Write script exit code and execution time to log (If user ask for a log footer) 
     if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ]      # Want to Produce Log Footer
-        then sadm_write_log "\n"                                        # Blank Line
+        then sadm_write_log " "                                         # Blank Line
              sadm_write_log "${SADM_FIFTY_DASH}"                        # Dash Line
              if [ $SADM_EXIT_CODE -eq 0 ]                               # If script succeeded
                 then foot1="Script exit code is ${SADM_EXIT_CODE} (Success)" # Success 
@@ -2268,14 +2289,16 @@ sadm_stop() {
     fi
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
-    if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File ?
-        then XCODE=`tail -1 ${SADM_RCHLOG}| awk '{ print $NF }'`        # Get RCH Code on last line
-             if [ "$XCODE" -eq 2 ]                                      # If last Line code is 2
-                then XLINE=`wc -l ${SADM_RCHLOG} | awk '{print $1}'`    # Count Nb. Line in RCH File
-                     XCOUNT=`expr $XLINE - 1`                           # Count without last line
-                     head -$XCOUNT ${SADM_RCHLOG} > ${SADM_TMP_DIR}/xrch.$$ # Create rch file trim
-                     rm -f ${SADM_RCHLOG} >/dev/null 2>&1               # Remove old rch file
-                     mv ${SADM_TMP_DIR}/xrch.$$ ${SADM_RCHLOG}          # Replace RCH without code 2
+    if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]            # Want to Produce RCH File ?
+        then if [ -f "$SADM_RCHLOG" ] 
+                then XCODE=`tail -1 $SADM_RCHLOG | awk '{ print $NF }'` # Get RCH Code on last line
+                     if [ "$XCODE" -eq 2 ]                              # If last Line code is 2
+                        then XLINE=`wc -l ${SADM_RCHLOG} | awk '{print $1}'` # Count Nb. Line in RCH
+                             XCOUNT=`expr $XLINE - 1`                   # Count without last line
+                             head -$XCOUNT ${SADM_RCHLOG} > ${SADM_TMP_DIR}/xrch.$$ # rch file trim
+                             rm -f ${SADM_RCHLOG} >/dev/null 2>&1       # Remove old rch file
+                             mv ${SADM_TMP_DIR}/xrch.$$ ${SADM_RCHLOG}  # Replace RCH without code 2
+                     fi 
              fi                     
              RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
              RCHLINE="$RCHLINE $sadm_elapse $SADM_INST"                 # Format Part2 RCH File
@@ -2729,24 +2752,6 @@ sadm_on_sadmin_server() {
     if [ $? -ne 0 ]                                                     # SADMIN missing in /etc/env
         then echo "SADMIN=$SADMIN" >> /etc/environment                  # Then add it to the file
     fi
-    
-    # User got to be root or be part of the SADMIN Group specified in $SADMIN/cfg/sadmin.cfg
-    if [ -r $SADMIN/cfg/sadmin.cfg ]
-       then SADM_GROUP=`awk -F= '/^SADM_GROUP/ {print $2}' $SADMIN/cfg/sadmin.cfg | tr -d ' '` 
-            if [ $(id -u) -ne 0 ]                                       # If user is not 'root' user
-               then usrname=$(id -un)                                   # Get Current User Name
-                    if ! id -nG "$usrname" | grep -qw "$SADM_GROUP"     # User part of sadmin group?
-                       then printf "\nUser '$(id -un)' doesn't belong to the '$SADM_GROUP' group." 
-                            printf "\nNon 'root' user MUST be part of the '$SADM_GROUP' group."
-                            printf "\nThe '$SADM_GROUP' group is specified in $SADM_CFG_FILE file."
-                            printf "\nMore info at https://sadmin.ca/sadmin-cfg/#sadmin-default-user-and-group-name"
-                            printf "\nAdd '$usrname' to '$SADM_GROUP' group (sudo usermod -a -G $SADM_GROUP $usrname)." 
-                            printf "\nScript aborted ...\n\n"
-                            exit 1                                      # Exit with Error
-                    fi 
-            fi
-    fi 
-
 
 # Load $SADMIN/cfg/sadmin.cfg
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
