@@ -178,7 +178,12 @@ main_process()
     print_file "/etc/environment" 
     print_file "/etc/profile.d/sadmin.sh" 
     print_file "$SADM_CFG_FILE"
-    print_file "/etc/sudoers.d/033_sadmin-nopasswd"
+    if [ -f "/etc/sudoers.d/033_sadmin-nopasswd" ] 
+        then print_file "/etc/sudoers.d/033_sadmin-nopasswd"
+    fi 
+    if [ -f "/etc/sudoers.d/033_sadmin" ] 
+        then print_file "/etc/sudoers.d/033_sadmin"
+    fi 
     print_file "/etc/cron.d/sadm_client"
 
     # Files that appears only on the SADMIN server.
