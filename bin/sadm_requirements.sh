@@ -482,7 +482,11 @@ command_available() {
     return 1
 }
 
-
+#            command_available "dmidecode"   ; SADM_DMIDECODE=$SPATH     # Save Command Path Returned
+#            if [ "$SADM_DMIDECODE" = "" ] && [ "$INSTREQ" -eq 1 ]       # Cmd not found & Inst Req.
+#                then install_package "dmidecode" "dmidecode"            # Install Package (rpm,deb)
+#                     command_available "dmidecode" ; SADM_DMIDECODE=$SPATH   
+#            fi
 
 # --------------------------------------------------------------------------------------------------
 # THIS FUNCTION VERIFY IF THE PACKAGE NAMES RECEIVED IN PARAMETER IS AVAILABLE ON THE SYSTEM
@@ -554,24 +558,6 @@ check_sadmin_requirements() {
             sadm_write_err "          Please install it and re-run this script"
             sadm_write_err "          *** Script Aborted"
             return 1                                                   # Return Error to Caller
-    fi
-
-    # Special consideration for nmon on Aix 5.x & 6.x (After that it is included as part of O/S ----
-    if [ "$(sadm_get_ostype)" = "AIX" ]                                 # Under Aix O/S
-       then command_available "nmon"                                    # Get nmon cmd path   
-            SADM_NMON="$SPATH"                                          # Save Path Returned
-            if [ "$SADM_NMON" = "" ]                                    # If Command not found
-               then NMON_WDIR="${SADM_PKG_DIR}/nmon/aix/"               # Where Aix nmon exec are
-                    NMON_EXE="nmon_aix$(sadm_get_osmajorversion)$(sadm_get_osminorversion)"
-                    NMON_USE="${NMON_WDIR}${NMON_EXE}"                  # Use exec. of your version
-                    if [ ! -x "$NMON_USE" ]                             # nmon exist and executable
-                        then sadm_write_err "'nmon' for AIX $(sadm_get_osversion) isn't available."
-                             sadm_write_err "The nmon executable we need is ${NMON_USE}."
-                        else sadm_write_err "ln -s ${NMON_USE} /usr/bin/nmon"
-                             ln -s ${NMON_USE} /usr/bin/nmon            # Link nmon avail to user
-                             if [ $? -eq 0 ] ; then SADM_NMON="/usr/bin/nmon" ; fi # Set SADM_NMON
-                    fi
-            fi
     fi
 
     # Get Command path for Linux O/S ---------------------------------------------------------------
