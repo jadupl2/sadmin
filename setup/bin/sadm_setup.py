@@ -127,6 +127,7 @@
 #@2023_12_20 install v3.96 Remove 'wkhtmltopdf' requirement package.
 #@2023_12_20 install v3.97 Remove 'sadm_daily_report.sh' from sadm_server crontab (depreciated).
 #@2023_12_24 install v3.98 Change for Alma,Rocky Linux and small change to 'sadm_client' crontab.
+#@2023_12_26 install v3.99 Add comment in 'sadm_client' & 'sadm_server' crontab file in /etc/cron.d.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -144,7 +145,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.98"                                            # Setup Version Number
+sver                = "3.99"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -474,10 +475,8 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
     hcron.write ("# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
     hcron.write ("#  " + '\n')
-    hcron.write ("#  " + '\n')
     hcron.write ("# Every 30 Min, this script make sure the 'nmon' performance collector is running.\n")
     hcron.write ("*/30 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.py > /dev/null 2>&1\n" % (wuser))
-    hcron.write ("# " + '\n')
     hcron.write ("# " + '\n')
     hcron.write ("# sadm_client_sunset.sh, run these four scripts in sequence, just before midnight every day:\n")
     hcron.write ("# (1) sadm_housekeeping_client.sh (Make sure files in $SADMIN have proper owner:group & permission)\n")
@@ -485,7 +484,6 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("# (3) sadm_create_cfg2html.sh (Run cfg2html tool - Produce system configuration web page).\n")
     hcron.write ("# (4) sadm_create_sysinfo.sh (Collect hardware & software info of system to update SADMIN database).\n")
     hcron.write ("23 23 * * *  %s sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1\n" % (wuser))
-    hcron.write ("# " + '\n')
     hcron.write ("# " + '\n')
 
     # Insert line that run System monitor every 5 minutes.
@@ -499,10 +497,8 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
         hcron.write ("# " + '\n')
     else:
         hcron.write ("# " + '\n')
-        hcron.write ("# " + '\n')
         hcron.write ("# Run SADMIN System Monitoring every 5 minutes\n")
         hcron.write ("*/5 * * * * %s %s %s\n"  % (wuser,cscript,clog))
-        hcron.write ("# " + '\n')
         hcron.write ("# " + '\n')
     hcron.close()                                                       # Close SADMIN Crontab file
 
@@ -595,10 +591,10 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     # Populate SADMIN Server Crontab File
     hcron.write ("# SADMIN Server Crontab File \n")
     #hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
-    hcron.write ("## " + '\n')
+    hcron.write ("# " + '\n')
     hcron.write ("PATH=%s\n" % (os.environ["PATH"]))
     hcron.write ("SADMIN=%s\n" % (sroot))
-    hcron.write ("## " + '\n')
+    hcron.write ("# " + '\n')
     hcron.write ("# \n")
     hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
     hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
@@ -614,7 +610,9 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     #
     cscript="sudo ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1"
     hcron.write ("#\n")
-    hcron.write ("# Early morning daily run, Collect Perf data - Update Database, Housekeeping\n")
+    hcron.write ("# Daily & early in the morning the sunrise script is started.\n")
+    hcron.write ("# This script collect information and performance data from active clients.")
+    hcron.write ("# The SADMIN database is then updated with the latest data (Default is 5:08 am).")
     hcron.write ("08 05 * * * %s %s\n" % (wuser,cscript))
     #
     # Report email is now depreciated.
@@ -626,10 +624,13 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     #
     cscript="sudo ${SADMIN}/bin/sadm_push_sadmin.sh >/dev/null 2>&1"
     hcron.write ("#\n")
-    hcron.write ("# Daily default push of \$SADMIN/(lib,bin,cfg/.*) to all active systems.\n")
-    hcron.write ("#   -c to push \$SADMIN/cfg/sadmin_client.cfg to active sadmin clients.\n")
-    hcron.write ("#   -s to push \$SADMIN/sys to active sadmin clients.\n")
-    hcron.write ("#   -u to push \$SADMIN/(usr/bin usr/lib usr/cfg) to active sadmin clients.\n")
+    hcron.write ("# Daily push of $SADMIN server version to all actives clients.\n")
+    hcron.write ("# Will not erase any of your data or configuration files.\n")
+    hcron.write ("# Good way to update version on some or all SADMIN clients.\n")
+    hcron.write ("#   -n Push SADMIN version to the client host name you specify.")
+    hcron.write ("#   -c Also \$SADMIN/cfg/sadmin_client.cfg to active sadmin clients.\n")
+    hcron.write ("#   -s Also push \$SADMIN/sys to active sadmin clients.\n")
+    hcron.write ("#   -u Also push \$SADMIN/(usr/bin usr/lib usr/cfg) to active sadmin clients.\n")
     hcron.write ("#10 13,21 * * * %s %s\n" % (wuser,cscript))
     hcron.write ("#\n")
     #
@@ -725,7 +726,7 @@ def update_sudo_file(sroot,logfile,wuser) :
     writelog('')
     writelog('--------------------')
     writelog("Creating '%s' user sudo file" % (wuser),'bold')
-    sudofile = "/etc/sudoers.d/033_%s-nopasswd" % (wuser)
+    sudofile = "/etc/sudoers.d/033_%s" % (wuser)
     writelog("  - Creating SADMIN sudo file (%s)" % (sudofile))
 
 
@@ -748,7 +749,7 @@ def update_sudo_file(sroot,logfile,wuser) :
         writelog("Error Opening %s file" % (sudofile),'bold')           # Advise Usr couldn't create
         writelog("Could not adjust 'sudo' configuration")               # Sudo file not updated
         sys.exit(1) 
-    hsudo.write ('Defaults  !requiretty')                               # Session don't require tty
+    hsudo.write ('\nDefaults  !requiretty')                             # Session don't require tty
     hsudo.write ('\nDefaults  env_keep += "SADMIN"')                    # Keep Env. Var. SADMIN 
     hsudo.write ("\n%s ALL=(ALL) NOPASSWD: ALL\n" % (wuser))            # No Passwd for SADMIN User
     hsudo.write ("\nDefaults secure_path='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:%s/bin:%s/usr/bin'" % (sroot,sroot))
