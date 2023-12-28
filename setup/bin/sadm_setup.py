@@ -128,6 +128,7 @@
 #@2023_12_20 install v3.97 Remove 'sadm_daily_report.sh' from sadm_server crontab (depreciated).
 #@2023_12_24 install v3.98 Change for Alma,Rocky Linux and small change to 'sadm_client' crontab.
 #@2023_12_26 install v3.99 Add comment in 'sadm_client' & 'sadm_server' crontab file in /etc/cron.d.
+#@2023_12_27 install v4.00 Add package 'cron' (deb) 'cronie' (rpm) to requirement.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -145,7 +146,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.99"                                            # Setup Version Number
+sver                = "4.00"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -197,6 +198,8 @@ req_client = {}                                                         # Requir
 req_client = { 
     'lsb_release':{ 'rpm':'lsb-release',                    'rrepo':'base',  
                     'deb':'lsb-release',                    'drepo':'base'},
+    'crontab'    :{ 'rpm':'cronie',                         'rrepo':'base',  
+                    'deb':'cron',                           'drepo':'base'},
     'nmon'       :{ 'rpm':'nmon',                           'rrepo':'epel',  
                     'deb':'nmon',                           'drepo':'base'},
     'ethtool'    :{ 'rpm':'ethtool',                        'rrepo':'base',  
@@ -595,10 +598,10 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("PATH=%s\n" % (os.environ["PATH"]))
     hcron.write ("SADMIN=%s\n" % (sroot))
     hcron.write ("# " + '\n')
-    hcron.write ("# \n")
     hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
     hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
     hcron.write ("# \n")
+    hcron.write ("\n")
     #
     hcron.write ("# Rsync all *.rch,*.log,*.rpt files from all actives clients.\n")
     cscript="sudo ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1"
@@ -611,8 +614,8 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     cscript="sudo ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1"
     hcron.write ("#\n")
     hcron.write ("# Daily & early in the morning the sunrise script is started.\n")
-    hcron.write ("# This script collect information and performance data from active clients.")
-    hcron.write ("# The SADMIN database is then updated with the latest data (Default is 5:08 am).")
+    hcron.write ("# This script collect information and performance data from active clients.\n")
+    hcron.write ("# The SADMIN database is then updated with the latest data (Default is 5:08 am).\n")
     hcron.write ("08 05 * * * %s %s\n" % (wuser,cscript))
     #
     # Report email is now depreciated.
@@ -623,14 +626,14 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     #hcron.write ("#\n")
     #
     cscript="sudo ${SADMIN}/bin/sadm_push_sadmin.sh >/dev/null 2>&1"
-    hcron.write ("#\n")
+    hcron.write ("\n")
     hcron.write ("# Daily push of $SADMIN server version to all actives clients.\n")
     hcron.write ("# Will not erase any of your data or configuration files.\n")
     hcron.write ("# Good way to update version on some or all SADMIN clients.\n")
-    hcron.write ("#   -n Push SADMIN version to the client host name you specify.")
-    hcron.write ("#   -c Also \$SADMIN/cfg/sadmin_client.cfg to active sadmin clients.\n")
-    hcron.write ("#   -s Also push \$SADMIN/sys to active sadmin clients.\n")
-    hcron.write ("#   -u Also push \$SADMIN/(usr/bin usr/lib usr/cfg) to active sadmin clients.\n")
+    hcron.write ("#   -n Push SADMIN version to the client host name you specify.\n")
+    hcron.write ("#   -c Also $SADMIN/cfg/sadmin_client.cfg to active sadmin clients.\n")
+    hcron.write ("#   -s Also push $SADMIN/sys to active sadmin clients.\n")
+    hcron.write ("#   -u Also push $SADMIN/(usr/bin usr/lib usr/cfg) to active sadmin clients.\n")
     hcron.write ("#10 13,21 * * * %s %s\n" % (wuser,cscript))
     hcron.write ("#\n")
     #
@@ -1627,7 +1630,8 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
 
     # Setting Access permission on web site
     writelog ("  - Setting Permission on SADMIN WebSite (%s/www) ... " % (sroot),'nonl') 
-    cmd = "find %s/www -type d -exec chmod 775 {} \;" % (sroot)         # chmod 775 on all www dir.
+    #cmd = "find %s/www -type d -exec chmod 775 {} \;" % (sroot)         # chmod 775 on all www dir.
+    cmd = "find %s/www -type d -exec chmod 775 {} " % (sroot)           # chmod 775 on all www dir.
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode == 0):
         writelog( " Done ")
@@ -2447,7 +2451,8 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     writelog (" ")
     writelog ("----------")
     writelog ("Please wait while we set the owner and group of %s directories ..." % (sroot))
-    cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
+    #cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
+    cmd = "find %s -exec chown %s.%s {} " % (sroot,wcfg_user,wcfg_group)
     if (DEBUG):
         writelog (" ")                                                  # White Line
         writelog ("Setting %s ownership : %s" % (sroot,cmd))            # Show what we are doing
