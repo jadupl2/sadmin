@@ -1630,8 +1630,8 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
 
     # Setting Access permission on web site
     writelog ("  - Setting Permission on SADMIN WebSite (%s/www) ... " % (sroot),'nonl') 
-    #cmd = "find %s/www -type d -exec chmod 775 {} \;" % (sroot)         # chmod 775 on all www dir.
-    cmd = "find %s/www -type d -exec chmod 775 {} " % (sroot)           # chmod 775 on all www dir.
+    #cmd = "find %s/www -type d -exec chmod 775 {} \;" % (sroot)        # chmod 775 on all www dir.
+    cmd = "find %s/www -type d | xargs chmod 775 " % (sroot)            # chmod 775 on all www dir.
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode == 0):
         writelog( " Done ")
@@ -2452,7 +2452,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     writelog ("----------")
     writelog ("Please wait while we set the owner and group of %s directories ..." % (sroot))
     #cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
-    cmd = "find %s -exec chown %s.%s {} " % (sroot,wcfg_user,wcfg_group)
+    cmd = "find %s | xargs chown %s.%s " % (sroot,wcfg_user,wcfg_group)
     if (DEBUG):
         writelog (" ")                                                  # White Line
         writelog ("Setting %s ownership : %s" % (sroot,cmd))            # Show what we are doing
