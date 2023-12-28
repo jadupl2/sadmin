@@ -217,7 +217,7 @@ main_process()
     fi
 
     sservice="httpd"
-    if [ "$SADM_OS_NAME" = "DEBIAN" ] [ "$SADM_OS_NAME" = "UBUNTU" ] [ "$SADM_OS_NAME" = "MINT" ] 
+    if [ "$SADM_OS_NAME" = "DEBIAN" ] || [ "$SADM_OS_NAME" = "UBUNTU" ] || [ "$SADM_OS_NAME" = "MINT" ] 
         then sservice = "apache2" 
     fi
 
@@ -226,6 +226,7 @@ main_process()
     # Remove web sever SADMIN
         if [ "$sservice" = "httpd" ] 
         then f="/etc/httpd/conf.d/sadmin.conf" 
+        
              if [ -r "$f" ]  ; then rm -f "$f"  ; fi
         else f="/etc/apache2/sites-available/sadmin.conf"
              if [ -r "$f" ]  ; then rm -f "$f"  ; fi
