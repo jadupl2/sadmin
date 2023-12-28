@@ -493,7 +493,7 @@ function display_right_side ($wrow)
     echo "</div>";
 
     # Last Update Date 
-    echo "\n\n<div class='server_right_label'>Last information collection date</div>";
+    echo "\n\n<div class='server_right_label'>Last date of collection</div>";
     echo "\n<div class='server_right_data'>";
     if (empty($wrow['srv_date_update'])) { 
         echo "&nbsp" ; 
