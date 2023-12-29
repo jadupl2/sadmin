@@ -434,19 +434,19 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     if wostype == "LINUX" :                                             # Under Linux
         ccron_file = "/etc/cron.d/sadm_client"                          # Client Crontab File Name
         if not os.path.exists("/etc/cron.d") :                          # Test if Dir. Exist
-            writelog("Crontab Directory /etc/cron.d doesn't exist ?",'bold')
+            writelog("[ ERROR ] Crontab Directory /etc/cron.d doesn't exist ?",'bold')
             writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
             return(1)                                                   # Return to Caller with Err.
     if wostype == "AIX" :                                               # Under AIX
         ccron_file = "/var/spool/cron/crontabs/%s" % (wuser)            # Client Crontab File Name
         if not os.path.exists("/var/spool/cron/crontabs") :             # Test if Dir. Exist
-            writelog("Crontab Directory /var/spool/cron/crontabs doesn't exist ?",'bold')
+            writelog("[ ERROR ] Crontab Directory /var/spool/cron/crontabs doesn't exist ?",'bold')
             writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
             return(1)                                                   # Return to Caller with Err.
     if wostype == "DARWIN" :                                            # Under MacOS 
         ccron_file = "/var/at/tabs/%s" % (wuser)                        # Crontab File on MacOS
         if not os.path.exists("/var/at/tabs") :                         # Test if Dir. Exist
-            writelog("Crontab Directory /var/at/tabs doesn't exist ?",'bold')
+            writelog("[ ERROR ] Crontab Directory /var/at/tabs doesn't exist ?",'bold')
             writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
             return(1)                                                   # Return to Caller with Err.
 
