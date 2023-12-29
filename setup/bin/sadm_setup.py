@@ -627,7 +627,7 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     #
     cscript="sudo ${SADMIN}/bin/sadm_push_sadmin.sh >/dev/null 2>&1"
     hcron.write ("\n")
-    hcron.write ("# Daily push of $SADMIN server version to all actives clients.\n")
+    hcron.write ("# Optional daily push of $SADMIN server version to all actives clients.\n")
     hcron.write ("# Will not erase any of your data or configuration files.\n")
     hcron.write ("# Good way to update version on some or all SADMIN clients.\n")
     hcron.write ("#   -n Push SADMIN version to the client host name you specify.\n")
