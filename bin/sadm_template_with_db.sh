@@ -176,7 +176,8 @@ process_servers()
         if [ $SADM_DEBUG -gt 0 ] 
             then sadm_write_log "$SADM_SSH -qnp $server_ssh_port $fqdn_server date" 
         fi 
-        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Server
+        sadm_on_sadmin_server
+        if [ $? -ne 1 ]                                                 # Not on SADMIN server
             then $SADM_SSH -qnp "$server_ssh_port" "$fqdn_server" date > /dev/null 2>&1
                  RC=$?                                                  # Save Return Code Number
             else RC=0                                                   # No SSH to SADMIN Server
