@@ -391,15 +391,15 @@ install_python3()
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
                  then printf "\n   - Running 'yum -y install python3 python3-setuptools python3-psutil python3-pip python3-PyMySQL'\n" |tee -a $SLOG
-                      yum -y install python3 python3-setuptools python3-pip  python3-PyMySQL >> $SLOG 2>&1
+                      yum -y install python3 python3-setuptools python3-pip python3-psutil python3-PyMySQL >> $SLOG 2>&1
                  else printf "\n   - Running 'dnf -y install python3 python3-setuptools python3-psutil python3-pip python3-PyMySQL'\n" |tee -a $SLOG
-                      dnf -y install python3 python3-setuptools python3-pip python3-PyMySQL >>$SLOG 2>&1
+                      dnf -y install python3 python3-setuptools python3-pip python3-psutil python3-PyMySQL >>$SLOG 2>&1
               fi 
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
         then apt-get update >> $SLOG 2>&1
-             printf "\n   - Running 'apt-get -y install python3 python3-venv python3-pip python3-pymysql'"| tee -a $SLOG
-             apt-get -y install python3 python3-venv python3-pip python3-pymysql >>$SLOG 2>&1
+             printf "\n   - Running 'apt-get -y install python3 python3-venv python3-pip python3-psutil python3-pymysql'"| tee -a $SLOG
+             apt-get -y install python3 python3-venv python3-pip python3-psutil python3-pymysql >>$SLOG 2>&1
     fi 
     
     # python3 should now be installed, if not then abort installation
