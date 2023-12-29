@@ -211,6 +211,7 @@
 #@2023_12_22 lib v4.32 Eliminate 'cp' error message in 'sadm_stop()'' function, when file is missing.
 #@2023_12_22 lib v4.33 Add message when user is not part if the SADMIN group.
 #@2023_12_26 lib v4.34 Minor fix, file permission verification.
+#@2023_12_29 lib v4.35 Minor bug fix
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -220,7 +221,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.34"                                              # This Library Version
+export SADM_LIB_VER="4.35"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -2088,15 +2089,15 @@ sadm_start() {
     sadm_freshen_directories_structure                                  # Chk Dir. Structure & Perm.
 
    # Make sure log & error log exist and have proper permission
-    [ ! -e "$SADM_LOG"  ] && touch $SADM_LOG                            # If Log File don't exist
-    [ ! -e "$SADM_ELOG" ] && touch $SADM_ELOG                           # If Error Log don't exist
+    [ ! -e "$SADM_LOG"  ] && touch $SADM_LOG  >/dev/null 2>&1           # If Log File don't exist
+    [ ! -e "$SADM_ELOG" ] && touch $SADM_ELOG >/dev/null 2>&1           # If Error Log don't exist
     if [ $(id -u) -eq 0 ]                                               # Need good permission
         then chmod 666 $SADM_LOG  ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}
              chmod 666 $SADM_ELOG ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_ELOG}
         else if [ "$SADM_LOG_APPEND" = "N" ] 
-                then chmod 666 $SADM_LOG  ; chgrp ${SADM_GROUP} ${SADM_LOG}
+                then chmod 666 $SADM_LOG  ; chgrp ${SADM_GROUP} ${SADM_LOG} >/dev/null 2>&1
              fi
-             chmod 666 $SADM_ELOG ; chgrp ${SADM_GROUP} ${SADM_ELOG}
+             chmod 666 $SADM_ELOG ; chgrp ${SADM_GROUP} ${SADM_ELOG} >/dev/null 2>&1
     fi
 
     # Initialize the script log 
@@ -2104,8 +2105,8 @@ sadm_start() {
         then rm -f $SADM_LOG  >/dev/null 2>&1                           # Remove old log
              touch $SADM_LOG  >/dev/null 2>&1                           # Create an empty script log
     fi 
-    chmod 666 $SADM_LOG                                                 # Read/Write Everyone
-    chgrp $SADM_GROUP $SADM_LOG                                         # Script log => SADMIN Group
+    chmod 666 $SADM_LOG  >/dev/null 2>&1                                # Read/Write Everyone
+    chgrp $SADM_GROUP $SADM_LOG  >/dev/null 2>&1                        # Script log => SADMIN Group
 
     # Write Log Header
     if [ ! -z "$SADM_LOG_HEADER" ] && [ "$SADM_LOG_HEADER" = "Y" ]      # Script Want Log Header
