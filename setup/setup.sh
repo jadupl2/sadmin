@@ -75,7 +75,7 @@
 # 2023_07_09 install v3.30 Changed the way to install 'pymysql' python module (Debian 12).
 # 2023_07_14 install v3.31 Hostname lookup, will verify /etc/hosts & DNS (if present).
 # 2023_07_16 install v3.32 Cosmetic change to the script log.
-#@2023_12_07 install v3.33 Minor adjustments.
+#@2023_12_07 install v3.33 Minor adjustments & added python3 'psutil' module to SADMIN requirement.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -390,9 +390,9 @@ install_python3()
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
-                 then printf "\n   - Running 'yum -y install python3 python3-setuptools python3-pip python3-PyMySQL'\n" |tee -a $SLOG
+                 then printf "\n   - Running 'yum -y install python3 python3-setuptools python3-psutil python3-pip python3-PyMySQL'\n" |tee -a $SLOG
                       yum -y install python3 python3-setuptools python3-pip  python3-PyMySQL >> $SLOG 2>&1
-                 else printf "\n   - Running 'dnf -y install python3 python3-setuptools python3-pip python3-PyMySQL'\n" |tee -a $SLOG
+                 else printf "\n   - Running 'dnf -y install python3 python3-setuptools python3-psutil python3-pip python3-PyMySQL'\n" |tee -a $SLOG
                       dnf -y install python3 python3-setuptools python3-pip python3-PyMySQL >>$SLOG 2>&1
               fi 
     fi 
