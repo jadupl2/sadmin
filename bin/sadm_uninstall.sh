@@ -42,7 +42,7 @@
 # 2019_09_20 install v2.0 Fixes & include new SADMIN section 1.52.
 #@2023_12_21 install v2.1 Update to SADMIN section 1.56.
 #@2023_12_26 install v2.2 Fix, 'sadmin' dir. couldn't be remove, cause the web service was running.
-#
+#@2023_12_29 install v2.3 Add message to user "Removing web site configuration".
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -72,7 +72,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.2'                                      # Script Version
+export SADM_VER='2.3'                                      # Script Version
 export SADM_PDESC="Uninstall SADMIN from the system."      # Script Optional Desc.(Not use if empty)
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -223,15 +223,17 @@ main_process()
 
     printf "\nStopping web interface '$sservice'." 
     systemctl stop $sservice
+    printf "\nRemove 'sadmin' web site configuration." 
     # Remove web sever SADMIN
-        if [ "$sservice" = "httpd" ] 
-        then f="/etc/httpd/conf.d/sadmin.conf" 
-        
-             if [ -r "$f" ]  ; then rm -f "$f"  ; fi
-        else f="/etc/apache2/sites-available/sadmin.conf"
-             if [ -r "$f" ]  ; then rm -f "$f"  ; fi
-             f="/etc/apache2/sites-enabled/sadmin.conf"
-             if [ -r "$f" ]  ; then rm -f "$f"  ; fi
+    if [ "$DRYRUN" -ne 1 ] 
+        then if [ "$sservice" = "httpd" ] 
+                then f="/etc/httpd/conf.d/sadmin.conf" 
+                     if [ -r "$f" ]  ; then rm -f "$f"  ; fi
+                else f="/etc/apache2/sites-available/sadmin.conf"
+                     if [ -r "$f" ]  ; then rm -f "$f"  ; fi
+                     f="/etc/apache2/sites-enabled/sadmin.conf"
+                     if [ -r "$f" ]  ; then rm -f "$f"  ; fi
+             fi
     fi 
     printf "\nRestarting service'$sservice'." 
     systemctl restart $sservice
@@ -362,7 +364,7 @@ main_process()
         then cd /tmp
              printf "\nRemoving directory structure $SADMIN ..."
              if [ "$DRYRUN" -ne 1 ] 
-                then rm -fr "$SADMIN" >/dev/null 2>&1
+                then rm -fr "$SADMIN" 
              fi
     fi
 
