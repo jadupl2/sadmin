@@ -128,7 +128,7 @@
 #@2023_12_20 install v3.97 Remove 'sadm_daily_report.sh' from sadm_server crontab (depreciated).
 #@2023_12_24 install v3.98 Change for Alma,Rocky Linux and small change to 'sadm_client' crontab.
 #@2023_12_26 install v3.99 Add comment in 'sadm_client' & 'sadm_server' crontab file in /etc/cron.d.
-#@2023_12_27 install v4.00 Add package 'cron' (deb) 'cronie' (rpm) to requirement.
+#@2023_12_27 install v4.00 Add packages 'cron' (deb) 'cronie' (rpm) & python3 'psutil' to requirement.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
