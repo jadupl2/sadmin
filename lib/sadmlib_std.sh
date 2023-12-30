@@ -2095,7 +2095,8 @@ sadm_start() {
         then chmod 666 $SADM_LOG  ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}
              chmod 666 $SADM_ELOG ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_ELOG}
         else if [ "$SADM_LOG_APPEND" = "N" ] 
-                then chmod 666 $SADM_LOG  ; chgrp ${SADM_GROUP} ${SADM_LOG} >/dev/null 2>&1
+                then chmod 666 $SADM_LOG  >/dev/null 2>&1
+                     chgrp ${SADM_GROUP} ${SADM_LOG} >/dev/null 2>&1
              fi
              chmod 666 $SADM_ELOG ; chgrp ${SADM_GROUP} ${SADM_ELOG} >/dev/null 2>&1
     fi
