@@ -61,6 +61,7 @@
 #@2023_12_14 lib v4.48 'SADM_HOST_TYPE' in 'sadmin.cfg', decide if system is a client or the server.
 # 2023_12_14 lib v4.48 Correct some type in the header
 #@2023_12_19 lib v4.49 New function 'on_sadmin_server()' Return "Y" if on SADMIN server or "N" .
+#@2024_01_01 lib v4.50 Remove the need to import 'psutil' module.
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -69,7 +70,7 @@ try :
     import datetime                                         # Date & Time Module
     import shutil                                           # HighLevel File Operations
     import platform                                         # Platform identifying data
-    import psutil                                           # Get all IPs defined on host
+    #import psutil                                           # Get all IPs defined on host
     import pwd                                              # Pwd /etc/passwd Database 
     import base64                                           # To Encrypt, decrypt password file
     import inspect                                          # Check Object Type
@@ -94,7 +95,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.49"                                # This Library Version
+lib_ver             = "4.50"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -2626,20 +2627,37 @@ def on_sadmin_server():
                       
     """
     valid_server="N"                                                    # Default, Not SADMIN server
-    if (sadm_host_type != "S") : return(valid_server)
-        
+    if (sadm_host_type != "S") : return(valid_server)                   # Not 'S' type in sadmin.cfg
+
+    # Get all IPs defined on this system in 'ips_on_system'. 
+    cmd =  "ip a | grep 'inet ' | grep -v '127.0.0.1' | awk '{ print $2 }' | awk -F/ '{ print $1 }'"
+    ccode, ips_on_system, cstderr = sa.oscommand(cmd)
+
+    # Get Ip of 'sadmin' server 
     try : 
-        server_ip = socket.gethostbyname("sadmin")                      # get 'sadmin' IP
+        sadmin_ip = socket.gethostbyname("sadmin")                      # get 'sadmin' IP
     except Exception as e:
-        print("\nCould not determine IP of 'sadmin'.\n")
-        print ("%s" % (e))
+        print("\nCould not determine IP of 'sadmin'.")
+        print("\nYou may want to add it to /etc/hosts or in your DNS.")
+        print ("\n%s" % (e))
+        return(valid_server)
+    
+    # 'sadmin' server IP is define on this system ?
+    if sadmin_ip in ips_on_system : return('Y')
+
+    # Get IP of the current IP 
+    try: 
+        hostname_ip = socket.gethostbyname(sadm_server) 
+    except Exception as e:
+        print("\nCould not determine IP of '%s'." % sadm_server)
+        print("\nYou may want to add it to /etc/hosts or in your DNS.")
+        print ("\n%s" % (e))
         return(valid_server)
 
-    ipv4s = list(get_ip_addresses(socket.AF_INET))
-    for x in ipv4s:
-        if x[1] == server_ip : valid_server = "Y"  
-    return(valid_server)
+    # Is SADM_SERVER var. that is define in sadmin.cfg is define on this host.                
+    if sadmin_ip in ips_on_system : return('Y')
 
+    return(valid_server)
 
 
 # --------------------------------------------------------------------------------------------------
