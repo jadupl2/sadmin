@@ -88,6 +88,7 @@
 # 2023_04_10 backup v3.44 Fix backup calculating total size occupied by host.
 # 2023_04_11 backup v3.45 Previous & Total backup size wasn't always right & added more info in log.
 # 2023_09_13 backup v3.46 Record backup size, more info in log & apply cleaning to all backup type.
+#@2024_01_02 backup v3.47 Fix Initial backup directory setup.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -119,7 +120,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.46'                                     # Script version number
+export SADM_VER='3.47'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -195,12 +196,12 @@ export BACKUP_DIR=""                                                    # Will b
 # $SADM_YEARLY_BACKUP_DATE         Date to do Yearly Backup(1-DayInMth): .31.
 
 # Backup Directories for current backup
-export DAILY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/daily"                # Dir. For Daily Backup
-export WEEKLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/weekly"              # Dir. For Weekly Backup
-export MONTHLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/monthly"            # Dir. For Monthly Backup
-export YEARLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/yearly"              # Dir. For Yearly Backup
-export LATEST_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/latest"              # Latest Backup Directory
-export BACKUP_TYPE=""                                                   # [D]ay [W]eek [M]th [Y]ear
+#export DAILY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/daily"                # Dir. For Daily Backup
+#export WEEKLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/weekly"              # Dir. For Weekly Backup
+#export MONTHLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/monthly"            # Dir. For Monthly Backup
+#export YEARLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/yearly"              # Dir. For Yearly Backup
+#export LATEST_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/latest"              # Latest Backup Directory
+#export BACKUP_TYPE=""                                                   # [D]ay [W]eek [M]th [Y]ear
 
 # Days and month name used to display inform to user before beginning the backup
 WEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
@@ -233,6 +234,13 @@ backup_setup()
 {
     sadm_write_log " "
     sadm_write_log "Setup Backup Environment ..."                       # Advise User were Starting
+
+    # Backup Directories for current backup
+    export DAILY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/daily"                # Dir. For Daily Backup
+    export WEEKLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/weekly"              # Dir. For Weekly Backup
+    export MONTHLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/monthly"            # Dir. For Monthly Backup
+    export YEARLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/yearly"              # Dir. For Yearly Backup
+    export LATEST_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/latest"              # Latest Backup Directory
 
     # Do Daily Backup Directory Exist
     if [ ! -d "${DAILY_DIR}" ]                                          # Daily Backup Dir. Exist ?
