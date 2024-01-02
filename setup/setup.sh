@@ -75,7 +75,8 @@
 # 2023_07_09 install v3.30 Changed the way to install 'pymysql' python module (Debian 12).
 # 2023_07_14 install v3.31 Hostname lookup, will verify /etc/hosts & DNS (if present).
 # 2023_07_16 install v3.32 Cosmetic change to the script log.
-#@2023_12_07 install v3.33 Minor adjustments & added python3 'psutil' module to SADMIN requirement.
+#@2023_12_07 install v3.33 Minor adjustments.
+#@2024_01_02 install v3.34 Remove requirement for python 'psutil' module.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -85,7 +86,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.33'                             ; export SADM_VER           # Your Script Version
+SADM_VER='3.34'                             ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=$(hostname -s)                ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1) ; export SADM_INST          # Script name without ext.
@@ -287,8 +288,8 @@ add_epel_9_repo()
     if [ "$SADM_OSNAME" = "ROCKY" ] || [ "$SADM_OSNAME" = "ALMA" ] 
         then dnf repolist | grep -q "^epel "
              if [ $? -ne 0 ] 
-                then printf "\nInstalling epel-release on $SADM_OSNAME V9 ...\n" | tee -a $SLOG
-                     printf "    - dnf -y install epel-release " | tee -a $SLOG
+                then printf "\nInstalling epel-release on $SADM_OSNAME V9 ..." | tee -a $SLOG
+                     printf "\n    - dnf -y install epel-release \n" | tee -a $SLOG
                      dnf -y install epel-release >>$SLOG 2>&1
                      if [ $? -ne 0 ]
                         then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
@@ -307,7 +308,7 @@ add_epel_9_repo()
              dnf repolist | grep -q "^epel-next "
              if [ $? -ne 0 ] ; then ((ins_count++)) ; fi
              if [ $ins_count -ne 0 ] 
-                then printf "\nInstalling epel-release & epel-next-release on CentOS V9 ...\n" |tee -a $SLOG
+                then printf "\nInstalling epel-release & epel-next-release on $SADM_OSNAME V9 ...\n" |tee -a $SLOG
                      printf "    - dnf -y install dnf install epel-release epel-next-release" |tee -a $SLOG
                      dnf -y install dnf install epel-release epel-next-release  >>$SLOG 2>&1
                      if [ $? -ne 0 ]
@@ -390,16 +391,16 @@ install_python3()
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
-                 then printf "\n   - Running 'yum -y install python3 python3-setuptools python3-psutil python3-pip python3-PyMySQL'\n" |tee -a $SLOG
-                      yum -y install python3 python3-setuptools python3-pip python3-psutil python3-PyMySQL >> $SLOG 2>&1
-                 else printf "\n   - Running 'dnf -y install python3 python3-setuptools python3-psutil python3-pip python3-PyMySQL'\n" |tee -a $SLOG
-                      dnf -y install python3 python3-setuptools python3-pip python3-psutil python3-PyMySQL >>$SLOG 2>&1
+                 then printf "\n   - Running 'yum -y install python3 python3-setuptools python3-pip python3-PyMySQL'\n" |tee -a $SLOG
+                      yum -y install python3 python3-setuptools python3-pip  python3-PyMySQL >> $SLOG 2>&1
+                 else printf "\n   - Running 'dnf -y install python3 python3-setuptools python3-pip python3-PyMySQL'\n" |tee -a $SLOG
+                      dnf -y install python3 python3-setuptools python3-pip python3-PyMySQL >>$SLOG 2>&1
               fi 
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
         then apt-get update >> $SLOG 2>&1
-             printf "\n   - Running 'apt-get -y install python3 python3-venv python3-pip python3-psutil python3-pymysql'"| tee -a $SLOG
-             apt-get -y install python3 python3-venv python3-pip python3-psutil python3-pymysql >>$SLOG 2>&1
+             printf "\n   - Running 'apt-get -y install python3 python3-venv python3-pip python3-pymysql'"| tee -a $SLOG
+             apt-get -y install python3 python3-venv python3-pip python3-pymysql >>$SLOG 2>&1
     fi 
     
     # python3 should now be installed, if not then abort installation
@@ -620,7 +621,7 @@ EOF
     
     echo " " > $SLOG                                                    # Init the Log File
     echo "SADMIN Pre-installation verification v${SADM_VER} - $SADM_OSTYPE $SADM_OSNAME v$SADM_OSVERSION" | tee -a $SLOG
-    echo "Log file is ${SLOGDIR}." | tee -a $SLOG 
+    echo "$(date) - Log file is located in ${SLOGDIR}." | tee -a $SLOG 
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
 
 
