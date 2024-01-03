@@ -1,4 +1,4 @@
 # sadmin.cfg SADM_SMTP_SENDER Documentation
-# Revise 2023_07_21
+# Revise 2024_01_02
 # ----------------------------------------------------------------------------
-This field indicate the email address of the sender.
+Indicate the email address of the sender.
