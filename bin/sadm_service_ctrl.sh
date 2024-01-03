@@ -439,7 +439,7 @@ service_start()
     while getopts "dsuvlh" opt ; do                                    # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               num=$(echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$) # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
@@ -452,8 +452,8 @@ service_start()
                service_stop    sadmin                                   # Stop sadmin Service
                service_disable sadmin                                   # Enable sadmin Service
                printf "\nConsequence of disabling SADMIN service :"
-               printf "\n${SADMIN}/sys/sadm_startup.sh, will not be executed at system startup."
-               printf "\n${SADMIN}/sys/sadm_shutdown.sh will not be executed on system shutdown.\n\n"
+               printf "\n${SADMIN}/sys/sadm_startup.sh script won't be executed at system startup."
+               printf "\n${SADMIN}/sys/sadm_shutdown.sh script won't be executed on system shutdown."
                sadm_stop 0                                              # Close the shop
                exit 0                                                   # Back to shell 
                ;;                                                      
@@ -463,9 +463,9 @@ service_start()
                service_start  sadmin                                    # Start sadmin Service
                service_status sadmin                                    # Status of sadmin Service
                printf "\nConsequence of enabling SADMIN service :"
-               printf "\n${SADMIN}/sys/sadm_startup.sh, will be executed at system startup."
-               printf "\n${SADMIN}/sys/sadm_shutdown.sh will be executed on system shutdown."
-               printf "\nWe encourage you to customize these two scripts to your need.\n\n"
+               printf "\n${SADMIN}/sys/sadm_startup.sh script will be executed at system startup."
+               printf "\n${SADMIN}/sys/sadm_shutdown.sh script will be executed on system shutdown."
+               printf "\nWe encourage you to customize these two scripts to your need."
                ;;                                                      
             l) P_STATUS="ON"                                            # Status Option Selected
                service_status sadmin                                    # Status of sadmin Service
