@@ -142,112 +142,82 @@ add_epel_8_repo()
 }
 
 
-
 #===================================================================================================
 # Add EPEL Repository on Redhat / CentOS 9 (but do not enable it)
-# Run this function only when on RedHat, Alma, Rocky, CentOS
 #===================================================================================================
 add_epel_9_repo()
 {
-
-    case "$SADM_OSNAME" in 
-        "REDHAT" )          printf "Enable $SADM_OSNAME 'codeready-builder' EPEL repository.\n" |tee -a $SLOG
-                            printf "subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms " |tee -a $SLOG 
-             subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms >>$SLOG 2>&1 
-             if [ $? -ne 0 ]
-                then echo "[ ERROR ] Couldn't enable 'codeready-builder' EPEL repository." |tee -a $SLOG
-                     return 1 
-                else echo " [ OK ]" |tee -a $SLOG
-             fi add_epel_7_repo 
-        "ROCKY|ALMA" )      add_epel_7_repo 
-        "CENTOS" )          add_epel_7_repo 
-        "REDHAT" )          add_epel_7_repo 
-    esac
-    
-    if [ "$SADM_OSNAME" = "REDHAT" ] 
-        then printf "Enable 'codeready-builder' EPEL repository for $SADM_OSNAME ...\n" |tee -a $SLOG
-             printf "subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms " |tee -a $SLOG 
-             subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms >>$SLOG 2>&1 
-             if [ $? -ne 0 ]
-                then echo "[ ERROR ] Couldn't enable 'codeready-builder' EPEL repository." |tee -a $SLOG
-                     return 1 
-                else echo " [ OK ]" |tee -a $SLOG
+    if [ "$OS_NAME" = "ROCKY" ] ||  [ "$OS_NAME" = "ALMA" ] || [ "$OS_NAME" = "CENTOS" ] 
+        then 
+             # Install 'crb' (Code Ready Builder) 
+             dnf repolist enabled | grep -q "^crd "                     # Check crb already enable
+             if [ $? -ne 0 ]                                            # If not enable
+                then write_log "Enable 'crb' EPEL repository on $OS_NAME ..."
+                     dnf config-manager --set-enabled crb 
+                     if [ $? -ne 0 ]
+                        then write_err "[ ERROR ] Couldn't enable 'crb' repository."
+                             return 1 
+                        else write_log "[ OK ] Repository 'crb' is now enable."
+                     fi
+                else write_log "Repository 'crb' already enable."
              fi 
              
-             printf "Enable 'codeready-builder' EPEL repository for $SADM_OSNAME ...\n" |tee -a $SLOG
-             printf "subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms " |tee -a $SLOG 
-             subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms >>$SLOG 2>&1 
-             if [ $? -ne 0 ]
-                then echo "[ ERROR ] Couldn't enable 'codeready-builder' EPEL repository." |tee -a $SLOG
-                     return 1 
-                else echo " [ OK ]" |tee -a $SLOG
-             fi 
-        else printf "Enabling 'crb' repository for $SADM_OSNAME ...\n" |tee -a $SLOG
-             printf "    - dnf config-manager --set-enabled crb " | tee -a $SLOG 
-             dnf config-manager --set-enabled crb  >>$SLOG 2>&1 
-             if [ $? -ne 0 ]
-                then echo "[ ERROR ] Couldn't enable 'crb' repository." | tee -a $SLOG
-                     return 1 
-                else echo " [ OK ]" |tee -a $SLOG
-             fi 
-    fi 
+             # Install epel repository 
+             dnf repolist enabled | grep -q "^epel "                    # Check epel already enable
+             if [ $? -ne 0 ]  
+                 then write_log "Install epel-release on $OS_NAME V9 ..." 
+                      dnf -y install epel-release
+                      if [ $? -ne 0 ]
+                         then write_err "[ ERROR ] Adding epel-release V9 repository."
+                              return 1 
+                         else write_log "[ OK ] Repository 'epel-release' is now enable."
+                              dnf config-manager --enable epel
+                      fi
+                 else write_log "Repository 'epel' already enable."
+             fi
+    fi
 
-    if [ "$SADM_OSNAME" = "ROCKY" ] || [ "$SADM_OSNAME" = "ALMA" ] 
-        then dnf repolist | grep -q "^epel "
-             if [ $? -ne 0 ] 
-                then printf "\nInstalling epel-release on $SADM_OSNAME V9 ...\n" | tee -a $SLOG
-                     printf "    - dnf -y install epel-release " | tee -a $SLOG
-                     dnf -y install epel-release >>$SLOG 2>&1
+    # Install epel-next repository only on CentOS 
+    if [ "$OS_NAME" = "CENTOS" ] 
+        then dnf repolist enabled | grep -q "^epel-next "               # epel-next already enable?
+             if [ $? -ne 0 ]  
+                then write_log "Install epel-next-release on $OS_NAME V9 ..." 
+                     dnf -y install epel-next-release
                      if [ $? -ne 0 ]
-                        then echo "[Error] Adding epel-release V9 repository." |tee -a $SLOG
+                        then write_err "[ ERROR ] Adding 'epel-next' V9 repository."
                              return 1 
-                        else echo " [ OK ]" |tee -a $SLOG
+                        else write_log "[ OK ] Repository 'epel-next' is now enable."
                      fi
-                else printf "\nRepository epel-release is already installed ...\n"  |tee -a $SLOG
+                     dnf config-manager --enable epel-next              # Make sure it's enable
+                else write_log "Repository 'epel-next' already enable."
              fi
              return 0 
     fi 
 
-    if [ "$SADM_OSNAME" = "CENTOS" ] 
-        then ins_count=0
-             dnf repolist | grep -q "^epel " 
-             if [ $? -ne 0 ] ; then ((ins_count++)) ; fi
-             dnf repolist | grep -q "^epel-next "
-             if [ $? -ne 0 ] ; then ((ins_count++)) ; fi
-             if [ $ins_count -ne 0 ] 
-                then printf "\nInstalling epel-release & epel-next-release on CentOS V9 ...\n" |tee -a $SLOG
-                     printf "    - dnf -y install dnf install epel-release epel-next-release" |tee -a $SLOG
-                     dnf -y install dnf install epel-release epel-next-release  >>$SLOG 2>&1
+    if [ "$OS_NAME" = "REDHAT" ] 
+        then dnf repolist enabled | grep -q "^codeready-builder-for-rhel-9" # Repo already configure
+             if [ $? -ne 0 ]  
+                then subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms >>$SLOG 2>&1 
                      if [ $? -ne 0 ]
-                        then printf "[ ERROR ] Adding epel-release V9 repository.\n" |tee -a $SLOG
+                        then write_err "[ ERROR ] Subscribing to 'codeready-builder-for-rhel-9-$(arch)-rpms'."
                              return 1 
-                        else printf " [ OK ]\n" |tee -a $SLOG
+                        else write_log "[ OK ] Repository 'codeready-builder-for-rhel-9-$(arch)-rpms' is now enable."
                      fi
-                else printf "\nRepositories epel-release & epel-next-release are already installed.\n" |tee -a $SLOG
+                else write_log "[ OK ] Repository 'codeready-builder-for-rhel-9-$(arch)-rpms' is already installed."
+                     return 0
              fi 
-    fi  
 
-    if [ "$SADM_OSNAME" = "REDHAT" ] 
-        then printf "\nImport EPEL 9 GPG Key ...\n" |tee -a $SLOG
-             printf "    - rpm --import http://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9 " |tee -a $SLOG 
-             rpm --import http://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9
-             if [ $? -ne 0 ]
-                then printf "[ ERROR ] Importing epel-release V9 GPG Key.\n" |tee -a $SLOG
-                     return 1 
-                else printf "[ OK ]\n" |tee -a $SLOG
-             fi
-             dnf repolist | grep -q "^epel "
-             if [ $? -ne 0 ] 
-                then printf "\nInstalling epel-release CentOS/Redhat V9 ...\n" |tee -a $SLOG
-                     printf "    - dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm " |tee -a $SLOG
+             dnf repolist enabled | grep -q "^rhel-9-for-x86_64-baseos" # Repo already configure
+             if [ $? -ne 0 ]  
+                then write_log "Installing 'epel-release-latest-9.noarch.rpm' CentOS/Redhat v9 ..." 
                      dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm >>$SLOG 2>&1
                      if [ $? -ne 0 ]
-                        then printf "[ ERROR ] Adding epel-release V9 repository.\n" |tee -a $SLOG
+                        then write_err "[ ERROR ] Adding 'epel-release-latest-9.noarch.rpm' v9 repository."
                              return 1 
-                        else printf "[ OK ]\n" |tee -a $SLOG
+                        else write_log"[ OK ] Repository 'rhel-9-for-x86_64-baseos' installed." 
                      fi
-                else printf "\nRepository epel-release already installed.\n" |tee -a $SLOG
-             fi 
+                else write_log "Repository 'rhel-9-for-x86_64-baseos' already enable."
+             fi
     fi 
 }
 
@@ -261,16 +231,15 @@ add_epel_9_repo()
 add_epel_repo()
 {
     # If not Red Hat or CentOS, just return to caller 
-    if [ "$OS_NAME" !=  "REDHAT" ] && [ "$OS_NAME" !=  "CENTOS" ] && [ "$OS_NAME" != "ALMALINUX" ] && [ "$OS_NAME" != "ROCKY" ]
+    if [ "$OS_NAME" != "REDHAT" ] && [ "$OS_NAME" != "CENTOS" ] && \
+       [ "$OS_NAME" != "ALMA"   ] && [ "$OS_NAME" != "ROCKY"  ]
         then write_log "No EPEL repository for $OS_NAME" 
-             return 0 
+             return 1
     fi
     error_count=0
 
     #Add EPEL repository on Redhat, CentOS, Rocky and Alma Linux 
-    if [ "$SADM_OS_NAME" = "REDHAT"] || [ "$SADM_OS_NAME" = "CENTOS" ] \
-       [ "$SADM_OS_NAME" = "ROCKY"]  || [ "$SADM_OS_NAME" = "ALMA" ] 
-       then case "$SADM_OS_MAJORVER" in 
+    case "$SADM_OS_MAJORVER" in 
                 7)  add_epel_7_repo 
                     if [ $? -ne 0 ]
                         then sadm_write_err "[Error] Adding EPEL $W_OSVERSION repository." 
@@ -297,8 +266,6 @@ add_epel_repo()
                     break
                     ;;
             esac
-
-    fi 
 
     # On Fedora install rpmfusion repositories (free and non-free release)
     if [ "$SADM_OS_NAME" = "FEDORA"] 
