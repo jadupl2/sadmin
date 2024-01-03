@@ -1,20 +1,35 @@
-# V2.1 Initial Backup Exclude List 
+# V2.2 Initial Standard Backup Exclude List 
 *.iso 
 *.swap
 *.pyc
+*.DS_Store
+*.Trash*
+@eaDir
+#
 ./*/tmp/*
-./*/Trash/*
+./*/Dropbox/*
+./*/Downloads/*
+./*/.tldr
 ./*/.cache
-./*/.DS_Store
+./*/snap/*
 ./*/temp/*
 ./var/cache/*
 ./var/swap*
-./home/jacques/.tldr
-./home/jacques/Dropbox/*
-./home/jacques/Downloads/*
+./var/crash/*
+#
+# Personnal Exclude
 ./home/jacques/Pictures/*
 ./home/jacques/Music/*
 ./home/jacques/Videos/*
-./home/jacques/VirtualBox*
+./home/jacques/ventoy/*
+./home/jacques/VirtualBox\ VMs/*
+./home/jacques/Applications/*
+./home/jacques/VirtualBox/*
+./home/jacques/.vscode/*
+./home/jacques/.thunderbird
 ./opt/sadmin/.git
 ./batnas/*
+./data/*
+./vm/*
+./media/*
+

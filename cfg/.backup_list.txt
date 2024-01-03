@@ -1,6 +1,8 @@
-# v2.1 Initial Backup List - template
+# v2.2 Initial Backup List - template
+# Modify to fit your need
 # Notes: Socket Files are automatically excluded
 # One file or directory per line 
+
 /opt/sadmin
 /home 
 /etc 
