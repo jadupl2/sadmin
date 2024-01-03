@@ -276,7 +276,8 @@ req_server = {
 # Ping the specified host (Return 0 if ping work else 1)
 #===================================================================================================
 def ping(host):
-    param = "-n" if platform.system().lower() == "windows" else "-c"
+    param = "-n" 
+    if platform.system().lower() == "windows" : param =  "-c"
     command = ["ping", param, "1", host]
     return subprocess.call(command) == 0
 
@@ -941,38 +942,40 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             needed_repo = pkginfo['rrepo']                              # Packages Repository to use
 
         if needed_packages == "none" : 
-            writelog ("....") 
+            writelog ("...") 
             continue               
 
         # Verify if needed package is installed
-        pline = "Checking availability of '%s' ... " % (needed_packages) # Show what we are doing
-        writelog (pline,'nonl')                                          # Show What is looking for
+        pline = "Is the package '%s' installed... " % (needed_packages) # Show what we are doing
+        writelog (pline,'nonl')                                         # Show What is looking for
 
         # Rear Only available on Intel platform Architecture
         if needed_packages == "rear" and sosarch not in rear_supported_architecture :
-            writelog ("[ OK ] 'rear' isn't supported on this platform (%s)" % (sosarch)) 
+            writelog ("[ INFO ] 'ReaR' isn't supported on this platform (%s)" % (sosarch)) 
             continue                                                  # Proceed with Next Package
 
-        # lsb_release package is depreciated on Centos,Rhel,AlmaLinux,Rocky 9, so fail is Ok
-        if (needed_packages == "lsb_release" and sosname != "FEDORA") : 
+        # lsb_release package is present on all platform.
+        #   - Except RHEL 7-8, package name is "redhat-lsb-core'.
+        if (needed_packages == "lsb_release") : 
             if (sosname in rhel_family and sosver < 9) : 
                 needed_packages = "redhat-lsb-core" 
 
         # Syslinux Only available on Intel platform Architecture
         if needed_packages == "syslinux" and sosarch not in syslinux_supported_architecture :
-            writelog ("[ OK ] 'syslinux' isn't supported on this platform (%s)" % (sosarch)) 
-            continue                                                  # Proceed with Next Package
+            writelog ("[ INFO ] 'syslinux' isn't supported on this platform (%s)" % (sosarch)) 
+            continue                                                    # Proceed with Next Package
 
         if locate_package(needed_packages,packtype) :                   # If Package is installed
-            writelog ("[ OK ] ")                                        # Show User Check Result
+            writelog ("[ INSTALLED ] ")                                 # Show User Check Result
             continue                                                    # Proceed with Next Package
 
         if needed_packages == "" :
-            writelog ("[ OK ] Not available on %s" % (sosname))
+            writelog ("[ WARNING ] Not available on %s." % (sosname))
             continue
 
         # Install Missing Packages - Setup command to install missing package
-        writelog ("Installing %s ... " % (needed_packages),'nonl')      # Show user what installing
+#        writelog ("Installing %s ... " % (needed_packages),'nonl')      # Show user what installing
+        writelog ("Installing... ",'nonl')                              # Show user what installing
         if (packtype == "deb") :                                        # If Package type is '.deb'
             icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
             icmd += "apt -y install %s >>%s 2>&1" % (needed_packages,logfile)
@@ -990,32 +993,12 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
         # To Test if install did work, try to execute command just installed.
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
-            writelog (" Done ")
+            writelog (" done.")
             continue
-        
-        # If unable to install package
-        if (needed_cmd == "lsb_release"):
-            writelog(" ")
-            writelog("Warning: Package '%s' not available on %s v%s." % (needed_cmd,sosname,sosver))
+        else : 
+            writelog("[ Warning ] Package '%s' not available on %s v%s." % (needed_cmd,sosname,sosver))
             continue
-        if (needed_cmd == "nmon"):
-            if not os.path.isfile('/usr/bin/nmon'):
-                package_dir="%s/pkg/%s/%s/%s/%s" % (sroot,needed_cmd,sosname.lower(),int(float(sosver)),sosarch)
-                writelog (" ")
-                writelog ("Warning: Distribution don't include '%s'." % (needed_cmd))
-                writelog ("Installing the one from %s" % (package_dir))
-                pcmd = "cp %s/nmon /usr/bin" % (package_dir)
-                ccode, cstdout, cstderr = oscommand(pcmd)
-                if (ccode != 0) : 
-                    writelog("Package 'nmon' couldn't be install, no performance Graph will be possible.")
-                    writelog("Error trying to copy the package from SADMIN - %s." % (pcmd))
-                else :
-                    writelog (" Done ")
-                    continue
-            else :
-                writelog (" Done ")
-                continue
-        writelog   ("Warning: Unable to install package '%s'." % (needed_packages),'bold')
+    return()     
             
 
 
@@ -1864,7 +1847,7 @@ def set_sadmin_env(ver):
     print ("Environment variable 'SADMIN' is now set to %s" % (sadm_base_dir))
     print ("  - Line below is now in %s & %s" % (SADM_PROFILE,SADM_ENVFILE)) 
     print ("    %s" % (eline),end='')                                   # SADMIN Line in sadmin.sh
-    print ("  - This will make 'SADMIN' environment variable persistent across reboot.")
+    print ("  - This make 'SADMIN' environment variable persistent across reboot.")
     return (sadm_base_dir)                                              # Return SADMIN Root Dir
 
 
@@ -2595,8 +2578,9 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("\n\n\n\n\n")
     writelog ("SADMIN tools successfully installed",'bold')
     writelog ("===========================================================================")
-    writelog ("You need to logout & log back in before using SADMIN or type the command :")
-    writelog ("'. /etc/profile.d/sadmin.sh', this will define 'SADMIN' environment variable.")
+    writelog ("You need to logout & log back in before using SADMIN.")
+    writelog ("Or you can type the command ; '. /etc/profile.d/sadmin.sh',")
+    writelog (" this will define 'SADMIN' environment variable.")
     if (stype == "S") :
         writelog (" ")
         writelog ("TAKE A LOOK AT 'SADMIN' WEB INTERFACE.",'bold')
@@ -2638,7 +2622,6 @@ def end_message(sroot,sdomain,sserver,stype):
 #===================================================================================================
 #
 def sadmin_service(sroot):
-    writelog (" ") 
     writelog (" ")
     writelog ("----------")
     cmd = "%s/bin/sadm_service_ctrl.sh -s" % (sroot)                    # Enable SADMIN Service 
