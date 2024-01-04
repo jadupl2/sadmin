@@ -128,7 +128,8 @@
 #@2023_12_20 install v3.97 Remove 'sadm_daily_report.sh' from sadm_server crontab (depreciated).
 #@2023_12_24 install v3.98 Change for Alma,Rocky Linux and small change to 'sadm_client' crontab.
 #@2023_12_26 install v3.99 Add comment in 'sadm_client' & 'sadm_server' crontab file in /etc/cron.d.
-#@2023_12_27 install v4.00 Add packages 'cron' (deb) 'cronie' (rpm) & python3 'psutil' to requirement.
+#@2023_12_27 install v4.00 Add packages 'cron' (deb) 'cronie' (rpm).
+#@2024_01_04 install v4.01 Minor fixes.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -146,7 +147,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "4.00"                                            # Setup Version Number
+sver                = "4.01"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -276,8 +277,7 @@ req_server = {
 # Ping the specified host (Return 0 if ping work else 1)
 #===================================================================================================
 def ping(host):
-    param = "-n" 
-    if platform.system().lower() == "windows" : param =  "-c"
+    param = "-n" if platform.system().lower() == "windows" else "-c"
     command = ["ping", param, "1", host]
     return subprocess.call(command) == 0
 
@@ -2578,9 +2578,9 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("\n\n\n\n\n")
     writelog ("SADMIN tools successfully installed",'bold')
     writelog ("===========================================================================")
-    writelog ("You need to logout & log back in before using SADMIN.")
-    writelog ("Or you can type the command ; '. /etc/profile.d/sadmin.sh',")
-    writelog (" this will define 'SADMIN' environment variable.")
+    writelog ("You need to logout & log back in before using SADMIN (or reboot).")
+    writelog ("Or you can type the command ; '. /etc/profile.d/sadmin.sh', this will ")
+    writelog ("define 'SADMIN' environment variable.")
     if (stype == "S") :
         writelog (" ")
         writelog ("TAKE A LOOK AT 'SADMIN' WEB INTERFACE.",'bold')
