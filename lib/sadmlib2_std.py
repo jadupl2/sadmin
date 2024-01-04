@@ -61,7 +61,7 @@
 #@2023_12_14 lib v4.48 'SADM_HOST_TYPE' in 'sadmin.cfg', decide if system is a client or the server.
 # 2023_12_14 lib v4.48 Correct some type in the header
 #@2023_12_19 lib v4.49 New function 'on_sadmin_server()' Return "Y" if on SADMIN server or "N" .
-#@2024_01_01 lib v4.50 Remove the need to import 'psutil' module.
+#@2024_01_01 lib v4.50 Correct typo and remove the need to import 'psutil' module.
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -2631,7 +2631,7 @@ def on_sadmin_server():
 
     # Get all IPs defined on this system in 'ips_on_system'. 
     cmd =  "ip a | grep 'inet ' | grep -v '127.0.0.1' | awk '{ print $2 }' | awk -F/ '{ print $1 }'"
-    ccode, ips_on_system, cstderr = sa.oscommand(cmd)
+    ccode, ips_on_system, cstderr = oscommand(cmd)
 
     # Get Ip of 'sadmin' server 
     try : 
