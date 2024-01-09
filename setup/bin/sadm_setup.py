@@ -130,6 +130,7 @@
 #@2023_12_26 install v3.99 Add comment in 'sadm_client' & 'sadm_server' crontab file in /etc/cron.d.
 #@2023_12_27 install v4.00 Add packages 'cron' (deb) 'cronie' (rpm).
 #@2024_01_04 install v4.01 Minor fixes.
+#@2024_01_09 install v4.02 Add 'grub2-efi-x64-modules' package needed for ReaR image backup.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -147,7 +148,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "4.01"                                            # Setup Version Number
+sver                = "4.02"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -225,7 +226,7 @@ req_client = {
                     'deb':'nfs-common',                     'drepo':'base'},
     'parted'     :{ 'rpm':'parted',                         'rrepo':'base',  
                     'deb':'parted',                         'drepo':'base'},
-    'rear   '    :{ 'rpm':'rear xorriso syslinux syslinux-extlinux', 'rrepo':'base',
+    'rear   '    :{ 'rpm':'rear xorriso syslinux syslinux-extlinux grub2-efi-x64-modules', 'rrepo':'base',
                     'deb':'rear xorriso syslinux-utils extlinux'   , 'drepo':'base'},
     'mutt'       :{ 'rpm':'mutt',                           'rrepo':'base',
                     'deb':'mutt',                           'drepo':'base'},
