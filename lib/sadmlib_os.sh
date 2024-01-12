@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+
+###### WORK IN PROGRESS DO NOT USE ########
+
+
+
 #===================================================================================================
 #  Author:    Jacques Duplessis
 #  Title      sadmlib_os.sh
@@ -18,6 +23,8 @@
 #@2023_12_24 v0.1 Initial working version
 #
 # --------------------------------------------------------------------------------------------------
+
+
 
 
 
@@ -147,9 +154,12 @@ add_epel_8_repo()
 #===================================================================================================
 add_epel_9_repo()
 {
-    if [ "$OS_NAME" = "ROCKY" ] ||  [ "$OS_NAME" = "ALMA" ] || [ "$OS_NAME" = "CENTOS" ] 
-        then 
-             # Install 'crb' (Code Ready Builder) 
+
+    case "$SADM_OS_NAME" in 
+
+        "ROCKY" | "ALMA" | "CENTOS" )
+
+            # Install 'crb' (Code Ready Builder) 
              dnf repolist enabled | grep -q "^crd "                     # Check crb already enable
              if [ $? -ne 0 ]                                            # If not enable
                 then write_log "Enable 'crb' EPEL repository on $OS_NAME ..."
@@ -162,63 +172,65 @@ add_epel_9_repo()
                 else write_log "Repository 'crb' already enable."
              fi 
              
-             # Install epel repository 
-             dnf repolist enabled | grep -q "^epel "                    # Check epel already enable
-             if [ $? -ne 0 ]  
-                 then write_log "Install epel-release on $OS_NAME V9 ..." 
-                      dnf -y install epel-release
-                      if [ $? -ne 0 ]
-                         then write_err "[ ERROR ] Adding epel-release V9 repository."
-                              return 1 
-                         else write_log "[ OK ] Repository 'epel-release' is now enable."
-                              dnf config-manager --enable epel
-                      fi
-                 else write_log "Repository 'epel' already enable."
-             fi
-    fi
-
-    # Install epel-next repository only on CentOS 
-    if [ "$OS_NAME" = "CENTOS" ] 
-        then dnf repolist enabled | grep -q "^epel-next "               # epel-next already enable?
-             if [ $? -ne 0 ]  
-                then write_log "Install epel-next-release on $OS_NAME V9 ..." 
-                     dnf -y install epel-next-release
+            # Install epel repository 
+            dnf repolist enabled | grep -q "^epel "                    # Check epel already enable
+            if [ $? -ne 0 ]  
+                then write_log "Install epel-release on $OS_NAME v${SADM_OS_VERSION} ..." 
+                     dnf -y install epel-release
                      if [ $? -ne 0 ]
-                        then write_err "[ ERROR ] Adding 'epel-next' V9 repository."
+                        then write_err "[ ERROR ] Adding epel-release v${SADM_OS_VERSION} repository."
                              return 1 
-                        else write_log "[ OK ] Repository 'epel-next' is now enable."
+                        else write_log "[ OK ] Repository 'epel-release' v${SADM_OS_VERSION} is now enable."
+                             dnf config-manager --enable epel
                      fi
-                     dnf config-manager --enable epel-next              # Make sure it's enable
-                else write_log "Repository 'epel-next' already enable."
-             fi
-             return 0 
-    fi 
+                else write_log "Repository 'epel' v${SADM_OS_VERSION} already enable."
+            fi
+            ;;
 
-    if [ "$OS_NAME" = "REDHAT" ] 
-        then dnf repolist enabled | grep -q "^codeready-builder-for-rhel-9" # Repo already configure
-             if [ $? -ne 0 ]  
-                then subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms >>$SLOG 2>&1 
-                     if [ $? -ne 0 ]
-                        then write_err "[ ERROR ] Subscribing to 'codeready-builder-for-rhel-9-$(arch)-rpms'."
-                             return 1 
-                        else write_log "[ OK ] Repository 'codeready-builder-for-rhel-9-$(arch)-rpms' is now enable."
-                     fi
-                else write_log "[ OK ] Repository 'codeready-builder-for-rhel-9-$(arch)-rpms' is already installed."
-                     return 0
-             fi 
+        # Install epel-next repository only on CentOS 
+        "CENTOS" ) 
+                dnf repolist enabled | grep -q "^epel-next "               # epel-next already enable?
+                if [ $? -ne 0 ]  
+                   then write_log "Install epel-next-release on $OS_NAME v${SADM_OS_VERSION} ..." 
+                        dnf -y install epel-next-release
+                        if [ $? -ne 0 ]
+                           then write_err "[ ERROR ] Adding 'epel-next' v${SADM_OS_VERSION} repository."
+                                return 1 
+                           else write_log "[ OK ] Repository 'epel-next' v${SADM_OS_VERSION} is now enable."
+                        fi
+                        dnf config-manager --enable epel-next              # Make sure it's enable
+                   else write_log "Repository 'epel-next' v${SADM_OS_VERSION} already enable."
+                fi
+                return 0 
+                ;;
 
-             dnf repolist enabled | grep -q "^rhel-9-for-x86_64-baseos" # Repo already configure
-             if [ $? -ne 0 ]  
-                then write_log "Installing 'epel-release-latest-9.noarch.rpm' CentOS/Redhat v9 ..." 
-                     dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm >>$SLOG 2>&1
-                     if [ $? -ne 0 ]
-                        then write_err "[ ERROR ] Adding 'epel-release-latest-9.noarch.rpm' v9 repository."
-                             return 1 
-                        else write_log"[ OK ] Repository 'rhel-9-for-x86_64-baseos' installed." 
-                     fi
-                else write_log "Repository 'rhel-9-for-x86_64-baseos' already enable."
-             fi
-    fi 
+        # Install codeready-builder & epel-release-latest repositories
+        "REDHAT" ) 
+                dnf repolist enabled | grep -q "^codeready-builder-for-rhel-9" # Repo already configure
+                if [ $? -ne 0 ]  
+                   then subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms >>$SLOG 2>&1 
+                        if [ $? -ne 0 ]
+                           then write_err "[ ERROR ] Subscribing to 'codeready-builder-for-rhel-9-$(arch)-rpms'."
+                                return 1 
+                           else write_log "[ OK ] Repository 'codeready-builder-for-rhel-9-$(arch)-rpms' is now enable."
+                        fi
+                   else write_log "[ OK ] Repository 'codeready-builder-for-rhel-9-$(arch)-rpms' is already installed."
+                        return 0
+
+                dnf repolist enabled | grep -q "^rhel-9-for-x86_64-baseos" # Repo already configure
+                if [ $? -ne 0 ]  
+                   then write_log "Installing 'epel-release-latest-9.noarch.rpm' CentOS/Redhat v9 ..." 
+                        dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm >>$SLOG 2>&1
+                        if [ $? -ne 0 ]
+                           then write_err "[ ERROR ] Adding 'epel-release-latest-9.noarch.rpm' v9 repository."
+                                return 1 
+                           else write_log"[ OK ] Repository 'rhel-9-for-x86_64-baseos' installed." 
+                        fi
+                   else write_log "Repository 'rhel-9-for-x86_64-baseos' is already enable."
+                fi
+                ;;
+    esac
+    return 0
 }
 
 
@@ -233,7 +245,7 @@ add_epel_repo()
     # If not Red Hat or CentOS, just return to caller 
     if [ "$OS_NAME" != "REDHAT" ] && [ "$OS_NAME" != "CENTOS" ] && \
        [ "$OS_NAME" != "ALMA"   ] && [ "$OS_NAME" != "ROCKY"  ]
-        then write_log "No EPEL repository for $OS_NAME" 
+        then write_log "No EPEL repository for '$OS_NAME'." 
              return 1
     fi
     error_count=0
