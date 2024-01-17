@@ -212,6 +212,7 @@
 #@2023_12_22 lib v4.33 Add message when user is not part if the SADMIN group.
 #@2023_12_26 lib v4.34 Minor fix, file permission verification.
 #@2023_12_29 lib v4.35 Minor bug fix
+#@2024_01_16 lib v4.36 Modify sadm_start() to advise user when permission don't allow to write to log.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -221,7 +222,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.35"                                              # This Library Version
+export SADM_LIB_VER="4.36"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -2088,26 +2089,69 @@ sadm_start() {
 
     sadm_freshen_directories_structure                                  # Chk Dir. Structure & Perm.
 
-   # Make sure log & error log exist and have proper permission
-    [ ! -e "$SADM_LOG"  ] && touch $SADM_LOG  >/dev/null 2>&1           # If Log File don't exist
-    [ ! -e "$SADM_ELOG" ] && touch $SADM_ELOG >/dev/null 2>&1           # If Error Log don't exist
-    if [ $(id -u) -eq 0 ]                                               # Need good permission
-        then chmod 666 $SADM_LOG  ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}
-             chmod 666 $SADM_ELOG ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_ELOG}
-        else if [ "$SADM_LOG_APPEND" = "N" ] 
-                then chmod 666 $SADM_LOG  >/dev/null 2>&1
-                     chgrp ${SADM_GROUP} ${SADM_LOG} >/dev/null 2>&1
-             fi
-             chmod 666 $SADM_ELOG ; chgrp ${SADM_GROUP} ${SADM_ELOG} >/dev/null 2>&1
+    # If user don't want to append to existing log, removed them. 
+    if [ "$SADM_LOG_APPEND" = "N" ]                                     # No append to log=New log
+        then rm -f "$SADM_LOG" "$SADM_ELOG" >/dev/null 2>&1             # Remove old log & errorlog
+    fi 
+
+    # Check and make sure script log, errorlog and RCH file exist and will be writable.
+    [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG                       # Create RCH  If not exist
+    [ ! -e "$SADM_LOG" ]    && touch $SADM_LOG                          # Create LOG  If not exist
+    [ ! -e "$SADM_ELOG" ]   && touch $SADM_ELOG                         # Create ELOG If not exist
+    chmod 664 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCHLOG" >/dev/null 2>&1   # Read/Write
+    chgrp "$SADM_GROUP" "$SADM_LOG" "$SADM_ELOG" "$SADM_RCHLOG" >/dev/null 2>&1  
+
+    if [ ! -w "$SADM_LOG" ] || [ ! -w "$SADM_ELOG" ]                    # If can't write to log/elog
+       then printf "\nUser '$SADM_USERNAME' do not have permission to write to:\n"
+            printf "     - The script log '$SADM_LOG'.\n"
+            printf "     - The script error log '$SADM_ELOG'.\n"
+            printf "     - Change permission to correct the situation.\n"
+            ls -l "$SADM_LOG" "$SADM_ELOG" 
+            if [ -w "$SADM_RCHLOG" ]
+               then WDOT=".......... ........ ........"                        # End Time & Elapse = Dot
+                    RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST"    # Format Part1 RCH File
+                    RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE 1"    # Format Part2 of RCH File
+                    echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
+               else printf "\nUser '$SADM_USERNAME' do not have permission to write to '$SADM_RCHLOG' :\n"
+                    printf "     - Change permission of '$SADM_RCHLOG'.\n"
+                    ls -l "$SADM_RCHLOG"
+            fi 
+            printf "\nScript Aborted !\n"
+            exit 1
     fi
 
-    # Initialize the script log 
-    if [ "$SADM_LOG_APPEND" = "N" ]                                     # User don't want append log
-        then rm -f $SADM_LOG  >/dev/null 2>&1                           # Remove old log
-             touch $SADM_LOG  >/dev/null 2>&1                           # Create an empty script log
+    # At this point the RCH file should be writable, if not abort script.
+    if [ ! -w "$SADM_RCHLOG" ]
+       then printf "\nUser '$SADM_USERNAME' do not have permission to write to '$SADM_RCHLOG' :\n"
+            printf "     - Change permission of '$SADM_RCHLOG'.\n"
+            ls -l "$SADM_RCHLOG"
+            printf "\nScript Aborted !\n"
+            exit 1
     fi 
-    chmod 666 $SADM_LOG  >/dev/null 2>&1                                # Read/Write Everyone
-    chgrp $SADM_GROUP $SADM_LOG  >/dev/null 2>&1                        # Script log => SADMIN Group
+
+
+# Make sure log & error log exist and have proper permission
+#    [ ! -e "$SADM_LOG"  ] && touch $SADM_LOG  >/dev/null 2>&1           # If Log File don't exist
+#    [ ! -e "$SADM_ELOG" ] && touch $SADM_ELOG >/dev/null 2>&1           # If Error Log don't exist
+#    if [ $(id -u) -eq 0 ]                                               # Need good permission
+#        then chmod 666 $SADM_LOG  ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}
+#             chmod 666 $SADM_ELOG ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_ELOG}
+#        else if [ "$SADM_LOG_APPEND" = "N" ] 
+#                then chmod 666 $SADM_LOG  >/dev/null 2>&1
+#                     chgrp ${SADM_GROUP} ${SADM_LOG} >/dev/null 2>&1
+#             fi
+#             chmod 666 $SADM_ELOG ; chgrp ${SADM_GROUP} ${SADM_ELOG} >/dev/null 2>&1
+#    fi
+
+#    # If User want new log & elog - Initialize script logs
+#    if [ "$SADM_LOG_APPEND" = "N" ]                                     # User don't want append log
+#        then rm -f "$SADM_LOG"   >/dev/null 2>&1                        # Remove old log
+#             touch "$SADM_LOG"   >/dev/null 2>&1                        # Create an empty script log
+#             rm -f "$SADM_ELOG"  >/dev/null 2>&1                        # Remove old error log
+#             touch "$SADM_ELOG"  >/dev/null 2>&1                        # Create empty script elog
+#    fi 
+#    chmod 666 $SADM_LOG  >/dev/null 2>&1                                # Read/Write Everyone
+#    chgrp $SADM_GROUP $SADM_LOG  >/dev/null 2>&1                        # Script log => SADMIN Group
 
     # Write Log Header
     if [ ! -z "$SADM_LOG_HEADER" ] && [ "$SADM_LOG_HEADER" = "Y" ]      # Script Want Log Header
@@ -2125,7 +2169,7 @@ sadm_start() {
              sadm_write_log " "                                         
     fi
 
-    # Check if this script to be run only by root user
+    # Check if this script is to be run only by root user
     if [ ! -z "$SADM_ROOT_ONLY" ] && [ $SADM_ROOT_ONLY == "Y" ] &&  [ $(id -u) -ne 0 ]  
         then sadm_write_err "Script can only be run by the 'root' user."
              sadm_write_err "Try 'sudo ${0##*/}'."                      # Suggest using sudo
@@ -2135,9 +2179,9 @@ sadm_start() {
     fi
 
     # Check if this script to be run only on the SADMIN server.
-    if [ "$SADM_ON_SADMIN_SERVER" = "N" ] &&  [ "$SADM_SERVER_ONLY" = "Y" ]  # Use ssh ?    
+    if [ "$SADM_ON_SADMIN_SERVER" = "N" ] &&  [ "$SADM_SERVER_ONLY" = "Y" ] 
         then sadm_write_err "This script only run on SADMIN server '$SADM_SERVER'."
-             sadm_write_err "   - The variable 'SADM_SERVER_ONLY' to 'Y'."
+             sadm_write_err "   - The variable 'SADM_SERVER_ONLY' is set to 'Y'."
              sadm_write_err "Process aborted."                          # Abort advise message
              sadm_write_err " "
              sadm_stop 1                                                # Close and Trim Log
@@ -2241,7 +2285,7 @@ sadm_start() {
              [ $(id -u) -eq 0 ] && chmod 664 $SADM_RCHLOG               # Change protection on RCH
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}
              WDOT=".......... ........ ........"                        # End Time & Elapse = Dot
-             RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST" # Format Part1 RCH File
+             RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST"    # Format Part1 RCH File
              RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE 2"    # Format Part2 of RCH File
              echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
     fi
@@ -2378,12 +2422,12 @@ sadm_stop() {
                      fi 
              fi 
              sadm_write_log "End of ${SADM_PN} - `date`"                # Write End Time To Log
-             sadm_write "${SADM_80_DASH}\n\n\n\n\n"                     # Write 80 Dash Line
+             sadm_write "${SADM_80_DASH}\n\n\n\n"                       # Write 80 Dash Line
              cat $SADM_LOG > /dev/null                                  # Force buffer to flush
              if [ $SADM_MAX_LOGLINE -ne 0 ] && [ "$SADM_LOG_APPEND" = "Y" ] # Max Line in Log Not 0 
                 then sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"      # Trim the Log
              fi                                                         # Else no trim of log made
-             chmod 666 ${SADM_LOG} >>/dev/null 2>&1                     # Log writable by Nxt Script
+             #chmod 666 ${SADM_LOG} >>/dev/null 2>&1                     # Log writable by Nxt Script
              chgrp ${SADM_GROUP} ${SADM_LOG} >>/dev/null 2>&1           # Change Log Group
              [ $(id -u) -eq 0 ] && chmod 664 ${SADM_LOG}                # R/W Owner/Group R by World
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}  # Change Log Owner
