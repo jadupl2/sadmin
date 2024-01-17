@@ -459,7 +459,7 @@ file_housekeeping()
     set_files_recursive "$SADM_WWW_DAT_DIR"    "0664" "${SADM_WWW_USER}" "${SADM_GROUP}" 
     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
 
-    set_files_recursive "$SADM_LOG_DIR"        "0666" "${SADM_USER}" "${SADM_GROUP}" 
+    set_files_recursive "$SADM_LOG_DIR"        "0664" "${SADM_USER}" "${SADM_GROUP}" 
     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
 
     set_files_recursive "$SADM_USR_DIR"        "0644" "${SADM_USER}" "${SADM_GROUP}" 
@@ -491,12 +491,12 @@ file_housekeeping()
 
 
     # SADMIN Readme, changelog and license file.
-    set_file "${SADM_BASE_DIR}/readme.md"    "0664" "${SADM_USER}" "${SADM_GROUP}" 
+    set_file "${SADM_BASE_DIR}/readme.md"    "0644" "${SADM_USER}" "${SADM_GROUP}" 
     set_file "${SADM_BASE_DIR}/readme.html"  "0644" "${SADM_USER}" "${SADM_GROUP}" 
     set_file "${SADM_BASE_DIR}/readme.pdf"   "0644" "${SADM_USER}" "${SADM_GROUP}" 
-    set_file "${SADM_BASE_DIR}/LICENSE"      "0664" "${SADM_USER}" "${SADM_GROUP}" 
-    set_file "${SADM_BASE_DIR}/license"      "0664" "${SADM_USER}" "${SADM_GROUP}" 
-    set_file "${SADM_BASE_DIR}/changelog.md" "0664" "${SADM_USER}" "${SADM_GROUP}" 
+    set_file "${SADM_BASE_DIR}/LICENSE"      "0644" "${SADM_USER}" "${SADM_GROUP}" 
+    set_file "${SADM_BASE_DIR}/license"      "0644" "${SADM_USER}" "${SADM_GROUP}" 
+    set_file "${SADM_BASE_DIR}/changelog.md" "0644" "${SADM_USER}" "${SADM_GROUP}" 
     
     # Password files
     set_file "${SADM_CFG_DIR}/.dbpass"       "0644" "${SADM_USER}" "${SADM_GROUP}"
