@@ -79,56 +79,53 @@
 # 2023_03_10 backup: v2.32 Include a list of the 10 biggest files included in the ReaR backup file.
 # 2023_03_11 backup: v2.33 New '.lst' file is generated, containing 1st & 2nd level dir. in backup.
 # 2023_05_25 backup: v2.34 ReaR USB bootable image is now produce at every execution.
+#@2024_01_18 backup: v2.35 Minor enhancements
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
 
 
 
-# ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.54
-# Setup for Global Variables and load the SADMIN standard library.
-# To use SADMIN tools, this section MUST be present near the top of your code.
-# ---------------------------------------------------------------------------------------
+# ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
+# v1.56 - Setup for Global Variables and load the SADMIN standard library.
+#       - To use SADMIN tools, this section MUST be present near the top of your code.    
 
-# MAKE SURE ENVIRONMENT VARIABLE 'SADMIN' IS DEFINED.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # SADMIN defined? Libr.exist
-then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
-    if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]     # Still not define = Error
-    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-        exit 1                                                 # No SADMIN Env. Var. Exit
-    fi
-fi
+# Make Sure Environment Variable 'SADMIN' Is Defined.
+if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
+    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
+         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                                 # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
 export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 export SADM_TPID="$$"                                      # Script Process ID.
-export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
-export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS
+export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
+export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
-# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.34'                                     # Script version number
-export SADM_PDESC="Produce a ReaR bootable iso and a restorable backup on an NFS server"
-export SADM_EXIT_CODE=0                                    # Script Default Exit Code
-export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='2.35'                                     # Script version number
+export SADM_PDESC="Produce a ReaR bootable iso and a restorable backup on a NFS server"
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
-export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX")
-export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX")
-export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX")
-export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
@@ -139,9 +136,12 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_LOGLINE=400                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-# ---------------------------------------------------------------------------------------
+#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+# --------------- ---  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+
 
 
 
@@ -152,7 +152,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 # Scripts Variables
 #===================================================================================================
 export NFS_MOUNT="/mnt/rear_$$"                                         # Temp. NFS Backup MountPoint
-export REAR_DATE=`date "+%C%y_%m_%d"`                                   # Date Format 2024_05_27
+export REAR_DATE=$(date "+%C%y_%m_%d")                                  # Date Format 2024_05_27
 export REAR_CFGFILE="/etc/rear/site.conf"                               # ReaR Site Config file
 export REAR_TMP="${SADMIN}/tmp/rear_site.tmp$$"                         # New ReaR site.conf tmp file
 #export REAR_DIR="${NFS_MOUNT}/${SADM_HOSTNAME}/${REAR_DATE}"           # Rear Host Backup Dir.
@@ -610,12 +610,13 @@ create_backup()
     sadm_write_log "ReaR backup exit code : ${RC}"                      # Show user backup exit code
     if [ $RC -ne 0 ]
     then sadm_write_err "[ ERROR ] See error message in ${SADM_LOG} & ${SADM_ELOG}."
-        sadm_write_err "***** Rear Backup completed with Error - Aborting Script *****"
-        sadm_write_err "Unmount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT}"
-        umount  ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} > /dev/null 2>&1
-        return 1                                                        # Back to caller with error
+         sadm_write_err "Also look into ReaR log file /var/log/rear/rear-${SADM_HOSTNAME}.log." 
+         sadm_write_err "***** Rear Backup completed with Error - Aborting Script *****"
+         sadm_write_log "Unmount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT}"
+         umount  ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} > /dev/null 2>&1
+         return 1                                                        # Back to caller with error
     else sadm_write_log "More info in the log ${REAR_CUR_LOG}."
-        sadm_write_log "[ SUCCESS ] Rear Backup completed."
+         sadm_write_log "[ SUCCESS ] Rear Backup completed."
     fi
     return 0                                                            # Return Default return code
 }
@@ -624,35 +625,36 @@ create_backup()
 
 
 # --------------------------------------------------------------------------------------------------
-# Command line Options functions - Evaluate Command Line Switch Options Upfront
-# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0 Set Debug Level (0-9.)
+# Command line Options functions
+# Evaluate Command Line Switch Options Upfront
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
     while getopts "d:hv" opt ; do                                       # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
-                if [ "$num" = "" ]
-                then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
-                    show_usage                                       # Display Help Usage
-                    exit 1                                           # Exit Script with Error
-                fi
-                printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
-            ;;
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
+               if [ "$num" = "" ]                            
+                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 1                                           # Exit Script with Error
+               fi
+               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               ;;                                                       
             h) show_usage                                               # Show Help Usage
-                exit 0                                                   # Back to shell
-            ;;
+               exit 0                                                   # Back to shell
+               ;;
             v) sadm_show_version                                        # Show Script Version Info
-                exit 0                                                   # Back to shell
-            ;;
-            \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
-                show_usage                                               # Display Help Usage
-                exit 1                                                   # Exit with Error
-            ;;
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
         esac                                                            # End of case
     done                                                                # End of while
-    return
+    return 
 }
 
 
@@ -667,7 +669,7 @@ function cmd_options()
     rear_preparation                                                    # Mount Point Work ?  ...
     if [ $? -eq 0 ]                                                     # If preparation went OK
     then create_backup                                                  # Do the ReaR ISO and Backup
-        SADM_EXIT_CODE=$?                                               # If Error Making Backup
+         SADM_EXIT_CODE=0                                               # If Error Making Backup
     else SADM_EXIT_CODE=1
     fi
     #
@@ -679,5 +681,6 @@ function cmd_options()
         fi
     fi
     if [ -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi   # Remove Temp File
+
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
