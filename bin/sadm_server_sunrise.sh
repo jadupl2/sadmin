@@ -47,7 +47,7 @@
 # 2019_05_23 server v2.6 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
 # 2020_02_23 server v2.7 Produce an alert only if one of the executed scripts isn't executable.
 # 2020_06_03 server v2.8 Update code section and minor update while writing new documentation
-#@2022_12_29 server v2.9 Update SADMIN code section to 1.56
+#@2023_12_29 server v2.9 Update SADMIN code section to 1.56
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTS LE ^C
