@@ -44,7 +44,7 @@
 # 2022_05_10 install v1.12 Using now 'mutt' instead of 'mail'.
 # 2022_07_19 install v1.13 Update of the list of commands and package require by SADMIN.
 # 2023_04_27 install v1.14 Add 'base64' command to requirement list.
-#@2023_12_21 install v1.15 Adjust the packages requirements.
+#@2023_12_21 install v1.15 Revision of the list of the packages require.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT LE ^C
 #set -x

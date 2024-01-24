@@ -77,7 +77,7 @@
 # 2023_07_12 client v2.13 Remove duplicated lines in /etc/cron.d/sadm_client file.
 # 2023_07_12 client v2.14 If gmail text pwd file '\$SADMIN/cfg/.gmpw' exist, remove it. 
 # 2023_09_18 client v2.15 Update SADMIN section (v1.56) and minor improvement.
-#@2023_12_22 client v2.16 Fix bug with client crontab.
+# 2023_12_22 client v2.16 Added comment within client crontab.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x

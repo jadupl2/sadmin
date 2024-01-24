@@ -88,7 +88,7 @@
 # 2023_04_10 backup v3.44 Fix backup calculating total size occupied by host.
 # 2023_04_11 backup v3.45 Previous & Total backup size wasn't always right & added more info in log.
 # 2023_09_13 backup v3.46 Record backup size, more info in log & apply cleaning to all backup type.
-#@2024_01_02 backup v3.47 Fix Initial backup directory setup.
+#@2024_01_02 backup v3.47 Fix initial backup directory setup.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
