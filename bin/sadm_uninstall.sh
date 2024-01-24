@@ -40,8 +40,8 @@
 # 2019_04_17 Update: v1.8 When quitting script, remove pid file and print abort message.
 # 2019_06_25 Update: v1.9 Minor code update (use SADM_DEBUG instead of DEBUG_LEVEL).
 # 2019_09_20 install v2.0 Fixes & include new SADMIN section 1.52.
-#@2023_12_21 install v2.1 Update to SADMIN section 1.56.
-#@2023_12_26 install v2.2 Fix, 'sadmin' dir. couldn't be remove, cause the web service was running.
+#@2023_12_21 install v2.1 Fix problem removing $SADMIN directories and update SADMIN section to v1.56.
+#@2023_12_26 install v2.2 Remove sadmin web configuration and sudoers file.
 #@2023_12_29 install v2.3 Add message to user "Removing web site configuration".
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT LE ^C

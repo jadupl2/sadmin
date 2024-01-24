@@ -58,9 +58,9 @@
 # 2023_09_22 lib v4.45 Reduce recommended SADM_*_KEEPDAYS values of  to save disk space.
 #@2023_10_23 lib v4.46 Fix crash when running a script that need to be run by 'root' and was not.
 #@2023_11_17 lib v4.47 Fix error in db_close(), when trying to close a connection that isn't open.
-#@2023_12_14 lib v4.48 'SADM_HOST_TYPE' in 'sadmin.cfg', decide if system is a client or a server.
+#@2023_12_14 lib v4.48 'SADM_HOST_TYPE' in 'sadmin.cfg', determine if system is a client or a server.
 # 2023_12_14 lib v4.48 Correct some type in the header
-#@2023_12_19 lib v4.49 New function 'on_sadmin_server()' Return "Y" if on SADMIN server else "N" .
+#@2023_12_19 lib v4.49 New function 'on_sadmin_server()' Return "Y" if on SADMIN server else "N".
 #@2024_01_01 lib v4.50 Correct typo and remove need to use 'psutil' python module.
 # --------------------------------------------------------------------------------------------------
 #

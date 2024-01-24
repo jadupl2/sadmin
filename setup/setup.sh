@@ -75,8 +75,8 @@
 # 2023_07_09 install v3.30 Changed the way to install 'pymysql' python module (Debian 12).
 # 2023_07_14 install v3.31 Hostname lookup, will verify /etc/hosts & DNS (if present).
 # 2023_07_16 install v3.32 Cosmetic change to the script log.
-#@2023_12_07 install v3.33 Minor adjustments.
-#@2024_01_02 install v3.34 Remove requirement for python 'psutil' module.
+# 2023_12_07 install v3.33 Minor adjustments.
+# 2024_01_02 install v3.34 Remove requirement for python 'psutil' module.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x

@@ -37,7 +37,7 @@
 # 2020_05_23 cmdline v1.18 Changing the way to get SADMIN variable in /etc/environment 
 # 2022_05_11 cmdline v1.19 Replace "sadm_send_alert()" call by "sadm_sendmail()". 
 # 2022_08_17 cmdline v1.20 Updated with new SADMIN section v1.52
-#@2023_10_27 cmdline v1.21 Exclude script specify in 'SADM_MONITOR_RECENT_EXCLUDE' in sadmin.cfg.
+#@2023_10_27 cmdline v1.21 Exclude script specify in 'SADM_MONITOR_RECENT_EXCLUDE' variable in sadmin.cfg.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x

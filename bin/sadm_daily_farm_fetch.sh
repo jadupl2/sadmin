@@ -60,8 +60,8 @@
 # 2023_05_24 server v4.11 Remove repeating error count in the error log.
 # 2023_07_18 server v4.12 Fix problem when not using the standard ssh port (22).
 # 2023_09_18 server v4.13 When syncing to the SADMIN server, don't use SSH to rsync .
-#@2023_12_14 server v4.14 'SADM_HOST_TYPE' in 'sadmin.cfg', decide if system is a client or a server.
-#@2023_12_30 server v4.15 Bug fix on files synchronization.
+# 2023_12_14 server v4.14 'SADM_HOST_TYPE' in 'sadmin.cfg', decide if system is a client or a server.
+# 2023_12_30 server v4.15 Now using new function "Bug fix on files synchronization.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
