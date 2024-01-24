@@ -1,5 +1,82 @@
 # SADMIN Full Changelog
  
+## Release [1.4.10](https://github.com/jadupl2/sadmin/releases) (2024-01-24)
+
+### Backup related
+  - [sadm_backup.sh](https://sadmin.ca/sadm-backup) 
+	  - v3.47 - Fix initial backup directory setup.
+  - [sadm_rear_backup.sh](https://sadmin.ca/sadm-rear-backup) 
+	  - v2.35 - Minor improvements & update sadmin section to v1.56.
+
+### Command line tools
+  - [sadm_rmcd_starter.sh](https://sadmin.ca/sadm_rmcd_starter) 
+	  - v2.0 - Add option to ssh command '-o ConnectTimeout=10 -o BatchMode=yes'.
+  - [sadm_show_rch.sh](https://sadmin.ca/sadm-show-rch) 
+	  - v1.21 - Exclude script specify in 'SADM_MONITOR_RECENT_EXCLUDE' variable in sadmin.cfg.
+  - sadm_sysmon_cli.sh 
+	  - v2.7 - Remove header and footer from the log.
+
+### Install, Uninstall & Update
+  - [sadm_requirements.sh](https://sadmin.ca/sadm-requirements) 
+	  - v1.15 - Revision of the list of the packages require.
+  - [sadm_setup.py](https://sadmin.ca/_pages/install/#the-setup-script) 
+	  - v3.94 - Misc. typo change & minor fixes.
+	  - v3.95 - If not present, package 'nfs-utils (rpm) & 'nfs-common' (deb) are install.
+	  - v3.96 - Package 'wkhtmltopdf' is no longer require (depreciated).
+	  - v3.97 - Script 'sadm_daily_report.sh' remove from sadm_server crontab (depreciated).
+	  - v3.98 - Make setup 'Alma' and 'Rocky' Linux aware.
+	  - v3.99 - More comment added to 'sadm_client' & 'sadm_server' crontab file.
+	  - v4.00 - If not present, package 'cron' (deb) 'cronie' (rpm) are install.
+	  - v4.02 - If not present, package 'grub2-efi-x64-modules' install (needed for ReaR).
+  - [sadm_uninstall.sh](https://sadmin.ca/sadm-uninstall) 
+	  - v2.1 - Fix problem removing $SADMIN directories and update SADMIN section to v1.56.
+	  - v2.2 - Remove sadmin web configuration and sudoers file.
+	  - v2.3 - Add message to user "Removing web site configuration".
+
+### Libraries, Scripts Templates, Demo
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py) 
+	  - v4.46 - Fix crash when running a script that need to be run by 'root' and was not.
+	  - v4.47 - Fix error in db_close(), when trying to close a connection that isn't open.
+	  - v4.48 - 'SADM_HOST_TYPE' in 'sadmin.cfg', determine if system is a client or a server.
+	  - v4.49 - New function 'on_sadmin_server()' Return "Y" if on SADMIN server else "N".
+	  - v4.50 - Correct typo and remove need to use 'psutil' python module.
+  - sadmlib_os.sh 
+	  - v0.1 - Initial working version
+  - [sadmlib_std.sh](https://sadmin.ca/sadmlib-std-sh) 
+	  - v4.30 - New function 'sadm_on_sadmin_server(), it return "Y" if on SADMIN server else "N".
+	  - v4.31 - Fix problem when copying log and rch when initially created and user isn't root.
+	  - v4.32 - Eliminate 'cp' error message in 'sadm_stop()'' function, when file is missing.
+	  - v4.33 - Add user message when user is not part if the SADMIN group.
+	  - v4.34 - Minor fix, file permission verification.
+	  - v4.36 - Modify sadm_start() to advise user when permission don't allow user to write to log.
+  - [sadm_nmon_watcher.py](https://sadmin.ca/sadm-nmon-watcher) 
+	  - v1.6 - Crash when could not start 'nmon' (performance monitor).
+	  - v1.7 - Fix problem starting 'nmon' at system startup.
+  - [sadm_template_with_db.py](https://sadmin.ca/sadm-template-py) 
+	  - v1.1 - New template (replace sadm_template.py), used when you need to access SADMIN DB.
+  - [sadm_template_with_db.sh](https://sadmin.ca/sadm-template-sh) 
+	  - v1.1 - New template (replace sadm_template.sh), used when you need to access SADMIN DB.
+  - [sadm_template_without_db.py](https://sadmin.ca/sadm-template-py) 
+	  - v1.1 - New template (replace sadm_template.py), used when you don't need access to SADMIN DB.
+  - [sadm_template_without_db.sh](https://sadmin.ca/sadm-template-sh) 
+	  - v1.1 - New template (replace sadm_template.sh), used when you don't need access to SADMIN DB.
+
+### Operating System Update
+  - [sadm_osupdate.sh](https://sadmin.ca/sadm-osupdate) 
+	  - v3.36 - Minor enhancement and uUpdate sadmin section to v1.56.
+
+### Server related
+  - [sadm_fetch_clients.sh](https://sadmin.ca/sadm-fetch-clients) 
+	  - v3.47 - Modification that allow SADMIN server IP to be an IP alias.
+  - [sadm_push_sadmin.sh](https://sadmin.ca/sadm-push-sadmin) 
+	  - v2.45 - More info shown while running.
+  - [sadm_server_housekeeping.sh](https://sadmin.ca/sadm-server-housekeeping) 
+	  - v2.15 - If Daily report line still in sadm_server crontab, remove it (depreciated).
+	  - v2.16 - Code optimization and minor bug fix.
+  - [sadm_server_sunrise.sh](https://sadmin.ca/sadm-server-sunrise) 
+	  - v2.9 - Minor enhancements and update SADMIN section to v1.56.
+   
+ 
 ## Release [1.4.9](https://github.com/jadupl2/sadmin/releases) (2023-10-17)
 
 ### Backup related
