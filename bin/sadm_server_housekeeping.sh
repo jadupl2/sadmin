@@ -38,8 +38,8 @@
 # 2022_07_13 server v2.12 Fix typo that was preventing script from running under certain condition.
 # 2023_04_17 server v2.13 Secure permission on email password files ($SADMIN/cfg/.gmpw & .gmpw64).
 # 2023_09_17 server v2.14 Add removal of file older than 1 day in $SADMIN/www/tmp directory.
-#@2023_12_20 server v2.15 If Daily report line still in sadm_server crontab, remove it (depreciated).
-#@2023_12_24 server v2.16 Code optimization and minor bug fix.
+# 2023_12_20 server v2.15 If Daily report line still in sadm_server crontab, remove it (depreciated).
+# 2023_12_24 server v2.16 Code optimization and minor bug fix.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x

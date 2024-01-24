@@ -32,7 +32,7 @@
 # 2022_08_17 cmdline v2.4 Updated with new SADMIN section v1.52
 # 2022_08_21 cmdline v2.5 Fix problem when running on other system than SADMIN Server
 # 2023_09_22 cmdline v2.6 Update SADMIN section (v1.56) and minor improvement.
-#@2023_10_23 cmdline v2.7 Remove header and footer from the log.
+# 2023_10_23 cmdline v2.7 Remove header and footer from the log.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x

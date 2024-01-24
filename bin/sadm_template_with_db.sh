@@ -24,7 +24,7 @@
 #
 # ---CHANGE LOG---
 # YYYY-MM-DD GRP vX.XX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
-#@2024_01_21 lib v1.1 New template (replace sadm_template.sh), used when you need to access SADMIN DB.
+# 2024_01_21 lib v1.1 New template (replace sadm_template.sh), used when you need to access SADMIN DB.
 #
 #
 # --------------------------------------------------------------------------------------------------

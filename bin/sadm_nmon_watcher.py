@@ -31,8 +31,8 @@
 # 2023_07_26 lib v1.3 Enhance 'nmon' instance detection.
 # 2023_08_14 lib v1.4 Make sure only one instance of 'nmon' in running.
 # 2023_08_17 lib v1.5 Update to SADMIN section v2.3, fix 'pymysql' error msg & added log verbosity.
-#@2023_11_29 lib v1.6 Crash when could not start 'nmon' (performance monitor).
-#@2023_12_03 lib v1.7 Fix problem starting 'nmon' at system startup.
+# 2023_11_29 lib v1.6 Crash when could not start 'nmon' (performance monitor).
+# 2023_12_03 lib v1.7 Fix problem starting 'nmon' at system startup.
 # --------------------------------------------------------------------------------------------------
 #
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.

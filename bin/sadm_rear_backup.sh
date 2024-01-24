@@ -79,7 +79,7 @@
 # 2023_03_10 backup: v2.32 Include a list of the 10 biggest files included in the ReaR backup file.
 # 2023_03_11 backup: v2.33 New '.lst' file is generated, containing 1st & 2nd level dir. in backup.
 # 2023_05_25 backup: v2.34 ReaR USB bootable image is now produce at every execution.
-#@2024_01_18 backup: v2.35 Minor improvements & update sadmin section to v1.56.
+# 2024_01_18 backup: v2.35 Minor improvements & update sadmin section to v1.56.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x

@@ -52,7 +52,7 @@
 # 2022_09_04 osupdate v3.33 Revisited to use the new error log when error is encountered.
 # 2023_02_08 osupdate v3.34 Insert more info in email sent when update are kept-back.
 # 2023_05_02 osupdate v3.35 Check update availability on some occasion wasn't returning an error.
-#@2024_01_12 osupdate v3.36 Minor enhancement and uUpdate sadmin section to v1.56.
+# 2024_01_12 osupdate v3.36 Minor enhancement and uUpdate sadmin section to v1.56.
 # --------------------------------------------------------------------------------------------------
 #set -x
 

@@ -122,15 +122,15 @@
 # 2023_07_16 install v3.91 Ask for the SADMIN server IP instead of FQDN.
 # 2023_07_26 install v3.92 Adjust list of packages required to use 'ReaR' image backup (+xorriso).
 # 2023_08_23 install v3.93 Package detection, was failing under certain condition.
-#@2023_11_06 install v3.94 Misc. typo change & minor fixes.
-#@2023_12_10 install v3.95 If not present, package 'nfs-utils (rpm) & 'nfs-common' (deb) are install.
-#@2023_12_20 install v3.96 Package 'wkhtmltopdf' is no longer require (depreciated).
-#@2023_12_20 install v3.97 Script 'sadm_daily_report.sh' remove from sadm_server crontab (depreciated).
-#@2023_12_24 install v3.98 Make setup 'Alma' and 'Rocky' Linux aware.
-#@2023_12_26 install v3.99 More comment added to 'sadm_client' & 'sadm_server' crontab file.
-#@2023_12_27 install v4.00 If not present, package 'cron' (deb) 'cronie' (rpm) are install.
+# 2023_11_06 install v3.94 Misc. typo change & minor fixes.
+# 2023_12_10 install v3.95 If not present, package 'nfs-utils (rpm) & 'nfs-common' (deb) are install.
+# 2023_12_20 install v3.96 Package 'wkhtmltopdf' is no longer require (depreciated).
+# 2023_12_20 install v3.97 Script 'sadm_daily_report.sh' remove from sadm_server crontab (depreciated).
+# 2023_12_24 install v3.98 Make setup 'Alma' and 'Rocky' Linux aware.
+# 2023_12_26 install v3.99 More comment added to 'sadm_client' & 'sadm_server' crontab file.
+# 2023_12_27 install v4.00 If not present, package 'cron' (deb) 'cronie' (rpm) are install.
 # 2024_01_04 install v4.01 Minor fixes.
-#@2024_01_09 install v4.02 If not present, package 'grub2-efi-x64-modules' install (needed for ReaR).
+# 2024_01_09 install v4.02 If not present, package 'grub2-efi-x64-modules' install (needed for ReaR).
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3

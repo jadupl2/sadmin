@@ -98,7 +98,7 @@
 # 2022_09_29 server v3.44 Daily backup, check new web option to compress backup or not.
 # 2023_07_18 server v3.45 Fix when not using the standard ssh port (22).
 # 2023_09_18 server v3.46 Enhance purge of old '*.nmon' files.
-#@2023_12_17 server v3.47 Modification that allow SADMIN server IP to be an IP alias.
+# 2023_12_17 server v3.47 Modification that allow SADMIN server IP to be an IP alias.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x

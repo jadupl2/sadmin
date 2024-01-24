@@ -206,13 +206,13 @@
 # 2023_08_20 lib v4.27 Code optimization, LIBRARY LOAD A LOT FASTER (So scripts run faster).
 # 2023_09_22 lib v4.28 Change default values of SADM_*_KEEPDAYS.
 # 2023_09_26 lib v4.29 Code optimization : To function "sadm_get_command_path()".
-#@2023_12_14 lib v4.30 New function 'sadm_on_sadmin_server(), it return "Y" if on SADMIN server else "N".
-#@2023_12_21 lib v4.31 Fix problem when copying log and rch when initially created and user isn't root.
-#@2023_12_22 lib v4.32 Eliminate 'cp' error message in 'sadm_stop()'' function, when file is missing.
-#@2023_12_22 lib v4.33 Add user message when user is not part if the SADMIN group.
-#@2023_12_26 lib v4.34 Minor fix, file permission verification.
+# 2023_12_14 lib v4.30 New function 'sadm_on_sadmin_server(), it return "Y" if on SADMIN server else "N".
+# 2023_12_21 lib v4.31 Fix problem when copying log and rch when initially created and user isn't root.
+# 2023_12_22 lib v4.32 Eliminate 'cp' error message in 'sadm_stop()'' function, when file is missing.
+# 2023_12_22 lib v4.33 Add user message when user is not part if the SADMIN group.
+# 2023_12_26 lib v4.34 Minor fix, file permission verification.
 # 2023_12_29 lib v4.35 Minor bug fix
-#@2024_01_16 lib v4.36 Modify sadm_start() to advise user when permission don't allow user to write to log.
+# 2024_01_16 lib v4.36 Modify sadm_start() to advise user when permission don't allow user to write to log.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x

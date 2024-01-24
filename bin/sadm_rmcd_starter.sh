@@ -51,7 +51,7 @@
 # 2022_09_20 cmdline v1.7 SSH to client is now using the port defined in each system.
 # 2022_12_13 cmdline v1.8 Intermittent crash cause by a typo error.
 # 2023_05_06 cmdline v1.9 Reduce ping wait time to speed up processing.
-#@2023_11_05 cmdline v2.0 Add option to ssh command '-o ConnectTimeout=10 -o BatchMode=yes'.
+# 2023_11_05 cmdline v2.0 Add option to ssh command '-o ConnectTimeout=10 -o BatchMode=yes'.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C

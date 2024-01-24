@@ -25,7 +25,7 @@
 #
 # VERSION CHANGE LOG
 # ------------------
-#@2024_01_19 lib v1.1 New template (replace sadm_template.py), used when you need to access SADMIN DB.
+# 2024_01_19 lib v1.1 New template (replace sadm_template.py), used when you need to access SADMIN DB.
 #
 # --------------------------------------------------------------------------------------------------
 #
