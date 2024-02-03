@@ -199,6 +199,8 @@ export LSSCSI=""                                                        # List S
 export LSPCI=""                                                         # List PCI Components
 
 
+
+
 # --------------------------------------------------------------------------------------------------
 # Show script command line options
 # --------------------------------------------------------------------------------------------------
@@ -207,7 +209,6 @@ show_usage()
     printf "\nUsage: %s%s%s [options]" "${BOLD}${CYAN}" $(basename "$0") "${NORMAL}"
     printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
     printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
-    printf "\n   ${BOLD}${YELLOW}[-b]${NORMAL}\t\t\Output in HTML only (Default text)"
     printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
     printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
     printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
@@ -940,13 +941,13 @@ function cmd_options()
     while getopts "d:hv" opt ; do                                       # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
-               if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
+               if [ "$num" = "" ]                            
+                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -964,7 +965,6 @@ function cmd_options()
 }
 
 
-
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
@@ -976,7 +976,7 @@ function cmd_options()
     pre_validation                                                      # Cmd present ?
     SADM_EXIT_CODE=$?                                                   # Save Function Return code
     if [ $SADM_EXIT_CODE -ne 0 ]                                        # Which Command missing
-        then sadm_stop $SADM_EXIT_CODE                                  # Upd. RC & Trim Log & RCH
+        then sadm_stop 1                                                # Upd. RC & Trim Log & RCH
              exit 1
     fi
     
