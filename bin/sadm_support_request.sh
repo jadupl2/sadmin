@@ -11,7 +11,7 @@
 #                   resulting log (setup_result.log) to support at sadmlinux@gmail.com
 #
 #   This code was originally written by Jacques Duplessis <sadmlinux@gmail.com>,
-#   Copyright (C) 2016-2018 Jacques Duplessis <sadmlinux@gmail.com> - https://www.sadmin.ca
+#    2016-2018 Jacques Duplessis <sadmlinux@gmail.com> - https://www.sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either

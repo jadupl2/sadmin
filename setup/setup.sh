@@ -1,4 +1,8 @@
 #! /usr/bin/env bash
+
+# ADD apt install bind9-host
+
+
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
 #   Title       :   setup.sh
@@ -9,7 +13,7 @@
 #   Description :   Make sure python 3 is installed and then execute sadm_setup.py
 #
 #   This code was originally written by Jacques Duplessis <sadmlinux@gmail.com>,
-#   Copyright (C) 2016-2018 Jacques Duplessis <sadmlinux@gmail.com> - https://www.sadmin.ca
+#    2016-2018 Jacques Duplessis <sadmlinux@gmail.com> - https://www.sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -437,7 +441,7 @@ check_python3()
     install_python3 
 
     # Check if python3 'pymsql' module is installed 
-    printf "   - Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
+    printf "\n   - Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG

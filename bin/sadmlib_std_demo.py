@@ -7,7 +7,7 @@
 #   Requires    : python3 and SADM Library
 #   Description : Demonstrate functions & variables available to developers using SADMIN Tools
 # 
-#   Copyright (C) 2016-2018 Jacques Duplessis <sadmlinux@gmail.com> - https://sadmin.ca
+#    2016-2018 Jacques Duplessis <sadmlinux@gmail.com> - https://sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either

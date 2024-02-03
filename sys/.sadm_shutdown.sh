@@ -86,6 +86,20 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 
 
+# Send email when the system goes offline.
+# --------------------------------------------------------------------------------------------------
+shutdown_mail()
+{
+    sadm_write_log " "
+    sadm_write_log "Send shutdown email to $SADM_MAIL_ADDR"
+    ws="System $SADM_HOSTNAME is going down." 
+    wb=$(echo -e "System '${SADM_HOSTNAME}' $(sadm_get_host_ip) is now offline.\n$(date)\nHave a nice day from ${SADM_PN}.\nSee you soon !\n\n")
+    we="$SADM_MAIL_ADDR"
+    sadm_sendmail "$we" "$ws" "$wb" 
+    RC=$?
+    return $RC 
+}
+
 
 # --------------------------------------------------------------------------------------------------
 #                                S c r i p t    M a i n     P r o c e s s
@@ -111,6 +125,9 @@ main_process()
     esac
 
     sadm_write_log " "
+    #shutdown_mail 
+    #if [ $? -ne 0 ] ; then ((ERROR_COUNT++)) ; fi 
+    sleep 10                                                            # Give time to send email   
     return $ERROR_COUNT                                                 # Return Default return code
 }
 

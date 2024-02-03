@@ -1556,13 +1556,15 @@ sadm_server_cpu_speed() {
 
 
 # --------------------------------------------------------------------------------------------------
-#                         Return the Server Number of Core per Socket
+#"N"" 
+#    Return the Server Number of Core per Socket
+#""" 
 # --------------------------------------------------------------------------------------------------
 sadm_server_core_per_socket() {
     case "$(sadm_get_ostype)" in
-       "LINUX")     wcps=`egrep "core id|physical id" /proc/cpuinfo |tr -d "\n" |sed s/physical/\\nphysical/g |grep -v ^$ |sort |uniq |wc -l`
-                    if [ "$SADM_LSCPU" != "" ]
-                        then wcps=`$SADM_LSCPU | grep -iE "core\(s\) per socket|Core\(s\) per cluster" | cut -d ':' -f 2 | tr -d ' '`
+       "LINUX")     wcps=$(grep -Ei "core id|physical id" /proc/cpuinfo |tr -d "\n" |sed s/physical/\\nphysical/g |grep -v ^$ |sort |uniq |wc -l)
+                    if [ "$SADM_LSCPU" != "" ]                          # If lscpu is available
+                        then wcps=$($SADM_LSCPU | grep -iE "core\(s\) per socket|Core\(s\) per cluster" | cut -d ':' -f 2 | tr -d ' ')
                     fi
                     if [ $wcps -eq 0 ] ;then wcps=1 ; fi
                     ;;
@@ -1570,7 +1572,7 @@ sadm_server_core_per_socket() {
                     ;;
         "DARWIN")   #syspro="system_profiler SPHardwareDataType"
                     #wcps=`$syspro | grep -i "Number of Cores"| awk -F: '{print$2}' | tr -d ' '`
-                    wcps=`sysctl -n machdep.cpu.core_count`
+                    wcps=$(sysctl -n machdep.cpu.core_count)
                     ;;
     esac
     echo "$wcps"

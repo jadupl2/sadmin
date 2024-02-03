@@ -406,7 +406,7 @@ set_last_osupdate_date()
     fi
 
     # Get the Status of the last O/S update
-    RCH_CODE=`tail -1 ${RCHFILE} |awk '{printf "%s", $NF}'`
+    RCH_CODE=$(tail -1 ${RCHFILE} |awk '{printf "%s", $NF}')
     if [ $? -ne 0 ]
         then sadm_write_log "Can't determine last O/S Update Status ..."
              return 1
@@ -453,10 +453,10 @@ print_file ()
     fi
 
     echo " " >> $wout
-    echo "#${DASH_LINE}"  >> $wout
-    echo "# File: $wfile " >> $wout                                      # Include name of the file
-    echo "#${DASH_LINE}"  >> $wout
-    grep -Evi "^#|^$" $wfile >> $wout                                    # Output file to Desire file
+    echo "#${DASH_LINE}"    >> $wout
+    echo "# File: $wfile "  >> $wout                                    # Include name of the file
+    echo "#${DASH_LINE}"    >> $wout
+    grep -v "^#\|^$" $wfile >> $wout                                    # Output file to Desire file
     return 0
 }
 
@@ -604,7 +604,7 @@ create_linux_config_files()
     #fi
 
     if [ -d "/sys/class/net" ] && [ "$ETHTOOL" != "" ]
-        then for w in `ls -1 /sys/class/net  --color=never | grep -v "^lo"`
+        then for w in $(ls -1 /sys/class/net  --color=never | grep -v "^lo")
                 do
                 CMD="$ETHTOOL $w" 
                 execute_command "$CMD" "$NET_FILE"
@@ -612,7 +612,7 @@ create_linux_config_files()
     fi
 
     if [ "$NMCLI" != "" ]
-        then for w in `$NMCLI --terse --fields DEVICE device | awk -F: '{ print $1 }'| grep -v lo `
+        then for w in $($NMCLI --terse --fields DEVICE device | awk -F: '{ print $1 }'| grep -v lo )
                 do
                 CMD="$NMCLI device show $w"
                 execute_command "$CMD" "$NET_FILE" 
@@ -662,7 +662,7 @@ create_linux_config_files()
 
     # Network Device information
     if [ "$IPCONFIG" != "" ]
-        then FirstTime=0 ; index=0
+        then index=0
              while [ $index -le 10 ]                                    # Process from en0 to en9
                 do
                 $IPCONFIG getpacket en${index} >/dev/null 2>&1          # Get Info about Interface
@@ -679,7 +679,7 @@ create_linux_config_files()
         then if [ "$(ls -A $wd)" ]
                 then ls -1 ${wd}/ifcfg* > /dev/null 2>&1 
                      if [ $? -eq 0 ] 
-                        then for xfile in `ls -1 ${wd}/ifcfg*`
+                        then for xfile in $(ls -1 ${wd}/ifcfg*)
                                 do
                                 if [ "$xfile" != "/etc/sysconfig/network-scripts/ifcfg-lo" ]
                                     then print_file "$xfile" "$NET_FILE"
@@ -921,7 +921,7 @@ create_summary_file()
     echo "SADM_OSUPDATE_DATE                    = ${OSUPDATE_DATE}"                  >> $HWD_FILE
     echo "SADM_OSUPDATE_STATUS                  = ${OSUPDATE_STATUS}"                >> $HWD_FILE
     echo "SADM_ROOT_DIRECTORY                   = ${SADMIN}"                         >> $HWD_FILE
-    if [ "$REAR" != "" ] ;then REAR_VER=`$REAR -V | awk '{print $2}'` ; else REAR_VER="N/A" ; fi
+    if [ "$REAR" != "" ] ;then REAR_VER=$($REAR -V | awk '{print $2}') ; else REAR_VER="N/A" ; fi
     echo "SADM_REAR_VERSION                     = $REAR_VER"                         >> $HWD_FILE
 
     return $SADM_EXIT_CODE

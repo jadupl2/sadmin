@@ -8,7 +8,7 @@
 #   Requires    :  php - MySQL
 #   Description :  Page used to confirm, archive server data & finally delete server from Database.
 #
-#   Copyright (C) 2019 Jacques Duplessis <sadmlinux@gmail.com>
+#    2019 Jacques Duplessis <sadmlinux@gmail.com>
 #
 # Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
 #        have and use a 100 characters per line. Comments in script always begin at column 73. 

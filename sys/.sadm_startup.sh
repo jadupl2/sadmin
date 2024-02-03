@@ -113,18 +113,29 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 export NTP_SERVER="68.69.221.61 162.159.200.1 205.206.70.2"             # Canada NTP Pool
 
 
+
 # Send email when the system is back online
 # --------------------------------------------------------------------------------------------------
 poweron_mail()
 {
     sadm_write_log " "
-    sadm_write_log "Send 'Startup' email to $SADM_MAIL_ADDR"
+    sadm_write_log "Sending 'Startup' email to $SADM_MAIL_ADDR"         # Show what we're doing
 
-    ws="System $SADM_HOSTNAME has just rebooted." 
-    wb=$(printf "System '${SADM_HOSTNAME}' $(sadm_get_host_ip) is now back online.\n$(date)\nHave a nice day from ${SADM_PN}.\nSee you soon !")
-    we="$SADM_MAIL_ADDR"
+    ws="System '$SADM_HOSTNAME' has just started."                      # Email subject
+
+    # Body message
+    wb0=$(printf "$(date)")
+    wb1=$(printf "System '${SADM_HOSTNAME}' is back online.")
+    bootmsg="$SADMIN/sys/boot_msg"                                      # who init reboot message 
+    if [ -f "$bootmsg" ] 
+        then wb2=$(cat $bootmsg)
+             rm -f $bootmsg
+    fi 
+    wb3="Have a nice day from ${SADM_PN}."
+    wb4="See you soon !"
+    wb=$(printf "$wb0 \n $wb1 \n $wb2 \n $wb3 \n $wb4")
     
-    #sadm_write_log "sadm_sendmail \"$we\" \"$ws\" \"$wb\""
+    we="$SADM_MAIL_ADDR"                                                # Send email to SysAdmin
     sadm_sendmail "$we" "$ws" "$wb"
     RC=$?
     if [ $RC -eq 0 ] 
@@ -135,59 +146,69 @@ poweron_mail()
 }
 
 
+
 # --------------------------------------------------------------------------------------------------
 #                                S c r i p t    M a i n     P r o c e s s
 # --------------------------------------------------------------------------------------------------
 main_process()
 {
-    ERROR_COUNT=0
+    ERROR_COUNT=0                                           
     sadm_write_log "*** Running SADM System Startup Script on $(sadm_get_fqdn)  ***"
     sadm_write_log " "
     sadm_write_log "Running Startup Standard Procedure"
     
-    sadm_write_log "  Remove system lock file ('${SADMIN}/${SADM_HOSTNAME}.lock')."
+    sadm_write_log "  Remove system lock file ("${SADMIN}/${SADM_HOSTNAME}.lock")."
     rm -f "${SADMIN}/${SADM_HOSTNAME}.lock" >> $SADM_LOG 2>>$SADM_ELOG
 
     sadm_write_log "  Removing files in '$SADMIN/tmp directory."
     rm -f ${SADMIN}/tmp/* >> $SADM_LOG 2>>$SADM_ELOG
 
-    sadm_write_log "  Removing SADM System Monitor Lock File ${SADM_BASE_DIR}/sysmon.lock"
-    rm -f ${SADMIN}/sysmon.lock >> $SADM_LOG 2>>$SADM_ELOG
+    sadm_write_log "  Removing SADM System Monitor Lock File ${SADMIN}/sysmon.lock"
+    rm -f ${SADMIN}/sysmon.lock >> "$SADM_LOG" 2>>"$SADM_ELOG"
 
-    # Force Date/Time Synchronization at system startup with NTP servers.
-    if which ntpdate  >> $SADM_LOG 2>>$SADM_ELOG                        # If your using NTP Package
-       then sleep 5                                                     # Wait network to come up
-            sadm_write_log "  Force system clock synchronization with NTP server $NTP_SERVER"
-            ntpdate -u $NTP_SERVER >> $SADM_LOG 2>>$SADM_ELOG
-            if [ $? -ne 0 ] 
-               then sadm_write_err "   - [ ERROR ] Synchronizing Time with $NTP_SERVER" 
-                    ERROR_COUNT=$(($ERROR_COUNT+1))
-            fi
-    fi 
-    if which chronyc >/dev/null 2>&1                                    # If using chrony package
-       then sleep 5                                                     # Wait network to come up
-            sadm_write_log "  Force system clock synchronization with \"chronyc 'burst 4/4'\""
-            chronyc 'burst 4/4' >> $SADM_LOG 2>>$SADM_ELOG
-            if [ $? -ne 0 ] 
-               then sadm_write_err "   - [ ERROR ] Synchronizing Time with \"chronyc 'burst 4/4'\"" 
-                    ERROR_COUNT=$(($ERROR_COUNT+1))
-            fi
+    # Force Date/Time Synchronization at startup with NTP servers (if ntpdate is installed).
+    command -v ntpdate >/dev/null 2>&1
+    if (( $? == 0 ))
+        then sadm_write_log "  Force system clock synchronization with NTP server $NTP_SERVER"
+             ntpdate -u $NTP_SERVER >> "$SADM_LOG" 2>>"$SADM_ELOG"
+             if [ $? -ne 0 ] 
+                then sadm_write_err "   - [ ERROR ] Synchronizing Time with $NTP_SERVER" 
+                     ((ERROR_COUNT++))
+             fi
     fi 
 
+    # Force Date/Time Synchronization at startup with 'chrony' servers (if chrony is installed).
+    command -v chronyc >/dev/null 2>&1
+    if (( $? == 0 ))
+        then sadm_write_log "  Force system clock synchronization with \"chronyc 'burst 4/4'\""
+             chronyc 'burst 4/4' >> "$SADM_LOG" 2>>"$SADM_ELOG"
+             if [ $? -ne 0 ] 
+                then sadm_write_err "   - [ ERROR ] Synchronizing Time with \"chronyc 'burst 4/4'\"" 
+                ((ERROR_COUNT++))
+             fi
+    fi 
+
+    # Start performance monitor 'nmon'.
     sadm_write_log "  Start 'nmon' performance system monitor tool"
-    ${SADMIN}/bin/sadm_nmon_watcher.py  >> $SADM_LOG 2>>$SADM_ELOG
-    if [ $? -ne 0 ] 
-        then sadm_write_err "   - [ ERROR ] Starting 'nmon' System Monitor." 
-             ERROR_COUNT=$(($ERROR_COUNT+1))
-    fi
+    pgrep 'nmon' >/dev/null 2>&1                                        
+    if [[ $? -ne 0 ]]                                                   # If nmon not running
+        then ${SADMIN}/bin/sadm_nmon_watcher.py > /dev/null 2>&1        # Start nmon script
+             if [ $? -ne 0 ] 
+                then sadm_write_err "   - [ ERROR ] Starting 'nmon' System Monitor." 
+                     ((ERROR_COUNT++))
+                else sadm_write_log "   - [ OK ] Performance system monitor 'nmon' is started." 
+             fi
+    fi 
 
-    # Special Operation for some particular System
+    # Special startup operation for each particular system
     sadm_write_log " "
-    sadm_write_log "Starting specific startup procedure for $SADM_HOSTNAME"
+    sadm_write_log "Starting specific startup procedure for '$SADM_HOSTNAME'."
+    sadm_write_log " " 
     case "$SADM_HOSTNAME" in
         "gandalf" )     sadm_write_log "  - Start 'noip2'to update dynamic DNS"
                         /usr/local/bin/noip2 >/dev/null 2>&1
                         ;;
+
         *)      	    sadm_write_log "  No particular procedure needed for $SADM_HOSTNAME"
                         ;;
     esac
@@ -204,12 +225,10 @@ main_process()
 
 
 
+#  S T A R T   O F   M A I N    P R O G R A M
 # --------------------------------------------------------------------------------------------------
-# 	                          	S T A R T   O F   M A I N    P R O G R A M
-# --------------------------------------------------------------------------------------------------
-#
-    sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong     
+    sadm_start                                                          # Won't come back if error
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong 
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log

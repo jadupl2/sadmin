@@ -8,7 +8,7 @@
 #   Requires :  sh
 #   SCCS-Id. :  @(#) sadm_rsync_sadmin.sh 1.0 2015.09.06
 # --------------------------------------------------------------------------------------------------
-#   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
+#    2016 Jacques Duplessis <duplessis.jacques@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either

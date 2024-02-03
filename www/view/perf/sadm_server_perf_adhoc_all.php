@@ -8,7 +8,7 @@
 #   Synopsis :  Show Performance Graphics of ALL Server(s) of certain Category.
 #               Useful to look at all servers on one page & spot problem on some server.
 #
-#   Copyright (C) 2018 Jacques Duplessis <sadmlinux@gmail.com>
+#    2018 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either

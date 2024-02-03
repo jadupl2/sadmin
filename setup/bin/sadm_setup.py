@@ -1,4 +1,8 @@
 #!/usr/bin/env python3  
+
+# New cfg2html ??
+# jq update
+
 # ==================================================================================================
 #   Author      :   Jacques Duplessis
 #   Date        :   2017-09-09
@@ -7,7 +11,7 @@
 #   License     :   You can redistribute it or modify under the terms of GNU General Public 
 #                   License, v.2 or above.
 # ==================================================================================================
-#   Copyright (C) 2016-2017 Jacques Duplessis <sadmlinux@gmail.com>
+#    2016-2017 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is a free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -2288,7 +2292,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
         wsmtp_server = accept_field(sroot,"SADM_SMTP_SERVER",sdefault,sprompt)
         ccode,cstdout,cstderr = oscommand("host %s >/dev/null 2>&1" % (wsmtp_server))
         if ccode != 0 :                                                 # smtp name can't be resolve
-            writelog("The smtp host name '%s'cannot be resolve." % (wsmtp_server))
+            writelog("The smtp host name '%s' cannot be resolve." % (wsmtp_server))
             continue                                                    # Go ReAccept the smtp name
         break
     update_sadmin_cfg(sroot,"SADM_SMTP_SERVER",wsmtp_server)            # Update Value in sadmin.cfg

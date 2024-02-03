@@ -9,7 +9,7 @@
 #   Description :  Web Page used to present list of category that can be edited/deleted.
 #                  Option a the top of the list is used to create a new category
 #
-#   Copyright (C) 2016 Jacques Duplessis <sadmlinux@gmail.com>
+#    2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either

@@ -2131,13 +2131,13 @@ def start(pver,pdesc) :
 
     # Validate Log Type (S=Screen L=Log B=Both)
     if ((log_type.upper() != 'S') and (log_type.upper() != "B") and (log_type.upper() != 'L')):
-        write_err ("Valid log_type are 'S','L','B' - Can't set log_type to %s" % (log_type.upper()))
+        write_err ("Valid 'log_type' are 'S','L','B' - Can't set log_type to %s" % (log_type.upper()))
         stop(1)                                                         # Close SADMIN 
         sys.exit(1)                                                     # Back to O/S 
 
     # Validate Log open move - Append (True or False)
     if ( (log_append != True) and (log_append != False) ):
-        write_err ("Invalid log.append attribute can be True or False (%s)" % (log_append))
+        write_err ("Invalid 'log.append' attribute, can only sbe True or False (%s)" % (log_append))
         stop(1)                                                         # Close SADMIN 
         sys.exit(1)                                                     # Back to O/S 
 
