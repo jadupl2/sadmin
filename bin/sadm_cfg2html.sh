@@ -26,7 +26,7 @@
 # 2021_07_21 client: v3.8 Fix problem with cfg2html on Fedora 34.
 # 2022_05_05 client: v3.9 Update code for RHEL, CentOS, AlmaLinux & Rocky Linux v9.
 # 2022_07_28 client: v3.10 Updated to use new SADMIN section 1.51
-#@2024_01_02 client: v3.11 Code review to run cfg2html v7 & update SADMIN section to v1.56
+#@2024_01_02 client: v3.12 Code review to run cfg2html v7 & update SADMIN section to v1.56
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------
@@ -59,7 +59,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.11'                                      # Script version number
+export SADM_VER='3.12'                                      # Script version number
 export SADM_PDESC="Run 'cfg2html' tool & produce system information files."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -109,6 +109,176 @@ show_usage()
     printf "\n\n" 
 }
 
+# --------------------------------------------------------------------------------------------------
+# Check if we need to update from version to 7 of cfg2html
+# --------------------------------------------------------------------------------------------------
+function update_cfg2html()
+{
+    if [ "$CFG2HTML" = "" ] ; then return 0 ; fi                        # If not install, no update
+
+    #wversion=$($CFG2HTML -v | tail -1 | awk  '{ print $3 }')            # Get version third field
+    #cur_version=$(echo $wversion | awk -F\. '{ print $1 }')             # Get 1st digit of version #
+    #if [ "$cur_version" = "7" ] ; then return 0 ; fi                    # Current version is OK
+    #sadm_write_log "Going to update 'cfg2html' from version $cur_version to version 7." 
+
+    # Uninstall current version & install latest version.
+    case "$(sadm_get_packagetype)" in
+        "rpm")  package_name="cfg2html-linux"                           # rpm cfg2html package name
+                sadm_write_log "Verifying if '$package_name' package is installed."
+                rpm -qi $package_name >/dev/null 2>&1                   # Is the package installed ?
+                if [ $? -eq 0 ]                                         # If cfg2html installed 
+                    then sadm_write_log "Removing version 2 of '$package_name'." 
+                         sadm_write_log "dnf remove -y $package_name"
+                         dnf remove -y "$package_name" >>$SADM_LOG 2>&1 # Remove installed package
+                         if [ $? -ne 0 ]                                # If error removing package
+                            then sadm_write_err "Error removing '$package_name' package."
+                                 return 1                               # Return Error to caller
+                         fi 
+                fi 
+                #sadm_write_log " "
+                sadm_write_log "Installing ${package_name} v7."
+                sadm_write_log "dnf -y --nogpgcheck install ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm"
+                dnf -y --nogpgcheck install ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm >>$SADM_LOG 2>&1
+                if [ $? -ne 0 ]                                         # if error installing latest
+                   then sadm_write_err "Error installing '$package_name' package."
+                        return 1                                        # Return Error to caller
+                fi 
+                sadm_write_log "Latest version on '$package_name' in now installed."
+                ;;  
+
+        "deb")  package_name="cfg2html-linux"                           # deb cfg2html package name
+                sadm_write_log "Verifying if '$package_name' package is installed."
+                dpkg -s "$package_name" >/dev/null 2>&1                 # Is the package installed ?
+                if [ $? -eq 0 ]                                         # If cfg2html installed 
+                    then sadm_write_log "Removing version 2 of $package_name." 
+                         sadm_write_log "apt remove -y $package_name"
+                         apt remove -y "$package_name" >>$SADM_LOG 2>&1 # Remove installed package
+                         if [ $? -ne 0 ]                                # If error removing package
+                            then sadm_write_err "Error removing '$package_name' package."
+                                 return 1                               # Return Error to caller
+                         fi 
+                fi 
+                #sadm_write_log " "
+                sadm_write_log "Installing '$package_name' v7 package."
+                sadm_write_log "apt -y install ${SADM_PKG_DIR}/cfg2html/cfg2html.deb"
+                apt -y install ${SADM_PKG_DIR}/cfg2html/cfg2html.deb >>$SADM_LOG 2>&1
+                if [ $? -ne 0 ]                                         # if error installing latest
+                   then sadm_write_err "Error installing '$package_name' package."
+                        return 1                                        # Return Error to caller
+                fi 
+                sadm_write_log "Latest version on '$package_name' in now installed."
+                ;;  
+
+        *)      sadm_write_err "Invalid package type $(sadm_get_packagetype)."
+                return 1                                                # Return Error to caller
+                ;;  
+    esac
+}
+
+
+
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Make sure that cfg2html is accessible on the server
+# If package not installed then used the SADMIN version located in $SADMIN_BASE_DIR/pkg
+# --------------------------------------------------------------------------------------------------
+function main_process()
+{
+    ws=$(which cfg2html >/dev/null 2>&1)                                # cfg2html exist on system?
+    if [ $? -eq 0 ]                                                     # Yes it does
+        then CFG2HTML=$(which cfg2html)                                 # Get full path of cfg2html
+             wversion=$($CFG2HTML -v | tail -1 | awk  '{ print $3 }')   # Get version third field
+             cur_version=$(echo $wversion | awk -F\. '{ print $1 }')    # Get 1st digit of version #
+             if [ "$cur_version" != "7" ]
+                then update_cfg2html
+                     if [ $? -ne 0 ] 
+                        then sadm_write_err "Problem updating 'cfg2html'."
+                             return 1 
+                     fi 
+             fi 
+    fi
+
+
+    CFG2HTML=$(which cfg2html)                                          # May have change if updated
+    if [ $? -ne 0 ]                                                     # if not found
+       then sadm_write_log "Command 'cfg2html' is not installed."       # Not Found inform user
+            sadm_write_log "Installing 'cfg2html' ..."                  # Not Found inform user
+            packname="cfg2html"
+
+            if [ "$(sadm_get_packagetype)" = "rpm" ] 
+                then sadm_write_log "dnf -y --nogpgcheck install ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm"
+                     dnf -y --nogpgcheck install ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm >>$SADM_LOG 2>&1
+                     if [ $? -ne 0 ]                                    # if error installing latest
+                        then sadm_write_err "Error installing '$packname' package."
+                             return 1                                   # Return Error to caller
+                     fi 
+            fi 
+
+            if [ "$(sadm_get_packagetype)" = "deb" ] 
+                then sadm_write_log "apt -y install ${SADM_PKG_DIR}/cfg2html/cfg2html.deb"
+                     apt -y install ${SADM_PKG_DIR}/cfg2html/cfg2html.deb >>$SADM_LOG 2>&1
+                     if [ $? -ne 0 ]                                    # if error installing latest
+                        then sadm_write_err "Error installing '$packname' package."
+                             return 1                                   # Return Error to caller
+                     fi 
+            fi
+
+            # Now that it is supposed to be installed, check if available now.
+            ws=$(which cfg2html >/dev/null 2>&1)                        # Try Again to Locate cfg2html
+            if [ $? -ne 0 ]                                             # if Still not found
+                then sadm_write_err "Still the command 'cfg2html' can't be found."
+                     sadm_write_err "Install it & re-run this script."  # Not Found inform user
+                     sadm_write_err "For Ubuntu/Debian/Mint,Raspbian : "
+                     sadm_write_err " - sudo apt -y install ${SADM_PKG_DIR}/cfg2html/cfg2html.deb"
+                     sadm_write_err "For Rocky,Alma,RedHat,CentOS,Fedora   : "
+                     sadm_write_err " - sudo dnf -y install ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm."
+                     sadm_stop 1                                        # Upd. RC & Trim Log
+                     exit 1                                             # Exit With Error
+                else sadm_write_log "Package cfg2html was installed successfully."
+             fi
+             
+    fi
+
+    # Update cfg2html if necessary
+    #update_cfg2html
+    #if [ $? -ne 0 ] 
+    #    then sadm_write_err "Problem updating 'cfg2html'."
+    #         return 1 
+    #fi
+
+    # Run CFG2HTML
+    export CFG2HTML=$(which cfg2html)                                   # Get cfg2html Path
+    #CFG2VER=$($CFG2HTML -v | tr -d '\n')
+    sadm_write_log " "
+    #sadm_write_log "${CFG2VER}"
+    sadm_write_log "Running : $CFG2HTML -o ${SADM_DR_DIR}"
+    $CFG2HTML -o $SADM_DR_DIR | tee -a $SADM_LOG 2>&1
+    SADM_EXIT_CODE=$?
+    sadm_write_log "Return code of the command is ${SADM_EXIT_CODE}."
+
+    # Uniformize name of cfg2html output files so that the domain name is not include in the name.
+    if [ "$(hostname)" != "$(hostname -s)" ]
+        then if [ -f "${SADM_DR_DIR}/$(hostname).err" ] 
+                then mv "${SADM_DR_DIR}/$(hostname).err" "${SADM_DR_DIR}/cfg2html_$(hostname -s).err"
+             fi 
+             if [ -f "${SADM_DR_DIR}/$(hostname).html" ]
+                then mv "${SADM_DR_DIR}/$(hostname).html" "${SADM_DR_DIR}/cfg2html_$(hostname -s).html"
+             fi 
+             if [ -f "${SADM_DR_DIR}/$(hostname).txt" ]
+                then mv "${SADM_DR_DIR}/$(hostname).txt" "${SADM_DR_DIR}/cfg2html_$(hostname -s).txt"
+             fi 
+             if [ -f "${SADM_DR_DIR}/$(hostname).partitions.save" ] 
+                then mv "${SADM_DR_DIR}/$(hostname).partitions.save" "${SADM_DR_DIR}/cfg2html_$(hostname -s).partitions.save"
+             fi 
+             chown ${SADM_USER}:${SADM_GROUP} ${SADM_DR_DIR}/cfg2html_$(hostname -s).*
+             chmod 664 ${SADM_DR_DIR}/cfg2html_$(hostname -s).*
+
+    fi
+}
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -143,76 +313,6 @@ function cmd_options()
     done                                                                # End of while
     return 
 }
-
-
-
-
-# --------------------------------------------------------------------------------------------------
-# Make sure that cfg2html is accessible on the server
-# If package not installed then used the SADMIN version located in $SADMIN_BASE_DIR/pkg
-# --------------------------------------------------------------------------------------------------
-function main_process()
-{
-    CFG2HTML=$(which cfg2html >/dev/null 2>&1)                          # Locate cfg2html if exist
-    if [ $? -ne 0 ]                                                     # if not found
-       then sadm_write_log "Command 'cfg2html' is not found.\n"         # Not Found inform user
-            sadm_write_log "Installing 'cfg2html' ...\n"                # Not Found inform user
-            if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] || 
-               [ "$(sadm_get_osname)" = "ALMA" ]   || [ "$(sadm_get_osname)" = "ROCKY" ]  || 
-               [ "$(sadm_get_osname)" = "FEDORA" ]
-                then sadm_write_log "yum install -y ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm"
-                     yum install -y ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm
-            fi 
-            if [ "$(sadm_get_osname)" = "UBUNTU" ] || [ "$(sadm_get_osname)" = "DEBIAN" ] ||
-               [ "$(sadm_get_osname)" = "RASPBIAN" ] || [ "$(sadm_get_osname)" = "MINT" ]
-               then sadm_write_log "apt -y install ${SADM_PKG_DIR}/cfg2html/cfg2html.deb"
-                    apt -y install ${SADM_PKG_DIR}/cfg2html/cfg2html.deb
-            fi
-
-            # Now that it is supposed to be installed, check if available now.
-            CFG2HTML=$(which cfg2html >/dev/null 2>&1)                  # Try Again to Locate cfg2html
-            if [ $? -ne 0 ]                                             # if Still not found
-                then sadm_write_err "Still the command 'cfg2html' can't be found."
-                     sadm_write_err "Install it & re-run this script."  # Not Found inform user
-                     sadm_write_err "For Ubuntu/Debian/Mint,Raspbian : "
-                     sadm_write_err " - sudo apt -y install ${SADM_PKG_DIR}/cfg2html/cfg2html.deb"
-                     sadm_write_err "For Rocky,Alma,RedHat,CentOS,Fedora   : "
-                     sadm_write_err " - sudo dnf -y install ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm."
-                     sadm_stop 1                                        # Upd. RC & Trim Log
-                     exit 1                                             # Exit With Error
-                else sadm_write_log "Package cfg2html was installed successfully."
-             fi
-             
-    fi
-    export CFG2HTML=$(which cfg2html)                                   # Save cfg2html path
-
-    # Run CFG2HTML
-    CFG2VER=$($CFG2HTML -v | tr -d '\n')
-    sadm_write_log "${CFG2VER}\nRunning : $CFG2HTML -o ${SADM_DR_DIR}"
-    $CFG2HTML -o $SADM_DR_DIR >>$SADM_LOG 2>&1
-    SADM_EXIT_CODE=$?
-    sadm_write_log "Return code of the command is ${SADM_EXIT_CODE}."
-
-    # Uniformize name of cfg2html output files so that the domain name is not include in the name.
-    if [ "$(hostname)" != "$(hostname -s)" ]
-        then if [ -f "${SADM_DR_DIR}/$(hostname).err" ] 
-                then mv "${SADM_DR_DIR}/$(hostname).err" "${SADM_DR_DIR}/cfg2html_$(hostname -s).err"
-             fi 
-             if [ -f "${SADM_DR_DIR}/$(hostname).html" ]
-                then mv "${SADM_DR_DIR}/$(hostname).html" "${SADM_DR_DIR}/cfg2html_$(hostname -s).html"
-             fi 
-             if [ -f "${SADM_DR_DIR}/$(hostname).txt" ]
-                then mv "${SADM_DR_DIR}/$(hostname).txt" "${SADM_DR_DIR}/cfg2html_$(hostname -s).txt"
-             fi 
-             if [ -f "${SADM_DR_DIR}/$(hostname).partitions.save" ] 
-                then mv "${SADM_DR_DIR}/$(hostname).partitions.save" "${SADM_DR_DIR}/cfg2html_$(hostname -s).partitions.save"
-             fi 
-             chown ${SADM_USER}:${SADM_GROUP} ${SADM_DR_DIR}/cfg2html_$(hostname -s).*
-             chmod 664 ${SADM_DR_DIR}/cfg2html_$(hostname -s).*
-
-    fi
-}
-
 
 
 
