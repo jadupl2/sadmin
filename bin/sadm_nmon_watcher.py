@@ -74,7 +74,7 @@ pexit_code  = 0                                                      # Script de
 
 # Fields used by sa.start(), sa.stop() & DB functions to influence execution of SADMIN library
 sa.db_used     = False          # Open/Use DB(True), No DB needed (False), sa.start() auto connect
-sa.db_silent   = False          # When DB Error Return(Error), True = NoErrMsg, False = ShowErrMsg
+sa.db_silent   = False          # True=ReturnErrorNo & No ErrMsg, False=ReturnErrorNo & ShowErrMsg
 sa.db_conn     = None           # Use this Database Connector when using DB,  set by sa.start()
 sa.db_cur      = None           # Use this Database cursor if you use the DB, set by sa.start()
 sa.db_name     = "sadmin"       # Database Name taken from $SADMIN/cfg/sadmin.cfg 
@@ -96,7 +96,7 @@ sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (s
 #sa.sadm_alert_type  = 1          # 0=NoAlert 1=AlertOnlyOnError 2=AlertOnlyOnSuccess 3=AlwaysAlert
 #sa.sadm_alert_group = "default"  # Valid Alert Group defined in $SADMIN/cfg/alert_group.cfg
 sa.max_logline      = 400        # Max. lines to keep in log (0=No trim) after execution.
-#sa.max_rchline      = 40         # Max. lines to keep in rch (0=No trim) after execution.
+sa.max_rchline      = 20         # Max. lines to keep in rch (0=No trim) after execution.
 #sa.sadm_mail_addr   = ""         # All mail goes to this email (Default is in sadmin.cfg)
 #sa.pid_timeout      = 7200       # PID File Default Time to Live in seconds.
 #sa.lock_timeout     = 3600       # A host can be lock for this number of seconds, auto unlock after
