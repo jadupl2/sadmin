@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------------------------------
-# SADMIN Service Definition V2.5 (Updated Sept 2023)
-# If you modify this file, Run these commands to make your change effective
+# SADMIN Service Definition V2.6 (Updated Feb 2024)
+# If you modify this file, run these commands to make your change effective.
 #   Enter   'systemctl disable sadmin.service' 
 #           'systemctl enable  sadmin.service'
 #           'systemctl restart sadmin.service' 

@@ -1,8 +1,4 @@
 #!/usr/bin/env python3  
-
-# New cfg2html ??
-# jq update
-
 # ==================================================================================================
 #   Author      :   Jacques Duplessis
 #   Date        :   2017-09-09
@@ -135,6 +131,8 @@
 # 2023_12_27 install v4.00 If not present, package 'cron' (deb) 'cronie' (rpm) are install.
 # 2024_01_04 install v4.01 Minor fixes.
 # 2024_01_09 install v4.02 If not present, package 'grub2-efi-x64-modules' install (needed for ReaR).
+#@2024_02_12 install v4.03 Execution of 'sadm_startup.sh & sadm_shutdown.sh' controlled by 'sadmin.service'.
+#@2024_02_12 install v4.03 Script 'sadm_service_ctrl.sh' is depreciated (Use 'systemctl').
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -152,7 +150,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "4.02"                                            # Setup Version Number
+sver                = "4.03"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -762,6 +760,7 @@ def update_sudo_file(sroot,logfile,wuser) :
     hsudo.write ('\nDefaults  env_keep += "SADMIN"')                    # Keep Env. Var. SADMIN 
     hsudo.write ("\n%s ALL=(ALL) NOPASSWD: ALL\n" % (wuser))            # No Passwd for SADMIN User
     hsudo.write ("\nDefaults secure_path='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:%s/bin:%s/usr/bin'" % (sroot,sroot))
+    hsudo.write ("\n")
     hsudo.close()                                                       # Close SADMIN sudo  file
 
     # Change sudo file permission to 440
@@ -2627,16 +2626,34 @@ def end_message(sroot,sdomain,sserver,stype):
 #===================================================================================================
 #
 def sadmin_service(sroot):
+
     writelog (" ")
     writelog ("----------")
-    cmd = "%s/bin/sadm_service_ctrl.sh -s" % (sroot)                    # Enable SADMIN Service 
-    writelog ("Enabling SADMIN Service - %s ... " % (cmd),"nonl")       # Inform User
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Enable MariaDB Server
+    writelog ("Creating SADMIN service unit.")
+    writelog (" ")
+
+    ifile="%s/cfg/.sadmin.service" % (sroot)                            # Input Source Service file
+    ofile="/etc/systemd/system/sadmin.service"                          # Output sadmin service file
+    if os.path.exists(ofile)==False:                                    # Service already in place
+        try:
+            shutil.copyfile(ifile,ofile)                                # Copy sadmin service file
+        except IOError as e:
+            writelog("Unable to copy file. %s" % e)                     # Advise user before exiting
+            sys.exit(1)                                                 # Exit to O/S With Error
+        except:
+            writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
+            sys.exit(1)                                                 # Exit to O/S with Error
+    writelog ("  - SADMIN service unit created %s." % ofile)            # Advise User
+    writelog (' ')
+
+    cmd = "systemctl enable sadmin.service"                             # Enable SADMIN Service 
+    writelog ("Enabling SADMIN Service: %s " % (cmd),"nonl")            # Inform User
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Enable SADMIN service
     if (ccode != 0):                                                    # Problem Enabling Service
         writelog ("Problem with enabling SADMIN service.")              # Advise User
-        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
-        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+        writelog ("Return code    : %d - %s" % (ccode,cmd))             # Show Return Code No
+        writelog ("Standard out   : %s" % (cstdout))                    # Print command stdout
+        writelog ("Standard error : %s" % (cstderr))                    # Print command stderr
     else:
         writelog (' Done ')
 

@@ -97,8 +97,8 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
-#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+export SADM_MAX_LOGLINE=200                                 # Nb Lines to trim(0=NoTrim)
+export SADM_MAX_RCLINE=20                                  # Nb Lines to trim(0=NoTrim)
 #export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
 #export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 # ---------------------------------------------------------------------------------------
