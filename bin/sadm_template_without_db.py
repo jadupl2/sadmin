@@ -69,8 +69,8 @@ pdebug      = 0                                                      # Debug lev
 pexit_code  = 0                                                      # Script default exit code
 
 # Fields used by sa.start(),sa.stop() & DB functions that influence execution of SADMIN library
-sa.db_used           = False       # Open/Use DB(True), No DB needed (False), sa.start() auto connect
-sa.db_silent         = False      # When DB Error Return(Error), True = NoErrMsg, False = ShowErrMsg
+sa.db_used           = False      # Open/Use DB(True), No DB needed (False), sa.start() auto connect
+sa.db_silent         = False      # True=ReturnErrorNo & No ErrMsg, False=ReturnErrorNo & ShowErrMsg
 sa.db_conn           = None       # Use this Database Connector when using DB,  set by sa.start()
 sa.db_cur            = None       # Use this Database cursor if you use the DB, set by sa.start()
 sa.db_name           = ""         # Database Name default to name define in $SADMIN/cfg/sadmin.cfg
