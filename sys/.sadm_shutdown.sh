@@ -120,7 +120,7 @@ main_process()
                                  ERROR_COUNT=$(($ERROR_COUNT+1))
                         fi  
                     ;;
-                *)  sadm_write_log "  No particular shutdown procedure needed for $SADM_HOSTNAME"
+                *)  sadm_write_log "  No particular shutdown procedure needed for '$SADM_HOSTNAME'."
                     ;;
     esac
 

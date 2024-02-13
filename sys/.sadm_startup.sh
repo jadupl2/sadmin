@@ -160,7 +160,7 @@ main_process()
     sadm_write_log "  Remove system lock file ("${SADMIN}/${SADM_HOSTNAME}.lock")."
     rm -f "${SADMIN}/${SADM_HOSTNAME}.lock" >> $SADM_LOG 2>>$SADM_ELOG
 
-    sadm_write_log "  Removing files in '$SADMIN/tmp directory."
+    sadm_write_log "  Removing files in '$SADMIN/tmp' directory."
     rm -f ${SADMIN}/tmp/* >> $SADM_LOG 2>>$SADM_ELOG
 
     sadm_write_log "  Removing SADM System Monitor Lock File ${SADMIN}/sysmon.lock"
