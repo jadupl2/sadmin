@@ -81,6 +81,7 @@
 # 2023_07_16 install v3.32 Cosmetic change to the script log.
 # 2023_12_07 install v3.33 Minor adjustments.
 # 2024_01_02 install v3.34 Remove requirement for python 'psutil' module.
+#@2024_02_12 install v3.35 Make sure 'host' command is installed, (needed for hostname resolution).
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -89,22 +90,22 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
  
 # Script environment variables
 #===================================================================================================
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='3.34'                             ; export SADM_VER           # Your Script Version
-SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
-SADM_HOSTNAME=$(hostname -s)                ; export SADM_HOSTNAME      # Current Host name
-SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1) ; export SADM_INST          # Script name without ext.
-SADM_TPID="$$"                              ; export SADM_TPID          # Script PID
-SADM_EXIT_CODE=0                            ; export SADM_EXIT_CODE     # Script Exit Return Code
-SCRIPT="$(dirname "$0")/bin/sadm_setup.py"  ; export SCRIPT             # Main Setup SCRIPT Next
-SLOGDIR="$(dirname "$0")/log"               ; export SLOGDIR            # Log Directory
+export DEBUG_LEVEL=0                                                    # 0=NoDebug Higher=+Verbose
+export SADM_VER='3.35'                                                  # Your Script Version
+export SADM_PN="${0##*/}"                                               # Script name
+export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)                      # Script name without ext.
+export SADM_TPID="$$"                                                   # Script PID
+export SADM_EXIT_CODE=0                                                 # Script Exit Return Code
+export SCRIPT="$(dirname "$0")/bin/sadm_setup.py"                       # Main Setup SCRIPT Next
+export SLOGDIR="$(dirname "$0")/log"                                    # Log Directory
 if [ ! -d ${SLOGDIR} ] ; then mkdir $SLOGDIR ; fi                       # If Don't exist create dir
-SLOG="${SLOGDIR}/sadm_pre_setup.log"        ; export SLOG               # Script Log Name
-SADM_OSNAME=""                              ; export SADM_OSNAME        # Operating System Name 
-SADM_OSVERSION=""                           ; export SADM_OSVERSION     # O/S System Major Version#
-SADM_OSFULLVER=""                           ; export SADM_OSFULLVER     # O/S Full Version number
-SADM_OSTYPE=""                              ; export SADM_OSTYPE        # OS(AIX/LINUX/DARWIN/SUNOS) 
-SADM_PACKTYPE=""                            ; export SADM_PACKTYPE      # Package Type use on System
+export SLOG="${SLOGDIR}/sadm_pre_setup.log"                             # Script Log Name
+export SADM_OSNAME=""                                                   # Operating System Name 
+export SADM_OSVERSION=""                                                # O/S System Major Version#
+export SADM_OSFULLVER=""                                                # O/S Full Version number
+export SADM_OSTYPE=""                                                   # OS(AIX/LINUX/DARWIN/SUNOS) 
+export SADM_PACKTYPE=""                                                 # Package Type use on System
 
 # Screen related variable
 clr=$(tput clear)                               ; export clr            # clear the screen
@@ -433,6 +434,49 @@ install_python3()
 }
 
 
+# Check if 'host' command is installed, if not install it 
+#===================================================================================================
+check_host_command()
+{
+    printf "\nChecking if 'host' command installed" | tee -a $SLOG
+
+    which host > /dev/null 2>&1                                         # Try getting command path
+    if [ $? -eq 0 ]                                                     # If command installed
+        then echo " [ OK ]" 
+             return 0                                                   # Return to caller
+        else echo " [ Not installed ]"  
+    fi 
+
+    printf "\n    - Installing bind-utils"
+    if [ "$SADM_PACKTYPE" = "rpm" ] 
+        then  if [ "$SADM_OSVERSION" -lt 8 ]
+                 then printf "\n   - Running 'yum -y install bind-utils'\n" |tee -a $SLOG
+                      yum -y install bind-utils >> $SLOG 2>&1
+                 else printf "\n   - Running 'dnf -y install bind-utils'\n" |tee -a $SLOG
+                      dnf -y install bind-utils >> $SLOG 2>&1
+              fi 
+    fi 
+    if [ "$SADM_PACKTYPE" = "deb" ] 
+        then apt update >> $SLOG 2>&1
+             printf "\n   - Running 'apt -y install bind9-host'"| tee -a $SLOG
+             apt -y install bind9-host >>$SLOG 2>&1
+    fi 
+    
+    which host > /dev/null 2>&1
+    if [ $? -ne 0 ]
+        then echo " " | tee -a $SLOG
+             echo "----------" | tee -a $SLOG
+             echo "We had problem installing the 'bind-utils' package." | tee -a $SLOG
+             echo "Try to manually install 'bind-utils' ('bind9-host' on deb) package." |tee -a $SLOG
+             echo "Script aborted, install the package & run this script again." | tee -a $SLOG 
+             echo "----------" | tee -a $SLOG
+             exit 1
+    fi
+}
+
+
+
+
 
 # Check if python 3 is installed, if not install it 
 #===================================================================================================
@@ -604,7 +648,7 @@ get_sysinfo()
 # Script Start HERE
 #===================================================================================================
 
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+    if [ $(id -u) -ne 0 ]                                               # If Cur. user is not root 
         then echo "Script can only be run by the 'root' user." | tee -a $SLOG   
              echo "Process aborted"  | tee -a $SLOG                     # Abort advise message
              exit 1                                                     # Exit To O/S
@@ -635,11 +679,9 @@ EOF
         then add_epel_repo                                               
     fi 
     
-    # Make sure python 3 installed, and the module need for SADMIN to work.
-    check_python3
-
-    # Make sure current host is in /etc/hosts
-    check_hostname
+    check_python3                                                       # Check Python3 sadmin req.
+    check_hostname                                                      # Current host in /etc/hosts
+    check_host_command                                                  # Check 'host' cmd installed
 
     # If SELinux present and activated, make it temporarily permissive until next reboot
     if [ "$SADM_PACKTYPE" = "rpm" ] ; then check_selinux ; fi
