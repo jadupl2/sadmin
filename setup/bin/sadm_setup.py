@@ -133,6 +133,7 @@
 # 2024_01_09 install v4.02 If not present, package 'grub2-efi-x64-modules' install (needed for ReaR).
 #@2024_02_12 install v4.03 Execution of 'sadm_startup.sh & sadm_shutdown.sh' controlled by 'sadmin.service'.
 #@2024_02_12 install v4.03 Script 'sadm_service_ctrl.sh' is depreciated (Use 'systemctl').
+#@2024_02_13 install v4.04 Setup will now ask for 'sadmin' user & force to change password on login.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -146,11 +147,13 @@ except ImportError as e:
     sys.exit(1)
 #pdb.set_trace()                                                        # Activate Python Debugging
 
- 
+
+
+
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "4.03"                                            # Setup Version Number
+sver                = "4.04"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -950,8 +953,8 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             continue               
 
         # Verify if needed package is installed
-        pline = "Is the package '%s' installed... " % (needed_packages) # Show what we are doing
-        writelog (pline,'nonl')                                         # Show What is looking for
+        #pline = "Is the package '%s' installed... " % (needed_packages) # Show what we are doing
+        #writelog (pline,'nonl')                                         # Show What is looking for
 
         # Rear Only available on Intel platform Architecture
         if needed_packages == "rear" and sosarch not in rear_supported_architecture :
@@ -970,7 +973,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             continue                                                    # Proceed with Next Package
 
         if locate_package(needed_packages,packtype) :                   # If Package is installed
-            writelog ("[ INSTALLED ] ")                                 # Show User Check Result
+            writelog ("[ OK ] Package %s already installed.")           # Show User Check Result
             continue                                                    # Proceed with Next Package
 
         if needed_packages == "" :
@@ -990,17 +993,17 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             else:
                 icmd = "yum install -y %s >>%s 2>&1" % (needed_packages,logfile)
 
-        writelog ("-----------------------",'log')
-        writelog (icmd,'log')
-        writelog ("-----------------------",'log')
+        #writelog ("-----------------------",'log')
+        #writelog (icmd,'log')
+        #writelog ("-----------------------",'log')
         
         # To Test if install did work, try to execute command just installed.
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
-            writelog (" done.")
+            writelog ("[ OK ] Package %s is now installed.")           # Show User Check Result
             continue
         else : 
-            writelog("[ Warning ] Package '%s' not available on %s v%s." % (needed_cmd,sosname,sosver))
+            writelog("[ WARNING ] Package '%s' not available on %s v%s." % (needed_cmd,sosname,sosver))
             continue
     return()     
             
@@ -2042,8 +2045,8 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
 
     Keyword Arguments:
         stype {str} -- [Type of input ([I]nteger [A]lphanumeric [P]assword)] (default: {"A"})
-        smin {int} -- [Minimum Value for Integer input] (default: {0})
-        smax {int} -- [Maximum value for Integer input] (default: {3})
+        smin  {int} -- [Minimum Value for Integer input] (default: {0})
+        smax  {int} -- [Maximum value for Integer input] (default: {3})
 
     Returns:
         [any] -- [Value entered by user (or default value)]
@@ -2059,7 +2062,8 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
     # Print Field name we will input (name used in sadmin.cfg file)
     writelog (" ")
     writelog ("----------")
-    writelog ("[%s]" % (sname),'bold')                                  # Bold Attr. Name in sadmin
+    if sname != "" : 
+        writelog ("[%s]" % (sname),'bold')                              # Bold Attr. Name in sadmin
 
     # Display field documentation file  
     docname = "%s/setup/msg/%s.txt" % (sroot,sname.lower())             # Set Documentation FileName
@@ -2068,11 +2072,12 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
         for line in doc:                                                # Read Doc. file until EOF
             if ((line.startswith("#")) or (len(line) == 0)):            # Line Start with # or empty
                continue                                                 # Skip Line that start with#
-            writelog ("%s" % (line.rstrip()))                                    # Print Documentation Line
+            writelog ("%s" % (line.rstrip()))                           # Print Documentation Line
         doc.close()                                                     # Close Document File
-    except FileNotFoundError:                                           # If Open File Failed
-        writelog ("Doc file %s not found, question skipped" % (docname))   # Advise User, Question Skip
-    #writelog ("--------------------")
+    except FileNotFoundError:                                           # If no mesg file to show
+        pass
+    #    writelog ("Doc file %s not found, question skipped" % (docname))   # Advise User, Question Skip
+    #writelog ("--------------------")+++++++
 
     # Accept a Password from the user    
     if (stype.upper() == "P"):                                          # If Password Input
@@ -2291,7 +2296,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
         wsmtp_server = accept_field(sroot,"SADM_SMTP_SERVER",sdefault,sprompt)
         ccode,cstdout,cstderr = oscommand("host %s >/dev/null 2>&1" % (wsmtp_server))
         if ccode != 0 :                                                 # smtp name can't be resolve
-            writelog("The smtp host name '%s' cannot be resolve." % (wsmtp_server))
+            writelog("The smtp host name '%s' cannot be resolved." % (wsmtp_server))
             continue                                                    # Go ReAccept the smtp name
         break
     update_sadmin_cfg(sroot,"SADM_SMTP_SERVER",wsmtp_server)            # Update Value in sadmin.cfg
@@ -2366,7 +2371,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     if (found_grp == True):                                             # Group were found in file
         writelog("Group %s is an existing group" % (wcfg_group),'bold') # Existing group Advise User 
     else:
-        writelog ("Creating group %s ... " % (wcfg_group),'nonl')       # Show creating the group
+        writelog ("Creating group '%s' ... " % (wcfg_group),'nonl')     # Show creating the group
         if wostype == "LINUX" :                                         # Under Linux
             ccode,cstdout,cstderr = oscommand("groupadd %s" % (wcfg_group))   # Add Group on Linux
         if wostype == "AIX" :                                           # Under AIX
@@ -2376,9 +2381,10 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
             writelog ("We can't create group for the moment")           # Advise USer
             sys.exit(1)                                                 # Exit to O/S  
         if (ccode == 0) :                                               # If Group Creation went well
-            writelog ('Done')                                           # Show action action result
+            writelog ("Group '%s' created." % (wcfg_group))             # Show action action result
         else:                                                           # If Error creating group
-            writelog ("Error %s creating group %s" % (ccode,wcfg_group))# Show AddGroup Cmd Error No
+            writelog ("Error %s creating group '%s'" % (ccode,wcfg_group))# Show AddGroup Cmd Error No
+            writelog ("%s" % cstderr )                                  # Show AddGroup Cmd Error No
     update_sadmin_cfg(sroot,"SADM_GROUP",wcfg_group)                    # Update Value in sadmin.cfg
 
 
@@ -2407,7 +2413,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
         if (DEBUG):                                                     # If Debug Activated
             writelog ("Return code is %d" % (ccode))                    # Show AddGroup Cmd Error #
     else:
-        writelog ("Creating user %s ... \n" % (wcfg_user),'nonl')       # Create user on system
+        writelog ("Creating user %s ... " % (wcfg_user),'nonl')       # Create user on system
         if wostype == "LINUX" :                                         # Under Linux
             cmd = "useradd -g %s -s /bin/bash " % (wcfg_group)          # Build Add user Command 
             cmd += " -m -d /home/%s "    % (wcfg_user)                  # Assign Home Directory
@@ -2421,8 +2427,8 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
             #cmd = "echo 'Gotham20!' | passwd --stdin %s" % (wcfg_user)     # Cmd to assign password
             cmd = "usermod -p '$6$gfz87SfX$XA2N1ZXl79D3Z2C/gtp1d1rba7TenH2XzweeF9oKGIMGzdabzxKF8f9SCsu7m304BoCjal.h/UGMJ4UUKMuF4/' %s" % (wcfg_user)
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Assign Password
-            writelog ("The password 'Gotham20!' have been assign to '%s' user." % (wcfg_user),'bold') 
-            writelog ("We strongly recommend that you change it after installation.",'bold') 
+            #writelog ("The password 'Gotham20!' have been assign to '%s' user." % (wcfg_user),'bold') 
+            #writelog ("We strongly recommend that you change it after installation.",'bold') 
         if wostype == "AIX" :                                           # Under AIX
             cmd = "mkuser pgrp='%s' -s /bin/ksh " % (wcfg_group)        # Build mkuser command
             cmd += " home='%s' " % (os.environ.get('SADMIN'))           # Set Home Directory
@@ -2434,6 +2440,29 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
             writelog (cstderr)                                          # Show Error msg returned
     update_sadmin_cfg(sroot,"SADM_USER",wcfg_user)                      # Update Value in sadmin.cfg
     
+
+    # Accept the sadmin user password
+    sdefault  = ""                                                      # No Default value 
+    sprompt   = "Enter the '%s' user password % (wcfg_user)"            # Prompt for user password
+    wcfg_upwd = accept_field(sroot,"SADM_USER_PASS",sdefault,sprompt,"P") # Accept password.
+    # Set sadmin user password
+    cmd = "echo %s | passwd --stdin %s" % (wcfg_upwd,wcfg_user)         # Set user passwd command
+    ccode, cstdout, cstderr = oscommand(cmd)                            # Set user password
+    if (ccode != 0) :                                                   # If Group Creation went well
+        writelog ("Error setting '%s' user password." % (wcfg_user)) 
+        writelog (cmd)
+        writelog (cstderr)                                              # Show Error msg returned
+        writelog ("Continuing installation.")                           # Show Error msg returned
+    # Set sadmin user to expire (Force to change upon next login).
+    cmd = "passwd --expire %s" % (wcfg_user)                            # Set password to expire
+    ccode, cstdout, cstderr = oscommand(cmd)                            # Go Create User
+    if (ccode != 0) :                                                   # If Group Creation went well
+        writelog ("Error setting '%s' password to expire." % (wcfg_user)) 
+        writelog (cmd)
+        writelog (cstderr)                                              # Show Error msg returned
+        writelog ("Continuing installation.")                           # Show Error msg returned
+    writelog("pwd=%s" % wcfg_user)
+
     # Change owner of all files in $SADMIN
     writelog (" ")
     writelog ("----------")
@@ -2688,7 +2717,7 @@ def mainflow(sroot):
     if (DEBUG) : writelog("O/S is running in %sBits mode." % (sosbits)) # Debug, Show O/S Bits MOde
     if (DEBUG) : writelog("O/S architecture is %s" % (sosarch))         # Debug, Show O/S Arch
 
-    # Go and Ask Setup Question to user 
+     # Go and Ask Setup Question to user 
     # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, sadmin User and Group).
     (userver,uip,udomain,uemail,uuser,ugroup,ussh_port) = setup_sadmin_config_file(sroot,wostype,sosname) 
 
@@ -2758,6 +2787,8 @@ def mainflow(sroot):
 #===================================================================================================
 #
 def main():
+    
+
     global fhlog                                                        # Script Log File Handler
     print ("SADMIN Setup V%s" % (sver))                                 # Print Version Number
     print ("---------------------------------------------------------------------------")
@@ -2771,6 +2802,7 @@ def main():
 
     # Set SADMIN Environment Variable, populate /etc/environment and /etc/profile.d/sadmin.sh
     sroot=set_sadmin_env(sver)                                          # Set SADMIN Var./Return Dir
+
     mainflow(sroot)                                                     # Script Main Flow Function
     sys.exit(0)                                                         # Exit to Operating System
 
