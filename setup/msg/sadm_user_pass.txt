@@ -1,0 +1,7 @@
+# SADM_UPASS Documentation - not written to sadmin.cfg file.
+# Revise 2024_02_13
+# ----------------------------------------------------------------------------
+This is SADMIN main user password.
+    - This will set the user password and will force to change it on first login.
+    - Password is not displayed while your enter it.
+    - Write down this password, you will need it when you use this account.

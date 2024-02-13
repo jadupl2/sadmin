@@ -1,8 +1,7 @@
 # sadmin.cfg SADM_USER Documentation
-# Revise 2024_01_02
+# Revise 2024_02_12
 # ----------------------------------------------------------------------------
 This is SADMIN main user name.
     - This user will have access to all SADMIN directories & files.
     - This user will be part of the SADMIN user group you define previously.
     - The SADMIN default user name is 'sadmin'.
-    

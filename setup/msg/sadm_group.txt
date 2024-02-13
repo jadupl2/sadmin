@@ -1,9 +1,8 @@
 # sadmin.cfg SADM_GROUP Documentation
-# Revise 2023_01_02
+# Revise 2024_02_12
 #----------------------------------------------------------------------------
 This is 'SADMIN' primary user group, it will have access to all SADMIN directories.
     - All files in the $SADMIN directories will be own by this group. 
-    - If other users need to access or scripts located in $SADMIN, they must 
+    - If other users need to access logs or scripts located in $SADMIN, they must 
       be part of this group.
     - The SADMIN default user group is 'sadmin'.
-    

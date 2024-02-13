@@ -10,4 +10,3 @@ in what we call a RCH file ([R]eturn [C]ode [H]istory]) file.
     - The number below is the maximum of lines you want to keep in each RCH file.
     - This help keeping our log to a reasonable size.    
     - The default value is 20 lines (0 = RCH file will not be trimmed)
-    

@@ -1,5 +1,5 @@
 # sadmin.cfg SADM_MAX_LOGLINE Documentation
-# Revise 2024_01_02
+# Revise 2024_02_13
 #----------------------------------------------------------------------------
 Every script (python or shell script) produce a 'log' in ${SADMIN}/log.
     - The name of the 'log' file is "[HOSTNAME]_[NAME_OF_SCRIPT].log".
@@ -7,3 +7,4 @@ Every script (python or shell script) produce a 'log' in ${SADMIN}/log.
     - This number indicate the maximum of lines you want to keep in your log.
     - Log file are trim automatically at the end of script execution.
     - This help keeping our log to a reasonable size.  
+    - The default value is 400 lines (0 = log will not be trimmed)    
