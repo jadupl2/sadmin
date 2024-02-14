@@ -231,7 +231,7 @@ req_client = {
                     'deb':'nfs-common',                     'drepo':'base'},
     'parted'     :{ 'rpm':'parted',                         'rrepo':'base',  
                     'deb':'parted',                         'drepo':'base'},
-    'rear   '    :{ 'rpm':'rear xorriso syslinux syslinux-extlinux grub2-efi-x64-modules', 'rrepo':'base',
+    'rear'       :{ 'rpm':'rear xorriso syslinux syslinux-extlinux grub2-efi-x64-modules', 'rrepo':'base',
                     'deb':'rear xorriso syslinux-utils extlinux'   , 'drepo':'base'},
     'mutt'       :{ 'rpm':'mutt',                           'rrepo':'base',
                     'deb':'mutt',                           'drepo':'base'},
@@ -973,7 +973,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             continue                                                    # Proceed with Next Package
 
         if locate_package(needed_packages,packtype) :                   # If Package is installed
-            writelog ("[ OK ] Package %s already installed.")           # Show User Check Result
+            writelog ("[ OK ] Package %s already installed." % (needed_packages))  # Check Result
             continue                                                    # Proceed with Next Package
 
         if needed_packages == "" :
@@ -2443,10 +2443,11 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
 
     # Accept the sadmin user password
     sdefault  = ""                                                      # No Default value 
-    sprompt   = "Enter the '%s' user password % (wcfg_user)"            # Prompt for user password
+    sprompt   = "Enter the '%s' user password" % (wcfg_user)            # Prompt for user password
     wcfg_upwd = accept_field(sroot,"SADM_USER_PASS",sdefault,sprompt,"P") # Accept password.
     # Set sadmin user password
-    cmd = "echo %s | passwd --stdin %s" % (wcfg_upwd,wcfg_user)         # Set user passwd command
+    cmd = "chpasswd <<< %s:%s" % (wcfg_user:wcfg_upwd) 
+    #cmd = "echo %s | passwd --stdin %s" % (wcfg_upwd,wcfg_user)         # Set user passwd command
     ccode, cstdout, cstderr = oscommand(cmd)                            # Set user password
     if (ccode != 0) :                                                   # If Group Creation went well
         writelog ("Error setting '%s' user password." % (wcfg_user)) 
@@ -2461,7 +2462,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
         writelog (cmd)
         writelog (cstderr)                                              # Show Error msg returned
         writelog ("Continuing installation.")                           # Show Error msg returned
-    writelog("pwd=%s" % wcfg_user)
+    #writelog("pwd=%s" % wcfg_user)
 
     # Change owner of all files in $SADMIN
     writelog (" ")

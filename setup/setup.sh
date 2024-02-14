@@ -404,8 +404,8 @@ install_python3()
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
         then apt-get update >> $SLOG 2>&1
-             printf "\n   - Running 'apt-get -y install python3 python3-venv python3-pip python3-pymysql'"| tee -a $SLOG
-             apt-get -y install python3 python3-venv python3-pip python3-pymysql >>$SLOG 2>&1
+             printf "\n   - Running 'apt -y install python3 python3-venv python3-pip python3-pymysql'"| tee -a $SLOG
+             apt -y install python3 python3-venv python3-pip python3-pymysql >>$SLOG 2>&1
     fi 
     
     # python3 should now be installed, if not then abort installation
@@ -418,6 +418,7 @@ install_python3()
              echo "Then run this script again." | tee -a $SLOG 
              echo "----------" | tee -a $SLOG
              exit 1
+        else echo " [ OK ]" | tee -a $SLOG
     fi
     
     # pip3 should now be installed, if not then abort installation
@@ -438,7 +439,7 @@ install_python3()
 #===================================================================================================
 check_host_command()
 {
-    printf "\nChecking if 'host' command installed" | tee -a $SLOG
+    printf "Checking if 'host' command is installed" | tee -a $SLOG
 
     which host > /dev/null 2>&1                                         # Try getting command path
     if [ $? -eq 0 ]                                                     # If command installed
@@ -578,7 +579,7 @@ check_hostname()
     S_IPADDR=$(ip a s | grep global | head -1 | awk '{ print $2 }' |awk -F/ '{ print $1 }')
     S_DOMAIN=$(domainname -d)
 
-    printf "\nMaking sure '$SADM_HOSTNAME.$S_DOMAIN' is defined in /etc/hosts ... " | tee -a $SLOG
+    printf "Making sure '$SADM_HOSTNAME.$S_DOMAIN' is defined in /etc/hosts ... " | tee -a $SLOG
 
     # Insert Server into /etc/hosts (If not already there)
     grep -Ei "^$S_IPADDR " /etc/hosts | grep -q $SADM_HOSTNAME
