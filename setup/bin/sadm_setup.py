@@ -958,7 +958,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
 
         # Rear Only available on Intel platform Architecture
         if needed_packages == "rear" and sosarch not in rear_supported_architecture :
-            writelog ("[ INFO ] 'ReaR' isn't supported on this platform (%s)" % (sosarch)) 
+            writelog ("[ INFO ] '%s' isn't supported on this platform (%s)" % (needed_packages,sosarch)) 
             continue                                                  # Proceed with Next Package
 
         # lsb_release package is present on all platform.
@@ -973,19 +973,21 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             continue                                                    # Proceed with Next Package
 
         if locate_package(needed_packages,packtype) :                   # If Package is installed
-            writelog ("[ OK ] Package %s already installed." % (needed_packages))  # Check Result
+            writelog ("[ OK ] Package '%s' already installed." % (needed_packages))  # Check Result
             continue                                                    # Proceed with Next Package
 
         if needed_packages == "" :
-            writelog ("[ WARNING ] Not available on %s." % (sosname))
+            writelog ("[ WARNING ] Not available on '%s'." % (sosname))
             continue
 
         # Install Missing Packages - Setup command to install missing package
 #        writelog ("Installing %s ... " % (needed_packages),'nonl')      # Show user what installing
         writelog ("Installing... ",'nonl')                              # Show user what installing
+
         if (packtype == "deb") :                                        # If Package type is '.deb'
             icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
             icmd += "apt -y install %s >>%s 2>&1" % (needed_packages,logfile)
+        
         if (packtype == "rpm") :                                        # If Package type is '.rpm'
             if (needed_repo == "epel") and (sosname != "FEDORA"):       # Repo needed is EPEL
                 writelog (" from EPEL ... ",'nonl')                 
@@ -993,10 +995,6 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             else:
                 icmd = "yum install -y %s >>%s 2>&1" % (needed_packages,logfile)
 
-        #writelog ("-----------------------",'log')
-        #writelog (icmd,'log')
-        #writelog ("-----------------------",'log')
-        
         # To Test if install did work, try to execute command just installed.
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
@@ -2446,7 +2444,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     sprompt   = "Enter the '%s' user password" % (wcfg_user)            # Prompt for user password
     wcfg_upwd = accept_field(sroot,"SADM_USER_PASS",sdefault,sprompt,"P") # Accept password.
     # Set sadmin user password
-    cmd = "chpasswd <<< %s:%s" % (wcfg_user:wcfg_upwd) 
+    cmd = "chpasswd \<\<\< %s:%s" % (wcfg_user,wcfg_upwd) 
     #cmd = "echo %s | passwd --stdin %s" % (wcfg_upwd,wcfg_user)         # Set user passwd command
     ccode, cstdout, cstderr = oscommand(cmd)                            # Set user password
     if (ccode != 0) :                                                   # If Group Creation went well
@@ -2592,7 +2590,7 @@ def run_script(sroot,sname):
     script = "%s/bin/%s" % (sroot,sname)                                # Bld Full Path Script name
     ccode,cstdout,cstderr = oscommand(script)                           # Execute Script
     if (ccode == 0):                                                    # Command Execution Went OK
-        writelog(" Done")                                               # Inform User
+        writelog(" [ OK ]")                                             # Inform User
         run_status = True                                               # Return Value will be True
     else:                                                               # If Problem with the insert
         writelog("Problem running %s" % (script))                       # Infor User
@@ -2660,7 +2658,7 @@ def sadmin_service(sroot):
     writelog (" ")
     writelog ("----------")
     writelog ("Creating SADMIN service unit.")
-    writelog (" ")
+    #writelog (" ")
 
     ifile="%s/cfg/.sadmin.service" % (sroot)                            # Input Source Service file
     ofile="/etc/systemd/system/sadmin.service"                          # Output sadmin service file
@@ -2673,11 +2671,11 @@ def sadmin_service(sroot):
         except:
             writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
             sys.exit(1)                                                 # Exit to O/S with Error
-    writelog ("  - SADMIN service unit created %s." % ofile)            # Advise User
-    writelog (' ')
+    writelog ("   - SADMIN service unit created %s." % ofile)           # Advise User
+    #writelog (' ')
 
     cmd = "systemctl enable sadmin.service"                             # Enable SADMIN Service 
-    writelog ("Enabling SADMIN Service: %s " % (cmd),"nonl")            # Inform User
+    writelog ("   - Enabling SADMIN Service: %s " % (cmd),"nonl")       # Inform User
     ccode,cstdout,cstderr = oscommand(cmd)                              # Enable SADMIN service
     if (ccode != 0):                                                    # Problem Enabling Service
         writelog ("Problem with enabling SADMIN service.")              # Advise User
@@ -2685,7 +2683,7 @@ def sadmin_service(sroot):
         writelog ("Standard out   : %s" % (cstdout))                    # Print command stdout
         writelog ("Standard error : %s" % (cstderr))                    # Print command stderr
     else:
-        writelog (' Done ')
+        writelog (' [ OK ]')
 
 
 

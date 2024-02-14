@@ -486,7 +486,7 @@ check_python3()
     install_python3 
 
     # Check if python3 'pymsql' module is installed 
-    printf "\n   - Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
+    printf "   - Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
@@ -650,8 +650,8 @@ get_sysinfo()
 #===================================================================================================
 
     if [ $(id -u) -ne 0 ]                                               # If Cur. user is not root 
-        then echo "Script can only be run by the 'root' user." | tee -a $SLOG   
-             echo "Process aborted"  | tee -a $SLOG                     # Abort advise message
+        then echo "Script can only be run by the 'root' user." 
+             echo "Process aborted"                                     # Abort advise message
              exit 1                                                     # Exit To O/S
     fi
 
