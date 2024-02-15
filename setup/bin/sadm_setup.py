@@ -2444,7 +2444,8 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     sprompt   = "Enter the '%s' user password" % (wcfg_user)            # Prompt for user password
     wcfg_upwd = accept_field(sroot,"SADM_USER_PASS",sdefault,sprompt,"P") # Accept password.
     # Set sadmin user password
-    cmd = "chpasswd \<\<\< %s:%s" % (wcfg_user,wcfg_upwd) 
+    #cmd = "chpasswd \<\<\< %s:%s" % (wcfg_user,wcfg_upwd) 
+    cmd = "echo %s:%s | chpasswd" % (wcfg_user,wcfg_upwd) 
     #cmd = "echo %s | passwd --stdin %s" % (wcfg_upwd,wcfg_user)         # Set user passwd command
     ccode, cstdout, cstderr = oscommand(cmd)                            # Set user password
     if (ccode != 0) :                                                   # If Group Creation went well
@@ -2657,8 +2658,7 @@ def sadmin_service(sroot):
 
     writelog (" ")
     writelog ("----------")
-    writelog ("Creating SADMIN service unit.")
-    #writelog (" ")
+    writelog ("Creating SADMIN service unit",'bold')
 
     ifile="%s/cfg/.sadmin.service" % (sroot)                            # Input Source Service file
     ofile="/etc/systemd/system/sadmin.service"                          # Output sadmin service file
