@@ -1355,7 +1355,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
                 password_ok = True                                      # Ok Exit the loop
     #
     rw_passwd = wcfg_rw_dbpwd                                           # DBpwd R/W sadmin Password
-    writelog (" Done ")                                                 # Advise User ok to proceed
+    writelog (" [ OK ]")                                                # Advise User ok to proceed
 
 
     # Check if 'squery' user exist in Database, if not create User and Grant permission ------------
@@ -1411,7 +1411,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
                 password_ok = True                                      # Ok Exit the loop
     #
     ro_passwd = wcfg_ro_dbpwd                                           # DBpwd R/W sadmin Password
-    writelog (" Done ")                                                 # Advise User ok to proceed
+    writelog (" [ OK ]")                                                # Advise User ok to proceed
 
 
     # Add current system to server table in MySQL Database
