@@ -1045,12 +1045,20 @@ def user_can_connect(uname,sroot):
 
     # Try to connect to Database Now that we have the user password.
     try :
-        conn=pymysql.connect('localhost',uname,userpwd,'sadmin')        # Attempt connection to DB
-    except pymysql.err.OperationalError as error :                      # Catch Error
+        conn = pymysql.connect( 
+            host='localhost', 
+            user=uname,  
+            password=userpwd, 
+            db='sadmin',
+            cursorclass=pymysql.cursors.DictCursor
+        )
+    except TypeError:                                                   # Catch Error
+        print ("Error connecting to Database 'sadmin'")                 # Advise USer
+        print ("'pymsql.connect' error")
+    except (pymysql.err.OperationalError,TypeError) as error :          # Catch Error
         enum,emsg = error.args                                          # Get Error No. & Message
         print ("Error connecting to Database 'sadmin'")                 # Advise USer
         print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Message
-        return (userpwd)                                                # Return Empty Password
     conn.close()                                                        # Close connection to DB
     return (userpwd)                                                    # Return User Pwd to caller
 
