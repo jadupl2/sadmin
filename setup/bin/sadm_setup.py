@@ -134,6 +134,7 @@
 #@2024_02_12 install v4.03 Execution of 'sadm_startup.sh & sadm_shutdown.sh' controlled by 'sadmin.service'.
 #@2024_02_12 install v4.03 Script 'sadm_service_ctrl.sh' is depreciated (Use 'systemctl').
 #@2024_02_13 install v4.04 Setup will now ask for 'sadmin' user & force to change password on login.
+#@2024_02_15 install v4.05 Various corrections and enhancements.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -153,7 +154,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "4.04"                                            # Setup Version Number
+sver                = "4.05"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -957,8 +958,8 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
         #writelog (pline,'nonl')                                         # Show What is looking for
 
         # Rear Only available on Intel platform Architecture
-        if needed_packages == "rear" and sosarch not in rear_supported_architecture :
-            writelog ("[ INFO ] '%s' isn't supported on this platform (%s)" % (needed_packages,sosarch)) 
+        if needed_packages.split()[0] == 'rear' and sosarch not in rear_supported_architecture :
+            writelog ("[ INFO ] '%s' isn't supported on this platform (%s)." % (needed_packages,sosarch)) 
             continue                                                  # Proceed with Next Package
 
         # lsb_release package is present on all platform.
@@ -966,11 +967,6 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
         if (needed_packages == "lsb_release") : 
             if (sosname in rhel_family and sosver < 9) : 
                 needed_packages = "redhat-lsb-core" 
-
-        # Syslinux Only available on Intel platform Architecture
-        if needed_packages == "syslinux" and sosarch not in syslinux_supported_architecture :
-            writelog ("[ INFO ] 'syslinux' isn't supported on this platform (%s)" % (sosarch)) 
-            continue                                                    # Proceed with Next Package
 
         if locate_package(needed_packages,packtype) :                   # If Package is installed
             writelog ("[ OK ] Package '%s' already installed." % (needed_packages))  # Check Result
@@ -981,8 +977,8 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             continue
 
         # Install Missing Packages - Setup command to install missing package
-#        writelog ("Installing %s ... " % (needed_packages),'nonl')      # Show user what installing
-        writelog ("Installing... " % (needed_packages),'nonl')                              # Show user what installing
+        #writelog ("Installing %s ... " % (needed_packages))      # Show user what installing
+#        writelog ("Installing... " % (needed_packages),'nonl')                              # Show user what installing
 
         if (packtype == "deb") :                                        # If Package type is '.deb'
             icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
@@ -2642,7 +2638,7 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("  - sudo $SADMIN/bin/sadmlib_std_demo.py")
     writelog (" ")
     writelog ("USE THE SADMIN WRAPPER TO RUN YOUR EXISTING SCRIPT",'bold')
-    writelog ("  - \$SADMIN/bin/sadm_wrapper.sh YourScript.sh")
+    writelog ("  - $SADMIN/bin/sadm_wrapper.sh YourScript.sh")
     writelog ("\n===========================================================================")
     writelog ("ENJOY !!",'bold')
 
