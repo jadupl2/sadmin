@@ -982,7 +982,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
 
         # Install Missing Packages - Setup command to install missing package
 #        writelog ("Installing %s ... " % (needed_packages),'nonl')      # Show user what installing
-        writelog ("Installing... ",'nonl')                              # Show user what installing
+        writelog ("Installing... " % (needed_packages),'nonl')                              # Show user what installing
 
         if (packtype == "deb") :                                        # If Package type is '.deb'
             icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
@@ -998,10 +998,10 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
         # To Test if install did work, try to execute command just installed.
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
-            writelog ("[ OK ] Package %s is now installed.")           # Show User Check Result
+            writelog ("[ OK ] Package %s is now installed." % (needed_packages)) # User Check Result
             continue
         else : 
-            writelog("[ WARNING ] Package '%s' not available on %s v%s." % (needed_cmd,sosname,sosver))
+            writelog("[ WARNING ] Package '%s' not available on %s v%s." % (needed_packages,sosname.capitalize(),sosver))
             continue
     return()     
             
@@ -2629,20 +2629,20 @@ def end_message(sroot,sdomain,sserver,stype):
         writelog ("    - If you need to use it, modify the configuration to access the web interface.")
     writelog (" ")
     writelog ("CREATE YOUR OWN SCRIPT USING SADMIN TEMPLATES",'bold')
-    writelog ("  - cp %s/bin/sadm_template_with_db.sh    %s/usr/bin/YourScript.sh" % (sroot,sroot))
-    writelog ("  - cp %s/bin/sadm_template_with_db.py    %s/usr/bin/YourScript.sh" % (sroot,sroot))
-    writelog ("  - cp %s/bin/sadm_template_without_db.sh %s/usr/bin/YourScript.sh" % (sroot,sroot))
-    writelog ("  - cp %s/bin/sadm_template_without_db.py %s/usr/bin/YourScript.sh" % (sroot,sroot))
+    writelog ("  - cp $SADMIN/bin/sadm_template_with_db.sh    $SADMIN/usr/bin/ScriptName.sh")
+    writelog ("  - cp $SADMIN/bin/sadm_template_with_db.py    $SADMIN/usr/bin/ScriptName.sh")
+    writelog ("  - cp $SADMIN/bin/sadm_template_without_db.sh $SADMIN/usr/bin/ScriptName.sh")
+    writelog ("  - cp $SADMIN/bin/sadm_template_without_db.py $SADMIN/usr/bin/ScriptName.sh")
     writelog ("  - Visit the Bash template documentation page at https://sadmin.ca/sadm-template-sh/")
     writelog ("  - Visit the Python template documentation page at https://sadmin.ca/sadm-template-py/")
     writelog ("  - Run any of the templates and see how simple they are.") 
     writelog (" ")
     writelog ("SEE SADMIN LIBRARIES IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :",'bold')
-    writelog ("  - sudo %s/bin/sadmlib_std_demo.sh" % (sroot))
-    writelog ("  - sudo %s/bin/sadmlib_std_demo.py" % (sroot))
+    writelog ("  - sudo $SADMIN/bin/sadmlib_std_demo.sh")
+    writelog ("  - sudo $SADMIN/bin/sadmlib_std_demo.py")
     writelog (" ")
     writelog ("USE THE SADMIN WRAPPER TO RUN YOUR EXISTING SCRIPT",'bold')
-    writelog ("  - %s/bin/sadm_wrapper.sh YourScript.sh" % (sroot))
+    writelog ("  - \$SADMIN/bin/sadm_wrapper.sh YourScript.sh")
     writelog ("\n===========================================================================")
     writelog ("ENJOY !!",'bold')
 
