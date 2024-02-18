@@ -43,6 +43,7 @@
 # 2023_12_21 install v2.1 Fix problem removing $SADMIN directories and update SADMIN section to v1.56.
 # 2023_12_26 install v2.2 Remove sadmin web configuration and sudoers file.
 # 2023_12_29 install v2.3 Add message to user "Removing web site configuration".
+#@2024_02_18 install v2.4 More verbose info for user.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -72,7 +73,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.3'                                      # Script Version
+export SADM_VER='2.4'                                      # Script Version
 export SADM_PDESC="Uninstall SADMIN from the system."      # Script Optional Desc.(Not use if empty)
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -188,7 +189,7 @@ validate_root_access()
 
         SQL="show databases;"
         CMDLINE="$SADM_MYSQL -uroot -p$ROOTPWD -h $SADM_DBHOST"
-        printf "\nVerifying access to Database ... "
+        printf "\nVerifying access to database ... "
         if [ $SADM_DEBUG -gt 0 ] ; then printf "\n$CMDLINE -Ne 'show databases ;'\n" ; fi
         $CMDLINE -Ne 'show databases ;' >/dev/null 2>&1                 # Try SQL see if access work
         if [ $? -ne 0 ]
@@ -209,6 +210,20 @@ validate_root_access()
 #===================================================================================================
 main_process()
 {
+
+    # Show user we are running in Dry Run mode (If user did not specify '-y' on cli).
+    # If '-y' is specified on command line, ask user to confirm that he wish to uninstall SADMIN.
+    if [ $DRYRUN -eq 1 ]                                                # Dry Run Activated
+        then printf "\n${BOLD}${YELLOW}Running in Dry run mode, no changes will be made." 
+             printf "\nUse '-y' to really remove 'SADMIN' from this system.${NORMAL}\n"
+        else if [ "$SADM_HOST_TYPE" = "S" ] ;then STYPE="Server" ;else STYPE="Client" ;fi
+             ask_user "Sure you want to remove 'SADMIN ${STYPE}' on this system"
+             if [ $? -eq 0 ]                                            # don't want to Del SADMIN
+                then sadm_stop 0                                        # Close log,rch - rm tmp&pid
+                     exit $SADM_EXIT_CODE                               # Exit to O/S
+             fi
+    fi 
+
     # Show what type of SADMIN we are removing 
     if [ "$SADM_HOST_TYPE" = "S" ] 
         then printf "\n${BOLD}${CYAN}Uninstalling a SADMIN server.${NORMAL}"
@@ -217,16 +232,17 @@ main_process()
     fi
 
     sservice="httpd"
-    if [ "$SADM_OS_NAME" = "DEBIAN" ] || [ "$SADM_OS_NAME" = "UBUNTU" ] || [ "$SADM_OS_NAME" = "MINT" ] 
-        then sservice = "apache2" 
+    if [ "$SADM_OS_NAME" = "DEBIAN" ] || [ "$SADM_OS_NAME" = "UBUNTU" ] ||  
+       [ "$SADM_OS_NAME" = "MINT" ]   || [ "$SADM_OS_NAME" = "RASPBIAN" ] 
+        then sservice="apache2" 
     fi
 
-    printf "\nStopping web interface '$sservice'." 
-    systemctl stop $sservice
-    printf "\nRemove 'sadmin' web site configuration." 
     # Remove web sever SADMIN
-    if [ "$DRYRUN" -ne 1 ] 
-        then if [ "$sservice" = "httpd" ] 
+    printf "\nStopping web interface '$sservice'." 
+    printf "\nRemove 'sadmin' web site configuration." 
+    if [ "$DRYRUN" -eq 0 ]                                              # 0 = Is Not a dry run 
+        then systemctl stop $sservice >/dev/null 2>&1
+             if [ "$sservice" = "httpd" ] 
                 then f="/etc/httpd/conf.d/sadmin.conf" 
                      if [ -r "$f" ]  ; then rm -f "$f"  ; fi
                 else f="/etc/apache2/sites-available/sadmin.conf"
@@ -235,9 +251,6 @@ main_process()
                      if [ -r "$f" ]  ; then rm -f "$f"  ; fi
              fi
     fi 
-    printf "\nRestarting service'$sservice'." 
-    systemctl restart $sservice
-    
     
     # Remove Backup crontab file in /etc/cron.d
     cfile="/etc/cron.d/sadm_backup" ; 
@@ -369,7 +382,10 @@ main_process()
     fi
 
     if [ "$SADM_HOST_TYPE" = "S" ] 
-        then printf "\n${BOLD}${CYAN}Uninstall of SADMIN server completed.${NORMAL}"
+        then if [ "$DRYRUN" -eq 1 ]
+                then printf "\n${BOLD}${CYAN}Uninstall of SADMIN server would have completed.${NORMAL}"
+                else printf "\n${BOLD}${CYAN}Uninstall of SADMIN server is now completed.${NORMAL}"
+             fi
         else printf "\n${BOLD}${CYAN}Uninstall of SADMIN client completed.${NORMAL}"
     fi
     printf "\n\n"                                                         # Blank line separation
@@ -385,22 +401,22 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
-    while getopts "d:hvy" opt ; do                                       # Loop to process Switch
+    while getopts "d:hvy" opt ; do                                      # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
                if [ "$num" = "" ]                            
-                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
             y) DRYRUN=0                                                 # DeActivate DryRun
-               ;;                                                       # No stop after each page
+               ;;                         
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
@@ -421,20 +437,8 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Won't come back if error
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong   
-
-    if [ $DRYRUN -eq 1 ]                                                # Dry Run Activated
-        then printf "${BOLD}${YELLOW}Dry Run activated"                 # Inform User
-             printf "\nUse '-y' to really remove 'SADMIN' from this system.${NORMAL}\n"
-        else if [ "$SADM_HOST_TYPE" = "S" ] ;then STYPE="Server" ;else STYPE="Client" ;fi
-             ask_user "This will remove 'SADMIN ${STYPE}' from this system, Are you sure"
-             if [ $? -eq 0 ]                                            # don't want to Del SADMIN
-                then sadm_stop 0                                        # Close log,rch - rm tmp&pid
-                     exit $SADM_EXIT_CODE                               # Exit to O/S
-             fi
-    fi 
     main_process                                                        # Main Process
-    
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
-    sadm_stop $SADM_EXIT_CODE                                  # Only in DryMode Else Error
+    sadm_stop $SADM_EXIT_CODE                                           # Only in DryMode Else Error
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
     
