@@ -448,9 +448,9 @@ check_host_command()
         else echo " [ Not installed ]"  
     fi 
 
-    printf "\n    - Installing bind-utils"
     if [ "$SADM_PACKTYPE" = "rpm" ] 
-        then  if [ "$SADM_OSVERSION" -lt 8 ]
+        then printf "   - Installing bind-utils"
+             if [ "$SADM_OSVERSION" -lt 8 ]
                  then printf "\n   - Running 'yum -y install bind-utils'\n" |tee -a $SLOG
                       yum -y install bind-utils >> $SLOG 2>&1
                  else printf "\n   - Running 'dnf -y install bind-utils'\n" |tee -a $SLOG
@@ -458,7 +458,8 @@ check_host_command()
               fi 
     fi 
     if [ "$SADM_PACKTYPE" = "deb" ] 
-        then apt update >> $SLOG 2>&1
+        then printf "   - Installing bind9-host"
+             apt update >> $SLOG 2>&1
              printf "\n   - Running 'apt -y install bind9-host'"| tee -a $SLOG
              apt -y install bind9-host >>$SLOG 2>&1
     fi 
@@ -473,6 +474,7 @@ check_host_command()
              echo "----------" | tee -a $SLOG
              exit 1
     fi
+    return 0
 }
 
 
@@ -687,9 +689,8 @@ EOF
     # If SELinux present and activated, make it temporarily permissive until next reboot
     if [ "$SADM_PACKTYPE" = "rpm" ] ; then check_selinux ; fi
 
-    # Ok Python3 is installed - Proceed with Main Setup Script
-    echo "We will now proceed with main setup program ($SCRIPT)" >> $SLOG 
-    echo "All basic requirements were met with success ..." >> $SLOG
-    echo "---------------------------------------------------------------------------"| tee -a $SLOG
-    echo -e "\n" | tee -a $SLOG 
+    # Proceed with Main Setup Script
+    printf "\nAll basic requirements were met with success ..." 
+    printf "\nWe will now proceed with main setup program ($SCRIPT)" 
+    printf "\n---------------------------------------------------------------------------\n\n\n"
     $SCRIPT 

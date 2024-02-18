@@ -2612,7 +2612,7 @@ def run_script(sroot,sname):
 #===================================================================================================
 #
 def end_message(sroot,sdomain,sserver,stype):
-    writelog ("\n\n\n\n\n")
+    writelog ("\n\n\n")
     writelog ("SADMIN tools successfully installed",'bold')
     writelog ("===========================================================================")
     writelog ("You need to logout & log back in before using SADMIN (or reboot).")
@@ -2622,8 +2622,8 @@ def end_message(sroot,sdomain,sserver,stype):
         writelog (" ")
         writelog ("TAKE A LOOK AT 'SADMIN' WEB INTERFACE.",'bold')
         writelog ("The Web interface is available at : https://sadmin.%s" % (sdomain))
-        writelog ("  - Use it to add, update and delete server in your server farm.")
-        writelog ("  - View performance graph of your servers up to two years in the past.")
+        writelog ("  - Use it to add, update and delete system in your server farm.")
+        writelog ("  - View performance graph of your systems up to two years in the past.")
         writelog ("  - If you want, you can schedule automatic O/S update of your systems.")
         writelog ("  - Have system configuration on hand, useful in case of a disaster recovery.")
         writelog ("  - View your systems subnet utilization and see what IP are free to use.")
