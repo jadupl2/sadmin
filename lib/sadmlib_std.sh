@@ -213,6 +213,7 @@
 # 2023_12_26 lib v4.34 Minor fix, file permission verification.
 # 2023_12_29 lib v4.35 Minor bug fix
 # 2024_01_16 lib v4.36 Modify sadm_start() to advise user when permission don't allow user to write to log.
+#@2024_01_18 lib v4.37 Error given when processing an invalid rch file.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -222,7 +223,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.36"                                              # This Library Version
+export SADM_LIB_VER="4.37"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -2337,9 +2338,12 @@ sadm_stop() {
     fi
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
-    if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]            # Want to Produce RCH File ?
-        then if [ -f "$SADM_RCHLOG" ] 
+    if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]            # User Want update RCH File?
+        then if [ -f "$SADM_RCHLOG" ]                                   # If RCH file exist
                 then XCODE=`tail -1 $SADM_RCHLOG | awk '{ print $NF }'` # Get RCH Code on last line
+                     if [ "$XCODE" -ne 0 ] && [ "$XCODE" -ne 1 ] && [ "$XCODE" -ne 2 ]
+                        then XCODE = 0                                  # If ResultCode Invalid = 0 
+                     fi 
                      if [ "$XCODE" -eq 2 ]                              # If last Line code is 2
                         then XLINE=`wc -l ${SADM_RCHLOG} | awk '{print $1}'` # Count Nb. Line in RCH
                              XCOUNT=`expr $XLINE - 1`                   # Count without last line
