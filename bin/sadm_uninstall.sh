@@ -176,7 +176,10 @@ validate_root_access()
 {
     while :
         do
-        printf "\nEnter MySQL root password (to delete sadmin database or 'q' to Quit) : "
+        if [ $DRYRUN -eq 1 ]                                            # If Dry Run Activated
+            then printf "\nEnter MySQL 'root' password to connect to 'sadmin' database or 'q' to Quit : "
+            else printf "\nEnter MySQL 'root' password (to delete 'sadmin' database or 'q' to Quit) : "
+        fi 
         stty -echo                                                      # Hide Char Input
         read ROOTPWD                                                    # Enter MySQL root Password 
         stty echo                                                       # Show Char Input
@@ -187,13 +190,13 @@ validate_root_access()
                  exit 1 
         fi                                                              
 
-        SQL="show databases;"
-        CMDLINE="$SADM_MYSQL -uroot -p$ROOTPWD -h $SADM_DBHOST"
+        SQL="show databases;"                                           # Sql to execute in Database
+        CMDLINE="$SADM_MYSQL -uroot -p$ROOTPWD -h $SADM_DBHOST"         # Connect String
         printf "\nVerifying access to database ... "
         if [ $SADM_DEBUG -gt 0 ] ; then printf "\n$CMDLINE -Ne 'show databases ;'\n" ; fi
         $CMDLINE -Ne 'show databases ;' >/dev/null 2>&1                 # Try SQL see if access work
         if [ $? -ne 0 ]
-            then printf "\nAccess to database with the password given, don't work."
+            then printf "\nAccess to database with the given password, don't work."
                  printf "\nPlease try again."
                  continue
             else printf "\nDatabase access confirmed ..." 
