@@ -44,6 +44,7 @@
 # 2023_12_26 install v2.2 Remove sadmin web configuration and sudoers file.
 # 2023_12_29 install v2.3 Add message to user "Removing web site configuration".
 #@2024_02_18 install v2.4 More verbose info for user.
+#@2024_02_18 install v2.5 Would not remove $SADMIN/www/dat/rch directory.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -73,7 +74,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.4'                                      # Script Version
+export SADM_VER='2.5'                                      # Script Version
 export SADM_PDESC="Uninstall SADMIN from the system."      # Script Optional Desc.(Not use if empty)
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -241,10 +242,10 @@ main_process()
     fi
 
     # Remove web sever SADMIN
-    printf "\nStopping web interface '$sservice'." 
-    printf "\nRemove 'sadmin' web site configuration." 
     if [ "$DRYRUN" -eq 0 ]                                              # 0 = Is Not a dry run 
-        then systemctl stop $sservice >/dev/null 2>&1
+        then printf "\nStopping web interface '$sservice'."
+             systemctl stop $sservice >/dev/null 2>&1
+             printf "\nRemove 'sadmin' web site configuration." 
              if [ "$sservice" = "httpd" ] 
                 then f="/etc/httpd/conf.d/sadmin.conf" 
                      if [ -r "$f" ]  ; then rm -f "$f"  ; fi
@@ -253,6 +254,8 @@ main_process()
                      f="/etc/apache2/sites-enabled/sadmin.conf"
                      if [ -r "$f" ]  ; then rm -f "$f"  ; fi
              fi
+        else printf "\nWould stop the web interface '$sservice'." 
+             printf "\nWould remove 'sadmin' web site configuration." 
     fi 
     
     # Remove Backup crontab file in /etc/cron.d
@@ -379,6 +382,7 @@ main_process()
    if [ -r "$SADMIN/lib/sadmlib_std.sh" ]                   # SADMIN Shell Library readable ?
         then cd /tmp
              printf "\nRemoving directory structure $SADMIN ..."
+             sadm_stop 0
              if [ "$DRYRUN" -ne 1 ] 
                 then rm -fr "$SADMIN" 
              fi
