@@ -2,7 +2,7 @@
 # Revise 2024_02_13
 #----------------------------------------------------------------------------
 Every script (python or shell script) produce a 'log' in ${SADMIN}/log.
-    - The name of the 'log' file is "[HOSTNAME]_[NAME_OF_SCRIPT].log".
+    - The name of this 'log' is "[HOSTNAME]_[NAME_OF_SCRIPT].log".
     - Log file are cumulative by default, but it can be overridden if you want.
     - This number indicate the maximum of lines you want to keep in your log.
     - Log file are trim automatically at the end of script execution.

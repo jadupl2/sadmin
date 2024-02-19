@@ -1,9 +1,12 @@
 # sadmin.cfg SADM_SMTP_SERVER Documentation
-# Revise 2024_01_02
+# Revise 2024_02_19
 # ----------------------------------------------------------------------------
 Specify the password of the sender email.
-This password will be store on the SADMIN server in $SADMIN/cfg/.gmpw file.
-On SADMIN client it will present in an encrypted format in $SADMIN/cfg/.gmpw64.
+- This password will only be store on the SADMIN server in '$SADMIN/cfg/.gmpw' file.
+- Whenever you change this file, a new encrypted version is created in 
+  '$SADMIN/cfg/.gmpw64' shortly after..
+- On SADMIN clients it will exist in an encrypted format in '$SADMIN/cfg/.gmpw64'
+
 Google Mail: 
   - If your using Gmail, you need to get an application password.
     https://support.google.com/accounts/answer/185833?hl=en&ref_topic=7189145

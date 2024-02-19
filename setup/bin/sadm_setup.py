@@ -994,10 +994,10 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
         # To Test if install did work, try to execute command just installed.
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
-            writelog ("[ OK ] Package %s is now installed." % (needed_packages)) # User Check Result
+            writelog ("[ OK ] Package '%s' is now installed." % (needed_packages)) # User Check Result
             continue
         else : 
-            writelog("[ WARNING ] Package '%s' not available on %s v%s." % (needed_packages,sosname.capitalize(),sosver))
+            writelog("[ WARNING ] Package '%s' is not available on %s v%s." % (needed_packages,sosname.capitalize(),sosver))
             continue
     return()     
             
@@ -1091,7 +1091,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     server    = sserver.split('.')                                      # Split FQDN Server Name
     sname     = server[0]                                               # Only Keep Server Name
     writelog('')
-    writelog("Inserting server '%s' in database ... " % (sname),'bold') # Show adding Server
+    writelog("Inserting '%s' system in database ... " % (sname),'bold') # Show adding Server
     #
     cnow    = datetime.datetime.now()                                   # Get Current Time
     curdate = cnow.strftime("%Y-%m-%d")                                 # Format Current date
@@ -1434,21 +1434,21 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
 
 
     # Make Sure MariaDB is Running -----------------------------------------------------------------
-    writelog ('  ')
-    if (SYSTEMD):                                                       # If Using Systemd
-        cmd = "systemctl restart mariadb.service"                       # Systemd Restart MariaDB
-    else:                                                               # If Using SystemV Init
-        cmd = "/etc/init.d/mysql restart"                               # SystemV Restart MariabDB
-    writelog('----------')                                              # Separation Line
-    writelog ("ReStarting MariaDB Service - %s ..." % (cmd),'nonl')     # Make Sure MariabDB Started
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Restart MariaDB Server
-    if (ccode != 0):                                                    # Problem Starting DB
-        writelog ("Problem Starting MariabDB server... ")               # Advise User
-        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
-        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-    else:
-        writelog (' Done ')
+    #writelog ('  ')
+    #if (SYSTEMD):                                                       # If Using Systemd
+    #    cmd = "systemctl restart mariadb.service"                       # Systemd Restart MariaDB
+    #else:                                                               # If Using SystemV Init
+    #    cmd = "/etc/init.d/mysql restart"                               # SystemV Restart MariabDB
+    #writelog('----------')                                              # Separation Line
+    #writelog ("ReStarting MariaDB Service - %s ..." % (cmd),'nonl')     # Make Sure MariabDB Started
+    #ccode,cstdout,cstderr = oscommand(cmd)                              # Restart MariaDB Server
+    #if (ccode != 0):                                                    # Problem Starting DB
+    #    writelog ("Problem Starting MariabDB server... ")               # Advise User
+    #    writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+    #    writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+    #    writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+    #else:
+    #    writelog (' Done ')
 
 
 #===================================================================================================
@@ -2415,7 +2415,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
         if (DEBUG):                                                     # If Debug Activated
             writelog ("Return code is %d" % (ccode))                    # Show AddGroup Cmd Error #
     else:
-        writelog ("Creating user %s ... " % (wcfg_user),'nonl')       # Create user on system
+        writelog ("Creating user '%s' ... " % (wcfg_user))              # Create user on system
         if wostype == "LINUX" :                                         # Under Linux
             cmd = "useradd -g %s -s /bin/bash " % (wcfg_group)          # Build Add user Command 
             cmd += " -m -d /home/%s "    % (wcfg_user)                  # Assign Home Directory
@@ -2496,7 +2496,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
         
         # Accept the Network Netmask
         sdefault = "24"                                                 # Network Mask Default value 
-        sprompt  = "Enter the Network Netmask [1-30]"                   # Prompt for Answer
+        sprompt  = "Enter the network netmask [1-30]"                   # Prompt for Answer
         wcfg_network1b = accept_field(sroot,"SADM_NETMASK1",sdefault,sprompt,"I",1,30) # NetMask
         update_sadmin_cfg(sroot,"SADM_NETWORK1","%s/%s" % (wcfg_network1a,wcfg_network1b))
     else:
@@ -2616,8 +2616,8 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("SADMIN tools successfully installed",'bold')
     writelog ("===========================================================================")
     writelog ("You need to logout & log back in before using SADMIN (or reboot).")
-    writelog ("Or you can type the command ; '. /etc/profile.d/sadmin.sh', this will ")
-    writelog ("define 'SADMIN' environment variable.")
+    writelog ("Or you can type the command ; '. /etc/profile.d/sadmin.sh', that will ")
+    writelog ("define the 'SADMIN' environment variable.")
     if (stype == "S") :
         writelog (" ")
         writelog ("TAKE A LOOK AT 'SADMIN' WEB INTERFACE.",'bold')
@@ -2639,10 +2639,6 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("  - $ sudo $SADMIN/bin/templates/sadm_template_with_db.py")
     writelog ("  - $ sudo $SADMIN/bin/templates/sadm_template_menus.sh")
     writelog (" ")
-    writelog ("RUN ONE OF THE LIBRARY USAGE DEMO",'bold')
-    writelog ("  - $ sudo $SADMIN/bin/sadmlib_std_demo.sh")
-    writelog ("  - $ sudo $SADMIN/bin/sadmlib_std_demo.py")
-    writelog (" ")
     writelog ("CREATE YOUR OWN SCRIPT USING SADMIN TEMPLATES",'bold')
     writelog ("  - cp $SADMIN/bin/templates/sadm_template.sh $SADMIN/usr/bin/ScriptName.sh")
     writelog ("  - cp $SADMIN/bin/templates/sadm_template.py $SADMIN/usr/bin/ScriptName.py")
@@ -2652,7 +2648,11 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("  - Visit the Python template documentation page at https://sadmin.ca/sadm-template-py/")
     writelog ("  - Run any of the templates and see how simple they are.") 
     writelog (" ")
-    writelog ("USE THE SADMIN WRAPPER TO RUN YOUR EXISTING SCRIPT",'bold')
+    writelog ("RUN ONE OF THE LIBRARY USAGE DEMO",'bold')
+    writelog ("  - $ sudo $SADMIN/bin/sadmlib_std_demo.sh")
+    writelog ("  - $ sudo $SADMIN/bin/sadmlib_std_demo.py")
+    writelog (" ")
+    writelog ("USE THE WRAPPER TO RUN YOUR EXISTING SCRIPT & ENJOY THE BENEFITS.",'bold')
     writelog ("  - $SADMIN/bin/sadm_wrapper.sh /YourPath/YourScript.sh")
     writelog ("\n===========================================================================")
     writelog ("ENJOY !!",'bold')

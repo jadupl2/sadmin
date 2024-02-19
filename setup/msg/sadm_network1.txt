@@ -1,10 +1,9 @@
 # sadmin.cfg SADM_NETWORK1 Documentation
-# Revise 2019_03_07
+# Revise 2024_02_19
 #----------------------------------------------------------------------------
-Every day SADMIN will check the IP utilisation on your network.
+Every day SADMIN will check the IP utilization on your network.
     - Result will be visible on SADMIN network web page.
     - You will be able to tell what IP are in use or not (respond to ping),
       and what DNS name each IP has (if any).
     - This will facilitate, the clean up of your DNS and IP usage.
     - Network should be specify in this form, '192.168.1.0"
-    

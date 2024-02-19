@@ -1,5 +1,5 @@
 # sadmin.cfg SADM_NETMASK1 Documentation
-# Revise 2018_03_15
+# Revise 2023_02_19
 #----------------------------------------------------------------------------
-Specify the Netmask of the network you just specified.
+Specify the netmask of the network you just specified.
     - Netmask should specify the number bits use (1-30) (Default 24)
