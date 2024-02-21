@@ -544,8 +544,8 @@ def load_config_file(cfg_file):
 
     # If configuration file can't be found, copy $SADMIN/.sadm_config to $SADMIN/sadmin.cfg
     # If none of these files can be found then exit to O/S.
-    if  not os.path.exists(cfg_file) :                                  # If Config file not Exist
-        if not os.path.exists(cfg_hidden) :                             # If Std Init Config ! Exist
+    if  not os.path.exists(cfg_file) :                                  # if sadmin.cfg don't Exist
+        if not os.path.exists(cfg_hidden) :                             # if .sadmin.cfg file exist
             print("\nSADMIN Configuration file %s can't be found" % (cfg_file))
             print("Even the template file %s can't be found" % (cfg_hidden))
             print("Copy both files from another system to this server")
@@ -646,7 +646,7 @@ def load_config_file(cfg_file):
         if "SADM_SMTP_SENDER"              in CFG_NAME: sadm_smtp_sender             = CFG_VALUE
     cfg_file_fh.close()
 
-    # Get Database User Password from .dbpass file (Read/Write Acc. 'sadmin' and 'squery' Read Only)
+    # Get Database user password from .dbpass file (Read/Write 'sadmin' and 'squery' Read only)
     if (sadm_host_type == "S"):         
         try:
             dbpass_file_fh = open(dbpass_file,'r')                      # Open DB Password File
@@ -704,19 +704,19 @@ def load_config_file(cfg_file):
 # Set Email Account password from encrypted email account password file.
     sadm_gmpw=""
     try : 
-        if os.path.exists(gmpw_file_b64):
-            with open(gmpw_file_b64) as f:
-                 wpwd = f.readline().strip()
+        if os.path.exists(gmpw_file_b64):                               # If Encrypt pwd file exist
+            with open(gmpw_file_b64) as f:                              # Open file
+                 wpwd = f.readline().strip()                            # Read Pwd encrypted line
                  base64_bytes = wpwd.encode('ascii')
                  data_bytes   = base64.b64decode(base64_bytes)
                  sadm_gmpw    = data_bytes.decode('ascii')
-    except (IOError, FileNotFoundError) as e:                       # Can't open SMTP Pwd file
+    except (IOError, FileNotFoundError) as e:                           # Can't open SMTP Pwd file
         print("Error opening smtp encrypted password file %s" % (gmpw_file_b64)) 
         print("Error Line No. : %d" % (inspect.currentframe().f_back.f_lineno)) # Print LineNo
         print("Function Name  : %s" % (sys._getframe().f_code.co_name)) # Get cur function Name
-        print("Error Number   : %d" % (e.errno))                    # write_log Error Number
-        print("Error Text     : %s" % (e.strerror))                 # write_log Error Message
-        sys.exit(1)    
+        print("Error Number   : %d" % (e.errno))                        # write_log Error Number
+        print("Error Text     : %s" % (e.strerror))                     # write_log Error Message
+        sys.exit(1)   
     return 
 
 
@@ -2450,9 +2450,9 @@ def sendmail(mail_addr, mail_subject, mail_body, mail_attach="") :
     """
 
     data = MIMEMultipart()                                              # instance of MIMEMultipart
-    data['From '] = sadm_smtp_sender                                     # store sender email address  
-    data['To '] = mail_addr                                              # store receiver email 
-    data['Subject '] = mail_subject                                      # storing the subject 
+    data['From '] = sadm_smtp_sender                                    # store sender email address  
+    data['To '] = mail_addr                                             # store receiver email 
+    data['Subject '] = mail_subject                                     # storing the subject 
     data.attach(MIMEText(mail_body, 'plain'))                           # attach body with msg inst
 
     if mail_attach != "" :
@@ -2466,7 +2466,6 @@ def sendmail(mail_addr, mail_subject, mail_body, mail_attach="") :
                 p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
                 data.attach(p)                                          # attach inst p to inst msg
     text = data.as_string()                                             # Conv. Multipart msg 2 str
-
     try : 
         context = ssl.create_default_context()
         with smtplib.SMTP(sadm_smtp_server, sadm_smtp_port) as server:
