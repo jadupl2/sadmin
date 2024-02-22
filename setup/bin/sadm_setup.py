@@ -134,7 +134,7 @@
 #@2024_02_12 install v4.03 Execution of 'sadm_startup.sh & sadm_shutdown.sh' controlled by 'sadmin.service'.
 #@2024_02_12 install v4.03 Script 'sadm_service_ctrl.sh' is depreciated (Use 'systemctl').
 #@2024_02_13 install v4.04 Setup will now ask for 'sadmin' user & force to change password on login.
-#@2024_02_15 install v4.05 Various corrections and enhancements.
+#@2024_02_15 install v4.05 Bug fix on postfix configuration & various corrections and enhancements.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -2134,6 +2134,22 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
 def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,sosname):
 
     if wostype != "LINUX" : return                                      # Configure Only on Linux
+
+    # What is the package type (rpm or debian)
+    if (locate_command('rpm')   != "") : packtype="rpm"                 # Is rpm command on system ? 
+    if (locate_command('dpkg')  != "") : packtype="deb"                 # is deb command on system ?
+
+    # Make sure postfix is installed
+    needed_packages="postfix"
+    if (packtype == "deb") :                                            # If Package type is '.deb'
+        icmd = "DEBIAN_FRONTEND=noninteractive "                        # No Prompt While installing
+        icmd += "apt -y install %s >>%s 2>&1" % (needed_packages,'/dev/null')
+    if (packtype == "rpm") :                                            # If Package type is '.rpm'
+        icmd = "dnf install -y %s >>%s 2>&1" % (needed_packages,'/dev/null')
+    ccode, cstdout, cstderr = oscommand(icmd)
+    if (ccode != 0) : 
+        writelog("[ WARNING ] Package 'postfix' is not available on %s." % sosname.capitalize())
+
     maincf="/etc/postfix/main.cf"                                       # Postfix Config FileName
     if not os.path.isfile(maincf): return                               # Postfix not installed
 
@@ -2142,7 +2158,7 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,s
     #update_postfix_cf(sroot,"myhostname",phostname)
     update_postfix_cf(sroot,"smtp_use_tls","yes")
     update_postfix_cf(sroot,"smtp_sasl_auth_enable","yes")
-    update_postfix_cf(sroot,"smtp_sasl_security_options"," ")
+    update_postfix_cf(sroot,"smtp_sasl_security_options","noanonymous")
     update_postfix_cf(sroot,"smtp_sasl_password_maps","hash:/etc/postfix/sasl_passwd")
  
     relayhost =  "[%s]:%d" % (wsmtp_server,wsmtp_port)  
@@ -2155,15 +2171,15 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,s
     fpw.write (sasl)                                                    # Server:port User:Pwd
     fpw.close()                                                         # Close file
     os.chmod(pfix_pwd, 0o600)
+
     ccode,cstdout,cstderr = oscommand("postmap %s" % (pfix_pwd))
     if (ccode != 0):
         writelog ("Problem running postmap command")
         writelog ("%s - %s" % (cstdout,cstderr)) 
-
-    writelog ("Restarting Postfix")
+    
     ccode,cstdout,cstderr = oscommand("systemctl restart postfix && systemctl enable postfix") 
     if (ccode != 0):
-        writelog ("Problem running postmap command")
+        writelog ("Problem restarting postfix ")
         writelog ("%s - %s" % (cstdout,cstderr)) 
     
     #writelog ("Changing finger information for root")
@@ -2702,7 +2718,7 @@ def sadmin_service(sroot):
 # Main Flow of Setup Script
 #===================================================================================================
 def mainflow(sroot):
-    global fhlog                                                        # Script Log File Handler   
+    global fhlog, packtype                                              # Script Log File Handler   
 
     # Create Script Log, Return Log FileHandle and log fileName
     (fhlog,logfile) = open_logfile(sroot)                               # Return File Handle/LogName
