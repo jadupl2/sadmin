@@ -62,6 +62,7 @@
 # 2023_12_14 lib v4.48 Correct some type in the header
 # 2023_12_19 lib v4.49 New function 'on_sadmin_server()' Return "Y" if on SADMIN server else "N".
 # 2024_01_01 lib v4.50 Correct typo and remove need to use 'psutil' python module.
+#@2024_02_22 LIB V4.51 Don´t remove email password file when on the SADMIN server.
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -95,7 +96,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.50"                                # This Library Version
+lib_ver             = "4.51"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -677,8 +678,8 @@ def load_config_file(cfg_file):
 
 
 # If old unencrypted email account password file exist and on a SADMIN client remove the file.
-    if os.path.isfile(gmpw_file_txt) and sadm_host_type == "S"  :
-       os.remove(gmpw_file_txt)      
+    #if os.path.isfile(gmpw_file_txt) and sadm_host_type == "S"  :
+    #   os.remove(gmpw_file_txt)      
 
 # If old unencrypted email account password file exist and on SADMIN server create an encrypted pwd.
     if os.path.isfile(gmpw_file_txt) and sadm_host_type == "S" :
