@@ -2141,6 +2141,7 @@ def setup_postfix(sroot,wostype,wsmtp_server,wsmtp_port,wsmtp_sender,wsmtp_pwd,s
 
     # Make sure postfix is installed
     needed_packages="postfix"
+    writelog("Installing postfix ...")
     if (packtype == "deb") :                                            # If Package type is '.deb'
         icmd = "DEBIAN_FRONTEND=noninteractive "                        # No Prompt While installing
         icmd += "apt -y install %s >>%s 2>&1" % (needed_packages,'/dev/null')
