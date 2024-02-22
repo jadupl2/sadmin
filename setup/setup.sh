@@ -689,8 +689,8 @@ EOF
     fi 
     
     check_python3                                                       # Check Python3 sadmin req.
-    check_hostname                                                      # Current host in /etc/hosts
     check_host_command                                                  # Check 'host' cmd installed
+    check_hostname                                                      # Current host in /etc/hosts
 
     # If SELinux present and activated, make it temporarily permissive until next reboot
     if [ "$SADM_PACKTYPE" = "rpm" ] ; then check_selinux ; fi
