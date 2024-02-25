@@ -43,8 +43,8 @@
 # 2023_12_21 install v2.1 Fix problem removing $SADMIN directories and update SADMIN section to v1.56.
 # 2023_12_26 install v2.2 Remove sadmin web configuration and sudoers file.
 # 2023_12_29 install v2.3 Add message to user "Removing web site configuration".
-#@2024_02_18 install v2.4 More verbose info for user.
-#@2024_02_18 install v2.5 Would not remove $SADMIN/www/dat/rch directory.
+#@2024_02_18 install v2.4 Adapt to change done in 'Setup' script.
+#@2024_02_18 install v2.5 Was not removing $SADMIN/www directory.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT LE ^C
 #set -x

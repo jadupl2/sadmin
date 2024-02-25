@@ -62,7 +62,7 @@
 # 2023_12_14 lib v4.48 Correct some type in the header
 # 2023_12_19 lib v4.49 New function 'on_sadmin_server()' Return "Y" if on SADMIN server else "N".
 # 2024_01_01 lib v4.50 Correct typo and remove need to use 'psutil' python module.
-#@2024_02_22 LIB V4.51 Don´t remove email password file when on the SADMIN server.
+#@2024_02_22 LIB V4.51 Was removing gmail password file (.gmpw) when on the SADMIN server.
 # --------------------------------------------------------------------------------------------------
 #
 try :

@@ -131,9 +131,9 @@
 # 2023_12_27 install v4.00 If not present, package 'cron' (deb) 'cronie' (rpm) are install.
 # 2024_01_04 install v4.01 Minor fixes.
 # 2024_01_09 install v4.02 If not present, package 'grub2-efi-x64-modules' install (needed for ReaR).
-#@2024_02_12 install v4.03 Execution of 'sadm_startup.sh & sadm_shutdown.sh' controlled by 'sadmin.service'.
+#@2024_02_12 install v4.03 Execution of 'sadm_startup.sh & sadm_shutdown.sh' now controlled by 'sadmin.service'.
 #@2024_02_12 install v4.03 Script 'sadm_service_ctrl.sh' is depreciated (Use 'systemctl').
-#@2024_02_13 install v4.04 Setup will now ask for 'sadmin' user & force to change password on login.
+#@2024_02_13 install v4.04 Setup will now ask for 'sadmin' user password & force to change it on login.
 #@2024_02_15 install v4.05 Bug fix on postfix configuration & various corrections and enhancements.
 # ==================================================================================================
 #
