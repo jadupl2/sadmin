@@ -1,5 +1,25 @@
 # SADMIN Full Changelog
  
+## Release [1.4.12](https://github.com/jadupl2/sadmin/releases) (2024-02-25)
+
+### Install, Uninstall & Update
+  - [sadm_setup.py](https://sadmin.ca/_pages/install/#the-setup-script) 
+	  - v4.03 - Execution of 'sadm_startup.sh & sadm_shutdown.sh' now controlled by 'sadmin.service'.
+	  - v4.03 - Script 'sadm_service_ctrl.sh' is depreciated (Use 'systemctl').
+	  - v4.04 - Setup will now ask for 'sadmin' user password & force to change it on login.
+	  - v4.05 - Bug fix on postfix configuration & various corrections and enhancements.
+  - [sadm_uninstall.sh](https://sadmin.ca/sadm-uninstall) 
+	  - v2.4 - Adapt to change done in 'Setup' script.
+	  - v2.5 - Was not removing $SADMIN/www directory.
+  - [setup.sh](https://sadmin.ca/_pages/install/#the-setup-script) 
+	  - v3.35 - Make sure 'host' command is installed, (needed for hostname resolution).
+	  - v3.36 - Add alternative way to determine the system domain name.
+
+### Libraries, Scripts Templates, Demo
+  - [sadmlib2_std.py](https://sadmin.ca/sadmlib2-std-py) 
+	  - V4.51 - Was removing gmail password file (.gmpw) when on the SADMIN server.
+   
+ 
 ## Release [1.4.10](https://github.com/jadupl2/sadmin/releases) (2024-01-24)
 
 ### Backup related
