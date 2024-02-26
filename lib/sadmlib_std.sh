@@ -213,7 +213,7 @@
 # 2023_12_26 lib v4.34 Minor fix, file permission verification.
 # 2023_12_29 lib v4.35 Minor bug fix
 # 2024_01_16 lib v4.36 Modify sadm_start() to advise user when permission don't allow user to write to log.
-#@2024_01_18 lib v4.37 Error given when processing an invalid rch file.
+# 2024_01_18 lib v4.37 Error given when processing an invalid rch file.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
