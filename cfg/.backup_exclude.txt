@@ -1,35 +1,38 @@
-# V2.2 Initial Standard Backup Exclude List 
+# v3.4 My Template Backup Exclude List - 2024-03-04 13:09
+
+# Don't backup these extensions
 *.iso 
 *.swap
 *.pyc
-*.DS_Store
-*.Trash*
-@eaDir
-#
-./*/tmp/*
-./*/Dropbox/*
-./*/Downloads/*
-./*/.tldr
-./*/.cache
-./*/snap/*
-./*/temp/*
+
+# Don't backup these files or content of these directories
+.*/tmp/*
+.*/.Trash*
+.*/.cache/*
+.*/.DS_Store
+.*/lost+found
+.*/@eaDir
+.*/temp/*
+.*/snap/*
 ./var/cache/*
+./var/tmp/*
 ./var/swap*
 ./var/crash/*
-#
-# Personnal Exclude
+
+# My Home exclusions
+./home/jacques/Dropbox/*
+./home/jacques/.local/share/Trash/*
+./home/jacques/Downloads/*
 ./home/jacques/Pictures/*
 ./home/jacques/Music/*
 ./home/jacques/Videos/*
 ./home/jacques/ventoy/*
+./home/jacques/VirtualBox/*
 ./home/jacques/VirtualBox\ VMs/*
 ./home/jacques/Applications/*
-./home/jacques/VirtualBox/*
-./home/jacques/.vscode/*
 ./home/jacques/.thunderbird
-./opt/sadmin/.git
+./home/jacques/.tldr
+./home/jacques/.vscode/*
 ./batnas/*
-./data/*
 ./vm/*
-./media/*
-
+.*/run/media/*

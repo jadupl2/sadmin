@@ -615,9 +615,9 @@ create_backup()
          sadm_write_log "Unmount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT}"
          umount  ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} > /dev/null 2>&1
          return 1                                                        # Back to caller with error
-    else sadm_write_log "More info in the log ${REAR_CUR_LOG}."
-         sadm_write_log "[ SUCCESS ] Rear Backup completed."
-    fi
+    fi 
+    sadm_write_log "More info in the log ${REAR_CUR_LOG}."
+    sadm_write_log "[ SUCCESS ] Rear Backup completed."
     return 0                                                            # Return Default return code
 }
 
@@ -669,9 +669,8 @@ function cmd_options()
     rear_preparation                                                    # Mount Point Work ?  ...
     if [ $? -eq 0 ]                                                     # If preparation went OK
     then create_backup                                                  # Do the ReaR ISO and Backup
-         SADM_EXIT_CODE=0                                               # If Error Making Backup
-    else SADM_EXIT_CODE=1
-    fi
+         SADM_EXIT_CODE=$?                                              # If Error Making Backup
+    fi 
     #
     if [ $SADM_EXIT_CODE -eq 0 ]                                        # Everything ok so far
     then rear_housekeeping                                              # Remove old backup & umount

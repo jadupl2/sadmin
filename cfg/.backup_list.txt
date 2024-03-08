@@ -1,10 +1,8 @@
-# v2.2 Initial Backup List - template
-# Modify to fit your need
-# Notes: Socket Files are automatically excluded
-# One file or directory per line 
-
-/opt/sadmin
+# v3.4 Backup include list - 2024-03-04 13:10 
+# Backup these directories or files (If they exist) 
 /home 
 /etc 
 /root
 /var
+/opt/sadmin
+/install
