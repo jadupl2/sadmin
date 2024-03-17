@@ -214,6 +214,7 @@
 # 2023_12_29 lib v4.35 Minor bug fix
 # 2024_01_16 lib v4.36 Modify sadm_start() to advise user when permission don't allow user to write to log.
 # 2024_01_18 lib v4.37 Error given when processing an invalid rch file.
+#@2024_03_13 lib v4.38 User assigned to the 'vboxusers' group.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -223,7 +224,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.37"                                              # This Library Version
+export SADM_LIB_VER="4.38"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -273,6 +274,7 @@ export SADM_WWW_TMP_DIR="$SADM_WWW_DIR/tmp"                             # web tm
 export SADM_WWW_PERF_DIR="$SADM_WWW_TMP_DIR/perf"                       # web perf dir
 
 # SADM CONFIG FILES, LOGS AND TEMP FILES USER CAN USE
+export SADM_ETCENV="/etc/environment"                                   # SADMIN define in this file
 export SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.pid"                 # PID file name
 export SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"                         # Cfg file name
 export SADM_ALERT_FILE="$SADM_CFG_DIR/alert_group.cfg"                  # AlertGrp File
@@ -393,6 +395,12 @@ export SADM_SMTP_SERVER="smtp.gmail.com"                                # smtp m
 export SADM_SMTP_PORT=587                                               # smtp port(25,465,587,2525)
 export SADM_SMTP_SENDER="sadmin.gmail.com"                              # Email address of sender 
 export SADM_GMPW=""                                                     # smtp sender gmail passwd
+export SADM_VM_EXPORT_NFS_SERVER=""                                     # NFS Server for VM Export
+export SADM_VM_EXPORT_MOUNT_POINT=""                                    # NFS mount port for Export
+export SADM_VM_EXPORT_TO_KEEP=""                                        # Nb export to keep per VM
+export SADM_VM_EXPORT_INTERVAL=""                                       # Days without export=alert
+export SADM_VM_EXPORT_ALERT="N"                                         # Y/N alert if days exceeded
+export SADM_VM_USER="UserPartOfVBoxUserGroup"                           # User part of vboxusers grp
 
 # To be a valid SADMIN server 'SADM_HOST_TYPE' must be "S" and 'SADM_SERVER' IP must exist on host.
 export SADM_ON_SADMIN_SERVER="N"                                        # Valid SADMIN Server Y/N ?
@@ -1827,7 +1835,7 @@ sadm_server_vg() {
 #            LOAD SADMIN CONFIGURATION FILE AND SET GLOBAL VARIABLES ACCORDINGLY
 # --------------------------------------------------------------------------------------------------
 sadm_load_config_file() {
-    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write_log "sadm_load_config_file" ; fi
+    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write_log "sadm_load_config_file" ; fi
 
     # SADMIN Configuration file '$SADMIN/cfg/sadmin.cfg' MUST be present.
     # If not, then create $SADMIN/cfg/sadmin.cfg from the template '$SADMIN/cfg/.sadmin.cfg'.
@@ -1975,8 +1983,22 @@ sadm_load_config_file() {
                                             ;;
             "SADM_SMTP_SENDER")             SADM_SMTP_SENDER=$VALUE
                                             ;;
+            "SADM_VM_EXPORT_NFS_SERVER" )   SADM_VM_EXPORT_NFS_SERVER=$VALUE
+                                            ;; 
+            "SADM_VM_EXPORT_MOUNT_POINT" )  SADM_VM_EXPORT_MOUNT_POINT=$VALUE
+                                            ;; 
+            "SADM_VM_EXPORT_TO_KEEP" )      SADM_VM_EXPORT_TO_KEEP=$VALUE
+                                            ;;
+            "SADM_VM_EXPORT_INTERVAL" )     SADM_VM_EXPORT_INTERVAL=$VALUE
+                                            ;; 
+            "SADM_VM_EXPORT_ALERT" )        SADM_VM_EXPORT_ALERT=$(sadm_toupper "$VALUE")
+                                            ;; 
+            "SADM_VM_USER" )                SADM_VM_USER=$VALUE
+                                            ;; 
         esac
         done < $SADM_CFG_FILE
+
+
 
 # Get Read/Write and Read/Only Database User Password from pasword file (Only on SADMIN Server)
     SADM_RW_DBPWD=""                                                    # Default Write Pwd is Blank
@@ -2787,19 +2809,20 @@ sadm_on_sadmin_server() {
 # --------------------------------------------------------------------------------------------------
 # Things to do when first called
 # --------------------------------------------------------------------------------------------------
+    SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`                            # Save Startup Date & Time
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
-        then printf "$(date "+%C%y.%m.%d %H:%M:%S") Starting ...\n"     # Show reference point #1
+        then printf "$SADM_STIME Starting ...\n"                        # Show reference point #1
     fi
 
-    export SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`                     # Save Script Startup Time
-    export SADM_ETCENV="/etc/environment"                               # Common env. file needed     
+    # Make sure /etc/environment exist
     if [ ! -r "$SADM_ETCENV" ]                                          # /etc/environment can't read
-        then printf "\n\nFile $SADM_ETCENV is missing & it's needed."   # Inform User 
-             printf "\nCannot continue, aborting"                       # We are aborting
+        then printf "\n\nFile '$SADM_ETCENV' is missing & require."     # Inform User 
+             printf "\nCannot continue, aborting."                       # We are aborting
              printf "\nFor more info: https://sadmin.ca/sadm-section/#environment \n"
              exit 1                                                     # Exit with error
     fi 
 
+    # Make sure 'SADMIN' Home directory declaration exist.
     grep "SADMIN=" $SADM_ETCENV >/dev/null 2>&1                         # Do Env.File include SADMIN
     if [ $? -ne 0 ]                                                     # SADMIN missing in /etc/env
         then echo "SADMIN=$SADMIN" >> /etc/environment                  # Then add it to the file
@@ -2829,3 +2852,4 @@ sadm_on_sadmin_server() {
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
         then printf "$(date "+%C%y.%m.%d %H:%M:%S") Library Loaded ...\n"
     fi
+

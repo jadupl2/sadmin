@@ -40,7 +40,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 # Make Sure Environment Variable 'SADMIN' Is Defined.
 if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
-    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
+    then if [ -r /etc/environment ] ; then source /etc/environment ; fi # LastChance defining SADMIN
          if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
             then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
                  exit 1                                                 # No SADMIN Env. Var. Exit

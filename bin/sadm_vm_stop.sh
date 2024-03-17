@@ -1,10 +1,10 @@
 #! /usr/bin/env bash
 #---------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
-#   Script Name :   sadm_vm_housekeeping.sh
-#   Date        :   2020/07/19
+#   Script Name :   sadm_vm_stop.sh
+#   Date        :   2020/07/18
 #   Requires    :   sh and SADMIN Shell Library
-#   Description :   Daily script to set/reset permission and owner in VirtualBox Virtual Machines.
+#   Description :   Script used to stop one or all the virtualbox vm(s).
 #
 # Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
 #        have and use a 100 characters per line. Comments in script always begin at column 73. 
@@ -29,9 +29,8 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-# 2020_07_22 New: v1.0 Initial Version
-#@2020_08_20 Update: v1.1 Added second /vm2 as a second directory to store Virtual machine.
-#@2020_12_12 Update: v1.2 Add change permission on /vm2 
+# 2020_07_18 New: v1.0 Initial Version
+#@2020_07_23 New: v1.1 First working version
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -63,11 +62,11 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
     export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
 
     # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.2'                               # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writ#set -x
+    export SADM_VER='1.1'                               # Your Current Script Version
+    export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header  [N]=No log Header
-    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer  [N]=No log Footer
+    export SADM_LOG_HEADER="N"                          # [Y]=Include Log Header  [N]=No log Header
+    export SADM_LOG_FOOTER="N"                          # [Y]=Include Log Footer  [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
     export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
@@ -94,36 +93,37 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 
   
+#===================================================================================================
+# Load SADM Virtual Box Library Functions.
+#===================================================================================================
+. ${SADM_LIB_DIR}/sadmlib_vbox.sh                                       # Load VM functions Tool Lib
 
-#===================================================================================================
-# Global Scripts Variables 
-#===================================================================================================
+# Default Command Line option variables
+#export OPT_CONFIRM=true                                                 # No confirmation needed
+#export OPT_VMNAME=""                                                    # Save VM Name 
+#export OPT_BACKUP=false                                                 # List VMs Option
+#export OPT_RUNLIST=false                                                # List Running VMs
+#export OPT_LIST=false                                                   # List VMs Option
+#export OPT_START=false                                                  # Start VM Option  
+#export OPT_STOP=false                                                   # Stop VM Option
+
+
 export VBOX_HOST="lestrade.maison.ca"                                       # VirtualBox Host Server
-export VMUSER="jacques"                                                 # VM Linux User 
-export VMGROUP="sadmin"                                                 # VM Linux Group 
+export VMUSER="jacques"                                                 # User part of vboxusers
 export VMLIST="$SADM_TMP_FILE1"                                         # List of VM in Virtual Box
 export VMRUNLIST="$SADM_TMP_FILE2"                                      # Running VM List
-export VMNAME=""                                                        # VM Name to Backup 
-export VM_INITIAL_STATE=0                                               # 0=OFF 1=ON 
+export VMNAME="NOVM"                                                    # No VM to Stop by Default 
+export CONFIRM="Y"                                                      # Default Ask Confirmation
+export STOP_TIMEOUT=75                                                  # acpipowerbutton wait sec
 
 # Verify that VBoxManage is available on this system, else abort script.
-which VBoxManage >/dev/null 2>&1
-if [ $? -ne 0 ] 
-    then printf "'VBoxManage' is needed and it's not available on this system" 
-         printf "Process aborted"
-         exit 1 
+which VBoxManage >/dev/null 2>&1                                        # VBoxManage on system ?
+if [ $? -ne 0 ]                                                         # If not present on system
+    then printf "\n${RED}'VBoxManage' is needed and it's not available on this system.${NORMAL}\n" 
+         printf "Process aborted.\n\n"                                  # Advise user
+         exit 1                                                         # Exit with Error 
     else export VBOXMANAGE=$(which VBoxManage)                          # Path to $VBOXMANAGE
 fi 
-
-# Load SADM VirtualBox functions 
-. $SADMIN/usr/lib/sadmlib_vbox.sh 
-
-export VBOX_HOST="lestrade.maison.ca"                                       # VirtualBox Host Server
-export NAS_SERVER="batnas.maison.ca"                                    # Backup Server HostName
-export NAS_DIR="/volume1/backup_vm/virtualbox"                          # Backup VM Dir. on NAS 
-export VM_DIR1="/vm"                                                    # Where Real vm Reside
-export VM_DIR2="/vm2"                                                   # Where Real vm Reside
-
 
 
 # --------------------------------------------------------------------------------------------------
@@ -135,9 +135,13 @@ show_usage()
     printf "\n\t-d   (Debug Level [0-9])"
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-v   (Show Script Version Info)"
-    printf "\n\t-s   (VM name to start)"
+    printf "\n\t-n   (Stop the specified VM name)"
+    printf "\n\t-a   (Stop all Power off VM)"
+    printf "\n\t-y   (Don't ask confirmation before starting VMs)"
+    printf "\n\t-l   (List status of all VMs)"
     printf "\n\n" 
 }
+
 
 
 
@@ -146,60 +150,67 @@ show_usage()
 #===================================================================================================
 main_process()
 {
-    ecount=0                                                            # Error Count Reset
-    sadm_write "${SADM_BOLD}${SADM_YELLOW}VirtualBox Virtual Machines Housekeeping${SADM_RESET}\n"
-
-    sadm_write "\n"
-    sadm_write "chown -R ${VMUSER}:${VMGROUP} $VM_DIR1 $VM_DIR2 "
-    chown -R ${VMUSER}:${VMGROUP} $VM_DIR1 $VMDIR2
-    if [ $? -ne 0 ]                                                     # If Error returned
-        then sadm_write "${SADM_ERROR} With last command.\n"            # Advise user of Error
-             ecount=`expr $ecount + 1`                                  # Incr. Error count                                                     # Make sure RC is 1 or 0 
-        else sadm_write "${SADM_OK}\n"                                  # Give Status to user
-    fi
-    if [ -f "${VM_DIR1}/lost+found" ] ; then chown root:root ${VM_DIR1}/lost+found ; fi 
-    if [ -f "${VM_DIR2}/lost+found" ] ; then chown root:root ${VM_DIR2}/lost+found ; fi 
-
-    sadm_write "find /vm -type d -exec chmod 775 {} \; "    
-    find /vm -type d -exec chmod 775 {} \;
-    if [ $? -ne 0 ]                                                     # If Error returned
-        then sadm_write "${SADM_ERROR} With last command.\n"            # Advise user of Error
-             ecount=`expr $ecount + 1`                                  # Incr. Error count                                                     # Make sure RC is 1 or 0 
-        else sadm_write "${SADM_OK}\n"                                  # Give Status to user
-    fi
-
-    sadm_write "find /vm -type f -exec chmod 664 {} \; "
-    find /vm -type f -exec chmod 664 {} \;
-    if [ $? -ne 0 ]                                                     # If Error returned
-        then sadm_write "${SADM_ERROR} With last command.\n"            # Advise user of Error
-             ecount=`expr $ecount + 1`                                  # Incr. Error count                                                     # Make sure RC is 1 or 0 
-        else sadm_write "${SADM_OK}\n"                                  # Give Status to user
-    fi
-
-    sadm_write "find /vm2 -type d -exec chmod 775 {} \; "    
-    find /vm2 -type d -exec chmod 775 {} \;
-    if [ $? -ne 0 ]                                                     # If Error returned
-        then sadm_write "${SADM_ERROR} With last command.\n"            # Advise user of Error
-             ecount=`expr $ecount + 1`                                  # Incr. Error count                                                     # Make sure RC is 1 or 0 
-        else sadm_write "${SADM_OK}\n"                                  # Give Status to user
-    fi
-
-    sadm_write "find /vm2 -type f -exec chmod 664 {} \; "
-    find /vm2 -type f -exec chmod 664 {} \;
-    if [ $? -ne 0 ]                                                     # If Error returned
-        then sadm_write "${SADM_ERROR} With last command.\n"            # Advise user of Error
-             ecount=`expr $ecount + 1`                                  # Incr. Error count                                                     # Make sure RC is 1 or 0 
-        else sadm_write "${SADM_OK}\n"                                  # Give Status to user
-    fi
-
-    sadm_write "\n"
-    if [ "$ecount" -eq 0 ]
-       then sadm_write "Virtual Machine Housekeeping completed successfully.\n"
-            SADM_EXIT_CODE=0
-       else sadm_write "Virtual Machine Encountered completed with $ecount errors.\n"
-            SADM_EXIT_CODE=1
+    # If did not specify cmdline option -a or -n 
+    if [ "$VMNAME" = "NOVM" ]                       
+       then printf "\nPlease use '-a' (All VMs) or '-n' (Name of VM) to indicate the VM to stop.\n"
+            show_usage
+            sadm_stop 1
+            exit 1
     fi 
 
+    # If Specified to stop one VM, check if it's already running.
+    if [ "$VMNAME" != "" ] 
+       then sadm_vm_exist "$VMNAME" 
+            if [ $? -eq 1 ] ; then sadm_write "'$VMNAME' is not a registered VM.\n" ;return 1 ;fi 
+            sadm_vm_running "$VMNAME"
+            if [ $? -eq 1 ] ; then sadm_write "The VM '$VMNAME' is not running.\n" ;return 0 ;fi 
+    fi        
+
+    scount=0 ; ecount=0                                                 # Started, Error Count Reset
+    if [ "$VMNAME" = "" ] 
+       then sadm_write "${SADM_BOLD}${SADM_YELLOW}Will stop ALL Virtual Machine(s).${SADM_RESET}\n"
+       else sadm_write "${SADM_BOLD}${SADM_YELLOW}Will stop '$VMNAME' Virtual Machine.${SADM_RESET}\n"
+    fi
+
+    # Ask Confirmation before Starting VM.
+    if [ "$CONFIRM" = "Y" ]
+       then sadm_ask "Still want to proceed"                            # Wait for user Answer (y/n)
+            if [ "$?" -eq 0 ] ; then return 0 ; fi                      # 0=No, Do not proceed
+    fi 
+
+    # When VMNAME is blank Stop ALL Virtual Machine.
+    # If $VMNAME isn't blank, than it contain the name of the vm to stop.
+    sadm_write "\n" 
+    if [ "$VMNAME" = "" ] 
+       then sadm_write "Producing a list of all running virtual machines.\n" 
+            $VBOXMANAGE list runningvms | awk -F\" '{ print $2 }' | sort > $VMRUNLIST
+            if [ $? -ne 0 ] 
+               then sadm_write "${SADM_ERROR} Running '$VBOXMANAGE list runningvms.\n"
+                    sadm_write "Backup can't be done, process aborted.\n" 
+                    return 1
+            fi 
+            for vm in $(cat $VMRUNLIST) 
+                 do 
+                 sadm_write "\n"                                        # Blank Line between each VM
+                 sadm_vm_stop "$vm"                                     # Stop the VM 
+                 if [ $? -ne 0 ]                                        # If error Stopping VM
+                    then ecount=`expr $ecount + 1`                      # Error Stopping vm count
+                    else scount=`expr $scount + 1`                      # Stopping VM Count
+                 fi 
+                 sleep 2
+                 done
+                 if [ "$ecount" -eq 0 ]
+                    then sadm_write "Stopped $scount vm(s) successfully.\n"
+                         SADM_EXIT_CODE=0
+                    else sadm_write "Encountered $ecount errors and stopped $scount vm(s).\n"
+                         SADM_EXIT_CODE=1
+                 fi 
+       else sadm_vm_stop "$VMNAME" 
+            if [ $? -eq 0 ] ; then SADM_EXIT_CODE=0 ; else SADM_EXIT_CODE=1 ; fi 
+    fi 
+
+    sleep 4
+    sadm_list_vm_status
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
 }
 
@@ -212,7 +223,8 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
-    while getopts "d:hv" opt ; do                                       # Loop to process Switch
+    VMNAME=""                                                           # VM name to Backup 
+    while getopts "d:hvayln:" opt ; do                                  # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
@@ -222,6 +234,16 @@ function cmd_options()
                        exit 1                                           # Exit Script with Error
                fi
                printf "Debug Level set to ${SADM_DEBUG}."               # Display Debug Level
+               ;;                                                       
+            n) VMNAME=$OPTARG                                           # Save VM Name to Stop
+               ;;                                                       
+            a) VMNAME=""                                                # Stop ALL vm
+               ;;                                                       
+            y) CONFIRM="N"                                              # No confirmation needed
+               ;;                                                       
+            l) sadm_list_vm_status                                      # List VM Status
+               sadm_stop 0
+               exit 0
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -247,22 +269,6 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options    
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-
-    # If current user is not 'root', exit to O/S with error code 1 (Optional)
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_write "Script can only be run by the 'root' user, process aborted.\n"
-             sadm_write "Try sudo %s" "${0##*/}\n"                      # Suggest using sudo
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
-    # If we are not on the VirtualBox Server, exit to O/S with error code 1
-    if [ "$(sadm_get_fqdn)" != "$VBOX_HOST" ]                           # Run only VirtualBox Server 
-        then sadm_write "Script can only be run on (${VBOX_HOST}), process aborted.\n"
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID

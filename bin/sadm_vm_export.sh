@@ -46,23 +46,16 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 
 # --------------------------------- VirtualBox Common Section  -------------------------------------
+#
+## Script accept only one parameter, it's the name of the VM you want to export.
+#if [ $# -eq 1 ] 
+#    then export VMNAME=$1                                               # Save VM Name to export
+#    else printf "\n[ ERROR ] You must specify the name of the VM to export.\n\n"
+#         show_usage
+#         exit 1 
+#fi
 
-# Script accept only one parameter, it's the name of the VM you want to export.
-if [ $# -eq 1 ] 
-    then export VMNAME=$1                                               # Save VM Name to export
-    else printf "\n[ ERROR ] You must specify the name of the VM to export.\n\n"
-         show_usage
-         exit 1 
-fi
 
-# Verify that VBoxManage is available on this system, else abort script.
-which VBoxManage >/dev/null 2>&1                                        # VBoxManage on system ?
-if [ $? -ne 0 ]                                                         # If not present on system
-    then printf "\n${RED}'VBoxManage' command is not available on this system.${NORMAL}\n" 
-         printf "Process aborted.\n\n"                                  # Advise user
-         exit 1                                                         # Exit with Error 
-    else export VBOXMANAGE=$(which VBoxManage)                          # Path to $VBOXMANAGE
-fi 
 
 
 
@@ -138,62 +131,35 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
   
 
 #===================================================================================================
-# Global Scripts Variables 
+# Load SADM Virtual Box Library Functions.
 #===================================================================================================
-export VBOX_HOST="lestrade.maison.ca"                                   # VirtualBox Host Server
-export VMUSER="jacques"                                                 # User part of vboxusers
-export VMLIST="$SADM_TMP_FILE1"                                         # List of VM in Virtual Box
-export VMRUNLIST="$SADM_TMP_FILE2"                                      # Running VM List
-export VM_INITIAL_STATE=0                                               # 0=OFF 1=ON 
+. ${SADM_LIB_DIR}/sadmlib_vbox.sh                                       # Load VM functions Tool Lib
+
+export CONFIRM="Y"                                                      # Default Ask Confirmation
+export VMNAME="NOVM"                                                    # No VM to Start Default 
 export STOP_TIMEOUT=120                                                 # acpi power button wait sec
-export STARTUP_TIME=240                                                 # Sec given for Startup App.
+export START_INTERVAL=120                                               # Sleep time between StartVM
+export VM_INITIAL_STATE=0                                               # 0=OFF 1=ON 
+export STARTUP_TIME=90                                                  # Sec given for Startup App.
 #
-if [ ! -v "$SA" ] || [ "$SA" = "" ] ; then export SA="/opt/sa" ; fi     # Default If $SA Not set
-# 
-
-
-# Load SADM VirtualBox Library functions 
-export TOOLS_DIR=$(dirname $(realpath "$0"))                            # Dir. Where VM Scripts are
-source ${TOOLS_DIR}/sadm_vm_lib.sh                                      # Load VM functions Tool Lib
-
-export VBOX_HOST="lestrade.maison.ca"                                       # VirtualBox Host Server
-export NAS_SERVER="batnas.maison.ca"                                    # Export Server HostName
-export NAS_DIR="/volume1/backup_vm/virtualbox_exports"                  # Export VM Dir. on NAS 
-export NFS_DIR="/mnt/nfstmp_$$"                                         # NFS Mount Tmp Dir.
 
 
 
 
 # --------------------------------------------------------------------------------------------------
-# Show Script command line option
+# Show script command line options
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\nUsage: %s%s%s%s [VM_Name]" "${BOLD}" "${CYAN}" $(basename "$0") "${NORMAL}"
+    printf "\nUsage: %s%s%s%s [options] VNNAME" "${BOLD}" "${CYAN}" "$(basename "$0")" "${NORMAL}"
     printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
+    printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
+    printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
+    printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
+    printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
     printf "\n\n" 
 }
 
-
-
-# --------------------------------------------------------------------------------------------------
-# Ping Backup server receive as $1 - If it failed abort script with error.
-# --------------------------------------------------------------------------------------------------
-ping_nas_server()
-{
-    WSERVER=$1
-    sadm_write "ping -c 2 ${WSERVER} " 
-    ping -c 2 -W 2 $WSERVER >/dev/null 2>/dev/null                      # Ping the Server
-    RC=$?                                                               # Save Return Code
-    if [ $RC -ne 0 ] 
-        then sadm_write "${SADM_ERROR} Can't Ping the backup server ${WSERVER}\n"
-             sadm_write "Can't proceed, aborting script.\n"
-             RC=1                                                       # Make sure RC is 1 or 0 
-        else sadm_write "${SADM_OK}\n"
-             RC=0
-    fi
-    return $RC
-}
 
 
 
@@ -203,77 +169,61 @@ ping_nas_server()
 #===================================================================================================
 main_process()
 {
-
-# If current user is not the VM Owner, exit to O/S with error code 1
-    if [ "$(whoami)" != "$VMUSER" ]                                     # If user is not a vbox user 
-        then sadm_write "Script can only be run by '$VMUSER' user, not '$(whoami)', process aborted.\n"
-             show_usage
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
-# If we are not on the VirtualBox Server, exit to O/S with error code 1
-    if [ "$(sadm_get_fqdn)" != "$VBOX_HOST" ]                           # Run only VirtualBox Server 
-        then sadm_write "Script can only be run on (${VBOX_HOST}), process aborted.\n"
-             show_usage
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
-# Check if the VM exist
-    sadm_vm_exist "$VMNAME"                                             # In Lib sadm_vm_lib.sh                                   
-    if [ $? -ne 0 ]                                                     
-       then sadm_write_err "${SADM_ERROR} '$VMNAME' is not a valid registered VM." 
-            return 1                                                    # Return Error to Caller
-    fi        
-
-# Show Export Option chosen by user.
-    TITLE="${SADM_BOLD}${SADM_YELLOW}Export '$VMNAME' Virtual Machine.${SADM_RESET}"
-    sadm_write_log "${TITLE}"                                           # Show Backup Chosen
-
-# NAS Server is available ?
-    ping_nas_server "$NAS_SERVER"                                       # NAS Server Alive ?
-    if [ $? -ne 0 ] ; then return 1 ; fi                                # Return Error to caller
-
-# Save current VM State (Running or Stop), if it's running then shutdown the VM.
-    sadm_vm_running "$VMNAME"                                           # Check if it is running
-    if [ $? -eq 0 ]                                                     # If it's still running
-        then sadm_write_log " "
-             sadm_write_log "The Virtual machine is currently running."
-             VM_STATE="RUNNING"                                         # Save VM Init State Running
-             sadm_vm_stop "$VMNAME"                                     # Then Stop it
-             if [ $? -ne 0 ] ; then return 1 ; fi                       # Error if can't stop it 
-        else sadm_write_log "The Virtual machine is currently power off."
-             VM_STATE="POWEROFF"                                        # Save VM InitState PowerOFF
-    fi 
-
-# Export the VM stopped VM.
+    sadm_write_log "Export '$VMNAME' Virtual Machine."                  # Show Backup Chosen
     sadm_export_vm "$VMNAME"                                            # Then Export VM
     if [ $? -eq 0 ] ; then SADM_EXIT_CODE=0 ; else SADM_EXIT_CODE=1 ; fi 
-    
-
-# If VM was initially running, then power on the VM.
-    if [ "$VM_STATE" = "RUNNING" ]                                      # VM Running before export ?
-        then sadm_vm_start "$VMNAME"                                    # Yes, then Restart the VM
-             if [ $? -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi               # Error Ocurred Set ExitCode
-             sadm_write_log "Sleep $STARTUP_TIME sec. - Give time to become available."
-             sadm_sleep $STARTUP_TIME 30
-    fi             
-    sleep 4                                                             # Time For last VM to Start
-
-# List the status of all VMs
     sadm_list_vm_status                                                 # List Status of ALL VMs
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
 }
 
 
 
+# --------------------------------------------------------------------------------------------------
+# Command line Options functions
+# Evaluate Command Line Switch Options Upfront
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# --------------------------------------------------------------------------------------------------
+function cmd_options()
+{
+    # Script accept only one parameter, it's the name of the VM you want to export.
+    if [ $# -eq 1 ] 
+        then export VMNAME=$1                                           # Save VM Name to export
+        else sadm_write_err "[ ERROR ] You must specify the name of the VM to export."
+             show_usage
+             exit 1 
+    fi
+    
+    while getopts "d:hv" opt ; do                                       # Loop to process Switch
+        case $opt in
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
+               if [ "$num" = "" ]                            
+                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 1                                           # Exit Script with Error
+               fi
+               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               ;;                                                       
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) sadm_show_version                                        # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    return 
+}
+
 
 #===================================================================================================
 # MAIN CODE START HERE
 #===================================================================================================
-
-
+    cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     main_process                                                        # Main Process
