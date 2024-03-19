@@ -246,7 +246,7 @@ sadm_vm_stop()
 #   sadm_vm_exist "$vmName"
 #
 # Description:
-#   Check if Virtual Machine Name is in the list of registered machine.
+#   Check if virtual machine name is a registered machine.
 #   
 # Args: 
 #   vmName(String): Contain the name of the virtual machine to check existence.
@@ -255,7 +255,7 @@ sadm_vm_stop()
 #   Integer: Return '1' If the VM doesn't exist.
 #            Return ´0' If the VM exist.
 # Example: 
-#   sadm_vm_exist "$VM"                                         # Start the specified VM 
+#   sadm_vm_exist "$VM"
 #   if [ $? -ne 0 ] 
 #      then sadm_write_err "[ ERROR ] The '$VM' VM does not exist."
 #      else sadm_write_log "[ OK ] The '$VM' VM does exist."
@@ -265,11 +265,10 @@ sadm_vm_stop()
 sadm_vm_exist()
 {
     VM=$1                                                               # Save Virtual Machine Name
-    if [ "$VMLIB_DEBUG" = "Y" ] ; then sadm_write_log "Check if the Virtual Machine '$VM' exist." ;fi
-    $VBOXMANAGE list vms | awk -F\" '{ print $2 }' > $VMLIST            # Produce List of Running VM
-    grep "^${VM}" $VMLIST > /dev/null 2>&1                              # Is it Part of running VM 
-    if [ $? -ne 0 ]                                                     # NOt it's not
-       then if [ "$VMLIB_DEBUG" = "Y" ]                                    # Under Debug show Result
+    if [ "$VMLIB_DEBUG" = "Y" ] ;then sadm_write_log "Check if the Virtual Machine '$VM' exist." ;fi
+    $VBOXMANAGE list vms | awk -F\" '{ print $2 }' | grep -q "^${VM}"   # Produce List of Running VM
+    if [ $? -ne 0 ]                                                     # Not it's not
+       then if [ "$VMLIB_DEBUG" = "Y" ]                                 # Under Debug show Result
                 then sadm_write_err "[ ERROR ] Virtual Machine '$VM' is not registered."
             fi 
             return 1                                                    # Return doesn't exist = 1
@@ -597,11 +596,33 @@ sadm_backup_vm()
 
 
 
-
+#===================================================================================================
+#"""
+# Synopsys:
+#   sadm_ping "hostname"
+#
+# Description:
+#   Do a ping to hostname received as a paraneter.
+#   
+# Args: 
+#   String:     The hostname to ping.
+#
+# Return: 
+#   Integer: #  1 = Ping failed.
+#               0 = Ping Succeeded.
+#
+# Example: 
+#    sadm_ping "$SADM_VM_EXPORT_NFS_SERVER" 
+#    if [ $? -ne 0 ]                                                     
+#       then sadm_write_err "Ping failed."
+#       else sadm_write_log "Ping succeeded."
+#    fi    
+#
+#"""
 # --------------------------------------------------------------------------------------------------
 # Ping Backup server received as $1 - If it failed Return (1) error to caller
 # --------------------------------------------------------------------------------------------------
-ping_nfs_server()
+sadm_ping()
 {
     WSERVER=$1
     sadm_write "ping -c 2 ${WSERVER} " 
@@ -648,12 +669,12 @@ sadm_export_vm()
     EXPORT_DIR="${MOUNT_POINT}/${VM}"                                   # Actual Export Directory
     EXP_CUR_PWD=`pwd`                                                   # Save Current Working Dir.
 
-# NAS Server is available ?
+    # NFS Server is available ?
     sadm_write_log " "
-    ping_nfs_server "$SADM_VM_EXPORT_NFS_SERVER"                        # NAS Server Alive ?
+    sadm_ping "$SADM_VM_EXPORT_NFS_SERVER"                              # NFS Server Alive ?
     if [ $? -ne 0 ] ; then return 1 ; fi                                # Return Error to caller
 
-# Check if the VM exist
+    # Check if the VM exist
     sadm_vm_exist "$VM"                                                 # Does the VM exist ?                                 
     if [ $? -ne 0 ]                                                     
        then sadm_write_err "${SADM_ERROR} '$VM' is not a valid registered VM." 
@@ -677,11 +698,7 @@ sadm_export_vm()
     VM_DIR=$($VBOXMANAGE showvminfo $VM |grep -i snapshot |awk -F: '{print $2}'|tr -d ' '|xargs dirname |head -1)
     sadm_write_log "The VM '$VM' is currently located in ${VM_DIR} on ${VBOX_HOST}."
 
-# Create export Directory
-#    if [ ! -d "$EXPORT_DIR" ] ; then sudo mkdir ${EXPORT_DIR} ; sudo chmod 777 ${EXPORT_DIR} ; fi
-#    sudo umount ${EXPORT_DIR} > /dev/null 2>&1                          # Make sure it's unmounted 
-    
- # Show User Mount command
+    # Show User Mount command
     SHORT_NFS="${SADM_VM_EXPORT_NFS_SERVER}:${SADM_VM_EXPORT_MOUNT_POINT}"
     sadm_write_log "sudo mount $SHORT_NFS $MOUNT_POINT"
     sudo mount $SHORT_NFS ${MOUNT_POINT} >>$SADM_LOG 2>&1
@@ -692,11 +709,11 @@ sadm_export_vm()
         else sadm_write_log "[ OK ] NFS Mount worked."
     fi
 
-# Make sure the System Export directory exist on the NFS server.
+    # Make sure the System Export directory exist on the NFS server.
     if [ ! -d "${MOUNT_POINT}/${VM}" ] ; then sudo mkdir -p "${MOUNT_POINT}/${VM}"  ; fi
     sudo chmod 777 "${MOUNT_POINT}/${VM}" > /dev/null 2>&1
 
-# Make sure export directory for today exist
+    # Make sure export directory for today exist
     EXPDIR="${MOUNT_POINT}/${VM}/${CUR_DATE}"                           # Export Today Export Dir.
     EXPOVA="${EXPDIR}/${VM}_$(date +%Y_%m_%d_%H_%M_%S).ova"             # Export OVA File Name
     if [ ! -d "$EXPDIR" ]                                               # Today export Dir. Exist?
@@ -713,13 +730,8 @@ sadm_export_vm()
                 else sadm_write_log "[ OK ] 'sudo chmod 6777 $EXPDIR'." 
              fi
     fi    
-    sadm_write_log " "
-
-
-    sadm_write_log "Starting the export of virtual machine '$VM' to ${SADM_VM_EXPORT_NFS_SERVER}."
-    sadm_write_log "Export directory is: '$EXPDIR'." 
-    sadm_write_log "Export OVA file is : '$EXPOVA'."
     
+    # Make sure export directory exist, if not create it.
     if [ ! -d "$EXPDIR" ]                                               # Today export Dir. Exist?
         then sudo mkdir -p "$EXPDIR" 
              sadm_write_log "Output directory ${EXPDIR} created."
@@ -731,6 +743,10 @@ sadm_export_vm()
                 else sadm_write_log "[ OK ] The 'sudo chmod 6777 $EXPDIR' did work." 
              fi
     fi
+    sadm_write_log " "
+    sadm_write_log "Starting the export of virtual machine '$VM' to ${SADM_VM_EXPORT_NFS_SERVER}."
+    sadm_write_log "Export directory is: '$EXPDIR'." 
+    sadm_write_log "Export OVA file is : '$EXPOVA'."
     find "${EXPDIR}" -type d | tee -a $SADM_LOG 
 
     # Export the selected VM
@@ -875,7 +891,7 @@ clean_export_dir()
 # Things to do when first called
 # --------------------------------------------------------------------------------------------------
 
-# If current user is not the VM Owner, exit to O/S with error code 1
+    # If current user is not the VM Owner, exit to O/S with error code 1
     if [ "$(whoami)" != "$SADM_VM_USER" ]                               # If user is not a vbox user 
         then sadm_write_err "Script can only be run by '$SADM_VM_USER' user, not '$(whoami)'."
              sadm_write_err "Process aborted."
@@ -883,8 +899,8 @@ clean_export_dir()
              exit 1                                                     # Exit To O/S
     fi
 
-# Check if $VMHOST_CFG file exist "/opt/sadmin/cfg/vhost_HOSTNAME.cfg". 
-# SADMIN VM Tools can only run on a system that have the $VMHOST_CFG created (Empty file).
+    # Check if $VMHOST_CFG file exist "/opt/sadmin/cfg/vhost_HOSTNAME.cfg". 
+    # SADMIN VM Tools can only run on a system that have the $VMHOST_CFG created (Empty file).
     export VMHOST_CFG="${SADM_CFG_DIR}/vhost_$(hostname -s).cfg"        # Exist on VBox Host Only
     if [ -f "$VMHOST_CFG" ]                                             # Server File exist = VM Use
         then export VBOX_HOST="$(hostname)"                             # Set VirtualBox Host Name
@@ -894,7 +910,7 @@ clean_export_dir()
              exit 1   
     fi 
 
-# Make sure that the VBoxManage is installed on the system.
+    # Make sure that the VBoxManage is installed on the system.
     which VBoxManage >/dev/null 2>&1
     if [ $? -ne 0 ] 
        then sadm_write_err "It's seem that VirtualBox is not installed on this system." 
