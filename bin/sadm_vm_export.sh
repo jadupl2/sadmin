@@ -39,22 +39,10 @@
 #@2023_01_06 vmtools v1.7 fix bug when exporting multiple vm
 #@2023_02_13 vmtools v1.8 Insert $VMNAME in the rch and log file name, instead of all in 1 file.
 #@2023_06_13 vmtools v1.9 Move setting of VMName at the beginning of the script
-#@2023_10_31 vmtools v2.0 Adaptation to use the VMTools configuration file (vmtools.cfg).
+#@2024_03_19 vmtools v2.1 Export the 'VMName' received to NFS server define in 'sadmin.cfg'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
-
-
-# --------------------------------- VirtualBox Common Section  -------------------------------------
-#
-## Script accept only one parameter, it's the name of the VM you want to export.
-#if [ $# -eq 1 ] 
-#    then export VMNAME=$1                                               # Save VM Name to export
-#    else printf "\n[ ERROR ] You must specify the name of the VM to export.\n\n"
-#         show_usage
-#         exit 1 
-#fi
-
 
 
 
@@ -93,7 +81,7 @@ export SADM_HOSTNAME="$VMNAME"                             # VM Name that we are
 # ---
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.10'                                     # Script version number
+export SADM_VER='2.1'                                      # Script version number
 export SADM_PDESC="Export the specified VirtualBox machine."      
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -135,12 +123,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #===================================================================================================
 . ${SADM_LIB_DIR}/sadmlib_vbox.sh                                       # Load VM functions Tool Lib
 
-export CONFIRM="Y"                                                      # Default Ask Confirmation
 export VMNAME="NOVM"                                                    # No VM to Start Default 
-export STOP_TIMEOUT=120                                                 # acpi power button wait sec
-export START_INTERVAL=120                                               # Sleep time between StartVM
-export VM_INITIAL_STATE=0                                               # 0=OFF 1=ON 
-export STARTUP_TIME=90                                                  # Sec given for Startup App.
 #
 
 
