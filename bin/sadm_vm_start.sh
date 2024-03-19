@@ -29,11 +29,12 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-# 2020_07_17 New: v1.0 Initial Version
-#@2020_07_23 Update: v1.1 Remove header, Footer and cleanup code.
-#@2020_09_12 Update: v1.2 Don't start any VM included in the VM Start exclude file.
-#@2020_12_12 Fix: v1.3 Change location of the exclude/include vm files.
-#@2021_01_25 Fix: v1.4 Startup Exclude list was not working 
+# 2020_07_17 vmtools v1.0 Initial Version
+#@2020_07_23 vmtools v1.1 Remove header, Footer and cleanup code.
+#@2020_09_12 vmtools v1.2 Don't start any VM included in the VM Start exclude file.
+#@2020_12_12 vmtools v1.3 Change location of the exclude/include vm files.
+#@2021_01_25 vmtools v1.4 Startup Exclude list was not working 
+#@2024_03_19 vmtools v1.5 New script to start a VirtualBox virtual machine.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -104,25 +105,9 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #===================================================================================================
 . ${SADM_LIB_DIR}/sadmlib_vbox.sh                                       # Load VM functions Tool Lib
 
-#export VMLIST="$SADM_TMP_FILE1"                                         # List of VM in Virtual Box
-#export VMRUNLIST="$SADM_TMP_FILE2"                                      # Running VM List
 export CONFIRM="Y"                                                      # Default Ask Confirmation
 export VMNAME="NOVM"                                                    # No VM to Start Default 
-export STOP_TIMEOUT=120                                                 # acpi power button wait sec
-export START_INTERVAL=120                                               # Sleep time between StartVM
-#
 
-# Default Command Line option variables
-#export OPT_CONFIRM=true                                                 # No confirmation needed
-#export OPT_VMNAME=""                                                    # Save VM Name 
-#export OPT_BACKUP=false                                                 # List VMs Option
-#export OPT_RUNLIST=false                                                # List Running VMs
-#export OPT_LIST=false                                                   # List VMs Option
-#export OPT_START=false                                                  # Start VM Option  
-#export OPT_STOP=false                                                   # Stop VM Option
-#
-#export START_EXCLUDE_FILE="$SA/cfg/sadm_vm_exclude_start_${SADM_HOSTNAME}.txt" # VM Start Excl. File
-#export START_EXCLUDE_INIT="$SA/cfg/.sadm_vm_exclude_start.txt"          # VM Start Exclude Template
 
 
 
@@ -153,41 +138,50 @@ show_usage()
 #===================================================================================================
 main_process()
 {
-    # Make sure that an exclude list file ($START_EXCLUDE_FILE) exist.
-    # If not copy exclude list template ($START_EXCLUDE_INIT) to exclude list.
+    # Make sure that an exclude list file ($START_EXCLUDE_FILE define in sadmlib_vbox.sh)
+    # START_EXCLUDE_FILE="$SADM_CFG_DIR/sadm_vm_exclude_start_${SADM_HOSTNAME}.txt" # VM Start Excl.
+    #
+    # If not, copy exclude template ($START_EXCLUDE_INIT define in sadmlib_vbox.sh) to exclude list.
+    # START_EXCLUDE_INIT="$SADM_CFG_DIR/.sadm_vm_exclude_start.txt"     # VM Start Exclude Template
+    #
     # If none of these files exist, create an empty exclude list file.
     if [ ! -r "$START_EXCLUDE_FILE" ]                                   # Start Exclude list Exist ?
        then if [ -f "$START_EXCLUDE_INIT" ]                             # Start Exclude Template
-               then sadm_write "Create initial VM start exclude file ($START_EXCLUDE_FILE).\n" 
+               then sadm_write_log "VM start exclude file '$START_EXCLUDE_FILE' not found." 
+                    sadm_write_log "Create one from the template file '$START_EXCLUDE_INIT'."
+                    sadm_write_log "cp $START_EXCLUDE_INIT $START_EXCLUDE_FILE"
                     cp $START_EXCLUDE_INIT $START_EXCLUDE_FILE          # Template become Excl. List
-               else sadm_write "Create an empty VM start exclude file.\n"
+               else sadm_write_log "VM start exclude file '$START_EXCLUDE_FILE' not found." 
+                    sadm_write_log "VM start exclude template file '$START_EXCLUDE_INIT' not found." 
+                    sadm_write_log "Create an empty VM start exclude file."
                     touch $START_EXCLUDE_FILE                           # Or Create empty Excl. List
             fi 
     fi 
-    #chmod 664 $START_EXCLUDE_FILE                                       # Set perm, on exclude list
+    chmod 664 $START_EXCLUDE_FILE                                       # Set perm, on exclude list
 
+    # If no VNName is specified (-n), or All VMs is specified (-a).
     if [ "$VMNAME" = "NOVM" ] 
-       then printf "\nPlease use '-a' (All VMs) or '-n' (Name of VM) to indicate the VM to Start.\n"
+       then sadm_write_err "Please use '-a' (All VMs) or '-n' (Name of VM) to specify VM to start."
             show_usage
             sadm_stop 1
             exit 1
     fi 
 
-    # If Specified to start one VM, check if it's already running.
+    # If Specified to start one VM [-n VMName], check if it's already running.
     if [ "$VMNAME" != "" ] 
        then sadm_vm_exist "$VMNAME" 
-            if [ $? -ne 0 ] ; then sadm_write "'$VMNAME' is not a registered VM.\n" ;return 1 ;fi 
+            if [ $? -ne 0 ] ; then sadm_write_err "VM '$VMNAME' is not registered."  ;return 1 ;fi 
             sadm_vm_running "$VMNAME"
-            if [ $? -eq 0 ] ; then sadm_write "VM '$VMNAME' is already running.\n" ;return 0 ;fi 
+            if [ $? -eq 0 ] ; then sadm_write_log "VM '$VMNAME' is already running." ;return 0 ;fi 
     fi        
 
-    scount=0 ; ecount=0                                                 # Started, Error Count Reset
-    if [ "$VMNAME" = "" ] 
-       then sadm_write "${SADM_BOLD}${SADM_YELLOW}Will start ALL Virtual Machine(s).${SADM_RESET}\n"
-       else sadm_write "${SADM_BOLD}${SADM_YELLOW}Will start '$VMNAME' Virtual Machine.${SADM_RESET}\n"
+    # Advide user what we will do if confirm.
+    if [ "$VMNAME" = "" ]                                               # If Starting ALL VMs
+       then sadm_write_log "Will start ALL Virtual Machine(s)."
+       else sadm_write_log "Will start '$VMNAME' Virtual Machine."
     fi
 
-    # Ask Confirmation before Starting VM.
+    # Ask Confirmation before Starting VM, if [-y] was not use.
     if [ "$CONFIRM" = "Y" ]
        then sadm_ask "Still want to proceed"                            # Wait for user Answer (y/n)
             if [ "$?" -eq 0 ] ; then return 0 ; fi                      # 0=No, Do not proceed
@@ -196,58 +190,65 @@ main_process()
     # When VMNAME is blank Start ALL Virtual Machine.
     # If $VMNAME isn't blank, than it contain the name of the vm to start
     #sadm_write "\n" 
-    if [ "$VMNAME" = "" ] 
-       then sadm_writelog "Producing a list of virtual machines." 
-            $VBOXMANAGE list vms | awk -F\" '{ print $2 }' > $VMLIST
-            if [ $? -ne 0 ] 
-               then sadm_write "${SADM_ERROR} Running '$VBOXMANAGE list vms.\n"
-                    sadm_write "Backup can't be done, process aborted.\n" 
+    scount=0 ; ecount=0                                                 # Started & Error Count = 0
+    if [ "$VMNAME" = "" ]                                               # if want to start ALL VM
+       then sadm_writelog "Producing list of virtual machines." 
+            $VBOXMANAGE list vms | awk -F\" '{ print $2 }' > $VMLIST    # Create a VM list.
+            if [ $? -ne 0 ]                                             # If no problem making list
+               then sadm_write_err " "
+                    sadm_write_err "[ ERROR ] Running '$VBOXMANAGE list vms."
+                    sadm_write_err " "
                     return 1
             fi
-            for vm in $(cat $VMLIST) 
-                 do sadm_writelog " "
-                    sadm_writelog "----------"
-                    sadm_writelog "Is $vm in the startup exclude list ($START_EXCLUDE_FILE)."
+            for vm in $(cat $VMLIST)                                    # Process each VMs
+                 do sadm_write_log " "
+                    sadm_write_log "----------"
+                    sadm_write_log "Is '$vm' in the startup exclude list ($START_EXCLUDE_FILE)."
                     grep -qi "^$vm" $START_EXCLUDE_FILE                 # VM in the exclude file ?
                     if [ $? -ne 0 ]                                     # If VM not in exclude list
-                       then sadm_writelog "The VM $vm is not in the exclude list."
+                       then sadm_write_log "The VM $vm is not in the exclude list."
                             sadm_vm_running "$vm"                       # Go Check if VM is running
                             if [ $? -eq 0 ]                             # Yes VM is already running
-                                then sadm_writelog "The VM '$vm' is already running." 
+                                then sadm_write_log "VM '$vm' already running." 
                                      continue                           # Proceed with next VM
                                 else sadm_vm_start "$vm"                # Start the VM 
                                      if [ $? -ne 0 ]                    # If error starting VM
-                                        then ecount=`expr $ecount + 1`  # Error Starting vm count
-                                        else scount=`expr $scount + 1`  # Started VM Count
+                                        then ecount=$(expr $ecount + 1) # Error starting vm count
+                                        else scount=$(expr $scount + 1) # VM started VM Count
                                      fi 
-                                     sadm_writelog "Let's give $START_INTERVAL seconds for the VM to start."
-                                     sadm_sleep $START_INTERVAL 15      # Sleep time between Start
+                                     sadm_write_log "You asked for an interval of $SADM_VM_START_INTERVAL seconds between VM start." 
+                                     sadm_sleep $SADM_VM_START_INTERVAL 15 # Sleep between Start
                             fi
-                       else sadm_writelog "${SADM_WARNING} Skipping '$vm' because it's in the exclude list." 
+                       else sadm_write_log "[ INFO ] Skipping '$vm' because it's in the exclude list." 
                     fi
-                    sadm_writelog " "
+                    sadm_write_log " "
                  done
-                 sadm_write "\n"
-                 if [ "$ecount" -eq 0 ]
-                    then sadm_write "Started $scount vm(s) successfully.\n"
-                         SADM_EXIT_CODE=0
-                    else sadm_write "Encountered $ecount errors and started $scount vm(s).\n"
-                         SADM_EXIT_CODE=1
-                 fi 
-       else sadm_vm_exist "$VMNAME"  
-            if [ $? -eq 0 ] 
-                then sadm_vm_running "$VMNAME" 
-                     if [ $? -ne 0 ] 
-                        then sadm_vm_start "$VMNAME" 
-                             if [ $? -eq 0 ] ; then SADM_EXIT_CODE=0 ; else SADM_EXIT_CODE=1 ; fi 
-                        else SADM_EXIT_CODE=0   
+            sadm_write_log " "
+            if [ "$ecount" -eq 0 ]
+               then sadm_write_log "[ OK ] Started $scount vm(s) successfully."
+                    SADM_EXIT_CODE=0
+               else sadm_write_log "[ ERROR ] Started $scount vm(s) and $ecount error(s) occurred."
+                    SADM_EXIT_CODE=1
+            fi 
+       else sadm_vm_exist "$VMNAME"                                     # Start One VM
+            if [ $? -eq 0 ]                                             # If VM exist ?
+                then sadm_vm_running "$VMNAME"                          # Check if VM Running
+                     if [ $? -ne 0 ]                                    # Yes VM is Running
+                        then sadm_vm_start "$VMNAME"                    # Start the VM
+                             if [ $? -eq 0 ] 
+                                then sadm_write_log "[ OK ] VM '$VMNAME' started successfully."
+                                     SADM_EXIT_CODE=0 
+                                else sadm_write_err "[ ERROR ] Couldn't start the VM '$VMNAME´."
+                                     SADM_EXIT_CODE=1 
+                             fi 
+                        else sadm_write_log "[ OK ] VM '$VMNAME' already running."
+                             SADM_EXIT_CODE=0                           # Started VM
                      fi           
-                else SADM_EXIT_CODE=1
+                else sadm_write_err "[ ERROR ] VM '$VMNAME´ doesn't exist."
+                     SADM_EXIT_CODE=1                                   # Return error to caller
             fi 
     fi 
-
-    sleep 4
-    sadm_list_vm_status
+    sadm_list_vm_status                                                 # List All VMs Status
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
 }
 
@@ -257,6 +258,10 @@ main_process()
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
 # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# [-n VNName] : VMName to Start.
+# [-a]        : Start all VMs.
+# [-y]        : Don't ask confirmation before starting operation.
+# [-l]        : List Status of all VMs.
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
@@ -264,7 +269,7 @@ function cmd_options()
     while getopts "d:hvayln:" opt ; do                                  # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               num=$(echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$) # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
@@ -302,7 +307,6 @@ function cmd_options()
 #===================================================================================================
 # MAIN CODE START HERE
 #===================================================================================================
-
     cmd_options "$@"                                                    # Check command-line Options    
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
