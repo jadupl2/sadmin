@@ -48,26 +48,16 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 # --------------------------------------------------------------------------------------------------
 export VMLIBVER="2.1"                                                   # This Library version
 export VMLIB_DEBUG="N"                                                  # Activate Debug output Y/N
+export VBOX_HOST=""                                                     # Contain VBox HostName
 export VMLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_list1_XXX")"        # List of all VM in VBox
 export VMRUNLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_runlist_XXX")"   # Running VM List
+export VBOXMANAGE=""                                                    # /usr/bin/VBoxManage
 #
-export START_EXCLUDE_FILE="$SA/cfg/sadm_vm_exclude_start_${SADM_HOSTNAME}.txt" # VM Start Excl. File
-export START_EXCLUDE_INIT="$SA/cfg/.sadm_vm_exclude_start.txt"          # VM Start Exclude Template
-export STARTUP_TIME=90                                                  # Sec given for Startup App.
+# SADMIN VM Start Exclude List and Template
+export START_EXCLUDE_FILE="$SADM_CFG_DIR/sadm_vm_exclude_start_${SADM_HOSTNAME}.txt" # VM Start Excl
+export START_EXCLUDE_INIT="$SADM_CFG_DIR/.sadm_vm_exclude_start.txt"    # VM Start Exclude Template
 
-# Default Command Line option variables
-export OPT_CONFIRM=true                                                 # No confirmation needed
-export OPT_VMNAME=""                                                    # Save VM Name 
-export OPT_BACKUP=false                                                 # List VMs Option
-export OPT_RUNLIST=false                                                # List Running VMs
-export OPT_LIST=false                                                   # List VMs Option
-export OPT_START=false                                                  # Start VM Option  
-export OPT_STOP=false                                                   # Stop VM Option
-export VBOXMANAGE=$(which VBoxManage)                                   # Usually /usr/bin/VBoxManage
-export CUR_DATE=$(date "+%C%y_%m_%d")                                   # Date Format 2018_05_27
-
-# Variables already loaded by sadmlib_std.sh.
-# You change them in $sadmin/cfg/sadmin.cfg).
+# Variables already loaded by sadmlib_std.sh - You change them in $sadmin/cfg/sadmin.cfg).
 #SADM_VM_EXPORT_NFS_SERVER    = batnas.maison.ca
 #SADM_VM_EXPORT_MOUNT_POINT   = /volume1/backup_vm/virtualbox_exports
 #SADM_VM_EXPORT_TO_KEEP       = 2
@@ -714,7 +704,7 @@ sadm_export_vm()
     sudo chmod 777 "${MOUNT_POINT}/${VM}" > /dev/null 2>&1
 
     # Make sure export directory for today exist
-    EXPDIR="${MOUNT_POINT}/${VM}/${CUR_DATE}"                           # Export Today Export Dir.
+    EXPDIR="${MOUNT_POINT}/${VM}/$(date "+%C%y_%m_%d")"                 # Export Today Export Dir.
     EXPOVA="${EXPDIR}/${VM}_$(date +%Y_%m_%d_%H_%M_%S).ova"             # Export OVA File Name
     if [ ! -d "$EXPDIR" ]                                               # Today export Dir. Exist?
         then sudo mkdir -p "$EXPDIR" >/dev/null 2>&1
@@ -793,8 +783,6 @@ sadm_export_vm()
     if [ "$INITIAL_STATE" = "RUNNING" ]                                 # VM Running before export ?
         then sadm_vm_start "$VMNAME"                                    # Yes, then Restart the VM
              if [ $? -ne 0 ] ; then return 1 ; fi                       # Error Ocurred Set ExitCode
-             sadm_write_log "Sleep $STARTUP_TIME sec. - Give time to become available."
-             sadm_sleep $STARTUP_TIME 10
     fi             
     sleep 4                                                             # Time For last VM to Start
     return $RC
@@ -893,8 +881,10 @@ clean_export_dir()
 
     # If current user is not the VM Owner, exit to O/S with error code 1
     if [ "$(whoami)" != "$SADM_VM_USER" ]                               # If user is not a vbox user 
-        then sadm_write_err "Script can only be run by '$SADM_VM_USER' user, not '$(whoami)'."
+        then sadm_write_err " "
+             sadm_write_err "Script can only be run by '$SADM_VM_USER' user, not '$(whoami)'."
              sadm_write_err "Process aborted."
+             sadm_write_err " "
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
@@ -904,18 +894,23 @@ clean_export_dir()
     export VMHOST_CFG="${SADM_CFG_DIR}/vhost_$(hostname -s).cfg"        # Exist on VBox Host Only
     if [ -f "$VMHOST_CFG" ]                                             # Server File exist = VM Use
         then export VBOX_HOST="$(hostname)"                             # Set VirtualBox Host Name
-        else sadm_write_err "[ ERROR ] This system is not a valid Virtual Box for SADMIN 'vmtools'." 
+        else sadm_write_err " "
+             sadm_write_err "[ ERROR ] This system is not a valid Virtual Box for SADMIN 'vmtools'." 
              sadm_write_err "- If it is, create an empty file name '$VMHOST_CFG'." 
              sadm_write_err "- Process aborted."                        # Advise user
-             exit 1   
+             sadm_write_err " "
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
     fi 
 
     # Make sure that the VBoxManage is installed on the system.
     which VBoxManage >/dev/null 2>&1
     if [ $? -ne 0 ] 
-       then sadm_write_err "It's seem that VirtualBox is not installed on this system." 
+       then sadm_write_err " "
+            sadm_write_err "It's seem that VirtualBox is not installed on this system." 
             sadm_write_err "Could not locate 'VBoxManage'."
-            sadm_write_err "- Process aborted."                         # Advise user
+            sadm_write_err "- Process aborted."  
+            sadm_write_err " "
             exit 1   
        else export VBOXMANAGE=$(which VBoxManage)                       # Usually /usr/bin/VBoxManage
     fi 
