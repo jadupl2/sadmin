@@ -188,8 +188,7 @@ main_process()
     fi 
 
     # When VMNAME is blank Start ALL Virtual Machine.
-    # If $VMNAME isn't blank, than it contain the name of the vm to start
-    #sadm_write "\n" 
+    # If $VMNAME isn't blank, then it contain the name of the vm to start
     scount=0 ; ecount=0                                                 # Started & Error Count = 0
     if [ "$VMNAME" = "" ]                                               # if want to start ALL VM
        then sadm_writelog "Producing list of virtual machines." 
