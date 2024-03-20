@@ -123,7 +123,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #===================================================================================================
 . ${SADM_LIB_DIR}/sadmlib_vbox.sh                                       # Load VM functions Tool Lib
 
-export VMNAME="NOVM"                                                    # No VM to Start Default 
+export VMNAME="NOVM"                                                    # No VM to Start (Default)
 #
 
 
