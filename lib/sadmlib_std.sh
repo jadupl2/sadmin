@@ -215,6 +215,7 @@
 # 2024_01_16 lib v4.36 Modify sadm_start() to advise user when permission don't allow user to write to log.
 # 2024_01_18 lib v4.37 Error given when processing an invalid rch file.
 #@2024_03_13 lib v4.38 User assigned to the 'vboxusers' group.
+#@2024_03_20 lib v4.39 Load new Global variables for VM from \$SADMIN/cfg/sadmin.cfg
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -224,7 +225,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.38"                                              # This Library Version
+export SADM_LIB_VER="4.39"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -401,6 +402,8 @@ export SADM_VM_EXPORT_TO_KEEP=""                                        # Nb exp
 export SADM_VM_EXPORT_INTERVAL=""                                       # Days without export=alert
 export SADM_VM_EXPORT_ALERT="N"                                         # Y/N alert if days exceeded
 export SADM_VM_USER="UserPartOfVBoxUserGroup"                           # User part of vboxusers grp
+export SADM_VM_STOP_TIMEOUT=120                                         # Seconds given to stop a VM
+export SADM_VM_START_INTERVAL=30                                        # Sec before start of next VM
 
 # To be a valid SADMIN server 'SADM_HOST_TYPE' must be "S" and 'SADM_SERVER' IP must exist on host.
 export SADM_ON_SADMIN_SERVER="N"                                        # Valid SADMIN Server Y/N ?
@@ -1250,7 +1253,7 @@ sadm_get_host_ip() {
     case "$(sadm_get_ostype)" in
         "LINUX")    whost_ip=$(host ${SADM_HOSTNAME} |awk '{ print $4 }' |head -1)
                     ;;
-        "AIX")      whost_ip=`host ${SADM_HOSTNAME}.$(sadm_get_domainname) |head -1 |awk '{ print $3 }'`
+        "AIX")      whost_ip=$(host ${SADM_HOSTNAME}.$(sadm_get_domainname) |head -1 |awk '{ print $3 }')
                     ;;
         "DARWIN")   whost_ip=`host ${SADM_HOSTNAME} |awk '{ print $4 }' |head -1`
                     #whost_ip=`ifconfig |grep inet | grep broadcast | awk '{ print $2 }'`
@@ -1994,6 +1997,10 @@ sadm_load_config_file() {
             "SADM_VM_EXPORT_ALERT" )        SADM_VM_EXPORT_ALERT=$(sadm_toupper "$VALUE")
                                             ;; 
             "SADM_VM_USER" )                SADM_VM_USER=$VALUE
+                                            ;; 
+            "SADM_VM_STOP_TIMEOUT" )        SADM_VM_STOP_TIMEOUT=$VALUE
+                                            ;; 
+            "SADM_VM_START_INTERVAL" )      SADM_VM_START_INTERVAL=$VALUE
                                             ;; 
         esac
         done < $SADM_CFG_FILE
