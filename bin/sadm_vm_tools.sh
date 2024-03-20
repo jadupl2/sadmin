@@ -173,15 +173,15 @@ main_process()
     if [ "$OPT_START" = true ]                                          # CmdLine Start VM
         then if [ "$OPT_CONFIRM" = true ]                               # Did ask for a confirmation
                 then if [ "$OPT_VMNAME" != "" ]                         # If a VM Name Specified
-                        then sadm_ask "Start $OPT_VMNAME Virtual Machine" # Wait user Answer(y/n)
+                        then sadm_ask "Start '$OPT_VMNAME' virtual machine" # Wait user Answer(y/n)
                              if [ "$?" -eq 0 ] ; then return 0 ; fi     # 0=No, Do not proceed
-                        else sadm_ask "Start ALL Virtual Machine"       # Wait for user Answer (y/n)   
+                        else sadm_ask "Start ALL virtual machine"       # Wait for user Answer (y/n)   
                              if [ "$?" -eq 0 ] ; then return 0 ; fi     # 0=No, Do not proceed
                      fi 
              fi 
              if [ "$OPT_VMNAME" != "" ]                                 # If a VM Name Specified
-                then ${SADM_BIN_DIR}/sadm_vm_start.sh -yn $OPT_VMNAME      # Stop the VM Specified
-                else ${SADM_BIN_DIR}/sadm_vm_start.sh -ya                  # Stop All VMs
+                then ${SADM_BIN_DIR}/sadm_vm_start.sh -yn $OPT_VMNAME   # Start the VM Specified
+                else ${SADM_BIN_DIR}/sadm_vm_start.sh -ya               # Start All VMs
              fi
     fi 
 
