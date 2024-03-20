@@ -29,8 +29,9 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-# 2020_07_18 New: v1.0 Initial Version
-#@2020_07_23 New: v1.1 First working version
+# 2020_07_18 vmtools v1.0 Initial Version
+#@2020_07_23 vmtools v1.1 First working version
+#@2024_03_19 vmtools v1.5 New script to stop a VirtualBox virtual machine.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -38,58 +39,62 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 
 
-#===================================================================================================
-# To use the SADMIN tools and libraries, this section MUST be present near the top of your code.
-# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
+# ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
+# v1.56 - Setup for Global Variables and load the SADMIN standard library.
+#       - To use SADMIN tools, this section MUST be present near the top of your code.    
 
-    # MAKE SURE THE ENVIRONMENT 'SADMIN' IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-    if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]          # If SADMIN EnvVar not right
-        then printf "\nPlease set 'SADMIN' environment variable to the install directory."
-             EE="/etc/environment" ; grep "SADMIN=" $EE >/dev/null      # SADMIN in /etc/environment
-             if [ $? -eq 0 ]                                            # Yes it is 
-                then export SADMIN=`grep "SADMIN=" $EE |sed 's/export //g'|awk -F= '{print $2}'`
-                     printf "\n'SADMIN' Environment variable was temporarily set to ${SADMIN}.\n"
-                else exit 1                                             # No SADMIN Env. Var. Exit
-             fi
-    fi 
+# Make Sure Environment Variable 'SADMIN' Is Defined.
+if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
+    then if [ -r /etc/environment ] ; then source /etc/environment ; fi # LastChance defining SADMIN
+         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                                 # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # USE CONTENT OF VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
-    export SADM_PN=${0##*/}                             # Current Script filename(with extension)
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script filename(without extension)
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_HOSTNAME=`hostname -s`                  # Current Host name without Domain Name
-    export SADM_OS_TYPE=`uname -s | tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS 
+# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
+export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
-    # USE AND CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of standard library).
-    export SADM_VER='1.1'                               # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Write goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="N"                          # [Y]=Include Log Header  [N]=No log Header
-    export SADM_LOG_FOOTER="N"                          # [Y]=Include Log Footer  [N]=No log Footer
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
-    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
-    export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
-    export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
-    export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
-    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
+# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='1.5'                                      # Script version number
+export SADM_PDESC=Script to stop a VirtualBox virtual machine.
+export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="N"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="N"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
+export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load Standard Shell Library Functions
-    export SADM_OS_NAME=$(sadm_get_osname)              # O/S in Uppercase,REDHAT,CENTOS,UBUNTU,...
-    export SADM_OS_VERSION=$(sadm_get_osversion)        # O/S Full Version Number  (ex: 7.6.5)
-    export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)  # O/S Major Version Number (ex: 7)
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
-#---------------------------------------------------------------------------------------------------
-# Values of these variables are loaded from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# They can be overridden here, on a per script basis (if needed).
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Always
-    #export SADM_ALERT_GROUP="default"                  # Alert Group to advise (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=500                        # At the end Trim log to 500 Lines(0=NoTrim)
-    #export SADM_MAX_RCLINE=35                          # At the end Trim rch to 35 Lines (0=NoTrim)
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#===================================================================================================
+# VALUES OF VARIABLES BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+#export SADM_MAX_LOGLINE=400                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+# --------------- ---  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+
 
 
   
@@ -98,32 +103,10 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 #===================================================================================================
 . ${SADM_LIB_DIR}/sadmlib_vbox.sh                                       # Load VM functions Tool Lib
 
-# Default Command Line option variables
-#export OPT_CONFIRM=true                                                 # No confirmation needed
-#export OPT_VMNAME=""                                                    # Save VM Name 
-#export OPT_BACKUP=false                                                 # List VMs Option
-#export OPT_RUNLIST=false                                                # List Running VMs
-#export OPT_LIST=false                                                   # List VMs Option
-#export OPT_START=false                                                  # Start VM Option  
-#export OPT_STOP=false                                                   # Stop VM Option
-
-
-export VBOX_HOST="lestrade.maison.ca"                                       # VirtualBox Host Server
-export VMUSER="jacques"                                                 # User part of vboxusers
-export VMLIST="$SADM_TMP_FILE1"                                         # List of VM in Virtual Box
-export VMRUNLIST="$SADM_TMP_FILE2"                                      # Running VM List
 export VMNAME="NOVM"                                                    # No VM to Stop by Default 
-export CONFIRM="Y"                                                      # Default Ask Confirmation
-export STOP_TIMEOUT=75                                                  # acpipowerbutton wait sec
+export CONFIRM="Y"                                                      # Ask Confirmation (Default)
 
-# Verify that VBoxManage is available on this system, else abort script.
-which VBoxManage >/dev/null 2>&1                                        # VBoxManage on system ?
-if [ $? -ne 0 ]                                                         # If not present on system
-    then printf "\n${RED}'VBoxManage' is needed and it's not available on this system.${NORMAL}\n" 
-         printf "Process aborted.\n\n"                                  # Advise user
-         exit 1                                                         # Exit with Error 
-    else export VBOXMANAGE=$(which VBoxManage)                          # Path to $VBOXMANAGE
-fi 
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -152,64 +135,74 @@ main_process()
 {
     # If did not specify cmdline option -a or -n 
     if [ "$VMNAME" = "NOVM" ]                       
-       then printf "\nPlease use '-a' (All VMs) or '-n' (Name of VM) to indicate the VM to stop.\n"
+       then sadm_write_err "[ ERROR ] Use [-a] (All VMs) or [-n VMNAME] to indicate the VM to stop."
             show_usage
             sadm_stop 1
             exit 1
     fi 
 
-    # If Specified to stop one VM, check if it's already running.
-    if [ "$VMNAME" != "" ] 
-       then sadm_vm_exist "$VMNAME" 
-            if [ $? -eq 1 ] ; then sadm_write "'$VMNAME' is not a registered VM.\n" ;return 1 ;fi 
-            sadm_vm_running "$VMNAME"
-            if [ $? -eq 1 ] ; then sadm_write "The VM '$VMNAME' is not running.\n" ;return 0 ;fi 
+    # If specified to stop one VM [-n VMName], check if it's already running.
+    if [ "$VMNAME" != "" ]                                              # Is a VMName specified.
+       then sadm_vm_exist "$VMNAME"                                     # Check if VM exist
+            if [ $? -eq 1 ] 
+                then sadm_write_err "'$VMNAME' is not a registered VM." 
+                     return 1 
+            fi 
+            sadm_vm_running "$VMNAME"                                   # Does the VM Running
+            if [ $? -eq 1 ] 
+                then sadm_write_err "The VM '$VMNAME' is not running." 
+                     return 0 
+            fi 
     fi        
 
-    scount=0 ; ecount=0                                                 # Started, Error Count Reset
     if [ "$VMNAME" = "" ] 
-       then sadm_write "${SADM_BOLD}${SADM_YELLOW}Will stop ALL Virtual Machine(s).${SADM_RESET}\n"
-       else sadm_write "${SADM_BOLD}${SADM_YELLOW}Will stop '$VMNAME' Virtual Machine.${SADM_RESET}\n"
+       then sadm_write_log "Will stop ALL virtual machine(s)."
+       else sadm_write_log "Will stop '$VMNAME' virtual machine."
     fi
 
     # Ask Confirmation before Starting VM.
-    if [ "$CONFIRM" = "Y" ]
+    if [ "$CONFIRM" = "Y" ]                                             # if [-y] cmd line used ?
        then sadm_ask "Still want to proceed"                            # Wait for user Answer (y/n)
             if [ "$?" -eq 0 ] ; then return 0 ; fi                      # 0=No, Do not proceed
     fi 
 
     # When VMNAME is blank Stop ALL Virtual Machine.
-    # If $VMNAME isn't blank, than it contain the name of the vm to stop.
-    sadm_write "\n" 
+    # If $VMNAME isn't blank, then it contain the name of the vm to stop.
+    scount=0 ; ecount=0                                                 # Stop and Error Count
     if [ "$VMNAME" = "" ] 
-       then sadm_write "Producing a list of all running virtual machines.\n" 
+       then sadm_write_log "Producing a list of all running virtual machines." 
             $VBOXMANAGE list runningvms | awk -F\" '{ print $2 }' | sort > $VMRUNLIST
-            if [ $? -ne 0 ] 
-               then sadm_write "${SADM_ERROR} Running '$VBOXMANAGE list runningvms.\n"
-                    sadm_write "Backup can't be done, process aborted.\n" 
+            if [ $? -ne 0 ]                                             # If no problem making list
+               then sadm_write_err " "
+                    sadm_write_err "[ ERROR ] Running '$VBOXMANAGE list vms."
+                    sadm_write_err " "
                     return 1
-            fi 
+            fi
             for vm in $(cat $VMRUNLIST) 
                  do 
-                 sadm_write "\n"                                        # Blank Line between each VM
+                 sadm_write_log " "
+                 sadm_write_log "----------"
                  sadm_vm_stop "$vm"                                     # Stop the VM 
                  if [ $? -ne 0 ]                                        # If error Stopping VM
-                    then ecount=`expr $ecount + 1`                      # Error Stopping vm count
-                    else scount=`expr $scount + 1`                      # Stopping VM Count
+                    then ecount=$(expr $ecount + 1)                     # Error Stopping vm count
+                    else scount=$(expr $scount + 1)                     # Stopping VM Count
                  fi 
-                 sleep 2
                  done
-                 if [ "$ecount" -eq 0 ]
-                    then sadm_write "Stopped $scount vm(s) successfully.\n"
-                         SADM_EXIT_CODE=0
-                    else sadm_write "Encountered $ecount errors and stopped $scount vm(s).\n"
-                         SADM_EXIT_CODE=1
-                 fi 
+            sadm_write_log " "
+            if [ "$ecount" -eq 0 ]
+               then sadm_write_log "[ OK ] Stopped $scount vm(s) successfully."
+                    SADM_EXIT_CODE=0
+               else sadm_write_log "[ ERROR ] Stopped $scount vm(s) and $ecount error(s) occurred."
+                    SADM_EXIT_CODE=1
+            fi 
        else sadm_vm_stop "$VMNAME" 
-            if [ $? -eq 0 ] ; then SADM_EXIT_CODE=0 ; else SADM_EXIT_CODE=1 ; fi 
+            if [ $? -eq 0 ] 
+                then SADM_EXIT_CODE=0 
+                     sadm_write_log "[ OK ] VM '$VMNAME' already poweroff."
+                else SADM_EXIT_CODE=1 
+                     sadm_write_err "[ ERROR ] VM '$VMNAME´ doesn't exist."
+            fi 
     fi 
-
-    sleep 4
     sadm_list_vm_status
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
 }
@@ -227,7 +220,7 @@ function cmd_options()
     while getopts "d:hvayln:" opt ; do                                  # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               num=$(echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$) # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
@@ -265,7 +258,6 @@ function cmd_options()
 #===================================================================================================
 # MAIN CODE START HERE
 #===================================================================================================
-
     cmd_options "$@"                                                    # Check command-line Options    
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
