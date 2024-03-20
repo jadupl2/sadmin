@@ -4,7 +4,7 @@
 #   Script Name :   sadm_vm_export.sh
 #   Date        :   2020/07/19
 #   Requires    :   sh and SADMIN Shell Library
-#   Description :   Script used to export one of the virtualbox vm to NAS Server.
+#   Description :   Script used to export one of the VirtualBox VM to NFS Server.
 #
 # Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
 #        have and use a 100 characters per line. Comments in script always begin at column 73. 
@@ -29,17 +29,8 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-# 2020_07_19 New: v1.0 Initial Version
-#@2020_07_22 Update: v1.1 Change Backup Directory on NAS
-#@2020_07_24 Update: v1.2 Good working version
-#@2020_12_12 Fix: v1.3 Fix location of vm exclude files.
-#@2021_02_13 Update: v1.4 Don't list VM prior to backup, Set $SA if not done.
-#@2021_03_17 Update: v1.5 Add 4 Min. (Sleep) to Start System & App. after starting VM after backup 
-#@2021_03_21 Update: v1.6 Startup wait time code missing when starting 1 vm only.
-#@2023_01_06 vmtools v1.7 fix bug when exporting multiple vm
-#@2023_02_13 vmtools v1.8 Insert $VMNAME in the rch and log file name, instead of all in 1 file.
-#@2023_06_13 vmtools v1.9 Move setting of VMName at the beginning of the script
-#@2024_03_19 vmtools v2.1 Export the 'VMName' received to NFS server define in 'sadmin.cfg'.
+# 2023_07_19 New: v1.0 Initial Version
+#@2024_03_19 vmtools v2.0 Export the 'VMName' received to NFS server define in 'sadmin.cfg'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -82,7 +73,7 @@ export SADM_HOSTNAME="$VMNAME"                             # VM Name that we are
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='2.1'                                      # Script version number
-export SADM_PDESC="Export the specified VirtualBox machine."      
+export SADM_PDESC="Used to export one VirtualBox VM (\$1) to a NFS Server."      
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
@@ -90,7 +81,7 @@ export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og 
 export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
-export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 

@@ -29,9 +29,7 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-# 2020_07_18 vmtools v1.0 Initial Version
-#@2020_07_23 vmtools v1.1 First working version
-#@2024_03_19 vmtools v1.5 New script to stop a VirtualBox virtual machine.
+#@2024_03_19 vmtools v1.5 Script to stop a VirtualBox virtual machine.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -66,7 +64,7 @@ export SADM_PDESC=Script to stop a VirtualBox virtual machine.
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
-export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="N"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="N"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
@@ -89,7 +87,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-#export SADM_MAX_LOGLINE=400                                # Nb Lines to trim(0=NoTrim)
+export SADM_MAX_LOGLINE=150                                 # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
 #export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
 #export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
@@ -114,17 +112,19 @@ export CONFIRM="Y"                                                      # Ask Co
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${SADM_PN} usage :"
-    printf "\n\t-d   (Debug Level [0-9])"
-    printf "\n\t-h   (Display this help message)"
-    printf "\n\t-v   (Show Script Version Info)"
-    printf "\n\t-n   (Stop the specified VM name)"
-    printf "\n\t-a   (Stop all Power off VM)"
-    printf "\n\t-y   (Don't ask confirmation before starting VMs)"
-    printf "\n\t-l   (List status of all VMs)"
+    printf "\nUsage: %s%s%s%s [options]" "${BOLD}" "${CYAN}" "$(basename "$0")" "${NORMAL}"
+    printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
+    printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
+    printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
+    printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
+    printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
+    printf "\n   ${BOLD}${YELLOW}[-n VMName]${NORMAL}\t\t(Stop the specified VM name)"
+    printf "\n   ${BOLD}${YELLOW}[-a]${NORMAL}\t\t\t(Stop all running VM)"
+    printf "\n   ${BOLD}${YELLOW}[-y]${NORMAL}\t\t\t(Don't ask confirmation before starting VMs)"
+    printf "\n   ${BOLD}${YELLOW}[-l]${NORMAL}\t\t\t(List status of all VMs)"
     printf "\n\n" 
 }
-
+ 
 
 
 
@@ -133,7 +133,7 @@ show_usage()
 #===================================================================================================
 main_process()
 {
-    # If did not specify cmdline option -a or -n 
+    # If did not specify cmdline option -a or -n
     if [ "$VMNAME" = "NOVM" ]                       
        then sadm_write_err "[ ERROR ] Use [-a] (All VMs) or [-n VMNAME] to indicate the VM to stop."
             show_usage
@@ -150,7 +150,7 @@ main_process()
             fi 
             sadm_vm_running "$VMNAME"                                   # Does the VM Running
             if [ $? -eq 1 ] 
-                then sadm_write_err "The VM '$VMNAME' is not running." 
+                then sadm_write_err "We didn't stop the VM '$VMNAME' since it's already power off." 
                      return 0 
             fi 
     fi        
