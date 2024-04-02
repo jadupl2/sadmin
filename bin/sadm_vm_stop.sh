@@ -30,6 +30,7 @@
 # Version Change Log 
 #
 #@2024_03_19 vmtools v1.5 Script to stop a VirtualBox virtual machine.
+#@2024_03_20 vmtools v1.6 Type correction missing double quote ('PDESC').
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -59,8 +60,8 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.5'                                      # Script version number
-export SADM_PDESC=Script to stop a VirtualBox virtual machine.
+export SADM_VER='1.6'                                      # Script version number
+export SADM_PDESC="Script to stop a VirtualBox virtual machine."
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
