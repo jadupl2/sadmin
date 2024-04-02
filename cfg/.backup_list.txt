@@ -1,8 +1,13 @@
-# v3.4 Backup include list - 2024-03-04 13:10 
+# v3.5 Suggested backup template list - 2024-04-02 13:00 
 # Backup these directories or files (If they exist) 
+#--------------------------------------------------
+#
+# Suggestion to include in backup 
 /home 
 /etc 
 /root
 /var
+#
+# Personnal backup include
 /opt/sadmin
 /install
