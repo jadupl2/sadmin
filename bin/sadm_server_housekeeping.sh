@@ -40,6 +40,7 @@
 # 2023_09_17 server v2.14 Add removal of file older than 1 day in $SADMIN/www/tmp directory.
 # 2023_12_20 server v2.15 If Daily report line still in sadm_server crontab, remove it (depreciated).
 # 2023_12_24 server v2.16 Code optimization and minor bug fix.
+# 2024_04_02 server v2.17 Change 'sadm_write' to 'sadm_write_log'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -68,7 +69,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.16'                                     # Script version number
+export SADM_VER='2.17'                                     # Script version number
 export SADM_PDESC="Set owner in www directories and remove old files in /www/tmp & www/tmp/perf dir."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -192,18 +193,18 @@ alert_housekeeping()
 # --------------------------------------------------------------------------------------------------
 dir_housekeeping()
 {
-    sadm_write "\n"
-    sadm_write "Server Directories HouseKeeping.\n"
+    sadm_write_log ""
+    sadm_write_log "Server Directories HouseKeeping."
     if [ ! -d "$SADM_WWW_DIR" ] ; then return $ERROR_COUNT ; fi 
 
     # Reset privilege on WWW Directory files
     CMD="find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \;"
     find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
-       then sadm_write_err "[ ERROR ] running ${CMD}\n"
+       then sadm_write_err "[ ERROR ] running ${CMD}"
             ((ERROR_COUNT++))
-       else sadm_write "${SADM_OK} ${CMD}\n"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
+       else sadm_write_log "[ OK ] ${CMD}"
+            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
     fi
 
     CMD="find $SADM_WWW_DIR -type f -exec chown ${SADM_WWW_USER}:${SADM_GROUP} {} \; "
@@ -211,8 +212,8 @@ dir_housekeeping()
     if [ $? -ne 0 ]
        then sadm_write_err "[ ERROR ] running ${CMD}"
             ((ERROR_COUNT++))
-       else sadm_write "${SADM_OK} ${CMD}\n"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
+       else sadm_write_log "[ OK ] ${CMD}"
+            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
     fi
 
     CMD="find $SADM_WWW_DAT_DIR -type f -exec chmod 0664 {}\; "
@@ -220,11 +221,11 @@ dir_housekeeping()
     if [ $? -ne 0 ]
        then sadm_write_err "[ ERROR ] running ${CMD}"
             ((ERROR_COUNT++))
-       else sadm_write "${SADM_OK} ${CMD}\n"
-            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at $ERROR_COUNT \n" ;fi
+       else sadm_write_log "[ OK ] ${CMD}"
+            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
     fi
     
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}.\n" ;fi
+    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
     return $ERROR_COUNT
 }
 
