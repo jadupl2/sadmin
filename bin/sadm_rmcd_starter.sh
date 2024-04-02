@@ -20,8 +20,8 @@
 #
 #
 # Example of line to put in crontab (/etc/crond/sadm_vm) to start remote backup of a VM
-# SADMIN=/sadmin
-# BSCRIPT=/opt/sa/bin/virtualbox/sadm_vm_backup.sh
+# SADMIN=/opt/sadmin
+# BSCRIPT=$SADMIN/bin/sadm_vm_backup.sh
 #
 # 0 14 6,21 * * root $SADMIN/bin/sadm_rmcd_starter.sh -lu 'jacques' -n borg -s "$BSCRIPT -yn rhel8"
 #
@@ -52,6 +52,7 @@
 # 2022_12_13 cmdline v1.8 Intermittent crash cause by a typo error.
 # 2023_05_06 cmdline v1.9 Reduce ping wait time to speed up processing.
 # 2023_11_05 cmdline v2.0 Add option to ssh command '-o ConnectTimeout=10 -o BatchMode=yes'.
+#@2024_04_02 cmdline v2.1 Same of remote system is now added, so we can see where script is run .
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -79,8 +80,18 @@ export SADM_HOSTNAME=$(hostname -s)                        # Host name without D
 export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
+
+# ---
+# SPECIAL DEROGATION TO INSERT THE NAME OF SYSTEM WE START THE SCRIPT TO UPDATE OF LOG AND RCH FILE.
+export SADM_EXT=$(echo "$SADM_PN" | cut -d'.' -f2)         # Save Script extension (sh, py, php,.)
+export SADM_INST="${SADM_INST}_${SYSTEM_NAME}"             # Insert VMName to export in rch & log
+export SADM_HOSTNAME="$SYSTEM_NAME"                        # SystemName that we are going to update
+export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with extension)
+# ---
+
+
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.0'                                      # Current Script Version
+export SADM_VER='2.1'                                      # Current Script Version
 export SADM_PDESC="Execute an existing script on a remote system." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -230,7 +241,7 @@ rmcd_start()
         sadm_write_log "${BOLD}Starting '$SCRIPT' on '${server_name}'.${NORMAL}"
         #ssh -o ConnectTimeout=10 -o BatchMode=yes raspi5 ; echo $?
 
-        sadm_write_log "$SADM_SSH -p -qnp $server_ssh_port -o ConnectTimeout=10 -o BatchMode=yes ${SUSER}\@${fqdn_server} '${SCRIPT}'"
+        sadm_write_log "$SADM_SSH -qnp $server_ssh_port -o ConnectTimeout=10 -o BatchMode=yes ${SUSER}\@${fqdn_server} '${SCRIPT}'"
         $SADM_SSH -qnp $server_ssh_port -o ConnectTimeout=10 -o BatchMode=yes ${SUSER}\@${fqdn_server} ${SCRIPT} >>$SADM_LOG 2>&1 
         RC=$? 
         if [ $RC -ne 0 ]                                                # Update went Successfully ?
