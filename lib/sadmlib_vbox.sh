@@ -39,6 +39,7 @@
 #@2022_12_29 virtualbox v1.7 Fix purge of old exports
 #@2023_02_05 virtualbox v1.8 Chmod of .ova (664) file after the export
 #@2023_03_09 virtualbox v2.1 New Library dedicated for administrating VirtualBox Environment.
+#@2024_04_02 virtualbox v2.2 Documents each functions available in this library.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -46,7 +47,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 # Global Variables
 # --------------------------------------------------------------------------------------------------
-export VMLIBVER="2.1"                                                   # This Library version
+export VMLIBVER="2.2"                                                   # This Library version
 export VMLIB_DEBUG="N"                                                  # Activate Debug output Y/N
 export VBOX_HOST=""                                                     # Contain VBox HostName
 export VMLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_list1_XXX")"        # List of all VM in VBox
@@ -68,23 +69,22 @@ export START_EXCLUDE_INIT="$SADM_CFG_DIR/.sadm_vm_exclude_start.txt"    # VM Sta
 
 
 #===================================================================================================
-#"""
-# Synopsys:
-#   sadm_vm_running "$vmName"
+#""" sadm_vm_running 
+### Synopsys:
+#   sadm_vm_running [vmName]
 #
-# Description:
+### Description:
 #   Test if the VM is Up (Power on) or Down (Power off).
 #   
-# Args: 
+### Args: 
 #   String: Contain the name of the virtual machine to verify.
 #
-# Return: 
+### Return: 
 #   Integer: Return '1', when power is off on the VM.
 #            Return ´0', when power is on.
-
-# Example: 
-#   sadm_vm_running "$VM"                                       # Test if VM is running
-#   if [ $? -ne 0 ] ; then sadm_vm_stop "$VM" ; fi              # If running, stop the VM 
+### Example: 
+#       sadm_vm_running "$VM"                                 # Test if VM is running
+#       if [ $? -ne 0 ] ; then sadm_vm_stop "$VM" ; fi        # If running, stop the VM 
 #
 #```bash
 #$ VBoxManage list runningvms
@@ -117,9 +117,10 @@ sadm_vm_running()
 
 
 #===================================================================================================
-#"""
+#""" sadm_vm_start [VNName]
+#
 # Synopsys:
-#   sadm_vm_start "$vmName"
+#   sadm_vm_start [vmName]
 #
 # Description:
 #   Start the specified VM.
@@ -632,23 +633,25 @@ sadm_ping()
 
 #===================================================================================================
 #"""
-# Synopsys:
+### Synopsys:
 #   sadm_export_vm()
 #
-# Description:
+### Description:
 #   Do an export of the specified VM on the NFS server mentionned in $SADMIN/cfg/sadmin.cfg
 #   
-# Args: 
+### Arguments: 
 #   String:     The name of the VM to export.
 #
-# Return: 
+### Return: 
 #   Integer: #  1 = Error producing the export of the VM.
 #               0 = The export was produced successfully 
 #
-# Example: 
+### Example: 
+# ```bash
 #    sadm_export_vm "$VMNAME"
 #    if [ $? -eq 0 ] ; then echo "Success" ; else echo "Failed" ; fi 
-#
+#```
+
 #"""
 # 
 #===================================================================================================
@@ -793,24 +796,58 @@ sadm_export_vm()
 
 #===================================================================================================
 #"""
-# Synopsys:
-#   clean_export_dir "$vmName" "export_directory"
 #
-# Description:
-#   In the export directory, exceeding number of exports (date) are deleted.
-#   The 'SADM_VM_EXPORT_TO_KEEP' field in $SADMIN/cfg/sadmin.cfg, indicate the number 
-#   of export (date) to keep for the corresponding VM.
-#   
-# Args: 
-#   (1) String: Contain the name of the virtual machine to export.
-#   (2) String: Specify the name of the export directory to clean. 
+## clean_export_dir()
 #
-# Return: 
-#   Integer: Return '1', Error occured when doing the cleanup.
-#            Return ´0', Cleanup done with success.
-# Example: 
-#   sadm_vm_running "$VM"                                       # Test if VM is running
-#   if [ $? -ne 0 ] ; then sadm_vm_stop "$VM" ; fi              # If running, stop the VM 
+#---
+#
+### Synopsys
+#
+#`clean_export_dir [vmName] [export_directory]`
+#
+### Description
+#
+#The [VMName] indicate the name of the virtual machine and the location of the export directory.
+#The value of 'SADM_VM_EXPORT_TO_KEEP' field define in $SADMIN/cfg/sadmin.cfg, indicate the number
+#of export (date) to keep for the corresponding VM.
+#
+## Argument(s)
+#
+#- [1] [vmName] (String)
+#  
+#  - Contain the name of the virtual machine to export.
+#
+#- [2] [Export Dir. Name]  (String)
+#  
+#  - Specify the name of the export directory to clean.   
+#
+### Value returned
+#
+#| Integer | Desciption                            |
+#|:-------:|:------------------------------------- |
+#| 1       | Error occured when doing the cleanup. |
+#| 0       | Cleanup was done with success.        |
+#
+### Example
+#
+#```bash
+## Build NFS with info define in SADMIN configuration '$SADM_CFG_DIR/sadmin.cfg'  
+# NFS_MOUNT="${SADM_VM_EXPORT_NFS_SERVER}:${SADM_VM_EXPORT_MOUNT_POINT}"  
+#sudo mount "$NFS_MOUNT" "$MOUNT_POINT"  
+#if [ "$?" -ne 0 ]                                 	   # If Error during mount 
+#    then sadm_write_err "[ ERROR ] mount $NFS_MOUNT $MOUNT_POINT"      
+#         sudo umount "${MOUNT_POINT" >/dev/null 2>&1  # Ensure Dest. Dir Unmounted
+#              return 1                                # Set RC to One (Standard)
+#    else sadm_write_log "[ OK ] NFS Mount worked."
+#fi
+##
+#EXPDIR="${MOUNT_POINT}/${vmName}"
+#clean_export_dir "$VM" "${MOUNT_POINT}/${VM}"         # VMName & Dir. to Purge
+#if [ "$?" -ne 0 ]                                     # If Error during clean up
+#    then sadm_write_err "[ ERROR ] Error while doing the export cleanup."
+#    else sadm_write_log "[ OK ] Cleanup was done successfully." 
+#fi
+#```
 #
 #"""
 #===================================================================================================
@@ -882,7 +919,7 @@ clean_export_dir()
     # If current user is not the VM Owner, exit to O/S with error code 1
     if [ "$(whoami)" != "$SADM_VM_USER" ]                               # If user is not a vbox user 
         then sadm_write_err " "
-             sadm_write_err "Script can only be run by '$SADM_VM_USER' user, not '$(whoami)'."
+             sadm_write_err "[ ERROR ] Script can only be run by '$SADM_VM_USER' user, not '$(whoami)'."
              sadm_write_err "Process aborted."
              sadm_write_err " "
              sadm_stop 1                                                # Close and Trim Log
@@ -891,23 +928,23 @@ clean_export_dir()
 
     # Check if $VMHOST_CFG file exist "/opt/sadmin/cfg/vhost_HOSTNAME.cfg". 
     # SADMIN VM Tools can only run on a system that have the $VMHOST_CFG created (Empty file).
-    export VMHOST_CFG="${SADM_CFG_DIR}/vhost_$(hostname -s).cfg"        # Exist on VBox Host Only
-    if [ -f "$VMHOST_CFG" ]                                             # Server File exist = VM Use
-        then export VBOX_HOST="$(hostname)"                             # Set VirtualBox Host Name
-        else sadm_write_err " "
-             sadm_write_err "[ ERROR ] This system is not a valid Virtual Box for SADMIN 'vmtools'." 
-             sadm_write_err "- If it is, create an empty file name '$VMHOST_CFG'." 
-             sadm_write_err "- Process aborted."                        # Advise user
-             sadm_write_err " "
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi 
+    #export VMHOST_CFG="${SADM_CFG_DIR}/vhost_$(hostname -s).cfg"        # Exist on VBox Host Only
+    #if [ -f "$VMHOST_CFG" ]                                             # Server File exist = VM Use
+    #    then export VBOX_HOST="$(hostname)"                             # Set VirtualBox Host Name
+    #    else sadm_write_err " "
+    #         sadm_write_err "[ ERROR ] This system is not a valid Virtual Box for SADMIN 'vmtools'." 
+    #         sadm_write_err "- If it is, create an empty file name '$VMHOST_CFG'." 
+    #         sadm_write_err "- Process aborted."                        # Advise user
+    #         sadm_write_err " "
+    #         sadm_stop 1                                                # Close and Trim Log
+    #         exit 1                                                     # Exit To O/S
+    #fi 
 
     # Make sure that the VBoxManage is installed on the system.
     which VBoxManage >/dev/null 2>&1
     if [ $? -ne 0 ] 
        then sadm_write_err " "
-            sadm_write_err "It's seem that VirtualBox is not installed on this system." 
+            sadm_write_err "[ ERROR ] It's seem that VirtualBox is not installed on this system." 
             sadm_write_err "Could not locate 'VBoxManage'."
             sadm_write_err "- Process aborted."  
             sadm_write_err " "
