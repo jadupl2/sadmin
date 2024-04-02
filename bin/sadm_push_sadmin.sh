@@ -62,6 +62,7 @@
 # 2023_07_18 server v2.43 Fix problem when not using the standard ssh port (22).
 # 2023_10_04 server v2.44 Some error were recorded in standard log instead of the error log.
 # 2023_12_26 server v2.45 More info shown while running.
+#@2024_04_02 server v2.46 Restructure rsync of $SADMIN/cfg and minor changes.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -91,7 +92,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.45'                                     # Script Version
+export SADM_VER='2.46'                                     # Script Version
 export SADM_PDESC="Copy SADMIN version to all actives clients, without overwriting config files)."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -153,7 +154,7 @@ show_usage()
     printf "\n\t-d   (Debug Level [0-9])"
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-v   (Show Script Version Info)"
-    printf "\n\t-u   (Also sync \$SADMIN/usr/bin to all active clients)" 
+    printf "\n\t-u   (Also sync \$SADMIN/usr/bin \$SADMIN/usr/lib \$SADMIN/usr/cfg to active clients)" 
     printf "\n\t-n   (Push SADMIN version only to system specified)" 
     printf "\n\t-s   (Also sync \$SADMIN/sys to all active clients)" 
     printf "\n\n" 
@@ -307,7 +308,7 @@ process_servers()
         fi
 
 
-# Rsync Array Of Important Directories To Sadm Client
+        # Rsync Basic Important Directories To SADMIN (bin,pkg,lib) to all clients.
         rem_std_dir_to_rsync=( bin pkg lib )                            # Directories array to sync
         for WDIR in "${rem_std_dir_to_rsync[@]}"                        # Loop through Array
           do
@@ -328,29 +329,129 @@ process_servers()
           done             
 
 
-# Copy Site Common configuration files to client
-        rem_cfg_files=(alert_group.cfg .gmpw64)
-        for WFILE in "${rem_cfg_files[@]}"
-          do
-          CFG_SRC="${SADM_CFG_DIR}/${WFILE}"
-          CFG_DST="${server_fqdn}:${server_dir}/cfg/${WFILE}"
-          CFG_CMD="scp -CqP $server_ssh_port ${CFG_SRC} ${CFG_DST}"
-          if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "$CFG_CMD" ; fi 
-          scp -CqP $server_ssh_port ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
-          RC=$? 
-          if [ $RC -ne 0 ]
-             then if [ $RC -eq 23 ] 
-                     then sadm_write_err "[ WARNING ] Error code 23 denotes a partial transfer ..." 
-                          ((WARNING_COUNT++))                           # Increase Warning Counter
-                     else sadm_write_err "[ ERROR ] ($RC) doing ${CFG_CMD}"
-                          ((ERROR_COUNT++))
-                  fi 
-             else sadm_write_log "[ OK ] ${CFG_CMD}" 
-          fi
-          done
 
-# If '-c' was specified on cmdline:
-# copy $SADMIN/cfg/sadmin_client.cfg from SADMIN server to $SADMIN/cfg/sadmin.cfg on all clients.
+
+
+        # If user choose to rsync user directories [-u] to all actives clients.
+        # User directories are "$SADMIN/usr/bin", "$SADMIN/usr/bin" and "$SADMIN/usr/bin".
+        if [ "$SYNC_USR" = "Y" ] 
+            then rem_usr_dir_to_rsync=( usr/bin usr/lib usr/cfg )
+                 for WDIR in "${rem_usr_dir_to_rsync[@]}"
+                    do
+                    if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
+                        then sadm_write_log "rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
+                    fi
+                    rsync -ar -e "ssh -p $server_ssh_port" --delete  ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
+                    RC=$? 
+                    if [ $RC -ne 0 ]
+                        then if [ $RC -eq 23 ] 
+                                then sadm_write_err "[ WARNING ] Error 23 - Partial rsync ..." 
+                                     ((WARNING_COUNT++)) # Increase Warning Counter
+                                else sadm_write_err "[ ERROR ] ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
+                                     ((ERROR_COUNT++))    # Increase Error Counter
+                             fi 
+                        else sadm_write_log "[ OK ] rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
+                    fi
+                    done             
+        fi
+
+        # rsync all dot files (configuration & templates) in "$SADMIN/cfg" to all actives clients.
+        # Except the files specified in "$CFG_EXCL".
+        touch "$SADM_CFG_DIR/.gmpw"                                     # Make sure exist for excl
+        touch "$SADM_CFG_DIR/.dbpass"                                   # Make sure exist for excl
+        CFG_EXCL="--exclude={'.gmpw','.dbpass'}"                        # File only on SADMIN server
+        CFG_SRC="$SADM_CFG_DIR/.??*"
+        CFG_DST="${server_fqdn}:${server_dir}/cfg/"
+        CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' $CFG_EXCL $CFG_SRC $CFG_DST"
+        rsync -ar -e "ssh -p $server_ssh_port" $CFG_EXCL $CFG_SRC $CFG_DST
+        RC=$? 
+        if [ $RC -ne 0 ]
+            then if [ $RC -eq 23 ] 
+                    then sadm_write_err "[ WARNING ] Error 23 - Partial rsync ..." 
+                         ((WARNING_COUNT++))                            # Increase Warning Counter
+                    else sadm_write_err "[ ERROR ] ($RC) $CFG_CMD"
+                         ((ERROR_COUNT++))                              # Increase Error Counter
+                 fi
+           else sadm_write_log "[ OK ] $CFG_CMD" 
+        fi
+
+
+        # If user choose to rsync "$sadmin/sys" [-s] to all actives clients, it's done here.
+        # Use [-s] option, if you want to have the same startup and shutdown script on all clients. 
+        # (Same $SADMIN/sys/sadm_startup.sh & $SADMIN/sys/sadm_shutdown.sh on all clients).
+        if [ "$SYNC_SYS" = "Y" ]                                        # rsync $SADMIN/sys content
+            then CFG_SRC="$SADM_SYS_DIR/"
+                 CFG_DST="${server_fqdn}:${server_dir}/sys/"
+                 CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' --delete $CFG_SRC $CFG_DST"
+                 rsync -ar -e "ssh -p $server_ssh_port" --delete $CFG_SRC $CFG_DST
+                 RC=$? 
+                 if [ $RC -ne 0 ]
+                    then if [ $RC -eq 23 ] 
+                            then sadm_write_err "[ WARNING ] Error 23 - Partial rsync ..." 
+                                 ((WARNING_COUNT++))                    # Increase Warning Counter
+                            else sadm_write_err "[ ERROR ] ($RC) $CFG_CMD "
+                                 ((ERROR_COUNT++))                      # Increase Error Counter
+                         fi
+                    else sadm_write_log "[ OK ] $CFG_CMD"
+                 fi
+
+            else # Rsync only startup/shutdown templates dot files in "$sadmin/sys" to clients.
+                 CFG_SRC="${SADM_SYS_DIR}/.??*"                         # rsync $SADMIN/sys dot file
+                 CFG_DST="${server_fqdn}:${server_dir}/sys/"
+                 CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' --delete $CFG_SRC $CFG_DST"
+                 rsync -ar -e "ssh -p $server_ssh_port" --delete $CFG_SRC $CFG_DST
+                 RC=$? 
+                 if [ $RC -ne 0 ]
+                    then if [ $RC -eq 23 ] 
+                            then sadm_write_err "[ WARNING ] Error 23 - Partial rsync ..." 
+                                 ((WARNING_COUNT++))                    # Increase Warning Counter
+                            else sadm_write_err "[ ERROR ] ($RC) $CFG_CMD"
+                                 ((ERROR_COUNT++))                      # Increase Error Counter
+                         fi
+                    else sadm_write_log "[ OK ] $CFG_CMD"
+                 fi
+        fi
+
+        # Rsync Nmon Watcher, Sadmin_Monitor Template Script, Service Restart Script
+        rem_files_to_rsync=(usr/mon/stemplate.sh usr/mon/srestart.sh ) 
+        for WFILE in "${rem_files_to_rsync[@]}"                         # Loop to sync template file
+          do
+            CFG_SRC="${SADM_BASE_DIR}/${WFILE}"
+            CFG_DST="${server_fqdn}:${server_dir}/${WFILE}"
+            CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' ${CFG_SRC} ${CFG_DST}"
+            rsync -ar -e "ssh -p $server_ssh_port" "${CFG_SRC}" "${CFG_DST}" 
+            RC=$?
+            if [ $RC -ne 0 ]
+                then sadm_write_err "[ ERROR ] ($RC) doing $CFG_CMD"
+                     ((ERROR_COUNT++))
+                else sadm_write_log "[ OK ] $CFG_CMD"  
+            fi
+          done             
+
+
+
+        # Copy Alert Group file configuration from SADMIN server file to client
+        WFILE="alert_group.cfg" 
+        CFG_SRC="${SADM_CFG_DIR}/${WFILE}"
+        CFG_DST="${server_fqdn}:${server_dir}/cfg/${WFILE}"
+        #CFG_CMD="scp -CqP $server_ssh_port ${CFG_SRC} ${CFG_DST}"
+        CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' ${CFG_SRC} ${CFG_DST}"
+        if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "$CFG_CMD" ; fi 
+        #scp -CqP $server_ssh_port ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
+        rsync -ar -e "ssh -p $server_ssh_port" "${CFG_SRC}" "${CFG_DST}" 
+        RC=$? 
+        if [ $RC -ne 0 ]
+           then if [ $RC -eq 23 ] 
+                   then sadm_write_err "[ WARNING ] Error code 23 denotes a partial transfer ..." 
+                        ((WARNING_COUNT++))                           # Increase Warning Counter
+                   else sadm_write_err "[ ERROR ] ($RC) doing ${CFG_CMD}"
+                        ((ERROR_COUNT++))
+                fi 
+           else sadm_write_log "[ OK ] ${CFG_CMD}" 
+        fi
+
+        # If [-c] was specified on cmdline (Used to have the same sadmin.cfg on all clients)
+        # copy $SADMIN/cfg/sadmin_client.cfg to $SADMIN/cfg/sadmin.cfg on all clients.
         if [ "$SYNC_CFG" = "Y" ]
             then sadmin_common="${SADM_CFG_DIR}/sadmin_client.cfg"
                  sadmin_destination="${server_fqdn}:${server_dir}/cfg/sadmin.cfg"
@@ -363,96 +464,6 @@ process_servers()
                     else sadm_write_log "[ OK ] $CMD" 
                  fi
         fi
-
-
-# If User Choose To Rsync $Sadmin/Usr/Bin To All Actives Clients, Then Do It Here.
-        if [ "$SYNC_USR" = "Y" ] 
-            then rem_usr_dir_to_rsync=( usr/bin usr/lib usr/cfg )
-                 for WDIR in "${rem_usr_dir_to_rsync[@]}"
-                    do
-                    if [ $SADM_DEBUG -gt 5 ]                           # If Debug is Activated
-                        then sadm_write_log "rsync -ar  -e 'ssh -p $server_ssh_port' --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
-                    fi
-                    rsync -ar -e "ssh -p $server_ssh_port" --delete  ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
-                    RC=$? 
-                    if [ $RC -ne 0 ]
-                        then if [ $RC -eq 23 ] 
-                                then sadm_write_err "[ WARNING ] Error 23 - Partial rsync ..." 
-                                     ((WARNING_COUNT++)) # Increase Warning Counter
-                                else sadm_write_err "[ ERROR ] ($RC) doing rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
-                                     ((ERROR_COUNT++))    # Increase Error Counter
-                             fi 
-                        else sadm_write_log "[ OK ] rsync -ar  -e 'ssh -p $server_ssh_port' --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
-                    fi
-                    done             
-        fi
-
-# Rsync All Dot Configuration (Templates) Files In $SADMIN/cfg To All Actives Clients
-        CFG_EXCL="--exclude .dbpass "
-        if [ $SADM_DEBUG -gt 5 ]                                        # If Debug is Activated
-            then sadm_write_log "rsync -ar -e 'ssh -p $server_ssh_port' --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/"
-        fi
-        rsync -ar -e "ssh -p $server_ssh_port" --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/
-        RC=$? 
-        if [ $RC -ne 0 ]
-            then if [ $RC -eq 23 ] 
-                    then sadm_write_err "[ WARNING ] Error 23 - Partial rsync ..." 
-                         ((WARNING_COUNT++))            # Increase Warning Counter
-                    else sadm_write_err "[ ERROR ] ($RC) doing rsync -ar -e 'ssh -p $server_ssh_port' --delete $CFG_EXCL ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/"
-                         ((ERROR_COUNT++))                # Increase Error Counter
-                 fi
-           else sadm_write_log "[ OK ] rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_CFG_DIR}/.??* ${server_fqdn}:${server_dir}/cfg/" 
-        fi
-
-# If User Choose To Rsync $SADMIN/sys To All Actives Clients, Then Do It Here.
-        if [ "$SYNC_SYS" = "Y" ] 
-            then if [ $SADM_DEBUG -gt 5 ]                               # If Debug is Activated
-                    then sadm_write_log "rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/"
-                 fi
-                 rsync -ar -e "ssh -p $server_ssh_port" --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/
-                 RC=$? 
-                 if [ $RC -ne 0 ]
-                    then if [ $RC -eq 23 ] 
-                            then sadm_write_err "[ WARNING ] Error 23 - Partial rsync ..." 
-                                 ((WARNING_COUNT++))    # Increase Warning Counter
-                            else sadm_write_err "[ ERROR ] ($RC) doing rsync -ar  -e 'ssh -p $server_ssh_port' --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/"
-                                 ((ERROR_COUNT++))        # Increase Error Counter
-                         fi
-                    else sadm_write_log "[ OK ] rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_SYS_DIR}/ ${server_fqdn}:${server_dir}/sys/" 
-                 fi
-
-            else # RSYNC STARTUP/SHUTDOWN TEMPLATE SCRIPT FILES IN $SADMIN/SYS TO ALL ACTIVES CLIENTS
-                 if [ $SADM_DEBUG -gt 5 ]                               # If Debug is Activated
-                    then sadm_write_log "rsync -ar  -e 'ssh -p $server_ssh_port' --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/"
-                 fi
-                 rsync -ar  -e "ssh -p $server_ssh_port" --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/
-                 RC=$? 
-                 if [ $RC -ne 0 ]
-                    then if [ $RC -eq 23 ] 
-                            then sadm_write_err "[ WARNING ] Error 23 - Partial rsync ..." 
-                                 ((WARNING_COUNT++))    # Increase Warning Counter
-                            else sadm_write_err "[ ERROR ] ($RC) doing rsync -ar  -e 'ssh -p $server_ssh_port' --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/"
-                                 ((ERROR_COUNT++))        # Increase Error Counter
-                         fi
-                    else sadm_write_log "[ OK ] rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_SYS_DIR}/.??* ${server_fqdn}:${server_dir}/sys/" 
-                 fi
-        fi
-
-# Rsync Nmon Watcher, Sadmin_Monitor Template Script, Service Restart Script
-        rem_files_to_rsync=(usr/mon/stemplate.sh usr/mon/srestart.sh ) 
-        for WFILE in "${rem_files_to_rsync[@]}"                         # Loop to sync template file
-          do
-            CFG_SRC="${SADM_BASE_DIR}/${WFILE}"
-            CFG_DST="${server_fqdn}:${server_dir}/${WFILE}"
-            CFG_CMD="scp -CqP $server_ssh_port ${CFG_SRC} ${CFG_DST}"
-            scp  -CqP $server_ssh_port ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
-            RC=$?
-            if [ $RC -ne 0 ]
-                then sadm_write_err "[ ERROR ] ($RC) doing $CFG_CMD"
-                     ((ERROR_COUNT++))
-                else sadm_write_log "[ OK ] $CFG_CMD"  
-            fi
-          done             
 
         # Show Cumulative Warning and Error
         if [ "$ERROR_COUNT" -ne 0 ] || [ "$WARNING_COUNT" -ne 0 ]
