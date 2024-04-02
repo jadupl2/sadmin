@@ -216,6 +216,7 @@
 # 2024_01_18 lib v4.37 Error given when processing an invalid rch file.
 #@2024_03_13 lib v4.38 User assigned to the 'vboxusers' group.
 #@2024_03_20 lib v4.39 Load new Global variables for VM from \$SADMIN/cfg/sadmin.cfg
+#@2024_04_02 lib v4.40 Function 'sadm_write_log' will now print in color for [ OK ], [ ERROR ], ...
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -225,7 +226,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.39"                                              # This Library Version
+export SADM_LIB_VER="4.40"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -300,11 +301,12 @@ export SADM_REAR_CRONTAB="/etc/cron.d/sadm_rear_backup"                 # Real C
 export SADM_BACKUP_LIST="$SADM_CFG_DIR/backup_list.txt"                 # List of file to Backup
 export SADM_BACKUP_LIST_INIT="$SADM_CFG_DIR/.backup_list.txt"           # Default files to Backup
 export SADM_BACKUP_EXCLUDE="$SADM_CFG_DIR/backup_exclude.txt"           # files Exclude from Backup
-export SADM_REAR_EXCLUDE_INIT="$SADM_CFG_DIR/.rear_exclude.txt"         # Default Rear Files Excl.
 export SADM_BACKUP_EXCLUDE_INIT="$SADM_CFG_DIR/.backup_exclude.txt"     # Default Files to Exclude
+export SADM_REAR_EXCLUDE_INIT="$SADM_CFG_DIR/.rear_exclude.txt"         # Default Rear Files Excl.
 export SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                      # Default SADMIN Cfg File
 export SADM_DOCLINK="$SADM_WWW_DOC_DIR/pgm2doc_link.cfg"                # Script to Doc Link File
 export SADM_WEBSITE="https://sadmin.ca"                                 # sadmin website URL
+export SADM_VM_EXCLUDE_TEMPLATE="$SADM_CFG_DIR/.sadm_vm_exclude_start.txt" # VM Start exclude file
 
 # Definition of SADMIN log, error log, Result Code  History (.rch) and Monitor report file (*.rpt).
 export SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"     # Script Output LOG
@@ -345,8 +347,8 @@ export SADM_GROUP="sadmin"                                              # sadmin
 export SADM_WWW_USER="apache"                                           # /sadmin/www owner
 export SADM_WWW_GROUP="apache"                                          # /sadmin/www group
 export SADM_MAX_LOGLINE=500                                             # Max Nb. Lines in LOG
-export SADM_MAX_RCLINE=35                                               # Max Nb. Lines in RCH file
-export SADM_NMON_KEEPDAYS=20                                            # Days to keep old *.nmon
+export SADM_MAX_RCLINE=25                                               # Max Nb. Lines in RCH file
+export SADM_NMON_KEEPDAYS=10                                            # Days to keep old *.nmon
 export SADM_RCH_KEEPDAYS=35                                             # Days to keep old *.rch
 export SADM_LOG_KEEPDAYS=35                                             # Days to keep old *.log
 export SADM_DBNAME="sadmin"                                             # MySQL DataBase Name
@@ -378,7 +380,7 @@ export SADM_REAR_BACKUP_DIF=25                                          # % size
 export SADM_REAR_BACKUP_INTERVAL=7                                      # Alert when 7 days without 
 export SADM_BACKUP_NFS_SERVER=""                                        # Backup NFS Server
 export SADM_BACKUP_NFS_MOUNT_POINT=""                                   # Backup Mnt Point
-export SADM_BACKUP_INTERVAL=7                                           # Days before yellow alert
+export SADM_BACKUP_INTERVAL=10                                          # Days before yellow alert
 export SADM_DAILY_BACKUP_TO_KEEP=3                                      # Daily to Keep
 export SADM_WEEKLY_BACKUP_TO_KEEP=3                                     # Weekly to Keep
 export SADM_MONTHLY_BACKUP_TO_KEEP=2                                    # Monthly to Keep
@@ -493,12 +495,12 @@ SADM_SUCCESS="[ SUCCESS ]"                                              # [ SUCC
 SADM_INFO="[ INFO ]"                                                    # [ INFO] in Blue Trigger
 
 # When mess. begin with constant above they are substituted by the value below in sadm_write().
-SADM_SERROR="[ ${RED}ERROR${NORMAL} ]"                                  # [ ERROR ] Red
-SADM_SFAILED="[ ${RED}FAILED${NORMAL} ]"                                # [ FAILED ] Red
-SADM_SWARNING="[ ${BOLD}${YELLOW}WARNING${NORMAL} ]"                    # WARNING Yellow
-SADM_SOK="[ ${BOLD}${GREEN}OK${NORMAL} ]"                               # [ OK ] Green
-SADM_SSUCCESS="[ ${BOLD}${GREEN}SUCCESS${NORMAL} ]"                     # SUCCESS Green
-SADM_SINFO="[ ${BOLD}${BLUE}INFO${NORMAL} ]"                            # INFO Blue
+SADM_SERROR="${BOLD}${MAGENTA}[ ${RED}ERROR${MAGENTA} ]${NORMAL}"       # [ ERROR ] Red
+SADM_SFAILED="${BOLD}${MAGENTA}[ ${RED}FAILED${MAGENTA} ]${NORMAL}"     # [ FAILED ] Red
+SADM_SWARNING="${BOLD}${MAGENTA}[ ${YELLOW}WARNING${MAGENTA} ]${NORMAL}" # WARNING Yellow
+SADM_SOK="${BOLD}${MAGENTA}[ ${GREEN}OK${MAGENTA} ]${NORMAL}"           # [ OK ] Green
+SADM_SSUCCESS="${BOLD}${MAGENTA}[ ${GREEN}SUCCESS${MAGENTA} ]${NORMAL}" # SUCCESS Green
+SADM_SINFO="${BOLD}${MAGENTA}[ ${BLUE}INFO${MAGENTA} ]${NORMAL}"        # INFO Blue
 
 
 
@@ -564,32 +566,8 @@ sadm_ask() {
 # Replace '[ OK ]' By a Green '[ OK ]', add color to ERROR WARNING, FAILED, SUCCESS, and INFO.
 sadm_write() {
     SADM_SMSG="$@"                                                      # Screen Msg = Msg Received
-    SADM_LMSG="$SADM_SMSG"                                              # Log Mess. = Screen Mess
-
-    # Replace special status and put them in color.
-    SADM_SMSG=$(echo "${SADM_SMSG//'[ OK ]'/$SADM_SOK}")                # Put OK in Green 
-    SADM_SMSG=$(echo "${SADM_SMSG//'[ ERROR ]'/$SADM_SERROR}")          # Put ERROR in Red
-    SADM_SMSG=$(echo "${SADM_SMSG//'[ WARNING ]'/$SADM_SWARNING}")      # Put WARNING in Yellow
-    SADM_SMSG=$(echo "${SADM_SMSG//'[ FAILED '/$SADM_SFAILED}")         # Put FAILED in Red
-    SADM_SMSG=$(echo "${SADM_SMSG//'[ SUCCESS ]'/$SADM_SSUCCESS}")      # Put Success in Green
-    SADM_SMSG=$(echo "${SADM_SMSG//'[ INFO ]'/$SADM_SINFO}")            # Put INFO in Blue
-    if [ "${SADM_SMSG:0:1}" != "[" ]                                    # 1st Char. of Mess. Not [
-        then SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_LMSG"      # Insert Date/Time in Log
-    fi 
-    
-    # Write Message received to either [S]creen, [L]og or [B]oth.
-    case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
-        s|S) echo -ne "$SADM_SMSG"                                      # Write Msg to [S]creen
-             ;;
-        l|L) echo -ne "$SADM_LMSG" >> $SADM_LOG                         # Write Msg to [L]og File
-             ;;
-        b|B) echo -ne "$SADM_SMSG"                                      # Write Msg to [S]creen
-             echo -ne "$SADM_LMSG" >> $SADM_LOG                         # Write Msg to [L]og File
-             ;;
-        *)   printf "\nWrong \$SADM_LOG_TYPE value ($SADM_LOG_TYPE)\n"  # Advise User if Incorrect
-             printf -- "%-s\n" "$SADM_LMSG" >> $SADM_LOG                # Write Msg to Log File
-             ;;
-    esac
+    sadm_write_log "$SADM_SMSG"  "NOLF"  
+    return 0
 }
 
 
@@ -598,23 +576,10 @@ sadm_write() {
 # Write String received to Log (L), Screen (S) or Both (B) depending on $SADM_LOG_TYPE variable.
 # A newLine is added at the end of each file written.
 sadm_writelog() {
-
-    SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
-    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Log Message with Date/Time
-    if [ "$SADM_LOG_TYPE" = "" ] ; then SADM_LOG_TYPE="B" ; fi          # Log Type Default is Both
-    case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
-        s|S) printf "%-s\n" "$SADM_SMSG"                                # Write Msg To Screen
-             ;;
-        l|L) printf "%-s\n" "$SADM_LMSG" >> $SADM_LOG                   # Write Msg to Log File
-             ;;
-        b|B) printf "%-s\n" "$SADM_SMSG"                                # Both = to Screen
-             printf "%-s\n" "$SADM_LMSG" >> $SADM_LOG                   # Both = to Log
-             ;;
-        *)   printf "Wrong value in \$SADM_LOG_TYPE ($SADM_LOG_TYPE)\n" # Advise User if Incorrect
-             ;;
-    esac
+    SADM_SMSG="$@"                                                      # Screen Msg = Msg Received
+    sadm_write_log "$SADM_SMSG"    
+    return 0
 }
-
 
 
 # New write_log
@@ -622,50 +587,51 @@ sadm_writelog() {
 #===================================================================================================
 sadm_write_log()
 {
-    #SADM_SMSG="$@"                                                      # Screen Mess. no Time Stamp
-    SADM_SMSG="$1"                                                      # Screen Mess. no Time Stamp
-    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"               # Log Mess. with Time Stamp
-    if [ "$SADM_LOG_TYPE" = "" ] ; then SADM_LOG_TYPE="B" ; fi          # Log Type Default is Both
-    NOLF=false                                                          # Default, write msg with LF
+    init_msg="$1"                                                       # Initial msg received
+    EOL_LF='Y'                                                          # Default EndOfLine LineFeed
+    dated_msg="$(date "+%C%y.%m.%d %H:%M:%S") $init_msg"
 
+    # When invalid Log Type, then default to 'B' go both (Screen and Log file).
+    if [ "$SADM_LOG_TYPE" = "" ] ; then SADM_LOG_TYPE="B" ; fi          
 
-    if [ $# -eq 2 ] && [ "$2" != "" ]                                                    # Should have rcv 1 Param
-       then WFCT=$(sadm_toupper "$2")
+    # If a second parameter is specified ('nolf'), means no LineFeed at the end of the line)
+    if [ $# -eq 2 ]                                                     # Extra parameter receive ?
+       then WFCT=$(sadm_toupper "$2")                                   # Extra parameter to UpCase
             case "$WFCT" in
-                "NOLF" )    NOLF=true                                 # Default, write msg with LF
+                "NOLF" )    EOL_LF='N'                                  # No LineFeed Activated
                             ;;
-                *)          printf "${FUNCNAME}: Second paramneter is invalid '$2'.\n"
-                            printf "Valid function are : 'NOLF'\n"
-                            return 1                                                   # Return Error to Caller
+                *)          printf "Invalid second parameter '$2' in ${FUNCNAME[0]} line ${LINENO}.\n"
+                            printf "Valid second parameter is : 'NOLF'\n"
+                            return 1                                    # Return Error to Caller
                             ;;
             esac
-
     fi    
 
-    # By default at the end of the message a line-feed is added.
-    # But if the message begin with '@nolf' then no line feed is added at the End Of Line.
-    #PRECMD=$(echo ${SADM_SMSG:0:5}|/usr/bin/tr "[:upper:]" "[:lower:]") # Isolate 1st 5chr lowercase
-    #if [ "$PRECMD" = "@nolf" ]                                          # If first 5 char = @nolf
-    #    then NOLF=true                                                  # Then No LineFeed at EOL
-    #         SADM_SMSG=${SADM_SMSG:5}                                   # Remove '@nolf' from Mess.
-    #fi                  
+    # Replace special status and put them in color.
+    SC_MSG="$init_msg"                                              # Screen msg is init msg 
+    SC_MSG="${SC_MSG/"$SADM_OK"/$SADM_SOK}"          
+    SC_MSG="${SC_MSG/"$SADM_INFO"/$SADM_SINFO}"      
+    SC_MSG="${SC_MSG/"$SADM_ERROR"/$SADM_SERROR}"    
+    SC_MSG="${SC_MSG/"$SADM_FAILED"/$SADM_SFAILED}"  
+    SC_MSG="${SC_MSG/"$SADM_WARNING"/$SADM_SWARNING}"
+    SC_MSG="${SC_MSG/"$SADM_SUCCESS"/$SADM_SSUCCESS}"
 
-    case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
-        s|S) if $NOLF                                                   # If No LineFeed is True 
-                then printf -- "$SADM_SMSG"                             # Write Msg without LineFeed
-                else printf -- "$SADM_SMSG\n"                           # Write Msg with LineFeed
-             fi
-             ;;
-        l|L) printf -- "$SADM_LMSG\n" >> $SADM_LOG                      # Write Msg to Log File
-             ;;
-        b|B) if $NOLF                                                   # If No LineFeed is True 
-                then printf -- "$SADM_SMSG"                             # Write Msg without LineFeed
-                else printf -- "$SADM_SMSG\n"                           # Write Msg with LineFeed
-             fi
-             printf -- "$SADM_LMSG\n" >> $SADM_LOG                      # Write Msg to Log
-             ;;
-        *)   printf "Wrong value in \$SADM_LOG_TYPE ($SADM_LOG_TYPE)\n" # Advise User if Incorrect
-             ;;
+    case "$SADM_LOG_TYPE" in                                            # [S]creen [L]og or [B]oth 
+        S)      if [ "$EOL_LF" = 'N' ]                                  # If No LineFeed at EOL
+                    then printf -- "$SC_MSG"                            # Screen Msg without LF
+                    else printf -- "$SC_MSG\n"                          # Screen Msg with LineFeed
+                fi
+                ;;
+        L)      printf -- "$dated_msg\n" >> $SADM_LOG                   # Write Msg to Log File
+                ;;
+        B)      if [ "$EOL_LF" = 'N' ]                                  # If No LineFeed at EOL
+                    then printf -- "${SC_MSG}"                           # Screen Msg without LF
+                    else printf -- "${SC_MSG}\n"                         # Screen Msg with LineFeed
+                fi
+                printf -- "$dated_msg\n" >> $SADM_LOG                   # Write Msg to Log
+                ;;
+        *)      printf "Invalid '$SADM_LOG_TYPE' ($SADM_LOG_TYPE) in ${FUNCNAME[0]} line ${LINENO}.\n" 
+                ;;
     esac
 }
 
@@ -673,22 +639,13 @@ sadm_write_log()
 
 # Write String received to log ($SADM_LOG) & script error log ($SADM_ELOG)
 sadm_write_err() {
-
-    SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
-    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Log Message with Date/Time
-    if [ "$SADM_LOG_TYPE" = "" ] ; then SADM_LOG_TYPE="B" ; fi          # Log Type Default is Both
+    SADM_SMSG="$1"                                                      # Screen Mess no Date/Time
+    sadm_write_log "$SADM_SMSG"                                         # Go write in normal Scr/log
+    #
+    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $SADM_SMSG"               # Log Message with Date/Time
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
-        s|S) printf "%-s\n" "$SADM_SMSG"                                # Write Msg To Screen
-             ;;
-        l|L) printf "%-s\n" "$SADM_LMSG" >> $SADM_ELOG                  # Write Msg to Error Log 
-             printf "%-s\n" "$SADM_LMSG" >> $SADM_LOG                   # Write Msg to Log File
-             ;;
-        b|B) printf "%-s\n" "$SADM_SMSG"                                # Both = to Screen
-             printf "%-s\n" "$SADM_LMSG" >> $SADM_ELOG                  # Write Msg to Error Log 
-             printf "%-s\n" "$SADM_LMSG" >> $SADM_LOG                   # Both = to Log
-             ;;
-        *)   printf "Wrong value in \$SADM_LOG_TYPE ($SADM_LOG_TYPE)\n" # Advise User if Incorrect
-             ;;
+        l|L|b|B) printf "$SADM_LMSG\n" >> $SADM_ELOG                    # Write Msg to Error Log 
+                 ;;
     esac
 }
 
@@ -2849,7 +2806,7 @@ sadm_on_sadmin_server() {
 # Load the path of commands used in SADMIN
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
         then printf "$(date "+%C%y.%m.%d %H:%M:%S") Loading command path ...\n"
-             printf "SADM_ON_SADMIN_SERVER = $SADM_ON_SADMIN_SERVER \n"
+             #printf "SADM_ON_SADMIN_SERVER = $SADM_ON_SADMIN_SERVER \n"
     fi
     sadm_load_cmd_path                                                  # Load Cmd Path Variables
     if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement not met
