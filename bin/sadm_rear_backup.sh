@@ -80,6 +80,7 @@
 # 2023_03_11 backup: v2.33 New '.lst' file is generated, containing 1st & 2nd level dir. in backup.
 # 2023_05_25 backup: v2.34 ReaR USB bootable image is now produce at every execution.
 # 2024_01_18 backup: v2.35 Minor improvements & update sadmin section to v1.56.
+#@2024_03_27 backup: v2.36 Signal an error if the 'isohybrid' command is not installed.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -108,7 +109,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.35'                                     # Script version number
+export SADM_VER='2.36'                                     # Script version number
 export SADM_PDESC="Produce a ReaR bootable iso and a restorable backup on a NFS server"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -449,7 +450,7 @@ rear_housekeeping()
                      isohybrid ${REAR_USB_ISO} 
                      if [ $? -ne 0 ]
                         then sadm_write_err "[ ERROR ] Running 'isohybrid ${REAR_USB_ISO}'."
-                             FNC_ERROR=1
+                             return 1 
                         else sadm_write_log "[ OK ] USB Boot image created '${REAR_USB_ISO}'."
                      fi
              fi
@@ -457,6 +458,7 @@ rear_housekeeping()
              sadm_write_err "The command 'isohybrid' not installed on '${SADM_HOSTNAME}'."
              sadm_write_err " - On debian,ubuntu,Mint use     : 'sudo apt install syslinux-utils'"
              sadm_write_err " - On fedora,rhel,alma,rocky use : 'sudo dnf install syslinux'" 
+             return 1 
     fi 
 
 
@@ -475,7 +477,7 @@ rear_housekeeping()
     sadm_write_log "Information coming from SADMIN configuration file ${SADM_CFG_FILE} :"
     sadm_write_log " - Always keep last $SADM_REAR_BACKUP_TO_KEEP ReaR backup on '${SADM_REAR_NFS_SERVER}'."
     sadm_write_log " "
-    sadm_write_log "List of ReaR backup directory before housekeeping for ${SADM_HOSTNAME}"
+    sadm_write_log "List of ReaR backup directory before housekeeping for '${SADM_HOSTNAME}'."
     ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write "${wline}\n"; done
     
 # Eliminate old backup structure 
@@ -486,7 +488,7 @@ rear_housekeeping()
     ls --color=never -1trdh  ${REAR_DIR}/20* >/dev/null 2>&1            # Check Prv Backup dir exist
     if [ $? -eq 0 ]                                                     # If Prv Backup dir exist
         then prev_backup_dir=$(ls --color=never -1trdh ${REAR_DIR}/20* | tail -1) 
-             prev_backup_size=`du -h $prev_backup_dir | awk '{print $1}'`
+             prev_backup_size=$(du -h $prev_backup_dir | awk '{print $1}')
         else prev_backup_dir=""
              prev_backup_size=0
     fi 
@@ -495,14 +497,14 @@ rear_housekeeping()
 # Current backup size 
     ls -l ${REAR_DIR}/rear* >/dev/null 2>&1
     if [ $? -eq 0 ] 
-        then cur_backup_size=`du -hac ${REAR_DIR}/rear* | awk '{print $1}' | tail -1`
+        then cur_backup_size=$(du -hac ${REAR_DIR}/rear* | awk '{print $1}' | tail -1)
         else cur_backup_size=0
     fi
     sadm_write_log "Current backup size: $cur_backup_size"
 
 # Total Rear backup directory size
-    rear_total_backup_size=`du -ahc ${REAR_DIR} | tail -1 | awk '{ print $1 }' `
-    sadm_write_log "$rear_total_backup_size - Total ReaR backup directory size for ${SADM_HOSTNAME}" 
+    rear_total_backup_size=$(du -ahc ${REAR_DIR} | tail -1 | awk '{ print $1 }')
+    sadm_write_log "$rear_total_backup_size - Total ReaR backup directory size for '${SADM_HOSTNAME}'." 
 
 # Calculate number of backup we have for this system
     if [ -r $REAR_CUR_TGZ ]                                             # If current .tar.gz exist
@@ -527,7 +529,7 @@ rear_housekeeping()
              /bin/ls -1td ${REAR_DIR}/20* | sort -r | sed 1,${nb_dir_to_keep}d | xargs rm -fr >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
              then sadm_write_err "Problem deleting backup directory [ ERROR ]"
-                  FNC_ERROR=1
+                  return 1
              else sadm_write_log "Previous backup directory removed [ OK ]"
              fi
         else sadm_write_log " "
@@ -559,9 +561,9 @@ rear_housekeeping()
     umount ${NFS_MOUNT} >> $SADM_LOG 2>&1
     if [ $? -ne 0 ]
     then sadm_write_err "[ ERROR ] Problem unmounting ${NFS_MOUNT}.\n"
-        FNC_ERROR=1
+         return 1
     else rmdir ${NFS_MOUNT} > /dev/null 2>&1
-        sadm_write "[ OK ]\n"
+         sadm_write "[ OK ]\n"
     fi
     
 # Remove NFS mount point.
@@ -572,7 +574,7 @@ rear_housekeeping()
         rm -fr ${NFS_MOUNT} >/dev/null 2>&1
         if [ $? -ne 0 ]
         then sadm_write_err "[ ERROR ] Problem removing mount point unmounting ${NFS_MOUNT}.\n"
-            FNC_ERROR=1
+            return 1
         else sadm_write_log "[ OK ] "
         fi
     fi
@@ -584,7 +586,7 @@ rear_housekeeping()
     sadm_write_log "-----"
     sadm_write_log "[ SUCCESS ] End of 'ReaR' backup housekeeping"
     sadm_write_log "-----"
-    return $FNC_ERROR
+    return 0
 }
 
 
@@ -673,11 +675,11 @@ function cmd_options()
     fi 
     #
     if [ $SADM_EXIT_CODE -eq 0 ]                                        # Everything ok so far
-    then rear_housekeeping                                              # Remove old backup & umount
-        if [ $? -ne 0 ]                                                 # If Error in housekeeping
-        then SADM_EXIT_CODE=1                                           # If Error Exit code = 1
-        else SADM_EXIT_CODE=0                                           # No Error Exit code = 0
-        fi
+        then rear_housekeeping                                          # Remove old backup & umount
+             if [ $? -ne 0 ]                                            # If Error in housekeeping
+                then SADM_EXIT_CODE=1                                   # If Error Exit code = 1
+                else SADM_EXIT_CODE=0                                   # No Error Exit code = 0
+             fi
     fi
     if [ -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi   # Remove Temp File
 
