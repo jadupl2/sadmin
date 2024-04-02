@@ -63,19 +63,12 @@
 # 2023_03_04 osupdate v5.2 Last O/S update date & status was no longer updated in SADMIN database.
 # 2023_05_06 osupdate v5.3 Reduce ping wait time to speed up processing.
 # 2023_09_13 osupdate v5.4 Update with latest SADMIN section(v1.56).
+# 2024_04_02 osupdate v5.5 Small modifications.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
     
-# Making sure at least one parameter is received (Sould be the system name to update"
-if [ $# -ne 1 ]                                                         # MUST be hostname to update
-    then printf "[ ERROR ]Please specify the system name to update.\n\n"
-         exit 1                                                         # Exit To O/S
-    else export SYSTEM_NAME=$1                                          # Save Server Name to Update
-fi 
-
-
 
 
 # ---------------------------------------------------------------------------------------
@@ -101,16 +94,25 @@ export SADM_HOSTNAME=$(hostname -s)                        # Host name without D
 export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
-# ---
+
+# ----------
 # SPECIAL DEROGATION TO INSERT THE NAME OF THE SYSTEM TO UPDATE IN THE FILENAME OF LOG AND RCH FILE.
+
+# Making sure at least one parameter is received (Should be the system name to update"
+if [ $# -ne 1 ]                                            # MUST be hostname to update
+    then printf "\n[ ERROR ] Please specify the remote system name.\n\n"
+         exit 1                                            # Exit To O/S
+    else export SYSTEM_NAME=$1                             # Save Server Name to Update
+fi 
 export SADM_EXT=$(echo "$SADM_PN" | cut -d'.' -f2)         # Save Script extension (sh, py, php,.)
 export SADM_INST="${SADM_INST}_${SYSTEM_NAME}"             # Insert VMName to export in rch & log
 export SADM_HOSTNAME="$SYSTEM_NAME"                        # SystemName that we are going to update
 export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with extension)
-# ---
+# ----------
+
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='5.4'                                      # Script version number
+export SADM_VER='5.5'                                      # Script version number
 export SADM_PDESC="Run the O/S update script on the selected remote system."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -250,7 +252,7 @@ rcmd_osupdate()
     server_sporadic=`           echo $wline|awk -F\; '{ print $6 }'`    # SporadicServer 1=Yes 0=No
     server_sadmin_dir=`         echo $wline|awk -F\; '{ print $8 }'`    # $SADMIN on remote Server
     server_ssh_port=`           echo $wline|awk -F\; '{ print $9 }'`    # SSH port to system
-    fqdn_server=`echo ${server_name}.${server_domain}`                  # Create FQN Server Name
+    fqdn_server=$(echo ${server_name}.${server_domain})                 # Create FQN Server Name
         
     # Ping to server (-c2 send two packets, -W2 Timeout waiting for response)
     ping -c2 -W2 $fqdn_server >> /dev/null 2>&1     
@@ -296,7 +298,9 @@ rcmd_osupdate()
             return 1 
     fi
 
-    # Create lock file while O/S Update is running (this turn off monitoring)
+    # Create lock file while O/S Update is running 
+    # This prevent the SADMIN server from starting a script on the remote system.
+    # A system Lock also turn off monitoring of remote system.
     sadm_lock_system "${server_name}"                               # Lock system while update o/s
     if [ $? -ne 0 ]                                                 # If lock system failed
        then sadm_write_err "Update of '${server_name}' cancelled."  # Couldn't Lock system
@@ -336,8 +340,8 @@ rcmd_osupdate()
 
 
 
-    sadm_write_log " "
-    sadm_write_log "O/S Update is now completed on '${server_name}'."
+    #sadm_write_log " "
+    sadm_write_log "[ OK ] O/S Update is now completed on '${server_name}'."
     sadm_unlock_system "${SYSTEM_NAME}"                                  # Go remove the lock file
     return 0
 }
