@@ -89,29 +89,27 @@
 # 2023_04_11 backup v3.45 Previous & Total backup size wasn't always right & added more info in log.
 # 2023_09_13 backup v3.46 Record backup size, more info in log & apply cleaning to all backup type.
 # 2024_01_02 backup v3.47 Fix initial backup directory setup.
+#@2024_04_02 backup v3.48 Small enhancements
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
 
-
-# ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.55
-# Setup for Global Variables and load the SADMIN standard library.
-# To use SADMIN tools, this section MUST be present near the top of your code.    
-# ---------------------------------------------------------------------------------------
+# ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
+# v1.56 - Setup for Global Variables and load the SADMIN standard library.
+#       - To use SADMIN tools, this section MUST be present near the top of your code.    
 
 # Make Sure Environment Variable 'SADMIN' Is Defined.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]              # SADMIN defined? Libr.exist
-    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
-         if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]     # Still not define = Error
+if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
+    then if [ -r /etc/environment ] ; then source /etc/environment ; fi # LastChance defining SADMIN
+         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
             then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
                  exit 1                                                 # No SADMIN Env. Var. Exit
          fi
 fi 
 
-# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
 export SADM_PN=${0##*/}                                    # Script name(with extension)
 export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 export SADM_TPID="$$"                                      # Script Process ID.
@@ -119,25 +117,25 @@ export SADM_HOSTNAME=$(hostname -s)                        # Host name without D
 export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
-# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.47'                                     # Script version number
+# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='3.48'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
-export SADM_EXIT_CODE=0                                    # Script Default Exit Code
-export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
 export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
 export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
-export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
 export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
@@ -148,11 +146,11 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_LOGLINE=400                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
 #export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
 #export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
-# ---------------------------------------------------------------------------------------
+# --------------- ---  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
 
 
 
@@ -161,10 +159,10 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #                               Script environment variables
 # --------------------------------------------------------------------------------------------------
 export TOTAL_ERROR=0                                                    # Total Backup Error
-export CUR_DAY_NUM=`date +"%u"`                                         # Current Day in Week 1=Mon
-export CUR_DATE_NUM=`date +"%d"`                                        # Current Date Nb. in Month
-export CUR_MTH_NUM=`date +"%m"`                                         # Current Month Number
-export CUR_DATE=`date "+%C%y_%m_%d"`                                    # Date Format 2018_05_27
+export CUR_DAY_NUM=$(date +"%u")                                        # Current Day in Week 1=Mon
+export CUR_DATE_NUM=$(date +"%d")                                       # Current Date Nb. in Month
+export CUR_MTH_NUM=$(date +"%m")                                        # Current Month Number
+export CUR_DATE=$(date "+%C%y_%m_%d")                                   # Date Format 2018_05_27
 if [ "$SADM_OS_TYPE" = "DARWIN" ]                                       # If on MacOS
     then export LOCAL_MOUNT="/tmp/nfs1"                                 # NFS Mount Point for MacOS
     else export LOCAL_MOUNT="/mnt/backup"                               # NFS Mount Point for Linux
@@ -293,7 +291,7 @@ backup_setup()
     fi
 
     # Remove previous backup link in the latest directory
-    sadm_write "Removing previous backup links in $LATEST_DIR \n"
+    sadm_write_log "Removing previous backup links in $LATEST_DIR"
     rm -f $LATEST_DIR/20* > /dev/null 2>&1
 
     # Determine the root backup for today (Daily,Weekly,Monthly or Yearly) 
@@ -373,10 +371,6 @@ backup_setup()
     esac 
     sadm_write_log " " 
     sadm_write_log "Base on SADMIN configuration file, you have chosen to:"
-    #if [ "$COMPRESS" = 'ON' ]
-    #    then sadm_write " - Compress the backup file\n"
-    #    else sadm_write " - Not compress the backup\n"
-    #fi
     sadm_write_log " - Keep $SADM_DAILY_BACKUP_TO_KEEP daily backups"
     sadm_write_log " - Keep $SADM_WEEKLY_BACKUP_TO_KEEP weekly backups"
     sadm_write_log " - Keep $SADM_MONTHLY_BACKUP_TO_KEEP monthly backups"
@@ -456,7 +450,7 @@ create_backup()
                          echo "#"  >>$BACK_LOG 2>&1
                          echo "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} .$backup_line" >>$BACK_LOG 2>&1
                          echo "#"  >>$BACK_LOG 2>&1
-                         sadm_write "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} .$backup_line \n"
+                         sadm_write_log "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} .$backup_line"
                          tar -cvzf ${BACKUP_DIR}/${BACK_FILE} .$backup_line >>$BACK_LOG 2>&1
                          RC=$?                                          # Save Return Code
                          echo "Backup ended at $(date) with exit code of $RC"  >>$BACK_LOG 2>&1
@@ -465,10 +459,10 @@ create_backup()
                          echo "#"  >>$BACK_LOG 2>&1
                          echo "tar -cvf ${BACKUP_DIR}/${BACK_FILE} .$backup_line" >>$BACK_LOG 2>&1
                          echo "#"  >>$BACK_LOG 2>&1
-                         sadm_write "tar -cvf ${BACKUP_DIR}/${BACK_FILE} .$backup_line \n"
+                         sadm_write_log "tar -cvf ${BACKUP_DIR}/${BACK_FILE} .$backup_line"
                          tar -cvf ${BACKUP_DIR}/${BACK_FILE} .$backup_line >>$BACK_LOG 2>&1
                          RC=$?                                          # Save Return Code
-                         echo "Backup ended at `date` with exit code of $RC"  >>$BACK_LOG 2>&1
+                         sadm_write_log "Backup ended at $(date) with exit code of $RC" 
                 fi
         fi
 
@@ -503,7 +497,7 @@ create_backup()
                 echo "# $SADM_PN v$SADM_VER - $SADM_HOSTNAME - $(sadm_capitalize $SADM_OS_NAME) v$SADM_OS_VERSION " >>$BACK_LOG 2>&1
                 if [ "$COMPRESS" == "ON" ]
                     then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"     # Final tgz Backup file name
-                         sadm_write "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line\n"
+                         sadm_write_log "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line"
                          echo "# Backup of .$backup_line started at `date`" >>$BACK_LOG 2>&1
                          echo " "  >>$BACK_LOG 2>&1
                          echo "# Exclude list content (/tmp/exclude) :" >>$BACK_LOG 2>&1
@@ -515,7 +509,7 @@ create_backup()
                          RC=$?                                          # Save Return Code
                          echo "Backup ended at `date` with exit code of $RC"  >>$BACK_LOG 2>&1
                     else BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"     # Final tar Backup file name
-                         sadm_write "tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line\n"
+                         sadm_write_log "tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line"
                          echo "# Backup of .$backup_line started at `date`" >>$BACK_LOG 2>&1
                          echo "#"  >>$BACK_LOG 2>&1
                          echo "# Exclude list content (/tmp/exclude) :" >>$BACK_LOG 2>&1
@@ -591,8 +585,8 @@ create_backup()
 clean_backup_dir()
 {
     TOTAL_ERROR=0                                                       # Reset Total of error
-    sadm_write "\n"
-    CUR_PWD=$(pwd)                                                       # Save Current Working Dir.
+    sadm_write_log ""
+    CUR_PWD=$(pwd)                                                      # Save Current Working Dir.
 
     BTYPE="SADM_DAILY_BACKUP_TO_KEEP"
     BID="Daily"
@@ -684,7 +678,7 @@ purge_dir()
              cat $SADM_TMP_FILE3 |while read ln ;do sadm_write_log "Deleting ${ln}" ;rm -fr ${ln}* ;done
              sadm_write_log " "
              sadm_write_log "List of '$BID' backup currently on disk after cleanup."
-             du -h . | grep -v '@eaDir' | while read ln ;do sadm_write "${ln}\n" ;done
+             du -h . | grep -v '@eaDir' | while read ln ;do sadm_write_log "${ln}" ;done
         else sadm_write_log "No clean up needed"
     fi
     sadm_write_log " "
@@ -712,7 +706,7 @@ mount_nfs()
 
     # Mount the NFS Drive - Where the Backup file will reside -----------------------------------------
     REM_MOUNT="${SADM_BACKUP_NFS_SERVER}:${SADM_BACKUP_NFS_MOUNT_POINT}"
-    sadm_write "Mounting NFS Drive on ${SADM_BACKUP_NFS_SERVER}.\n"     # Show NFS Server Name
+    sadm_write_log "Mounting NFS Drive on ${SADM_BACKUP_NFS_SERVER}."   # Show NFS Server Name
     umount ${LOCAL_MOUNT} > /dev/null 2>&1                              # Make sure not mounted
     if [ "$SADM_OS_TYPE" = "DARWIN" ]                                   # If on MacOS
         then sadm_write_log "mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT}"
