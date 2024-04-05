@@ -79,6 +79,7 @@
 # 2023_09_18 client v2.15 Update SADMIN section (v1.56) and minor improvement.
 # 2023_12_22 client v2.16 Added comment within client crontab.
 # 2024_04_02 client v2.17 'sadm_write' to 'sadm_write_log' changes.
+#@2024_04_05 client v2.18 Remove files that are not needed on SADMIN client.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -109,7 +110,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.17'                                      # Script version number
+export SADM_VER='2.18'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -425,19 +426,37 @@ file_housekeeping()
        else set_file "$GMPW_FILE_TXT" "0600" "${SADM_USER}" "${SADM_GROUP}"
     fi
 
-    # Remove default crontab job - We want to run the ReaR Backup from the sadm_rear_backup crontab.
+    # Make sure Gmail password as proper permission
     if [ -f "$GMPW_FILE_B64" ] 
         then chmod 664 $GMPW_FILE_B64
              chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_B64
     fi 
     
-    # No Password file ($SADMIN/cfg/.gmpw)non encrypted on client, remote it.
-    if [ -f "$GMPW_FILE_TXT" ] && [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]
-        then rm -f $GMPW_FILE_TXT >/dev/null 2>&1
+    # No Password clear text file ($SADMIN/cfg/.gmpw) on client, remote it.
+    if [ -f "$GMPW_FILE_TXT" ] && [ $(sadm_on_sadmin_server) -eq 1 ] 
+         then rm -f $GMPW_FILE_TXT >/dev/null 2>&1
     fi
 
     # Remove default crontab job - We want to run the ReaR Backup from the sadm_rear_backup crontab.
     if [ -r /etc/cron.d/rear ] ; then rm -f /etc/cron.d/rear >/dev/null 2>&1; fi
+
+    # Remove unnecessary old files 
+    if [ -r 'sadm_vm_exclude_start*' ] ; then rm -f 'sadm_vm_exclude_start*' >/dev/null 2>&1; fi
+
+    # Remove file that are not needed on SADMIN client
+    if [ "$SADM_ON_SADMIN_SERVER" = "N" ]                           # If not on SADMIN server      
+        then echo "Not on server" 
+             if [ -f "$SADM_ALERT_ARC" ]  ; then rm -f "$SADM_ALERT_ARC"       >/dev/null 2>&1 ;fi
+             echo "SADM_ALERT_HIST=$SADM_ALERT_HIST"
+             if [ -f "$SADM_ALERT_HIST" ] ; then rm -f "$SADM_ALERT_HIST" >/dev/null 2>&1 ;fi
+             if [ -f "${SADM_CFG_DIR}/sadmin_client.cfg" ] 
+                then rm -f "${SADM_CFG_DIR}/sadmin_client.cfg" >/dev/null 2>&1
+             fi
+             if [ -f "${SADM_CFG_DIR}/sherlock.smon" ] 
+                then rm -f "${SADM_CFG_DIR}/sherlock.smon" >/dev/null 2>&1
+             fi
+        else echo "on server"
+    fi
 
     # Make sure some files have proper permission and owner
     set_file "/etc/cron.d/sadm_client"       "0644" "root" "root"
@@ -501,7 +520,7 @@ file_housekeeping()
     
     # Password files
     set_file "${SADM_CFG_DIR}/.dbpass"       "0644" "${SADM_USER}" "${SADM_GROUP}"
-    set_file "$GMPW_FILE_TXT"                "0644" "${SADM_USER}" "${SADM_GROUP}"
+    set_file "$GMPW_FILE_TXT"                "0640" "${SADM_USER}" "${SADM_GROUP}"
     set_file "$GMPW_FILE_B64"                "0644" "${SADM_USER}" "${SADM_GROUP}"
     set_file "/etc/postfix/sasl_passwd"      "0600"  "root" "root"
     set_file "/etc/postfix/sasl_passwd.db"   "0600"  "root" "root"
