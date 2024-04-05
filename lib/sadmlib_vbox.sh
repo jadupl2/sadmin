@@ -40,6 +40,7 @@
 #@2023_02_05 virtualbox v1.8 Chmod of .ova (664) file after the export
 #@2023_03_09 virtualbox v2.1 New Library dedicated for administrating VirtualBox Environment.
 #@2024_04_02 virtualbox v2.2 Documents each functions available in this library.
+#@2024_04_04 virtualbox v2.3 Small bug fixes.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -47,7 +48,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 # Global Variables
 # --------------------------------------------------------------------------------------------------
-export VMLIBVER="2.2"                                                   # This Library version
+export VMLIBVER="2.3"                                                   # This Library version
 export VMLIB_DEBUG="N"                                                  # Activate Debug output Y/N
 export VBOX_HOST=""                                                     # Contain VBox HostName
 export VMLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_list1_XXX")"        # List of all VM in VBox
@@ -763,7 +764,7 @@ sadm_export_vm()
     sadm_write_log " "
 
     # Delete old exports, according to the number of export to keep.
-    clean_export_dir "$VM" "${MOUNT_POINT}/${VM}"                       # VMName & Dir. to Purge
+    sadm_vm_export_housekeeping "$VM" "${MOUNT_POINT}/${VM}"                # VMName & Dir. to Purge
     if [ "$?" -ne 0 ]                                                   # If Error during mount 
         then sadm_write_err "[ ERROR ] Some error occurred while doing the export cleanup."      
         else sadm_write_log "[ OK ] Cleanup done with success." 
@@ -795,63 +796,66 @@ sadm_export_vm()
 
 
 #===================================================================================================
-#"""
 #
-## clean_export_dir()
+#""" sadm_vm_export_housekeeping
+#
+#
+## sadm_vm_export_housekeeping()
 #
 #---
 #
-### Synopsys
 #
-#`clean_export_dir [vmName] [export_directory]`
+### Synopsys
+#`sadm_vm_export_housekeeping [VMName] [export_directory]`
 #
 ### Description
+#The [VMName] indicate the virtual machine name and [export_directory] the location of the export directory.
+#The value of '**SADM_VM_EXPORT_TO_KEEP**' field is define in the $SADMIN/cfg/sadmin.cfg file.
+#It indicate the number of export (date) to keep for the corresponding VM.
 #
-#The [VMName] indicate the name of the virtual machine and the location of the export directory.
-#The value of 'SADM_VM_EXPORT_TO_KEEP' field define in $SADMIN/cfg/sadmin.cfg, indicate the number
-#of export (date) to keep for the corresponding VM.
 #
-## Argument(s)
-#
+### Argument(s)
 #- [1] [vmName] (String)
-#  
-#  - Contain the name of the virtual machine to export.
+#       - Contain the name of the virtual machine to export.
 #
 #- [2] [Export Dir. Name]  (String)
-#  
-#  - Specify the name of the export directory to clean.   
+#       - Specify the name of the export directory.   
+#
 #
 ### Value returned
-#
 #| Integer | Desciption                            |
 #|:-------:|:------------------------------------- |
 #| 1       | Error occured when doing the cleanup. |
 #| 0       | Cleanup was done with success.        |
 #
-### Example
+#   
+### Example  
 #
 #```bash
-## Build NFS with info define in SADMIN configuration '$SADM_CFG_DIR/sadmin.cfg'  
-# NFS_MOUNT="${SADM_VM_EXPORT_NFS_SERVER}:${SADM_VM_EXPORT_MOUNT_POINT}"  
-#sudo mount "$NFS_MOUNT" "$MOUNT_POINT"  
-#if [ "$?" -ne 0 ]                                 	   # If Error during mount 
-#    then sadm_write_err "[ ERROR ] mount $NFS_MOUNT $MOUNT_POINT"      
-#         sudo umount "${MOUNT_POINT" >/dev/null 2>&1  # Ensure Dest. Dir Unmounted
-#              return 1                                # Set RC to One (Standard)
+#Build NFS mount point with data from SADMIN configuration file. 
+#LOCAL_DIR="/tmp/nfs.$$"
+#NFS_DIR="${SADM_VM_EXPORT_NFS_SERVER}:${SADM_VM_EXPORT_MOUNT_POINT}"
+#   
+#sudo mount "$NFS_DIR" "$LOCAL_DIR"
+#if [ "$?" -ne 0 ]
+#    then sadm_write_err "[ ERROR ] mount $NFS_MOUNT $NFS_DIR"
+#         sudo umount "${NFS_DIR}" >/dev/null 2>&1 
+#         return 1  
 #    else sadm_write_log "[ OK ] NFS Mount worked."
-#fi
-##
-#EXPDIR="${MOUNT_POINT}/${vmName}"
-#clean_export_dir "$VM" "${MOUNT_POINT}/${VM}"         # VMName & Dir. to Purge
-#if [ "$?" -ne 0 ]                                     # If Error during clean up
-#    then sadm_write_err "[ ERROR ] Error while doing the export cleanup."
-#    else sadm_write_log "[ OK ] Cleanup was done successfully." 
-#fi
-#```
+#fi   
+#    
+#sadm_vm_export_housekeeping "$VM" "${NFS_DIR}/${VM}"    
+#if [ "$?" -ne 0 ]                            
+#    then sadm_write_err "[ ERROR ] Error doing the export housekeeping of '$VM'."
+#    else sadm_write_log "[ SUCCESS ] Export housekeeping of '$VM' done successfully."
+#fi   
 #
+#```
+##### Included in "$SADMIN/lib/$SADM_PN"
+#   
 #"""
 #===================================================================================================
-clean_export_dir()
+sadm_vm_export_housekeeping()
 {
     VM=$1                                                               # Name of the VM
     EXPORT_DIR=$2                                                       # Dir. where epuration done
