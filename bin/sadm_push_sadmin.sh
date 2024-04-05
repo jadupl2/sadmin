@@ -170,7 +170,7 @@ show_usage()
 process_servers()
 {
 
-# MySQL Select All Actives Servers (Except SADMIN Server) & output result in $SADM_TMP_FILE.
+    # MySQL Select All Actives Servers (Except SADMIN Server) & output result in $SADM_TMP_FILE.
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_sadmin_dir,srv_ssh_port"
     SQL="${SQL} from server"
     if [ "$SYNC_CLIENT" != "" ]
@@ -183,13 +183,13 @@ process_servers()
             sadm_write_log "SQL = ${SQL}"
     fi
     
-# Setup Database Authentication
+    # Setup Database Authentication
     WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/;/'" # Build CmdLine
     if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
 
-# Execute SQL to Select Active servers Data
+    # Execute SQL to Select Active servers Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
     if [ $SADM_DEBUG -gt 5 ] 
         then sadm_write_log " "
@@ -200,14 +200,14 @@ process_servers()
 
     xcount=0; ERROR_COUNT=0;                                            # Reset Server/Error Counter
 
-# If SQL result file has a zero length, return to caller, nothing to process
+    # If SQL result file has a zero length, return to caller, nothing to process
         if [ ! -s "$SADM_TMP_FILE1" ]                                   # File has a zero length?
         then sadm_write_log "[ ERROR ] No server to process ..."        # Nothing to process
              sadm_write_log "${SADM_TEN_DASH}"                          # Terminate dash line
              return 1                                                   # Return to caller RC=1
     fi
 
-# Process each actives servers
+    # Process each actives servers
     xcount=0; ERROR_COUNT=0;                                            # Set Server & Error Counter
     while read wline                                                    # Read Tmp file Line by Line
         do
@@ -225,7 +225,7 @@ process_servers()
         sadm_write_log "${SADM_TEN_DASH} "
         sadm_write_log "Processing ($xcount) $server_fqdn "             # Show ServerName Processing
         
-# if can't resolve server name (Get IP of server), signal Error and proceed with next server
+    # if can't resolve server name (Get IP of server), signal Error and proceed with next server
         if ! host $server_fqdn >/dev/null 2>&1
            then SMSG="[ ERROR ] Can't process '$server_fqdn', hostname can't be resolved."
                 sadm_write_err "${SMSG}"                                # Advise user
@@ -234,7 +234,7 @@ process_servers()
                 continue                                                # skip this server
         fi
 
-# Check if System is Locked.
+    # Check if System is Locked.
         sadm_check_system_lock "$server_name"                           # Check lock file status
         if [ $? -ne 0 ] 
             then sadm_write_log "[ WARNING ] System ${server_fqdn} is currently lock."
@@ -243,7 +243,7 @@ process_servers()
                  continue                                               # Go process next server
         fi
 
-# If SSH to server failed & it's a sporadic server = warning & next server
+    # If SSH to server failed & it's a sporadic server = warning & next server
         ${SADM_SSH} -qnp $server_ssh_port $server_fqdn date >/dev/null 2>&1
         RC=$?                                                           # Save Error Number
         if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "1" ]              # SSH don't work & Sporadic
@@ -253,7 +253,7 @@ process_servers()
                 continue                                                # Go process next server
         fi
 
-# If first SSH failed, try again 3 times to prevent false Error
+    # If first SSH failed, try again 3 times to prevent false Error
         if [ $RC -ne 0 ]   
           then RETRY=0                                                  # Set Retry counter to zero
                while [ $RETRY -lt 3 ]                                   # Retry rsync 3 times
@@ -273,7 +273,7 @@ process_servers()
                   done
         fi
 
-# IF THE 3 SSH ATTEMPT FAILED, ISSUE ERROR MESSAGE AND CONTINUE WITH NEXT SERVER
+    # IF THE 3 SSH ATTEMPT FAILED, ISSUE ERROR MESSAGE AND CONTINUE WITH NEXT SERVER
         if [ $RC -ne 0 ]   
            then SMSG="[ ERROR ] Can't SSH to server '${server_fqdn}'"  
                 sadm_write_err "${SMSG}"                                # Display Error Msg
@@ -283,7 +283,7 @@ process_servers()
         fi
         sadm_write_log "[ OK ] SSH to $server_fqdn"                      # Good SSH Work
 
-# Get the remote /etc/environment file to determine where SADMIN is install on remote system
+    # Get the remote /etc/environment file to determine where SADMIN is install on remote system
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}"                       # Local Dir. on SADM Server
         if [ ! -d $WDIR ] ; then mkdir $WDIR ; chmod 775 $WDIR ; fi     # Local Dir. if don't exist 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
@@ -355,15 +355,14 @@ process_servers()
                     done             
         fi
 
+
         # rsync all dot files (configuration & templates) in "$SADMIN/cfg" to all actives clients.
         # Except the files specified in "$CFG_EXCL".
-        touch "$SADM_CFG_DIR/.gmpw"                                     # Make sure exist for excl
-        touch "$SADM_CFG_DIR/.dbpass"                                   # Make sure exist for excl
-        CFG_EXCL="--exclude={'.gmpw','.dbpass'}"                        # File only on SADMIN server
-        CFG_SRC="$SADM_CFG_DIR/.??*"
+        CFG_SRC="$SADM_CFG_DIR/" 
         CFG_DST="${server_fqdn}:${server_dir}/cfg/"
-        CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' $CFG_EXCL $CFG_SRC $CFG_DST"
-        rsync -ar -e "ssh -p $server_ssh_port" $CFG_EXCL $CFG_SRC $CFG_DST
+        CFG_EXCL="--exclude={'.gmpw','.dbpass','sadmin.cfg','sadmin_client.cfg','backup_exclude.txt','backup_list.txt','rear_exclude.txt'}" 
+        CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' --delete $CFG_EXCL $CFG_SRC $CFG_DST"
+        rsync -ar -e "ssh -p $server_ssh_port" --delete $CFG_EXCL $CFG_SRC $CFG_DST
         RC=$? 
         if [ $RC -ne 0 ]
             then if [ $RC -eq 23 ] 
@@ -427,7 +426,6 @@ process_servers()
                 else sadm_write_log "[ OK ] $CFG_CMD"  
             fi
           done             
-
 
 
         # Copy Alert Group file configuration from SADMIN server file to client
