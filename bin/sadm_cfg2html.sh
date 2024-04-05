@@ -127,7 +127,7 @@ function update_cfg2html()
                 sadm_write_log "Verifying if '$package_name' package is installed."
                 rpm -qi $package_name >/dev/null 2>&1                   # Is the package installed ?
                 if [ $? -eq 0 ]                                         # If cfg2html installed 
-                    then sadm_write_log "Removing version 2 of '$package_name'." 
+                    then sadm_write_log "Removing old version 2 of '$package_name'." 
                          sadm_write_log "dnf remove -y $package_name"
                          dnf remove -y "$package_name" >>$SADM_LOG 2>&1 # Remove installed package
                          if [ $? -ne 0 ]                                # If error removing package
@@ -150,7 +150,7 @@ function update_cfg2html()
                 sadm_write_log "Verifying if '$package_name' package is installed."
                 dpkg -s "$package_name" >/dev/null 2>&1                 # Is the package installed ?
                 if [ $? -eq 0 ]                                         # If cfg2html installed 
-                    then sadm_write_log "Removing version 2 of $package_name." 
+                    then sadm_write_log "Removing old version 2 of $package_name." 
                          sadm_write_log "apt remove -y $package_name"
                          apt remove -y "$package_name" >>$SADM_LOG 2>&1 # Remove installed package
                          if [ $? -ne 0 ]                                # If error removing package
