@@ -96,7 +96,7 @@ export SADM_VER='2.46'                                     # Script Version
 export SADM_PDESC="Copy SADMIN version to all actives clients, without overwriting config files)."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
-export SADM_LOG_APPEND="Y"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
@@ -309,7 +309,7 @@ process_servers()
 
 
         # Rsync Basic Important Directories To SADMIN (bin,pkg,lib) to all clients.
-        rem_std_dir_to_rsync=( bin pkg lib )                            # Directories array to sync
+        rem_std_dir_to_rsync=( bin pkg lib doc setup )                  # Directories array to sync
         for WDIR in "${rem_std_dir_to_rsync[@]}"                        # Loop through Array
           do
           if [ $SADM_DEBUG -gt 5 ]                                      # If Debug is Activated
@@ -327,9 +327,6 @@ process_servers()
              else sadm_write_log "[ OK ] rsync -ar -e 'ssh -p $server_ssh_port' --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/" 
           fi
           done             
-
-
-
 
 
         # If user choose to rsync user directories [-u] to all actives clients.
@@ -360,9 +357,12 @@ process_servers()
         # Except the files specified in "$CFG_EXCL".
         CFG_SRC="$SADM_CFG_DIR/" 
         CFG_DST="${server_fqdn}:${server_dir}/cfg/"
-        CFG_EXCL="--exclude={'.gmpw','.dbpass','sadmin.cfg','sadmin_client.cfg','backup_exclude.txt','backup_list.txt','rear_exclude.txt'}" 
-        CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' --delete $CFG_EXCL $CFG_SRC $CFG_DST"
-        rsync -ar -e "ssh -p $server_ssh_port" --delete $CFG_EXCL $CFG_SRC $CFG_DST
+        CFG_EXCLA="--exclude={'.gmpw','.dbpass','sadmin.cfg','*.smon'} "
+        CFG_EXCLB="--exclude={'sadmin_client.cfg','backup_exclude.txt','backup_list.txt'} "
+        CFG_EXCLC="--exclude={'rear_exclude.txt'} "
+        CFG_EXCL="$CFG_EXCLA $CFG_EXCLB $CFG_EXCLC " 
+        CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' $CFG_EXCL $CFG_SRC $CFG_DST"
+        rsync -ar -e "ssh -p $server_ssh_port" $CFG_EXCL $CFG_SRC $CFG_DST
         RC=$? 
         if [ $RC -ne 0 ]
             then if [ $RC -eq 23 ] 
@@ -432,7 +432,6 @@ process_servers()
         WFILE="alert_group.cfg" 
         CFG_SRC="${SADM_CFG_DIR}/${WFILE}"
         CFG_DST="${server_fqdn}:${server_dir}/cfg/${WFILE}"
-        #CFG_CMD="scp -CqP $server_ssh_port ${CFG_SRC} ${CFG_DST}"
         CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' ${CFG_SRC} ${CFG_DST}"
         if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "$CFG_CMD" ; fi 
         #scp -CqP $server_ssh_port ${CFG_SRC} ${CFG_DST} >> $SADM_LOG 2>&1
