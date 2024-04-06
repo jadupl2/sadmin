@@ -594,10 +594,9 @@ function cmd_options()
 
 # --------------------------------------------------------------------------------------------------
 #                       S T A R T     O F    T H E    S C R I P T 
-# --------------------------------------------------------------------------------------------------
-
+# --------------------------------------------------------------------------------------------------    cmd_options "$@"                                                    # Check command-line Options
     cmd_options "$@"                                                    # Check command-line Options
-    sadm_start                                                          # Init Env. Dir & RC/Log File
+    sadm_start                                                    # Init Env. Dir & RC/Log File
 
     # Get the last line of all rch files in $SADMIN/www, sort results and Display them
     if [ "$WATCH" = "ON" ]                                              # If WATCH switch is ON
