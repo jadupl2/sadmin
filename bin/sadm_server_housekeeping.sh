@@ -41,6 +41,7 @@
 # 2023_12_20 server v2.15 If Daily report line still in sadm_server crontab, remove it (depreciated).
 # 2023_12_24 server v2.16 Code optimization and minor bug fix.
 # 2024_04_02 server v2.17 Change 'sadm_write' to 'sadm_write_log'.
+#@2024_04_15 server v2.18 Fix problem when moving lines from alert history to alert archive file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -69,7 +70,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.17'                                     # Script version number
+export SADM_VER='2.18'                                     # Script version number
 export SADM_PDESC="Set owner in www directories and remove old files in /www/tmp & www/tmp/perf dir."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -110,9 +111,9 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-ERROR_COUNT=0                               ; export ERROR_COUNT            # Error Counter
-ARC_DAYS=7                                  ; export ARC_DAYS               # ALert Age to move
-export SADM_TEN_DASH=$(printf %10s |tr " " "-")                             # 10 dashes line
+export ERROR_COUNT=0                                                    # Error Counter
+export ARC_DAYS=3                                                       # Days before alert is archive
+
 
 
 
@@ -134,49 +135,70 @@ show_usage()
 
 
 # --------------------------------------------------------------------------------------------------
-# Move Alert older than 30 days from $SADMIN/cfg/alert_history.txt to $SADMIN/cfg/alert_archive.txt
+# Move alert older than $ARC_DAYS days,
+# from $SADMIN/cfg/alert_history.txt to $SADMIN/cfg/alert_archive.txt
 # --------------------------------------------------------------------------------------------------
 alert_housekeeping()
 {
-    sadm_writelog "Move Alert older than $ARC_DAYS days to the alert history file." 
-    sadm_writelog "Move from $SADM_ALERT_HIST to $SADM_ALERT_ARC file."
+    sadm_write_log "Move alerts older than $ARC_DAYS days from the alert history file to the alert archive file."
+    sadm_write_log "Alert history file : '$SADM_ALERT_HIST' $(wc -l $SADM_ALERT_HIST | cut -d' ' -f1) lines."
+    sadm_write_log "Alert archive file : '$SADM_ALERT_ARC'  $(wc -l $SADM_ALERT_ARC  | cut -d' ' -f1) lines."
 
-    # If History archive doesn't exist, create it.
-    if [ ! -f "$SADM_ALERT_ARC" ]                                       # If Archive don't exist
-        then cp $SADM_ALERT_ARCINI $SADM_ALERT_ARC                      # Create Initial Archive
-             chmod 664 $SADM_ALERT_ARC 
-             chown $SADM_USER:$SADM_GROUP $SADM_ALERT_ARC
+    # If history archive file doesn't exist, create it.
+    if [ ! -f "$SADM_ALERT_ARC" ]                                       # If Archive file not found
+        then sadm_write_log "Alert archive file doesn't exist.'$SADM_ALERT_ARC'." 
+             if [ -f $SADM_ALERT_ARCINI ]                               # Alert arc. template exist 
+                then sadm_write_log "Using alert archive template to create initial alert archive." 
+                     sadm_write_log "cp $SADM_ALERT_ARCINI $SADM_ALERT_ARC" 
+                     cp $SADM_ALERT_ARCINI $SADM_ALERT_ARC              # Use alert archive template
+                else sadm_write_log "No alert archive template, creating an empty alert archive." 
+                     sadm_write_log "touch $SADM_ALERT_ARC" 
+                     touch $SADM_ALERT_ARC                              # Not template=Empty arch.
+                     touch $SADM_ALERT_ARC                              # Not template=Empty arch.
+             fi 
     fi 
+    chmod 664 $SADM_ALERT_ARC 
+    chown $SADM_USER:$SADM_GROUP $SADM_ALERT_ARC
+
 
     # Create file that will eventually become the New Alert History File from the template
-    cp $SADM_ALERT_HINI $SADM_TMP_FILE3                                 # Create new Initial History
+    cp $SADM_ALERT_HINI $SADM_TMP_FILE3                                 # Create tmp Initial History
      
-    # Alert than happen before Calculate Epoch time (archive_epoch) will be archive.
+    # Calculate the epoch time (now - $ARC_DAYS * 86400) so we know alert older than $ARC_DAYS.
     current_epoch=$(sadm_get_epoch_time)                                # Get Current Epoch
-    alert_age=`echo "86400 * $ARC_DAYS" | $SADM_BC`                     # Nb of Sec. before Archive
-    archive_epoch=`echo $current_epoch - $alert_age | $SADM_BC`         # Archive Epoch Threshold
-    if [ $SADM_DEBUG -gt 0 ]                                            # Under Debug
-        then sadm_writelog "Alert before $archive_epoch are archive."   # Show Epoch Threshold
-    fi
+    alert_age=$(( $ARC_DAYS * 86400 ))                                  # 86400 secs = 1 day 
+    archive_epoch=$(( $current_epoch - $alert_age ))                    # Curr. Epoch - Arc Sec.
+    if [ "$SADM_DEBUG" -gt 4 ] 
+        then sadm_writelog "Current epoch time : '$current_epoch'."
+             sadm_writelog "Epoch $ARC_DAYS days ago   : '$archive_epoch'."
+             sadm_writelog "Alert older than this epoch time ($archive_epoch), are moved to the archive alert file."
+    fi 
 
-    # Read Alert History file
+    # Read Alert History file line by line
+    # Example of line in alert history file
+    # 1654542300;01;15:05;2022.06.06;E;borg;mail_sysadmin;borg.maison.ca unresponsive (Can't SSH to it);;20220606_1505
     cat $SADM_ALERT_HIST | while read line  ; 
         do
         #echo "line=$line" 
-        if  [[ "$line" =~ ^[[:space:]]*# ]] ; then continue ; fi
-        num=`echo $line | awk -F\; '{ print $1 }'`                      # Get Current Alert Epoch
-        alert_epoch=`echo "$num" | grep -E ^\-?[0-9]?\.?[0-9]+$`        # Valid is Level is Numeric
+        if  [[ "$line" =~ ^[[:space:]]*# ]] ; then continue ; fi        # Skip blank or comment line
+        num=$(echo $line | awk -F\; '{ print $1 }')                     # Get Current Alert Epoch
+        alert_epoch=$(echo "$num" | grep -E ^\-?[0-9]?\.?[0-9]+$)       # Is epoch line is Numeric ?
         if [ "$alert_epoch" = "" ] ; then continue ; fi                 # No it's not numeric, skip
-        if [ $alert_epoch -lt $archive_epoch ]
-            then if [ $SADM_DEBUG -gt 0 ] ;then  sadm_writelog "Alert added to archive." ;fi
-                 echo $line >> $SADM_ALERT_ARC
-                 ldate=`echo $line | awk -F\; '{ print $4 }'`           # Extract Alert Date
-                 ltime=`echo $line | awk -F\; '{ print $3 }'`           # Extract Alert Time
-                 lhost=`echo $line | awk -F\; '{ print $6 }'`           # Extract Alert Host
-                 lmess=`echo $line | awk -F\; '{ print $8 }'`           # Extract Error Mess
-                 sadm_write "Archiving Alert: $ldate $ltime $lhost $lmess \n"
-            else if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "Alert left in history file." ;fi
-                 echo $line >> $SADM_TMP_FILE3
+
+        # If current alert epoch time is before the epoch archive calculated.
+        if [ $alert_epoch -lt $archive_epoch ]                          # Alert younger than ArcEpoch
+            then echo $line >> $SADM_ALERT_ARC                          # Append line to AlertArchive
+                 ldate=$(echo $line | awk -F\; '{ print $4 }')          # Extract Alert Date
+                 ltime=$(echo $line | awk -F\; '{ print $3 }')          # Extract Alert Time
+                 lhost=$(echo $line | awk -F\; '{ print $6 }')          # Extract Alert Host
+                 lmess=$(echo $line | awk -F\; '{ print $8 }')          # Extract Error Mess
+                 if [ "$SADM_DEBUG" -gt 4 ] 
+                    then sadm_write_log "Archiving Alert : $ldate $ltime $lhost $lmess"
+                 fi 
+            else echo $line >> $SADM_TMP_FILE3                          # Alert below number of days
+                 if [ "$SADM_DEBUG" -gt 4 ] 
+                    then sadm_write_log "Alert not old enough : $line"
+                 fi 
         fi 
         done
     
@@ -184,6 +206,12 @@ alert_housekeeping()
     cp $SADM_TMP_FILE3 $SADM_ALERT_HIST
     chmod 664 $SADM_ALERT_HIST
     chown $SADM_USER:$SADM_GROUP $SADM_ALERT_HIST
+
+    sadm_write_log " "
+    sadm_write_log "After moving alert older than $ARC_DAYS days from the alert history file to the alert archive file."
+    sadm_write_log "Alert history file : '$SADM_ALERT_HIST' $(wc -l $SADM_ALERT_HIST | cut -d' ' -f1) lines."
+    sadm_write_log "Alert archive file : '$SADM_ALERT_ARC'  $(wc -l $SADM_ALERT_ARC  | cut -d' ' -f1) lines."
+
 }
 
 
@@ -355,11 +383,42 @@ function adjust_server_crontab()
             echo "#   -u To include push of $SADMIN/\(usr/bin usr/lib usr/cfg\)" >> $F 
             echo "#30 11,20 * * * root ${SADMIN}/bin/sadm_push_sadmin.sh > /dev/null 2>&1" >>$F 
             echo "#" >> $F  
-            sadm_write "${BOLD}${YELLOW}Daily Push of SADMIN Scripts added to ${F}${NORMAL}.\n" 
+            sadm_write_log "${BOLD}${YELLOW}Daily Push of SADMIN Scripts added to ${F}${NORMAL}." 
     fi 
     sadm_write_log " " 
     return 0                                                            # Return OK to Caller
 }
+
+
+# --------------------------------------------------------------------------------------------------
+#                                S c r i p t    M a i n     P r o c e s s
+# --------------------------------------------------------------------------------------------------
+main_process()
+{
+    adjust_server_crontab                                               # Check sadm_server crontab
+
+    alert_housekeeping                                                  # Prune Alert History File
+    if [ $? -eq 0 ]
+       then sadm_write_log "[ SUCCESS ] Archiving of alerts done."
+       else sadm_write_err "[ ERROR ] While archiving alert."
+            ((ERROR_COUNT++)) 
+    fi 
+
+    dir_housekeeping                                                    # Do Dir HouseKeeping
+    if [ $? -eq 0 ]
+       then sadm_write_log "[ OK ] Directories housekeeping."
+       else sadm_write_err "[ ERROR ] While directories housekeeping."
+            ((ERROR_COUNT++)) 
+    fi 
+
+    file_housekeeping                                                   # Do File HouseKeeping
+    if [ $? -eq 0 ]
+       then sadm_write_log "[ OK ] File housekeeping."
+       else sadm_write_err "[ ERROR ] While file housekeeping."
+            ((ERROR_COUNT++)) 
+    fi 
+}
+
 
 
 
@@ -401,20 +460,13 @@ function cmd_options()
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
-
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-    adjust_server_crontab                                               # Check sadm_server crontab
-    alert_housekeeping                                                  # Prune Alert History File
-    if [ $? -eq 0 ]
-       then sadm_write_log "[ OK ] Alert archiving done."
-       else sadm_write_err "[ ERROR ] While archiving alert."
-            ((ERROR_COUNT++)) 
-    fi 
-    dir_housekeeping                                                    # Do Dir HouseKeeping
-    file_housekeeping                                                   # Do File HouseKeeping
-
-    if [ $ERROR_COUNT -ne 0 ] ; then SADM_EXIT_CODE=1 ; else SADM_EXIT_CODE=0 ; fi
+    main_process                                                        # Main processing function
+    if [ $ERROR_COUNT -ne 0 ]                                           # Any error in main process?
+        then SADM_EXIT_CODE=1 
+        else SADM_EXIT_CODE=0 
+    fi
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
