@@ -217,6 +217,7 @@
 #@2024_03_13 lib v4.38 User assigned to the 'vboxusers' group.
 #@2024_03_20 lib v4.39 Load new Global variables for VM from \$SADMIN/cfg/sadmin.cfg
 #@2024_04_02 lib v4.40 Function 'sadm_write_log' will now print in color for [ OK ], [ ERROR ], ...
+#@2024_04_22 lib v4.41 Add 'SADM_DAYS_HISTORY' & ´SADM_DAYS_ARCHIVE' to $SADM_CFG_FILE.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -226,7 +227,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.40"                                              # This Library Version
+export SADM_LIB_VER="4.41"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -340,6 +341,9 @@ export SADM_ALERT_GROUP="default"                                       # Define
 export SADM_ALERT_REPEAT=43200                                          # Repeat Alarm wait time Sec
 export SADM_TEXTBELT_KEY="textbelt"                                     # Textbelt.com API Key
 export SADM_TEXTBELT_URL="https://textbelt.com/text"                    # Textbelt.com API URL
+export SADM_DAYS_HISTORY=14                                             # Days to move alert to Arch
+export SADM_DAYS_ARCHIVE=365                                            # Days to Keep alert in Arch
+#
 export SADM_CIE_NAME="Your Company Name"                                # Company Name
 export SADM_HOST_TYPE=""                                                # [S]erver/[C]lient/[D]ev.
 export SADM_USER="sadmin"                                               # sadmin user account
@@ -398,6 +402,7 @@ export SADM_SMTP_SERVER="smtp.gmail.com"                                # smtp m
 export SADM_SMTP_PORT=587                                               # smtp port(25,465,587,2525)
 export SADM_SMTP_SENDER="sadmin.gmail.com"                              # Email address of sender 
 export SADM_GMPW=""                                                     # smtp sender gmail passwd
+#
 export SADM_VM_EXPORT_NFS_SERVER=""                                     # NFS Server for VM Export
 export SADM_VM_EXPORT_MOUNT_POINT=""                                    # NFS mount port for Export
 export SADM_VM_EXPORT_TO_KEEP=""                                        # Nb export to keep per VM
@@ -618,17 +623,17 @@ sadm_write_log()
 
     case "$SADM_LOG_TYPE" in                                            # [S]creen [L]og or [B]oth 
         S)      if [ "$EOL_LF" = 'N' ]                                  # If No LineFeed at EOL
-                    then printf -- "$SC_MSG"                            # Screen Msg without LF
-                    else printf -- "$SC_MSG\n"                          # Screen Msg with LineFeed
+                    then printf -- "%s" "$SC_MSG"                            # Screen Msg without LF
+                    else printf -- "%s\n" "$SC_MSG"                          # Screen Msg with LineFeed
                 fi
                 ;;
-        L)      printf -- "$dated_msg\n" >> $SADM_LOG                   # Write Msg to Log File
+        L)      printf -- "%s\n" "$dated_msg" >> $SADM_LOG                   # Write Msg to Log File
                 ;;
         B)      if [ "$EOL_LF" = 'N' ]                                  # If No LineFeed at EOL
-                    then printf -- "${SC_MSG}"                           # Screen Msg without LF
-                    else printf -- "${SC_MSG}\n"                         # Screen Msg with LineFeed
+                    then printf -- "%s" "${SC_MSG}"                           # Screen Msg without LF
+                    else printf -- "%s\n" "${SC_MSG}"                         # Screen Msg with LineFeed
                 fi
-                printf -- "$dated_msg\n" >> $SADM_LOG                   # Write Msg to Log
+                printf -- "%s\n" "$dated_msg" >> $SADM_LOG                   # Write Msg to Log
                 ;;
         *)      printf "Invalid '$SADM_LOG_TYPE' ($SADM_LOG_TYPE) in ${FUNCNAME[0]} line ${LINENO}.\n" 
                 ;;
@@ -675,6 +680,7 @@ sadm_show_version()
 # Return Value : 
 #   0 - if the trim done with success 
 #   1 - if problem occured while trimming the file
+# 
 sadm_trimfile() {
     wfile=$1 ; maxline=$2                                               # Save FileName & Trim Num.
     wreturn_code=0                                                      # Default Return Code 
@@ -1959,6 +1965,10 @@ sadm_load_config_file() {
                                             ;; 
             "SADM_VM_START_INTERVAL" )      SADM_VM_START_INTERVAL=$VALUE
                                             ;; 
+            "SADM_DAYS_HISTORY" )           SADM_DAYS_HISTORY=$VALUE
+                                            ;; 
+            "SADM_DAYS_ARCHIVE" )           SADM_DAYS_ARCHIVE=$VALUE
+                                            ;; 
         esac
         done < $SADM_CFG_FILE
 
@@ -2200,6 +2210,7 @@ sadm_start() {
             cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
             sadm_write_err "[ ERROR ] Script '$SADM_PN' is already running ..."
+            sadm_write_err " "
             sadm_write_err "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
             sadm_write_err "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid', was created $pelapse seconds ago."
             sadm_write_err "The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds."
@@ -2243,13 +2254,13 @@ sadm_start() {
     # If it doesn't exist, create it from initial file ($SADMIN/cfg/.alert_group.cfg)
     if [ ! -f "$SADM_ALERT_FILE" ]                                      # alert_group.cfg not Exist
        then if [ ! -f "$SADM_ALERT_INIT" ]                              # .alert_group.cfg not Exist
-               then sadm_write_log "********************************************************\n"
-                    sadm_write_log "SADMIN Alert Group file not found - $SADM_ALERT_FILE \n"
-                    sadm_write_log "Even Alert Group Template file is missing - $SADM_ALERT_INIT\n"
-                    sadm_write_log "Copy both files from another system to this server\n"
-                    sadm_write_log "Or restore them from a backup\n"
-                    sadm_write_log "Don't forget to review the file content.\n"
-                    sadm_write_log "********************************************************\n"
+               then sadm_write_log "********************************************************"
+                    sadm_write_log "SADMIN Alert Group file not found - $SADM_ALERT_FILE "
+                    sadm_write_log "Even Alert Group Template file is missing - $SADM_ALERT_INIT"
+                    sadm_write_log "Copy both files from another system to this server"
+                    sadm_write_log "Or restore them from a backup"
+                    sadm_write_log "Don't forget to review the file content."
+                    sadm_write_log "********************************************************"
                     sadm_stop 1                                         # Exit to O/S with Error
                     exit 1
                else cp $SADM_ALERT_INIT $SADM_ALERT_FILE                # Copy Template as initial
@@ -2328,11 +2339,11 @@ sadm_stop() {
         then if [ -f "$SADM_RCHLOG" ]                                   # If RCH file exist
                 then XCODE=`tail -1 $SADM_RCHLOG | awk '{ print $NF }'` # Get RCH Code on last line
                      if [ "$XCODE" -ne 0 ] && [ "$XCODE" -ne 1 ] && [ "$XCODE" -ne 2 ]
-                        then XCODE = 0                                  # If ResultCode Invalid = 0 
+                        then XCODE=0                                    # If ResultCode Invalid = 0 
                      fi 
                      if [ "$XCODE" -eq 2 ]                              # If last Line code is 2
                         then XLINE=`wc -l ${SADM_RCHLOG} | awk '{print $1}'` # Count Nb. Line in RCH
-                             XCOUNT=`expr $XLINE - 1`                   # Count without last line
+                             XCOUNT=$(expr $XLINE - 1)                  # Count without last line
                              head -$XCOUNT ${SADM_RCHLOG} > ${SADM_TMP_DIR}/xrch.$$ # rch file trim
                              rm -f ${SADM_RCHLOG} >/dev/null 2>&1       # Remove old rch file
                              mv ${SADM_TMP_DIR}/xrch.$$ ${SADM_RCHLOG}  # Replace RCH without code 2
@@ -2414,7 +2425,10 @@ sadm_stop() {
                      fi 
              fi 
              sadm_write_log "End of ${SADM_PN} - `date`"                # Write End Time To Log
-             sadm_write "${SADM_80_DASH}\n\n\n\n"                       # Write 80 Dash Line
+             sadm_write_log "${SADM_80_DASH}"                           # Write 80 Dash Line
+             sadm_write_log " "                                         # Write 80 Dash Line
+             sadm_write_log " "                                         # Write 80 Dash Line
+             sadm_write_log " "                                         # Write 80 Dash Line
              cat $SADM_LOG > /dev/null                                  # Force buffer to flush
              if [ $SADM_MAX_LOGLINE -ne 0 ] && [ "$SADM_LOG_APPEND" = "Y" ] # Max Line in Log Not 0 
                 then sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"      # Trim the Log
@@ -2768,6 +2782,83 @@ sadm_on_sadmin_server() {
 
 
 
+# Check if new variables added with new version are in the sadmin.cfg file
+# If they are not they will be added here.
+# --------------------------------------------------------------------------------------------------
+sadmin_cfg_update() {
+
+
+    grep -q "SADM_VM_EXPORT_NFS_SERVER" $SADM_CFG_FILE
+    if [ $? -ne 0 ] 
+        then 
+        ( cat <<'EOF'
+#----------------------------------------------------------------------------
+# Virtual Box Machine Backup (OVA) Options
+#----------------------------------------------------------------------------
+# SADM_VM_EXPORT_NFS_SERVER: 
+#   NFS Server name where the Virtual Machine will be exported.
+# SADM_VM_EXPORT_MOUNT_POINT:
+#   NFS mount point where the export files are stored on NFS Server.
+# SADM_VM_EXPORT_TO_KEEP:
+#   Number of export directory per VM to keep at all time.
+#   The oldest export directory is deleted when this number is exceeded.
+# SADM_VM_EXPORT_INTERVAL:
+#   When no 'export' is done for more than 'SADM_VM_EXPORT_INTERVAL' days, 
+#   the VM status page will highlight this fact with a different color.
+#   (Default is 14 days).
+# SADM_VM_EXPORT_ALERT:
+#   Y = Issue an alert when export interval is exceeded.
+#   N = Don't send an alert when export interval is exceeded (Default).
+# SADM_VM_USER: 
+#   Username that is assigned to the 'vboxusers' user group.
+# SADM_VM_STOP_TIMEOUT: 
+#   Seconds given to stop a VM using the acpi shutdown, before issuing a poweroff.
+# SADM_VM_START_INTERVAL: 
+#   When you decide start all VMs, this is the number of seconds we sleep 
+#   before starting the next one.
+#----------------------------------------------------------------------------
+SADM_VM_EXPORT_NFS_SERVER    = batnas.maison.ca
+SADM_VM_EXPORT_MOUNT_POINT   = /volume1/backup_vm/virtualbox_exports
+SADM_VM_EXPORT_TO_KEEP       = 2
+SADM_VM_EXPORT_INTERVAL      = 14 
+SADM_VM_EXPORT_ALERT         = Y 
+SADM_VM_USER                 = jacques
+SADM_VM_STOP_TIMEOUT         = 120
+SADM_VM_START_INTERVAL       = 30
+#
+
+EOF
+) >> $SADM_CFG_FILE
+    fi 
+
+
+# Add New variable 'SADM_DAYS_HISTORY' & 'SADM_DAYS_ARCHIVE' to sadmin.cfg, if not in yet.
+    grep -q "SADM_DAYS_HISTORY" $SADM_CFG_FILE
+    if [ $? -ne 0 ] 
+        then 
+        ( cat <<'EOF'
+
+#----------------------------------------------------------------------------
+# Number of days to keep an alert in the History File ($SADM_ALERT_HIST).
+# When alert become older the 'SADM_DAYS_HISTORY' they are moved to the alert
+# archive file ($SADM_ALERT_ARC).
+# (Default 14 days) 
+#----------------------------------------------------------------------------
+SADM_DAYS_HISTORY = 14
+
+
+
+#----------------------------------------------------------------------------
+# Number of days to keep in the alert archive file ($SADM_ALERT_ARC).
+# Default is 365 Days.
+#----------------------------------------------------------------------------
+SADM_DAYS_ARCHIVE = 365
+
+EOF
+) >> $SADM_CFG_FILE
+    fi 
+
+}
 
 
 # --------------------------------------------------------------------------------------------------
@@ -2798,6 +2889,7 @@ sadm_on_sadmin_server() {
     fi
     sadm_load_config_file                                               # Load sadmin.cfg file
     if [ -r "$SADM_SLACK_FILE" ] ; then merge_alert_files ; fi          # If old version
+    sadmin_cfg_update                                                   # Add new Variables to cfg
 
 # Check if on a valid SADMIN server and set SADM_ON_SADMIN_SERVER to "Y" or "N" 
     sadm_on_sadmin_server                                               # SADMIN Server? 0=No 1=Yes
