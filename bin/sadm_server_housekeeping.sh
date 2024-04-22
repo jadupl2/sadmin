@@ -42,6 +42,10 @@
 # 2023_12_24 server v2.16 Code optimization and minor bug fix.
 # 2024_04_02 server v2.17 Change 'sadm_write' to 'sadm_write_log'.
 #@2024_04_15 server v2.18 Fix problem when moving lines from alert history to alert archive file.
+#@2024_04_22 server v2.19 Alert older than '$SADM_DAYS_HISTORY' defined in sadmin.cfg are archived.
+#@2024_04_22 server v2.20 Trim the alert archive file to '$SADM_DAYS_ARCHIVE' defined in sadmin.cfg.
+
+ Add 'SADM_DAYS_HISTORY' & ´SADM_DAYS_ARCHIVE' to $SADM_CFG_FILE.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -70,7 +74,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.18'                                     # Script version number
+export SADM_VER='2.20'                                     # Script version number
 export SADM_PDESC="Set owner in www directories and remove old files in /www/tmp & www/tmp/perf dir."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -112,7 +116,6 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
 export ERROR_COUNT=0                                                    # Error Counter
-export ARC_DAYS=3                                                       # Days before alert is archive
 
 
 
@@ -135,12 +138,12 @@ show_usage()
 
 
 # --------------------------------------------------------------------------------------------------
-# Move alert older than $ARC_DAYS days,
+# Move alert older than $SADM_DAYS_HISTORY days,
 # from $SADMIN/cfg/alert_history.txt to $SADMIN/cfg/alert_archive.txt
 # --------------------------------------------------------------------------------------------------
 alert_housekeeping()
 {
-    sadm_write_log "Move alerts older than $ARC_DAYS days from the alert history file to the alert archive file."
+    sadm_write_log "Move alerts older than $SADM_DAYS_HISTORY days from the alert history file to the alert archive file."
     sadm_write_log "Alert history file : '$SADM_ALERT_HIST' $(wc -l $SADM_ALERT_HIST | cut -d' ' -f1) lines."
     sadm_write_log "Alert archive file : '$SADM_ALERT_ARC'  $(wc -l $SADM_ALERT_ARC  | cut -d' ' -f1) lines."
 
@@ -164,13 +167,13 @@ alert_housekeeping()
     # Create file that will eventually become the New Alert History File from the template
     cp $SADM_ALERT_HINI $SADM_TMP_FILE3                                 # Create tmp Initial History
      
-    # Calculate the epoch time (now - $ARC_DAYS * 86400) so we know alert older than $ARC_DAYS.
+    # Calculate the epoch time (now - $SADM_DAYS_HISTORY * 86400) so we know alert older than $SADM_DAYS_HISTORY.
     current_epoch=$(sadm_get_epoch_time)                                # Get Current Epoch
-    alert_age=$(( $ARC_DAYS * 86400 ))                                  # 86400 secs = 1 day 
-    archive_epoch=$(( $current_epoch - $alert_age ))                    # Curr. Epoch - Arc Sec.
+    alert_age=$(( $SADM_DAYS_HISTORY * 86400 ))                         # 86400 secs = 1 day 
+    archive_epoch=$(( $current_epoch - $alert_age ))                    # Current Epoch - Arc Sec.
     if [ "$SADM_DEBUG" -gt 4 ] 
         then sadm_writelog "Current epoch time : '$current_epoch'."
-             sadm_writelog "Epoch $ARC_DAYS days ago   : '$archive_epoch'."
+             sadm_writelog "Epoch $SADM_DAYS_HISTORY days ago   : '$archive_epoch'."
              sadm_writelog "Alert older than this epoch time ($archive_epoch), are moved to the archive alert file."
     fi 
 
@@ -208,10 +211,12 @@ alert_housekeeping()
     chown $SADM_USER:$SADM_GROUP $SADM_ALERT_HIST
 
     sadm_write_log " "
-    sadm_write_log "After moving alert older than $ARC_DAYS days from the alert history file to the alert archive file."
+    sadm_write_log "After moving alert older than $SADM_DAYS_HISTORY days from the alert history file to the alert archive file."
     sadm_write_log "Alert history file : '$SADM_ALERT_HIST' $(wc -l $SADM_ALERT_HIST | cut -d' ' -f1) lines."
     sadm_write_log "Alert archive file : '$SADM_ALERT_ARC'  $(wc -l $SADM_ALERT_ARC  | cut -d' ' -f1) lines."
 
+    sadm_write_log "Trimming alert archive file to a maximum of $SADM_DAYS_ARCHIVE lines." 
+    sadm_trimfile "$SADM_ALERT_ARC" "$SADM_DAYS_ARCHIVE"
 }
 
 
