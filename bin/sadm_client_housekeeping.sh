@@ -80,6 +80,7 @@
 # 2023_12_22 client v2.16 Added comment within client crontab.
 # 2024_04_02 client v2.17 'sadm_write' to 'sadm_write_log' changes.
 #@2024_04_05 client v2.18 Remove files that are not needed on SADMIN client.
+#@2024_04_16 client v2.19 Replace 'sadm_write' with 'sadm_write_log' and 'sadm_write_err'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -110,7 +111,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.18'                                      # Script version number
+export SADM_VER='2.19'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -279,24 +280,22 @@ set_dir()
     RETURN_CODE=0                                                       # Reset Error Counter
 
     if [ -d "$VAL_DIR" ]                                                # If Directory Exist
-        then sadm_write "  - chmod $VAL_OCTAL $VAL_DIR "
+        then sadm_write_log "  - chmod $VAL_OCTAL $VAL_DIR " "NOLF"
              chmod $VAL_OCTAL $VAL_DIR  >>$SADM_LOG 2>&1
              if [ $? -ne 0 ]
-                then sadm_write "${SADM_ERROR} On 'chmod' operation for ${VALDIR}.\n"
+                then sadm_write_err "[ ERROR ] On 'chmod' operation for ${VALDIR}."
                      ((ERROR_COUNT++))                                  # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
-                else sadm_write "${SADM_OK}\n"
+                else sadm_write_log "[ OK ]"
              fi
-             sadm_write "  - chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR "
+             sadm_write_log "  - chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR " "NOLF"
              chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR >>$SADM_LOG 2>&1
              if [ $? -ne 0 ]
-                then sadm_write "${SADM_ERROR} On 'chown' operation for ${VALDIR}.\n"
+                then sadm_write_err "[ ERROR ] On 'chown' operation for ${VALDIR}."
                      ((ERROR_COUNT++))                                  # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
-                else sadm_write "${SADM_OK}\n"
+                else sadm_write_log "[ OK ]"
              fi
-             #lsline=`ls -ld $VAL_DIR`
-             #sadm_write "${lsline}\n"
     fi
     return $RETURN_CODE
 }
@@ -345,7 +344,7 @@ set_files_recursive()
 # --------------------------------------------------------------------------------------------------
 dir_housekeeping()
 {
-    sadm_write "${BOLD}SADMIN Client Directories Housekeeping.${NORMAL}\n"
+    sadm_write_log "${BOLD}SADMIN Client Directories Housekeeping.${NORMAL}"
     ERROR_COUNT=0                                                       # Reset Error Count
 
     # Setup basic SADMIN directories structure and permissions
@@ -390,8 +389,6 @@ set_file()
                      RETURN_CODE=1                                      # Error = Return Code to 1
                 else sadm_write_log "[ OK ]"
              fi
-             #lsline=`ls -l $VAL_FILE`
-             #sadm_write "${lsline}\n"
     fi
 
     return $RETURN_CODE
@@ -566,13 +563,13 @@ file_housekeeping()
                      ((ERROR_COUNT++))
                 else sadm_write_log "[ OK ]"
              fi
-             if [ $ERROR_COUNT -ne 0 ] ;then sadm_write "Total Error at ${ERROR_COUNT}\n" ;fi
+             if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}" ;fi
     fi
 
     # Remove any *.log in SADMIN LOG Directory older than ${SADM_LOG_KEEPDAYS} days
     if [ -d "${SADM_LOG_DIR}" ]
         then sadm_write_log "  - Remove any unmodified *.log file(s) for more than ${SADM_LOG_KEEPDAYS} days in ${SADM_LOG_DIR}."
-             #sadm_write "    - List of log file that will be deleted.\n" 
+             #sadm_write_log "    - List of log file that will be deleted." 
              #find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec ls -l {} \; >>$SADM_LOG
              sadm_write_log "    - find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name '*.log' -exec rm -f {} \; "  "NOLF"
              find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec rm -f {} \; | tee -a $SADM_LOG
@@ -587,7 +584,7 @@ file_housekeeping()
     # Delete old nmon files - As defined in the sadmin.cfg file
     if [ -d "${SADM_NMON_DIR}" ]
         then sadm_write_log "  - Remove any unmodified *.nmon file(s) for more than ${SADM_NMON_KEEPDAYS} days in ${SADM_NMON_DIR}." 
-             #sadm_write "    - List of nmon file that will be deleted.\n"
+             #sadm_write_log "    - List of nmon file that will be deleted."
              #find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec ls -l {} \; >> $SADM_LOG 2>&1
              sadm_write_log "    - find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name '*.nmon' -exec rm {} \; " "NOLF"
              find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec rm {} \; >/dev/null 2>&1
