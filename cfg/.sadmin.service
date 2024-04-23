@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-# SADMIN Service Definition V2.6 (Updated Feb 2024)
+# SADMIN Service Definition V2.7 (Updated April 2024)
 # If you modify this file, run these commands to make your change effective.
 #   Enter   'systemctl disable sadmin.service' 
 #           'systemctl enable  sadmin.service'
@@ -7,7 +7,7 @@
 # --------------------------------------------------------------------------------------------------
 #
 [Unit]
-Description=Control SADMIN stop/start script execution.
+Description=Execute SADMIN stop/start script.
 Requires=multi-user.target
 After=multi-user.target
 DefaultDependencies=no
