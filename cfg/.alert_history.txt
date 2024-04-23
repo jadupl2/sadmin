@@ -1,4 +1,4 @@
-# SADMIN Alert History File v2.0
+# SADMIN Alert History File v2.1
 # --------------------------------------------------------------------------------------------------
 # This file record each alert that was sent either by mail,SMS & Slack
 #   Comment and blank line are ignored.
@@ -20,7 +20,4 @@
 #       - When alert is sent more than once a day, it indicate the
 #         date and time the alert was resend (SADM_ALERT_REPEAT<>0 in sadmin.cfg).
 #
-# --------------------------------------------------------------------------------------------------
-
-
-
+#---------------------------------------------------------------------------------------------------
