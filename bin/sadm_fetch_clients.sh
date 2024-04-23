@@ -99,6 +99,7 @@
 # 2023_07_18 server v3.45 Fix when not using the standard ssh port (22).
 # 2023_09_18 server v3.46 Enhance purge of old '*.nmon' files.
 # 2023_12_17 server v3.47 Modification that allow SADMIN server IP to be an IP alias.
+#@2024_04_16 server v3.48 Replace 'sadm_write' with 'sadm_write_log' and 'sadm_write_err'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -128,7 +129,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.47'                                     # Script version number
+export SADM_VER='3.48'                                     # Script version number
 export SADM_PDESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -1820,15 +1821,16 @@ sadm_send_alert()
           s_md="\"mrkdwn\": true,"                                      # s_md format to true
           json="{\"channel\": \"${s_channel}\", \"icon_emoji\": \":${s_icon}:\", ${s_md} ${s_text}}"
           if [ "$LIB_DEBUG" -gt 4 ]
-              then sadm_write "$SADM_CURL -s -d \"payload=$json\" ${slack_hook_url}\n"
+              then sadm_write_log "$SADM_CURL -s -d \"payload=$json\" ${slack_hook_url}"
           fi
           SRC=`$SADM_CURL -s -d "payload=$json" $slack_hook_url`        # Send Slack Message
-          if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Status after send to Slack is ${SRC}\n" ;fi
+          if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write_log "Status after send to Slack is ${SRC}" ;fi
           if [ $SRC = "ok" ]                                            # If Sent Successfully
               then RC=0                                                 # Set Return code to 0
                    wstatus="[ OK ] Slack message sent with success to $agroup ($SRC)" 
-              else wstatus="[ Error ] Sending Slack message to $agroup ($SRC)"
-                   sadm_write "${wstatus}\n"                            # Advise User
+                   sadm_write_log "${wstatus}"                          # Advise User
+              else wstatus="[ ERROR ] Sending Slack message to $agroup ($SRC)"
+                   sadm_write_log "${wstatus}"                          # Advise User
                    RC=1                                                 # When Error Return Code 1
           fi
           ;;
@@ -1850,8 +1852,8 @@ sadm_send_alert()
               agtype=`echo $agtype | awk '{$1=$1;print}'`               # Del Leading/Trailing Space
               agtype=`echo $agtype | tr "[:lower:]" "[:upper:]"`        # Make Grp Type is uppercase
               if [ "$agtype" != "C" ]                                   # Member should be type [C]
-                  then sadm_write "Member of '$agroup' alert group '$i' is not a type 'C' alert.\n"
-                       sadm_write "Alert not send to '$i', proceeding with next member.\n"
+                  then sadm_write_log "Member of '$agroup' alert group '$i' is not a type 'C' alert."
+                       sadm_write_log "Alert not send to '$i', proceeding with next member."
                        total_error=`expr $total_error + 1`
                        continue
               fi
