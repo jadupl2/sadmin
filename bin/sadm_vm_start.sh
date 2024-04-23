@@ -35,6 +35,7 @@
 #@2020_12_12 vmtools v1.3 Change location of the exclude/include vm files.
 #@2021_01_25 vmtools v1.4 Startup Exclude list was not working 
 #@2024_03_19 vmtools v1.5 New script to start a VirtualBox virtual machine.
+#@2024_04_19 vmtools v1.6 Remove 'chmod' of 'vm_start_exclude_list'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -64,7 +65,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.5'                                      # Script version number
+export SADM_VER='1.6'                                      # Script version number
 export SADM_PDESC="Script to start one or all the VirtualBox Virtual machines" 
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -157,7 +158,7 @@ main_process()
                     touch $START_EXCLUDE_FILE                           # Or Create empty Excl. List
             fi 
     fi 
-    chmod 664 $START_EXCLUDE_FILE                                       # Set perm, on exclude list
+    #
 
     # If no VNName is specified (-n), or All VMs is specified (-a).
     if [ "$VMNAME" = "NOVM" ] 
