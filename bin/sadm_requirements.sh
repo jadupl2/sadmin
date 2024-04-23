@@ -45,6 +45,7 @@
 # 2022_07_19 install v1.13 Update of the list of commands and package require by SADMIN.
 # 2023_04_27 install v1.14 Add 'base64' command to requirement list.
 # 2023_12_21 install v1.15 Revision of the list of the packages require.
+#@2024_04_21 install v1.16 Replace 'sadm_write' by 'sadm_write_log' and 'sadm_write_err'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -76,7 +77,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.15'                                     # Your Current Script Version
+export SADM_VER='1.16'                                     # Your Current Script Version
 export SADM_PDESC="Check if all SADMIN Tools requirement are present (-i install missing packages)."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -154,8 +155,8 @@ install_package()
 {
     # Check if we received at least a parameter
     if [ $# -ne 2 ]                                                      # Should have rcv 2 Param
-        then sadm_write "Nb. Parameter received by $FUNCNAME function is incorrect.\n"
-             sadm_write "Please correct your script - Script Aborted.\n" # Advise User to Correct
+        then sadm_write_log "Nb. Parameter received by $FUNCNAME function is incorrect."
+             sadm_write_log "Please correct your script - Script Aborted.\n" # Advise User to Correct
              sadm_stop 1                                                 # Prepare exit gracefully
              exit 1                                                      # Terminate the script
     fi
@@ -173,20 +174,20 @@ install_package()
                         lmess="${lmess} v$(sadm_get_osmajorversion)"
                         sadm_write_log "${lmess}"
                         case "$(sadm_get_osmajorversion)" in
-                            [567])  sadm_write "Running \"yum -y install ${PACKAGE_RPM}\"\n" # Install Command
-                                    yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
-                                    rc=$?                                            # Save Exit Code
-                                    sadm_write "Return Code after in installation of ${PACKAGE_RPM} is ${rc}.\n"
+                            [567])  sadm_write_log "Running 'yum -y install ${PACKAGE_RPM}'" 
+                                    yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  
+                                    rc=$?                                            
+                                    sadm_write_log "Return Code after in installation of ${PACKAGE_RPM} is ${rc}."
                                     ;;
-                            [89])   sadm_write "Running \"dnf -y install ${PACKAGE_RPM}\"\n" 
+                            [89])   sadm_write_log "Running 'dnf -y install ${PACKAGE_RPM}'" 
                                     yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List update
                                     rc=$?                                            # Save ExitCode
-                                    sadm_write "Return Code after in installation of ${PACKAGE_RPM} is ${rc}.\n"
+                                    sadm_write_log "Return Code after in installation of ${PACKAGE_RPM} is ${rc}."
                                     ;;
                             *)      lmess="The version $(sadm_get_osmajorversion) of"
                                     lmess="${lmess} $(sadm_get_osname) isn't supported at the moment"
-                                    sadm_write "${lmess}.\n"
-                                    rc=1                                             # Save Exit Code
+                                    sadm_write_log "${lmess}."
+                                    rc=1 
                                     ;;
                         esac
                 fi
@@ -200,18 +201,18 @@ install_package()
                 if [ "$rc" -ne 0 ]
                     then sadm_write_err "We had problem running the \"apt update\" command."
                          sadm_write_err "We had a return code ${rc}."
-                    else sadm_write "Return Code after apt-get update is ${rc}.\n" 
-                         sadm_write "Installing the Package ${PACKAGE_DEB} now.\n"
-                         sadm_write "apt -y install ${PACKAGE_DEB}\n"
+                    else sadm_write_log "Return Code after apt-get update is ${rc}." 
+                         sadm_write_log "Installing the Package ${PACKAGE_DEB} now."
+                         sadm_write_log "apt -y install ${PACKAGE_DEB}"
                          apt -y install ${PACKAGE_DEB} >>$SADM_LOG 2>&1
                          rc=$?                                          # Save Exit Code
-                         sadm_write "Return Code after installation of ${PACKAGE_DEB} is $rc \n"
+                         sadm_write_log "Return Code after installation of ${PACKAGE_DEB} is $rc"
                 fi
                 sadm_write_log "----------"
                 ;;
     esac
 
-    sadm_write "\n"
+    sadm_write_log " "
     return $rc                                                          # 0=Installed 1=Error
 }
 
@@ -541,8 +542,7 @@ package_available() {
 # IF THE REQUIREMENTS ARE NOT MET, THEN THE SCRIPT WILL ABORT INFORMING USER TO CORRECT SITUATION
 # --------------------------------------------------------------------------------------------------
 check_sadmin_requirements() {
-    sadm_write "${YELLOW}${BOLD}SADMIN client requirements${NORMAL}\n"
-
+    sadm_write_log "${YELLOW}${BOLD}SADMIN client requirements${NORMAL}"
     if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] ||
        [ "$(sadm_get_osname)" = "ROCKY" ]  || [ "$(sadm_get_osname)" = "ALMA" ]
        then if [ $INSTREQ -eq 1 ] 
@@ -728,7 +728,8 @@ check_sadmin_requirements() {
 
     # If on the SADMIN Server mysql MUST be present - Check Availibility of the mysql command.
     if [ "$SADM_ON_SADMIN_SERVER" = "Y" ] || [ "$CHK_SERVER" = "Y" ] # Check Server Req.
-        then sadm_write "\n${YELLOW}${BOLD}SADMIN server requirements.${NORMAL}\n"
+        then sadm_write_log " "
+             sadm_write_log "${YELLOW}${BOLD}SADMIN server requirements.${NORMAL}"
              command_available "mysql" ; SADM_MYSQL=$SPATH              # Get mysql cmd path  
              if [ "$SADM_MYSQL" = "" ] && [ "$INSTREQ" -eq 1 ]          # Cmd not found & Inst Req.
                 then install_package "mariadb-server " "mariadb-server mariadb-client"  
