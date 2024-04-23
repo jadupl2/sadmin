@@ -34,6 +34,7 @@
 #@2020_10_23 vmtools v1.2 Option -y (No confirmation) was not working (Typo Error)
 #@2021_01_22 vmtools v1.3 Don't wait for a confirmation if option (-l) list is used.
 #@2024_03_08 vmtools v1.4 Adapt code to be included in SADMIN Tools.
+#@2024_04_18 vmtools v1.5 Will now accept a confirmation by default (if -y not specify).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -64,7 +65,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.4'                                      # Script version number
+export SADM_VER='1.5'                                      # Script version number
 export SADM_PDESC="Command line tools to control the VirtualBox vm(s)."
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -107,7 +108,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 . ${SADM_LIB_DIR}/sadmlib_vbox.sh                                       # Load VM functions Tool Lib
 
 # Default Command Line option variables
-#export OPT_CONFIRM=true                                                 # No confirmation needed
+export OPT_CONFIRM=true                                                 # No confirmation needed
 #export OPT_VMNAME=""                                                    # Save VM Name 
 #export OPT_BACKUP=false                                                 # List VMs Option
 #export OPT_RUNLIST=false                                                # List Running VMs
@@ -160,11 +161,7 @@ main_process()
 
     # List VM Status (-l)
     if [ "$OPT_LIST" = true ]                                           # CmdLine Option -l (List)
-        then #if [ "$OPT_CONFIRM" = true ]
-             #   then sadm_ask "List Virtual Machines status"            # Wait for user Answer (y/n)
-             #        if [ "$?" -eq 0 ] ; then return 0 ; fi             # 0=No, Do not proceed
-             #fi 
-             sadm_list_vm_status                                        # List VM Status
+        then sadm_list_vm_status                                        # List VM Status
              SADM_EXIT_CODE=$?                                          # Save return code
              return $SADM_EXIT_CODE                                     # Return ErrorCode to Caller
     fi 
@@ -242,7 +239,7 @@ function cmd_options()
     while getopts "d:hvlresybn:" opt ; do                               # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               num=$(echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$) # Valid is Level is Numeric
                if [ "$num" = "" ]                                       # No it's not numeric 
                   then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
