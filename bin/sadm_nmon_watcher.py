@@ -228,23 +228,24 @@ def main_process():
     sa.write_log ("We calculated that there will be %d snapshots till then." % (total_snapshots))
 
     CMD = "%s -f -s120 -c%d -t -m %s " % (sa.cmd_nmon,total_snapshots,sa.dir_nmon)
-    sa.write_log ("Running : %s" % (CMD))
     sa.write_log ("Starting 'nmon' daemon ...")
+    sa.write_log ("Running : %s" % (CMD))
     ccode, std_out, std_err = sa.oscommand(CMD)                    
-    time.sleep(3)
+    time.sleep(5)               # Time to come up
     pcount = count_process(nmon_name)
+    ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
+    sa.write_log("pcount=%d before starting it %s" % (pcount,cstdout))
     if pcount == 1 :
         sa.write_log("[ OK ] Process named '%s' is now running." % (nmon_name))
         ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
         sa.write_log(cstdout)
-        return(0)
+        pexit_code = 0
     else : 
-        pexit_code = 1 
-        sa.write_err("[ ERROR ] 'nmon' daemon could not be started")
+        sa.write_err("[ ERROR ] The 'nmon' daemon (%d), could not be started." % (pcount))
         ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
         sa.write_log(cstdout)
         sa.write_err("%s - %s" % (std_out,std_err))
-
+        pexit_code = 1 
     return(pexit_code)
 
 
