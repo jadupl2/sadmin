@@ -41,6 +41,7 @@
 #@2023_03_09 virtualbox v2.1 New Library dedicated for administrating VirtualBox Environment.
 #@2024_04_02 virtualbox v2.2 Documents each functions available in this library.
 #@2024_04_04 virtualbox v2.3 Small bug fixes.
+#@2024_04_19 virtualbox v2.4 Replace 'sadm_write' by 'sadm_write_log' and 'sadm_write_err'. 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -48,7 +49,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 # Global Variables
 # --------------------------------------------------------------------------------------------------
-export VMLIBVER="2.3"                                                   # This Library version
+export VMLIBVER="2.4"                                                   # This Library version
 export VMLIB_DEBUG="N"                                                  # Activate Debug output Y/N
 export VBOX_HOST=""                                                     # Contain VBox HostName
 export VMLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_list1_XXX")"        # List of all VM in VBox
@@ -144,7 +145,7 @@ sadm_vm_start()
 {
     VM=$1 
     sadm_write_log "Starting '$VM' virtual machine."
-    sadm_write "$VBOXMANAGE startvm --type headless '$VM'\n"
+    sadm_write_log "$VBOXMANAGE startvm --type headless '$VM'"
 
     $VBOXMANAGE startvm --type headless "$VM" >> $SADM_LOG 2>&1
     if [ $? -eq 0 ] 
@@ -153,7 +154,11 @@ sadm_vm_start()
        else sadm_write_err "[ ERROR ] The '$VM' virtual machine could not be started."
             RC=1
     fi 
-    if [ "$VMLIB_DEBUG" = "Y" ] ; then sadm_write_log "\nList of running VM :" ; nl $VMRUNLIST ; fi 
+    if [ "$VMLIB_DEBUG" = "Y" ] 
+        then sadm_write_log " " 
+             sadm_write_log "List of running VM :"
+             nl $VMRUNLIST 
+    fi 
     return $RC
 }
 
@@ -337,15 +342,16 @@ sadm_list_vm()
 sadm_list_vm_running()
 {
     if [ "$VMLIB_DEBUG" = "Y" ] 
-        then sadm_write "$VBOXMANAGE list runningvms | awk -F\" '{ print $2 }'" 
+        then sadm_write_log "$VBOXMANAGE list runningvms | awk -F\" '{ print $2 }'" 
     fi
     $VBOXMANAGE list runningvms | awk -F\" '{ print $2 }' > $VMRUNLIST
     if [ $? -ne 0 ]
-       then sadm_write "[ ERROR ] Unable to produce the running vm list.\n" 
+       then sadm_write_log "[ ERROR ] Unable to produce the running vm list." 
             return 1 
     fi 
-    sadm_write "\n${SADM_BOLD}${SADM_YELLOW}List of running Virtual machine(s)${SADM_RESET}\n"
-    sort $VMRUNLIST | nl | while read wline ; do sadm_write "${wline}\n"; done
+    sadm_write_log " "
+    sadm_write_log "${SADM_BOLD}${SADM_YELLOW}List of running Virtual machine(s)${SADM_RESET}"
+    sort $VMRUNLIST | nl | while read wline ; do sadm_write_log "${wline}"; done
     return 0
 }
 
@@ -574,7 +580,7 @@ sadm_backup_vm()
 
     sadm_write_log " " 
     sadm_write_log "List content of $VM backup directory:"
-    ls -lhR ${NFS_DIR}/${VM} | while read wline ; do sadm_write "${wline}\n"; done
+    ls -lhR ${NFS_DIR}/${VM} | while read wline ; do sadm_write_log "${wline}"; done
 
     sudo umount ${NFS_DIR} >>$SADM_LOG 2>&1  
     if [ "$?" -ne 0 ]                                                   # If Error during mount 
@@ -617,7 +623,7 @@ sadm_backup_vm()
 sadm_ping()
 {
     WSERVER=$1
-    sadm_write "ping -c 2 ${WSERVER} " 
+    sadm_write_log "ping -c 2 ${WSERVER} " "NOLF" 
     ping -c 2 -W 2 $WSERVER >/dev/null 2>/dev/null                      # Ping the Server
     RC=$?  
     sadm_write_log " "                                                  # Save Return Code
