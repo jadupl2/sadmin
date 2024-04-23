@@ -127,7 +127,7 @@ show_usage()
 #===================================================================================================
 process_servers()
 {
-    sadm_write "${BOLD}${YELLOW}Processing All Active(s) Server(s) ...${NORMAL}\n"
+    sadm_write_log "${BOLD}${YELLOW}Processing All Active(s) Server(s) ...${NORMAL}"
 
     # Put the rows you want in the select. 
     # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
