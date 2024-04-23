@@ -217,7 +217,7 @@
 #@2024_03_13 lib v4.38 User assigned to the 'vboxusers' group.
 #@2024_03_20 lib v4.39 Load new Global variables for VM from \$SADMIN/cfg/sadmin.cfg
 #@2024_04_02 lib v4.40 Function 'sadm_write_log' will now print in color for [ OK ], [ ERROR ], ...
-#@2024_04_22 lib v4.41 Add 'SADM_DAYS_HISTORY' & ´SADM_DAYS_ARCHIVE' to $SADM_CFG_FILE.
+#@2024_04_22 lib v4.41 Alert housekeeping, add 'SADM_DAYS_HISTORY' & ´SADM_DAYS_ARCHIVE' to $SADM_CFG_FILE.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
