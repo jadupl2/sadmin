@@ -70,17 +70,18 @@
 # 2020_06_30 Fix: v2.23 Fix chmod 664 for files in server backup directory
 # 2020_09_05 Fix: v2.24 Minor Changes.
 # 2021_01_11 Fix: v2.25 NFS drive was not unmounted when the backup failed.
-# 2021_05_11 backup: v2.26 Fix 'rear' command missing false error message
-# 2021_05_12 backup: v2.27 Write more information about ReaR sadmin.cfg in the log.
-# 2021_06_02 backup: v2.28 Added more information in the script log.
-# 2022_05_11 backup: v2.29 Minor change to log output.
-# 2022_08_17 backup: v2.30 Update new SADMIN section v1.52 and code revision.
-# 2023_03_07 backup: v2.31 Major update, backup directory restructure & show backup size in log.
-# 2023_03_10 backup: v2.32 Include a list of the 10 biggest files included in the ReaR backup file.
-# 2023_03_11 backup: v2.33 New '.lst' file is generated, containing 1st & 2nd level dir. in backup.
-# 2023_05_25 backup: v2.34 ReaR USB bootable image is now produce at every execution.
-# 2024_01_18 backup: v2.35 Minor improvements & update sadmin section to v1.56.
-#@2024_03_27 backup: v2.36 Signal an error if the 'isohybrid' command is not installed.
+# 2021_05_11 backup v2.26 Fix 'rear' command missing false error message
+# 2021_05_12 backup v2.27 Write more information about ReaR sadmin.cfg in the log.
+# 2021_06_02 backup v2.28 Added more information in the script log.
+# 2022_05_11 backup v2.29 Minor change to log output.
+# 2022_08_17 backup v2.30 Update new SADMIN section v1.52 and code revision.
+# 2023_03_07 backup v2.31 Major update, backup directory restructure & show backup size in log.
+# 2023_03_10 backup v2.32 Include a list of the 10 biggest files included in the ReaR backup file.
+# 2023_03_11 backup v2.33 New '.lst' file is generated, containing 1st & 2nd level dir. in backup.
+# 2023_05_25 backup v2.34 ReaR USB bootable image is now produce at every execution.
+# 2024_01_18 backup v2.35 Minor improvements & update sadmin section to v1.56.
+#@2024_03_27 backup v2.36 Signal an error if the 'isohybrid' command is not installed.
+#@2024_04_26 backup v2.37 Replace usage of 'sadm_write' with 'sadm_write_log' and 'sadm_write_err'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -109,7 +110,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.36'                                     # Script version number
+export SADM_VER='2.37'                                     # Script version number
 export SADM_PDESC="Produce a ReaR bootable iso and a restorable backup on a NFS server"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -203,21 +204,21 @@ update_url_in_rear_site_conf()
     do
         echo $wline | grep -i "^BACKUP_URL" >/dev/null 2>&1             # Line begin "BACKUP_URL"
         if [ $? -eq 0 ]                                                 # If BACKUP_URL line
-        then sadm_write "Update backup destination in $REAR_CFGFILE with value from sadmin.cfg.\n"
+        then sadm_write_log "Update backup destination in $REAR_CFGFILE with value from sadmin.cfg."
             echo "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"" >> $REAR_TMP
-            sadm_write "  - BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"\n"
+            sadm_write_log "  - BACKUP_URL='nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}'"
         else echo "$wline" >> $REAR_TMP                                 # Output normal line in TMP
         fi
     done < $REAR_CFGFILE                                                # Read /etc/rear/site.conf
     
     # Copy New site.conf ($REAR_TMP) to the official one ($REAR_CFGFILE).
-    sadm_write "  - Update actual $REAR_CFGFILE "
+    sadm_write_log "  - Update actual $REAR_CFGFILE "
     cp $REAR_TMP $REAR_CFGFILE                                          # Replace ReaR site.conf
     if [ $? -ne 0 ]
-    then sadm_write "[ ERROR ] replacing actual ${REAR_CFGFILE}.\n"
-        sadm_write_err "***** Rear Backup Abort *****"
+    then sadm_write_err "[ ERROR ] replacing actual ${REAR_CFGFILE}."
+         sadm_write_err "***** Rear Backup Abort *****"
         return 1                                                        # Back to caller with error
-    else sadm_write "[ OK ]\n"
+    else sadm_write_log "[ OK ]"
     fi
 }
 
@@ -329,8 +330,8 @@ rear_preparation()
     # Under DEBUG mode run the command 'rear dump' 
     if [ "$SADM_DEBUG" -gt 4 ]
     then sadm_write_log " "
-        sadm_write_log "Below is the result of the 'rear dump' command : "
-        sadm_write_log " " ; $REAR dump ; sadm_write_log " " ; sadm_write_log " "
+         sadm_write_log "Below is the result of the 'rear dump' command : "
+         sadm_write_log " " ; $REAR dump ; sadm_write_log " " ; sadm_write_log " "
     fi 
 
     # If Rear configuration file '/etc/rear/site.conf' doesn't exist, create a default one.
@@ -344,14 +345,14 @@ rear_preparation()
     # Make sure nfs local mount point exist.
     if [ ! -d ${NFS_MOUNT} ]
     then sadm_write_log " "
-        sadm_write_log "Create local mount point directory '${NFS_MOUNT}'."
-        mkdir ${NFS_MOUNT} ; chmod 775 ${NFS_MOUNT}
+         sadm_write_log "Create local mount point directory '${NFS_MOUNT}'."
+         mkdir ${NFS_MOUNT} ; chmod 775 ${NFS_MOUNT}
     fi
     
     # Mount the NFS Mount point
     sadm_write_log "Mount NFS share on $SADM_REAR_NFS_SERVER"
     umount ${NFS_MOUNT} > /dev/null 2>&1                                # Make sure it's unmounted.
-    sadm_write "mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} "
+    sadm_write_log "mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} "
     mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} >>$SADM_LOG 2>&1
     if [ $? -ne 0 ]
     then RC=1
@@ -360,27 +361,27 @@ rear_preparation()
         rmdir  ${NFS_MOUNT} > /dev/null 2>&1
         return 1
     fi
-    sadm_write "$SADM_OK \n"
-    df -h | grep ${NFS_MOUNT} | sed 's/%//g' | while read wline ; do sadm_write "${wline}\n"; done
+    sadm_write_log "[ OK ]"
+    df -h | grep ${NFS_MOUNT} | sed 's/%//g' | while read wline ; do sadm_write_log "${wline}"; done
     
 # Make sure Directory for the host exist on NFS Server.
     if [ ! -d  "${NFS_MOUNT}/${SADM_HOSTNAME}" ]
-    then mkdir ${NFS_MOUNT}/${SADM_HOSTNAME}
-        if [ $? -ne 0 ]
-        then sadm_write_err "[ ERROR ] Creating directory ${NFS_MOUNT}/${SADM_HOSTNAME}"
-            return 1
-        fi
+        then mkdir ${NFS_MOUNT}/${SADM_HOSTNAME}
+             if [ $? -ne 0 ]
+                then sadm_write_err "[ ERROR ] Creating directory ${NFS_MOUNT}/${SADM_HOSTNAME}"
+                     return 1
+             fi
     fi
     
 # Write test to NFS Mount Point.
-    sadm_write "Write test to NFS mount ... "                           # Feed user and log
+    sadm_write_log "Write test to NFS mount ... "                       # Feed user and log
     TEST_FILE="${NFS_MOUNT}/${SADM_HOSTNAME}/rear_pid_$SADM_TPID.txt"   # Create test file name
     touch ${TEST_FILE} >> $SADM_LOG 2>&1                                # Create empty test file
     if [ $? -ne 0 ]                                                     # If error on chmod command
-    then sadm_write_err "[ ERROR ] Can't write test file ${TEST_FILE}."
-        return 1                                                    # Back to caller with error
+        then sadm_write_err "[ ERROR ] Can't write test file ${TEST_FILE}."
+             return 1                                                    # Back to caller with error
     fi
-    sadm_write "[ OK ]\n"                                             # Feed user and log
+    sadm_write_log "[ OK ]"                                             # Feed user and log
     rm -f ${TEST_FILE} >> $SADM_LOG 2>&1                                # Delete the test file
     
     sadm_write_log " "
@@ -393,13 +394,13 @@ rear_preparation()
 # Show content of rear directory just before starting the backup.
     sadm_write_log " "
     sadm_write_log "Current content of 'ReaR' backup directory for ${SADM_HOSTNAME} : "
-    ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write "${wline}\n"; done
+    ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write_log "${wline}"; done
 
 
 # Move previous backup in one directory (name of dir is YYYY_MM_DD_HH_MM_SS)
     if [ -r "$REAR_CUR_ISO" ]
-    then prev_date=`stat --printf='%y\n' $REAR_CUR_ISO |awk '{ print $1 }' |tr '-' '_'`
-         prev_time=`stat --printf='%y\n' $REAR_CUR_ISO |awk '{ print $2 }' |awk -F\. '{ print $1 }'| tr ':' '_'`
+    then prev_date=$(stat --printf='%y\n' $REAR_CUR_ISO |awk '{ print $1 }' |tr '-' '_')
+         prev_time=$(stat --printf='%y\n' $REAR_CUR_ISO |awk '{ print $2 }' |awk -F\. '{ print $1 }'| tr ':' '_')
          prev_dir="${REAR_DIR}/${prev_date}_${prev_time}"
          mkdir -p ${prev_dir}
          sadm_write_log " "
@@ -478,7 +479,7 @@ rear_housekeeping()
     sadm_write_log " - Always keep last $SADM_REAR_BACKUP_TO_KEEP ReaR backup on '${SADM_REAR_NFS_SERVER}'."
     sadm_write_log " "
     sadm_write_log "List of ReaR backup directory before housekeeping for '${SADM_HOSTNAME}'."
-    ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write "${wline}\n"; done
+    ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write_log "${wline}"; done
     
 # Eliminate old backup structure 
     find ${REAR_DIR} -type f -name "rear_${SADM_HOSTNAME}_20*" -exec rm -f {} \;
@@ -525,7 +526,7 @@ rear_housekeeping()
              sadm_write_log " "
              sadm_write_log "Number of backup directory to delete: $nb_to_delete"
              sadm_write_log "Backup directories that will be removed : "
-             /bin/ls -1td ${REAR_DIR}/20* | sort -r | sed 1,${nb_dir_to_keep}d | while read wline ; do sadm_write "${wline}\n"; done
+             /bin/ls -1td ${REAR_DIR}/20* | sort -r | sed 1,${nb_dir_to_keep}d | while read wline ; do sadm_write_log "${wline}"; done
              /bin/ls -1td ${REAR_DIR}/20* | sort -r | sed 1,${nb_dir_to_keep}d | xargs rm -fr >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
              then sadm_write_err "Problem deleting backup directory [ ERROR ]"
@@ -552,30 +553,30 @@ rear_housekeeping()
 # List Backup Directory to user after cleanup
     sadm_write_log " "
     sadm_write_log "List of ReaR backup directory after housekeeping for ${SADM_HOSTNAME}"
-    ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write "${wline}\n"; done
+    ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write_log "${wline}"; done
     
 # Ok Cleanup up is finish - Unmount the NFS
     sadm_write_log " "
     sadm_write_log "Unmounting NFS mount directory ${NFS_MOUNT} ..."
-    sadm_write "umount ${NFS_MOUNT} "
+    sadm_write_log "umount ${NFS_MOUNT} "
     umount ${NFS_MOUNT} >> $SADM_LOG 2>&1
     if [ $? -ne 0 ]
-    then sadm_write_err "[ ERROR ] Problem unmounting ${NFS_MOUNT}.\n"
+    then sadm_write_err "[ ERROR ] Problem unmounting ${NFS_MOUNT}."
          return 1
     else rmdir ${NFS_MOUNT} > /dev/null 2>&1
-         sadm_write "[ OK ]\n"
+         sadm_write_log "[ OK ]"
     fi
     
 # Remove NFS mount point.
     if [ -d "${NFS_MOUNT}" ]
-    then sadm_write "\n"
-        sadm_write "Removing NFS mount directory ${NFS_MOUNT} ...\n"
-        sadm_write "rm -fr ${NFS_MOUNT} "
+    then sadm_write_log " "
+        sadm_write_log "Removing NFS mount directory ${NFS_MOUNT} ..."
+        sadm_write_log "rm -fr ${NFS_MOUNT} "
         rm -fr ${NFS_MOUNT} >/dev/null 2>&1
         if [ $? -ne 0 ]
-        then sadm_write_err "[ ERROR ] Problem removing mount point unmounting ${NFS_MOUNT}.\n"
-            return 1
-        else sadm_write_log "[ OK ] "
+            then sadm_write_err "[ ERROR ] Problem removing mount point unmounting ${NFS_MOUNT}."
+                 return 1
+            else sadm_write_log "[ OK ]"
         fi
     fi
     
