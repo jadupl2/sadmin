@@ -25,7 +25,8 @@
 #
 # VERSION CHANGE LOG
 # ------------------
-# 2024_01_21 lib v1.1 New template (replace sadm_template.py), used when you don't need access to SADMIN DB.
+# 2024_01_21 lib v1.56 Python standard template, can be use to create your next scripts.
+#                      Need to access SADMIN database ? : Use 'sadm_template_with_db.py' instead.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -43,7 +44,7 @@ except ImportError as e:                                            # Trap Impor
 
 
 # --------------------------------------------------------------------------------------------------
-# SADMIN CODE SECTION v2.3
+# SADMIN CODE SECTION 1.56
 # Setup for Global Variables and load the SADMIN standard library.
 # To use SADMIN tools, this section MUST be present near the top of your Python code.    
 # --------------------------------------------------------------------------------------------------

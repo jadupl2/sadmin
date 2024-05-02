@@ -97,7 +97,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #===================================================================================================
 # Script global variables definitions
 #===================================================================================================
-#
+
 
 
 
@@ -122,7 +122,7 @@ show_usage()
 
 
 #===================================================================================================
-# Script Main Processing Function
+# Main Processing Function
 #===================================================================================================
 main_process()
 {
@@ -131,10 +131,10 @@ main_process()
     # PROCESSING CAN BE PUT HERE
     # If Error occurred, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default)
     # ........
-    sadm_sleep 10 2                                                     # Sleep 10Sec, 2sec interval
+
+    sadm_sleep 6 2                                                      # Sleep 10Sec, 2sec interval
     sadm_write_log " "                                                  # Write an empty line
-    
-    return "$SADM_EXIT_CODE"                                              # Return ErrorCode to Caller
+    return "$SADM_EXIT_CODE"                                            # Return ErrorCode to Caller
 }
 
 
