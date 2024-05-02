@@ -81,6 +81,7 @@
 # 2024_04_02 client v2.17 'sadm_write' to 'sadm_write_log' changes.
 #@2024_04_05 client v2.18 Remove files that are not needed on SADMIN client.
 #@2024_04_16 client v2.19 Replace 'sadm_write' with 'sadm_write_log' and 'sadm_write_err'.
+#@2024_05_02 client v2.20 Remove unnecessary file(s) on client.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -111,7 +112,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.19'                                      # Script version number
+export SADM_VER='2.20'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -635,6 +636,21 @@ function check_sadmin_user()
 }
 
 
+# --------------------------------------------------------------------------------------------------
+# The script Remove some old files or files on client that should not be there
+# --------------------------------------------------------------------------------------------------
+function remove_client_unwanted_files()
+{
+    if [ "$SADM_SERVER_ONLY" = "N" ] 
+        then rm sherlock.smon        >/dev/null 2>&1
+             rm alert_archive.txt    >/dev/null 2>&1
+             rm sadmin_client.cfg    >/dev/null 2>&1
+             rm .dbpass              >/dev/null 2>&1
+             rm .gmpw                >/dev/null 2>&1
+    fi 
+
+}
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -773,6 +789,7 @@ function cmd_options()
     check_sadm_client_crontab                                           # crontab have nmon watcher
     CRON_ERROR=$?                                                       # Return 1 if crontab error 
     set_new_nmon_watcher                                                # Update sadm_client cron 
+    remove_client_unwanted_files                                        # Del Server file not client
     #
     SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR+$ACC_ERROR+$CRON_ERROR))   # Error= DIR+File+Lock Func.
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
