@@ -19,6 +19,7 @@
 # 2020_11_04 startup/shutdown v2.12 Update SADMIN section & use env cmd to use proper bash shell.
 # 2022_09_15 startup/shutdown v2.13 Update SADMIN section 1.52 & minor changes.
 # 2023_07_17 startup/shutdown v2.14 Update with latest SADMIN section(v1.56).
+# 2024_05_02 startup/shutdown v2.15 Send shutdown email if 'SADM_EMAIL_SHUTDOWN' = "Y" in sadmin.cfg.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -49,7 +50,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.14'                                     # Script version number
+export SADM_VER='2.15'                                     # Script version number
 export SADM_PDESC="Executed when the system is brought down by the sadmin.service."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -125,9 +126,13 @@ main_process()
     esac
 
     sadm_write_log " "
-    #shutdown_mail 
-    #if [ $? -ne 0 ] ; then ((ERROR_COUNT++)) ; fi 
-    sleep 10                                                            # Give time to send email   
+
+    if [ "$SADM_EMAIL_SHUTDOWN" = "Y" ] 
+        then shutdown_mail    
+             if [ $? -ne 0 ] ; then ((ERROR_COUNT++)) ; fi
+             sleep 10                                                   # Give time to send email   
+    fi     
+    
     return $ERROR_COUNT                                                 # Return Default return code
 }
 
