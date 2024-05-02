@@ -218,6 +218,7 @@
 #@2024_03_20 lib v4.39 Load new Global variables for VM from \$SADMIN/cfg/sadmin.cfg
 #@2024_04_02 lib v4.40 Function 'sadm_write_log' will now print in color for [ OK ], [ ERROR ], ...
 #@2024_04_22 lib v4.41 Alert housekeeping, add 'SADM_DAYS_HISTORY' & ´SADM_DAYS_ARCHIVE' to $SADM_CFG_FILE.
+#@2024_04_23 lib v4.42 Add option to send email on startup and on shutdown in sadmin.cfg.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -227,7 +228,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.41"                                              # This Library Version
+export SADM_LIB_VER="4.42"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -343,6 +344,8 @@ export SADM_TEXTBELT_KEY="textbelt"                                     # Textbe
 export SADM_TEXTBELT_URL="https://textbelt.com/text"                    # Textbelt.com API URL
 export SADM_DAYS_HISTORY=14                                             # Days to move alert to Arch
 export SADM_DAYS_ARCHIVE=365                                            # Days to Keep alert in Arch
+export SADM_EMAIL_STARTUP="N"                                           # No email on Startup
+export SADM_EMAIL_SHUTDOWN="N"                                          # No email on Shutdown
 #
 export SADM_CIE_NAME="Your Company Name"                                # Company Name
 export SADM_HOST_TYPE=""                                                # [S]erver/[C]lient/[D]ev.
@@ -1969,6 +1972,10 @@ sadm_load_config_file() {
                                             ;; 
             "SADM_DAYS_ARCHIVE" )           SADM_DAYS_ARCHIVE=$VALUE
                                             ;; 
+            "SADM_EMAIL_STARTUP" )          SADM_EMAIL_STARTUP=$VALUE
+                                            ;; 
+            "SADM_EMAIL_SHUTDOWN" )         SADM_EMAIL_SHUTDOWN=$VALUE
+                                            ;; 
         esac
         done < $SADM_CFG_FILE
 
@@ -2857,6 +2864,34 @@ SADM_DAYS_ARCHIVE = 365
 EOF
 ) >> $SADM_CFG_FILE
     fi 
+
+
+# Add New variable 'SADM_EMAIL_STARTUP' and 'SADM_EMAIL_SHUTDOWN' to sadmin.cfg, if not in yet.
+    grep -q "SADM_EMAIL_STARTUP" $SADM_CFG_FILE
+    if [ $? -ne 0 ] 
+        then 
+        ( cat <<'EOF'
+
+
+#----------------------------------------------------------------------------
+# If you want to received and email before each system shutdown & after 
+# a system startup.
+# Default value is 'N'. 
+#
+# To enable this email you need to enable the sadmin.service, with the 
+# following command : 'systemctl enable sadmin'
+#
+# This will execute the startup script ($SADMIN/sys/sadm_startup.sh) when 
+# a system is starting and the shutdown script ($SADMIN/sys/sadm_shutdown.sh)
+# when the system is being brought down.
+#----------------------------------------------------------------------------
+SADM_EMAIL_STARTUP = Y
+SADM_EMAIL_SHUTDOWN = Y 
+
+EOF
+) >> $SADM_CFG_FILE
+    fi 
+
 
 }
 
