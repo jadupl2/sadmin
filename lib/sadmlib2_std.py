@@ -63,6 +63,10 @@
 # 2023_12_19 lib v4.49 New function 'on_sadmin_server()' Return "Y" if on SADMIN server else "N".
 # 2024_01_01 lib v4.50 Correct typo and remove need to use 'psutil' python module.
 # 2024_02_22 LIB V4.51 Was removing gmail password file (.gmpw) when on the SADMIN server.
+#@2024_03_20 lib v4.52 Load new Global variables for VM from \$SADMIN/cfg/sadmin.cfg
+#@2024_04_22 lib v4.53 Alert housekeeping, add 'SADM_DAYS_HISTORY' & ´SADM_DAYS_ARCHIVE' to $SADM_CFG_FILE.
+#@2024_04_23 lib v4.54 Add option to send email on startup and on shutdown in sadmin.cfg.
+
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -96,7 +100,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.51"                                # This Library Version
+lib_ver             = "4.54"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -141,8 +145,10 @@ max_logline         = 500                                   # Max Nb. Lines in L
 max_rchline         = 35                                    # Max Nb. Lines in RCH file
 mail_addr           = ""                                    # Default is in sadmin.cfg
 
-
-# SADM Configuration file (sadmin.cfg) content loaded from configuration file
+#---------------------------------------------------------------------------------------------------
+# Definition of SADMIN configuration file (sadmin.cfg) default value.
+# The value below, will be overridden by configuration file ($SADMIN/cfg/sadmin.cfg)
+#---------------------------------------------------------------------------------------------------
 sadm_alert_type               = 1                           # 0=No 1=Err 2=Succes 3=All
 sadm_alert_group              = "default"                   # Defined in alert_group.cfg
 sadm_alert_repeat             = 43200                       # Alarm Repeat Wait Time Sec
@@ -201,6 +207,18 @@ sadm_smtp_server             = "smtp.gmail.com"             # smtp host relay na
 sadm_smtp_port               = 587                          # smtp relay host port
 sadm_smtp_sender             = "sender@gmail.com"           # smtp sender account
 sadm_gmpw                    = ""                           # smtp sender password
+sadm_vm_export_nfs_server    = ""
+sadm_vm_export_mount_point   = ""
+sadm_vm_export_to_keep       = 2
+sadm_vm_export_interval      = 14
+sadm_vm_export_alert         = "Y"
+sadm_vm_user                 = "jacques"
+sadm_vm_stop_timeout         = 120
+sadm_vm_start_interval       = 30
+sadm_days_history            = 14
+sadm_days_archive            = 365
+sadm_email_startup           = "N"
+sadm_email_shutdown          = "N"
 
 
 # Logic to get O/S Distribution Information into Dictionary os_dict
@@ -512,7 +530,7 @@ def load_config_file(cfg_file):
         Load Sadmin Configuration File (sadmin.cfg) in dictionary.
         
         Args:
-            cfg_file (str)  :   Full path of the SADMIN configuration file.
+            cfg_file (str)  :   Full path of the configuration file.
 
         Returns:
             All Global variables are loader with the content of sadmin.cfg
@@ -537,9 +555,13 @@ def load_config_file(cfg_file):
     sadm_network4                ,sadm_network5                 ,sadm_monitor_update_interval  ,\
     sadm_monitor_recent_count    ,sadm_monitor_recent_exclude   ,sadm_pid_timeout              ,\
     sadm_lock_timeout            ,sadm_max_logline              ,sadm_max_rchline              ,\
-    sadm_smtp_server             ,sadm_smtp_port                ,\
-    sadm_smtp_sender             ,sadm_gmpw
-
+    sadm_smtp_server             ,sadm_smtp_port                ,sadm_vm_export_nfs_server     ,\
+    sadm_smtp_sender             ,sadm_gmpw                     ,sadm_vm_export_mount_point    ,\
+    sadm_vm_export_to_keep       ,sadm_vm_export_interval       ,sadm_vm_export_alert          ,\
+    sadm_vm_user                 ,sadm_vm_stop_timeout          ,sadm_vm_start_interval        ,\
+    sadm_days_history            ,sadm_days_archive             ,sadm_email_startup            ,\
+    sadm_email_shutdown       
+    
     if lib_debug > 4 :
         print ("Load Configuration file %s" % (cfg_file))
 
@@ -645,6 +667,19 @@ def load_config_file(cfg_file):
         if "SADM_SMTP_SERVER"              in CFG_NAME: sadm_smtp_server             = CFG_VALUE
         if "SADM_SMTP_PORT"                in CFG_NAME: sadm_smtp_port               = int(CFG_VALUE)
         if "SADM_SMTP_SENDER"              in CFG_NAME: sadm_smtp_sender             = CFG_VALUE
+
+        if "SADM_VM_EXPORT_NFS_SERVER"     in CFG_NAME: sadm_vm_export_nfs_server    = CFG_VALUE
+        if "SADM_VM_EXPORT_MOUNT_POINT"    in CFG_NAME: sadm_vm_export_mount_point   = CFG_VALUE
+        if "SADM_VM_EXPORT_TO_KEEP"        in CFG_NAME: sadm_vm_export_to_keep       = int(CFG_VALUE)
+        if "SADM_VM_EXPORT_INTERVAL"       in CFG_NAME: sadm_vm_export_interval      = int(CFG_VALUE)
+        if "SADM_VM_EXPORT_ALERT"          in CFG_NAME: sadm_vm_export_alert         = CFG_VALUE
+        if "SADM_VM_USER"                  in CFG_NAME: sadm_vm_user                 = CFG_VALUE
+        if "SADM_VM_STOP_TIMEOUT"          in CFG_NAME: sadm_vm_stop_timeout         = int(CFG_VALUE)
+        if "SADM_VM_START_INTERVAL"        in CFG_NAME: sadm_vm_start_interval       = int(CFG_VALUE)
+        if "SADM_DAYS_HISTORY"             in CFG_NAME: sadm_days_history            = int(CFG_VALUE)
+        if "SADM_DAYS_ARCHIVE"             in CFG_NAME: sadm_days_archive            = int(CFG_VALUE)
+        if "SADM_EMAIL_STARTUP"            in CFG_NAME: sadm_email_startup           = CFG_VALUE
+        if "SADM_EMAIL_SHUTDOWN"           in CFG_NAME: sadm_email_shutdown          = CFG_VALUE
     cfg_file_fh.close()
 
     # Get Database user password from .dbpass file (Read/Write 'sadmin' and 'squery' Read only)
@@ -1877,7 +1912,7 @@ def stop(pexit_code) :
         msg = "Invalid or Non-Existant User %s in sadmin.cfg" % (sadm_user)
         write_log (msg)
 
-    # Update the [R]eturn [C]ode [H]istory File and trim it if needed.
+    # Update the [R]eturn [C]ode [H]istory File and trim it, if needed.
     if (use_rch) :                                                      # If User use RCH File
         rch_exists = os.path.isfile(rch_file)                           # Do we have existing rch ?
         if rch_exists :                                                 # If we do, del code2 line?
@@ -1959,7 +1994,7 @@ def stop(pexit_code) :
     if sadm_alert_type == 3 :                                           # User always Want email
         MailMess="Always send an alert %s." % (grp_desc)                # Mess + Group we will send
                      
-    if sadm_alert_type > 3 or sadm_alert_type < 0 : # Alert Type is Invalid
+    if sadm_alert_type > 3 or sadm_alert_type < 0 :                     # Alert Type is Invalid
         MailMess="Invalid 'sadm_alert_type' value %s",(str(sadm_alert_type))
         MailMess2="It's set to '%s', changing it to 3.\n" % (sadm_alert_type)
         sadm_alert_type=3
