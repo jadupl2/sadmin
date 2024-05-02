@@ -39,6 +39,7 @@
 # 2022_09_15 startup/shutdown v3.18 When error feed error log and fix 'nmon' wasn't starting.
 # 2023_07_17 startup/shutdown v3.19 Updated to use faster python version of 'sadm_nmon_watcher'.
 #@2024_04_17 startup/shutdown v3.20 Minor adjustment when starting 'nmon' performance monitor.
+#@2024_05_02 startup/shutdown v3.21 Send startup email if 'SADM_EMAIL_STARTUP' = "Y" in sadmin.cfg.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 
@@ -70,7 +71,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.20'                                     # Script version number
+export SADM_VER='3.21'                                     # Script version number
 export SADM_PDESC="Script run at the system startup (via sadmin.service)." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -217,8 +218,10 @@ main_process()
     sadm_write_log " "
     sadm_write_log "End of startup script."                              # End of Script Message
 
-    #poweron_mail    
-    #if [ $? -ne 0 ] ; then ((ERROR_COUNT++)) ; fi
+    if [ "$SADM_EMAIL_STARTUP" = "Y" ] 
+        then poweron_mail    
+             if [ $? -ne 0 ] ; then ((ERROR_COUNT++)) ; fi
+    fi 
         
     return $ERROR_COUNT                                                 # Return Default return code
 }
