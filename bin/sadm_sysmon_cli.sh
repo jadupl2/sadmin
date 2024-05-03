@@ -63,7 +63,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='2.7'                                      # Script version number
 export SADM_PDESC="Run SADMIN System Monitor and display result file (hostname.rpt)."
-export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth

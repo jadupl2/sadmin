@@ -1958,8 +1958,8 @@ sub end_of_sysmon {
 
     # Initializing SysMon
     if ($SADM_UID != 0) {                           # Script MUST be run by root
-        print "\nThe SADMIN monitor need to be run by 'root' user.\n\n" ;
-        exit 1;                                     # Exit with Error
+        print "\n\nThe SADMIN monitor need to be run by 'root' user.\n\n" ;
+        exit 1 ;                                    # Exit with Error
     }    
     #
     #my $random_number = rand(120);                  # Get a random number between 0 and 120
