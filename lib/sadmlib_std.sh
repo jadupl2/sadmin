@@ -2177,16 +2177,19 @@ sadm_start() {
 
     # Check if this script is to be run only by root user
     if [ ! -z "$SADM_ROOT_ONLY" ] && [ $SADM_ROOT_ONLY == "Y" ] &&  [ $(id -u) -ne 0 ]  
-        then sadm_write_err "Script can only be run by the 'root' user."
+        then sadm_write_err " "
+             sadm_write_err "Script can only be run by the 'root' user."
              sadm_write_err "Try 'sudo ${0##*/}'."                      # Suggest using sudo
              sadm_write_err "Process aborted."                          # Abort advise message
+             sadm_write_err " "
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S with Error
     fi
 
     # Check if this script to be run only on the SADMIN server.
     if [ "$SADM_ON_SADMIN_SERVER" = "N" ] &&  [ "$SADM_SERVER_ONLY" = "Y" ] 
-        then sadm_write_err "This script only run on SADMIN server '$SADM_SERVER'."
+        then sadm_write_err " "
+             sadm_write_err "This script only run on SADMIN server '$SADM_SERVER'."
              sadm_write_err "   - The variable 'SADM_SERVER_ONLY' is set to 'Y'."
              sadm_write_err "Process aborted."                          # Abort advise message
              sadm_write_err " "
