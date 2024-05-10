@@ -56,6 +56,7 @@
 # 2023_04_14 lib v3.20 SADMIN client email account pwd now taken from encrypted $SADMIN/cfg/.gmpw64. 
 # 2023_08_19 lib v3.21 start() function auto connect to DB, if on SADMIN server & db_used=True.
 # 2023_12_19 lib v3.22 Fix minor problem
+#@2024_05_10 lib v3.23 Add VM export parameters and alert history/archive purge days limit.
 #==================================================================================================
 #
 try :
@@ -91,7 +92,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "3.22"                                                  # Program version no.
+pver        = "3.23"                                                  # Program version no.
 pdesc       = "Demonstrate functions & variables available to developers using SADMIN Tools"
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
 pdebug      = 0                                                      # Debug level from 0 to 9
@@ -106,13 +107,13 @@ sa.db_name           = ""         # Database Name default to name define in $SAD
 sa.db_errno          = 0          # Database Error Number
 sa.db_errmsg         = ""         # Database Error Message
 #
-sa.use_rch           = True       # Generate entry in Result Code History (.rch)
+sa.use_rch           = False      # Generate entry in Result Code History (.rch)
 sa.log_type          = 'B'        # Output goes to [S]creen to [L]ogFile or [B]oth
 sa.log_append        = False      # Append Existing Log(True) or Create New One(False)
 sa.log_header        = True       # Show/Generate Header in script log (.log)
 sa.log_footer        = True       # Show/Generate Footer in script log (.log)
 sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
-sa.proot_only        = True       # Pgm run by root only ?
+sa.proot_only        = False      # Pgm run by root only ?
 sa.psadm_server_only = False      # Run only on SADMIN server ?
 sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
@@ -334,13 +335,13 @@ def print_python_function():
     printheader ("FUNCTIONS AVAILABLE ONLY PYTHON","Description","  This System Result")
 
     pexample="sa.db_connect('sadmin')"                                  
-    pdesc="Open connection to database."                                # Function Description
-    presult="1=OK 1=Error,conn_obj,con_cursor"                          # Return 3 Value(s)
+    pdesc="Open connection to database"                                 # Function Description
+    presult="1=Success 1=Error"                                         # Return 3 Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
                  
     pexample="sa.db_close():"           
-    pdesc="Close connection with database."                             # Function Description
-    presult="0=Connection close 1=Error"                                # Return Value(s)
+    pdesc="Close connection to database"                                # Function Description
+    presult="0=Success, 1=Error"                                        # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
                  
     pexample="sa.db_silent"                             
@@ -349,7 +350,7 @@ def print_python_function():
     printline (pexample,pdesc,presult)                                  # Print Example Line
                  
     pexample="sa.db_used"                                               # Variable Name
-    pdesc="Need to use SADMIN Database ?"                               # Function Description
+    pdesc="Need to access SADMIN Database ?"                            # Function Description
     presult=sa.db_used                                                  # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
@@ -359,7 +360,7 @@ def print_python_function():
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.touch_file('filename')"                                # Example Calling Function
-    pdesc="Create an empty file."                                       # Function Description
+    pdesc="Create an empty file"                                        # Function Description
     presult="0=File created 1=Error"                                    # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
@@ -729,10 +730,25 @@ def print_sadmin_cfg():
     presult=sa.sadm_alert_repeat                                        # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
+
+    pexample="sa.sadm_days_history"                                     # Variable Name
+    pdesc="Days to keep alert in History file"                          # Function Description
+    presult=sa.sadm_days_history                                        # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+
+    pexample="sa.sadm_days_archive"                                     # Variable Name
+    pdesc="Days to keep in alert Archive file"                          # Function Description
+    presult=sa.sadm_days_archive                                        # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
     pexample="sa.sadm_textbelt_key"                                     # Variable Name
     pdesc="TextBelt.com API Key"                                        # Function Description
     presult=""                                                          # Default Don't show Key
-    if show_password : presult=sa.sadm_textbelt_key                     # Selected show TextBelt Key
+    if show_password : 
+        presult=sa.sadm_textbelt_key                                    # Selected show TextBelt Key
+    else: 
+        presult="*Hidden*"                                              # Selected show TextBelt Key
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.sadm_textbelt_url"                                     # Variable Name
@@ -793,7 +809,10 @@ def print_sadmin_cfg():
     pexample="sa.sadm_rw_dbpwd"                                         # Variable Name
     pdesc="SADMIN Database Read/Write User Pwd"                         # Function Description
     presult=""                                                          # Default don't show passwd
-    if show_password : presult=sa.sadm_rw_dbpwd                         # Selected to Show DB Passwd
+    if show_password : 
+        presult=sa.sadm_rw_dbpwd                                        # Selected to Show DB Passwd
+    else: 
+        presult="*Hidden*"                                              # Selected to Show DB Passwd
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.sadm_ro_dbuser"                                        # Variable Name
@@ -804,7 +823,10 @@ def print_sadmin_cfg():
     pexample="sa.sadm_ro_dbpwd"                                         # Variable Name
     pdesc="SADMIN Database Read Only User Pwd"                          # Function Description
     presult=""                                                          # Default don't show passwd
-    if show_password : presult=sa.sadm_ro_dbpwd                         # Selected to Show DB Passwd
+    if show_password : 
+        presult=sa.sadm_ro_dbpwd                                        # Selected to Show DB Passwd
+    else: 
+        presult="*Hidden*"                                              # Selected to Show DB Passwd
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.sadm_smtp_server"                                      # Variable Name
@@ -824,7 +846,7 @@ def print_sadmin_cfg():
 
     pexample="sa.sadm_gmpw"                                             # Variable Name
     pdesc="Your internet smtp email password"                           # Function Description
-    presult=""                                                          # Default don't show passwd
+    presult="*Hidden*"                                                  # Default don't show passwd
     if show_password : presult=sa.sadm_gmpw                             # Selected to Show smtp pwd
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
@@ -876,26 +898,31 @@ def print_sadmin_cfg():
     pexample="sa.sadm_network1"                                         # Variable Name
     pdesc="Network/Netmask 1 inv. IP/Name/Mac"                          # Function Description
     presult=sa.sadm_network1                                            # Return Value(s)
+    if presult == "" : presult="None"
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.sadm_network2"                                         # Variable Name
     pdesc="Network/Netmask 2 inv. IP/Name/Mac"                          # Function Description
     presult=sa.sadm_network2                                            # Return Value(s)
+    if presult == "" : presult="None"
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.sadm_network3"                                         # Variable Name
     pdesc="Network/Netmask 3 inv. IP/Name/Mac"                          # Function Description
     presult=sa.sadm_network3                                            # Return Value(s)
+    if presult == "" : presult="None"
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.sadm_network4"                                         
     pdesc="Network/Netmask 4 inv. IP/Name/Mac"                          
     presult=sa.sadm_network4                                            
+    if presult == "" : presult="None"
     printline (pexample,pdesc,presult)                                  
 
     pexample="sa.sadm_network5"                                         # Variable Name
     pdesc="Network/Netmask 5 inv. IP/Name/Mac"                          # Function Description
     presult=sa.sadm_network5                                            # Return Value(s)
+    if presult == "" : presult="None"
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.sadm_rear_nfs_server"                                  # Variable Name
@@ -991,6 +1018,46 @@ def print_sadmin_cfg():
     pexample="sa.sadm_lock_timeout"                                     # Variable Name
     pdesc="Maximun nb. sec. a host can be lock"                         # Function Description
     presult=sa.sadm_lock_timeout                                        # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+    pexample="sa.sadm_vm_export_nfs_server"                             # Variable Name
+    pdesc="NFS Export Server"                                           # Function Description
+    presult=sa.sadm_vm_export_nfs_server                                # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+    pexample="sa.sadm_vm_export_mount_point"                            # Variable Name
+    pdesc="NFS Export Mount Point"                                      # Function Description
+    presult=sa.sadm_vm_export_mount_point                               # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+    pexample="sa.sadm_vm_export_to_keep"                                # Variable Name
+    pdesc="Nb. of export to keep"                                       # Function Description
+    presult=sa.sadm_vm_export_to_keep                                   # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+    pexample="sa.sadm_vm_export_interval"                               # Variable Name
+    pdesc="Days without export before alert"                            # Function Description
+    presult=sa.sadm_vm_export_interval                                  # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+    pexample="sa.sadm_vm_export_alert"                                  # Variable Name (Y/N)
+    pdesc="Issue an alert if interval reached"                          # Function Description
+    presult=sa.sadm_vm_export_alert                                     # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+    pexample="sa.sadm_vm_user"                                          # Variable Name
+    pdesc="User part of 'vboxusers' user group"                         # Function Description
+    presult=sa.sadm_vm_user                                             # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+    pexample="sa.sadm_vm_stop_timeout"                                  # Variable Name
+    pdesc="Max. seconds given for acpi shutdown"                        # Function Description
+    presult=sa.sadm_vm_stop_timeout                                     # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+    pexample="sa.sadm_vm_start_interval"                                # Variable Name
+    pdesc="Sec. to sleep between each VM start"                         # Function Description
+    presult=sa.sadm_vm_start_interval                                   # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
 
@@ -1150,7 +1217,7 @@ def print_db_variables():
     printheader ("Database Information","Description","  This System Result")
          
     pexample="sa.db_silent"                                             # Variable Name
-    pdesc="When True, No db_errmsg (Just db_errno)"                     # Function Description
+    pdesc="True=No db_errmsg (Just db_errno)"                           # Function Description
     presult=sa.db_silent                                                # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
                  
