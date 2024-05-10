@@ -175,12 +175,15 @@ check_available_update()
                         case $rc in
                             100) UpdateStatus=0                         # Update Exist
                                  dnf check-update                       # List Available update
+                                 sadm_write_log " "
                                  sadm_write_log "[ OK ] Update available." # Update the log
                                  ;;
                             0)   UpdateStatus=1                         # No Update available
+                                 sadm_write_log " "
                                  sadm_write_log "[ OK ] No Update available."
                                  ;;
                             *)   UpdateStatus=2                         # Problem Abort Update
+                                 sadm_write_log " "
                                  sadm_write_err "[ ERROR ] encountered, update aborted.\n"  
                                  sadm_write_err "For more information check the log ${SADM_LOG}.\n"
                                  ;;
@@ -192,12 +195,15 @@ check_available_update()
                         case $rc in
                             100) UpdateStatus=0                         # Update Exist
                                  dnf check-update                       # List Available update
+                                 sadm_write_log " "
                                  sadm_write_log "[ OK ] Update available." 
                                  ;;
                             0)   UpdateStatus=1                         # No Update available
+                                 sadm_write_log " "
                                  sadm_write_log "[ OK ] No Update available."
                                  ;;
                             *)   UpdateStatus=2                         # Problem Abort Update
+                                 sadm_write_log " "
                                  sadm_write_err "[ ERROR ] encountered, update aborted."  
                                  sadm_write_err "For more information check the log ${SADM_LOG}"
                                  ;;
@@ -214,12 +220,15 @@ check_available_update()
             case $rc in
                 100) UpdateStatus=0                                     # Update Exist
                      dnf check-update                                   # List Available update
+                     sadm_write_log " "
                      sadm_write_log "[ OK ] Update available."          # Update the log
                      ;;
                   0) UpdateStatus=1                                     # No Update available
+                     sadm_write_log " "
                      sadm_write_log "[ OK ] No Update available."
                      ;;
                   *) UpdateStatus=2                                     # Problem Abort Update
+                     sadm_write_log " "
                      sadm_writ_err "[ ERROR ] encountered, update aborted." 
                      sadm_writ_err "For more information check the log ${SADM_LOG}"
                      ;;
@@ -227,6 +236,7 @@ check_available_update()
             ;;
 
         "OPENSUSE"|"SUSE" )
+            sadm_write_log " "
             sadm_write_err "Not supporting $(sadm_get_osname) yet."
             UpdateStatus=1                                              # No Update available
             sadm_write_err "[ OK ] No Update available."
