@@ -143,8 +143,8 @@ show_usage()
 #===================================================================================================
 main_process()
 {
-    sadm_write_log "Export '$VMNAME' Virtual Machine."                  # Show Backup Chosen
-    sadm_export_vm "$VMNAME"                                            # Then Export VM
+    sadm_write_log "Export of '$VMNAME' virtual machine."               # Show Backup Chosen
+    sadm_export_vm "$VMNAME"                                            # Libr. VM Export Function
     if [ $? -eq 0 ] ; then SADM_EXIT_CODE=0 ; else SADM_EXIT_CODE=1 ; fi 
     sadm_list_vm_status                                                 # List Status of ALL VMs
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
