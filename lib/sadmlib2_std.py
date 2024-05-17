@@ -64,7 +64,7 @@
 # 2024_01_01 lib v4.50 Correct typo and remove need to use 'psutil' python module.
 # 2024_02_22 LIB V4.51 Was removing gmail password file (.gmpw) when on the SADMIN server.
 #@2024_03_20 lib v4.52 Load new Global variables for VM from \$SADMIN/cfg/sadmin.cfg
-#@2024_04_22 lib v4.53 Alert housekeeping, add 'SADM_DAYS_HISTORY' & ´SADM_DAYS_ARCHIVE' to $SADM_CFG_FILE.
+#@2024_04_22 lib v4.53 Alert housekeeping, add 'SADM_DAYS_HISTORY' & ´SADM_MAX_ARC_LINE' to $SADM_CFG_FILE.
 #@2024_04_23 lib v4.54 Add option to send email on startup and on shutdown in sadmin.cfg.
 
 # --------------------------------------------------------------------------------------------------
@@ -216,7 +216,7 @@ sadm_vm_user                 = "jacques"
 sadm_vm_stop_timeout         = 120
 sadm_vm_start_interval       = 30
 sadm_days_history            = 14
-sadm_days_archive            = 365
+SADM_MAX_ARC_LINE            = 365
 sadm_email_startup           = "N"
 sadm_email_shutdown          = "N"
 
@@ -559,7 +559,7 @@ def load_config_file(cfg_file):
     sadm_smtp_sender             ,sadm_gmpw                     ,sadm_vm_export_mount_point    ,\
     sadm_vm_export_to_keep       ,sadm_vm_export_interval       ,sadm_vm_export_alert          ,\
     sadm_vm_user                 ,sadm_vm_stop_timeout          ,sadm_vm_start_interval        ,\
-    sadm_days_history            ,sadm_days_archive             ,sadm_email_startup            ,\
+    sadm_days_history            ,SADM_MAX_ARC_LINE             ,sadm_email_startup            ,\
     sadm_email_shutdown       
     
     if lib_debug > 4 :
@@ -677,7 +677,7 @@ def load_config_file(cfg_file):
         if "SADM_VM_STOP_TIMEOUT"          in CFG_NAME: sadm_vm_stop_timeout         = int(CFG_VALUE)
         if "SADM_VM_START_INTERVAL"        in CFG_NAME: sadm_vm_start_interval       = int(CFG_VALUE)
         if "SADM_DAYS_HISTORY"             in CFG_NAME: sadm_days_history            = int(CFG_VALUE)
-        if "SADM_DAYS_ARCHIVE"             in CFG_NAME: sadm_days_archive            = int(CFG_VALUE)
+        if "SADM_MAX_ARC_LINE"             in CFG_NAME: SADM_MAX_ARC_LINE            = int(CFG_VALUE)
         if "SADM_EMAIL_STARTUP"            in CFG_NAME: sadm_email_startup           = CFG_VALUE
         if "SADM_EMAIL_SHUTDOWN"           in CFG_NAME: sadm_email_shutdown          = CFG_VALUE
     cfg_file_fh.close()
@@ -1917,16 +1917,21 @@ def stop(pexit_code) :
         rch_exists = os.path.isfile(rch_file)                           # Do we have existing rch ?
         if rch_exists :                                                 # If we do, del code2 line?
             with open(rch_file) as xrch:                                # Open rch file
-                lastLine = (list(xrch)[-1])                             # Get Last Line of rch file
-                rch_code = lastLine.split(' ')[-1].strip()              # Get Last last fld (RCode) 
-                if rch_code == "2" :                                    # If Code 2 - want to del it
-                    rch_file_fh = open(rch_file,'r')                    # Open RCH File for reading
-                    lines = rch_file_fh.readlines()                     # Read all Lines in Memory
-                    del lines[-1]                                       # Delete last line (Code 2)
-                    rch_file_fh.close()                                 # Write changes to disk
-                    rch_file_fh = open(rch_file,'w')                    # Open RCH to rewrite it
-                    rch_file_fh.writelines(lines)                       # Write RCH without code2
+                try: 
+                    lastLine = (list(xrch)[-1])                             # Get Last Line of rch file
+                    rch_code = lastLine.split(' ')[-1].strip()              # Get Last last fld (RCode) 
+                    if rch_code == "2" :                                    # If Code 2 - want to del it
+                        rch_file_fh = open(rch_file,'r')                    # Open RCH File for reading
+                        lines = rch_file_fh.readlines()                     # Read all Lines in Memory
+                        del lines[-1]                                       # Delete last line (Code 2)
+                        rch_file_fh.close()                                 # Write changes to disk
+                        rch_file_fh = open(rch_file,'w')                    # Open RCH to rewrite it
+                        rch_file_fh.writelines(lines)                       # Write RCH without code2
+                        rch_file_fh.close()                                 # Close & Write change 
+                except IndexError as e:  
+                    write_log ("[ ERROR ] Getting the last line of RCH file %s." % (rch_file))
                     rch_file_fh.close()                                 # Close & Write change 
+
         i = datetime.datetime.now()                                     # Get Current Stop Time
         stop_time=i.strftime('%Y.%m.%d %H:%M:%S')                       # Format Stop Date & Time
         rch_file_fh=open(rch_file,'a')                                  # Open RCH Log - append mode
