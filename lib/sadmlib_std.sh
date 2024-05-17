@@ -2258,7 +2258,7 @@ sadm_start() {
     fi
 
     # Check Files that are present ONLY ON SADMIN SERVER
-    if [ "$SADM_ON_SADMIN_SERVER" = "Y" ]
+    if [ "$SADM_ON_SADMIN_SERVER" = "Y" ]                               # If we're on  SADMIN server
         then if [ ! -r "$SADM_ALERT_HIST" ]                             # If Alert History Missing
                 then if [ ! -r "$SADM_ALERT_HINI" ]                     # If Alert Init File not Fnd
                         then touch $SADM_ALERT_HIST                     # Create a Blank One
@@ -2266,17 +2266,6 @@ sadm_start() {
                      fi
                      chmod 666 $SADM_ALERT_HIST                         # Make sure it's writable
              fi
-    fi
-
-    # Feed the (RCH) Return Code History File stating the script is Running (Code 2)
-    if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]            # Want to Produce RCH File
-        then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
-             [ $(id -u) -eq 0 ] && chmod 664 $SADM_RCHLOG               # Change protection on RCH
-             [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}
-             WDOT=".......... ........ ........"                        # End Time & Elapse = Dot
-             RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST"    # Format Part1 RCH File
-             RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE 2"    # Format Part2 of RCH File
-             echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
     fi
     return 0
 }
@@ -2300,6 +2289,9 @@ sadm_start() {
 # --------------------------------------------------------------------------------------------------
 #
 sadm_stop() {
+    echo "Begin of stop"
+    nl $SADM_RCHLOG
+   
     if [ $# -eq 0 ]                                                     # If No status Code Received
         then SADM_EXIT_CODE=1                                           # Assume Error if none given
              sadm_write_log "Function '${FUNCNAME[0]}' expect one parameter.\n"
@@ -2324,18 +2316,20 @@ sadm_stop() {
     fi
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
-    if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]            # User Want update RCH File?
-        then if [ -f "$SADM_RCHLOG" ]                                   # If RCH file exist
-                then XCODE=`tail -1 $SADM_RCHLOG | awk '{ print $NF }'` # Get RCH Code on last line
-                     if [ "$XCODE" -ne 0 ] && [ "$XCODE" -ne 1 ] && [ "$XCODE" -ne 2 ]
-                        then XCODE=0                                    # If ResultCode Invalid = 0 
+    if [ "$SADM_USE_RCH" = "Y" ]                                        # User Want update RCH File?
+        then if [ -s "$SADM_RCHLOG" ]                                   # If RCH file exist
+                then echo "Should have one line" 
+                     nl $SADM_RCHLOG
+                     XCODE=`tail -1 "$SADM_RCHLOG" | awk '{ print $NF }'` # Get RCH Code on last line
+                     echo "XCODE = $XCODE" 
+                     if [ "$XCODE" != "0" ] && [ "$XCODE" != "1" ] && [ "$XCODE" != "2" ]
+                        then XCODE="0"                                    # If ResultCode Invalid = 0 
                      fi 
-                     if [ "$XCODE" -eq 2 ]                              # If last Line code is 2
-                        then XLINE=`wc -l ${SADM_RCHLOG} | awk '{print $1}'` # Count Nb. Line in RCH
-                             XCOUNT=$(expr $XLINE - 1)                  # Count without last line
-                             head -$XCOUNT ${SADM_RCHLOG} > ${SADM_TMP_DIR}/xrch.$$ # rch file trim
-                             rm -f ${SADM_RCHLOG} >/dev/null 2>&1       # Remove old rch file
-                             mv ${SADM_TMP_DIR}/xrch.$$ ${SADM_RCHLOG}  # Replace RCH without code 2
+                     if [ "$XCODE" == "2" ]                              # If last Line code is 2
+                        then echo "SADM_RCHLOG = $SADM_RCHLOG" 
+                             echo "Before delete last line : $(nl $SADM_RCHLOG)" 
+                             sed -i '$d' "$SADM_RCHLOG"                  # Delete last line of rch
+                             echo "After delete last line  : $(nl $SADM_RCHLOG)" 
                      fi 
              fi                     
              RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
