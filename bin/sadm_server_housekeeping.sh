@@ -43,9 +43,8 @@
 # 2024_04_02 server v2.17 Change 'sadm_write' to 'sadm_write_log'.
 #@2024_04_15 server v2.18 Fix problem when moving lines from alert history to alert archive file.
 #@2024_04_22 server v2.19 Alert older than '$SADM_DAYS_HISTORY' defined in sadmin.cfg are archived.
-#@2024_04_22 server v2.20 Trim the alert archive file to '$SADM_DAYS_ARCHIVE' defined in sadmin.cfg.
-
- Add 'SADM_DAYS_HISTORY' & ´SADM_DAYS_ARCHIVE' to $SADM_CFG_FILE.
+#@2024_04_22 server v2.20 Trim the alert archive file to '$SADM_MAX_ARC_LINE' defined in sadmin.cfg.
+#@2024_05_15 server v2.21 Correct a typo that was causing the script to crash.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -74,7 +73,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.20'                                     # Script version number
+export SADM_VER='2.21'                                     # Script version number
 export SADM_PDESC="Set owner in www directories and remove old files in /www/tmp & www/tmp/perf dir."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -143,9 +142,9 @@ show_usage()
 # --------------------------------------------------------------------------------------------------
 alert_housekeeping()
 {
-    sadm_write_log "Move alerts older than $SADM_DAYS_HISTORY days from the alert history file to the alert archive file."
-    sadm_write_log "Alert history file : '$SADM_ALERT_HIST' $(wc -l $SADM_ALERT_HIST | cut -d' ' -f1) lines."
-    sadm_write_log "Alert archive file : '$SADM_ALERT_ARC'  $(wc -l $SADM_ALERT_ARC  | cut -d' ' -f1) lines."
+    sadm_write_log "Before moving alerts older than $SADM_DAYS_HISTORY days from the alert history file to the alert archive file."
+    sadm_write_log "Alert history file : '$SADM_ALERT_HIST' have $(wc -l $SADM_ALERT_HIST | cut -d' ' -f1) lines."
+    sadm_write_log "Alert archive file : '$SADM_ALERT_ARC' have $(wc -l $SADM_ALERT_ARC  | cut -d' ' -f1) lines."
 
     # If history archive file doesn't exist, create it.
     if [ ! -f "$SADM_ALERT_ARC" ]                                       # If Archive file not found
@@ -212,11 +211,11 @@ alert_housekeeping()
 
     sadm_write_log " "
     sadm_write_log "After moving alert older than $SADM_DAYS_HISTORY days from the alert history file to the alert archive file."
-    sadm_write_log "Alert history file : '$SADM_ALERT_HIST' $(wc -l $SADM_ALERT_HIST | cut -d' ' -f1) lines."
-    sadm_write_log "Alert archive file : '$SADM_ALERT_ARC'  $(wc -l $SADM_ALERT_ARC  | cut -d' ' -f1) lines."
+    sadm_write_log "Alert history file : '$SADM_ALERT_HIST' have $(wc -l $SADM_ALERT_HIST | cut -d' ' -f1) lines."
+    sadm_write_log "Alert archive file : '$SADM_ALERT_ARC' have $(wc -l $SADM_ALERT_ARC  | cut -d' ' -f1) lines."
 
-    sadm_write_log "Trimming alert archive file to a maximum of $SADM_DAYS_ARCHIVE lines." 
-    sadm_trimfile "$SADM_ALERT_ARC" "$SADM_DAYS_ARCHIVE"
+    sadm_write_log "Trimming alert archive file to a maximum of $SADM_MAX_ARC_LINE lines." 
+    sadm_trimfile "$SADM_ALERT_ARC" "$SADM_MAX_ARC_LINE"
 }
 
 
@@ -309,6 +308,45 @@ file_housekeeping()
                 else sadm_write_log "${SADM_OK} running ${CMD}"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
              fi
+    fi
+
+    # Make sure crontab for VM Export have proper permission and owner
+    afile="/etc/cron.d/sadm_vm"
+    if [ -f "$afile" ]
+      then CMD="chmod 0644 $afile && chown root:root $afile"
+            chmod 0644 $afile && chown root:root $afile 
+            if [ $? -ne 0 ]
+               then sadm_write_err "$SADM_ERROR running ${CMD}"
+                    ((ERROR_COUNT++))
+               else sadm_write_log "${SADM_OK} running ${CMD}"
+                    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
+            fi
+    fi
+
+    # Make sure crontab for VM Export have proper permission and owner
+    afile="/etc/cron.d/sadm_rear_backup"
+    if [ -f "$afile" ]
+      then CMD="chmod 0644 $afile && chown root:root $afile"
+            chmod 0644 $afile && chown root:root $afile 
+            if [ $? -ne 0 ]
+               then sadm_write_err "$SADM_ERROR running ${CMD}"
+                    ((ERROR_COUNT++))
+               else sadm_write_log "${SADM_OK} running ${CMD}"
+                    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
+            fi
+    fi
+
+    # Make sure crontab for VM Export have proper permission and owner
+    afile="/etc/cron.d/sadm_client"
+    if [ -f "$afile" ]
+      then CMD="chmod 0644 $afile && chown root:root $afile"
+            chmod 0644 $afile && chown root:root $afile 
+            if [ $? -ne 0 ]
+               then sadm_write_err "$SADM_ERROR running ${CMD}"
+                    ((ERROR_COUNT++))
+               else sadm_write_log "${SADM_OK} running ${CMD}"
+                    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
+            fi
     fi
 
     # Delete performance graph (*.png) generated by web interface older than 5 days.
