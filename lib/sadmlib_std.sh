@@ -217,9 +217,10 @@
 #@2024_03_13 lib v4.38 User assigned to the 'vboxusers' group.
 #@2024_03_20 lib v4.39 Load new Global variables for VM from \$SADMIN/cfg/sadmin.cfg
 #@2024_04_02 lib v4.40 Function 'sadm_write_log' will now print in color for [ OK ], [ ERROR ], ...
-#@2024_04_22 lib v4.41 Alert housekeeping, add 'SADM_DAYS_HISTORY' & ´SADM_DAYS_ARCHIVE' to $SADM_CFG_FILE.
+#@2024_04_22 lib v4.41 Alert housekeeping, add 'SADM_DAYS_HISTORY' & ´SADM_MAX_ARC_LINE' to $SADM_CFG_FILE.
 #@2024_04_23 lib v4.42 Add option to send email on startup and on shutdown in sadmin.cfg.
 #@2024_05_15 lib v4.43 function 'sadm_stop()' now delete empty .rch at the end of execution.
+#@2024_05_17 lib v4.44 function 'sadm_stop()' remove last dotted line, before adding result status line.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -229,7 +230,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.43"                                              # This Library Version
+export SADM_LIB_VER="4.44"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
@@ -344,7 +345,7 @@ export SADM_ALERT_REPEAT=43200                                          # Repeat
 export SADM_TEXTBELT_KEY="textbelt"                                     # Textbelt.com API Key
 export SADM_TEXTBELT_URL="https://textbelt.com/text"                    # Textbelt.com API URL
 export SADM_DAYS_HISTORY=14                                             # Days to move alert to Arch
-export SADM_DAYS_ARCHIVE=365                                            # Days to Keep alert in Arch
+export SADM_MAX_ARC_LINE=1000                                           # Max Lines in Alert Archive
 export SADM_EMAIL_STARTUP="N"                                           # No email on Startup
 export SADM_EMAIL_SHUTDOWN="N"                                          # No email on Shutdown
 #
@@ -1808,7 +1809,7 @@ sadm_server_vg() {
 #            LOAD SADMIN CONFIGURATION FILE AND SET GLOBAL VARIABLES ACCORDINGLY
 # --------------------------------------------------------------------------------------------------
 sadm_load_config_file() {
-    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write_log "sadm_load_config_file" ; fi
+    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write_log " " ; fi
 
     # SADMIN Configuration file '$SADMIN/cfg/sadmin.cfg' MUST be present.
     # If not, then create $SADMIN/cfg/sadmin.cfg from the template '$SADMIN/cfg/.sadmin.cfg'.
@@ -1974,7 +1975,7 @@ sadm_load_config_file() {
                                             ;; 
             "SADM_DAYS_HISTORY" )           SADM_DAYS_HISTORY=$VALUE
                                             ;; 
-            "SADM_DAYS_ARCHIVE" )           SADM_DAYS_ARCHIVE=$VALUE
+            "SADM_MAX_ARC_LINE" )           SADM_MAX_ARC_LINE=$VALUE
                                             ;; 
             "SADM_EMAIL_STARTUP" )          SADM_EMAIL_STARTUP=$VALUE
                                             ;; 
@@ -2127,7 +2128,7 @@ sadm_start() {
         then if [ -w "$SADM_RCHLOG" ] 
                 then WDOT=".......... ........ ........"                        # End Time & Elapse = Dot
                      RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST"    # Format Part1 RCH File
-                     RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE 1"    # Format Part2 of RCH File
+                     RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE 2"    # Format Part2 of RCH File
                      echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
                 else printf "\nUser '$SADM_USERNAME' do not have permission to write to '$SADM_RCHLOG' :\n"
                      printf "     - Change permission of '$SADM_RCHLOG'.\n"
@@ -2821,7 +2822,7 @@ EOF
     fi 
 
 
-# Add New variable 'SADM_DAYS_HISTORY' & 'SADM_DAYS_ARCHIVE' to sadmin.cfg, if not in yet.
+# Add New variable 'SADM_DAYS_HISTORY' & 'SADM_MAX_ARC_LINE' to sadmin.cfg, if not in yet.
     grep -q "SADM_DAYS_HISTORY" $SADM_CFG_FILE
     if [ $? -ne 0 ] 
         then 
@@ -2841,7 +2842,7 @@ SADM_DAYS_HISTORY = 14
 # Number of days to keep in the alert archive file ($SADM_ALERT_ARC).
 # Default is 365 Days.
 #----------------------------------------------------------------------------
-SADM_DAYS_ARCHIVE = 365
+SADM_MAX_ARC_LINE = 365
 
 EOF
 ) >> $SADM_CFG_FILE
