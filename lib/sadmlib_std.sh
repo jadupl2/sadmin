@@ -2318,7 +2318,6 @@ sadm_stop() {
     if [ "$SADM_USE_RCH" = "Y" ]                                        # User Want update RCH File?
         then if [ -s "$SADM_RCHLOG" ]                                   # If RCH file exist
                 then XCODE=`tail -1 "$SADM_RCHLOG" |awk '{ print $NF }'` # Get RCH Code on last line
-                     echo "XCODE = $XCODE" 
                      if [ "$XCODE" != "0" ] && [ "$XCODE" != "1" ] && [ "$XCODE" != "2" ]
                         then XCODE="0"                                    # If ResultCode Invalid = 0 
                      fi 
