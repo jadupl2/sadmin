@@ -216,7 +216,7 @@ sadm_vm_user                 = "jacques"
 sadm_vm_stop_timeout         = 120
 sadm_vm_start_interval       = 30
 sadm_days_history            = 14
-SADM_MAX_ARC_LINE            = 365
+sadm_max_arc_line            = 1000
 sadm_email_startup           = "N"
 sadm_email_shutdown          = "N"
 
@@ -559,7 +559,7 @@ def load_config_file(cfg_file):
     sadm_smtp_sender             ,sadm_gmpw                     ,sadm_vm_export_mount_point    ,\
     sadm_vm_export_to_keep       ,sadm_vm_export_interval       ,sadm_vm_export_alert          ,\
     sadm_vm_user                 ,sadm_vm_stop_timeout          ,sadm_vm_start_interval        ,\
-    sadm_days_history            ,SADM_MAX_ARC_LINE             ,sadm_email_startup            ,\
+    sadm_days_history            ,sadm_max_arc_line             ,sadm_email_startup            ,\
     sadm_email_shutdown       
     
     if lib_debug > 4 :
@@ -677,7 +677,7 @@ def load_config_file(cfg_file):
         if "SADM_VM_STOP_TIMEOUT"          in CFG_NAME: sadm_vm_stop_timeout         = int(CFG_VALUE)
         if "SADM_VM_START_INTERVAL"        in CFG_NAME: sadm_vm_start_interval       = int(CFG_VALUE)
         if "SADM_DAYS_HISTORY"             in CFG_NAME: sadm_days_history            = int(CFG_VALUE)
-        if "SADM_MAX_ARC_LINE"             in CFG_NAME: SADM_MAX_ARC_LINE            = int(CFG_VALUE)
+        if "SADM_MAX_ARC_LINE"             in CFG_NAME: sadm_max_arc_line            = int(CFG_VALUE)
         if "SADM_EMAIL_STARTUP"            in CFG_NAME: sadm_email_startup           = CFG_VALUE
         if "SADM_EMAIL_SHUTDOWN"           in CFG_NAME: sadm_email_shutdown          = CFG_VALUE
     cfg_file_fh.close()
