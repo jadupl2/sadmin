@@ -43,6 +43,7 @@
 .bash_history
 .bash_profile
 .bashrc
+.vscode
 .viminfo
 .mysql_history
 .Trash-*/
