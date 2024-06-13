@@ -88,11 +88,11 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
 #export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
 #export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
-# --------------- ---  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+# -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
 
 
 
-  
+
 
 #===================================================================================================
 # Script global variables definitions
