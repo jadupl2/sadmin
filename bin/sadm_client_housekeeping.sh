@@ -82,6 +82,7 @@
 #@2024_04_05 client v2.18 Remove files that are not needed on SADMIN client.
 #@2024_04_16 client v2.19 Replace 'sadm_write' with 'sadm_write_log' and 'sadm_write_err'.
 #@2024_05_02 client v2.20 Remove unnecessary file(s) on client.
+#@2024_06_13 client v2.21 Verification 'sadmin' account & more cleanup on client.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -112,7 +113,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.20'                                      # Script version number
+export SADM_VER='2.21'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -191,28 +192,34 @@ check_sadmin_account()
     # Make sure sadmin account is not asking for password change and block crontab sudo.
     # So we make sadmin account non-expirable and password non-expire
     if [ "$SADM_OS_TYPE"  = "LINUX" ]                                   # On Linux Operating System
-        then sadm_write_log "  - Making sure account '$SADM_USER' doesn't expire." 
-             usermod -e '' $SADM_USER >/dev/null 2>&1                   # Make Account non-expirable
-             sadm_write_log "  - Making sure password for '$SADM_USER' doesn't expire."
-             chage -I -1 -m 0 -M 99999 -E -1 $SADM_USER >/dev/null 2>&1 # Make sadmin pwd non-expire
-             sadm_write_log "  - We recommend changing '$SADM_USER' password at regular interval."
+        then sadm_write_log "  - Making sure account '$SADM_USER' password doesn't expire." 
+             pwd_expire_date=$(chage -l $SADM_USER | grep -i 'Password expires' | awk '{ print $NF }')
+             if [[ "$pwd_expire_date" != "never" ]] 
+                then usermod -e '' $SADM_USER >/dev/null 2>&1           # Disable passwd expiry date
+             fi 
+             sadm_write_log "  - Making sure account '$SADM_USER' doesn't expire."
+             acc_expire_date=$(chage -l $SADM_USER | grep -i 'Account expires' | awk '{ print $NF }')
+             if [[ "$acc_expire_date" != "never" ]]   
+                then usermod -e -1 $SADM_USER >/dev/null 2>&1           # Make account non-expirable
+                     sadm_write_log "  - We recommend changing '$SADM_USER' password at regular interval."
+             fi 
     fi
 
     # Check if sadmin account is lock.
     if [ "$SADM_OS_TYPE"  = "LINUX" ]                                   # On Linux Operating System
         then passwd -S $SADM_USER | grep -i 'locked' > /dev/null 2>&1   # Check if Account is locked
              if [ $? -eq 0 ]                                            # If Account is Lock
-                then upass=`grep "^$SADM_USER" /etc/shadow | awk -F: '{ print $2 }'` # Get pwd hash
-                     if [ "$upass" = "!!" ]                             # if passwd is '!!'' = NoPwd
+                then upass=$(grep "^$SADM_USER" /etc/shadow | awk -F: '{ print $2 }') # Get pwd hash
+                     if [[ "$upass" = "!!" ]]                           # if passwd is '!!'' = NoPwd
                         then sadm_write_log "  - [WARNING] User $SADM_USER has no password." 
                              echo "47up&wd40!" | passwd --stdin $SADM_USER
                              sadm_write_log "  - A temporary password was assigned to ${SADM_USER}, please change it now !!"
-                        else first2char=`echo $upass | cut -c1-2`       # Get passwd first two Char.
+                        else first2char=$(echo $upass | cut -c1-2)      # Get passwd first two Char.
                              if [ "$first2char" = "!!" ]                # First 2 Char are '!!' 
                                 then sadm_write_err "  - [ERROR] Account $SADM_USER is locked."
                                      sadm_write_err "  - Use 'passwd -u $SADM_USER' to unlock it."
                                      lock_error=1                       # Set Error Flag ON
-                                else firstchar=`echo $upass | cut -c1`  # Get passwd first Char.
+                                else firstchar=$(echo $upass | cut -c1) # Get passwd first Char.
                                      if [ "$firstchar" = "!" ]          # First Char is "!'
                                         then sadm_write_err "  - [ERROR] Account $SADM_USER is locked."
                                              sadm_write_err "  - Use 'usermod -U $SADM_USER' to unlock it."
@@ -239,7 +246,7 @@ check_sadmin_account()
     fi
 
     if [ $lock_error -eq 0 ] 
-        then sadm_write_log "  - No problem with '$SADM_USER' account. ${SADM_OK}" 
+        then sadm_write_log "  - No problem with '$SADM_USER' account." 
     fi
     return $lock_error
 }
@@ -431,8 +438,8 @@ file_housekeeping()
     fi 
     
     # No Password clear text file ($SADMIN/cfg/.gmpw) on client, remote it.
-    if [ -f "$GMPW_FILE_TXT" ] && [ $(sadm_on_sadmin_server) -eq 1 ] 
-         then rm -f $GMPW_FILE_TXT >/dev/null 2>&1
+    if [[ -f "$GMPW_FILE_TXT" ]] && [[ $(sadm_on_sadmin_server) -eq 1 ]] 
+         then rm -f "$GMPW_FILE_TXT" >/dev/null 2>&1
     fi
 
     # Remove default crontab job - We want to run the ReaR Backup from the sadm_rear_backup crontab.
@@ -443,8 +450,7 @@ file_housekeeping()
 
     # Remove file that are not needed on SADMIN client
     if [ "$SADM_ON_SADMIN_SERVER" = "N" ]                           # If not on SADMIN server      
-        then echo "Not on server" 
-             if [ -f "$SADM_ALERT_ARC" ]  ; then rm -f "$SADM_ALERT_ARC"       >/dev/null 2>&1 ;fi
+        then if [ -f "$SADM_ALERT_ARC" ]  ; then rm -f "$SADM_ALERT_ARC"       >/dev/null 2>&1 ;fi
              echo "SADM_ALERT_HIST=$SADM_ALERT_HIST"
              if [ -f "$SADM_ALERT_HIST" ] ; then rm -f "$SADM_ALERT_HIST" >/dev/null 2>&1 ;fi
              if [ -f "${SADM_CFG_DIR}/sadmin_client.cfg" ] 
@@ -453,7 +459,6 @@ file_housekeeping()
              if [ -f "${SADM_CFG_DIR}/sherlock.smon" ] 
                 then rm -f "${SADM_CFG_DIR}/sherlock.smon" >/dev/null 2>&1
              fi
-        else echo "on server"
     fi
 
     # Make sure some files have proper permission and owner
