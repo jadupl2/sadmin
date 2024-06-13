@@ -730,16 +730,14 @@ def print_sadmin_cfg():
     presult=sa.sadm_alert_repeat                                        # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
-
     pexample="sa.sadm_days_history"                                     # Variable Name
     pdesc="Days to keep alert in History file"                          # Function Description
     presult=sa.sadm_days_history                                        # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
-
-    pexample="sa.sadm_days_archive"                                     # Variable Name
-    pdesc="Days to keep in alert Archive file"                          # Function Description
-    presult=sa.sadm_days_archive                                        # Return Value(s)
+    pexample="sa.sadm_max_arc_line"                                     # Variable Name
+    pdesc="Max lines to keep in alert archive file"                     # Function Description
+    presult=sa.sadm_max_arc_line                                        # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.sadm_textbelt_key"                                     # Variable Name
@@ -1163,22 +1161,22 @@ def print_start_stop():
      
     print ("") 
     print ("Function 'sa.start(pver,pdesc)'")
-    print ("    - 'pver' variable in SADMIN section, indicating the program version.") 
-    print ("    - 'pdesc' variable in SADMIN section, is a short description of the program.") 
+    print ("    - 'pver' variable in SADMIN section, indicate the script version.") 
+    print ("    - 'pdesc' variable in SADMIN section, is a short description of the script.") 
     print ("") 
     print ("  What this function does:") 
     print ("    1) Make sure all $SADMIN directories & sub-dir. exist and have proper permissions.") 
     print ("    2) Make sure log files exist with proper permission.") 
     print ("    3) Write the log header (if 'sa.log_header = True').") 
-    print ("    4) If script run on the SADMIN server, check if system is lock")
-    print ("    5) Check if PID file exist, show error message and abort.") 
+    print ("    4) If script run on the SADMIN server, check if the system is lock")
+    print ("    5) If PID file exist, show error message and abort.") 
     print ("       Unless user allow to run simultaneously more than one copy (sa.multiple_exec=True).") 
     print ("    6) Record the start Date/Time.") 
     print ("    7) Add line in the [R]eturn [C]ode [H]istory file stating script is started (Code 2).") 
     print ("") 
     print ("") 
     print ("Function 'sa.stop(pexit_code)'") 
-    print ("    - 'pexit_code' variable defined in SADMIN section, indicate the program exit code.") 
+    print ("    - 'pexit_code' variable defined in SADMIN section, is the script exit code (0=OK 1=Error).") 
     print ("") 
     print ("  This should be the last function called at the end of your script.") 
     print ("  It accept one parameter - Either 0 (Successful) or non-zero (Error Encountered).") 
@@ -1186,14 +1184,14 @@ def print_start_stop():
     print ("") 
     print ("  What this function does:") 
     print ("    1) Get actual time and calculate the execution time.") 
-    print ("    2) It check if the exit code is not zero, change it to 1.") 
+    print ("    2) If the exit code is not zero, change it to 1.") 
     print ("    3) If 'sa.log_footer = True', write the log footer.") 
     print ("    4) If 'sa.use_rch = True', append (Start/End/Elapse Time ...) in the RCH File.") 
     print ("    5) Trim The RCH File according to user choice in 'sa.sadm_max_rchline'.")  
     print ("       No trim is done if 'sa.sadm_max_rchline = 0'.") 
     print ("    6) Trim the log according to user choice in 'sa.sadm_max_logline'.") 
     print ("       No trim is done if 'sa.sadm_max_logline = 0'.") 
-    print ("    7) Delete the PID file of the script (sa.pid_file) if it exist.") 
+    print ("    7) Delete the PID file of the script (sa.pid_file).") 
     print (" ")
 
 
