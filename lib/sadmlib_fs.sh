@@ -367,7 +367,7 @@ extend_fs()
         then sadm_writelog "Error on lvextend /dev/$VGNAME/$LVNAME"
              sadm_print_status "ERROR" "Error on lvextend /dev/$VGNAME/$LVNAME"
              return 1
-        else sadm_print_status "OK" ""
+        else sadm_print_status "OK" ''
     fi 
 
     if [ "$LVTYPE" = "ext3" ] || [ "$LVTYPE" = "ext4" ]                 # Ext3,Ext4 Resize Filesystem 
@@ -378,7 +378,7 @@ extend_fs()
                 then sadm_writelog "Error on resize2fs /dev/$VGNAME/$LVNAME"
                      sadm_print_status "ERROR" "Error on resize2fs /dev/$VGNAME/$LVNAME"
                      return 1
-                else sadm_print_status "OK" ""
+                else sadm_print_status "OK" ''
             fi 
     fi
 
@@ -390,7 +390,7 @@ extend_fs()
                 then sadm_writelog "Error with $XFS_GROWFS ${LVMOUNT}"
                      sadm_print_status "ERROR" "Error with $XFS_GROWFS ${LVMOUNT}"
                      return 1
-                else sadm_print_status "OK" ""
+                else sadm_print_status "OK" ''
             fi              
     fi
 
@@ -420,7 +420,7 @@ remove_fs()
                 then sadm_writelog "Error unmounting ${LVMOUNT}"
                      sadm_print_status "ERROR" "Can't unmount ${LVMOUNT}\n"
                      return 1
-                else sadm_print_status "OK" ""
+                else sadm_print_status "OK" ''
             fi 
      fi
    
@@ -433,7 +433,7 @@ remove_fs()
              sadm_print_status "ERROR" "Can't remove the logical volume ${LVMOUNT}"
              mount ${LVMOUNT}                                           # Remount Filesystem
              return 1                                                   # Return Error to caller
-        else sadm_print_status "OK" ""                                # Action succeeded
+        else sadm_print_status "OK" ''                                # Action succeeded
     fi 
 
     # Create a TMP Work file from fstab without the lv to remove
@@ -445,7 +445,7 @@ remove_fs()
              sadm_print_status "ERROR" "Can't create new fstab temp file ($WFSTAB)."
              mount ${LVMOUNT}                                           # Remount Filesystem
              return 1                                                   # Return Error to caller
-        else sadm_print_status "OK" ""                                  # Action succeeded
+        else sadm_print_status "OK" ''                                  # Action succeeded
     fi 
 
     # Erase actual fstab with the new fstab (the tmp file)
@@ -456,7 +456,7 @@ remove_fs()
         then sadm_writelog "Error copying $WFSTAB to $FSTAB"             # Unable to create work file
              sadm_print_status "ERROR" "Error copying $WFSTAB to $FSTAB - Check /etc/fstab"
              return 1                                                   # Return Error to caller
-        else sadm_print_status "OK" ""                                # Action succeeded
+        else sadm_print_status "OK" ''                                # Action succeeded
     fi 
 
     # Make sure /etc/fstab have the right owner and permission
@@ -467,7 +467,7 @@ remove_fs()
         then sadm_writelog "Error change owner/group or permission on $FSTAB"  
              sadm_print_status "ERROR" "Error change owner/group or permission on $FSTAB"
              return 1                                                   # Return Error to caller
-        else sadm_print_status "OK" ""                                # Action succeeded
+        else sadm_print_status "OK" ''                                # Action succeeded
     fi 
 
 }
@@ -489,7 +489,7 @@ filesystem_fsck()
                 then sadm_writelog "Error unmounting ${LVMOUNT}"
                      sadm_print_status "ERROR" "Can't unmount ${LVMOUNT}"  
                      return 1
-                else sadm_print_status "OK" ""                          # Action succeeded
+                else sadm_print_status "OK" ''                          # Action succeeded
             fi
     fi
 
@@ -504,7 +504,7 @@ filesystem_fsck()
                then sadm_writelog "Error $RC on fsck /dev/$VGNAME/$LVNAME"
                     sadm_print_status "ERROR" "Error no.${RC} returned by $FSCK_EXT3"  
                     return 1
-               else sadm_print_status "OK" ""                           # Action succeeded
+               else sadm_print_status "OK" ''                           # Action succeeded
             fi
     fi
     if [ "$LVTYPE" = "ext4" ]
@@ -516,7 +516,7 @@ filesystem_fsck()
                then sadm_writelog "Error on fsck /dev/$VGNAME/$LVNAME"
                     sadm_print_status "ERROR" "Error no.${RC} returned by $FSCK_EXT4"  
                     return 1
-               else sadm_print_status "OK" ""                           # Action succeeded
+               else sadm_print_status "OK" ''                           # Action succeeded
             fi
     fi
     if [ "$LVTYPE" = "xfs" ]
@@ -528,7 +528,7 @@ filesystem_fsck()
                 then sadm_writelog "Error $RC returned by ${XFS_REPAIR}"
                      sadm_print_status "ERROR" "Error no.${RC} returned by $XFS_REPAIR"  
                      return 1
-                else sadm_print_status "OK" ""                          # Action succeeded
+                else sadm_print_status "OK" ''                          # Action succeeded
              fi
     fi
        
@@ -541,7 +541,7 @@ filesystem_fsck()
         then sadm_writelog "Error Mounting ${LVMOUNT}"
              sadm_print_status "ERROR" "Error no.${RC} remounting ${LVMOUNT}"  
              return 1
-        else sadm_print_status "OK" ""                                  # Action succeeded
+        else sadm_print_status "OK" ''                                  # Action succeeded
     fi
 
      return 0  
@@ -618,7 +618,7 @@ create_fs()
         then sadm_writelog "Error (${RC}) returned by lvcreate command."
              sadm_print_status "ERROR" "Error (${RC}) returned by lvcreate command."  
              return 1
-        else sadm_print_status "OK" ""                                  # Action succeeded
+        else sadm_print_status "OK" ''                                  # Action succeeded
     fi
 
 
@@ -632,7 +632,7 @@ create_fs()
                 then sadm_writelog "Error $RC with ${MKFS_EXT3}"
                      sadm_print_status "ERROR" "Error (${RC}) returned by ${MKFS_EXT3}"  
                      return 1
-                else sadm_print_status "OK" ""                          # Action succeeded
+                else sadm_print_status "OK" ''                          # Action succeeded
              fi
     fi
     if [ "$LVTYPE" = "ext4" ]
@@ -644,7 +644,7 @@ create_fs()
                 then sadm_writelog "Error $RC with ${MKFS_EXT4}"
                      sadm_print_status "ERROR" "Error (${RC}) returned by ${MKFS_EXT4}"  
                      return 1
-                else sadm_print_status "OK" ""                          # Action succeeded
+                else sadm_print_status "OK" ''                          # Action succeeded
              fi
     fi
     if [ "$LVTYPE" = "xfs" ]
@@ -656,7 +656,7 @@ create_fs()
                 then sadm_writelog "Error $RC with ${MKFS_XFS}"
                      sadm_print_status "ERROR" "Error (${RC}) returned by ${MKFS_XFS}"  
                      return 1
-                else sadm_print_status "OK" ""                          # Action succeeded
+                else sadm_print_status "OK" ''                          # Action succeeded
              fi
     fi
 
@@ -670,7 +670,7 @@ create_fs()
                 then sadm_writelog "Error $RC with ${FSCK_EXT3}"
                      sadm_print_status "ERROR" "Error No.${RC} with ${FSCK_EXT3}"  
                      return 1
-                else sadm_print_status "OK" ""                          # Action succeeded
+                else sadm_print_status "OK" ''                          # Action succeeded
              fi
     fi
     if [ "$LVTYPE" = "ext4" ]
@@ -682,7 +682,7 @@ create_fs()
                 then sadm_writelog "Error $RC with ${FSCK_EXT4}"
                      sadm_print_status "ERROR" "Error No.${RC} with ${FSCK_EXT4}"  
                      return 1
-                else sadm_print_status "OK" ""                          # Action succeeded
+                else sadm_print_status "OK" ''                          # Action succeeded
              fi
     fi
     if [ "$LVTYPE" = "xfs" ]
@@ -694,7 +694,7 @@ create_fs()
                 then sadm_writelog "Error $RC with ${XFS_REPAIR}"
                      sadm_print_status "ERROR" "Error No.${RC} with ${XFS_REPAIR}"  
                      return 1
-                else sadm_print_status "OK" ""                          # Action succeeded
+                else sadm_print_status "OK" ''                          # Action succeeded
              fi
     fi
        
@@ -707,7 +707,7 @@ create_fs()
         then sadm_writelog "Error $RC with ${LVMOUNT}"
              sadm_print_status "ERROR" "Error No.${RC} with ${LVMOUNT}"  
              return 1
-        else sadm_print_status "OK" ""                                  # Action succeeded
+        else sadm_print_status "OK" ''                                  # Action succeeded
     fi
 
     # ADD MOUNT POINT TO /ETC/FSTAB
@@ -733,7 +733,7 @@ create_fs()
     printf "Sort /etc/fstab so that all mounts points are in the right order "
     awk '! /^#/ && !/^$/ { printf "%03d %s\n", length($2), $0 }' $FSTAB |sort > $WFSTAB
     awk '{ printf "%-30s %-30s %s %s %-3s %-3s\n",$2,$3,$4,$5,$6,$7}' $WFSTAB > $FSTAB 
-    sadm_print_status "OK" ""                                           # Action succeeded
+    sadm_print_status "OK" ''                                           # Action succeeded
 
     # Make sure /etc/fstab have the right owner and permission
     sadm_writelog "Make sure $FSTAB is own by root user/group and permission are at 644" 
@@ -744,7 +744,7 @@ create_fs()
              printf "${red} [ERROR]${reset} Error change owner/group or permission on $FSTAB\n"
              sadm_print_status "ERROR" "Error change owner/group or permission on $FSTAB"  
              return 1                                                   # Return Error to caller
-        else sadm_print_status "OK" ""                                # Action succeeded
+        else sadm_print_status "OK" ''                                # Action succeeded
     fi 
     
     # MOUNT NEW FILESYSTEM
@@ -756,7 +756,7 @@ create_fs()
         then sadm_writelog "Error $RC with mounting ${LVMOUNT}"
              sadm_print_status "ERROR" "Error No.${RC} with mounting ${LVMOUNT}"  
              return 1
-        else sadm_print_status "OK" ""                                  # Action succeeded
+        else sadm_print_status "OK" ''                                  # Action succeeded
     fi
     
     # CHANGE OWNER OF FILESYSTEM
@@ -768,7 +768,7 @@ create_fs()
         then sadm_writelog "Error $RC with chown"
              sadm_print_status "ERROR" "Error No.${RC} with chown on ${LVMOUNT}"  
              return 1
-        else sadm_print_status "OK" ""                                  # Action succeeded
+        else sadm_print_status "OK" ''                                  # Action succeeded
     fi
     
     # CHANGE PROTECTION OF FILESYSTEM
@@ -780,7 +780,7 @@ create_fs()
         then sadm_writelog "Error $RC with chmod"
              sadm_print_status "ERROR" "Error No.${RC} with chmod on ${LVMOUNT}"  
              return 1
-        else sadm_print_status "OK" ""                                  # Action succeeded
+        else sadm_print_status "OK" ''                                  # Action succeeded
     fi
 
     return 0
