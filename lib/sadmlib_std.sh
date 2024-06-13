@@ -232,10 +232,10 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
 export SADM_LIB_VER="4.45"                                              # This Library Version
-export SADM_DASH=$(printf %80s |tr " " "=")                             # 80 equals sign line
-export SADM_FIFTY_DASH=$(printf %50s |tr " " "=")                       # 50 equals sign line
-export SADM_80_DASH=$(printf %80s |tr " " "=")                          # 80 equals sign line
-export SADM_TEN_DASH=$(printf %10s |tr " " "-")                         # 10 dashes line
+export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
+export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
+export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
+export SADM_TEN_DASH=$(printf %10s |tr ' ' '-')                         # 10 dashes line
 export SADM_STIME=""                                                    # Script Start Time
 export DELETE_PID="Y"                                                   # Default Delete PID On Exit
 export LIB_DEBUG=0                                                      # This Library Debug Level
@@ -548,7 +548,7 @@ sadm_isnumeric() {
 
 
 
-# Display Question (Receive as $1) and wait for response from user, Y/y (return 1) or N/n (return 0)
+# Display Question ($1) and wait for response from user, Y/y (return 1) or N/n (return 0)
 sadm_ask() {
     wmess="$1 [y,n] ? "                                                 # Add Y/N to Mess. Rcv
     while :                                                             # While until good answer
@@ -1016,9 +1016,9 @@ sadm_get_osversion() {
                             fi 
                     fi 
                     ;;
-        "AIX")      osver="`uname -v`.`uname -r`"                  # Get Aix Version
+        "AIX")      osver="$(uname -v).$(uname -r)"                  # Get Aix Version
                     ;;
-        "DARWIN")   osver=`sw_vers -productVersion`                # Get O/S Version on MacOS
+        "DARWIN")   osver="$(sw_vers -productVersion)"               # Get O/S Version on MacOS
                     ;;
     esac
     echo "$osver"
