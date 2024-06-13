@@ -53,6 +53,7 @@
 # 2023_05_06 cmdline v1.9 Reduce ping wait time to speed up processing.
 # 2023_11_05 cmdline v2.0 Add option to ssh command '-o ConnectTimeout=10 -o BatchMode=yes'.
 #@2024_04_02 cmdline v2.1 Same of remote system is now added, so we can see where script is run .
+#@2024_06_13 cmdline v2.2 Include name of remote host in the log and rch file name.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -82,7 +83,9 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 
 # ---
-# SPECIAL DEROGATION TO INSERT THE NAME OF SYSTEM WE START THE SCRIPT TO UPDATE OF LOG AND RCH FILE.
+# SPECIAL DEROGATION TO INSERT THE HOSTNAME IN THE FILE NAME OF THE LOG AND THE RCH FILE.
+for i in $@; do :; done                                    # Get last Parameter (portable version)
+export SYSTEM_NAME="$i"                                    # Save last parameter on cmdline
 export SADM_EXT=$(echo "$SADM_PN" | cut -d'.' -f2)         # Save Script extension (sh, py, php,.)
 export SADM_INST="${SADM_INST}_${SYSTEM_NAME}"             # Insert VMName to export in rch & log
 export SADM_HOSTNAME="$SYSTEM_NAME"                        # SystemName that we are going to update
@@ -91,7 +94,7 @@ export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with ex
 
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.1'                                      # Current Script Version
+export SADM_VER='2.2'                                      # Current Script Version
 export SADM_PDESC="Execute an existing script on a remote system." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
