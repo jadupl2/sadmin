@@ -468,9 +468,9 @@ sadm_list_vm_status()
 
     # Print List Header
     printf "\n%s" "${SADM_BOLD}${SADM_YELLOW}"                          # Header color (Yellow/Bold)
-    printf "%80s\n" |tr " " "="                                         # 80 Dashes Line
+    printf "$SADM_80_DASH"                                              # 80 Dashes Line
     printf "%-3s%-19s%-8s%-10s%-8s%-6s%-16s%-s\n" "No" "Name" "State" "Ext.Ver" "Memory" "CPU" "VM IP" "VRDE Port" 
-    printf "%80s\n" |tr " " "="                                         # 80 Dashes Line
+    printf "$SADM_80_DASH"                                              # 80 Dashes Line
     printf "%s" "${SADM_RESET}"                                         # Reset Color to Normal
 
     # Initialize Total Variables.
