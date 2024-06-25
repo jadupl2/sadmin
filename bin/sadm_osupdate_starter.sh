@@ -308,14 +308,18 @@ rcmd_osupdate()
     fi
     
     # Go and Script the O/S Update on the selected system.
-    sadm_write_log "\nStarting the O/S update on '${server_name}'."
+    sadm_write_log " "
+    sadm_write_log "Starting the O/S update on '${server_name}'."
     if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
         then sadm_write_log "$SADM_SSH -qnp $server_ssh_port $fqdn_server '${server_sadmin_dir}/bin/$USCRIPT ${WREBOOT}'"
-             sadm_write_log "\n\n\n"
+             sadm_write_log " "
+             sadm_write_log " "
+             sadm_write_log " "
              $SADM_SSH -qnp $server_ssh_port $fqdn_server ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
              RC=$? 
-        else sadm_write_log "Starting execution of ${server_sadmin_dir}/bin/${USCRIPT}.\n\n\n\n"
-             sadm_write_log "\n\n\n"
+        else sadm_write_log "Starting execution of ${server_sadmin_dir}/bin/${USCRIPT}."
+             sadm_write_log " "
+             sadm_write_log " "
              ${server_sadmin_dir}/bin/$USCRIPT                       # Run Locally when on SADMIN
              RC=$?
     fi      
@@ -359,29 +363,30 @@ function cmd_options()
     while getopts "d:hv" opt ; do                                       # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
-               if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug level specified is invalid.\n"   # Inform User Debug Invalid
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
+               if [ "$num" = "" ]                            
+                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "Debug level set to ${SADM_DEBUG}."               # Display Debug Level
-               ;;                    
+               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
-           \?) printf "\nInvalid option: -${OPTARG}.\n"                 # Invalid Option Message
+           \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-
     return 
 }
+
+
 
 
 
