@@ -83,6 +83,7 @@
 # 2024_01_02 install v3.34 Remove requirement for python 'psutil' module.
 # 2024_02_12 install v3.35 Make sure 'host' command is installed, (needed for hostname resolution).
 # 2024_02_12 install v3.36 Add alternative way to determine the system domain name.
+#@2024_06_29 install v3.37 Domain Name was not set correctly in some situation.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -92,7 +93,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 export DEBUG_LEVEL=0                                                    # 0=NoDebug Higher=+Verbose
-export SADM_VER='3.36'                                                  # Your Script Version
+export SADM_VER='3.37'                                                  # Your Script Version
 export SADM_PN="${0##*/}"                                               # Script name
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
 export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)                      # Script name without ext.
@@ -582,10 +583,11 @@ check_hostname()
     S_IPADDR=$(ip a s | grep global | head -1 | awk '{ print $2 }' |awk -F/ '{ print $1 }')
 
     # Get system domain name
-    S_DOMAIN=$(domainname -d)
-    if [ "$S_DOMAIN" = "" ]
-        then S_DOMAIN=$(host $SADM_HOSTNAME |awk '{print $1}' |awk -F\. '{printf "%s.%s\n",$2,$3}')
-    fi 
+    S_DOMAIN=$(hostname | awk -F\. '{printf "%s.%s\n",$2,$3}') 
+    #S_DOMAIN=$(domainname -d)
+    #if [ "$S_DOMAIN" = "" ]
+    #    then S_DOMAIN=$(host $SADM_HOSTNAME |awk '{print $1}' |awk -F\. '{printf "%s.%s\n",$2,$3}')
+    #fi 
 
     printf "Making sure '$SADM_HOSTNAME.$S_DOMAIN' is defined in /etc/hosts ... " | tee -a $SLOG
 
