@@ -467,11 +467,11 @@ sadm_list_vm_status()
     fi 
 
     # Print List Header
-    printf "\n%s" "${SADM_BOLD}${SADM_YELLOW}"                          # Header color (Yellow/Bold)
-    printf "$SADM_80_DASH"                                              # 80 Dashes Line
+    sadm_write_log "${SADM_BOLD}${SADM_YELLOW}"                         # Header color (Yellow/Bold)
+    sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
     printf "%-3s%-19s%-8s%-10s%-8s%-6s%-16s%-s\n" "No" "Name" "State" "Ext.Ver" "Memory" "CPU" "VM IP" "VRDE Port" 
-    printf "$SADM_80_DASH"                                              # 80 Dashes Line
-    printf "%s" "${SADM_RESET}"                                         # Reset Color to Normal
+    sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
+    sadm_write_log "${SADM_RESET}"                                      # Reset Color to Normal
 
     # Initialize Total Variables.
     lineno=0                                                            # Reset to 0 Line Counter
@@ -519,7 +519,7 @@ sadm_list_vm_status()
         done
 
     # Show Total Lines.
-    printf "%80s\n" |tr " " "="                                         # 80 Dashes Line
+    sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
     #
     part1=$(printf "Running VM allocated memory : ${tmemory} MB")
     freemem=$(free -m | grep 'Mem:' | awk '{ print $4 }')
@@ -533,7 +533,7 @@ sadm_list_vm_status()
     swap_pct=$( echo "$swap_used / $swap_size * 100" | bc -l)
     swap_pct=$(printf "%3.1f" "$swap_pct")
     printf "Using %s MB (%s%%) out of the %s MB Swap space.\n" "$swap_used" "$swap_pct" "$swap_size"
-    printf "%80s\n" |tr " " "="                                         # 80 Dashes Line
+    sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
     return 0
 }
 
