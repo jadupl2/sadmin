@@ -1155,7 +1155,7 @@ sadm_get_osname() {
 # Return Sadmin Release Version Number
 sadm_get_release() {
     if [ -r "$SADM_REL_FILE" ]
-        then wrelease=`cat $SADM_REL_FILE`
+        then wrelease=$(cat $SADM_REL_FILE)
         else wrelease="00.00"
     fi
     echo "$wrelease"
@@ -1168,9 +1168,9 @@ sadm_get_release() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_hostname() {
     case "$(sadm_get_ostype)" in
-        "AIX")      whostname=`hostname | awk -F. '{ print $1 }'`       # Get HostName
+        "AIX")      whostname=$(hostname | awk -F. '{ print $1 }')      # Get HostName
                     ;;
-        *)          whostname=`hostname -s`                             # Get rid of domain name
+        *)          whostname=$(hostname -s)                            # Get rid of domain name
                     ;;
     esac
     echo "$whostname"
@@ -1185,17 +1185,17 @@ sadm_get_domainname() {
     case "$(sadm_get_ostype)" in
         "LINUX")   
             wdom=""                                                     # No Domain Default
-            wdom=`hostname -d`                                          # Get Hostname Domain
+            wdom=$(hostname -d)                                         # Get Hostname Domain
             if [ $? -ne 0 ] || [ "$wdom" = "" ]                         # If Domain Name Problem
                 then host -4 ${SADM_HOSTNAME} >/dev/null 2>&1           # Try host Command
                      if [ $? -eq 0 ]                                    # Host Command worked ?
-                        then wdom=`host ${SADM_HOSTNAME} |head -1 |awk '{ print $1 }' |cut -d. -f2-3`
+                        then wdom=$(host ${SADM_HOSTNAME} |head -1 |awk '{ print $1 }' |cut -d. -f2-3)
                              if [ $wdom = ${SADM_HOSTNAME} ] ; then wdom="" ;fi  
                      fi
             fi
             ;;
         "AIX")              
-            wdom=`namerslv -s | grep domain | awk '{ print $2 }'`
+            wdom=$(namerslv -s | grep domain | awk '{ print $2 }')
             ;;
         "DARWIN")              
             wdom=`scutil --dns |grep 'search domain\[0\]' |head -1 |awk -F\: '{print $2}' |tr -d ' '`
