@@ -135,6 +135,7 @@
 # 2024_02_12 install v4.03 Script 'sadm_service_ctrl.sh' is depreciated (Use 'systemctl').
 # 2024_02_13 install v4.04 Setup will now ask for 'sadmin' user password & force to change it on login.
 # 2024_02_15 install v4.05 Bug fix on postfix configuration & various corrections and enhancements.
+# 2024_07_10 install v4.06 Minor changes and fixes.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -154,7 +155,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "4.05"                                            # Setup Version Number
+sver                = "4.06"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -366,7 +367,7 @@ def open_logfile(sroot):
 def writelog(sline,stype="normal"):
     global fhlog                                                        # Need to share file handler
     fhlog.write ("%s\n" % (sline))                                      # Write Line to Log 
-    if (stype == "log") : return                                        # Log Only Nothing on screen   
+    if (stype == "log") : return                                        # Log Only,Nothing on screen   
 
     # Display Line on Screen
     if (stype == "normal") : 
@@ -681,26 +682,26 @@ def special_install(lpacktype,sosname,logfile) :
         return (False)                                                  # Return False to caller
 
     # INSTALL PIP3 - IF 'pip3' ISN'T PRESENT ON SYSTEM (Installed by Default on RHEL/CentOS 8) -----
-    writelog("Checking for python pip3 command ... ",'nonl')
+    writelog("Checking for python pip3 command ... ","nonl")
     if (locate_command('pip3') == "") :                                 # If pip3 command not found
         writelog("Installing python3 pip3")                             # Inform User - install pip3
         if (lpacktype == "deb"):                                        # Is Debian Style Package
             cmd =  "apt-get -y update >> %s 2>&1" % (logfile)           # Build Refresh Pack Cmd
-            writelog ("Running apt-get -y update...",'nonl')            # Show what we are running
+            writelog ("Running apt-get -y update...","nonl")            # Show what we are running
             (ccode, cstdout, cstderr) = oscommand(cmd)                  # Run the apt-get command
             if (ccode == 0) :                                           # If command went ok
                 writelog (" Done ")                                     # Print DOne
             else:                                                       # If we had error 
                 writelog ("Error Code is %d" % (ccode))                 # Advise user of error     
-            writelog ('Installing python3-pip','nonl')                  # Show User Pkg Installing
+            writelog ('Installing python3-pip',"nonl")                  # Show User Pkg Installing
             icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
             icmd += "apt-get -y install python3-pip >>%s 2>&1" % (logfile)
         else:                                                           # 
             if (sosname != "FEDORA"):                                   # On Redhat/CentOS
-                writelog('Installing python34-pip from EPEL ... ','nonl') # Need Help of EPEL Repo
+                writelog('Installing python34-pip from EPEL ... ',"nonl") # Need Help of EPEL Repo
                 icmd = "yum install --enablerepo=epel -y python3-pip >>%s 2>&1" % (logfile)
             else:                                                       # On Fedora
-                writelog ('Installing python3-pip ... ','nonl')         # Inform User Pkg installing
+                writelog ('Installing python3-pip ... ',"nonl")         # Inform User Pkg installing
                 icmd="dnf install -y python3-pip >>%s 2>&1" % (logfile) # Fedora pip3 install cmd
 
         # Install pip3 command 
@@ -716,7 +717,7 @@ def special_install(lpacktype,sosname,logfile) :
 
 
     # Install pymysql python3 module using pip3
-    writelog ("Installing python3 PyMySQL module (pip3 install PyMySQL) ... ",'nonl') 
+    writelog ("Installing python3 PyMySQL module (pip3 install PyMySQL) ... ","nonl") 
     cmd = "pip3 install PyMySQL"                                        # Command to execute
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute Command 
     if (ccode == 0):                                                    # If install went ok
@@ -799,7 +800,7 @@ def rpm_firewall_rule(ussh_port) :
     writelog("Checking Firewall Information",'bold')
 
     # Check if the command 'firewalld-cmd' is present on system - If not return to caller
-    writelog("  - Checking Firewall ... ",'nonl')
+    writelog("  - Checking Firewall ... ","nonl")
     if (locate_command('firewall-cmd') == "") :                         # firewalld command not found
         writelog("Firewall (firewalld) not installed")
         return (0)                                                      # No need to continue
@@ -807,7 +808,7 @@ def rpm_firewall_rule(ussh_port) :
         writelog("Firewall (firewalld) installed")
 
     # Check if Firewall is running - If not then return to caller 
-    writelog("  - Checking if firewall is running ... ",'nonl')
+    writelog("  - Checking if firewall is running ... ","nonl")
     COMMAND = "systemctl status firewalld"                              # Check if Firewall running
     if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
     ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
@@ -925,7 +926,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
         if (DRYRUN):                                                    # If Running if DRY-RUN Mode
             print ("DryRun - would run : %s" % (cmd))                   # Only shw cmd we would run
         else:                                                           # If running in normal mode
-            writelog ("Running apt update...",'nonl')                   # Show what we are running
+            writelog ("Running apt update...","nonl")                   # Show what we are running
             (ccode, cstdout, cstderr) = oscommand(cmd)                  # Run the apt-get command
             if (ccode == 0) :                                           # If command went ok
                 writelog (" Done ")                                     # Print DOne
@@ -944,10 +945,10 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
         needed_cmd = cmd                                                # File/Cmd Req. Check 
         if (packtype == "deb"):                                         # If Current host use .deb
             needed_packages = pkginfo['deb']                            # Save Packages to install
-            needed_repo = pkginfo['drepo']                              # Packages Repository to use
+            needed_repo     = pkginfo['drepo']                          # Packages Repository to use
         else:                                                           # If Current Host use .rpm
             needed_packages = pkginfo['rpm']                            # Save Packages to install
-            needed_repo = pkginfo['rrepo']                              # Packages Repository to use
+            needed_repo     = pkginfo['rrepo']                          # Packages Repository to use
 
         if needed_packages == "none" : 
             writelog ("...") 
@@ -955,15 +956,15 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
 
         # Verify if needed package is installed
         #pline = "Is the package '%s' installed... " % (needed_packages) # Show what we are doing
-        #writelog (pline,'nonl')                                         # Show What is looking for
+        #writelog (pline,"nonl")                                         # Show What is looking for
 
         # Rear Only available on Intel platform Architecture
         if needed_packages.split()[0] == 'rear' and sosarch not in rear_supported_architecture :
-            writelog ("[ INFO ] '%s' isn't supported on this platform (%s)." % (needed_packages,sosarch)) 
-            continue                                                  # Proceed with Next Package
+            writelog ("[ INFO ] 'ReaR' Backup & Recovery tool isn't supported on this platform.") 
+            continue                                                    # Proceed with Next Package
 
-        # lsb_release package is present on all platform.
-        #   - Except RHEL 7-8, package name is "redhat-lsb-core'.
+        # 'lsb_release' package is present on all platform.
+        #   - Except RHEL 7-8, package name is named "redhat-lsb-core'.
         if (needed_packages == "lsb_release") : 
             if (sosname in rhel_family and sosver < 9) : 
                 needed_packages = "redhat-lsb-core" 
@@ -976,31 +977,28 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             writelog ("[ WARNING ] Not available on '%s'." % (sosname))
             continue
 
-        # Install Missing Packages - Setup command to install missing package
-        #writelog ("Installing %s ... " % (needed_packages))      # Show user what installing
-#        writelog ("Installing... " % (needed_packages),'nonl')                              # Show user what installing
-
+        # Install Missing Packages 
+        # Setup the command to install missing package
         if (packtype == "deb") :                                        # If Package type is '.deb'
             icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
             icmd += "apt -y install %s >>%s 2>&1" % (needed_packages,logfile)
-        
         if (packtype == "rpm") :                                        # If Package type is '.rpm'
             if (needed_repo == "epel") and (sosname != "FEDORA"):       # Repo needed is EPEL
-                writelog (" from EPEL ... ",'nonl')                 
                 icmd = "yum install --enablerepo=epel -y %s >>%s 2>&1" % (needed_packages,logfile)
             else:
                 icmd = "yum install -y %s >>%s 2>&1" % (needed_packages,logfile)
 
-        # To Test if install did work, try to execute command just installed.
+        # To Test if install went ok, try to execute install command.
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
-            writelog ("[ OK ] Package '%s' is now installed." % (needed_packages)) # User Check Result
+            writelog ("[ OK ] Package '%s' is now installed." % (needed_packages)) 
             continue
         else : 
-            writelog("[ WARNING ] Package '%s' is not available on %s v%s." % (needed_packages,sosname.capitalize(),sosver))
+            writelog("[ WARNING ] '%s' isn't available on %s v%s." % (needed_packages,sosname.capitalize(),sosver))
             continue
-    return()     
-            
+
+    return()
+
 
 
 #===================================================================================================
@@ -1209,7 +1207,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         cmd = "systemctl restart mariadb.service"                       # Systemd Restart MariaDB
     else:                                                               # If Using SystemV Init
         cmd = "/etc/init.d/mysql restart"                               # SystemV Restart MariabDB
-    writelog ("ReStarting MariaDB Service - %s ... " % (cmd),'nonl')    # Make Sure MariabDB Started
+    writelog ("ReStarting MariaDB Service - %s ... " % (cmd),"nonl")    # Make Sure MariabDB Started
     ccode,cstdout,cstderr = oscommand(cmd)                              # Restart MariaDB Server
     if (ccode != 0):                                                    # Problem Starting DB
         writelog ("Problem Starting MariabDB server... ")               # Advise User
@@ -1320,7 +1318,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
             else:                                                       # sadmin password is wrong
                 writelog ("Not able to connect to Database using '%s' .dbpass password." % (uname))
                 wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Enter Usr pwd
-                writelog ("Updating 'sadmin' user password and grant ... ",'nonl')
+                writelog ("Updating 'sadmin' user password and grant ... ","nonl")
                 sql = " SET PASSWORD FOR '%s'@'localhost' = PASSWORD('%s');" % (uname,wcfg_rw_dbpwd)
                 sql += " revoke all privileges on *.* from '%s'@'localhost';" % (uname)
                 sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
@@ -1338,7 +1336,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         else:                                                           # Database user don't exist
             writelog ("User '%s' don't exist in database, will create it now." % (uname))   # Show user was found
             wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
-            writelog ("Creating 'sadmin' user ... ",'nonl')             # Show User Creating DB Usr
+            writelog ("Creating 'sadmin' user ... ","nonl")             # Show User Creating DB Usr
             sql =  "drop user 'sadmin'@'localhost'; flush privileges; " # Drop Usr,ByPass Bug Debian
             cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)     # Build Create User SQL
             ccode,cstdout,cstderr = oscommand(cmd)                      # Execute MySQL Command 
@@ -1376,7 +1374,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
             else:                                                       # sadmin password is wrong
                 writelog ("Not able to connect to Database using '%s' .dbpass password ..." % (uname))
                 wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Enter Usr pwd
-                writelog ("Updating 'squery' user password and grant ... ",'nonl')
+                writelog ("Updating 'squery' user password and grant ... ","nonl")
                 sql = " SET PASSWORD FOR '%s'@'localhost' = PASSWORD('%s');" % (uname,wcfg_ro_dbpwd)
                 sql += " revoke all privileges on *.* from 'squery'@'localhost';"
                 sql += " grant select, show view on sadmin.* to 'squery'@'localhost';"
@@ -1394,7 +1392,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         else:                                                           # Database user don't exist
             writelog ("User '%s' don't exist in database, will created now." % (uname))   # Show user was found
             wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Accept user pwd
-            writelog ("Creating '%s' user ... " % (uname),'nonl')       # Show User Creating DB Usr
+            writelog ("Creating '%s' user ... " % (uname),"nonl")       # Show User Creating DB Usr
             sql =  "drop user 'squery'@'localhost'; flush privileges; " # Drop User - ByPass Bug Deb
             cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)     # Build Create User SQL
             ccode,cstdout,cstderr = oscommand(cmd)                      # Execute MySQL Command 
@@ -1440,7 +1438,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     #else:                                                               # If Using SystemV Init
     #    cmd = "/etc/init.d/mysql restart"                               # SystemV Restart MariabDB
     #writelog('----------')                                              # Separation Line
-    #writelog ("ReStarting MariaDB Service - %s ..." % (cmd),'nonl')     # Make Sure MariabDB Started
+    #writelog ("ReStarting MariaDB Service - %s ..." % (cmd),"nonl")     # Make Sure MariabDB Started
     #ccode,cstdout,cstderr = oscommand(cmd)                              # Restart MariaDB Server
     #if (ccode != 0):                                                    # Problem Starting DB
     #    writelog ("Problem Starting MariabDB server... ")               # Advise User
@@ -1611,7 +1609,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     update_sadmin_cfg(sroot,"SADM_WWW_GROUP",apache_group,False)        # Update Value in sadmin.cfg
 
     # Setting Files and Directories Permissions for Web sites 
-    writelog ("  - Setting Owner/Group on SADMIN WebSite(%s/www) ... " % (sroot),'nonl') 
+    writelog ("  - Setting Owner/Group on SADMIN WebSite(%s/www) ... " % (sroot),"nonl") 
     cmd = "chown -R %s.%s %s/www" % (apache_user,apache_group,sroot)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on Web Dir.
     if (ccode == 0):
@@ -1621,7 +1619,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         writelog ("%s - %s" % (cstdout,cstderr))        
 
     # Setting Access permission on web site
-    writelog ("  - Setting Permission on SADMIN WebSite (%s/www) ... " % (sroot),'nonl') 
+    writelog ("  - Setting Permission on SADMIN WebSite (%s/www) ... " % (sroot),"nonl") 
     #cmd = "find %s/www -type d -exec chmod 775 {} \;" % (sroot)        # chmod 775 on all www dir.
     cmd = "find %s/www -type d | xargs chmod 775 " % (sroot)            # chmod 775 on all www dir.
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
@@ -1632,7 +1630,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         writelog ("%s - %s" % (cstdout,cstderr))        
     
     # Setting permissions on Website images
-    writelog ("  - Setting Permission on SADMIN WebSite images (%s/www/images) ... " % (sroot),'nonl') 
+    writelog ("  - Setting Permission on SADMIN WebSite images (%s/www/images) ... " % (sroot),"nonl") 
     cmd = "chmod -R 664 %s/www/images/*" % (sroot)                      # chmod 644 on all images
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode == 0):
@@ -1644,7 +1642,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
 
     # Restarting Web Server with new configuration
     cmd = "systemctl restart %s" % (sservice) 
-    writelog ("  - Web Server Restarting - %s ..." % (cmd),'nonl')
+    writelog ("  - Web Server Restarting - %s ..." % (cmd),"nonl")
     ccode,cstdout,cstderr = oscommand(cmd)                          
     if (ccode == 0):
         writelog( " Done ")
@@ -1654,7 +1652,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
 
     # Enable Web Server Service so it restart upon reboot
     cmd = "systemctl enable %s" % (sservice) 
-    writelog ("  - Enabling Web Server Service - %s ... " % (cmd),'nonl')
+    writelog ("  - Enabling Web Server Service - %s ... " % (cmd),"nonl")
     ccode,cstdout,cstderr = oscommand(cmd)                          
     if (ccode == 0):
         writelog( " Done ")
@@ -2390,7 +2388,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
     if (found_grp == True):                                             # Group were found in file
         writelog("Group %s is an existing group" % (wcfg_group),'bold') # Existing group Advise User 
     else:
-        writelog ("Creating group '%s' ... " % (wcfg_group),'nonl')     # Show creating the group
+        writelog ("Creating group '%s' ... " % (wcfg_group),"nonl")     # Show creating the group
         if wostype == "LINUX" :                                         # Under Linux
             ccode,cstdout,cstderr = oscommand("groupadd %s" % (wcfg_group))   # Add Group on Linux
         if wostype == "AIX" :                                           # Under AIX
@@ -2608,7 +2606,7 @@ def getpacktype(sroot,sostype):
 #
 def run_script(sroot,sname):
     run_status = False                                                  # Default Run Failed
-    writelog("Running '%s/bin/%s' script ... " % (sroot,sname),'nonl')  # Show User Script running
+    writelog("Running '%s/bin/%s' script ... " % (sroot,sname),"nonl")  # Show User Script running
     script = "%s/bin/%s" % (sroot,sname)                                # Bld Full Path Script name
     ccode,cstdout,cstderr = oscommand(script)                           # Execute Script
     if (ccode == 0):                                                    # Command Execution Went OK
