@@ -1,8 +1,4 @@
 #! /usr/bin/env bash
-
-# ADD apt install bind9-host
-
-
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
 #   Title       :   setup.sh
@@ -84,6 +80,7 @@
 # 2024_02_12 install v3.35 Make sure 'host' command is installed, (needed for hostname resolution).
 # 2024_02_12 install v3.36 Add alternative way to determine the system domain name.
 #@2024_06_29 install v3.37 Domain Name was not set correctly in some situation.
+#@2024_07_09 install v3.38 Minor change to log
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -93,7 +90,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 export DEBUG_LEVEL=0                                                    # 0=NoDebug Higher=+Verbose
-export SADM_VER='3.37'                                                  # Your Script Version
+export SADM_VER='3.38'                                                  # Your Script Version
 export SADM_PN="${0##*/}"                                               # Script name
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
 export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)                      # Script name without ext.
@@ -658,7 +655,6 @@ get_sysinfo()
 
 # Script Start HERE
 #===================================================================================================
-
     if [ $(id -u) -ne 0 ]                                               # If Cur. user is not root 
         then echo "Script can only be run by the 'root' user." 
              echo "Process aborted"                                     # Abort advise message
@@ -698,7 +694,7 @@ EOF
     if [ "$SADM_PACKTYPE" = "rpm" ] ; then check_selinux ; fi
 
     # Proceed with Main Setup Script
-    printf "\nAll basic requirements were met with success ..." 
-    printf "\nWe will now proceed with main setup program ($SCRIPT)" 
-    printf "\n---------------------------------------------------------------------------\n\n\n"
+    printf "\nAll basic requirements were met with success ..."  | tee -a $SLOG
+    printf "\nWe will now proceed with main setup program ($SCRIPT)"  | tee -a $SLOG
+    printf "\n---------------------------------------------------------------\n\n\n"  | tee -a $SLOG
     $SCRIPT 
