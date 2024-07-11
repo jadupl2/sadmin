@@ -222,6 +222,7 @@
 #@2024_05_15 lib v4.43 function 'sadm_stop()' now delete empty .rch at the end of execution.
 #@2024_05_17 lib v4.44 function 'sadm_stop()' remove last dotted line, before adding result status line.
 #@2024_05_18 lib v4.45 function 'sadm_stop()' remove debugging lines
+#@2024_07_11 lib v4.46 function 'sadm_ask()' added [C] cancel option.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -231,7 +232,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.45"                                              # This Library Version
+export SADM_LIB_VER="4.46"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -550,20 +551,24 @@ sadm_isnumeric() {
 
 # Display Question ($1) and wait for response from user, Y/y (return 1) or N/n (return 0)
 sadm_ask() {
-    wmess="$1 [y,n] ? "                                                 # Add Y/N to Mess. Rcv
+    wreturn=2
+    wmess="$1 [y,n,c] ? "                                               # Add Y/N to Mess. Rcv
     while :                                                             # While until good answer
         do
-        printf "%s" "$wmess"                                            # Print "Question [Y/N] ?" 
+        printf "%s" "$wmess"                                            # Print "Question [Y/N/C] ?"
         read answer                                                     # Read User answer
         case "$answer" in                                               # Test Answer
-           Y|y ) wreturn=1                                              # Yes = Return Value of 1
-                 break                                                  # Break of the loop
-                 ;;
-           n|N ) wreturn=0                                              # No = Return Value of 0
-                 break                                                  # Break of the loop
-                 ;;
-             * ) echo ""                                                # Blank Line
-                 ;;                                                     # Other stay in the loop
+           [Y|y]* ) wreturn=1                                           # Yes = Return Value of 1
+                    break                                               # Break of the loop
+                    ;;
+           [n|N]* ) wreturn=0                                           # No = Return Value of 0
+                    break                                               # Break of the loop
+                    ;;
+           [c|C]* ) wreturn=2                                           # Cancel = Return Value of 2
+                    break                                               # Break of the loop
+                    ;;
+             * )    echo "Invalid input. Please enter y, n, or c."                                               # Blank Line
+                    ;;                                                  # Other stay in the loop
         esac
     done
     return $wreturn                                                     # Return Answer to caller 
