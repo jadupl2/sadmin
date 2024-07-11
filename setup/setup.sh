@@ -391,7 +391,7 @@ install_python3()
     #   then echo "SADMIN requirement will not be met, then installation aborted." | tee -a $SLOG
     #        exit 0  
     #fi 
-    printf "\nInstalling 'python3' requirements." | tee -a $SLOG
+    printf "\nMaking sure 'python3' requirements are present on the system." | tee -a $SLOG
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
         then  if [ "$SADM_OSVERSION" -lt 8 ]
@@ -438,7 +438,7 @@ install_python3()
 #===================================================================================================
 check_host_command()
 {
-    printf "Checking if 'host' command is installed" | tee -a $SLOG
+    printf "Is the 'host' command present on the system " | tee -a $SLOG
 
     which host > /dev/null 2>&1                                         # Try getting command path
     if [ $? -eq 0 ]                                                     # If command installed
@@ -487,7 +487,7 @@ check_python3()
     install_python3 
 
     # Check if python3 'pymsql' module is installed 
-    printf "   - Check if python3 'pymsql' module is installed ... " | tee -a $SLOG
+    printf "   - Verifying if python3 'pymsql' module is installed  " | tee -a $SLOG
     python3 -c "import pymysql" > /dev/null 2>&1
     if [ $? -eq 0 ] 
         then echo "[ OK ] " | tee -a $SLOG
@@ -586,7 +586,7 @@ check_hostname()
     #    then S_DOMAIN=$(host $SADM_HOSTNAME |awk '{print $1}' |awk -F\. '{printf "%s.%s\n",$2,$3}')
     #fi 
 
-    printf "Making sure '$SADM_HOSTNAME.$S_DOMAIN' is defined in /etc/hosts ... " | tee -a $SLOG
+    printf "\nMaking sure '$SADM_HOSTNAME.$S_DOMAIN' is defined in /etc/hosts ... " | tee -a $SLOG
 
     # Insert Server into /etc/hosts (If not already there)
     grep -Ei "^$S_IPADDR " /etc/hosts | grep -q $SADM_HOSTNAME
@@ -694,7 +694,7 @@ EOF
     if [ "$SADM_PACKTYPE" = "rpm" ] ; then check_selinux ; fi
 
     # Proceed with Main Setup Script
-    printf "\nAll basic requirements were met with success ..."  | tee -a $SLOG
-    printf "\nWe will now proceed with main setup program ($SCRIPT)"  | tee -a $SLOG
+    printf "\nNow that all basic requirements are met ..."  | tee -a $SLOG
+    printf "\nWe can now proceed with main setup program ($SCRIPT)"  | tee -a $SLOG
     printf "\n---------------------------------------------------------------\n\n\n"  | tee -a $SLOG
     $SCRIPT 
