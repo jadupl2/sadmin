@@ -202,14 +202,14 @@ update_server_db()
     WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -e '$SQL'"           # Build Full Command Line
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "${CMDLINE}" ; fi    # Debug = Write command Line
 
     # Execute SQL to Update Server O/S Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e "$SQL" >>$SADM_LOG 2>&1
     if [ $? -ne 0 ]                                                     # If Error while updating
-        then sadm_write_err "[ ERROR ] O/S update status changed to 'Failed' in Database. \n"
+        then sadm_write_err "[ ERROR ] O/S update status changed to 'Failed' in Database."
              RCU=1                                                      # Set Error Code
-        else sadm_write_log "[ OK ] O/S update status changed to 'Success' in Database.\n"
+        else sadm_write_log "[ OK ] O/S update status changed to 'Success' in Database."
              RCU=0                                                      # Set Error Code = Success 
     fi
     return $RCU
@@ -227,12 +227,12 @@ rcmd_osupdate()
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, "
     SQL2="srv_update_reboot, srv_sporadic, srv_active, srv_sadmin_dir, srv_ssh_port from server "
     SQL3="where srv_ostype = 'linux' and srv_active = True "            # Got to Be a Linux & Active
-    SQL4="and srv_name = '$SYSTEM_NAME' ;"                               # Select server to update
+    SQL4="and srv_name = '$SYSTEM_NAME' ;"                              # Select server to update
     SQL="${SQL1}${SQL2}${SQL3}${SQL4}"                                  # Build Final SQL Statement 
     WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL'"        # Build Full Command Line
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "${CMDLINE}" ; fi    # Debug = Write command Line
 
     # Execute SQL to Get Server Information
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
