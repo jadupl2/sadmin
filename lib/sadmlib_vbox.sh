@@ -93,6 +93,14 @@ export START_EXCLUDE_INIT="$SADM_CFG_DIR/.sadm_vm_exclude_start.txt"    # VM Sta
 #"ubuntu2204" {87ff06ea-3a16-424a-b4f6-cf9f4418e06d}
 #"debian12" {de6be8ac-9508-45ce-8931-0833d3310d2b}
 #"rhel9" {24e7f86c-9282-4ac7-9b20-69b8236157e6}
+#
+# sudo -H -u robert vboxmanage list runningvms | cut -d " " -f1  | sed -e 's/^.//' -e 's/.$//'
+#    holmes
+#    centos8
+#    debian11
+#    ubuntu2004
+#    ubuntu2204
+#    rhel8
 #```
 #"""
 #===================================================================================================
