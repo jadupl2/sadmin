@@ -140,8 +140,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #===================================================================================================
 # Scripts Variables
 #===================================================================================================
-DASH_LINE=`printf %79s |tr " " "-"`             ; export DASH_LINE      # 79 minus sign line
-OSRELEASE="/etc/os-release"
+export OSRELEASE="/etc/os-release"
 
 # Name of all Output Files
 export HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"                    # Output File Loc & Name
@@ -197,7 +196,7 @@ export SYSCTL=""                                                        # sysctl
 export SCUTIL=""                                                        # MacOS to list DNS Param.
 export LSSCSI=""                                                        # List SCSI Device Info.
 export LSPCI=""                                                         # List PCI Components
-
+export VBOXMANAGE=""                                                    # VirtualBox Manager
 
 
 
@@ -218,58 +217,53 @@ show_usage()
 
 
 # ==================================================================================================
+#""
 # Check if the package name received as parameter is available on the server
 #   - If command is found, $SADM_CPATH is set to full command path (return 0)
 #   - If command is not found, $SADM_CPATH is set empty "" (return 1)
+#""
 # ==================================================================================================
 #
 command_available()
 {
     SADM_PKG=$1
     if [ $# -ne 1 ] || [ -z "$SADM_PKG" ]
-        then sadm_write_err "[ ERROR ] Invalid parameter received by command_available function."
-             sadm_write_err " - Parameter received = $* "
+        then sadm_write_err "[ ERROR ] Command '$SADM_PKG' is not available on this system."
+             sadm_write_err " - Parameter received = '$*' "
              sadm_write_err " - Please correct error in the script."
              return 1
     fi
 
-
-    # Check if command can be located and set SADM_CPATH accordingly
-    SADM_CPATH=$(${SADM_WHICH} $SADM_PKG > /dev/null 2>&1)
-    if [ $? -eq 0 ]
-        then SADM_CPATH=$($SADM_WHICH $SADM_PKG)
-        else SADM_CPATH=""
+    # Ff command (SADM_PKG) exist, Return command full Path, else return blank in CPATH
+    if [[ $(type -P $SADM_PKG > /dev/null 2>&1) -eq 0 ]] 
+        then SADM_CPATH=$(type -P $SADM_PKG) 
+        else SADM_CPATH="" 
     fi
 
     # If SADM_DEBUG is activated then display Package Name and Full path to it
     if [ $SADM_DEBUG -gt 0 ]
-        then if [ ! -z $SADM_CPATH ]
-                then SADM_MSG=$(printf "%-10s %-15s : %-30s" "[OK]" "$SADM_PKG" "$SADM_CPATH")
-                else SADM_MSG=$(printf "%-10s %-15s : %-30s" "[NA]" "$SADM_PKG" "Not Found")
+        then if [ ! -z $SADM_CPATH ]                                    # If CPATH not Blank
+                then SADM_MSG=$(printf "%-10s %-15s : %-30s" "[ OK ]" "$SADM_PKG" "$SADM_CPATH")
+                else SADM_MSG=$(printf "%-10s %-15s : %-30s" "[ INFO ]" "$SADM_PKG" "Not Found")
              fi
              sadm_write_log "${SADM_MSG}"
     fi
 
-    # If Package was located return 0 else return 1
     if [ -z "$SADM_CPATH" ] ; then return 1 ; else return 0 ; fi
 }
 
 
+
 # ==================================================================================================
+#""
 #     - Set command path used in the script (Some path are different on some RHEL Version)
 #     - Check if Input exist and is readable
+#""
 # ==================================================================================================
 #
 pre_validation()
 {
     sadm_write_log "Verifying command availability ..."
-
-    # The which command is needed to determine presence of command - Return Error if not found
-    #-----------------------------------------------------------------------------------------------
-    if [ "$SADM_WHICH" == "" ] 
-        then sadm_write_err "Command 'which' isn't available - Install it and rerun this script."
-             return 1
-    fi
 
     # Check the availability of some commands that will be used in this script
     # If command is found the uppercase command variable is set to full command path
@@ -284,6 +278,10 @@ pre_validation()
                 ;;
         DARWIN) command_available "sw_vers"     ; SWVERS=$SADM_CPATH    # sw_ver Cmd Path
                 command_available "system_profiler" ; SYSTEMPROFILER=$SADM_CPATH # Profiler Cmd Path
+                command_available "diskutil"     ; DISKUTIL=$SADM_CPATH  # Cmd Path or Blank=!found
+                command_available "networksetup" ; NETWORKSETUP=$SADM_CPATH  
+                command_available "hostinfo"     ; HOSTINFO=$SADM_CPATH  # HostInfo Cmd Path
+                command_available "ipconfig"     ; IPCONFIG=$SADM_CPATH  # ipconfig Cmd Path
                 ;;
         LINUX)  command_available "lvs"          ; LVS=$SADM_CPATH       # Cmd Path or Blank=!found
                 command_available "lvscan"       ; LVSCAN=$SADM_CPATH    # Cmd Path or Blank=!found
@@ -300,10 +298,6 @@ pre_validation()
                 command_available "blkid"        ; BLKID=$SADM_CPATH     # Cmd Path or Blank=!found
                 command_available "hwinfo"       ; HWINFO=$SADM_CPATH    # Cmd Path or Blank=!found
                 command_available "inxi"         ; INXI=$SADM_CPATH      # Cmd Path or Blank=!found
-                command_available "diskutil"     ; DISKUTIL=$SADM_CPATH  # Cmd Path or Blank=!found
-                command_available "networksetup" ; NETWORKSETUP=$SADM_CPATH  
-                command_available "hostinfo"     ; HOSTINFO=$SADM_CPATH  # HostInfo Cmd Path
-                command_available "ipconfig"     ; IPCONFIG=$SADM_CPATH  # ipconfig Cmd Path
                 command_available "lshw"         ; LSHW=$SADM_CPATH      # lshw Cmd Path
                 command_available "nmcli"        ; NMCLI=$SADM_CPATH     # nmcli Cmd Path
                 command_available "hostnamectl"  ; HOSTNAMECTL=$SADM_CPATH   
@@ -314,6 +308,7 @@ pre_validation()
                 command_available "lsscsi"       ; LSSCSI=$SADM_CPATH    # CmdPath="" if not found
                 command_available "rear"         ; REAR=$SADM_CPATH      # CmdPath="" if not found
                 command_available "lspci"        ; LSPCI=$SADM_CPATH     # CmdPath="" if not found
+                command_available "vboxmanage"   ; VBOXMANAGE=$SADM_CPATH
                 ;;
         *)      sadm_write_err "$SADM_OSTYPE is not supported yet."
                 sadm_write_err "Please reported to sadmlinux@gmail.com"
@@ -328,6 +323,8 @@ pre_validation()
     command_available "uname"       ; UNAME=$SADM_CPATH                 # Cmd Path or Blank !found
     command_available "uptime"      ; UPTIME=$SADM_CPATH                # Cmd Path or Blank !found
     command_available "last"        ; LAST=$SADM_CPATH                  # Cmd Path or Blank !found
+    sadm_write_log " " 
+    sadm_write_log " " 
     return 0
 }
 
@@ -400,7 +397,7 @@ set_last_osupdate_date()
 
     # Get Last Update Date from Return History File
     sadm_write_log "Getting last O/S Update date from $RCHFILE ..."
-    OSUPDATE_DATE=`tail -1 ${RCHFILE} |awk '{printf "%s %s", $4,$5}'`
+    OSUPDATE_DATE=$(tail -1 ${RCHFILE} |awk '{printf "%s %s", $4,$5}')
     if [ $? -ne 0 ]
         then sadm_write_log "Can't determine last O/S Update Date ..."
              sadm_write_log "You should run 'sadm_osupdate_starter.sh $(sadm_get_hostname)' on $SADM_SERVER to update this server."
@@ -456,9 +453,9 @@ print_file ()
     fi
 
     echo " " >> $wout
-    echo "#${DASH_LINE}"    >> $wout
+    echo "#${SADM_80_DASH}"    >> $wout
     echo "# File: $wfile "  >> $wout                                    # Include name of the file
-    echo "#${DASH_LINE}"    >> $wout
+    echo "#${SADM_80_DASH}"    >> $wout
     grep -v "^#\|^$" $wfile >> $wout                                    # Output file to Desire file
     return 0
 }
@@ -473,7 +470,7 @@ execute_command()
 {
     # Validate number of Parameters Received
     if [ $# -ne 2 ]
-        then sadm_write_err "$SADM_ERROR Function ${FUNCNAME[0]} didn't receive 2 parameters.\n"
+        then sadm_write_err "[ ERROR ] Function ${FUNCNAME[0]} didn't receive 2 parameters.\n"
              sadm_write_err "Function received $* and this isn't valid.\n"
              return 1
     fi 
@@ -484,7 +481,7 @@ execute_command()
     echo " "                        >> $EFILE
     echo "$ECMD"         >> $EFILE
     if [ $SADM_DEBUG -gt 4 ] ;then echo "Command executed is ${ECMD}." ; fi
-    echo "#${DASH_LINE}"            >> $EFILE
+    echo "#${SADM_80_DASH}"         >> $EFILE
     eval $ECMD                      >> $EFILE 2>&1
     echo " "                        >> $EFILE
     return 0
@@ -973,9 +970,8 @@ function cmd_options()
 #
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     
-    pre_validation                                                      # Cmd present ?
+    pre_validation                                                      # Cmd neede are present ?
     SADM_EXIT_CODE=$?                                                   # Save Function Return code
     if [ $SADM_EXIT_CODE -ne 0 ]                                        # Which Command missing
         then sadm_stop 1                                                # Upd. RC & Trim Log & RCH
@@ -992,3 +988,6 @@ function cmd_options()
     SADM_EXIT_CODE=$?                                                   # Save Function Return code
     sadm_stop $SADM_EXIT_CODE                                           # Upd RCH & Trim Log & RCH
     exit $SADM_EXIT_CODE                                                # Exit Glob. Err.Code (0/1)
+
+##  lsmod | grep -io vboxguest | xargs modinfo | grep -iw version
+#version:        6.1.12 r139181
