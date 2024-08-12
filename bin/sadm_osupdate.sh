@@ -31,7 +31,7 @@
 # 2019_05_23 osupdate: v3.12 Updated to use SADM_DEBUG instead of Local Variable DEBUG_LEVEL
 # 2019_07_12 osupdate: v3.13 O/S update script now update the date and status in sysinfo.txt. 
 # 2019_07_17 osupdate: v3.14 O/S update script now perform apt-get clean before update start on *.deb
-# 2019_11_21 osupdate: v3.15 Add 'export DEBIAN_FRONTEND=noninteractive' prior to 'apt-get upgrade'.
+# 2019_11_21 osupdate: v3.15 Add 'export DEBIAN_FRONTEND=non-interactive' prior to 'apt-get upgrade'.
 # 2019_11_21 osupdate: v3.16 Email sent to SysAdmin if some package are kept back from update.
 # 2020_01_18 osupdate: v3.17 Include everything in script log while running 'apt-get upgrade'. 
 # 2020_01_21 osupdate: v3.18 Enhance the update checking process.
@@ -54,6 +54,8 @@
 # 2023_05_02 osupdate v3.35 Check update availability on some occasion wasn't returning an error.
 # 2024_01_12 osupdate v3.36 Minor enhancement and uUpdate sadmin section to v1.56.
 #@2024_04_18 osupdate v3.37 Remove code for RHEL,RHEL5,RHEL6 and use 'apt' instead of 'apt-get'.
+#@2024_07_22 osupdate v3.38 Remove faulty 'reboot' message at the beginning of the script.
+#@2024_09_11 osupdate v3.39 Correct error when sysinfo was net yet created.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -82,7 +84,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.37'                                     # Your Current Script Version
+export SADM_VER='3.39'                                     # Your Current Script Version
 export SADM_PDESC="Script is used to perform an O/S update on the system"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -159,7 +161,7 @@ show_usage()
 check_available_update()
 {
     x_version="$(sadm_get_osmajorversion).$(sadm_get_osminorversion)"
-    sadm_write_log "Verifying update availability for $SADM_OS_NAME v$(sadm_get_osversion)"
+    sadm_write_log "Verifying update availability for $SADM_OS_NAME v${x_version}."
     
     case "$(sadm_get_osname)" in
 
@@ -265,8 +267,9 @@ check_available_update()
                     sadm_write_log " " ; sadm_write_log " "
                     sadm_write_log "Retrieving list of upgradable packages." 
                     sadm_write_log "Running 'apt list --upgradable'."
-                    apt list --upgradable | tee -a  ${SADM_LOG}
-                    NB_UPD=`apt list --upgradable 2>/dev/null | grep -iv 'Listing...' | wc -l`
+                    #apt list --upgradable | tee -a  ${SADM_LOG}
+                    apt list --upgradable 2>/dev/null | grep packages | cut -d '.' -f 1 | nl | tee -a $SADM_LOG 
+                    NB_UPD=$(apt list --upgradable 2>/dev/null | grep -iv 'Listing...' | wc -l)
                     if [ "$NB_UPD" -ne 0 ]
                         then sadm_write_log " " 
                              sadm_write_log "There are ${NB_UPD} update available."
@@ -408,12 +411,15 @@ update_sysinfo_file()
         then sadm_write_log "Updating 'O/S Update' date & status in ${HWD_FILE}."
     fi
 
-    grep -vi "SADM_OSUPDATE_" $HWD_FILE > $SADM_TMP_FILE1               # Remove lines to update
+    # Update Status in for in sysinfo file
+    if [ -f "$SADM_TMP_FILE1" ] 
+        then grep -vi "SADM_OSUPDATE_" $HWD_FILE > $SADM_TMP_FILE1      # Remove OSUPDATE Lines
+    fi 
     if [ "$FINAL_CODE" -eq 0 ]                                          # O/S Update was a success
-        then echo "SADM_OSUPDATE_STATUS                  = S"  >> $SADM_TMP_FILE1   # Success
-        else echo "SADM_OSUPDATE_STATUS                  = F"  >> $SADM_TMP_FILE1   # Failed
-    fi
-    
+       then echo "SADM_OSUPDATE_STATUS                  = S"  >> $SADM_TMP_FILE1   # Success
+       else echo "SADM_OSUPDATE_STATUS                  = F"  >> $SADM_TMP_FILE1   # Failed
+    fi 
+
     TODAY=$(date "+%Y.%m.%d %H:%M:%S")                                   # Get Current Date/Time
     echo "SADM_OSUPDATE_DATE                    = $TODAY"  >> $SADM_TMP_FILE1 # Last OS Update Date
     
@@ -469,14 +475,11 @@ perform_osupdate()
 #
 main_process()
 {
-    # Advise user that there will be a reboot or not.
-    SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'`         # SADMIN Hostname
-    if [ "$HOSTNAME" = "$SADM_SRV_NAME" ]                               # We are on SADM Master Srv
-       then  printf "No Automatic reboot on the SADMIN Main server - $SADM_SERVER \n"
-             printf "Automatic reboot cancelled for this server.\n"
-             printf "You will need to reboot system at your chosen time.\n\n"
+    # Prevent to reboot after the update on a SADMIN server.
+    if [ "$SADM_ON_SADMIN_SERVER" = "Y" ] && [ "$WREBOOT" = "Y" ]       # On SADMIN Server & Reboot? 
+       then  sadm_write_log "No Automatic reboot on a SADMIN server."
+             sadm_write_log "You will need to reboot system at your chosen time."
              WREBOOT="N"                                                # No Auto Reboot on SADM Srv
-       else  printf "Reboot requested after a successful update.\n"  
     fi
 
     # Check for Automatic Update
@@ -500,8 +503,7 @@ main_process()
     # Update the Date & Status of update in Sysinfo File ($SADMIN/dat/dr/`hostname -s`_sysinfo.txt).
     update_sysinfo_file $SADM_EXIT_CODE                                 # Upd. Sysinfo Date & Status
 
-    # If Reboot was requested and update were available and update was successful, then reboot.
-    SADM_SRV_NAME=$(echo $SADM_SERVER | awk -F\. '{ print $1 }')        # SADM srvname with no domain
+    # If Reboot was requested, update were available and update was successful, then reboot.
     if [ "$WREBOOT" = "Y" ] && [ "$UPDATE_AVAILABLE" = "Y" ] && [ "$SADM_EXIT_CODE" -eq 0 ]     
         then sadm_write_log "Update successful, system will reboot in 1 Minute."
              shutdown -r +1 "System will reboot in 1 minute."           # Issue Shutdown & Reboot
@@ -523,13 +525,12 @@ function cmd_options()
     while getopts "hrvd:" opt ; do                                      # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
-               if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
+               if [ "$num" = "" ]                            
+                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "Debug Level set to ${SADM_DEBUG}."               # Display Debug Level
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
