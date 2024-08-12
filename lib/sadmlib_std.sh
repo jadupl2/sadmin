@@ -223,6 +223,7 @@
 #@2024_05_17 lib v4.44 function 'sadm_stop()' remove last dotted line, before adding result status line.
 #@2024_05_18 lib v4.45 function 'sadm_stop()' remove debugging lines
 #@2024_07_11 lib v4.46 function 'sadm_ask()' added [C] cancel option.
+#@2024_09_12 lib v4.47 Minor changes (perl)
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -232,7 +233,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.46"                                              # This Library Version
+export SADM_LIB_VER="4.47"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -498,7 +499,8 @@ if [ -z "$TERM" ] || [ "$TERM" = "dumb" ] || [ "$TERM" = "unknown" ]
 fi 
 
 
-# Constant Var., if message begin with these constant it's showed with special color by sadm_write()
+# Constant Variable use in sadm_write_log() and sadm_write_err() definition.
+# If message begin with these constant, it's showed with in color by sadm_write_...
 SADM_ERROR="[ ERROR ]"                                                  # [ ERROR ] in Red Trigger 
 SADM_FAILED="[ FAILED ]"                                                # [ FAILED ] in Red Trigger 
 SADM_WARNING="[ WARNING ]"                                              # [ WARNING ] in Yellow
@@ -506,7 +508,7 @@ SADM_OK="[ OK ]"                                                        # [ OK ]
 SADM_SUCCESS="[ SUCCESS ]"                                              # [ SUCCESS ] in Green
 SADM_INFO="[ INFO ]"                                                    # [ INFO] in Blue Trigger
 
-# When mess. begin with constant above they are substituted by the value below in sadm_write().
+# When mess. contain one of these constant, they are substituted by their equivalent in color below.
 SADM_SERROR="${BOLD}${MAGENTA}[ ${RED}ERROR${MAGENTA} ]${NORMAL}"       # [ ERROR ] Red
 SADM_SFAILED="${BOLD}${MAGENTA}[ ${RED}FAILED${MAGENTA} ]${NORMAL}"     # [ FAILED ] Red
 SADM_SWARNING="${BOLD}${MAGENTA}[ ${YELLOW}WARNING${MAGENTA} ]${NORMAL}" # WARNING Yellow
@@ -866,7 +868,7 @@ sadm_sleep() {
 
 #  R E T U R N      C U R R E N T    E P O C H   T I M E
 sadm_get_epoch_time() {
-    w_epoch_time=`${SADM_PERL} -e 'print time'`                         # Use Perl to get Epoch Time
+    w_epoch_time=$(${SADM_PERL} -e 'print time')                        # Use Perl to get Epoch Time
     echo "$w_epoch_time"                                                # Return Epoch to Caller
 }
 
@@ -2206,10 +2208,10 @@ sadm_start() {
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
             sadm_write_err "[ ERROR ] Script '$SADM_PN' is already running ..."
             sadm_write_err " "
-            sadm_write_err "Script policy don't allow to run a second copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
-            sadm_write_err "The PID file '\${SADMIN}/tmp/${SADM_INST}.pid', was created $pelapse seconds ago."
-            sadm_write_err "The '\$SADM_PID_TIMEOUT' variable is set to $SADM_PID_TIMEOUT seconds."
-            sadm_write_err " "
+            sadm_write_err "Can't run multiple copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
+            sadm_write_err "PID file ('\${SADMIN}/tmp/${SADM_INST}.pid'), was created $pelapse seconds ago."
+            sadm_write_err "The timeout ('\$SADM_PID_TIMEOUT') is set to $SADM_PID_TIMEOUT seconds."
+            #sadm_write_err " "
             if [ -z "$SADM_PID_TIMEOUT" ]                               # Is SADM_PID_TIMEOUT define
                 then sadm_write_err "Script can't run unless one of the following thing is done :"
                      sadm_write_err "  - Remove the PID File (\${SADMIN}/tmp/${SADM_INST}.pid)."
@@ -2218,9 +2220,9 @@ sadm_start() {
                      DELETE_PID="N"                                     # No Del PID Since running
                      exit 1                                             # Exit To O/S with Error
                 else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
-                        then sadm_write_log "The PID file exceeded the time to live ('\$SADM_PID_TIMEOUT')."
+                        then sadm_write_log "The PID file is now exceeding this timeout ('\$SADM_PID_TIMEOUT')."
                              sadm_write_log "Assuming script was aborted abnormally."
-                             sadm_write_log "Script execution is now resume and the PID file recreated."
+                             sadm_write_log "The script execution will now resume and the PID file recreated."
                              sadm_write_log " "
                              sadm_write_log " "
                              touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
@@ -2280,7 +2282,8 @@ sadm_start() {
 
 
 # --------------------------------------------------------------------------------------------------
-# SADM END OF PROCESS FUNCTION (RECEIVE 1 PARAMETER = EXIT CODE OF SCRIPT)
+# CLOSING SADMIN 
+# END OF PROCESS FUNCTION (RECEIVE 1 PARAMETER = EXIT CODE OF SCRIPT)
 # What this function do.
 #   1) If Exit Code is not zero, change it to 1.
 #   2) Get Actual Time and Calculate the Execution Time.
@@ -2746,7 +2749,7 @@ sadm_check_system_lock() {
 #     "1"     : System is a valid SADMIN server,
 #                 - System have "SADM_HOST_TYPE" equal to "S" in $SADMIN/cfg/sadmin.cfg.
 #                 - The 'sadmin' host resolved to an IP present on the current system.
-#                   This permit to use an IP other than the main system IP address.
+#                   This permit to use an IP other than the main system IP address (IP alias).
 #     "0"     : Mean that current is not a SADMIN server.
 #               
 # --------------------------------------------------------------------------------------------------
@@ -2758,7 +2761,12 @@ sadm_on_sadmin_server() {
     # Check if SADM_SERVER IP is defined on this system and set SADM_ON_SADMIN_SERVER accordingly.
     server_ip=$(getent ahostsv4 $SADM_SERVER | tail -1 | awk  '{ print $1 }')  
     ip a | grep -q $server_ip 
-    if [ $? -eq 0 ] ; then wreturn=1 ; fi                               # System is a SADMIN server
+    if [ $? -eq 0 ]                                                     # If on a SADMIN Server
+        then wreturn=1                                                  # Return 1 to caller
+             SADM_ON_SADMIN_SERVER="Y"                                  # Set Global Var to Y
+        else wreturn=0                                                  # If not a SADMIN Server
+             SADM_ON_SADMIN_SERVER="N"                                  # Set Global to N
+    fi 
     return $wreturn
 }
 
