@@ -69,7 +69,7 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
 
     $URL_HOME   = '/index.php';                                         # Site Home Page URL
     
-    # SHOW HEADING LINE 1
+    # HEADING LINE 1 - Icon on the left
     echo "\n<div style='float: left;'>";                                # Align Left Link Go Back
     if (strtoupper($BACK_URL) != "HOME") {                              # Parameter Recv. = home
         echo "<a href='javascript:history.go(-1)'>";                    # URL Go Back Previous Page
@@ -83,12 +83,14 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
         echo "style='width:32px;height:32px;'></span></a>";             # Size Icons 32x32
     }
     echo "</div>"; 
+
+    # HEADING LINE 1 - Title and version number.
     echo "\n<div style='";
     echo "text-align: center ; color: #271c1c; ";
     echo "font-size: 1.8em; font-family: Verdana, sans-serif; ";
     echo "font-weight: bold; '>"; 
-    echo "\n${TITLE1} " ."- v${WVER}";
-    echo "\n</div>";
+    echo "$TITLE1" ." - v$WVER";
+    echo "</div>\n";
  
     # SHOW HEADING LINE 2
     if ($TITLE2 != "") {
@@ -96,12 +98,12 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
         echo "text-align: center ; color: #271c1c; ";
         echo "font-size: 1.0em; font-family: Verdana, sans-serif; ";
         echo "font-weight: bold; '>"; 
-        echo "${TITLE2}" ;   
-        echo "\n</div>";
+        echo "$TITLE2" ;   
+        echo "</div>\n";
     }        
 
     # Space line for separation purpose
-    echo "\n<hr/>";                                                     # Print Horizontal Line
+    echo "<hr/>\n\n";                                                     # Print Horizontal Line
 }
 
 
