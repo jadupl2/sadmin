@@ -25,6 +25,10 @@
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGES OF SADMIN SITE
+#echo ("\n ========= DOCUMENT ROOT : $_SERVER['DOCUMENT_ROOT']\n") ; 
+#echo ("\n ========= init lib = '/lib/sadmInit.php' \n"); 
+#exit ("Aborted by Jacques");
+
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
@@ -61,7 +65,6 @@ $URL_OSUPDATE       = '/crud/srv/sadm_server_osupdate.php';             # O/S Sc
 $URL_BACKUP         = '/crud/srv/sadm_server_rear_backup.php';          # Rear Schedule Update URL
 $URL_VIEW_FILE      = '/view/log/sadm_view_file.php';                   # View File Content URL
 $URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
-$URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
 $URL_VIEW_BACKUP    = "/view/sys/sadm_view_rear.php";                   # Rear Back Status Page
 $URL_VIEW_VBEXPORT  = "/view/sys/sadm_view_vbexport.php";               # VirtualBox Export URL
 $URL_REAR_REPORT    = "/view/daily_rear_report.html";                   # Rear Daily Report Page
@@ -75,6 +78,7 @@ $BACKUP_LOG         = 'sadm_rear_backup.log';                           # Rear B
 $BACKUP_ELOG        = 'sadm_rear_backup_e.log';                         # Rear Backup Error LOG 
 
 
+
 #===================================================================================================
 #                              Display SADMIN Main Page Header
 #===================================================================================================
@@ -82,42 +86,45 @@ function setup_table() {
 
     echo "<div id='SimpleTable'>"; 
     #echo '<table id="sadmTable" class="display" row-border width="100%">';   
-    echo '<table id="sadmTable" row-border width="100%">';   
+#    echo "<table id='sadmTable' row-border width='100%'>\n";   
+    echo "<table row-border width='100%'>\n";   
 
-    echo "<thead>\n";
+    echo "\n<thead>\n";
     echo "<tr>\n";
-    echo "<th class='text-left'>Last Export</th>\n";
-    echo "<th class='text-left'>Duration</th>\n";
-    #echo "<th class='text-center'>Duration</th>\n";
-    echo "<th class='text-left'>System</th>\n";
-    echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='dt-head-center'>Schedule</th>\n";
+    echo "<th class='text-left'>No.</th>\n";
+    echo "<th align=left>Guest Name</th>\n";
+    echo "<th align=left>Host Name</th>\n";
+    echo "<th align=left>Last Export / Duration</th>\n";
+    echo "<th class='text-left'>Status</th>\n";
+    echo "<th class='text-left'>VM Type Active</th>\n";
+    echo "<th class='text-center'>VGuest<br>Version</th>\n";
+    echo "<th class='dt-head-center'>Export<br>Schedule</th>\n";
     echo "<th class='dt-head-center'>Sporadic</th>\n";
-    echo "<th class='text-center'>ReaR<br>Version</th>\n";
-    echo "<th class='text-center'>Next Backup Occurrence</th>\n";
-    #echo "<th class='text-center'>Occurrence</th>\n";
-    echo "<th align='center'>Current Size</th>\n";
-    echo "<th class='text-center'>Prev. Size</th>\n";
-    echo "<th class='text-center'>Log/Hist.</th>\n";
+    echo "<th class='text-center'>Next Export<br>Occurrence</th>\n";
+    echo "<th align='center'>Last Export Size</th>\n";
+    echo "<th class='text-center'>Previous Export Size</th>\n";
+    echo "<th class='text-center'>Export Log<br>Export History</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
 
-    echo "<tfoot>\n";
+    echo "\n<tfoot>\n";
     echo "<tr>\n";
-    echo "<th class='text-left'>Last Backup Date Duration</th>\n";
-    #echo "<th class='text-center'>Duration</th>\n";
-    echo "<th class='text-left'>System</th>\n";
-    echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='dt-head-center'>Schedule</th>\n";
+    echo "<th class='text-left'>No.</th>\n";
+    echo "<th align=left>Guest Name</th>\n";
+    echo "<th align=left>Host Name</th>\n";
+    echo "<th align=left>Last Export / Duration</th>\n";
+    echo "<th class='text-left'>Status</th>\n";
+    echo "<th class='text-left'>VM Type Active</th>\n";
+    echo "<th class='text-center'>VGuest<br>Version</th>\n";
+    echo "<th class='dt-head-center'>Export<br>Schedule</th>\n";
     echo "<th class='dt-head-center'>Sporadic</th>\n";
-    echo "<th class='text-center'>Ver.</th>\n";
-    echo "<th class='text-center'>Next Backup Occurrence</th>\n";
-    #echo "<th class='text-center'>Occurrence</th>\n";
-    echo "<th align='center'>Current Size</th>\n";
-    echo "<th class='text-center'>Prev. Size</th>\n";
-    echo "<th class='text-center'>Log/Hist./th>\n";
+    echo "<th class='text-center'>Next Export<br>Occurrence</th>\n";
+    echo "<th align='center'>Last Export Size</th>\n";
+    echo "<th class='text-center'>Previous Export Size</th>\n";
+    echo "<th class='text-center'>Export Log<br>Export History</th>\n";
     echo "</tr>\n"; 
-    echo "</tfoot>\n";
+    echo "</tfoot>\n\n";
+
     echo "<tbody>\n";
 }
 
@@ -127,27 +134,41 @@ function setup_table() {
 # Display main page data from the row received in parameter
 #===================================================================================================
 function display_data($count, $row) {
-    global  $URL_HOST_INFO, $URL_VIEW_FILE, $URL_BACKUP, $URL_VIEW_RCH, $URL_UPDATE,
-            $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG, $BACKUP_ELOG ;
+    global  $URL_VIEW_FILE,   $URL_BACKUP, $URL_VIEW_RCH, $URL_UPDATE,
+            $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG,   $BACKUP_ELOG ;
 
-
-# ReaR Not Supported on MacOS and ARM system (Raspberry Pi), return to caller
-    if ((($row['srv_arch']   != "x86_64") and ($row['srv_arch'] != "i686")) 
-        or ($row['srv_ostype'] == "darwin")) {
-        return ; 
-    } 
 
 # Set the Logs, ErrorLog and rch full path name
     $log_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_LOG;
-    $elog_name = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_ELOG ;
+    $elog_name = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_ELOG;
     $rch_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/rch/". $row['srv_name'] ."_". $BACKUP_RCH;
 
 # Start of row
-    echo "<tr>\n";  
+    echo "\n<tr>\n";  
+    echo "<td><center>$count</center></td>\n";  
+
+# Show VM Guest System name
+    echo "\n<td class='dt-left'>";
+    echo "<a href='" . $URL_UPDATE . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'";
+    echo " title='Click to view system info, $WOS $WVER system - " . $row['srv_note'] . "'>";
+    echo $row['srv_name']  . "</a>&nbsp;&nbsp;"; 
+    $WOS   = sadm_clean_data($row['srv_osname']);
+    echo "<br>" . $row['srv_desc'];
+    echo "\n</td>\n";
+
+# Show VM Host System name
+    echo "<td class='dt-left'>";
+    echo "<a href='" . $URL_UPDATE . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'";
+    echo " title='Click to view system info, $WOS $WVER system - " . $row['srv_note'] . "'>";
+    echo $row['srv_name']  . "</a>&nbsp;&nbsp;"; 
+    $WOS   = sadm_clean_data($row['srv_osname']);
+    echo "<br>" . $row['srv_desc'];
+    echo "</td>\n";
+
 
 # Show Last Execution Rear Backup Date/Time & Check if overdue.
     if (! file_exists($rch_name))  {                                    # No RCH Found,No backup yet
-        echo "<td class='dt-center'>No backup yet";  
+        echo "<td align=center>No export yet";  
     }else{
         $file = file("$rch_name");                                      # Load RCH File in Memory
         $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
@@ -158,38 +179,20 @@ function display_data($count, $row) {
         $backup_age = round($datediff / (60 * 60 * 24));
         if ($backup_age > SADM_REAR_BACKUP_INTERVAL) { 
             $tooltip = "Backup is " .$backup_age. " days old, greater than the threshold of " .SADM_REAR_BACKUP_INTERVAL. " days.";
-            echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>";
+            echo "<td align=left style='color:red' bgcolor='#DAF7A6'><b>";
             echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
-            echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ;
+            echo "$cdate1" . '<br>' . substr($ctime1,0,5) ;
             echo "</span>"; 
         }else{
             $tooltip = "Backup is " .$backup_age. " days old, will have a tinted background, if greater than " .SADM_REAR_BACKUP_INTERVAL. " days.";
-            echo "<td align='center'>";
+            echo "<td align='left'>";
             echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
-            echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ; 
+            echo "$cdate1" . '<br>' . substr($ctime1,0,5) ; 
             echo "</span>"; 
         }
     }
     #echo "</font></td>\n";  
     echo "</b></font>\n";  
-
-# Backup duration time
-    if (! file_exists($rch_name))  {                                    # If RCH File Not Found
-        #echo "\n<td class='dt-center'>&nbsp;</td>";
-        echo "&nbsp;</td>";
-    }else{
-        #echo "<td class='dt-center'>" . nl2br($celapse) . "</td>\n";  
-        echo "<br>" . nl2br($celapse) . "</td>\n";  
-    }
-
-# Show System name
-    echo "<td class='dt-left'>";
-    echo "<a href='" . $URL_UPDATE . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'";
-    echo " title='Click to view system info, $WOS $WVER system - " . $row['srv_note'] . "'>";
-    echo $row['srv_name']  . "</a>&nbsp;&nbsp;"; 
-    $WOS   = sadm_clean_data($row['srv_osname']);
-    echo "<br>" . $row['srv_desc'];
-    echo "</td>\n";
 
 # Status of Last Backup
     if (file_exists($rch_name)) {
@@ -227,6 +230,20 @@ function display_data($count, $row) {
     }
     echo "</td>\n";
 
+# Show Virtual Machine Type (VB=VirtualBox VW=VMWare KVM=Kernel Virt,...)
+    echo "<td class='dt-left'>";
+    echo "<a href='" . $URL_UPDATE . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'";
+    echo " title='Click to view system info, $WOS $WVER system - " . $row['srv_note'] . "'>";
+    #echo $row['srv_name']  . "</a>&nbsp;&nbsp;"; 
+    echo "VBOX</a>&nbsp;&nbsp;"; 
+    $WOS   = sadm_clean_data($row['srv_osname']);
+    #echo "<br>" . $row['srv_desc'];
+    echo "</td>\n";
+
+# Show Guest Server Version
+    echo "<td class='dt-body-center'>" . nl2br( $row['srv_rear_ver']) . "</td>\n";  
+
+
 # Schedule Update Button
     $ipath = '/images/UpdateButton.png';
     if ($row['srv_img_backup'] == TRUE) {                                  # Is Server Active
@@ -248,8 +265,6 @@ function display_data($count, $row) {
        echo "\n<td class='dt-center'>No</td>";
    }
 
-# Show ReaR Server Version
-    echo "<td class='dt-body-center'>" . nl2br( $row['srv_rear_ver']) . "</td>\n";  
 
 # Next Rear Backup Date
     echo "<td class='dt-center'>";
@@ -365,12 +380,11 @@ function display_data($count, $row) {
 
 
 
-# ==================================================================================================
-#       PHP MAIN START HERE
+# PHP MAIN START HERE
 # ==================================================================================================
 
 # Get all active systems from the SADMIN Database
-    $sql = "SELECT * FROM server where srv_active = True order by srv_name;";
+    $sql = "SELECT * FROM server where srv_vm = True order by srv_name;";
     $result=mysqli_query($con,$sql) ;     
     $NUMROW = mysqli_num_rows($result);                                 # Get Nb of rows returned
     if ($NUMROW == 0)  {                                                # If No Server found
