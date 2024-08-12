@@ -1966,8 +1966,8 @@ sub end_of_sysmon {
     #print "Execution will start in $random_number seconds.\n";
     #sleep($random_number);
 
-    init_process;                                   # Create lock file & do 'ps' commands to files
     $start_time = time;                             # Store Starting time - To calculate elapse time
+    init_process;                                   # Create lock file & do 'ps' commands > to files
     load_sadmin_cfg;                                # Load SADMIN Config file sadmin.cfg in Glob.Var
     load_smon_file;                                 # Load SysMon Config file hostname.smon in Array
     load_df_in_array;                               # Execute "df" command & store result in a array
