@@ -51,6 +51,7 @@
 # 2021_08_31 lib v2.20 New function "sadm_return_logo(OSNAME)" return image path, doc url & tooltip
 # 2022_06_02 lib v2.21 Added Logo of AlmaLinux, Rocky Linux & update logo of Ubuntu.
 # 2022_07_26 lib v2.22 Fix bug calculating "Next Update Date/Time" in some situation.
+# 2024_09_12 lib v2.23 Minor change to standard heading function used for every page.
 #===================================================================================================
 #
 
@@ -59,7 +60,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.22" ;   
+$LIBVER = "2.23" ;   
     
 
 #===================================================================================================
