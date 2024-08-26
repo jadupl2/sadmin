@@ -223,7 +223,8 @@
 #@2024_05_17 lib v4.44 function 'sadm_stop()' remove last dotted line, before adding result status line.
 #@2024_05_18 lib v4.45 function 'sadm_stop()' remove debugging lines
 #@2024_07_11 lib v4.46 function 'sadm_ask()' added [C] cancel option.
-#@2024_09_12 lib v4.47 Minor changes (perl)
+#@2024_08_12 lib v4.47 Minor changes (perl)
+#@2024_08_26 lib v4.48 When timeout is reach, check if script is still running before starting a new one.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -233,7 +234,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.47"                                              # This Library Version
+export SADM_LIB_VER="4.48"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
