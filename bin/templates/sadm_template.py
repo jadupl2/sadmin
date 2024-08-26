@@ -138,10 +138,10 @@ def cmd_options(argv):
               [-h]      Show this help message
               [-v]      Show script version information
         Returns:
-            debug_opt (int)          : Set to the debug level [0-9] (Default is 0)
+            pdebug (int)          : Set to the debug level [0-9] (Default is 0)
     """
 
-    debug_opt = 0                                                      # Script Debug Level (0-9)
+    global pdebug                                                       # Script Debug Level (0-9)
     parser = argparse.ArgumentParser(description=pdesc)                 # Desc. is the script name
 
     # Declare Arguments
@@ -152,20 +152,20 @@ def cmd_options(argv):
     parser.add_argument("-d",
                         metavar="0-9",
                         type=int,
-                        dest='debug_opt',
+                        dest='pdebug',
                         help="debug/verbose level from 0 to 9",
                         default=0)
     
     args = parser.parse_args()                                          # Parse the Arguments
 
     # Set return values accordingly.
-    if args.debug_opt:                                                  # Debug Level -d specified
-        debug_opt = args.debug_opt                                      # Save Debug Level
-        print("Debug Level is now set at %d" % (debug_opt))             # Show user debug Level
+    if args.pdebug:                                                  # Debug Level -d specified
+        pdebug = args.pdebug                                      # Save Debug Level
+        print("Debug Level is now set at %d" % (pdebug))             # Show user debug Level
     if args.version:                                                    # If -v specified
         sa.show_version(pver)                                           # Show Custom Show Version
         sys.exit(0)                                                     # Exit with code 0
-    return(debug_opt)                                                   # Return opt values
+    return(pdebug)                                                   # Return opt values
 
 
 

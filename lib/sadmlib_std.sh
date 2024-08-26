@@ -228,7 +228,7 @@
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
 
-
+ 
 # --------------------------------------------------------------------------------------------------
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
@@ -2037,7 +2037,7 @@ sadm_freshen_directories_structure() {
 
     # Path is needed to perform NFS Backup (It doesn't exist by default on Mac)
     if [ "$SADM_OS_TYPE" = "DARWIN" ] && [ ! -d "/tmp/nfs2" ]           # NFS Mount Point not exist
-        then mkdir -p /tmp/nfs2 && chmod 775 /tmp/nfs2                  # Create NFS mount point
+        then mkdir -p -m 755 /tmp/nfs2                                    # Create NFS mount point
     fi
 
     # $SADMIN directories creation (If do not exist and ignore error)
@@ -2208,25 +2208,36 @@ sadm_start() {
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
             sadm_write_err "[ ERROR ] Script '$SADM_PN' is already running ..."
             sadm_write_err " "
+            f_timeout=$(printf "%'d\n" $SADM_PID_TIMEOUT)
+            f_elapse=$(printf "%'d\n" $pelapse)
             sadm_write_err "Can't run multiple copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
-            sadm_write_err "PID file ('\${SADMIN}/tmp/${SADM_INST}.pid'), was created $pelapse seconds ago."
-            sadm_write_err "The timeout ('\$SADM_PID_TIMEOUT') is set to $SADM_PID_TIMEOUT seconds."
+            sadm_write_err "PID file ('\${SADMIN}/tmp/${SADM_INST}.pid'), was created $f_pelapse seconds ago."
+            sadm_write_err "The PID timeout ('\$SADM_PID_TIMEOUT') is set to $f_timeout seconds."
+            sadm_write_err " "
             #sadm_write_err " "
             if [ -z "$SADM_PID_TIMEOUT" ]                               # Is SADM_PID_TIMEOUT define
-                then sadm_write_err "Script can't run unless one of the following thing is done :"
+                then sadm_write_err "Script can't run unless one of the following action is done :"
                      sadm_write_err "  - Remove the PID File (\${SADMIN}/tmp/${SADM_INST}.pid)."
                      sadm_write_err "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script."
                      sadm_write_err "  - You wait till PID timeout '\$SADM_PID_TIMEOUT' is reach."
                      DELETE_PID="N"                                     # No Del PID Since running
                      exit 1                                             # Exit To O/S with Error
                 else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
-                        then sadm_write_log "The PID file is now exceeding this timeout ('\$SADM_PID_TIMEOUT')."
-                             sadm_write_log "Assuming script was aborted abnormally."
-                             sadm_write_log "The script execution will now resume and the PID file recreated."
-                             sadm_write_log " "
-                             sadm_write_log " "
-                             touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
-                             DELETE_PID="Y"                             # Del PID Since running
+                        then sadm_write_log "The PID file is now expired."
+                             sadm_write_log "Checking if '$SADM_PN' is still running."
+                             ps -ef | grep "$SADM_PN" | grep -v grep | nl >> $SADM_LOG 2>&1
+                             proc_count=$(ps -ef | grep "$SADM_PN"| grep -v grep | wc -l)
+                             if [ $proc_count -gt 3 ] 
+                                then sadm_write_err "More than 3 processes are running with the name '$SADM_PN'."
+                                     sadm_write_err "Refusing to run another copy of this script."
+                                     DELETE_PID="N"                                     # No Del PID Since running
+                                     exit 1                                             # Exit To O/S with Error
+                                else sadm_write_log "Assuming that the script was aborted abnormally."
+                                     sadm_write_log "Script execution will now start and the PID file recreated."
+                                     sadm_write_log " "
+                                     touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
+                                     DELETE_PID="Y"                             # Del PID Since running
+                             fi
                         else DELETE_PID="N"                             # No Del PID Since running
                              exit 1                                     # Exit with Error
                      fi
