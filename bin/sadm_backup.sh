@@ -723,15 +723,14 @@ mount_nfs()
     # Create System Main Directory
     F="${LOCAL_MOUNT}/${SADM_HOSTNAME}"
     if [ ! -d ${F} ]                                                    # Check if Server Dir Exist
-        then sadm_write_log "Making System main backup directory $F"
-             mkdir ${F}                                                 # If Not Create it
+        then mkdir ${F}                                                 # If Not Create it
              if [ $? -ne 0 ]                                            # If Error trying to mount
-                then sadm_write_log "[ ERROR ] Creating Main System Backup Directory ${F}"
+                then sadm_write_err "[ ERROR ] Creating backup main directory '${F}'."
                      return 1                                           # End Function with error
+                else sadm_write_log "[ SUCCESS ] Main backup directory created '${F}'."
              fi
-            chmod 775 ${F}                                              # Assign Permission
     fi
-
+    chmod 775 ${F}                                                      # Assign Permission
     return 0
 }
 
