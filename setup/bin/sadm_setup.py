@@ -950,9 +950,9 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
             needed_packages = pkginfo['rpm']                            # Save Packages to install
             needed_repo     = pkginfo['rrepo']                          # Packages Repository to use
 
-        if needed_packages == "none" : 
-            writelog ("...") 
-            continue               
+        if needed_packages == "none" :                                  # Package not avail. on O/S
+            #writelog ("...") 
+            continue                                                    # Continue with next Package
 
         # Verify if needed package is installed
         #pline = "Is the package '%s' installed... " % (needed_packages) # Show what we are doing
