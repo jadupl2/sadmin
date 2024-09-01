@@ -116,7 +116,7 @@ function std_page_footer($wcon="") {
     echo "\n</div> <!-- End of sadmRightColumn   -->" ;                 # End of Left Content Page       
     echo "\n</div> <!-- End of sadmPageContents  -->" ;                 # End of Content Page
     echo "\n\n<div id='sadmFooter'>";
-    echo "\nCopyright &copy; 2015-2023 - sadmin.ca - Suggestions, Questions or Report a problem at ";
+    echo "\nCopyright &copy; 2015-2024 - sadmin.ca - Suggestions, Questions or Report a problem at ";
     echo '<a href="mailto:sadmlinux@gmail.com">sadmlinux@gmail.com</a></small>';
     echo "\n</div> <!-- End of Div sadmFooter -->";
 

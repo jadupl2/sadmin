@@ -55,7 +55,8 @@
 # 2024_01_12 osupdate v3.36 Minor enhancement and uUpdate sadmin section to v1.56.
 #@2024_04_18 osupdate v3.37 Remove code for RHEL,RHEL5,RHEL6 and use 'apt' instead of 'apt-get'.
 #@2024_07_22 osupdate v3.38 Remove faulty 'reboot' message at the beginning of the script.
-#@2024_09_11 osupdate v3.39 Correct error when sysinfo was net yet created.
+#@2024_08_11 osupdate v3.39 Correct error when sysinfo was net yet created.
+#@2024_09_11 osupdate v3.40 Remove code for older version of RHEL 3-4-5-6-7.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -84,7 +85,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.39'                                     # Your Current Script Version
+export SADM_VER='3.40'                                     # Your Current Script Version
 export SADM_PDESC="Script is used to perform an O/S update on the system"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -165,96 +166,49 @@ check_available_update()
     
     case "$(sadm_get_osname)" in
 
-        "REDHAT"|"CENTOS"|"ALMA"|"ROCKY" ) 
-            case "$(sadm_get_osmajorversion)" in
-                [2-6])  UpdateStatus=1                                  # No Update available
-                        sadm_write_log "No more update for $SADM_OS_NAME v$(sadm_get_osmajorversion)"
-                        sadm_write_log "This version have reach end of life."
-                        ;;
-                7)      sadm_write_log "Checking update availability for $SADM_OS_NAME, with 'yum check-update'."
-                        yum check-update >> $SADM_LOG 2>&1              # List Available update
-                        rc=$?                                           # Save Exit Code
-                        case $rc in
-                            100) UpdateStatus=0                         # Update Exist
-                                 dnf check-update                       # List Available update
-                                 sadm_write_log " "
-                                 sadm_write_log "[ OK ] Update available." # Update the log
-                                 ;;
-                            0)   UpdateStatus=1                         # No Update available
-                                 sadm_write_log " "
-                                 sadm_write_log "[ OK ] No Update available."
-                                 ;;
-                            *)   UpdateStatus=2                         # Problem Abort Update
-                                 sadm_write_log " "
-                                 sadm_write_err "[ ERROR ] encountered, update aborted.\n"  
-                                 sadm_write_err "For more information check the log ${SADM_LOG}.\n"
-                                 ;;
-                        esac
-                        ;;
-                * )     sadm_write_log "Checking if update are available, with 'dnf check-update'."
-                        dnf check-update >> $SADM_LOG 2>&1              # List Available update
-                        rc=$?                                           # Save Exit Code
-                        case $rc in
-                            100) UpdateStatus=0                         # Update Exist
-                                 dnf check-update                       # List Available update
-                                 sadm_write_log " "
-                                 sadm_write_log "[ OK ] Update available." 
-                                 ;;
-                            0)   UpdateStatus=1                         # No Update available
-                                 sadm_write_log " "
-                                 sadm_write_log "[ OK ] No Update available."
-                                 ;;
-                            *)   UpdateStatus=2                         # Problem Abort Update
-                                 sadm_write_log " "
-                                 sadm_write_err "[ ERROR ] encountered, update aborted."  
-                                 sadm_write_err "For more information check the log ${SADM_LOG}"
-                                 ;;
-                        esac
-                        ;;
-            esac
-            ;;
-            
-        "FEDORA"    )
-            sadm_write_log "Checking for new update for $SADM_OS_NAME with 'dnf check-update'"
-            sadm_write_log " "
+    # RedHat Family
+    "REDHAT"|"CENTOS"|"ALMA"|"ROCKY"|"FEDORA" ) 
+            sadm_write_log "Checking if update are available, with 'dnf check-update'."
             dnf check-update >> $SADM_LOG 2>&1                          # List Available update
             rc=$?                                                       # Save Exit Code
             case $rc in
                 100) UpdateStatus=0                                     # Update Exist
                      dnf check-update                                   # List Available update
                      sadm_write_log " "
-                     sadm_write_log "[ OK ] Update available."          # Update the log
+                     sadm_write_log "[ OK ] Update are available." 
                      ;;
-                  0) UpdateStatus=1                                     # No Update available
+                0)   UpdateStatus=1                                     # No Update available
                      sadm_write_log " "
                      sadm_write_log "[ OK ] No Update available."
                      ;;
-                  *) UpdateStatus=2                                     # Problem Abort Update
+                *)   UpdateStatus=2                                     # Problem Abort Update
                      sadm_write_log " "
-                     sadm_writ_err "[ ERROR ] encountered, update aborted." 
-                     sadm_writ_err "For more information check the log ${SADM_LOG}"
+                     sadm_write_err "[ ERROR ] encountered, update aborted."  
+                     sadm_write_err "For more information check the log ${SADM_LOG}"
                      ;;
             esac
             ;;
-
-        "OPENSUSE"|"SUSE" )
+            
+    # Suse Family
+    "OPENSUSE"|"SUSE" )
             sadm_write_log " "
             sadm_write_err "Not supporting $(sadm_get_osname) yet."
             UpdateStatus=1                                              # No Update available
             sadm_write_err "[ OK ] No Update available."
             ;;
 
-        # Ubuntu, Debian, Raspian, Linux MInt, ...
-        * ) 
+    # Debian Family
+    * ) 
             sadm_write_log "Start with a clean of APT cache, running 'apt clean'" 
-            apt clean  >>$SADM_LOG 2>>$SADM_ELOG                    # Cleanup /var/cache/apt
+            apt clean  >>$SADM_LOG 2>>$SADM_ELOG                        # Cleanup /var/cache/apt
             rc=$?                                                       # Save Exit Code
             if [ $rc -ne 0 ] 
                 then sadm_write_log "[ ERROR ] while cleaning apt cache, return code ${rc}" 
                 else sadm_write_log "[ OK ] APT cache is now cleaned." 
             fi
+
             sadm_write_log " "
-            sadm_write_log "Update the APT package repository cache with 'apt update'" 
+            sadm_write_log "Load a fresh copy of the repository in apt cache with 'apt update'" 
             apt update   >>$SADM_LOG 2>>$SADM_ELOG                      # Updating the apt-cache
             rc=$?                                                       # Save Exit Code
             if [ "$rc" -ne 0 ]
@@ -268,12 +222,12 @@ check_available_update()
                     sadm_write_log "Retrieving list of upgradable packages." 
                     sadm_write_log "Running 'apt list --upgradable'."
                     #apt list --upgradable | tee -a  ${SADM_LOG}
-                    apt list --upgradable 2>/dev/null | grep packages | cut -d '.' -f 1 | nl | tee -a $SADM_LOG 
+                    #apt list --upgradable 2>/dev/null | grep -iv "Listing" | nl | tee -a $SADM_LOG 
                     NB_UPD=$(apt list --upgradable 2>/dev/null | grep -iv 'Listing...' | wc -l)
                     if [ "$NB_UPD" -ne 0 ]
                         then sadm_write_log " " 
                              sadm_write_log "There are ${NB_UPD} update available."
-                             apt list --upgradable 2>/dev/null |grep -iv "listing"  >$SADM_TMP_FILE3 
+                             apt list --upgradable 2>/dev/null | grep -v "Listing" >$SADM_TMP_FILE3
                              if [ $? -ne 0 ] 
                                 then sadm_write_log "Error getting list of packages to update."
                                      sadm_write_log "Script aborted ..." 
@@ -435,24 +389,10 @@ update_sysinfo_file()
 perform_osupdate()
 {
     case "$(sadm_get_osname)" in                                        # Test OS Name
-        "REDHAT"|"CENTOS"|"ALMA"|"ROCKY" )
-            case "$(sadm_get_osmajorversion)" in
-                [2-6])  sadm_write_log "No more update for $SADM_OS_NAME v$(sadm_get_osmajorversion)."
-                        sadm_write_log "This version have reach end of life."
-                        ;;
-                [7])    run_yum                                         # V 5 and above use yum cmd
-                        SADM_EXIT_CODE=$?                               # Save Return Code
-                        ;;
-                *)      run_dnf                                         # V 8 and up use dnf
-                        SADM_EXIT_CODE=$?                               # Save Return Code
-                        ;; 
-            esac
-            ;;
-
-        "FEDORA" ) 
-            run_dnf
-            SADM_EXIT_CODE=$?
-            ;;
+        "REDHAT"|"CENTOS"|"ALMA"|"ROCKY"|"FEDORA")
+            run_dnf                                         # V 8 and up use dnf
+            SADM_EXIT_CODE=$?                               # Save Return Code
+            ;; 
 
         "SUSE"|"OPENSUSE" ) 
             sadm_write_err "$SADM_OS_NAME is not yet supported."
@@ -477,7 +417,7 @@ main_process()
 {
     # Prevent to reboot after the update on a SADMIN server.
     if [ "$SADM_ON_SADMIN_SERVER" = "Y" ] && [ "$WREBOOT" = "Y" ]       # On SADMIN Server & Reboot? 
-       then  sadm_write_log "No Automatic reboot on a SADMIN server."
+       then  sadm_write_log "No Automatic reboot on the SADMIN server."
              sadm_write_log "You will need to reboot system at your chosen time."
              WREBOOT="N"                                                # No Auto Reboot on SADM Srv
     fi
@@ -561,6 +501,5 @@ function cmd_options()
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Init went wrong
     main_process                                                        # Check/Perform O/S Update
     SADM_EXIT_CODE=$?                                                   # Save Status returned 
-    if [ $SADM_EXIT_CODE -ne 0 ] ; then cat $SADM_ELOG ; fi
     sadm_stop "$SADM_EXIT_CODE"                                         # End Process with exit Code
     exit  "$SADM_EXIT_CODE"                                             # Exit script
