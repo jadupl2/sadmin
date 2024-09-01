@@ -225,6 +225,7 @@
 #@2024_07_11 lib v4.46 function 'sadm_ask()' added [C] cancel option.
 #@2024_08_12 lib v4.47 Minor changes (perl)
 #@2024_08_26 lib v4.48 When timeout is reach, check if script is still running before starting a new one.
+#@2024_09_01 lib v4.49 Add the 'From:' email in function 'sadm_sendmail()''
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -234,7 +235,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.48"                                              # This Library Version
+export SADM_LIB_VER="4.49"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -2531,11 +2532,11 @@ sadm_sendmail() {
                              sadm_write_err "$emsg"                     # Avise user of error
                              printf "\n$emsg\n" >> $mbody               # Add Err Msg to Body
                              RC=1                                       # Set Error return code
-                             echo "$mbody" | $SADM_MUTT -s "$msubject" "$maddr" >>$SADM_LOG 2>&1
-                        else echo "$mbody" | $SADM_MUTT -s "$msubject" "$maddr" -a "$mfile" >>$SADM_LOG 2>&1 
+                             echo "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" >>$SADM_LOG 2>&1
+                        else echo "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" -a "$mfile" >>$SADM_LOG 2>&1 
                              RC=$?                                      # Save Error Number
                      fi
-                else echo "$mbody" | $SADM_MUTT -s "$msubject" "$maddr" >>$SADM_LOG 2>&1 
+                else echo "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" >>$SADM_LOG 2>&1 
                      RC=$?                                              # Save Error Number
             fi
             if [ $RC -ne 0 ]                                            # Error sending email 
@@ -2558,7 +2559,7 @@ sadm_sendmail() {
                              #echo "opt_a = $opt_a"
                    fi 
                 done
-            echo "$mbody" | $SADM_MUTT -s "$msubject" $opt_a \-\- "$maddr"
+            echo "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" $opt_a \-\- "$maddr"
             RC=$?                                                       # Save Error Number
             if [ $RC -ne 0 ]                                            # Error sending email 
                 then wstatus="[ Error ] Sending email to $maddr"        # Advise Error sending Email
