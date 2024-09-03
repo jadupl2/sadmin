@@ -960,7 +960,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits,sosa
 
         # Rear Only available on Intel platform Architecture
         if needed_packages.split()[0] == 'rear' and sosarch not in rear_supported_architecture :
-            writelog ("[ INFO ] 'ReaR' Backup & Recovery tool isn't supported on this platform.") 
+            writelog ("[ INFO ] 'ReaR' Backup & Recovery tool isn't supported on %s." % (sosarch)) 
             continue                                                    # Proceed with Next Package
 
         # 'lsb_release' package is present on all platform.
