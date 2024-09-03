@@ -81,6 +81,7 @@
 # 2024_02_12 install v3.36 Add alternative way to determine the system domain name.
 #@2024_06_29 install v3.37 Domain Name was not set correctly in some situation.
 #@2024_07_09 install v3.38 Minor change to log
+#@2024_09_02 install v3.39 Some screen output were not included in the log.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -90,7 +91,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # Script environment variables
 #===================================================================================================
 export DEBUG_LEVEL=0                                                    # 0=NoDebug Higher=+Verbose
-export SADM_VER='3.38'                                                  # Your Script Version
+export SADM_VER='3.39'                                                  # Your Script Version
 export SADM_PN="${0##*/}"                                               # Script name
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
 export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)                      # Script name without ext.
@@ -269,7 +270,6 @@ add_epel_8_repo()
 #===================================================================================================
 add_epel_9_repo()
 {
-
     if [ "$SADM_OSNAME" = "REDHAT" ] 
         then printf "Enable 'codeready-builder' EPEL repository for $SADM_OSNAME ...\n" |tee -a $SLOG
              printf "subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms " |tee -a $SLOG 
@@ -442,9 +442,9 @@ check_host_command()
 
     which host > /dev/null 2>&1                                         # Try getting command path
     if [ $? -eq 0 ]                                                     # If command installed
-        then echo " [ OK ]" 
+        then echo " [ OK ]" | tee -a $SLOG
              return 0                                                   # Return to caller
-        else echo " [ Not installed ]"  
+        else echo " [ Not installed ]" | tee -a $SLOG
     fi 
 
     if [ "$SADM_PACKTYPE" = "rpm" ] 
@@ -536,30 +536,30 @@ check_selinux()
 
     selinuxenabled
     if [ $? -eq 0 ] 
-        then printf "   - SELinux is currently enabled.\n"
-        else printf "   - SELinux is currently disabled.\n"
+        then printf "   - SELinux is currently enabled.\n" | tee -a $SLOG
+        else printf "   - SELinux is currently disabled.\n" | tee -a $SLOG
              return 0 
     fi 
 
     sestat=$(getenforce)
-    printf "   - Current SELinux status is ${sestat}.\n"
+    printf "   - Current SELinux status is ${sestat}.\n" | tee -a $SLOG
     
     if [ "$sestat" == "Enforcing" ]
        then while : 
                 do
                 ans=""
-                printf "   - SElinux need to be disable during installation.\n"
-                printf "   - Do you wish to disable SElinux [T]emporarily or [P]ermanently [T/P] ? "
+                printf "   - SElinux need to be disable during installation.\n" | tee -a $SLOG
+                printf "   - Do you wish to disable SElinux [T]emporarily or [P]ermanently [T/P] ? " | tee -a $SLOG
                 read ans
                 ans=$(echo "$ans" | tr '[:lower:]' '[:upper:]')
                 if [ "$ans" == "T" ]
                     then setenforce 0
-                         printf "   - SELinux is now disable temporarily.\n"
+                         printf "   - SELinux is now disable temporarily.\n" | tee -a $SLOG
                          break
                     else if [ "$ans" == "P" ]
                             then sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
                                  setenforce 0
-                                 printf "   - SELinux is now disable.\n"
+                                 printf "   - SELinux is now disable.\n" | tee -a $SLOG
                              break
                          fi 
                 fi 
@@ -586,7 +586,7 @@ check_hostname()
     #    then S_DOMAIN=$(host $SADM_HOSTNAME |awk '{print $1}' |awk -F\. '{printf "%s.%s\n",$2,$3}')
     #fi 
 
-    printf "\nMaking sure '$SADM_HOSTNAME.$S_DOMAIN' is defined in /etc/hosts ... " | tee -a $SLOG
+    printf "\nMaking sure '$SADM_HOSTNAME.$S_DOMAIN' is defined in /etc/hosts " | tee -a $SLOG
 
     # Insert Server into /etc/hosts (If not already there)
     grep -Ei "^$S_IPADDR " /etc/hosts | grep -q $SADM_HOSTNAME
