@@ -234,11 +234,11 @@ backup_setup()
     sadm_write_log "Setup Backup Environment ..."                       # Advise User were Starting
 
     # Backup Directories for current backup
-    export DAILY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/daily"                # Dir. For Daily Backup
-    export WEEKLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/weekly"              # Dir. For Weekly Backup
-    export MONTHLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/monthly"            # Dir. For Monthly Backup
-    export YEARLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/yearly"              # Dir. For Yearly Backup
-    export LATEST_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/latest"              # Latest Backup Directory
+    export DAILY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/daily"            # Dir. For Daily Backup
+    export WEEKLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/weekly"          # Dir. For Weekly Backup
+    export MONTHLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/monthly"        # Dir. For Monthly Backup
+    export YEARLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/yearly"          # Dir. For Yearly Backup
+    export LATEST_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/latest"          # Latest Backup Directory
 
     # Do Daily Backup Directory Exist
     if [ ! -d "${DAILY_DIR}" ]                                          # Daily Backup Dir. Exist ?
@@ -408,9 +408,9 @@ create_backup()
     # Read one by one the line of the backup include file
     while read backup_line                                              # Loop Until EOF Backup List
         do
-        FC=`echo $backup_line | cut -c1`                                # Get First Char. of Line
-        backup_line=`echo $backup_line | tr -d '\r'`                    # Remove EndOfLine CR if any 
-        backup_line=`echo $backup_line | sed 's/[[:blank:]]*$//'`       # Remove Blank & Tab if any 
+        FC=$(echo $backup_line | cut -c1)                               # Get First Char. of Line
+        backup_line=$(echo $backup_line | tr -d '\r')                   # Remove EndOfLine CR if any 
+        backup_line=$(echo $backup_line | sed 's/[[:blank:]]*$//')      # Remove Blank & Tab if any 
         if [ "$FC" = "#" ] || [ ${#backup_line} -eq 0 ]                 # Line begin with # or Empty
             then continue                                               # Skip, Go read Next Line
         fi  
