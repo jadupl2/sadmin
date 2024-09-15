@@ -26,6 +26,7 @@
 # 2017_11_15 web v2.0 client update page - Restructure and modify to used to new web interface and MySQL Database.
 # 2018_02_03 web v2.1 client update page - Added Server Graph Display Option
 # 2019_08_17 web v2.2 client update page - Use new heading function, return to caller screen when exiting.
+# 2024_09_15 web v2.3 client update page - Correct error when using quite in the note description
 # ==================================================================================================
 #
 #
@@ -52,7 +53,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.2" ;                                                        # Current version number
+$SVER  = "2.3" ;                                                        # Current version number
 #$URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
@@ -67,6 +68,9 @@ $CREATE_BUTTON = False ;                                                # Don't 
     if (isset($_POST['submitted'])) {
         if ($DEBUG) { echo "<br>Submitted for " . $_POST['scr_name'];}  # Debug Info Start Submit
         foreach($_POST AS $key => $value) { $_POST[$key] = $value; }    # Fill in Post Array 
+
+        $wnote = str_replace("'", " ", $_POST['scr_note']) ;            # Remove ' if any in note
+        $_POST['scr_note'] = $wnote;
 
         # Construct SQL to Update row
         $sql = "UPDATE server SET ";
