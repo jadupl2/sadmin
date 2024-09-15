@@ -923,28 +923,41 @@ def unlock_system(fname ,errmsg=True):
 def check_system_lock(fname, errmsg=True):
 
     """ 
-        This function is used to check if a 'lock_file' exist for the system name received.
-        When the lock file exist "${SADMIN}/tmp/$(hostname -s).lock" for a system, no 
-        monitoring error or warning is reported (No alert, No notification) to the user
-        until the lock file is deleted.
+
+### Description :   
+
+This function is used to check if a 'lock_file' exist for the system name received.
+When the lock file exist "${SADMIN}/tmp/$(hostname -s).lock" for a system, no 
+monitoring error or warning is reported (No alert, No notification) to the user
+until the lock file is deleted.
  
-        If the lock file exist, this function check the creation date & time of it.
-        When the lock file time stamp exceed the number of seconds set by 'lock_timeout' 
-        then 'lock_file' file is automatically remove by this function and exit with a return
-        code of 0, as if the lock file didn't exist.
+If the lock file exist, this function check the creation date & time of it.
+When the lock file time stamp exceed the number of seconds set by 'lock_timeout' 
+then 'lock_file' file is automatically remove by this function and exit with a return
+code of 0, as if the lock file didn't exist.
        
-        Args: 
-            fname : Name of the system you want to remove the lock file (hostname -s, not FQDN).
-                    The full path name of the lock file is "$SADMIN/tmp/$(hostname -s).lock"
+### Argument(s) :       
 
-        Args Optionnal: 
-            errmsg: Default value is True
-                    Use if don't want any message or error message written to log or screen.
-                    Base your logic only on the return value and built and display your own message.
+Args: 
+    fname : Name of the system you want to remove the lock file (hostname -s, not FQDN).
+            The full path name of the lock file is "$SADMIN/tmp/$(hostname -s).lock"
 
-        Return Value : 
-            False) System is not lock.
-            True)  System is lock.
+Args Optionnal: 
+    errmsg: Default value is True
+            Use if don't want any message or error message written to log or screen.
+            Base your logic only on the return value and built and display your own message.
+
+### Return(s) :   
+False) System is not lock.
+True)  System is lock.
+
+### Example :   
+
+# Check if System is Locked.
+if sa.check_system_lock(wname) != 0:                            # Is System Lock ?
+    sa.write_err("[ WARNING ] System '%s' is currently lock." % (wname))
+    sa.write_log("Continuing with next system.)                 # Not Error if system lock
+    continue                                                    # Go read Next System
     """
     
     fexit_code = 0    
