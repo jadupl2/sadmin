@@ -421,6 +421,7 @@ export SADM_VM_EXPORT_ALERT="N"                                         # Y/N al
 export SADM_VM_USER="UserPartOfVBoxUserGroup"                           # User part of vboxusers grp
 export SADM_VM_STOP_TIMEOUT=120                                         # Seconds given to stop a VM
 export SADM_VM_START_INTERVAL=30                                        # Sec before start of next VM
+export SADM_VM_EXPORT_DIF=25                                            # When Size 25% greater 
 
 # To be a valid SADMIN server 'SADM_HOST_TYPE' must be "S" and 'SADM_SERVER' IP must exist on host.
 export SADM_ON_SADMIN_SERVER="N"                                        # Valid SADMIN Server Y/N ?
@@ -1983,6 +1984,8 @@ sadm_load_config_file() {
                                             ;; 
             "SADM_VM_START_INTERVAL" )      SADM_VM_START_INTERVAL=$VALUE
                                             ;; 
+            "SADM_VM_EXPORT_DIF" )          SADM_VM_EXPORT_DIF=$VALUE
+                                            ;; 
             "SADM_DAYS_HISTORY" )           SADM_DAYS_HISTORY=$VALUE
                                             ;; 
             "SADM_MAX_ARC_LINE" )           SADM_MAX_ARC_LINE=$VALUE
@@ -2828,6 +2831,8 @@ SADM_VM_EXPORT_ALERT         = Y
 SADM_VM_USER                 = jacques
 SADM_VM_STOP_TIMEOUT         = 120
 SADM_VM_START_INTERVAL       = 30
+SADM_VM_EXPORT_DIF           = 25
+
 #
 
 EOF

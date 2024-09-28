@@ -920,8 +920,8 @@ sadm_vm_export_housekeeping()
     most_recent=$(du -h . | grep -v '@eaDir' | grep "20" | sort -r -k2 | head -1 | awk '{print $1}')
     previous=$(du -h . | grep -v '@eaDir' | grep "20" | sort -r -k2 | head -2 | tail -1 | awk '{print $1}')
     sadm_write_log " "
-    sadm_write_log "${BID}current backup size : $most_recent"
-    sadm_write_log "${BID}previous backup size : $previous"
+    sadm_write_log "${BID}current export size : $most_recent"
+    sadm_write_log "${BID}previous export size : $previous"
 
     cd $CUR_PWD                                                         # Restore Previous Cur Dir.
     return 0                                                            # Return to caller

@@ -197,6 +197,15 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_MONITOR_UPDATE_INTERVAL") {define("SADM_MONITOR_UPDATE_INTERVAL", trim($fvalue));}
           if (trim($fname) == "SADM_MONITOR_RECENT_COUNT")   { define("SADM_MONITOR_RECENT_COUNT"   , trim($fvalue));}
           if (trim($fname) == "SADM_MONITOR_RECENT_EXCLUDE") { define("SADM_MONITOR_RECENT_EXCLUDE" , trim($fvalue));}
+          if (trim($fname) == "SADM_VM_EXPORT_NFS_SERVER")   { define("SADM_VM_EXPORT_NFS_SERVER"   , trim($fvalue));}
+          if (trim($fname) == "SADM_VM_EXPORT_MOUNT_POINT")  { define("SADM_VM_EXPORT_MOUNT_POINT"  , trim($fvalue));}
+          if (trim($fname) == "SADM_VM_EXPORT_TO_KEEP")      { define("SADM_VM_EXPORT_TO_KEEP"      , trim($fvalue));}
+          if (trim($fname) == "SADM_VM_EXPORT_INTERVAL")     { define("SADM_VM_EXPORT_INTERVAL"     , trim($fvalue));}
+          if (trim($fname) == "SADM_VM_EXPORT_ALERT")        { define("SADM_VM_EXPORT_ALERT"        , trim($fvalue));}
+          if (trim($fname) == "SADM_VM_USER")                { define("SADM_VM_USER"                , trim($fvalue));}
+          if (trim($fname) == "SADM_VM_STOP_TIMEOUT")        { define("SADM_VM_STOP_TIMEOUT"        , trim($fvalue));}
+          if (trim($fname) == "SADM_VM_START_INTERVAL")      { define("SADM_VM_START_INTERVAL"      , trim($fvalue));}
+          if (trim($fname) == "SADM_VM_EXPORT_DIF")          { define("SADM_VM_EXPORT_DIF"          , trim($fvalue));}
     }
     if (! defined('SADM_MONITOR_RECENT_COUNT'))    {define("SADM_MONITOR_RECENT_COUNT" , 10);}
     if (! defined('SADM_MONITOR_UPDATE_INTERVAL')) {define("SADM_MONITOR_UPDATE_INTERVAL", 60);}
