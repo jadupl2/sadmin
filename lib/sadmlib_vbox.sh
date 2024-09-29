@@ -197,16 +197,16 @@ sadm_vm_stop()
 {
     VM=$1 
     WAIT_BETWEEN_RETRY=10                                               # Sec. sleep Between ReCheck 
-    SEC_GIVEN_2_ACPI_SHUTDOWN=120                                       # Sec. timeout to stop VM
-    ELAPSE="$SEC_GIVEN_2_ACPI_SHUTDOWN"                                 # Sec. since acpi shutdown 
+#    SADM_VM_STOP_TIMEOUT=120                                       # Sec. timeout to stop VM
+    ELAPSE="$SADM_VM_STOP_TIMEOUT"                                 # Sec. since acpi shutdown 
     POWEROFF="N"                                                        # Change to Y when PowerOFF
 
-    sadm_write_log "Stopping '$VM' virtual machine."
+    sadm_write_log "Stopping virtual machine '$VM'."
     sadm_write_log "$VBOXMANAGE controlvm '$VM' acpipowerbutton"
-    sadm_write_log "We give $SEC_GIVEN_2_ACPI_SHUTDOWN seconds to bring down the virtual machine."
+    sadm_write_log "We give $SADM_VM_STOP_TIMEOUT seconds to bring down the virtual machine."
     $VBOXMANAGE controlvm "$VM" acpipowerbutton >> $SADM_LOG 2>&1
 
-    # Wait for the shutdown to complete, wait for "$SEC_GIVEN_2_ACPI_SHUTDOWN" sec, then power off.
+    # Wait for the shutdown to complete, wait for "$SADM_VM_STOP_TIMEOUT" sec, then power off.
     while [ $ELAPSE -ge 0 ]                                             # loop till sec. down to 0 
         do
         printf "${ELAPSE}..."  | tee -a $SADM_LOG                       # Indicate Sec. ELAPSE
@@ -221,11 +221,11 @@ sadm_vm_stop()
     if [ "$POWEROFF" = "Y" ]
         then sadm_write_log "[ OK ] Virtual Machine '$VM' is now power off." 
              return 0  
-        else sadm_write_log "The $SEC_GIVEN_2_ACPI_SHUTDOWN sec. given for a shutdown is exceeded."
+        else sadm_write_log "The $SADM_VM_STOP_TIMEOUT sec. given for a shutdown is exceeded."
     fi 
     sadm_write_log " " 
 
-    # OK we waited more than $SEC_GIVEN_2_ACPI_SHUTDOWN sec. for the shutdown to complete,
+    # OK we waited more than $SADM_VM_STOP_TIMEOUT sec. for the shutdown to complete,
     # now we poweroff the VM
     sadm_write_log "$VBOXMANAGE controlvm '$VM' poweroff"
     $VBOXMANAGE controlvm "$VM" poweroff
@@ -630,15 +630,13 @@ sadm_backup_vm()
 sadm_ping()
 {
     WSERVER=$1
-    sadm_write_log "ping -c 2 ${WSERVER} " "NOLF" 
     ping -c 2 -W 2 $WSERVER >/dev/null 2>/dev/null                      # Ping the Server
     RC=$?  
-    sadm_write_log " "                                                  # Save Return Code
     if [ $RC -ne 0 ] 
-        then sadm_write_err "[ ERROR ] Can't Ping the NFS server ${WSERVER}."
+        then sadm_write_err "[ ERROR ] 'ping -c 2 ${WSERVER}' failed."
              sadm_write_err "Can't proceed, aborting script."
              RC=1                                                       # Make sure RC is 1 or 0 
-        else sadm_write_log "[ OK ] Ping worked."
+        else sadm_write_log "[ OK ] 'ping -c 2 ${WSERVER}' worked."
              RC=0
     fi
     return $RC
@@ -679,24 +677,23 @@ sadm_export_vm()
     # Check if the VM exist
     sadm_vm_exist "$VM"                                                 # Does the VM exist ?                                 
     if [ $? -ne 0 ]                                                     
-       then sadm_write_err "${SADM_ERROR} '$VM' is not a valid registered VM." 
+       then sadm_write_err "${SADM_ERROR} '$VM' is not a valid registered virtual machine." 
             return 1                                                    # Return Error to Caller
     fi    
 
     # NFS Server is available ?
-    sadm_write_log " "
     sadm_ping "$SADM_VM_EXPORT_NFS_SERVER"                              # NFS Server Alive ?
     if [ $? -ne 0 ] ; then return 1 ; fi                                # Return Error to caller
 
     # Save current VM State (Running or Power Off), if it's running then shutdown the VM.
     sadm_vm_running "$VM"                                               # Check if it is running
     if [ $? -eq 0 ]                                                     # If it's still running
-        then sadm_write_log " "
-             sadm_write_log "The Virtual machine is currently running."
+        then #sadm_write_log " "
+             sadm_write_log "The Virtual machine '$VM' is currently running."
              INITIAL_STATE="RUNNING"                                    # Save VM Init State Running
              sadm_vm_stop "$VM"                                         # Then Stop it
              if [ $? -ne 0 ] ; then return 1 ; fi                       # Error if can't stop it 
-        else sadm_write_log "The Virtual machine is currently power off."
+        else sadm_write_log "The Virtual machine '$VM' is currently power off."
              INITIAL_STATE="POWEROFF"                                   # Save VM InitState PowerOFF
     fi 
     
