@@ -47,6 +47,9 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 #set -x
      
 
+
+
+
 # Global Variables
 # --------------------------------------------------------------------------------------------------
 export VMLIBVER="2.4"                                                   # This Library version
@@ -60,12 +63,15 @@ export START_EXCLUDE_FILE="$SADM_CFG_DIR/sadm_vm_exclude_start_${SADM_HOSTNAME}.
 export START_EXCLUDE_INIT="$SADM_CFG_DIR/.sadm_vm_exclude_start.txt"    # VM Start Exclude Template
 
 # Variables already loaded by sadmlib_std.sh - You change them in $SADMIN/cfg/sadmin.cfg).
-#SADM_VM_EXPORT_NFS_SERVER    = batnas.maison.ca
-#SADM_VM_EXPORT_MOUNT_POINT   = /volume1/backup_vm/virtualbox_exports
-#SADM_VM_EXPORT_TO_KEEP       = 2
-#SADM_VM_EXPORT_INTERVAL      = 14 
-#SADM_VM_EXPORT_ALERT         = Y 
-#SADM_USER                    = "jacques"
+# SADM_VM_EXPORT_NFS_SERVER    = batnas.maison.ca
+# SADM_VM_EXPORT_MOUNT_POINT   = /volume1/backup_vm/virtualbox_exports
+# SADM_VM_EXPORT_TO_KEEP       = 2
+# SADM_VM_EXPORT_INTERVAL      = 14 
+# SADM_VM_EXPORT_ALERT         = Y 
+# SADM_VM_USER                 = jacques
+# SADM_VM_STOP_TIMEOUT         = 120
+# SADM_VM_START_INTERVAL       = 30
+# SADM_VM_EXPORT_DIF           = 25
 
 
 
@@ -197,7 +203,6 @@ sadm_vm_stop()
 {
     VM=$1 
     WAIT_BETWEEN_RETRY=10                                               # Sec. sleep Between ReCheck 
-#    SADM_VM_STOP_TIMEOUT=120                                       # Sec. timeout to stop VM
     ELAPSE="$SADM_VM_STOP_TIMEOUT"                                 # Sec. since acpi shutdown 
     POWEROFF="N"                                                        # Change to Y when PowerOFF
 
@@ -223,10 +228,10 @@ sadm_vm_stop()
              return 0  
         else sadm_write_log "The $SADM_VM_STOP_TIMEOUT sec. given for a shutdown is exceeded."
     fi 
-    sadm_write_log " " 
+    #sadm_write_log " " 
 
-    # OK we waited more than $SADM_VM_STOP_TIMEOUT sec. for the shutdown to complete,
-    # now we poweroff the VM
+    # OK we waited more than $SADM_VM_STOP_TIMEOUT sec. for the ACPI shutdown to complete,
+    # Now we force poweroff the VM
     sadm_write_log "$VBOXMANAGE controlvm '$VM' poweroff"
     $VBOXMANAGE controlvm "$VM" poweroff
 
@@ -560,7 +565,7 @@ sadm_backup_vm()
     VM="$1"
     sadm_write_log " "
     sadm_write_log "----------"
-    sadm_write_log "Backup of virtual machine '$VM' to ${SADM_VM_EXPORT_NFS_SERVER} in progress."
+    sadm_write_log "Starting backup of virtual machine '$VM' to ${SADM_VM_EXPORT_NFS_SERVER}."
     VM_DIR=$($VBOXMANAGE showvminfo $VM |grep -i snapshot |awk -F: '{print $2}'|tr -d ' '|xargs dirname)
 
     sadm_write_log "rsync -e 'ssh' -hi -var --no-p --no-g --no-o --delete ${VM_DIR}/ ${SADM_VM_EXPORT_NFS_SERVER}:${SADM_VM_EXPORT_MOUNT_POINT}/${VM}/"
@@ -670,9 +675,12 @@ sadm_ping()
 sadm_export_vm()
 {
     VM="$1"                                                             # Save VM Name
-    export MOUNT_POINT="$(mktemp -d)"                                   # Create Temp Dir in /tmp
+    #export MOUNT_POINT="$(mktemp -d)"                                   # Create Temp Dir in /tmp
+    export MOUNT_POINT="/tmp/${SADM_INST}.${VM}"
     EXPORT_DIR="${MOUNT_POINT}/${VM}"                                   # Actual Export Directory
     EXP_CUR_PWD=$(pwd)                                                  # Save Current Working Dir.
+    EXPDIR="${MOUNT_POINT}/${VM}/$(date "+%C%y_%m_%d")"                 # Export Today Export Dir.
+    EXPOVA="${EXPDIR}/${VM}_$(date +%Y_%m_%d_%H_%M_%S).ova"             # Export OVA File Name
 
     # Check if the VM exist
     sadm_vm_exist "$VM"                                                 # Does the VM exist ?                                 
@@ -698,9 +706,9 @@ sadm_export_vm()
     fi 
     
     # Get the name of the directory where the VM exist
-    sadm_write_log " "
+    #sadm_write_log " "
     VM_DIR=$($VBOXMANAGE showvminfo $VM |grep -i snapshot |awk -F: '{print $2}'|tr -d ' '|xargs dirname |head -1)
-    sadm_write_log "The VM '$VM' is currently located in ${VM_DIR} on ${SADM_HOSTNAME}."
+    sadm_write_log "The VM '$VM' is currently located in '${VM_DIR}' on '${SADM_HOSTNAME}.'"
 
     # Show User Mount command
     SHORT_NFS="${SADM_VM_EXPORT_NFS_SERVER}:${SADM_VM_EXPORT_MOUNT_POINT}"
@@ -714,18 +722,27 @@ sadm_export_vm()
     fi
 
     # Make sure the System Export directory exist on the NFS server.
-    if [ ! -d "${MOUNT_POINT}/${VM}" ] ; then sudo mkdir -p "${MOUNT_POINT}/${VM}"  ; fi
+    if [ ! -d "${MOUNT_POINT}/${VM}" ] 
+        then sudo mkdir -p "${MOUNT_POINT}/${VM}"  
+             if [ "$?" -ne 0 ]                                          # If Error creating Dir.
+                then sadm_write_err "[ ERROR ] Wasn't able to create nfs mount point directory '${MOUNT_POINT}/${VM}'."
+                     sudo umount ${MOUNT_POINT} >>$SADM_LOG 2>&1  
+                     return 1
+                else sadm_write_log "[ OK ] Today export directory created '${MOUNT_POINT}/${VM}'."
+             fi 
+    fi
     sudo chmod 777 "${MOUNT_POINT}/${VM}" > /dev/null 2>&1
 
     # Make sure export directory for today exist
-    EXPDIR="${MOUNT_POINT}/${VM}/$(date "+%C%y_%m_%d")"                 # Export Today Export Dir.
-    EXPOVA="${EXPDIR}/${VM}_$(date +%Y_%m_%d_%H_%M_%S).ova"             # Export OVA File Name
+
     if [ ! -d "$EXPDIR" ]                                               # Today export Dir. Exist?
         then sudo mkdir -p "$EXPDIR" >/dev/null 2>&1
-            if [ "$?" -ne 0 ]                                          # If Error creating Dir.
-               then sadm_write_err "[ ERROR ] Wasn't able to create directory '$EXPDIR'."
-               else sadm_write_log "[ OK ] New directory created '$EXPDIR'."
-            fi 
+             if [ "$?" -ne 0 ]                                          # If Error creating Dir.
+                then sadm_write_err "[ ERROR ] Wasn't able to create directory '$EXPDIR'."
+                     sudo umount ${MOUNT_POINT} >>$SADM_LOG 2>&1  
+                     return 1
+                else sadm_write_log "[ OK ] New export directory is created '$EXPDIR'."
+             fi 
     fi       
     sudo chmod 6777 "$EXPDIR" > /dev/null 2>&1
     if [ "$?" -ne 0 ]                                                   # If Error during mount 
@@ -751,11 +768,11 @@ sadm_export_vm()
     sadm_write_log "Starting the export of virtual machine '$VM' to ${SADM_VM_EXPORT_NFS_SERVER}."
     sadm_write_log "Export directory is: '$EXPDIR'." 
     sadm_write_log "Export OVA file is : '$EXPOVA'."
-    find "${EXPDIR}" -type d | tee -a $SADM_LOG 
+    #find "${EXPDIR}" -type d | tee -a $SADM_LOG 
 
     # Export the selected VM
-    sadm_write_log " "
-    sadm_write_log "VBoxManage export $VM -o ${EXPOVA}"
+    #sadm_write_log " "
+    sadm_write_log "VBoxManage export '$VM' -o '${EXPOVA}'."
     VBoxManage export $VM -o ${EXPOVA} | tee -a $SADM_LOG 
     if [ $? -ne 0 ]                                                     # If Error Occurred 
        then sadm_write_err "[ ERROR ] doing export of '${VM}' in '$EXPDIR'" 
@@ -765,7 +782,7 @@ sadm_export_vm()
     fi 
 
     # Change permission on the .ova created.
-    sadm_write_log "sudo chmod 666 ${EXPOVA}"
+    #sadm_write_log "sudo chmod 666 ${EXPOVA}"
     sudo chmod 666 ${EXPOVA} >>$SADM_LOG 2>&1
     if [ "$?" -ne 0 ]                                                   # If Error during mount 
         then sadm_write_err "[ ERROR ] 'sudo chmod 666 ${EXPOVA}' didn't work."
