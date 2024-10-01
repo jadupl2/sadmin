@@ -42,14 +42,18 @@
 #@2024_04_02 virtualbox v2.2 Documents each functions available in this library.
 #@2024_04_04 virtualbox v2.3 Small bug fixes.
 #@2024_04_19 virtualbox v2.4 Replace 'sadm_write' by 'sadm_write_log' and 'sadm_write_err'. 
+#@2024_10_01 virtualbox v2.5 Total free mem is now (free mem + avail mem) on total vm line.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
      
 
+
+
+
 # Global Variables
 # --------------------------------------------------------------------------------------------------
-export VMLIBVER="2.4"                                                   # This Library version
+export VMLIBVER="2.5"                                                   # This Library version
 export VMLIB_DEBUG="N"                                                  # Activate Debug output Y/N
 export VMLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_list1_XXX")"        # List of all VM in VBox
 export VMRUNLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_runlist_XXX")"   # Tmp File to list RunningVM 
@@ -60,12 +64,15 @@ export START_EXCLUDE_FILE="$SADM_CFG_DIR/sadm_vm_exclude_start_${SADM_HOSTNAME}.
 export START_EXCLUDE_INIT="$SADM_CFG_DIR/.sadm_vm_exclude_start.txt"    # VM Start Exclude Template
 
 # Variables already loaded by sadmlib_std.sh - You change them in $SADMIN/cfg/sadmin.cfg).
-#SADM_VM_EXPORT_NFS_SERVER    = batnas.maison.ca
-#SADM_VM_EXPORT_MOUNT_POINT   = /volume1/backup_vm/virtualbox_exports
-#SADM_VM_EXPORT_TO_KEEP       = 2
-#SADM_VM_EXPORT_INTERVAL      = 14 
-#SADM_VM_EXPORT_ALERT         = Y 
-#SADM_USER                    = "jacques"
+# SADM_VM_EXPORT_NFS_SERVER    = batnas.maison.ca
+# SADM_VM_EXPORT_MOUNT_POINT   = /volume1/backup_vm/virtualbox_exports
+# SADM_VM_EXPORT_TO_KEEP       = 2
+# SADM_VM_EXPORT_INTERVAL      = 14 
+# SADM_VM_EXPORT_ALERT         = Y 
+# SADM_VM_USER                 = jacques
+# SADM_VM_STOP_TIMEOUT         = 120
+# SADM_VM_START_INTERVAL       = 30
+# SADM_VM_EXPORT_DIF           = 25
 
 
 
@@ -197,19 +204,19 @@ sadm_vm_stop()
 {
     VM=$1 
     WAIT_BETWEEN_RETRY=10                                               # Sec. sleep Between ReCheck 
-    SEC_GIVEN_2_ACPI_SHUTDOWN=120                                       # Sec. timeout to stop VM
-    ELAPSE="$SEC_GIVEN_2_ACPI_SHUTDOWN"                                 # Sec. since acpi shutdown 
+    ELAPSE="$SADM_VM_STOP_TIMEOUT"                                 # Sec. since acpi shutdown 
     POWEROFF="N"                                                        # Change to Y when PowerOFF
 
-    sadm_write_log "Stopping '$VM' virtual machine."
+    sadm_write_log "Stopping virtual machine '$VM'."
     sadm_write_log "$VBOXMANAGE controlvm '$VM' acpipowerbutton"
-    sadm_write_log "We give $SEC_GIVEN_2_ACPI_SHUTDOWN seconds to bring down the virtual machine."
+    sadm_write_log "We give $SADM_VM_STOP_TIMEOUT seconds to bring down the virtual machine."
     $VBOXMANAGE controlvm "$VM" acpipowerbutton >> $SADM_LOG 2>&1
 
-    # Wait for the shutdown to complete, wait for "$SEC_GIVEN_2_ACPI_SHUTDOWN" sec, then power off.
+    # Wait for the shutdown to complete, wait for "$SADM_VM_STOP_TIMEOUT" sec, then power off.
     while [ $ELAPSE -ge 0 ]                                             # loop till sec. down to 0 
         do
-        printf "${ELAPSE}..."  | tee -a $SADM_LOG                       # Indicate Sec. ELAPSE
+        #printf "${ELAPSE}..."  | tee -a $SADM_LOG                       # Indicate Sec. ELAPSE
+        printf "${ELAPSE}..."                                           # Indicate Sec. ELAPSE
         sleep $WAIT_BETWEEN_RETRY                                       # Wait Shutdown to End
         sadm_vm_running "$VM"                                           # Test if VM still running
         if [ $? -ne 0 ] ; then POWEROFF="Y" ; break ; fi                # If PowerOFF, Set Y & break 
@@ -221,12 +228,12 @@ sadm_vm_stop()
     if [ "$POWEROFF" = "Y" ]
         then sadm_write_log "[ OK ] Virtual Machine '$VM' is now power off." 
              return 0  
-        else sadm_write_log "The $SEC_GIVEN_2_ACPI_SHUTDOWN sec. given for a shutdown is exceeded."
+        else sadm_write_log "The $SADM_VM_STOP_TIMEOUT sec. given for a shutdown is exceeded."
     fi 
-    sadm_write_log " " 
+    #sadm_write_log " " 
 
-    # OK we waited more than $SEC_GIVEN_2_ACPI_SHUTDOWN sec. for the shutdown to complete,
-    # now we poweroff the VM
+    # OK we waited more than $SADM_VM_STOP_TIMEOUT sec. for the ACPI shutdown to complete,
+    # Now we force poweroff the VM
     sadm_write_log "$VBOXMANAGE controlvm '$VM' poweroff"
     $VBOXMANAGE controlvm "$VM" poweroff
 
@@ -317,7 +324,7 @@ sadm_list_vm()
             return 1 
     fi 
     sadm_write_log " " 
-    sadm_write_log "${SADM_BOLD}${SADM_YELLOW}List of registered virtual machine(s)${SADM_RESET}"
+    sadm_write_log "List of registered virtual machine(s)"
     sort $VMLIST | nl | while read wline ; do sadm_write_log "${wline}"; done
     return 0
 }
@@ -357,7 +364,7 @@ sadm_list_vm_running()
             return 1 
     fi 
     sadm_write_log " "
-    sadm_write_log "${SADM_BOLD}${SADM_YELLOW}List of running Virtual machine(s)${SADM_RESET}"
+    sadm_write_log "List of running virtual machine(s)"
     sort $VMRUNLIST | nl | while read wline ; do sadm_write_log "${wline}"; done
     return 0
 }
@@ -474,12 +481,12 @@ sadm_list_vm_status()
              cat $VMTMP2 | while read wline ; do sadm_write_log "${wline}"; done
     fi 
 
-    # Print List Header
-    sadm_write_log "${SADM_BOLD}${SADM_YELLOW}"                         # Header color (Yellow/Bold)
+    # Virtual Box machine list header
+    #sadm_write_log "${SADM_BOLD}${SADM_YELLOW}"                         # Header color (Yellow/Bold)
     sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
     printf "%-3s%-19s%-8s%-10s%-8s%-6s%-16s%-s\n" "No" "Name" "State" "Ext.Ver" "Memory" "CPU" "VM IP" "VRDE Port" 
     sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
-    sadm_write_log "${SADM_RESET}"                                      # Reset Color to Normal
+    #sadm_write_log "${SADM_RESET}"                                      # Reset Color to Normal
 
     # Initialize Total Variables.
     lineno=0                                                            # Reset to 0 Line Counter
@@ -489,7 +496,7 @@ sadm_list_vm_status()
     
     # Now we have a file that contain alls VMs info, one vm per line.
     # Read that file and get Nb.CPU, Memory assigned to VM, Ip Address, Remote Desktop Port & state.
-    IFS=$'\n'                                                                           # set the Internal Field Separator to newline
+    IFS=$'\n'                                                           # set Internal Field Separator
     for wline in $(cat "$VMTMP2")
         do 
         lineno=$((lineno + 1))                                          # Add 1 to Line Counter
@@ -500,20 +507,26 @@ sadm_list_vm_status()
         # Set Power State
         if [ "$vm_stat" = "poweron" ]  ; then tpoweron=$((tpoweron + 1))   ; fi
         if [ "$vm_stat" = "poweroff" ] ; then tpoweroff=$((tpoweroff + 1)) ; fi
+
         # Get VM IP
         #printf "guestproperty\n"
         vm_ip=$(VBoxManage guestproperty enumerate $vm_name | grep '/VirtualBox/GuestInfo/Net/0/V4/IP' | awk -F= '{print $2}' |awk '{print $1}'|tr -d "\'") 
         if [ "$vm_ip" = 'value' ] ; then vm_ip='Not available' ; fi
+
         # Get Memory size
         #printf "memory\n"
         vm_mem=$($VBOXMANAGE showvminfo $vm_name |grep 'Memory size' | awk '{print $3}')
         vm_num_mem=$(echo "$vm_mem" | sed 's/[A-Za-z]*//g')             # Remove size unit
+
         # Add memory to total
         if [ "$vm_stat" = "poweron" ]  ; then tmemory=$((tmemory + vm_num_mem)) ; fi
+
         # Get number of CPU
         vm_cpu=$($VBOXMANAGE showvminfo $vm_name |grep 'Number of CPU' |awk '{print $4}' |tr -d ' ')
+
         # Get Virtual Box Guest extension version
         vm_verext=$($VBOXMANAGE guestproperty enumerate $vm_name |grep '/VirtualBox/HostInfo/VBoxVerExt' |awk '{print $3}' |tr -d "\'")
+
         # Remote Desktop State
         #printf "vrde\n"
         vrde_state=`$VBOXMANAGE showvminfo $vm_name |grep 'VRDE:'     | awk '{print $2}'`
@@ -521,8 +534,6 @@ sadm_list_vm_status()
             then vrde_port=$($VBOXMANAGE showvminfo $vm_name |grep 'VRDE:' |awk '{print $6}' |tr -d ',')
             else vrde_port='Disable'
         fi 
-        #echo -e "${vm_name}\t\t${vm_stat}\t\t${vm_uuid}"
-        #printf "%-3s%-19s%-10s%-9s% -8s%-6s%-16s%-s\n" "No" "Name" "State" "Ext.Ver" "Memory" "CPU" "VM IP" "VRDE Port" 
         printf  "%02d %-18s %-9s %-8s%-8s %-4s %-15s %-s\n" "$lineno" "$vm_name" "$vm_stat" "$vm_verext" "$vm_mem" "$vm_cpu" "$vm_ip" "$vrde_port"
         done
 
@@ -530,8 +541,11 @@ sadm_list_vm_status()
     sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
     #
     part1=$(printf "Running VM allocated memory : ${tmemory} MB")
-    freemem=$(free -m | grep 'Mem:' | awk '{ print $4 }')
-    part2=$(printf "Total Server Free Memory : ${freemem} MB")
+    freemem=$(free -m  | grep 'Mem:' | awk '{ print $4 }')
+    availmem=$(free -m | grep 'Mem:' | awk '{ print $7 }') 
+
+    part2=$(printf "Total Server Free Memory : $(( availmem + freemem )) MB")
+    part2=$(printf "Total memory available for VM : $(( availmem + freemem )) MB")
     printf "%-40s%40s\n" "$part1" "$part2" 
     #
     printf "%-40s%40s\n" "Total PowerON VM : ${tpoweron}" "Total PowerOFF VM : ${tpoweroff}"
@@ -560,7 +574,7 @@ sadm_backup_vm()
     VM="$1"
     sadm_write_log " "
     sadm_write_log "----------"
-    sadm_write_log "Backup of virtual machine '$VM' to ${SADM_VM_EXPORT_NFS_SERVER} in progress."
+    sadm_write_log "Starting backup of virtual machine '$VM' to ${SADM_VM_EXPORT_NFS_SERVER}."
     VM_DIR=$($VBOXMANAGE showvminfo $VM |grep -i snapshot |awk -F: '{print $2}'|tr -d ' '|xargs dirname)
 
     sadm_write_log "rsync -e 'ssh' -hi -var --no-p --no-g --no-o --delete ${VM_DIR}/ ${SADM_VM_EXPORT_NFS_SERVER}:${SADM_VM_EXPORT_MOUNT_POINT}/${VM}/"
@@ -630,15 +644,13 @@ sadm_backup_vm()
 sadm_ping()
 {
     WSERVER=$1
-    sadm_write_log "ping -c 2 ${WSERVER} " "NOLF" 
     ping -c 2 -W 2 $WSERVER >/dev/null 2>/dev/null                      # Ping the Server
     RC=$?  
-    sadm_write_log " "                                                  # Save Return Code
     if [ $RC -ne 0 ] 
-        then sadm_write_err "[ ERROR ] Can't Ping the NFS server ${WSERVER}."
+        then sadm_write_err "[ ERROR ] 'ping -c 2 ${WSERVER}' failed."
              sadm_write_err "Can't proceed, aborting script."
              RC=1                                                       # Make sure RC is 1 or 0 
-        else sadm_write_log "[ OK ] Ping worked."
+        else sadm_write_log "[ OK ] 'ping -c 2 ${WSERVER}' worked."
              RC=0
     fi
     return $RC
@@ -672,38 +684,40 @@ sadm_ping()
 sadm_export_vm()
 {
     VM="$1"                                                             # Save VM Name
-    export MOUNT_POINT="$(mktemp -d)"                                   # Create Temp Dir in /tmp
+    #export MOUNT_POINT="$(mktemp -d)"                                   # Create Temp Dir in /tmp
+    export MOUNT_POINT="/tmp/${SADM_INST}.${VM}"
     EXPORT_DIR="${MOUNT_POINT}/${VM}"                                   # Actual Export Directory
     EXP_CUR_PWD=$(pwd)                                                  # Save Current Working Dir.
+    EXPDIR="${MOUNT_POINT}/${VM}/$(date "+%C%y_%m_%d")"                 # Export Today Export Dir.
+    EXPOVA="${EXPDIR}/${VM}_$(date +%Y_%m_%d_%H_%M_%S).ova"             # Export OVA File Name
 
     # Check if the VM exist
     sadm_vm_exist "$VM"                                                 # Does the VM exist ?                                 
     if [ $? -ne 0 ]                                                     
-       then sadm_write_err "${SADM_ERROR} '$VM' is not a valid registered VM." 
+       then sadm_write_err "${SADM_ERROR} '$VM' is not a valid registered virtual machine." 
             return 1                                                    # Return Error to Caller
     fi    
 
     # NFS Server is available ?
-    sadm_write_log " "
     sadm_ping "$SADM_VM_EXPORT_NFS_SERVER"                              # NFS Server Alive ?
     if [ $? -ne 0 ] ; then return 1 ; fi                                # Return Error to caller
 
     # Save current VM State (Running or Power Off), if it's running then shutdown the VM.
     sadm_vm_running "$VM"                                               # Check if it is running
     if [ $? -eq 0 ]                                                     # If it's still running
-        then sadm_write_log " "
-             sadm_write_log "The Virtual machine is currently running."
+        then #sadm_write_log " "
+             sadm_write_log "The Virtual machine '$VM' is currently running."
              INITIAL_STATE="RUNNING"                                    # Save VM Init State Running
              sadm_vm_stop "$VM"                                         # Then Stop it
              if [ $? -ne 0 ] ; then return 1 ; fi                       # Error if can't stop it 
-        else sadm_write_log "The Virtual machine is currently power off."
+        else sadm_write_log "The Virtual machine '$VM' is currently power off."
              INITIAL_STATE="POWEROFF"                                   # Save VM InitState PowerOFF
     fi 
     
     # Get the name of the directory where the VM exist
-    sadm_write_log " "
+    #sadm_write_log " "
     VM_DIR=$($VBOXMANAGE showvminfo $VM |grep -i snapshot |awk -F: '{print $2}'|tr -d ' '|xargs dirname |head -1)
-    sadm_write_log "The VM '$VM' is currently located in ${VM_DIR} on ${SADM_HOSTNAME}."
+    sadm_write_log "The VM '$VM' is currently located in '${VM_DIR}' on '${SADM_HOSTNAME}.'"
 
     # Show User Mount command
     SHORT_NFS="${SADM_VM_EXPORT_NFS_SERVER}:${SADM_VM_EXPORT_MOUNT_POINT}"
@@ -716,19 +730,29 @@ sadm_export_vm()
         else sadm_write_log "[ OK ] NFS Mount worked."
     fi
 
+
     # Make sure the System Export directory exist on the NFS server.
-    if [ ! -d "${MOUNT_POINT}/${VM}" ] ; then sudo mkdir -p "${MOUNT_POINT}/${VM}"  ; fi
+    if [ ! -d "${MOUNT_POINT}/${VM}" ] 
+        then sudo mkdir -p "${MOUNT_POINT}/${VM}"  
+             if [ "$?" -ne 0 ]                                          # If Error creating Dir.
+                then sadm_write_err "[ ERROR ] Wasn't able to create nfs mount point directory '${MOUNT_POINT}/${VM}'."
+                     sudo umount ${MOUNT_POINT} >>$SADM_LOG 2>&1  
+                     return 1
+                else sadm_write_log "[ OK ] Today export directory created '${MOUNT_POINT}/${VM}'."
+             fi 
+    fi
     sudo chmod 777 "${MOUNT_POINT}/${VM}" > /dev/null 2>&1
 
+
     # Make sure export directory for today exist
-    EXPDIR="${MOUNT_POINT}/${VM}/$(date "+%C%y_%m_%d")"                 # Export Today Export Dir.
-    EXPOVA="${EXPDIR}/${VM}_$(date +%Y_%m_%d_%H_%M_%S).ova"             # Export OVA File Name
     if [ ! -d "$EXPDIR" ]                                               # Today export Dir. Exist?
         then sudo mkdir -p "$EXPDIR" >/dev/null 2>&1
-            if [ "$?" -ne 0 ]                                          # If Error creating Dir.
-               then sadm_write_err "[ ERROR ] Wasn't able to create directory '$EXPDIR'."
-               else sadm_write_log "[ OK ] New directory created '$EXPDIR'."
-            fi 
+             if [ "$?" -ne 0 ]                                          # If Error creating Dir.
+                then sadm_write_err "[ ERROR ] Wasn't able to create directory '$EXPDIR'."
+                     sudo umount ${MOUNT_POINT} >>$SADM_LOG 2>&1  
+                     return 1
+                else sadm_write_log "[ OK ] New export directory is created '$EXPDIR'."
+             fi 
     fi       
     sudo chmod 6777 "$EXPDIR" > /dev/null 2>&1
     if [ "$?" -ne 0 ]                                                   # If Error during mount 
@@ -757,8 +781,8 @@ sadm_export_vm()
     #find "${EXPDIR}" -type d | tee -a $SADM_LOG 
 
     # Export the selected VM
-    sadm_write_log " "
-    sadm_write_log "VBoxManage export $VM -o ${EXPOVA}"
+    #sadm_write_log " "
+    sadm_write_log "VBoxManage export '$VM' -o '${EXPOVA}'."
     VBoxManage export $VM -o ${EXPOVA} | tee -a $SADM_LOG 
     if [ $? -ne 0 ]                                                     # If Error Occurred 
        then sadm_write_err "[ ERROR ] doing export of '${VM}' in '$EXPDIR'" 
@@ -768,7 +792,7 @@ sadm_export_vm()
     fi 
 
     # Change permission on the .ova created.
-    sadm_write_log "sudo chmod 666 ${EXPOVA}"
+    #sadm_write_log "sudo chmod 666 ${EXPOVA}"
     sudo chmod 666 ${EXPOVA} >>$SADM_LOG 2>&1
     if [ "$?" -ne 0 ]                                                   # If Error during mount 
         then sadm_write_err "[ ERROR ] 'sudo chmod 666 ${EXPOVA}' didn't work."
@@ -891,9 +915,9 @@ sadm_vm_export_housekeeping()
     export_count=$(ls -1| grep -v '@eaDir' | awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l)
     day2del=$(($export_count-$SADM_VM_EXPORT_TO_KEEP))                  # Calc. Nb. Days to remove
     sadm_write_log " "
-    sadm_write_log "You spcified to keep only the last $SADM_VM_EXPORT_TO_KEEP export(s) of each VM."
-    sadm_write_log "You can change this choice by changing 'SADM_VM_EXPORT_TO_KEEP' in sadmin.cfg."
-    sadm_write_log "You currently have $export_count export(s)."              # Show Nb. Backup Days
+    sadm_write_log "You specified to keep only the last $SADM_VM_EXPORT_TO_KEEP export(s) of each VM."
+    sadm_write_log "You can change this choice by modifying 'SADM_VM_EXPORT_TO_KEEP' in sadmin.cfg."
+    sadm_write_log "You currently have $export_count export(s)."        # Show Nb. Backup Days
 
 
     # If current number of exports on disk is greater than nb. of export to keep, then cleanup.
@@ -911,17 +935,17 @@ sadm_vm_export_housekeeping()
         else sadm_write_log "No clean up needed"
     fi
 
-# List *.ova in backup directory of the system
+    # List *.ova in backup directory of the system
     sadm_write_log " "
     sadm_write_log "ls -ltrh ${EXPORT_DIR}"
     ls -ltrh ${EXPORT_DIR} | while read wline ; do sadm_write_log "${wline}"; done
 
-# Create Line that is used by 'Daily Backup Status' web page to show size of last 2 backup.
+    # Create Line that is used by 'Daily Backup Status' web page to show size of last 2 backup.
     most_recent=$(du -h . | grep -v '@eaDir' | grep "20" | sort -r -k2 | head -1 | awk '{print $1}')
     previous=$(du -h . | grep -v '@eaDir' | grep "20" | sort -r -k2 | head -2 | tail -1 | awk '{print $1}')
     sadm_write_log " "
-    sadm_write_log "${BID}current export size : $most_recent"
-    sadm_write_log "${BID}previous export size : $previous"
+    sadm_write_log "current export size : $most_recent"
+    sadm_write_log "previous export size : $previous"
 
     cd $CUR_PWD                                                         # Restore Previous Cur Dir.
     return 0                                                            # Return to caller
