@@ -42,6 +42,7 @@
 #@2024_04_02 virtualbox v2.2 Documents each functions available in this library.
 #@2024_04_04 virtualbox v2.3 Small bug fixes.
 #@2024_04_19 virtualbox v2.4 Replace 'sadm_write' by 'sadm_write_log' and 'sadm_write_err'. 
+#@2024_10_01 virtualbox v2.5 Total free mem is now (free mem + avail mem) on total vm line.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -52,7 +53,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 # Global Variables
 # --------------------------------------------------------------------------------------------------
-export VMLIBVER="2.4"                                                   # This Library version
+export VMLIBVER="2.5"                                                   # This Library version
 export VMLIB_DEBUG="N"                                                  # Activate Debug output Y/N
 export VMLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_list1_XXX")"        # List of all VM in VBox
 export VMRUNLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_runlist_XXX")"   # Tmp File to list RunningVM 
@@ -323,7 +324,7 @@ sadm_list_vm()
             return 1 
     fi 
     sadm_write_log " " 
-    sadm_write_log "${SADM_BOLD}${SADM_YELLOW}List of registered virtual machine(s)${SADM_RESET}"
+    sadm_write_log "List of registered virtual machine(s)"
     sort $VMLIST | nl | while read wline ; do sadm_write_log "${wline}"; done
     return 0
 }
@@ -363,7 +364,7 @@ sadm_list_vm_running()
             return 1 
     fi 
     sadm_write_log " "
-    sadm_write_log "${SADM_BOLD}${SADM_YELLOW}List of running Virtual machine(s)${SADM_RESET}"
+    sadm_write_log "List of running virtual machine(s)"
     sort $VMRUNLIST | nl | while read wline ; do sadm_write_log "${wline}"; done
     return 0
 }
@@ -480,12 +481,12 @@ sadm_list_vm_status()
              cat $VMTMP2 | while read wline ; do sadm_write_log "${wline}"; done
     fi 
 
-    # Print List Header
-    sadm_write_log "${SADM_BOLD}${SADM_YELLOW}"                         # Header color (Yellow/Bold)
+    # Virtual Box machine list header
+    #sadm_write_log "${SADM_BOLD}${SADM_YELLOW}"                         # Header color (Yellow/Bold)
     sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
     printf "%-3s%-19s%-8s%-10s%-8s%-6s%-16s%-s\n" "No" "Name" "State" "Ext.Ver" "Memory" "CPU" "VM IP" "VRDE Port" 
     sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
-    sadm_write_log "${SADM_RESET}"                                      # Reset Color to Normal
+    #sadm_write_log "${SADM_RESET}"                                      # Reset Color to Normal
 
     # Initialize Total Variables.
     lineno=0                                                            # Reset to 0 Line Counter
@@ -495,7 +496,7 @@ sadm_list_vm_status()
     
     # Now we have a file that contain alls VMs info, one vm per line.
     # Read that file and get Nb.CPU, Memory assigned to VM, Ip Address, Remote Desktop Port & state.
-    IFS=$'\n'                                                                           # set the Internal Field Separator to newline
+    IFS=$'\n'                                                           # set Internal Field Separator
     for wline in $(cat "$VMTMP2")
         do 
         lineno=$((lineno + 1))                                          # Add 1 to Line Counter
@@ -506,20 +507,26 @@ sadm_list_vm_status()
         # Set Power State
         if [ "$vm_stat" = "poweron" ]  ; then tpoweron=$((tpoweron + 1))   ; fi
         if [ "$vm_stat" = "poweroff" ] ; then tpoweroff=$((tpoweroff + 1)) ; fi
+
         # Get VM IP
         #printf "guestproperty\n"
         vm_ip=$(VBoxManage guestproperty enumerate $vm_name | grep '/VirtualBox/GuestInfo/Net/0/V4/IP' | awk -F= '{print $2}' |awk '{print $1}'|tr -d "\'") 
         if [ "$vm_ip" = 'value' ] ; then vm_ip='Not available' ; fi
+
         # Get Memory size
         #printf "memory\n"
         vm_mem=$($VBOXMANAGE showvminfo $vm_name |grep 'Memory size' | awk '{print $3}')
         vm_num_mem=$(echo "$vm_mem" | sed 's/[A-Za-z]*//g')             # Remove size unit
+
         # Add memory to total
         if [ "$vm_stat" = "poweron" ]  ; then tmemory=$((tmemory + vm_num_mem)) ; fi
+
         # Get number of CPU
         vm_cpu=$($VBOXMANAGE showvminfo $vm_name |grep 'Number of CPU' |awk '{print $4}' |tr -d ' ')
+
         # Get Virtual Box Guest extension version
         vm_verext=$($VBOXMANAGE guestproperty enumerate $vm_name |grep '/VirtualBox/HostInfo/VBoxVerExt' |awk '{print $3}' |tr -d "\'")
+
         # Remote Desktop State
         #printf "vrde\n"
         vrde_state=`$VBOXMANAGE showvminfo $vm_name |grep 'VRDE:'     | awk '{print $2}'`
@@ -527,8 +534,6 @@ sadm_list_vm_status()
             then vrde_port=$($VBOXMANAGE showvminfo $vm_name |grep 'VRDE:' |awk '{print $6}' |tr -d ',')
             else vrde_port='Disable'
         fi 
-        #echo -e "${vm_name}\t\t${vm_stat}\t\t${vm_uuid}"
-        #printf "%-3s%-19s%-10s%-9s% -8s%-6s%-16s%-s\n" "No" "Name" "State" "Ext.Ver" "Memory" "CPU" "VM IP" "VRDE Port" 
         printf  "%02d %-18s %-9s %-8s%-8s %-4s %-15s %-s\n" "$lineno" "$vm_name" "$vm_stat" "$vm_verext" "$vm_mem" "$vm_cpu" "$vm_ip" "$vrde_port"
         done
 
@@ -536,8 +541,11 @@ sadm_list_vm_status()
     sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
     #
     part1=$(printf "Running VM allocated memory : ${tmemory} MB")
-    freemem=$(free -m | grep 'Mem:' | awk '{ print $4 }')
-    part2=$(printf "Total Server Free Memory : ${freemem} MB")
+    freemem=$(free -m  | grep 'Mem:' | awk '{ print $4 }')
+    availmem=$(free -m | grep 'Mem:' | awk '{ print $7 }') 
+
+    part2=$(printf "Total Server Free Memory : $(( availmem + freemem )) MB")
+    part2=$(printf "Total memory available for VM : $(( availmem + freemem )) MB")
     printf "%-40s%40s\n" "$part1" "$part2" 
     #
     printf "%-40s%40s\n" "Total PowerON VM : ${tpoweron}" "Total PowerOFF VM : ${tpoweroff}"
@@ -936,8 +944,8 @@ sadm_vm_export_housekeeping()
     most_recent=$(du -h . | grep -v '@eaDir' | grep "20" | sort -r -k2 | head -1 | awk '{print $1}')
     previous=$(du -h . | grep -v '@eaDir' | grep "20" | sort -r -k2 | head -2 | tail -1 | awk '{print $1}')
     sadm_write_log " "
-    sadm_write_log "${BID}current export size : $most_recent"
-    sadm_write_log "${BID}previous export size : $previous"
+    sadm_write_log "current export size : $most_recent"
+    sadm_write_log "previous export size : $previous"
 
     cd $CUR_PWD                                                         # Restore Previous Cur Dir.
     return 0                                                            # Return to caller
