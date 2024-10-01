@@ -214,7 +214,8 @@ sadm_vm_stop()
     # Wait for the shutdown to complete, wait for "$SADM_VM_STOP_TIMEOUT" sec, then power off.
     while [ $ELAPSE -ge 0 ]                                             # loop till sec. down to 0 
         do
-        printf "${ELAPSE}..."  | tee -a $SADM_LOG                       # Indicate Sec. ELAPSE
+        #printf "${ELAPSE}..."  | tee -a $SADM_LOG                       # Indicate Sec. ELAPSE
+        printf "${ELAPSE}..."                                           # Indicate Sec. ELAPSE
         sleep $WAIT_BETWEEN_RETRY                                       # Wait Shutdown to End
         sadm_vm_running "$VM"                                           # Test if VM still running
         if [ $? -ne 0 ] ; then POWEROFF="Y" ; break ; fi                # If PowerOFF, Set Y & break 
@@ -721,6 +722,7 @@ sadm_export_vm()
         else sadm_write_log "[ OK ] NFS Mount worked."
     fi
 
+
     # Make sure the System Export directory exist on the NFS server.
     if [ ! -d "${MOUNT_POINT}/${VM}" ] 
         then sudo mkdir -p "${MOUNT_POINT}/${VM}"  
@@ -733,8 +735,8 @@ sadm_export_vm()
     fi
     sudo chmod 777 "${MOUNT_POINT}/${VM}" > /dev/null 2>&1
 
-    # Make sure export directory for today exist
 
+    # Make sure export directory for today exist
     if [ ! -d "$EXPDIR" ]                                               # Today export Dir. Exist?
         then sudo mkdir -p "$EXPDIR" >/dev/null 2>&1
              if [ "$?" -ne 0 ]                                          # If Error creating Dir.
@@ -906,8 +908,8 @@ sadm_vm_export_housekeeping()
     day2del=$(($export_count-$SADM_VM_EXPORT_TO_KEEP))                  # Calc. Nb. Days to remove
     sadm_write_log " "
     sadm_write_log "You spcified to keep only the last $SADM_VM_EXPORT_TO_KEEP export(s) of each VM."
-    sadm_write_log "You can change this choice by changing 'SADM_VM_EXPORT_TO_KEEP' in sadmin.cfg."
-    sadm_write_log "You currently have $export_count export(s)."              # Show Nb. Backup Days
+    sadm_write_log "You can change this choice by modifying 'SADM_VM_EXPORT_TO_KEEP' in sadmin.cfg."
+    sadm_write_log "You currently have $export_count export(s)."        # Show Nb. Backup Days
 
 
     # If current number of exports on disk is greater than nb. of export to keep, then cleanup.
@@ -925,12 +927,12 @@ sadm_vm_export_housekeeping()
         else sadm_write_log "No clean up needed"
     fi
 
-# List *.ova in backup directory of the system
+    # List *.ova in backup directory of the system
     sadm_write_log " "
     sadm_write_log "ls -ltrh ${EXPORT_DIR}"
     ls -ltrh ${EXPORT_DIR} | while read wline ; do sadm_write_log "${wline}"; done
 
-# Create Line that is used by 'Daily Backup Status' web page to show size of last 2 backup.
+    # Create Line that is used by 'Daily Backup Status' web page to show size of last 2 backup.
     most_recent=$(du -h . | grep -v '@eaDir' | grep "20" | sort -r -k2 | head -1 | awk '{print $1}')
     previous=$(du -h . | grep -v '@eaDir' | grep "20" | sort -r -k2 | head -2 | tail -1 | awk '{print $1}')
     sadm_write_log " "
