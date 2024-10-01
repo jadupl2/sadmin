@@ -35,6 +35,7 @@
 #@2021_01_22 vmtools v1.3 Don't wait for a confirmation if option (-l) list is used.
 #@2024_03_08 vmtools v1.4 Adapt code to be included in SADMIN Tools.
 #@2024_04_18 vmtools v1.5 Will now accept a confirmation by default (if -y not specify).
+#@2024_10_01 vmtools v1.6 Option -b, export to a ''.ova' file format.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -65,7 +66,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.5'                                      # Script version number
+export SADM_VER='1.6'                                      # Script version number
 export SADM_PDESC="Command line tools to control the VirtualBox vm(s)."
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -109,12 +110,12 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 # Default Command Line option variables
 export OPT_CONFIRM=true                                                 # No confirmation needed
-#export OPT_VMNAME=""                                                    # Save VM Name 
-#export OPT_BACKUP=false                                                 # List VMs Option
-#export OPT_RUNLIST=false                                                # List Running VMs
-#export OPT_LIST=false                                                   # List VMs Option
-#export OPT_START=false                                                  # Start VM Option  
-#export OPT_STOP=false                                                   # Stop VM Option
+export OPT_VMNAME=""                                                    # Save VM Name, Blank=ALL
+export OPT_EXPORT=false                                                 # Export VM Option
+export OPT_RUNLIST=false                                                # List Running VMs
+export OPT_LIST=false                                                   # List VMs Option
+export OPT_START=false                                                  # Start VM Option  
+export OPT_STOP=false                                                   # Stop VM Option
 
 
 
@@ -132,7 +133,7 @@ show_usage()
     printf "\n\t-s  Start all virtual machines, unless '-n' is used to specify the vm to start."
     printf "\n\t-e  Stop all virtual machines, unless '-n' is used to specify the vm to stop."
     printf "\n\t-n  Specify Virtual Machines Name to act upon (Backup,Stop,Start)." 
-    printf "\n\t-b  Backup all virtual machines, unless '-n' is used to specify the vm to backup"
+    printf "\n\t-b  Export all virtual machines, unless '-n' is used to specify the vm to export"
     printf "\n\t-y  Don't ask confirmation before beginning process."
     printf "\n\n" 
 }
@@ -171,9 +172,9 @@ main_process()
         then if [ "$OPT_CONFIRM" = true ]                               # Did ask for a confirmation
                 then if [ "$OPT_VMNAME" != "" ]                         # If a VM Name Specified
                         then sadm_ask "Start '$OPT_VMNAME' virtual machine" # Wait user Answer(y/n)
-                             if [ "$?" -eq 0 ] ; then return 0 ; fi     # 0=No, Do not proceed
+                             if [ $? -eq 0 ] || [ $? -eq 2 ] ; then return 0 ; fi 
                         else sadm_ask "Start ALL virtual machine"       # Wait for user Answer (y/n)   
-                             if [ "$?" -eq 0 ] ; then return 0 ; fi     # 0=No, Do not proceed
+                             if [ $? -eq 0 ] || [ $? -eq 2 ] ; then return 0 ; fi 
                      fi 
              fi 
              if [ "$OPT_VMNAME" != "" ]                                 # If a VM Name Specified
@@ -187,9 +188,9 @@ main_process()
         then if [ "$OPT_CONFIRM" = true ]                               # Did ask for a confirmation
                 then if [ "$OPT_VMNAME" != "" ]                         # If a VM Name Specified
                         then sadm_ask "Stop $OPT_VMNAME Virtual Machine" # Wait for user Answer(y/n)
-                             if [ "$?" -eq 0 ] ; then return 0 ; fi     # 0=No, Do not proceed
+                             if [ $? -eq 0 ] || [ $? -eq 2 ] then return 0 ;fi # 0,2  Do not proceed
                         else sadm_ask "Stop ALL Virtual Machine"        # Wait for user Answer (y/n)   
-                             if [ "$?" -eq 0 ] ; then return 0 ; fi     # 0=No, Do not proceed
+                             if [ $? -eq 0 ] || [ $? -eq 2 ] then return 0 ;fi # 0,2  Do not proceed
                      fi 
              fi 
              if [ "$OPT_VMNAME" != "" ]                                 # If a VM Name Specified
@@ -199,18 +200,18 @@ main_process()
     fi 
 
     # Backup One or All VMs (-b)
-    if [ "$OPT_BACKUP" = true ]                                         # CmdLine Backup VM Switch
+    if [ "$OPT_EXPORT" = true ]                                         # CmdLine Backup VM Switch
         then if [ "$OPT_CONFIRM" = true ]                               # Did ask for a confirmation
                 then if [ "$OPT_VMNAME" != "" ]                         # If a VM Name Specified
-                        then sadm_ask "Backup $OPT_VMNAME Virtual Machine" # Wait user Answer(y/n)
-                             if [ "$?" -eq 0 ] ; then return 0 ; fi     # 0=No, Do not proceed
-                        else sadm_ask "Backup ALL Virtual Machine"      # Wait for user Answer (y/n)   
-                             if [ "$?" -eq 0 ] ; then return 0 ; fi     # 0=No, Do not proceed
+                        then sadm_ask "Export $OPT_VMNAME Virtual Machine" # Wait user Answer(y/n)
+                             if [ $? -eq 0 ] || [ $? -eq 2 ] then return 0 ;fi # 0,2  Do not proceed
+                        else sadm_ask "Export ALL Virtual Machine"      # Wait for user Answer (y/n)   
+                             if [ $? -eq 0 ] || [ $? -eq 2 ] then return 0 ;fi # 0,2  Do not proceed
                      fi 
              fi 
              if [ "$OPT_VMNAME" != "" ]                                 # If a VM Name Specified
-                then ${SADM_BIN_DIR}/sadm_vm_backup.sh -yn $OPT_VMNAME     # Stop the VM Specified
-                else ${SADM_BIN_DIR}/sadm_vm_backup.sh -ya                 # Stop All VMs
+                then ${SADM_BIN_DIR}/sadm_vm_export.sh -yn $OPT_VMNAME     # Stop the VM Specified
+                else ${SADM_BIN_DIR}/sadm_vm_export.sh -ya                 # Stop All VMs
              fi
     fi 
 
@@ -232,7 +233,7 @@ main_process()
 #     -e   (Stop (End) One (-n) or All Virtual Machines)" 
 #     -n   (Specify the Virtual Machines Name to act upon (backup,Stop,Start))" 
 #     -y   (Don't ask confirmation before backing up VMs)"
-#     -b   (Backup one (-n) or All Virtual machines)"
+#     -b   (Export one (-n) or All Virtual machines)"
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
@@ -253,7 +254,7 @@ function cmd_options()
                ;;                                                       
             l) OPT_LIST=true                                            # List VMs Option
                ;;                                                       
-            b) OPT_BACKUP=true                                          # List VMs Option
+            b) OPT_EXPORT=true                                          # List VMs Option
                ;;                                                       
             r) OPT_RUNLIST=true                                         # List Running VMs 
                OPT_LIST=true                                            # List VMs Option
