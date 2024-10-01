@@ -907,7 +907,7 @@ sadm_vm_export_housekeeping()
     export_count=$(ls -1| grep -v '@eaDir' | awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l)
     day2del=$(($export_count-$SADM_VM_EXPORT_TO_KEEP))                  # Calc. Nb. Days to remove
     sadm_write_log " "
-    sadm_write_log "You spcified to keep only the last $SADM_VM_EXPORT_TO_KEEP export(s) of each VM."
+    sadm_write_log "You specified to keep only the last $SADM_VM_EXPORT_TO_KEEP export(s) of each VM."
     sadm_write_log "You can change this choice by modifying 'SADM_VM_EXPORT_TO_KEEP' in sadmin.cfg."
     sadm_write_log "You currently have $export_count export(s)."        # Show Nb. Backup Days
 
