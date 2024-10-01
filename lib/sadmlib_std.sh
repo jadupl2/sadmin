@@ -572,7 +572,7 @@ sadm_ask() {
            [c|C]* ) wreturn=2                                           # Cancel = Return Value of 2
                     break                                               # Break of the loop
                     ;;
-             * )    echo "Invalid input. Please enter y, n, or c."                                               # Blank Line
+             * )    echo "Invalid input. Please enter y, n, or c."      # Blank Line 
                     ;;                                                  # Other stay in the loop
         esac
     done
