@@ -543,9 +543,7 @@ sadm_list_vm_status()
     part1=$(printf "Running VM allocated memory : ${tmemory} MB")
     freemem=$(free -m  | grep 'Mem:' | awk '{ print $4 }')
     availmem=$(free -m | grep 'Mem:' | awk '{ print $7 }') 
-
-    part2=$(printf "Total Server Free Memory : $(( availmem + freemem )) MB")
-    part2=$(printf "Total memory available for VM : $(( availmem + freemem )) MB")
+    part2=$(printf "Memory available for VM  : $(( availmem + freemem )) MB")
     printf "%-40s%40s\n" "$part1" "$part2" 
     #
     printf "%-40s%40s\n" "Total PowerON VM : ${tpoweron}" "Total PowerOFF VM : ${tpoweroff}"
@@ -554,7 +552,7 @@ sadm_list_vm_status()
     #echo "Swap Used: $swap_used - Swap Size: $swap_size "
     swap_pct=$( echo "$swap_used / $swap_size * 100" | bc -l)
     swap_pct=$(printf "%3.1f" "$swap_pct")
-    printf "Using %s MB (%s%%) out of the %s MB Swap space.\n" "$swap_used" "$swap_pct" "$swap_size"
+    printf "Using %s MB (%s%%) of the %s MB allocated for swap space.\n" "$swap_used" "$swap_pct" "$swap_size"
     sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
     return 0
 }
@@ -684,8 +682,11 @@ sadm_ping()
 sadm_export_vm()
 {
     VM="$1"                                                             # Save VM Name
-    #export MOUNT_POINT="$(mktemp -d)"                                   # Create Temp Dir in /tmp
-    export MOUNT_POINT="/tmp/${SADM_INST}.${VM}"
+    export MOUNT_POINT="/tmp/${SADM_INST}.tmp"                          # Create Temp Dir in /tmp
+    if [ ! -d "$MOUNT_POINT" ]                                          # Today export Dir. Exist?
+        then sudo mkdir -p "$MOUNT_POINT" 
+    fi 
+
     EXPORT_DIR="${MOUNT_POINT}/${VM}"                                   # Actual Export Directory
     EXP_CUR_PWD=$(pwd)                                                  # Save Current Working Dir.
     EXPDIR="${MOUNT_POINT}/${VM}/$(date "+%C%y_%m_%d")"                 # Export Today Export Dir.
@@ -727,7 +728,7 @@ sadm_export_vm()
         then sadm_write_err "[ ERROR ] mount $SHORT_NFS ${MOUNT_POINT}"      
              sudo umount ${MOUNT_POINT} > /dev/null 2>&1                 # Ensure Dest. Dir Unmounted
              return 1                                                   # Set RC to One (Standard)
-        else sadm_write_log "[ OK ] NFS Mount worked."
+        else sadm_write_log "[ OK ] NFS mount succeeded."
     fi
 
 
