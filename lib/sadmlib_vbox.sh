@@ -754,7 +754,7 @@ sadm_export_vm()
     sadm_write_log "Starting the export of virtual machine '$VM' to ${SADM_VM_EXPORT_NFS_SERVER}."
     sadm_write_log "Export directory is: '$EXPDIR'." 
     sadm_write_log "Export OVA file is : '$EXPOVA'."
-    find "${EXPDIR}" -type d | tee -a $SADM_LOG 
+    #find "${EXPDIR}" -type d | tee -a $SADM_LOG 
 
     # Export the selected VM
     sadm_write_log " "
