@@ -163,9 +163,9 @@ sadm_vm_start()
 
     $VBOXMANAGE startvm --type headless "$VM" >> $SADM_LOG 2>&1
     if [ $? -eq 0 ] 
-       then sadm_write_log "[ OK ] The '$VM' virtual machine is started."
+       then sadm_write_log "[ OK ] The virtual machine '$VM' is started."
             RC=0
-       else sadm_write_err "[ ERROR ] The '$VM' virtual machine could not be started."
+       else sadm_write_err "[ ERROR ] The virtual machine '$VM' could not be started."
             RC=1
     fi 
     if [ "$VMLIB_DEBUG" = "Y" ] 
@@ -443,9 +443,10 @@ sadm_list_vm_status()
        if [ "$VMLIB_DEBUG" = "Y" ] ; then echo "Poweroff line: ${vm_name},${vm_uuid},${vm_stat}" ;fi
        echo "${vm_name},${vm_uuid},${vm_stat}" >>$VMTMP1
        done
+
     if [ "$VMLIB_DEBUG" = "Y" ] 
         then sadm_write_log " " 
-             sadm_write_log "Should all have power off, as thirst field"
+             sadm_write_log "Should all have power off, as first field"
              cat $VMTMP1 | while read wline ; do sadm_write_log "${wline}"; done
              sadm_write_log " " 
     fi 
@@ -482,11 +483,9 @@ sadm_list_vm_status()
     fi 
 
     # Virtual Box machine list header
-    #sadm_write_log "${SADM_BOLD}${SADM_YELLOW}"                         # Header color (Yellow/Bold)
-    sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
-    printf "%-3s%-19s%-8s%-10s%-8s%-6s%-16s%-s\n" "No" "Name" "State" "Ext.Ver" "Memory" "CPU" "VM IP" "VRDE Port" 
-    sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
-    #sadm_write_log "${SADM_RESET}"                                      # Reset Color to Normal
+    printf "${SADM_80_DASH}\n" | tee -a $SADM_LOG
+    printf "%-3s%-19s%-8s%-10s%-8s%-6s%-16s%-s\n" "No" "Name" "State" "Ext.Ver" "Memory" "CPU" "VM IP" "VRDE Port" | tee -a $SADM_LOG
+    printf "${SADM_80_DASH}\n" | tee -a $SADM_LOG
 
     # Initialize Total Variables.
     lineno=0                                                            # Reset to 0 Line Counter
@@ -534,26 +533,26 @@ sadm_list_vm_status()
             then vrde_port=$($VBOXMANAGE showvminfo $vm_name |grep 'VRDE:' |awk '{print $6}' |tr -d ',')
             else vrde_port='Disable'
         fi 
-        printf  "%02d %-18s %-9s %-8s%-8s %-4s %-15s %-s\n" "$lineno" "$vm_name" "$vm_stat" "$vm_verext" "$vm_mem" "$vm_cpu" "$vm_ip" "$vrde_port"
+        printf  "%02d %-18s %-9s %-8s%-8s %-4s %-15s %-s\n" "$lineno" "$vm_name" "$vm_stat" "$vm_verext" "$vm_mem" "$vm_cpu" "$vm_ip" "$vrde_port" | tee -a $SADM_LOG
         done
 
     # Show Total Lines.
-    sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
+    printf "${SADM_80_DASH}\n" | tee -a $SADM_LOG
     #
     part1=$(printf "Running VM allocated memory : ${tmemory} MB")
     freemem=$(free -m  | grep 'Mem:' | awk '{ print $4 }')
     availmem=$(free -m | grep 'Mem:' | awk '{ print $7 }') 
     part2=$(printf "Memory available for VM  : $(( availmem + freemem )) MB")
-    printf "%-40s%40s\n" "$part1" "$part2" 
+    printf "%-40s%40s\n" "$part1" "$part2" | tee -a $SADM_LOG
     #
-    printf "%-40s%40s\n" "Total PowerON VM : ${tpoweron}" "Total PowerOFF VM : ${tpoweroff}"
+    printf "%-40s%40s\n" "Total PowerON VM : ${tpoweron}" "Total PowerOFF VM : ${tpoweroff}" | tee -a $SADM_LOG
     swap_size=$(free -m | grep "Swap" | awk '{ print $2 }')
     swap_used=$(free -m | grep "Swap" | awk '{ print $3 }')
     #echo "Swap Used: $swap_used - Swap Size: $swap_size "
     swap_pct=$( echo "$swap_used / $swap_size * 100" | bc -l)
     swap_pct=$(printf "%3.1f" "$swap_pct")
-    printf "Using %s MB (%s%%) of the %s MB allocated for swap space.\n" "$swap_used" "$swap_pct" "$swap_size"
-    sadm_write_log "$SADM_80_DASH"                                      # 80 Dashes Line
+    printf "Using %s MB (%s%%) of the %s MB allocated for swap space.\n" "$swap_used" "$swap_pct" "$swap_size" | tee -a $SADM_LOG
+    printf "${SADM_80_DASH}\n" | tee -a $SADM_LOG
     return 0
 }
 
@@ -718,7 +717,7 @@ sadm_export_vm()
     # Get the name of the directory where the VM exist
     #sadm_write_log " "
     VM_DIR=$($VBOXMANAGE showvminfo $VM |grep -i snapshot |awk -F: '{print $2}'|tr -d ' '|xargs dirname |head -1)
-    sadm_write_log "The VM '$VM' is currently located in '${VM_DIR}' on '${SADM_HOSTNAME}.'"
+    sadm_write_log "The VM '$VM' is located in '${VM_DIR}' on '${SADM_HOSTNAME}.'"
 
     # Show User Mount command
     SHORT_NFS="${SADM_VM_EXPORT_NFS_SERVER}:${SADM_VM_EXPORT_MOUNT_POINT}"
@@ -776,7 +775,7 @@ sadm_export_vm()
              fi
     fi
     sadm_write_log " "
-    sadm_write_log "Starting the export of virtual machine '$VM' to ${SADM_VM_EXPORT_NFS_SERVER}."
+    sadm_write_log "Starting the export of virtual machine '$VM' to '${SADM_VM_EXPORT_NFS_SERVER}'."
     sadm_write_log "Export directory is: '$EXPDIR'." 
     sadm_write_log "Export OVA file is : '$EXPOVA'."
     #find "${EXPDIR}" -type d | tee -a $SADM_LOG 
@@ -804,8 +803,10 @@ sadm_export_vm()
     # Delete old exports, according to the number of export to keep.
     sadm_vm_export_housekeeping "$VM" "${MOUNT_POINT}/${VM}"                # VMName & Dir. to Purge
     if [ "$?" -ne 0 ]                                                   # If Error during mount 
-        then sadm_write_err "[ ERROR ] Some error occurred while doing the export cleanup."      
-        else sadm_write_log "[ OK ] Cleanup done with success." 
+        then sadm_write_log " "
+             sadm_write_err "[ ERROR ] Some error occurred while doing the export cleanup."      
+        else sadm_write_log " "
+             sadm_write_log "[ OK ] Cleanup done with success." 
     fi
 
     # Unmount NFS export directory
@@ -937,15 +938,15 @@ sadm_vm_export_housekeeping()
     fi
 
     # List *.ova in backup directory of the system
-    sadm_write_log " "
-    sadm_write_log "ls -ltrh ${EXPORT_DIR}"
-    ls -ltrh ${EXPORT_DIR} | while read wline ; do sadm_write_log "${wline}"; done
+    #sadm_write_log " "
+    #sadm_write_log "ls -ltrh ${EXPORT_DIR}"
+    #ls -ltrh ${EXPORT_DIR} | while read wline ; do sadm_write_log "${wline}"; done
 
     # Create Line that is used by 'Daily Backup Status' web page to show size of last 2 backup.
     most_recent=$(du -h . | grep -v '@eaDir' | grep "20" | sort -r -k2 | head -1 | awk '{print $1}')
-    previous=$(du -h . | grep -v '@eaDir' | grep "20" | sort -r -k2 | head -2 | tail -1 | awk '{print $1}')
+    previous=$(du -h .    | grep -v '@eaDir' | grep "20" | sort -r -k2 | head -2 | tail -1 | awk '{print $1}')
     sadm_write_log " "
-    sadm_write_log "current export size : $most_recent"
+    sadm_write_log "current export size  : $most_recent"
     sadm_write_log "previous export size : $previous"
 
     cd $CUR_PWD                                                         # Restore Previous Cur Dir.
