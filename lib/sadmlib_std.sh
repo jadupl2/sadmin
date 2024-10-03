@@ -557,23 +557,20 @@ sadm_isnumeric() {
 # Display Question ($1) and wait for response from user, Y/y (return 1) or N/n (return 0)
 sadm_ask() {
     wreturn=2
-    wmess="$1 [y,n,c] ? "                                               # Add Y/N to Mess. Rcv
+    wmess="$1 [y,n] ? "                                                 # Add Y/N to Mess. Rcv
     while :                                                             # While until good answer
         do
         printf "%s" "$wmess"                                            # Print "Question [Y/N/C] ?"
         read answer                                                     # Read User answer
         case "$answer" in                                               # Test Answer
-           [Y|y]* ) wreturn=1                                           # Yes = Return Value of 1
-                    break                                               # Break of the loop
-                    ;;
-           [n|N]* ) wreturn=0                                           # No = Return Value of 0
-                    break                                               # Break of the loop
-                    ;;
-           [c|C]* ) wreturn=2                                           # Cancel = Return Value of 2
-                    break                                               # Break of the loop
-                    ;;
-             * )    echo "Invalid input. Please enter y, n, or c."      # Blank Line 
-                    ;;                                                  # Other stay in the loop
+           Y|y ) wreturn=1                                              # Yes = Return Value of 1
+                 break                                                  # Break of the loop
+                 ;;
+           n|N ) wreturn=0                                              # No = Return Value of 0
+                 break                                                  # Break of the loop
+                 ;;
+             * ) echo "Invalid input '$answer', please enter y or n." 
+                 ;;                                                     # Other stay in the loop
         esac
     done
     return $wreturn                                                     # Return Answer to caller 

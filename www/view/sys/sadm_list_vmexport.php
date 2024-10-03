@@ -330,7 +330,7 @@ function display_data($count, $row) {
     # Get previous export size.
     $previous_size = 0 ; $num_previous_size = 0 ;
     if (file_exists($log_name)) {
-        $pattern = "/Previous backup size/i";
+        $pattern = "/Previous export size/i";
         if (preg_grep($pattern, file($log_name))) {
             $bstring       = implode (" ", preg_grep($pattern, file($log_name)));
             $barray        = explode (" ", $bstring) ;

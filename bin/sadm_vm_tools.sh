@@ -151,12 +151,9 @@ main_process()
 
     # List running Virtual Machine (-r, -l assumed)
     if [ "$OPT_RUNLIST" = true ]
-        then if [ "$OPT_CONFIRM" = true ]
-                then sadm_ask "List running Virtual Machines"           # Wait for user Answer (y/n)
-                     if [ "$?" -eq 0 ] ; then return 0 ; fi             # 0=No, Do not proceed
-             fi 
-             sadm_list_vm_running                                       # List Running VM 
+        then sadm_list_vm_running                                       # List Running VM 
              SADM_EXIT_CODE=$?                                          # Save return code
+             sadm_write_log "" 
              return $SADM_EXIT_CODE                                     # Return ErrorCode to Caller
     fi 
 
@@ -172,9 +169,9 @@ main_process()
         then if [ "$OPT_CONFIRM" = true ]                               # Did ask for a confirmation
                 then if [ "$OPT_VMNAME" != "" ]                         # If a VM Name Specified
                         then sadm_ask "Start '$OPT_VMNAME' virtual machine" # Wait user Answer(y/n)
-                             if [ $? -eq 0 ] || [ $? -eq 2 ] ; then return 0 ; fi 
+                             if [ $? -eq 0 ] ; then return 0 ; fi 
                         else sadm_ask "Start ALL virtual machine"       # Wait for user Answer (y/n)   
-                             if [ $? -eq 0 ] || [ $? -eq 2 ] ; then return 0 ; fi 
+                             if [ $? -eq 0 ] ; then return 0 ; fi 
                      fi 
              fi 
              if [ "$OPT_VMNAME" != "" ]                                 # If a VM Name Specified
@@ -188,9 +185,9 @@ main_process()
         then if [ "$OPT_CONFIRM" = true ]                               # Did ask for a confirmation
                 then if [ "$OPT_VMNAME" != "" ]                         # If a VM Name Specified
                         then sadm_ask "Stop $OPT_VMNAME Virtual Machine" # Wait for user Answer(y/n)
-                             if [ $? -eq 0 ] || [ $? -eq 2 ] then return 0 ;fi # 0,2  Do not proceed
+                             if [ $? -eq 0 ] ; then return 0 ; fi 
                         else sadm_ask "Stop ALL Virtual Machine"        # Wait for user Answer (y/n)   
-                             if [ $? -eq 0 ] || [ $? -eq 2 ] then return 0 ;fi # 0,2  Do not proceed
+                             if [ $? -eq 0 ] ; then return 0 ; fi
                      fi 
              fi 
              if [ "$OPT_VMNAME" != "" ]                                 # If a VM Name Specified
@@ -199,19 +196,19 @@ main_process()
              fi
     fi 
 
-    # Backup One or All VMs (-b)
+    # Export One or All VMs (-b)
     if [ "$OPT_EXPORT" = true ]                                         # CmdLine Backup VM Switch
         then if [ "$OPT_CONFIRM" = true ]                               # Did ask for a confirmation
                 then if [ "$OPT_VMNAME" != "" ]                         # If a VM Name Specified
-                        then sadm_ask "Export $OPT_VMNAME Virtual Machine" # Wait user Answer(y/n)
-                             if [ $? -eq 0 ] || [ $? -eq 2 ] then return 0 ;fi # 0,2  Do not proceed
+                        then sadm_ask "Export '$OPT_VMNAME' virtual machine" # Wait user Answer(y/n)
+                             if [ $? -eq 0 ] ; then return 0 ;fi 
                         else sadm_ask "Export ALL Virtual Machine"      # Wait for user Answer (y/n)   
-                             if [ $? -eq 0 ] || [ $? -eq 2 ] then return 0 ;fi # 0,2  Do not proceed
+                             if [ $? -eq 0 ] ; then return 0 ;fi 
                      fi 
              fi 
              if [ "$OPT_VMNAME" != "" ]                                 # If a VM Name Specified
-                then ${SADM_BIN_DIR}/sadm_vm_export.sh -yn $OPT_VMNAME     # Stop the VM Specified
-                else ${SADM_BIN_DIR}/sadm_vm_export.sh -ya                 # Stop All VMs
+                then ${SADM_BIN_DIR}/sadm_vm_export.sh $OPT_VMNAME      # Stop the VM Specified
+                #else ${SADM_BIN_DIR}/sadm_vm_export.sh -ya ""           # Stop All VMs
              fi
     fi 
 
