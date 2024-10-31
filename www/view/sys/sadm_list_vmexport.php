@@ -22,13 +22,10 @@
 # ==================================================================================================
 #
 # 2024_05_22 web v1.0 Virtual Box export results page - Initial version.
+# 2024_10_03 web v1.1 Practically usable only occurrence and next export date display missing.
+#@2024_10_31 web v1.2 Permit to view the status of Virtual Box machine export.
 # ==================================================================================================
 #
-# REQUIREMENT COMMON TO ALL PAGES OF SADMIN SITE
-#echo ("\n ========= DOCUMENT ROOT : $_SERVER['DOCUMENT_ROOT']\n") ; 
-#echo ("\n ========= init lib = '/lib/sadmInit.php' \n"); 
-#exit ("Aborted by Jacques");
-
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
@@ -47,6 +44,44 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
         } );
     } );
 </script>
+<style>
+.content-table {
+    border-collapse: collapse ;
+    margin: 25px 0; 
+    font-size: 0.9em;
+    min-width: 400px;
+    width: 100%;
+    border-radius: 5px 5px 0 0 ; 
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0.15);
+}
+
+.content-table thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+}
+
+.content-table th,
+.content-table td {
+    padding: 12px 15px;
+}
+
+.content-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.content-table tbody tr:nthof-type(even) {
+    background-color: #f3f3f3;
+}
+
+.content-table tbody tr.active-row {
+    font-weight : bold;
+    color: #009879;
+}
+</style>
+
 <?php
 
 
@@ -54,7 +89,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "1.1" ;                                           # Current version number
+$WVER               = "1.2" ;                                           # Current version number
 $URL_HOME           = '/index.php';                                     # Site Main Page
 
 # Server Static Data Maintenance
@@ -88,45 +123,47 @@ $EXPORT_SCRIPT      = "_sadm_vm_export_";
 #===================================================================================================
 function setup_table() {
 
-    echo "<div id='SimpleTable'>"; 
-    echo '<table id="sadmTable" class="display" row-border width="100%">';   
+    #echo "<div id='SimpleTable'>\n"; 
+    echo "<div id='MyTable'>\n"; 
+    echo "<table class='content-table'>\n" ; 
+    
+    #    echo "<table bgcolor='black' width='1100' border=1>\n" ; 
     #echo "<table id='sadmTable' row-border width='100%'>\n";   
+    #echo '<table id="sadmTable" class="display" row-border width="100%">';   
     #echo "<table row-border width='100%'>\n";   
 
     echo "\n<thead>\n";
-    echo "<tr>\n";
-    echo "<th align=center>No</th>\n";
-    echo "<th align=left>VmName</th>\n";
-    echo "<th align=left>Guest Version</th>\n";
-    echo "<th align=left>HostName</th>\n";
-    echo "<th align=left>Date & Duration</th>\n";
-    echo "<th align=left>Status</th>\n";
-    echo "<th align=left>Log & Hist.</th>\n";
-    echo "<th align=left>Export<br>Schedule</th>\n";
-    #echo "<th align=left>Sporadic</th>\n";
-    echo "<th align=left>Next Export</th>\n";
-    echo "<th align=left>Occurrence</th>\n";
-    echo "<th align=left>Export Size</th>\n";
-    echo "<th align=left>Prev. Size</th>\n";
-    echo "</tr>\n"; 
+    echo "  <tr align=left bgcolor='grey'>\n";
+    echo "      <th width=12>No</th>\n";
+    echo "      <th width=60>VmName</th>\n";
+    echo "      <th width=60>Guest Version</th>\n";
+    echo "      <th width=60>HostName</th>\n";
+    echo "      <th width=150>Date & Duration</th>\n";
+    echo "      <th width=50>Status</th>\n";
+    echo "      <th width=60>Log & Hist.</th>\n";
+    echo "      <th width=70>Export<br>Schedule</th>\n";
+    echo "      <th width=120>Next Export</th>\n";
+    echo "      <th width=240>Occurrence</th>\n";
+    echo "      <th width=50>Export Size</th>\n";
+    echo "      <th width=50>Prev. Size</th>\n";
+    echo "  </tr>\n"; 
     echo "</thead>\n";
 
     echo "\n<tfoot>\n";
-    echo "<tr>\n";
-    echo "<th align=center>No</th>\n";
-    echo "<th align=left>VmName</th>\n";
-    echo "<th align=left>Guest Version</th>\n";
-    echo "<th align=left>HostName</th>\n";
-    echo "<th align=left>Date & Duration</th>\n";
-    echo "<th align=left>Status</th>\n";
-    echo "<th align=left>Log & Hist.</th>\n";
-    echo "<th align=left>Export<br>Schedule</th>\n";
-    #echo "<th align=left>Sporadic</th>\n";
-    echo "<th align=left>Next Export</th>\n";
-    echo "<th align=left>Occurrence</th>\n";
-    echo "<th align=left>Export Size</th>\n";
-    echo "<th align=left>Prev. Size</th>\n";
-    echo "</tr>\n"; 
+    echo "  <tr align=left bgcolor='lightgrey'>\n";
+    echo "      <th width=12>No</th>\n";
+    echo "      <th width=60>VmName</th>\n";
+    echo "      <th width=60>Guest Version</th>\n";
+    echo "      <th width=60>HostName</th>\n";
+    echo "      <th width=150>Date & Duration</th>\n";
+    echo "      <th width=50>Status</th>\n";
+    echo "      <th width=60>Log & Hist.</th>\n";
+    echo "      <th width=70>Export<br>Schedule</th>\n";
+    echo "      <th width=120>Next Export</th>\n";
+    echo "      <th width=240>Occurrence</th>\n";
+    echo "      <th width=50>Export Size</th>\n";
+    echo "      <th width=50>Prev. Size</th>\n";
+    echo "  </tr>\n"; 
     echo "</tfoot>\n\n";
     echo "<tbody>\n";
 }
@@ -150,54 +187,53 @@ function display_data($count, $row) {
 
 
     # Export counter
-    echo "\n<tr>\n";  
-    echo "<td align=left>$count</td>\n";  
+    echo "\n<tr align=left bgcolor='lightgrey'>\n";  
+    echo "<td>$count</td>\n";  
 
 
     # Virtual machine name
-    echo "\n<td align=left>";
-    echo "<a href='" . $URL_SERVER_INFO . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_VBEXPORT . "'";
+    echo "<td>";
+    echo "<a href='" .$URL_SERVER_INFO. "?sel=" .$row['srv_name']. "&back=" .$URL_VIEW_VBEXPORT. "'";
     if ($row['srv_desc']   != "") { $sysinfo = $row['srv_desc'] ; }else{ $sysinfo=""; };
     if ($row['srv_note']   != "") { $sysinfo = $sysinfo .', '.  $row['srv_note']    ; };
-    if ($row['srv_osname'] != "") { $sysinfo = $sysinfo .', '.  ucwords(strtolower($row['srv_osname']))  ; };
+    if ($row['srv_osname'] != "") { $sysinfo = $sysinfo .', '.  ucwords(strtolower($row['srv_osname'])) ; };
     if ($row['srv_osversion'] != "") { $sysinfo = $sysinfo . "&nbsp;" . $row['srv_osversion']  ; };
     echo " title='" . $sysinfo . "'>" . $row['srv_name'] ."</a></td>\n";
 
 
     # Show Virtual Machine Type (VB=VirtualBox VW=VMWare KVM=Kernel Virt,...) & Guest version 
-    echo "<td align=left>";
-    echo "<a href='" . $URL_SERVER_INFO . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_VBEXPORT . "'";
+    echo "<td>";
+    echo "<a href='" .$URL_SERVER_INFO. "?sel=" .$row['srv_name']. "&back=" .$URL_VIEW_VBEXPORT. "'";
     echo " title='" . $sysinfo . "'>VBOX</a>&nbsp;&nbsp;" . $row['srv_rear_ver'] . "</td>\n";  
     
 
     # System Hosting the Virtual machine.
-    echo "<td align=left>";
+    echo "<td>";
     echo "<a href='" . $URL_SERVER_INFO ."?sel=". $row['srv_vm_host'] ."&back=". $URL_VIEW_VBEXPORT ."'";
     echo " title='Click to view system info, system'>" . $row['srv_vm_host']  . "</a></td>\n";
 
 
-    # Show Last export Date/Time 
+    # Show Last export Date/Time & duration.
     # Check age of export and highlight if days between export exceed interval.
-    if (! file_exists($rch_name))  {                                    # No RCH Found,No backup yet
-        echo "<td align=center>No export yet</td>";  
+    if (! file_exists($rch_name))  {                          # No RCH Found,No backup yet
+        echo "<td align=left>No export yet</td>";  
     }else{
-        $file = file("$rch_name");                                      # Load RCH File in Memory
-        $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
-        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapse,$cname,$calert,$ctype,$ccode) = explode(" ",$lastline);
+        $file = file("$rch_name");                            # Load RCH File in Memory
+        $lastline = $file[count($file) - 1];                     # Extract Last line of RCH
+        $rch_array = explode(" ",$lastline);
         $now = time();                                                  # Current epoch time
-        $your_date = strtotime(str_replace(".", "-",$cdate1));          # Get Epoch export date/time 
-        $datediff = $now - $your_date;                                  # Diff. between now & export
-        $backup_age = round($datediff / (60 * 60 * 24));                # Days since last export 
+        $your_date = strtotime(str_replace(".", "-",$rch_array[1])); 
+        $datediff  = $now - $your_date;                                 # Diff. between now & export
+        $backup_age = round($datediff / (60 * 60 * 24));           # Days since last export 
         if ($backup_age > SADM_VM_EXPORT_INTERVAL) {                    # exportAge>accepted interval
             $tooltip = "Export is " .$backup_age. " days old, greater than the threshold of " .SADM_VM_EXPORT_INTERVAL. " days.";
             echo "<td align=left style='color:red' bgcolor='#DAF7A6'><b>";
             echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
         }else{
             $tooltip = "Export is " .$backup_age. " days old, below accepted export interval of " .SADM_VM_EXPORT_INTERVAL. " days.";
-            echo "<td align=left>";
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
+            echo "<td align=left><span data-toggle='tooltip' title='" . $tooltip . "'>";
         }
-        echo "$cdate1 " . substr($ctime1,0,5);
+        echo "$rch_array[1] " . $rch_array[5];
         echo "</span></td>"; 
     }
     echo "\n";  
@@ -205,47 +241,42 @@ function display_data($count, $row) {
 
     # Status of Last Backup (Check export last line, the last field in the '.rch' history file.
     if (file_exists($rch_name)) {
-        $file = file("$rch_name");                                      # Load RCH File in Memory
-        $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
-        list($cserver, $cdate1, $ctime1, $cdate2, $ctime2, $celapse, $cname, $calert, $ctype, $ccode) = explode(" ", $lastline);
+        $file = file("$rch_name");                            # Load RCH File in Memory
+        $lastline = $file[count($file) - 1];                     # Extract Last line of RCH
+        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapse,$cname,$calert,$ctype,$ccode) = explode(" ", $lastline);
     } else {
         $ccode = 9;                                                     # No rch, export never ran
     }
     switch ($ccode) {
         case 0:
             $tooltip = 'Export completed with success.';
-            echo "<td align=left>";
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
-            echo "Success</span>";
+            echo "<td align=left><span data-toggle='tooltip' title='" .$tooltip. "'>Success</span>";
             break;
         case 1:
             $tooltip = 'Export terminated with error.';
             echo "<td align=left style='color:red' bgcolor='#DAF7A6'><b>";
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
-            echo "Failed</span></b>";
+            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>Failed</span>";
             break;
         case 2:
             $tooltip = 'Export is actually running.';
-            echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'>";
-            echo "<span data-toggle='tooltip'  title='" . $tooltip . "'>";
-            echo "Running</span>";
+            echo "<td align=left style='color:red' bgcolor='#DAF7A6'>";
+            echo "<span data-toggle='tooltip'  title='" . $tooltip . "'>Running</span>";
             break;
         default:
-            $tooltip = "Unknown status - code: " . $ccode;
-            echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'>";
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
-            echo "Unknown</span>";
+            $tooltip = "Not available, not run yet.";
+            echo "<td align=left><span data-toggle='tooltip' title='" . $tooltip . "'>N/A</span>";
             break;
     }
     echo "</td>\n";
 
     # Display link to view export log
-    echo "<td align=left'>";
+    echo "<td>";
     if (file_exists($log_name)) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
         echo " title='View export Log'>[log]</a>&nbsp;";
     }else{
-        echo "[N/A]&nbsp;";
+        echo "\n<span data-toggle='tooltip' title='" . $tooltip . "'>[N/A]&nbsp;</span>";
+        #echo "[N/A]&nbsp;";
     }
 
     # Display link to view export error log (If exist)
@@ -272,13 +303,15 @@ function display_data($count, $row) {
     $ipath = '/images/UpdateButton.png';
     if ($row['srv_export_sched'] == True ) {                            # If Export Schedule Active
         $tooltip = 'Schedule is active, click to edit export schedule.';
-        echo "<td align=center style='color: green'<b>Y</b> ";
-    } else {                                                            # If Schedule not Activate
+        echo "<td align=left style='color: green'<b>Y</b> ";
+    }else{                                                              # If Schedule not Activate
         $tooltip = 'Schedule is inactive, click to activate export schedule.';
-        echo "<td align=center style='color:red' bgcolor='#DAF7A6'><b>N</b> ";
+        echo "<td align=left style='color:red' bgcolor='#DAF7A6'><b>N</b> ";
     }
-    echo "<a href='" . $URL_EXPORT_SCHED . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_VBEXPORT . "'>";
-    echo "\n   <span data-toggle='tooltip' title='" . $tooltip . "'><button type='button'>Update</button></a></span></td>\n";
+    echo "<a href='" .$URL_EXPORT_SCHED. "?sel=" . $row['srv_name'];
+    echo "&back=" .$URL_VIEW_VBEXPORT. "'>";
+    echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
+    echo "<button type='button'>Update</button></a></span></td>\n";
 
 
     # Show if it's a sporadic system or not.
@@ -290,27 +323,27 @@ function display_data($count, $row) {
 
 
     # Next export date
-    echo "<td align=center>";
+    echo "<td>";
     if ($row['srv_export_sched'] == True) { 
         list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_export_dom'], 
-            $row['srv_export_month'],$row['srv_export_dow'],$row['srv_export_hour'],$row['srv_export_minute']);
-        echo $UPD_DATE_TIME ;
+            $row['srv_export_mth'] ,$row['srv_export_dow'],
+            $row['srv_export_hrs'] ,$row['srv_export_min']);
+        echo $UPD_DATE_TIME . "</td>\n";
     }else{
-        echo "N/A";
+        echo "No Schedule</td>\n";
     }
-    echo "</td>\n";  
 
 
     # Export occurrence 
-    echo "<td align=center>";
+    echo "<td>";
     if ($row['srv_export_sched'] == True ) { 
-        list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_export_dom'], $row['srv_export_month'],
-            $row['srv_export_dow'], $row['srv_export_hour'], $row['srv_export_minute']);
-        echo $STR_SCHEDULE ;
+        list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_export_dom'], 
+            $row['srv_export_mth'], $row['srv_export_dow'], 
+            $row['srv_export_hrs'], $row['srv_export_min']);
+        echo $STR_SCHEDULE . "</td>\n";
     }else{
-        echo "N/A";
+        echo "No Schedule</td>\n";
     }
-    echo "</td>\n"; 
 
 
     # Get current export size. 
@@ -343,23 +376,23 @@ function display_data($count, $row) {
 
     # Show current export size.
     if (($num_export_size == 0 || $num_previous_size == 0) && (SADM_VM_EXPORT_DIF != 0)) {
-        echo "<td align=center style='color:red' bgcolor='#DAF7A6'>" .$export_size;
+        echo "<td align=left style='color:red' bgcolor='#DAF7A6'>" .$export_size;
     }else{
         #echo "PCT = (($num_export_size - $num_previous_size) / $num_previous_size) * 100";
         $PCT = (($num_export_size - $num_previous_size) / $num_previous_size) * 100;
         if (number_format($PCT,1) == 0.0) {
-            echo "<td align=center>" . $export_size ; 
+            echo "<td align=left>" . $export_size ; 
         }else{
             if (number_format($PCT,0) > SADM_VM_EXPORT_DIF) {
-                echo "<td align=center style='color:red' bgcolor='#DAF7A6'><b>" .$export_size. "&nbsp;(+" .number_format($PCT,1). "%)</b>"; 
+                echo "<td align=left style='color:red' bgcolor='#DAF7A6'><b>" .$export_size. "&nbsp;(+" .number_format($PCT,1). "%)</b>"; 
             }else{
                 if (number_format($PCT,0) < (SADM_VM_EXPORT_DIF * -1)) {
-                    echo "<td align=center style='color:red' bgcolor='#DAF7A6'><b>" . $export_size . "&nbsp;("  .number_format($PCT,1). "%)</b>";
+                    echo "<td align=left style='color:red' bgcolor='#DAF7A6'><b>" . $export_size . "&nbsp;("  .number_format($PCT,1). "%)</b>";
                 }else{
                     if ($PCT < 0) {
-                        echo "<td align=center>" . $export_size . "&nbsp;("  .number_format($PCT,1). "%)"; 
+                        echo "<td align=left>" . $export_size . "&nbsp;("  .number_format($PCT,1). "%)"; 
                     }else{ 
-                        echo "<td align=center>" . $export_size . "&nbsp;(+" .number_format($PCT,1). "%)"; 
+                        echo "<td align=left>" . $export_size . "&nbsp;(+" .number_format($PCT,1). "%)"; 
                     }
                 }
             }
@@ -369,13 +402,11 @@ function display_data($count, $row) {
 
 # Show Previous Backup Size
     if (($num_export_size == 0 || $num_previous_size == 0) && (SADM_VM_EXPORT_DIF != 0)) {
-        echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" . $previous_size . "</b>";  
+        echo "<td align=left style='color:red' bgcolor='#DAF7A6'><b>" .$previous_size. "</b></td>\n";
     }else{
-        echo "<td align='center'>" . $previous_size;
+        echo "<td align=left>" . $previous_size . "</td>\n";
     }
-    echo "</td>\n";
 
-    echo "</tr>\n"; 
 }
 
 
@@ -385,16 +416,17 @@ function display_data($count, $row) {
 # ==================================================================================================
 
     # Get all active virtual systems from the SADMIN Database
-    $sql = "SELECT * FROM server where srv_vm = True and srv_active = True order by srv_name;";
+    # $sql = "SELECT * FROM server where srv_vm = True and srv_active = True order by srv_name;";
+    $sql = "SELECT * FROM server where srv_vm = 1 order by srv_name;";
     $result=mysqli_query($con,$sql) ;     
-    $NUMROW = mysqli_num_rows($result);                                 # Get Nb of rows returned
+    $NUMROW = mysqli_num_rows($result);                         # Get Nb of rows returned
     if ($NUMROW == 0)  {                                                # If No Server found
         $err_msg = "<br>No active server or no virtual system found in database"; # Msg to user
-        $err_msg = $err_msg . mysqli_error($con) ;                      # Add MySQL Error  to Msg
+        $err_msg = $err_msg . mysqli_error($con) ;               # Add MySQL Error  to Msg
         if ($DEBUG) {                                                   # In Debug Insert SQL in Msg
             $err_msg = $err_msg . "<br>\nMaybe a problem with SQL Command ?\n" . $query ;
         }
-        sadm_fatal_error($err_msg);                                     # Display Error & Go Back
+        sadm_fatal_error($err_msg);                                # Display Error & Go Back
         exit();  
     }
 
@@ -404,13 +436,13 @@ function display_data($count, $row) {
     
     # Loop Through Retrieved Data and Display each Row
     $count=0;   
-    while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
+    while ($row = mysqli_fetch_assoc($result)) {                # Gather Result from Query
         $count+=1;                                                      # Incr Line Counter
         display_data($count, $row);                                     # Display Next Server
     }
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
 
-    echo "<center>Only active virtual machive are shown on this page.</center>";
+    echo "<center>Only virtual machine are shown on this page.</center>";
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
-    std_page_footer($con)                                               # Close MySQL & HTML Footer
+    std_page_footer($con)                                         # Close MySQL & HTML Footer
 ?>
