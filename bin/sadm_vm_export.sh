@@ -29,8 +29,9 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-# 2023_07_19 New: v1.0 Initial Version
+# 2023_07_19 vmtools v1.0 Initial Version
 #@2024_03_19 vmtools v2.0 Export the 'VMName' received to NFS server define in 'sadmin.cfg'.
+#@2024_10_31 vmtools v2.3 Fix some minor issues and command line option.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -60,25 +61,23 @@ export SADM_HOSTNAME=$(hostname -s)                        # Host name without D
 export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
-
 # ---**********************
-# SPECIAL DEROGATION TO INSERT THE EXPORTED VM NAME IN THE FILENAME OF THE LOG AND RCH FILE.
+# SPECIAL DEROGATION HERE TO INSERT THE EXPORTED VM NAME IN THE FILENAME OF THE LOG AND RCH FILE.
 # Script accept only one parameter, it's the name of the VM you want to export.
-if [ $# -eq 1 ]                                            # First & Only Parameter is VMName
+if [ $# -eq 1 ]                                            # Only Parameter is VMName
     then export VMNAME="$1"                                # Save VM Name to export
-    else printf "\n[ ERROR ] You must specify the name of the VM to export.\n\n"
+    else show_usage
+         printf "${SADM_ERROR} You must specify the name of the VM to export.\n\n"
          exit 1                                            # Exit with an error 1
 fi
 export SADM_INST="${SADM_INST}_${VMNAME}"                  # Insert VMName to export in rch & log
 export SADM_EXT=$(echo "$SADM_PN" | cut -d'.' -f2)         # Save Script extension (sh, py, php,.)
 export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with extension)
-export SADM_HOSTNAME="$VMNAME"                             # VM Name that we are going to export
 # ---**********************
 
-
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.2'                                      # Script version number
-export SADM_PDESC="Export one VirtualBox VM to a NFS Server."      
+export SADM_VER='2.3'                                      # Script version number
+export SADM_PDESC="Export one virtual machine to a NFS Server."      
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
@@ -115,10 +114,26 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 
 
 #===================================================================================================
-# Load SADMIN Virtual Box Functions Library.
+# Load SADM Virtual Box Library Functions and define global variables.
 #===================================================================================================
 . ${SADM_LIB_DIR}/sadmlib_vbox.sh                                       # Load VM functions Tool Lib
 
+CONFIRM="Y"                                                             # confirmation if not -y use
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Show Script command line option
+# --------------------------------------------------------------------------------------------------
+show_usage()
+{
+    printf "\n${SADM_PN} [ VMName ] usage :"
+    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\n" 
+}
 
 
 #===================================================================================================
@@ -126,7 +141,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #===================================================================================================
 main_process()
 {
-    #sadm_write_log "Export of '$VMNAME' virtual machine."              # Show Backup Chosen
+    sadm_write_log "Export of virtual machine '$VMNAME'."               # Show Backup Chosen
     sadm_export_vm "$VMNAME"                                            # Libr. VM Export Function
     if [ $? -eq 0 ] ; then SADM_EXIT_CODE=0 ; else SADM_EXIT_CODE=1 ; fi 
     sadm_list_vm_status                                                 # List Status of ALL VMs
@@ -134,9 +149,58 @@ main_process()
 }
 
 
+
+
+# --------------------------------------------------------------------------------------------------
+# Command line Options functions
+# Evaluate Command Line Switch Options Upfront
+# By Default 
+# (-h)          Show Help Usage 
+# (-v)          Show Script Version
+# (-d0-9]       Set Debug Level 
+# [-n VNName]   VMName to export
+# [-y]          Don't ask confirmation before starting operation, default ask for configuration.
+# --------------------------------------------------------------------------------------------------
+function cmd_options()
+{
+    while getopts "d:hv" opt ; do                                       # Loop to process Switch
+        case $opt in
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=$(echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$) # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 1                                           # Exit Script with Error
+               fi
+               printf "Debug Level set to ${SADM_DEBUG}."               # Display Debug Level
+               ;;                                                       
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) sadm_show_version                                        # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -${OPTARG}.\n"                 # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    return 
+}
+
+
+
+
 #===================================================================================================
 # MAIN CODE START HERE
 #===================================================================================================
+    cmd_options "$@"                                                    # Check command-line Options
+    sadm_vm_exist "$VMNAME"                                             # Does the VM exist ? 
+    if [ $? -ne 0 ]                                                     # If VM does not exist                  
+       then printf "\n${SADM_ERROR} '$VMNAME' is not a valid registered virtual machine.\n"
+            exit 1                                    # Exit script
+    fi    
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     main_process                                                        # Main Process
