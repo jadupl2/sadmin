@@ -28,6 +28,7 @@
 # 2019_08_29 web v2.2 CRUD_client - New page heading, using the library heading function.
 # 2022_09_24 web v2.3 CRUD_client - Add SSH port to communicate with client.
 # 2022_09_24 web v2.4 CRUD_client - When ing a  client, create client dir. in $SADMIN/www/dat.
+#@2022_10_31 web v2.5 CRUD_client - Minor update and fix
 #
 # ==================================================================================================
 #
@@ -45,7 +46,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.4" ;                                                        # Current version number
+$SVER  = "2.5" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -106,10 +107,10 @@ $CREATE_BUTTON = False ;                                                # Don't 
 # ==================================================================================================
     
     # START OF FORM - DISPLAY FORM READY TO ACCEPT DATA
-    display_lib_heading("NotHome","Create SADMIN Client","",$SVER);       # Display Content Heading
+    display_lib_heading("NotHome","Create SADMIN Client","",$SVER); 
 
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-    display_srv_form ($con,$row,"Create");                              # Display Form Default Value
+    display_srv_form ($con,$row,"Create");             # Display Form Default Value
     echo "<input type='hidden' value='1' name='submitted' />";          # Set submitted var. to 1
     
     # Display Buttons (Create/Cancel) at the bottom of the form
@@ -124,5 +125,5 @@ $CREATE_BUTTON = False ;                                                # Don't 
     
     echo "\n</form>";                                                     
     echo "\n<br>";                                                      # Blank Line After Button
-    std_page_footer($con)                                               # Close MySQL & HTML Footer
+    std_page_footer($con)                                         # Close MySQL & HTML Footer
 ?>
