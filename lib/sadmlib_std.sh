@@ -226,6 +226,7 @@
 #@2024_08_12 lib v4.47 Minor changes (perl)
 #@2024_08_26 lib v4.48 When timeout is reach, check if script is still running before starting a new one.
 #@2024_09_01 lib v4.49 Add the 'From:' email in function 'sadm_sendmail()''
+#@2024_10_31 lib v4.50 Add new variable to sadmin.cfg for Virtual Box export new feature.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -235,7 +236,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.49"                                              # This Library Version
+export SADM_LIB_VER="4.50"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -278,6 +279,10 @@ export SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                             # www Da
 export SADM_WWW_ARC_DIR="$SADM_WWW_DAT_DIR/archive"                     # www archive Dir
 export SADM_WWW_RRD_DIR="$SADM_WWW_DIR/rrd"                             # www RRD Dir
 export SADM_WWW_CFG_DIR="$SADM_WWW_DIR/cfg"                             # www CFG Dir
+export SADM_WWW_VIEW_DIR="$SADM_WWW_DIR/view"                           # www view Dir
+export SADM_WWW_RRD_DIR="$SADM_WWW_DIR/rrd"                             # www rrd Dir
+export SADM_WWW_CSS_DIR="$SADM_WWW_DIR/css"                             # www CSS Dir
+export SADM_WWW_CRUD_DIR="$SADM_WWW_DIR/crud"                           # www CRUD Dir
 export SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                             # www Lib Dir
 export SADM_WWW_IMG_DIR="$SADM_WWW_DIR/images"                          # www Img Dir
 export SADM_WWW_NET_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/net"        # web net dir
@@ -307,6 +312,8 @@ export SADM_BACKUP_NEWCRON="$SADM_CFG_DIR/.sadm_backup"                 # Tmp Cr
 export SADM_BACKUP_CRONTAB="/etc/cron.d/sadm_backup"                    # Act Cron
 export SADM_REAR_NEWCRON="$SADM_CFG_DIR/.sadm_rear_backup"              # Tmp Cron
 export SADM_REAR_CRONTAB="/etc/cron.d/sadm_rear_backup"                 # Real Cron
+export SADM_VMEXPORT_NEWCRON="$SADM_CFG_DIR/.sadm_vm_export"            # VM Export Tmp Cron
+export SADM_VMEXPORT_CRONTAB="/etc/cron.d/sadm_vm"                      # VM Export Real Contab
 export SADM_BACKUP_LIST="$SADM_CFG_DIR/backup_list.txt"                 # List of file to Backup
 export SADM_BACKUP_LIST_INIT="$SADM_CFG_DIR/.backup_list.txt"           # Default files to Backup
 export SADM_BACKUP_EXCLUDE="$SADM_CFG_DIR/backup_exclude.txt"           # files Exclude from Backup
@@ -320,7 +327,7 @@ export SADM_VM_EXCLUDE_TEMPLATE="$SADM_CFG_DIR/.sadm_vm_exclude_start.txt" # VM 
 # Definition of SADMIN log, error log, Result Code  History (.rch) and Monitor report file (*.rpt).
 export SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"     # Script Output LOG
 export SADM_ELOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}_e.log"  # Script Error LOG
-export SADM_RCHLOG="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"  # Result Code History File
+export SADM_RCH_FILE="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"  # Result Code History File
 export SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt"             # Monitor Report file (rpt)
 
 # COMMAND PATH REQUIRE THAT SADMIN USE
@@ -556,7 +563,6 @@ sadm_isnumeric() {
 
 # Display Question ($1) and wait for response from user, Y/y (return 1) or N/n (return 0)
 sadm_ask() {
-    wreturn=2
     wmess="$1 [y,n] ? "                                                 # Add Y/N to Mess. Rcv
     while :                                                             # While until good answer
         do
@@ -2054,7 +2060,7 @@ sadm_freshen_directories_structure() {
     # $SADMIN/www directories creation (If do not exist and ignore error)
     mkdir -p ${SADM_WWW_DIR}/{dat/archive,crud,css,dat,doc,images,js,lib,rrd,tmp,view} > /dev/null 2>&1
 
-    if [ $(id -u) -eq 0 ]
+    if [ "$(id -u)" -eq 0 ]
         then chmod 0775 $SADM_LIB_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LIB_DIR
              chmod 0775 $SADM_CFG_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_CFG_DIR
              chmod 0775 $SADM_SYS_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_DIR
@@ -2086,11 +2092,19 @@ sadm_freshen_directories_structure() {
              if [ "$SADM_HOST_TYPE" = "S" ] 
                 then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DIR
                      chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR
+                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_CRUD_DIR
+                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_CSS_DIR
+                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_VIEW_DIR
+                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_RRD_DIR
                      chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_ARC_DIR
                      chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DOC_DIR
                      chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_LIB_DIR
                      chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_IMG_DIR
                      chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR
+                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_PERF_DIR
+                     chmod 0775 $SADM_WWW_NET_DIR   
+                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_NET_DIR
+                     chmod 1777 $SADM_WWW_PERF_DIR 
              fi 
     fi
 }
@@ -2116,11 +2130,11 @@ sadm_start() {
     fi 
 
     # Check and make sure script log, errorlog and RCH file exist and will be writable.
-    [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG                       # Create RCH  If not exist
-    [ ! -e "$SADM_LOG" ]    && touch $SADM_LOG                          # Create LOG  If not exist
-    [ ! -e "$SADM_ELOG" ]   && touch $SADM_ELOG                         # Create ELOG If not exist
-    chmod 664 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCHLOG" >/dev/null 2>&1   # Read/Write
-    chown "${SADM_USER}:${SADM_GROUP}" "$SADM_LOG" "$SADM_ELOG" "$SADM_RCHLOG" >/dev/null 2>&1 
+    [ ! -e "$SADM_RCH_FILE" ] && touch $SADM_RCH_FILE                   # Create RCH  If not exist
+    [ ! -e "$SADM_LOG" ]      && touch $SADM_LOG                        # Create LOG  If not exist
+    [ ! -e "$SADM_ELOG" ]     && touch $SADM_ELOG                       # Create ELOG If not exist
+    chmod 664 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Read/Write
+    chown "${SADM_USER}:${SADM_GROUP}" "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 
 
     # Check if log and error log are writable.
     if [ ! -w "$SADM_LOG" ] || [ ! -w "$SADM_ELOG" ]                    # If can't write to log/elog
@@ -2135,14 +2149,14 @@ sadm_start() {
 
     # Update the RCH file if it is writable, if it doesn't advise user and abort script.
     if [ "$SADM_USE_RCH" = "Y" ]
-        then if [ -w "$SADM_RCHLOG" ] 
+        then if [ -w "$SADM_RCH_FILE" ] 
                 then WDOT=".......... ........ ........"                        # End Time & Elapse = Dot
                      RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST"    # Format Part1 RCH File
                      RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE 2"    # Format Part2 of RCH File
-                     echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
-                else printf "\nUser '$SADM_USERNAME' do not have permission to write to '$SADM_RCHLOG' :\n"
-                     printf "     - Change permission of '$SADM_RCHLOG'.\n"
-                     ls -l "$SADM_RCHLOG"
+                     echo "$RCHLINE" >>$SADM_RCH_FILE                             # Append Line to  RCH File
+                else printf "\nUser '$SADM_USERNAME' do not have permission to write to '$SADM_RCH_FILE' :\n"
+                     printf "     - Change permission of '$SADM_RCH_FILE'.\n"
+                     ls -l "$SADM_RCH_FILE"
                      printf "\nScript Aborted !\n"
                      exit 1
              fi
@@ -2212,8 +2226,8 @@ sadm_start() {
             sadm_write_err " "
             f_timeout=$(printf "%'d\n" $SADM_PID_TIMEOUT)
             f_elapse=$(printf "%'d\n" $pelapse)
-            sadm_write_err "Can't run multiple copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
-            sadm_write_err "PID file ('\${SADMIN}/tmp/${SADM_INST}.pid'), was created $f_pelapse seconds ago."
+            sadm_write_err "Can't run simultaneous copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
+            sadm_write_err "PID file ('\${SADMIN}/tmp/${SADM_INST}.pid'), was created $pelapse seconds ago."
             sadm_write_err "The PID timeout ('\$SADM_PID_TIMEOUT') is set to $f_timeout seconds."
             sadm_write_err " "
             #sadm_write_err " "
@@ -2337,36 +2351,36 @@ sadm_stop() {
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
     if [ "$SADM_USE_RCH" = "Y" ]                                        # User Want update RCH File?
-        then if [ -s "$SADM_RCHLOG" ]                                   # If RCH file exist
-                then XCODE=`tail -1 "$SADM_RCHLOG" |awk '{ print $NF }'` # Get RCH Code on last line
+        then if [ -s "$SADM_RCH_FILE" ]                                   # If RCH file exist
+                then XCODE=`tail -1 "$SADM_RCH_FILE" |awk '{ print $NF }'` # Get RCH Code on last line
                      if [ "$XCODE" != "0" ] && [ "$XCODE" != "1" ] && [ "$XCODE" != "2" ]
                         then XCODE="0"                                    # If ResultCode Invalid = 0 
                      fi 
                      if [ "$XCODE" == "2" ]                              # If last Line code is 2
-                        then sed -i '$d' "$SADM_RCHLOG"                  # Delete last line of rch
+                        then sed -i '$d' "$SADM_RCH_FILE"                  # Delete last line of rch
                      fi 
              fi 
              RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
              RCHLINE="$RCHLINE $sadm_elapse $SADM_INST"                 # Format Part2 RCH File
              RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE"      # Format Part3 of RCH File
              RCHLINE="$RCHLINE $SADM_EXIT_CODE"                         # Format Part4 of RCH File
-             if [ -w $SADM_RCHLOG ] 
-                then echo "$RCHLINE" >>$SADM_RCHLOG                     # Append to RCH File
-                else sadm_write_log "Permission denied to write to $SADM_RCHLOG"
+             if [ -w $SADM_RCH_FILE ] 
+                then echo "$RCHLINE" >>$SADM_RCH_FILE                     # Append to RCH File
+                else sadm_write_log "Permission denied to write to $SADM_RCH_FILE"
              fi
              if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ] # If User want Log Footer
                 then if [ "$SADM_MAX_RCLINE" -ne 0 ]                    # User want to trim rch file
-                        then if [ -w $SADM_RCHLOG ]                     # If History RCH Writable
+                        then if [ -w $SADM_RCH_FILE ]                     # If History RCH Writable
                                 then mtmp1="History file '\$SADMIN/dat/rch/${SADM_HOSTNAME}_${SADM_INST}.rch' trim to ${SADM_MAX_RCLINE} lines."
                                      sadm_write_log "${mtmp1}"          # Write rch trim context 
-                                     sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE" 
+                                     sadm_trimfile "$SADM_RCH_FILE" "$SADM_MAX_RCLINE" 
                              fi
                         else mtmp="Script is set not to trim history file (\$SADM_MAX_RCLINE=0)"
                              sadm_write_log "${mtmp}." 
                      fi
              fi
-             [ $(id -u) -eq 0 ] && chmod 664 ${SADM_RCHLOG}             # R/W Owner/Group R by World
-             [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG} # Change RCH Owner
+             [ $(id -u) -eq 0 ] && chmod 664 ${SADM_RCH_FILE}             # R/W Owner/Group R by World
+             [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCH_FILE} # Change RCH Owner
     fi 
 
     # If log size not at zero and user want to use the log.
@@ -2451,7 +2465,7 @@ sadm_stop() {
 
     # If error log or the RCH file are empty, we can delete them
     if [ ! -s "$SADM_ELOG" ]   ; then rm -f $SADM_ELOG   >/dev/null 2>&1 ; fi
-    if [ ! -s "$SADM_RCHLOG" ] ; then rm -f $SADM_RCHLOG >/dev/null 2>&1 ; fi
+    if [ ! -s "$SADM_RCH_FILE" ] ; then rm -f $SADM_RCH_FILE >/dev/null 2>&1 ; fi
 
     # If script is running on the SADMIN server, copy log and rch immediatly to web data dir.
     if [ "$SADM_ON_SADMIN_SERVER" = "Y" ]                               # Only run on SADMIN server
@@ -2476,7 +2490,7 @@ sadm_stop() {
                        then touch "$WRCH"                               # Make sure web rch exist
                             chmod 666 $WRCH                             # Make sure we can overwite
                             chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WRCH} # Good group
-                            if [ -f "$SADM_RCHLOG" ] ; then cp $SADM_RCHLOG $WRCH ; fi
+                            if [ -f "$SADM_RCH_FILE" ] ; then cp $SADM_RCH_FILE $WRCH ; fi
                     fi
             fi 
     fi
@@ -2488,6 +2502,8 @@ sadm_stop() {
 
 
 # --------------------------------------------------------------------------------------------------
+# sadm_sendmail() 
+#
 # Send email to email address received.
 # 
 # Args:            
@@ -2496,7 +2512,7 @@ sadm_stop() {
 #     mbody (str)     : Body of your email
 #     mfile (str)     : Name of the files (MUST exist) to attach to the email.
 #                           - If no attachment, leave blank "")
-#                           - If multiples attachment separate each file name by comma.
+#                           - If you have multiple attachments, separate each file name with comma.
 # Returns:
 #     Return Code (Int)   : 0 Successfully sent the email
 #                           1 Error while sending the email (Parameters may be wrong)
@@ -2507,8 +2523,8 @@ sadm_sendmail() {
     RC=0                                                                # Function Return Code
     #LIB_DEBUG=5                                                        # Debug Library Level
     if [ $# -lt 3 ] || [ $# -gt 4 ]                                     # Invalid No. of Parameter
-        then sadm_write_log "Invalid number of argument, $# arguments received by function ${FUNCNAME}."
-             sadm_write_log "Should be 3 or 4 we received $# : $* "      # Show what received
+        then sadm_write_log "Invalid number of argument, '$#' received by function ${FUNCNAME}."
+             sadm_write_log "Should be 3 or 4 we received $# : $* "     # Show what received
              return 1                                                   # Return Error to caller
     fi
 
@@ -2731,7 +2747,7 @@ sadm_unlock_system() {
 sadm_check_system_lock() {
     SNAME=$1                                                            # Save System Name to verify
     RC=0                                                                # Default Return Code
-    LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                           # System Lock file name
+    LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
     if [ -r "$LOCK_FILE" ]                                              # Lock file exist ?
         then current_epoch=$(sadm_get_epoch_time)                       # Get current Epoch Time
              create_epoch=$(stat -c %Y $LOCK_FILE)                      # Get lock file epoch
@@ -2755,7 +2771,9 @@ sadm_check_system_lock() {
 
 
 
-
+# --------------------------------------------------------------------------------------------------
+# sadm_on_sadmin_server()
+#
 # Check if the IP assigned to 'sadmin' is defined on the current system.
 # 
 # Return True or False
@@ -2768,7 +2786,7 @@ sadm_check_system_lock() {
 # --------------------------------------------------------------------------------------------------
 sadm_on_sadmin_server() {
 
-    wreturn=0                                                           # Default, No = Return 1
+    wreturn=0                                                           # 0=yes, 1=No = Retur
     if [ "$SADM_HOST_TYPE" != "S" ] ; then return "$wreturn" ; fi
     
     # Check if SADM_SERVER IP is defined on this system and set SADM_ON_SADMIN_SERVER accordingly.
@@ -2937,7 +2955,7 @@ EOF
     if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement not met
 
 # Build SSH command according to Path and Port used
-    export SADM_SSH_CMD="${SADM_SSH} -qnp${SADM_SSH_PORT}"              # SSH Command to SSH CLient
+    export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}"             # SSH Command to SSH CLient
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
         then printf "$(date "+%C%y.%m.%d %H:%M:%S") Library Loaded ...\n"
     fi
