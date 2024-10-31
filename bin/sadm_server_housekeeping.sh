@@ -45,6 +45,8 @@
 #@2024_04_22 server v2.19 Alert older than '$SADM_DAYS_HISTORY' defined in sadmin.cfg are archived.
 #@2024_04_22 server v2.20 Trim the alert archive file to '$SADM_MAX_ARC_LINE' defined in sadmin.cfg.
 #@2024_05_15 server v2.21 Correct a typo that was causing the script to crash.
+#@2024_10_31 server v2.22 Fix "$SADMIN/www/tmp/perf" permission (prevent to view performance graph).
+#
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -74,7 +76,7 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='2.21'                                     # Script version number
-export SADM_PDESC="Set owner in www directories and remove old files in /www/tmp & www/tmp/perf dir."
+export SADM_PDESC="Move alert old alert to history archive and set permission in www directories."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
@@ -239,6 +241,7 @@ dir_housekeeping()
             if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
     fi
 
+    # SADMIN /www/tmp directories
     CMD="find $SADM_WWW_DIR -type f -exec chown ${SADM_WWW_USER}:${SADM_GROUP} {} \; "
     find "$SADM_WWW_DIR" -type f -exec chown $SADM_WWW_USER:$SADM_GROUP {} \; 
     if [ $? -ne 0 ]
@@ -247,7 +250,10 @@ dir_housekeeping()
        else sadm_write_log "[ OK ] ${CMD}"
             if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
     fi
-
+    chown ${SADM_WWW_USER}:${SADM_GROUP} "$SADM_WWW_TMP_DIR"  ; chmod 1777 "$SADM_WWW_TMP_DIR"
+    chown ${SADM_WWW_USER}:${SADM_GROUP} "$SADM_WWW_PERF_DIR" ; chmod 1777 "$SADM_WWW_PERF_DIR" 
+    
+    
     CMD="find $SADM_WWW_DAT_DIR -type f -exec chmod 0664 {}\; "
     find "$SADM_WWW_DAT_DIR" -type f -exec chmod 0664 {} \; 
     if [ $? -ne 0 ]
@@ -354,11 +360,11 @@ file_housekeeping()
         then sadm_write_log " " 
              sadm_write_log "Delete any *.png files older than 5 days in ${SADM_WWW_PERF_DIR}."
              CMD="find $SADM_WWW_PERF_DIR -type f -mtime +5 -name '*.png' -exec rm -f {} \;"
-             find $SADM_WWW_PERF_DIR -type f -mtime +5 -name "*.png" -exec rm -f {} \; | tee -a $SADM_LOG
+             find "$SADM_WWW_PERF_DIR" -type f -mtime +5 -name "*.png" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] running ${CMD}"
                      ((ERROR_COUNT++))
-                else sadm_write_log "${SADM_OK} running ${CMD}"
+                else sadm_write_log "[ OK ] running ${CMD}"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
              fi
     fi
@@ -507,9 +513,6 @@ function cmd_options()
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
     main_process                                                        # Main processing function
-    if [ $ERROR_COUNT -ne 0 ]                                           # Any error in main process?
-        then SADM_EXIT_CODE=1 
-        else SADM_EXIT_CODE=0 
-    fi
+    if [ $ERROR_COUNT -ne 0 ] ;then SADM_EXIT_CODE=1 ;else SADM_EXIT_CODE=0 ;fi
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
