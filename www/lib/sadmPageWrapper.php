@@ -29,6 +29,7 @@
 # 2020_04_25 web v1.3 Reduce Menu line in header to fit on Ipad.
 # 2020_09_23 web v1.4 Add Tooltips to Shortcut in the page header.
 # 2020_12_15 web v1.5 Add Storix Report Link in Header, only if Storix html file exist.
+#42024_10_31 web v1.6 Add VirtualBox Button to view the status of VM export.
 #
 # ==================================================================================================
 #
@@ -87,13 +88,10 @@ echo "\n<div id='sadmHeader'>                   <!-- Start Of sadmHeader  -->";
             &nbsp;&nbsp;
             <a href='/view/sys/sadm_view_rear.php'><span data-toggle='tooltip' title='Status of the ReaR Image Backup Schedule'>ReaR Backup</span></a>
             &nbsp;&nbsp;
+            <a href='/view/sys/sadm_list_vmexport.php'><span data-toggle='tooltip' title='Status of the virtual machine export'>VM Export</span></a>
+            &nbsp;&nbsp;
             <a href='/view/perf/sadm_server_perf_adhoc_all.php'><span data-toggle='tooltip' title='Show Performance Graph of systems'>Performance</span></a>
             </div>
-            <?php
-            if (file_exists(SADM_WWW_DIR . "/view/daily_storix_report.html")) {
-                echo "<a href='/view/daily_storix_report.html'><span data-toggle='tooltip' title='Show Storix Daily Report'>Storix</span></a>";
-            }                
-            ?>
         </div>
     </font>
         </td>
