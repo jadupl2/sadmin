@@ -100,6 +100,7 @@
 # 2023_09_18 server v3.46 Enhance purge of old '*.nmon' files.
 # 2023_12_17 server v3.47 Modification that allow SADMIN server IP to be an IP alias.
 #@2024_04_16 server v3.48 Replace 'sadm_write' with 'sadm_write_log' and 'sadm_write_err'.
+#@2024_10_31 server v3.49 Add code to update schedule of VirtualBox VM export in crontab 'sadm_vm'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -129,7 +130,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.48'                                     # Script version number
+export SADM_VER='3.49'                                     # Script version number
 export SADM_PDESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -181,13 +182,16 @@ export RCH_FIELD=10                                                     # Nb. of
 export OSTIMEOUT=1800                                                   # 1800sec=30Min todo O/S Upd
 export GLOB_UPTIME=""                                                   # Global Server uptime value 
 export BOOT_DATE=""                                                     # Server Last Boot Date/Time
-export ERROR_COUNT=0                                                    # Rsync Error Count
+export ERROR_COUNT=0                                                    # Total Error Count
+export WARNING_COUNT=0                                                  # Total Warning count
 export SADM_TEN_DASH=$(printf %10s |tr " " "-")                         # 10 dashes line
+export VMLIST=$SADM_WWW_DAT_DIR/vm_list.txt                             # List of VM Per Host vBox
 #
 # Variables used to insert in /etc/cron.d/sadm* crontab files.
 export OS_SCRIPT="sadm_osupdate_starter.sh"                             # OSUpdate Script in crontab
 export BA_SCRIPT="sadm_backup.sh"                                       # Backup Script 
 export REAR_SCRIPT="sadm_rear_backup.sh"                                # ReaR Backup Script 
+export EXPORT_SCRIPT="sadm_vm_export.sh"                                # VM export Script 
 #
 # Reset Alert Totals Counters
 export total_alert=0 total_duplicate=0 total_ok=0 total_error=0 total_oldies=0
@@ -250,20 +254,20 @@ update_osupdate_crontab ()
 
     # To Display Parameters received - Used for Debugging Purpose ----------------------------------
     if [ $SADM_DEBUG -gt 5 ] 
-        then sadm_writelog "I'm in update crontab"
-             sadm_writelog "cserver  = $cserver"                        # Server to run script
-             sadm_writelog "cscript  = $cscript"                        # Script to execute
-             sadm_writelog "cmonth   = $cmonth"                         # Month String YNYNYNYNYNY..
-             sadm_writelog "cdom     = $cdom"                           # Day of MOnth String YNYN..
-             sadm_writelog "cdow     = $cdow"                           # Day of Week String YNYN...
-             sadm_writelog "chour    = $chour"                          # Hour to run script
-             sadm_writelog "cmin     = $cmin"                           # Min. to run Script
-             sadm_writelog "cronfile = $SADM_CRON_FILE"                 # Name of Output file
+        then sadm_write_log "I'm in update crontab"
+             sadm_write_log "cserver  = $cserver"                        # Server to run script
+             sadm_write_log "cscript  = $cscript"                        # Script to execute
+             sadm_write_log "cmonth   = $cmonth"                         # Month String YNYNYNYNYNY..
+             sadm_write_log "cdom     = $cdom"                           # Day of MOnth String YNYN..
+             sadm_write_log "cdow     = $cdow"                           # Day of Week String YNYN...
+             sadm_write_log "chour    = $chour"                          # Hour to run script
+             sadm_write_log "cmin     = $cmin"                           # Min. to run Script
+             sadm_write_log "cronfile = $SADM_CRON_FILE"                 # Name of Output file
     fi
     
     # Begin constructing our crontab line ($cline) - Based on Hour and Min. Received ---------------
-    cline=`printf "%02d %02d" "$cmin" "$chour"`                         # Hour & Min. of Execution
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    cline=$(printf "%02d %02d" "$cmin" "$chour")                        # Hour & Min. of Execution
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
 
 
     # Construct DATE of the month (1-31) to run and add it to crontab line ($cline) ----------------
@@ -287,7 +291,7 @@ update_osupdate_crontab ()
                 done                                                    # End of For Loop
              cline="$cline $fdom"                                       # Add DOM in Crontab Line
     fi
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
 
 
     # Construct the month(s) (1-12) to run the script and add it to crontab line ($cline) ----------
@@ -310,7 +314,7 @@ update_osupdate_crontab ()
                 done                                                    # End of For Loop
              cline="$cline $fmth"                                       # Add Month in Crontab Line
     fi
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
 
 
     # Construct the day of the week (0-6) to run the script and add it to crontab line ($cline) ----
@@ -335,7 +339,7 @@ update_osupdate_crontab ()
                 done                                                    # End of For Loop
              cline="$cline $fdow"                                       # Add DOW in Crontab Line
     fi
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
     
     
     # Add User, script name and script parameter to crontab line -----------------------------------
@@ -344,7 +348,7 @@ update_osupdate_crontab ()
     #cline="$cline root $cscript -s $cserver >/dev/null 2>&1";   
     cline="$cline $SADM_USER sudo $cscript $cserver >/dev/null 2>&1";   
     #cline="$cline root $cscript -s $cserver > ${SADM_TMP_DIR}/sadm_osupdate_${cserver}.log 2>&1";   
-    if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 0 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
 
     echo "$cline" >> $SADM_CRON_FILE                                    # Output Line to Crontab cfg
 }
@@ -386,21 +390,21 @@ update_rear_crontab ()
     SSH_PORT=$8
 
     # To Display Parameters received - Used for Debugging Purpose ----------------------------------
-    if [ $SADM_DEBUG -gt 5 ] 
-        then sadm_writelog "I'm in update crontab"
-             sadm_writelog "cserver  = $cserver"                        # Server to run script
-             sadm_writelog "cscript  = $cscript"                        # Script to execute
-             sadm_writelog "cmonth   = $cmonth"                         # Month String YNYNYNYNYNY..
-             sadm_writelog "cdom     = $cdom"                           # Day of MOnth String YNYN..
-             sadm_writelog "cdow     = $cdow"                           # Day of Week String YNYN...
-             sadm_writelog "chour    = $chour"                          # Hour to run script
-             sadm_writelog "cmin     = $cmin"                           # Min. to run Script
-             sadm_writelog "cronfile = $SADM_CRON_FILE"                 # Name of Output file
+    if [ "$SADM_DEBUG" -gt 5 ] 
+        then sadm_write_log "I'm in update crontab"
+             sadm_write_log "cserver  = $cserver"                        # Server to run script
+             sadm_write_log "cscript  = $cscript"                        # Script to execute
+             sadm_write_log "cmonth   = $cmonth"                         # Month String YNYNYNYNYNY..
+             sadm_write_log "cdom     = $cdom"                           # Day of MOnth String YNYN..
+             sadm_write_log "cdow     = $cdow"                           # Day of Week String YNYN...
+             sadm_write_log "chour    = $chour"                          # Hour to run script
+             sadm_write_log "cmin     = $cmin"                           # Min. to run Script
+             sadm_write_log "cronfile = $SADM_REAR_NEWCRON"              # Name of Output file
     fi
     
     # Begin constructing our crontab line ($cline) - Based on Hour and Min. Received ---------------
-    cline=`printf "%02d %02d" "$cmin" "$chour"`                         # Hour & Min. of Execution
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    cline=$(printf "%02d %02d" "$cmin" "$chour")                        # Hour & Min. of Execution
+    if [ "$SADM_DEBUG" -gt 5 ] ;then sadm_write_log "cline=.$cline." ;fi  # Show Cron Line Now
 
 
     # Construct DATE of the month (1-31) to run and add it to crontab line ($cline) ----------------
@@ -424,7 +428,7 @@ update_rear_crontab ()
                 done                                                    # End of For Loop
              cline="$cline $fdom"                                       # Add DOM in Crontab Line
     fi
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
 
 
     # Construct the month(s) (1-12) to run the script and add it to crontab line ($cline) ----------
@@ -447,7 +451,7 @@ update_rear_crontab ()
                 done                                                    # End of For Loop
              cline="$cline $fmth"                                       # Add Month in Crontab Line
     fi
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
 
 
     # Construct the day of the week (0-6) to run the script and add it to crontab line ($cline) ----
@@ -472,7 +476,7 @@ update_rear_crontab ()
                 done                                                    # End of For Loop
              cline="$cline $fdow"                                       # Add DOW in Crontab Line
     fi
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
     
     
     # Add User, script name and script parameter to crontab line -----------------------------------
@@ -482,7 +486,7 @@ update_rear_crontab ()
         then cline="$cline $SADM_USER sudo ${SADM_SSH} -qnp $SSH_PORT $cserver \"$cscript\" >/dev/null 2>&1";
         else cline="$cline $SADM_USER sudo \"$cscript\" >/dev/null 2>&1";
     fi 
-    if [ $SADM_DEBUG -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 0 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
 
     echo "$cline" >> $SADM_REAR_NEWCRON                               # Output Line to Crontab cfg
 }
@@ -527,7 +531,7 @@ update_backup_crontab ()
     ccompress=$9                                                        # Compress Backup 1=Yes 0=No
 
     cline=`printf "%02d %02d" "$cmin" "$chour"`                         # Hour & Min. of Execution
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi   # Show Cron Line Now
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi   # Show Cron Line Now
     cline="$cline * * * "
     if [ "$SADM_HOSTNAME" != "$cserver" ]  
         then if [ $ccompress -eq 1 ] 
@@ -540,6 +544,149 @@ update_backup_crontab ()
              fi 
     fi 
     echo "$cline" >> $SADM_BACKUP_NEWCRON                               # Output Line to Crontab cfg
+}
+
+
+
+
+# ==================================================================================================
+# update_vmexport_crontab () 
+#
+# Update the export crontab work file based on the parameters received
+#
+# Parameters: 
+#   (1) cserver   Name of virtual system to export.
+#   (2) cscript   The name of the script to executed
+#   (3) cmin      Minute when the update will begin (00-59)
+#   (4) chour     Hour when the update should begin (00-23)
+#   (5) cmonth    13 Characters (either a Y or a N) each representing a month (YNNNNNNNNNNNN)
+#                 Position 0 = Y Then ALL Months are Selected
+#                 Position 1-12 represent the month that are selected (Y or N)             
+#                 Default is YNNNNNNNNNNNN meaning will run every month 
+#   (6) cdom      32 Characters (either a Y or a N) each representing a day (1-31) Y=Update N=No Update
+#                 Position 0 = Y Then ALL Date in the month are Selected
+#                 Position 1-31 Indicate (Y) date of the month that script will run or not (N)
+#   (7) cdow      8 Characters (either a Y or a N) 
+#                 If Position 0 = Y then will run every day of the week
+#                 Position 1-7 Indicate a week day () Starting with Sunday
+#                 Default is all Week (YNNNNNNN)
+#   (8)           SSH port to communicate with the system
+#
+# Example of line generated
+# 00 13 05,27 * * sadmin sudo /usr/bin/ssh -qnp 32 jacques@anemone '$SADMIN/bin/sadm_vm_export.sh ubuntu2204'
+#
+# ==================================================================================================
+update_vmexport_crontab () 
+{
+    cserver=$1                                                          # Server Name to export 
+    cscript=$2                                                          # Export Script to Run
+    cmin=$3                                                             # Crontab Minute
+    chour=$4                                                            # Crontab Hour
+    cmonth=$5                                                           # Crontab Mth (YNNNN) Format
+    cdom=$6                                                             # Crontab DOM (YNNNN) Format
+    cdow=$7                                                             # Crontab DOW (YNNNN) Format
+    SSH_PORT=$8                                                         # SSH Port Number 
+    chost=$9                                                            # VirtualBox Hostname
+
+    # To Display Parameters received - Used for Debugging Purpose ----------------------------------
+    if [ $SADM_DEBUG -gt 5 ] 
+        then sadm_write_log "I'm in update_vmexport_crontab"
+             sadm_write_log "cserver  = $cserver"                        # Server to run script
+             sadm_write_log "cscript  = $cscript"                        # Script to execute
+             sadm_write_log "cmonth   = $cmonth"                         # Month String YNYNYNYNYNY..
+             sadm_write_log "cdom     = $cdom"                           # Day of MOnth String YNYN..
+             sadm_write_log "cdow     = $cdow"                           # Day of Week String YNYN...
+             sadm_write_log "chour    = $chour"                          # Hour to run script
+             sadm_write_log "cmin     = $cmin"                           # Min. to run Script
+             sadm_write_log "cronfile = $SADM_VMEXPORT_NEWCRON"          # Name of Output file
+    fi
+    
+    # Begin constructing our crontab line ($cline) - Based on Hour and Min. Received ---------------
+    cline=$(printf "%02d %02d" "$cmin" "$chour")                        # Hour & Min. of Execution
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
+
+
+    # Construct DATE of the month (1-31) to run and add it to crontab line ($cline) ----------------
+    flag_dom=0
+    if [ "$cdom" = "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN" ]                 # If it's to run every Date
+        then cline="$cline *"                                           # Then use a Star for Date
+        else fdom=""                                                    # Clear Final Date of Month
+             for i in $(seq 2 32)
+                do    
+                wchar=`expr substr $cdom $i 1`
+                if [ $SADM_DEBUG -gt 5 ] ; then echo "cdom[$i] = $wchar" ; fi
+                xmth=`expr $i - 1`                                      # Date = Index -1 ,Cron Mth
+                if [ "$wchar" = "Y" ]                                   # If Date Set to Yes 
+                    then if [ $flag_dom -eq 0 ]                         # If First Date to Run 
+                            then fdom=`printf "%02d" "$xmth"`           # Add Date to Final DOM
+                                 flag_dom=1                             # No Longer the first date
+                            else wdom=`printf "%02d" "$xmth"`           # Format the Date number
+                                 fdom=`echo "${fdom},${wdom}"`          # Combine Final+New Date
+                         fi
+                fi                                                      # If Date is set to No
+                done                                                    # End of For Loop
+             cline="$cline $fdom"                                       # Add DOM in Crontab Line
+    fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
+
+
+    # Construct the month(s) (1-12) to run the script and add it to crontab line ($cline) ----------
+    flag_mth=0
+    if [ "$cmonth" = "YNNNNNNNNNNNN" ]                                  # 1st Char=Y = run every Mth
+        then cline="$cline *"                                           # Then use a Star for Month
+        else fmth=""                                                    # Clear Final Date of Month
+             for i in $(seq 2 13)                                       # Check Each Mth 2-13 = 1-12
+                do                                                      # Get Y or N for the Month 
+                wchar=`expr substr $cmonth $i 1`
+                xmth=`expr $i - 1`                                      # Mth = Index -1 ,Cron Mth
+                if [ "$wchar" = "Y" ]                                   # If Month Set to Yes 
+                    then if [ $flag_mth -eq 0 ]                         # If 1st Insert in Cron Line
+                            then fmth=`printf "%02d" "$xmth"`           # Add Month to Final Months
+                                 flag_mth=1                             # No Longer the first Month
+                            else wmth=`printf "%02d" "$xmth"`           # Format the Month number
+                                 fmth=`echo "${fmth},${wmth}"`          # Combine Final+New Months
+                         fi
+                fi                                                      # If Month is set to No
+                done                                                    # End of For Loop
+             cline="$cline $fmth"                                       # Add Month in Crontab Line
+    fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
+
+
+    # Construct the day of the week (0-6) to run the script and add it to crontab line ($cline) ----
+    flag_dow=0
+    if [ "$cdow" = "YNNNNNNN" ]                                         # 1st Char=Y Run all dayWeek
+        then cline="$cline *"                                           # Then use Star for All Week
+        else fdow=""                                                    # Final Day of Week Flag
+             for i in $(seq 2 8)                                        # Check Each Day 2-8 = 0-6
+                do                                                      # Day of the week (dow)
+                wchar=`expr substr "$cdow" $i 1`                        # Get Char of loop
+                if [ $SADM_DEBUG -gt 5 ] ; then echo "cdow[$i] = $wchar" ; fi
+                if [ "$wchar" = "Y" ]                                   # If Day is Yes 
+                    then xday=`expr $i - 2`                             # Adjust Indx to Crontab Day
+                         if [ $SADM_DEBUG -gt 5 ] ; then echo "xday = $xday" ; fi
+                         if [ $flag_dow -eq 0 ]                         # If First Day to Insert
+                            then fdow=`printf "%02d" "$xday"`           # Add day to Final Day
+                                 flag_dow=1                             # No Longer the first Insert
+                            else wdow=`printf "%02d" "$xday"`           # Format the day number
+                                 fdow=`echo "${fdow},${wdow}"`          # Combine Final+New Day
+                         fi
+                fi                                                      # If DOW is set to No
+                done                                                    # End of For Loop
+             cline="$cline $fdow"                                       # Add DOW in Crontab Line
+    fi
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
+    
+    
+    # Add Line to tmp vmexport crontab work file 
+    # 00 16 08,25 * * sadmin -/usr/bin/ssh -qnp 32 jacques@anemone /opt/sadmin/bin/sadm_vm_export.sh centos8
+    # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN 
+    find $SADM_WWW_DAT_DIR -type f -name "*_vmlist.txt" -exec cat {} \; | sort > $VMLIST
+    if [ -s "$VMLIST" ]                                                 # if file exist & size > 0
+        then cline="$cline $SADM_USER sudo ${SADM_SSH} -qnp $SSH_PORT ${SADM_VM_USER}@${chost} '$cscript $cserver'" 
+    fi 
+    if [ $SADM_DEBUG -gt 0 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
+    echo "$cline" >> $SADM_VMEXPORT_NEWCRON                             # Output Line to VM Crontab 
 }
 
 
@@ -562,10 +709,10 @@ rsync_function()
 {
     # Parameters received should always by two - If not write error to log and return to caller
     if [ $# -ne 2 ]
-        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters."
-             sadm_writelog "Function received $* and this isn't valid."
-             sadm_writelog "Should receive remote directory path and the local directory path." 
-             sadm_writelog "The two parameters must both end with a '/' (Important)." 
+        then sadm_write_log "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters."
+             sadm_write_log "Function received $* and this isn't valid."
+             sadm_write_log "Should receive remote directory path and the local directory path." 
+             sadm_write_log "The two parameters must both end with a '/' (Important)." 
              return 1
     fi
 
@@ -596,14 +743,14 @@ rsync_function()
                    else sadm_write_err "$SADM_ERROR $RETRY ] rsync -ar -e 'ssh -p $ssh_port' --delete ${REMOTE_DIR} ${LOCAL_DIR}"
                         break
                 fi
-           else sadm_writelog "$SADM_OK rsync -ar -e 'ssh -p $ssh_port' --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+           else sadm_write_log "$SADM_OK rsync -ar -e 'ssh -p $ssh_port' --delete ${REMOTE_DIR} ${LOCAL_DIR}"
                 break
         fi
         done
 
-    #sadm_writelog "chmod 775 ${LOCAL_DIR}" 
+    #sadm_write_log "chmod 775 ${LOCAL_DIR}" 
     chmod 775 ${LOCAL_DIR}  >> $SADM_LOG 2>&1
-    #sadm_writelog "chmod 664 ${LOCAL_DIR}*" 
+    #sadm_write_log "chmod 664 ${LOCAL_DIR}*" 
     chmod 664 ${LOCAL_DIR}* >> $SADM_LOG 2>&1
     return $RC
 }
@@ -659,76 +806,101 @@ update_rear_site_conf()
     cat $REAR_TMP $REAR_USER_EXCLUDE | tr -d '\r' > $REAR_CFG           # Concat & Remove CR in file
     #cat $REAR_TMP $REAR_USER_EXCLUDE > $REAR_CFG           # Concat & Remove CR in file
 
-    #sadm_writelog "scp -CqP${SADM_SSH_PORT} $REAR_CFG ${WSERVER}:/etc/rear/site.conf" 
+    #sadm_write_log "scp -CqP${SADM_SSH_PORT} $REAR_CFG ${WSERVER}:/etc/rear/site.conf" 
     #scp -CqP${SADM_SSH_PORT}  $REAR_CFG ${WSERVER}:/etc/rear/site.conf
-    #if [ $? -eq 0 ] ; then sadm_writelog "[OK] /etc/rear/site.conf is updated on ${WSERVER}" ;fi
+    #if [ $? -eq 0 ] ; then sadm_write_log "[OK] /etc/rear/site.conf is updated on ${WSERVER}" ;fi
 }
 
 # --------------------------------------------------------------------------------------------------
-# On Linux, Create standard crontab header for O/S Update, Daily Backup and ReaR Backup 
+# create_crontab_files_header()
+#
+# Create standard crontab header for O/S Update, Daily Backup, ReaR Backup and VM export.
+#
+#  Parameters:
+#   None.
+#
+#  Return Value:
+#   0) When crontab files created with success.
+#   1) If any error encountered.
 # --------------------------------------------------------------------------------------------------
 create_crontab_files_header()
 {
     # Header for O/S Update Crontab File
-    echo "# "                                                        > $SADM_CRON_FILE 
-    echo "# SADMIN - Operating System Update Schedule"              >> $SADM_CRON_FILE 
-    echo "# Please don't edit manually, SADMIN generated."          >> $SADM_CRON_FILE 
-    echo "# "                                                       >> $SADM_CRON_FILE 
-    echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> $SADM_CRON_FILE
-    echo "# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"          >> $SADM_CRON_FILE
-    echo "# "                                                       >> $SADM_CRON_FILE 
-    echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_CRON_FILE
-    echo "# "                                                       >> $SADM_CRON_FILE
+    echo "# "                                                        > "$SADM_CRON_FILE" 
+    echo "# SADMIN - Operating System Update Schedule"              >> "$SADM_CRON_FILE" 
+    echo "# Please don't edit manually, SADMIN will update it."     >> "$SADM_CRON_FILE"
+    echo "# "                                                       >> "$SADM_CRON_FILE" 
+    echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> "$SADM_CRON_FILE"
+    echo "# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"          >> "$SADM_CRON_FILE"
+    echo "# "                                                       >> "$SADM_CRON_FILE" 
+    echo "SADMIN=$SADM_BASE_DIR"                                    >> "$SADM_CRON_FILE"
+    echo "# "                                                       >> "$SADM_CRON_FILE"
 
-    # Header for Backup Crontab File
-    echo "# "                                                        > $SADM_BACKUP_NEWCRON 
-    echo "# SADMIN Client Backup Schedule"                          >> $SADM_BACKUP_NEWCRON 
-    echo "# Please don't edit manually, SADMIN generated."          >> $SADM_BACKUP_NEWCRON 
-    echo "# "                                                       >> $SADM_BACKUP_NEWCRON 
-    echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> $SADM_BACKUP_NEWCRON
-    echo "# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"          >> $SADM_BACKUP_NEWCRON
-    echo "# "                                                       >> $SADM_BACKUP_NEWCRON 
-    echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_BACKUP_NEWCRON
-    echo "# "                                                       >> $SADM_BACKUP_NEWCRON
+    # Header for" Backup Crontab Filn"
+    echo "# "                                                        > "$SADM_BACKUP_NEWCRON" 
+    echo "# SADMIN Client Backup Schedule"                          >> "$SADM_BACKUP_NEWCRON" 
+    echo "# Please don't edit manually, SADMIN will update it."     >> "$SADM_BACKUP_NEWCRON"
+    echo "# "                                                       >> "$SADM_BACKUP_NEWCRON" 
+    echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> "$SADM_BACKUP_NEWCRON"
+    echo "# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"          >> "$SADM_BACKUP_NEWCRON"
+    echo "# "                                                       >> "$SADM_BACKUP_NEWCRON" 
+    echo "SADMIN=$SADM_BASE_DIR"                                    >> "$SADM_BACKUP_NEWCRON"
+    echo "# "                                                       >> "$SADM_BACKUP_NEWCRON"
 
     # Header for Rear Crontab File
-    echo "# "                                                        > $SADM_REAR_NEWCRON 
-    echo "# SADMIN Client ReaR Schedule"                            >> $SADM_REAR_NEWCRON 
-    echo "# Please don't edit manually, SADMIN generated."          >> $SADM_REAR_NEWCRON 
-    echo "# "                                                       >> $SADM_REAR_NEWCRON 
-    echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> $SADM_REAR_NEWCRON
-    echo "# Day 0or7=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"       >> $SADM_REAR_NEWCRON
-    echo "# "                                                       >> $SADM_REAR_NEWCRON 
-    echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_REAR_NEWCRON
-    echo "# "                                                       >> $SADM_REAR_NEWCRON
-    return
+    echo "# "                                                        > "$SADM_REAR_NEWCRON"
+    echo "# SADMIN Client ReaR Schedule"                            >> "$SADM_REAR_NEWCRON"
+    echo "# Please don't edit manually, SADMIN will update it."     >> "$SADM_REAR_NEWCRON"
+    echo "# "                                                       >> "$SADM_REAR_NEWCRON"
+    echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> "$SADM_REAR_NEWCRON"
+    echo "# Day 0or7=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"       >> "$SADM_REAR_NEWCRON"
+    echo "# "                                                       >> "$SADM_REAR_NEWCRON"
+    echo "SADMIN=$SADM_BASE_DIR"                                    >> "$SADM_REAR_NEWCRON"
+    echo "# "                                                       >> "$SADM_REAR_NEWCRON"
+
+    # Header for Virtual system export 
+    echo "# "                                                        > "$SADM_VMEXPORT_NEWCRON"
+    echo "# SADMIN Client VM Export Schedule"                       >> "$SADM_VMEXPORT_NEWCRON"
+    echo "# Please don't edit manually, SADMIN will update it."     >> "$SADM_VMEXPORT_NEWCRON"
+    echo "# "                                                       >> "$SADM_VMEXPORT_NEWCRON"
+    echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> "$SADM_VMEXPORT_NEWCRON"
+    echo "# Day 0or7=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"       >> "$SADM_VMEXPORT_NEWCRON"
+    echo "# "                                                       >> "$SADM_VMEXPORT_NEWCRON"
+    echo "SADMIN=$SADM_BASE_DIR"                                    >> "$SADM_VMEXPORT_NEWCRON"
+    echo "ESCRIPT=$SADMIN/bin/sadm_vm_export.sh"                    >> "$SADM_VMEXPORT_NEWCRON"
+    echo "# "                                                       >> "$SADM_VMEXPORT_NEWCRON"
+    return 0
 }
 
 
 # --------------------------------------------------------------------------------------------------
-# Validate SSH Server Connectivity 
+# check_host_connectivity()
+#
+#   Validate SSH Server Connectivity 
 #
 #  Parameters:
 #   1) Fully qualified domain name of the server to connect with SSH
 #   2) SSH port number used to communicate to system.
 #
 #  Return Value:
-#   0) Server Accessible
-#   1) Error, go to next server (Can't SSH to Server, Missing Parameter rcv, Hostname Unresovable)
-#   2) Warning, skip server (server lock, O/S Update Running, Sporadic System or Monitor if OFF)
-#   3) Was not able to update uptime of server in Database
+#   0) Server Accessible, ssh worked
+#   1) Error, go to next server (Can't SSH to Server, Missing Parameter rcv, Hostname Unresolvable)
+#   2) Warning, skip server (system lock, Sporadic System or Monitor if OFF)
 # --------------------------------------------------------------------------------------------------
 check_host_connectivity()
 {
     # If parameters received is not 2, return error to caller
     if [ $# -ne 2 ]
-        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters."
-             sadm_writelog "Function received $* and this isn't valid."
-             sadm_writelog "Should receive the fqdn of the server and the ssh port number."
+        then sadm_write_log "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters."
+             sadm_write_log "Function received $* and this isn't valid."
+             sadm_write_log "Should receive the fqdn of the server and the ssh port number."
              return 1
     fi
     FQDN_SNAME="$1"                                                     # Server Name Full Qualified
     SSH_PORT="$2"                                                       # Port No. to SSH to system
+    SNAME=$(echo "$FQDN_SNAME" | awk -F\. '{print $1}')                 # System Name without Domain
+    if [ $SADM_DEBUG -gt 0 ] ; then echo "Verifying connectivity with '$FQDN_SNAME'." ; fi 
+
 
     # Can we resolve the hostname ?
     if ! host $FQDN_SNAME >/dev/null 2>&1                               # Name is resolvable ? 
@@ -736,61 +908,72 @@ check_host_connectivity()
                 sadm_write_err "[ ERROR ] ${SMSG}"                      # Advise user
                 return 1                                                # Return Error to Caller
     fi
+    if [ $SADM_DEBUG -gt 0 ] ; then echo "Hostname '$FQDN_SNAME' is resolvable." ; fi 
+
 
     # Check if System is Locked.
-    SNAME=$(echo "$FQDN_SNAME" | awk -F\. '{print $1}')                 # System Name without Domain
     sadm_check_system_lock "$SNAME"                                     # Check lock file status
-    if [ $? -eq 1 ] ; then return 2 ; fi                                # System Lock return error
+    if [ $? -ne 0 ]                                                     # The system is lock
+        then sadm_write_log "[ WARNING ] Can't SSH to ${FQDN_SNAME} (System is lock)."
+             return 1                                                   # Return Skip Code to caller
+    fi 
+    if [ "$SADM_DEBUG" -gt 0 ] ; then echo "System '$SNAME' is not lock." ; fi 
 
-    # Get uptime from system and test at same time if ssh to system is working
-    if [ "$FQDN_SNAME" = "$SADM_SERVER" ] || [ "$SNAME" = "sadmin" ]
-        then wuptime=$(uptime 2>/dev/null)                              # No need to use SSH
-             RC=$?
+
+    # Get uptime from system and test at same time if ssh to remote system is working
+    if [ "$SADM_SERVER" = "$FQDN_SNAME" ]                               # If not on sadmin server
+        then wuptime=$(uptime 2>/dev/null)                              # Get local system uptime 
+             uptime_rc=$?
         else wuptime=$(${SADM_SSH} -qnp $SSH_PORT -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
-             RC=$?
+             uptime_rc=$?
     fi
-    if [ $RC -eq 0 ]                                                    # Can connect to Dest. Host!
+    if [ "$SADM_DEBUG" -gt 0 ] ; then sadm_write_log "Uptime RC=$RC" ; fi
+
+
+    # Update system uptime in the Database, if ssh worked to get Uptime.
+    if [ "$uptime_rc" -eq 0 ]                                           # Able to get uptime 0=yes
         then GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
              update_server_uptime "$SNAME" "$GLOB_UPTIME"               # Update Server Uptime in DB
-             if [ $? -eq 0 ] ; then return 0 ; else return 3 ; fi       # Return ErrorCode to caller
-    fi                               
+             if [ $? -ne 0 ] 
+                then  sadm_write_err "[ WARNING ] Could not update 'uptime' in database."
+             fi 
+             return 0 
+    fi 
 
-    # SSH didn't work, but it's a sporadic system (Laptop or Tmp Server, don't report an error)
-    if [ "$server_sporadic" = "1" ]                                     # If Error on Sporadic Host
+
+    # At this point SSH to system is not possible 
+    # SSH didn't work, but is it a sporadic system (Laptop or Tmp Server, don't report an error)
+    if [ $uptime_rc -ne 0 ]  && [ "$server_sporadic" = "1" ]                   # If Error on Sporadic Host
         then sadm_write_log "[ WARNING ] Can't SSH to ${FQDN_SNAME} (Sporadic System)."
              return 2                                                   # Return Skip Code to caller
     fi 
 
     # SSH didn't work, but monitoring for that system is off (don't report an error)
-    if [ "$server_monitor" = "0" ]                                      # If Error & Monitor is OFF
+    if [ $uptime_rc -ne 0 ]  &&  [ "$server_monitor" = "0" ]                   # If Error & Monitor is OFF
         then sadm_write_log "[ WARNING ] Can't SSH to ${FQDN_SNAME} (Monitoring is OFF)."
              return 2                                                   # Return Skip Code to caller
     fi 
 
     # SSH is not working and it should be at this point
-    sadm_write_err "[ ERROR ] ${FQDN_SNAME} unresponsive (Can't SSH to it)." 
+    sadm_write_err "[ ERROR ] Can't SSH to '${SNAME}' (System may be down)." 
     
     # Create Error Line in Global Error Report File (rpt)
     ADATE=$(date "+%Y.%m.%d;%H:%M")                                     # Current Date/Time
     RPTLINE="Error;${SNAME};${ADATE};linux;NETWORK"                     # Date/Time,Module,SubModule
-    RPTLINE="${RPTLINE};${FQDN_SNAME} unresponsive (Can't SSH to it)"   # Monitor Error Message
+    RPTLINE="${RPTLINE};Can't SSH to $SNAME (System may be down)"       # Monitor Error Message
     RPTLINE="${RPTLINE};${SADM_ALERT_GROUP};${SADM_ALERT_GROUP}"        # Set Alert group to notify
-    echo "$RPTLINE" >> $FETCH_RPT_LOCAL                                 # SADMIN Server Monitor RPT
-    if [ ! -d "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" ]              # Create Global rpt Dir.
-        then mkdir -p "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" 
-             if [ $(id -u) -eq 0 ]                                      # if root can change perm.
-                then chown $SADM_WWW_USER:$SADM_GROUP  "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"  
-                     chmod 777 "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"
-             fi
-    fi 
-    echo "$RPTLINE" >> $FETCH_RPT_GLOBAL                                # SADMIN All System rpt 
+
+    echo "$RPTLINE" >> $FETCH_RPT_LOCAL                                 # SADMIN Server Monitor rpt
+    echo "$RPTLINE" >> $FETCH_RPT_GLOBAL                                # SADMIN WWW All System rpt 
     return 1    
 }
 
 
 
 # --------------------------------------------------------------------------------------------------
-#  Build a system list of the O/S type (aix/linux,darwin) received.
+# build_server_list()
+#
+# Build a system list of the O/S type (aix/linux,darwin) received in parameter.
 #
 # Input Parameters :
 #   1)  Operating System Type
@@ -801,29 +984,29 @@ check_host_connectivity()
 # --------------------------------------------------------------------------------------------------
 build_server_list()
 { 
-    WOSTYPE=$1                                                          # O/S Type Linux,aix,darwin
-    
     # Build the SQL select statement for active systems with selected o/s 
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir," 
     SQL="${SQL} srv_update_minute,srv_update_hour,srv_update_dom,srv_update_month,srv_update_dow,"
     SQL="${SQL} srv_update_auto,srv_backup,srv_backup_month,srv_backup_dom,srv_backup_dow,"
     SQL="${SQL} srv_backup_hour,srv_backup_minute,"
     SQL="${SQL} srv_img_backup,srv_img_month,srv_img_dom,srv_img_dow,srv_img_hour,srv_img_minute, "
-    SQL="${SQL} srv_ssh_port, srv_backup_compress "
+    SQL="${SQL} srv_ssh_port, srv_backup_compress, "
+    SQL="${SQL} srv_vm_type, srv_export_sched, srv_export_ova, srv_export_mth, srv_export_dom, "
+    SQL="${SQL} srv_export_dow, srv_export_hrs, srv_export_min, srv_vm_host, srv_vm"
     SQL="${SQL} from server"
-    SQL="${SQL} where srv_ostype = '${WOSTYPE}' and srv_active = True "
+    SQL="${SQL} where srv_active = True "
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
 
     # Setup database connection parameters
     WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/;/'" # Build CmdLine
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
+    if [ "$SADM_DEBUG" -gt 5 ] ; then sadm_write_log "${CMDLINE}" ; fi  # Debug = Write command Line
 
     # Try simple sql statement to test connection to database
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST -e "show databases;" > /dev/null 2>&1
     if [ $? -ne 0 ]                                                     # Error Connecting to DB
-        then sadm_write "Error connecting to Database.\n"               # Access Denied
+        then sadm_write_err "[ ERROR] Error connecting to Database."    # Access Denied
              return 1                                                   # Return Error to Caller
     fi 
 
@@ -841,70 +1024,83 @@ build_server_list()
 
 
 # --------------------------------------------------------------------------------------------------
-# Process Operating System received in parameter (aix/linux,darwin)
-# Function call 3 times - One for Linux, one for Aix, and one for MacOS
-# --------------------------------------------------------------------------------------------------
+# process_servers()
+#
+# Process each Operating System received in parameter (aix/linux,darwin)
+# Function call 3 times 
+#   - One for 'Linux', one for 'Aix', and one for 'MacOS'
+# 
+#--------------------------------------------------------------------------------------------------
 process_servers()
 {
-    WOSTYPE=$1                                                          # Should be aix/linux/darwin
+    WOSTYPE=$1                                                          # Could be aix/linux/darwin
 
+    # Build a system list of the O/S type received and output to $SADM_TMP_FILE1 file.
     build_server_list "$WOSTYPE"
-    if [ $? -ne 0 ] ; then return 1 ; fi
+    if [ $? -ne 0 ] ; then return 1 ; fi                                # If error while processing
 
-    # Check input file presence and readability and not empty
-    if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
+    #cat "$SADM_TMP_FILE1"
+
+    # Check results file presence and readability and not empty.
+    if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File ! exist or ! Readable
         then return 0 
     fi 
 
-    sadm_writelog " "                                                   # Blank Line in log/Screen
-    sadm_writelog "=================================================="
-    sadm_writelog "Processing active '$WOSTYPE' server(s)" 
-    sadm_writelog " "                                                   # Blank Line in log/Screen
-
-    # Create Standard SADMIN header for cron files (sadm_backup, sadm_osupdate, sadm_rear_backup)
-    if [ "$WOSTYPE" = "linux" ] ; then create_crontab_files_header ; fi # Create crontab Files Headr
+    # Create SADMIN crontab files headers (sadm_backup, sadm_osupdate, sadm_rear_backup, sadm_vm)
+    create_crontab_files_header 
 
     # Process each servers included in $SADM_TMP_FILE1 created previously by build_server_list()
-    xcount=0; ERROR_COUNT=0;                                            # Initialize Counters 
+    xcount=0; ERROR_COUNT=0; WARNING_COUNT=0                            # Initialize Counters 
     while read wline                                                    # Read Server Data from DB
         do                                                              # Line by Line
-        xcount=`expr $xcount + 1`                                       # Incr Server Counter Var.
-        server_name=`    echo $wline|awk -F\; '{ print $1 }'`           # Extract Server Name
-        server_os=`      echo $wline|awk -F\; '{ print $2 }'`           # Extract O/S (linux/aix)
-        server_domain=`  echo $wline|awk -F\; '{ print $3 }'`           # Extract Domain of Server
-        server_monitor=` echo $wline|awk -F\; '{ print $4 }'`           # Monitor t=True f=False
-        server_sporadic=`echo $wline|awk -F\; '{ print $5 }'`           # Sporadic t=True f=False
-        server_dir=`     echo $wline|awk -F\; '{ print $7 }'`           # SADMIN Dir on Client 
-        fqdn_server=`    echo ${server_name}.${server_domain}`          # Create FQN Server Name
+        xcount=$((xcount + 1))                                          # Incr Server Counter Var.
+        server_name=$(    echo $wline|awk -F\; '{ print $1 }')          # Extract Server Name
+        server_os=$(      echo $wline|awk -F\; '{ print $2 }')          # Extract O/S (linux/aix)
+        server_domain=$(  echo $wline|awk -F\; '{ print $3 }')          # Extract Domain of Server
+        server_monitor=$( echo $wline|awk -F\; '{ print $4 }')          # Monitor t=True f=False
+        server_sporadic=$(echo $wline|awk -F\; '{ print $5 }')          # Sporadic t=True f=False
+        server_dir=$(     echo $wline|awk -F\; '{ print $7 }')          # SADMIN Dir on Client 
+        fqdn_server="${server_name}.${server_domain}"                   # Create FQN Server Name
         #
-        db_updmin=`     echo $wline|awk -F\; '{ print $8 }'`            # crontab Update Min field
-        db_updhrs=`     echo $wline|awk -F\; '{ print $9 }'`            # crontab Update Hrs field
-        db_upddom=`     echo $wline|awk -F\; '{ print $10 }'`           # crontab Update DOM field
-        db_updmth=`     echo $wline|awk -F\; '{ print $11 }'`           # crontab Update Mth field
-        db_upddow=`     echo $wline|awk -F\; '{ print $12 }'`           # crontab Update DOW field 
-        db_updauto=`    echo $wline|awk -F\; '{ print $13 }'`           # crontab Update DOW field 
+        db_updmin=$(     echo $wline|awk -F\; '{ print $8 }')           # crontab Update Min field
+        db_updhrs=$(     echo $wline|awk -F\; '{ print $9 }')           # crontab Update Hrs field
+        db_upddom=$(     echo $wline|awk -F\; '{ print $10 }')          # crontab Update DOM field
+        db_updmth=$(     echo $wline|awk -F\; '{ print $11 }')          # crontab Update Mth field
+        db_upddow=$(     echo $wline|awk -F\; '{ print $12 }')          # crontab Update DOW field 
+        db_updauto=$(    echo $wline|awk -F\; '{ print $13 }')          # crontab Update DOW field 
         #
-        backup_auto=`   echo $wline|awk -F\; '{ print $14 }'`           # crontab Backup 1=Yes 0=No 
-        backup_mth=`    echo $wline|awk -F\; '{ print $15 }'`           # crontab Backup Mth field
-        backup_dom=`    echo $wline|awk -F\; '{ print $16 }'`           # crontab Backup DOM field
-        backup_dow=`    echo $wline|awk -F\; '{ print $17 }'`           # crontab Backup DOW field 
-        backup_hrs=`    echo $wline|awk -F\; '{ print $18 }'`           # crontab Backup Hrs field
-        backup_min=`    echo $wline|awk -F\; '{ print $19 }'`           # crontab Backup Min field
+        backup_auto=$(  echo $wline|awk -F\; '{ print $14 }')           # crontab Backup 1=Yes 0=No 
+        backup_mth=$(   echo $wline|awk -F\; '{ print $15 }')           # crontab Backup Mth field
+        backup_dom=$(   echo $wline|awk -F\; '{ print $16 }')           # crontab Backup DOM field
+        backup_dow=$(   echo $wline|awk -F\; '{ print $17 }')           # crontab Backup DOW field 
+        backup_hrs=$(   echo $wline|awk -F\; '{ print $18 }')           # crontab Backup Hrs field
+        backup_min=$(   echo $wline|awk -F\; '{ print $19 }')           # crontab Backup Min field
         #
-        rear_auto=`     echo $wline|awk -F\; '{ print $20 }'`           # Rear Crontab 1=Yes 0=No 
-        rear_mth=`      echo $wline|awk -F\; '{ print $21 }'`           # Rear Crontab Mth field
-        rear_dom=`      echo $wline|awk -F\; '{ print $22 }'`           # Rear Crontab DOM field
-        rear_dow=`      echo $wline|awk -F\; '{ print $23 }'`           # Rear Crontab DOW field 
-        rear_hrs=`      echo $wline|awk -F\; '{ print $24 }'`           # Rear Crontab Hrs field
-        rear_min=`      echo $wline|awk -F\; '{ print $25 }'`           # Rear Crontab Min field
-        ssh_port=`      echo $wline|awk -F\; '{ print $26 }'`           # Port No. to SSH to System
-        compress=`      echo $wline|awk -F\; '{ print $27 }'`           # Compress (1=Yes,0=No)
+        rear_auto=$( echo $wline|awk -F\; '{ print $20 }')              # Rear Crontab 1=Yes 0=No 
+        rear_mth=$(  echo $wline|awk -F\; '{ print $21 }')              # Rear Crontab Mth field
+        rear_dom=$(  echo $wline|awk -F\; '{ print $22 }')              # Rear Crontab DOM field
+        rear_dow=$(  echo $wline|awk -F\; '{ print $23 }')              # Rear Crontab DOW field 
+        rear_hrs=$(  echo $wline|awk -F\; '{ print $24 }')              # Rear Crontab Hrs field
+        rear_min=$(  echo $wline|awk -F\; '{ print $25 }')              # Rear Crontab Min field
+        ssh_port=$(  echo $wline|awk -F\; '{ print $26 }')              # Port No. to SSH to System
+        compress=$(  echo $wline|awk -F\; '{ print $27 }')              # Compress (1=Yes,0=No)
         #
-        sadm_writelog " "                                               # White Line
-        sadm_writelog "---- [$xcount ($server_os)] ${fqdn_server} ----" # Show count & ServerName
+        vm_type=$(        echo $wline|awk -F\; '{ print $28 }')         # VM Type "vbox" for now
+        export_sched=$(   echo $wline|awk -F\; '{ print $29 }')         # 1=Sched Active 0=Inactive
+        export_ova=$(     echo $wline|awk -F\; '{ print $30 }')         # ova version 0.9, 1.0, 2.0
+        export_mth=$(     echo $wline|awk -F\; '{ print $31 }')         # month of export 
+        export_dom=$(     echo $wline|awk -F\; '{ print $32 }')         # Date in month to export 
+        export_dow=$(     echo $wline|awk -F\; '{ print $33 }')         # Day of the week to export 
+        export_hrs=$(     echo $wline|awk -F\; '{ print $34 }')         # Hour to start the export
+        export_min=$(     echo $wline|awk -F\; '{ print $35 }')         # Minute to start the export
+        export_host=$(    echo $wline|awk -F\; '{ print $36 }')         # VirtualBox Hosting VM
+        server_vm=$(      echo $wline|awk -F\; '{ print $37 }')         # 0=Physical 1=Virtual 
+        
+        sadm_write_log " "                                               # White Line
+        sadm_write_log "---- [$xcount ($server_os)] ${fqdn_server} ----" # Show count & ServerName
 
         # TO DISPLAY DATABASE COLUMN WE WILL USED, FOR DEBUGGING
-        if [ $SADM_DEBUG -gt 4 ] 
+        if [ "$SADM_DEBUG" -gt 5 ] 
             then sadm_write_log "Column Name and Value before processing them."
                  sadm_write_log "server_name     = $server_name"        # Server Name to run script
                  sadm_write_log "backup_auto     = $backup_auto"        # Run Backup ? 1=Yes 0=No 
@@ -922,40 +1118,72 @@ process_servers()
                  sadm_write_log "rear_dow        = $rear_dow  "         # Rear Crontab DOW field 
                  sadm_write_log "rear_hrs        = $rear_hrs  "         # Rear Crontab Hrs field
                  sadm_write_log "rear_min        = $rear_min  "         # Rear Crontab Min field
+                 sadm_write_log "vm_type         = $vm_type      "      # 1=VM, 0=Physical Machine
+                 sadm_write_log "export_sched    = $export_sched "      # 1=Sched Active 0=Inactive
+                 sadm_write_log "export_ova      = $export_ova   "      # ova version 0.9, 1.0, 2.0
+                 sadm_write_log "export_mth      = $export_mth   "      # month of export 
+                 sadm_write_log "export_dom      = $export_dom   "      # Date in month to export 
+                 sadm_write_log "export_dow      = $export_dow   "      # Day of the week to export 
+                 sadm_write_log "export_hrs      = $export_hrs   "      # Hour to start the export
+                 sadm_write_log "export_min      = $export_min   "      # Minute to start the export
+                 sadm_write_log "export_host     = $export_host  "      # VirtualBox Hosting VM
+                 sadm_write_log "server_vm       = $server_vm  "        # 1=VirtualSystem 0=Physical
         fi
-    
-        # Test SSH connectivity and update uptime in Database 
-        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ] # Use ssh or not
+        
+         # Test SSH connectivity, get uptime and update the Database.
+        if [ "$SADM_SERVER" != "fqdn_name" ]                           # If not on sadmin server
            then check_host_connectivity "$fqdn_server" "$ssh_port"     # Test SSH, Upd uptime in DB
-                RC=$?                                                  # Save function return code 
-                if [ $RC -eq 2 ] ; then continue ; fi                  # Sporadic,Monitor Off,OSUpd.
-                if [ $RC -eq 1 ] || [ $RC -eq 3 ]                      # Error SSH or Update Uptime
-                   then ERROR_COUNT=$(($ERROR_COUNT+1))                # Error - Incr Error counter
-                        sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
-                        continue                                       # Not accessible, Nxt Server
+                connectivity_rc=$?                                     # Save function return code 
+                if [ "$SADM_DEBUG" -ne 0 ] 
+                    then echo "Host connectivity result code is $connectivity_rc"
                 fi 
-            else GLOB_UPTIME=$(uptime |awk -F, '{print $1}' | awk '{gsub(/^[ ]+/,""); print $0}')
-                 update_server_uptime "$server_name" "$GLOB_UPTIME"    # Update Server Uptime in DB
-        fi                            
+        fi 
+        
+        SYSTEM_ONLINE="N"                                               # Default, system not online
+        case $connectivity_rc in
+            0)  SYSTEM_ONLINE="Y"                                       # Able to connect to system
+                ;;
+            1)  ((ERROR_COUNT++))                                       # Error, Can't connect
+                sadm_write_log "Total error(s) is now $ERROR_COUNT"
+                ;;
+            2)  ((WARNING_COUNT++))                                     # Warn. sporadic,monitor off
+                sadm_write_log "Total warning is now $WARNING_COUNT"
+                ;;
+            *)  ((ERROR_COUNT++))                                       # Error, Can't connect
+                sadm_write_log "[ ERROR ] Host Connectivity RC unknown '$RC'."
+                ;;
+        esac 
 
         # On Linux & O/S AutoUpdate is ON, Generate Crontab entry in O/S Update crontab work file
-        if [ "$WOSTYPE" = "linux" ] && [ "$db_updauto" -eq 1 ]          # If O/S Update Scheduled
+        if [ "$db_updauto" -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]         # If O/S Update Requested
             then update_osupdate_crontab "$server_name" "\${SADMIN}/bin/$OS_SCRIPT" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow" "$ssh_port"
         fi
 
-        # Generate Crontab Entry for this server in Backup crontab work file
-        if [ $backup_auto -eq 1 ]                                       # If Backup set to Yes 
+        # Generate Crontab Entry for this server in Backup crontab work file, if online
+        if [ "$backup_auto" -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]       # If Backup set to Yes 
             then update_backup_crontab "$server_name" "${server_dir}/bin/$BA_SCRIPT" "$backup_min" "$backup_hrs" "$backup_mth" "$backup_dom" "$backup_dow" "$ssh_port" "$compress"
         fi
 
         # Generate Crontab Entry for this server in ReaR crontab work file
-        if [ "$WOSTYPE" = "linux" ] && [ $rear_auto -eq 1 ]            # If Rear Backup set to Yes 
+        if [ $rear_auto -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]           # If Rear Backup set to Yes 
             then update_rear_crontab "$server_name" "${server_dir}/bin/$REAR_SCRIPT" "$rear_min" "$rear_hrs" "$rear_mth" "$rear_dom" "$rear_dow" "$ssh_port"
         fi
                 
+        # Generate Crontab Entry for this system in Virtual Box export crontab work file
+        # System Don't need to be alive to do an export of the VM.
+        if [ "$server_vm" -eq 1 ]                                       # 1-Virtual System, 0=Hardw
+            then update_vmexport_crontab "$server_name" "/opt/sadmin/bin/$EXPORT_SCRIPT" "$export_min" "$export_hrs" "$export_mth" "$export_dom" "$export_dow" "$ssh_port" "$export_host"
+            #then update_vmexport_crontab "$server_name" "${server_dir}/bin/$EXPORT_SCRIPT" "$export_min" "$export_hrs" "$export_mth" "$export_dom" "$export_dow" "$ssh_port" "$export_host"
+        fi
+                
         # Set remote $SADMIN/cfg Dir. and local www/dat/${server_name}/cfg directory.
-        LDIR="${SADM_WWW_DAT_DIR}/${server_name}/cfg"                   # cfg Local Receiving Dir.
+        LDIR="${SADM_WWW_DAT_DIR}/${server_name}/cfg"                   # Local Receiving Dir.
         RDIR="${server_dir}/cfg"                                        # Remote cfg Directory
+
+
+        # If system is not online then no need to perform the rsync.
+        if [ "$SYSTEM_ONLINE" = "N" ] ; then continue ; fi              # No rsync when offline
+
 
         # If client backup list was modified on master (if backup_list.tmp exist) then update client.
         if [ -r "$LDIR/backup_list.tmp" ]                               # If backup list was modify
@@ -974,16 +1202,18 @@ process_servers()
 
         # If backup exclude list was modified on master (if backup_exclude.tmp exist), update client
         if [ -r "$LDIR/backup_exclude.tmp" ]                            # Backup Exclude list modify
-           then if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ] # Use ssh or not
-                   then rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_exclude.tmp ${server_name}:$RDIR/backup_exclude.txt 
+           then if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ]
+                   then # Use rsync directory on SADMIN server to push new backup exclude list
+                        rsync -ar -e "ssh -p $ssh_port" $LDIR/backup_exclude.tmp ${server_name}:$RDIR/backup_exclude.txt 
                         RC=$?                                           # Save Command Return Code
-                   else rsync -ar $LDIR/backup_exclude.tmp $SADM_CFG_DIR/backup_exclude.txt # LocalRsync 
+                   else # Use rsync directory on SADMIN server
+                        rsync -ar $LDIR/backup_exclude.tmp $SADM_CFG_DIR/backup_exclude.txt # LocalRsync 
                         RC=$?                                           # Save Command Return Code
                 fi
                 if [ $RC -eq 0 ]                                        # If copy to client Worked
-                    then sadm_writelog "$SADM_OK Modified Backup Exclude list updated on ${server_name}"
+                    then sadm_write_log "$SADM_OK Modified Backup Exclude list updated on ${server_name}"
                          rm -f $LDIR/backup_exclude.tmp                 # Remove modified Local copy
-                    else sadm_writelog "$SADM_ERROR Syncing Backup Exclude list with ${server_name}"
+                    else sadm_write_log "$SADM_ERROR Syncing Backup Exclude list with ${server_name}"
                 fi
         fi
 
@@ -994,35 +1224,35 @@ process_servers()
         if [ -r "$REAR_USER_EXCLUDE" ]                                  # Rear Exclude option modify
            then update_rear_site_conf ${server_name}
                 if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "sadmin" ] # Use ssh ?
-                   then #sadm_writelog "rsync -var $REAR_CFG ${server_name}:/etc/rear/site.conf "
+                   then #sadm_write_log "rsync -var $REAR_CFG ${server_name}:/etc/rear/site.conf "
                         rsync -ar -e "ssh -p $ssh_port" $REAR_CFG ${server_name}:/etc/rear/site.conf 
                         if [ $? -eq 0 ] 
-                            then sadm_writelog "$SADM_OK /etc/rear/site.conf updated on ${server_name}"
-                            else sadm_writelog "$SADM_ERROR Trying to update /etc/rear/site.conf on ${server_name}"
-                                 if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi  
+                            then sadm_write_log "$SADM_OK /etc/rear/site.conf updated on ${server_name}"
+                            else sadm_write_log "$SADM_ERROR Trying to update /etc/rear/site.conf on ${server_name}"
+                                 if [ $RC -ne 0 ] ; then ERROR_COUNT=$((ERROR_COUNT++)) ; fi  
                         fi
                         #
-                        #sadm_writelog "rsync -var $REAR_USER_EXCLUDE ${server_name}:${RDIR}/rear_exclude.txt" 
+                        #sadm_write_log "rsync -var $REAR_USER_EXCLUDE ${server_name}:${RDIR}/rear_exclude.txt" 
                         rsync -ar -e "ssh -p $ssh_port" "$REAR_USER_EXCLUDE" "${server_name}:${RDIR}/rear_exclude.txt"
                         if [ $? -eq 0 ] 
-                            then sadm_writelog "$SADM_OK ${RDIR}/rear_exclude.txt updated on ${server_name}"
-                            else sadm_writelog "$SADM_ERROR Trying to update ${RDIR}/rear_exclude.txt on ${server_name}"
-                                 if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi  
+                            then sadm_write_log "$SADM_OK ${RDIR}/rear_exclude.txt updated on ${server_name}"
+                            else sadm_write_log "$SADM_ERROR Trying to update ${RDIR}/rear_exclude.txt on ${server_name}"
+                                 if [ $RC -ne 0 ] ; then ERROR_COUNT=$((ERROR_COUNT++)) ; fi  
                         fi
-                   else #sadm_writelog "rsync -var $REAR_CFG /etc/rear/site.conf" 
+                   else #sadm_write_log "rsync -var $REAR_CFG /etc/rear/site.conf" 
                         rsync -ar -e "ssh -p $ssh_port" $REAR_CFG /etc/rear/site.conf
                         if [ $? -eq 0 ] 
-                            then sadm_writelog "$SADM_OK /etc/rear/site.conf updated on ${server_name}"
-                            else sadm_writelog "$SADM_ERROR Trying to update /etc/rear/site.conf on ${server_name}"
-                                 if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi  
+                            then sadm_write_log "$SADM_OK /etc/rear/site.conf updated on ${server_name}"
+                            else sadm_write_log "$SADM_ERROR Trying to update /etc/rear/site.conf on ${server_name}"
+                                 if [ $RC -ne 0 ] ; then ERROR_COUNT=$((ERROR_COUNT++)) ; fi  
                         fi
                         #
-                        #sadm_writelog "rsync $REAR_USER_EXCLUDE ${SADM_CFG_DIR}/rear_exclude.txt" 
+                        #sadm_write_log "rsync $REAR_USER_EXCLUDE ${SADM_CFG_DIR}/rear_exclude.txt" 
                         rsync -ar -e "ssh -p $ssh_port" "$REAR_USER_EXCLUDE" "${SADM_CFG_DIR}/rear_exclude.txt"
                         if [ $? -eq 0 ] 
-                            then sadm_writelog "$SADM_OK ${SADM_CFG_DIR}/rear_exclude.txt updated on ${server_name}"
-                            else sadm_writelog "$SADM_ERROR Trying to update ${SADM_CFG_DIR}/rear_exclude.txt on ${server_name}"
-                                 if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi  
+                            then sadm_write_log "$SADM_OK ${SADM_CFG_DIR}/rear_exclude.txt updated on ${server_name}"
+                            else sadm_write_log "$SADM_ERROR Trying to update ${SADM_CFG_DIR}/rear_exclude.txt on ${server_name}"
+                                 if [ $RC -ne 0 ] ; then ERROR_COUNT=$((ERROR_COUNT++)) ; fi  
                         fi
                         RC=$?
                 fi
@@ -1037,27 +1267,26 @@ process_servers()
                    do
                    CFG_SRC="${SADM_CFG_DIR}/${WFILE}" 
                    CFG_DST="${fqdn_server}:${server_dir}/cfg/${WFILE}"
-                   CFG_CMD="rsync -ar -e ssh -p $ssh_port ${CFG_SRC} ${CFG_DST}"
-                   if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CFG_CMD" ; fi 
+                   CFG_CMD="rsync -ar -e 'ssh -p $ssh_port' ${CFG_SRC} ${CFG_DST}"
+                   if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "$CFG_CMD" ; fi 
                    rsync -ar -e "ssh -p $ssh_port" "${CFG_SRC}" "${CFG_DST}" >> "$SADM_LOG" 2>&1
                    RC=$? 
                    if [ $RC -ne 0 ]
-                      then sadm_writelog "$SADM_ERROR ($RC) doing ${CFG_CMD}"
-                           ERROR_COUNT=$(($ERROR_COUNT+1))
-                      else sadm_writelog "$SADM_OK ${CFG_CMD}" 
+                      then sadm_write_log "$SADM_ERROR ($RC) doing ${CFG_CMD}"
+                           ((ERROR_COUNT++))
+                      else sadm_write_log "$SADM_OK ${CFG_CMD}" 
                    fi
                    done  
         fi 
 
         # Get remote $SADMIN/cfg Dir. and update local www/dat/${server_name}/cfg directory.
-        #sadm_write_log "SADM_ON_SADMIN_SERVER = $SADM_ON_SADMIN_SERVER"
         if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ] # Use ssh or not
             then rsync_function "$fqdn_server:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
                  RC=$?                                                  # Save Command Return Code
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
                  RC=$?                                                  # Save Command Return Code
         fi
-        if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
+        if [ $RC -ne 0 ] ; then ((ERROR_COUNT++)) ; fi                  # rsync error, Incr Err Cntr
         chown -R $SADM_WWW_USER:$SADM_GROUP ${SADM_WWW_DAT_DIR}/${server_name} # Change Owner
 
         
@@ -1070,7 +1299,7 @@ process_servers()
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
                  RC=$?                                                  # Save Command Return Code
         fi
-        if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
+        if [ $RC -ne 0 ] ; then ((ERROR_COUNT++)) ; fi                  # rsync error, Incr Err Cntr
         find $LDIR -type f -exec chown $SADM_WWW_USER:$SADM_WWW_GROUP {} \;
         find $LDIR -type f -exec chmod 666 {} \;
 
@@ -1097,21 +1326,24 @@ process_servers()
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
                  RC=$?                                                  # Save Command Return Code
         fi
-        if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
+        if [ $RC -ne 0 ] ; then ((ERROR_COUNT++)) ; fi                  # rsync error, Incr Err Cntr
         find $LDIR -type f -exec chown $SADM_WWW_USER:$SADM_WWW_GROUP {} \;
         find $LDIR -type f -exec chmod 666 {} \;
 
 
         # Advise the user if the total error counter is different than zero.
         if [ $ERROR_COUNT -ne 0 ]                                       # If at Least 1 Error
-           then sadm_writelog " "                                       # Separation Blank Line
-                sadm_writelog "** Total ${WOSTYPE} error(s) is now $ERROR_COUNT" # Show Err. Count
+           then sadm_write_log " "                                      # Separation Blank Line
+                sadm_write_log "** Total error is now $ERROR_COUNT"     # Show Err. Count
+        fi
+        if [ $WARNING_COUNT -ne 0 ]                                     # If at Least 1 Warning
+           then sadm_write_log "** Total warning is now $WARNING_COUNT" # Show Warning Count
         fi
 
-        done < $SADM_TMP_FILE1                                          # Read active server list
+        done < "$SADM_TMP_FILE1"                                        # Read active server list
 
-    sadm_writelog " "                                                   # Separation Blank Line
-    #sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
+    sadm_write_log " "                                                  # Separation Blank Line
+    #sadm_write_log "${SADM_TEN_DASH}"                                  # Print 10 Dash line
     return $ERROR_COUNT                                                 # Return Total Error Count
 }
 
@@ -1119,9 +1351,11 @@ process_servers()
 
 
 # --------------------------------------------------------------------------------------------------
+# check_all_rpt()
+#
 # Combine all clients *.rpt files and issues alert(s) if needed.
-# ----------
 # Get all *.rpt files content and output it then a temp file ($SADM_TMP_FILE1).
+# 
 #  Example of rpt content : 
 #   Warning;nomad;2018.09.16;11:00;linux;FILESYSTEM;Filesystem /usr at 86% > 85%;mail;sadmin
 #   Error;nano;2018.09.16;11:00;SERVICE;DAEMON;Service crond|cron not running !;sadm;sadm
@@ -1130,84 +1364,87 @@ process_servers()
 # --------------------------------------------------------------------------------------------------
 check_all_rpt()
 {
-    sadm_writelog "Verifying all Systems Monitors reports files (*.rpt) :"
-    find $SADM_WWW_DAT_DIR -name *.rpt -exec cat {} \;  > $SADM_TMP_FILE3
-    if [ $SADM_DEBUG -gt 0 ] 
-        then sadm_write "\nFile containing results\n"
-             ls -l $SADM_TMP_FILE3
-             sadm_write "Content of the file $SADM_TMP_FILE3 \n" 
-             cat  $SADM_TMP_FILE3 | while read wline ; do sadm_writelog "$wline"; done
+    # Combine all *.rpt files into one $SADM_TMP_FILE3
+    sadm_write_log "Verifying all systems monitors RePorTs files (*.rpt) :"
+    find "$SADM_WWW_DAT_DIR"  -name "*.rpt" -exec cat {} \;  > "$SADM_TMP_FILE3"
+    if [ "$SADM_DEBUG" -gt 0 ] 
+        then sadm_write_log " " 
+             sadm_write_log "File containing results"
+             ls -l "$SADM_TMP_FILE3"
+             sadm_write_log "Content of the file $SADM_TMP_FILE3" 
+             cat "$SADM_TMP_FILE3" | while read wline ; do sadm_write_log "$wline"; done
     fi 
-
 
     # Process the file containing all *.rpt content (if any).
     if [ -s "$SADM_TMP_FILE3" ]                                         # If File Not Zero in Size
-        then while read line                      # Read Each Line of file
+        then while read line                                            # Read Each Line of file
                 do
-                if [ $SADM_DEBUG -gt 6 ] ; then sadm_writelog "Processing Line=$line" ; fi
-                ehost=`echo $line | awk -F\; '{ print $2 }'`            # Get Hostname for Event
-                emess=`echo $line | awk -F\; '{ print $7 }'`            # Get Event Error Message
-                wdate=`echo $line | awk -F\; '{ print $3 }'`            # Get Event Date
-                wtime=`echo $line | awk -F\; '{ print $4 }'`            # Get Event Time
+                if [ "$SADM_DEBUG" -gt 6 ] ; then sadm_write_log "Processing Line=$line" ; fi
+                ehost=$(echo "$line" | awk -F\; '{ print $2 }')         # Get Hostname for Event
+                emess=$(echo "$line" | awk -F\; '{ print $7 }')         # Get Event Error Message
+                wdate=$(echo "$line" | awk -F\; '{ print $3 }')         # Get Event Date
+                wtime=$(echo "$line" | awk -F\; '{ print $4 }')         # Get Event Time
                 etime="${wdate} ${wtime}"                               # Combine Event Date & Time
-                if [ ${line:0:1} = "W" ] || [ ${line:0:1} = "w" ]       # If it is a Warning
+                if [ "${line:0:1}" = "W" ] || [ "${line:0:1}" = "w" ]   # If it is a WARNING
                     then etype="W"                                      # Set Event Type to Warning
-                         egname=`echo $line | awk -F\; '{ print $8 }'`  # Get Warning Alert Group
+                         egname=$(echo "$line" |awk -F\; '{ print $8 }') # Get Warning Alert Group
                          esub="$emess"                                  # Specify it is a Warning
                 fi
-                if [ ${line:0:1} = "I" ] || [ ${line:0:1} = "i" ]       # If it is an Info
+                if [ "${line:0:1}" = "I" ] || [ "${line:0:1}" = "i" ]   # If it is an INFO
                     then etype="I"                                      # Set Event Type to Info
-                         egname=`echo $line | awk -F\; '{ print $8 }'`  # Get Info Alert Group
+                         egname=$(echo "$line" |awk -F\; '{print $8}')  # Get Info Alert Group
                          esub="$emess"                                  # Specify it is an Info
                 fi
-                if [ ${line:0:1} = "E" ] || [ ${line:0:1} = "e" ]       # If it is an Info
+                if [ "${line:0:1}" = "E" ] || [ "${line:0:1}" = "e" ]   # If it is an ERROR
                     then etype="E"                                      # Set Event Type to Error
-                         egname=`echo $line | awk -F\; '{ print $9 }'`  # Get Error Alert Group
+                         egname=$(echo "$line" |awk -F\; '{print $9}')  # Get Error Alert Group
                          esub="$emess"                                  # Specify it is a Error
                 fi
-                emess2=`echo -e "${emess}\nEvent Date/Time : ${etime}\n"` 
-                if [ $SADM_DEBUG -gt 0 ] 
-                    then sadm_writelog "sadm_send_alert $etype $etime $ehost sysmon $egname $esub $emess $eattach"
+                emess2=$(echo -e "${emess}\nEvent Date/Time : ${etime}\n")
+                if [ "$SADM_DEBUG" -gt 0 ] 
+                    then sadm_write_log "sadm_send_alert $etype $etime $ehost sysmon $egname $esub $emess $eattach"
                 fi
-                #sadm_write "$etime SysMon alert ($etype) on ${ehost} : ${emess}\n"
-                alert_counter=`expr $alert_counter + 1`                 # Increase Submit AlertCount
+
+                ((alert_counter++))
                 umess="${alert_counter}) $etime SysMon alert ($etype) on ${ehost} : ${emess} -"
-                t_alert=`expr $t_alert + 1`                             # Incr. Alert counter
+                ((t_alert++))
                 sadm_send_alert "$etype" "$etime" "$ehost" "SysMon" "$egname" "$esub" "$emess2" "$eattach"
                 RC=$?
+                
                 case $RC in
-                    0)  t_ok=`expr $t_ok + 1`
-                        sadm_writelog "${umess} Alert sent successfully."
+                    0)  ((t_ok++))
+                        sadm_write_log "${umess} Alert sent successfully."
                         ;;
-                    1)  t_error=`expr $t_error + 1`
-                        sadm_writelog "${umess} Error submitting alert."
+                    1)  ((t_error++))
+                        sadm_write_log "${umess} Error submitting alert."
                         ;;
-                    2)  t_duplicate=`expr $t_duplicate + 1`
-                        sadm_writelog "${umess} Alert already sent."
+                    2)  ((t_duplicate++))
+                        sadm_write_log "${umess} Alert already sent."
                         ;;
-                    3)  t_oldies=`expr $t_oldies + 1`
-                        sadm_writelog "${umess} Alert is older than 24 hrs."
+                    3)  ((t_oldies++))
+                        sadm_write_log "${umess} Alert is older than 24 hrs."
                         ;;
-                    *)  if [ $SADM_DEBUG -gt 0 ] 
-                            then sadm_writelog "   - ERROR: Unknown return code $RC"
+                    *)  if [ "$SADM_DEBUG" -gt 0 ] 
+                            then sadm_write_log "   - ERROR: Unknown return code $RC"
                         fi
                         ;;
-                esac                                                    # End of case
-                done < $SADM_TMP_FILE3 
-        else sadm_writelog "${BOLD}No error reported by any 'SysMon report files' (*.rpt).${NORMAL}" 
+                esac 
+
+                done < "$SADM_TMP_FILE3" 
+        else sadm_write_log "${BOLD}No error reported by any 'SysMon report files' (*.rpt).${NORMAL}" 
     fi
 
     # Print Alert submitted Summary
-    sadm_writelog " "                                               # Separation Blank Line
+    sadm_write_log " "
     if [ $t_alert -ne 0 ]    
-        then sadm_writelog "${BOLD}$t_alert System Monitor Alert(s) submitted${NORMAL}"
-        else sadm_writelog "${BOLD}No System Monitor Alert(s) submitted${NORMAL}"
+        then sadm_write_log "${BOLD}$t_alert System Monitor Alert(s) submitted${NORMAL}"
+        else sadm_write_log "${BOLD}No System Monitor Alert(s) submitted${NORMAL}"
     fi
-    sadm_writelog "   - New alert sent successfully : $t_ok" 
-    sadm_writelog "   - Alert error trying to send  : $t_error"
-    sadm_writelog "   - Alert older than 24 Hrs     : $t_oldies"
-    sadm_writelog "   - Alert already sent          : $t_duplicate"
-    sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
+    sadm_write_log "   - New alert sent successfully : $t_ok" 
+    sadm_write_log "   - Alert error trying to send  : $t_error"
+    sadm_write_log "   - Alert older than 24 Hrs     : $t_oldies"
+    sadm_write_log "   - Alert already sent          : $t_duplicate"
+    sadm_write_log "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
 
 }
 
@@ -1222,17 +1459,17 @@ check_all_rpt()
 # --------------------------------------------------------------------------------------------------
 check_all_rch()
 {
-    sadm_write "\n"
-    sadm_write "${BOLD}${YELLOW}Verifying all systems scripts results files (*.rch) :${NORMAL}\n"
+    sadm_write_log " "
+    sadm_write_log "${BOLD}${YELLOW}Verifying all systems scripts results files (*.rch) :${NORMAL}"
     total_ok=0 ; total_error=0 ; total_oldies=0 ; total_duplicate=0     # Clear Function Totals
     find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \; > $SADM_TMP_FILE1 2>&1
     awk 'match($NF,/[0-1]/) { print }' $SADM_TMP_FILE1 >$SADM_TMP_FILE2 # Keep line ending with 0or1
 
     # IF NO FILE TO PROCESS
     if [ ! -s "$SADM_TMP_FILE2" ]                                       # If File Zero in Size
-        then sadm_write "No error reported by any scripts files (*.rch)\n" 
-             sadm_write "${SADM_TEN_DASH}\n"                            # Print 10 Dash 
-             sadm_write "\n"                                            # Separation Blank Line
+        then sadm_write_log "No error reported by any scripts files (*.rch)" 
+             sadm_write_log "${SADM_TEN_DASH}"                          # Print 10 Dash 
+             sadm_write_log ""                                          # Separation Blank Line
              return 0                                                   # Return to Caller
     fi
 
@@ -1240,7 +1477,7 @@ check_all_rch()
     alert_counter=0                                                     # Init alert counter
     cat $SADM_TMP_FILE2 | { while read line                             # Read Each Line of file
         do                
-        NBFIELD=`echo $line | awk '{ print NF }'`                       # How many fields on line ?
+        NBFIELD=$(echo $line | awk '{print NF}')                        # How many fields on line ?
 
         # Each line MUST have the right number of field ($NBFIELD) to be process, else skip line.
         if [ $SADM_DEBUG -gt 8 ] ;then sadm_write "Processing Line: ${line} ($NBFIELD)\n" ;fi
@@ -1296,52 +1533,49 @@ check_all_rch()
         #  - If script terminate with error ($egtype=1 and $ecode=1)
         #  - If script terminate with success  ($egtype=2 and $ecode=0)
         #  - Each time the script is executed ($egtype=3)
-        if [ "$egtype" = "1" -a "$ecode" = "1" ] || 
-           [ "$egtype" = "2" -a "$ecode" = "0" ] || [ "$egtype" = "3" ]  
-           then total_alert=`expr $total_alert + 1`                     # Incr. Alert counter
-                if [ $SADM_DEBUG -gt 0 ]                                # Under Debug Show Parameter
+        if [ "$egtype" = "1" ] && [ "$ecode" = "1" ] || 
+           [ "$egtype" = "2" ] && [ "$ecode" = "0" ] || [ "$egtype" = "3" ]  
+           then ((total_alert++))                                       # Incr. Alert counter
+                if [ "$SADM_DEBUG" -gt 0 ]                              # Under Debug Show Parameter
                    then dmess="'$etype' '$start_time' '$end_time' '$ehost' '$egname'"    # Build Mess to see Param.
                         dmess="$dmess '$esub' '$emess' '$eattach'"      # Build Mess to see Param.
-                        sadm_writelog "sadm_send_alert $dmess RC=$RC"   # Show User Paramaters sent
+                        sadm_write_log "sadm_send_alert $dmess RC=$RC"   # Show User Paramaters sent
                 fi
-                alert_counter=`expr $alert_counter + 1`                 # Increase Submit AlertCount
-                #sadm_writelog " " 
-                #sadm_writelog "${alert_counter}) $etime alert ($etype) for $escript on ${ehost}: "
-                #sadm_writelog "   - $emess"
+                ((alert_counter++))                                     # Increase Submit AlertCount
                 emess=$(echo -e "${emess}\nScript start time  : ${start_time}\n")
                 emess=$(echo -e "${emess}\nScript end time    : ${end_time}\n")
                 emess=$(echo -e "${emess}\nScript elapse time : ${elapse}\n")
                 if [ $SADM_DEBUG -gt 0 ] ;then sadm_write "Email Message is:\n${emess}\n" ; fi
                 sadm_send_alert "$etype" "$end_time" "$ehost" "$escript" "$egname" "$esub" "$emess" "$eattach"
                 RC=$?
-                if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "RC=$RC" ;fi # Debug Show ReturnCode
+                if [ $SADM_DEBUG -gt 0 ] ;then sadm_write_log "RC=$RC" ;fi   # Debug Show ReturnCode
                 case $RC in
-                    0)  total_ok=`expr $total_ok + 1`
-                        sadm_writelog "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Alert was sent successfully."
+                    0)  ((total_ok++))
+                        sadm_write_log "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Alert was sent successfully."
                         ;;
-                    1)  total_error=`expr $total_error + 1`
-                        sadm_writelog "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Error submitting the alert."
+                    1)  ((total_error++))
+                        sadm_write_log "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Error submitting the alert."
                         ;;
-                    2)  total_duplicate=`expr $total_duplicate + 1`
-                        sadm_writelog "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Alert already sent."
+                    2)  ((total_duplicate++))
+                        sadm_write_log "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Alert already sent."
                         ;;
-                    3)  total_oldies=`expr $total_oldies + 1`
-                        sadm_writelog "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Alert is older than 24 hrs."
+                    3)  ((total_oldies++))
+                        sadm_write_log "${alert_counter}) $start_time alert ($etype) for $escript on ${ehost}: Alert is older than 24 hrs."
                         ;;
-                    *)  if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "   - ERROR: Unknown return code $RC"; fi
+                    *)  if [ $SADM_DEBUG -gt 0 ] ;then sadm_write_log "   - ERROR: Unknown return code $RC"; fi
                         ;;
                 esac                                                    # End of case
         fi
         done 
 
         # Print Alert submitted Summary
-        sadm_writelog " "                                               # Separation Blank Line
-        sadm_writelog "${BOLD}$total_alert Script(s) Alert(s) submitted${NORMAL}"
-        sadm_writelog "   - New alert sent successfully : $total_ok"
-        sadm_writelog "   - Alert error trying to send  : $total_error"
-        sadm_writelog "   - Alert older than 24 Hrs     : $total_oldies"
-        sadm_writelog "   - Alert already sent          : $total_duplicate"
-        sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
+        sadm_write_log " "                                               # Separation Blank Line
+        sadm_write_log "${BOLD}$total_alert Script(s) Alert(s) submitted${NORMAL}"
+        sadm_write_log "   - New alert sent successfully : $total_ok"
+        sadm_write_log "   - Alert error trying to send  : $total_error"
+        sadm_write_log "   - Alert older than 24 Hrs     : $total_oldies"
+        sadm_write_log "   - Alert already sent          : $total_duplicate"
+        sadm_write_log "${SADM_TEN_DASH}"                                # Print 10 Dash lineHistory
     }                                                              
 }
 
@@ -1349,136 +1583,162 @@ check_all_rch()
 
 
 # --------------------------------------------------------------------------------------------------
+# crontab_update()
+#
 # Check checksum of current crontab versus the one created while processing each systems.
 # If checksum is different, update the crontab file (For sadm_osupdate file and sadm_vackup file).
+#
 # --------------------------------------------------------------------------------------------------
 crontab_update()
 {
-    sadm_writelog "${BOLD}${YELLOW}Crontab Update Summary${NORMAL}"
+    sadm_write_log "${BOLD}${YELLOW}Crontab Update Summary${NORMAL}"
 
-    # Create sha1sum on newly and actual backup crontab.
+    # Create sha1sum on newly created and actual backup crontab.
     # Compare the two sha1sum and if they are different, then the new crontab become the actual.
-    if [ -f ${SADM_CRON_FILE} ] ; then work_sha1=`sha1sum ${SADM_CRON_FILE} |awk '{print $1}'` ;fi 
-    if [ -f ${SADM_CRONTAB} ]   ; then real_sha1=`sha1sum ${SADM_CRONTAB}   |awk '{print $1}'` ;fi 
+    if [ -f "$SADM_CRON_FILE" ] ; then work_sha1=$(sha1sum "$SADM_CRON_FILE" |awk '{print $1}') ;fi 
+    if [ -f "$SADM_CRONTAB" ]   ; then real_sha1=$(sha1sum "$SADM_CRONTAB"   |awk '{print $1}') ;fi 
     if [ "$work_sha1" != "$real_sha1" ]                                 # New Different than Actual?
-       then if [ -f ${SADM_CRON_FILE} ]
-                then cp ${SADM_CRON_FILE} ${SADM_CRONTAB}               # Put in place New Crontab
-                     chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB} # Set crontab Perm.
-                     sadm_writelog "  - O/S update schedule crontab ($SADM_CRONTAB) was updated."
-            fi  
-       else sadm_writelog "  - No need to update the O/S update schedule crontab ($SADM_CRONTAB)."
+       then cp "$SADM_CRON_FILE" "$SADM_CRONTAB"                        # Put in place New Crontab
+            sadm_write_log "  - O/S update schedule crontab ($SADM_CRONTAB) was updated."
+       else sadm_write_log "  - No need to update the O/S update schedule crontab '$SADM_CRONTAB'."
     fi
-    rm -f ${SADM_CRON_FILE} >>/dev/null 2>&1                            # Remove crontab work file
+    chmod 644 "$SADM_CRONTAB" 
+    chown root:root "$SADM_CRONTAB" 
+    rm -f $SADM_CRON_FILE  >/dev/null 2>&1                              # Remove crontab work file
 
-    # Create sha1sum on newly and actual backup crontab.
+    # Create sha1sum on newly created and actual backup crontab.
     # Compare the two sha1sum and if they are different, then the new crontab become the actual.
-    if [ -f ${SADM_BACKUP_NEWCRON} ] ; then nsha1=`sha1sum ${SADM_BACKUP_NEWCRON} |awk '{print $1}'` ;fi
-    if [ -f ${SADM_BACKUP_CRONTAB} ] ; then asha1=`sha1sum ${SADM_BACKUP_CRONTAB} |awk '{print $1}'` ;fi 
+    if [ -f "$SADM_BACKUP_NEWCRON" ] ; then nsha1=$(sha1sum "$SADM_BACKUP_NEWCRON" |awk '{print $1}') ;fi
+    if [ -f "$SADM_BACKUP_CRONTAB" ] ; then asha1=$(sha1sum "$SADM_BACKUP_CRONTAB" |awk '{print $1}') ;fi 
     if [ "$nsha1" != "$asha1" ]                                         # New Different than Actual?
-       then if [ -f ${SADM_BACKUP_NEWCRON} ]
-                then cp ${SADM_BACKUP_NEWCRON} ${SADM_BACKUP_CRONTAB}   # Put in place New Crontab
-                     chmod 644 $SADM_BACKUP_CRONTAB ; chown root:root ${SADM_BACKUP_CRONTAB}
-                     sadm_writelog "  - Clients backup schedule crontab ($SADM_BACKUP_CRONTAB) was updated." 
+       then if [ -f "$SADM_BACKUP_NEWCRON" ]
+                then cp "$SADM_BACKUP_NEWCRON" "$SADM_BACKUP_CRONTAB"   # Put in place New Crontab
+                     sadm_write_log "  - Clients backup schedule crontab '$SADM_BACKUP_CRONTAB' updated." 
             fi
-       else sadm_writelog "  - No need to update the backup crontab ($SADM_BACKUP_CRONTAB)."
+       else sadm_write_log "  - No need to update the backup crontab '$SADM_BACKUP_CRONTAB)'."
     fi
-    rm -f ${SADM_BACKUP_NEWCRON} >>/dev/null 2>&1                       # Remove crontab work file
+    chmod 644 "$SADM_BACKUP_CRONTAB" 
+    chown root:root "$SADM_BACKUP_CRONTAB"
+    rm -f $SADM_BACKUP_NEWCRON  >/dev/null 2>&1                         # Remove crontab work file
 
-    # Create sha1sum on newly and actual ReaR backup crontab.
+    # Create sha1sum on newly created and live ReaR backup crontab.
     # Compare the two sha1sum and if they are different, then the new crontab become the actual.
-    if [ -f ${SADM_REAR_NEWCRON} ] ; then nsha1=`sha1sum ${SADM_REAR_NEWCRON} |awk '{print $1}'` ;fi
-    if [ -f ${SADM_REAR_CRONTAB} ] ; then asha1=`sha1sum ${SADM_REAR_CRONTAB} |awk '{print $1}'` ;fi 
+    if [ -f "$SADM_REAR_NEWCRON" ] ;then nsha1=$(sha1sum "$SADM_REAR_NEWCRON" |awk '{print $1}') ;fi
+    if [ -f "$SADM_REAR_CRONTAB" ] ;then asha1=$(sha1sum "$SADM_REAR_CRONTAB" |awk '{print $1}') ;fi 
     if [ "$nsha1" != "$asha1" ]                                         # New Different than Actual?
-       then if [ -f ${SADM_REAR_NEWCRON} ]
-                then cp ${SADM_REAR_NEWCRON} ${SADM_REAR_CRONTAB}       # Put in place New Crontab
-                     chmod 644 $SADM_REAR_CRONTAB ; chown root:root ${SADM_REAR_CRONTAB}
-                     sadm_writelog "  - Clients ReaR backup schedule crontab ($SADM_REAR_CRONTAB) was updated."
-            fi 
-       else sadm_writelog "  - No need to update the ReaR backup crontab ($SADM_REAR_CRONTAB)."
+       then cp "$SADM_REAR_NEWCRON" "$SADM_REAR_CRONTAB"                # Put in place New Crontab
+            sadm_write_log "  - Clients ReaR backup schedule crontab '$SADM_REAR_CRONTAB' was updated."
+       else sadm_write_log "  - No need to update the ReaR backup crontab '$SADM_REAR_CRONTAB'."
     fi
-    rm -f ${SADM_REAR_NEWCRON} >>/dev/null 2>&1                         # Remove crontab work file
+    chmod 644 "$SADM_REAR_CRONTAB" 
+    chown root:root "$SADM_REAR_CRONTAB" 
+    rm -f $SADM_REAR_NEWCRON  >/dev/null 2>&1                           # Remove crontab work file
 
-    sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog " "
+
+
+    # Create sha1sum on newly and actual VM export crontab.
+    # Compare the two sha1sum and if they are different, then the new crontab become the actual.
+    if [ -f "SADM_VMEXPORT_NEWCRON" ] ;then nsha1=$(sha1sum "$SADM_VMEXPORT_NEWCRON" |awk '{print $1}') ;fi
+    if [ -f "SADM_VMEXPORT_CRONTAB" ] ;then asha1=$(sha1sum "$SADM_VMEXPORT_CRONTAB" |awk '{print $1}') ;fi 
+
+    #echo "SADM_VMEXPORT_CRONTAB = $SADM_VMEXPORT_NEWCRON"
+    #echo "nsha1=$nsha1 "
+    #cat  "$SADM_VMEXPORT_NEWCRON" | while read wline ; do sadm_writelog "$wline"; done
+
+    #echo "SADM_VMEXPORT_CRONTAB = $SADM_VMEXPORT_CRONTAB"
+    #echo "asha1=$asha1"
+    #cat  "$SADM_VMEXPORT_CRONTAB" | while read wline ; do sadm_writelog "$wline"; done
+
+    if [ "$nsha1" != "$asha1" ]                                         # New Different than Actual?
+       then cp "$SADM_VMEXPORT_NEWCRON" "$SADM_VMEXPORT_CRONTAB"        # Put in place New Crontab
+            sadm_write_log "  - Virtual system export schedule crontab '$SADM_VMEXPORT_CRONTAB' updated."
+       else sadm_write_log "  - No need to update virtual system export crontab '$SADM_VMEXPORT_CRONTAB'."
+    fi
+    chmod 644 "$SADM_VMEXPORT_CRONTAB" 
+    chown root:root "$SADM_VMEXPORT_CRONTAB"
+    rm -f $SADM_VMEXPORT_NEWCRON  >/dev/null 2>&1                       # Remove crontab work file
+
+    sadm_write_log "${SADM_TEN_DASH}"
+    sadm_write_log " "
+    return 0
 }
 
 
 
-
 # --------------------------------------------------------------------------------------------------
-# Get from all actives servers the new hostname.rpt file and all the new or updated *.rch files.
+# main_process()
+#
+# Get from all actives sadmin clients the new hostname.rpt & all the new or updated *.rch files.
+#
 # --------------------------------------------------------------------------------------------------
 main_process()
 {   
-    error_count=0                                                       # Init error counter
+    PROCESS_ERROR=0                                                     # Init. Error count to 0
     
-    # Initialize local rpt file 
-    > "$FETCH_RPT_LOCAL"                                                # Clear/Create RPT file
-    if [ ! -d "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" ]              # Create Global rpt Dir.
-        then mkdir -p "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" 
-             if [ $(id -u) -eq 0 ]  
-                then chown $SADM_WWW_USER:$SADM_GROUP  "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"  
-                     chmod 777 "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"
-            fi 
-    fi     
-    > "$FETCH_RPT_GLOBAL"                                               # Create Mon. in Glocal Dir
-    LINUX_ERROR=0; AIX_ERROR=0 ; MAC_ERROR=0                            # Init. Error count to 0
+    # Making sure that SADMIN server have a $SADMIN/www/dat/HOSTNAME/rpt directory for this system.
+    WDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"                     # Web copy of the rpt dir.
+    if [ ! -d "$WDIR" ] ; then mkdir -p "$WDIR" ; fi 
+    chown "$SADM_WWW_USER:$SADM_GROUP"  "$WDIR" 
+    chmod 775 "$WDIR" 
 
-    # Process All Active Linux/Aix servers
+    # Create a starting empty global rpt file $SADMIN/www/dat/HOSTNAME/rpt/HOSTNAME_fetch.rpt
+    if [ -f "$FETCH_RPT_GLOBAL" ] ;then rm -f "$FETCH_RPT_GLOBAL" ;fi   # rm global RPT file if exist
+    touch "$FETCH_RPT_GLOBAL"                                           # Create global RPT file
+    chown "$SADM_WWW_USER:$SADM_GROUP"  "$FETCH_RPT_GLOBAL"  
+    chmod 664 "$FETCH_RPT_GLOBAL"
+
+    # Create starting empty local rpt file $SADMIN/dat/rpt/HOSTNAME_fetch.rpt
+    if [ -f "$FETCH_RPT_LOCAL" ] ; then rm -f "$FETCH_RPT_LOCAL" ; fi   # rm local RPT file if exist
+    touch "$FETCH_RPT_LOCAL"                                            # Create EMPTY local RPTfile
+    chown "$SADM_USER:$SADM_GROUP"  "$FETCH_RPT_LOCAL"  
+    chmod 664 "$FETCH_RPT_LOCAL"
+
+    # Process All Active Linux systems.
     process_servers "linux"                                             # Process Active Linux
-    LINUX_ERROR=$?                                                      # Save Nb. Errors in process
-    AIX_ERROR=0 ; MAC_ERROR=0
-    #process_servers "aix"                                               # Process Active Aix
-    #AIX_ERROR=$?                                                        # Save Nb. Errors in process
-    #process_servers "darwin"                                            # Process Active MacOS
-    #MAC_ERROR=$?                                                        # Save Nb. Errors in proces
+    PROCESS_ERROR=$?                                                    # Save Nb. Errors in process
 
     # Print Total Scripts Errors
-    sadm_writelog " "                                                   # Separation Blank Line
-    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
-    sadm_writelog "Systems Rsync Summary"                               # Rsync Summary 
-    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR+$MAC_ERROR))              # ExitCode=AIX+Linux+Mac Err
-    sadm_writelog " - Total Linux error(s)  : ${LINUX_ERROR}"           # Display Total Linux Errors
-#    sadm_writelog " - Total Aix error(s)    : ${AIX_ERROR}"             # Display Total Aix Errors
-#    sadm_writelog " - Total Mac error(s)    : ${MAC_ERROR}"             # Display Total Mac Errors
-#    sadm_writelog "Rsync Total Error(s)     : ${SADM_EXIT_CODE}"
-    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
-    sadm_writelog " "                                                   # Separation Blank Line
+    sadm_write_log " "                                                  # Separation Blank Line
+    sadm_write_log "${SADM_TEN_DASH}"                                   # Print 10 Dash lineHistory
+    sadm_write_log "Systems Rsync Summary"                              # Rsync Summary 
+    sadm_write_log " - Total error(s)  : ${PROCESS_ERROR}"              # Display Total Linux Errors
+    sadm_write_log "${SADM_TEN_DASH}"                                   # Print 10 Dash lineHistory
+    sadm_write_log " "                                                  # Separation Blank Line
 
-    # Go and check if crontabs need to be updated (sadm_backup, sadm_osupdate, sadm_rear_backup)
-    if [ $(sadm_get_ostype) = "LINUX" ] ; then crontab_update ; fi      # Update crontab if needed
-    
-    # To prevent this script from showing very often on the monitor (This script run every 5 min)
-    # We copy immediatly the updated .rch file in the SADMIN main web central directory. 
-    if [ ! -d ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ]                # Web RCH repo Dir not exist
-        then mkdir -p ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch          # Create it
-    fi
+    # Check if crontabs need to be updated (sadm_backup, sadm_osupdate, sadm_rear_backup, sadm_vm)
+    crontab_update                                                      # Update crontab if changed
 
+    # If Global RCH and RPT directories don't exist
+    WDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"                     # Web Global RCH repo Dir 
+    if [ ! -d "$WDIR" ] ; then mkdir -p "$WDIR" ; fi
+    chmod 775 "$WDIR"
 
-    # Copy local result files (rch,rpt) to Global Directory ($DSADMIN/www/dat/$HOSTNAME).
-    if [ ! -d "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch" ]              # Web RCH repo Dir not exist
-        then mkdir -p "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"        # Create it
-    fi
-    cp "$SADM_RCHLOG" "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"        # cp rch for instant Status
-    if [ $(id -u) -eq 0 ] ; then chmod 666 "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch" ; fi 
+    WDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"                     # Web Global RPT repo Dir 
+    if [ ! -d "$WDIR" ] ; then mkdir -p "$WDIR" ; fi
+    chmod 775 "$WDIR"
 
-    if [ ! -d "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" ]              # Web RCH repo Dir not exist
-        then mkdir -p "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"        # Create it
-    fi
-    cp "${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt" "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" # cp rpt for instant Status
+    # Copy local rpt and rch to Global www directories.
+    chmod 664 "$SADM_RPT_FILE"
+    cp "$SADM_RPT_FILE" "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" 
     if [ $? -ne 0 ] 
-        then sadm_write_err "[ ERROR ] cp ${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"
-             ((error_count++))                                         # Increase Error Counter 
+        then sadm_write_err "[ ERROR ] cp $SADM_RPT_FILE ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"
+             ((PROCESS_ERROR++))                                        # Increase Error Counter 
     fi
-    if [ $(id -u) -eq 0 ]; then chmod 666 "${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt" ; fi
+    chmod 664 "$SADM_RCH_FILE"
+    cp "$SADM_RCH_FILE" "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"      # cp rch for instant Status
+    if [ $? -ne 0 ] 
+        then sadm_write_err "[ ERROR ] cp $SADM_RCH_FILE ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"
+             ((PROCESS_ERROR++))                                        # Increase Error Counter 
+    fi
 
     # Check for Error or Alert to submit
     check_all_rpt                                                       # Check all *.rpt for Alert
     check_all_rch                                                       # Check all *.rch for Alert
 
-    # Delete TMP work file before retuning to caller 
+    # Delete TMP work file before returning to caller 
     if [ ! -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi
     
+    SADM_EXIT_CODE=$PROCESS_ERROR                                       # Save error count
     return $SADM_EXIT_CODE
 }
 
@@ -1487,10 +1747,14 @@ main_process()
 
 
 # --------------------------------------------------------------------------------------------------
+#  update_server_uptime()
+#
 #  Update the system uptime in Server Table in SADMIN Database
+#
 #  Parameters:
 #   1) server hostname to update (without domain name)
 #   2) uptime value to store in Database
+#
 #  Return Value:
 #   0) Successful update
 #   1) Error when trying to record uptime
@@ -1516,9 +1780,9 @@ update_server_uptime()
     # Execute SQL to Update Server O/S Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e "$SQL" >>$SADM_LOG 2>&1
     if [ $? -ne 0 ]                                                     # If Error while updating
-        then sadm_writelog "${SADM_ERROR} Failed to update database 'uptime' ($WUPTIME) of $WSERVER"
+        then sadm_write_log "${SADM_ERROR} Failed to update database 'uptime' ($WUPTIME) of $WSERVER"
              RCU=1                                                      # Set Error Code = 1
-        else sadm_writelog "${SADM_OK} Success updating database 'uptime' ($WUPTIME) of $WSERVER"
+        else sadm_write_log "${SADM_OK} Success updating database 'uptime' ($WUPTIME) of $WSERVER"
              RCU=0                                                      # Set Code = Success =0
     fi
     return $RCU
@@ -1566,8 +1830,8 @@ sadm_send_alert()
 {
     LIB_DEBUG=0                                                         # Debug Library Level
     if [ $# -ne 8 ]                                                     # Invalid No. of Parameter
-        then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}."
-             sadm_writelog "Should be 8 we received $# : $* "           # Show what received
+        then sadm_write_log "Invalid number of argument received by function ${FUNCNAME}."
+             sadm_write_log "Should be 8 we received $# : $* "           # Show what received
              return 1                                                   # Return Error to caller
     fi
 
@@ -1590,9 +1854,9 @@ sadm_send_alert()
             agroup=`echo $galias | awk '{$1=$1;print}'`                 # Del Leading/Trailing Space
        else grep -i "^$agroup " $SADM_ALERT_FILE >/dev/null 2>&1        # Search in Alert Group File
             if [ $? -ne 0 ]                                             # Group Missing in GrpFile
-                then sadm_writelog "[ ERROR ] Alert group '$agroup' missing from ${SADM_ALERT_FILE}"
-                     sadm_writelog "  - Alert date/time : $atime"       # Show Event Date & Time
-                     sadm_writelog "  - Alert subject   : $asubject"    # Show Event Subject
+                then sadm_write_log "[ ERROR ] Alert group '$agroup' missing from ${SADM_ALERT_FILE}"
+                     sadm_write_log "  - Alert date/time : $atime"       # Show Event Date & Time
+                     sadm_write_log "  - Alert subject   : $asubject"    # Show Event Subject
                      return 1                                           # Return Error to caller
             fi
     fi 
@@ -1600,14 +1864,14 @@ sadm_send_alert()
     # Display Values received and we will use in this function.
     if [ $LIB_DEBUG -gt 4 ]                                             # Debug Info List what Recv.
        then printf "\n\nFunction '${FUNCNAME}' parameters received :\n" # Print Function Name
-            sadm_writelog "atype=$atype"                                # Show Alert Type
-            sadm_writelog "atime=$atime"                                # Show Event Date & Time
-            sadm_writelog "aserver=$aserver"                            # Show Server Name
-            sadm_writelog "ascript=$ascript"                            # Show Script Name
-            sadm_writelog "agroup=$agroup"                              # Show Alert Group
-            sadm_writelog "asubject=\"$asubject\""                      # Show Alert Subject/Title
-            sadm_writelog "amessage=\"$amessage\""                      # Show Alert Message
-            sadm_writelog "aattachment=\"$aattach\""                    # Show Alert Attachment File
+            sadm_write_log "atype=$atype"                                # Show Alert Type
+            sadm_write_log "atime=$atime"                                # Show Event Date & Time
+            sadm_write_log "aserver=$aserver"                            # Show Server Name
+            sadm_write_log "ascript=$ascript"                            # Show Script Name
+            sadm_write_log "agroup=$agroup"                              # Show Alert Group
+            sadm_write_log "asubject=\"$asubject\""                      # Show Alert Subject/Title
+            sadm_write_log "amessage=\"$amessage\""                      # Show Alert Message
+            sadm_write_log "aattachment=\"$aattach\""                    # Show Alert Attachment File
     fi
 
 
@@ -1632,19 +1896,19 @@ sadm_send_alert()
     fi
 
     # Validate the Alert type from alert group file ([M]ail, [S]lack, [T]exto or [C]ellular)
-    agroup_type=`grep -i "^$agroup " $SADM_ALERT_FILE |awk '{print $2}'` # [S/M/T/C] Group
-    agroup_type=`echo $agroup_type |awk '{$1=$1;print}' |tr  "[:lower:]" "[:upper:]"`
+    agroup_type=$(grep -i "^$agroup " $SADM_ALERT_FILE |awk '{print $2}') # [S/M/T/C] Group
+    agroup_type=$(echo "$agroup_type" |awk '{$1=$1;print}' |tr  "[:lower:]" "[:upper:]")
     if [ "$agroup_type" != "M" ] && [ "$agroup_type" != "S" ] &&
        [ "$agroup_type" != "T" ] && [ "$agroup_type" != "C" ] 
-       then wmess="\n[ ERROR ] Invalid Group Type '$agroup_type' for '$agroup' in $SADM_ALERT_FILE"
-            sadm_write "${wmess}\n"
+       then wmess="[ ERROR ] Invalid Group Type '$agroup_type' for '$agroup' in $SADM_ALERT_FILE"
+            sadm_write_err " " ; sadm_write_err "${wmess}"
             return 1
     fi
 
     # Calculate some data that we will need later on 
     # Age of alert in Days (NbDaysOld), in Seconds (aage) & Nb. Alert Repeat per day (MaxRepeat)
     aepoch=$(sadm_date_to_epoch "$atime")                               # Convert AlertTime to Epoch
-    cepoch=`date +%s`                                                   # Get Current Epoch Time
+    cepoch=$(date +%s)                                                  # Get Current Epoch Time
     aage=`expr $cepoch - $aepoch`                                       # Age of Alert in Seconds.
     if [ $SADM_ALERT_REPEAT -ne 0 ]                                     # If Config = Alert Repeat
         then MaxRepeat=`echo "(86400 / $SADM_ALERT_REPEAT)" | $SADM_BC` # Calc. Nb Alert Per Day
@@ -1751,7 +2015,7 @@ sadm_send_alert()
         *) ws="Invalid Alert Type ($atype): ${aserver} ${asubject}"     # Invalid Alert type Message
            ;;
     esac
-    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Alert Subject will be : $ws \n" ; fi
+    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write_log "Alert Subject will be : $ws" ; fi
 
     # Message Header
     mheader=""                                                          # Default Mess. Header Blank
@@ -1910,31 +2174,29 @@ write_alert_history() {
     fi
 
     htype=$1                                                            # Script,Error,Warning,Info
-    htype=`echo $htype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
-    hdatetime=`echo "$2"  | awk '{$1=$1;print}'`                        # Save Event Date & Time
-    hdate=`echo "$2"      | awk '{ print $1 }'`                         # Save Event Date
-    htime=`echo "$2"      | awk '{ print $2 }'`                         # Save Event Time
-    hgroup=`echo "$3"     | awk '{$1=$1;print}'`                        # SADM AlertGroup to Advise
-    hserver=`echo "$4"    | awk '{$1=$1;print}'`                        # Save Server Name
+    htype=$(echo $htype |tr "[:lower:]" "[:upper:]")                    # Make Alert Type Uppercase
+    hdatetime=$(echo "$2"  | awk '{$1=$1;print}')                       # Save Event Date & Time
+    hdate=$(echo "$2"      | awk '{ print $1 }')                        # Save Event Date
+    htime=$(echo "$2"      | awk '{ print $2 }')                        # Save Event Time
+    hgroup=$(echo "$3"     | awk '{$1=$1;print}')                       # SADM AlertGroup to Advise
+    hserver=$(echo "$4"    | awk '{$1=$1;print}')                       # Save Server Name
     hsub="$5"                                                           # Save Alert Subject
     hcount="$6"                                                         # Save Alert Reference No.
     hstat="$7"                                                          # Save Alert Send Status
     hepoch=$(sadm_date_to_epoch "$hdatetime")                           # Convert Event Time to Epoch
-    cdatetime=`date "+%C%y%m%d_%H%M"`                                   # Current Date & Time
+    cdatetime=$(date "+%C%y%m%d_%H%M")                                  # Current Date & Time
     #
-    hline=`printf "%s;%s" "$hepoch" "$hcount" `                         # Epoch and AlertSent Counter
-    hline=`printf "%s;%s;%s;%s" "$hline" "$htime" "$hdate" "$htype"`    # Alert time,date,type
-    hline=`printf "%s;%s;%s;%s" "$hline" "$hserver" "$hgroup" "$hsub"`  # Alert Server,Group,Subject
-    hline=`printf "%s;%s;%s" "$hline" "$hstat" "$cdatetime"`            # Alert Status,Cur Date/Time
-    echo "$hline" >>$SADM_ALERT_HIST                                    # Write Alert History File
+    hline=$(printf "%s;%s" "$hepoch" "$hcount")                         # Epoch and AlertSent Counter
+    hline=$(printf "%s;%s;%s;%s" "$hline" "$htime" "$hdate" "$htype")   # Alert time,date,type
+    hline=$(printf "%s;%s;%s;%s" "$hline" "$hserver" "$hgroup" "$hsub") # Alert Server,Group,Subject
+    hline=$(printf "%s;%s;%s" "$hline" "$hstat" "$cdatetime")           # Alert Status,Cur Date/Time
+    echo "$hline" >> "$SADM_ALERT_HIST"                                 # Write Alert History File
     if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Line added to History : $hline \n" ; fi 
 }
 
 
-# --------------------------------------------------------------------------------------------------
-# Command line Options functions
 # Evaluate Command Line Switch Options Upfront
-# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# By Default (-h) Show Help Usage, (-v) Show Script Version, (-d0-9] Set Debug Level 
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
@@ -1948,7 +2210,7 @@ function cmd_options()
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "Debug Level set to ${SADM_DEBUG}."               # Display Debug Level
+               printf "\nDebug Level set to ${SADM_DEBUG}.\n"           # Display Debug Level
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -1967,10 +2229,8 @@ function cmd_options()
 
 
 
+# Script Start HERE
 # --------------------------------------------------------------------------------------------------
-#                                       Script Start HERE
-# --------------------------------------------------------------------------------------------------
-#
     cmd_options "$@"                                                    # Check command-line Options    
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
