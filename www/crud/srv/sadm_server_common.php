@@ -30,6 +30,7 @@
 # 2022_09_24 web v2.5 CRUD_client - Add ssh port number to use to access the client.
 # 2022_11_25 web v2.6 CRUD client - New client, wasn't using default SSH port defined in sadmin.cfg.
 # 2022_12_29 web v2.7 CRUD client - Fix problem saving the SSH port number.
+#@2024_10_31 web v2.8 CRUD client - Minor syntax fix.
 # ==================================================================================================
  
 
@@ -38,7 +39,7 @@
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.7" ;                                                        # Current version number
+$SVER  = "2.8" ;                                                        # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -233,8 +234,8 @@ function display_srv_form ($con,$wrow,$mode) {
         case 'CREATE' : 
                 echo "\n<select name='scr_group' size=1>";              # Combo Box 1 Item Display
                 $sqlc = 'SELECT * FROM server_group order by grp_code;';
-                if ($cresult = mysqli_query($con,$sqlc)) {              # If Results to Display
-                    while ($crow = mysqli_fetch_assoc($cresult)) {      # Gather Result from Query
+                if ($cresult = mysqli_query($con,$sqlc)) {   # If Results to Display
+                    while ($crow = mysqli_fetch_assoc($cresult)) { # Gather Result from Query
                         if ($crow['grp_default'] == True) {             # If it is the default
                             echo "\n<option selected>" ;                # Make it the Selected Item
                         }else{                                          # If not The Default
