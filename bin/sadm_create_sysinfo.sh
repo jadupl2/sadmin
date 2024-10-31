@@ -65,6 +65,7 @@
 # 2022_09_22 client v3.35 LVM information are now written into the Disk information file.
 # 2023_01_12 client v3.36 Update gathering network information.
 # 2023_12_26 client v3.37 Update SADMIN section
+# 2024_10_31 client v3.38 Creation of a list of vm on system to $SADMIN/dat/dr/HOSTNAME_vm_list.txt 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # Intercept the ^C
 #set -x
@@ -94,7 +95,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.37'                                     # Script version number
+export SADM_VER='3.38'                                     # Script version number
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -151,6 +152,7 @@ export LVM_FILE="${HPREFIX}_lvm.txt"                                    # lvm In
 export NET_FILE="${HPREFIX}_network.txt"                                # Network Information File
 export SYSTEM_FILE="${HPREFIX}_system.txt"                              # System Information File
 export LSHW_FILE="${HPREFIX}_lshw.html"                                 # System Hardware in HTML 
+export VMLIST="${HPREFIX}_vmlist.txt"                                   # List existing VM on system
 
 # Path to Command used in this Script
 export LVS=""                                                           # LV Summary Cmd with Path
@@ -196,7 +198,7 @@ export SYSCTL=""                                                        # sysctl
 export SCUTIL=""                                                        # MacOS to list DNS Param.
 export LSSCSI=""                                                        # List SCSI Device Info.
 export LSPCI=""                                                         # List PCI Components
-export VBOXMANAGE=""                                                    # VirtualBox Manager
+export VBMGR=""                                                    # VirtualBox Manager
 
 
 
@@ -308,7 +310,7 @@ pre_validation()
                 command_available "lsscsi"       ; LSSCSI=$SADM_CPATH    # CmdPath="" if not found
                 command_available "rear"         ; REAR=$SADM_CPATH      # CmdPath="" if not found
                 command_available "lspci"        ; LSPCI=$SADM_CPATH     # CmdPath="" if not found
-                command_available "vboxmanage"   ; VBOXMANAGE=$SADM_CPATH
+                command_available "vboxmanage"   ; VBMGR=$SADM_CPATH
                 ;;
         *)      sadm_write_err "$SADM_OSTYPE is not supported yet."
                 sadm_write_err "Please reported to sadmlinux@gmail.com"
@@ -382,13 +384,13 @@ set_last_osupdate_date()
 
     # Verify if the o/s update rch file exist
     RCHFILE="${SADM_RCH_DIR}/$(sadm_get_hostname)_sadm_osupdate.rch"
-    if [ ! -r "$RCHFILE" ]
+    if [ ! -r "$RCHFILE" ]                                              # If no O/S update done yet
         then sadm_write_log " " 
              sadm_write_log "Missing O/S Update RCH file ($RCHFILE)."
              sadm_write_log "Can't determine last O/S Update Date/Time & Status."
-             sadm_write_log "Situation will resolve by itself, when you run your first O/S update for this system."
-             sadm_write_log "You can run 'sadm_osupdate_starter.sh $(sadm_get_hostname)' on '$SADM_SERVER' to update this system."
-             sadm_write_log "You will then get a valid 'rch' file."
+             sadm_write_log "Situation will resolve by itself, when you run your first O/S update."
+             sadm_write_log "You can run 'sadm_osupdate' on '$SADM_HOSTNAME' to update the system."
+             sadm_write_log "You will then have an initial 'rch' file."
              sadm_write_log " "
              OSUPDATE_DATE=""
              OSUPDATE_STATUS="U"
@@ -400,29 +402,29 @@ set_last_osupdate_date()
     OSUPDATE_DATE=$(tail -1 ${RCHFILE} |awk '{printf "%s %s", $4,$5}')
     if [ $? -ne 0 ]
         then sadm_write_log "Can't determine last O/S Update Date ..."
-             sadm_write_log "You should run 'sadm_osupdate_starter.sh $(sadm_get_hostname)' on $SADM_SERVER to update this server."
-             sadm_write_log "You will then get a valid 'rch' file ${RCHFILE}."
+             sadm_write_log "You can run 'sadm_osupdate' on '$SADM_HOSTNAME' to update the system."
+             sadm_write_log "You will then have an initial 'rch' file."
              return 1
     fi
 
     # Get the Status of the last O/S update
     RCH_CODE=$(tail -1 ${RCHFILE} |awk '{printf "%s", $NF}')
     if [ $? -ne 0 ]
-        then sadm_write_log "Can't determine last O/S Update Status ..."
+        then sadm_write_log "Can't determine the last O/S update status ..."
              return 1
     fi
     case "$RCH_CODE" in
         0)  OSUPDATE_STATUS="S"
-            sadm_write_log "Last update done the $OSUPDATE_DATE & was successful ..."
+            sadm_write_log "Last O/S update on $OSUPDATE_DATE was successful ..."
             ;;
         1)  OSUPDATE_STATUS="F"
-            sadm_write_log "Last update done the $OSUPDATE_DATE & failed ..."
+            sadm_write_log "Last O/S update on $OSUPDATE_DATE failed ..."
             ;;
         2)  OSUPDATE_STATUS="R"
-            sadm_write_log "Last update done the $OSUPDATE_DATE & is actually running ..."
+            sadm_write_log "The O/S update is actually running ..."
             ;;
       "*")  OSUPDATE_STATUS="U"
-            sadm_write_log "Last update done the $OSUPDATE_DATE - Undefined Status ..."
+            sadm_write_log "Last O/S update on $OSUPDATE_DATE have an undefined status ..."
             ;;
     esac
     return 0
@@ -882,9 +884,9 @@ create_summary_file()
 {
 
     sadm_write_log "Creating $HWD_FILE ..."
-    echo "# $SADM_CIE_NAME - SysInfo Report File v${SADM_VER} - `date`"              >  $HWD_FILE
+    echo "# $SADM_CIE_NAME - SysInfo Summary Report File v${SADM_VER} - $(date)"          >  $HWD_FILE
     echo "# This file is use by 'sadm_database_update.py' to update the SADMIN database." >> $HWD_FILE
-    echo "#                                                    "                     >> $HWD_FILE
+    echo "#                                                    "                          >> $HWD_FILE
 
     if [ "$SADM_OS_TYPE"  = "LINUX" ]                                   # O/S Upd RCH Only on Linux
         then set_last_osupdate_date                                     # Get Last O/S Update Date
@@ -924,6 +926,20 @@ create_summary_file()
     if [ "$REAR" != "" ] ;then REAR_VER=$($REAR -V | awk '{print $2}') ; else REAR_VER="N/A" ; fi
     echo "SADM_REAR_VERSION                     = $REAR_VER"                         >> $HWD_FILE
 
+    # If we are on a VirtualBox System, create a sorted list of vm on the system to file $VMLIST.
+    # Application 'vboxmanage' MUST be run by '$SADM_VM_USER' defined in $SADMIN/cfg/sadmin.cfg.
+    if [ -f "$VMLIST" ] ; then rm -f "$VMLIST" >/dev/null 2>&1 ; fi     # Make sure file not exist
+    command -v vboxmanage > /dev/null 2>&1                              # If VirtualBox mgr exist
+    if [ $? -eq 0 ]                                                     # Yes it's present on system
+        then VBMGR=$(command -v vboxmanage)                             # Get PATH of vboxmanage
+             su "$SADM_VM_USER" -c "$VBMGR list vms" |sort |awk '{print $1}' |tr -d '"' >"$SADM_TMP_FILE1"
+             touch "$VMLIST"                                            # Create Empty VM List file
+             # Example of line of VMLIST: 'anemone,ubuntu2204,/opt/sadmin'
+             while read GUEST
+                do
+                   echo "${SADM_HOSTNAME},${GUEST},$SADMIN"  >>"$VMLIST"   
+                done < "$SADM_TMP_FILE1"
+    fi
     return $SADM_EXIT_CODE
 }
 
@@ -970,19 +986,13 @@ function cmd_options()
 #
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
-    
     pre_validation                                                      # Cmd neede are present ?
     SADM_EXIT_CODE=$?                                                   # Save Function Return code
-    if [ $SADM_EXIT_CODE -ne 0 ]                                        # Which Command missing
-        then sadm_stop 1                                                # Upd. RC & Trim Log & RCH
-             exit 1
-    fi
-    
-    if [ "$SADM_OS_TYPE"  = "AIX"   ]                                   # If running in AIX
+    if [ $SADM_EXIT_CODE -ne 0 ] ; then sadm_stop 1 ; exit 1 ; fi       # If pre_validation failed
+    if [ "$SADM_OS_TYPE"  = "AIX"   ]                                   # If running on AIX
         then create_aix_config_files                                    # Collect Aix Info
         else create_linux_config_files                                  # Collect Linux/OSX Info
     fi
-    
     if [ -f "$LVM_FILE" ] ; then rm -f $LVM_FILE >/dev/null 2>&1 ; fi
     create_summary_file                                                 # Create Summary File for DB
     SADM_EXIT_CODE=$?                                                   # Save Function Return code
