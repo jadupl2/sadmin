@@ -438,7 +438,7 @@ install_python3()
 #===================================================================================================
 check_host_command()
 {
-    printf "Is the 'host' command present on the system " | tee -a $SLOG
+    printf "   - Is the 'host' command present on the system " | tee -a $SLOG
 
     which host > /dev/null 2>&1                                         # Try getting command path
     if [ $? -eq 0 ]                                                     # If command installed
