@@ -43,6 +43,8 @@
 # 2023_04_13 lib v3.25 Add 'SADM_REAR_DIF', 'SADM_REAR_INTERVAL', 'SADM_BACKUP_INTERVAL' to output.
 # 2023_11_29 lib v3.26 Change to not update 'rch' file.
 #@2024_06_13 lib v3.27 Add VM export parameters and alert history/archive purge days limit.
+#@2024_11_01 lib v3.28 Change name of Global variable "SADM_RCHLOG" to "RCH_FILE". 
+
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -71,7 +73,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.27'                                      # Script version number
+export SADM_VER='3.28'                                      # Script version number
 export SADM_PDESC="Demonstrate functions & variables available to developers using SADMIN Tools"
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -737,9 +739,9 @@ print_file_variable()
     presult="$SADM_LOG"                                                 # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
             
-    pexample="\$SADM_RCHLOG"                                            # Variable Name
+    pexample="\$SADM_RCH_FILE"                                            # Variable Name
     pdesc="Script Return Code History File"                             # Description
-    presult="$SADM_RCHLOG"                                              # Actual Content of Variable
+    presult="$SADM_RCH_FILE"                                              # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
                 
     pexample="\$DBPASSFILE"                                             # Variable Name
