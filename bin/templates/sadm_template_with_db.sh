@@ -250,7 +250,7 @@ function cmd_options()
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               printf "\nDebug level set to ${SADM_DEBUG}.\n"           # Display Debug Level
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
