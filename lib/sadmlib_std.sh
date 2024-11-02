@@ -227,6 +227,7 @@
 #@2024_08_26 lib v4.48 When timeout is reach, check if script is still running before starting a new one.
 #@2024_09_01 lib v4.49 Add the 'From:' email in function 'sadm_sendmail()''
 #@2024_10_31 lib v4.50 Add new variable to sadmin.cfg for Virtual Box export new feature.
+#@2024_11_01 lib v4.51 sadm_get_osname() was not returning the right O/S under certain condition.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercept The ^C
 #set -x
@@ -236,7 +237,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.50"                                              # This Library Version
+export SADM_LIB_VER="4.51"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -735,33 +736,31 @@ sadm_trimfile() {
 
 
 
-# Purpose : 
-#   Verify existence a command and return the full path of command or blank.
+#---------------------------------------------------------------------------------------------------
+# sadm_get_command_path() 
+#
+#   Verify existence a command and return the full path of command (0) or blank (1).
 #
 # Parameter(s)  : 
 #   1) Name of the command ('cal' for example)
 #
-# Return Value : 
+# Return Values : 
 #   0) If command exist & the full command path is returned (/usr/bin/cal).
 #   1) If command doesn't exist & an empty string is returned ("")
+#
+#   Also return a string : 
+#   - Blank              : Will return blank if the command was not found.
+#   - Command Full Path: : Eample if received 'lsb_release' will return 'usr/bin/lsb_release'.
+#
 #---------------------------------------------------------------------------------------------------
 sadm_get_command_path() {
     SADM_CMD=$1                                                         # Save Parameter received
-
-    # If command received was not found on system
-    if [ "$(command -v ${SADM_CMD})" = "" ]                             # Command not found ?
-        then if [ "${SADM_CMD}" == "lsb_release" ] && [ -f /usr/lib/dkms/lsb_release ] # dkms rpm
-                then CMD_PATH="/usr/lib/dkms/lsb_release"
-                     echo "$CMD_PATH"
-                     return 0
-                else echo ""                                            # Return empty str as path
-                     return 1                                           # Return 1 if Cmd not Found
-             fi 
+    if [ "$(command -v ${SADM_CMD})" = "" ]                             # If command not found
+        then echo ""                                                    # echo blank for Cmd Path 
+             return 1                                                   # Return error to caller
+        else CMD_PATH=$(command -v ${SADM_CMD})                         # Store Path in Cmd path
+             echo "$CMD_PATH"                                           # echo the Command Path 
     fi 
-    
-    # Command exist, return full path to command
-    CMD_PATH=$(command -v ${SADM_CMD})                                  # Store Path in Cmd path
-    echo "$CMD_PATH"                                                    # echo the Command Path 
     return 0  
 }
 
@@ -1124,16 +1123,21 @@ sadm_get_oscodename() {
 }
 
 
-
-# Return The OS  Name (Always Returned In Uppercase)
+#---------------------------------------------------------------------------------------------------
+# sadm_get_osname()
+# 
+# Return : 
+#   - The O/S name (Always returned in uppercase)
+#
+#---------------------------------------------------------------------------------------------------
 sadm_get_osname() {
     case "$(sadm_get_ostype)" in
         "DARWIN")   wosname=`sw_vers -productName | tr -d ' '`
                     wosname=`echo $wosname | tr '[:lower:]' '[:upper:]'`
                     ;;
-        "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
+        "LINUX")    if [ -f "$SADM_LSB_RELEASE" ] && [ -x "$SADM_LSB_RELEASE" ]
                        then wosname=$($SADM_LSB_RELEASE -si)
-                       else if [ -f "$OS_REL" ] 
+                       else if [ -f "$OS_REL" ]                         # /etc/os-release exist ?
                                then grep -q '^ID=' $OS_REL 
                                     if [ $? -eq 0 ]
                                        then wosname=$(awk -F= '/^ID=/ {print $2}' $OS_REL)
@@ -1142,18 +1146,22 @@ sadm_get_osname() {
                                     fi 
                             fi 
                     fi 
-                    wosname=$(echo $wosname | tr '[:lower:]' '[:upper:]')
+                    
+                    # Put O/S name in uppercase.
+                    wosname=$(echo "$wosname" | tr '[:lower:]' '[:upper:]')
+                    
                     # RockyLinux returned by lsb_release and /etc/os-release ID=Rocky, make it ROCKY
                     if [ "$wosname" = "ROCKYLINUX" ]             ; then wosname="ROCKY"    ;fi
                     if [ "$wosname" = "ALMALINUX"  ]             ; then wosname="ALMA"     ;fi
+                    # Rename CENTOSSTREAM MAKING it CENTOS
                     if [ "$wosname" = "CENTOSSTREAM" ]           ; then wosname="CENTOS"   ;fi
-                    if [ -f /usr/bin/raspi-config ]              ; then wosname="RASPBIAN" ;fi
                     # RedHat ID can be different accross time , making REDHAT
                     if [ "$wosname" = "REDHATENTERPRISESERVER" ] ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "REDHATENTERPRISE" ]       ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "RHEL" ]                   ; then wosname="REDHAT"   ;fi
-                    # Rename CENTOSSTREAM MAKING it CENTOS
+                    command -v piclone > /dev/null 2>&1 
+                    if [ $? -eq 0 ] ; then wosname="RASPBIAN" ;fi
                     ;;
         "AIX")      wosname="AIX"
                     ;;
