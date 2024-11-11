@@ -101,6 +101,7 @@
 # 2023_12_17 server v3.47 Modification that allow SADMIN server IP to be an IP alias.
 #@2024_04_16 server v3.48 Replace 'sadm_write' with 'sadm_write_log' and 'sadm_write_err'.
 #@2024_10_31 server v3.49 Add code to update schedule of VirtualBox VM export in crontab 'sadm_vm'.
+#@2024_11_11 server v3.50 Add creation of list of all VMs '$SADM_VMLIST' & VM Hosts '$SADM_VMHOSTS'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -130,7 +131,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.49'                                     # Script version number
+export SADM_VER='3.50'                                     # Script version number
 export SADM_PDESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -185,7 +186,6 @@ export BOOT_DATE=""                                                     # Server
 export ERROR_COUNT=0                                                    # Total Error Count
 export WARNING_COUNT=0                                                  # Total Warning count
 export SADM_TEN_DASH=$(printf %10s |tr " " "-")                         # 10 dashes line
-export VMLIST=$SADM_WWW_DAT_DIR/vm_list.txt                             # List of VM Per Host vBox
 #
 # Variables used to insert in /etc/cron.d/sadm* crontab files.
 export OS_SCRIPT="sadm_osupdate_starter.sh"                             # OSUpdate Script in crontab
@@ -678,16 +678,74 @@ update_vmexport_crontab ()
     if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
     
     
+
     # Add Line to tmp vmexport crontab work file 
     # 00 16 08,25 * * sadmin -/usr/bin/ssh -qnp 32 jacques@anemone /opt/sadmin/bin/sadm_vm_export.sh centos8
     # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN 
-    find $SADM_WWW_DAT_DIR -type f -name "*_vmlist.txt" -exec cat {} \; | sort > $VMLIST
-    if [ -s "$VMLIST" ]                                                 # if file exist & size > 0
-        then cline="$cline $SADM_USER sudo ${SADM_SSH} -qnp $SSH_PORT ${SADM_VM_USER}@${chost} '$cscript $cserver'" 
-    fi 
+#    if [ -s "$SADM_VMLIST" ]                                                 # if file exist & size > 0
+#        then cline="$cline $SADM_USER sudo ${SADM_SSH} -qnp $SSH_PORT ${SADM_VM_USER}@${chost} '$cscript $cserver'" 
+     cline="$cline $SADM_USER sudo ${SADM_SSH} -qnp $SSH_PORT ${SADM_VM_USER}@${chost} '$cscript $cserver'" 
+#    fi 
+    
     if [ $SADM_DEBUG -gt 0 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
     echo "$cline" >> $SADM_VMEXPORT_NEWCRON                             # Output Line to VM Crontab 
 }
+
+
+
+
+#===================================================================================================
+# create_vm_list()
+#
+# 1- Create file "$SADM_VMLIST" that contain a list of all vms and their respective host.
+# 2- Create file "SADMM_VMHOSTS" that contain a list of all vms and their respective host.
+# 
+# Example on content : 
+#   lestrade,centos9,/opt/sadmin
+#   lestrade,debian12,/opt/sadmin
+# 
+# Input Parameters : None 
+#
+# Return Value : None
+#
+#===================================================================================================
+create_vm_list()
+{
+    # Delete old files
+    if [ -f "$SADM_VMLIST" ]  ; then rm -f "$SADM_VMLIST"  ; fi
+    if [ -f "$SADM_VMHOSTS" ] ; then rm -f "$SADM_VMHOSTS" ; fi
+
+    # Creating VM list file
+    sadm_write_log " "                                                  # Separation Blank Line
+    sadm_write_log "${SADM_TEN_DASH}"                                   # Print 10 Dash line
+    sadm_write_log "Creating list of all VMs '$SADM_VMLIST'."
+    find "$SADM_WWW_DAT_DIR" -type f -name "*_vmlist.txt" -exec cat {} \; | sort > $SADM_VMLIST
+    chmod 664 "$SADM_VMLIST" >/dev/null 2>&1
+    chown "$SADM_WWW_USER:$SADM_WWW_GROUP" "$SADM_VMLIST" >/dev/null 2>&1
+    if [ -s "$SADM_VMLIST" ]                                            # Exist & contain data
+        then nl "$SADM_VMLIST"                                          # List file content
+        else sadm_write_log "No VM detected."
+             return                                                     # No VM then no VM host
+    fi 
+
+    # CReate VM Hosts, if the list of vm is not empty, create the vm host file from it.
+    if [ -s "$SADM_VMLIST" ]                                                 
+        then sadm_write_log " "                                         # Separation Blank Line
+             sadm_write_log "Creating list of all VM Hosts '$SADM_VMHOSTS'."
+             awk -F, '{print $1}' "$SADM_VMLIST" | sort | uniq > $SADM_VMHOSTS
+             if [ -s "$SADM_VMHOSTS" ]                                  # Exist & contain data
+                then nl "$SADM_VMHOSTS"                                 # List file content
+                else sadm_write_log "No Nost detected ? "
+             fi
+             chmod 664 "$SADM_VMHOSTS" >/dev/null 2>&1
+             chown "$SADM_WWW_USER:$SADM_WWW_GROUP" "$SADM_VMHOSTS" >/dev/null 2>&1
+    fi 
+
+    sadm_write_log "${SADM_TEN_DASH}"                                   # Print 10 Dash line
+    sadm_write_log " "                                                  # Separation Blank Line
+}
+
+
 
 
 
@@ -1707,6 +1765,9 @@ main_process()
 
     # Check if crontabs need to be updated (sadm_backup, sadm_osupdate, sadm_rear_backup, sadm_vm)
     crontab_update                                                      # Update crontab if changed
+
+    # Create $SADM_VMLIST & $SADM_VMHOSTS
+    create_vm_list    
 
     # If Global RCH and RPT directories don't exist
     WDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"                     # Web Global RCH repo Dir 
