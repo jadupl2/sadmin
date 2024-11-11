@@ -228,8 +228,9 @@
 #@2024_09_01 lib v4.49 Add the 'From:' email in function 'sadm_sendmail()''
 #@2024_10_31 lib v4.50 Add new variable to sadmin.cfg for Virtual Box export new feature.
 #@2024_11_01 lib v4.51 sadm_get_osname() was not returning the right O/S under certain condition.
+#@2024_11_11 lib v4.52 Add two Global var. accessible to any script 'SADM_VMLIST' & 'SADM_VMHOSTS'.
 #===================================================================================================
-trap 'exit 0' 2                                                         # Intercept The ^C
+trap 'exit 0' 2  
 #set -x
 
  
@@ -237,7 +238,7 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.51"                                              # This Library Version
+export SADM_LIB_VER="4.52"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -324,6 +325,8 @@ export SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                      # Defaul
 export SADM_DOCLINK="$SADM_WWW_DOC_DIR/pgm2doc_link.cfg"                # Script to Doc Link File
 export SADM_WEBSITE="https://sadmin.ca"                                 # sadmin website URL
 export SADM_VM_EXCLUDE_TEMPLATE="$SADM_CFG_DIR/.sadm_vm_exclude_start.txt" # VM Start exclude file
+export SADM_VMLIST="$SADM_WWW_DAT_DIR/vm_list.txt"                      # List all VMs & Hosts 
+export SADM_VMHOSTS="$SADM_WWW_DAT_DIR/vm_hosts.txt"                    # List all VirtualBox Hosts
 
 # Definition of SADMIN log, error log, Result Code  History (.rch) and Monitor report file (*.rpt).
 export SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"     # Script Output LOG
