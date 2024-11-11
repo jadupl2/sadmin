@@ -36,6 +36,7 @@
 #@2021_01_25 vmtools v1.4 Startup Exclude list was not working 
 #@2024_03_19 vmtools v1.5 New script to start a VirtualBox virtual machine.
 #@2024_04_19 vmtools v1.6 Remove 'chmod' of 'vm_start_exclude_list'.
+#@2024_11_11 vmtools v1.7 Standardize messages to users
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -65,7 +66,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.6'                                      # Script version number
+export SADM_VER='1.7'                                      # Script version number
 export SADM_PDESC="Script to start one or all the VirtualBox Virtual machines" 
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -124,7 +125,7 @@ show_usage()
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\t-n   (Start the specified VM name)"
-    printf "\n\t-a   (Start all Power off VM)"
+    printf "\n\t-a   (Start all VMs)"
     printf "\n\t-y   (Don't ask confirmation before starting VMs)"
     printf "\n\t-l   (List status of all VMs)"
     printf "\n\n" 
@@ -178,8 +179,8 @@ main_process()
 
     # Advide user what we will do if confirm.
     if [ "$VMNAME" = "" ]                                               # If Starting ALL VMs
-       then sadm_write_log "Will start ALL Virtual Machine(s)."
-       else sadm_write_log "Will start '$VMNAME' Virtual Machine."
+       then sadm_write_log "This will start ALL Virtual Machine(s)."
+       else sadm_write_log "This will start '$VMNAME' Virtual Machine."
     fi
 
     # Ask Confirmation before Starting VM, if [-y] was not use.
