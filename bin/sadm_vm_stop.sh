@@ -157,7 +157,7 @@ main_process()
     fi        
 
     if [ "$VMNAME" = "" ] 
-       then sadm_write_log "Will stop ALL virtual machine(s)."
+       then sadm_write_log "This will stop ALL virtual machine(s)."
        else sadm_write_log "Will stop '$VMNAME' virtual machine."
     fi
 
