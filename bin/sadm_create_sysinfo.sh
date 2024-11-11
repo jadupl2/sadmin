@@ -65,7 +65,8 @@
 # 2022_09_22 client v3.35 LVM information are now written into the Disk information file.
 # 2023_01_12 client v3.36 Update gathering network information.
 # 2023_12_26 client v3.37 Update SADMIN section
-# 2024_10_31 client v3.38 Creation of a list of vm on system to $SADMIN/dat/dr/HOSTNAME_vm_list.txt 
+#@2024_10_31 client v3.38 Creation of a list of vm on system to $SADMIN/dat/dr/HOSTNAME_vm_list.txt 
+#@2024_11_11 client v3.39 Change permission to VM list file '$SADMIN/dat/dr/HOSTNAME_vm_list.txt'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # Intercept the ^C
 #set -x
@@ -95,7 +96,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.38'                                     # Script version number
+export SADM_VER='3.39'                                     # Script version number
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -152,7 +153,6 @@ export LVM_FILE="${HPREFIX}_lvm.txt"                                    # lvm In
 export NET_FILE="${HPREFIX}_network.txt"                                # Network Information File
 export SYSTEM_FILE="${HPREFIX}_system.txt"                              # System Information File
 export LSHW_FILE="${HPREFIX}_lshw.html"                                 # System Hardware in HTML 
-export VMLIST="${HPREFIX}_vmlist.txt"                                   # List existing VM on system
 
 # Path to Command used in this Script
 export LVS=""                                                           # LV Summary Cmd with Path
@@ -218,13 +218,16 @@ show_usage()
 
 
 
-# ==================================================================================================
+#---------------------------------------------------------------------------------------------------
 #""
-# Check if the package name received as parameter is available on the server
+# command_available()
+# 
+#   Check if the package name received as parameter is available on the server
+#
 #   - If command is found, $SADM_CPATH is set to full command path (return 0)
 #   - If command is not found, $SADM_CPATH is set empty "" (return 1)
 #""
-# ==================================================================================================
+#---------------------------------------------------------------------------------------------------
 #
 command_available()
 {
@@ -925,21 +928,26 @@ create_summary_file()
     echo "SADM_ROOT_DIRECTORY                   = ${SADMIN}"                         >> $HWD_FILE
     if [ "$REAR" != "" ] ;then REAR_VER=$($REAR -V | awk '{print $2}') ; else REAR_VER="N/A" ; fi
     echo "SADM_REAR_VERSION                     = $REAR_VER"                         >> $HWD_FILE
+    chmod 644 $HWD_FILE 
+    chown "$SADM_USER:$SADM_GROUP" "$HWD_FILE"
 
     # If we are on a VirtualBox System, create a sorted list of vm on the system to file $VMLIST.
     # Application 'vboxmanage' MUST be run by '$SADM_VM_USER' defined in $SADMIN/cfg/sadmin.cfg.
-    if [ -f "$VMLIST" ] ; then rm -f "$VMLIST" >/dev/null 2>&1 ; fi     # Make sure file not exist
+    if [ -f "$SADM_VMLIST" ] ; then rm -f "$SADM_VMLIST" >/dev/null 2>&1 ; fi     # Make sure file not exist
     command -v vboxmanage > /dev/null 2>&1                              # If VirtualBox mgr exist
     if [ $? -eq 0 ]                                                     # Yes it's present on system
         then VBMGR=$(command -v vboxmanage)                             # Get PATH of vboxmanage
              su "$SADM_VM_USER" -c "$VBMGR list vms" |sort |awk '{print $1}' |tr -d '"' >"$SADM_TMP_FILE1"
-             touch "$VMLIST"                                            # Create Empty VM List file
+             touch "$SADM_VMLIST"                                            # Create Empty VM List file
              # Example of line of VMLIST: 'anemone,ubuntu2204,/opt/sadmin'
              while read GUEST
                 do
-                   echo "${SADM_HOSTNAME},${GUEST},$SADMIN"  >>"$VMLIST"   
+                   echo "${SADM_HOSTNAME},${GUEST},$SADMIN"  >> "$SADM_VMLIST"   
                 done < "$SADM_TMP_FILE1"
+             chmod 644 "$SADM_VMLIST"
+             chown "$SADM_USER:$SADM_GROUP" "$SADM_VMLIST" 
     fi
+
     return $SADM_EXIT_CODE
 }
 
