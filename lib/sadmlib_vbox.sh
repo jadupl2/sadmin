@@ -43,6 +43,7 @@
 #@2024_04_04 virtualbox v2.3 Small bug fixes.
 #@2024_04_19 virtualbox v2.4 Replace 'sadm_write' by 'sadm_write_log' and 'sadm_write_err'. 
 #@2024_10_01 virtualbox v2.5 Total free mem is now (free mem + avail mem) on total vm line.
+#@2024_11_11 virtualbox v2.6 Do not start an VM export if the system is lock.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -53,7 +54,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 # Global Variables
 # --------------------------------------------------------------------------------------------------
-export VMLIBVER="2.5"                                                   # This Library version
+export VMLIBVER="2.6"                                                   # This Library version
 export VMLIB_DEBUG="N"                                                  # Activate Debug output Y/N
 export VMLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_list1_XXX")"        # List of all VM in VBox
 export VMRUNLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_runlist_XXX")"   # Tmp File to list RunningVM 
@@ -226,7 +227,7 @@ sadm_vm_stop()
     # If was able to shutdown VM using 'acpi power button' command, advise user & return to caller.
     sadm_write_log " " 
     if [ "$POWEROFF" = "Y" ]
-        then sadm_write_log "[ OK ] Virtual Machine '$VM' is now power off." 
+        then sadm_write_log "[ OK ] Virtual Machine '$VM' is now powered off." 
              return 0  
         else sadm_write_log "The $SADM_VM_STOP_TIMEOUT sec. given for a shutdown is exceeded."
     fi 
@@ -698,11 +699,18 @@ sadm_export_vm()
             return 1                                                    # Return Error to Caller
     fi    
 
-    # NFS Server is available ?
+   # NFS Server is available ?
     sadm_ping "$SADM_VM_EXPORT_NFS_SERVER"                              # NFS Server Alive ?
     if [ $? -ne 0 ] ; then return 1 ; fi                                # Return Error to caller
 
-    # Save current VM State (Running or Power Off), if it's running then shutdown the VM.
+    # Check if System is Locked.
+    sadm_check_system_lock "$VM"                                        # Check lock file status
+    if [ $? -ne 0 ]                                                     # The system is lock
+        then sadm_write_log "[ ERROR ] System is lock, export is cancelled."
+             return 1                                                   # Return Error to caller
+    fi 
+
+     # Save current VM State (Running or Power Off), if it's running then shutdown the VM.
     sadm_vm_running "$VM"                                               # Check if it is running
     if [ $? -eq 0 ]                                                     # If it's still running
         then #sadm_write_log " "
@@ -725,7 +733,8 @@ sadm_export_vm()
     sudo mount $SHORT_NFS ${MOUNT_POINT} >>$SADM_LOG 2>&1
     if [ "$?" -ne 0 ]                                                   # If Error during mount 
         then sadm_write_err "[ ERROR ] mount $SHORT_NFS ${MOUNT_POINT}"      
-             sudo umount ${MOUNT_POINT} > /dev/null 2>&1                 # Ensure Dest. Dir Unmounted
+             sudo umount ${MOUNT_POINT} > /dev/null 2>&1                # Ensure Dest. Dir Unmounted
+             sadm_unlock_system "$VM"                                   # Go remove the lock file
              return 1                                                   # Set RC to One (Standard)
         else sadm_write_log "[ OK ] NFS mount succeeded."
     fi
@@ -737,6 +746,7 @@ sadm_export_vm()
              if [ "$?" -ne 0 ]                                          # If Error creating Dir.
                 then sadm_write_err "[ ERROR ] Wasn't able to create nfs mount point directory '${MOUNT_POINT}/${VM}'."
                      sudo umount ${MOUNT_POINT} >>$SADM_LOG 2>&1  
+                     sadm_unlock_system "$VM"                           # Go remove the lock file
                      return 1
                 else sadm_write_log "[ OK ] Today export directory created '${MOUNT_POINT}/${VM}'."
              fi 
@@ -750,6 +760,7 @@ sadm_export_vm()
              if [ "$?" -ne 0 ]                                          # If Error creating Dir.
                 then sadm_write_err "[ ERROR ] Wasn't able to create directory '$EXPDIR'."
                      sudo umount ${MOUNT_POINT} >>$SADM_LOG 2>&1  
+                     sadm_unlock_system "$VM"                           # Go remove the lock file
                      return 1
                 else sadm_write_log "[ OK ] New export directory is created '$EXPDIR'."
              fi 
@@ -825,9 +836,13 @@ sadm_export_vm()
     # If VM was initially running, then power on the VM.
     if [ "$INITIAL_STATE" = "RUNNING" ]                                 # VM Running before export ?
         then sadm_vm_start "$VMNAME"                                    # Yes, then Restart the VM
-             if [ $? -ne 0 ] ; then return 1 ; fi                       # Error Ocurred Set ExitCode
+             if [ $? -ne 0 ] 
+                then sadm_unlock_system "$VM"                           # Go remove the lock file
+                     return 1                                           # Error Ocurred Set ExitCode
+             fi
     fi             
     sleep 4                                                             # Time For last VM to Start
+    sadm_unlock_system "$VM"                                            # Go remove the lock file
     return $RC
 }
 
