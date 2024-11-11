@@ -44,6 +44,8 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
         } );
     } );
 </script>
+
+
 <style>
 .content-table {
     border-collapse: collapse ;
@@ -230,7 +232,7 @@ function display_data($count, $row) {
             echo "<td align=left style='color:red' bgcolor='#DAF7A6'><b>";
             echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
         }else{
-            $tooltip = "Export is " .$backup_age. " days old, below accepted export interval of " .SADM_VM_EXPORT_INTERVAL. " days.";
+            $tooltip = "Export is " .$backup_age. " days old, cell will be highlighted if export is older than " .SADM_VM_EXPORT_INTERVAL. " days.";
             echo "<td align=left><span data-toggle='tooltip' title='" . $tooltip . "'>";
         }
         echo "$rch_array[1] " . $rch_array[5];
