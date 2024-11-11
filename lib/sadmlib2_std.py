@@ -66,8 +66,9 @@
 #@2024_03_20 lib v4.52 Load new Global variables for VM from \$SADMIN/cfg/sadmin.cfg
 #@2024_04_22 lib v4.53 Alert housekeeping, add 'SADM_DAYS_HISTORY' & ´SADM_MAX_ARC_LINE' to $SADM_CFG_FILE.
 #@2024_04_23 lib v4.54 Add option to send email on startup and on shutdown in sadmin.cfg.
-
-# --------------------------------------------------------------------------------------------------
+#@2024_11_11 lib v4.55 Add two Global var. accessible to any script 'sa.vm_list' & 'sa.vm_hosts'.
+#
+# # --------------------------------------------------------------------------------------------------
 #
 try :
     import os                                               # Operating System interface
@@ -100,7 +101,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.54"                                # This Library Version
+lib_ver             = "4.55"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -329,10 +330,13 @@ backup_list        = dir_cfg + '/backup_list.txt'                       # FileNa
 backup_list_init   = dir_cfg + '/.backup_list.txt'                      # Initial File/Dir. 2 Backup
 backup_exclude     = dir_cfg + '/backup_exclude.txt'                    # Exclude File/Dir 2 Exclude
 backup_exclude_init= dir_cfg + '/.backup_exclude.txt'                   # Initial File/Dir 2 Exclude
+vm_list            = dir_www_dat + '/vm_list.txt'                       # List all VMs & Hosts
+vm_hosts           = dir_www_dat + '/vm_hosts.txt'                      # List all VirtualBox Hosts
 tmp_file_prefix    = dir_tmp + '/' + pinst                              # TMP Prefix
 tmp_file1          = "%s_1.%s" % (tmp_file_prefix,ppid)                 # Temp1 Filename
 tmp_file2          = "%s_2.%s" % (tmp_file_prefix,ppid)                 # Temp2 Filename
 tmp_file3          = "%s_3.%s" % (tmp_file_prefix,ppid)                 # Temp3 Filename
+
 # The SSH command used to communicate with all the systems.
 cmd_ssh_full = "%s -qnp %s " % (cmd_ssh,sadm_ssh_port) 
 
