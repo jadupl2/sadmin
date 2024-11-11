@@ -33,6 +33,7 @@
 # 2023_08_17 lib v1.5 Update to SADMIN section v2.3, fix 'pymysql' error msg & added log verbosity.
 # 2023_11_29 lib v1.6 Crash when could not start 'nmon' (performance monitor).
 # 2023_12_03 lib v1.7 Fix problem starting 'nmon' at system startup.
+# 2024_11_11 lib v1.8 Standardize messages to users.
 # --------------------------------------------------------------------------------------------------
 #
 # Modules needed by this script SADMIN Tools and they all come with Standard Python 3.
@@ -66,7 +67,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "1.7"                                                  # Program version no.
+pver        = "1.8"                                                  # Program version no.
 pdesc       = "This script ensure that 'nmon' performance monitor is running."
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
 pdebug      = 0                                                      # Debug level from 0 to 9
@@ -172,14 +173,14 @@ def main_process():
     # Check how many 'nmon' process are running
     pcount = count_process(nmon_name)
     if pcount == 1 :
-        sa.write_log("There is %d process of '%s' running." % (pcount,nmon_name))
+        sa.write_log("[ OK ] There is %d process of '%s' running." % (pcount,nmon_name))
         ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
         sa.write_log(cstdout)
         return(0)
 
     # If more than one process: Kill them for now and will return it later on
     if pcount > 1: 
-        sa.write_log("There should be only 1 '%s' process running, we now have %d." % (nmon_name,pcount))
+        sa.write_log("[ WARNING ] There should be only 1 '%s' process running, we now have %d." % (nmon_name,pcount))
         ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
         sa.write_log(cstdout)
         sa.write_log("We will stop them all and restart a fresh copy of '%s' daemon." % (nmon_name))
@@ -234,7 +235,7 @@ def main_process():
     time.sleep(5)               # Time to come up
     pcount = count_process(nmon_name)
     ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
-    sa.write_log("pcount=%d before starting it %s" % (pcount,cstdout))
+    sa.write_log("pcount=%d before starting it :\n%s" % (pcount,cstdout))
     if pcount == 1 :
         sa.write_log("[ OK ] Process named '%s' is now running." % (nmon_name))
         ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
