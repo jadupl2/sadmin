@@ -2290,6 +2290,7 @@ def setup_sadmin_config_file(sroot,wostype,sosname):
         break                                                  # Go Re-Accept Server Name
     host_line = "%s     sadmin.%s     sadmin" % (wcfg_ip, wcfg_domain)
     with open('/etc/hosts', 'a') as file: file.write("%s\n" % (host_line))
+    writelog ("")
     writelog ("Line '%s' was added to /etc/hosts." % (host_line))
     wcfg_server = "%s.%s" % (phostname,wcfg_domain)
     sadmin_server= "sadmin.%s" % wcfg_domain
@@ -2815,7 +2816,7 @@ def main():
     
 
     global fhlog                                                        # Script Log File Handler
-    print ("SADMIN Setup V%s" % (sver))                                 # Print Version Number
+    print ("\n\nSADMIN Setup V%s" % (sver))                             # Print Version Number
     print ("---------------------------------------------------------------------------")
    
     # Insure that this script is only run by the user root (Optional Code)
