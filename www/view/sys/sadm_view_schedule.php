@@ -40,6 +40,7 @@
 # 2022_09_12 web v2.15 O/S update status page - Display the first 50 systems instead of 25.
 # 2023_05_01 web v2.16 O/S update status page - Enhance functionality and bug fix.
 # 2023_05_06 web v2.17 O/S update status page - Enhance functionality and bug 
+#@2024_11_24 web v2.18 O/S update status page - Fix bug when displaying schedule status
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -75,7 +76,7 @@ $(document).ready(function() {
 #                                       Local Variables
 #===================================================================================================
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.17" ;                                               # Current version number
+$WVER          = "2.18" ;                                               # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
@@ -189,22 +190,23 @@ function display_data($count, $row) {
     
 # Last Update Status
     if (file_exists($rch_name)) {
-        $file = file("$rch_name");                                      # Load RCH File in Memory
+        $file = file("$rch_name");                                   # Load RCH File in Memory
         $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
         list($cserver, $cdate1, $ctime1, $cdate2, $ctime2, $celapse, $cname, $calert, $ctype, $ccode) = explode(" ", $lastline);
     } else {
         $ccode = 9;                                                     # No Log, Backup never ran
     }
     
-    switch ( strtoupper($row['srv_update_status']) ) {
-        case 'S'  : echo "<td class='dt-center'>Success"; 
-                    break ;
-        case 'F'  : echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>Failed</b>"; 
-                    break ;
-        case 'R'  : echo "<td class='dt-center' style='bgcolor='#DAF7A6'><b>Running</b>"; 
-                    break ;
-        default   : echo "<td class='dt-center' style='bgcolor='#DAF7A6'>None yet"; 
-                    break ;
+    #    switch ( strtoupper($row['srv_update_status']) ) {
+    switch ( $ccode ) {
+        case 0  : echo "<td class='dt-center'>Success"; 
+                  break ;
+        case 1  : echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>Failed</b>"; 
+                  break ;
+        case 2  : echo "<td class='dt-center' style='bgcolor='#DAF7A6'><b>Running</b>"; 
+                  break ;
+        default : echo "<td class='dt-center' style='bgcolor='#DAF7A6'>None yet"; 
+                  break ;
     }
     echo "</td>\n";  
 
