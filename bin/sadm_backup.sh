@@ -7,8 +7,8 @@
 # Tag:          man sadm_backup 
 # Category:     backup 
 # Description:
-# Backup files and directories are specified in the backup list file ${SADMIN}/cfg/backup_list.txt.
-# Files & directories specified in the exclude list ${SADMIN}/cfg/backup_exclude.txt are excluded.
+# Backup files and directories to backup are specified in the file ${SADMIN}/cfg/backup_list.txt.
+# Files & directories to exclude are specified in the exclude list ${SADMIN}/cfg/backup_exclude.txt.
 # Backup is compress by default, unless you specify not to (-n).
 # Destination of the backup (NFS Server & Directory) is specified within the SADMIN configuration
 # file ($SADMIN/cfg/sadmin.cfg) with the fields 'SADM_BACKUP_NFS_SERVER' and 
