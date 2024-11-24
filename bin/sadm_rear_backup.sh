@@ -82,6 +82,7 @@
 # 2024_01_18 backup v2.35 Minor improvements & update sadmin section to v1.56.
 #@2024_03_27 backup v2.36 Signal an error if the 'isohybrid' command is not installed.
 #@2024_04_26 backup v2.37 Replace usage of 'sadm_write' with 'sadm_write_log' and 'sadm_write_err'.
+#@2024_11_21 backup v2.38 Fix minor bug, enhance log structure.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -110,7 +111,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.37'                                     # Script version number
+export SADM_VER='2.38'                                     # Script version number
 export SADM_PDESC="Produce a ReaR bootable iso and a restorable backup on a NFS server"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -195,7 +196,6 @@ show_usage()
 # --------------------------------------------------------------------------------------------------
 update_url_in_rear_site_conf()
 {
-
     # Ensure that this temporary file doesn't exist,
     if [ -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi
     
@@ -205,20 +205,20 @@ update_url_in_rear_site_conf()
         echo $wline | grep -i "^BACKUP_URL" >/dev/null 2>&1             # Line begin "BACKUP_URL"
         if [ $? -eq 0 ]                                                 # If BACKUP_URL line
         then sadm_write_log "Update backup destination in $REAR_CFGFILE with value from sadmin.cfg."
-            echo "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"" >> $REAR_TMP
-            sadm_write_log "  - BACKUP_URL='nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}'"
+             echo "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"" >> $REAR_TMP
+             sadm_write_log "  - BACKUP_URL='nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}'"
         else echo "$wline" >> $REAR_TMP                                 # Output normal line in TMP
         fi
     done < $REAR_CFGFILE                                                # Read /etc/rear/site.conf
     
     # Copy New site.conf ($REAR_TMP) to the official one ($REAR_CFGFILE).
-    sadm_write_log "  - Update actual $REAR_CFGFILE "
     cp $REAR_TMP $REAR_CFGFILE                                          # Replace ReaR site.conf
     if [ $? -ne 0 ]
     then sadm_write_err "[ ERROR ] replacing actual ${REAR_CFGFILE}."
          sadm_write_err "***** Rear Backup Abort *****"
-        return 1                                                        # Back to caller with error
-    else sadm_write_log "[ OK ]"
+         return 1                                                        # Back to caller with error
+    else sadm_write_log "[ OK ] ReaR configuration file '$REAR_CFGFILE' successfully updated."
+         return 0 
     fi
 }
 
@@ -230,15 +230,15 @@ update_url_in_rear_site_conf()
 create_etc_rear_site_conf()
 {
 
-# if /etc/rear/site.conf is readable, then return to caller.
+    # If /etc/rear/site.conf is readable, then return to caller.
     if [ -r "$REAR_CFGFILE" ] 
-    then sadm_write_log "The $REAR_CFGFILE exist, no need to create it." 
-         return 0 
-    else sadm_write_log "The $REAR_CFGFILE isn't present."
-         sadm_write_log "Creating a ReaR default site file."
+        then sadm_write_log "The $REAR_CFGFILE exist, no need to create it." 
+             return 0 
+        else sadm_write_log "The $REAR_CFGFILE isn't present."
+             sadm_write_log "Creating a ReaR default site file."
     fi
     
-# Start creating the header of ReaR site.conf file into a temp. file for now.
+    # Start creating the header of ReaR site.conf file into a temp. file for now.
     echo  "# Create a bootable ISO9660 image on disk as rear_${SADM_HOSTNAME}.iso" > $REAR_TMP
     echo  "OUTPUT=ISO" >> $REAR_TMP
     echo  " " >> $REAR_TMP
@@ -248,11 +248,11 @@ create_etc_rear_site_conf()
     echo  " " >> $REAR_TMP
     
     echo  "# Directory within mount point where iso and tgz will be stored" >> $REAR_TMP
-    echo  "NETFS_PREFIX=\"\$HOSTNAME\"" >> $REAR_TMP
+    echo  -e "NETFS_PREFIX=\"\$HOSTNAME\"" >> $REAR_TMP
     echo  " " >> $REAR_TMP
     
     echo  "# To backup to NFS disk, use BACKUP_URL=nfs://nfs-server-name/share/path"  >> $REAR_TMP
-    echo  "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\"" >> $REAR_TMP
+    echo  -e "BACKUP_URL=\"nfs://${SADM_REAR_NFS_SERVER}${SADM_REAR_NFS_MOUNT_POINT}\""  >> $REAR_TMP
     echo  " " >> $REAR_TMP
     
     echo  "# Disable SELinux while the backup is running." >> $REAR_TMP
@@ -260,11 +260,11 @@ create_etc_rear_site_conf()
     echo  " " >> $REAR_TMP
     
     echo  "# Prefix name for ISO images without the .iso suffix (rear_HOSTNAME.iso)" >> $REAR_TMP
-    echo  "ISO_PREFIX=\"rear_\$HOSTNAME\"" >> $REAR_TMP
+    echo  -e "ISO_PREFIX=\"rear_\$HOSTNAME\"" >> $REAR_TMP
     echo  " " >> $REAR_TMP
     
     echo  "# Name of Backup (tar.gz) File" >> $REAR_TMP
-    echo  "BACKUP_PROG_ARCHIVE=\"rear_\$HOSTNAME\"" >> $REAR_TMP
+    echo  -e "BACKUP_PROG_ARCHIVE=\"rear_\$HOSTNAME\"" >> $REAR_TMP
     echo  " " >> $REAR_TMP
     
     echo  "# Only include volume groups (opposite of EXCLUDE_VG)." >> $REAR_TMP
@@ -297,6 +297,11 @@ create_etc_rear_site_conf()
     echo  "# Only used to exclude files from the restore. " >> $REAR_TMP
     echo  "# EXCLUDE_RESTORE=()" >> $REAR_TMP
     echo  "" >> $REAR_TMP
+
+    # Keep previous backup archive when new one are created (Y/N)
+    # (Y) Will move previous previous backup to ${HOSTNAME}.old, prior to backup
+    #NETFS_KEEP_OLD_BACKUP_COPY=Y
+
     cat $REAR_TMP | tr -d '\r' > $REAR_CFGFILE
 }
 
@@ -315,24 +320,22 @@ create_etc_rear_site_conf()
 rear_preparation()
 {
     sadm_write_log "-----"
-    sadm_write_log "Starting ReaR Preparation"
-    sadm_write_log "-----"
-    sadm_write_log " "
+    sadm_write_log "Starting 'ReaR' backup preparation"
 
     # Set the REAR env. variable to 'rear' full path.
     ${SADM_WHICH} rear >/dev/null 2>&1                                  # rear command is found ?
     if [ $? -eq 0 ]                                                     # Yes it is on system
-    then export REAR=`${SADM_WHICH} rear`                               # Store Path of command
-    else sadm_write_err "[ ERROR ] The 'rear' command is missing, job aborted."
-        return 1                                                        # Return Error to Caller
+        then export REAR=$(sadm_get_command_path 'rear')                # Store Path of command
+        else sadm_write_err "[ ERROR ] The 'rear' executable is missing, job aborted."
+             return 1                                                   # Return Error to Caller
     fi
     
     # Under DEBUG mode run the command 'rear dump' 
     if [ "$SADM_DEBUG" -gt 4 ]
-    then sadm_write_log " "
-         sadm_write_log "Below is the result of the 'rear dump' command : "
-         sadm_write_log " " ; $REAR dump ; sadm_write_log " " ; sadm_write_log " "
-    fi 
+        then sadm_write_log " "
+             sadm_write_log "Below is the result of the 'rear dump' command : "
+             sadm_write_log " " ; $REAR dump ; sadm_write_log " " ; sadm_write_log " "
+        fi 
 
     # If Rear configuration file '/etc/rear/site.conf' doesn't exist, create a default one.
     if [ ! -r "$REAR_CFGFILE" ] ; then create_etc_rear_site_conf ; fi   # ReaR Site config exist?
@@ -345,26 +348,26 @@ rear_preparation()
     # Make sure nfs local mount point exist.
     if [ ! -d ${NFS_MOUNT} ]
     then sadm_write_log " "
-         sadm_write_log "Create local mount point directory '${NFS_MOUNT}'."
+         sadm_write_log "Create local temporary mount point directory '${NFS_MOUNT}'."
          mkdir ${NFS_MOUNT} ; chmod 775 ${NFS_MOUNT}
     fi
     
     # Mount the NFS Mount point
-    sadm_write_log "Mount NFS share on $SADM_REAR_NFS_SERVER"
     umount ${NFS_MOUNT} > /dev/null 2>&1                                # Make sure it's unmounted.
-    sadm_write_log "mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} "
+    sadm_write_log "  - mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} "
     mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} >>$SADM_LOG 2>&1
-    if [ $? -ne 0 ]
-    then RC=1
-        sadm_write_err "[ ERROR ] NFS Mount failed - Process Aborted."
-        umount ${NFS_MOUNT} > /dev/null 2>&1
-        rmdir  ${NFS_MOUNT} > /dev/null 2>&1
-        return 1
+    RC=$?
+    if [ $RC -ne 0 ]
+        then sadm_write_err "[ ERROR ] NFS Mount failed, error $RC - Process Aborted."
+             RC=1
+             umount ${NFS_MOUNT} > /dev/null 2>&1
+             rmdir  ${NFS_MOUNT} > /dev/null 2>&1
+             return 1
+        else sadm_write_log "[ OK ] NFS share on $SADM_REAR_NFS_SERVER mounted."
     fi
-    sadm_write_log "[ OK ]"
-    df -h | grep ${NFS_MOUNT} | sed 's/%//g' | while read wline ; do sadm_write_log "${wline}"; done
+    #df -h | grep ${NFS_MOUNT} | sed 's/%//g' | while read wline ; do sadm_write_log "$wline" ; done
     
-# Make sure Directory for the host exist on NFS Server.
+    # Make sure Directory for the host exist on NFS Server.
     if [ ! -d  "${NFS_MOUNT}/${SADM_HOSTNAME}" ]
         then mkdir ${NFS_MOUNT}/${SADM_HOSTNAME}
              if [ $? -ne 0 ]
@@ -372,39 +375,23 @@ rear_preparation()
                      return 1
              fi
     fi
-    
-# Write test to NFS Mount Point.
-    sadm_write_log "Write test to NFS mount ... "                       # Feed user and log
-    TEST_FILE="${NFS_MOUNT}/${SADM_HOSTNAME}/rear_pid_$SADM_TPID.txt"   # Create test file name
+
+    # Write test to NFS Mount Point.
+    TEST_FILE="${NFS_MOUNT}/${SADM_HOSTNAME}/test_file.txt"             # Create test file name
     touch ${TEST_FILE} >> $SADM_LOG 2>&1                                # Create empty test file
     if [ $? -ne 0 ]                                                     # If error on chmod command
         then sadm_write_err "[ ERROR ] Can't write test file ${TEST_FILE}."
-             return 1                                                    # Back to caller with error
+             return 1                                                   # Back to caller with error
+        else sadm_write_log "[ OK ] Write test to NFS mount succeeded"  # Feed user and log
     fi
-    sadm_write_log "[ OK ]"                                             # Feed user and log
     rm -f ${TEST_FILE} >> $SADM_LOG 2>&1                                # Delete the test file
-    
-    sadm_write_log " "
-    sadm_write_log "New CD/DVD ISO will be created under the name of ${REAR_CUR_ISO}."
-    sadm_write_log "New USB ISO will be created under the name of ${REAR_USB_ISO}."
-    sadm_write_log "New Backup will be created under the name of ${REAR_CUR_TGZ}."
-    sadm_write_log " "
 
-
-# Show content of rear directory just before starting the backup.
-    sadm_write_log " "
-    sadm_write_log "Current content of 'ReaR' backup directory for ${SADM_HOSTNAME} : "
-    ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write_log "${wline}"; done
-
-
-# Move previous backup in one directory (name of dir is YYYY_MM_DD_HH_MM_SS)
-    if [ -r "$REAR_CUR_ISO" ]
+    # Move previous backup in one directory (name of dir is YYYY_MM_DD_HH_MM_SS)
+    if [ -r "$REAR_CUR_ISO" ]                                           # ISO = Prev. backup exist
     then prev_date=$(stat --printf='%y\n' $REAR_CUR_ISO |awk '{ print $1 }' |tr '-' '_')
          prev_time=$(stat --printf='%y\n' $REAR_CUR_ISO |awk '{ print $2 }' |awk -F\. '{ print $1 }'| tr ':' '_')
-         prev_dir="${REAR_DIR}/${prev_date}_${prev_time}"
-         mkdir -p ${prev_dir}
-         sadm_write_log " "
-         sadm_write_log "Moving previous backup into $prev_dir"
+         prev_dir="${REAR_DIR}/${prev_date}_${prev_time}"               # Dir. Name of Prev. Backup
+         mkdir -p ${prev_dir}                                           # Create Prev. backup dir.
          mv $REAR_CUR_ISO ${prev_dir}/
          if [ -r "$REAR_USB_ISO" ] ; then mv $REAR_USB_ISO ${prev_dir}/ ; fi
          if [ -r "$REAR_ISO_LOG" ] ; then mv $REAR_ISO_LOG ${prev_dir}/ ; fi
@@ -413,16 +400,20 @@ rear_preparation()
          if [ -r "$REAR_CUR_LOG" ] ; then mv $REAR_CUR_LOG ${prev_dir}/ ; fi
          if [ -r "$REAR_README"  ] ; then mv $REAR_README  ${prev_dir}/ ; fi
          if [ -r "$REAR_VERSION" ] ; then mv $REAR_VERSION ${prev_dir}/ ; fi
+         sadm_write_log "[ OK ] Moved previous 'ReaR' backup files in $prev_dir"   # Advise user
     fi 
     
-# Show the content og /etc/rear/site.conf before starting the ReaR backup
     sadm_write_log " "
-    sadm_write_log "-----"
-    sadm_write_log "Current content of 'ReaR' site configuration file ${REAR_CFGFILE} :"
+    sadm_write_log "ReaR bootable ISO that will be created     : ${REAR_CUR_ISO}."
+    sadm_write_log "ReaR USB bootable ISO that will be created : ${REAR_USB_ISO}."
+    sadm_write_log "ReaR backup file that will be created      : ${REAR_CUR_TGZ}."
+
+    # Show the content of /etc/rear/site.conf before starting the ReaR backup
+    sadm_write_log " "
+    sadm_write_log "Content of 'ReaR' site configuration file ${REAR_CFGFILE} before backup:"
     grep -Ev "^$|^#" $REAR_CFGFILE | while read wline ; do sadm_write_log "${wline}"; done
-    sadm_write_log "-----"
-    #sadm_write_log " "
-    sadm_write_log "[ SUCCESS ] End of 'ReaR' preparation."
+    sadm_write_log " "
+    sadm_write_log "[ SUCCESS ] 'ReaR' backup preparation succeeded."
     sadm_write_log "-----"
     sadm_write_log " "
     return 0
@@ -440,52 +431,53 @@ rear_housekeeping()
     sadm_write_log " "
     sadm_write_log " "
     sadm_write_log "-----"
-    sadm_write_log "Perform ReaR housekeeping : "
-    sadm_write_log "-----"
+    sadm_write_log "Perform ReaR housekeeping "
 
-# Create USB Bootable image (If isohybrid command is installed)
+    if [ $SADM_DEBUG -gt 4 ] 
+        then sadm_write_log " " 
+             sadm_write_log "List of 'ReaR' backup directory before starting the housekeeping of '${SADM_HOSTNAME}'."
+             ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write_log "${wline}"; done
+    fi 
+
+    # Create USB Bootable image (If isohybrid command is installed) fi 
     if command -v isohybrid > /dev/null
         then if [ -r "$REAR_CUR_ISO" ] 
                 then cp ${REAR_CUR_ISO} ${REAR_USB_ISO} 
-                     sadm_write_log "Creating USB bootable iso image" 
+                     #sadm_write_log "Creating USB bootable iso image" 
                      isohybrid ${REAR_USB_ISO} 
                      if [ $? -ne 0 ]
-                        then sadm_write_err "[ ERROR ] Running 'isohybrid ${REAR_USB_ISO}'."
+                        then sadm_write_err " "
+                             sadm_write_err "[ ERROR ] Running 'isohybrid ${REAR_USB_ISO}'."
                              return 1 
-                        else sadm_write_log "[ OK ] USB Boot image created '${REAR_USB_ISO}'."
+                        else sadm_write_log " "
+                             sadm_write_log "[ OK ] USB boot image created '${REAR_USB_ISO}'."
                      fi
              fi
-        else sadm_write_err "[ WARNING ] USB Boot image not created."
+        else sadm_write_err " "
+             sadm_write_err "[ WARNING ] USB Boot image not created."
              sadm_write_err "The command 'isohybrid' not installed on '${SADM_HOSTNAME}'."
              sadm_write_err " - On debian,ubuntu,Mint use     : 'sudo apt install syslinux-utils'"
              sadm_write_err " - On fedora,rhel,alma,rocky use : 'sudo dnf install syslinux'" 
              return 1 
     fi 
 
-
-# All generated rear files can be read syncing scripts.0
-    sadm_write_log " " 
-    if [ -r "$REAR_CUR_ISO" ] ; then chmod -v 664 ${REAR_CUR_ISO} ; fi
-    if [ -r "$REAR_USB_ISO" ] ; then chmod -v 664 ${REAR_USB_ISO} ; fi
-    if [ -r "$REAR_ISO_LOG" ] ; then chmod -v 664 ${REAR_ISO_LOG} ; fi
-    if [ -r "$REAR_CUR_TGZ" ] ; then chmod -v 664 ${REAR_CUR_TGZ} ; fi
-    if [ -r "$REAR_CUR_LST" ] ; then chmod -v 664 ${REAR_CUR_LST} ; fi
-    if [ -r "$REAR_README" ]  ; then chmod -v 664 ${REAR_README}  ; fi
-    if [ -r "$REAR_VERSION" ] ; then chmod -v 664 ${REAR_VERSION} ; fi
-    if [ -r "$REAR_CUR_LOG" ] ; then chmod -v 664 ${REAR_CUR_LOG} ; fi
+    if [ -r "$REAR_CUR_ISO" ] ; then chmod 664 ${REAR_CUR_ISO} ; fi
+    if [ -r "$REAR_USB_ISO" ] ; then chmod 664 ${REAR_USB_ISO} ; fi
+    if [ -r "$REAR_ISO_LOG" ] ; then chmod 664 ${REAR_ISO_LOG} ; fi
+    if [ -r "$REAR_CUR_TGZ" ] ; then chmod 664 ${REAR_CUR_TGZ} ; fi
+    if [ -r "$REAR_CUR_LST" ] ; then chmod 664 ${REAR_CUR_LST} ; fi
+    if [ -r "$REAR_README" ]  ; then chmod 664 ${REAR_README}  ; fi
+    if [ -r "$REAR_VERSION" ] ; then chmod 664 ${REAR_VERSION} ; fi
+    if [ -r "$REAR_CUR_LOG" ] ; then chmod 664 ${REAR_CUR_LOG} ; fi
+    sadm_write_log "[ OK ] Set permission on backup files."
 
     sadm_write_log " "
-    sadm_write_log "Information coming from SADMIN configuration file ${SADM_CFG_FILE} :"
-    sadm_write_log " - Always keep last $SADM_REAR_BACKUP_TO_KEEP ReaR backup on '${SADM_REAR_NFS_SERVER}'."
-    sadm_write_log " "
-    sadm_write_log "List of ReaR backup directory before housekeeping for '${SADM_HOSTNAME}'."
-    ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write_log "${wline}"; done
+    sadm_write_log "Based on the field 'SADM_REAR_BACKUP_TO_KEEP' in SADMIN configuration file ${SADM_CFG_FILE} :"
+    sadm_write_log "  - You decided to keep the last $SADM_REAR_BACKUP_TO_KEEP 'ReaR' backup on '${SADM_REAR_NFS_SERVER}'."
     
-# Eliminate old backup structure 
-    find ${REAR_DIR} -type f -name "rear_${SADM_HOSTNAME}_20*" -exec rm -f {} \;
-
-# Get previous backup directory name and size
-    sadm_write_log " "
+    # Get previous backup directory name and size
+    sadm_write_log " " 
+    sadm_write_log "Calculating previous backup size."
     ls --color=never -1trdh  ${REAR_DIR}/20* >/dev/null 2>&1            # Check Prv Backup dir exist
     if [ $? -eq 0 ]                                                     # If Prv Backup dir exist
         then prev_backup_dir=$(ls --color=never -1trdh ${REAR_DIR}/20* | tail -1) 
@@ -495,19 +487,19 @@ rear_housekeeping()
     fi 
     sadm_write_log "Previous backup size: $prev_backup_size"
 
-# Current backup size 
+    # Current backup size 
     ls -l ${REAR_DIR}/rear* >/dev/null 2>&1
     if [ $? -eq 0 ] 
         then cur_backup_size=$(du -hac ${REAR_DIR}/rear* | awk '{print $1}' | tail -1)
         else cur_backup_size=0
     fi
-    sadm_write_log "Current backup size: $cur_backup_size"
+    sadm_write_log "Current backup size : $cur_backup_size"
 
-# Total Rear backup directory size
+    # Total Rear backup directory size
     rear_total_backup_size=$(du -ahc ${REAR_DIR} | tail -1 | awk '{ print $1 }')
-    sadm_write_log "$rear_total_backup_size - Total ReaR backup directory size for '${SADM_HOSTNAME}'." 
+    sadm_write_log "Space occupied by the backups of '${SADM_HOSTNAME}' : $rear_total_backup_size" 
 
-# Calculate number of backup we have for this system
+    # Calculate number of backup we have for this system
     if [ -r $REAR_CUR_TGZ ]                                             # If current .tar.gz exist
         then nb_backup=1                                                # Then nb backup is 1
         else nb_backup=0                                                # Else nb backup is 0
@@ -515,7 +507,7 @@ rear_housekeeping()
     nb_date_dir=$(find ${REAR_DIR} -type d -name "2*" | wc -l)        # Nb of directories
     nb_backup=$((nb_backup + nb_date_dir))                           # Total nb of ReaR Backup
 
-# Delete backup that are over the number we want to keep.
+    # Delete backup that are over the number we want to keep.
     nb_dir_to_keep=$((SADM_REAR_BACKUP_TO_KEEP - 1)) 
     if [ $SADM_DEBUG -gt 0 ] 
         then sadm_write_log "Number of dir. to keep: $nb_dir_to_keep"
@@ -523,54 +515,56 @@ rear_housekeeping()
     fi 
     if [ $nb_date_dir -gt $nb_dir_to_keep ]
         then nb_to_delete=$((nb_date_dir - nb_dir_to_keep)) 
-             sadm_write_log " "
-             sadm_write_log "Number of backup directory to delete: $nb_to_delete"
-             sadm_write_log "Backup directories that will be removed : "
+             if [ $SADM_DEBUG -gt 0 ] 
+                then sadm_write_log "Number of backup directory to delete: $nb_to_delete"
+             fi 
+             sadm_write_log "Following directories that will be removed : "
              /bin/ls -1td ${REAR_DIR}/20* | sort -r | sed 1,${nb_dir_to_keep}d | while read wline ; do sadm_write_log "${wline}"; done
              /bin/ls -1td ${REAR_DIR}/20* | sort -r | sed 1,${nb_dir_to_keep}d | xargs rm -fr >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
-             then sadm_write_err "Problem deleting backup directory [ ERROR ]"
+             then sadm_write_err "[ ERROR ] Problem deleting backup directory [ ERROR ]"
                   return 1
-             else sadm_write_log "Previous backup directory removed [ OK ]"
+             else sadm_write_log "[ OK ] Previous backup directory removed"
              fi
-        else sadm_write_log " "
-             sadm_write_log "No need to remove any directories."
+        else sadm_write_log "[ OK ] No need to remove any directories."
     fi
 
-# List 10 biggest files include in the tgz file
-    sadm_write_log " "
-    sadm_write_log "Building a list of the 10 biggest files included in the ReaR backup file."
-    tar -tzvf $REAR_CUR_TGZ | sort -k3 -rn | nl | head | tee -a  ${SADM_LOG}  
-    sadm_write_log " "
+    sadm_write_log " " 
+    sadm_write_log "List of 'ReaR' backup directory after the backup of '${SADM_HOSTNAME}'."
+    ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write_log "${wline}"; done
+    sadm_write_log " " 
 
-# List level 1 and 2 of the directories included in the ReaR tgz file
-    sadm_write_log " "
-    sadm_write_log "Creating a table of content (-tvzf) of ReaR backup '$REAR_CUR_LST'".
+    # List 10 biggest files include in the tgz file
+    if [ $SADM_DEBUG -gt 0 ] 
+        then sadm_write_log " "
+             sadm_write_log "-----"
+             sadm_write_log "Building a list of the 10 biggest files included in your ReaR backup file."
+             tar -tzvf $REAR_CUR_TGZ | sort -k3 -rn | nl | head | tee -a  ${SADM_LOG}  
+    fi 
+
+    # List level 1 and 2 of the directories included in the ReaR tgz file
+    sadm_write_log "Creating a table of content of backup file in '$REAR_CUR_LST'".
     #tar --exclude '*/*/*/*/*' -tvzf $REAR_CUR_TGZ | grep -Ex '([^/]+/){3}' >$REAR_CUR_LST
     tar -tvzf $REAR_CUR_TGZ >$REAR_CUR_LST
-    sadm_write_log " "
+    if [ $? -ne 0 ]
+        then sadm_write_err "[ ERROR ] Verification of backup file failed."
+             return 1
+        else sadm_write_log "[ OK ] Success of verification of backup file."
+    fi
 
-# List Backup Directory to user after cleanup
-    sadm_write_log " "
-    sadm_write_log "List of ReaR backup directory after housekeeping for ${SADM_HOSTNAME}"
-    ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write_log "${wline}"; done
-    
-# Ok Cleanup up is finish - Unmount the NFS
-    sadm_write_log " "
-    sadm_write_log "Unmounting NFS mount directory ${NFS_MOUNT} ..."
-    sadm_write_log "umount ${NFS_MOUNT} "
+    # Ok Cleanup up is finish - Unmount the NFS
     umount ${NFS_MOUNT} >> $SADM_LOG 2>&1
     if [ $? -ne 0 ]
     then sadm_write_err "[ ERROR ] Problem unmounting ${NFS_MOUNT}."
          return 1
     else rmdir ${NFS_MOUNT} > /dev/null 2>&1
-         sadm_write_log "[ OK ]"
+         sadm_write_log "[ OK ] ${NFS_MOUNT} unmounted."
     fi
-    
-# Remove NFS mount point.
+
+    # Remove NFS mount point.
     if [ -d "${NFS_MOUNT}" ]
     then sadm_write_log " "
-        sadm_write_log "Removing NFS mount directory ${NFS_MOUNT} ..."
+        sadm_write_log "Removing NFS mount point temporary directory ${NFS_MOUNT} ..."
         sadm_write_log "rm -fr ${NFS_MOUNT} "
         rm -fr ${NFS_MOUNT} >/dev/null 2>&1
         if [ $? -ne 0 ]
@@ -580,13 +574,10 @@ rear_housekeeping()
         fi
     fi
     
-# Delete TMP work file before retuning to caller
+    # Delete TMP work file before retuning to caller
     if [ ! -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi
-    
-    sadm_write_log " "
-    sadm_write_log "-----"
+   
     sadm_write_log "[ SUCCESS ] End of 'ReaR' backup housekeeping"
-    sadm_write_log "-----"
     return 0
 }
 
@@ -599,15 +590,21 @@ rear_housekeeping()
 # --------------------------------------------------------------------------------------------------
 create_backup()
 {
-
-# Feed user and log, the what we are about to do.
-    sadm_write_log " "
+    # Feed user and log, with what we are doing.
     sadm_write_log "-----"
     sadm_write_log "Creating 'ReaR' backup for system '${SADM_HOSTNAME}' : "
-    sadm_write_log "-----"
+
+    # Show current content of rear directory.
+    if [ $SADM_DEBUG -gt 4 ] 
+        then sadm_write_log " "
+             sadm_write_log "Here's the content of 'ReaR' backup directory of ${SADM_HOSTNAME} before backup begin :"
+             sadm_write_log "Backup directory is '$REAR_DIR'."
+             ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write_log "${wline}"; done
+    fi 
+
+    # Create the Backup TGZ file on the NFS Server
     sadm_write_log "$REAR mkbackup -v"
-    
-# Create the Backup TGZ file on the NFS Server
+    sadm_write_log " "
     $REAR mkbackup -v >> $SADM_LOG 2>&1                                 # Produce Rear Backup for DR
     RC=$?                                                               # Save Command return code.
     sadm_write_log "ReaR backup exit code : ${RC}"                      # Show user backup exit code
@@ -616,11 +613,20 @@ create_backup()
          sadm_write_err "Also look into ReaR log file /var/log/rear/rear-${SADM_HOSTNAME}.log." 
          sadm_write_err "***** Rear Backup completed with Error - Aborting Script *****"
          sadm_write_log "Unmount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT}"
-         umount  ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} > /dev/null 2>&1
+         umount  ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} | tee -a ${SADM_LOG} 
          return 1                                                        # Back to caller with error
     fi 
     sadm_write_log "More info in the log ${REAR_CUR_LOG}."
     sadm_write_log "[ SUCCESS ] Rear Backup completed."
+
+    # Show current content of rear directory.
+    if [ $SADM_DEBUG -gt 4 ] 
+        then sadm_write_log " "
+             sadm_write_log "XYCurrent content of 'ReaR' backup directory of ${SADM_HOSTNAME} after backup : "
+             sadm_write_log "Backup directory is '$REAR_DIR'."
+             ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write_log "${wline}"; done
+    fi 
+    
     return 0                                                            # Return Default return code
 }
 
