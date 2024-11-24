@@ -229,6 +229,7 @@
 #@2024_10_31 lib v4.50 Add new variable to sadmin.cfg for Virtual Box export new feature.
 #@2024_11_01 lib v4.51 sadm_get_osname() was not returning the right O/S under certain condition.
 #@2024_11_11 lib v4.52 Add two Global var. accessible to any script 'SADM_VMLIST' & 'SADM_VMHOSTS'.
+#@2024_11_24 lib v4.53 Fix minor bug in function sadm_on_sadmin_server()
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -238,7 +239,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.52"                                              # This Library Version
+export SADM_LIB_VER="4.53"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -742,7 +743,7 @@ sadm_trimfile() {
 #---------------------------------------------------------------------------------------------------
 # sadm_get_command_path() 
 #
-#   Verify existence a command and return the full path of command (0) or blank (1).
+#   Verify existence of a command and return the full path of command (0) or blank (1).
 #
 # Parameter(s)  : 
 #   1) Name of the command ('cal' for example)
@@ -2785,20 +2786,27 @@ sadm_check_system_lock() {
 # --------------------------------------------------------------------------------------------------
 # sadm_on_sadmin_server()
 #
-# Check if the IP assigned to 'sadmin' is defined on the current system.
+# Check if the IP assigned to 'SADMIN' env. variable is defined on the current system and check 
+# if the value of 'SADM_HOST_TYPE' is set to "S" in $SADMIN/cfg/sadmin.cfg. 
 # 
-# Return True or False
-#     "1"     : System is a valid SADMIN server,
-#                 - System have "SADM_HOST_TYPE" equal to "S" in $SADMIN/cfg/sadmin.cfg.
-#                 - The 'sadmin' host resolved to an IP present on the current system.
-#                   This permit to use an IP other than the main system IP address (IP alias).
-#     "0"     : Mean that current is not a SADMIN server.
+# Return code : 
+#
+#     "0"     : Mean that current host is not a SADMIN server 
+#                   - Set global variable 'SADM_ON_SADMIN_SERVER' is to "N".
+#               
+#     "1"     : Current system is a 'SADMIN' server.
+#                 - If system global variable "SADM_HOST_TYPE" equal "S" in $SADMIN/cfg/sadmin.cfg.
+#                 - If 'sadmin' host resolved to an IP present on the current system (IP alias).
+#                 - Set global variable 'SADM_ON_SADMIN_SERVER' is set to "Y".
 #               
 # --------------------------------------------------------------------------------------------------
 sadm_on_sadmin_server() {
 
-    wreturn=0                                                           # 0=yes, 1=No = Retur
-    if [ "$SADM_HOST_TYPE" != "S" ] ; then return "$wreturn" ; fi
+    wreturn=0                                                           # 0=yes, 1=No = Return
+    if [ "$SADM_HOST_TYPE" = "S" ]                                      # Check value in sadmin.cfg
+        then SADM_ON_SADMIN_SERVER="Y"                                  # Set Global Var to Y
+             return 1
+    fi
     
     # Check if SADM_SERVER IP is defined on this system and set SADM_ON_SADMIN_SERVER accordingly.
     server_ip=$(getent ahostsv4 $SADM_SERVER | tail -1 | awk  '{ print $1 }')  
