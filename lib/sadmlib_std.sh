@@ -2725,7 +2725,7 @@ sadm_unlock_system() {
                else sadm_write_err "[ ERROR ] Unlocking '${SNAME}' - Can't remove '${LOCK_FILE}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
-        else sadm_write_log "[ OK ] System '$SNAME' is now unlocked."
+        else sadm_write_log "[ OK ] System '$SNAME' is not lock."
     fi 
     return $RC                                                          # Return to caller 
 } 
@@ -2774,7 +2774,7 @@ sadm_check_system_lock() {
                 else #sadm_write_log "The system '${SNAME}' is currently lock."
                      #sadm_write_log "System normal monitoring will resume in ${sec_left} seconds."
                      #sadm_write_log "Maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
-                     return 1                                           # System Lock Return 1
+                     return 1                                           # System is Lock Return 1
             fi 
     fi 
     return 0                                                            # Return no lockfile
