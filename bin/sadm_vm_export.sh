@@ -32,6 +32,7 @@
 # 2023_07_19 vmtools v1.0 Initial Version
 #@2024_03_19 vmtools v2.0 Export the 'VMName' received to NFS server define in 'sadmin.cfg'.
 #@2024_10_31 vmtools v2.3 Fix some minor issues and command line option.
+#@2024_11_26 vmtools v2.4 If system is lock, then export of the VM is not allowed.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -76,7 +77,7 @@ export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with ex
 # ---**********************
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.3'                                      # Script version number
+export SADM_VER='2.4'                                      # Script version number
 export SADM_PDESC="Export one virtual machine to a NFS Server."      
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -118,7 +119,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #===================================================================================================
 . ${SADM_LIB_DIR}/sadmlib_vbox.sh                                       # Load VM functions Tool Lib
 
-CONFIRM="Y"                                                             # confirmation if not -y use
+export CONFIRM="Y"                                                      # confirmation if not -y use
 
 
 
@@ -141,7 +142,7 @@ show_usage()
 #===================================================================================================
 main_process()
 {
-    sadm_write_log "Export of virtual machine '$VMNAME'."               # Show Backup Chosen
+    sadm_write_log "Starting the export of virtual machine '$VMNAME'."  # Show Backup Chosen
     sadm_export_vm "$VMNAME"                                            # Libr. VM Export Function
     if [ $? -eq 0 ] ; then SADM_EXIT_CODE=0 ; else SADM_EXIT_CODE=1 ; fi 
     sadm_list_vm_status                                                 # List Status of ALL VMs
@@ -199,7 +200,7 @@ function cmd_options()
     sadm_vm_exist "$VMNAME"                                             # Does the VM exist ? 
     if [ $? -ne 0 ]                                                     # If VM does not exist                  
        then printf "\n${SADM_ERROR} '$VMNAME' is not a valid registered virtual machine.\n"
-            exit 1                                    # Exit script
+            exit 1                                                      # Exit script
     fi    
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
