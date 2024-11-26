@@ -64,7 +64,8 @@
 # 2023_05_06 osupdate v5.3 Reduce ping wait time to speed up processing.
 # 2023_09_13 osupdate v5.4 Update with latest SADMIN section(v1.56).
 # 2024_04_02 osupdate v5.5 Small modifications.
-# 2024_09_12 osupdate v5.6 Adjustments & modifications done to log.
+#@2024_09_12 osupdate v5.6 Adjustments & modifications done to log.
+#@2024_11_25 osupdate v5.7 Fix minor problem with system lock.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -113,7 +114,7 @@ export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with ex
 
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='5.6'                                      # Script version number
+export SADM_VER='5.7'                                      # Script version number
 export SADM_PDESC="Run the O/S update script on the selected remote system."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -297,16 +298,16 @@ rcmd_osupdate()
     # Check if System is Locked.
     sadm_check_system_lock "$server_name"                           # Check lock file status
     if [ $? -ne 0 ]                                                 # If System is lock
-       then sadm_write_err "System '${server_name}' is lock, update not possible at this time."
+       then sadm_write_err "[ ERROR ] System '$server_name' is lock, cannot proceed at this time."
             return 1 
     fi
 
     # Create lock file while O/S Update is running 
     # This prevent the SADMIN server from starting a script on the remote system.
     # A system Lock also turn off monitoring of remote system.
-    sadm_lock_system "${server_name}"                               # Lock system while update o/s
+    sadm_lock_system "$server_name"                                 # Lock system while update o/s
     if [ $? -ne 0 ]                                                 # If lock system failed
-       then sadm_write_err "Update of '${server_name}' cancelled."  # Couldn't Lock system
+       then sadm_write_err "[ ERROR ] Couldn't create the lock file for '$server_name'."
             return 1 
     fi
     
