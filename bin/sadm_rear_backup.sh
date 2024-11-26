@@ -83,6 +83,7 @@
 #@2024_03_27 backup v2.36 Signal an error if the 'isohybrid' command is not installed.
 #@2024_04_26 backup v2.37 Replace usage of 'sadm_write' with 'sadm_write_log' and 'sadm_write_err'.
 #@2024_11_21 backup v2.38 Fix minor bug, enhance log structure.
+#@2024_11_25 backup v2.39 Add integrity check of resulting tgz file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -111,7 +112,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.38'                                     # Script version number
+export SADM_VER='2.39'                                     # Script version number
 export SADM_PDESC="Produce a ReaR bootable iso and a restorable backup on a NFS server"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -168,6 +169,7 @@ export REAR_USB_ISO="${REAR_NAME}_usb.iso"                              # USB IS
 export REAR_ISO_LOG="${REAR_DIR}/rear-${SADM_HOSTNAME}.log"             # CD ISO creation log
 export REAR_CUR_TGZ="${REAR_NAME}.tar.gz"                               # Rear Host Backup File Name
 export REAR_CUR_LST="${REAR_CUR_TGZ}.lst"                               # tar -tvzf of ReaR file
+export REAR_CUR_ERR="${REAR_NAME}.err"                                  # tar error in ReaR file
 export REAR_CUR_LOG="${REAR_NAME}.log"                                  # Rear Host Backup log file
 export REAR_README="${REAR_DIR}/README"                                 # Rear Backup README
 export REAR_VERSION="${REAR_DIR}/VERSION"                               # Rear Version file
@@ -524,35 +526,47 @@ rear_housekeeping()
              if [ $? -ne 0 ]
              then sadm_write_err "[ ERROR ] Problem deleting backup directory [ ERROR ]"
                   return 1
-             else sadm_write_log "[ OK ] Previous backup directory removed"
+             else sadm_write_log "[ OK ] Oldest backup directory removed"
              fi
         else sadm_write_log "[ OK ] No need to remove any directories."
     fi
 
     sadm_write_log " " 
-    sadm_write_log "List of 'ReaR' backup directory after the backup of '${SADM_HOSTNAME}'."
+    sadm_write_log "List of 'ReaR' backup directories of '${SADM_HOSTNAME}' after the backup."
     ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write_log "${wline}"; done
     sadm_write_log " " 
 
-    # List 10 biggest files include in the tgz file
-    if [ $SADM_DEBUG -gt 0 ] 
-        then sadm_write_log " "
-             sadm_write_log "-----"
-             sadm_write_log "Building a list of the 10 biggest files included in your ReaR backup file."
-             tar -tzvf $REAR_CUR_TGZ | sort -k3 -rn | nl | head | tee -a  ${SADM_LOG}  
+    # Verify integrity of ReaR backup file (*.tgz)
+    sadm_write_log "Verify integrity of the compressed ReaR backup file '$REAR_CUR_TGZ'".
+    gunzip -tvl $REAR_CUR_TGZ
+    if [ $? -ne 0 ] 
+        then sadm_write_err "[ ERROR ] Integrity check of '$REAR_CUR_TGZ' failed."
+             return 1 
+        else sadm_write_log "[ OK ] Integrity check of '$REAR_CUR_TGZ' succeeded."  
     fi 
 
-    # List level 1 and 2 of the directories included in the ReaR tgz file
-    sadm_write_log "Creating a table of content of backup file in '$REAR_CUR_LST'".
+    # Create a table of content of tgz backup file just produced.
+    sadm_write_log " " 
+    sadm_write_log "Creating a list of the ReaR backup file in '$REAR_CUR_LST'".
     #tar --exclude '*/*/*/*/*' -tvzf $REAR_CUR_TGZ | grep -Ex '([^/]+/){3}' >$REAR_CUR_LST
-    tar -tvzf $REAR_CUR_TGZ >$REAR_CUR_LST
+    tar -tvzf "$REAR_CUR_TGZ" 1>"$REAR_CUR_LST" 2>"$REAR_CUR_ERR"
     if [ $? -ne 0 ]
-        then sadm_write_err "[ ERROR ] Verification of backup file failed."
+        then if [ -r "$REAR_CUR_ERR" ] 
+                then cat "$REAR_CUR_ERR" | while read wline ; do sadm_write_err "${wline}"; done
+             fi
+             sadm_write_err "[ ERROR ] Failed to produce a list of files on the backup."
              return 1
-        else sadm_write_log "[ OK ] Success of verification of backup file."
+        else sadm_write_log "[ OK ] List of files included in the backup in ´$REAR_CUR_LST '."
     fi
 
-    # Ok Cleanup up is finish - Unmount the NFS
+
+    # List 10 biggest files include in the tgz file
+    sadm_write_log " "
+    sadm_write_log "Building a list of the 10 biggest files included in your ReaR backup file."
+    tar -tzvf $REAR_CUR_TGZ | sort -k3 -rn | nl | head | tee -a  ${SADM_LOG}  
+    sadm_write_log " "
+    
+     # Unmount the NFS directory 
     umount ${NFS_MOUNT} >> $SADM_LOG 2>&1
     if [ $? -ne 0 ]
     then sadm_write_err "[ ERROR ] Problem unmounting ${NFS_MOUNT}."
@@ -561,17 +575,17 @@ rear_housekeeping()
          sadm_write_log "[ OK ] ${NFS_MOUNT} unmounted."
     fi
 
-    # Remove NFS mount point.
+    # Remove NFS temporary mount point.
     if [ -d "${NFS_MOUNT}" ]
-    then sadm_write_log " "
-        sadm_write_log "Removing NFS mount point temporary directory ${NFS_MOUNT} ..."
-        sadm_write_log "rm -fr ${NFS_MOUNT} "
-        rm -fr ${NFS_MOUNT} >/dev/null 2>&1
-        if [ $? -ne 0 ]
-            then sadm_write_err "[ ERROR ] Problem removing mount point unmounting ${NFS_MOUNT}."
-                 return 1
-            else sadm_write_log "[ OK ]"
-        fi
+        then sadm_write_log " "
+             sadm_write_log "Removing NFS mount point temporary directory ${NFS_MOUNT} ..."
+             sadm_write_log "rm -fr ${NFS_MOUNT} "
+             rm -fr ${NFS_MOUNT} >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                 then sadm_write_err "[ ERROR ] Problem removing NFS mount point ${NFS_MOUNT}."
+                      return 1
+                 else sadm_write_log "[ OK ]"
+             fi
     fi
     
     # Delete TMP work file before retuning to caller
@@ -592,12 +606,12 @@ create_backup()
 {
     # Feed user and log, with what we are doing.
     sadm_write_log "-----"
-    sadm_write_log "Creating 'ReaR' backup for system '${SADM_HOSTNAME}' : "
+    sadm_write_log "Starting 'ReaR' backup for '${SADM_HOSTNAME}'. "
 
     # Show current content of rear directory.
     if [ $SADM_DEBUG -gt 4 ] 
         then sadm_write_log " "
-             sadm_write_log "Here's the content of 'ReaR' backup directory of ${SADM_HOSTNAME} before backup begin :"
+             sadm_write_log "Content of 'ReaR' backup directory before backup begin."
              sadm_write_log "Backup directory is '$REAR_DIR'."
              ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write_log "${wline}"; done
     fi 
@@ -622,7 +636,7 @@ create_backup()
     # Show current content of rear directory.
     if [ $SADM_DEBUG -gt 4 ] 
         then sadm_write_log " "
-             sadm_write_log "XYCurrent content of 'ReaR' backup directory of ${SADM_HOSTNAME} after backup : "
+             sadm_write_log "Content of 'ReaR' backup directory of ${SADM_HOSTNAME} after backup : "
              sadm_write_log "Backup directory is '$REAR_DIR'."
              ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write_log "${wline}"; done
     fi 
