@@ -46,6 +46,7 @@
 #@2024_04_22 server v2.20 Trim the alert archive file to '$SADM_MAX_ARC_LINE' defined in sadmin.cfg.
 #@2024_05_15 server v2.21 Correct a typo that was causing the script to crash.
 #@2024_10_31 server v2.22 Fix "$SADMIN/www/tmp/perf" permission (prevent to view performance graph).
+#@2024_12_17 server v2.23 Code revision and optimization.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
@@ -75,7 +76,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.21'                                     # Script version number
+export SADM_VER='2.23'                                     # Script version number
 export SADM_PDESC="Move alert old alert to history archive and set permission in www directories."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -223,13 +224,47 @@ alert_housekeeping()
 
 
 # --------------------------------------------------------------------------------------------------
+# Function that set the Owner/Group and Privilege of the Filename received.
+# --------------------------------------------------------------------------------------------------
+set_file()
+{
+    VAL_FILE=$1                                                         # Directory Name
+    VAL_OCTAL=$2                                                        # chmod octal value
+    VAL_OWNER=$3                                                        # Directory Owner 
+    VAL_GROUP=$4                                                        # Directory Group name
+    RETURN_CODE=0                                                       # Reset Error Counter
+
+    if [ -f "$VAL_FILE" ]                                               # If file exist
+        then sadm_write_log "  - chmod ${VAL_OCTAL} ${VAL_FILE} " "NOLF"
+             chmod ${VAL_OCTAL} ${VAL_FILE}
+             if [ $? -ne 0 ]
+                then sadm_write_err "[ ERROR ] On 'chmod' operation on ${VAL_FILE}."
+                     RETURN_CODE=1                                      # Error = Return Code to 1
+                else sadm_write_log "[ OK ]"
+             fi
+             sadm_write_log "  - chown ${VAL_OWNER}:${VAL_GROUP} ${VAL_FILE} " "NOLF"
+             chown ${VAL_OWNER}:${VAL_GROUP} ${VAL_FILE}
+             if [ $? -ne 0 ]
+                then sadm_write_err "[ ERROR ] On 'chown' operation on ${VAL_FILE}."
+                     RETURN_CODE=1                                      # Error = Return Code to 1
+                else sadm_write_log "[ OK ]"
+             fi
+    fi
+    return $RETURN_CODE
+}
+
+
+# --------------------------------------------------------------------------------------------------
 #                               General Directories Housekeeping Function
 # --------------------------------------------------------------------------------------------------
 dir_housekeeping()
 {
     sadm_write_log ""
-    sadm_write_log "Server Directories HouseKeeping."
-    if [ ! -d "$SADM_WWW_DIR" ] ; then return $ERROR_COUNT ; fi 
+    sadm_write_log "SERVER DIRECTORIES HOUSEKEEPING"
+    if [ ! -d "$SADM_WWW_DIR" ] 
+        then sadm_write_err "[ ERROR ] Directory '$SADM_WWW_DIR' doesn't exist." 
+             return 1
+    fi 
 
     # Reset privilege on WWW Directory files
     CMD="find $SADM_WWW_DIR -type d -exec chmod -R 775 {} \;"
@@ -278,83 +313,13 @@ file_housekeeping()
 
     # Make sure crontab for SADMIN server have proper permission and owner
     sadm_write_log "Make sure SADMIN crontab file have proper permission and owner"
-    afile="/etc/cron.d/sadm_server"
-    if [ -f "$afile" ]
-        then CMD="chmod 0644 $afile && chown root:root $afile"
-             chmod 0644 $afile && chown root:root $afile 
-             if [ $? -ne 0 ]
-                then sadm_write_err "$SADM_ERROR running ${CMD}"
-                     ((ERROR_COUNT++))
-                else sadm_write_log "${SADM_OK} running ${CMD}"
-                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-             fi
-    fi
-
-    # Make sure crontab for O/S Update have proper permission and owner
-    afile="/etc/cron.d/sadm_osupdate"
-    if [ -f "$afile" ]
-        then CMD="chmod 0644 $afile && chown root:root $afile"
-             chmod 0644 $afile && chown root:root $afile 
-             if [ $? -ne 0 ]
-                then sadm_write_err "$SADM_ERROR running ${CMD}"
-                     ((ERROR_COUNT++))
-                else sadm_write_log "${SADM_OK} running ${CMD}"
-                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-             fi
-    fi
-
-    # Make sure crontab for Backup have proper permission and owner
-    afile="/etc/cron.d/sadm_backup"
-    if [ -f "$afile" ]
-      then CMD="chmod 0644 $afile && chown root:root $afile"
-             chmod 0644 $afile && chown root:root $afile 
-             if [ $? -ne 0 ]
-                then sadm_write_err "$SADM_ERROR running ${CMD}"
-                     ((ERROR_COUNT++))
-                else sadm_write_log "${SADM_OK} running ${CMD}"
-                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-             fi
-    fi
-
-    # Make sure crontab for VM Export have proper permission and owner
-    afile="/etc/cron.d/sadm_vm"
-    if [ -f "$afile" ]
-      then CMD="chmod 0644 $afile && chown root:root $afile"
-            chmod 0644 $afile && chown root:root $afile 
-            if [ $? -ne 0 ]
-               then sadm_write_err "$SADM_ERROR running ${CMD}"
-                    ((ERROR_COUNT++))
-               else sadm_write_log "${SADM_OK} running ${CMD}"
-                    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-            fi
-    fi
-
-    # Make sure crontab for VM Export have proper permission and owner
-    afile="/etc/cron.d/sadm_rear_backup"
-    if [ -f "$afile" ]
-      then CMD="chmod 0644 $afile && chown root:root $afile"
-            chmod 0644 $afile && chown root:root $afile 
-            if [ $? -ne 0 ]
-               then sadm_write_err "$SADM_ERROR running ${CMD}"
-                    ((ERROR_COUNT++))
-               else sadm_write_log "${SADM_OK} running ${CMD}"
-                    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-            fi
-    fi
-
-    # Make sure crontab for VM Export have proper permission and owner
-    afile="/etc/cron.d/sadm_client"
-    if [ -f "$afile" ]
-      then CMD="chmod 0644 $afile && chown root:root $afile"
-            chmod 0644 $afile && chown root:root $afile 
-            if [ $? -ne 0 ]
-               then sadm_write_err "$SADM_ERROR running ${CMD}"
-                    ((ERROR_COUNT++))
-               else sadm_write_log "${SADM_OK} running ${CMD}"
-                    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
-            fi
-    fi
-
+    set_file "/etc/cron.d/sadm_client"       "0644" "root" "root"
+    set_file "/etc/cron.d/sadm_server"       "0644" "root" "root"
+    set_file "/etc/cron.d/sadm_osupdate"     "0644" "root" "root"
+    set_file "/etc/cron.d/sadm_backup"       "0644" "root" "root"
+    set_file "/etc/cron.d/sadm_rear_backup"  "0644" "root" "root"
+    set_file "/etc/cron.d/sadm_vm"           "0644" "root" "root"
+    
     # Delete performance graph (*.png) generated by web interface older than 5 days.
     if [ -d "$SADM_WWW_PERF_DIR" ]
         then sadm_write_log " " 
@@ -383,7 +348,7 @@ file_housekeeping()
              fi
     fi 
 
-    # Delete *.nmon files older than 1 days in $SADMIN/dat/nmon
+    # Delete *.nmon files older than $SADM_NMON_KEEPDAYS days in $SADMIN/dat/nmon
     if [ -d "$SADM_NMON_DIR" ]
         then sadm_write_log " " 
              sadm_write_log "Delete *.nmon files older than $SADM_NMON_KEEPDAYS days ('SADM_NMON_KEEPDAYS') in ${SADM_WWW_TMP_DIR}."
