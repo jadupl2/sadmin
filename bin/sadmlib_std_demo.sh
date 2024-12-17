@@ -44,7 +44,7 @@
 # 2023_11_29 lib v3.26 Change to not update 'rch' file.
 #@2024_06_13 lib v3.27 Add VM export parameters and alert history/archive purge days limit.
 #@2024_11_01 lib v3.28 Change name of Global variable "SADM_RCHLOG" to "RCH_FILE". 
-
+#@2024_12_17 lib v3.29 Now require 'root' user to run.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -73,9 +73,9 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.28'                                      # Script version number
+export SADM_VER='3.29'                                      # Script version number
 export SADM_PDESC="Demonstrate functions & variables available to developers using SADMIN Tools"
-export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -856,6 +856,11 @@ print_sadmin_cfg()
     pexample="\$SADM_GROUP"                                             # Directory Variable Name
     pdesc="SADMIN Group Name"                                           # Directory Description
     presult="$SADM_GROUP"                                               # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    
+    pexample="\$SADM_PWD_RANDOM"                                        # Variable Name
+    pdesc="Auto generation of '$SADM_USER' password"                    # Description
+    presult="$SADM_PWD_RANDOM"                                          # Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_WWW_USER"                                          # Directory Variable Name
