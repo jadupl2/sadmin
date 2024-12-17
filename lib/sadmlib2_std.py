@@ -67,8 +67,8 @@
 #@2024_04_22 lib v4.53 Alert housekeeping, add 'SADM_DAYS_HISTORY' & ´SADM_MAX_ARC_LINE' to $SADM_CFG_FILE.
 #@2024_04_23 lib v4.54 Add option to send email on startup and on shutdown in sadmin.cfg.
 #@2024_11_11 lib v4.55 Add two Global var. accessible to any script 'sa.vm_list' & 'sa.vm_hosts'.
-#
-# # --------------------------------------------------------------------------------------------------
+#@2024_12_17 lib v4.56 Add loading new global variable 'sadm_pwd_random' to generate 'sadmin user' pwd.
+# --------------------------------------------------------------------------------------------------
 #
 try :
     import os                                               # Operating System interface
@@ -101,7 +101,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.55"                                # This Library Version
+lib_ver             = "4.56"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -162,6 +162,7 @@ sadm_mail_addr                = ""                          # Default is in sadm
 sadm_cie_name                 = ""                          # Company Name
 sadm_user                     = ""                          # sadmin user account
 sadm_group                    = ""                          # sadmin user group
+sadm_pwd_random               = "N"                         # ReGenerate sadmin pwd Y/N
 sadm_nmon_keepdays            = 20                          # Days to keep old *.nmon
 sadm_rch_keepdays             = 35                          # Days to keep old *.rch
 sadm_log_keepdays             = 35                          # Days to keep old *.log
@@ -565,7 +566,7 @@ def load_config_file(cfg_file):
     sadm_vm_export_to_keep       ,sadm_vm_export_interval       ,sadm_vm_export_alert          ,\
     sadm_vm_user                 ,sadm_vm_stop_timeout          ,sadm_vm_start_interval        ,\
     sadm_days_history            ,sadm_max_arc_line             ,sadm_email_startup            ,\
-    sadm_email_shutdown          ,sadm_vm_export_dif
+    sadm_email_shutdown          ,sadm_vm_export_dif            ,sadm_pwd_random
     
     if lib_debug > 4 :
         print ("Load Configuration file %s" % (cfg_file))
@@ -629,6 +630,7 @@ def load_config_file(cfg_file):
         if "SADM_DOMAIN"                   in CFG_NAME: sadm_domain                  = CFG_VALUE
         if "SADM_USER"                     in CFG_NAME: sadm_user                    = CFG_VALUE
         if "SADM_GROUP"                    in CFG_NAME: sadm_group                   = CFG_VALUE
+        if "SADM_PWD_RANDOM"               in CFG_NAME: sadm_pwd_random              = CFG_VALUE.upper()
         if "SADM_WWW_USER"                 in CFG_NAME: sadm_www_user                = CFG_VALUE
         if "SADM_WWW_GROUP"                in CFG_NAME: sadm_www_group               = CFG_VALUE
         if "SADM_SSH_PORT"                 in CFG_NAME: sadm_ssh_port                = int(CFG_VALUE)
