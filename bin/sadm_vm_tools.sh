@@ -36,6 +36,7 @@
 #@2024_03_08 vmtools v1.4 Adapt code to be included in SADMIN Tools.
 #@2024_04_18 vmtools v1.5 Will now accept a confirmation by default (if -y not specify).
 #@2024_10_01 vmtools v1.6 Option -b, export to a ''.ova' file format.
+#@2024_12_17 vmtools v1.7 Revise the command line usage help message.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -66,7 +67,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.6'                                      # Script version number
+export SADM_VER='1.7'                                      # Script version number
 export SADM_PDESC="Command line tools to control the VirtualBox vm(s)."
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -108,7 +109,7 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #===================================================================================================
 . ${SADM_LIB_DIR}/sadmlib_vbox.sh                                       # Load VM functions Tool Lib
 
-# Default Command Line option variables
+# Command Line options default values.
 export OPT_CONFIRM=true                                                 # No confirmation needed
 export OPT_VMNAME=""                                                    # Save VM Name, Blank=ALL
 export OPT_EXPORT=false                                                 # Export VM Option
@@ -125,14 +126,14 @@ export OPT_STOP=false                                                   # Stop V
 show_usage()
 {
     printf "\n${SADM_PN} usage :"
-    printf "\n\t-d  Debug Level [0-9]."
+    printf "\n\t-d  Debug level [0-9]."
     printf "\n\t-h  Display this help message."
-    printf "\n\t-v  Show Script Version Info."
-    printf "\n\t-l  List Virtual Machines Status."
+    printf "\n\t-v  Show script version info."
+    printf "\n\t-l  List virtual machines status."
     printf "\n\t-r  List running virtual machines."
     printf "\n\t-s  Start all virtual machines, unless '-n' is used to specify the vm to start."
     printf "\n\t-e  Stop all virtual machines, unless '-n' is used to specify the vm to stop."
-    printf "\n\t-n  Specify Virtual Machines Name to act upon (Backup,Stop,Start)." 
+    printf "\n\t-n  Specify virtual machines name to act upon (Export,Stop,Start)." 
     printf "\n\t-b  Export all virtual machines, unless '-n' is used to specify the vm to export"
     printf "\n\t-y  Don't ask confirmation before beginning process."
     printf "\n\n" 
