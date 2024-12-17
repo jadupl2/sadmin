@@ -45,6 +45,7 @@
 #@2024_10_01 virtualbox v2.5 Total free mem is now (free mem + avail mem) on total vm line.
 #@2024_11_11 virtualbox v2.6 Do not start an VM export if the system is lock.
 #@2024_11_26 virtualbox v2.7 Do not start an VM export if the system is lock.
+#@2024_11_17 virtualbox v2.8 Minor changes
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -55,7 +56,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 # Global Variables
 # --------------------------------------------------------------------------------------------------
-export VMLIBVER="2.7"                                                   # This Library version
+export VMLIBVER="2.8"                                                   # This Library version
 export VMLIB_DEBUG="N"                                                  # Activate Debug output Y/N
 export VMLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_list1_XXX")"        # List of all VM in VBox
 export VMRUNLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_runlist_XXX")"   # Tmp File to list RunningVM 
@@ -710,11 +711,11 @@ sadm_export_vm()
     # Create lock file while VM export is running 
     # This prevent the SADMIN server from starting a script on the remote system.
     # A system Lock also turn off monitoring of remote system.
-    sadm_lock_system "$VM"                                              # Lock system while export
-    if [ $? -ne 0 ]                                                     # If lock system failed
-       then sadm_write_err "[ ERROR ] Couldn't create the lock file for '$VM'." 
-            return 1 
-    fi
+    #sadm_lock_system "$VM"                                              # Lock system while export
+    #if [ $? -ne 0 ]                                                     # If lock system failed
+    #   then sadm_write_err "[ ERROR ] Couldn't create the lock file for '$VM'." 
+    #        return 1 
+    #fi
 
     # NFS Server is available ?
     sadm_ping "$SADM_VM_EXPORT_NFS_SERVER"                              # NFS Server Alive ?
@@ -852,7 +853,7 @@ sadm_export_vm()
              fi
     fi             
     sleep 4                                                             # Time For last VM to Start
-    sadm_unlock_system "$VM"                                            # Go remove the lock file
+    #sadm_unlock_system "$VM"                                            # Go remove the lock file
     return $RC
 }
 
