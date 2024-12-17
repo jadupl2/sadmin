@@ -57,6 +57,7 @@
 # 2023_08_19 lib v3.21 start() function auto connect to DB, if on SADMIN server & db_used=True.
 # 2023_12_19 lib v3.22 Fix minor problem
 #@2024_05_10 lib v3.23 Add VM export parameters and alert history/archive purge days limit.
+#@2024_12_17 lib v3.24 Add new global variable 'sadm_pwd_random' to auto-generate 'sadmin user' pwd.
 #==================================================================================================
 #
 try :
@@ -92,7 +93,7 @@ except ImportError as e:                                             # If Error 
     sys.exit(1)                                                      # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "3.23"                                                  # Program version no.
+pver        = "3.24"                                                  # Program version no.
 pdesc       = "Demonstrate functions & variables available to developers using SADMIN Tools"
 phostname   = sa.get_hostname()                                      # Get current `hostname -s`
 pdebug      = 0                                                      # Debug level from 0 to 9
@@ -113,7 +114,7 @@ sa.log_append        = False      # Append Existing Log(True) or Create New One(
 sa.log_header        = True       # Show/Generate Header in script log (.log)
 sa.log_footer        = True       # Show/Generate Footer in script log (.log)
 sa.multiple_exec     = "Y"        # Allow running multiple copy at same time ?
-sa.proot_only        = False      # Pgm run by root only ?
+sa.proot_only        = True       # Pgm run by root only ?
 sa.psadm_server_only = False      # Run only on SADMIN server ?
 sa.cmd_ssh_full = "%s -qnp %s -o ConnectTimeout=2 -o ConnectionAttempts=2 " % (sa.cmd_ssh,sa.sadm_ssh_port)
 
@@ -772,6 +773,11 @@ def print_sadmin_cfg():
     pexample="sa.sadm_group"                                            # Variable Name
     pdesc="SADMIN Group Name"                                           # Function Description
     presult=sa.sadm_group                                               # Return Value(s)
+    printline (pexample,pdesc,presult)                                  # Print Example Line
+
+    pexample="sa.sadm_pwd_random"                                       # Variable Name
+    pdesc="Auto generation of '$SADM_USER' pwd"                         # Description
+    presult=sa.sadm_pwd_random                                          # Actual value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.sadm_www_user"                                         # Variable Name
