@@ -83,6 +83,8 @@
 #@2024_04_16 client v2.19 Replace 'sadm_write' with 'sadm_write_log' and 'sadm_write_err'.
 #@2024_05_02 client v2.20 Remove unnecessary file(s) on client.
 #@2024_06_13 client v2.21 Verification 'sadmin' account & more cleanup on client.
+#@2024_12_17 client v2.22 Add option to auto-generate sadmin user password.
+#@2024_12_17 client v2.23 Code optimization, fix minor bugs and add deletion of empty log.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The ^C
 #set -x
@@ -113,7 +115,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.21'                                      # Script version number
+export SADM_VER='2.23'                                      # Script version number
 export SADM_PDESC="Set \$SADMIN owner/group/permission, prune old log,rch files ,check sadmin account."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -154,15 +156,14 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 # --------------------------------------------------------------------------------------------------
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
-ERROR_COUNT=0                               ; export ERROR_COUNT        # Error Counter
-LIMIT_DAYS=14                               ; export LIMIT_DAYS         # RCH+LOG Delete after
-DIR_ERROR=0                                 ; export DIR_ERROR          # ReturnCode = Nb. of Errors
-FILE_ERROR=0                                ; export FILE_ERROR         # ReturnCode = Nb. of Errors
+export ERROR_COUNT=0                                                    # Error Counter
+export LIMIT_DAYS=14                                                    # RCH+LOG Delete after
+export DIR_ERROR=0                                                      # ReturnCode = Nb. of Errors
+export FILE_ERROR=0                                                     # ReturnCode = Nb. of Errors
 
 
 
-
-# --------------------------------------------------------------------------------------------------
+# ---------------------             ----------------------------------------------------
 # Show script command line options
 # --------------------------------------------------------------------------------------------------
 show_usage()
@@ -178,6 +179,23 @@ show_usage()
 
 
 
+# --------------------------------------------------------------------------------------------------
+#  Set 'sadmin' user with a new generated password & account standard setting. 
+# --------------------------------------------------------------------------------------------------
+generate_password()
+{
+    random_pwd=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13; echo)     # Generate random password
+    echo "${SADM_USER}:${random_pwd}" | chpasswd >> "$SADM_LOG" 2>&1
+    passwd -u   $SADM_USER                                              # Unlock user. 
+    chage -m 5  $SADM_USER                                              # 5 days before change again
+    chage -M 30 $SADM_USER                                              # password valid for 30 days
+    chage -W 10 $SADM_USER                                              # Warn 10 days before expire
+    chage -E -1 $SADM_USER                                              # Account expires to never
+    chage -I -1 $SADM_USER                                              # Password inactive to never
+    sadm_write_log "  - Value of 'SADM_PWD_RANDOM' is set to 'Y' in sadmin.cfg." 
+    sadm_write_log "  - Random password generation is activated for user '$SADM_USER'." 
+    sadm_write_log "  - A new random password have been assigned to user '${SADM_USER}'."
+}
 
 
 # --------------------------------------------------------------------------------------------------
@@ -185,69 +203,129 @@ show_usage()
 # --------------------------------------------------------------------------------------------------
 check_sadmin_account()
 {
-    lock_error=0
-    sadm_write_log ""
-    sadm_write_log "${BOLD}Check status of account '$SADM_USER' ...${NORMAL}" 
+    # (MacOS) - Don't execute this function under MacOS (Not coded yet)
+    if [ "$SADM_OS_TYPE" = "DARWIN" ] ; then return 0 ; fi              # No check on MacOS
 
-    # Make sure sadmin account is not asking for password change and block crontab sudo.
-    # So we make sadmin account non-expirable and password non-expire
-    if [ "$SADM_OS_TYPE"  = "LINUX" ]                                   # On Linux Operating System
-        then sadm_write_log "  - Making sure account '$SADM_USER' password doesn't expire." 
-             pwd_expire_date=$(chage -l $SADM_USER | grep -i 'Password expires' | awk '{ print $NF }')
-             if [[ "$pwd_expire_date" != "never" ]] 
-                then usermod -e '' $SADM_USER >/dev/null 2>&1           # Disable passwd expiry date
-             fi 
-             sadm_write_log "  - Making sure account '$SADM_USER' doesn't expire."
-             acc_expire_date=$(chage -l $SADM_USER | grep -i 'Account expires' | awk '{ print $NF }')
-             if [[ "$acc_expire_date" != "never" ]]   
-                then usermod -e -1 $SADM_USER >/dev/null 2>&1           # Make account non-expirable
-                     sadm_write_log "  - We recommend changing '$SADM_USER' password at regular interval."
-             fi 
+    # '$SADM_GROUP' group define in sadmin.cfg, should exist in O/S, if not advise user & abort
+    grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1                  # $SADMIN Group defined ?
+    if [ $? -ne 0 ]                                                     # SADM_GROUP not Defined
+       then sadm_write_err "Group '$SADM_GROUP' not present."           # Advise user will create
+            sadm_write_err "Create group or change 'SADM_GROUP' value in $SADMIN/sadmin.cfg."
+            sadm_write_err "Process Aborted."                           # Abort got be created
+            sadm_stop 1                                                 # sadmin exit procedure.
+            return 1                                                    # Return Error to caller
     fi
-
-    # Check if sadmin account is lock.
-    if [ "$SADM_OS_TYPE"  = "LINUX" ]                                   # On Linux Operating System
-        then passwd -S $SADM_USER | grep -i 'locked' > /dev/null 2>&1   # Check if Account is locked
-             if [ $? -eq 0 ]                                            # If Account is Lock
-                then upass=$(grep "^$SADM_USER" /etc/shadow | awk -F: '{ print $2 }') # Get pwd hash
-                     if [[ "$upass" = "!!" ]]                           # if passwd is '!!'' = NoPwd
-                        then sadm_write_log "  - [WARNING] User $SADM_USER has no password." 
-                             echo "47up&wd40!" | passwd --stdin $SADM_USER
-                             sadm_write_log "  - A temporary password was assigned to ${SADM_USER}, please change it now !!"
-                        else first2char=$(echo $upass | cut -c1-2)      # Get passwd first two Char.
-                             if [ "$first2char" = "!!" ]                # First 2 Char are '!!' 
-                                then sadm_write_err "  - [ERROR] Account $SADM_USER is locked."
-                                     sadm_write_err "  - Use 'passwd -u $SADM_USER' to unlock it."
-                                     lock_error=1                       # Set Error Flag ON
-                                else firstchar=$(echo $upass | cut -c1) # Get passwd first Char.
-                                     if [ "$firstchar" = "!" ]          # First Char is "!'
-                                        then sadm_write_err "  - [ERROR] Account $SADM_USER is locked."
-                                             sadm_write_err "  - Use 'usermod -U $SADM_USER' to unlock it."
-                                             lock_error=1               # Set Error Flag ON
-                                        else sadm_write_log "  - We use 'passwd -S $SADM_USER' to check if user account is lock."
-                                             sadm_write_log "  - You need to fix that, so the account unlock."
-                                             lock_error=1               # Set Error Flag ON
-                                     fi                                            
-                             fi 
-                     fi 
-             fi
+    
+    # '$SADM_USER' user account should exist. 
+    grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1                   # $SADMIN User Defined ?
+    if [ $? -ne 0 ]                                                     # OH Not There
+       then sadm_write_err "User '$SADM_USER' not present."             # usr in sadmin.cfg not found
+            sadm_write_err "Create user or change 'SADM_USER' value in $SADMIN/sadmin.cfg."
+            sadm_write_err "Process Aborted."                           # Abort got be created
+            sadm_stop 1                                                 # sadmin exit procedure.
+            return 1                                                    # Return Error to caller
     fi
-  
-    # Check if sadmin Aix account is locked.
+    
+    # (AIX) - Check if sadmin Aix account is part of the users lock list.
     if [ "$SADM_OS_TYPE"  = "AIX" ]
         then lsuser -a account_locked $SADM_USER | grep -i 'true' >/dev/null 2>&1
              if [ $? -eq 0 ] 
-                then sadm_write_log "  - ${SADM_ERROR} Account $SADM_USER is locked and need to be unlock ..."
-                     sadm_write_log "  - Please check the account and unlock it with these commands ; "
-                     sadm_write_log "  - chsec -f /etc/security/lastlog -a 'unsuccessful_login_count=0' -s $SADM_USER "
-                     sadm_write_log "  - chuser 'account_locked=false' $SADM_USER "
-                     lock_error=1
+                then sadm_write_err "  - Account $SADM_USER is locked and need to be unlock ..."
+                     sadm_write_err "  - Please check and unlock it with these commands ; "
+                     sadm_write_err "  - chsec -f /etc/security/lastlog -a 'unsuccessful_login_count=0' -s $SADM_USER "
+                     sadm_write_err "  - chuser 'account_locked=false' $SADM_USER "
+                     return 1
              fi
     fi
 
-    if [ $lock_error -eq 0 ] 
-        then sadm_write_log "  - No problem with '$SADM_USER' account." 
-    fi
+    # (Any Linux) - Check the 'sadmin' account ($SADM_USER) status.
+    lock_error=0
+    sadm_write_log "CHECK STATUS OF '$SADM_USER' ACCOUNT" 
+    
+
+    # Check if sadmin account is lock.
+    # 'passwd -S sadmin', display account status information. 
+    # The status information consists of 7 fields. 
+    #   - The first field is the user's login name. 
+    #   - The second field indicates if the user account has a locked password (L or LK), 
+    #     has no password (NP),or has a usable password (P), and (PS) password set.
+    #   - The third field gives the date of the last password change. 
+    #   - The next four fields are the minimum age, maximum age, warning period, and inactivity 
+    #     period for the password. These ages are expressed in days.
+    # Example : passwd -S sadmin
+    #    sadmin P 1970-01-01 0 99999 7 -1
+    #
+    acc_status=$(passwd -S $SADM_USER | awk '{ print $2 }')             # Get Account status
+    case $acc_status in
+        L|LK)   sadm_write_err "  - Account '$SADM_USER' is lock." 
+                if [ "$SADM_PWD_RANDOM" = "Y" ]                         # If random passwd needed
+                       then generate_password                           # Generate random passwd
+                       else lock_error=1                                # Set function error flag ON
+                fi                 
+                ;;           
+        NP)     sadm_write_err "  - Account '$SADM_USER' have no password." 
+                if [ "$SADM_PWD_RANDOM" = "Y" ]                         # If random passwd needed
+                       then generate_password                           # Generate random passwd
+                       else lock_error=1                                # Set function error flag ON
+                fi
+                ;;
+        P|PS)   sadm_write_err "  - Account '$SADM_USER' have a valid password." 
+                ;;
+            *)  sadm_write_err "Unknown user state for '$SADM_USER' account ($acc_status)"
+                lock_error=1                                            # 0=Ok, 1=Error Flag ON
+                ;;
+    esac   
+
+    # Field # 3 in /etc/shadow : Is the date of the last password change, expressed as the number 
+    # of days since Jan 1, 1970. 
+    # The value 0 has a special meaning, which is that the user should change her password the 
+    # next time she will log in the system. 
+    # An empty field means that password aging features are disabled.
+    last_passwd_change=$(grep $SADM_USER /etc/shadow | awk -F\: '{ print $3 }')
+    if [ "$last_passwd_change" = "0" ]
+        then sadm_write_err "  - The password of '$SADM_USER' user need to be change." 
+             sadm_write_err "  - The 'sadmin' cron jobs may not run if you don't change it."
+             if [ "$SADM_PWD_RANDOM" = "Y" ]                            # If random passwd needed
+                    then generate_password                              # Generate random passwd
+                    else lock_error=1                                   # Set function error flag ON
+             fi 
+    fi 
+
+
+    # Make sure 'sadmin' account is not asking for password change.and if block crontab sudo.
+    # So we make sadmin account non-expirable and password non-expire
+    #sadm_write_log "  - Making sure account '$SADM_USER' password is not expired." 
+    
+    # Get Status of password
+    pwd_expire_date=$(chage -l $SADM_USER | grep -i '^Password expires' | awk -F\: '{ print $NF }')
+
+    if [[ "$pwd_expire_date" = "password must be changed" ]] 
+        then sadm_write_err "  - The password of '$SADM_USER' user is expired, must be changed." 
+             sadm_write_err "  - The 'sadmin' cron jobs may not run if you don't change it."
+             if [ "$SADM_PWD_RANDOM" = "Y" ]                            # If random passwd needed
+                    then generate_password                              # Generate random passwd
+                    else lock_error=1                                   # Set function error flag ON
+             fi 
+    fi 
+
+
+    # Password : Your encrypted password is in hash format. 
+    # The password should be minimum 15-20 characters long including special characters, digits, 
+    # lower case alphabetic and more. 
+    # Usually password format is set to $id$salt$hashed, The $id is the algorithm prefix used 
+    # On GNU/Linux as follows
+    #
+    #    $1$ is MD5
+    #    $2a$ is Blowfish
+    #    $2y$ is Blowfish
+    #    $5$ is SHA-256
+    #    $6$ is SHA-512
+    #    $y$ is yescrypt
+    #
+    # $ sudo grep sadmin /etc/shadow
+    # sadmin:$y$j9T$dU.OsT1BXQJp0KD2yrgHQ/$yBWUKXw5W4mWpouyQ5/.7SJeJ/UlX38vuAd.S/Iq8A9:19759:0::7:::
+
+    if [ $lock_error -eq 0 ] ; then sadm_write_log "  - No problem with '$SADM_USER' account." ; fi
     return $lock_error
 }
 
@@ -261,17 +339,8 @@ set_new_nmon_watcher()
     if [[ -f "/etc/cron.d/sadm_client" ]]
        then sed -i 's/sadm_nmon_watcher.sh/sadm_nmon_watcher.py/' /etc/cron.d/sadm_client 
     fi 
-
-    # This is to eliminate the duplicate lines in /etc/cron.d/sadm_client
-    # Because of an earlier bug, line for sadm_nmon_watcher were added more than once.
-    #awk -i inplace '!sadm_nmon_watcher[$0]++' /etc/cron.d/sadm_client
-
     return 0 
 }
-
-
-
-
 
 
 
@@ -314,7 +383,7 @@ set_dir()
 # --------------------------------------------------------------------------------------------------
 set_files_recursive()
 {
-    VAL_DIR=$1                                                          # Directory Name
+    VAL_DIR=$1                                                          # File or Directory Name
     VAL_OCTAL=$2                                                        # chmod octal value
     VAL_OWNER=$3                                                        # Directory Owner 
     VAL_GROUP=$4                                                        # Directory Group name
@@ -326,20 +395,17 @@ set_files_recursive()
              find $VAL_DIR -type f -exec chown ${VAL_OWNER}:${VAL_GROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] On 'chown' operation of ${VALDIR}."
-                     ((ERROR_COUNT++))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
                 else sadm_write_log "[ OK ]"
              fi
              sadm_write_log "  - find $VAL_DIR -type f -exec chmod $VAL_OCTAL{} \; " "NOLF" 
              find $VAL_DIR -type f -exec chmod $VAL_OCTAL {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then sadm_write_err "[ ERROR ] On 'chmod' operation of ${VALDIR}."
-                     ((ERROR_COUNT++))
+                then sadm_write_err "[ ERROR ] On 'chmod' operation of ${VAL_DIR}."
                 else sadm_write_log "[ OK ]"
                      RETURN_CODE=1                                      # Error = Return Code to 1
              fi
     fi
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
     return $RETURN_CODE
 }
 
@@ -352,11 +418,13 @@ set_files_recursive()
 # --------------------------------------------------------------------------------------------------
 dir_housekeeping()
 {
-    sadm_write_log "${BOLD}SADMIN Client Directories Housekeeping.${NORMAL}"
-    ERROR_COUNT=0                                                       # Reset Error Count
+    sadm_write_log " "
+    sadm_write_log "SADMIN CLIENT DIRECTORIES HOUSEKEEPING"
+    ERROR_COUNT=0
 
     # Setup basic SADMIN directories structure and permissions
     sadm_freshen_directories_structure
+    sadm_write_log "  - Directories structure is [ OK ]" 
 
     # Taking care of lost+found directory (If present) in AIX and Linux.
     if [ -d "$SADM_BASE_DIR/lost+found" ]
@@ -380,12 +448,11 @@ set_file()
     VAL_GROUP=$4                                                        # Directory Group name
     RETURN_CODE=0                                                       # Reset Error Counter
 
-    if [ -f "$VAL_FILE" ]
+    if [ -f "$VAL_FILE" ]                                               # If file exist
         then sadm_write_log "  - chmod ${VAL_OCTAL} ${VAL_FILE} " "NOLF"
              chmod ${VAL_OCTAL} ${VAL_FILE}
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] On 'chmod' operation on ${VAL_FILE}."
-                     ((ERROR_COUNT++))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
                 else sadm_write_log "[ OK ]"
              fi
@@ -393,12 +460,10 @@ set_file()
              chown ${VAL_OWNER}:${VAL_GROUP} ${VAL_FILE}
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] On 'chown' operation on ${VAL_FILE}."
-                     ((ERROR_COUNT++))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
                 else sadm_write_log "[ OK ]"
              fi
     fi
-
     return $RETURN_CODE
 }
 
@@ -410,7 +475,7 @@ set_file()
 file_housekeeping()
 {
     sadm_write_log ""
-    sadm_write_log "${BOLD}SADMIN Client Files Housekeeping.${NORMAL}"
+    sadm_write_log "SADMIN CLIENT FILES HOUSEKEEPING"
 
    # Just to make sure .gitkeep file always exist
     if [ ! -f "${SADM_TMP_DIR}/.gitkeep" ]  ; then touch ${SADM_TMP_DIR}/.gitkeep ; fi 
@@ -422,98 +487,40 @@ file_housekeeping()
     if [ ! -f "${SADM_UCFG_DIR}/.gitkeep" ] ; then touch ${SADM_UCFG_DIR}/.gitkeep ; fi 
     if [ ! -f "${SADM_UDOC_DIR}/.gitkeep" ] ; then touch ${SADM_UDOC_DIR}/.gitkeep ; fi 
 
-    # - Remove files that should only be there on the SADMIN Server not the client.
-    # - Delete plain text email password file on client
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]
-       then afile="$SADM_WWW_LIB_DIR/.crontab.txt"
-            if [ -f $afile ] ; then rm -f $afile  >/dev/null 2>&1 ; fi
-     
-       else set_file "$GMPW_FILE_TXT" "0600" "${SADM_USER}" "${SADM_GROUP}"
-    fi
-
-    # Make sure Gmail password as proper permission
-    if [ -f "$GMPW_FILE_B64" ] 
-        then chmod 664 $GMPW_FILE_B64
-             chown ${SADM_USER}:${SADM_GROUP} $GMPW_FILE_B64
-    fi 
-    
-    # No Password clear text file ($SADMIN/cfg/.gmpw) on client, remote it.
-    if [[ -f "$GMPW_FILE_TXT" ]] && [[ $(sadm_on_sadmin_server) -eq 1 ]] 
-         then rm -f "$GMPW_FILE_TXT" >/dev/null 2>&1
-    fi
-
     # Remove default crontab job - We want to run the ReaR Backup from the sadm_rear_backup crontab.
     if [ -r /etc/cron.d/rear ] ; then rm -f /etc/cron.d/rear >/dev/null 2>&1; fi
 
-    # Remove unnecessary old files 
-    if [ -r 'sadm_vm_exclude_start*' ] ; then rm -f 'sadm_vm_exclude_start*' >/dev/null 2>&1; fi
-
-    # Remove file that are not needed on SADMIN client
-    if [ "$SADM_ON_SADMIN_SERVER" = "N" ]                           # If not on SADMIN server      
-        then if [ -f "$SADM_ALERT_ARC" ]  ; then rm -f "$SADM_ALERT_ARC"       >/dev/null 2>&1 ;fi
-             echo "SADM_ALERT_HIST=$SADM_ALERT_HIST"
+    # Remove file(s) and directories used by SADMIN server and not needed on SADMIN client
+    if [ "$SADM_ON_SADMIN_SERVER" = "N" ]                               # If not on SADMIN server      
+        then if [ -f "$SADM_ALERT_ARC"  ] ; then rm -f "$SADM_ALERT_ARC"  >/dev/null 2>&1 ;fi
              if [ -f "$SADM_ALERT_HIST" ] ; then rm -f "$SADM_ALERT_HIST" >/dev/null 2>&1 ;fi
-             if [ -f "${SADM_CFG_DIR}/sadmin_client.cfg" ] 
-                then rm -f "${SADM_CFG_DIR}/sadmin_client.cfg" >/dev/null 2>&1
-             fi
-             if [ -f "${SADM_CFG_DIR}/sherlock.smon" ] 
-                then rm -f "${SADM_CFG_DIR}/sherlock.smon" >/dev/null 2>&1
-             fi
-    fi
-
-    # Make sure some files have proper permission and owner
-    set_file "/etc/cron.d/sadm_client"       "0644" "root" "root"
-    set_file "/etc/cron.d/sadm_server"       "0644" "root" "root"
-    set_file "/etc/cron.d/sadm_osupdate"     "0644" "root" "root"
-    set_file "/etc/cron.d/sadm_backup"       "0644" "root" "root"
-    set_file "/etc/cron.d/sadm_rear_backup"  "0644" "root" "root"
-
-    # If old file '.rch_conversion_done' exist, then delete it (Not needed anymore)
-    if [ -r "$SADM_CFG_DIR/.rch_conversion_done" ]
-        then rm -f $SADM_CFG_DIR/.rch_conversion_done > /dev/null 2>&1 
-    fi
-    
-    set_files_recursive "$SADM_TMP_DIR"        "1777" "${SADM_USER}" "${SADM_GROUP}" 
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
+             if [ -f "$GMPW_FILE_TXT"   ] ; then rm -f "$GMPW_FILE_TXT"   >/dev/null 2>&1 ;fi
+             if [ -f "$DBPASSFILE"      ] ; then rm -f "$DBPASSFILE"      >/dev/null 2>&1 ;fi
+             if [ -d "$SADM_DBB_DIR"    ] ; then rm -fr "$SADM_DBB_DIR" ; fi
+             if [ -d "$SADM_NET_DIR"    ] ; then rm -fr "$SADM_NET_DIR" ; fi    
+             f="${SADM_CFG_DIR}/sadmin_client.cfg" 
+             if [ -f "$f" ] ; then rm -f "$f" >/dev/null 2>&1 ; fi
+             f="${SADM_CFG_DIR}/sherlock.smon"
+             if [ -f "$f" ] ; then rm -f "$f" >/dev/null 2>&1 ; fi 
+             f="$SADM_WWW_LIB_DIR/.crontab.txt"
+             if [ -f "$f" ] ; then rm -f "$f" >/dev/null 2>&1 ; fi
+    fi 
 
     set_files_recursive "$SADM_DAT_DIR"        "0664" "${SADM_USER}" "${SADM_GROUP}" 
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
-
     set_files_recursive "$SADM_WWW_DAT_DIR"    "0664" "${SADM_WWW_USER}" "${SADM_GROUP}" 
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
-
     set_files_recursive "$SADM_LOG_DIR"        "0664" "${SADM_USER}" "${SADM_GROUP}" 
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
-
     set_files_recursive "$SADM_USR_DIR"        "0644" "${SADM_USER}" "${SADM_GROUP}" 
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
-
     set_files_recursive "$SADM_UBIN_DIR"       "0775" "${SADM_USER}" "${SADM_GROUP}" 
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
-
     set_files_recursive "$SADM_ULIB_DIR"       "0775" "${SADM_USER}" "${SADM_GROUP}" 
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
-
     set_files_recursive "$SADM_UMON_DIR"       "0775" "${SADM_USER}" "${SADM_GROUP}" 
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
-
     set_files_recursive "$SADM_CFG_DIR"        "0664" "${SADM_USER}" "${SADM_GROUP}" 
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
-
     set_files_recursive "$SADM_SYS_DIR"        "0770" "${SADM_USER}" "${SADM_GROUP}" 
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
-
     set_files_recursive "$SADM_BIN_DIR"        "0775" "${SADM_USER}" "${SADM_GROUP}" 
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
-
     set_files_recursive "$SADM_LIB_DIR"        "0775" "${SADM_USER}" "${SADM_GROUP}" 
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
-
     set_files_recursive "$SADM_PKG_DIR"        "0755" "${SADM_USER}" "${SADM_GROUP}" 
-    if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}." ;fi
 
-
-    # SADMIN Readme, changelog and license file.
+    # SADMIN directories and Readme, changelog and license file.
+    set_file "$SADM_TMP_DIR" "1777" "${SADM_USER}" "${SADM_GROUP}"     
     set_file "${SADM_BASE_DIR}/readme.md"    "0644" "${SADM_USER}" "${SADM_GROUP}" 
     set_file "${SADM_BASE_DIR}/readme.html"  "0644" "${SADM_USER}" "${SADM_GROUP}" 
     set_file "${SADM_BASE_DIR}/readme.pdf"   "0644" "${SADM_USER}" "${SADM_GROUP}" 
@@ -522,21 +529,19 @@ file_housekeeping()
     set_file "${SADM_BASE_DIR}/changelog.md" "0644" "${SADM_USER}" "${SADM_GROUP}" 
     
     # Password files
-    set_file "${SADM_CFG_DIR}/.dbpass"       "0644" "${SADM_USER}" "${SADM_GROUP}"
-    set_file "$GMPW_FILE_TXT"                "0640" "${SADM_USER}" "${SADM_GROUP}"
     set_file "$GMPW_FILE_B64"                "0644" "${SADM_USER}" "${SADM_GROUP}"
     set_file "/etc/postfix/sasl_passwd"      "0600"  "root" "root"
     set_file "/etc/postfix/sasl_passwd.db"   "0600"  "root" "root"
 
     sadm_write_log ""
-    sadm_write_log "${BOLD}SADMIN Files Pruning.${NORMAL}"
+    sadm_write_log "SADMIN FILES PRUNING"
 
-    # Remove files older than 7 days in SADMIN TMP Directory
+    # Remove files older than 2 days in SADMIN TMP Directory
     if [ -d "$SADM_TMP_DIR" ]
-        then sadm_write_log "  - Remove unmodified file(s) for more than 7 days in ${SADM_TMP_DIR}."
-             sadm_write_log "    - find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \;" "NOLF"
-             find $SADM_TMP_DIR  -type f -mtime +7 -exec ls -l {} \; >> $SADM_LOG
-             find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \; >/dev/null 2>&1
+        then sadm_write_log "  - Remove unmodified file(s) for more than 2 days in ${SADM_TMP_DIR}."
+             sadm_write_log "    - find $SADM_TMP_DIR  -type f -mtime +2 -exec rm -f {} \; " "NOLF"
+             find $SADM_TMP_DIR  -type f -mtime +2 -exec ls -l {} \; >> $SADM_LOG
+             find $SADM_TMP_DIR  -type f -mtime +2 -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_write_err " ${SADM_ERROR} On last pruning operation."
                      ((ERROR_COUNT++))
@@ -574,13 +579,20 @@ file_housekeeping()
 
     # Remove any *.log in SADMIN LOG Directory older than ${SADM_LOG_KEEPDAYS} days
     if [ -d "${SADM_LOG_DIR}" ]
-        then sadm_write_log "  - Remove any unmodified *.log file(s) for more than ${SADM_LOG_KEEPDAYS} days in ${SADM_LOG_DIR}."
-             #sadm_write_log "    - List of log file that will be deleted." 
-             #find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec ls -l {} \; >>$SADM_LOG
-             sadm_write_log "    - find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name '*.log' -exec rm -f {} \; "  "NOLF"
-             find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec rm -f {} \; | tee -a $SADM_LOG
+        then sadm_write_log "  - Remove any *.log file(s) older than $SADM_LOG_KEEPDAYS days."
+             sadm_write_log "    - find $SADM_LOG_DIR -type f -mtime +${SADM_LOG_KEEPDAYS} -name '*.log' -exec rm -f {} \; " "NOLF"
+             find "$SADM_LOG_DIR" -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec rm -f {} \; | tee -a "$SADM_LOG"
              if [ $? -ne 0 ]
-                then sadm_write_err "[ ERROR ] On last operation."
+                then sadm_write_err "[ ERROR ]"
+                     ((ERROR_COUNT++))
+                else sadm_write_log "[ OK ]"
+             fi
+
+             sadm_write_log "  - Remove empty log file(s)."
+             sadm_write_log "    - find $SADM_LOG_DIR -type f -name \"*.log\" -size 0 -exec rm {} \; " "NOLF"
+             find $SADM_LOG_DIR -type f -name "*.log" -size 0 -exec rm {} \;
+             if [ $? -ne 0 ]
+                then sadm_write_err "[ ERROR ]"
                      ((ERROR_COUNT++))
                 else sadm_write_log "[ OK ]"
              fi
@@ -602,43 +614,26 @@ file_housekeeping()
              if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}" ;fi
     fi
 
+    # Delete old rpt files - Should not happen but let's do it to be clean.
+    if [ -d "${SADM_RPT_DIR}" ]
+        then sadm_write_log "  - Remove any unmodified *.rpt file(s) for more than ${SADM_NMON_KEEPDAYS} days in ${SADM_RPT_DIR}." 
+             #sadm_write_log "    - List of nmon file that will be deleted."
+             #find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec ls -l {} \; >> $SADM_LOG 2>&1
+             sadm_write_log "    - find $SADM_RPT_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name '*.rpt' -exec rm {} \; " "NOLF"
+             find $SADM_RPT_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.rpt" -exec rm {} \; >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then sadm_write_err "[ ERROR ] On last operation."
+                     ((ERROR_COUNT++))
+                else sadm_write_log "[ OK ]"
+             fi
+             if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}" ;fi
+    fi
+
     return $ERROR_COUNT
 }
 
 
 
-
-# --------------------------------------------------------------------------------------------------
-# This function check if the SADMIN group ($SADM_GROUP) and user ($SADM_USER) exist on system.
-# If not the advise user about what to do and abort script execution & return error to O/S/
-# --------------------------------------------------------------------------------------------------
-function check_sadmin_user()
-{
-    # The '$SADM_GROUP' (Define in sadmin.cfg) group should exist - If not advise user & abort
-    if [ "$SADM_OS_TYPE" != "DARWIN" ]                                  # If not on MacOS
-        then grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1         # $SADMIN Group Defined ?
-             if [ $? -ne 0 ]                                            # SADM_GROUP not Defined
-                then sadm_write_err "Group ${SADM_GROUP} not present."  # Advise user will create
-                     sadm_write_err "Create group or change 'SADM_GROUP' value in $SADMIN/sadmin.cfg."
-                     sadm_write_err "Process Aborted."                  # Abort got be created
-                     sadm_stop 1                                        # Terminate Gracefully
-                     exit 1                                             # Exit with Error
-             fi
-    fi
-
-    # The '$SADM_USER' user exist user - if not create it and make it part of 'sadmin' group.
-    if [ "$SADM_OS_TYPE" != "DARWIN" ]                                  # If not on MacOS
-        then grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1          # $SADMIN User Defined ?
-             if [ $? -ne 0 ]                                            # NO Not There
-                then sadm_write_err "User $SADM_USER not present."        # usr in sadmin.cfg not found
-                     sadm_write_err "Create user or change 'SADM_USER' value in $SADMIN/sadmin.cfg"
-                     sadm_write_err "Process Aborted."                    # Abort got be created
-                     sadm_stop 1                                        # Terminate Gracefully
-                     exit 1                                             # Exit with Error
-             fi
-    fi
-    return 0                                                            # Return OK to Caller
-}
 
 
 # --------------------------------------------------------------------------------------------------
@@ -646,98 +641,16 @@ function check_sadmin_user()
 # --------------------------------------------------------------------------------------------------
 function remove_client_unwanted_files()
 {
-    if [ "$SADM_SERVER_ONLY" = "N" ] 
+    sadm_write_log ""
+    sadm_write_log "REMOVE SADMIN SERVER FILES ON CLIENT (IF ANY)"
+
+    if [ "$SADM_ON_SADMIN_SERVER" = "N" ] 
         then rm sherlock.smon        >/dev/null 2>&1
              rm alert_archive.txt    >/dev/null 2>&1
              rm sadmin_client.cfg    >/dev/null 2>&1
              rm .dbpass              >/dev/null 2>&1
              rm .gmpw                >/dev/null 2>&1
     fi 
-
-}
-
-
-
-# --------------------------------------------------------------------------------------------------
-# Inspect sadm_client crontab to make sure that the line below is in it. 
-# "*/45 * * * *  %s sudo ${SADMIN}/bin/sadm_nmon_watcher.py > /dev/null 2>&1"
-#
-# The script check if 'nmon. is running, if isn't we will start it with the right parameters.
-# --------------------------------------------------------------------------------------------------
-function check_sadm_client_crontab()
-{
-    sadm_write_log ""
-    sadm_write_log "${BOLD}Check SADMIN client '$SADM_USER' crontab & System monitor config file ...${NORMAL}"     
-    ccron_file="/etc/cron.d/sadm_client"                                # Default crontab file name
-
-    # Setup SADMIN crontab filename under linux
-    if [ "$(sadm_get_ostype)" == "LINUX" ]                              # Under Linux
-       then ccron_file="/etc/cron.d/sadm_client"                        # Client Crontab File Name
-            if [ ! -d "/etc/cron.d" ]                                   # Test if Dir. Exist
-                then sadm_write_log "  - Crontab Directory /etc/cron.d doesn't exist ?"
-                     sadm_write_log "  - Send log ($SADM_LOG) and submit problem to support@sadmin.ca"
-                     return 1                                           # Return to Caller with Err.
-            fi 
-    fi
-
-    # Setup SADMIN crontab filename under aix
-    if [ "$(sadm_get_ostype)" == "AIX" ]                                # Under Aix
-       then ccron_file="/var/spool/cron/crontabs/${SADM_USER}"          # Client Crontab File Name
-            if [ ! -d "/var/spool/cron/crontabs" ]                      # Test if Dir. Exist
-                then sadm_write_log "  - Crontab Directory /var/spool/cron/crontabs doesn't exist ?"
-                     sadm_write_log "  - Send log ($SADM_LOG) and submit problem to support@sadmin.ca"
-                     return 1                                           # Return to Caller with Err.
-            fi
-    fi
-    
-    # Setup SADMIN crontab filename MacOS
-    if [ "$(sadm_get_ostype)" == "DARWIN" ]                             # Under MacOS
-       then ccron_file="/var/at/tabs/${SADM_USER}"                      # Client Crontab Name
-            if [ ! -d "/var/at/tabs" ]                                  # Test if Dir. Exist
-                then sadm_write_log "  - Crontab Directory /var/spool/cron/crontabs doesn't exist ?"
-                     sadm_write_log "  - Send log ($SADM_LOG) and submit problem to support@sadmin.ca"
-                     return 1                                           # Return to Caller with Err.
-            fi
-    fi
-
-    # Grep crontab for new Python sadm_nmon_watcher, if not in there, add it to cron file.
-    sadm_writelog "  - Make sure sadm_client crontab ($ccron_file) have 'sadm_nmon_watcher.py' line."
-    if [ -f "$ccron_file" ]                                             # Do we have crontab file ?
-       then grep -q "sadm_nmon_watcher.py" "$ccron_file"                # grep for watcher script
-            if [ $? -ne 0 ]                                             # If watcher not there
-               then echo "# " >> "$ccron_file"                          # Add to crontab
-                    echo "# " >> "$ccron_file"
-                    echo "# Every 30 Min, make sure 'nmon' performance collector is running." >> "$ccron_file"
-                    echo "*/30 * * * *  $SADM_USER sudo \${SADMIN}/bin/sadm_nmon_watcher.py >/dev/null 2>&1" >> "$ccron_file"
-                    echo "# " >> "$ccron_file"
-                    echo "# " >> "$ccron_file" 
-                    sadm_write_log "  - Crontab ($ccron_file) was updated with 'sadm_nmon_watcher.py' line." 
-               else sadm_write_log "  - Yes, crontab ($ccron_file) already got 'sadm_nmon_watcher.py' line." 
-            fi
-       else sadm_write_log "  - There were no crontab file ($ccron_file) present on system ?" 
-            return 1
-    fi
-
-    # Remove line in sadmin System monitor file, that ran a script 'swatch_nmon.sh' to check/restart nmon
-    nmon_file="${SADMIN}/cfg/${SADM_HOSTNAME}.smon"
-    sadm_write_log "  - Making sure that "script:swatch_nmon.sh" is no longer in $nmon_file" 
-    if [ -f "$nmon_file" ] 
-       then grep -q "^script:swatch_nmon.sh" $nmon_file
-            if [ $? -eq 0 ] 
-                then if [ "$(sadm_get_ostype)" == "DARWIN" ]            # Under MacOS
-                        then grep -v "script:swatch_nmon.sh" $nmon_file >temp2 && mv temp2 $nmon_file
-                        else sed -i '/^script:swatch_nmon.sh/d' $nmon_file
-                     fi 
-            fi
-            grep -q "^# SADMIN Script Don" $nmon_file
-            if [ $? -eq 0 ] 
-                then if [ "$(sadm_get_ostype)" == "DARWIN" ]            # Under MacOS
-                        then grep -v "# SADMIN Script Don" $nmon_file >temp2 && mv temp2 $nmon_file
-                        else sed -i '/^# SADMIN Script Don/d' $nmon_file
-                     fi 
-            fi            
-    fi 
-    return 0
 }
 
 
@@ -776,6 +689,8 @@ function cmd_options()
     return 
 }
 
+
+
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
@@ -783,19 +698,19 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-    #
-    check_sadmin_user                                                   # Check SADMIN Usr & Grp
-    dir_housekeeping                                                    # Do Dir HouseKeeping
-    DIR_ERROR=$?                                                        # ReturnCode = Nb. of Errors
-    file_housekeeping                                                   # Do File HouseKeeping
-    FILE_ERROR=$?                                                       # ReturnCode = Nb. of Errors
+
     check_sadmin_account                                                # SADMIN User Account Lock ?
     ACC_ERROR=$?                                                        # Return 1 if Locked 
-    check_sadm_client_crontab                                           # crontab have nmon watcher
-    CRON_ERROR=$?                                                       # Return 1 if crontab error 
-    set_new_nmon_watcher                                                # Update sadm_client cron 
+   
+    dir_housekeeping                                                    # Do Dir HouseKeeping
+    DIR_ERROR=$?                                                        # ReturnCode = Nb. of Errors
+
+    file_housekeeping                                                   # Do File HouseKeeping
+    FILE_ERROR=$?                                                       # ReturnCode = Nb. of Errors
+
+    set_new_nmon_watcher                                                # Use Python nmon_watcher  
     remove_client_unwanted_files                                        # Del Server file not client
     #
-    SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR+$ACC_ERROR+$CRON_ERROR))   # Error= DIR+File+Lock Func.
+    SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR+$ACC_ERROR))               # Error= DIR+File+Lock Func.
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
