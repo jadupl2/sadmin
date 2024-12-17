@@ -2,16 +2,16 @@
 #---------------------------------------------------------------------------------------------------
 #   Author        : Your Name 
 #   Script Name   : XXXXXXXX.sh
-#   Creation Date : 2024/MM/DD
+#   Creation Date : 2025/MM/DD
 #   Requires      : sh and SADMIN Shell Library
 #   Description   : Template for starting a new shell script
 #
-# Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
-#        have and use a 100 characters per line. Comments in script always begin at column 73. 
+# Note : All scripts (Shell,Python,php), configuration files and screen output are formatted to 
+#        have and use a 100 characters per line. Comments in all scripts always begin at column 73. 
 #        You will have a better experience, if you set screen width to have at least 100 Characters.
 # 
 # --------------------------------------------------------------------------------------------------
-#   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
+#   The SADMIN tools are free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
@@ -24,7 +24,7 @@
 #
 # ---CHANGE LOG---
 # YYYY-MM-DD GRP vX.XX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
-# 2024_01_21 lib v1.1 New template (replace sadm_template.sh), used when you don't need access to SADMIN DB.
+# 2024_01_25 lib v1.1 New template (replace sadm_template.sh), used when no DB access needed.
 #
 #---------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
@@ -34,9 +34,9 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 
 
-# ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
-# v1.56 - Setup for Global Variables and load the SADMIN standard library.
-#       - To use SADMIN tools, this section MUST be present near the top of your code.    
+# --------------------------  S A D M I N   C O D E    S E C T I O N  ------------------------------
+# v1.56 - Setup for Global variables and load the SADMIN standard library.
+#       - To use SADMIN tools, this section MUST be present near the top of your code.
 
 # Make Sure Environment Variable 'SADMIN' Is Defined.
 if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
@@ -75,7 +75,7 @@ export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX")
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
-export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
 #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 

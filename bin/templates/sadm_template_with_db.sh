@@ -1,17 +1,16 @@
-#! /usr/bin/env bash
 #---------------------------------------------------------------------------------------------------
 #   Author        : Your Name 
 #   Script Name   : XXXXXXXX.sh
-#   Creation Date : 2024/MM/DD
+#   Creation Date : 2025/MM/DD
 #   Requires      : sh and SADMIN Shell Library
 #   Description   : Template for starting a new shell script
 #
-# Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
-#        have and use a 100 characters per line. Comments in script always begin at column 73. 
+# Note : All scripts (Shell,Python,php), configuration files and screen output are formatted to 
+#        have and use a 100 characters per line. Comments in all scripts always begin at column 73. 
 #        You will have a better experience, if you set screen width to have at least 100 Characters.
 # 
 # --------------------------------------------------------------------------------------------------
-#   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
+#   The SADMIN tools are free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
@@ -24,24 +23,22 @@
 #
 # ---CHANGE LOG---
 # YYYY-MM-DD GRP vX.XX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
-# 2024_01_21 lib v1.1 New template (replace sadm_template.sh), used when you need to access SADMIN DB.
+# 2024_01_25 lib v1.1 New template (replace sadm_template.sh), used when no DB access needed.
 #
-#
-# --------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
      
 
 
 
-
-# ------------------- S T A R T  O F   S A D M I N   C O D E    S E C T I O N  ---------------------
-# v1.56 - Setup for Global Variables and load the SADMIN standard library.
-#       - To use SADMIN tools, this section MUST be present near the top of your code.    
+# --------------------------  S A D M I N   C O D E    S E C T I O N  ------------------------------
+# v1.56 - Setup for Global variables and load the SADMIN standard library.
+#       - To use SADMIN tools, this section MUST be present near the top of your code.
 
 # Make Sure Environment Variable 'SADMIN' Is Defined.
 if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
-    then if [ -r /etc/environment ] ; then source /etc/environment ;fi  # LastChance defining SADMIN
+    then if [ -r /etc/environment ] ; then source /etc/environment ; fi # LastChance defining SADMIN
          if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
             then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
                  exit 1                                                 # No SADMIN Env. Var. Exit
@@ -58,17 +55,17 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
 export SADM_VER='4.3'                                      # Script version number
-export SADM_PDESC="SADMIN template shell script that use SADMIN database."
+export SADM_PDESC="SADMIN template shell script using 'sadmin' database." 
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
-export SADM_EXIT_CODE=0                                    # Script Default Exit Code
-export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
 export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
 export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
@@ -76,7 +73,7 @@ export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX")
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
 . "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
-export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
 #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
@@ -85,11 +82,12 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_LOGLINE=400                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
 #export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
 #export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
-# --------------- ---  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+# -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+
 
 
 
@@ -117,6 +115,7 @@ show_usage()
     printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
     printf "\n\n" 
 }
+
 
 
 
@@ -175,12 +174,21 @@ process_servers()
                  continue                                               # Continue with next Server
         fi
 
-        # Try a SSH to system
+        # Check if System is Locked.
+        sadm_check_system_lock "$server_name"                           # Check lock file status
+        if [[ $? -ne 0 ]]                                               # If system is lock
+            then sadm_write_err "[ WARNING ] System $server_name is currently lock."
+                 ((warning_count++))                                    # Increase Warning Counter
+                 sadm_write_err "Continuing with next system."          # Not Error if Sporadic Srv. 
+                 continue                                               # Go process next server
+        fi
+
+        # Try a SSH to the remote system
         if [ $SADM_DEBUG -gt 0 ] 
             then sadm_write_log "$SADM_SSH -qnp $server_ssh_port $fqdn_server date" 
         fi 
-        sadm_on_sadmin_server
-        if [ $? -ne 1 ]                                                 # Not on SADMIN server
+
+        if [[ "$fqdn_server" != "$SADM_SERVER" ]]                       # If not on SADMIN Server  
             then $SADM_SSH -qnp "$server_ssh_port" "$fqdn_server" date > /dev/null 2>&1
                  RC=$?                                                  # Save Return Code Number
             else RC=0                                                   # No SSH to SADMIN Server
@@ -210,14 +218,6 @@ process_servers()
                  continue                                               # Continue with next system
         fi
 
-        # Check if System is Locked.
-        sadm_check_system_lock "$server_name"                           # Check lock file status
-        if [[ $? -ne 0 ]]                                               # If system is lock
-            then sadm_write_err "[ WARNING ] System $server_name is currently lock."
-                 ((warning_count++))                                    # Increase Warning Counter
-                 sadm_write_err "Continuing with next system."          # Not Error if Sporadic Srv. 
-                 continue                                               # Go process next server
-        fi
 
         if [[ "$fqdn_server" != "$SADM_SERVER" ]]                       # If not on SADMIN Server
             then sadm_write_log "[ OK ] SSH to ${fqdn_server} work."    # Good SSH Work on Client
@@ -250,7 +250,7 @@ function cmd_options()
                        show_usage                                       # Display Help Usage
                        exit 1                                           # Exit Script with Error
                fi
-               printf "\nDebug level set to ${SADM_DEBUG}.\n"           # Display Debug Level
+               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
                ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
