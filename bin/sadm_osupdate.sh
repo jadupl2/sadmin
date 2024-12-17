@@ -496,11 +496,11 @@ function cmd_options()
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
+            r) WREBOOT="Y"                                              # Reboot after Upd. if allow
+               ;;
            \?) printf "\nInvalid option: -${OPTARG}.\n"                 # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
-               ;;
-            r) WREBOOT="Y"                                              # Reboot after Upd. if allow
                ;;
         esac                                                            # End of case
     done                                                                # End of while
