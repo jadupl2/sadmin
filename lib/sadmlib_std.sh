@@ -230,6 +230,8 @@
 #@2024_11_01 lib v4.51 sadm_get_osname() was not returning the right O/S under certain condition.
 #@2024_11_11 lib v4.52 Add two Global var. accessible to any script 'SADM_VMLIST' & 'SADM_VMHOSTS'.
 #@2024_11_24 lib v4.53 Fix minor bug in function sadm_on_sadmin_server()
+#@2024_12_16 lib v4.54 On Debian the 'sadm_get_osversion()' did not return the minor version number.
+#
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -239,7 +241,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.53"                                              # This Library Version
+export SADM_LIB_VER="4.54"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -370,6 +372,7 @@ export SADM_CIE_NAME="Your Company Name"                                # Compan
 export SADM_HOST_TYPE=""                                                # [S]erver/[C]lient/[D]ev.
 export SADM_USER="sadmin"                                               # sadmin user account
 export SADM_GROUP="sadmin"                                              # sadmin group account
+export SADM_PWD_RANDOM="N"                                              # ReGenerate sadmin pwd Y/N
 export SADM_WWW_USER="apache"                                           # /sadmin/www owner
 export SADM_WWW_GROUP="apache"                                          # /sadmin/www group
 export SADM_MAX_LOGLINE=500                                             # Max Nb. Lines in LOG
@@ -1021,7 +1024,7 @@ sadm_get_osversion() {
     #wosversion="0.0"                                                    # Default Value
     case "$(sadm_get_ostype)" in
         "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
-                       then osver=$($SADM_LSB_RELEASE -rs)
+                       then osver=$($SADM_LSB_RELEASE -rs | tail -1)
                        else if [ -f $OS_REL ] 
                                 then osver=$(awk -F= '/^VERSION_ID=/ {print $2}' $OS_REL |tr -d '"')
                                 else if [ -f /etc/system-release-cpe ] 
@@ -1031,6 +1034,7 @@ sadm_get_osversion() {
                                      fi
                             fi 
                     fi 
+                    if [ -r /etc/debian_version ] ; then osver=$(cat /etc/debian_version) ; fi
                     ;;
         "AIX")      osver="$(uname -v).$(uname -r)"                  # Get Aix Version
                     ;;
@@ -1835,16 +1839,16 @@ sadm_server_vg() {
 #            LOAD SADMIN CONFIGURATION FILE AND SET GLOBAL VARIABLES ACCORDINGLY
 # --------------------------------------------------------------------------------------------------
 sadm_load_config_file() {
-    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write_log " " ; fi
+    if [ "$LIB_DEBUG" -gt 4 ] ; then printf "\nIn 'sadm_load_config_file'." ; fi
 
     # SADMIN Configuration file '$SADMIN/cfg/sadmin.cfg' MUST be present.
-    # If not, then create $SADMIN/cfg/sadmin.cfg from the template '$SADMIN/cfg/.sadmin.cfg'.
-    if [ ! -r "$SADM_CFG_FILE" ]                                        # If $SADMIN/cfg/sadmin.cfg
+    # If not, then create one from the template '$SADMIN/cfg/.sadmin.cfg'.
+    if [ ! -r "$SADM_CFG_FILE" ]                                        # Can't read sadmin.cfg
         then if [ ! -r "$SADM_CFG_HIDDEN" ]                             # Initial Cfg file not exist
                 then echo "****************************************************************"
                      echo "SADMIN configuration file $SADM_CFG_FILE doesn't exist."
                      echo "Even the config template file '$SADM_CFG_HIDDEN' can't be found."
-                     echo "Copy '$SADM_CFG_HIDDEN' from SADMIN server to this system."
+                     echo "Copy '$SADM_CFG_HIDDEN' from other system to this one."
                      echo "Job aborted."
                      echo "****************************************************************"
                      sadm_stop 1
@@ -1892,7 +1896,10 @@ sadm_load_config_file() {
             "SADM_USER")                    SADM_USER=$VALUE
                                             ;;
             "SADM_GROUP")                   SADM_GROUP=$VALUE
-                                            ;;
+                                            ;;            
+            "SADM_PWD_RANDOM" )             SADM_PWD_RANDOM=$(sadm_toupper "$VALUE")
+                                            ;; 
+
             "SADM_WWW_USER")                SADM_WWW_USER=$VALUE
                                             ;;
             "SADM_WWW_GROUP")               SADM_WWW_GROUP=$VALUE
@@ -2057,7 +2064,7 @@ sadm_freshen_directories_structure() {
 
     # Path is needed to perform NFS Backup (It doesn't exist by default on Mac)
     if [ "$SADM_OS_TYPE" = "DARWIN" ] && [ ! -d "/tmp/nfs2" ]           # NFS Mount Point not exist
-        then mkdir -p -m 755 /tmp/nfs2                                    # Create NFS mount point
+        then mkdir -p -m 755 /tmp/nfs2                                  # Create NFS mount point
     fi
 
     # $SADMIN directories creation (If do not exist and ignore error)
@@ -2203,11 +2210,10 @@ sadm_start() {
 
     # Check if this script to be run only on the SADMIN server.
     if [ "$SADM_ON_SADMIN_SERVER" = "N" ] &&  [ "$SADM_SERVER_ONLY" = "Y" ] 
-        then sadm_write_err " "
-             sadm_write_err "This script only run on SADMIN server '$SADM_SERVER'."
-             sadm_write_err "   - The variable 'SADM_SERVER_ONLY' is set to 'Y'."
+        then sadm_write_err "[ ERROR ] This script will only run on the SADMIN server '$SADM_SERVER'."
+             sadm_write_err "The variable 'SADM_SERVER_ONLY' is set to 'Y'."
              sadm_write_err "Process aborted."                          # Abort advise message
-             sadm_write_err " "
+             #sadm_write_err " "
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
@@ -2535,8 +2541,8 @@ sadm_sendmail() {
     RC=0                                                                # Function Return Code
     #LIB_DEBUG=5                                                        # Debug Library Level
     if [ $# -lt 3 ] || [ $# -gt 4 ]                                     # Invalid No. of Parameter
-        then sadm_write_log "Invalid number of argument, '$#' received by function ${FUNCNAME}."
-             sadm_write_log "Should be 3 or 4 we received $# : $* "     # Show what received
+        then sadm_write_err "Invalid number of argument, '$#' received by function ${FUNCNAME}."
+             sadm_write_err "Should be 3 or 4 we received $# : $* "     # Show what received
              return 1                                                   # Return Error to caller
     fi
 
@@ -2554,10 +2560,11 @@ sadm_sendmail() {
 
     # Send mail with 1 or no attachment
     if [ $(expr index "$mfile" ,) -eq 0 ]                               # No comma = 1 file attach
-       then if [ "$mfile" != "" ]                                       # If Attach. file specified 
+       then RC=0
+            if [ "$mfile" != "" ]                                       # If Attach. file specified 
                 then if [ ! -r "$mfile" ]                               # Attachment Not Readable ?
                         then emsg="Attachment file $mfile can't be read or doesn't exist."
-                             sadm_write_err "$emsg"                     # Avise user of error
+                             sadm_write_err "[ ERROR ] $emsg"           # Avise user of error
                              printf "\n$emsg\n" >> $mbody               # Add Err Msg to Body
                              RC=1                                       # Set Error return code
                              echo "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" "$maddr" >>$SADM_LOG 2>&1
@@ -2568,7 +2575,7 @@ sadm_sendmail() {
                      RC=$?                                              # Save Error Number
             fi
             if [ $RC -ne 0 ]                                            # Error sending email 
-                then wstatus="[ Error ] Sending email to $maddr"        # Advise Error sending Email
+                then wstatus="[ ERROR ] Sending email to $maddr"        # Advise Error sending Email
                      sadm_write_err "${wstatus}"                        # Show Message to user 
                      RC=1                                               # Set Error return code
             fi 
@@ -2590,7 +2597,7 @@ sadm_sendmail() {
             echo "$mbody" | $SADM_MUTT -e "set from=$maddr" -s "$msubject" $opt_a \-\- "$maddr"
             RC=$?                                                       # Save Error Number
             if [ $RC -ne 0 ]                                            # Error sending email 
-                then wstatus="[ Error ] Sending email to $maddr"        # Advise Error sending Email
+                then wstatus="[ ERROR ] Sending email to $maddr"        # Advise Error sending Email
                      sadm_write_err "${wstatus}\n"                      # Show Message to user 
             fi
     fi
@@ -2598,58 +2605,6 @@ sadm_sendmail() {
     return $RC
 } 
 
-
-
-# --------------------------------------------------------------------------------------------------
-# Merge alert_group.cfg and alert_slack.cfg into alert_group.cfg
-# This function should be executed on when these two files exists.
-# After the merge the alert_slack.cfg file will be deleted (Won't be sed anymore)
-# --------------------------------------------------------------------------------------------------
-merge_alert_files() {
-
-    if [ ! -r "$SADM_ALERT_FILE" ] ; then return 1 ; fi 
-    if [ ! -r "$SADM_SLACK_FILE" ] ; then return 1 ; fi 
-    tmp_merge="${SADM_TMP_DIR}/tmp_merge.$$"                            # Name tmp File for merge
-    if [ -a "$tmp_merge" ] ; then rm -f "$tmp_merge" ; fi               # If tmp exist, delete it.
-
-    while read aline
-        do
-        FC=`echo $aline | cut -c1`
-        if [ "$FC" = "#" ] || [ ${#aline} -eq 0 ] 
-            then echo "$aline" >> $tmp_merge                            # Write line as it is
-                 continue    
-        fi
-        echo "$aline" | grep -iq " s "                                  # Is it a Slack Alert Line
-        if [ $? -ne 0 ]                                                 # No it's not a Slack Line
-            then echo "$aline" >> $tmp_merge                            # Write line as it is
-                 continue                                               # Continue with next line
-        fi 
-        #
-        nbfield=$(echo $aline | awk -F' ' '{print NF}')
-        #sadm_write_log "Selected : $aline we have $nbfield fields."
-        slchannel=$(echo $aline | awk -F' ' '{print $3}')
-        #sadm_write_log "Searching for $slchannel in $SADM_SLACK_FILE"
-        grep -iq "^${slchannel} " $SADM_SLACK_FILE 
-        if [ $? -ne 0 ] 
-            then sadm_write_log "Channel $slchannel in $SADM_ALERT_FILE isn't found in $SADM_SLACK_FILE"
-                 sadm_write_log "Cannot merge this entry, correct the situation please" 
-            else httphook=$(grep -i "^${slchannel} " $SADM_SLACK_FILE | awk '{print $2 }')
-                 echo "$aline  $httphook"  >> $tmp_merge
-        fi
-        done < $SADM_ALERT_FILE   
-        echo " " >> $tmp_merge                                           # Blank Line at the EOF
-
-    # Put in place the new alert goup file
-    cp $tmp_merge $SADM_ALERT_FILE
-    if [ $? -eq 0 ] 
-        then if [ -r "$SADM_SLACK_FILE" ] ; then rm -f "$SADM_SLACK_FILE" > /dev/null 2>&1 ; fi
-             if [ -r "$SADM_SLACK_INIT" ] ; then rm -f "$SADM_SLACK_INIT" > /dev/null 2>&1 ; fi
-             if [ -r "$tmp_merge" ]       ; then rm -f "$tmp_merge" > /dev/null 2>&1 ; fi
-             if [ $(id -u) -eq 0 ]        ; then chmod 664 $SADM_ALERT_FILE ; fi
-             sadm_write_log "Slack config file ($SADM_SLACK_FILE) merged into alert group file ($SADM_ALERT_FILE)"
-    fi 
-    return
-}
 
 
 
@@ -2682,10 +2637,10 @@ sadm_lock_system()
                else sadm_write_log "[ ERROR ] Updating '${SNAME}' lock file '${LOCK_FILE}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
-        else echo "$SADM_INST $(date +%Y_%m_%d_%H_%M_%S)" >${LOCK_FILE} # Create Lock File 
+        else echo "$SADM_INST $(date +%Y_%m_%d_%H_%M_%S)" >"$LOCK_FILE" # Create Lock File 
              if [ $? -eq 0 ]                                            # Lock file created [ OK ]
                then sadm_write_log "[ OK ] System '${SNAME}' now lock."  
-               else sadm_write_log "[ ERROR ] while locking the system '${SNAME}'" 
+               else sadm_write_log "[ ERROR ] While creating the lock file for system '${SNAME}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
     fi
@@ -2789,8 +2744,10 @@ sadm_check_system_lock() {
 # Check if the IP assigned to 'SADMIN' env. variable is defined on the current system and check 
 # if the value of 'SADM_HOST_TYPE' is set to "S" in $SADMIN/cfg/sadmin.cfg. 
 # 
-# Return code : 
+# Input Parameters :
+#   None
 #
+# Return code : 
 #     "0"     : Mean that current host is not a SADMIN server 
 #                   - Set global variable 'SADM_ON_SADMIN_SERVER' is to "N".
 #               
@@ -2799,6 +2756,12 @@ sadm_check_system_lock() {
 #                 - If 'sadmin' host resolved to an IP present on the current system (IP alias).
 #                 - Set global variable 'SADM_ON_SADMIN_SERVER' is set to "Y".
 #               
+# Sample Code :
+#        if [ "$SADM_ON_SADMIN_SERVER" = "N" ] 
+#            then sadm_write_log "You are on a SADMIN client" 
+#            else sadm_write_log "You are on a SADMIN server" 
+#        fi
+#
 # --------------------------------------------------------------------------------------------------
 sadm_on_sadmin_server() {
 
@@ -2927,7 +2890,30 @@ EOF
 ) >> $SADM_CFG_FILE
     fi 
 
+# Add New variable 'SADM_PWD_RANDOM' to sadmin.cfg, if not in yet.
+    grep -q "SADM_PWD_RANDOM" $SADM_CFG_FILE
+    if [ $? -ne 0 ] 
+        then 
+        ( cat <<'EOF'
 
+
+#----------------------------------------------------------------------------
+# SADM_PWD_RANDOM: 
+# - If set to 'Y' and the SADM_USER password expire, it will automatically set a 
+#   random password to SADM_USER, and change some of the 'SADM_USER' user setting :
+#   'chage -m 5 -M 30 -W 10 -E -1 -I -1 $SADM_USER'
+#
+#   To unlock user, 5 days before change again, password is valid for 30 days, 
+#   Warn 10 days before expire, set account expire and password inactive to 'never'. 
+#   If set to 'N' then if the password expire or the account lock, an error
+#   will be reported by sadm_housekeeping_client.sh' script.
+#----------------------------------------------------------------------------
+SADM_PWD_RANDOM = N
+
+EOF
+) >> $SADM_CFG_FILE
+    fi 
+    
 }
 
 
@@ -2935,37 +2921,34 @@ EOF
 # Things to do when first called
 # --------------------------------------------------------------------------------------------------
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`                            # Save Startup Date & Time
-    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
+    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # If invoke from cmdline
         then printf "$SADM_STIME Starting ...\n"                        # Show reference point #1
     fi
 
     # Make sure /etc/environment exist
-    if [ ! -r "$SADM_ETCENV" ]                                          # /etc/environment can't read
+    if [ ! -r "$SADM_ETCENV" ]                                          # /etc/environment not there
         then printf "\n\nFile '$SADM_ETCENV' is missing & require."     # Inform User 
-             printf "\nCannot continue, aborting."                       # We are aborting
+             printf "\nCan't continue, aborting."                       # We are aborting
              printf "\nFor more info: https://sadmin.ca/sadm-section/#environment \n"
              exit 1                                                     # Exit with error
     fi 
 
-    # Make sure 'SADMIN' Home directory declaration exist.
+    # Make sure 'SADMIN' directory declaration exist in /etc/environment.
     grep "SADMIN=" $SADM_ETCENV >/dev/null 2>&1                         # Do Env.File include SADMIN
-    if [ $? -ne 0 ]                                                     # SADMIN missing in /etc/env
-        then echo "SADMIN=$SADMIN" >> /etc/environment                  # Then add it to the file
-    fi
+    if [ $? -ne 0 ] ; then echo "SADMIN=$SADMIN" >> $SADM_ETCENV ; fi   # Then add it to the file
 
-# Load $SADMIN/cfg/sadmin.cfg
-    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
-        then printf "$(date "+%C%y.%m.%d %H:%M:%S") Loading $SADM_CFG_FILE ...\n"
+    # Load $SADMIN/cfg/sadmin.cfg
+    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # If invoke from cmdline
+        then printf "\n$(date "+%C%y.%m.%d %H:%M:%S") Loading $SADM_CFG_FILE ..."
     fi
     sadm_load_config_file                                               # Load sadmin.cfg file
-    if [ -r "$SADM_SLACK_FILE" ] ; then merge_alert_files ; fi          # If old version
-    sadmin_cfg_update                                                   # Add new Variables to cfg
+    sadmin_cfg_update                                                   # New Stuff was added to cfg
 
-# Check if on a valid SADMIN server and set SADM_ON_SADMIN_SERVER to "Y" or "N" 
+    # Check if on a valid SADMIN server and set SADM_ON_SADMIN_SERVER to "Y" or "N" 
     sadm_on_sadmin_server                                               # SADMIN Server? 0=No 1=Yes
     if [ $? -eq 0 ] ; then SADM_ON_SADMIN_SERVER="N" ; else SADM_ON_SADMIN_SERVER="Y" ; fi 
 
-# Load the path of commands used in SADMIN
+    # Load the path of commands used in SADMIN
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
         then printf "$(date "+%C%y.%m.%d %H:%M:%S") Loading command path ...\n"
              #printf "SADM_ON_SADMIN_SERVER = $SADM_ON_SADMIN_SERVER \n"
@@ -2973,7 +2956,7 @@ EOF
     sadm_load_cmd_path                                                  # Load Cmd Path Variables
     if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement not met
 
-# Build SSH command according to Path and Port used
+    # Build SSH command according to Path and Port used
     export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}"             # SSH Command to SSH CLient
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
         then printf "$(date "+%C%y.%m.%d %H:%M:%S") Library Loaded ...\n"
