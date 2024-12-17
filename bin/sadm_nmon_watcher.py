@@ -235,7 +235,7 @@ def main_process():
     time.sleep(5)               # Time to come up
     pcount = count_process(nmon_name)
     ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
-    sa.write_log("pcount=%d before starting it :\n%s" % (pcount,cstdout))
+    #sa.write_log("pcount=%d before starting it :\n%s" % (pcount,cstdout))
     if pcount == 1 :
         sa.write_log("[ OK ] Process named '%s' is now running." % (nmon_name))
         ccode, cstdout, cstderr = sa.oscommand("ps -ef | grep '/nmon ' | grep -v grep") 
