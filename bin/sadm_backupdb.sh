@@ -41,59 +41,55 @@
 # 2021_05_26 backup v2.3 Added command line option option [-b backup_dir] [-n dbname].
 # 2022_08_17 backup v2.4 Updated with SADMIN section 1.52
 #@2024_04_17 backup v2.5 Replace 'sadm_write' with 'sadm_write_log' and 'sadm_write_err'.
+#@2024_12_17 backup v2.6 Updated with SADMIN section 1.56
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
 
+# --------------------------  S A D M I N   C O D E    S E C T I O N  ------------------------------
+# v1.56 - Setup for Global variables and load the SADMIN standard library.
+#       - To use SADMIN tools, this section MUST be present near the top of your code.
 
-# ---------------------------------------------------------------------------------------
-# SADMIN CODE SECTION 1.52
-# Setup for Global Variables and load the SADMIN standard library.
-# To use SADMIN tools, this section MUST be present near the top of your code.
-# ---------------------------------------------------------------------------------------
+# Make Sure Environment Variable 'SADMIN' Is Defined.
+if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
+    then if [ -r /etc/environment ] ; then source /etc/environment ; fi # LastChance defining SADMIN
+         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                                 # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-# MAKE SURE THE ENVIRONMENT 'SADMIN' VARIABLE IS DEFINED, IF NOT EXIT SCRIPT WITH ERROR.
-if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] # SADMIN defined ? SADMIN Libr. exist
-then if [ -r /etc/environment ] ; then source /etc/environment ;fi # Last chance defining SADMIN
-    if [ -z $SADMIN ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]    # Still not define = Error
-    then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
-        exit 1                                    # No SADMIN Env. Var. Exit
-    fi
-fi
-
-# USE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
 export SADM_PN=${0##*/}                                    # Script name(with extension)
-export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`          # Script name(without extension)
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
 export SADM_TPID="$$"                                      # Script Process ID.
-export SADM_HOSTNAME=`hostname -s`                         # Host name without Domain Name
-export SADM_OS_TYPE=`uname -s |tr '[:lower:]' '[:upper:]'` # Return LINUX,AIX,DARWIN,SUNOS
+export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
+export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
-# USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.4'                                      # Script version number
+# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='2.6'                                      # Script version number
 export SADM_PDESC="Take a backup of all (Default) or selected (sadmin) database."
-export SADM_EXIT_CODE=0                                    # Script Default Exit Code
-export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
-export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
-export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
-export SADM_TMP_FILE1="${SADMIN}/tmp/${SADM_INST}_1.$$"    # Tmp File1 for you to use
-export SADM_TMP_FILE2="${SADMIN}/tmp/${SADM_INST}_2.$$"    # Tmp File2 for you to use
-export SADM_TMP_FILE3="${SADMIN}/tmp/${SADM_INST}_3.$$"    # Tmp File3 for you to use
-export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
-export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
 
 # LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
-. ${SADMIN}/lib/sadmlib_std.sh                             # Load SADMIN Shell Library
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
 export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
-export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.0.1)
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
 export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
 #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
 
@@ -102,9 +98,13 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
 #export SADM_ALERT_GROUP="default"                          # Alert Group to advise
 #export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
-#export SADM_MAX_LOGLINE=500                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_LOGLINE=400                                # Nb Lines to trim(0=NoTrim)
 #export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
-# ---------------------------------------------------------------------------------------
+#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+# -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+
+
 
 
 
@@ -112,14 +112,14 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 #===================================================================================================
 # Scripts Variables
 #===================================================================================================
-CUR_DAY_NUM=`date +"%u"`            ; export CUR_DAY_NUM                # Current Day in Week 1=Mon
-CUR_DATE_NUM=`date +"%d"`           ; export CUR_DATE_NUM               # Current Date Nb. in Month
-CUR_MTH_NUM=`date +"%m"`            ; export CUR_MTH_NUM                # Current Month Number
-MYSQLDUMP=""                        ; export MYSQLDUMP                  # Save mysqldump Full Path
-BACKUP_FILENAME=""                  ; export BACKUP_FILENAME            # Backup File Name
-BACKUP_NAME="all"                   ; export BACKUP_NAME                # DB Name to Backup or 'all'
-ERROR_COUNT=0                       ; export ERROR_COUNT                # Total Backup Error Counter
-COMPRESS_BACKUP="Y"                 ; export COMPRESS_BACKUP            # Default Compress Backup
+export CUR_DAY_NUM=$(date +"%u")                                        # Current Day in Week 1=Mon
+export CUR_DATE_NUM=$(date +"%d")                                       # Current Date Nb. in Month
+export CUR_MTH_NUM=$(date +"%m")                                        # Current Month Number
+export MYSQLDUMP=""                                                     # Save mysqldump Full Path
+export BACKUP_FILENAME=""                                               # Backup File Name
+export BACKUP_NAME="all"                                                # DB Name to Backup or 'all'
+export ERROR_COUNT=0                                                    # Total Backup Error Counter
+export COMPRESS_BACKUP="Y"                                              # Default Compress Backup
 
 
 WEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
@@ -133,6 +133,10 @@ CREDENTIAL="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD -h $SADM_DBHOST" ; export CREDE
 #export DBEXCLUDE="information_schema|performance_schema"
 export DBEXCLUDE=""
 
+# Backup database default options
+export BACKUP_NAME="all"                                                # DB to Backup Default=All
+export BACKUP_ROOT_DIR="$SADM_DBB_DIR"                                  # Default DB Backup Dir.
+export COMPRESS_BACKUP="Y"                                              # Compress Backup by Default
 
 # Number of backup to keep per backup type
 export DAILY_BACKUP_TO_KEEP=4                                           # Nb. Daily Backup to keep
@@ -143,7 +147,7 @@ export YEARLY_BACKUP_TO_KEEP=2                                          # Nb. Ye
 # What day/date per backup type
 export WEEKLY_BACKUP_DAY=5                                              # Day Week Backup 1=Mon7=Sun
 export MONTHLY_BACKUP_DATE=1                                            # Monthly Backup Date (1-28)
-export YEARLY_BACKUP_MONTH=6                                            # Yearly Backup Month (1-12)
+export YEARLY_BACKUP_MONTH=12                                           # Yearly Backup Month (1-12)
 export YEARLY_BACKUP_DATE=31                                            # Yearly Backup Date (1-28)
 
 
@@ -174,13 +178,13 @@ backup_setup()
     sadm_write_log " "
     sadm_write_log "----------Setup Backup Environment ..."             # Advise User were Starting
     
-    which mysqldump >/dev/null 2>&1                                     # See if mysqldump available
+    command -v mysqldump >/dev/null 2>&1                                # See if mysqldump available
     if [ $? -ne 0 ]                                                     # If Can't be found
     then sadm_write_err "The 'mysqldump' command can't be found."       # Advise User
-         sadm_write_err "The Backup cannot be started."                 # No Backup can be performed
+         sadm_write_err "The database backup cannot be started."        # No Backup can be performed
          return 1                                                       # Return Error to Caller
     else                                                                # If mysqldump was found
-         MYSQLDUMP=`which mysqldump`                                    # Save mysqldump Full Path
+         MYSQLDUMP=$(command -v mysqldump)                              # Save mysqldump Full Path
     fi
     
     # Main Backup Directory
@@ -255,8 +259,8 @@ backup_setup()
     else sadm_write_log " - Backup the Database '$BACKUP_NAME'"
     fi
     if [ "$COMPRESS_BACKUP" = 'Y' ]
-    then sadm_write_log " - Compress the backup file."
-    else sadm_write_log " - Not compress the backup file."
+        then sadm_write_log " - Compress the backup file."
+        else sadm_write_log " - Not compress the backup file."
     fi
     sadm_write_log " - Keep $DAILY_BACKUP_TO_KEEP daily backups."
     sadm_write_log " - Keep $WEEKLY_BACKUP_TO_KEEP weekly backups."
@@ -276,7 +280,7 @@ backup_cleanup()
     CLEAN_DIR=$1                                                        # Save Backup Dir. to Clean
     NB_KEEP=$2                                                          # Nb. OF Backup to Keep
     sadm_write_log " "
-    sadm_write_log "Cleaning `basename $CLEAN_DIR` Backup (Keep last $NB_KEEP Backups)."
+    sadm_write_log "Cleaning $(basename $CLEAN_DIR) Backup (Keep last $NB_KEEP Backups)."
     
     # Produce a list of Databases Directories in $CLEAN_DIR
     find $CLEAN_DIR -type d -print |grep -v "${CLEAN_DIR}$" >${SADM_TMP_FILE1}
@@ -319,7 +323,7 @@ backup_cleanup()
 backup_db()
 {
     CURRENT_DB=$1                                                       # Database Name to Backup
-    BACKUP_FILENAME="${CURRENT_DB}_`date +"%Y_%m_%d_%H_%M_%S_%A"`.sql"  # Build Backup File Name
+    BACKUP_FILENAME="${CURRENT_DB}_$(date +"%Y_%m_%d_%H_%M_%S_%A").sql"  # Build Backup File Name
     
     # Determine the Directory where the backup will be created
     BACKUP_DIR="${DAILY_DIR}/$CURRENT_DB"                               # Default goes in Daily Dir.
@@ -437,29 +441,29 @@ function cmd_options()
     while getopts "hvd:bn:u" opt ; do                                   # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
-                num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
-                if [ "$num" = "" ]                                       # No it's not numeric
-                then printf "\nDebug Level specified is invalid.\n"   # Inform User Debug Invalid
-                    show_usage                                       # Display Help Usage
-                    exit 1                                           # Exit Script with Error
-                fi
-                printf "Debug Level set to ${SADM_DEBUG}.\n"             # Display Debug Level
-            ;;
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
+               if [ "$num" = "" ]                            
+                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 1                                           # Exit Script with Error
+               fi
+               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               ;;                                                       
             h) show_usage                                               # Show Help Usage
-                exit 0                                                   # Back to shell
-            ;;
+               exit 0                                                   # Back to shell
+               ;;
             v) sadm_show_version                                        # Show Script Version Info
-                exit 0                                                   # Back to shell
-            ;;
-            \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
-                show_usage                                               # Display Help Usage
-                exit 1                                                   # Exit with Error
-            ;;
+               exit 0                                                   # Back to shell
+               ;;
             b) BACKUP_ROOT_DIR=$OPTARG                                  # Database Backup Directory
             ;;
             n) BACKUP_NAME=$OPTARG                                      # Database Name to Backup
             ;;
             u) COMPRESS_BACKUP="N"                                      # Backup Uncompress
+            ;;
+            \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
+                show_usage                                               # Display Help Usage
+                exit 1                                                   # Exit with Error
             ;;
         esac                                                            # End of case
     done                                                                # End of while
@@ -470,7 +474,6 @@ function cmd_options()
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
-
 cmd_options "$@"                                                    # Check command-line Options
 sadm_start                                                          # Create Dir.,PID,log,rch
 if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
