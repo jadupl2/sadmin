@@ -231,7 +231,8 @@
 #@2024_11_11 lib v4.52 Add two Global var. accessible to any script 'SADM_VMLIST' & 'SADM_VMHOSTS'.
 #@2024_11_24 lib v4.53 Fix minor bug in function sadm_on_sadmin_server()
 #@2024_12_16 lib v4.54 On Debian the 'sadm_get_osversion()' did not return the minor version number.
-#
+#@2024_12_27 lib v4.55 Under certain condition, 'sadm_get_host_ip' wasn't returning proper IP.
+# 
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -241,7 +242,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.54"                                              # This Library Version
+export SADM_LIB_VER="4.55"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -1253,7 +1254,8 @@ sadm_get_fqdn() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_host_ip() {
     case "$(sadm_get_ostype)" in
-        "LINUX")    whost_ip=$(host ${SADM_HOSTNAME} |awk '{ print $4 }' |head -1)
+        "LINUX")    whost=$(hostname -i)
+                    #whost_ip=$(host ${SADM_HOSTNAME} |awk '{ print $4 }' |head -1)
                     ;;
         "AIX")      whost_ip=$(host ${SADM_HOSTNAME}.$(sadm_get_domainname) |head -1 |awk '{ print $3 }')
                     ;;
