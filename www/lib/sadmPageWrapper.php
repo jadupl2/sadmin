@@ -29,7 +29,7 @@
 # 2020_04_25 web v1.3 Reduce Menu line in header to fit on Ipad.
 # 2020_09_23 web v1.4 Add Tooltips to Shortcut in the page header.
 # 2020_12_15 web v1.5 Add Storix Report Link in Header, only if Storix html file exist.
-#42024_10_31 web v1.6 Add VirtualBox Button to view the status of VM export.
+#@2024_10_31 web v1.6 Add VirtualBox Button to view the status of VM export.
 #
 # ==================================================================================================
 #
