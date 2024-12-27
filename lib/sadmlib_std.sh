@@ -1254,7 +1254,7 @@ sadm_get_fqdn() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_host_ip() {
     case "$(sadm_get_ostype)" in
-        "LINUX")    whost=$(hostname -i)
+        "LINUX")    whost_ip=$(hostname -i)
                     #whost_ip=$(host ${SADM_HOSTNAME} |awk '{ print $4 }' |head -1)
                     ;;
         "AIX")      whost_ip=$(host ${SADM_HOSTNAME}.$(sadm_get_domainname) |head -1 |awk '{ print $3 }')
