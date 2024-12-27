@@ -427,6 +427,7 @@ export SADM_SMTP_SERVER="smtp.gmail.com"                                # smtp m
 export SADM_SMTP_PORT=587                                               # smtp port(25,465,587,2525)
 export SADM_SMTP_SENDER="sadmin.gmail.com"                              # Email address of sender 
 export SADM_GMPW=""                                                     # smtp sender gmail passwd
+#export SADM_SILENT_MODE=0                                  # Show (0) or not error mesg (1)=just RC
 #
 export SADM_VM_EXPORT_NFS_SERVER=""                                     # NFS Server for VM Export
 export SADM_VM_EXPORT_MOUNT_POINT=""                                    # NFS mount port for Export
@@ -2539,9 +2540,9 @@ sadm_stop() {
 sadm_sendmail() {
 
     RC=0                                                                # Function Return Code
-    #LIB_DEBUG=5                                                        # Debug Library Level
+    LIB_DEBUG=0                                                         # Debug funtion Library Level
     if [ $# -lt 3 ] || [ $# -gt 4 ]                                     # Invalid No. of Parameter
-        then sadm_write_err "Invalid number of argument, '$#' received by function ${FUNCNAME}."
+        then sadm_write_err "[ ERROR ] Invalid number of argument, '$#' received by function ${FUNCNAME}."
              sadm_write_err "Should be 3 or 4 we received $# : $* "     # Show what received
              return 1                                                   # Return Error to caller
     fi
@@ -2601,7 +2602,7 @@ sadm_sendmail() {
                      sadm_write_err "${wstatus}\n"                      # Show Message to user 
             fi
     fi
-    #LIB_DEBUG=0                                                         # Debug Library Level
+    LIB_DEBUG=0                                                         # Debug Library Level
     return $RC
 } 
 
