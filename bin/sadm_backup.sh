@@ -711,8 +711,8 @@ mount_nfs()
     if [ "$SADM_OS_TYPE" = "DARWIN" ]                                   # If on MacOS
         then sadm_write_log "mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT}"
              mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
-        else sadm_write_log "mount ${REM_MOUNT} ${LOCAL_MOUNT}"         # If on Linux/Aix
-             mount ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1         # Mount NFS Drive
+        else sadm_write_log "mount -o vers=3 ${REM_MOUNT} ${LOCAL_MOUNT}" # If on Linux/Aix
+             mount -o vers=3 ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1 # Mount NFS Drive
     fi
     if [ $? -ne 0 ]                                                     # If Error trying to mount
         then sadm_write_err "[ ERROR ] Mount NFS Failed - Process Aborted" # Error - Advise User
