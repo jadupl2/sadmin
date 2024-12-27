@@ -269,7 +269,7 @@ check_sadmin_account()
                        else lock_error=1                                # Set function error flag ON
                 fi
                 ;;
-        P|PS)   sadm_write_err "  - Account '$SADM_USER' have a valid password." 
+        P|PS)   sadm_write_log "  - Account '$SADM_USER' have a valid password." 
                 ;;
             *)  sadm_write_err "Unknown user state for '$SADM_USER' account ($acc_status)"
                 lock_error=1                                            # 0=Ok, 1=Error Flag ON
@@ -520,7 +520,7 @@ file_housekeeping()
     set_files_recursive "$SADM_PKG_DIR"        "0755" "${SADM_USER}" "${SADM_GROUP}" 
 
     # SADMIN directories and Readme, changelog and license file.
-    set_file "$SADM_TMP_DIR" "1777" "${SADM_USER}" "${SADM_GROUP}"     
+    set_file "$SADM_TMP_DIR"                 "1777" "${SADM_USER}" "${SADM_GROUP}"     
     set_file "${SADM_BASE_DIR}/readme.md"    "0644" "${SADM_USER}" "${SADM_GROUP}" 
     set_file "${SADM_BASE_DIR}/readme.html"  "0644" "${SADM_USER}" "${SADM_GROUP}" 
     set_file "${SADM_BASE_DIR}/readme.pdf"   "0644" "${SADM_USER}" "${SADM_GROUP}" 
