@@ -173,7 +173,7 @@ function setup_table() {
 
 
 
-# Display main page data from the row received in parameter
+# Display Virtual Box Export Status Page
 #===================================================================================================
 function display_data($count, $row) {
     global  $URL_VIEW_FILE, $URL_VIEW_RCH, $URL_UPDATE, $URL_SERVER_INFO, 
@@ -271,6 +271,7 @@ function display_data($count, $row) {
     }
     echo "</td>\n";
 
+
     # Display link to view export log
     echo "<td>";
     if (file_exists($log_name)) {
@@ -281,13 +282,15 @@ function display_data($count, $row) {
         #echo "[N/A]&nbsp;";
     }
 
+
     # Display link to view export error log (If exist)
     if ((file_exists($elog_name)) and (filesize($elog_name) != 0)) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $elog_name . "'" ;
         echo " title='View export error Log'>[elog]</a>&nbsp;";
     }
 
-    # Display link to view export rch file
+
+    # Display link to view export history (rch) file
     #$rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
     $rch_www_name = $row['srv_vm_host'] . $EXPORT_SCRIPT . $row['srv_name'] . ".rch";
     if (file_exists($rch_name)) {
@@ -302,7 +305,7 @@ function display_data($count, $row) {
     # Schedule Update Button
     # Zero and an empty string are considered to be false. 
     # Any other numerical value or string is true. 
-    $ipath = '/images/UpdateButton.png';
+    #$ipath = '/images/UpdateButton.png';
     if ($row['srv_export_sched'] == True ) {                            # If Export Schedule Active
         $tooltip = 'Schedule is active, click to edit export schedule.';
         echo "<td align=left style='color: green'<b>Y</b> ";
@@ -327,9 +330,11 @@ function display_data($count, $row) {
     # Next export date
     echo "<td>";
     if ($row['srv_export_sched'] == True) { 
+        #echo $row['srv_export_dom'] ." _ ". $row['srv_export_mth']." _ ". $row['srv_export_dow']  ." _ ". 
+        #     $row['srv_export_hrs'] ." _ ". $row['srv_export_min'];
         list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_export_dom'], 
-            $row['srv_export_mth'] ,$row['srv_export_dow'],
-            $row['srv_export_hrs'] ,$row['srv_export_min']);
+           $row['srv_export_mth'] ,$row['srv_export_dow'],
+           $row['srv_export_hrs'] ,$row['srv_export_min']);
         echo $UPD_DATE_TIME . "</td>\n";
     }else{
         echo "No Schedule</td>\n";
