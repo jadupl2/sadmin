@@ -249,7 +249,7 @@ function display_vmschedule($con, $wrow, $mode) {
     # ----------------------------------------------------------------------------------------------
     echo "\n\n<div class='vmexport_label'>Day(s) to run the export</div>";
     echo "\n<div class='vmexport_input'>";
-    $days = array('Daily','Sun','Mon','Tue','Wed','Thu','Fri','Sat');
+    $days = array('Any Days','Sun','Mon','Tue','Wed','Thu','Fri','Sat');
 
     echo "\n<select name='scr_export_dow[]' multiple='multiple' size=8>";
     switch ($mode) {
@@ -264,7 +264,7 @@ function display_vmschedule($con, $wrow, $mode) {
                         if (substr($wrow['srv_export_dow'],$i,1) == "Y") {echo " selected";}
                         if ($mode == 'D') { echo " disabled" ; }
                         echo "/>" . $days[$i];
-                        if ($i == 0) { echo "  (Run daily all week)" ;} 
+                        if ($i == 0) { echo "  (Any days)" ;} 
                         echo "</option>";
                     }
                     break;
