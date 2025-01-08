@@ -232,6 +232,7 @@
 #@2024_11_24 lib v4.53 Fix minor bug in function sadm_on_sadmin_server()
 #@2024_12_16 lib v4.54 On Debian the 'sadm_get_osversion()' did not return the minor version number.
 #@2024_12_27 lib v4.55 Under certain condition, 'sadm_get_host_ip' wasn't returning proper IP.
+#@2025_01_07 lib v4.56 Fix for Debian the 'sadm_get_osversion()' did not return the minor version.
 # 
 #===================================================================================================
 trap 'exit 0' 2  
@@ -242,7 +243,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.55"                                              # This Library Version
+export SADM_LIB_VER="4.56"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -702,6 +703,8 @@ sadm_show_version()
 }
 
 
+
+
 # Purpose : 
 #   Trim a file.
 #
@@ -1026,17 +1029,17 @@ sadm_get_osversion() {
     #wosversion="0.0"                                                    # Default Value
     case "$(sadm_get_ostype)" in
         "LINUX")    if [ "$SADM_LSB_RELEASE" != "" ] && [ -x "$SADM_LSB_RELEASE" ]
-                       then osver=$($SADM_LSB_RELEASE -rs | tail -1)
-                       else if [ -f $OS_REL ] 
-                                then osver=$(awk -F= '/^VERSION_ID=/ {print $2}' $OS_REL |tr -d '"')
-                                else if [ -f /etc/system-release-cpe ] 
-                                        then osver=$(awk -F: '{print $5}' /etc/system-release-cpe)
-                                        else printf "Couldn't get O/S version\n"
-                                             osver=0.0
-                                     fi
+                     then osver=$($SADM_LSB_RELEASE -rs | tail -1)
+                            if [ "$(sadm_get_osname)" = "DEBIAN" ] && [ -r /etc/debian_version ] 
+                                then osver=$(cat /etc/debian_version)
                             fi 
+                     elif [ -f $OS_REL ] 
+                            then osver=$(awk -F= '/^VERSION_ID=/ {print $2}' $OS_REL |tr -d '"')
+                            elif [ -f /etc/system-release-cpe ] 
+                                   then osver=$(awk -F: '{print $5}' /etc/system-release-cpe)
+                     else printf "Couldn't get O/S version\n"
+                          osver=0.0
                     fi 
-                    if [ -r /etc/debian_version ] ; then osver=$(cat /etc/debian_version) ; fi
                     ;;
         "AIX")      osver="$(uname -v).$(uname -r)"                  # Get Aix Version
                     ;;
@@ -1068,12 +1071,12 @@ sadm_get_osmajorversion() {
 # Return the os (distribution) minor version
 sadm_get_osminorversion() {
     case "$(sadm_get_ostype)" in
-        "LINUX")    wosminorversion=`echo $(sadm_get_osversion) | awk -F. '{ print $2 }'| tr -d ' '`
-                    ;;
-        "AIX")      wosminorversion=`uname -r`
-                    ;;
-        "DARWIN")   wosminorversion=`sw_vers -productVersion | awk -F '.' '{print $3 }'`
-                    ;;
+        "LINUX")  wosminorversion=$(echo $(sadm_get_osversion) | awk -F. '{ print $2 }'| tr -d ' ')
+                  ;;
+        "AIX")    wosminorversion=$(uname -r)
+                  ;;
+        "DARWIN") wosminorversion=$(sw_vers -productVersion | awk -F '.' '{print $3 }')
+                  ;;
     esac
     echo "$wosminorversion"
 }
@@ -1082,7 +1085,7 @@ sadm_get_osminorversion() {
 
 # Return the os type (AIX/LINUX/DARWIN/SUNOS) -- Always returned in uppercase
 sadm_get_ostype() {
-    sadm_get_ostype=`uname -s | tr '[:lower:]' '[:upper:]'`
+    sadm_get_ostype=$(uname -s | tr '[:lower:]' '[:upper:]')
     echo "$sadm_get_ostype"
 }
 
@@ -1137,13 +1140,14 @@ sadm_get_oscodename() {
 # sadm_get_osname()
 # 
 # Return : 
-#   - The O/S name (Always returned in uppercase)
+#   - The O/S name (Always returned in uppercase).
+#     (REDHAT,ROCKY,ALMA,CENTOS,DEBIAN,UBUNTU,MACOS,FEDORA,RASPBIAN,AIX)
 #
 #---------------------------------------------------------------------------------------------------
 sadm_get_osname() {
     case "$(sadm_get_ostype)" in
-        "DARWIN")   wosname=`sw_vers -productName | tr -d ' '`
-                    wosname=`echo $wosname | tr '[:lower:]' '[:upper:]'`
+        "DARWIN")   wosname=$(sw_vers -productName | tr -d ' ')
+                    wosname=$(echo $wosname | tr '[:lower:]' '[:upper:]')
                     ;;
         "LINUX")    if [ -f "$SADM_LSB_RELEASE" ] && [ -x "$SADM_LSB_RELEASE" ]
                        then wosname=$($SADM_LSB_RELEASE -si)
@@ -1170,8 +1174,7 @@ sadm_get_osname() {
                     if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "REDHATENTERPRISE" ]       ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "RHEL" ]                   ; then wosname="REDHAT"   ;fi
-                    command -v piclone > /dev/null 2>&1 
-                    if [ $? -eq 0 ] ; then wosname="RASPBIAN" ;fi
+                    if [ -f /etc/rpi-issue ] ; then wosname="RASPBIAN" ;fi
                     ;;
         "AIX")      wosname="AIX"
                     ;;
@@ -2630,6 +2633,7 @@ sadm_sendmail() {
 sadm_lock_system()
 {
     SNAME=$1                                                            # Save System Name to verify
+    if [ $# -eq 2 ] ; then SDESC="$2" ; fi 
     RC=0                                                                # Default Return Code
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
     if [ -r "$LOCK_FILE" ]                                              # Lock file already exist ?
