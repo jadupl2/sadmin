@@ -149,7 +149,7 @@
 # 2021_04_10 Fix: v3.70 Fix Path to which command was not set properly because of defined alias.
 # 2021_06_30 lib: v3.71 To be more succinct global variables were removed from log footer.
 # 2021_08_06 nolog v3.72 $SADMIN/www/tmp directory default permission now set to 777 
-# 2021_08_13 lib v3.73 New func. see Doc sadm_lock_system  sadm_unlock_system sadm_check_system_lock
+# 2021_08_13 lib v3.73 New func. see Doc sadm_lock_status  sadm_unlock_system sadm_check_system_lock
 # 2021_08_17 lib v3.74 Performance improvement.
 # 2021_09_09 lib v3.75 'sadm_write_err $msg' function added to write to log and error log.
 # 2021_09_13 lib v3.76 Enhance script log header to be more concise, yet have more information.
@@ -233,7 +233,7 @@
 #@2024_12_16 lib v4.54 On Debian the 'sadm_get_osversion()' did not return the minor version number.
 #@2024_12_27 lib v4.55 Under certain condition, 'sadm_get_host_ip' wasn't returning proper IP.
 #@2025_01_07 lib v4.56 Fix for Debian the 'sadm_get_osversion()' did not return the minor version.
-# 
+#@2025_01_23 lib v4.57 Refine locking (Added sadm_show_lock, sadm_unlock sadm_lock, sadm_lock_status 
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -243,7 +243,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.56"                                              # This Library Version
+export SADM_LIB_VER="4.57"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -332,6 +332,7 @@ export SADM_WEBSITE="https://sadmin.ca"                                 # sadmin
 export SADM_VM_EXCLUDE_TEMPLATE="$SADM_CFG_DIR/.sadm_vm_exclude_start.txt" # VM Start exclude file
 export SADM_VMLIST="$SADM_WWW_DAT_DIR/vm_list.txt"                      # List all VMs & Hosts 
 export SADM_VMHOSTS="$SADM_WWW_DAT_DIR/vm_hosts.txt"                    # List all VirtualBox Hosts
+
 
 # Definition of SADMIN log, error log, Result Code  History (.rch) and Monitor report file (*.rpt).
 export SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"     # Script Output LOG
@@ -624,7 +625,7 @@ sadm_write_log()
 {
     init_msg="$1"                                                       # Initial msg received
     EOL_LF='Y'                                                          # Default EndOfLine LineFeed
-    dated_msg="$(date "+%C%y.%m.%d %H:%M:%S") $init_msg"
+    dated_msg="$(date "+%C%y.%m.%d %H:%M:%S") $init_msg"                # Insert Date & Time in msg
 
     # When invalid Log Type, then default to 'B' go both (Screen and Log file).
     if [ "$SADM_LOG_TYPE" = "" ] ; then SADM_LOG_TYPE="B" ; fi          
@@ -2375,13 +2376,13 @@ sadm_stop() {
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
     if [ "$SADM_USE_RCH" = "Y" ]                                        # User Want update RCH File?
-        then if [ -s "$SADM_RCH_FILE" ]                                   # If RCH file exist
-                then XCODE=`tail -1 "$SADM_RCH_FILE" |awk '{ print $NF }'` # Get RCH Code on last line
+        then if [ -s "$SADM_RCH_FILE" ]                                 # If RCH file exist
+                then XCODE=`tail -1 "$SADM_RCH_FILE" |awk '{ print $NF }'` # RCH Code on last line
                      if [ "$XCODE" != "0" ] && [ "$XCODE" != "1" ] && [ "$XCODE" != "2" ]
-                        then XCODE="0"                                    # If ResultCode Invalid = 0 
+                        then XCODE="0"                                  # If ResultCode Invalid = 0 
                      fi 
-                     if [ "$XCODE" == "2" ]                              # If last Line code is 2
-                        then sed -i '$d' "$SADM_RCH_FILE"                  # Delete last line of rch
+                     if [ "$XCODE" == "2" ]                             # If last Line code is 2
+                        then sed -i '$d' "$SADM_RCH_FILE"               # Delete last line of rch
                      fi 
              fi 
              RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
@@ -2389,12 +2390,12 @@ sadm_stop() {
              RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE"      # Format Part3 of RCH File
              RCHLINE="$RCHLINE $SADM_EXIT_CODE"                         # Format Part4 of RCH File
              if [ -w $SADM_RCH_FILE ] 
-                then echo "$RCHLINE" >>$SADM_RCH_FILE                     # Append to RCH File
+                then echo "$RCHLINE" >>$SADM_RCH_FILE                   # Append to RCH File
                 else sadm_write_log "Permission denied to write to $SADM_RCH_FILE"
              fi
-             if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ] # If User want Log Footer
+             if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ] # User want Log Footer
                 then if [ "$SADM_MAX_RCLINE" -ne 0 ]                    # User want to trim rch file
-                        then if [ -w $SADM_RCH_FILE ]                     # If History RCH Writable
+                        then if [ -w $SADM_RCH_FILE ]                   # If History RCH Writable
                                 then mtmp1="History file '\$SADMIN/dat/rch/${SADM_HOSTNAME}_${SADM_INST}.rch' trim to ${SADM_MAX_RCLINE} lines."
                                      sadm_write_log "${mtmp1}"          # Write rch trim context 
                                      sadm_trimfile "$SADM_RCH_FILE" "$SADM_MAX_RCLINE" 
@@ -2624,44 +2625,103 @@ sadm_sendmail() {
 # automatically by "sadm_check_system_lock" function.
 #
 # Input Parameters :
-#   1) Name of the system to lock (Creating the lock file for it) 
+#   1) Name of the system to lock (Required)
+#   2) Name of script locking the system (Optional) 
+#      If not specified the value of $SADM_INST assumed.
 #
 # Return Value : 
 #   0) System Lock file was created successfully
 #   1) System Lock file could not be created or updated
 # --------------------------------------------------------------------------------------------------
 sadm_lock_system()
-{
+{    
+    if [ $# -lt 1 ] || [ $# -gt 2 ] 
+        then sadm_write_err "[ ERROR ] Function '$FUNCNAME' invalid number of argument."
+             sadm_write_err "Should be 1 or 2 but we received $# : $* " # Show what received
+             return 1                                                   # Return Error to caller
+    fi
+
     SNAME=$1                                                            # Save System Name to verify
-    if [ $# -eq 2 ] ; then SDESC="$2" ; fi 
+    if [ $# -eq 2 ]                                                     # If Name of script specify
+        then SCRIPT_NAME="$2"                                           # Remote Script Name
+        else SCRPIT_NAME="$SADM_INST"                                   # Use current script name
+    fi 
     RC=0                                                                # Default Return Code
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
-    if [ -r "$LOCK_FILE" ]                                              # Lock file already exist ?
-        then sadm_write_log "System '${SNAME}' is already lock."
-             echo "$SADM_INST $(date +%Y_%m_%d_%H_%M_%S)" >${LOCK_FILE} # Update TimeStamp & Content
-             if [ $? -eq 0 ]                                            # no error while updating
-               then sadm_write_log "Lock file time stamp updated."      # Advise user
-               else sadm_write_log "[ ERROR ] Updating '${SNAME}' lock file '${LOCK_FILE}'" 
-                    RC=1                                                # Set Return Value (Error)
-             fi
-        else echo "$SADM_INST $(date +%Y_%m_%d_%H_%M_%S)" >"$LOCK_FILE" # Create Lock File 
-             if [ $? -eq 0 ]                                            # Lock file created [ OK ]
-               then sadm_write_log "[ OK ] System '${SNAME}' now lock."  
-               else sadm_write_log "[ ERROR ] While creating the lock file for system '${SNAME}'" 
-                    RC=1                                                # Set Return Value (Error)
-             fi
-    fi
-    [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${LOCK_FILE} # Change Log Owner
+
+    # If lock file already exist
+    if [ -f "$LOCK_FILE" ]                                              # Lock file already exist ?
+        then sadm_write_err "[ ERROR ] System '${SNAME}' is already lock."
+             sadm_write_err "Content of lock file : $(cat $LOCK_FILE)"
+             return 1
+    fi 
+
+    # Create the lock file
+    xdate=$(date "+%H:%M %Y/%m/%d") 
+    if [ $# -eq 2 ]
+        then echo "System lock at $xdate by '$(basename $SCRIPT_NAME)'" > "$LOCK_FILE"
+             RC=$?                                                      # Save Result Code
+        else echo "System lock at $xdate by '$SADM_INST'" > "$LOCK_FILE"
+             RC=$?                                                      # Save Result Code
+    fi 
+    if [ $RC -eq 0 ]                                                     # Lock file created [ OK ]
+       then sadm_write_log "[ OK ] System '${SNAME}' now lock."  
+       else sadm_write_err "[ ERROR ] Creating the lock file '$LOCK_FILE'."
+            RC=1 
+    fi 
+
+    # Change lock file permission and owner.
+    if [ $(id -u) -eq 0 ] 
+        then chown ${SADM_USER}:${SADM_GROUP} ${LOCK_FILE}              # Change lock file  Owner
+             chmod 0664 "$LOCK_FILE" 
+    fi 
+
     return $RC                                                          # Return to caller 
+} 
+
+
+
+# --------------------------------------------------------------------------------------------------
+#
+# sadm_show_lock()
+#
+# Show the content of the system lock file for the received system name.
+#
+# Input Parameter :
+#   1) Name of the system locked.
+#
+# Return Value : 
+#   0) Show system Lock file content was successfully
+#   1) Show system Lock file content could not be shown.
+# --------------------------------------------------------------------------------------------------
+sadm_show_lock()
+{
+    if [ $# -ne 1 ] 
+        then sadm_write_err "[ ERROR ] Function '${FUNCNAME}' received an invalid number of argument."
+             sadm_write_err "Should be 1 but we received $# : $* "      # Show what received
+             return 1                                                   # Return Error to caller
+    fi
+    SNAME=$1                                                            # Save System Name to verify
+    LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
+ 
+    if [ -r "$LOCK_FILE" ]
+        then LOCK_MSG=$(cat $LOCK_FILE)
+             echo "$LOCK_MSG"
+             return 0
+        else #echo "" 
+             return 1
+    fi 
 } 
 
 
 
 
 
-
 # --------------------------------------------------------------------------------------------------
+# sadm_unlock_system()
+#
 # Remove the lock file for the received system name.
+#
 # This function is used to remove a ($LOCK_FILE) for the system received as a parameter.
 # When the lock file exist "${SADMIN}/tmp/$(hostname -s).lock" for a system, no error or warning is 
 # reported (No alert, No notification) to the user (on monitor screen) until the lock file is 
@@ -2677,10 +2737,18 @@ sadm_lock_system()
 #   1) System Lock file could not be removed 
 # --------------------------------------------------------------------------------------------------
 sadm_unlock_system() {
+
+    if [ $# -ne 1 ] 
+        then sadm_write_err "[ ERROR ] Function ${FUNCNAME} invalid number of argument."
+             sadm_write_err "Should be 1 but we received $# : $* "      # Show what received
+             return 1                                                   # Return Error to caller
+    fi
+
     SNAME=$1                                                            # Save System Name to verify
     RC=0                                                                # Default Return Code
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
-    if [ -w "$LOCK_FILE" ]                                              # Lock file exist ?
+
+    if [ -f "$LOCK_FILE" ]                                              # Lock file exist ?
         then rm -f ${LOCK_FILE} >/dev/null 2>&1                         # Delete Lock file 
              if [ $? -eq 0 ]                                            # no error while updating
                then sadm_write_log "[ OK ] System '$SNAME' is now unlocked."
@@ -2718,28 +2786,41 @@ sadm_unlock_system() {
 #   1) System is Lock.
 # --------------------------------------------------------------------------------------------------
 #
-sadm_check_system_lock() {
+sadm_lock_status() {
+
+    if [ $# -ne 1 ] 
+        then sadm_write_err "[ ERROR ] Function ${FUNCNAME} invalid number of argument."
+             sadm_write_err "Should be 1 but we received $# : $* "      # Show what received
+             return 1                                                   # Return Error to caller
+    fi
+
     SNAME=$1                                                            # Save System Name to verify
     RC=0                                                                # Default Return Code
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
+
     if [ -r "$LOCK_FILE" ]                                              # Lock file exist ?
-        then current_epoch=$(sadm_get_epoch_time)                       # Get current Epoch Time
-             create_epoch=$(stat -c %Y $LOCK_FILE)                      # Get lock file epoch
-             lock_age=`echo "$current_epoch - $create_epoch" | $SADM_BC` # Age of lock in seconds
-             sec_left=`expr $SADM_LOCK_TIMEOUT - $lock_age` 
-             if [ $lock_age -ge $SADM_LOCK_TIMEOUT ]                     # Age of lock reach timeout?
-                then sadm_write_log "System is lock for more than $SADM_LOCK_TIMEOUT seconds."
-                     sadm_write_log "Unlocking ${SNAME} system."
-                     sadm_write_log "We now restart monitoring this system as usual."
-                     sadm_unlock_system "$SNAME"
-                     #rm -f $LOCK_FILE > /dev/null 2>&1
-                else #sadm_write_log "The system '${SNAME}' is currently lock."
-                     #sadm_write_log "System normal monitoring will resume in ${sec_left} seconds."
-                     #sadm_write_log "Maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
-                     return 1                                           # System is Lock Return 1
-            fi 
+        then RC=1
+        else RC=0
     fi 
-    return 0                                                            # Return no lockfile
+#            current_epoch=$(sadm_get_epoch_time)                       # Get current Epoch Time
+#            create_epoch=$(stat -c %Y $LOCK_FILE)                      # Get lock file epoch
+#            lock_age=`echo "$current_epoch - $create_epoch" |$SADM_BC` # Age of lock in seconds
+#            sec_left=`expr $SADM_LOCK_TIMEOUT - $lock_age` 
+#            if [ $lock_age -ge $SADM_LOCK_TIMEOUT ]                     # Age of lock reach timeout?
+#               then sadm_write_log "System is lock for more than $SADM_LOCK_TIMEOUT seconds."
+#                    sadm_write_log "Unlocking ${SNAME} system."
+#                    sadm_write_log "We now restart monitoring this system as usual."
+#                    sadm_unlock_system "$SNAME"
+#                    rm -f $LOCK_FILE > /dev/null 2>&1
+#                    RC=0
+#               else sadm_write_err "The system '${SNAME}' is currently lock."
+#                    sadm_write_err "Content of lock file : $(cat $LOCK_FILE)"
+#                    sadm_write_err "System normal monitoring will resume in ${sec_left} seconds."
+#                    sadm_write_err "Maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
+#                    RC=1                                               # System is Lock Return 1
+#            fi 
+#    fi 
+    return $RC                                                            # Return no lockfile
 }  
 
 
@@ -2929,7 +3010,7 @@ EOF
 # --------------------------------------------------------------------------------------------------
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`                            # Save Startup Date & Time
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # If invoke from cmdline
-        then printf "$SADM_STIME Starting ...\n"                        # Show reference point #1
+        then printf "\n$SADM_STIME Loading SADMIN Shell Library ..."    # Show reference point #1
     fi
 
     # Make sure /etc/environment exist
@@ -2957,7 +3038,7 @@ EOF
 
     # Load the path of commands used in SADMIN
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
-        then printf "$(date "+%C%y.%m.%d %H:%M:%S") Loading command path ...\n"
+        then printf "\n$(date "+%C%y.%m.%d %H:%M:%S") Loading command path ..."
              #printf "SADM_ON_SADMIN_SERVER = $SADM_ON_SADMIN_SERVER \n"
     fi
     sadm_load_cmd_path                                                  # Load Cmd Path Variables
@@ -2966,6 +3047,6 @@ EOF
     # Build SSH command according to Path and Port used
     export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}"             # SSH Command to SSH CLient
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              # Library invoke directly
-        then printf "$(date "+%C%y.%m.%d %H:%M:%S") Library Loaded ...\n"
+        then printf "\n$(date "+%C%y.%m.%d %H:%M:%S") Library Loaded ...\n"
     fi
 
