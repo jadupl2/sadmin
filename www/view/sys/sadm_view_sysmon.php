@@ -62,6 +62,7 @@
 # 2023_01_06 web v2.35 System monitor page - O/S update starter now show hostname being updated.
 # 2023_04_10 web v2.36 System monitor page - Bug fix when no rch and rpt files were present.
 # 2023_10_17 web v2.37 System monitor page - Minor adjustments.
+# 2025_01_24 web v2.38 Will now show when a system is lock.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -127,13 +128,13 @@ $alert_file = SADM_WWW_TMP_DIR . "/sysmon_alert_file_" . getmypid() ;   # File B
 function create_alert_file() {
     global $DEBUG, $tmp_file1, $tmp_file2, $alert_file ;
     #$DEBUG = True;
-
+ 
 # Make sure we begin with a new empty file ($alert_file).
-    if (file_exists($alert_file)) { unlink($alert_file); }              # Delete Alert file if exist
-    touch($alert_file);                                                 # Create empty file
-    chmod($alert_file,0666);                                            # Set Permission on file
-    chown($alert_file,SADM_WWW_USER) ;                                  # chown on new alert file
-    chgrp($alert_file,SADM_WWW_GROUP) ;                                 # chgrp on new alert file 
+    if (file_exists($alert_file)) { unlink($alert_file); }  # Delete Alert file if exist
+    touch($alert_file);                                               # Create empty file
+    chmod($alert_file,0666);                             # Set Permission on file
+    chown($alert_file,SADM_WWW_USER) ;                          # chown on new alert file
+    chgrp($alert_file,SADM_WWW_GROUP) ;                        # chgrp on new alert file 
 
 # Create a list of all *.rpt file name and output it to $alert_file.
 #   - Example of rpt format line below : 
@@ -141,7 +142,7 @@ function create_alert_file() {
 
     $CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rpt' -exec cat {} \; >> $alert_file";
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }        # Show Cmd that we execute
-    $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute the find command
+    $a = exec ( $CMD , $FILE_LIST, $RCODE);  # Execute the find command
     if ($DEBUG) {                                                       # Debug then,show cmd result
         echo "\n<br>Return code of command is : " . $RCODE ;            # Command return code
         if (filesize($alert_file) == 0) { echo "\n<br>File $alert_file is empty" ; }
@@ -301,8 +302,22 @@ function display_line($line,$BGCOLOR,$con)
     # Running;holmes;2019.09.30;10:39;SADM;SCRIPT;sadm_fetch_clients;default/1;default/1 
     list($wstatus,$whost,$wdate,$wtime,$wmod,$wsubmod,$wdesc,$warngrp,$errgrp)=explode(";",$line);
 
+    if ($DEBUG) { 
+        echo "\n<br>IN DISPLAY_LINE";
+        echo "\n<br>wstatus     = $wstatus";
+        echo "\n<br>whost       = $whost";
+        echo "\n<br>wdate       = $wdate";
+        echo "\n<br>wtime       = $wtime";
+        echo "\n<br>wmod        = $wmod";
+        echo "\n<br>wsubmod     = $wsubmod";
+        echo "\n<br>wdesc       = $wdesc";
+        echo "\n<br>warngrp     = $warngrp";
+        echo "\n<br>errgrp      = $errgrp";
+    }
+
     # Show Status Icons 
     echo "\n<tr>";                                                      # Start of line
+    if ($DEBUG) { echo "In display_line: ". $wstatus . ".<br>\n"; } 
     switch (strtoupper($wstatus)) {                                     # Depend on Uppercase Status
         case 'ERROR' :                                                  # If an Error Line
             echo "\n<td align='center' bgcolor=$BGCOLOR style='vertical-align:middle'><span data-toggle='tooltip' title='Error Reported'>";
@@ -315,6 +330,7 @@ function display_line($line,$BGCOLOR,$con)
             echo "<img src='/images/sadm_warning.png' ";                # Show Warning Icon
             echo "style='width:96px;height:40px;'></span></td>";        # Status Standard Image Size
             $alert_group=$warngrp;                                      # Set Event Alert Group
+            if ($DEBUG) { echo "In alert group: ". $alert_group . ".<br>\n"; }             
             break;
         case 'RUNNING' :                                                # Running Status = Script
             echo "\n<td align='center' bgcolor=$BGCOLOR align='left'><span data-toggle='tooltip' title='Script currently running'>";
@@ -739,11 +755,11 @@ function display_alert_section($con,$alert_file) {
     $xheading = false ; ;                                               # Init. Default values
     $current_section="";                                                # Last Section Processed
 
-    # Loop through the array and process ERROR first 
+    # ERROR DISPLAY - Loop through the array and process ERROR first 
     foreach ($array_sysmon as $line_num => $line) {
         if ($DEBUG) { 
-            echo "\nProcessing Line #{$line_num} : ." .htmlspecialchars($line). ".<br />\n"; 
-            echo "Length of line #{$line_num} is ". strlen($line) . ".<br>\n"; 
+            echo "\n<br>Processing Line #{$line_num} : ." .htmlspecialchars($line). ".<br />\n"; 
+            echo "<br>Length of line #{$line_num} is ". strlen($line) . ".<br>\n"; 
         }
         if (strlen($line) > 4095) { continue ; }                        # Empty Line Exceeding 4095
 
@@ -760,27 +776,29 @@ function display_alert_section($con,$alert_file) {
     if ($eheading) { echo "\n</table>\n" ; }                        # If data Shown,End of Table
 
 
-    # Loop through the array and process WARNING first 
+    # WARNING DISPLAY - Loop through the array and process WARNING first 
     foreach ($array_sysmon as $line_num => $line) {
         if ($DEBUG) { 
-            echo "\nProcessing Line #{$line_num} : ." .htmlspecialchars($line). ".<br />\n"; 
-            echo "Length of line #{$line_num} is ". strlen($line) ; 
+            echo "\n<br>Processing Warning Line #{$line_num} : ." .htmlspecialchars($line). ".<br />\n"; 
+            echo "<br>Length of line #{$line_num} is ". strlen($line) ; 
         }
         if (strlen($line) > 4095) { continue ; }                        # Empty Line Exceeding 4095
         # Running;holmes;2019.09.30;10:39;SADM;SCRIPT;sadm_fetch_clients;default/1;default/1 
         list($wstatus,$whost,$wdate,$wtime,$wmod,$wsubmod,$wdesc,$warngrp,$errgrp)=explode(";",$line);
+        #echo "strtoupper= strtoupper($wstatus)" ;
         if (strtoupper($wstatus) == "WARNING") {
             if (! $wheading) { sysmon_page_heading ('W') ; $wheading=True ; $wcount=0; } 
             $wcount += 1;
             if ($wcount % 2 == 0) $BGCOLOR="#fff1e6" ; else $BGCOLOR="#f0efeb" ;
             if ($DEBUG) { echo "display_line: ". $line . ".<br>\n"; } 
+            #echo "\n<br> goto display_line: $line<br>" ;
             display_line($line,$BGCOLOR,$con);
         }
     }
     if ($wheading) { echo "\n</table>\n" ; }                     # If data Shown,End of Table
 
 
-    # Loop through the array and process RUNNING first 
+    # RUNNING DISPLAY - Loop through the array and process RUNNING first 
     foreach ($array_sysmon as $line_num => $line) {
         if ($DEBUG) { 
             echo "\nProcessing Line #{$line_num} : ." .htmlspecialchars($line). ".<br />\n"; 
@@ -800,8 +818,7 @@ function display_alert_section($con,$alert_file) {
     if ($rheading) { echo "\n</table>\n" ; }                     # If data Shown,End of Table
    
 
-
-    # Loop through the array and process INFO line
+    # INFO DISPLAY - Loop through the array and process INFO line
     foreach ($array_sysmon as $line_num => $line) {
         if ($DEBUG) { 
             echo "\nProcessing Line #{$line_num} : ." .htmlspecialchars($line). ".<br />\n"; 
@@ -837,13 +854,13 @@ function display_data($con,$alert_file) {
 
     #echo "\nNb Lines in " . $alert_file . " is " . count(file($alert_file)) . "\n<br>" ; 
     $array_sysmon = array();                                            # Create an empty Array
-    $array_sysmon = file($alert_file);                                  # Put Alert file in Array
-    natsort($array_sysmon);                                             # Natural Sort Array 
+    $array_sysmon = file($alert_file);                        # Put Alert file in Array
+    natsort($array_sysmon);                                     # Natural Sort Array 
     if ($DEBUG) { echo "\n2- FINAL ARRAY CONTENT\n<br>" ; var_dump ($array_sysmon); echo "\n<br>"; }  
 
     # Show any alerts, Scripts Error,Warning or Running.
     if ($DEBUG) { echo "\nSize of array is " . sizeof($array_sysmon) . "\n<br>" ; }
-    if (sizeof($array_sysmon) > 0) {                                    # Array is not Empty 
+    if (sizeof($array_sysmon) > 0) {                             # Array is not Empty 
         display_alert_section($con,$alert_file);                        # Show Error,Warning,Running
     }else{
         echo "<h3><center><strong><font color='#124f44'>***Nothing to report at the moment***</font></strong></center></h3>";
