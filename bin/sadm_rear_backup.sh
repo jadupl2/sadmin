@@ -85,6 +85,7 @@
 #@2024_11_21 backup v2.38 Fix minor bug, enhance log structure.
 #@2024_11_25 backup v2.39 Add integrity check of resulting tgz file.
 #@2024_12_05 backup v2.40 Change way used to check integrity on rear tgz backup file.
+#@2025_01_24 backup v2.41 Collect more info while doing a restore test at the end of backup.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -113,7 +114,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.40'                                     # Script version number
+export SADM_VER='2.41'                                     # Script version number
 export SADM_PDESC="Produce a ReaR bootable iso and a restorable backup on a NFS server"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -538,10 +539,10 @@ rear_housekeeping()
     sadm_write_log " " 
 
     # Verify integrity of ReaR backup file (*.tgz)
-    sadm_write_log "Verify integrity of the compressed ReaR backup file '$REAR_CUR_TGZ'".
-    tar -xOf "$REAR_CUR_TGZ" &> /dev/null
+    sadm_write_log "Verify that the compressed ReaR backup file '$REAR_CUR_TGZ' is restorable".
+    tar -xOf "$REAR_CUR_TGZ" &>> $SADM_LOG
     if [ $? -ne 0 ] 
-        then sadm_write_err "[ ERROR ] Integrity check of '$REAR_CUR_TGZ' failed."
+        then sadm_write_err "[ ERROR ] The ReaR backup file '$REAR_CUR_TGZ' is not restorable."
              return 1 
         else sadm_write_log "[ OK ] Integrity check of '$REAR_CUR_TGZ' succeeded."  
     fi 
