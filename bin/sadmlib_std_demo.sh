@@ -45,6 +45,7 @@
 #@2024_06_13 lib v3.27 Add VM export parameters and alert history/archive purge days limit.
 #@2024_11_01 lib v3.28 Change name of Global variable "SADM_RCHLOG" to "RCH_FILE". 
 #@2024_12_17 lib v3.29 Now require 'root' user to run.
+#@2025_01_24 lib v3.30 Added lock functions examples.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -73,7 +74,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.29'                                      # Script version number
+export SADM_VER='3.30'                                      # Script version number
 export SADM_PDESC="Demonstrate functions & variables available to developers using SADMIN Tools"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -363,12 +364,12 @@ print_functions()
     presult=$(sadm_server_arch)                                         # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
 
-    pexample="sadm_lock_system \"hostname\""                            # Example Calling Function
+    pexample="sadm_lock_status \"hostname\""                            # Example Calling Function
     pdesc="Lock the specified hostname"                                 # Function Description
     presult="0=Lock 1=Error not lock"                                   # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
 
-    pexample="sadm_check_system_lock \"hostname\""                      # Example Calling Function
+    pexample="sadm_lock_status \"hostname\""                      # Example Calling Function
     pdesc="Check if specified hostname is lock"                         # Function Description
     presult="0=Not Lock - 1=System Locked"                              # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
