@@ -1,8 +1,8 @@
 #! /usr/bin/env bash
 # ---------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_rmcmd_starter.sh
-#   Synopsis :  Execute a script on a remote system.
+#   Title    :  sadm_rmcmd_lock.sh
+#   Synopsis :  Execute a script on a remote system, with creating a system lock file.
 #   Version  :  1.0
 #   Date     :  8 Dec 2020  
 #   Requires :  sh
@@ -16,7 +16,6 @@
 #   -l   (Lock System (no monitoring) while script is running)
 #   -s   (Script Name to execute)
 #   -u   (User Name use to ssh on remote system)
-#   -p   (Prefix script Name with path of /sadmin on remote system)
 #
 #
 # Example of line to put in crontab (/etc/crond/sadm_vm) to start remote backup of a VM
@@ -52,6 +51,8 @@
 # 2023_11_05 cmdline v2.0 Add option to ssh command '-o ConnectTimeout=10 -o BatchMode=yes'.
 #@2024_04_02 cmdline v2.1 Same of remote system is now added, so we can see where script is run .
 #@2024_06_13 cmdline v2.2 Include name of remote host in the log and rch file name.
+#@2025_01_09 cmdline v2.3 Execute a script on remote system, while creating a specified lock file.
+#@2025_01_24 cmdline v2.4 Bug fixes concerning lock & remote execution while updating logs
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -82,18 +83,18 @@ export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # ----------
 # SPECIAL DEROGATION TO INSERT THE HOSTNAME IN THE FILE NAME OF THE LOG AND THE RCH FILE.
-for i in "$@" ; do : ; done                                # Get last Parameter (portable version)
+for i in "$@" ; do : ; done                                # Get last Parameter (-a)
 export SYSTEM_NAME="$i"                                    # Save last parameter on cmdline
 export SADM_EXT=$(echo "$SADM_PN" | cut -d'.' -f2)         # Save Script extension (sh, py, php,.)
-export SADM_INST="${SADM_INST}_${SYSTEM_NAME}"             # Insert VMName to export in rch & log
+export SADM_INST="${SADM_INST}_${SYSTEM_NAME}"             # Insert remote hostname in rch & log
 export SADM_HOSTNAME="$SYSTEM_NAME"                        # SystemName that we are going to update
 export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with extension)
 # ----------
 
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.2'                                      # Current Script Version
-export SADM_PDESC="Execute an existing script on a remote system." 
+export SADM_VER='2.4'                                      # Current Script Version
+export SADM_PDESC="Execute a script on a remote system, with creating a system lock file." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
@@ -102,8 +103,8 @@ export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=Crea
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
 export SADM_MULTIPLE_EXEC="Y"                              # Run Simultaneous copy of script
-export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
-export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
+export SADM_DEBUG=1                                        # Debug Level(0-9) 0=NoDebug
 export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
 export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
 export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
@@ -134,12 +135,14 @@ export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. 
 # --------------------------------------------------------------------------------------------------
 #
 # Script variables needed to run the script on the remote client.
-export SCRIPT=""                                                        # Script to execute 
-export SERVER=""                                                        # System where execute script
-export LOCK="N"                                                         # Lock=No Monitor during run
-export SUSER=""                                                         # UserName used to run script
-export ERROR_COUNT=0                                                    # Nb. of update failed
-
+export REM_SCRIPT=""                                    # Remote script name to execute 
+export REM_SCRIPT_ARGS=""                               # Remote script argument(s)
+export REM_SERVER=""                                    # Remote system where script exist
+export REM_LOCK="N"                                     # cmdline -l used, Need to lock a System Y/N
+export REM_LOCK_SYSTEM=""                               # Remote system name to lock
+export REM_USER=""                                      # Remote User that will run script
+export REAL_SYSTEM_LOCK=""                              # when -l and -n is use, the -l name is use.
+#export REM_PREFIX="Y"                                   # $SADMIN directory in front of script name
 
 
 
@@ -149,15 +152,19 @@ export ERROR_COUNT=0                                                    # Nb. of
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${BOLD}${SADM_PN} [-d level] [-h] [-v] [-l] [-u username] [-s scriptName] [-n remote_hostname]${NORMAL}" 
+    printf "\n${BOLD}${SADM_PN} v$SADM_VER"
+    printf "\n$SADM_PDESC \n"
+    printf "\n$SADM_PN}.sh  [-d level] [-h] [-v] [-l system to lock name] [-s scriptname] [-a script arguments] "
+    printf "[-u username] [-n remote_hostname]${NORMAL}" 
     printf "\n\t${BOLD}-d${NORMAL}   (Debug level [0-9])"
     printf "\n\t${BOLD}-h${NORMAL}   (Display this help message)."
     printf "\n\t${BOLD}-v${NORMAL}   (Show script version info)."
-    printf "\n\t${BOLD}-n${NORMAL}   (Remote system name where script reside)."
-    printf "\n\t${BOLD}-l${NORMAL}   (System name to lock while script is running)."
-    printf "\n\t${BOLD}-s${NORMAL}   (Script name and parameter(s) (if needed) to execute)."
+    printf "\n\t${BOLD}-l${NORMAL}   (System name to lock, if different than remote system (-n)."
+    #printf "\n\t${BOLD}-p${NORMAL}   (Prefix script name with path of $SADMIN on remote system)."
+    printf "\n\t${BOLD}-s${NORMAL}   (Script name to execute on remote system."
+    printf "\n\t${BOLD}-a${NORMAL}   (Script argument(s) use with -s)"
     printf "\n\t${BOLD}-u${NORMAL}   (User name use by ssh to log on remote system)."
-    printf "\n\t${BOLD}-p${NORMAL}   (Prefix script name with path of $SADMIN on remote system)."
+    printf "\n\t${BOLD}-n${NORMAL}   (Remote system name where script reside)."
     printf "\n\n" 
 }
 
@@ -169,11 +176,10 @@ show_usage()
 # --------------------------------------------------------------------------------------------------
 rmcmd_start()
 {
-
     # Construct the SQL to get info about remote system in Database
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, "
-    SQL2="srv_update_reboot, srv_sporadic, srv_active, srv_sadmin_dir,srv_ssh_port from server "
-    SQL3="where srv_name = '$SERVER' ;"                                 # Select server to rmcmd
+    SQL2="srv_update_reboot, srv_sporadic, srv_active, srv_sadmin_dir,srv_ssh_port,srv_vm_host "
+    SQL3="from server where srv_name = '$REM_SERVER' ;"                 # Select server to rmcmd
     SQL="${SQL1}${SQL2}${SQL3}"                                         # Build Final SQL Statement 
 
     # Execute the SQL and write the output to $SADM_TMP_FILE1
@@ -185,7 +191,7 @@ rmcmd_start()
    
     # If resulting file ($SADM_TMP_FILE1) is not readable or is empty.
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
-        then sadm_write_err "[ ERROR ] The remote system '$SERVER' wasn't found in Database."
+        then sadm_write_err "[ ERROR ] The remote system '$REM_SERVER' wasn't found in Database."
              return 1                                                   # Return Error to Caller
     fi 
     
@@ -194,65 +200,80 @@ rmcmd_start()
         do
 
         # Extract field we may need
-        server_name=$(          echo $wline|awk -F\; '{ print $1 }')
-        server_os=$(            echo $wline|awk -F\; '{ print $2 }')
-        server_domain=$(        echo $wline|awk -F\; '{ print $3 }')
-        server_update_auto=$(   echo $wline|awk -F\; '{ print $4 }')
-        server_update_reboot=$( echo $wline|awk -F\; '{ print $5 }')
-        server_sporadic=$(      echo $wline|awk -F\; '{ print $6 }')
-        server_sadmin_dir=$(    echo $wline|awk -F\; '{ print $8 }')
-        server_ssh_port=$(      echo $wline|awk -F\; '{ print $9 }')
+        server_name=$(          echo $wline|awk -F\; '{ print $1 }')    # Extract system host name
+        #server_os=$(            echo $wline|awk -F\; '{ print $2 }')
+        server_domain=$(        echo $wline|awk -F\; '{ print $3 }')    # Extract system domain
+        #server_update_auto=$(   echo $wline|awk -F\; '{ print $4 }')
+        #server_update_reboot=$( echo $wline|awk -F\; '{ print $5 }')
+        #server_sporadic=$(      echo $wline|awk -F\; '{ print $6 }')
+        server_sadmin_dir=$(    echo $wline|awk -F\; '{ print $8 }')    # Extract $SADMIN on remote
+        server_ssh_port=$(      echo $wline|awk -F\; '{ print $9 }')    # Extract SSH port of remote
+        server_vm_host=$(       echo $wline|awk -F\; '{ print $9 }')    # Extract SSH port of remote
         fqdn_server=$(echo $server_name.$server_domain)                 # Create FQN System Name
 
-        # Check if the remote system is currently lock (Abort execution)
-        sadm_check_system_lock "$SERVER"                               # Check if node is lock
-        if [ $? -eq 1 ]                                                 # If node is lock
-           then sadm_write_err "[ ERROR ] The system '$SNAME' is currently lock."
+        # Set REAL_SYSTEM_LOCK, 
+        #  - If cmdline '-l' IS USE, system name specified by it is use in lock file name.
+        #  - If cmdline '-l' IS NOT USE, system name specified by the (-n) is use in lock file name.
+        if [ "$REM_LOCK" = "Y" ]                                        # When cmdline '-l' used
+           then REAL_SYSTEM_LOCK=$REM_LOCK_SYSTEM                       # Used '-l' system to lock
+           else REAL_SYSTEM_LOCK="$REM_SERVER"                          # Used '-n' system to lock
+        fi 
+
+        # Check if the remote system is currently lock (Abort execution)        
+        #sadm_write_log "Check lock of $REAL_SYSTEM_LOCK" 
+        sadm_lock_status "$REAL_SYSTEM_LOCK"                      # Check if node is lock
+        if [ $RC -ne 0 ]                                                # If node is lock
+           then sadm_write_err "[ ERROR ] System '$REAL_SYSTEM_LOCK' is currently lock."
+                sadm_write_err "$(sadm_show_lock "$REAL_SYSTEM_LOCK")"
                 return 1                                                # Return Error to caller
         fi 
 
         # Ping the remote system - Test if it is alive
-        ping -c2 -W2 $fqdn_server >> /dev/null 2>&1
+        ping -c2 -W2 $REM_SERVER >> /dev/null 2>&1                     # Ping 2 times,timeout 2 Sec
         if [ $? -ne 0 ]
-            then sadm_write_err "[ ERROR ] Can't ping '$fqdn_server'."
+            then sadm_write_err "[ ERROR ] Can't ping '$REM_SERVER'."
                  return 1                                              
-            else sadm_write_log "[ OK ] Remote system '$fqdn_server' is alive."
+            else sadm_write_log "[ OK ] Remote system '$REM_SERVER' is alive."
         fi
 
-        # If prefix requested (-p), add the $SADMIN PATH before the script name.
-        if [ "$PREFIX" = "Y" ]                                          # Script Path Prefix added ?
-           then SCRIPT="$server_sadmin_dir/bin/$SCRIPT"                 # Add $SADMIN System to Name
-                sadm_write_log "[ OK ] The SADMIN path added to script name, now changed to '$SCRIPT'." 
-        fi
+        # If REM_PREFIX requested (-p), add the remote system $SADMIN PATH in front of script name.
+        #if [ "$REM_PREFIX" = "Y" ]                                      # $SADMIN Path Prefix added?
+        #   then REM_SCRIPT="$server_sadmin_dir/bin/$REM_SCRIPT"         # Add $SADMIN System to Name
+        #        sadm_write_log "[ OK ] SADMIN path added to script name, changed to '$REM_SCRIPT'." 
+        #fi
 
         # Lock the remote system while the script is executed (-l) 
-        if [ "$LOCK" = "Y" ]                                            # cmdline option lock system
-           then sadm_lock_system "$SERVER"                              # Create System Lock File
-                if [ $? -ne 0 ]                                         # Unable to Lock Node
-                   then sadm_write_log "[ ERROR ] Aborting, could not lock to system '$LOCKNODE'."
-                        return 1                                        # Return Error to caller 
-                fi
+#        sadm_lock_status "$REAL_SYSTEM_LOCK" "${REM_SCRIPT}_${REM_SCRIPT_ARGS}"
+        sadm_lock_status "$REAL_SYSTEM_LOCK" "$REM_SCRIPT $REM_SCRIPT_ARGS"
+        if [ $? -ne 0 ]                                                 # Unable to Lock Node
+           then sadm_write_log "[ ERROR ] couldn't lock system '$REAL_SYSTEM_LOCK'."
+                return 1                                                # Return Error to caller 
         fi
         
         # Time to run the requested $SCRIPT on remote system
-        sadm_write_log " "
-        sadm_write_log "Starting '$SCRIPT' on '${server_name}'."
-        #ssh -o ConnectTimeout=10 -o BatchMode=yes raspi5 ; echo $?
-
-        sadm_write_log "$SADM_SSH -qnp $server_ssh_port -o ConnectTimeout=10 -o BatchMode=yes ${SUSER}\@${fqdn_server} '${SCRIPT}'"
-        #$SADM_SSH -qnp $server_ssh_port -o ConnectTimeout=10 -o BatchMode=yes ${SUSER}\@${fqdn_server} ${SCRIPT} >>$SADM_LOG 2>&1 
+        sadm_write_log "[ OK ] Starting '$REM_SCRIPT' on '$REM_SERVER'."
+        #$DSADMBIN/sadm_rmcmd_starter.sh  -u jacques -l centos8 -n anemone -p -s 'sadm_vm_export.sh' -a centos8 
+        CMD="$SADM_SSH -qnp $server_ssh_port -o BatchMode=yes ${REM_USER}\@$REM_SERVER "
+        CMD="$CMD $REM_SCRIPT $REM_SCRIPT_ARGS"
+        if [ "$SADM_DEBUG" -gt 0 ] 
+            then sadm_write_log "$CMD" ; sadm_write_log " " ; sadm_write_log " "
+        fi 
+        eval "$CMD"
+        #SADM_SSH -qnp $server_ssh_port -o BatchMode=yes ${REM_USER}\@$REM_SERVER "'${REM_SCRIPT} $REM_SCRIPT_ARGS'"
+        #                $SADM_SSH -qnp $server_ssh_port -o BatchMode=yes ${REM_USER}\@$REM_SERVER "${REM_SCRIPT} REM_SCRIPT_ARGS" >>$SADM_LOG 2>&1 
         RC=$? 
         if [ $RC -ne 0 ]                                                # Update went Successfully ?
-           then sadm_write_err "[ ERROR ] Script completed with error no.$RC on '$SERVER'."
-           else sadm_write_log "[ OK ] Script completed successfully on '$SERVER'."
+           then sadm_write_err "[ ERROR ] Script completed with error no.$RC on '$REM_SERVER'."
+                sadm_unlock_system "$REAL_SYSTEM_LOCK"                  # Remove the lock file
+                return 1 
+           else sadm_write_log "[ OK ] Script completed successfully on '$REM_SERVER'."
         fi
 
-        # If the lock file exist, then time to remove it.
-        if [ "$LOCK" = "Y" ] ;then sadm_unlock_system "$SERVER" ;fi     # Remove the lock file
-
+        # Remove the system lock file
+        sadm_unlock_system "$REAL_SYSTEM_LOCK"                          # Remove the lock file
         done < $SADM_TMP_FILE1
 
-    return $ERROR_COUNT
+    return 0
 }
 
 
@@ -261,12 +282,13 @@ rmcmd_start()
 # --------------------------------------------------------------------------------------------------
 # Command line Options functions
 # Evaluate Command Line Switch Options Upfront
-# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d[0-9]) Set Debug Level 
-# (-s)=Script name to execute, (-n)=system name where script reside (-u)=UserName used to ssh
+# By Default : (-h) Show Help Usage, (-v) Show Script Version,  (-d[0-9]) Set Debug Level 
+#              (-s) Name of script to execute,       (-p) Script Arguments
+#              (-n) System name where script reside, (-u) UserName used to ssh,             
 # --------------------------------------------------------------------------------------------------
 function cmd_options()
 {
-    while getopts "hvlpd:u:n:s:" opt ; do 
+    while getopts "hvl:d:u:n:s:a:" opt ; do 
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
                num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
@@ -283,19 +305,17 @@ function cmd_options()
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
-            n) SERVER=$OPTARG                                           # Remote system name
-               printf "Server:${SERVER}\n"
+            s) REM_SCRIPT=$OPTARG                                       # Remote REM_SCRIPT to execute
                ;;
-            s) SCRIPT=$OPTARG                                           # Remote script to execute
-               printf "Script:${SCRIPT}\n"
+            a) REM_SCRIPT_ARGS=$OPTARG                                  # Remote REM_SCRIPT arguments
                ;;
-            u) SUSER=$OPTARG                                            # User executing the script
-               printf "User:${SUSER}\n"
+            n) REM_SERVER=$OPTARG                                       # Remote system name
                ;;
-            l) LOCK="Y"                                                 # Create lockfile for remote
+            u) REM_USER=$OPTARG                                         # User executing the REM_SCRIPT
                ;;
-            p) PREFIX="Y"                                               # Prefix the ScriptName with 
-               ;;                                                       # $SADMIN Path on RemoteSys.
+            l) REM_LOCK="Y"                                             # Create lockfile for remote
+               REM_LOCK_SYSTEM=$OPTARG                                  # Name of system to lock
+               ;;
            \?) printf "\nInvalid option: -${OPTARG}.\n"                 # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
@@ -303,8 +323,9 @@ function cmd_options()
         esac                                                            # End of case
     done                                                                # End of while
     if [ $SADM_DEBUG -gt 4 ] 
-        then printf "Script:${SCRIPT} Server:${SERVER} User:${SUSER}\n"
-             printf "Current User id: $(id)\n"
+        then printf "\nREM_SERVER:$REM_SERVER     REM_USER:$REM_USER  "
+             printf "\nREM_SCRIPT:$REM_SCRIPT     REM_SCRIPT_ARGS:$REM_SCRIPT_ARGS  " 
+             printf "\nREM_LOCK  :$REM_LOCK       REM_LOCK_SYSTEM=$REM_LOCK_SYSTEM\n"
     fi
     return      
 }
@@ -315,12 +336,8 @@ function cmd_options()
 # MAIN CODE START HERE
 #===================================================================================================
     cmd_options "$@"                                                    # Check command-line Options
-
-
-
     sadm_start                                                          # Create Dir.,PID,log,rch
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-    rmcmd_start                                                          # Go Run Remote Script
+    rmcmd_start                                                         # Go Run Remote REM_SCRIPT
     SADM_EXIT_CODE=$?                                                   # Save Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
