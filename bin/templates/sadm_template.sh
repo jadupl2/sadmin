@@ -6,7 +6,7 @@
 #   Requires      : sh and SADMIN Shell Library
 #   Description   : Template for starting a new shell script
 #
-# Note : All scripts (Shell,Python,php), configuration files and screen output are formatted to 
+# Note : All scripts (Shell,Python,Perl,php), configuration files and screen output are formatted to 
 #        have and use a 100 characters per line. Comments in all scripts always begin at column 73. 
 #        You will have a better experience, if you set screen width to have at least 100 Characters.
 # 
@@ -24,7 +24,7 @@
 #
 # ---CHANGE LOG---
 # YYYY-MM-DD GRP vX.XX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
-# 2024_01_25 lib v1.1 New template (replace sadm_template.sh), used when no DB access needed.
+# 2025_01_02 lib v0.1  Initial development version.
 #
 #---------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
