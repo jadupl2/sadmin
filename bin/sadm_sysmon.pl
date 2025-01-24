@@ -11,16 +11,16 @@
 # 2017_12_30 mon V2.8 Change name of template file from sysmon.std to template.smon
 # 2017_12_30 mon V2.9 Change Message Sent to user when host.cfg file not there and using template file
 # 2018_05_07 mon V2.10 Bug Fixes - Code Revamp - Now read SADMIN config file
-# 2018_05_14 mon V2.11 MacOS/AIX Checking SwapSpac/Load Average/New Filesystem Enhancement
+# 2018_05_14 mon V2.11 MacOS/AIX Checking Swap Space/Load Average/New Filesystem Enhancement
 # 2018_05_27 mon v2.12 Change Location of SysMon Scripts Directory to $SADMIN/usr/sysmon_scripts
 # 2018_06_03 mon v2.13 Change Location of SysMon Scripts Directory to $SADMIN/usr/mon
-# 2018_06_12 mon v2.14 Correct Problem with fileincrease and Filesystem Warning double error
+# 2018_06_12 mon v2.14 Correct Problem with file increase and Filesystem Warning double error
 # 2018_06_14 mon v2.15 Load $SADMIN/sadmin.cfg before the hostname.smon file (So we know Email Address)
 # 2018_07_11 mon v2.16 Uptime/Load Average take last 5 min. values instead of current.
 # 2018_07_12 mon v2.17 Service Line now execute srestart.sh script to restart it & Alert Insertion
 # 2018_07_18 mon v2.18 Fix when filesystem exceed threshold try increase when no script specified
 # 2018_07_19 mon v2.19 Add Mail Mess when sadmin.cfg not found & Change Mess when host.smon not found
-# 2018_07_21 mon v2.20 Fix When executiong scripts from sysmon the log wasn't at proper place.
+# 2018_07_21 mon v2.20 Fix When executing scripts from sysmon the log wasn't at proper place.
 # 2018_07_22 mon v2.21 Added Date and Time in mail messages sent.
 # 2018_09_14 mon v2.22 Take Default Alert Group from SADMIN configuration file.
 # 2018_09_18 mon v2.23 Error reported was stating > instead of >=
@@ -42,7 +42,7 @@
 # 2020_03_28 mon v2.38 Fix problem when 'dmidecode' is not available on system.
 # 2020_07_27 mon v2.39 Used space of CIFS Mounted filesystem are no longer monitored.
 # 2020_10_01 mon v2.40 Write more elaborated email to user when restarting a service.
-# 2020_11_18 mon v2.41 Fix: Fix problem with iostat on MacOS.
+# 2020_11_18 mon v2.41 Fix: Fix problem with 'iostat' on MacOS.
 # 2020_11_30 mon v2.42 Fix: Fix problem reading SADMIN variable in /etc/environment.
 # 2021_06_12 mon v2.43 Add Date & Time of last boot on last line of hostname.smon file.
 # 2021_07_03 mon v2.44 Fix problem when trying to run custom script.
