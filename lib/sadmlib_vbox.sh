@@ -697,12 +697,12 @@ sadm_export_vm()
     # Check if the VM exist
     sadm_vm_exist "$VM"                                                 # Does the VM exist ?                                 
     if [ $? -ne 0 ]                                                     
-       then sadm_write_err "${SADM_ERROR} '$VM' is not a valid registered virtual machine." 
+       then sadm_write_err "${SADM_ERROR} '$VM' is not a valid registered virtual machine on host." 
             return 1                                                    # Return Error to Caller
     fi    
 
     # Check if System is Locked.
-    sadm_check_system_lock "$VM"                                        # Check lock file status
+    sadm_lock_status "$VM"                                        # Check lock file status
     if [ $? -ne 0 ]                                                     # The system is lock
         then sadm_write_err "[ ERROR ] System is lock, VM export is not allowed."
              return 1                                                   # Return Error to caller
@@ -711,7 +711,7 @@ sadm_export_vm()
     # Create lock file while VM export is running 
     # This prevent the SADMIN server from starting a script on the remote system.
     # A system Lock also turn off monitoring of remote system.
-    #sadm_lock_system "$VM"                                              # Lock system while export
+    #sadm_lock_status "$VM"                                              # Lock system while export
     #if [ $? -ne 0 ]                                                     # If lock system failed
     #   then sadm_write_err "[ ERROR ] Couldn't create the lock file for '$VM'." 
     #        return 1 
@@ -736,7 +736,7 @@ sadm_export_vm()
     # Get the name of the directory where the VM exist
     #sadm_write_log " "
     VM_DIR=$($VBOXMANAGE showvminfo $VM |grep -i snapshot |awk -F: '{print $2}'|tr -d ' '|xargs dirname |head -1)
-    sadm_write_log "The VM '$VM' is located in '${VM_DIR}' on '${SADM_HOSTNAME}.'"
+    sadm_write_log "The VM '$VM' is located in '${VM_DIR}' on '${SADM_HOSTNAME}'."
 
     # Show User Mount command
     SHORT_NFS="${SADM_VM_EXPORT_NFS_SERVER}:${SADM_VM_EXPORT_MOUNT_POINT}"
@@ -798,7 +798,7 @@ sadm_export_vm()
     fi
     sadm_write_log " "
     sadm_write_log "Starting the export of virtual machine '$VM' to '${SADM_VM_EXPORT_NFS_SERVER}'."
-    sadm_write_log "Export directory is: '$EXPDIR'." 
+    #sadm_write_log "Export directory is: '$EXPDIR'." 
     sadm_write_log "Export OVA file is : '$EXPOVA'."
     #find "${EXPDIR}" -type d | tee -a $SADM_LOG 
 
@@ -814,13 +814,12 @@ sadm_export_vm()
     fi 
 
     # Change permission on the .ova created.
-    #sadm_write_log "sudo chmod 666 ${EXPOVA}"
-    sudo chmod 666 ${EXPOVA} >>$SADM_LOG 2>&1
+    sudo chmod 664 ${EXPOVA} >>$SADM_LOG 2>&1
     if [ "$?" -ne 0 ]                                                   # If Error during mount 
-        then sadm_write_err "[ ERROR ] 'sudo chmod 666 ${EXPOVA}' didn't work."
-        else sadm_write_log "[ OK ] 'sudo chmod 666 ${EXPOVA}'." 
+        then sadm_write_err "[ ERROR ] 'sudo chmod 664 ${EXPOVA}' didn't work."
+        else sadm_write_log "[ OK ] 'sudo chmod 664 ${EXPOVA}'." 
     fi
-    sadm_write_log " "
+    #sadm_write_log " "
 
     # Delete old exports, according to the number of export to keep.
     sadm_vm_export_housekeeping "$VM" "${MOUNT_POINT}/${VM}"                # VMName & Dir. to Purge
@@ -881,9 +880,9 @@ sadm_export_vm()
 #
 ### Argument(s)
 #- [1] [vmName] (String)
-#       - Contain the name of the virtual machine to export.
+#       - Contain the name of the virtual machine to export (Required).
 #
-#- [2] [Export Dir. Name]  (String)
+#- [2] [Export Dir. Name]  (String) (Required)
 #       - Specify the name of the export directory.   
 #
 #

@@ -181,10 +181,10 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
     e_bold "System Monitor Command Line Report v${SADM_VER}                      $WDATE"
     echo "------------------------------------------------------------------------------"
     e_bold "Based on SysMon configuration file $SADM_CFG_DIR/${SADM_HOSTNAME}.smon"
-    e_bold "Here is the output of SysMon Report File $SADM_RPT_DIR/${SADM_HOSTNAME}.rpt"
+    e_bold "Here is the output of SysMon Report File $SADM_RPT_DIR/*.rpt"
     echo "------------------------------------------------------------------------------"
     if [ -s $SADM_RPT_DIR/${SADM_HOSTNAME}.rpt ] 
-        then cat $SADM_RPT_DIR/${SADM_HOSTNAME}.rpt | while read line 
+        then cat $SADM_RPT_DIR/*.rpt | while read line 
                 do
                 e_error "$line"
                 done 

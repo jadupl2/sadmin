@@ -296,7 +296,7 @@ rcmd_osupdate()
     fi                                                              # This reboot after Update
     
     # Check if System is Locked.
-    sadm_check_system_lock "$server_name"                           # Check lock file status
+    sadm_lock_status "$server_name"                           # Check lock file status
     if [ $? -ne 0 ]                                                 # If System is lock
        then sadm_write_err "[ ERROR ] System '$server_name' is lock, cannot proceed at this time."
             return 1 
@@ -305,7 +305,7 @@ rcmd_osupdate()
     # Create lock file while O/S Update is running 
     # This prevent the SADMIN server from starting a script on the remote system.
     # A system Lock also turn off monitoring of remote system.
-    sadm_lock_system "$server_name"                                 # Lock system while update o/s
+    sadm_lock_status "$server_name"                                 # Lock system while update o/s
     if [ $? -ne 0 ]                                                 # If lock system failed
        then sadm_write_err "[ ERROR ] Couldn't create the lock file for '$server_name'."
             return 1 

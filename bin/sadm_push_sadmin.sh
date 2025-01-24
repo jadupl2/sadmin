@@ -235,7 +235,7 @@ process_servers()
         fi
 
     # Check if System is Locked.
-        sadm_check_system_lock "$server_name"                           # Check lock file status
+        sadm_lock_status "$server_name"                           # Check lock file status
         if [ $? -ne 0 ] 
             then sadm_write_log "[ WARNING ] System ${server_fqdn} is currently lock."
                  ((WARNING_COUNT++))                                    # Increase Warning Counter
