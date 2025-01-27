@@ -2802,24 +2802,6 @@ sadm_lock_status() {
         then RC=1
         else RC=0
     fi 
-#            current_epoch=$(sadm_get_epoch_time)                       # Get current Epoch Time
-#            create_epoch=$(stat -c %Y $LOCK_FILE)                      # Get lock file epoch
-#            lock_age=`echo "$current_epoch - $create_epoch" |$SADM_BC` # Age of lock in seconds
-#            sec_left=`expr $SADM_LOCK_TIMEOUT - $lock_age` 
-#            if [ $lock_age -ge $SADM_LOCK_TIMEOUT ]                     # Age of lock reach timeout?
-#               then sadm_write_log "System is lock for more than $SADM_LOCK_TIMEOUT seconds."
-#                    sadm_write_log "Unlocking ${SNAME} system."
-#                    sadm_write_log "We now restart monitoring this system as usual."
-#                    sadm_unlock_system "$SNAME"
-#                    rm -f $LOCK_FILE > /dev/null 2>&1
-#                    RC=0
-#               else sadm_write_err "The system '${SNAME}' is currently lock."
-#                    sadm_write_err "Content of lock file : $(cat $LOCK_FILE)"
-#                    sadm_write_err "System normal monitoring will resume in ${sec_left} seconds."
-#                    sadm_write_err "Maximum lock time allowed is ${SADM_LOCK_TIMEOUT} seconds."
-#                    RC=1                                               # System is Lock Return 1
-#            fi 
-#    fi 
     return $RC                                                            # Return no lockfile
 }  
 
