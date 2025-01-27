@@ -67,6 +67,8 @@
 # 2023_12_26 client v3.37 Update SADMIN section
 #@2024_10_31 client v3.38 Creation of a list of vm on system to $SADMIN/dat/dr/HOSTNAME_vm_list.txt 
 #@2024_11_11 client v3.39 Change permission to VM list file '$SADMIN/dat/dr/HOSTNAME_vm_list.txt'.
+#@2025_01_25 client v3.40 Add VM guest version line (SADM_VMGUEST_VERSION) to sysinfo.txt file
+
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # Intercept the ^C
 #set -x
@@ -96,7 +98,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.39'                                     # Script version number
+export SADM_VER='3.40'                                     # Script version number
 export SADM_PDESC="Collect hardware & software info of system" # Script Description
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
@@ -907,7 +909,7 @@ create_summary_file()
     echo "SADM_OS_VERSION                       = $(sadm_get_osversion)"             >> $HWD_FILE
     echo "SADM_OS_MAJOR_VERSION                 = $(sadm_get_osmajorversion)"        >> $HWD_FILE
     echo "SADM_OS_NAME                          = $(sadm_get_osname)"                >> $HWD_FILE
-    echo "SADM_OS_CODE_NAME                     = $(sadm_get_oscodename)"            >> $HWD_FILE
+    echo "SADM_OS_CODE_NAME                     = $(sadm_get_oscodename )"            >> $HWD_FILE
     echo "SADM_KERNEL_VERSION                   = $(sadm_get_kernel_version)"        >> $HWD_FILE
     echo "SADM_KERNEL_BITMODE (32 or 64)        = $(sadm_get_kernel_bitmode)"        >> $HWD_FILE
     echo "SADM_SERVER_MODEL                     = $(sadm_server_model)"              >> $HWD_FILE
@@ -928,6 +930,20 @@ create_summary_file()
     echo "SADM_ROOT_DIRECTORY                   = ${SADMIN}"                         >> $HWD_FILE
     if [ "$REAR" != "" ] ;then REAR_VER=$($REAR -V | awk '{print $2}') ; else REAR_VER="N/A" ; fi
     echo "SADM_REAR_VERSION                     = $REAR_VER"                         >> $HWD_FILE
+
+    # Get VM Guest E
+    command -v VBoxService >/dev/null
+    if [ $? -eq 0 ] 
+       then VBOXSERVICE=$(command -v VBoxService)
+            SADM_VMGUEST_VERSION=$($VBOXSERVICE -V)
+            if [ $? -ne 0 ] 
+                then sadm_write_err "[ ERROR ] Getting VM properties."
+                     SADM_VMGUEST_VERSION=""
+            fi 
+    fi 
+    echo "SADM_VMGUEST_VERSION                  = $SADM_VMGUEST_VERSION"             >> $HWD_FILE
+
+
     chmod 644 $HWD_FILE 
     chown "$SADM_USER:$SADM_GROUP" "$HWD_FILE"
 
