@@ -244,7 +244,7 @@ rmcmd_start()
 
         # Lock the remote system while the script is executed (-l) 
 #        sadm_lock_status "$REAL_SYSTEM_LOCK" "${REM_SCRIPT}_${REM_SCRIPT_ARGS}"
-        sadm_lock_status "$REAL_SYSTEM_LOCK" "$REM_SCRIPT $REM_SCRIPT_ARGS"
+        sadm_lock_system "$REAL_SYSTEM_LOCK" "$REM_SCRIPT $REM_SCRIPT_ARGS"
         if [ $? -ne 0 ]                                                 # Unable to Lock Node
            then sadm_write_log "[ ERROR ] couldn't lock system '$REAL_SYSTEM_LOCK'."
                 return 1                                                # Return Error to caller 
