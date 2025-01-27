@@ -540,7 +540,7 @@ rear_housekeeping()
 
     # Verify integrity of ReaR backup file (*.tgz)
     sadm_write_log "Verify that the compressed ReaR backup file '$REAR_CUR_TGZ' is restorable".
-    tar -xOf "$REAR_CUR_TGZ" &>> $SADM_LOG
+    tar -xOf "$REAR_CUR_TGZ" | tee -a $SADM_LOG
     if [ $? -ne 0 ] 
         then sadm_write_err "[ ERROR ] The ReaR backup file '$REAR_CUR_TGZ' is not restorable."
              return 1 
