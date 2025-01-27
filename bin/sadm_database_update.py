@@ -48,6 +48,7 @@
 # 2022_08_25 server v3.19 Fix a 'KeyError' that could cause problem.
 # 2023_07_26 server v3.20 Restrict execution on the SADMIN server only.
 # 2023_08_18 server v3.21 Update to SADMIN section v2.3 & update database I/O functions.
+# 2025_01_25 server v3.22 Update VM Guest version in Database for sysinfo.txt file.
 # 
 # ==================================================================================================
 #
@@ -75,7 +76,7 @@ except ImportError as e:                                                # If Err
     sys.exit(1)                                                         # Go Back to O/S with Error
 
 # Local variables local to this script.
-pver        = "3.21"                                                    # Program version
+pver        = "3.22"                                                    # Program version
 pdesc       = "Update SADMIN database with information collected from each system."
 phostname   = sa.get_hostname()                                         # Get current `hostname -s`
 pdebug      = 0                                                         # Debug level from 0 to 9
@@ -184,7 +185,7 @@ def update_row(wdict):
                 srv_date_osupdate='%s',     srv_update_status='%s', \
                 srv_sadmin_dir='%s',        srv_arch='%s', \
                 srv_vgs_info='%s',          srv_date_update='%s', \
-                srv_rear_ver='%s'  \
+                srv_rear_ver='%s',          srv_vm_version='%s'  \
                 where srv_name='%s' " %  \
                 (wdict['srv_ostype'],           wdict['srv_osname'], \
                 wdict['srv_vm'], \
@@ -200,7 +201,7 @@ def update_row(wdict):
                 wdict['srv_date_osupdate'],     wdict['srv_update_status'], \
                 wdict['srv_sadmin_dir'],        wdict['srv_arch'],   \
                 wdict['srv_vgs_info'],          wdict['srv_date_update'], \
-                wdict['srv_rear_ver'], \
+                wdict['srv_rear_ver'],          wdict['srv_vm_version'], \
                 wdict['srv_name'] )
     except (KeyError, TypeError, ValueError, IndexError) as error:      # Mismatch Between Num & Str
         #enum, emsg = error.args                                        # Get Error No. & Message
@@ -235,8 +236,12 @@ def update_row(wdict):
     except pymysql.ProgrammingError as e:
         print("ProgrammingError")
         print(e)
+    except pymysql.UnboundLocalError as e:
+        print("UnboundLocalError")
+        print(e)        
     except :
         print("Unknown error occurred")
+        print(e)
 
     #except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
     #    enum, emsg = error.args                                         # Get Error No. & Message
@@ -328,6 +333,8 @@ def process_servers():
         wdict['srv_update_status'] = "U"                                # Def. O/S Update Status
         wdict['srv_arch'] = ""                                          # Def. Server Architecture
         wdict['srv_rear_ver'] = "N/A"                                   # Default for Rear Version
+        wdict['srv_vm_version'] = ""
+        
         for cfg_line in FH:                                             # Loop until all lines parse
             wline = cfg_line.strip()                                    # Strip CR/LF/Trailing space
             if '#' in wline or len(wline) == 0:                         # If comment or blank line
@@ -367,6 +374,7 @@ def process_servers():
                 if "SADM_ROOT_DIRECTORY"    in CFG_NAME: wdict['srv_sadmin_dir']        = CFG_VALUE
                 if "SADM_SERVER_ARCH"       in CFG_NAME: wdict['srv_arch']              = CFG_VALUE
                 if "SADM_REAR_VERSION"      in CFG_NAME: wdict['srv_rear_ver']          = CFG_VALUE
+                if "SADM_VMGUEST_VERSION"   in CFG_NAME: wdict['srv_vm_version']        = CFG_VALUE
                 if wdict['srv_date_osupdate'] == '' :
                    wdict['srv_date_osupdate'] = "0000-00-00 00:00:00"   # Def. O/S Update Date
 
