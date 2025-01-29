@@ -2641,7 +2641,7 @@ sadm_lock_system()
              return 1                                                   # Return Error to caller
     fi
 
-    SNAME=$1                                                            # Save System Name to verify
+    SNAME=$1                                                            # Name of system to lock
     if [ $# -eq 2 ]                                                     # If Name of script specify
         then SCRIPT_NAME="$2"                                           # Remote Script Name
         else SCRPIT_NAME="$SADM_INST"                                   # Use current script name
@@ -2659,9 +2659,9 @@ sadm_lock_system()
     # Create the lock file
     xdate=$(date "+%H:%M %Y/%m/%d") 
     if [ $# -eq 2 ]
-        then echo "System lock at $xdate by '$(basename $SCRIPT_NAME)'" > "$LOCK_FILE"
+        then echo "'$SNAME' lock at $xdate by '$(basename $SCRIPT_NAME)'" > "$LOCK_FILE"
              RC=$?                                                      # Save Result Code
-        else echo "System lock at $xdate by '$SADM_INST'" > "$LOCK_FILE"
+        else echo "'$SNAME' lock at $xdate by '$SADM_INST'" > "$LOCK_FILE"
              RC=$?                                                      # Save Result Code
     fi 
     if [ $RC -eq 0 ]                                                     # Lock file created [ OK ]
