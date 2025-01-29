@@ -62,6 +62,7 @@
 # 2023_09_18 server v4.13 When syncing to the SADMIN server, don't use SSH to rsync .
 # 2023_12_14 server v4.14 'SADM_HOST_TYPE' in 'sadmin.cfg', decide if system is a client or a server.
 # 2023_12_30 server v4.15 Now using new function "Bug fix on files synchronization.
+#@2025_01_29 server v4.16 Remove Escape character from logs 
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -93,7 +94,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.15'                                     # Script version number
+export SADM_VER='4.16'                                     # Script version number
 export SADM_PDESC="Collect hardware,software,performance info data from all active systems."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -171,7 +172,7 @@ process_servers()
     sadm_write_log "${BOLD}Processing All Actives Server(s)${NORMAL}"
 
     # BUILD THE SELECT STATEMENT FOR ACTIVE SERVER & OUTPUT RESULT IN CSV FORMAT TO $SADM_TMP_FILE1
-    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_ssh_port"
+    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_ssh_port,srv_osname"
     SQL="${SQL} from server"                                            # From the Server Table
     SQL="${SQL} where srv_active = True"                                # Select only Active Servers
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
@@ -194,19 +195,21 @@ process_servers()
     while read wline                                                    # Then Read Line by Line
         do
         ((xcount++))
-        server_name=`    echo $wline|awk -F\; '{ print $1 }'`           # Extract Server Name
-        server_os=`      echo $wline|awk -F\; '{ print $2 }'`           # Extract O/S (linux/aix)
-        server_domain=`  echo $wline|awk -F\; '{ print $3 }'`           # Extract Domain of Server
-        server_monitor=` echo $wline|awk -F\; '{ print $4 }'`           # Monitor  t=True f=False
-        server_sporadic=`echo $wline|awk -F\; '{ print $5 }'`           # Sporadic t=True f=False
-        server_ssh_port=`echo $wline|awk -F\; '{ print $6 }'`           # Server SSH Port to connect
-        fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
+        server_name=$(echo $wline|awk -F\; '{ print $1 }')              # Extract Server Name
+        server_os=$(echo $wline|awk -F\; '{ print $2 }')                # Extract O/S (linux/aix)
+        server_domain=$(echo $wline|awk -F\; '{ print $3 }')            # Extract Domain of Server
+        server_monitor=$(echo $wline|awk -F\; '{ print $4 }')           # Monitor  t=True f=False
+        server_sporadic=$(echo $wline|awk -F\; '{ print $5 }')          # Sporadic t=True f=False
+        server_ssh_port=$(echo $wline|awk -F\; '{ print $6 }')          # Server SSH Port to connect
+        server_osname=$(echo $wline|awk -F\; '{ print $7 }')            # Server O/S Name
+        fqdn_server=$(echo ${server_name}.${server_domain})             # Create FQN Server Name
         sadm_write_log "  "
-        sadm_write_log "${BOLD}Processing [$xcount ($server_os)] ${fqdn_server}${NORMAL}"
+        #sadm_write_log "${BOLD}Processing [$xcount ($server_os)] ${fqdn_server}${NORMAL}"
+        sadm_write_log "Processing [ $xcount ($server_osname) ] ${fqdn_server}"
         
         # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR TO USER AND CONTINUE WITH NEXT SYSTEM.
         if ! host $fqdn_server >/dev/null 2>&1
-            then SMSG="${SADM_ERROR} Can't process '$fqdn_server', hostname can't be resolved."
+            then SMSG="[ ERROR ] Can't process '$fqdn_server', hostname can't be resolved."
                  sadm_write_err "${SMSG}"                               # Advise user
                  ((ERROR_COUNT++))                        # Increase Error Counter
                  sadm_write_err "Error Count is now at $ERROR_COUNT"
@@ -223,8 +226,7 @@ process_servers()
         fi                                                              # System Lock, Nxt Server
 
         # TEST SSH TO SERVER (IF NOT ON SADMIN SERVER)
-#        if [ "$SADM_HOST_TYPE" != "S" ]                                 # If not on SADMIN Server 
-        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ] # Use ssh or not
+        if [ "$fqdn_server" != "$SADM_SERVER" ] && [ "$server_name" != "$SADM_HOSTNAME" ] 
             then $SADM_SSH -qnp "$server_ssh_port" "$fqdn_server" date > /dev/null 2>&1
                  RC=$?                                                  # Save Error Number
             else RC=0                                                   # RC=0 no SSH on SADMIN Srv
@@ -244,7 +246,7 @@ process_servers()
                         continue
                 fi 
                 if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_write_log "Return Code is $RC" ;fi 
-                sadm_write_err "$SADM_ERROR Can't SSH to ${fqdn_server} on port $server_ssh_port."
+                sadm_write_err "[ ERROR ] Can't SSH to ${fqdn_server} on port $server_ssh_port."
                 ((ERROR_COUNT++))
                 sadm_write_err "Error Count is now at $ERROR_COUNT"
                 continue
@@ -267,7 +269,7 @@ process_servers()
         if [ $? -eq 0 ]                                                 # If file was transferred
             then RDIR=$(grep "SADMIN=" $WDIR/environment |sed 's/export //g' |awk -F= '{print $2}'|tail -1)
                  if [ "$RDIR" != "" ]                                   # No Remote Dir. Set
-                    then sadm_writelog "SADMIN installed in ${RDIR} on ${server_name}."
+                    then sadm_writelog "[ OK ] SADMIN installed in ${RDIR} on ${server_name}."
                     else sadm_write_err "[ WARNING } Couldn't get $ETCENV."
                          if [ "$server_sporadic" = "1" ]                # SSH don't work & Sporadic
                             then sadm_write_log "${server_name} is a sporadic system."
@@ -280,7 +282,7 @@ process_servers()
                  fi 
             else sadm_write_err "[ ERROR ] Couldn't get $ETCENV on ${server_name}."
                  ((ERROR_COUNT++))                        # Add 1 to Error Count
-                 sadm_write_err "Error Count is now at $ERROR_COUNT "
+                 sadm_write_err "Error count is now at $ERROR_COUNT "
                  sadm_write_err "Continuing with next system."          # Advise we are skipping srv
                  continue                                               # Go process next system
         fi
@@ -333,11 +335,11 @@ process_servers()
                  RC=$?
         fi
         if [ $RC -ne 0 ]
-            then sadm_write_err "[ ERROR ] ($RC) ${rcmd}"
+            then sadm_write_err "[ ERROR ] #($RC) ${rcmd}"
                  ((ERROR_COUNT++))
             else sadm_write_log "[ OK ] ${rcmd}" 
         fi
-        #if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write_err "Error Count is now at $ERROR_COUNT" ;fi
+        if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_write_err "Error Count is now at $ERROR_COUNT" ;fi
 
         done < $SADM_TMP_FILE1
 
