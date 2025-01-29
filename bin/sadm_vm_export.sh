@@ -129,7 +129,7 @@ export CONFIRM="Y"                                                      # confir
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${SADM_PN} [ VMName ] usage :"
+    printf "\n${SADM_PN} [ VMName ] :"
     printf "\n\t-d   (Debug Level [0-9])"
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-v   (Show Script Version Info)"
