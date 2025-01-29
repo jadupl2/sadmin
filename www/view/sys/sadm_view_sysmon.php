@@ -342,8 +342,7 @@ function display_line($line,$BGCOLOR,$con)
             echo "\n<td align='center' bgcolor=$BGCOLOR align='left'><span data-toggle='tooltip' title='System Information'>";
             echo "<img src='/images/sadm_info.png' ";                   # Show Running Icon
             echo "style='width:96px;height:40px;'></span></td>";        # Status Standard Image Size
-            $alert_group=$errgrp;                                       # Script group 
-            break;
+            $alert_group=$warngrp;                                      # Set Event Alert Group            break;
         default:
             echo "\n<td bgcolor=$BGCOLOR align='left'><span data-toggle='tooltip' title='Unknown Status'>";
             echo "<img src='/images/question_mark.jpg' ";               # Show Question Mark
