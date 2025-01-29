@@ -558,7 +558,7 @@ rear_housekeeping()
              fi
              sadm_write_err "[ ERROR ] Failed to produce a list of files on the backup."
              return 1
-        else sadm_write_log "[ OK ] List of files included in the backup in ´$REAR_CUR_LST '."
+        else sadm_write_log "[ OK ] List of files included in the backup in '$REAR_CUR_LST'."
     fi
 
 
@@ -620,7 +620,7 @@ create_backup()
 
     # Create the Backup TGZ file on the NFS Server
     sadm_write_log "$REAR mkbackup -v"
-    sadm_write_log " "
+    sadm_write_log " " 
     $REAR mkbackup -v >> $SADM_LOG 2>&1                                 # Produce Rear Backup for DR
     RC=$?                                                               # Save Command return code.
     sadm_write_log "ReaR backup exit code : ${RC}"                      # Show user backup exit code
