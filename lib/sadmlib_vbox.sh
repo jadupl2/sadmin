@@ -531,7 +531,7 @@ sadm_list_vm_status()
 
         # Remote Desktop State
         #printf "vrde\n"
-        vrde_state=`$VBOXMANAGE showvminfo $vm_name |grep 'VRDE:'     | awk '{print $2}'`
+        vrde_state=$($VBOXMANAGE showvminfo $vm_name |grep 'VRDE:'     | awk '{print $2}')
         if [ "$vrde_state" = "enabled" ]
             then vrde_port=$($VBOXMANAGE showvminfo $vm_name |grep 'VRDE:' |awk '{print $6}' |tr -d ',')
             else vrde_port='Disable'
