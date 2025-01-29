@@ -103,6 +103,7 @@
 #@2024_10_31 server v3.49 Add code to update schedule of VirtualBox VM export in crontab 'sadm_vm'.
 #@2024_11_11 server v3.50 Add creation of list of all VMs '$SADM_VMLIST' & VM Hosts '$SADM_VMHOSTS'.
 #@2025_01_24 server v3.51 Bug fixes & refine lock detection vs Monitor page.
+#@2025_01_29 server v3.52 Change 'sadm_vm' crontab update to use 'sadm_rmcmd_lock' to lock/unlock system.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -132,7 +133,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.51'                                     # Script version number
+export SADM_VER='3.52'                                     # Script version number
 export SADM_PDESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -273,14 +274,14 @@ update_osupdate_crontab ()
 
     # Construct DATE of the month (1-31) to run and add it to crontab line ($cline) ----------------
     flag_dom=0
-    if [ "$cdom" = "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN" ]                 # If it's to run every Date
+    if [ "$cdom" = "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN" ]                 # Can run at any date 
         then cline="$cline *"                                           # Then use a Star for Date
         else fdom=""                                                    # Clear Final Date of Month
              for i in $(seq 2 32)
                 do    
-                wchar=`expr substr $cdom $i 1`
+                wchar=$(expr substr $cdom $i 1)
                 if [ $SADM_DEBUG -gt 5 ] ; then echo "cdom[$i] = $wchar" ; fi
-                xmth=`expr $i - 1`                                      # Date = Index -1 ,Cron Mth
+                xmth=$(expr $i - 1)                                     # Date = Index -1 ,Cron Mth
                 if [ "$wchar" = "Y" ]                                   # If Date Set to Yes 
                     then if [ $flag_dom -eq 0 ]                         # If First Date to Run 
                             then fdom=`printf "%02d" "$xmth"`           # Add Date to Final DOM
@@ -297,13 +298,13 @@ update_osupdate_crontab ()
 
     # Construct the month(s) (1-12) to run the script and add it to crontab line ($cline) ----------
     flag_mth=0
-    if [ "$cmonth" = "YNNNNNNNNNNNN" ]                                  # 1st Char=Y = run every Mth
+    if [ "$cmonth" = "YNNNNNNNNNNNN" ]                                  # 1st Ch=Y,can run every Mth
         then cline="$cline *"                                           # Then use a Star for Month
         else fmth=""                                                    # Clear Final Date of Month
              for i in $(seq 2 13)                                       # Check Each Mth 2-13 = 1-12
                 do                                                      # Get Y or N for the Month 
-                wchar=`expr substr $cmonth $i 1`
-                xmth=`expr $i - 1`                                      # Mth = Index -1 ,Cron Mth
+                wchar=$(expr substr $cmonth $i 1)
+                xmth=$(expr $i - 1)                                     # Mth = Index -1 ,Cron Mth
                 if [ "$wchar" = "Y" ]                                   # If Month Set to Yes 
                     then if [ $flag_mth -eq 0 ]                         # If 1st Insert in Cron Line
                             then fmth=`printf "%02d" "$xmth"`           # Add Month to Final Months
@@ -320,15 +321,15 @@ update_osupdate_crontab ()
 
     # Construct the day of the week (0-6) to run the script and add it to crontab line ($cline) ----
     flag_dow=0
-    if [ "$cdow" = "YNNNNNNN" ]                                         # 1st Char=Y Run all dayWeek
+    if [ "$cdow" = "YNNNNNNN" ]                                         # 1st Ch=Y,can run every day
         then cline="$cline *"                                           # Then use Star for All Week
         else fdow=""                                                    # Final Day of Week Flag
              for i in $(seq 2 8)                                        # Check Each Day 2-8 = 0-6
                 do                                                      # Day of the week (dow)
-                wchar=`expr substr "$cdow" $i 1`                        # Get Char of loop
+                wchar=$(expr substr "$cdow" $i 1)                       # Get Char of loop
                 if [ $SADM_DEBUG -gt 5 ] ; then echo "cdow[$i] = $wchar" ; fi
                 if [ "$wchar" = "Y" ]                                   # If Day is Yes 
-                    then xday=`expr $i - 2`                             # Adjust Indx to Crontab Day
+                    then xday=`expr $i - 2)                             # Adjust Indx to Crontab Day
                          if [ $SADM_DEBUG -gt 5 ] ; then echo "xday = $xday" ; fi
                          if [ $flag_dow -eq 0 ]                         # If First Day to Insert
                             then fdow=`printf "%02d" "$xday"`           # Add day to Final Day
@@ -529,9 +530,11 @@ update_backup_crontab ()
     SSH_PORT=$8                                                         # SSH Port Number 
     ccompress=$9                                                        # Compress Backup 1=Yes 0=No
 
-    cline=`printf "%02d %02d" "$cmin" "$chour"`                         # Hour & Min. of Execution
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi   # Show Cron Line Now
+    cline=$(printf "%02d %02d" "$cmin" "$chour")                        # Hour & Min. of Execution
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write_log "cline=.$cline.";fi  # Show Cron Line Now
     cline="$cline * * * "
+
+    # Add argument -n if the backup is to be compress.
     if [ "$SADM_HOSTNAME" != "$cserver" ]  
         then if [ $ccompress -eq 1 ] 
                 then cline="$cline $SADM_USER sudo ${SADM_SSH} -qnp $SSH_PORT $cserver \"$cscript\" >/dev/null 2>&1";
@@ -542,6 +545,8 @@ update_backup_crontab ()
                 else cline="$cline $SADM_USER sudo \"$cscript -n\" >/dev/null 2>&1"; 
              fi 
     fi 
+
+    # Add line to backup crontab tmp work file
     echo "$cline" >> $SADM_BACKUP_NEWCRON                               # Output Line to Crontab cfg
 }
 
@@ -588,9 +593,10 @@ update_vmexport_crontab ()
     chost=$9                                                            # VirtualBox Hostname
 
     # To Display Parameters received - Used for Debugging Purpose ----------------------------------
-    if [ $SADM_DEBUG -gt 5 ] 
+    if [ $SADM_DEBUG -gt 4 ] 
         then sadm_write_log "I'm in update_vmexport_crontab"
-             sadm_write_log "cserver  = $cserver"                        # Server to run script
+             sadm_write_log "cserver  = $cserver"                        # Server to export
+             sadm_write_log "chost    = $host"                           # VirtualBox Hostname
              sadm_write_log "cscript  = $cscript"                        # Script to execute
              sadm_write_log "cmonth   = $cmonth"                         # Month String YNYNYNYNYNY..
              sadm_write_log "cdom     = $cdom"                           # Day of MOnth String YNYN..
@@ -702,8 +708,8 @@ update_vmexport_crontab ()
 create_vm_list()
 {
     # Delete old files
-    if [ -f "$SADM_VMLIST" ]  ; then rm -f "$SADM_VMLIST"  ; fi
-    if [ -f "$SADM_VMHOSTS" ] ; then rm -f "$SADM_VMHOSTS" ; fi
+    if [ -f "$SADM_VMLIST" ]  ; then rm -f "$SADM_VMLIST"  >/dev/null ; fi
+    if [ -f "$SADM_VMHOSTS" ] ; then rm -f "$SADM_VMHOSTS" >/dev/null ; fi
 
     # Creating VM list file
     sadm_write_log " "                                                  # Separation Blank Line
@@ -1045,7 +1051,7 @@ build_server_list()
     SQL="${SQL} srv_img_backup,srv_img_month,srv_img_dom,srv_img_dow,srv_img_hour,srv_img_minute, "
     SQL="${SQL} srv_ssh_port, srv_backup_compress, "
     SQL="${SQL} srv_vm_type, srv_export_sched, srv_export_ova, srv_export_mth, srv_export_dom, "
-    SQL="${SQL} srv_export_dow, srv_export_hrs, srv_export_min, srv_vm_host, srv_vm"
+    SQL="${SQL} srv_export_dow, srv_export_hrs, srv_export_min, srv_vm_host, srv_vm, srv_vm_version"
     SQL="${SQL} from server"
     SQL="${SQL} where srv_active = True "
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
@@ -1066,6 +1072,8 @@ build_server_list()
     # Execute sql to get a list of active servers of the received o/s type into $sadm_tmp_file1
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
     
+    if [ $SADM_DEBUG -gt 1 ] ; then cat $SADM_TMP_FILE1 ; fi 
+
     # If file wasn't created or has a zero lenght, then no active system is found, return to caller.
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
         then sadm_write_log "${SADM_TEN_DASH}"                          # Print 10 Dash line
@@ -1086,6 +1094,7 @@ build_server_list()
 #       'I' = Information line
 #       'W' = Warning line
 #       'E' = Error line
+#       'S' = Script 
 #   2) System Host Name
 #   3) Operating System (LINUX,DARWIN or AIX)
 #   4) SubModule (One of these ; NETWORK,SCRIPT,HTTP,HTTPS,DAEMON,SERVICE)
@@ -1263,8 +1272,8 @@ process_servers()
         
          # Test SSH connectivity, get uptime and update the Database.
         if [ "$SADM_SERVER" != "fqdn_name" ]     
-            then check_host_connectivity "$fqdn_server" "$ssh_port"              # Test SSH, Upd uptime in DB
-                 connectivity_rc=$?                                              # Connectivity result code 
+            then check_host_connectivity "$fqdn_server" "$ssh_port"     # Test SSH, Upd uptime in DB
+                 connectivity_rc=$?                                     # Connectivity result code 
                  if [ "$SADM_DEBUG" -ne 0 ] 
                     then sadm_write_log "[ DEBUG ] System host '$fqdn_server' connectivity result code is $connectivity_rc"
                  fi
@@ -1287,7 +1296,7 @@ process_servers()
                 SYSTEM_ONLINE="N"                                       # Not able to connect 
                 sadm_write_log "Total warning is now $WARNING_COUNT"
                 RPT_MSG="$(sadm_show_lock $server_name)"
-                update_rpt_file "W" "$server_name" "$(sadm_get_ostype)" "NETWORK" "$RPT_MSG" "$SADM_ALERT_GROUP" "$SADM_ALERT_GROUP"
+                update_rpt_file "I" "$server_name" "$(sadm_get_ostype)" "NETWORK" "$RPT_MSG" "$SADM_ALERT_GROUP" "$SADM_ALERT_GROUP"
                 ;;
             *)  ((ERROR_COUNT++))                                       # Error, Can't connect
                 SYSTEM_ONLINE="N"                                       # Not able to connect 
@@ -1319,9 +1328,13 @@ process_servers()
                 
         # Generate Crontab Entry for this system in Virtual Box export 
         # System Don't need to be alive to do an export of the VM.
+        # anemone,holmes,/opt/sadmin
         if [ "$SADM_DEBUG" -gt 2 ] ;then sadm_write_log "[ DEBUG ] Crontab entries for VM export" ;fi
         if [ "$server_vm" -eq 1 ]                                       # 1-Virtual System, 0=Hardw
-            then update_vmexport_crontab "$server_name" "${server_dir}/bin/$EXPORT_SCRIPT" "$export_min" "$export_hrs" "$export_mth" "$export_dom" "$export_dow" "$ssh_port" "$export_host"
+            then HOST_SADMIN=$(find $SADM_WWW_DAT_DIR -type f -name "*_vmlist.txt" -exec cat {} \; | grep $server_name | awk -F, '{print $3}')
+                 #sadm_write_log "HOST_SADMIN=$HOST_SADMIN" 
+                 sadm_write_log "find $SADM_WWW_DAT_DIR -type f -name '*_vmlist.txt' -exec cat {} \; | grep $export_host | awk -F, '{print $3}'"
+                 update_vmexport_crontab "$server_name" "${HOST_SADMIN}/bin/$EXPORT_SCRIPT" "$export_min" "$export_hrs" "$export_mth" "$export_dom" "$export_dow" "$ssh_port" "$export_host"
         fi
                 
         # Set remote $SADMIN/cfg Dir. and local www/dat/${server_name}/cfg directory.
