@@ -24,6 +24,7 @@
 # 2024_05_22 web v1.0 Virtual Box export results page - Initial version.
 # 2024_10_03 web v1.1 Practically usable only occurrence and next export date display missing.
 #@2024_10_31 web v1.2 Permit to view the status of Virtual Box machine export.
+#@2025_01_29 web v1.3 Was not showing the right VirtualBox Guest Addition version 
 # ==================================================================================================
 #
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -91,7 +92,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "1.2" ;                                           # Current version number
+$WVER               = "1.3" ;                                           # Current version number
 $URL_HOME           = '/index.php';                                     # Site Main Page
 
 # Server Static Data Maintenance
@@ -206,7 +207,7 @@ function display_data($count, $row) {
     # Show Virtual Machine Type (VB=VirtualBox VW=VMWare KVM=Kernel Virt,...) & Guest version 
     echo "<td>";
     echo "<a href='" .$URL_SERVER_INFO. "?sel=" .$row['srv_name']. "&back=" .$URL_VIEW_VBEXPORT. "'";
-    echo " title='" . $sysinfo . "'>VBOX</a>&nbsp;&nbsp;" . $row['srv_rear_ver'] . "</td>\n";  
+    echo " title='" . $sysinfo . "'>VBOX</a>&nbsp;&nbsp;" . $row['srv_vm_version'] . "</td>\n";  
     
 
     # System Hosting the Virtual machine.
@@ -279,7 +280,6 @@ function display_data($count, $row) {
         echo " title='View export Log'>[log]</a>&nbsp;";
     }else{
         echo "\n<span data-toggle='tooltip' title='" . $tooltip . "'>[N/A]&nbsp;</span>";
-        #echo "[N/A]&nbsp;";
     }
 
 
