@@ -364,7 +364,7 @@ print_functions()
     presult=$(sadm_server_arch)                                         # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
 
-    pexample="sadm_lock_status \"hostname\""                            # Example Calling Function
+    pexample="sadm_lock_system \"hostname\""                            # Example Calling Function
     pdesc="Lock the specified hostname"                                 # Function Description
     presult="0=Lock 1=Error not lock"                                   # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
