@@ -329,7 +329,7 @@ update_osupdate_crontab ()
                 wchar=$(expr substr "$cdow" $i 1)                       # Get Char of loop
                 if [ $SADM_DEBUG -gt 5 ] ; then echo "cdow[$i] = $wchar" ; fi
                 if [ "$wchar" = "Y" ]                                   # If Day is Yes 
-                    then xday=`expr $i - 2)                             # Adjust Indx to Crontab Day
+                    then xday=$(expr $i - 2)                             # Adjust Indx to Crontab Day
                          if [ $SADM_DEBUG -gt 5 ] ; then echo "xday = $xday" ; fi
                          if [ $flag_dow -eq 0 ]                         # If First Day to Insert
                             then fdow=`printf "%02d" "$xday"`           # Add day to Final Day
