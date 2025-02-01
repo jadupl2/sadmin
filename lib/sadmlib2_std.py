@@ -68,6 +68,8 @@
 #@2024_04_23 lib v4.54 Add option to send email on startup and on shutdown in sadmin.cfg.
 #@2024_11_11 lib v4.55 Add two Global var. accessible to any script 'sa.vm_list' & 'sa.vm_hosts'.
 #@2024_12_17 lib v4.56 Add loading new global variable 'sadm_pwd_random' to generate 'sadmin user' pwd.
+#@2025_01_30 lib v4.57 3 New global var. for NFS mount in sadmin.cfg, initialize when loading library
+#@2025_01_30 lib v4.47 sadm_vm_export_nfs_server_ver,sadm_backup_nfs_server_ver,sadm_rear_nfs_server_ver
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -101,7 +103,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.56"                                # This Library Version
+lib_ver             = "4.57"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -177,6 +179,7 @@ sadm_ro_dbuser                = ""                          # MySQL Read Only Us
 sadm_ro_dbpwd                 = ""                          # MySQL Read Only Pwd
 sadm_ssh_port                 = 22                          # SSH Port used in Farm
 sadm_backup_nfs_server        = ""                          # Backup NFS Server
+sadm_backup_nfs_server_ver    = 3                           # Nfs version to use on mount point
 sadm_backup_nfs_mount_point   = ""                          # Backup Mount Point
 sadm_daily_backup_to_keep     = 3                           # Nb Daily Backup to keep
 sadm_weekly_backup_to_keep    = 3                           # Nb Weekly Backup to keep
@@ -198,30 +201,31 @@ sadm_network2                 = ""                          # Network Subnet 2 t
 sadm_network3                 = ""                          # Network Subnet 3 to report
 sadm_network4                 = ""                          # Network Subnet 4 to report
 sadm_network5                 = ""                          # Network Subnet 5 to report
-sadm_monitor_update_interval = 60                           # Sysmon refresh rate
-sadm_monitor_recent_count    = 10                           # SysMon Nb Recent Script
-sadm_monitor_recent_exclude  = "sadm_nmon_watcher"          # SysMon Recent list Exclude 
-sadm_pid_timeout             = 7200                         # PID File TTL default
-sadm_lock_timeout            = 3600                         # Host Lock File TTL 
-sadm_max_logline             = 500                          # Max Nb. Lines in LOG
-sadm_max_rchline             = 100                          # Max Nb. Lines in RCH file
-sadm_smtp_server             = "smtp.gmail.com"             # smtp host relay name
-sadm_smtp_port               = 587                          # smtp relay host port
-sadm_smtp_sender             = "sender@gmail.com"           # smtp sender account
-sadm_gmpw                    = ""                           # smtp sender password
-sadm_vm_export_nfs_server    = ""
-sadm_vm_export_mount_point   = ""
-sadm_vm_export_to_keep       = 2
-sadm_vm_export_interval      = 14
-sadm_vm_export_alert         = "Y"
-sadm_vm_user                 = "jacques"
-sadm_vm_stop_timeout         = 120
-sadm_vm_start_interval       = 30
-sadm_vm_export_dif           = 25
-sadm_days_history            = 14
-sadm_max_arc_line            = 1000
-sadm_email_startup           = "N"
-sadm_email_shutdown          = "N"
+sadm_monitor_update_interval  = 60                          # Sysmon refresh rate
+sadm_monitor_recent_count     = 10                          # SysMon Nb Recent Script
+sadm_monitor_recent_exclude   = "sadm_nmon_watcher"         # SysMon Recent list Exclude 
+sadm_pid_timeout              = 7200                        # PID File TTL default
+sadm_lock_timeout             = 3600                        # Host Lock File TTL 
+sadm_max_logline              = 500                         # Max Nb. Lines in LOG
+sadm_max_rchline              = 100                         # Max Nb. Lines in RCH file
+sadm_smtp_server              = "smtp.gmail.com"            # smtp host relay name
+sadm_smtp_port                = 587                         # smtp relay host port
+sadm_smtp_sender              = "sender@gmail.com"          # smtp sender account
+sadm_gmpw                     = ""                          # smtp sender password
+sadm_vm_export_nfs_server     = ""                          # Default Export NFS server name
+sadm_vm_export_nfs_server_ver = 3                           # Nfs version to use on mount point
+sadm_vm_export_mount_point    = ""                          # VM Export NFS Mount Point
+sadm_vm_export_to_keep        = 2                           # Default export copies to keep of a VM
+sadm_vm_export_interval       = 14                          # Warning when export is older than 14d
+sadm_vm_export_alert          = "Y"                         # Issue and alert if export to old
+sadm_vm_user                  = "jacques"                   # User that do the export
+sadm_vm_stop_timeout          = 120                         # Time given to stop a virtual machine
+sadm_vm_start_interval        = 30                          # Time given to start a virtual machine
+sadm_vm_export_dif            = 25                          # Current export size vs previous=warning
+sadm_days_history             = 14                          # Days before moving alerts to Archive
+sadm_max_arc_line             = 1000                        # Maximum Nb. of Lines in Alert Archive
+sadm_email_startup            = "N"                         # Send email on startup to sysadmin ?
+sadm_email_shutdown           = "N"                         # Send email on shutdown to sysadmin ?
 
 
 # Logic to get O/S Distribution Information into Dictionary os_dict
@@ -566,7 +570,8 @@ def load_config_file(cfg_file):
     sadm_vm_export_to_keep       ,sadm_vm_export_interval       ,sadm_vm_export_alert          ,\
     sadm_vm_user                 ,sadm_vm_stop_timeout          ,sadm_vm_start_interval        ,\
     sadm_days_history            ,sadm_max_arc_line             ,sadm_email_startup            ,\
-    sadm_email_shutdown          ,sadm_vm_export_dif            ,sadm_pwd_random
+    sadm_email_shutdown          ,sadm_vm_export_dif            ,sadm_pwd_random               ,\
+    sadm_backup_nfs_server_ver,  sadm_rear_nfs_server_ver       ,sadm_vm_export_nfs_server_ver
     
     if lib_debug > 4 :
         print ("Load Configuration file %s" % (cfg_file))
@@ -644,7 +649,9 @@ def load_config_file(cfg_file):
         if "SADM_DBPORT"                   in CFG_NAME: sadm_dbport                  = int(CFG_VALUE)
         if "SADM_RW_DBUSER"                in CFG_NAME: sadm_rw_dbuser               = CFG_VALUE
         if "SADM_RO_DBUSER"                in CFG_NAME: sadm_ro_dbuser               = CFG_VALUE
+#
         if "SADM_BACKUP_NFS_SERVER"        in CFG_NAME: sadm_backup_nfs_server       = CFG_VALUE
+        if "SADM_BACKUP_NFS_SERVER_VER"    in CFG_NAME: sadm_backup_nfs_server_ver   = int(CFG_VALUE)
         if "SADM_BACKUP_NFS_MOUNT_POINT"   in CFG_NAME: sadm_backup_nfs_mount_point  = CFG_VALUE
         if "SADM_BACKUP_DIF"               in CFG_NAME: sadm_backup_dif              = int(CFG_VALUE)
         if "SADM_BACKUP_INTERVAL"          in CFG_NAME: sadm_backup_interval         = int(CFG_VALUE)
@@ -656,11 +663,14 @@ def load_config_file(cfg_file):
         if "SADM_MONTHLY_BACKUP_DATE"      in CFG_NAME: sadm_monthly_backup_date     = int(CFG_VALUE)
         if "SADM_YEARLY_BACKUP_MONTH"      in CFG_NAME: sadm_yearly_backup_month     = int(CFG_VALUE)
         if "SADM_YEARLY_BACKUP_DATE"       in CFG_NAME: sadm_yearly_backup_date      = int(CFG_VALUE)
+#
         if "SADM_REAR_NFS_SERVER"          in CFG_NAME: sadm_rear_nfs_server         = CFG_VALUE
+        if "SADM_REAR_NFS_SERVER_VER"      in CFG_NAME: sadm_rear_nfs_server_ver     = int(CFG_VALUE)
         if "SADM_REAR_NFS_MOUNT_POINT"     in CFG_NAME: sadm_rear_nfs_mount_point    = CFG_VALUE
         if "SADM_REAR_BACKUP_TO_KEEP"      in CFG_NAME: sadm_rear_backup_to_keep     = int(CFG_VALUE)
         if "SADM_REAR_BACKUP_DIFF"         in CFG_NAME: sadm_rear_backup_dif         = int(CFG_VALUE)
         if "SADM_REAR_BACKUP_INTERVAL"     in CFG_NAME: sadm_rear_backup_interval    = int(CFG_VALUE)
+# 
         if "SADM_NETWORK1"                 in CFG_NAME: sadm_network1                = CFG_VALUE
         if "SADM_NETWORK2"                 in CFG_NAME: sadm_network2                = CFG_VALUE
         if "SADM_NETWORK3"                 in CFG_NAME: sadm_network3                = CFG_VALUE
@@ -676,6 +686,7 @@ def load_config_file(cfg_file):
         if "SADM_SMTP_SENDER"              in CFG_NAME: sadm_smtp_sender             = CFG_VALUE
 
         if "SADM_VM_EXPORT_NFS_SERVER"     in CFG_NAME: sadm_vm_export_nfs_server    = CFG_VALUE
+        if "SADM_VM_EXPORT_NFS_SERVER_VER" in CFG_NAME: sadm_vm_export_nfs_server_ver = int(CFG_VALUE)
         if "SADM_VM_EXPORT_MOUNT_POINT"    in CFG_NAME: sadm_vm_export_mount_point   = CFG_VALUE
         if "SADM_VM_EXPORT_TO_KEEP"        in CFG_NAME: sadm_vm_export_to_keep       = int(CFG_VALUE)
         if "SADM_VM_EXPORT_INTERVAL"       in CFG_NAME: sadm_vm_export_interval      = int(CFG_VALUE)
@@ -684,6 +695,7 @@ def load_config_file(cfg_file):
         if "SADM_VM_STOP_TIMEOUT"          in CFG_NAME: sadm_vm_stop_timeout         = int(CFG_VALUE)
         if "SADM_VM_START_INTERVAL"        in CFG_NAME: sadm_vm_start_interval       = int(CFG_VALUE)
         if "SADM_VM_EXPORT_DIF"            in CFG_NAME: sadm_vm_export_dif           = int(CFG_VALUE)
+# 
         if "SADM_DAYS_HISTORY"             in CFG_NAME: sadm_days_history            = int(CFG_VALUE)
         if "SADM_MAX_ARC_LINE"             in CFG_NAME: sadm_max_arc_line            = int(CFG_VALUE)
         if "SADM_EMAIL_STARTUP"            in CFG_NAME: sadm_email_startup           = CFG_VALUE
@@ -855,7 +867,7 @@ def lock_system(fname, errmsg=True ) :
         This function is used to create a 'lock_time' for the requested system.
         When the lock file exist "${SADMIN}/tmp/$(hostname -s).lock" for a system, 
         no error or warning is reported (No alert, No notification) to the user 
-        (on monitor screen) until the 'lock_file'is removed, either by calling 
+        (on monitor screen) until the 'lock_file' is removed, either by calling 
         "unlock_systemfunction or when the lock file time stamp exceed the number of 
         seconds set by 'lock_timeout'. The "check_system_lockockock()" function will automatically 
         remove the 'lock_file' when it is expired.
@@ -929,12 +941,13 @@ def unlock_system(fname ,errmsg=True):
 
 # --------------------------------------------------------------------------------------------------
 def check_system_lock(fname, errmsg=True):
+#def lock_status(fname, errmsg=True):
 
     """ 
 
 ### Description :   
 
-This function is used to check if a 'lock_file' exist for the system name received.
+This function is used to check if a system 'lock_file' exist for the hostname received.
 When the lock file exist "${SADMIN}/tmp/$(hostname -s).lock" for a system, no 
 monitoring error or warning is reported (No alert, No notification) to the user
 until the lock file is deleted.
