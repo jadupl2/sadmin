@@ -90,6 +90,7 @@
 # 2023_09_13 backup v3.46 Record backup size, more info in log & apply cleaning to all backup type.
 # 2024_01_02 backup v3.47 Fix initial backup directory setup.
 #@2024_04_02 backup v3.48 Small enhancements
+#@2020_02_01 backup v3.49 Fix 'mount.nfs: Cannot allocate memory' on Raspi O/S
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -118,7 +119,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.48'                                     # Script version number
+export SADM_VER='3.49'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -708,16 +709,32 @@ mount_nfs()
     REM_MOUNT="${SADM_BACKUP_NFS_SERVER}:${SADM_BACKUP_NFS_MOUNT_POINT}"
     sadm_write_log "Mounting NFS Drive on ${SADM_BACKUP_NFS_SERVER}."   # Show NFS Server Name
     umount ${LOCAL_MOUNT} > /dev/null 2>&1                              # Make sure not mounted
+
     if [ "$SADM_OS_TYPE" = "DARWIN" ]                                   # If on MacOS
         then sadm_write_log "mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT}"
              mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
-        else sadm_write_log "mount -o vers=3 ${REM_MOUNT} ${LOCAL_MOUNT}" # If on Linux/Aix
-             mount -o vers=3 ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1 # Mount NFS Drive
+             RC=$?
+        else sadm_write_log "mount -o vers=$SADM_BACKUP_NFS_SERVER_VER ${REM_MOUNT} ${LOCAL_MOUNT}" 
+             mount -o vers=$SADM_BACKUP_NFS_SERVER_VER ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
+             RC=$?
     fi
-    if [ $? -ne 0 ]                                                     # If Error trying to mount
-        then sadm_write_err "[ ERROR ] Mount NFS Failed - Process Aborted" # Error - Advise User
-             return 1                                                   # End Function with error
-        else sadm_write_log "[ SUCCESS ] NFS Mount Succeeded."          # NFS Mount Succeeded Msg
+    if [ $RC -ne 0 ]                                                    # If Error trying to mount
+        then if [ "$SADM_OS_NAME" = "RASPBIAN" ]                        # If on Raspbian
+                then sadm_write_err "[ WARNING ] First tentative of NFS mount failed."
+                     sadm_write_err "Will clear the cache and try again : "
+                     sadm_write_err "'sync && echo 3 > /proc/sys/vm/drop_caches'"
+                     sleep 1 
+                     sadm_write_err "Try second tentative : "
+                     sadm_write_err "'mount -o vers=$SADM_BACKUP_NFS_SERVER_VER ${REM_MOUNT} ${LOCAL_MOUNT}'"
+                     mount -o vers=$SADM_BACKUP_NFS_SERVER_VER ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
+                     if [ "$?" -ne 0 ] 
+                        then sadm_write_err "[ Error ] NFS mount failed - backup aborted."
+                             return 1                                   # End Function with error
+                     fi 
+                else sadm_write_err "[ Error ] Mount NFS failed - backup aborted."
+                     return 1                                           # End Function with error
+             fi 
+        else sadm_write_log "[ SUCCESS ] NFS mount succeeded."          # NFS Mount Succeeded Msg
     fi
 
     # Create System Main Directory
@@ -730,7 +747,7 @@ mount_nfs()
                 else sadm_write_log "[ SUCCESS ] Main backup directory created '${F}'."
              fi
     fi
-    chmod 775 ${F}                                                      # Assign Permission
+    chmod 775 ${F} >/dev/null @>&1                                      # Assign Permission
     return 0
 }
 
