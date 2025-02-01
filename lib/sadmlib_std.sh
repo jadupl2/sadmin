@@ -234,6 +234,8 @@
 #@2024_12_27 lib v4.55 Under certain condition, 'sadm_get_host_ip' wasn't returning proper IP.
 #@2025_01_07 lib v4.56 Fix for Debian the 'sadm_get_osversion()' did not return the minor version.
 #@2025_01_23 lib v4.57 Refine locking (Added sadm_show_lock, sadm_unlock sadm_lock, sadm_lock_status 
+#@2025_01_30 lib v4.58 3 New global var. for NFS mount in sadmin.cfg, initialize when loading library
+#@2025_01_30 lib v4.48 SADM_VM_EXPORT_NFS_SERVER_VER,SADM_BACKUP_NFS_SERVER_VER,SADM_REAR_NFS_SERVER_VER
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -243,7 +245,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.57"                                              # This Library Version
+export SADM_LIB_VER="4.58"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -405,12 +407,16 @@ export GMPW_FILE_TXT="${SADM_CFG_DIR}/.gmpw"                            # SMTP U
 export GMPW_FILE_B64="${SADM_CFG_DIR}/.gmpw64"                          # SMTP Encrypted PasswdFile
 export SADM_RELEASE=$(cat $SADM_REL_FILE)                               # SADM Release Ver. Number
 export SADM_SSH_PORT=""                                                 # Default SSH Port
+#
 export SADM_REAR_NFS_SERVER=""                                          # ReaR NFS Server
+export SADM_REAR_NFS_SERVER_VER=3                                       # NFS mount version (3-4)
 export SADM_REAR_NFS_MOUNT_POINT=""                                     # ReaR Mount Point
 export SADM_REAR_BACKUP_TO_KEEP=3                                       # Rear Nb.Copy
 export SADM_REAR_BACKUP_DIF=25                                          # % size diff cur. vs prev.
 export SADM_REAR_BACKUP_INTERVAL=7                                      # Alert when 7 days without 
+#
 export SADM_BACKUP_NFS_SERVER=""                                        # Backup NFS Server
+export SADM_BACKUP_NFS_SERVER_VER=3                                     # NFS mount version (3-4)
 export SADM_BACKUP_NFS_MOUNT_POINT=""                                   # Backup Mnt Point
 export SADM_BACKUP_INTERVAL=10                                          # Days before yellow alert
 export SADM_DAILY_BACKUP_TO_KEEP=3                                      # Daily to Keep
@@ -422,6 +428,7 @@ export SADM_MONTHLY_BACKUP_DATE=1                                       # Monthl
 export SADM_YEARLY_BACKUP_MONTH=12                                      # Yearly Backup Mth
 export SADM_YEARLY_BACKUP_DATE=31                                       # Yearly Backup Day
 export SADM_BACKUP_DIF=40                                               # % size diff cur. vs prev.
+#
 export SADM_PID_TIMEOUT=7200                                            # PID File TTL default
 export SADM_LOCK_TIMEOUT=3600                                           # Host Lock File TTL           
 export SADM_MONITOR_RECENT_COUNT=10                                     # SysMon Nb Recent Script
@@ -433,6 +440,7 @@ export SADM_GMPW=""                                                     # smtp s
 #export SADM_SILENT_MODE=0                                  # Show (0) or not error mesg (1)=just RC
 #
 export SADM_VM_EXPORT_NFS_SERVER=""                                     # NFS Server for VM Export
+export SADM_VM_EXPORT_NFS_SERVER_VER=3                                  # NFS server ver.(3-4) to use
 export SADM_VM_EXPORT_MOUNT_POINT=""                                    # NFS mount port for Export
 export SADM_VM_EXPORT_TO_KEEP=""                                        # Nb export to keep per VM
 export SADM_VM_EXPORT_INTERVAL=""                                       # Days without export=alert
@@ -1939,6 +1947,8 @@ sadm_load_config_file() {
                                             ;;
             "SADM_BACKUP_NFS_SERVER")       SADM_BACKUP_NFS_SERVER=$VALUE
                                             ;;
+            "SADM_BACKUP_NFS_SERVER_VER")   SADM_BACKUP_NFS_SERVER_VER=$VALUE
+                                            ;;
             "SADM_BACKUP_NFS_MOUNT_POINT")  SADM_BACKUP_NFS_MOUNT_POINT=$VALUE
                                             ;;
             "SADM_BACKUP_INTERVAL")         SADM_BACKUP_INTERVAL=$VALUE
@@ -1962,6 +1972,8 @@ sadm_load_config_file() {
             "SADM_BACKUP_DIF")              SADM_BACKUP_DIF=$VALUE
                                             ;;
             "SADM_REAR_NFS_SERVER")         SADM_REAR_NFS_SERVER=$VALUE
+                                            ;;
+            "SADM_REAR_NFS_SERVER_VER")     SADM_REAR_NFS_SERVER_VER=$VALUE
                                             ;;
             "SADM_REAR_NFS_MOUNT_POINT")    SADM_REAR_NFS_MOUNT_POINT=$VALUE
                                             ;;
@@ -1998,6 +2010,8 @@ sadm_load_config_file() {
             "SADM_SMTP_SENDER")             SADM_SMTP_SENDER=$VALUE
                                             ;;
             "SADM_VM_EXPORT_NFS_SERVER" )   SADM_VM_EXPORT_NFS_SERVER=$VALUE
+                                            ;; 
+            "SADM_VM_EXPORT_NFS_SERVER_VER" ) SADM_VM_EXPORT_NFS_SERVER_VER=$VALUE
                                             ;; 
             "SADM_VM_EXPORT_MOUNT_POINT" )  SADM_VM_EXPORT_MOUNT_POINT=$VALUE
                                             ;; 
