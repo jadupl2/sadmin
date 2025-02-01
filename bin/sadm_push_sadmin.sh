@@ -202,8 +202,8 @@ process_servers()
 
     # If SQL result file has a zero length, return to caller, nothing to process
         if [ ! -s "$SADM_TMP_FILE1" ]                                   # File has a zero length?
-        then sadm_write_log "[ ERROR ] No server to process ..."        # Nothing to process
-             sadm_write_log "${SADM_TEN_DASH}"                          # Terminate dash line
+        then sadm_write_err "[ WARNING] No server to process ..."       # Nothing to process
+             sadm_write_err "${SADM_TEN_DASH}"                          # Terminate dash line
              return 1                                                   # Return to caller RC=1
     fi
 
@@ -237,9 +237,9 @@ process_servers()
     # Check if System is Locked.
         sadm_lock_status "$server_name"                           # Check lock file status
         if [ $? -ne 0 ] 
-            then sadm_write_log "[ WARNING ] System ${server_fqdn} is currently lock."
+            then sadm_write_err "[ WARNING ] System ${server_fqdn} is currently lock."
                  ((WARNING_COUNT++))                                    # Increase Warning Counter
-                 sadm_write_log "$SADM_WARNING at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT}"
+                 sadm_write_err "$SADM_WARNING at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT}"
                  continue                                               # Go process next server
         fi
 
@@ -247,9 +247,9 @@ process_servers()
         ${SADM_SSH} -qnp $server_ssh_port $server_fqdn date >/dev/null 2>&1
         RC=$?                                                           # Save Error Number
         if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "1" ]              # SSH don't work & Sporadic
-           then sadm_write_log "[ WARNING ] Can't SSH to sporadic server ${server_fqdn}"
+           then sadm_write_err "[ WARNING ] Can't SSH to sporadic server ${server_fqdn}"
                 ((WARNING_COUNT++))                                     # Increase Warning Counter
-                sadm_write_log "$SADM_WARNING at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT}"
+                sadm_write_err "$SADM_WARNING at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT}"
                 continue                                                # Go process next server
         fi
 
@@ -263,7 +263,7 @@ process_servers()
                   RC=$?                                                 # Save Error Number
                   if [ $RC -ne 0 ]                                      # If Error doing ssh
                       then if [ $RETRY -lt 3 ]                          # If less than 3 retry
-                              then MSG="[ RETRY $RETRY ] $SADM_SSH -qnp $server_ssh_port $server_fqdn date"
+                              then MSG="[ WARNING ] Retry No.$RETRY - $SADM_SSH -qnp $server_ssh_port $server_fqdn date"
                                    sadm_write_log "${MSG}"               # Show Retry Count to User
                               else break                                # Break out after 3 attempts
                            fi
