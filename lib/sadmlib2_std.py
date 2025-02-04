@@ -863,30 +863,37 @@ def sleep(sleep_time=60, sleep_interval=15):
 def lock_system(fname, errmsg=True ) :
 
     """  
-        Create a system 'lock_file' for the received system name.
-        This function is used to create a 'lock_time' for the requested system.
+        Create a system 'lock_file' for the specified hostname.
         When the lock file exist "${SADMIN}/tmp/$(hostname -s).lock" for a system, 
         no error or warning is reported (No alert, No notification) to the user 
-        (on monitor screen) until the 'lock_file' is removed, either by calling 
-        "unlock_systemfunction or when the lock file time stamp exceed the number of 
-        seconds set by 'lock_timeout'. The "check_system_lockockock()" function will automatically 
-        remove the 'lock_file' when it is expired.
+        Lock system will appears on the monitor web page until the 'lock_file' is removed, 
+        either by calling then 'unlock_system' function or when the lock file time stamp exceed 
+        the number of seconds set by 'sa.lock_timeout' variable. The 'unlock system()' function
+        will automatically remove the 'lock_file' when this time is expired.
         
     Args: 
         fname : Name of the system you want to remove the lock file (hostname -s, not FQDN).
                 The full path name of the lock file is "$SADMIN/tmp/$(hostname -s).lock"
 
     Args Optionnal: 
-        errmsg: Default value is True
+        errmsg: Default value is True (Show message/error)
+                False, when you want no message, error or content of lock file to be displayed.
                 Use if don't want any message or error message written to log or screen.
                 Base your logic only on the return value and built and display your own message.
 
+    Return Value : 
+            True is system is lock and False if it's not.
     """
 
     fexit_code = True                                                   # Default return value
-    lock_file = dir_base + '/' + fname + '.lock'                         # Lock File Name
+    lock_file = dir_base + '/' + fname + '.lock'                        # Lock File Name
     if os.path.isfile(lock_file):                                       # If lock file already exist
-        if errmsg : write_err("[ WARNING ] System '%s' already lock." % (fname))                                     
+        if errmsg : 
+            write_err("[ WARNING ] System '%s' already lock." % (fname))  
+            file = open(lock_file, 'r')                                 # Open lockfile in read mode
+            contents = file.read()                                      # Read lock file contents
+            print(contents)                                             # Print lock file contents
+            file.close()                                     
         return(True)
 
     try:
@@ -913,7 +920,7 @@ def unlock_system(fname ,errmsg=True):
         warning is reported (No alert, No notification) to the user (on monitor screen) until the 
         lock file is remove.
         When the lock file time stamp exceed the number of seconds set by 'lock_timeout' variable
-        then 'lock_file' will be automatically by "check_system_lock()" function.
+        then 'lock_file' will be automatically by "lock_status()" function.
        
         Args: 
             fname : Name of the system you want to remove the lock file (hostname -s, not FQDN).
@@ -940,17 +947,17 @@ def unlock_system(fname ,errmsg=True):
 
 
 # --------------------------------------------------------------------------------------------------
-def check_system_lock(fname, errmsg=True):
-#def lock_status(fname, errmsg=True):
+def lock_status(fname, errmsg=True):
 
     """ 
 
 ### Description :   
 
-This function is used to check if a system 'lock_file' exist for the hostname received.
+This function is used to check if a system 'lock_file' exist for the specified hostname.
 When the lock file exist "${SADMIN}/tmp/$(hostname -s).lock" for a system, no 
 monitoring error or warning is reported (No alert, No notification) to the user
-until the lock file is deleted.
+until the lock file is deleted. The SADMIN server will not trigger any remote command to
+that system until the lock is removed.
  
 If the lock file exist, this function check the creation date & time of it.
 When the lock file time stamp exceed the number of seconds set by 'lock_timeout' 
@@ -974,11 +981,13 @@ True)  System is lock.
 
 ### Example :   
 
-# Check if System is Locked.
-if sa.check_system_lock(wname) != 0:                            # Is System Lock ?
-    sa.write_err("[ WARNING ] System '%s' is currently lock." % (wname))
-    sa.write_log("Continuing with next system.)                 # Not Error if system lock
-    continue                                                    # Go read Next System
+```bash
+    # Check if System is Locked.
+    if sa.lock_status(wname) :                                      # System is Lock
+        sa.write_err("[ WARNING ] System '%s' is currently lock." % (wname))
+        sa.write_err("Continuing with next system.)                 # Not Error if system lock
+```
+    
     """
     
     fexit_code = 0    
@@ -2320,7 +2329,7 @@ def start(pver,pdesc) :
     # Check Files that should be present ONLY ON SADMIN SERVER
     # Make sure the alert History file exist , if not use the history template to create it.
     if (sadm_host_type == "S") :
-        if check_system_lock(phostname) :                               # System is Lock on SADMIN
+        if lock_status(phostname) :                               # System is Lock on SADMIN
            stop(1)                                                      # Close SADMIN
            sys.exit(1)                                                  # Exit back to O/S,Abort
         if not os.path.exists(alert_hist):                              # AlertHistory Missing

@@ -235,7 +235,7 @@
 #@2025_01_07 lib v4.56 Fix for Debian the 'sadm_get_osversion()' did not return the minor version.
 #@2025_01_23 lib v4.57 Refine locking (Added sadm_show_lock, sadm_unlock sadm_lock, sadm_lock_status 
 #@2025_01_30 lib v4.58 3 New global var. for NFS mount in sadmin.cfg, initialize when loading library
-#@2025_01_30 lib v4.48 SADM_VM_EXPORT_NFS_SERVER_VER,SADM_BACKUP_NFS_SERVER_VER,SADM_REAR_NFS_SERVER_VER
+#@2025_01_30 lib v4.58 SADM_VM_EXPORT_NFS_SERVER_VER,SADM_BACKUP_NFS_SERVER_VER,SADM_REAR_NFS_SERVER_VER
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x

@@ -285,13 +285,13 @@ def print_functions():
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.lock_system(hostname)"                                 # If Exist=No Error Msg
-    pdesc="Lock specified host, monitoring off"                         # Function Description
+    pdesc="Lock the specified hostname (Not FQDN)"                      # Function Description
     presult=sa.lock_system(sa.sadm_server,errmsg=False)                 # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
-    pexample="sa.check_system_lock(hostname)"                           # Example Calling Function
+    pexample="sa.lock_status(hostname)"                                 # Example Calling Function
     pdesc="Check if host specified is lock"                             # Function Description
-    presult=sa.check_system_lock(sa.sadm_server,errmsg=False)           # Return Value(s)
+    presult=sa.lock_status(sa.sadm_server,errmsg=False)                 # Return Value(s)
     printline (pexample,pdesc,presult)                                  # Print Example Line
 
     pexample="sa.unlock_system(hostname)"                               # Example Calling Function

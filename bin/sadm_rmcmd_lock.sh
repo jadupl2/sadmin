@@ -170,6 +170,86 @@ show_usage()
 
 
 
+# --------------------------------------------------------------------------------------------------
+# update_rpt_file()
+#
+# Update the host SysMon report (rpt) 
+#
+# Input Parameters :
+#   1) State of the report line (1 Char - Lower or Upper case).
+#       'I' = Information line
+#       'W' = Warning line
+#       'E' = Error line
+#       'S' = Script 
+#   2) System Host Name
+#   3) Operating System (LINUX,DARWIN or AIX)
+#   4) SubModule (One of these ; NETWORK,SCRIPT,HTTP,HTTPS,DAEMON,SERVICE)
+#   5) Message concerning the event (String)
+#   6) Warning Alert Group Name (String)
+#   7) Error Alert Group Name (String)
+# 
+# The rpt file is created ans the formatted rpt line is output to the filee.
+# Fields in this file are ';' delimited.
+#
+# Example of rpt line: 
+#  Warning;sherlock;2025.01.19;11:43;linux;FILESYSTEM;Filesystem /data at 92% >= 90%;default;default
+# --------------------------------------------------------------------------------------------------
+update_rpt_file()
+{
+    if [ $# -ne 7 ]
+        then sadm_write_log "Invalid number of argument received by function ${FUNCNAME}."
+             sadm_write_log "Should be 7, but we received $# : $* "     # Show what received
+             return 1                                                   # Return Error to caller
+    fi
+    
+    RPT_STAT="$1"
+    RPT_HOST="$2"
+    RPT_OSNAME=$(sadm_capitalize "$3")
+    RPT_MODULE="$4"
+    RPT_MSG="$5"
+    RPT_WGRP="$6"
+    RPT_EGRP="$7"
+
+    if [ "$SADM_DEBUG" -gt 2 ] 
+        then sadm_write_log "[ DEBUG ] In function ${FUNCNAME}."
+             sadm_write_log "[ DEBUG ] RPT_STAT=$RPT_STAT"
+             sadm_write_log "[ DEBUG ] RPT_HOST=$RPT_HOST"
+             sadm_write_log "[ DEBUG ] RPT_OSNAME=$RPT_OSNAME"
+             sadm_write_log "[ DEBUG ] RPT_MODULE=$RPT_MODULE"
+             sadm_write_log "[ DEBUG ] RPT_MSG=$RPT_MSG"
+             sadm_write_log "[ DEBUG ] RPT_WGRP=$RPT_WGRP"
+             sadm_write_log "[ DEBUG ] RPT_EGRP=$RPT_EGRP"
+    fi 
+
+    # Set Event Type 
+    case "$RPT_STAT" in
+        E|e) RPT_STAT="Error"
+             ;;  
+        W|w) RPT_STAT="Warning" 
+             ;;  
+        I|i) RPT_STAT="Info"
+             ;;  
+        S|s) RPT_STAT="Script" 
+             ;;  
+        *) RPT_STAT="Invalid status type '$1' "
+           ;;
+    esac
+
+    RPT_DATE=$(date "+%Y.%m.%d")                                       
+    RPT_TIME=$(date "+%H:%M")                                       
+    RPTLINE="${RPT_STAT};${RPT_HOST};${RPT_DATE};${RPT_TIME};${RPT_OSNAME}" 
+    RPTLINE="${RPTLINE};${RPT_MODULE};${RPT_MSG};${RPT_WGRP};${RPT_EGRP};"
+    echo "$RPTLINE" >> $FETCH_RPT_LOCAL                                 # SADMIN Server Monitor rpt
+    echo "$RPTLINE" >> $FETCH_RPT_GLOBAL                                # SADMIN WWW All System rpt 
+
+    if [ "$SADM_DEBUG" -gt 2 ] 
+        then sadm_write_log "[ DEBUG ] In function ${FUNCNAME}, Line added to $FETCH_RPT_LOCAL ."
+             sadm_write_log "[ DEBUG ] $RPTLINE" 
+    fi 
+    return 0 
+}
+
+
 
 # --------------------------------------------------------------------------------------------------
 #                      Process Linux servers selected by the SQL
@@ -221,7 +301,7 @@ rmcmd_start()
 
         # Check if the remote system is currently lock (Abort execution)        
         #sadm_write_log "Check lock of $REAL_SYSTEM_LOCK" 
-        sadm_lock_status "$REAL_SYSTEM_LOCK"                      # Check if node is lock
+        sadm_lock_status "$REAL_SYSTEM_LOCK"                            # Check if node is lock
         if [ $RC -ne 0 ]                                                # If node is lock
            then sadm_write_err "[ ERROR ] System '$REAL_SYSTEM_LOCK' is currently lock."
                 sadm_write_err "$(sadm_show_lock "$REAL_SYSTEM_LOCK")"
@@ -229,7 +309,7 @@ rmcmd_start()
         fi 
 
         # Ping the remote system - Test if it is alive
-        ping -c2 -W2 $REM_SERVER >> /dev/null 2>&1                     # Ping 2 times,timeout 2 Sec
+        ping -c2 -W2 $REM_SERVER >> /dev/null 2>&1                      # Ping 2 times,timeout 2 Sec
         if [ $? -ne 0 ]
             then sadm_write_err "[ ERROR ] Can't ping '$REM_SERVER'."
                  return 1                                              
@@ -243,13 +323,17 @@ rmcmd_start()
         #fi
 
         # Lock the remote system while the script is executed (-l) 
-#        sadm_lock_status "$REAL_SYSTEM_LOCK" "${REM_SCRIPT}_${REM_SCRIPT_ARGS}"
         sadm_lock_system "$REAL_SYSTEM_LOCK" "$REM_SCRIPT $REM_SCRIPT_ARGS"
         if [ $? -ne 0 ]                                                 # Unable to Lock Node
-           then sadm_write_log "[ ERROR ] couldn't lock system '$REAL_SYSTEM_LOCK'."
+           then sadm_write_log "[ ERROR ] Couldn't lock system '$REAL_SYSTEM_LOCK'."
                 return 1                                                # Return Error to caller 
         fi
         
+        # Update SADMIN server Global RPT File.
+        RPT_MSG="$(sadm_show_lock $server_name)"
+        update_rpt_file "I" "$REAL_SYSTEM_LOCK" "$(sadm_get_ostype)" "NETWORK" "$RPT_MSG" "$SADM_ALERT_GROUP" "$SADM_ALERT_GROUP"
+
+
         # Time to run the requested $SCRIPT on remote system
         sadm_write_log "[ OK ] Starting '$REM_SCRIPT' on '$REM_SERVER'."
         #$DSADMBIN/sadm_rmcmd_starter.sh  -u jacques -l centos8 -n anemone -p -s 'sadm_vm_export.sh' -a centos8 

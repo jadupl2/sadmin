@@ -342,7 +342,8 @@ function display_line($line,$BGCOLOR,$con)
             echo "\n<td align='center' bgcolor=$BGCOLOR align='left'><span data-toggle='tooltip' title='System Information'>";
             echo "<img src='/images/sadm_info.png' ";                   # Show Running Icon
             echo "style='width:96px;height:40px;'></span></td>";        # Status Standard Image Size
-            $alert_group=$warngrp;                                      # Set Event Alert Group            break;
+            $alert_group=$warngrp;                                      # Set Event Alert Group 
+            break;
         default:
             echo "\n<td bgcolor=$BGCOLOR align='left'><span data-toggle='tooltip' title='Unknown Status'>";
             echo "<img src='/images/question_mark.jpg' ";               # Show Question Mark
@@ -353,7 +354,7 @@ function display_line($line,$BGCOLOR,$con)
 
     # Get Server Description, O/S and O/S version.
     $sql ="SELECT * FROM server where srv_name = '". $whost . "';";     # Construct select 
-    if ( ! $result=mysqli_query($con,$sql)) {                           # Execute SQL Select
+    if ( ! $result=mysqli_query($con,$sql)) {             # Execute SQL Select
         $WDESC = "Server not in Database";                              # Server not found descr.
         $WOS   = "Unknown";                                             # O/S name is unknown
         $WVER  = "Unknown";                                             # O/S Version is unknown

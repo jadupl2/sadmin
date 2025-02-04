@@ -167,7 +167,7 @@ def process_servers():
             continue                                                    # Go read Next Server
 
         # Check if System is Locked.
-        if sa.check_system_lock(wname) != 0:                            # Is System Lock ?
+        if sa.lock_status(wname) != 0:                                  # Is System Lock ?
             sa.write_err("[ WARNING ] System '%s' is currently lock." % (wname))
             sa.write_log("Continuing with next system")                 # Not Error if system lock
             continue                                                    # Go read Next Server
