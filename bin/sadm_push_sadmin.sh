@@ -63,6 +63,7 @@
 # 2023_10_04 server v2.44 Some error were recorded in standard log instead of the error log.
 # 2023_12_26 server v2.45 More info shown while running.
 #@2024_04_02 server v2.46 Restructure rsync of $SADMIN/cfg and minor changes.
+#@2025_02_11 server v2.47 Minor changes to screen output & log.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -92,7 +93,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.46'                                     # Script Version
+export SADM_VER='2.47'                                     # Script Version
 export SADM_PDESC="Copy SADMIN version to all actives clients, without overwriting config files)."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -204,6 +205,7 @@ process_servers()
         if [ ! -s "$SADM_TMP_FILE1" ]                                   # File has a zero length?
         then sadm_write_err "[ WARNING] No server to process ..."       # Nothing to process
              sadm_write_err "${SADM_TEN_DASH}"                          # Terminate dash line
+             sadm_write_err " " 
              return 1                                                   # Return to caller RC=1
     fi
 
@@ -231,6 +233,7 @@ process_servers()
                 sadm_write_err "${SMSG}"                                # Advise user
                 ((ERROR_COUNT++))                                       # Consider Error -Incr Cntr
                 sadm_write_err "Total Error(s) now at ${ERROR_COUNT}"   # Show Error count
+                 sadm_write_err " " 
                 continue                                                # skip this server
         fi
 
@@ -240,6 +243,7 @@ process_servers()
             then sadm_write_err "[ WARNING ] System ${server_fqdn} is currently lock."
                  ((WARNING_COUNT++))                                    # Increase Warning Counter
                  sadm_write_err "$SADM_WARNING at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT}"
+                 sadm_write_err " " 
                  continue                                               # Go process next server
         fi
 
@@ -250,6 +254,7 @@ process_servers()
            then sadm_write_err "[ WARNING ] Can't SSH to sporadic server ${server_fqdn}"
                 ((WARNING_COUNT++))                                     # Increase Warning Counter
                 sadm_write_err "$SADM_WARNING at ${WARNING_COUNT} - [ ERROR ] at ${ERROR_COUNT}"
+                sadm_write_err " " 
                 continue                                                # Go process next server
         fi
 
@@ -456,7 +461,7 @@ process_servers()
                  scp -CqP $server_ssh_port ${sadmin_common} ${sadmin_destination} >> $SADM_LOG 2>&1
                  RC=$? 
                  if [ $RC -ne 0 ]
-                    then sadm_write_log "[ ERROR ] $CMD"
+                    then sadm_write_err "[ ERROR ] $CMD"
                          ((ERROR_COUNT++))
                     else sadm_write_log "[ OK ] $CMD" 
                  fi
