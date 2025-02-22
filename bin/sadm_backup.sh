@@ -91,6 +91,7 @@
 # 2024_01_02 backup v3.47 Fix initial backup directory setup.
 #@2024_04_02 backup v3.48 Small enhancements
 #@2020_02_01 backup v3.49 Fix 'mount.nfs: Cannot allocate memory' on Raspi O/S
+#@2020_02_22 backup v3.50 Fix problem with 'mount.nfs: Cannot allocate memory' on Raspbian.
 #===================================================================================================
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -119,7 +120,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.49'                                     # Script version number
+export SADM_VER='3.50'                                     # Script version number
 export SADM_PDESC="Backup files and directories specified in the backup list file."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -508,7 +509,7 @@ create_backup()
                          echo "#"  >>$BACK_LOG 2>&1
                          tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line >>$BACK_LOG 2>&1
                          RC=$?                                          # Save Return Code
-                         echo "Backup ended at `date` with exit code of $RC"  >>$BACK_LOG 2>&1
+                         echo "Backup ended at $(date) with exit code of $RC"  >>$BACK_LOG 2>&1
                     else BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"     # Final tar Backup file name
                          sadm_write_log "tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line"
                          echo "# Backup of .$backup_line started at `date`" >>$BACK_LOG 2>&1
@@ -520,7 +521,7 @@ create_backup()
                          echo "#"  >>$BACK_LOG 2>&1
                          tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude .$backup_line >>$BACK_LOG 2>&1
                          RC=$?                                          # Save Return Code
-                         echo "Backup ended at `date` with exit code of $RC"  >>$BACK_LOG 2>&1
+                         echo "Backup ended at $(date) with exit code of $RC"  >>$BACK_LOG 2>&1
                 fi
         fi
 
@@ -714,8 +715,9 @@ mount_nfs()
         then sadm_write_log "mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT}"
              mount -t nfs -o resvport,rw ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
              RC=$?
-        else sadm_write_log "mount -o vers=$SADM_BACKUP_NFS_SERVER_VER ${REM_MOUNT} ${LOCAL_MOUNT}" 
-             mount -o vers=$SADM_BACKUP_NFS_SERVER_VER ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
+        else NFS_OPT="-t nfs -o vers=$SADM_BACKUP_NFS_SERVER_VER "
+             sadm_write_log "mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT}" 
+             mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
              RC=$?
     fi
     if [ $RC -ne 0 ]                                                    # If Error trying to mount
@@ -723,10 +725,11 @@ mount_nfs()
                 then sadm_write_err "[ WARNING ] First tentative of NFS mount failed."
                      sadm_write_err "Will clear the cache and try again : "
                      sadm_write_err "'sync && echo 3 > /proc/sys/vm/drop_caches'"
-                     sleep 1 
+                     sync && echo 3 > /proc/sys/vm/drop_caches
+                     sleep 4
                      sadm_write_err "Try second tentative : "
-                     sadm_write_err "'mount -o vers=$SADM_BACKUP_NFS_SERVER_VER ${REM_MOUNT} ${LOCAL_MOUNT}'"
-                     mount -o vers=$SADM_BACKUP_NFS_SERVER_VER ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
+                     sadm_write_err "'mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT}'"
+                     mount $NFS_OPT ${REM_MOUNT} ${LOCAL_MOUNT} >>$SADM_LOG 2>&1
                      if [ "$?" -ne 0 ] 
                         then sadm_write_err "[ Error ] NFS mount failed - backup aborted."
                              return 1                                   # End Function with error
