@@ -86,6 +86,7 @@
 #@2024_11_25 backup v2.39 Add integrity check of resulting tgz file.
 #@2024_12_05 backup v2.40 Change way used to check integrity on rear tgz backup file.
 #@2025_01_24 backup v2.41 Collect more info while doing a restore test at the end of backup.
+#@2025_02_22 backup v2.42 Using the NFS mount version '$SADM_REAR_NFS_SERVER_VER' from sadmin.cfg.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -114,7 +115,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.41'                                     # Script version number
+export SADM_VER='2.42'                                     # Script version number
 export SADM_PDESC="Produce a ReaR bootable iso and a restorable backup on a NFS server"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -358,8 +359,9 @@ rear_preparation()
     
     # Mount the NFS Mount point
     umount ${NFS_MOUNT} > /dev/null 2>&1                                # Make sure it's unmounted.
-    sadm_write_log "  - mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} "
-    mount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} >>$SADM_LOG 2>&1
+    NFS_OPT="-t nfs -o vers=$SADM_REAR_NFS_SERVER_VER "
+    sadm_write_log "mount $NFS_OPT ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT}"
+    mount $NFS_OPT ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} >>$SADM_LOG 2>&1
     RC=$?
     if [ $RC -ne 0 ]
         then sadm_write_err "[ ERROR ] NFS Mount failed, error $RC - Process Aborted."
@@ -565,10 +567,10 @@ rear_housekeeping()
     # List 10 biggest files include in the tgz file
     sadm_write_log " "
     sadm_write_log "Building a list of the 10 biggest files included in your ReaR backup file."
-    tar -tzvf $REAR_CUR_TGZ | sort -k3 -rn | nl | head | tee -a  ${SADM_LOG}  
+    tar -tzvf $REAR_CUR_TGZ | sort -k3 -rn | nl | head >>$SADM_LOG 2>&1
     sadm_write_log " "
     
-     # Unmount the NFS directory 
+    # Unmount the NFS directory 
     umount ${NFS_MOUNT} >> $SADM_LOG 2>&1
     if [ $? -ne 0 ]
     then sadm_write_err "[ ERROR ] Problem unmounting ${NFS_MOUNT}."
@@ -629,7 +631,7 @@ create_backup()
          sadm_write_err "Also look into ReaR log file /var/log/rear/rear-${SADM_HOSTNAME}.log." 
          sadm_write_err "***** Rear Backup completed with Error - Aborting Script *****"
          sadm_write_log "Unmount ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT}"
-         umount  ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} | tee -a ${SADM_LOG} 
+         umount  ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} >>$SADM_LOG 2>&1
          return 1                                                        # Back to caller with error
     fi 
     sadm_write_log "More info in the log ${REAR_CUR_LOG}."
@@ -690,21 +692,28 @@ function cmd_options()
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # Create Dir.,PID,log,rch
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong
-    #
-    rear_preparation                                                    # Mount Point Work ?  ...
-    if [ $? -eq 0 ]                                                     # If preparation went OK
-    then create_backup                                                  # Do the ReaR ISO and Backup
-         SADM_EXIT_CODE=$?                                              # If Error Making Backup
+    
+    rear_preparation                                                    # NFS Mount Point Work ?  ...
+    SADM_EXIT_CODE=$?
+    if [ "$SADM_EXIT_CODE" -ne 0 ]                                      # If preparation went wrong
+        then sadm_stop $SADM_EXIT_CODE                                  # Upd. RCH File & Trim Log
+             exit $SADM_EXIT_CODE                                       # Exit With Global Err (0/1)
     fi 
-    #
-    if [ $SADM_EXIT_CODE -eq 0 ]                                        # Everything ok so far
-        then rear_housekeeping                                          # Remove old backup & umount
-             if [ $? -ne 0 ]                                            # If Error in housekeeping
-                then SADM_EXIT_CODE=1                                   # If Error Exit code = 1
-                else SADM_EXIT_CODE=0                                   # No Error Exit code = 0
-             fi
-    fi
-    if [ -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi   # Remove Temp File
 
+    create_backup                                                       # Do the ReaR ISO and Backup
+    SADM_EXIT_CODE=$?                                                   # If Error Making Backup
+    if [ "$SADM_EXIT_CODE" -ne 0 ]                                      # If preparation went wrong
+        then sadm_stop $SADM_EXIT_CODE                                  # Upd. RCH File & Trim Log
+             exit $SADM_EXIT_CODE                                       # Exit With Global Err (0/1)
+    fi 
+
+    rear_housekeeping                                                   # Remove old backup & umount
+    SADM_EXIT_CODE=$?                                                   # If Error Making Backup
+    if [ "$SADM_EXIT_CODE" -ne 0 ]                                      # If preparation went wrong
+        then sadm_stop $SADM_EXIT_CODE                                  # Upd. RCH File & Trim Log
+             exit $SADM_EXIT_CODE                                       # Exit With Global Err (0/1)
+    fi 
+
+    if [ -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi   # Remove Temp File
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
