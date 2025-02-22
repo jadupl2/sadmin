@@ -236,6 +236,7 @@
 #@2025_01_23 lib v4.57 Refine locking (Added sadm_show_lock, sadm_unlock sadm_lock, sadm_lock_status 
 #@2025_01_30 lib v4.58 3 New global var. for NFS mount in sadmin.cfg, initialize when loading library
 #@2025_01_30 lib v4.58 SADM_VM_EXPORT_NFS_SERVER_VER,SADM_BACKUP_NFS_SERVER_VER,SADM_REAR_NFS_SERVER_VER
+#@2025_01_30 lib v4.59 Fix some problems these 2 functions 'sadm_get_host_ip() and sadm_get_fqdn()'.
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -245,7 +246,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.58"                                              # This Library Version
+export SADM_LIB_VER="4.59"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -652,7 +653,7 @@ sadm_write_log()
     fi    
 
     # Replace special status and put them in color.
-    SC_MSG="$init_msg"                                              # Screen msg is init msg 
+    SC_MSG="$init_msg"                                                  # Screen msg is init msg 
     SC_MSG="${SC_MSG/"$SADM_OK"/$SADM_SOK}"          
     SC_MSG="${SC_MSG/"$SADM_INFO"/$SADM_SINFO}"      
     SC_MSG="${SC_MSG/"$SADM_ERROR"/$SADM_SERROR}"    
@@ -760,7 +761,7 @@ sadm_trimfile() {
 #---------------------------------------------------------------------------------------------------
 # sadm_get_command_path() 
 #
-#   Verify existence of a command and return the full path of command (0) or blank (1).
+#   Verify presence of a command on current system and return the full path of command or blank.
 #
 # Parameter(s)  : 
 #   1) Name of the command ('cal' for example)
@@ -1256,7 +1257,8 @@ sadm_get_domainname() {
 #                        RETURN THE FULLY QUALIFIED NAME OF THE SYSTEM
 # --------------------------------------------------------------------------------------------------
 sadm_get_fqdn() {
-    echo "${SADM_HOSTNAME}.$(sadm_get_domainname)"
+    #echo "${SADM_HOSTNAME}.$(sadm_get_domainname)"
+    echo "$(hostname --fqdn)"
 }
 
 
@@ -1266,12 +1268,12 @@ sadm_get_fqdn() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_host_ip() {
     case "$(sadm_get_ostype)" in
-        "LINUX")    whost_ip=$(hostname -i)
+        "LINUX")    whost_ip=$(hostname -I | awk '{ print $1 }')
                     #whost_ip=$(host ${SADM_HOSTNAME} |awk '{ print $4 }' |head -1)
                     ;;
         "AIX")      whost_ip=$(host ${SADM_HOSTNAME}.$(sadm_get_domainname) |head -1 |awk '{ print $3 }')
                     ;;
-        "DARWIN")   whost_ip=`host ${SADM_HOSTNAME} |awk '{ print $4 }' |head -1`
+        "DARWIN")   whost_ip=$(host ${SADM_HOSTNAME} | awk '{ print $4 }' | head -1)
                     #whost_ip=`ifconfig |grep inet | grep broadcast | awk '{ print $2 }'`
                     ;;
     esac
@@ -2279,19 +2281,20 @@ sadm_start() {
                      exit 1                                             # Exit To O/S with Error
                 else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
                         then sadm_write_log "The PID file is now expired."
-                             sadm_write_log "Checking if '$SADM_PN' is still running."
+                             sadm_write_log "Let's see if '$SADM_PN' is currently running."
                              ps -ef | grep "$SADM_PN" | grep -v grep | nl >> $SADM_LOG 2>&1
                              proc_count=$(ps -ef | grep "$SADM_PN"| grep -v grep | wc -l)
-                             if [ $proc_count -gt 3 ] 
-                                then sadm_write_err "More than 3 processes are running with the name '$SADM_PN'."
+                             if [ $proc_count -gt 0 ] 
+                                then sadm_write_err "More than 1 process are running with the name '$SADM_PN'."
                                      sadm_write_err "Refusing to run another copy of this script."
-                                     DELETE_PID="N"                                     # No Del PID Since running
-                                     exit 1                                             # Exit To O/S with Error
-                                else sadm_write_log "Assuming that the script was aborted abnormally."
+                                     DELETE_PID="N"                     # No Del PID Since running
+                                     exit 1                             # Exit To O/S with Error
+                                else sadm_write_log "No process with the name '$SADM_PN' is currently running." 
+                                     sadm_write_log "Assuming that the script was aborted abnormally."
                                      sadm_write_log "Script execution will now start and the PID file recreated."
                                      sadm_write_log " "
                                      touch ${SADM_PID_FILE} >/dev/null 2>&1     # Update Modify date of PID
-                                     DELETE_PID="Y"                             # Del PID Since running
+                                     DELETE_PID="Y"                     # Del PID Since running
                              fi
                         else DELETE_PID="N"                             # No Del PID Since running
                              exit 1                                     # Exit with Error
