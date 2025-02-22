@@ -69,9 +69,11 @@
 #@2024_11_11 lib v4.55 Add two Global var. accessible to any script 'sa.vm_list' & 'sa.vm_hosts'.
 #@2024_12_17 lib v4.56 Add loading new global variable 'sadm_pwd_random' to generate 'sadmin user' pwd.
 #@2025_01_30 lib v4.57 3 New global var. for NFS mount in sadmin.cfg, initialize when loading library
-#@2025_01_30 lib v4.47 sadm_vm_export_nfs_server_ver,sadm_backup_nfs_server_ver,sadm_rear_nfs_server_ver
+#@2025_01_30 lib v4.57 sadm_vm_export_nfs_server_ver,sadm_backup_nfs_server_ver,sadm_rear_nfs_server_ver
+#@2025_02_21 lib v4.58 Fix some seldom error with these 2 functions 'get_host_ip'& 'get_domainname'.
+# 
 # --------------------------------------------------------------------------------------------------
-#
+
 try :
     import os                                               # Operating System interface
     import sys                                              # System-Specific Module
@@ -103,7 +105,7 @@ except ImportError as e:
 
 # Global Variables Shared among all SADM Libraries and Scripts
 # --------------------------------------------------------------------------------------------------
-lib_ver             = "4.57"                                # This Library Version
+lib_ver             = "4.58"                                # This Library Version
 lib_debug           = 0                                     # Library Debug Level (0-9)
 start_time          = ""                                    # Script Start Date & Time
 stop_time           = ""                                    # Script Stop Date & Time
@@ -786,8 +788,8 @@ def oscommand (command : str) :
         command (str): The command to execute.
 
     Returns:
-        returncode (int) :  0 When command executed with no error.
-                            1 When error occurred when executing the command
+        returncode (int) :  0 = When command executed with no error.
+                            1 = When error occurred when executing the command
         out (str)        :  Contain the stdout of the command executed
         err (str)        :  Contain the stderr of the command executed
     """
@@ -1059,7 +1061,11 @@ def get_host_ip():
     """ 
 
     try: 
-        whost = socket.gethostbyname(phostname)
+        cmd="hostname -I | awk '{ print $1 }' | head -1"
+        #rc=os.system(cmd)
+        oscommand(cmd)
+        ccode, whost, cstderr = oscommand(cmd)
+        #whost = socket.gethostbyname(phostname)
     except (socket.gaierror, NameError) as e:
         print("Couldn't get the IP address of '%s'." % (whost))
         print("\n%s" % (e))
@@ -1153,8 +1159,9 @@ def get_domainname():
     """ 
 
     whostip = socket.gethostbyname(phostname)
-    cmd = "host %s  | awk '{print $NF}' | cut -d. -f2-3" % whostip 
-    ccode, cstdout, cstderr = oscommand(cmd)
+    #cmd = "host %s  | awk '{print $NF}' | cut -d. -f2-3" % whostip 
+    cmd = "dnsdomainname"
+    (ccode,cstdout,cstderr) = oscommand(cmd)
     wdomainname=cstdout
     if wdomainname == "" or wdomainname == phostname : wdomainname = sadm_domain
     return wdomainname
