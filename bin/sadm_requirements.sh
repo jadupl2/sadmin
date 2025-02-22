@@ -46,6 +46,7 @@
 # 2023_04_27 install v1.14 Add 'base64' command to requirement list.
 # 2023_12_21 install v1.15 Revision of the list of the packages require.
 #@2024_04_21 install v1.16 Replace 'sadm_write' by 'sadm_write_log' and 'sadm_write_err'.
+#@2025_02_22 install v1.17 Replace 'command_available()' by the one in library 'sadm_get_command_path()'.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -77,7 +78,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='1.16'                                     # Your Current Script Version
+export SADM_VER='1.17'                                     # Your Current Script Version
 export SADM_PDESC="Check if all SADMIN Tools requirement are present (-i install missing packages)."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -466,28 +467,6 @@ add_epel_repo()
 
 
 
-# --------------------------------------------------------------------------------------------------
-# THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SYSTEM
-# IF THE COMMAND EXIST, RETURN 0  -  IF IT DOESN'T EXIST RETURN 1
-# --------------------------------------------------------------------------------------------------
-command_available() {
-    CMD=$1                                                              # Save Parameter received
-    printf "%-55s" "Checking availability of command $CMD"
-    if ${SADM_WHICH} ${CMD} >/dev/null 2>&1                             # Locate command found ?
-        then SPATH=$($SADM_WHICH $CMD) 
-             echo "$SPATH ${GREEN}[OK]${NORMAL}"                        # Show Path to user and OK
-             return 0                                                   # Return 0 if cmd found
-        else SPATH=""                                                   # PATH empty when Not Avail.
-             echo "Missing ${BOLD}${MAGENTA}[Warning]${NORMAL}"         # Show user Warning
-    fi
-    return 1
-}
-
-#            command_available "dmidecode"   ; SADM_DMIDECODE=$SPATH     # Save Command Path Returned
-#            if [ "$SADM_DMIDECODE" = "" ] && [ "$INSTREQ" -eq 1 ]       # Cmd not found & Inst Req.
-#                then install_package "dmidecode" "dmidecode"            # Install Package (rpm,deb)
-#                     command_available "dmidecode" ; SADM_DMIDECODE=$SPATH   
-#            fi
 
 # --------------------------------------------------------------------------------------------------
 # THIS FUNCTION VERIFY IF THE PACKAGE NAMES RECEIVED IN PARAMETER IS AVAILABLE ON THE SYSTEM
@@ -563,111 +542,111 @@ check_sadmin_requirements() {
     # Get Command path for Linux O/S ---------------------------------------------------------------
     if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux O/S
        then 
-            command_available "dmidecode"   ; SADM_DMIDECODE=$SPATH     # Save Command Path Returned
+            sadm_get_command_path "dmidecode"   ; SADM_DMIDECODE=$SPATH     # Save Command Path Returned
             if [ "$SADM_DMIDECODE" = "" ] && [ "$INSTREQ" -eq 1 ]       # Cmd not found & Inst Req.
                 then install_package "dmidecode" "dmidecode"            # Install Package (rpm,deb)
-                     command_available "dmidecode" ; SADM_DMIDECODE=$SPATH   
+                     sadm_get_command_path "dmidecode" ; SADM_DMIDECODE=$SPATH   
             fi
 
-            command_available "nmon"        ; SADM_NMON=$SPATH          # Save Command Path Returned
+            sadm_get_command_path "nmon"        ; SADM_NMON=$SPATH          # Save Command Path Returned
             if [ "$SADM_NMON" = "" ] && [ "$INSTREQ" -eq 1 ]            # Cmd not found & Inst Req.
                 then install_package "--enablerepo=epel nmon" "nmon"    # Install Package (rpm,deb)
-                     command_available "nmon" ; SADM_NMON=$SPATH        # Recheck Should be install
+                     sadm_get_command_path "nmon" ; SADM_NMON=$SPATH        # Recheck Should be install
             fi
 
-            command_available "ethtool"     ; SADM_ETHTOOL=$SPATH       # Save Command Path Returned
+            sadm_get_command_path "ethtool"     ; SADM_ETHTOOL=$SPATH       # Save Command Path Returned
             if [ "$SADM_ETHTOOL" = "" ] && [ "$INSTREQ" -eq 1 ]         # Cmd not found & Inst Req. 
                 then install_package "ethtool" "ethtool"                # Install Package (rpm,deb)
-                     command_available "ethtool" ; SADM_ETHTOOL=$SPATH  # Recheck Should be install
+                     sadm_get_command_path "ethtool" ; SADM_ETHTOOL=$SPATH  # Recheck Should be install
             fi
 
             if [ $SYSTEMD -ne 1 ]                                       # Using Sysinit
-                then command_available "chkconfig" ; SADM_CHKCONFIG=$SPATH # Save Cmd Path Returned
+                then sadm_get_command_path "chkconfig" ; SADM_CHKCONFIG=$SPATH # Save Cmd Path Returned
                      if [ "$SADM_CHKCONFIG" = "" ] && [ "$INSTREQ" -eq 1 ] # Not found = Inst Req. 
                         then install_package "chkconfig" "chkconfig"       # Install Pack (rpm,deb)
-                             command_available "chkconfig" ; SADM_CHKCONFIG=$SPATH  # Recheck 
+                             sadm_get_command_path "chkconfig" ; SADM_CHKCONFIG=$SPATH  # Recheck 
                      fi
             fi
 
-            command_available "sudo"     ; SADM_SUDO=$SPATH             # Save Command Path Returned
+            sadm_get_command_path "sudo"     ; SADM_SUDO=$SPATH             # Save Command Path Returned
             if [ "$SADM_SUDO" = "" ] && [ "$INSTREQ" -eq 1 ]            # Cmd not found & Inst Req.
                 then install_package "sudo" "sudo"                      # Install Package (rpm,deb)
-                     command_available "sudo"     ; SADM_SUDO=$SPATH    # Recheck Should be install
+                     sadm_get_command_path "sudo"     ; SADM_SUDO=$SPATH    # Recheck Should be install
             fi
 
-            command_available "lshw"     ; SADM_LSHW=$SPATH             # Save Command Path Returned
+            sadm_get_command_path "lshw"     ; SADM_LSHW=$SPATH             # Save Command Path Returned
             if [ "$SADM_LSHW" = "" ] && [ "$INSTREQ" -eq 1 ]            # Cmd not found & Inst Req.
                 then install_package "lshw" "lshw"                      # Install Package (rpm,deb)
-                     command_available "lshw"     ; SADM_LSHW=$SPATH    # Recheck Should be install
+                     sadm_get_command_path "lshw"     ; SADM_LSHW=$SPATH    # Recheck Should be install
             fi
 
-            command_available "base64"     ; SADM_BASE64=$SPATH         # Save Command Path Returned
+            sadm_get_command_path "base64"     ; SADM_BASE64=$SPATH         # Save Command Path Returned
             if [ "$SADM_BASE64" = "" ] && [ "$INSTREQ" -eq 1 ]          # Cmd not found & Inst Req.
                 then install_package "coreutils" "coreutils"            # Install Package (rpm,deb)
-                     command_available "base64"   ; SADM_LSHW=$SPATH    # Recheck Should be install
+                     sadm_get_command_path "base64"   ; SADM_LSHW=$SPATH    # Recheck Should be install
             fi
 
-            command_available "ifconfig"     ; SADM_IFCONFIG=$SPATH     # Save Command Path Returned
+            sadm_get_command_path "ifconfig"     ; SADM_IFCONFIG=$SPATH     # Save Command Path Returned
             if [ "$SADM_IFCONFIG" = "" ] && [ "$INSTREQ" -eq 1 ]        # Cmd not found & Inst Req.
                 then install_package "net-tools" "net-tools"            # Install Package (rpm,deb)
-                     command_available "ifconfig" ;SADM_IFCONFIG=$SPATH # Recheck Should be install
+                     sadm_get_command_path "ifconfig" ;SADM_IFCONFIG=$SPATH # Recheck Should be install
             fi
 
-            command_available "sar"     ; SADM_SAR=$SPATH               # Save Command Path Returned
+            sadm_get_command_path "sar"     ; SADM_SAR=$SPATH               # Save Command Path Returned
             if [ "$SADM_SAR" = "" ] && [ "$INSTREQ" -eq 1 ]             # Cmd not found & Inst Req.
                 then install_package "sysstat" "sysstat"                # Install Package (rpm,deb)
-                     command_available "sar"  ; SADM_SAR=$SPATH         # Recheck Should be install
+                     sadm_get_command_path "sar"  ; SADM_SAR=$SPATH         # Recheck Should be install
             fi
 
-            command_available "parted"      ; SADM_PARTED=$SPATH        # Save Command Path Returned
+            sadm_get_command_path "parted"      ; SADM_PARTED=$SPATH        # Save Command Path Returned
             if [ "$SADM_PARTED" = "" ] && [ "$INSTREQ" -eq 1 ]          # Cmd not found & Inst Req.
                 then install_package "parted" "parted"                  # Install Package (rpm,deb)
-                     command_available "parted" ; SADM_PARTED=$SPATH    # Recheck Should be install
+                     sadm_get_command_path "parted" ; SADM_PARTED=$SPATH    # Recheck Should be install
             fi
 
-            command_available "mutt"        ; SADM_MUTT=$SPATH          # Save Command Path Returned
+            sadm_get_command_path "mutt"        ; SADM_MUTT=$SPATH          # Save Command Path Returned
             if [ "$SADM_MUTT" = "" ] && [ "$INSTREQ" -eq 1 ]            # Cmd not found & Inst Req.
                 then install_package "parted" "parted"                  # Install Package (rpm,deb)
-                     command_available "mutt"  ; SADM_MUTT=$SPATH       # Recheck Should be install
+                     sadm_get_command_path "mutt"  ; SADM_MUTT=$SPATH       # Recheck Should be install
             fi
 
-            command_available "gawk"        ; SADM_GAWK=$SPATH          # Save Command Path Returned
+            sadm_get_command_path "gawk"        ; SADM_GAWK=$SPATH          # Save Command Path Returned
             if [ "$SADM_GAWK" = "" ] && [ "$INSTREQ" -eq 1 ]            # Cmd not found & Inst Req.
                 then install_package "gawk" "gawk"                      # Install Package (rpm,deb)
-                     command_available "gawk"  ; SADM_GAWK=$SPATH       # Recheck Should be install
+                     sadm_get_command_path "gawk"  ; SADM_GAWK=$SPATH       # Recheck Should be install
             fi
 
-            command_available "curl"        ; SADM_CURL=$SPATH          # Save Command Path Returned
+            sadm_get_command_path "curl"        ; SADM_CURL=$SPATH          # Save Command Path Returned
             if [ "$SADM_CURL" = "" ] && [ "$INSTREQ" -eq 1 ]            # Cmd not found & Inst Req.
                 then install_package "curl" "curl"                      # Install Package (rpm,deb)
-                     command_available "curl"  ; SADM_CURL=$SPATH       # Recheck Should be install
+                     sadm_get_command_path "curl"  ; SADM_CURL=$SPATH       # Recheck Should be install
             fi
 
-            command_available "lscpu"       ; SADM_LSCPU=$SPATH         # Save Command Path Returned
+            sadm_get_command_path "lscpu"       ; SADM_LSCPU=$SPATH         # Save Command Path Returned
             if [ "$SADM_LSCPU" = "" ] && [ "$INSTREQ" -eq 1 ]           # Cmd not found & Inst Req.
                 then install_package "util-linux" "util-linux"          # Install Package (rpm,deb)
-                     command_available "lscpu" ; SADM_LSCPU=$SPATH      # Recheck Should be install
+                     sadm_get_command_path "lscpu" ; SADM_LSCPU=$SPATH      # Recheck Should be install
             fi
             
-            command_available "fdisk"       ; SADM_FDISK=$SPATH         # Save Command Path Returned
+            sadm_get_command_path "fdisk"       ; SADM_FDISK=$SPATH         # Save Command Path Returned
             if [ "$SADM_FDISK" = "" ] && [ "$INSTREQ" -eq 1 ]           # Cmd not found & Inst Req.
                 then install_package "util-linux" "util-linux"          # Install Package (rpm,deb)
-                     command_available "fdisk"  ; SADM_FDISK=$SPATH     # Recheck Should be install
+                     sadm_get_command_path "fdisk"  ; SADM_FDISK=$SPATH     # Recheck Should be install
             fi
 
             if [ "$(sadm_get_osname)" != "RASPBIAN" ]
-                then command_available "rear"         ; SADM_REAR=$SPATH        # Save Command Path Returned
+                then sadm_get_command_path "rear"         ; SADM_REAR=$SPATH        # Save Command Path Returned
                      if [ "$SADM_REAR" = "" ] && [ "$INSTREQ" -eq 1 ]           # Cmd not found & Inst Req.
                          then install_package "rear" "rear"
-                              command_available "rear"   ; SADM_SYSLINUX=$SPATH # Recheck Should be install
+                              sadm_get_command_path "rear"   ; SADM_SYSLINUX=$SPATH # Recheck Should be install
                      fi    
             fi 
 
             if [ "$(sadm_get_osname)" != "RASPBIAN" ]
-                then command_available "syslinux"         ; SADM_SYSLINUX=$SPATH        
+                then sadm_get_command_path "syslinux"         ; SADM_SYSLINUX=$SPATH        
                      if [ "$SADM_RSYNC" = "" ] && [ "$INSTREQ" -eq 1 ]                  
                         then install_package "syslinux" "syslinux"
-                             command_available "syslinux"   ; SADM_SYSLINUX=$SPATH      
+                             sadm_get_command_path "syslinux"   ; SADM_SYSLINUX=$SPATH      
                      fi    
             fi 
 
@@ -678,51 +657,51 @@ check_sadmin_requirements() {
 
 
     # Get Command path for All supported O/S -------------------------------------------------------
-    command_available "perl"        ; SADM_PERL=$SPATH                  # Save Command Path Returned
+    sadm_get_command_path "perl"        ; SADM_PERL=$SPATH                  # Save Command Path Returned
     if [ "$SADM_PERL" = "" ] && [ "$INSTREQ" -eq 1 ]                    # Cmd not found & Inst Req.
         then install_package "perl" "perl-base"                         # Install Package (rpm,deb)
-             command_available "perl"  ; SADM_PERL=$SPATH               # Recheck Should be install
+             sadm_get_command_path "perl"  ; SADM_PERL=$SPATH               # Recheck Should be install
     fi    
     
-    command_available "ssh"         ; SADM_SSH=$SPATH                   # Save Command Path Returned
+    sadm_get_command_path "ssh"         ; SADM_SSH=$SPATH                   # Save Command Path Returned
     if [ "$SADM_SSH" = "" ] && [ "$INSTREQ" -eq 1 ]                     # Cmd not found & Inst Req.
         then install_package "openssh-clients" "openssh-client"         # Install Package (rpm,deb)
-             command_available "ssh"         ; SADM_SSH=$SPATH          # Recheck Should be install
+             sadm_get_command_path "ssh"         ; SADM_SSH=$SPATH          # Recheck Should be install
     fi    
 
-    command_available "rsync"         ; SADM_RSYNC=$SPATH               # Save Command Path Returned
+    sadm_get_command_path "rsync"         ; SADM_RSYNC=$SPATH               # Save Command Path Returned
     if [ "$SADM_RSYNC" = "" ] && [ "$INSTREQ" -eq 1 ]                   # Cmd not found & Inst Req.
         then install_package "rsync" "rsync"
-             command_available "rsync"         ; SADM_RSYNC=$SPATH      # Recheck Should be install
+             sadm_get_command_path "rsync"         ; SADM_RSYNC=$SPATH      # Recheck Should be install
     fi    
-    command_available "genisoimage"   ; SADM_GENISOIMAGE=$SPATH         # Save Command Path Returned
+    sadm_get_command_path "genisoimage"   ; SADM_GENISOIMAGE=$SPATH         # Save Command Path Returned
     if [ "$SADM_GENISOIMAGE" = "" ] && [ "$INSTREQ" -eq 1 ]              # Cmd not found & Inst Req.
         then install_package "genisoimage" "genisoimage"
-             command_available "genisoimage" ; SADM_GENISOIMAGE=$SPATH  # Recheck Should be install
+             sadm_get_command_path "genisoimage" ; SADM_GENISOIMAGE=$SPATH  # Recheck Should be install
     fi    
 
-    command_available "hwinfo"         ; SADM_HWINFO=$SPATH             # Save Command Path Returned
+    sadm_get_command_path "hwinfo"         ; SADM_HWINFO=$SPATH             # Save Command Path Returned
     if [ "$SADM_HWINFO" = "" ] && [ "$INSTREQ" -eq 1 ]                  # Cmd not found & Inst Req.
         then install_package "hwinfo" "hwinfo"
-             command_available "hwinfo"   ; SADM_SYSLINUX=$SPATH        # Recheck Should be install
+             sadm_get_command_path "hwinfo"   ; SADM_SYSLINUX=$SPATH        # Recheck Should be install
     fi    
 
-    command_available "bc"          ; SADM_BC=$SADM_BC                  # Save Command Path Returned
+    sadm_get_command_path "bc"          ; SADM_BC=$SADM_BC                  # Save Command Path Returned
     if [ "$SADM_BC" = "" ] && [ "$INSTREQ" -eq 1 ]                      # Cmd not found & Inst Req.
         then install_package "bc" "bc"                                  # Install Package (rpm,deb)
-             command_available "bc"          ; SADM_BC=$SADM_BC         # Recheck Should be install
+             sadm_get_command_path "bc"          ; SADM_BC=$SADM_BC         # Recheck Should be install
     fi    
 
-    command_available "inxi"          ; SADM_INXI=$SADM_INXI            # Save Command Path Returned
+    sadm_get_command_path "inxi"          ; SADM_INXI=$SADM_INXI            # Save Command Path Returned
     if [ "$SADM_INXI" = "" ] && [ "$INSTREQ" -eq 1 ]                    # Cmd not found & Inst Req.
         then install_package "inxi" "inxi"                              # Install Package (rpm,deb)
-             command_available "inxi" ; SADM_INXI=$SADM_INXI            # Recheck Should be install
+             sadm_get_command_path "inxi" ; SADM_INXI=$SADM_INXI            # Recheck Should be install
     fi    
 
-    command_available "python3"  ; SADM_PYTHON3=$SPATH                  # Save Command Path Returned
+    sadm_get_command_path "python3"  ; SADM_PYTHON3=$SPATH                  # Save Command Path Returned
     if [ "$SADM_PYTHON3" = "" ] && [ "$INSTREQ" -eq 1 ]                 # Cmd not found & Inst Req.
         then install_package "--enablerepo=epel python34 python34-setuptools python34-pip" "python3" 
-             command_available "python3"  ; SADM_PYTHON3=$SPATH         # Recheck Should be install
+             sadm_get_command_path "python3"  ; SADM_PYTHON3=$SPATH         # Recheck Should be install
     fi    
 
 
@@ -730,48 +709,48 @@ check_sadmin_requirements() {
     if [ "$SADM_ON_SADMIN_SERVER" = "Y" ] || [ "$CHK_SERVER" = "Y" ] # Check Server Req.
         then sadm_write_log " "
              sadm_write_log "${YELLOW}${BOLD}SADMIN server requirements.${NORMAL}"
-             command_available "mysql" ; SADM_MYSQL=$SPATH              # Get mysql cmd path  
+             sadm_get_command_path "mysql" ; SADM_MYSQL=$SPATH              # Get mysql cmd path  
              if [ "$SADM_MYSQL" = "" ] && [ "$INSTREQ" -eq 1 ]          # Cmd not found & Inst Req.
                 then install_package "mariadb-server " "mariadb-server mariadb-client"  
-                     command_available "mysql" ; SADM_MYSQL=$SPATH      # Recheck Should be install 
+                     sadm_get_command_path "mysql" ; SADM_MYSQL=$SPATH      # Recheck Should be install 
              fi    
-             command_available "rrdtool" ; SADM_RRDTOOL=$SPATH          # Get  cmd path  
+             sadm_get_command_path "rrdtool" ; SADM_RRDTOOL=$SPATH          # Get  cmd path  
              if [ "$SADM_RRDTOOL" = "" ] && [ "$INSTREQ" -eq 1 ]        # Cmd not found & Inst Req.
                 then install_package "rrdtool" "rrdtool"                # Install package
-                     command_available "rrdtool" ; SADM_RRDTOOL=$SPATH  # Recheck Should be install
+                     sadm_get_command_path "rrdtool" ; SADM_RRDTOOL=$SPATH  # Recheck Should be install
              fi        
-             command_available "fping" ; SADM_FPING=$SPATH              # Get  cmd path  
+             sadm_get_command_path "fping" ; SADM_FPING=$SPATH              # Get  cmd path  
              if [ "$SADM_FPING" = "" ] && [ "$INSTREQ" -eq 1 ]          # Cmd not found & Inst Req.
                 then install_package "--enablerepo=epel fping" "fping monitoring-plugins-standard" 
-                     command_available "fping" ; SADM_FPING=$SPATH      # Recheck Should be install
+                     sadm_get_command_path "fping" ; SADM_FPING=$SPATH      # Recheck Should be install
              fi    
-             command_available "pip3" ; SADM_PIP3=$SPATH                # Get cmd path  
+             sadm_get_command_path "pip3" ; SADM_PIP3=$SPATH                # Get cmd path  
              if [ "$SADM_PIP3" = "" ] && [ "$INSTREQ" -eq 1 ]           # Cmd not found & Inst Req.
                 then install_package "python3-pip" "python3-pip"        # Install package
                      if [ $? -ne 0 ]                                    # Normal Install not working
                         then install_package "--enablerepo=epel python34-pip" "python3-pip" 
                      fi 
-                     command_available "pip3" ; SADM_PIP3=$SPATH        # Recheck Should be install
+                     sadm_get_command_path "pip3" ; SADM_PIP3=$SPATH        # Recheck Should be install
              fi    
-             command_available "php" ; SADM_PHP=$SPATH                  # Get  cmd path  
+             sadm_get_command_path "php" ; SADM_PHP=$SPATH                  # Get  cmd path  
              if [ "$SADM_PHP" = "" ] && [ "$INSTREQ" -eq 1 ]            # Cmd not found & Inst Req.
                 then rpmpkg="php php-common php-cli php-mysqlnd php-mbstring"
                      debpkg="php php-mysql php-common php-cli"
                      install_package  "$rpmpkg" "$debpkg"
-                     command_available "php" ; SADM_PHP=$SPATH          # Recheck Should be install
+                     sadm_get_command_path "php" ; SADM_PHP=$SPATH          # Recheck Should be install
              fi    
              if [ "$(sadm_get_packagetype)" = "rpm" ]                   # Check HTTPD RPM
-                then command_available "httpd" ; SADM_HTTPD=$SPATH      # Get  cmd path  
+                then sadm_get_command_path "httpd" ; SADM_HTTPD=$SPATH      # Get  cmd path  
                      if [ "$SADM_HTTPD" = "" ] && [ "$INSTREQ" -eq 1 ]  # Cmd not found & Inst Req.
                         then install_package "httpd httpd-tools" " "    # Install package
-                             command_available "httpd" ; SADM_HTTPD=$SPATH  # Recheck Should be inst
+                             sadm_get_command_path "httpd" ; SADM_HTTPD=$SPATH  # Recheck Should be inst
                      fi  
              fi
              if [ "$(sadm_get_packagetype)" = "deb" ]                   # Check HTTPD RPM
-                then command_available "apache2" ; SADM_APACHE2=$SPATH  # Get  cmd path  
+                then sadm_get_command_path "apache2" ; SADM_APACHE2=$SPATH  # Get  cmd path  
                      if [ "$SADM_APACHE2" = "" ] && [ "$INSTREQ" -eq 1 ] # Cmd not found & Inst Req.
                         then install_package " " "apache2 apache2-utils libapache2-mod-php" 
-                             command_available "apache2" ; SADM_APACHE2=$SPATH 
+                             sadm_get_command_path "apache2" ; SADM_APACHE2=$SPATH 
                      fi  
              fi    
     fi
