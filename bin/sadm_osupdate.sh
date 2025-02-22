@@ -58,6 +58,7 @@
 #@2024_08_11 osupdate v3.39 Correct error when sysinfo was net yet created.
 #@2024_09_11 osupdate v3.40 Remove code for older version of RHEL 3-4-5-6-7.
 #@2024_11_15 osupdate v3.41 Show user if the system will reboot or not after a successful update.
+#@2025_02_22 osupdate v3.42 Remove the use of the 'tee' command that was affecting return code.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -86,7 +87,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.41'                                     # Your Current Script Version
+export SADM_VER='3.42'                                     # Your Current Script Version
 export SADM_PDESC="Script is used to perform an O/S update on the system"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -228,9 +229,9 @@ check_available_update()
                    else sadm_write_log "[ OK ] The cache have been updated."
                         sadm_write_log " " ; sadm_write_log " "
                         sadm_write_log "Retrieving list of upgradable packages." 
-                        sadm_write_log "Running 'apt list --upgradable'."
+                        sadm_write_log "Running 'apt list --upgradable'."                        
                         #apt list --upgradable | tee -a  ${SADM_LOG}
-                        #apt list --upgradable 2>/dev/null | grep -iv "Listing" | nl | tee -a $SADM_LOG 
+                        apt list --upgradable 2>/dev/null | grep -iv "Listing" | nl | tee -a $SADM_LOG 
                         NB_UPD=$(apt list --upgradable 2>/dev/null | grep -iv 'Listing...' | wc -l)
                         if [ "$NB_UPD" -ne 0 ]
                             then sadm_write_log " " 
@@ -268,7 +269,7 @@ run_yum()
     sadm_write_log "Running : yum -y update"
     yum -y update   >>$SADM_LOG 2>>$SADM_ELOG
     rc=$?
-    sadm_write_log "Return Code after yum program update is ${rc}."
+    sadm_write_log "Return code after yum program update is ${rc}."
     sadm_write_log "${SADM_TEN_DASH}"
     return $rc
 }
@@ -282,9 +283,9 @@ run_dnf()
     sadm_write_log " "
     sadm_write_log "Starting $SADM_OS_NAME update process ..."
     sadm_write_log "Running : dnf -y update"
-    dnf -y update  | tee -a $SADM_LOG 
+    dnf -y update  >>$SADM_LOG 2>&1
     rc=$?
-    sadm_write_log "Return Code after 'dnf -y update' is ${rc}."
+    sadm_write_log "Return code after 'dnf -y update' is ${rc}."
     sadm_write_log " "
     return $rc
 }
@@ -294,7 +295,7 @@ run_dnf()
 # --------------------------------------------------------------------------------------------------
 #                 Function to update the server with apt command
 # --------------------------------------------------------------------------------------------------
-run_apt_get()
+run_apt()
 {
     sadm_write_log "Starting $(sadm_get_osname) update process ..."
     
@@ -426,7 +427,7 @@ perform_osupdate()
             ;;
             
         * ) 
-            run_apt_get
+            run_apt
             SADM_EXIT_CODE=$?
             ;;
     esac
