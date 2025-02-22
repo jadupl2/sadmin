@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
 #   Title       :   sadm_support_request.sh
-#   Synopsis    :   Create a log file used to submit problem.
+#   Synopsis    :   Collect SADMIN information to help debugging a problem
 #   Version     :   1.0
 #   Date        :   30 March 2018 
 #   Requires    :   sh 
@@ -38,55 +38,73 @@
 # 2019_06_10 Updated: v1.9 Add /etc/postfix/main.cf to support request output.
 # 2019_06_11 Updated: V2.0 Code Revision and performance improvement.
 # 2019_11_28 Updated: V2.1 When run on SADM server, will include crontab (osupdate,backup,rear).
-# 2019_12_02 Updated: V2.2 Add execution of sadm_check_requirenent.
+# 2019_12_02 Updated: V2.2 Add execution of sadm_check_requirement.
+#@2025_02_22 Updated: V2.3 Code optimization & restructure.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
 
 
-#===================================================================================================
-# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
-#
-    if [ -z "$SADMIN" ]                                 # Test If SADMIN Environment Var. is present
-        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
 
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN Shell Library not readable ?
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
+# --------------------------  S A D M I N   C O D E    S E C T I O N  ------------------------------
+# v1.56 - Setup for Global variables and load the SADMIN standard library.
+#       - To use SADMIN tools, this section MUST be present near the top of your code.
 
-    # You can use variable below BUT DON'T CHANGE THEM - They are used by SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
-    export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
+# Make Sure Environment Variable 'SADMIN' Is Defined.
+if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN defined? Libr.exist
+    then if [ -r /etc/environment ] ; then source /etc/environment ; fi # LastChance defining SADMIN
+         if [ -z "$SADMIN" ] || [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]   # Still not define = Error
+            then printf "\nPlease set 'SADMIN' environment variable to the install directory.\n"
+                 exit 1                                                 # No SADMIN Env. Var. Exit
+         fi
+fi 
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.2'                               # Your Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
-    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
-    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
-    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
+# YOU CAN USE THE VARIABLES BELOW, BUT DON'T CHANGE THEM (Used by SADMIN Standard Library).
+export SADM_PN=${0##*/}                                    # Script name(with extension)
+export SADM_INST=$(echo "$SADM_PN" |cut -d'.' -f1)         # Script name(without extension)
+export SADM_TPID="$$"                                      # Script Process ID.
+export SADM_HOSTNAME=$(hostname -s)                        # Host name without Domain Name
+export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,DARWIN,SUNOS 
+export SADM_USERNAME=$(id -un)                             # Current user name.
 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-#---------------------------------------------------------------------------------------------------
-# Value for these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
-# But they can be overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used for Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    export SADM_MAX_LOGLINE=5000                       # At end of script Trim log to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-#===================================================================================================
+# YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
+export SADM_VER='2.3'                                      # Script version number
+export SADM_PDESC="Collect SADMIN information to help debugging a problem"
+export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
+export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
+export SADM_LOG_TYPE="B"                                   # Write log to [S]creen, [L]og, [B]oth
+export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
+export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoHeader
+export SADM_LOG_FOOTER="Y"                                 # Y=IncludeFooter N=NoFooter
+export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
+export SADM_USE_RCH="N"                                    # Update RCH History File (Y/N)
+export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
+export SADM_EXIT_CODE=0                                    # Script Default Exit Code
+export SADM_TMP_FILE1=$(mktemp "$SADMIN/tmp/${SADM_INST}1_XXX") 
+export SADM_TMP_FILE2=$(mktemp "$SADMIN/tmp/${SADM_INST}2_XXX") 
+export SADM_TMP_FILE3=$(mktemp "$SADMIN/tmp/${SADM_INST}3_XXX") 
+
+# LOAD SADMIN SHELL LIBRARY AND SET SOME O/S VARIABLES.
+. "${SADMIN}/lib/sadmlib_std.sh"                           # Load SADMIN Shell Library
+export SADM_OS_NAME=$(sadm_get_osname)                     # O/S Name in Uppercase
+export SADM_OS_VERSION=$(sadm_get_osversion)               # O/S Full Ver.No. (ex: 9.5)
+export SADM_OS_MAJORVER=$(sadm_get_osmajorversion)         # O/S Major Ver. No. (ex: 9)
+#export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} "   # SSH CMD to Access Systems
+
+# VARIABLES DEFINE BELOW ARE LOADED FROM SADMIN CONFIG FILE ($SADMIN/cfg/sadmin.cfg)
+# BUT THEY CAN BE OVERRIDDEN HERE, ON A PER SCRIPT BASIS (IF NEEDED).
+#export SADM_ALERT_TYPE=1                                   # 0=No 1=OnError 2=OnOK 3=Always
+#export SADM_ALERT_GROUP="default"                          # Alert Group to advise
+#export SADM_MAIL_ADDR="your_email@domain.com"              # Email to send log
+export SADM_MAX_LOGLINE=5000                                # Nb Lines to trim(0=NoTrim)
+#export SADM_MAX_RCLINE=35                                  # Nb Lines to trim(0=NoTrim)
+#export SADM_PID_TIMEOUT=7200                               # Sec. before PID Lock expire
+#export SADM_LOCK_TIMEOUT=3600                              # Sec. before Del. System LockFile
+# -------------------  E N D   O F   S A D M I N   C O D E    S E C T I O N  -----------------------
+
+
+
 
 
   
@@ -101,12 +119,17 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 # --------------------------------------------------------------------------------------------------
 #       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
 # --------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# Show script command line options
+# --------------------------------------------------------------------------------------------------
 show_usage()
 {
-    printf "\n${SADM_PN} usage :"
-    printf "\n\t-d   (Debug Level [0-9])"
-    printf "\n\t-h   (Display this help message)"
-    printf "\n\t-v   (Show Script Version Info)"
+    printf "\nUsage: %s%s%s%s [options]" "${BOLD}" "${CYAN}" "$(basename "$0")" "${NORMAL}"
+    printf "\nDesc.: %s" "${BOLD}${CYAN}${SADM_PDESC}${NORMAL}"
+    printf "\n\n${BOLD}${GREEN}Options:${NORMAL}"
+    printf "\n   ${BOLD}${YELLOW}[-d 0-9]${NORMAL}\t\tSet Debug (verbose) Level"
+    printf "\n   ${BOLD}${YELLOW}[-h]${NORMAL}\t\t\tShow this help message"
+    printf "\n   ${BOLD}${YELLOW}[-v]${NORMAL}\t\t\tShow script version information"
     printf "\n\n" 
 }
 
@@ -120,25 +143,23 @@ show_usage()
 print_file()
 {
     wfile=$1                                                            # Save FileName to Print
-    echo " " >> $SADM_LOG                                               # Insert Blank Line in Log
+    sadm_write_log " "
+    sadm_write_log " "
+    sadm_write_log "$SADM_TEN_DASH"  
     
     if [ -r $wfile ]                                                    # If File is Readable
-       then echo "Adding $wfile to support request log ..."
-            echo " "                    >> $SADM_LOG                    # Insert Blank Line
-            echo "$SADM_FIFTY_DASH"     >> $SADM_LOG
-            echo "Content of $wfile"    >> $SADM_LOG
-            echo "$SADM_FIFTY_DASH"     >> $SADM_LOG
-            grep -Ev "^#|^[[:space:]]*$" $wfile >> $SADM_LOG
-            echo " "                    >> $SADM_LOG                    # Insert Blank Line
-            echo " "                    >> $SADM_LOG                    # Insert Blank Line
-            return 0                                                    # Return No Error to Caller
-       else echo " "                    >> $SADM_LOG                    # Insert Blank Line
-            echo "$SADM_FIFTY_DASH"     >> $SADM_LOG
-            echo "Could not print, file not found : $wfile" >> $SADM_LOG
-            echo "$SADM_FIFTY_DASH"     >> $SADM_LOG
-            echo " "                    >> $SADM_LOG                    # Insert Blank Line
+       then sadm_write_log "Adding $wfile to support request log ..."
+            sadm_write_log "Content of ${wfile}" 
+            grep -Ev "^#|^[[:space:]]*$" $wfile  | tee -a $SADM_LOG
+            sadm_write_log "$SADM_TEN_DASH"  
+            sadm_write_log " " 
+            return 0  
+       else sadm_write_log "Could not print, file not found : $wfile" 
+            sadm_write_log "$SADM_TEN_DASH"     
+            sadm_write_log " " 
+            return 1 
     fi
-    return 1
+    return
 }
 
 
@@ -147,24 +168,25 @@ print_file()
 #===================================================================================================
 run_command()
 {
-    SCRIPT=$1                                                           # Shell Script Name to Run
-    CMDLOG=$2                                                           # Log Generated by Script
+    SCRIPT="$1"                                                         # Shell Script Name to Run
+    CMDLOG="$2"                                                         # Log Generated by Script
     CMDLINE="$*"                                                        # Command with All Parameter
     SCMD="${SADM_BIN_DIR}/${SCRIPT}"                                    # Full Path of the script
 
     if [ ! -x "${SADM_BIN_DIR}/${SCRIPT}" ]                             # If SCript do not exist
-        then sadm_write "[ERROR] ${SADM_BIN_DIR}/${SCRIPT} Don't exist or can't execute\n\n" 
+        then sadm_write_err "[ERROR] ${SADM_BIN_DIR}/${SCRIPT} Don't exist or can't execute" 
+             sadm_write_err " "
              return 1                                                   # Return Error to Callerr
     fi 
 
-    sadm_write "Running $SCMD ...\n"                                    # Show Command about to run
-    $SCMD >${CMDLOG} 2>&1                                               # Run Script Collect output
+    sadm_write_log "Running $SCMD ..."                                  # Show Command about to run
+    $SCMD | tee -a ${SADM_LOG} 2>&1                                     # Run Script Collect output
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_write "[ERROR] $SCRIPT Terminate with Error\n"        # Signal Error in Log
-             sadm_write "Check Log for further detail about Error\n"    # Show user where to look
-             sadm_write "${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SCRIPT}.log\n" # Show Log Name    
+        then sadm_write_err "[ERROR] $SCRIPT Terminate with Error"      # Signal Error in Log
+             sadm_write_err "Check Log for further detail about Error"  # Show user where to look
+             sadm_write_err "${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SCRIPT}.log" # Show Log Name    
              return 1                                                   # Return Error to Callerr
-        else sadm_write "[SUCCESS] Script $SCRIPT terminated.\n"        # Advise user it's OK
+        else sadm_write_log "[SUCCESS] Script $SCRIPT terminated."        # Advise user it's OK
     fi
     return 0                                                            # Return Success to Caller
 }
@@ -174,12 +196,11 @@ run_command()
 #===================================================================================================
 main_process()
 {
-
     print_file "/etc/environment" 
     print_file "/etc/profile.d/sadmin.sh" 
     print_file "$SADM_CFG_FILE"
     if [ -f "/etc/sudoers.d/033_sadmin-nopasswd" ] 
-        then print_file "/etc/sudoers.d/033_sadmin-nopasswd"
+        then print_file "/etc/sudoers.d/033_sadmin-nopasswd" 
     fi 
     if [ -f "/etc/sudoers.d/033_sadmin" ] 
         then print_file "/etc/sudoers.d/033_sadmin"
@@ -187,7 +208,7 @@ main_process()
     print_file "/etc/cron.d/sadm_client"
 
     # Files that appears only on the SADMIN server.
-    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # If Running on SADM Server
+    if [ $SADM_ON_SADMIN_SERVER = "Y" ] 
         then print_file "/etc/cron.d/sadm_server"
              print_file "/etc/cron.d/sadm_osupdate"
              print_file "/etc/cron.d/sadm_backup"
@@ -196,126 +217,117 @@ main_process()
     print_file "/etc/selinux/config"
     print_file "/etc/postfix/main.cf"
     print_file "/etc/hosts"
-    #print_file "${SADM_DR_DIR}/${SADM_HOSTNAME}_system.txt"
+    print_file "${SADM_DR_DIR}/${SADM_HOSTNAME}_system.txt"
     print_file "${SADM_DR_DIR}/${SADM_HOSTNAME}_sysinfo.txt"
     print_file "/etc/httpd/conf.d/sadmin.conf"
 
     # Copy the setup log (if exist) to SADMIN normal log directory,
-    if [ -f "$SADM_SETUP_DIR/log/sadm_setup.log" ] 
-        then cp $SADM_SETUP_DIR/log/sadm_setup.log $SADM_LOG_DIR >/dev/null 2>&1
+    if [ -f "$SADM_SETUP_DIR/log/sadm_pre_setup.log" ] 
+        then print_file $SADM_SETUP_DIR/log/sadm_pre_setup.log 
     fi 
 
     # Run the Shell Library Demo 
-    sadm_write "\n"                                                     # Blank LIne
+    sadm_write_log " "                                                  # Blank LIne
     CMD="sadmlib_std_demo"                                              # Script Name to execute
-    CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${CMD}.log"                # Script Log file Name
-    run_command "${CMD}.sh" "$CMDLOG"                                   # Run Shell Library Demo
-    print_file "${CMDLOG}"                                              # Print log 
-    if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove log
+    run_command "${CMD}.sh"                                             # Run Shell Library Demo
 
     # Run the Python Library Demo 
-    sadm_write "\n"                                                     # Blank LIne
+    sadm_write_log " "                                                  # Blank LIne
     CMD="sadmlib_std_demo"                                              # Script Name to execute
-    CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${CMD}.log"                # Script Log file Name
-    run_command "${CMD}.py" "$CMDLOG"                                   # Run Python Library Demo
-    print_file "${CMDLOG}"                                              # Print tmp log 
-    if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove tmp log
+    run_command "${CMD}.py"                                             # Run Python Library Demo
 
     # Run the check requirement script.
-    sadm_write "\n"                                                     # Blank LIne
+    sadm_write_log " "                                                  # Blank LIne
     CMD="sadm_requirements.sh"                                          # Script Name to execute
-    CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${CMD}.log"                # Script Log file Name
-    run_command "${CMD}" "$CMDLOG"                                      # Run Check Requirement
-    print_file "${CMDLOG}"                                              # Print tmp log 
-    if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove tmp log
+    run_command "${CMD}"                                                # Run Check Requirement
 
     # Include result of command "chage -l $SADM_USER", to see if password is expire
     if [ "$(sadm_get_ostype)" = "LINUX" ]                               # If Current O/S is Linux 
         then CMD="chage -l $SADM_USER"                                  # Command Name to execute
-             CMDLOG="${SADM_TMP_DIR}/${SADM_HOSTNAME}_chage.log"        # Command Log file Name
-             sadm_write "\nRunning $CMD ...\n"                          # Show Command about to run
-             $CMD > $CMDLOG                                             # Exec Command
-             print_file "${CMDLOG}"                                     # Print tmp log 
-             if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove log
+             sadm_write_log " "
+             sadm_write_log "Running $CMD ..."                          # Show Command about to run
+             $CMD | tee -a $SADM_LOG 2>&1                               # Exec Command
     fi
 
     # Create file with SADMIN tree in it
-    which tree >/dev/null 2>&1
+    command -v tree >/dev/null 2>&1
     if [ $? -eq 0 ] 
-        then TLOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_sadm_support_tree.log"
-             sadm_write "Recording $SADMIN tree structure list in $TLOG ...\n"
-             tree > $TLOG
+        then sadm_write_log " "
+             sadm_write_log "Recording $SADMIN tree structure list in $TLOG ..."
+             tree $SADMIN | tee -a $SADM_LOG
     fi
     
     # List of files in SADMIN
-    LLOG="$SADM_LOG_DIR/${SADM_HOSTNAME}_sadm_support_files_list.log" 
-    sadm_write "Creating a listing of all files in $SADMIN to $LLOG ...\n"
-    find $SADMIN -ls > $LLOG
+    sadm_write_log " "
+    sadm_write_log "Creating a listing of all files in $SADMIN ..."
+    find $SADMIN -exec ls -l {} \; >> $SADM_LOG 2>&1
+
+    # Print if all requirements are met.
+    sadm_write_log "Print SADMIN requirements ...¨
+    $SADMIN/bin/sadm_requirements.sh >>$SADM_LOG 2>&1
+
+    # Create & Compress Support File
+    BACDIR=$(pwd)
+    cd "$SADM_LOG_DIR"
+    SRQ_FILE="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${SADM_INST}.tgz"
+    tar -cvzf $SRQ_FILE $(basename "$SADM_LOG")
+
+    # What to include in the email.
+    sadm_write_log " "
+    sadm_write_log "${YELLOW}Send this file '$SRQ_FILE' to sadmlinux@gmail.com.${NORMAL}"
+    sadm_write_log "The email should include a description of the problem your having."
+    sadm_write_log "We will get back to you as soon as possible."
+    sadm_write_log " "
+    cd $BACDIR
 
     return 0
 }
 
-#===================================================================================================
-#                                       Script Start HERE
-#===================================================================================================
 
-    # Call SADMIN Initialization Procedure
-    sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
-    # Evaluate Command Line Switch Options Upfront
-    # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
-    while getopts "hvd:" opt ; do                                       # Loop to process Switch
+
+# --------------------------------------------------------------------------------------------------
+# Command line Options functions
+# Evaluate Command Line Switch Options Upfront
+# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# --------------------------------------------------------------------------------------------------
+function cmd_options()
+{
+    while getopts "d:hv" opt ; do                                       # Loop to process Switch
         case $opt in
-            d) SADM_DEBUG=$OPTARG                                      # Get Debug Level Specified
-               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
-               if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=$(echo "$SADM_DEBUG" |grep -E "^\-?[0-9]?\.?[0-9]+$") # Valid if Level is Numeric
+               if [ "$num" = "" ]                            
+                  then printf "\nInvalid debug level.\n"                # Inform User Debug Invalid
                        show_usage                                       # Display Help Usage
-                       exit 0
+                       exit 1                                           # Exit Script with Error
                fi
-               ;;                                                       # No stop after each page
+               printf "Debug level set to ${SADM_DEBUG}.\n"             # Display Debug Level
+               ;;                                                       
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
             v) sadm_show_version                                        # Show Script Version Info
                exit 0                                                   # Back to shell
                ;;
-           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+           \?) printf "\nInvalid option: ${OPTARG}.\n"                  # Invalid Option Message
                show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $SADM_DEBUG -gt 0 ] ; then printf "\nDebug activated, Level ${SADM_DEBUG}\n" ; fi
+    return 
+}
 
 
-    # If current user is not 'root', exit to O/S with error code 1 (Optional)
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_write "Script can only be run by the 'root' user.\n"  # Advise User Message
-             sadm_write "Process aborted.\n"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
 
-    main_process                                                        # Main Process
-    SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
-
-    # SADMIN Closing procedure - Close/Trim log and rch file, Remove PID File, Remove TMP files ...
+#===================================================================================================
+# Main Code Start Here
+#===================================================================================================
+    cmd_options "$@"                                                    # Check command-line Options
+    sadm_start                                                          # Won't come back if error
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if 'Start' went wrong    
+    main_process                                                        # Your PGM Main Process
+    SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
-
-    # Compress Support File
-    BACDIR=`pwd`
-    SRQ_FILE="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${SADM_INST}.tgz"
-    cd $SADM_BASE_DIR
-    if [ $SADM_DEBUG -gt 0 ] 
-        then echo "tar -cvzf ${SADM_TMP_DIR}/${SADM_INST}.tgz ${SADM_LOG}"
-    fi
-    tar -cvzf $SRQ_FILE log >/dev/null 2>&1
-    echo "Please send the file '$SRQ_FILE' to sadmlinux@gmail.com."
-    echo "We will get back to you as soon as possible."
-    echo " "                                                            # Insert Blank Line
-    cd $BACDIR
-
-    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
-    
+    exit $SADM_EXIT_CODE 
