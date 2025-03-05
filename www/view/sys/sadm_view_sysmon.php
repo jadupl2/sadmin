@@ -8,7 +8,6 @@
 #   Description :  This page allow to view the servers alerts information in various ways
 #                  depending on parameters received.
 #
-#
 #    2016 Jacques Duplessis <sadmlinux@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
@@ -504,7 +503,7 @@ function display_line($line,$BGCOLOR,$con)
 
 
 
-# Show XX Most recent scripts execution
+# Show XX most recent scripts execution
 #   - XX is $SADM_MONITOR_HISTORY_SIZE defined in $SADMIN/cfg/sadmin.cfg.
 #---------------------------------------------------------------------------------------------------
 function show_activity($con,$alert_file) {
@@ -546,8 +545,8 @@ function show_activity($con,$alert_file) {
     echo "<td width=25 align='center'><b>No</td>\n";    
     echo "<td widtd=90 align='center'><b>System</td>\n";
     echo "<td align='center'><b>Script Name</td>\n";
-    echo "<td align='center'><b>End Time</td>\n";
     echo "<td align='center'><b>Start Date/Time</td>\n";
+    echo "<td align='center'><b>End Time</td>\n";
     echo "<td align='center'><b>Elapse</td>\n";
     echo "<td align='center'><b>Alert Group</td>\n";
     echo "<td align='center'><b>Alert Type</td>\n";
@@ -610,7 +609,7 @@ function show_activity($con,$alert_file) {
         echo "\n<td align='left'> &nbsp;" . $cname ;                        # Server Name Cell
         
         # Show Link to log if it exist on disk.
-        $LOGFILE = trim("${cserver}_${cname}.log");                     # Add .log to Script Name
+        $LOGFILE = trim("${cserver}_${cname}.log");                        # Add .log to Script Name
         $log_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $LOGFILE ;
         if (file_exists($log_name) and (filesize($log_name) != 0) ){
             echo "\n<a href='" . $URL_VIEW_FILE . "?filename=" . 
@@ -646,25 +645,30 @@ function show_activity($con,$alert_file) {
             echo "' title='View script documentation'>[doc]</a>";
         }
         echo "</td>" ;
+        
+        
+        # Display start date, start time
+        echo "\n<td align='center'>" . $cdate1  . "&nbsp;" . $ctime1 . "</td>"; 
+        
 
         # End Time
         if ($ccode == 2) {
-            echo "\n<td align='center'>............</td>";       # Running - No End time Yet
+            echo "\n<td align='center'>............</td>";              # Running - No End time Yet
         }else{
             echo "\n<td align='center'>" . $ctime2 . "</td>";  
         }
 
 
-        # Display start date, start time
-        echo "\n<td align='center'>" . $cdate1  . "&nbsp;" . $ctime1 . "</td>"; 
-
-        # Display end date, end time and elapse script time
+        # Display End date, End time and Elapse time
         if ($ccode == 2) {
-            echo "\n<td align='center''>............</td>";       # Running - No End date Yet
+            echo "\n<td align='center''>............</td>";             # Running - No End date Yet
         }else{
-            echo "\n<td align='center'>" . $celapsed . "</td>";  # Script Elapse Time
+            echo "\n<td align='center'>" . $celapsed . "</td>";         # Script Elapse Time
         }
-        
+                
+
+
+
         # Show Alert Group with Tooltip
         list($calert, $alert_group_type, $stooltip) = get_alert_group_data ($calert) ;
         echo "\n<td align='center'>";

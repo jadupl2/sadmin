@@ -360,13 +360,12 @@ function display_right_side ($wrow)
        $pvArray  = explode(",",$wrow['srv_disks_info']);
        $pvNumber = sizeof($pvArray);
        $pvLine   = ""; 
-       #echo "count = " . count($pvArray);
        if (count($pvArray) > 0) {
           for ($i = 0; $i < count($pvArray); ++$i) {
               list($pvDev,$pvSize) = explode("|", $pvArray[$i] );
               echo "\n\n<div class='server_right_label'>Disk " . $i . " Information</div>";
               echo "\n<div class='server_right_data'>";
-              $pvSize = $pvSize / 1000 ;
+              $pvSize = $pvSize / 1024 ;
               $info = sprintf ("%-10s %16s GB",$pvDev,$pvSize);
               echo $info;
               echo "</div>";

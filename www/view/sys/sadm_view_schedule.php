@@ -145,8 +145,9 @@ function display_data($count, $row) {
     $rch_name = SADM_WWW_DAT_DIR  ."/".  $row['srv_name'] ."/rch/". $row['srv_name'] ."_". $OSUPDATE_RCH;
     $WOS            = $row['srv_osname'];                               # O/S Name
     $WVER           = $row['srv_osversion'];                            # O/S Version Number
-    $OSUPDATE_DAYS  = 45 ;                                              # Max Days without osupdate
-    
+    $OSUPDATE_DAYS  = 31; 
+
+
 # System Name
     echo "<tr>\n";  
     echo "<td class='dt-left'>";
@@ -154,17 +155,34 @@ function display_data($count, $row) {
     echo "' title='$WOS $WVER system, click to view system info.'>";
     echo $WSYSTEM  ."<br></a>" .$row['srv_desc']. "</td>\n";
 
+
 # Last O/S Update Date 
     if (file_exists($rch_name)) {
-        $file = file("$rch_name");                                      # Load RCH File in Memory
+        $file = file("$rch_name");                                   # Load RCH File
         $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
         list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapse,$cname,$calert,$ctype,$ccode) = explode(" ",$lastline);
         $WLAST_UPDATE = "$cdate1 $ctime1";
-        $now = time(); 
+    }else{
+        if (substr($row['srv_date_osupdate'],0,16) == "0000-00-00 00:00") {
+            $WLAST_UPDATE = "None";  
+            echo "<td align='center'>";
+            $tooltip = "There is no O/S update that was perform yet.";
+            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
+            echo "None yet</span></td>";
+        }else{
+            #$WLAST_UPDATE = substr($row['srv_date_osupdate'],0,16) ;
+            $cdate1 = substr($row['srv_date_osupdate'],0 ,10) ;
+            $ctime1 = substr($row['srv_date_osupdate'],11,16) ;
+            $WLAST_UPDATE = "$cdate1 $ctime1";
+        }
+    }
+
+    if ($WLAST_UPDATE != "None") {
+        $now = time();                                                      # Actual Epoch time
         $your_date = strtotime(str_replace(".", "-",$cdate1));
         $datediff  = $now - $your_date;
-        $osupdate_age = round($datediff / (60 * 60 * 24));
-        if ($osupdate_age > $OSUPDATE_DAYS) { 
+        $osupdate_age = round($datediff / (60 * 60 * 24));             # Days since last O/S Update
+        if ($osupdate_age > $OSUPDATE_DAYS) {                               # If was more than threshold
             $tooltip = "Last O/S update was done " .$osupdate_age. " days ago, threshold at " .$OSUPDATE_DAYS. " days.";
             echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>";
             echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
@@ -177,16 +195,8 @@ function display_data($count, $row) {
             echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ; 
             echo "</span></td>"; 
         }
-    }else{
-        echo "<td align='center'>";
-        $WLAST_UPDATE = "$cdate1 $ctime1";
-        if (substr($row['srv_date_osupdate'],0,16) == "0000-00-00 00:00") {
-            $WLAST_UPDATE = "None Yet";  
-        }else{
-            $WLAST_UPDATE = substr($row['srv_date_osupdate'],0,16) ;
-        }
-        echo $WLAST_UPDATE . "</td>\n";  
     }
+
     
 # Last Update Status
     if (file_exists($rch_name)) {
@@ -233,10 +243,10 @@ function display_data($count, $row) {
 
 # O/S Update Occurrence
     $ipath = '/images/UpdateButton.png';
-    if ($row['srv_update_auto'] == True) {                                  # Is Server Active
-        $tooltip = 'Schedule is active, click to edit the schedule.';
-    } else {                                                              # If not Activate
-        $tooltip = 'Schedule is inactive, click to edit the schedule.';
+    if ($row['srv_update_auto'] == True) {                              # Is Server Active
+        $tooltip = 'Schedule is active, click to modify schedule.';
+    } else {                                                            # If not Activate
+        $tooltip = 'Schedule is inactive, click to modify schedule.';
     }
     if ($row['srv_update_auto']   == True ) { 
         echo "\n<td class='dt-center'>";
@@ -244,19 +254,20 @@ function display_data($count, $row) {
         $row['srv_update_dow'], $row['srv_update_hour'], $row['srv_update_minute']);
         echo $STR_SCHEDULE ;
     }else{
-        echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><B><I>Schedule deactivated</I></B>";
+        echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><B><I>No Schedule</I></B>";
     }
     echo "<br>";
-    if ($row['srv_update_auto'] == True) {                                  # Is Server Active
+    if ($row['srv_update_auto'] == True) {                              # Is Server Active
         $tooltip = 'Schedule is active, click to edit the schedule.';
-        echo "\nY ";
-    } else {                                                              # If not Activate
+#        echo "\nY ";
+        echo "\n ";
+    } else {                                                            # If not Activate
         $tooltip = 'Schedule is inactive, click to edit the schedule.';
-        echo "\n<b><font color='red'>N </font></b>";
+        echo "\n<b><font color='red'> </font></b>";
     }
     echo "<a href='" . $URL_OSUPDATE ."?sel=". $row['srv_name'] ."&back=". $URL_VIEW_SCHED . "'>";
     echo "\n<span data-toggle='tooltip' title='" . $tooltip . "'>";
-    echo "\n<button type='button'>Update</button>";  
+    echo "\n<button type='button'>Modify Schedule</button>";  
     echo "</a></span>";
     echo "</td>\n";  
 
