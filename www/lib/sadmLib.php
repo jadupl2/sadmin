@@ -54,6 +54,7 @@
 # 2024_09_12 lib v2.23 Minor change to standard heading function used for every page.
 #@2024_10_31 lib v2.24 Add debug info and fix some problem in 'SCHEDULE_TO_TEXT()'.
 #@2024_12_28 lib v2.25 Fix problem date of next schedule at end of year in 'SCHEDULE_TO_TEXT()'.
+#@2025_03_05 lib v2.26 Update O/S Logo and documentation URL.
 #===================================================================================================
 #
 
@@ -62,7 +63,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.25" ;   
+$LIBVER = "2.26" ;   
     
 
 #===================================================================================================
@@ -584,11 +585,11 @@ function sadm_return_logo($WOS) {
             $ipath='/images/logo_apple.png';
             break;
         case 'CENTOS' :
-            $iurl='https://docs.centos.org/en-US/docs/' ;
+            $iurl='https://docs.centos.org' ;
             $ipath='/images/logo_centos.png';
             break;
         case 'ALMA' :
-            $iurl='https://wiki.almalinux.org/' ;
+            $iurl='https://wiki.almalinux.org/documentation/guides.html' ;
             $ipath='/images/logo_almalinux.png';
             break;
         case 'ROCKY' :
@@ -608,7 +609,7 @@ function sadm_return_logo($WOS) {
             $ipath='/images/logo_debian.png';
             break;
         case 'RASPBIAN' :
-            $iurl='https://www.raspbian.org/RaspbianDocumentation' ;
+            $iurl='https://www.raspberrypi.com/documentation/computers/os.html' ;
             $ipath='/images/logo_raspbian.png';
             break;
         case 'SUSE' :
@@ -616,11 +617,11 @@ function sadm_return_logo($WOS) {
             $ipath='/images/logo_suse.png';
             break;
         case 'AIX' :
-            $iurl='https://www.ibm.com/docs/en/aix/7.2?topic=aix-pdfs' ;
+            $iurl='https://www.ibm.com/docs/en/aix' ;
             $ipath='/images/logo_aix.png';
             break;
         case 'MACOS' :
-            $iurl='https://en.wikipedia.org/wiki/MacOS' ;
+            $iurl='https://support.apple.com/fr-ca/docs/mac#' ;
             $ipath='/images/logo_apple.png';
             break;
         default:
