@@ -41,6 +41,7 @@
 # 2020_01_13 web v2.9 Minor Appearance page change (Nb.Cpu and page width).
 # 2020_12_29 web v3.0 Main server page - Display the first 50 systems instead of 25.
 #@2025_01_31 web v3.1 Combine Category & Group & insert the last uptime for each systems.
+#@2025_03_04 web v3.2 Change page layour (Add uptime, disk space, cpu,... )
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -61,6 +62,47 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
         } );
     } );
 </script>
+
+
+<style>
+.content-table {
+    border-collapse: collapse ;
+    margin: 25px 0; 
+    font-size: 0.9em;
+    min-width: 400px;
+    width: 100%;
+    border-radius: 5px 5px 0 0 ; 
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0.15);
+}
+
+.content-table thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+}
+
+.content-table th,
+.content-table td {
+// Vertical | Horizontal    padding: 12px 15px;
+    padding: 5px 5px;
+}
+
+.content-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.content-table tbody tr:nthof-type(even) {
+    background-color: #f3f3f3;
+}
+
+.content-table tbody tr.active-row {
+    font-weight : bold;
+    color: #009879;
+}
+</style>
+
 <?php
 
 
@@ -69,7 +111,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG          = False ;                                               # Debug Activated True/False
-$WVER           = "3.1" ;                                              # Current version number
+$WVER           = "3.2" ;                                              # Current version number
 $URL_CREATE     = '/crud/srv/sadm_server_create.php';                   # Create Page URL
 $URL_UPDATE     = '/crud/srv/sadm_server_update.php';                   # Update Page URL
 $URL_DELETE     = '/crud/srv/sadm_server_delete.php';                   # Delete Page URL
@@ -87,52 +129,47 @@ $CREATE_BUTTON  = False ;                                               # Yes Di
 # DISPLAY TWO FIRST HEADING LINES OF PAGE AND SETUP TABLE HEADING AND FOOTER
 #===================================================================================================
 function setup_table() {
-    echo "\n<br>\n";
+    #echo "\n<br>\n";
     
     # TABLE CREATION
-    echo "<div id='SimpleTable'>";                                      # Width Given to Table
-    echo '<table id="sadmTable" class="display" compact row-border no-wrap width="100%">';   
-    
+    echo "<div id='MyTable'>\n"; 
+    echo "<table class='content-table'>\n" ; 
+
     # PAGE TABLE HEADING
     echo "\n<thead>";
-    echo "\n<tr>";
-    echo "\n<th class='dt-head-left'>Name/Description</th>";            # Left Align Header & Body
-    echo "\n<th class='dt-head-left'>Last Uptime</th>";                      # Left Header Only
-    echo "\n<th class='dt-head-left'>Arch</th>";                        # Left Header Only
-#    echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
-#    echo "\n<th class='dt-head-center'>Version</th>";                   # Left Header Only
-    echo "\n<th class='dt-head-center'>O/S Version</th>";                   # Left Header Only
-    echo "\n<th class='dt-head-center'>Group Category</th>";            # Left Align Group
-#    echo "\n<th class='dt-head-center'>Cat.</th>";                      # Left Align Cat
-    echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
-    echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
-    echo "\n<th class='dt-head-center'>Status</th>";                    # Center Header & Body
-    echo "\n<th class='dt-head-center'>Sporadic</th>";                  # Center Header & Body
-    echo "\n<th class='dt-head-center'>VM</th>";                        # Center Header & Body
-    echo "\n<th class='dt-head-center'>Perf</th>";                      # Center Header & Body
+    echo "\n<tr align=left bgcolor='grey'>";
+    echo "\n<th width=10 align=center>No</th>";
+    echo "\n<th align=left>Name&nbsp;/&nbsp;Arch&nbsp;/&nbsp;Desc.</th>"; 
+    echo "\n<th align=left>Uptime</th>";     
+    echo "\n<th align=center>O/S</th>";   
+    echo "\n<th width=5 align=center>Ver.</th>";   
+    echo "\n<th align=center>Group / Category</th>";
+    echo "\n<th align=center>Memory</th>";        
+    echo "\n<th align=center>CPU</th>";           
+    echo "\n<th align=center>Disk Space</th>";           
+    echo "\n<th align=center>Status</th>";        
+    echo "\n<th align=center>Sporadic</th>";      
+    echo "\n<th align=center>VM</th>";            
+    echo "\n<th align=center>Perf</th>";          
     echo "\n</tr>";
     echo "\n</thead>\n";
     
     # PAGE TABLE FOOTER
     echo "\n<tfoot>";
-    echo "\n<tr>";
-    echo "\n<th class='dt-head-left'>Name/Description</th>";            # Left Align Header & Body
-    echo "\n<th class='dt-head-left'>Last Uptime</th>";                      # Left Header Only
-#    echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
-    echo "\n<th class='dt-head-left'>Arch</th>";                        # Left Header Only
-#    echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
-#    echo "\n<th class='dt-head-center'>Version</th>";                   # Left Header Only
-echo "\n<th class='dt-head-center'>O/S Version</th>";                   # Left Header Only
-#    echo "\n<th class='dt-head-center'>Group Category</th>";            # Left Align Group
-#    echo "\n<th class='dt-head-center'>Cat.</th>";                      # Left Align Cat
-    echo "\n<th class='dt-head-center'>Group Category</th>";                     # Left Align Group
-#    echo "\n<th class='dt-head-center'>Cat.</th>";                      # Left Align Cat
-    echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
-    echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
-    echo "\n<th class='dt-head-center'>Status</th>";                    # Center Header & Body
-    echo "\n<th class='dt-head-center'>Sporadic</th>";                  # Center Header & Body
-    echo "\n<th class='dt-head-center'>VM</th>";                        # Center Header & Body
-    echo "\n<th class='dt-head-center'>Perf</th>";                      # Center Header & Body
+    echo "\n<tr align=left bgcolor='grey'>";
+    echo "\n<th width=10>No</th>";
+    echo "\n<th align=left>Name&nbsp;/&nbsp;Arch&nbsp;/&nbsp;Desc.</th>"; 
+    echo "\n<th align=left>Uptime</th>";     
+    echo "\n<th align=center>O/S</th>";   
+    echo "\n<th width=5 align=center>Ver.</th>";   
+    echo "\n<th align=center>Group / Category</th>";
+    echo "\n<th align=center>Memory</th>";        
+    echo "\n<th align=center>CPU</th>";           
+    echo "\n<th align=center>Disk Space</th>";           
+    echo "\n<th align=center>Status</th>";        
+    echo "\n<th align=center>Sporadic</th>";      
+    echo "\n<th align=center>VM</th>";            
+    echo "\n<th align=center>Perf</th>";          
     echo "\n</tr>";
     echo "\n</tfoot>\n";
 }
@@ -140,131 +177,153 @@ echo "\n<th class='dt-head-center'>O/S Version</th>";                   # Left H
 
 
 #===================================================================================================
-#                               DISPLAY ROW DATE RECEIVED ON ONE LINE        
+# DISPLAY ROW DATA RECEIVED ON ONE LINE        
 #===================================================================================================
 function display_data($count,$con,$row) {
     global $URL_UPDATE, $URL_DELETE, $URL_HOST_INFO, $URL_SERVER, $URL_PERF ;
 
-    echo "\n<tr>";
+    echo "\n<tr align=left bgcolor='lightgrey'>\n";  
+    echo "\n<td>$count</td>\n";  
 
-    # Server Name
-    #echo "\n<td class='dt-left'>" ;
+    # System Name / Architecture / Description
     echo "\n<td>" ;
-    echo "<a href='" . $URL_HOST_INFO . "?sel=" . $row['srv_name'];
-    echo "' data-toggle='tooltip' title='" ;
-    if ($row['srv_note'] != "") { echo $row['srv_note']. " - " ; } 
-    echo "IP " . $row['srv_ip'] ."'>" .$row['srv_name']. "</a>";
-    #"</td>";
+    echo "<a href='" .$URL_HOST_INFO. "?sel=" .$row['srv_name']. "' data-toggle='tooltip' title='";
+#    if ($row['srv_note'] != "") { echo "Note: " . $row['srv_note']. "\n" ; } 
+    echo "Note: " . $row['srv_note']. "\n" ; 
+    echo "Model: ". ucfirst(strtolower($row['srv_model'])) ."\nIP: ". $row['srv_ip'] . "'>\n" ;
+    echo $row['srv_name']. "</a>&nbsp;&nbsp;" .$row['srv_arch'] ;
+    echo "\n<br>" . $row['srv_desc'] ;
+    echo "\n</td>";   
 
-    # Display Server Desc.
-    #echo "\n<td class='dt-left'>"    . $row['srv_desc']   . "</td>";    # Display Description
-    echo "\n<br>" . $row['srv_desc']  . "</td>";   
-
-    # Display Server Uptime
-    #echo "\n<td class='dt-left'>"    . $row['srv_desc']   . "</td>";    # Display Description
-    echo "\n<td class='dt-body-left'> " . $row['srv_uptime']  . "</td>";   
-
-    # Server Architecture  
-    echo "<td class='dt-body-left'>" . $row['srv_arch'] . "</td>\n";  
-    
-    # Display O/S Version
-#    echo "\n<td class='dt-center'>" . $row['srv_osversion'] . "</td>";
-    #echo "\n<td class='dt-center'>" . $row['srv_osversion'] ." ";
+    # Display System Uptime
+    echo "\n<td align=left> " . $row['srv_uptime'] . "</td>";   
 
     # Display Operating System Logo
-    $WOS   = sadm_clean_data($row['srv_osname']);
-    list($ipath, $iurl, $ititle) = sadm_return_logo ($WOS) ;
-    echo "<td class='dt-center'>";
+    echo "<td align=center>";
+    $WOS = sadm_clean_data($row['srv_osname']);
+    list($ipath, $iurl, $ititle) = sadm_return_logo ($WOS) ;            # Get Distribution Logo
     echo "<a href='". $iurl . "' ";
     echo "title='" . $ititle . "'>";
     echo "<img src='" . $ipath . "' ";
-    echo "style='width:24px;height:24px;'>"; 
-    echo "</a>";
+    echo "style='width:32px;height:32px;'>"; 
+    echo "</a></td>";
 
     # Display O/S Version
-#    echo "\n<td class='dt-center'>" . $row['srv_osversion'] . "</td>";
-    echo $row['srv_osversion'] . "</td>";
+    echo "<td width=5 align=center>" . $row['srv_osversion'] . "</td>";
 
-    #sadm_show_logo($WOS);                                               # Show Distribution Logo
-    #echo "\n</td>";
+    # Display System Group & Category
+    echo "\n<td align=center>"; 
+    echo "\n<a href='" . $URL_SERVER . "?selection=group&value=" .$row['srv_group']. "'>" .$row['srv_group']. "</a>";
+    echo "&nbsp;/&nbsp;";
+    echo "\n<a href='" . $URL_SERVER . "?selection=cat&value="   .$row['srv_cat'].   "'>" .$row['srv_cat']. "</a>";
+    echo "\n</td>";
 
-    # Display O/S Version
-#    echo "\n<td class='dt-center'>" . $row['srv_osversion'] . "</td>";
+    # Display System Memory
+    echo "\n<td align=center>";
+    $MEMORY_SIZE = $row['srv_memory'] ;
+    if ( $MEMORY_SIZE <  1000 ) { 
+        $MEMORY_SIZE = round($row['srv_memory']) ;
+        $MEMORY_UNIT = "MB" ; 
+    } 
+    if ( $MEMORY_SIZE >= 1000 ) { 
+        $MEMORY_SIZE = round($row['srv_memory'] / 1024) ;
+        if ( $MEMORY_SIZE == 7  ) { $MEMORY_SIZE=8  ; } ;
+        if ( $MEMORY_SIZE == 31 ) { $MEMORY_SIZE=32 ; } ;
+        if ( $MEMORY_SIZE == 23 ) { $MEMORY_SIZE=24 ; } ; 
+        $MEMORY_UNIT = "GB" ;
+    }
+        echo "$MEMORY_SIZE $MEMORY_UNIT" ;
+    echo "\n</td>" ;
 
-    // # Display O/S Name and O/S Version
-    // echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=os";  
-    // echo "&value=" . $row['srv_osname']  ."'>"  . $row['srv_osname'] . "</a></td>";
     
-    // # Display O/S Version
-    // echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=osv";  
-    // echo "&value=" . $row['srv_osversion']  ."'>"  . $row['srv_osversion'] . "</a></td>";
+    # Display Nb. of CPU and Speed
+    echo "\n<td align=center>";
+    $CPU_NUM   = $row['srv_nb_cpu'] ;
+    $CPU_SPEED = $row['srv_cpu_speed'] ;  
+    if ( $CPU_SPEED <  1000 ) { 
+        $CPU_SPEED = round($row['srv_cpu_speed']) ;
+        $CPU_UNIT = "MHz" ; 
+    }else{
+        $CPU_SPEED = round($row['srv_cpu_speed'] / 1000) ;
+        $CPU_SPEED = $row['srv_cpu_speed'] / 1000 ;
+        $CPU_UNIT = "GHz" ;
+    }
+    $CPU_NUM = $CPU_NUM * $row['srv_core_per_socket'] ;    
+    $CPU_NUM = $CPU_NUM * $row['srv_thread_per_core'] ;
+    $etooltip="CPU : " .$row['srv_nb_cpu']. " -  Core per socket : " .$row['srv_core_per_socket']. " - Thread per core : " .$row['srv_thread_per_core'] ;
+    echo "<span data-toggle='tooltip' title='" . $etooltip . "'>"; 
+    echo $CPU_NUM ."&nbsp;X&nbsp;" . $CPU_SPEED . "&nbsp;" . $CPU_UNIT ;
+    echo "\n</span></td>" ;
 
-    # Display Server Group
-    echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=group";
-#    echo "&value=" . $row['srv_group']  ."'>"  . $row['srv_group'] . "</a></td>";
-    echo "&value=" . $row['srv_group']  ."'>"  . $row['srv_group'] . "</a>";
 
-    # Display Server Category
-#    echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=cat";
-#    echo "&value=" . $row['srv_cat']  ."'>"  . $row['srv_cat'] . "</a></td>";
-    echo "\n<a href='" . $URL_SERVER . "?selection=cat&value=" . $row['srv_cat']  ."'>"  . $row['srv_cat'] . "</a></td>";
-
-    # Display Server Memory
-    echo "\n<td class='dt-center'>" . $row['srv_memory'] ." MB </td>";
-
-    # Display Server Number of CPU and Speed
-    echo "\n<td class='dt-center'>" . $row['srv_nb_cpu'] . "X" . $row['srv_cpu_speed'] ."Mhz</td>";
+    # Display Disk space available
+    $DISK_SPACE = 0 ; 
+    if ( ! empty($row['srv_disks_info'])) { 
+        $DISK_ARRAY  = explode(",",$row['srv_disks_info']);
+        if (count($DISK_ARRAY) > 0) {
+           for ($i = 0; $i < count($DISK_ARRAY); ++$i) {
+               list($DISK_DEV,$DISK_SIZE) = explode("|", $DISK_ARRAY[$i] );
+               $DISK_SIZE  = round($DISK_SIZE / 1024) ;
+               $DISK_SPACE = $DISK_SPACE + $DISK_SIZE ;
+               $DISK_UNIT = "GB";
+           }   
+           if ( $DISK_SPACE > 1000 ) { 
+                $DISK_SPACE = round($DISK_SPACE /1024) ;
+                $DISK_UNIT = "TB";
+           }
+           $etooltip="Disk(s) : " . $row['srv_disks_info']  ;
+           #str_replace("|", " ",$etooltip);
+           echo "\n<td align=center>"; 
+           echo "<span data-toggle='tooltip' title='" . str_replace("|", " ",$etooltip) . "'>"; 
+           echo $DISK_SPACE . " " . $DISK_UNIT . "</span></td>";
+        }
+    }else{
+        echo "\n<td align=center> NO INFO </td>";
+    }
 
     # Display if server is Active or Inactive
     if ($row['srv_active'] == TRUE ) {                                  # Is Server Active
-        echo "\n<td class='dt-center'>";
+        echo "\n<td align=center>";
         echo "<a href='" .$URL_SERVER. "?selection=all_active'>Active</a></td>";
     }else{                                                              # If not Activate
-        echo "\n<td class='dt-center'>";
+        echo "\n<td align=center>";
         echo "<a href='" .$URL_SERVER. "?selection=all_inactive'>Inactive</a></td>";
     }
 
     # Display if server is Sporadically online or not
     if ($row['srv_sporadic'] == TRUE ) {                                # Is Server Sporadic
-        echo "\n<td class='dt-center'>";
+        echo "\n<td align=center>";
         echo "<a href='" .$URL_SERVER. "?selection=all_sporadic'>Yes</a></td>";
     }else{                                                              # If not Sporadic
-        echo "\n<td class='dt-center'>";
+        echo "\n<td align=center>";
         echo "<a href='" .$URL_SERVER. "?selection=all_non_sporadic'>No</a></td>";
     }
 
     # Display if it is a physical or a virtual server
+    echo "\n<td align=center>";
     if ($row['srv_vm'] == TRUE ) {                                      # Is VM Server 
-        echo "\n<td class='dt-center'>";
-        echo "<a href='" .$URL_SERVER. "?selection=all_vm'>Yes</a></td>";
+        echo "<a href='" .$URL_SERVER. "?selection=all_vm'>Yes</a>";
     }else{                                                              # If not Sporadic
-        echo "\n<td class='dt-center'>";
-        echo "<a href='" .$URL_SERVER. "?selection=all_physical'>No</a></td>";
+        echo "<a href='" .$URL_SERVER. "?selection=all_physical'>No</a>";
     }
+    echo "\n</td>";   
 
     # Show Performance Graph
+    echo "\n<td align=center>";
     if ($row['srv_graph'] == TRUE ) {                                   # If Show Perf. Active 
         $RRD_FILE = SADM_WWW_RRD_DIR ."/".$row['srv_name']."/".$row['srv_name'].".rrd"; # Host RRD File
         if (file_exists($RRD_FILE)) {
-            echo "\n<td class='dt-center'>";
-            echo "<a href='" .$URL_PERF. "?host=" .$row['srv_name']. "'>Graph</a></td>";
-        } else { echo "\n<td class='dt-center'>No Data</td>"; }
-    } else { echo "\n<td class='dt-center'>Not Act.</td>"; }                                                           
+            echo "<a href='" .$URL_PERF. "?host=" .$row['srv_name']. "'>Graph</a>";
+        } else { echo "No Data"; }
+    } else { echo "\nNot Actv."; }                                                           
+    echo "\n</td>";   
     
-
-    # Display Memory 
-    #echo "\n<td class='dt-center'>" . $row['srv_memory'] . " MB</td>"; # Display Server Alert
-    
-
-    # Display CPU And Speed
-    #echo "\n<td class='dt-center'>" . $row['srv_nb_cpu'] ."x". $row['srv_cpu_speed'] . " Mhz</td>";
-
-    echo "\n\n</tr>\n";                                                 # End of Table Line
+    echo "\n</tr>\n";                                                 # End of Table Line
 }
 
 
 
-#                       P R O G R A M    S T A R T     H E R E 
+# P R O G R A M    S T A R T     H E R E 
 # ==================================================================================================
 #
     # 1st parameter contains type of query that need to be done (all_servers,os,...)   
