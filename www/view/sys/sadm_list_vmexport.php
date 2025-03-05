@@ -25,6 +25,7 @@
 # 2024_10_03 web v1.1 Practically usable only occurrence and next export date display missing.
 #@2024_10_31 web v1.2 Permit to view the status of Virtual Box machine export.
 #@2025_01_29 web v1.3 Was not showing the right VirtualBox Guest Addition version 
+#@2025_03_05 web v1.4 Change the look of the page adding some mpore info
 # ==================================================================================================
 #
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -92,7 +93,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "1.3" ;                                           # Current version number
+$WVER               = "1.4" ;                                           # Current version number
 $URL_HOME           = '/index.php';                                     # Site Main Page
 
 # Server Static Data Maintenance
@@ -141,7 +142,8 @@ function setup_table() {
     echo "      <th width=60>VmName</th>\n";
     echo "      <th width=60>Guest Version</th>\n";
     echo "      <th width=60>HostName</th>\n";
-    echo "      <th width=150>Date & Duration</th>\n";
+    echo "      <th width=60>Last Export</th>\n";
+    echo "      <th width=150>Duration</th>\n";
     echo "      <th width=50>Status</th>\n";
     echo "      <th width=60>Log & Hist.</th>\n";
     echo "      <th width=70>Export<br>Schedule</th>\n";
@@ -158,7 +160,8 @@ function setup_table() {
     echo "      <th width=60>VmName</th>\n";
     echo "      <th width=60>Guest Version</th>\n";
     echo "      <th width=60>HostName</th>\n";
-    echo "      <th width=150>Date & Duration</th>\n";
+    echo "      <th width=60>Last Export</th>\n";
+    echo "      <th width=150>Duration</th>\n";
     echo "      <th width=50>Status</th>\n";
     echo "      <th width=60>Log & Hist.</th>\n";
     echo "      <th width=70>Export<br>Schedule</th>\n";
@@ -191,11 +194,11 @@ function display_data($count, $row) {
 
     # Export counter
     echo "\n<tr align=left bgcolor='lightgrey'>\n";  
-    echo "<td>$count</td>\n";  
+    echo "\n<td>$count</td>";  
 
 
     # Virtual machine name
-    echo "<td>";
+    echo "\n<td>";
     echo "<a href='" .$URL_SERVER_INFO. "?sel=" .$row['srv_name']. "&back=" .$URL_VIEW_VBEXPORT. "'";
     if ($row['srv_desc']   != "") { $sysinfo = $row['srv_desc'] ; }else{ $sysinfo=""; };
     if ($row['srv_note']   != "") { $sysinfo = $sysinfo .', '.  $row['srv_note']    ; };
@@ -207,23 +210,22 @@ function display_data($count, $row) {
     # Show Virtual Machine Type (VB=VirtualBox VW=VMWare KVM=Kernel Virt,...) & Guest version 
     echo "<td>";
     echo "<a href='" .$URL_SERVER_INFO. "?sel=" .$row['srv_name']. "&back=" .$URL_VIEW_VBEXPORT. "'";
-    echo " title='" . $sysinfo . "'>VBOX</a>&nbsp;&nbsp;" . $row['srv_vm_version'] . "</td>\n";  
-    
+    echo " title='" . $sysinfo . "'>VBOX</a>&nbsp;&nbsp;" . $row['srv_vm_version'] ;
+    echo "</td>\n";  
 
     # System Hosting the Virtual machine.
     echo "<td>";
     echo "<a href='" . $URL_SERVER_INFO ."?sel=". $row['srv_vm_host'] ."&back=". $URL_VIEW_VBEXPORT ."'";
     echo " title='Click to view system info, system'>" . $row['srv_vm_host']  . "</a></td>\n";
 
-
-    # Show Last export Date/Time & duration.
+    # System last export date
     # Check age of export and highlight if days between export exceed interval.
     if (! file_exists($rch_name))  {                          # No RCH Found,No backup yet
         echo "<td align=left>No export yet</td>";  
     }else{
         $file = file("$rch_name");                            # Load RCH File in Memory
         $lastline = $file[count($file) - 1];                     # Extract Last line of RCH
-        $rch_array = explode(" ",$lastline);
+        $rch_array = explode(" ",$lastline);         # Split rch line in array
         $now = time();                                                  # Current epoch time
         $your_date = strtotime(str_replace(".", "-",$rch_array[1])); 
         $datediff  = $now - $your_date;                                 # Diff. between now & export
@@ -236,7 +238,33 @@ function display_data($count, $row) {
             $tooltip = "Export is " .$backup_age. " days old, cell will be highlighted if export is older than " .SADM_VM_EXPORT_INTERVAL. " days.";
             echo "<td align=left><span data-toggle='tooltip' title='" . $tooltip . "'>";
         }
-        echo "$rch_array[1] " . $rch_array[5];
+        echo "$rch_array[1] " . $rch_array[2];
+        echo "</span></td>"; 
+    }
+    echo "\n";  
+
+    # Show Last export Duration.
+    # Check age of export and highlight if days between export exceed interval.
+    if (! file_exists($rch_name))  {                          # No RCH Found,No backup yet
+        echo "<td align=left>No export yet</td>";  
+    }else{
+        $file = file("$rch_name");                            # Load RCH File in Memory
+        $lastline = $file[count($file) - 1];                     # Extract Last line of RCH
+        $rch_array = explode(" ",$lastline);         # Split rch line in array
+        $now = time();                                                  # Current epoch time
+        $your_date = strtotime(str_replace(".", "-",$rch_array[1])); 
+        $datediff  = $now - $your_date;                                 # Diff. between now & export
+        $backup_age = round($datediff / (60 * 60 * 24));           # Days since last export 
+        if ($backup_age > SADM_VM_EXPORT_INTERVAL) {                    # exportAge>accepted interval
+            $tooltip = "Export is " .$backup_age. " days old, greater than the threshold of " .SADM_VM_EXPORT_INTERVAL. " days.";
+            echo "<td align=left style='color:red' bgcolor='#DAF7A6'><b>";
+            echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
+        }else{
+            $tooltip = "Export is " .$backup_age. " days old, cell will be highlighted if export is older than " .SADM_VM_EXPORT_INTERVAL. " days.";
+            echo "<td align=left><span data-toggle='tooltip' title='" . $tooltip . "'>";
+        }
+#        echo "$rch_array[1] " . $rch_array[5];
+        echo "$rch_array[5] " ;
         echo "</span></td>"; 
     }
     echo "\n";  
@@ -308,10 +336,11 @@ function display_data($count, $row) {
     #$ipath = '/images/UpdateButton.png';
     if ($row['srv_export_sched'] == True ) {                            # If Export Schedule Active
         $tooltip = 'Schedule is active, click to edit export schedule.';
-        echo "<td align=left style='color: green'<b>Y</b> ";
+        #echo "<td align=left style='color: green'<b>Y</b> ";
+        echo "<td align=left style='color: green'";
     }else{                                                              # If Schedule not Activate
         $tooltip = 'Schedule is inactive, click to activate export schedule.';
-        echo "<td align=left style='color:red' bgcolor='#DAF7A6'><b>N</b> ";
+        echo "<td align=left style='color:red' bgcolor='#DAF7A6'> ";
     }
     echo "<a href='" .$URL_EXPORT_SCHED. "?sel=" . $row['srv_name'];
     echo "&back=" .$URL_VIEW_VBEXPORT. "'>";
@@ -449,7 +478,7 @@ function display_data($count, $row) {
     }
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
 
-    echo "<center>Only virtual machine are shown on this page.</center>";
+    echo "<center>Only virtual systems are shown on this page.</center>";
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                         # Close MySQL & HTML Footer
 ?>
