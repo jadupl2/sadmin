@@ -237,6 +237,7 @@
 #@2025_01_30 lib v4.58 3 New global var. for NFS mount in sadmin.cfg, initialize when loading library
 #@2025_01_30 lib v4.58 SADM_VM_EXPORT_NFS_SERVER_VER,SADM_BACKUP_NFS_SERVER_VER,SADM_REAR_NFS_SERVER_VER
 #@2025_01_30 lib v4.59 Fix some problems these 2 functions 'sadm_get_host_ip() and sadm_get_fqdn()'.
+#@2025_03_05 lib v4.60 Change syntax of some command
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -246,7 +247,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.59"                                              # This Library Version
+export SADM_LIB_VER="4.60"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -1723,7 +1724,7 @@ sadm_get_kernel_version() {
 # --------------------------------------------------------------------------------------------------
 #    FUNCTION RETURN A STRING CONTAINING DISKS NAMES AND CAPACITY (MB) OF EACH DISKS
 #
-#    Example :  sda:65536;sdb:17408;sdc:17408;sdd:104
+#    Example :  sda|65536,sdb|17408,sdc|17408,sdd|104
 #        EACH DISK NAME IS FOLLOWED BY THE DISK CAPACITY IN MB,  SEPERATED BY A ":"
 #        IF THEY ARE MULTIPLE DISKS ON THE SERVER EACH DISK INFO IS SEPARATED BY A ";"
 # --------------------------------------------------------------------------------------------------
@@ -1734,11 +1735,7 @@ sadm_server_disks() {
 
                  # Cannot Get Info under RedHat/CentOS 3 and 4 - Unsuported
                  SOSNAME=$(sadm_get_osname) ; SOSVER=$(sadm_get_osmajorversion)
-                 #echo "SOSNAME = $SOSNAME , SOSVER = $SOSVER"
-                 if (([ $SOSNAME = "CENTOS" ] || [ $SOSNAME = "REDHAT" ]) && ([ $SOSVER -lt 5 ]))
-                    then echo "O/S Version not Supported - To get disk Name/Size "      >$STMP
-                    else $SADM_PARTED -l | grep "^Disk" | grep -vE "mapper|Disk Flags:" >$STMP
-                 fi
+                 $SADM_PARTED -l | grep "^Disk" | grep -viE "mapper|Disk Flags:|zram" >$STMP
 
                  while read xline                                       # Read Each disks line
                     do
@@ -1746,36 +1743,37 @@ sadm_server_disks() {
                         then output_line="${output_line},"              # For others disks add ","
                     fi
                     # Get the Disk Name
-                    dname=`echo $xline| awk '{ print $2 }'| awk -F/ '{ print $3 }'| tr -d ':'`
+                    dname=$(echo $xline| awk '{ print $2 }'| awk -F/ '{ print $3 }'| tr -d ':')
 
                     # Get Disk Size
-                    dsize=`echo $xline | awk '{ print $3 }' | awk '{print substr($0,1,length-2)}'`
+                    dsize=$(echo $xline | awk '{ print $3 }' | awk '{print substr($0,1,length-2)}')
 
                     # Get Size Unit (GB,MB,TB)
-                    disk_unit=`echo $xline | awk '{ print $3 }' | awk '{print substr($0,length-1,2)}'`
-                    disk_unit=`sadm_toupper $disk_unit`                 # Make sure is in Uppercase
+                    disk_unit=$(echo $xline | awk '{ print $3 }' | awk '{print substr($0,length-1,2)}')
+                    disk_unit=$(sadm_toupper $disk_unit)                # Make sure is in Uppercase
 
                     # Convert Disk Size in MB if needed
                     if [ "$disk_unit" = "GB" ]                          # If GB Unit
-                       then dsize=`echo "($dsize * 1024) / 1" | $SADM_BC`  # Convert GB into MB
+                       then dsize=$(echo "($dsize * 1024) / 1" | $SADM_BC)  # Convert GB into MB
                     fi
                     if [ "$disk_unit" = "MB" ]                          # if MB Unit
-                       then dsize=`echo "$dsize * 1"| $SADM_BC`         # If MB Get Rid of Decimal
+                       then dsize=$(echo "$dsize * 1"| $SADM_BC)        # If MB Get Rid of Decimal
                     fi
                     if [ "$disk_unit" = "TB" ]
-                       then dsize=`echo "(($dsize*1024)*1024)/1"| $SADM_BC` # Convert GB into MB
+                       then dsize=$(echo "(($dsize*1024)*1024)/1"| $SADM_BC) # Convert GB into MB
                     fi
 
                     output_line="${output_line}${dname}|${dsize}"       # Combine Disk Name & Size
-                    index=`expr $index + 1`                             # Increment Index by 1
+                    ((index++))                                         # Increment Index by 1
                     done < $STMP
                  rm -f $STMP> /dev/null 2>&1                            # Remove Temp File
                  ;;
-        "AIX")   for wdisk in `find /dev -name "hdisk*"`
+
+        "AIX")   for wdisk in $(find /dev -name "hdisk*")
                      do
                      if [ "$index" -ne 0 ] ; then output_line="${output_line}," ; fi
-                     sadm_dname=`basename $wdisk`
-                     sadm_dsize=`getconf DISK_SIZE ${wdisk}`
+                     sadm_dname=$(basename $wdisk)
+                     sadm_dsize=$(getconf DISK_SIZE ${wdisk})
                      output_line="${output_line}${sadm_dname}|${sadm_dsize}"
                      index=`expr $index + 1`
                      done
