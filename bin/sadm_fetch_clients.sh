@@ -104,6 +104,7 @@
 #@2024_11_11 server v3.50 Add creation of list of all VMs '$SADM_VMLIST' & VM Hosts '$SADM_VMHOSTS'.
 #@2025_01_24 server v3.51 Bug fixes & refine lock detection vs Monitor page.
 #@2025_01_29 server v3.52 Change 'sadm_vm' crontab update to use 'sadm_rmcmd_lock' to lock/unlock system.
+#@2025_03_25 server v3.53 Refine way to copy local rch,log  and rpt to farm www directory.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -133,7 +134,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.52'                                     # Script version number
+export SADM_VER='3.53'                                     # Script version number
 export SADM_PDESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -1837,12 +1838,6 @@ main_process()
 {   
     PROCESS_ERROR=0                                                     # Init. Error count to 0
     
-    # Making sure the SADMIN server have a $SADMIN/www/dat/$HOSTNAME/rpt directory on this system.
-    WDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"                     # Web copy of the rpt dir.
-    if [ ! -d "$WDIR" ] ; then mkdir -p "$WDIR" ; fi 
-    chown "$SADM_WWW_USER:$SADM_GROUP"  "$WDIR" 
-    chmod 775 "$WDIR" 
-
     # Create an empty global rpt file $SADMIN/www/dat/HOSTNAME/rpt/HOSTNAME_fetch.rpt
     if [ -f "$FETCH_RPT_GLOBAL" ] ;then rm -f "$FETCH_RPT_GLOBAL" ;fi   # rm global RPT file if exist
     touch "$FETCH_RPT_GLOBAL"                                           # Create global RPT file
@@ -1854,6 +1849,7 @@ main_process()
     touch "$FETCH_RPT_LOCAL"                                            # Create EMPTY local RPTfile
     chown "$SADM_USER:$SADM_GROUP"  "$FETCH_RPT_LOCAL"  
     chmod 664 "$FETCH_RPT_LOCAL"
+
 
     # Process All Active Linux systems.
     process_servers "linux"                                             # Process Active Linux
@@ -1872,14 +1868,18 @@ main_process()
     # Create $SADM_VMLIST & $SADM_VMHOSTS
     create_vm_list    
 
+    
     # If Global RCH and RPT directories don't exist
     WDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"                     # Web Global RCH repo Dir 
     if [ ! -d "$WDIR" ] ; then mkdir -p "$WDIR" ; fi
+    chown "$SADM_WWW_USER:$SADM_GROUP"  "$WDIR" 
     chmod 775 "$WDIR"
 
     WDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"                     # Web Global RPT repo Dir 
     if [ ! -d "$WDIR" ] ; then mkdir -p "$WDIR" ; fi
+    chown "$SADM_WWW_USER:$SADM_GROUP"  "$WDIR" 
     chmod 775 "$WDIR"
+
 
     # Copy local rpt and rch to Global www directories.
     chmod 664 "$SADM_RPT_FILE"
@@ -2133,7 +2133,7 @@ sadm_send_alert()
     if [ $RC -eq 0 ]                                                    # Same Alert was found
         then if [ $SADM_ALERT_REPEAT -eq 0 ]                            # User want no alert repeat
                 then if [ "$LIB_DEBUG" -gt 4 ]                          # Under Debug
-                        then wmsg="Alert already sent, you asked to sent alert only once"
+                        then wmsg="Alert already sent, you asked to sent alert only once."
                              sadm_write "$wmsg - (SADM_ALERT_REPEAT set to $SADM_ALERT_REPEAT).\n"
                      fi
                      return 2                                           # Return 2 = Alreay Sent
