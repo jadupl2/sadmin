@@ -135,7 +135,8 @@
 # 2024_02_12 install v4.03 Script 'sadm_service_ctrl.sh' is depreciated (Use 'systemctl').
 # 2024_02_13 install v4.04 Setup will now ask for 'sadmin' user password & force to change it on login.
 # 2024_02_15 install v4.05 Bug fix on postfix configuration & various corrections and enhancements.
-# 2024_07_10 install v4.06 Minor changes and fixes.
+#@2024_07_10 install v4.06 Minor changes and fixes.
+#@2025_03_25 install v4.07 Add some more comments in SADMIN Server crontab.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -155,7 +156,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "4.06"                                            # Setup Version Number
+sver                = "4.07"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 phostname           = platform.node().split('.')[0].strip()             # Get current hostname
@@ -332,12 +333,12 @@ def askyesno(emsg,sdefault="Y"):
         return False
         
 #===================================================================================================
-#                       Open the Script Log File in $SADMIN/log Directory
+# Open Script Log File in $SADMIN/log Directory
 #===================================================================================================
 def open_logfile(sroot):
     global fhlog                                                        # Need to share file Handle
 
-    # Make sure log Directory exist
+    # Make sure log directory exist
     try:                                                                # Catch mkdir error
         os.mkdir ("%s/setup/log" % (sroot),mode=0o777)                  # Make ${SADMIN}/log dir.
     except FileExistsError as e :                                       # If Dir. already exists 
@@ -637,13 +638,20 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     cscript="sudo ${SADMIN}/bin/sadm_push_sadmin.sh >/dev/null 2>&1"
     hcron.write ("\n")
     hcron.write ("# Optional daily push of $SADMIN server version to all actives clients.\n")
-    hcron.write ("# Will not erase any of your data or configuration files.\n")
     hcron.write ("# Good way to update version on some or all SADMIN clients.\n")
-    hcron.write ("#   -n Push SADMIN version to the client host name you specify.\n")
-    hcron.write ("#   -c Also $SADMIN/cfg/sadmin_client.cfg to active sadmin clients.\n")
-    hcron.write ("#   -s Also push $SADMIN/sys to active sadmin clients.\n")
-    hcron.write ("#   -u Also push $SADMIN/(usr/bin usr/lib usr/cfg) to active sadmin clients.\n")
-    hcron.write ("#10 13,21 * * * %s %s\n" % (wuser,cscript))
+    hcron.write ("# Will not erase any of your data or configuration files.\n")
+    hcron.write ("# - Exclude some files in $SADMIN/cfg :\n")
+    hcron.write ("#     .gmpw,.dbpass,sadmin.cfg,*.smon,sadmin_client.cfg,\n")
+    hcron.write ("#     backup_exclude.txt,backup_list.txt,rear_exclude.txt,alert_archive.txt\n")
+    hcron.write ("# OPTIONS: \n")
+    hcron.write ("# -n Copy SADMIN version to the host name you specify\n")
+    hcron.write ("# -c Copy $SADMIN/cfg/sadmin_client.cfg to active sadmin clients.\n")
+    hcron.write ("#    Use if you wish to have the same sadmin.cfg on all active clients.\n")
+    hcron.write ("#    First copy $SADMIN/cfg/sadmin.cfg to $SADMIN/cfg/sadmin_client.cfg.\n") 
+    hcron.write ("#    Second change the 'SADM_HOST_TYPE' variable to 'C' afterward.")
+    hcron.write ("# -s Copy $SADMIN/sys to active sadmin clients.\n")
+    hcron.write ("# -u Copy $SADMIN/(usr/bin,usr/lib,usr/cfg) to active sadmin clients.\n")
+    hcron.write ("#10 22 * * * %s %s\n" % (wuser,cscript))
     hcron.write ("#\n")
     #
     hcron.close()                                                       # Close SADMIN Crontab file
@@ -1717,11 +1725,13 @@ def update_apache_config(sroot,sfile,sname,svalue):
         writelog ("Error removing %s" % (wbak_file))                    # Advise user of problem
         sys.exit(1)                                                     # Exit to O/S with Error
 
+
+
 #===================================================================================================
-#   Set and/or Validate that SADMIN Environment Variable is set in /etc/environment file
+# Set and/or Validate that SADMIN Environment Variable is set in /etc/environment file
 #===================================================================================================
 #
-def set_sadmin_env(ver):
+def set_sadmin_env(ver) :
 
     # Is SADMIN Environment Variable Defined ? , If not ask user to specify it
     if "SADMIN" in os.environ:                                          # Is SADMIN Env. Var. Exist?
@@ -1736,14 +1746,13 @@ def set_sadmin_env(ver):
 
     # Validate That Directory specify contain the Shell SADMIN Library 
     libname="%s/lib/sadmlib_std.sh" % (sadm_base_dir)                   # Set Full Path to Shell Lib
-    if os.path.exists(libname)==False:                                  # If SADMIN Lib Not Found
+    if os.path.exists(libname) == False :                               # If SADMIN Lib Not Found
         printBold ("The directory %s isn't the SADMIN directory" % (sadm_base_dir)) # Reject Msg
         printBold ("It doesn't contains the file %s\n" % (libname))     # Show Why we Refused
         sys.exit(1)                                                     # Exit with Error Code
 
-    # Ok now we can Set SADMIN Environnement Variable, for the moment
+    # Ok now we can Set SADMIN Environnement variable, for the moment
     os.environ['SADMIN'] = sadm_base_dir                                # Setting SADMIN Env. Dir.
-
 
     # Making sure that 'export SADMIN=' line is in /etc/profile.d/sadmin.sh (So it survive a reboot)
     SADM_PROFILE='/etc/profile.d/sadmin.sh'                             # SADMIN Environment File
@@ -2689,7 +2698,7 @@ def sadmin_service(sroot):
 
     ifile="%s/cfg/.sadmin.service" % (sroot)                            # Input Source Service file
     ofile="/etc/systemd/system/sadmin.service"                          # Output sadmin service file
-    if os.path.exists(ofile)==False:                                    # Service already in place
+    if os.path.exists(ofile) == False :                                 # Service already in place
         try:
             shutil.copyfile(ifile,ofile)                                # Copy sadmin service file
         except IOError as e:
@@ -2813,16 +2822,15 @@ def mainflow(sroot):
 #===================================================================================================
 #
 def main():
-    
 
     global fhlog                                                        # Script Log File Handler
     print ("\n\nSADMIN Setup V%s" % (sver))                             # Print Version Number
     print ("---------------------------------------------------------------------------")
    
     # Insure that this script is only run by the user root (Optional Code)
-    if not os.getuid() == 0:                                            # UID of user is not zero
+    if not os.getuid() == 0 :                                           # UID of user is not zero
        print ("This script must be run by the 'root' user.")            # Advise User Message / Log
-       print ("Try sudo ./%s" % (pn))                                   # Suggest to use 'sudo'
+       print ("Or try sudo ./%s" % (pn))                                   # Suggest to use 'sudo'
        print ("Process aborted")                                        # Process Aborted Msg
        sys.exit(1)                                                      # Exit with Error Code
 
