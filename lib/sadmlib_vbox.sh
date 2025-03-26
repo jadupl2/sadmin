@@ -46,6 +46,7 @@
 #@2024_11_11 virtualbox v2.6 Do not start an VM export if the system is lock.
 #@2024_11_26 virtualbox v2.7 Do not start an VM export if the system is lock.
 #@2024_11_17 virtualbox v2.8 Minor changes
+#@2025_03_25 virtualbox v2.9 Was not showing the current VirtualBox Guest addition version.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -56,7 +57,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 # Global Variables
 # --------------------------------------------------------------------------------------------------
-export VMLIBVER="2.8"                                                   # This Library version
+export VMLIBVER="2.9"                                                   # This Library version
 export VMLIB_DEBUG="N"                                                  # Activate Debug output Y/N
 export VMLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_list1_XXX")"        # List of all VM in VBox
 export VMRUNLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_runlist_XXX")"   # Tmp File to list RunningVM 
@@ -487,7 +488,7 @@ sadm_list_vm_status()
 
     # Virtual Box machine list header
     printf "${SADM_80_DASH}\n" | tee -a $SADM_LOG
-    printf "%-3s%-19s%-8s%-10s%-8s%-6s%-16s%-s\n" "No" "Name" "State" "Ext.Ver" "Memory" "CPU" "VM IP" "VRDE Port" | tee -a $SADM_LOG
+    printf "%-3s%-17s%-8s%-14s%-8s%-6s%-16s%-s\n" "No" "Name" "State" "Additions" "Memory" "CPU" "VM IP" "VRDE Port" | tee -a $SADM_LOG
     printf "${SADM_80_DASH}\n" | tee -a $SADM_LOG
 
     # Initialize Total Variables.
@@ -527,7 +528,8 @@ sadm_list_vm_status()
         vm_cpu=$($VBOXMANAGE showvminfo $vm_name |grep 'Number of CPU' |awk '{print $4}' |tr -d ' ')
 
         # Get Virtual Box Guest extension version
-        vm_verext=$($VBOXMANAGE guestproperty enumerate $vm_name |grep '/VirtualBox/HostInfo/VBoxVerExt' |awk '{print $3}' |tr -d "\'")
+        #vm_verext=$($VBOXMANAGE guestproperty enumerate $vm_name |grep '/VirtualBox/HostInfo/VBoxVerExt' |awk '{print $3}' |tr -d "\'")
+        vm_verext=$($VBOXMANAGE showvminfo $vm_name |grep 'Additions version' |awk -F: '{print $2}' |tr -d ' ')
 
         # Remote Desktop State
         #printf "vrde\n"
@@ -536,7 +538,7 @@ sadm_list_vm_status()
             then vrde_port=$($VBOXMANAGE showvminfo $vm_name |grep 'VRDE:' |awk '{print $6}' |tr -d ',')
             else vrde_port='Disable'
         fi 
-        printf  "%02d %-18s %-9s %-8s%-8s %-4s %-15s %-s\n" "$lineno" "$vm_name" "$vm_stat" "$vm_verext" "$vm_mem" "$vm_cpu" "$vm_ip" "$vrde_port" | tee -a $SADM_LOG
+        printf  "%02d %-15s %-8s %-13s %-8s %-4s %-15s %-s\n" "$lineno" "$vm_name" "$vm_stat" "$vm_verext" "$vm_mem" "$vm_cpu" "$vm_ip" "$vrde_port" | tee -a $SADM_LOG
         done
 
     # Show Total Lines.
