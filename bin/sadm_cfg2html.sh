@@ -27,6 +27,7 @@
 # 2022_05_05 client: v3.9 Update code for RHEL, CentOS, AlmaLinux & Rocky Linux v9.
 # 2022_07_28 client: v3.10 Updated to use new SADMIN section 1.51
 # 2024_01_02 client: v3.12 Code review to run cfg2html v7 & update SADMIN section to v1.56
+# 2025_03_25 client: v3.13 Review code - 'which' command is depreciated.
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------
@@ -59,7 +60,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.12'                                      # Script version number
+export SADM_VER='3.13'                                      # Script version number
 export SADM_PDESC="Run 'cfg2html' tool & produce system information files."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -187,22 +188,15 @@ function update_cfg2html()
 # --------------------------------------------------------------------------------------------------
 function main_process()
 {
-    ws=$(which cfg2html >/dev/null 2>&1)                                # cfg2html exist on system?
-    if [ $? -eq 0 ]                                                     # Yes it does
-        then CFG2HTML=$(which cfg2html)                                 # Get full path of cfg2html
+    if command -v cfg2html >/dev/null 2>&1
+        then CFG2HTML=$(command -v cfg2html)                            # Get full path of cfg2html
              wversion=$($CFG2HTML -v | tail -1 | awk  '{ print $3 }')   # Get version third field
-             cur_version=$(echo $wversion | awk -F\. '{ print $1 }')    # Get 1st digit of version #
-             if [ "$cur_version" != "7" ]
-                then update_cfg2html
-                     if [ $? -ne 0 ] 
-                        then sadm_write_err "Problem updating 'cfg2html'."
-                             return 1 
-                     fi 
-             fi 
+        else sadm_write_err "The command 'cfg2html' is not installed, please install it." 
+             return 1
     fi
 
 
-    CFG2HTML=$(which cfg2html)                                          # May have change if updated
+    CFG2HTML=$(command -v cfg2html)                                     # May have change if updated
     if [ $? -ne 0 ]                                                     # if not found
        then sadm_write_log "Command 'cfg2html' is not installed."       # Not Found inform user
             sadm_write_log "Installing 'cfg2html' ..."                  # Not Found inform user
@@ -227,7 +221,7 @@ function main_process()
             fi
 
             # Now that it is supposed to be installed, check if available now.
-            ws=$(which cfg2html >/dev/null 2>&1)                        # Try Again to Locate cfg2html
+            ws=$(command -v cfg2html >/dev/null 2>&1)                   # Try Again to Locate cfg2html
             if [ $? -ne 0 ]                                             # if Still not found
                 then sadm_write_err "Still the command 'cfg2html' can't be found."
                      sadm_write_err "Install it & re-run this script."  # Not Found inform user
@@ -242,18 +236,9 @@ function main_process()
              
     fi
 
-    # Update cfg2html if necessary
-    #update_cfg2html
-    #if [ $? -ne 0 ] 
-    #    then sadm_write_err "Problem updating 'cfg2html'."
-    #         return 1 
-    #fi
-
     # Run CFG2HTML
-    export CFG2HTML=$(which cfg2html)                                   # Get cfg2html Path
-    #CFG2VER=$($CFG2HTML -v | tr -d '\n')
+    export CFG2HTML=$(command -v cfg2html)                                   # Get cfg2html Path
     sadm_write_log " "
-    #sadm_write_log "${CFG2VER}"
     sadm_write_log "Running : $CFG2HTML -o ${SADM_DR_DIR}"
     $CFG2HTML -o $SADM_DR_DIR | tee -a $SADM_LOG 2>&1
     SADM_EXIT_CODE=$?
