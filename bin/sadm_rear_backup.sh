@@ -87,6 +87,7 @@
 #@2024_12_05 backup v2.40 Change way used to check integrity on rear tgz backup file.
 #@2025_01_24 backup v2.41 Collect more info while doing a restore test at the end of backup.
 #@2025_02_22 backup v2.42 Using the NFS mount version '$SADM_REAR_NFS_SERVER_VER' from sadmin.cfg.
+#@2025_03_25 backup v2.43 Minor change & now show 20 biggest files taken in backup.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -115,7 +116,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.42'                                     # Script version number
+export SADM_VER='2.43'                                     # Script version number
 export SADM_PDESC="Produce a ReaR bootable iso and a restorable backup on a NFS server"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -225,6 +226,13 @@ update_url_in_rear_site_conf()
     else sadm_write_log "[ OK ] ReaR configuration file '$REAR_CFGFILE' successfully updated."
          return 0 
     fi
+
+    # Show content of the /etc/rear/site.conf
+    #sadm_write_log " "
+    #sadm_write_log "Content of ReaR config file '$REAR_CFGFILE' :"
+    #cat $REAR_CFGFILE| while read wline ; do sadm_write_log "$wline"; done
+    #sadm_write_log " "
+    #sadm_write_log " "
 }
 
 
@@ -364,12 +372,14 @@ rear_preparation()
     mount $NFS_OPT ${SADM_REAR_NFS_SERVER}:${SADM_REAR_NFS_MOUNT_POINT} ${NFS_MOUNT} >>$SADM_LOG 2>&1
     RC=$?
     if [ $RC -ne 0 ]
-        then sadm_write_err "[ ERROR ] NFS Mount failed, error $RC - Process Aborted."
+        then sadm_write_err "[ ERROR ] NFS share on '$SADM_REAR_NFS_SERVER' could not be mounted."
+             sadm_write_err "Error #$RC on NFS mount - Process aborted."
+             sadm_write_err "Function '${FUNCNAME[1]}' at line no.$LINENO."
              RC=1
              umount ${NFS_MOUNT} > /dev/null 2>&1
              rmdir  ${NFS_MOUNT} > /dev/null 2>&1
              return 1
-        else sadm_write_log "[ OK ] NFS share on $SADM_REAR_NFS_SERVER mounted."
+        else sadm_write_log "[ OK ] NFS share on '$SADM_REAR_NFS_SERVER' is now mounted."
     fi
     #df -h | grep ${NFS_MOUNT} | sed 's/%//g' | while read wline ; do sadm_write_log "$wline" ; done
     
@@ -552,7 +562,6 @@ rear_housekeeping()
     # Create a table of content of tgz backup file just produced.
     sadm_write_log " " 
     sadm_write_log "Creating a list of the ReaR backup file in '$REAR_CUR_LST'".
-    #tar --exclude '*/*/*/*/*' -tvzf $REAR_CUR_TGZ | grep -Ex '([^/]+/){3}' >$REAR_CUR_LST
     tar -tvzf "$REAR_CUR_TGZ" 1>"$REAR_CUR_LST" 2>"$REAR_CUR_ERR"
     if [ $? -ne 0 ]
         then if [ -r "$REAR_CUR_ERR" ] 
@@ -566,8 +575,8 @@ rear_housekeeping()
 
     # List 10 biggest files include in the tgz file
     sadm_write_log " "
-    sadm_write_log "Building a list of the 10 biggest files included in your ReaR backup file."
-    tar -tzvf $REAR_CUR_TGZ | sort -k3 -rn | nl | head >>$SADM_LOG 2>&1
+    sadm_write_log "Building a list of the 20 biggest files included in your ReaR backup file."
+    tar -tzvf $REAR_CUR_TGZ | sort -k3 -rn | nl | head -n 20 | tee -a $SADM_LOG 2>&1
     sadm_write_log " "
     
     # Unmount the NFS directory 
