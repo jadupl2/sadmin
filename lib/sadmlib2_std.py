@@ -2120,7 +2120,7 @@ def stop(pexit_code) :
             except Exception as e:
                 print ("Couldn't copy %s to %s\n%s\n" % (rch_file,woutput,e)) # Advise user
     else :
-        if not use_rch :                                               # If not using RCH File
+        if not use_rch :                                                # If not using RCH File
             silentremove(rch_file)                                      # Then Delete it 
 
     # If on SADMIN Server, copy immediately rch, log and elog to server central directories.
@@ -2140,7 +2140,7 @@ def stop(pexit_code) :
                 print ("Couldn't copy %s to %s\n%s\n" % (err_file,welog,e))
 
     # Close Database if was used
-    if sadm_host_type == "S" and db_used :                          # If Database was Used
+    if sadm_host_type == "S" and db_used :                              # If Database was Used
        db_close()                                                       # Close Database
     return
 
