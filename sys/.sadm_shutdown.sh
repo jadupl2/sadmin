@@ -19,7 +19,8 @@
 # 2020_11_04 startup/shutdown v2.12 Update SADMIN section & use env cmd to use proper bash shell.
 # 2022_09_15 startup/shutdown v2.13 Update SADMIN section 1.52 & minor changes.
 # 2023_07_17 startup/shutdown v2.14 Update with latest SADMIN section(v1.56).
-# 2024_05_02 startup/shutdown v2.15 Send shutdown email if 'SADM_EMAIL_SHUTDOWN' = "Y" in sadmin.cfg.
+#@2024_05_02 startup/shutdown v2.15 Send shutdown email if 'SADM_EMAIL_SHUTDOWN' = "Y" in sadmin.cfg.
+#@2025_03_25 startup/shutdown v2.16 Change format of shutdown email sent to sysadmin.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x
@@ -50,7 +51,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.15'                                     # Script version number
+export SADM_VER='2.16'                                     # Script version number
 export SADM_PDESC="Executed when the system is brought down by the sadmin.service."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -93,12 +94,12 @@ shutdown_mail()
 {
     sadm_write_log " "
     sadm_write_log "Send shutdown email to $SADM_MAIL_ADDR"
-    ws="System $SADM_HOSTNAME is going down." 
-    wb=$(echo -e "System '${SADM_HOSTNAME}' $(sadm_get_host_ip) is now offline.\n$(date)\nHave a nice day from ${SADM_PN}.\nSee you soon !\n\n")
+    ws="SADM_INFO: System '$SADM_HOSTNAME' going down." 
+    wb=$(echo -e "\n$(date)\nSystem '${SADM_HOSTNAME}' '$(sadm_get_host_ip)' is going offline.\nEmail sent by '${SADM_PN}'.\nSee you soon !\n\n")
     we="$SADM_MAIL_ADDR"
     sadm_sendmail "$we" "$ws" "$wb" 
     RC=$?
-    return $RC 
+    return $RC
 }
 
 
@@ -118,8 +119,8 @@ main_process()
                     /myapp/bin/stop_httpd.sh >> $SADM_LOG 2>&1
                     if [ $? -ne 0 ] 
                         then sadm_write_err "  [ ERROR ] Stopping Web Server ..." 
-                                 ERROR_COUNT=$(($ERROR_COUNT+1))
-                        fi  
+                             (($ERROR_COUNT+1))
+                    fi  
                     ;;
                 *)  sadm_write_log "  No particular shutdown procedure needed for '$SADM_HOSTNAME'."
                     ;;
