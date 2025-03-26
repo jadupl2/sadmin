@@ -64,6 +64,7 @@
 # 2023_12_26 server v2.45 More info shown while running.
 #@2024_04_02 server v2.46 Restructure rsync of $SADMIN/cfg and minor changes.
 #@2025_02_11 server v2.47 Minor changes to screen output & log.
+#@2025_03_25 server v2.48 Use rsync exclude file instead of specifying each files.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -93,7 +94,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.47'                                     # Script Version
+export SADM_VER='2.48'                                     # Script Version
 export SADM_PDESC="Copy SADMIN version to all actives clients, without overwriting config files)."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -362,11 +363,19 @@ process_servers()
         # Except the files specified in "$CFG_EXCL".
         CFG_SRC="$SADM_CFG_DIR/" 
         CFG_DST="${server_fqdn}:${server_dir}/cfg/"
-        CFG_EXCLA="--exclude={'.gmpw','.dbpass','sadmin.cfg','*.smon'} "
-        CFG_EXCLB="--exclude={'sadmin_client.cfg','backup_exclude.txt','backup_list.txt'} "
-        CFG_EXCLC="--exclude={'rear_exclude.txt'} "
-        CFG_EXCL="$CFG_EXCLA $CFG_EXCLB $CFG_EXCLC " 
-        CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' $CFG_EXCL $CFG_SRC $CFG_DST"
+
+        # Construct Exclude file for $SADMIN/cfg directory
+        CFG_EXCL="/tmp/cfg_exclude2.txt" 
+        if [ -f "$CFG_EXCL" ] ; then rm -f "$CFG_EXCL" ; fi
+        echo ".gmpw"                 > $CFG_EXCL
+        echo ".dbpass"              >> $CFG_EXCL
+        echo "sadmin.cfg"           >> $CFG_EXCL
+        echo "sadmin_client.cfg"    >> $CFG_EXCL
+        echo "rear_exclude.txt"     >> $CFG_EXCL
+        echo "alert_archive.txt"    >> $CFG_EXCL
+        echo "backup*.txt"          >> $CFG_EXCL
+        echo "*.smon"               >> $CFG_EXCL
+        CFG_CMD="rsync -ar -e 'ssh -p $server_ssh_port' --exclude-from $CFG_EXCL $CFG_SRC $CFG_DST"
         rsync -ar -e "ssh -p $server_ssh_port" $CFG_EXCL $CFG_SRC $CFG_DST
         RC=$? 
         if [ $RC -ne 0 ]
@@ -500,7 +509,7 @@ function cmd_options()
     # -u rsync $SADMIN/usr/bin to clients, 
     # -s rsync $SADMIN/sys to clients, 
     # -c rsync $SADMIN/cfg/sadmin_client.cfg to $sadmin/cfg/sadmin.cfg 
-    # -n rsync Clients Hostname Name to update (Comma separated, no space between them: host1,host2)
+    # -n rsync Hostname to update (Comma separated, no space between them: host1,host2)
     while getopts "hvscun:d:" opt ; do                                  # Loop to process Switch
         case $opt in
             d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
