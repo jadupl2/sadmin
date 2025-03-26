@@ -122,7 +122,7 @@ function Read_RearExclude($wrow) {
     $SADM_REAR_EXCLUDE_TMP = $SADM_BACKUP_CFG_DIR . "/rear_exclude.tmp"; # Temp Rear Exclude List
     
     # Make Sure the SADMIN cfg directory exist.
-    if (! is_dir($SADM_BACKUP_CFG_DIR)) { mkdir($SADM_BACKUP_CFG_DIR, 0777, true); }
+    #if (! is_dir($SADM_BACKUP_CFG_DIR)) { mkdir($SADM_BACKUP_CFG_DIR, 0777, true); }
     
     # If the ReaR Exclude list doesn't exist, create one by using the ReaR exclude list template.
     if (! file_exists($SADM_REAR_EXCLUDE)) {
@@ -582,6 +582,7 @@ if (isset($_POST['submitted'])) {
         $title2="ReaR backup isn't activated";
     }
     display_lib_heading("NotHome","$title1","$title2",$SVER);           # Display Content Heading
+    
     
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
     echo "\n\n<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' id='backup' method='POST'>";
