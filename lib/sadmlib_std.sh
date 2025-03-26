@@ -238,6 +238,7 @@
 #@2025_01_30 lib v4.58 SADM_VM_EXPORT_NFS_SERVER_VER,SADM_BACKUP_NFS_SERVER_VER,SADM_REAR_NFS_SERVER_VER
 #@2025_01_30 lib v4.59 Fix some problems these 2 functions 'sadm_get_host_ip() and sadm_get_fqdn()'.
 #@2025_03_05 lib v4.60 Change syntax of some command
+#@2025_03_25 lib v4.61 Add an alternative way the get current host IP.
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -247,7 +248,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.60"                                              # This Library Version
+export SADM_LIB_VER="4.61"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -1269,7 +1270,11 @@ sadm_get_fqdn() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_host_ip() {
     case "$(sadm_get_ostype)" in
-        "LINUX")    whost_ip=$(hostname -I | awk '{ print $1 }')
+        "LINUX")    hostname -I > /dev/null 2>&1
+                    if [ $? -eq 0 ] 
+                        then whost_ip=$(hostname -I | awk '{ print $1 }')
+                        else whost_ip=$(hostname -i | awk '{ print $1 }')
+                    fi                     
                     #whost_ip=$(host ${SADM_HOSTNAME} |awk '{ print $4 }' |head -1)
                     ;;
         "AIX")      whost_ip=$(host ${SADM_HOSTNAME}.$(sadm_get_domainname) |head -1 |awk '{ print $3 }')
@@ -2415,7 +2420,7 @@ sadm_stop() {
                                      sadm_write_log "${mtmp1}"          # Write rch trim context 
                                      sadm_trimfile "$SADM_RCH_FILE" "$SADM_MAX_RCLINE" 
                              fi
-                        else mtmp="Script is set not to trim history file (\$SADM_MAX_RCLINE=0)"
+                        else mtmp="The history file (.rch) will not be trim (\$SADM_MAX_RCLINE=0)."
                              sadm_write_log "${mtmp}." 
                      fi
              fi
@@ -2423,7 +2428,7 @@ sadm_stop() {
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCH_FILE} # Change RCH Owner
     fi 
 
-    # If log size not at zero and user want to use the log.
+    # If log size not at zero and user want to produce a log.
     if [ ! -z "$SADM_LOG_FOOTER" ] && [ "$SADM_LOG_FOOTER" = "Y" ]      # User Want the Log Footer
         then GRP_TYPE=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$2}' |tr -d ' ')
              GRP_NAME=$(grep -i "^$SADM_ALERT_GROUP " $SADM_ALERT_FILE |awk '{print$3}' |tr -d ' ')
@@ -2504,35 +2509,51 @@ sadm_stop() {
     if [ -e "$SADM_TMP_FILE3" ] ; then rm -f $SADM_TMP_FILE3 >/dev/null 2>&1 ; fi
 
     # If error log or the RCH file are empty, we can delete them
-    if [ ! -s "$SADM_ELOG" ]   ; then rm -f $SADM_ELOG   >/dev/null 2>&1 ; fi
+    if [ ! -s "$SADM_ELOG" ]     ; then rm -f $SADM_ELOG     >/dev/null 2>&1 ; fi
     if [ ! -s "$SADM_RCH_FILE" ] ; then rm -f $SADM_RCH_FILE >/dev/null 2>&1 ; fi
 
+
     # If script is running on the SADMIN server, copy log and rch immediatly to web data dir.
-    if [ "$SADM_ON_SADMIN_SERVER" = "Y" ]                               # Only run on SADMIN server
+    if [ "$SADM_HOST_TYPE" = "S" ]                                      # Only run on SADMIN server
        then WLOGDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log"          # Host Main LOG Directory
             WLOG="${WLOGDIR}/${SADM_HOSTNAME}_${SADM_INST}.log"         # LOG File Name in Main Dir
             WRCHDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"          # Host Main RCH Directory
             WRCH="${WRCHDIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"         # RCH File Name in Main Dir
             if [ ! -d "${WLOGDIR}" ] ; then mkdir -p $WLOGDIR ; fi      # Host Log dir. not exist
             if [ ! -d "${WRCHDIR}" ] ; then mkdir -p $WRCHDIR ; fi      # Host Main Dir don't exist
+
             if [ $(id -u) -eq 0 ] 
-                then chmod 775 $WLOGDIR                                 # Make it accesible
-                     chown $SADM_WWW_USER:$SADM_WWW_GROUP $WLOGDIR      # Own by Main User and Group
-                     chmod 775 $WRCHDIR                                 # Make it accesible
-                     chown $SADM_WWW_USER:$SADM_WWW_GROUP $WRCHDIR      # Own by Main User and Group
-                     touch "$WLOG"                                      # Make sure web log exist
-                     chmod 666 ${WLOG}                                  # make it readable
-                     chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WLOG}       # Good group
-                     if [ -f "$SADM_LOG" ] ;then cp $SADM_LOG $WLOG ;fi # Copy result to web dir
+                then touch "$WLOG"                                      # Make sure web log exist
+                     chmod 666 "$WLOG"                                  # make it readable
+                     chmod 775 "$WLOGDIR" "$WRCHDIR"                    # Make it accesible
+                     chown -R $SADM_WWW_USER:$SADM_WWW_GROUP "$WLOGDIR" # Own by Main User and Group
+                     chown -R $SADM_WWW_USER:$SADM_WWW_GROUP "$WRCHDIR" # Own by Main User and Group
             fi
-            if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]    # W  ant to Produce RCH File
-               then if [ $(id -u) -eq 0 ] 
-                       then touch "$WRCH"                               # Make sure web rch exist
-                            chmod 666 $WRCH                             # Make sure we can overwite
-                            chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WRCH} # Good group
-                            if [ -f "$SADM_RCH_FILE" ] ; then cp $SADM_RCH_FILE $WRCH ; fi
-                    fi
-            fi 
+#            if [ -f "$SADM_LOG" ] ;then cp $SADM_LOG $WLOG ;fi # Copy result to web dir
+
+            # Copy Local 'log' directory to Global log web directory
+            rsync -ar --delete ${SADM_LOG_DIR}/ ${WLOGDIR}/ >/dev/null 2>&1 
+            if [ $? -ne 0 ] 
+                then sadm_write_err "[ ERROR ] Doing rsync between $SADM_LOG_DIR to $WLOGDIR" 
+            fi
+            if [ $(id -u) -eq 0 ] ; then chown -R $SADM_WWW_USER:$SADM_WWW_GROUP "$WLOGDIR"  ;fi 
+
+            # Copy Local 'rch' directory to Global rch web directory
+            rsync -ar --delete ${SADM_RCH_DIR}/ ${WRCHDIR}/ >/dev/null 2>&1 
+            if [ $? -ne 0 ] 
+                then sadm_write_err "[ ERROR ] Doing rsync between $SADM_RCH_DIR to $WRCHDIR" 
+            fi
+            if [ $(id -u) -eq 0 ] ; then chown -R $SADM_WWW_USER:$SADM_WWW_GROUP "$WRCHDIR"  ;fi 
+
+
+#           if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]    # W  ant to Produce RCH File
+#               then if [ $(id -u) -eq 0 ] 
+#                       then touch "$WRCH"                               # Make sure web rch exist
+#                            chmod 666 $WRCH                             # Make sure we can overwite
+#                            chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WRCH} # Good group
+#                            if [ -f "$SADM_RCH_FILE" ] ; then cp $SADM_RCH_FILE $WRCH ; fi
+#                    fi
+#            fi 
     fi
     return $SADM_EXIT_CODE
 }
@@ -2550,7 +2571,7 @@ sadm_stop() {
 #     maddr (str)     : Email Address to which you want to send it
 #     msubject (str)  : Subject of your email
 #     mbody (str)     : Body of your email
-#     mfile (str)     : Name of the files (MUST exist) to attach to the email.
+#     mfile (str)     : (Optional) Name of the files (MUST exist) to attach to the email.
 #                           - If no attachment, leave blank "")
 #                           - If you have multiple attachments, separate each file name with comma.
 # Returns:
