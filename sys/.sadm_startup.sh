@@ -41,6 +41,7 @@
 #@2024_04_17 startup/shutdown v3.20 Minor adjustment when starting 'nmon' performance monitor.
 #@2024_05_02 startup/shutdown v3.21 Send startup email if 'SADM_EMAIL_STARTUP' = "Y" in sadmin.cfg.
 #@2024_09_12 startup/shutdown v3.22 Change default script description 'SADM_PDESC'.
+#@2025_03_25 startup/shutdown v3.23 Change format of Power ON email to sysadmin.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
 #set -x 
@@ -72,7 +73,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.22'                                     # Script version number
+export SADM_VER='3.23'                                     # Script version number
 export SADM_PDESC="Run when the system is started (via sadmin.service)." 
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -124,20 +125,12 @@ poweron_mail()
     sadm_write_log " "
     sadm_write_log "Sending 'Startup' email to $SADM_MAIL_ADDR"         # Show what we're doing
 
-    ws="System '$SADM_HOSTNAME' has just started."                      # Email subject
-
-    # Body message
-    wb0=$(printf "$(date)")
-    wb1=$(printf "System '${SADM_HOSTNAME}' is back online.")
-    bootmsg="$SADMIN/sys/boot_msg"                                      # who init reboot message 
-    if [ -f "$bootmsg" ] 
-        then wb2=$(cat $bootmsg)
-             rm -f $bootmsg
-    fi 
-    wb3="Have a nice day from ${SADM_PN}."
-    wb4="See you soon !"
-    wb=$(printf "$wb0 \n $wb1 \n $wb2 \n $wb3 \n $wb4")
-    
+    ws="SADM_INFO: System '$SADM_HOSTNAME' has just started."           # Email subject
+    wb0=$(date)
+    wb1="System '${SADM_HOSTNAME}' is back online."
+    wb2="Have a nice day from ${SADM_PN}."
+    wb3="See you soon !"
+    wb=$(printf "$wb0\n$wb1\n$wb2\n$wb3")
     we="$SADM_MAIL_ADDR"                                                # Send email to SysAdmin
     sadm_sendmail "$we" "$ws" "$wb"
     RC=$?
