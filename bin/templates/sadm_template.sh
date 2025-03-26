@@ -56,7 +56,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.3'                                      # Script version number
+export SADM_VER='4.4'                                      # Script version number
 export SADM_PDESC="SADMIN template shell script"           # Script Optional Desc.(Not use if empty)
 export SADM_ROOT_ONLY="N"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -64,8 +64,8 @@ export SADM_LOG_TYPE="B"                                   # Write log to [S]cre
 export SADM_LOG_APPEND="N"                                 # Y=AppendLog, N=CreateNewLog
 export SADM_LOG_HEADER="Y"                                 # Y=ProduceLogHeader N=NoLogHeader
 export SADM_LOG_FOOTER="Y"                                 # Y=IncludeLogFooter N=NoLogFooter
-export SADM_LOG_DATE="Y"                              # Y=Include date in log,  N=No date in log
-export SADM_LOG_TIME="Y"                              # Y=Include time in log,  N=No time in log
+#export SADM_LOG_DATE="Y"                              # Y=Include date in log,  N=No date in log
+#export SADM_LOG_TIME="Y"                              # Y=Include time in log,  N=No time in log
 export SADM_MULTIPLE_EXEC="N"                              # Run Simultaneous copy of script
 export SADM_USE_RCH="Y"                                    # Update RCH History File (Y/N)
 export SADM_DEBUG=0                                        # Debug Level(0-9) 0=NoDebug
@@ -128,6 +128,13 @@ show_usage()
 #===================================================================================================
 main_process()
 {
+    
+    # If invoke from command line, ask if user want to continue (To avoid error).
+#    if [[ "${BASH_SOURCE[0]}" == "${0}" ]]                              
+#        then sadm_ask "${SADM_PN} ${SADM_VER} ${SADM_PDESC} continue"
+#             if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi 
+#    fi
+    
     sadm_write_log "Starting Main Process ..."                          # Starting processing Mess.
 
     # PROCESSING CAN BE PUT HERE
