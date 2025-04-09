@@ -109,16 +109,16 @@ table {
     tr:nth-child(odd) { background:#E2E4FF; }
 
 /* Table Heading Line CSS */
-th {
-    font-family     :   arial;
-    padding         :   1px;
-    margin-top      :   0px;
-    margin-bottom   :   0px; 
-    background-color:   #006456; 
-    color           :   #fff;
-    /* text-transform  :   uppercase; */
-    /* font-size       :   12px; */
-}
+th { 
+    font-family     :   arial; 
+    padding         :   1px; 
+    margin-top      :   0px; 
+    margin-bottom   :   0px;  
+    background-color:   #006456;  
+    color           :   #fff; 
+    /* text-transform  :   uppercase; */ 
+    /* font-size       :   12px; */ 
+} 
 /* Table Detail Line CSS */
 td {
     font-family     :   arial;
@@ -550,10 +550,48 @@ div.server_top_buttons {
     border          :   1px solid #000000;
     /* font-size    :   12px; */
     /* margin       :   1px; */
-        border-width    :   1px;
+    border-width    :   1px;
     border-style    :   solid;
     border-color    :   #000000;
     border-radius   :   10px;
     line-height     :   1.7;    
 }
 
+
+/* Latest table format */
+.content-table {
+    border-collapse: collapse ;
+    margin: 25px 0; 
+    font-size: 0.9em;
+    min-width: 400px;
+    width: 100%;
+    border-radius: 5px 5px 0 0 ; 
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0.15);
+}
+
+.content-table thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+}
+
+.content-table th,
+.content-table td {
+    Vertical | Horizontal    padding: 12px 15px ; 
+/*     padding: 5px 5px; */
+}
+
+.content-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.content-table tbody tr:nthof-type(even) {
+    background-color: #f3f3f3;
+}
+
+.content-table tbody tr.active-row {
+    font-weight : bold;
+    color: #009879;
+}
