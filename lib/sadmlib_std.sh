@@ -239,6 +239,7 @@
 #@2025_01_30 lib v4.59 Fix some problems these 2 functions 'sadm_get_host_ip() and sadm_get_fqdn()'.
 #@2025_03_05 lib v4.60 Change syntax of some command
 #@2025_03_25 lib v4.61 Add an alternative way the get current host IP.
+#@2025_04_09 lib v4.62 Minor enhancements et fixes. 
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -248,7 +249,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.61"                                              # This Library Version
+export SADM_LIB_VER="4.62"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -2103,7 +2104,7 @@ sadm_freshen_directories_structure() {
     mkdir -p ${SADM_USR_DIR}/{bin,cfg,doc,lib,mon} > /dev/null 2>&1
 
     # $SADMIN/www directories creation (If do not exist and ignore error)
-    mkdir -p ${SADM_WWW_DIR}/{dat/archive,crud,css,dat,doc,images,js,lib,rrd,tmp,view} > /dev/null 2>&1
+    mkdir -p ${SADM_WWW_DIR}/{dat/archive,crud,css,dat,doc,images,js,lib,rrd,tmp,view} >/dev/null 2>&1
 
     if [ "$(id -u)" -eq 0 ]
         then chmod 0775 $SADM_LIB_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LIB_DIR
@@ -2114,6 +2115,7 @@ sadm_freshen_directories_structure() {
              chmod 1777 $SADM_TMP_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_TMP_DIR
              chmod 0775 $SADM_SETUP_DIR     ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SETUP_DIR
              chmod 0775 $SADM_DAT_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DAT_DIR
+             chmod 0775 $SADM_LOG_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR
              chmod 0775 $SADM_NMON_DIR      ; chown ${SADM_USER}:${SADM_GROUP} $SADM_NMON_DIR
              chmod 0775 $SADM_DR_DIR        ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DR_DIR
              chmod 0775 $SADM_RPT_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_RPT_DIR
@@ -2126,29 +2128,28 @@ sadm_freshen_directories_structure() {
              chmod 0775 $SADM_UMON_DIR      ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UMON_DIR
              chmod 0775 $SADM_NET_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_NET_DIR
              chmod 0775 $SADM_DBB_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DBB_DIR
-             chmod 0775 $SADM_WWW_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DIR 
-             chmod 0775 $SADM_WWW_DAT_DIR   ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR 
-             chmod 0775 $SADM_WWW_ARC_DIR   ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_ARC_DIR 
-             chmod 0775 $SADM_WWW_DOC_DIR   ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DOC_DIR 
-             chmod 0775 $SADM_WWW_LIB_DIR   ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_LIB_DIR 
-             chmod 0775 $SADM_WWW_IMG_DIR   ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_IMG_DIR 
-             chmod 1777 $SADM_WWW_TMP_DIR   ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR 
-             chmod 0775 $SADM_LOG_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR
+             chmod 0775 $SADM_WWW_DIR       ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR 
+             chmod 0775 $SADM_WWW_DAT_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR 
+             chmod 0775 $SADM_WWW_ARC_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_ARC_DIR 
+             chmod 0775 $SADM_WWW_DOC_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR 
+             chmod 0775 $SADM_WWW_LIB_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR 
+             chmod 0775 $SADM_WWW_IMG_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR 
+             chmod 1777 $SADM_WWW_TMP_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR 
              if [ "$SADM_HOST_TYPE" = "S" ] 
-                then chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DIR
-                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR
-                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_CRUD_DIR
-                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_CSS_DIR
-                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_VIEW_DIR
-                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_RRD_DIR
-                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_ARC_DIR
-                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_DOC_DIR
-                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_LIB_DIR
-                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_IMG_DIR
-                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR
-                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_PERF_DIR
+                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR
+                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR
+                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_CRUD_DIR
+                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_CSS_DIR
+                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_VIEW_DIR
+                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_RRD_DIR
+                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_ARC_DIR
+                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR
+                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
+                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR
+                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR
+                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_PERF_DIR
+                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_NET_DIR
                      chmod 0775 $SADM_WWW_NET_DIR   
-                     chown ${SADM_WWW_USER}:${SADM_GROUP} $SADM_WWW_NET_DIR
                      chmod 1777 $SADM_WWW_PERF_DIR 
              fi 
     fi
@@ -2175,32 +2176,34 @@ sadm_start() {
     fi 
 
     # Check and make sure script log, errorlog and RCH file exist and will be writable.
-    [ ! -e "$SADM_RCH_FILE" ] && touch $SADM_RCH_FILE                   # Create RCH  If not exist
-    [ ! -e "$SADM_LOG" ]      && touch $SADM_LOG                        # Create LOG  If not exist
-    [ ! -e "$SADM_ELOG" ]     && touch $SADM_ELOG                       # Create ELOG If not exist
-    chmod 664 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Read/Write
-    chown "${SADM_USER}:${SADM_GROUP}" "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 
+    [ ! -f "$SADM_RCH_FILE" ] && touch $SADM_RCH_FILE                   # Create RCH  If not exist
+    [ ! -f "$SADM_LOG" ]      && touch $SADM_LOG                        # Create LOG  If not exist
+    [ ! -f "$SADM_ELOG" ]     && touch $SADM_ELOG                       # Create ELOG If not exist
+
+    # Will work when running with root, don't give error if we are not 'root'.
+    chmod 664 "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Change Perm.only with root
+    chgrp "${SADM_GROUP}" "$SADM_LOG" "$SADM_ELOG" "$SADM_RCH_FILE" >/dev/null 2>&1 # Good with root
 
     # Check if log and error log are writable.
     if [ ! -w "$SADM_LOG" ] || [ ! -w "$SADM_ELOG" ]                    # If can't write to log/elog
-       then printf "\nUser '$SADM_USERNAME' do not have permission to write to:\n"
-            printf "     - The script log '$SADM_LOG'.\n"
-            printf "     - The script error log '$SADM_ELOG'.\n"
-            printf "     - Change permission to correct the situation.\n"
+       then printf "\n[ ERROR] User '$SADM_USERNAME' don't have permission to write to:"
+            printf "\n     - The script log '$SADM_LOG'."
+            printf "\n     - The script error log '$SADM_ELOG'."
+            printf "\n     - Change permission to correct the situation.\n"
             ls -l "$SADM_LOG" "$SADM_ELOG" 
             printf "\nScript Aborted !\n"
             exit 1
     fi 
 
     # Update the RCH file if it is writable, if it doesn't advise user and abort script.
-    if [ "$SADM_USE_RCH" = "Y" ]
-        then if [ -w "$SADM_RCH_FILE" ] 
-                then WDOT=".......... ........ ........"                        # End Time & Elapse = Dot
-                     RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST"    # Format Part1 RCH File
-                     RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE 2"    # Format Part2 of RCH File
-                     echo "$RCHLINE" >>$SADM_RCH_FILE                             # Append Line to  RCH File
-                else printf "\nUser '$SADM_USERNAME' do not have permission to write to '$SADM_RCH_FILE' :\n"
-                     printf "     - Change permission of '$SADM_RCH_FILE'.\n"
+    if [ "$SADM_USE_RCH" = "Y" ]                                        # Want a Result Code History
+        then if [ -w "$SADM_RCH_FILE" ]                                 # RCH file is writable
+                then WDOT=".......... ........ ........"                # End Time & Elapse = Dot
+                     RCHLINE="${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST" # Format Part1 RCH File
+                     RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_ALERT_TYPE 2" # Format Part2 RCH File
+                     echo "$RCHLINE" >>$SADM_RCH_FILE                   # Append Line to RCH File
+                else printf "\nUser '$SADM_USERNAME' don't have permission to write to '$SADM_RCH_FILE':"
+                     printf "\n    - Change permission of '$SADM_RCH_FILE'.\n"
                      ls -l "$SADM_RCH_FILE"
                      printf "\nScript Aborted !\n"
                      exit 1
@@ -2208,7 +2211,7 @@ sadm_start() {
     fi
 
     # Write Log Header
-    if [ ! -z "$SADM_LOG_HEADER" ] && [ "$SADM_LOG_HEADER" = "Y" ]      # Script Want Log Header
+    if [ ! -z "$SADM_LOG_HEADER" ] && [ "$SADM_LOG_HEADER" = "Y" ]      # User Want Log Header
         then sadm_write_log "${SADM_80_DASH}"                           # Write 80 Dashes Line
              sadm_write_log "$(date +"%a %d %b %Y %T") - ${SADM_PN} v${SADM_VER} - Library v${SADM_LIB_VER}"
              if [ "$SADM_PDESC" ]                                       # If Script Desc. Not empty
@@ -2230,7 +2233,7 @@ sadm_start() {
              sadm_write_err "Try 'sudo ${0##*/}'."                      # Suggest using sudo
              sadm_write_err "Process aborted."                          # Abort advise message
              sadm_write_err " "
-             sadm_stop 1                                                # Close and Trim Log
+             sadm_stop 1
              exit 1                                                     # Exit To O/S with Error
     fi
 
@@ -2239,8 +2242,6 @@ sadm_start() {
         then sadm_write_err "[ ERROR ] This script will only run on the SADMIN server '$SADM_SERVER'."
              sadm_write_err "The variable 'SADM_SERVER_ONLY' is set to 'Y'."
              sadm_write_err "Process aborted."                          # Abort advise message
-             #sadm_write_err " "
-             sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
 
@@ -2373,11 +2374,11 @@ sadm_stop() {
 
     if [ $# -eq 0 ]                                                     # If No status Code Received
         then SADM_EXIT_CODE=1                                           # Assume Error if none given
-             sadm_write_log "Function '${FUNCNAME[0]}' expect one parameter.\n"
-             sadm_write_log "${SADM_ERROR} Received None.\n"            # Advise User
+             sadm_write_log "Function '${FUNCNAME[0]}' expect one parameter."
+             sadm_write_log "${SADM_ERROR} Received None."              # Advise User
         else SADM_EXIT_CODE=$1                                          # Save Exit Code Received
     fi
-    if [ "$SADM_EXIT_CODE" -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi         # Making Sure code is 1 or 0
+    if [ "$SADM_EXIT_CODE" -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi         # Result Code must be 0 or 1
 
     # Get End time and Calculate Elapse Time
     export sadm_end_time=`date "+%C%y.%m.%d %H:%M:%S"`                  # Get & Format End Time
@@ -2425,7 +2426,8 @@ sadm_stop() {
                      fi
              fi
              [ $(id -u) -eq 0 ] && chmod 664 ${SADM_RCH_FILE}             # R/W Owner/Group R by World
-             [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCH_FILE} # Change RCH Owner
+#             [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCH_FILE} # Change RCH Owner
+             [ $(id -u) -eq 0 ] && chgrp ${SADM_GROUP} ${SADM_RCH_FILE} # Change RCH Owner
     fi 
 
     # If log size not at zero and user want to produce a log.
@@ -2490,9 +2492,12 @@ sadm_stop() {
                 then sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"      # Trim the Log
              fi                                                         # Else no trim of log made
              #chmod 666 ${SADM_LOG} >>/dev/null 2>&1                     # Log writable by Nxt Script
-             chgrp ${SADM_GROUP} ${SADM_LOG} >>/dev/null 2>&1           # Change Log Group
-             [ $(id -u) -eq 0 ] && chmod 664 ${SADM_LOG}                # R/W Owner/Group R by World
-             [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}  # Change Log Owner
+             #chgrp ${SADM_GROUP} ${SADM_LOG} >>/dev/null 2>&1           # Change Log Group
+#             [ $(id -u) -eq 0 ] && chmod 664 ${SADM_LOG}                # R/W Owner/Group R by World
+#             [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_WWW_GROUP} ${SADM_LOG}  # Change Log Owner
+             chmod 664 ${SADM_LOG}                # R/W Owner/Group R by World
+#             chown ${SADM_USER}:${SADM_WWW_GROUP} ${SADM_LOG}  # Change Log O#             
+              chgrp ${SADM_GROUP} ${SADM_LOG}  # Change Log Owner
     fi
  
     # Normally we Delete the PID File when exiting the script.
@@ -2515,45 +2520,31 @@ sadm_stop() {
 
     # If script is running on the SADMIN server, copy log and rch immediatly to web data dir.
     if [ "$SADM_HOST_TYPE" = "S" ]                                      # Only run on SADMIN server
-       then WLOGDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log"          # Host Main LOG Directory
+       then 
+            WLOGDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/log"          # Host Main LOG Directory
+            if [ ! -d "${WLOGDIR}" ] ;then mkdir -p -m 755 $WLOGDIR ;fi # Host Log dir. not exist
             WLOG="${WLOGDIR}/${SADM_HOSTNAME}_${SADM_INST}.log"         # LOG File Name in Main Dir
+
             WRCHDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"          # Host Main RCH Directory
+            if [ ! -d "${WRCHDIR}" ] ; then mkdir -p -m 755 $WRCHDIR ; fi      # Host Main Dir don't exist
             WRCH="${WRCHDIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"         # RCH File Name in Main Dir
-            if [ ! -d "${WLOGDIR}" ] ; then mkdir -p $WLOGDIR ; fi      # Host Log dir. not exist
-            if [ ! -d "${WRCHDIR}" ] ; then mkdir -p $WRCHDIR ; fi      # Host Main Dir don't exist
 
-            if [ $(id -u) -eq 0 ] 
-                then touch "$WLOG"                                      # Make sure web log exist
-                     chmod 666 "$WLOG"                                  # make it readable
-                     chmod 775 "$WLOGDIR" "$WRCHDIR"                    # Make it accesible
-                     chown -R $SADM_WWW_USER:$SADM_WWW_GROUP "$WLOGDIR" # Own by Main User and Group
-                     chown -R $SADM_WWW_USER:$SADM_WWW_GROUP "$WRCHDIR" # Own by Main User and Group
-            fi
-#            if [ -f "$SADM_LOG" ] ;then cp $SADM_LOG $WLOG ;fi # Copy result to web dir
-
-            # Copy Local 'log' directory to Global log web directory
-            rsync -ar --delete ${SADM_LOG_DIR}/ ${WLOGDIR}/ >/dev/null 2>&1 
+            # Rsync Local 'log' directory ($SADMIN/log) 
+            # to Global log web dir. ($SADMIN/www/dat/$SADM_HOSTNAME)
+            rsync -ar --no-t --delete ${SADM_LOG_DIR}/ ${WLOGDIR}/ >/dev/null 2>&1 
             if [ $? -ne 0 ] 
-                then sadm_write_err "[ ERROR ] Doing rsync between $SADM_LOG_DIR to $WLOGDIR" 
+                then sadm_write_err "[ ERROR ] Doing rsync between $SADM_LOG_DIR to $WLOGDIR"
+                     sadm_write_err "Command used: 'rsync -ar --no-t --delete ${SADM_LOG_DIR}/ ${WLOGDIR}/'" 
             fi
-            if [ $(id -u) -eq 0 ] ; then chown -R $SADM_WWW_USER:$SADM_WWW_GROUP "$WLOGDIR"  ;fi 
+            if [ $(id -u) -eq 0 ] ; then chown -R $SADM_WWW_USER:$SADM_GROUP "$WLOGDIR"  ;fi 
 
-            # Copy Local 'rch' directory to Global rch web directory
-            rsync -ar --delete ${SADM_RCH_DIR}/ ${WRCHDIR}/ >/dev/null 2>&1 
+            # Rsync Local 'rch' directory 
+            # to Global rch web directory ($SADMIN/www/dat/$SADM_HOSTNAME)/rch)
+            rsync -ar --no-t --delete ${SADM_RCH_DIR}/ ${WRCHDIR}/ >/dev/null 2>&1 
             if [ $? -ne 0 ] 
                 then sadm_write_err "[ ERROR ] Doing rsync between $SADM_RCH_DIR to $WRCHDIR" 
+                     sadm_write_err "Command used: 'rsync -ar --no-t --delete ${SADM_RCH_DIR}/ ${WRCHDIR}/'" 
             fi
-            if [ $(id -u) -eq 0 ] ; then chown -R $SADM_WWW_USER:$SADM_WWW_GROUP "$WRCHDIR"  ;fi 
-
-
-#           if [ ! -z "$SADM_USE_RCH" ] && [ "$SADM_USE_RCH" = "Y" ]    # W  ant to Produce RCH File
-#               then if [ $(id -u) -eq 0 ] 
-#                       then touch "$WRCH"                               # Make sure web rch exist
-#                            chmod 666 $WRCH                             # Make sure we can overwite
-#                            chown $SADM_WWW_USER:$SADM_WWW_GROUP ${WRCH} # Good group
-#                            if [ -f "$SADM_RCH_FILE" ] ; then cp $SADM_RCH_FILE $WRCH ; fi
-#                    fi
-#            fi 
     fi
     return $SADM_EXIT_CODE
 }
@@ -2878,8 +2869,9 @@ sadm_on_sadmin_server() {
     fi
     
     # Check if SADM_SERVER IP is defined on this system and set SADM_ON_SADMIN_SERVER accordingly.
+    # Usefull when sadmin server in an IP alias.
     server_ip=$(getent ahostsv4 $SADM_SERVER | tail -1 | awk  '{ print $1 }')  
-    ip a | grep -q $server_ip 
+    ip a | grep -q $server_ip > /dev/null 2>&1                          # SADMIN server ip on system
     if [ $? -eq 0 ]                                                     # If on a SADMIN Server
         then wreturn=1                                                  # Return 1 to caller
              SADM_ON_SADMIN_SERVER="Y"                                  # Set Global Var to Y
