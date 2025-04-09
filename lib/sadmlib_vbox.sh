@@ -47,6 +47,7 @@
 #@2024_11_26 virtualbox v2.7 Do not start an VM export if the system is lock.
 #@2024_11_17 virtualbox v2.8 Minor changes
 #@2025_03_25 virtualbox v2.9 Was not showing the current VirtualBox Guest addition version.
+#@2025_04_09 virtualbox v3.0 Minor changes.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # Intercept ^C
 #set -x
@@ -57,7 +58,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # Interc
 
 # Global Variables
 # --------------------------------------------------------------------------------------------------
-export VMLIBVER="2.9"                                                   # This Library version
+export VMLIBVER="3.0"                                                   # This Library version
 export VMLIB_DEBUG="N"                                                  # Activate Debug output Y/N
 export VMLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_list1_XXX")"        # List of all VM in VBox
 export VMRUNLIST="$(mktemp "$SADMIN/tmp/${SADM_INST}vm_runlist_XXX")"   # Tmp File to list RunningVM 
