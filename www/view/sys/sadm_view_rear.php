@@ -95,44 +95,51 @@ $BACKUP_ELOG        = 'sadm_rear_backup_e.log';                         # Rear B
 #===================================================================================================
 function setup_table() {
 
-    echo "<div id='SimpleTable'>"; 
+    echo "\n\n<div id='SimpleTable'>"; 
+    
     #echo '<table id="sadmTable" class="display" row-border width="100%">';   
-    echo '<table id="sadmTable" row-border width="100%">';   
+    #echo '<table id="sadmTable" row-border width="100%">';   
+    #echo "\n<table class='content-table' width='100%' border=1>\n" ; 
 
-    echo "<thead>\n";
-    echo "<tr>\n";
-    echo "<th class='text-left'>Last Backup Date Duration</th>\n";
-    #echo "<th class='text-center'>Duration</th>\n";
-    echo "<th class='text-left'>System</th>\n";
-    echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='dt-head-center'>Schedule</th>\n";
-    echo "<th class='dt-head-center'>Sporadic</th>\n";
-    echo "<th class='text-center'>ReaR<br>Version</th>\n";
-    echo "<th class='text-center'>Next Backup Occurrence</th>\n";
-    #echo "<th class='text-center'>Occurrence</th>\n";
-    echo "<th align='center'>Current Size</th>\n";
-    echo "<th class='text-center'>Prev. Size</th>\n";
-    echo "<th class='text-center'>Log/Hist.</th>\n";
-    echo "</tr>\n"; 
-    echo "</thead>\n";
+    echo "\n<table class='content-table'>\n" ;
 
-    echo "<tfoot>\n";
-    echo "<tr>\n";
-    echo "<th class='text-left'>Last Backup Date Duration</th>\n";
-    #echo "<th class='text-center'>Duration</th>\n";
-    echo "<th class='text-left'>System</th>\n";
-    echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='dt-head-center'>Schedule</th>\n";
-    echo "<th class='dt-head-center'>Sporadic</th>\n";
-    echo "<th class='text-center'>Ver.</th>\n";
-    echo "<th class='text-center'>Next Backup Occurrence</th>\n";
-    #echo "<th class='text-center'>Occurrence</th>\n";
-    echo "<th align='center'>Current Size</th>\n";
-    echo "<th class='text-center'>Prev. Size</th>\n";
-    echo "<th class='text-center'>Log/Hist./th>\n";
-    echo "</tr>\n"; 
-    echo "</tfoot>\n";
-    echo "<tbody>\n";
+    echo "\n<thead>";
+    echo "\n<tr>";
+    echo "\n<th align='center' width=20>No</th>";
+    echo "\n<th align='left'>System</th>";
+    echo "\n<th align='center'>Last Backup</th>";
+    echo "\n<th align='center'>Duration</th>";
+    echo "\n<th align='center'>Status</th>";
+    echo "\n<th align='center'>Log & Hist.</th>";
+    echo "\n<th align='center'>Rear<br>Schedule</th>";
+    echo "\n<th align='center'>Sporadic</th>";
+    echo "\n<th align='center'>ReaR</th>";
+    echo "\n<th align='center'>Next Backup</th>";
+    echo "\n<th align='center'>Occurrence</th>";
+    echo "\n<th align='center'>Current Size</th>";
+    echo "\n<th align='center'>Prev. Size</th>";
+    echo "\n</tr>"; 
+    echo "\n</thead>\n";
+
+    echo "\n<tfoot>";
+    echo "\n<tr>";
+    echo "\n<th align='center' width=20>No</th>";
+    echo "\n<th align='left'>System</th>";
+    echo "\n<th align='center'>Last Backup</th>";
+    echo "\n<th align='center'>Duration</th>";
+    echo "\n<th align='center'>Status</th>";
+    echo "\n<th align='center'>Log & Hist.</th>";
+    echo "\n<th align='center'>Rear<br>Schedule</th>";
+    echo "\n<th align='center'>Sporadic</th>";
+    echo "\n<th align='center'>ReaR</th>";
+    echo "\n<th align='center'>Next Backup</th>";
+    echo "\n<th align='center'>Occurrence</th>";
+    echo "\n<th align='center'>Current Size</th>";
+    echo "\n<th align='center'>Prev. Size</th>";
+    echo "\n</tr>"; 
+    echo "\n</tfoot>\n";
+
+    echo "\n<tbody>\n";
 }
 
 
@@ -141,27 +148,40 @@ function setup_table() {
 # Display main page data from the row received in parameter
 #===================================================================================================
 function display_data($count, $row) {
+    
     global  $URL_HOST_INFO, $URL_VIEW_FILE, $URL_BACKUP, $URL_VIEW_RCH, $URL_UPDATE,
             $URL_VIEW_BACKUP, $BACKUP_RCH, $BACKUP_LOG, $BACKUP_ELOG ;
 
-
-# ReaR Not Supported on MacOS and ARM system (Raspberry Pi), return to caller
+    # ReaR Not Supported on MacOS and ARM system (Raspberry Pi), return to caller
     if ((($row['srv_arch']   != "x86_64") and ($row['srv_arch'] != "i686")) 
         or ($row['srv_ostype'] == "darwin")) {
         return ; 
     } 
 
-# Set the Logs, ErrorLog and rch full path name
+    # Set the Logs, ErrorLog and rch full path name
     $log_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_LOG;
     $elog_name = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_ELOG ;
     $rch_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/rch/". $row['srv_name'] ."_". $BACKUP_RCH;
 
-# Start of row
-    echo "<tr>\n";  
+    # Start of row
+    echo "\n<tr>\n";  
 
-# Show Last Execution Rear Backup Date/Time & Check if overdue.
+    # Line Counter
+    echo "\n<td align='center'>" . $count . "</td>";  
+
+    # Show System name
+    echo "<td>";
+    echo "<a href='" . $URL_UPDATE . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'";
+    echo " title='Click to view system info, $WOS $WVER system - " . $row['srv_note'] . "'>";
+    echo $row['srv_name']  . "</a>&nbsp;&nbsp;"; 
+    $WOS   = sadm_clean_data($row['srv_osname']);
+    echo "<br>" . $row['srv_desc'];
+    echo "</td>\n";
+
+
+    # Last Rear Backup Date/Time & Check if overdue.
     if (! file_exists($rch_name))  {                                    # No RCH Found,No backup yet
-        echo "<td class='dt-center'>No backup yet";  
+        echo "<td align='center'>No backup yet";  
     }else{
         $file = file("$rch_name");                                      # Load RCH File in Memory
         $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
@@ -172,7 +192,7 @@ function display_data($count, $row) {
         $backup_age = round($datediff / (60 * 60 * 24));
         if ($backup_age > SADM_REAR_BACKUP_INTERVAL) { 
             $tooltip = "Backup is " .$backup_age. " days old, greater than the threshold of " .SADM_REAR_BACKUP_INTERVAL. " days.";
-            echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>";
+            echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>";
             echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
             echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ;
             echo "</span>"; 
@@ -184,26 +204,16 @@ function display_data($count, $row) {
             echo "</span>"; 
         }
     }
-    #echo "</font></td>\n";  
-    echo "</b></font>\n";  
+    echo "</font></td>\n";  
 
 # Backup duration time
+    echo "<td align='center'>";
     if (! file_exists($rch_name))  {                                    # If RCH File Not Found
-        #echo "\n<td class='dt-center'>&nbsp;</td>";
         echo "&nbsp;</td>";
     }else{
         #echo "<td class='dt-center'>" . nl2br($celapse) . "</td>\n";  
-        echo "<br>" . nl2br($celapse) . "</td>\n";  
+        echo nl2br($celapse) . "</td>\n";  
     }
-
-# Show System name
-    echo "<td class='dt-left'>";
-    echo "<a href='" . $URL_UPDATE . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'";
-    echo " title='Click to view system info, $WOS $WVER system - " . $row['srv_note'] . "'>";
-    echo $row['srv_name']  . "</a>&nbsp;&nbsp;"; 
-    $WOS   = sadm_clean_data($row['srv_osname']);
-    echo "<br>" . $row['srv_desc'];
-    echo "</td>\n";
 
 # Status of Last Backup
     if (file_exists($rch_name)) {
@@ -216,30 +226,59 @@ function display_data($count, $row) {
     switch ($ccode) {
         case 0:
             $tooltip = 'ReaR backup completed with success.';
-            echo "\n<td class='dt-center'>";
+            echo "\n<td align='center'>";
             echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
             echo "Success</span>\n";
             break;
         case 1:
             $tooltip = 'ReaR backup terminated with error.';
-            echo "\n<td class='dt-center'  style='color:red' bgcolor='#DAF7A6'><b>";
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>";
             echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
             echo "Failed</span></b>\n";
             break;
         case 2:
             $tooltip = 'ReaR backup is actually running.';
-            echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'>";
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
             echo "<span data-toggle='tooltip'  title='" . $tooltip . "'>";
             echo "Running</span>";
             break;
         default:
             $tooltip = "Unknown status - code: " . $ccode;
-            echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'>";
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
             echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
             echo "Unknown</span>";
             break;
     }
     echo "</td>\n";
+
+
+
+# Display link to view Rear Main Backup log
+echo "<td align='center'>";
+if (file_exists($log_name)) {
+    echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
+    echo " title='View Backup Log'>[log]</a>&nbsp;";
+}else{
+    echo "[NoLog]&nbsp;";
+}
+
+# Display link to view ReaR backup Error log (If exist)
+if ((file_exists($elog_name)) and (file_exists($elog_name)) and (filesize($elog_name) != 0)) {
+    echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $elog_name . "'" ;
+    echo " title='View ReaR error Log'>[elog]</a>&nbsp;";
+}
+
+# Display link to view Rear Backup rch file
+$rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
+if (file_exists($rch_name)) {
+    echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
+    echo " title='View Backup History (rch) file'>[rch]</a>";
+}else{
+    echo "&nbsp;[NoRCH]";
+}
+echo "</td>\n";
+
+
 
 # Schedule Update Button
     $ipath = '/images/UpdateButton.png';
@@ -257,16 +296,16 @@ function display_data($count, $row) {
 
 # Show if System is sporadic or not
    if ($row['srv_sporadic'] == TRUE ) {
-       echo "\n<td class='dt-center'>Yes</td>";
+       echo "\n<td align='center'>Yes</td>";
    }else{
-       echo "\n<td class='dt-center'>No</td>";
+       echo "\n<td align='center'>No</td>";
    }
 
 # Show ReaR Server Version
-    echo "<td class='dt-body-center'>" . nl2br( $row['srv_rear_ver']) . "</td>\n";  
+    echo "<td align='center'>" . nl2br( $row['srv_rear_ver']) . "</td>\n";  
 
 # Next Rear Backup Date
-    echo "<td class='dt-center'>";
+    echo "\n<td align='center'>";
     if ($row['srv_img_backup'] == True ) { 
         list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
             $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
@@ -274,11 +313,10 @@ function display_data($count, $row) {
     }else{
         echo "Unknown";
     }
-    #echo "</td>\n";  
-    echo "<br>";  
+    echo "</td>\n";  
 
 # Rear Backup Occurrence
-    #echo "<td class='dt-center'>";
+    echo "\n<td align='center'>\n";
     if ($row['srv_img_backup'] == True ) { 
         list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_img_dom'], $row['srv_img_month'],
             $row['srv_img_dow'], $row['srv_img_hour'], $row['srv_img_minute']);
@@ -347,32 +385,6 @@ function display_data($count, $row) {
     }else{
         echo "<td align='center'>" . $previous_size . "</td>\n";
     }
-
-# Display link to view Rear Main Backup log
-    echo "<td class='dt-center'>";
-    if (file_exists($log_name)) {
-        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
-        echo " title='View Backup Log'>[log]</a>&nbsp;";
-    }else{
-        echo "[NoLog]&nbsp;";
-    }
-
-# Display link to view ReaR backup Error log (If exist)
-    if ((file_exists($elog_name)) and (file_exists($elog_name)) and (filesize($elog_name) != 0)) {
-        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $elog_name . "'" ;
-        echo " title='View ReaR error Log'>[elog]</a>&nbsp;";
-    }
-
-# Display link to view Rear Backup rch file
-    $rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
-    if (file_exists($rch_name)) {
-        echo "<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'" ;
-        echo " title='View Backup History (rch) file'>[rch]</a>";
-    }else{
-        echo "&nbsp;[NoRCH]";
-    }
-    echo "</td>\n";
-
     echo "</tr>\n"; 
 }
 
@@ -382,7 +394,7 @@ function display_data($count, $row) {
 # PHP MAIN START HERE
 # ==================================================================================================
 
-# Get all active systems from the SADMIN Database
+    # Get all active systems from the SADMIN Database 
     $sql = "SELECT * FROM server where srv_active = True order by srv_name;";
     $result=mysqli_query($con,$sql) ;     
     $NUMROW = mysqli_num_rows($result);                                 # Get Nb of rows returned
@@ -396,16 +408,17 @@ function display_data($count, $row) {
         exit();  
     }
 
-# Show ReaR schedule page heading
-    $title1="ReaR Backup Status";                                       # Page Title 1
-    $title2=" "; 
+    # Show ReaR Report
     #if (file_exists(SADM_WWW_DIR . "/view/daily_rear_report.html")) {
     #    $title2="<a href='" . $URL_REAR_REPORT . "'>View the ReaR Daily Report</a>"; 
     #}     
+    
+    $title1="ReaR Backup Status";                                       # Page Title 1
+    $title2=" "; 
     display_lib_heading("NotHome","$title1","$title2",$WVER);           # Display Heading
-    setup_table();                                                      # Create HTML Table/Heading
     
     # Loop Through Retrieved Data and Display each Row
+    setup_table();                                                      # Create HTML Table/Heading
     $count=0;   
     while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
         $count+=1;                                                      # Incr Line Counter
@@ -415,8 +428,8 @@ function display_data($count, $row) {
 
     echo "<center>"; 
     echo "MacOS & ARM systems aren't shown on this page because they aren't supported by "; 
-    echo "<a href='https://relax-and-recover.org'>ReaR</a>"; 
-    echo "</center>.";
+    echo "<a href='https://relax-and-recover.org'>ReaR.</a>"; 
+    echo "</center>";
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>

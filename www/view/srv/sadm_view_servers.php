@@ -129,13 +129,12 @@ $CREATE_BUTTON  = False ;                                               # Yes Di
 # DISPLAY TWO FIRST HEADING LINES OF PAGE AND SETUP TABLE HEADING AND FOOTER
 #===================================================================================================
 function setup_table() {
-    #echo "\n<br>\n";
     
-    # TABLE CREATION
-    echo "<div id='MyTable'>\n"; 
-    echo "<table class='content-table'>\n" ; 
+    # Table Creation
+    #echo "\n<div id='MyTable'>\n"; 
+    echo "\n<table class='content-table'>\n" ; 
 
-    # PAGE TABLE HEADING
+    # Page Table Heading
     echo "\n<thead>";
     echo "\n<tr align=left bgcolor='grey'>";
     echo "\n<th width=10 align=center>No</th>";
@@ -154,7 +153,7 @@ function setup_table() {
     echo "\n</tr>";
     echo "\n</thead>\n";
     
-    # PAGE TABLE FOOTER
+    # Page Table Footer
     echo "\n<tfoot>";
     echo "\n<tr align=left bgcolor='grey'>";
     echo "\n<th width=10>No</th>";
@@ -177,13 +176,15 @@ function setup_table() {
 
 
 #===================================================================================================
-# DISPLAY ROW DATA RECEIVED ON ONE LINE        
+# Display of one row of data received.
 #===================================================================================================
 function display_data($count,$con,$row) {
-    global $URL_UPDATE, $URL_DELETE, $URL_HOST_INFO, $URL_SERVER, $URL_PERF ;
 
-    echo "\n<tr align=left bgcolor='lightgrey'>\n";  
-    echo "\n<td>$count</td>\n";  
+    global $URL_UPDATE, $URL_DELETE, $URL_HOST_INFO, $URL_SERVER, $URL_PERF ;
+    echo "\n<tr align=left bgcolor='lightgrey'>\n"; 
+    
+    # Line counter
+    echo "\n<td>$count</td>\n";                                     
 
     # System Name / Architecture / Description
     echo "\n<td>" ;
@@ -258,27 +259,29 @@ function display_data($count,$con,$row) {
 
     # Display Disk space available
     $DISK_SPACE = 0 ; 
-    if ( ! empty($row['srv_disks_info'])) { 
-        $DISK_ARRAY  = explode(",",$row['srv_disks_info']);
-        if (count($DISK_ARRAY) > 0) {
-           for ($i = 0; $i < count($DISK_ARRAY); ++$i) {
-               list($DISK_DEV,$DISK_SIZE) = explode("|", $DISK_ARRAY[$i] );
-               $DISK_SIZE  = round($DISK_SIZE / 1024) ;
-               $DISK_SPACE = $DISK_SPACE + $DISK_SIZE ;
-               $DISK_UNIT = "GB";
-           }   
-           if ( $DISK_SPACE > 1000 ) { 
-                $DISK_SPACE = round($DISK_SPACE /1024) ;
-                $DISK_UNIT = "TB";
+    if ( ! empty($row['srv_disks_info'])) {                             # If Some disk(s) on system
+        $DISK_ARRAY  = explode(",",$row['srv_disks_info']);             # Put disks list in array
+        if (count($DISK_ARRAY) > 0) {                                   # If Array is not empty
+           for ($i = 0; $i < count($DISK_ARRAY); ++$i) {                # Process one disk at a time
+               list($DISK_DEV,$DISK_SIZE) = explode("|", $DISK_ARRAY[$i] ); # Split disk name & size
+               $DISK_SPACE += $DISK_SIZE ;                              # Add GB to total disk space
+           }
+           if ( $DISK_SPACE > 1024 ) {                                  # If more than 1024 MB
+                $DISK_SPACE = ($DISK_SPACE /1024) ;                     # Convert from MB to GB
+                $DISK_UNIT = "GB";                                      # Unit is going to be GB now
+           }
+           if ( $DISK_SPACE > 1024 ) {                                  # If more than 1024 GB    
+                $DISK_SPACE = ($DISK_SPACE /1024) ;                     # Convert from GB to TB
+                $DISK_UNIT = "TB";                                      # Unit is going to be TB now
            }
            $etooltip="Disk(s) : " . $row['srv_disks_info']  ;
            #str_replace("|", " ",$etooltip);
            echo "\n<td align=center>"; 
            echo "<span data-toggle='tooltip' title='" . str_replace("|", " ",$etooltip) . "'>"; 
-           echo $DISK_SPACE . " " . $DISK_UNIT . "</span></td>";
+           echo number_format((float)$DISK_SPACE, 1, '.', '') ." ". $DISK_UNIT . "</span></td>";
         }
     }else{
-        echo "\n<td align=center> NO INFO </td>";
+        echo "\n<td align=center>No Info</td>";
     }
 
     # Display if server is Active or Inactive
@@ -411,28 +414,29 @@ function display_data($count,$con,$row) {
     if ($DEBUG) { echo "<br>SQL is " . $sql ; }                         # Under Debug Display Param.
     
     # Perform the SQL Requested And Display Data
-    if ( ! $result=mysqli_query($con,$sql)) {                           # Execute SQL Select
+    if ( ! $result=mysqli_query($con,$sql)) {             # Execute SQL Select
         $err_line = (__LINE__ -1) ;                                     # Error on preceding line
         $err_msg1 = "Server (" . $wkey . ") not found.\n";              # Row was not found Msg.
-        $err_msg2 = strval(mysqli_errno($con)) . ") " ;                 # Insert Err No. in Message
-        $err_msg3 = mysqli_error($con) . "\nAt line "  ;                # Insert Err Msg and Line No 
-        $err_msg4 = $err_line . " in " . basename(__FILE__);            # Insert Filename in Mess.
-        sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4);     # Display Msg. Box for User
+        $err_msg2 = strval(mysqli_errno($con)) . ") " ;   # Insert Err No. in Message
+        $err_msg3 = mysqli_error($con) . "\nAt line "  ;         # Insert Err Msg and Line No 
+        $err_msg4 = $err_line . " in " . basename(__FILE__);      # Insert Filename in Mess.
+        sadm_alert ($err_msg1 . $err_msg2 .$err_msg3. $err_msg4);  # Display Msg. Box for User
         exit;                                                           # Exit - Should not occurs
     }
 
     # SHOW PAGE HEADING    
-    display_lib_heading("NotHome","$TITLE"," ",$WVER);                  # Display Content Heading
+    #display_lib_heading("NotHome","$TITLE",TITLE2: " "$WVER); 
+    display_lib_heading("NotHome","$TITLE"," " ,"$WVER"); 
     setup_table();                                                      # Create Table & Heading
-    echo "\n<tbody>\n";                                                 # Start of Table Body
 
     # LOOP THROUGH RETRIEVED DATA AND DISPLAY EACH ROW
+    echo "\n<tbody>\n";                                                 # Start of Table Body
     $count = 0 ;                                                        # Init server counter to 0
-    while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
-        display_data(++$count,$con,$row);                               # Display Row Data
+    while ($row = mysqli_fetch_assoc($result)) {                # Gather Result from Query
+        display_data(++$count,$con,$row);              # Display Row Data
     }
-
-    echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
+    echo "\n</table>\n";                                                # End of tbody,table
+    echo "\n</tbody>" ;
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
-    std_page_footer($con)                                               # Close MySQL & HTML Footer
+    std_page_footer($con)                                         # Close MySQL & HTML Footer
 ?>

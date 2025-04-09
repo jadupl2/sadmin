@@ -47,12 +47,8 @@
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');  # <head>CSS,JavaScript</Head>
-#require      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
-#require      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
-#require      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');  # <head>CSS,JavaScript</Head>
-#echo "\n<body>";
-echo "\n\n<div class='SideBar'>";
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');# <head>CSS,JavaScript</Head>
+
 
 
 
@@ -148,7 +144,7 @@ function build_sidebar_scripts_info()
 
 # ==================================================================================================
 # This function read the server table and collect info to build the SideBar (Except Scripts Status)
-# The function return an array with the information needed to display the SideBar info
+# The function return an array 'sadm_array()' with the info. needed to display the SideBar info.
 # ==================================================================================================
 function build_sadm_array_from_db() {
     global $con, $sadm_array ;                                          # Global Database Conn. Obj.
@@ -487,6 +483,7 @@ function show_crud_operation() {
 
 # Start of SADM SideBar
 # ==================================================================================================
+    echo "\n\n<div class='SideBar'>";
     $sadm_array = build_sadm_array_from_db();                                 
     show_os_distribution();
     show_server_attribute();
@@ -495,5 +492,4 @@ function show_crud_operation() {
     show_ip_usage();
     show_crud_operation();
     echo "\n</div> <!-- End of SideBar  -->\n\n\n"                      # End of Left Column Div
-
 ?> 

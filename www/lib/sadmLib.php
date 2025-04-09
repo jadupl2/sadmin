@@ -89,25 +89,22 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
     echo "</div>"; 
 
     # HEADING LINE 1 - Title and version number.
-    echo "\n<div style='";
-    echo "text-align: center ; color: #271c1c; ";
-    echo "font-size: 1.8em; font-family: Verdana, sans-serif; ";
-    echo "font-weight: bold; '>"; 
+    echo "\n<div style='text-align: center ; color: #271c1c; font-size: 1.8em; ";
+    echo "font-family: Verdana, sans-serif; font-weight: bold; '>"; 
     echo "$TITLE1" ." - v$WVER";
-    echo "</div>\n";
+    echo "</div>";
  
     # SHOW HEADING LINE 2
     if ($TITLE2 != "") {
-        echo "\n<div style='";
-        echo "text-align: center ; color: #271c1c; ";
-        echo "font-size: 1.0em; font-family: Verdana, sans-serif; ";
-        echo "font-weight: bold; '>"; 
+        echo "\n<div style='text-align: center ; color: #271c1c; ";
+        echo "font-size: 1.0em; font-family: Verdana, sans-serif; font-weight: bold; '>"; 
         echo "$TITLE2" ;   
-        echo "</div>\n";
+        echo "</div>";
     }        
 
     # Space line for separation purpose
     echo "<hr/>\n\n";                                                     # Print Horizontal Line
+#    echo "\n\n";                                                     # Print Horizontal Line
 }
 
 
@@ -115,11 +112,14 @@ function display_lib_heading($BACK_URL,$TITLE1,$TITLE2,$WVER) {
 #        Function called at every end of SADM web page (Close Database and end all std Div)
 # ==================================================================================================
 function std_page_footer($wcon="") {
+
     if ($wcon != "") { mysqli_close($wcon); }                    # Close Database Connection
     echo "\n</div> <!-- End of sadmRightColumn   -->" ;                 # End of Left Content Page
     echo "\n</div> <!-- End of sadmPageContents  -->" ;                 # End of Content Page
+   #echo "\n</div> <!-- End of ... -->" ;                               # End of Content Page
+    
     echo "\n\n<div id='sadmFooter'>";
-    echo "\nCopyright &copy; 2015-2024 - sadmin.ca - Suggestions, Questions or Report a problem at ";
+    echo "\nCopyright &copy; 2015-2025 - sadmin.ca - Suggestions, Questions or Report a problem at ";
     echo '<a href="mailto:sadmlinux@gmail.com">sadmlinux@gmail.com</a></small>';
     echo "\n</div> <!-- End of Div sadmFooter -->";
 
@@ -1145,7 +1145,8 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
             if ($tepoch >= $curepoch) {                                 # If Next Event >= Cur Epoch
                 if ($DEBUG) { print "\n<br>-E48A-" ; }
                 #echo "param to update_date_time=" .$curyear ."-". date('m',strtotime('next month')) ."-". sprintf("%02d",$tdate) . " $seltime";
-                $update_date_time = $curyear ."-". date('m',strtotime('next month')) ."-". sprintf("%02d",$tdate) . " $seltime";
+                #$update_date_time = $curyear ."-". date('m',strtotime('next month')) ."-". sprintf("%02d",$tdate) . " $seltime";
+                $update_date_time = $curyear ."-". sprintf("%02d",$curmth) ."-". sprintf("%02d",$tdate) . " $seltime";
                 if ($DEBUG) { print "\n<br>-E55- Occurence & Update time: $event_occurence - $update_date_time"; } 
                 return array ($event_occurence , $update_date_time) ;
             }
@@ -1170,6 +1171,7 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
     }
 
     if ($DEBUG) { print "Finally Function Returned : $update_date_time - $event_occurence"; } 
+    $DEBUG = False;
     return array ($event_occurence , $update_date_time) ;
 }
 

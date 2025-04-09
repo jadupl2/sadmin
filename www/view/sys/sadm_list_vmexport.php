@@ -130,7 +130,7 @@ function setup_table() {
 
     #echo "<div id='SimpleTable'>\n"; 
     echo "<div id='MyTable'>\n"; 
-    echo "<table class='content-table' border=1>\n" ; 
+    echo "<table class='content-table' border=0>\n" ; 
     
     #    echo "<table bgcolor='black' width='1100' border=1>\n" ; 
     #echo "<table id='sadmTable' row-border width='100%'>\n";   
@@ -143,15 +143,15 @@ function setup_table() {
     echo "      <th width=60>VmName</th>\n";
     echo "      <th width=60>Guest Version</th>\n";
     echo "      <th width=60>HostName</th>\n";
-    echo "      <th width=110>Last Export</th>\n";
+    echo "      <th width=100>Last Export</th>\n";
     echo "      <th width=60>Duration</th>\n";
     echo "      <th width=50>Status</th>\n";
     echo "      <th width=60>Log & Hist.</th>\n";
     echo "      <th width=70>Export<br>Schedule</th>\n";
-    echo "      <th width=110>Next Export</th>\n";
-    echo "      <th width=240>Occurrence</th>\n";
-    echo "      <th width=50>Export Size</th>\n";
-    echo "      <th width=50>Prev. Size</th>\n";
+    echo "      <th width=100>Next Export</th>\n";
+    echo "      <th width=200>Occurrence</th>\n";
+    echo "      <th width=70>Export Size</th>\n";
+    echo "      <th width=60>Prev. Size</th>\n";
     echo "  </tr>\n"; 
     echo "</thead>\n";
 
@@ -161,15 +161,15 @@ function setup_table() {
     echo "      <th width=60>VmName</th>\n";
     echo "      <th width=60>Guest Version</th>\n";
     echo "      <th width=60>HostName</th>\n";
-    echo "      <th width=110>Last Export</th>\n";
+    echo "      <th width=100>Last Export</th>\n";
     echo "      <th width=60>Duration</th>\n";
     echo "      <th width=50>Status</th>\n";
     echo "      <th width=60>Log & Hist.</th>\n";
     echo "      <th width=70>Export<br>Schedule</th>\n";
-    echo "      <th width=110>Next Export</th>\n";
-    echo "      <th width=240>Occurrence</th>\n";
-    echo "      <th width=50>Export Size</th>\n";
-    echo "      <th width=50>Prev. Size</th>\n";
+    echo "      <th width=100>Next Export</th>\n";
+    echo "      <th width=200>Occurrence</th>\n";
+    echo "      <th width=70>Export Size</th>\n";
+    echo "      <th width=60>Prev. Size</th>\n";
     echo "  </tr>\n"; 
     echo "</tfoot>\n\n";
     echo "<tbody>\n";

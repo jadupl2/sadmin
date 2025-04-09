@@ -98,42 +98,49 @@ $BACKUP_ELOG        = 'sadm_backup_e.log';                              # Backup
 #===================================================================================================
 function setup_table()
 {
-    echo "<div id='SimpleTable'>";
-    echo '<table id="sadmTable" row-border width="100%">';
 
-    echo "<thead>\n";
-    echo "<tr>\n";
-    echo "<th class='text-center'>Last Backup</th>\n";
-    echo "<th class='dt-head-center'>Time</th>\n";
-    echo "<th class='text-center'>Duration</th>\n";
-    echo "<th align='left'>System</th>\n";
-    echo "<th class='dt-head-center'>Status</th>\n";
-    echo "<th class='dt-head-center'>Schedule</th>\n";
-    echo "<th class='dt-head-center'>Sporadic</th>\n";
-    echo "<th align='center'>Backup<br>Size in GB</th>\n";
-    echo "<th class='text-center'>Previous<br>Size in GB</th>\n";
-    echo "<th class='text-center'>Host Total<br>Size in GB</th>\n";
-    echo "<th class='text-center'>Log/Hist</th>\n";
-    echo "</tr>\n";
-    echo "</thead>\n";
+    #echo "<div id='SimpleTable'>";
+    #echo '<table id="sadmTable" row-border width="100%">';
+    #echo "<div id='SimpleTable'>\n"; 
+    #echo "\n<div id='MyTable'>"; 
 
-    echo "<tfoot>\n";
-    echo "<tr>\n";
-    echo "<th class='text-center'>Last Backup</th>\n";
-    echo "<th class='dt-head-center'>Time</th>\n";
-    echo "<th class='text-center'>Duration</th>\n";
-    echo "<th align='left'>System</th>\n";
-    echo "<th class='dt-head-center'>Status</th>\n";
-    echo "<th class='dt-head-center'>Schedule</th>\n";
-    echo "<th class='dt-head-center'>Sporadic</th>\n";
-    echo "<th align='center'>Backup<br>Size in GB</th>\n";
-    echo "<th class='text-center'>Previous<br>Size in GB</th>\n";
-    echo "<th class='text-center'>Host Total<br>Size in GB</th>\n";
-    echo "<th class='text-center'>Log/Hist</th>\n";
-    echo "</tr>\n";
-    echo "</tfoot>\n";
+    echo "\n<table class='content-table' width='100%' border=1>\n" ; 
+    
+    echo "\n<thead>";
+    echo "\n<tr>";
+    echo "\n<th align='center' width=25>No</th>";
+    echo "\n<th align='left'>System</th>";
+    echo "\n<th align='center'>Last Backup</th>";
+    echo "\n<th align='center'>Time</th>";
+    echo "\n<th align='center'>Duration</th>";
+    echo "\n<th align='center'>Status</th>";
+    echo "\n<th align='center'>Log/Hist</th>";
+    echo "\n<th align='center'>Schedule</th>";
+    echo "\n<th align='center'>Sporadic</th>";
+    echo "\n<th align='center'>Backup<br>Size in GB</th>";
+    echo "\n<th align='center'>Previous<br>Size in GB</th>";
+    echo "\n<th align='center'>Host Total<br>Size in GB</th>";
+    echo "\n</tr>";
+    echo "\n</thead>\n";
 
-    echo "<tbody>\n";
+    echo "\n<tfoot>";
+    echo "\n<tr>";
+    echo "\n<th align='center' width=25>No</th>";
+    echo "\n<th align='left'>System</th>";
+    echo "\n<th align='center'>Last Backup</th>";
+    echo "\n<th align='center'>Time</th>";
+    echo "\n<th align='center'>Duration</th>";
+    echo "\n<th align='center'>Status</th>";
+    echo "\n<th align='center'>Log/Hist</th>";
+    echo "\n<th align='center'>Schedule</th>";
+    echo "\n<th align='center'>Sporadic</th>";
+    echo "\n<th align='center'>Backup<br>Size in GB</th>";
+    echo "\n<th align='center'>Previous<br>Size in GB</th>";
+    echo "\n<th align='center'>Host Total<br>Size in GB</th>";
+    echo "\n</tr>";
+    echo "\n</tfoot>\n";
+
+    echo "\n<tbody>\n";
 }
 
 
@@ -154,43 +161,59 @@ function display_data($count, $row)
     $elog_name = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/log/". $row['srv_name'] ."_". $BACKUP_ELOG;
     $rch_name  = SADM_WWW_DAT_DIR ."/". $row['srv_name'] ."/rch/". $row['srv_name'] ."_". $BACKUP_RCH;
 
-# Start of the row
-    echo "<tr>\n";
+    # Start of the row
+    echo "\n<tr>";
 
-# Date of the Last Backup
-    if (!file_exists($rch_name)) {                                    # If RCH File doesn't exist
-        echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>Not run</b></td>\n";
+
+    # Line Counter
+    echo "\n<td align='center'>" . $count . "</td>";  
+
+
+    # Show System Hostname
+    echo "\n<td>";
+    echo "<a href='" . $URL_HOST_INFO . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP ;
+    echo "' title='Click to view system info, $WOS $WVER system - " . $row['srv_note'] . "'>";
+    echo $row['srv_name']  . "</a><br>" . $row['srv_desc'] ;
+    echo "</td>";
+
+
+    # Last Backup Date and Time.
+    if (!file_exists($rch_name)) {                                      # If RCH File doesn't exist
+        echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b></td>";
     } else {
         $file = file("$rch_name");                                      # Load RCH File in Memory
         $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
-        list($cserver, $cdate1, $ctime1, $cdate2, $ctime2, $celapse, $cname, $calert, $ctype, $ccode) = explode(" ", $lastline);
-        $now        = time();
-        $your_date  = strtotime(str_replace(".", "-", $cdate1));
-        $datediff   = $now - $your_date;
-        $backup_age = round($datediff / (60 * 60 * 24));
+        #$barray        = explode (" ", $bstring) ;
+        #$previous_size = $barray[count($barray)-1];
+        #list($cserver, $cdate1, $ctime1, $cdate2, $ctime2, $celapse, $cname, $calert, $ctype, $ccode) = explode(" ", $lastline);
+        $rch_array  = explode(" ", $lastline);                          # Load Lines in rch_array
+        $now        = time();                                           # Get current Epoch Time
+        #$your_date  = strtotime(str_replace(".", "-", $cdate1));
+        $your_date  = strtotime(str_replace(".", "-", $rch_array[1]));  # Event Start Date in epoch
+        $datediff   = $now - $your_date;                                # Event Elapse Nb. seconds 
+
+        $backup_age = round($datediff / (60 * 60 * 24));                # Event Elapse Nb. Days
         if ($backup_age > SADM_BACKUP_INTERVAL) {
-            $tooltip = "Backup is " . $backup_age . " days old, greater than the threshold of " . SADM_BACKUP_INTERVAL . " days.";
-            echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>";
-            echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
-            echo "$cdate1</span>";
+            $tooltip = "Backup is " .$backup_age. " days old, exceeding the treshold of " .SADM_BACKUP_INTERVAL. " days.";
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
+            echo "<span data-toggle='tooltip' title='" .$tooltip. "'><b>" .$rch_array[1]. "</b></span>";
         } else {
-            $tooltip = "Backup is " . $backup_age . " days old, background will be tinted, if greater than " . SADM_BACKUP_INTERVAL . " days.";
-            if (date("Y.m.d") != $cdate1) {
-                echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>";
+            $tooltip = "Backup is " .$backup_age. " days old, threshold at " .SADM_BACKUP_INTERVAL. " days.";
+            if (date("Y.m.d") != $rch_array[1]) {
+                echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
             } else {
-                echo "<td class='dt-center'>";
+                echo "\n<td align='center'>" ;
             }
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
-            echo "$cdate1";
-            echo "</span>";
+            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>" .$rch_array[1]. "</span>";
+            #echo "<span data-toggle='tooltip' title='" . $tooltip . "'>" .$barray[1]. "</span>";
         }
-        echo "</b></td>";
+        echo "</td>";
     }
 
-# Time of the last Backup
-    #echo "\n<td class='dt-center'>";
-    if ($row['srv_backup'] == True) {
-        echo "\n<td class='dt-center'>";
+
+    # Time of the last Backup
+    if ($row['srv_backup'] == True) {                                   # If Backup Activated
+        echo "\n<td align='center'>";
         list($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT(
             $row['srv_backup_dom'],
             $row['srv_backup_month'],
@@ -198,28 +221,26 @@ function display_data($count, $row)
             $row['srv_backup_hour'],
             $row['srv_backup_minute']
         );
-        #echo $STR_SCHEDULE ;
         echo sprintf("%02d", $row['srv_backup_hour']) . ":" . sprintf("%02d", $row['srv_backup_minute']);
-    } else {
-        echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'>";
-        echo "<b>Deactivated</b>";
+    }else{
+        if (!file_exists($rch_name)) {                                      # If RCH File doesn't exist
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b>";
+        }else{
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>Deactivated</b>";
+        } 
     }
-    echo "</td>\n";
+    echo "</td>";
 
-# Backup duration time
+
+    # Backup duration time
     if (!file_exists($rch_name)) {                                    # If RCH File Not Found
-        echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>No data</b></td>";
+        echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b></td>";
     } else {
-        echo "<td class='dt-center'>" . $celapse . "</td>\n";
+        echo "\n<td align='center'>" . $rch_array[5] . "</td>";
     }
 
-# Show server name
-    echo "<td class='dt-left'>";
-    echo "<a href='" . $URL_HOST_INFO . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'";
-    echo " title='Click to view system info, $WOS $WVER system - " . $row['srv_note'] . "'>";
-    echo $row['srv_name']  . "</a><br>" . $row['srv_desc'] . "</td>";
 
-# Status of Last Backup, Logo of the O/S and icon to edit the ReaR backup schedule.
+    # Status of Last Backup
     if (file_exists($rch_name)) {
         $file = file("$rch_name");                                      # Load RCH File in Memory
         $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
@@ -230,59 +251,80 @@ function display_data($count, $row)
     switch ($ccode) {
         case 0:
             $tooltip = 'Backup completed with success.';
-            echo "\n<td class='dt-center'>";
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
-            echo "Success</span>\n";
+            echo "\n<td align='center'>";
+            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>Success</span></td>";
             break;
         case 1:
             $tooltip = 'Backup terminated with error.';
-            echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>";
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
-            echo "Failed</span></b>\n";
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
+            echo "<span data-toggle='tooltip' title='" . $tooltip . "'><b>Failed</span></b></td>";
             break;
         case 2:
             $tooltip = 'Backup is actually running.';
-            echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'>";
-            echo "<span data-toggle='tooltip'  title='" . $tooltip . "'>";
-            echo "Running</span>";
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
+            echo "<span data-toggle='tooltip' title='" . $tooltip . "'><b>Running</b></span></td>";
             break;
         default:
             $tooltip = "Unknown status - code: " . $ccode;
-            echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'>";
-            echo "<span data-toggle='tooltip' title='" . $tooltip . "'>";
-            echo "Unknown</span>";
+            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
+            echo "<span data-toggle='tooltip' title='" .$tooltip. "'><b>No data</b></span></td>";
             break;
     }
-    echo "</td>\n";
 
-# Schedule Update Button
+
+    # Show [log] to view backup log
+    if (file_exists($log_name)) {
+        echo "\n<td align='center'  style='color:blue' >";
+        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'";
+        echo " title='View Backup Log'>[log]</a>&nbsp;";
+    } else {
+        echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b>";
+    }
+
+    # Show [elog] to view backup error log (If exist)
+    if ((file_exists($elog_name)) and (filesize($elog_name) != 0)) {
+        echo "\n<a href='" . $URL_VIEW_FILE . "?&filename=" . $elog_name . "'";
+        echo " title='View error log'>[elog]</a>&nbsp;";
+    } else {
+        echo "&nbsp;";
+    }
+
+    # Show [his] (rch) history file.
+    $rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
+    if (file_exists($rch_name)) {
+        echo "\n<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'";
+        echo " title='View backup history (rch) file'>[hist]</a>";
+    }
+    echo "</td>" ;
+
+
+    # Schedule Update Button
     $ipath = '/images/UpdateButton.png';
     if ($row['srv_backup'] == TRUE) {                                  # Is Server Active
         $tooltip = 'Schedule is active, click to edit backup configuration.';
-        echo "\n<td style='color: green' class='dt-center'><b>Y ";
+        echo "\n<td style='color: green' align='center'><b>Y ";
     } else {                                                              # If not Activate
         $tooltip = 'Schedule is inactive, click to edit backup configuration.';
-        echo "\n<td style='color: red' class='dt-center'><b>N ";
+        echo "\n<td style='color: red' align='center'><b>N ";
     }
     echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'>";
     echo "\n<span data-toggle='tooltip' title='" . $tooltip . "'>";
     echo "\n<button type='button'>Update</button>";             # Display Delete Button
     echo "</a></span></b></td>";
 
-# Is server sporadically offline (Can be offline like laptop).
+
+    # Is server sporadically offline (Can be offline like laptop).
     if ($row['srv_sporadic'] == TRUE) {                                # Is Server Active
         $tooltip = "System can be running or offline (Do not alert the sysadmin).";
-        echo "\n<td class='dt-center'>";
-        echo "\n<span data-toggle='tooltip' title='" . $tooltip . "'>";
+        echo "\n<td align='center'><span data-toggle='tooltip' title='" . $tooltip . "'>";
         echo "<b>Yes</b></span></td>";
     } else {                                                              # If not Activate
         $tooltip = 'System should be up and running, otherwise alert the sysadmin.';
-        echo "\n<td class='dt-center'>";
-        echo "\n<span data-toggle='tooltip' title='" . $tooltip . "'>";
+        echo "\n<td align='center'><span data-toggle='tooltip' title='" . $tooltip . "'>";
         echo "No</span></td>";
     }
 
-# Calculate Current Backup Size. 
+    # Calculate Current Backup Size. 
     $backup_size = $num_backup_size = 0; $backup_unit = "";
     if (file_exists($log_name)) {
         $pattern = "/current backup size/i";                            # String to search in log
@@ -307,11 +349,9 @@ function display_data($count, $row)
             } 
         } 
     }
-    #echo "<br>2- backup_size :" . $backup_size;
-    #echo "<br>2- backup_unit :" . $backup_unit;
-    #echo "<br>2- num_backup_size :" . $num_backup_size;
 
-# Calculate Previous Backup Size. 
+
+    # Calculate Previous Backup Size. 
     $previous_size = $num_previous_size = 0; $previous_unit = "";
     if (file_exists($log_name)) {
         $pattern = "/previous backup size/i";
@@ -336,38 +376,42 @@ function display_data($count, $row)
             } 
         }
     }
-    #echo "<br>3- previous_size :" .     $previous_size;
-    #echo "<br>3- previous_unit :" .     $previous_unit;
-    #echo "<br>3- num_previous_size :" . $num_previous_size;
 
 
-# Show current backup Size
+    # Show current backup Size in GB
     if (($num_backup_size == 0 || $num_previous_size == 0) && (SADM_BACKUP_DIF != 0)) {
-        echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" . number_format($num_backup_size,2) . "</b></td>\n";
+        echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>" ;
+        echo "<b>" . number_format($num_backup_size,2) . "</b></td>";
     } else {
         $PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100;
         #echo "$PCT = (($num_backup_size - $num_previous_size) / $num_previous_size) * 100";
         if (number_format($PCT, 1) != 0.0) {
             if (number_format($PCT, 0) >= SADM_BACKUP_DIF) {
-                echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" . number_format($num_backup_size,2). "&nbsp;(+" . number_format($PCT, 1) . "%)</b></td>\n";
-            } elseif (number_format($PCT, 0) <= (SADM_BACKUP_DIF * -1)) {
-                echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" . number_format($num_backup_size,2) . "&nbsp;(" . number_format($PCT, 1) . "%)</b></td>\n";
+                echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" ;
+                echo number_format($num_backup_size,2) . "&nbsp;(+" ;
+                echo number_format($PCT, 1) . "%)</b></td>";
+            }elseif (number_format($PCT, 0) <= (SADM_BACKUP_DIF * -1)) {
+                echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" ; 
+                echo number_format($num_backup_size,2) . "&nbsp;(" ;
+                echo number_format($PCT, 1) . "%)</b></td>";
             }else{    
-                echo "<td align='center'>" . number_format($num_backup_size,2) . "</td>\n";
+                echo "\n<td align='center'>" . number_format($num_backup_size,2) . "</td>";
             }
         }else{
-            echo "<td align='center'>" . number_format($num_backup_size,2) . "</td>\n";
+            echo "\n<td align='center'>" . number_format($num_backup_size,2) . "</td>";
         }
     }
 
-# Show Previous Backup Size
+    # Show Previous Backup Size
     if (($num_backup_size == 0 || $num_previous_size == 0) && (SADM_BACKUP_DIF != 0)) {
-        echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" . number_format($num_previous_size,2) . "</b></td>\n";
+        echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>" ;
+        echo "<b>" . number_format($num_previous_size,2) . "</b></td>";
     } else {
-        echo "<td align='center'>" . number_format($num_previous_size,2) . "</td>\n";
+        echo "\n<td align='center'>" . number_format($num_previous_size,2) . "</td>";
     }
 
-# Show Total backup space occupied by this host in GB.
+
+    # Show total backup space occupied by this host in GB.
     $num_total_size = 0; 
     if (file_exists($log_name)) {
         $pattern = "/Total backup size/i";
@@ -392,36 +436,9 @@ function display_data($count, $row)
             } 
         }
     }
-    #echo "<br>2- num_total_size:" . $num_total_size;
-    #echo "<br>2- total_size :" . $total_size;
-    #echo "<br>2- total_unit :" . $total_unit;
-    echo "<td align='center'>" . number_format($num_total_size,2) . "</td>\n";
+    echo "\n<td align='center'>" . number_format($num_total_size,2) . "</td>";
 
-# Show [log] to view backup log
-    if (file_exists($log_name)) {
-        echo "<td class='dt-center'  style='color:blue' >";
-        echo "\n<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'";
-        echo " title='View Backup Log'>[log]</a>&nbsp;";
-    } else {
-        echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>No data</b>";
-    }
-
-# Show [elog] to view backup error log (If exist)
-    if ((file_exists($elog_name)) and (filesize($elog_name) != 0)) {
-        echo "\n<a href='" . $URL_VIEW_FILE . "?&filename=" . $elog_name . "'";
-        echo " title='View error log'>[elog]</a>&nbsp;";
-    } else {
-        echo "&nbsp;";
-    }
-
-# Show [his] (rch) history file.
-    $rch_www_name  = $row['srv_name'] . "_$BACKUP_RCH";
-    if (file_exists($rch_name)) {
-        echo "\n<a href='" . $URL_VIEW_RCH . "?host=" . $row['srv_name'] . "&filename=" . $rch_www_name . "'";
-        echo " title='View backup history (rch) file'>[hist]</a>";
-    }
-
-    echo "\n</td>\n</tr>\n\n";
+    echo "\n</tr>\n\n";
 }
 
 
@@ -432,10 +449,10 @@ function display_data($count, $row)
 function backup_legend()
 {
     echo  "\n<hr>\n<center><b>\n";
-    echo "If backup status isn't 'Success' it will have a yellow background.<br>\n";
+    echo "If backup status isn't a 'Success' it will have a different background color.<br>\n";
     echo "If the current backup size is zero or " . SADM_BACKUP_DIF . "% bigger or smaller than the previous backup, it will be in red.<br>\n";
     echo "If the previous backup size is zero or " . SADM_BACKUP_DIF . "% bigger or smaller than the current backup, it will be in red.<br>\n";
-    echo "The " . SADM_BACKUP_DIF . "% can be change by modifying the 'SADM_BACKUP_DIF' variable in \$SADMIN/cfg/sadmin.cfg.<br>\n";
+    echo "You can change the " . SADM_BACKUP_DIF . "% by modifying the variable 'SADM_BACKUP_DIF' in \$SADMIN/cfg/sadmin.cfg.<br>\n";
     echo "If the date of the last backup is not today, it will have the last backup date in red.<br>\n";
     echo  "</center><br><br>\n";
 }
@@ -485,8 +502,9 @@ function backup_legend()
         $count += 1;                                                    # Incr Line Counter
         display_data($count, $row);                                     # Display Next Server
     }
-    echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
-    echo "</div> <!-- End of SimpleTable          -->";                 # End Of SimpleTable Div
+    echo "\n</table>\n</tbody>";                                        # End of tbody,table
+
+   #echo "</div> <!-- End of SimpleTable          -->";                 # End Of SimpleTable Div
     backup_legend();
     std_page_footer($con);                                              # Close MySQL & HTML Footer
 ?>

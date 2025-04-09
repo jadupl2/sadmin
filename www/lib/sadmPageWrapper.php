@@ -35,9 +35,9 @@
 #
 $URL_STORIX_REPORT  = "/view/daily_storix_report.html";                 # Storix Daily Report Page
 
-echo "</head>";
+echo "\n</head>";
 echo "\n<body>\n";
-echo "\n<div id='sadmWrapper'>                  <!-- Start Of sadmWrapper -->\n";
+echo "\n<div id='sadmWrapper'>                  <!-- Start Of sadmWrapper -->";
 echo "\n<div id='sadmHeader'>                   <!-- Start Of sadmHeader  -->";
 ?>
 
@@ -46,7 +46,6 @@ echo "\n<div id='sadmHeader'>                   <!-- Start Of sadmHeader  -->";
 <table border=0 bgcolor="#124f44" cellspacing="1" cellpadding="3" width=98% >
 
 <tr>
-
     <td bgcolor="#124f44" rowspan="3" align="vcenter" valign="middle" style="width:15%">
         <span data-toggle='tooltip' title='Home Page'>
         <a href="/index.php"><img width=90 height=90 src=/images/sadmin_logo.png></span></a>
@@ -63,12 +62,11 @@ echo "\n<div id='sadmHeader'>                   <!-- Start Of sadmHeader  -->";
          ?>
          </strong></font>
     </td>
-
 </tr>
 
-<tr>
 
-<td  bgcolor="#124f44" align="center" valign="top">
+<tr>
+    <td  bgcolor="#124f44" align="center" valign="top">
     <font size="2"><strong>
         <div id='quick_link'>
             <a href='/view/srv/sadm_view_servers.php?selection=all_servers'>
@@ -91,7 +89,7 @@ echo "\n<div id='sadmHeader'>                   <!-- Start Of sadmHeader  -->";
             <a href='/view/sys/sadm_list_vmexport.php'><span data-toggle='tooltip' title='Status of the virtual machine export'>VM Export</span></a>
             &nbsp;&nbsp;
             <a href='/view/perf/sadm_server_perf_adhoc_all.php'><span data-toggle='tooltip' title='Show Performance Graph of systems'>Performance</span></a>
-            </div>
+
         </div>
     </font>
         </td>
@@ -100,14 +98,10 @@ echo "\n<div id='sadmHeader'>                   <!-- Start Of sadmHeader  -->";
             <font size="2"><font color="#ffffff"><strong>
             <?php echo "Release "  . SADM_VERSION ?></strong></font>
         </td>
-
     </tr>
 
-</table>
-
-
+</table></center>
 <br>
-</center>
 
 
 <?php
@@ -121,5 +115,3 @@ echo "\n<div id='sadmHeader'>                   <!-- Start Of sadmHeader  -->";
     # Set the beginning Content Page
     echo "\n<div id='sadmRightColumn'>              <!-- Start Of sadmRightColumn -->\n\n"; 
 ?>
-
-

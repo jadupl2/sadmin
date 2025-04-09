@@ -223,13 +223,13 @@ if (!is_readable(SADM_ALERT_FILE)) {
 
 
 # Get SADMIN Tool release number form the .release file --------------------------------------------
-    if (file_exists(SADM_REL_FILE)) {                                   # If Release file exist
-        $f = fopen(SADM_REL_FILE, 'r');                                 # Open Release FIle
+    if (file_exists(SADM_REL_FILE)) {                                 # If Release file exist
+        $f = fopen(SADM_REL_FILE, 'r');                         # Open Release FIle
         $release = fgets($f);                                           # Read Rel No. from File
         fclose($f);                                                     # Close .release file
-        define("SADM_VERSION" , trim($release));                        # Create Var. from Release
+        define("SADM_VERSION" , trim($release));  # Create Var. from Release
     }else{
-        define("SADM_VERSION" , "00.00");                               # Default if File Not Exist
+        define("SADM_VERSION" , "00.00");         # Default if File Not Exist
         echo "<BR>\nRelease file is missing " . SADM_REL_FILE ;         # Error Mess. - File Missing
     }
 
@@ -283,6 +283,4 @@ if (!is_readable(SADM_ALERT_FILE)) {
         echo "<BR>\n>>>>> Failed to connect to MySQL Database: '" . SADM_DBNAME . "'";
         echo "<BR>\n>>>>> Error (" . mysqli_connect_error() . ") " . "'<br/>";
     }
-
-
 ?>
