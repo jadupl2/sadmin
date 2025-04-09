@@ -88,6 +88,7 @@
 #@2025_01_24 backup v2.41 Collect more info while doing a restore test at the end of backup.
 #@2025_02_22 backup v2.42 Using the NFS mount version '$SADM_REAR_NFS_SERVER_VER' from sadmin.cfg.
 #@2025_03_25 backup v2.43 Minor change & now show 20 biggest files taken in backup.
+#@2025_03_26 backup v2.44 Refine validation of ReaR backup file (.tgz).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -116,7 +117,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.43'                                     # Script version number
+export SADM_VER='2.44'                                     # Script version number
 export SADM_PDESC="Produce a ReaR bootable iso and a restorable backup on a NFS server"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -238,7 +239,7 @@ update_url_in_rear_site_conf()
 
 
 # --------------------------------------------------------------------------------------------------
-# Process Operating System received in parameter (aix/linux,darwin)
+# Create an initial /etc/rear/sites.conf file, if it doesn't exist
 # --------------------------------------------------------------------------------------------------
 create_etc_rear_site_conf()
 {
@@ -464,17 +465,19 @@ rear_housekeeping()
                      if [ $? -ne 0 ]
                         then sadm_write_err " "
                              sadm_write_err "[ ERROR ] Running 'isohybrid ${REAR_USB_ISO}'."
-                             return 1 
+                             ((FNC_ERROR++))                            # Incr. Error counter
+#                            return 1 
                         else sadm_write_log " "
                              sadm_write_log "[ OK ] USB boot image created '${REAR_USB_ISO}'."
                      fi
              fi
         else sadm_write_err " "
-             sadm_write_err "[ WARNING ] USB Boot image not created."
+             sadm_write_err "[ WARNING ] USB Boot image could not be created."
              sadm_write_err "The command 'isohybrid' not installed on '${SADM_HOSTNAME}'."
-             sadm_write_err " - On debian,ubuntu,Mint use     : 'sudo apt install syslinux-utils'"
-             sadm_write_err " - On fedora,rhel,alma,rocky use : 'sudo dnf install syslinux'" 
-             return 1 
+             sadm_write_err " - On Debian,Ubuntu,Mint,raspian : 'sudo apt install syslinux-utils'"
+             sadm_write_err " - On Fedora,RHEL,Alma,Rocky use : 'sudo dnf install syslinux'" 
+             ((FNC_ERROR++))                                            # Incr. Error counter
+#             return 1 
     fi 
 
     if [ -r "$REAR_CUR_ISO" ] ; then chmod 664 ${REAR_CUR_ISO} ; fi
@@ -538,9 +541,10 @@ rear_housekeeping()
              /bin/ls -1td ${REAR_DIR}/20* | sort -r | sed 1,${nb_dir_to_keep}d | while read wline ; do sadm_write_log "${wline}"; done
              /bin/ls -1td ${REAR_DIR}/20* | sort -r | sed 1,${nb_dir_to_keep}d | xargs rm -fr >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
-             then sadm_write_err "[ ERROR ] Problem deleting backup directory [ ERROR ]"
-                  return 1
-             else sadm_write_log "[ OK ] Oldest backup directory removed"
+                then sadm_write_err "[ ERROR ] Problem deleting backup directory [ ERROR ]"
+                     ((FNC_ERROR++))                                    # Incr. Error counter
+#                     return 1
+                else sadm_write_log "[ OK ] Oldest backup directory removed"
              fi
         else sadm_write_log "[ OK ] No need to remove any directories."
     fi
@@ -550,42 +554,82 @@ rear_housekeeping()
     ls -ltrh ${REAR_DIR} | while read wline ; do sadm_write_log "${wline}"; done
     sadm_write_log " " 
 
+    # Verify the integrity of the gzip file.
+    sadm_write_log "Check the compressed ReaR backup file integrity."
+    sadm_write_log "gzip -t '$REAR_CUR_TGZ'"
+    gzip -t "$REAR_CUR_TGZ" >>$SADM_LOG 2>&1 
+    if [ $? -ne 0 ] 
+        then sadm_write_err "[ ERROR ] The compressed failed the integrity check."
+             sadm_write_err "The ReaR backup may not be restorable, you may want to run it again."
+             sadm_write_err ""
+             ((FNC_ERROR++))                                            # Incr. Error counter
+#             return 1 
+        else sadm_write_log "[ OK ] Integrity of the compressed file '$REAR_CUR_TGZ' succeeded."  
+    fi 
+
+
     # Verify integrity of ReaR backup file (*.tgz)
-    sadm_write_log "Verify that the compressed ReaR backup file '$REAR_CUR_TGZ' is restorable".
+    sadm_write_log " " 
+    sadm_write_log "Verifying that the compressed ReaR backup file '$REAR_CUR_TGZ' is restorable".
+    sadm_write_log "tar -xOf '$REAR_CUR_TGZ' > /dev/null 2>&1" 
     tar -xOf "$REAR_CUR_TGZ" > /dev/null 2>&1
     if [ $? -ne 0 ] 
         then sadm_write_err "[ ERROR ] The ReaR backup file '$REAR_CUR_TGZ' is not restorable."
-             return 1 
+             ((FNC_ERROR++))                                            # Incr. Error counter
+#             return 1 
         else sadm_write_log "[ OK ] Integrity check of '$REAR_CUR_TGZ' succeeded."  
     fi 
 
-    # Create a table of content of tgz backup file just produced.
+    # Create a table of content of tgz backup file just produced to a log file.
     sadm_write_log " " 
-    sadm_write_log "Creating a list of the ReaR backup file in '$REAR_CUR_LST'".
+    sadm_write_log "Creating a list of the ReaR backup content in '$REAR_CUR_LST'".
+    sadm_write_log "tar -tvzf '$REAR_CUR_TGZ'"
     tar -tvzf "$REAR_CUR_TGZ" 1>"$REAR_CUR_LST" 2>"$REAR_CUR_ERR"
     if [ $? -ne 0 ]
-        then if [ -r "$REAR_CUR_ERR" ] 
+        then sadm_write_err "[ ERROR ] Failed to produce a list of files on the backup."
+             if [ -r "$REAR_CUR_ERR" ] 
                 then cat "$REAR_CUR_ERR" | while read wline ; do sadm_write_err "${wline}"; done
              fi
-             sadm_write_err "[ ERROR ] Failed to produce a list of files on the backup."
-             return 1
+             ((FNC_ERROR++))                                            # Incr. Error counter
+#             return 1
         else sadm_write_log "[ OK ] List of files included in the backup in '$REAR_CUR_LST'."
     fi
 
 
-    # List 10 biggest files include in the tgz file
-    sadm_write_log " "
-    sadm_write_log "Building a list of the 20 biggest files included in your ReaR backup file."
-    tar -tzvf $REAR_CUR_TGZ | sort -k3 -rn | nl | head -n 20 | tee -a $SADM_LOG 2>&1
-    sadm_write_log " "
+    # List 20 biggest files include in the tgz file
+    if [ "$FNC_ERROR" = 0 ] 
+        then sadm_write_log " "
+             sadm_write_log "Building a list of the 15 biggest files included in your ReaR backup file."
+             tar -tzvf $REAR_CUR_TGZ | sort -k3 -rn | nl | head -n 15 | tee -a $SADM_LOG 2>&1
+             sadm_write_log " "
+    fi 
     
+
+    # Unmount the NFS directory 
+    unmount_batnas
+  
+    if [ "$FNC_ERROR" -eq 0 ] 
+        then sadm_write_log "[ SUCCESS ] End of 'ReaR' backup housekeeping."
+        else sadm_write_log "[ FAILED ] 'ReaR' backup housekeeping."
+    fi 
+    
+    return "$FNC_ERROR"
+}
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Unmount NFS directory before exiting script.
+# --------------------------------------------------------------------------------------------------
+unmount_batnas()
+{
     # Unmount the NFS directory 
     umount ${NFS_MOUNT} >> $SADM_LOG 2>&1
     if [ $? -ne 0 ]
-    then sadm_write_err "[ ERROR ] Problem unmounting ${NFS_MOUNT}."
-         return 1
+    then sadm_write_err "[ ERROR ] Problem unmounting ${SADM_REAR_NFS_MOUNT_POINT}/${SADM_HOSTNAME}."
+#         return 1
     else rmdir ${NFS_MOUNT} > /dev/null 2>&1
-         sadm_write_log "[ OK ] ${NFS_MOUNT} unmounted."
+         sadm_write_log "[ OK ] NFS '${SADM_REAR_NFS_MOUNT_POINT}/${SADM_HOSTNAME}' is now unmounted."
     fi
 
     # Remove NFS temporary mount point.
@@ -596,7 +640,7 @@ rear_housekeeping()
              rm -fr ${NFS_MOUNT} >/dev/null 2>&1
              if [ $? -ne 0 ]
                  then sadm_write_err "[ ERROR ] Problem removing NFS mount point ${NFS_MOUNT}."
-                      return 1
+#                      return 1
                  else sadm_write_log "[ OK ]"
              fi
     fi
@@ -604,11 +648,8 @@ rear_housekeeping()
     # Delete TMP work file before retuning to caller
     if [ ! -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi
    
-    sadm_write_log "[ SUCCESS ] End of 'ReaR' backup housekeeping"
-    return 0
-}
-
-
+    return
+} 
 
 
 

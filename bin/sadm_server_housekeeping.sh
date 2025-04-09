@@ -48,6 +48,7 @@
 #@2024_10_31 server v2.22 Fix "$SADMIN/www/tmp/perf" permission (prevent to view performance graph).
 #@2024_12_17 server v2.23 Code revision and optimization.
 #@2025_01_04 server v2.24 Also apply removal policy of old .rch, log and *.nmon  in $SADMIN/www/dat.
+#@2025_04_01 server v2.25 Delete any *.lock older than 1 day in $SADMIN.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT ^C
@@ -77,7 +78,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.24'                                     # Script version number
+export SADM_VER='2.25'                                     # Script version number
 export SADM_PDESC="Move alert old alert to history archive and set permission in www directories."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -350,11 +351,11 @@ file_housekeeping()
     fi 
 
     # Delete *.nmon files older than $SADM_NMON_KEEPDAYS days in $SADMIN/www/dat/
-    if [ -d "$SADM_WWW_DAT_DIR" ]
+    if [ -d "$SADM_NMON_DIR" ]
         then sadm_write_log " " 
-             sadm_write_log "Delete *.nmon files older than $SADM_NMON_KEEPDAYS days ('SADM_NMON_KEEPDAYS') in ${SADM_WWW_DAT_DIR}."
-             CMD="find ${SADM_WWW_DAT_DIR} -name \"*.nmon\" -type f -mtime +${SADM_NMON_KEEPDAYS} -exec rm -f {} \;"
-             find ${SADM_WWW_DAT_DIR} -name "*.nmon" -type f -mtime +${SADM_NMON_KEEPDAYS} -exec rm -f {} \; >/dev/null 2>&1
+             sadm_write_log "Delete *.nmon files older than $SADM_NMON_KEEPDAYS days ('SADM_NMON_KEEPDAYS') in ${SADM_NMON_DIR}."
+             CMD="find ${SADM_NMON_DIR} -name \"*.nmon\" -type f -mtime +${SADM_NMON_KEEPDAYS} -exec rm -f {} \;"
+             find ${SADM_NMON_DIR} -name "*.nmon" -type f -mtime +${SADM_NMON_KEEPDAYS} -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] running '${CMD}'"
                      ((ERROR_COUNT++))
@@ -364,35 +365,46 @@ file_housekeeping()
     fi 
 
 
-    # Delete *.rch files older than ${SADM_RCH_KEEPDAYS}  days in $SADMIN/www/dat
-    if [ -d "$SADM_WWW_DAT_DIR" ]
+    # Delete *.rch files older than ${SADM_RCH_KEEPDAYS} days in $SADMIN/www/dat
+    if [ -d "$SADM_RCH_DIR" ]
         then sadm_write_log " " 
-             sadm_write_log "Delete *.rch files older than ${SADM_RCH_KEEPDAYS} days in ${SADM_WWW_DAT_DIR}."
-             CMD="find $SADM_WWW_DAT_DIR -name \"*.rch\" -type f -mtime +${SADM_RCH_KEEPDAYS} -exec rm -f {} \;"
-             find $SADM_WWW_DAT_DIR -name "*.rch" -type f -mtime +${SADM_RCH_KEEPDAYS} -exec rm -f {} \; >/dev/null 2>&1
+             sadm_write_log "Delete *.rch files older than ${SADM_RCH_KEEPDAYS} days in ${SADM_RCH_DIR}."
+             CMD="find $SADM_RCH_DIR -name \"*.rch\" -type f -mtime +${SADM_RCH_KEEPDAYS} -exec rm -f {} \;"
+             find $SADM_RCH_DIR -name "*.rch" -type f -mtime +${SADM_RCH_KEEPDAYS} -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] running '${CMD}'"
                      ((ERROR_COUNT++))
                 else sadm_write_log "${SADM_OK} ${CMD}"
              fi
-             if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
+             if [ $ERROR_COUNT -ne 0 ] ; then sadm_write_log "Total Error at $ERROR_COUNT" ; fi
     fi 
 
 
     # Delete *.log files older than ${SADM_LOG_KEEPDAYS}  days in $SADMIN/www/dat
-    if [ -d "$SADM_WWW_DAT_DIR" ]
+    if [ -d "$SADM_LOG_DIR" ]
         then sadm_write_log " " 
-             sadm_write_log "Delete *.log files older than ${SADM_LOG_KEEPDAYS} days in ${SADM_WWW_DAT_DIR}."
-             CMD="find $SADM_WWW_DAT_DIR -name \"*.log\" -type f -mtime +${SADM_LOG_KEEPDAYS} -exec rm -f {} \;"
-             find $SADM_WWW_DAT_DIR -name "*.log" -type f -mtime +${SADM_LOG_KEEPDAYS} -exec rm -f {} \; >/dev/null 2>&1
+             sadm_write_log "Delete *.log files older than ${SADM_LOG_KEEPDAYS} days in ${SADM_LOG_DIR}."
+             CMD="find $SADM_LOG_DIR -name \"*.log\" -type f -mtime +${SADM_LOG_KEEPDAYS} -exec rm -f {} \;"
+             find $SADM_LOG_DIR -name "*.log" -type f -mtime +${SADM_LOG_KEEPDAYS} -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] running '${CMD}'"
                      ((ERROR_COUNT++))
-                else sadm_write_log "${SADM_OK} ${CMD}"
+                else sadm_write_log "[ OK ] ${CMD}"
              fi
              if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
     fi 
     
+    # Delete $SADMIN/*.lock files older than 1 days.
+    sadm_write_log " " 
+    sadm_write_log "Delete any lock files older than 1 days in '$SADMIN'."
+    CMD="find $SADMIN -name \"*.lock\" -type f -mtime +1 -exec rm -f {} \;"
+    find $SADMIN -name \"*.lock\" -type f -mtime +1 -exec rm -f {} \; >/dev/null 2>&1
+    if [ $? -ne 0 ]
+       then sadm_write_err "[ ERROR ] running ${CMD}"
+            ((ERROR_COUNT++))
+       else sadm_write_log "[ OK ] ${CMD}"
+            if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at $ERROR_COUNT" ;fi
+    fi
     
     # $SADMIN/www/tmp writable by everyone (If not cause intermittent problem with monitor page refresh)
     chmod 1777 $SADM_WWW_TMP_DIR  

@@ -215,11 +215,16 @@ display_detail_line()
 #===================================================================================================
 load_array()
 {
-    # SADMIN Server get ReturnCodeHistory (RCH) files from all clients via "sadm_fetch_clients.sh".
-    # This is done at regular interval from the server crontab,(/etc/cron.d/sadm_server).
-    # A temp file containing the LAST line of each *.rch file present in ${SADMIN}/www/dat dir.
+    # SADMIN Server get ResultCodeHistory (.rch) files from all clients via "sadm_fetch_clients.sh".
+    #
+    #   - Run on regular interval (default 5min) from the SADMIN server (/etc/cron.d/sadm_server).
+    #   - Create a tmp file containing the LAST line of each *.rch file in '${SADMIN}/www/dat' dir.
+    #   - Then sort it by Result Code in reverse order, then by date & hostname into $SADM_TMP_FILE1 
+    #   - Load that file in an array.
+    #   - Process each line in the array
+    #       If any line(s) that don't have '$FIELD_IN_RCH' fields is added to $SADM_TMP_FILE3
     # ----------------------------------------------------------------------------------------------
-    find $SADM_WWW_DAT_DIR -type f -name "*.rch" -exec tail -1 {} \; > $SADM_TMP_FILE2
+    find $SADM_WWW_DAT_DIR -type f -name "*.rch" -exec tail -1 {} \; > "$SADM_TMP_FILE2" 2>&1 
     sort -t' ' -rk10,10 -k2,3 -k7,7 $SADM_TMP_FILE2 > $SADM_TMP_FILE1   # Sort by Return Code & date
     
     # Don´t shown script name specify in $SADMIN/cfg/sadmin.cfg under 'SADM_MONITOR_RECENT_EXCLUDE'
@@ -231,25 +236,29 @@ load_array()
     done
 
 
-    # If Option '-s hostname' use on the command line to get the report for only one system.
-    if [ "$SERVER_NAME" != "" ]                                         # CmdLine -s 1 server Report
-        then sadm_write "Searching for $SERVER_NAME in RCH files.\n"    # Search ServerName in RCH
-             grep -i "$SERVER_NAME" $SADM_TMP_FILE1 > $SADM_TMP_FILE2   # Keep only that server
-             cp  $SADM_TMP_FILE2  $SADM_TMP_FILE1                       # That become working file
-    fi
-
-    # Check if working file is empty, then nothing to report
+    # The tmp file is empty, then there is nothing to report, return error to caller.
     if [ ! -s "$SADM_TMP_FILE1" ]                                       # No rch file record ??
-       then sadm_write "No RCH File to process.\n"                      # Issue message to user
+       then sadm_write_err "No Result Code History '.rch' file'.rch' file to process."
+            sadm_write_err "Just run a sadmin scripts that will create one."
             return 1                                                    # Exit Function 
     fi
     
+
+    # If we want to produce a report for just one host, then we use option '-s hostname' 
+    # on the command line to get the report for only one system '$SERVER_NAME'.
+    if [ "$SERVER_NAME" != "" ]                                         # CmdLine -s 1 server Report
+        then sadm_write_log "Searching for $SERVER_NAME in RCH files."  # Search ServerName in RCH
+             grep -i "$SERVER_NAME" "$SADM_TMP_FILE1" >"$SADM_TMP_FILE2" # Keep only that server
+             cp  $SADM_TMP_FILE2  $SADM_TMP_FILE1                       # That become working file
+    fi
+
+
     # Now we put the last line of all rch file from the working temp file into an array.
     xcount=0 ; array=""                                                 # Initialize Array & Index
     touch $SADM_TMP_FILE3                                               # Field Number dont' match
     while read wline                                                    # Read Line from TEMP3 file
         do                                                              # Start of loop
-        WNB_FIELD=`echo $wline | wc -w`                                 # Check Nb. Of field in Line
+        WNB_FIELD=$(echo $wline | wc -w)                                # Check Nb. Of field in Line
         if [ "$WNB_FIELD" -eq 0 ] ; then continue ; fi                  # Ignore Blank Line
         if [ "$WNB_FIELD" -ne "$FIELD_IN_RCH" ]                         # If NB.Field don't match
             then echo $wline >> $SADM_TMP_FILE3                         # Faulty Line to TMP3 file
@@ -397,23 +406,25 @@ mail_report()
     echo -e "</head>\n<body>\n"         >> $HTML_FILE
     echo -e "<br><center><h1>Scripts Daily Report for `date`</h1></center>\n" >> $HTML_FILE
 
+
     # Produce Report of error/running scripts ------------------------------------------------------
-    sadm_write "Producing Summary Report of 'Failed' scripts ...\n"
+    # the code below is to create a file ($SADM_TMP_FILE2) that will scan rch & rpt files.....
+    sadm_write_log "Producing Summary Report of 'Failed' scripts ..."
     xcount=0                                                            # Clear Line Counter  
     rm -f $SADM_TMP_FILE1 >/dev/null 2>&1                               # Make Sure it doesn't exist
     for wline in "${array[@]}"                                          # Process till End of array
         do                                                                          
-        WRCODE=` echo $wline | awk '{ print $10 }'`                     # Extract Return Code 
+        WRCODE=$(echo $wline | awk '{ print $10 }')                     # Extract Return Code 
         if [ "$WRCODE" = "0" ] ; then continue ; fi                     # If Script Succeeded = Skip 
-        echo "$wline" >> $SADM_TMP_FILE1                                # Write Event to Tmp File1
+        echo "$wline" >> $SADM_TMP_FILE1                                # 0=Success 1=Fail 2=Running
         done 
     if [ -s "$SADM_TMP_FILE1" ]                                         # If Input file Size > 0 
-        then sort -t' ' -rk10,10 $SADM_TMP_FILE1 > $SADM_TMP_FILE2      # Sort File by Return Code
+        then sort -t' ' -rk10,10 "$SADM_TMP_FILE1" > "$SADM_TMP_FILE2"  # Sort File by Return Code
              rch2html "$SADM_TMP_FILE2" "Latest error/running scripts"  # Print RCH File in HTML
     fi
 
     # Produce Report for Today ---------------------------------------------------------------------
-    DATE1=`date --date="today" +"%Y.%m.%d"`                         # Date 1 day ago YYY.MM.DD
+    DATE1=$(date --date="today" +"%Y.%m.%d")                            # Date 1 day ago YYY.MM.DD
     sadm_write "Producing Email Summary Report for Today ($DATE1) ...\n"
     if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_write "Date for Today : $DATE1 \n" ; fi
     # Isolate Today Event & Sort by Event Time afterward.
@@ -421,7 +432,7 @@ mail_report()
     rm -f $SADM_TMP_FILE1 >/dev/null 2>&1                               # Make Sure it doesn't exist
     for wline in "${array[@]}"                                          # Process till End of array
         do                                                                          
-        WDATE1=` echo -e $wline | awk '{ print $2 }'`                   # Extract Event Date Started
+        WDATE1=$(echo -e $wline | awk '{ print $2 }')                   # Extract Event Date Started
         if [ "$WDATE1" != "$DATE1" ] ; then continue ; fi               # If Not the Day Wanted
         echo "$wline" >> $SADM_TMP_FILE1                                # Write Event to Tmp File1
         done 
@@ -431,18 +442,20 @@ mail_report()
     fi 
 
     # Produce Report for Yesterday -----------------------------------------------------------------
-    DATE1=`date --date="yesterday" +"%Y.%m.%d"`                         # Date 1 day ago YYY.MM.DD
-    sadm_write "Producing Email Summary Report for yesterday ($DATE1) ...\n"
-    if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_write "Date for 1 day ago  : $DATE1 \n" ; fi
+    DATE1=$(date --date="yesterday" +"%Y.%m.%d")                        # Date 1 day ago YYY.MM.DD
+    sadm_write_log "Producing Email Summary Report for yesterday ($DATE1) ..."
+    if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_write_log "[ DEBUG ] Date for 1 day ago: $DATE1" ; fi
+
     # Isolate Yesterday Event & Sort by Event Time afterward.
     xcount=0                                                            # Clear Line Counter  
-    rm -f $SADM_TMP_FILE1 >/dev/null 2>&1                               # Make Sure it doesn't exist
+    rm -f "$SADM_TMP_FILE1" >/dev/null 2>&1                             # Make Sure it doesn't exist
     for wline in "${array[@]}"                                          # Process till End of array
-        do                                                                          
-        WDATE1=` echo -e $wline | awk '{ print $2 }'`                   # Extract Event Date Started
+      do                                                                          
+        WDATE1=$(echo -e $wline | awk '{ print $2 }')                   # Extract Event Date Started
         if [ "$WDATE1" != "$DATE1" ] ; then continue ; fi               # If Not the Day Wanted
         echo "$wline" >> $SADM_TMP_FILE1                                # Write Event to Tmp File1
-        done 
+      done 
+
     if [ -s "$SADM_TMP_FILE1" ]                                         # If Input file Size > 0 
         then sort -t' ' -k3,3 $SADM_TMP_FILE1 > $SADM_TMP_FILE2         # Sort File by Start time
              rch2html "$SADM_TMP_FILE2" "Scripts that was executed Yesterday ($DATE1)" 

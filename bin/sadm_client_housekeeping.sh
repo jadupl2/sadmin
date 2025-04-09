@@ -184,11 +184,11 @@ show_usage()
 # --------------------------------------------------------------------------------------------------
 generate_password()
 {
-    random_pwd=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13; echo)     # Generate random password
-    echo "${SADM_USER}:${random_pwd}" | chpasswd >> "$SADM_LOG" 2>&1
+    random_pwd=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)     # Generate random password
+    echo "${SADM_USER}:${random_pwd}" | chpasswd >> "$SADM_LOG" 2>&1    # Assign password to user
     passwd -u   $SADM_USER                                              # Unlock user. 
     chage -m 5  $SADM_USER                                              # 5 days before change again
-    chage -M 30 $SADM_USER                                              # password valid for 30 days
+    chage -M 90 $SADM_USER                                              # password valid for 90 days
     chage -W 10 $SADM_USER                                              # Warn 10 days before expire
     chage -E -1 $SADM_USER                                              # Account expires to never
     chage -I -1 $SADM_USER                                              # Password inactive to never
@@ -209,7 +209,7 @@ check_sadmin_account()
     # '$SADM_GROUP' group define in sadmin.cfg, should exist in O/S, if not advise user & abort
     grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1                  # $SADMIN Group defined ?
     if [ $? -ne 0 ]                                                     # SADM_GROUP not Defined
-       then sadm_write_err "Group '$SADM_GROUP' not present."           # Advise user will create
+       then sadm_write_err "[ ERROR ] Group '$SADM_GROUP' not present." # Advise user will create
             sadm_write_err "Create group or change 'SADM_GROUP' value in $SADMIN/sadmin.cfg."
             sadm_write_err "Process Aborted."                           # Abort got be created
             sadm_stop 1                                                 # sadmin exit procedure.
@@ -219,7 +219,7 @@ check_sadmin_account()
     # '$SADM_USER' user account should exist. 
     grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1                   # $SADMIN User Defined ?
     if [ $? -ne 0 ]                                                     # OH Not There
-       then sadm_write_err "User '$SADM_USER' not present."             # usr in sadmin.cfg not found
+       then sadm_write_err "[ ERROR ] User '$SADM_USER' not present."   # SADM_USER not found
             sadm_write_err "Create user or change 'SADM_USER' value in $SADMIN/sadmin.cfg."
             sadm_write_err "Process Aborted."                           # Abort got be created
             sadm_stop 1                                                 # sadmin exit procedure.
@@ -252,6 +252,7 @@ check_sadmin_account()
     #   - The third field gives the date of the last password change. 
     #   - The next four fields are the minimum age, maximum age, warning period, and inactivity 
     #     period for the password. These ages are expressed in days.
+    #
     # Example : passwd -S sadmin
     #    sadmin P 1970-01-01 0 99999 7 -1
     #
@@ -291,6 +292,8 @@ check_sadmin_account()
              fi 
     fi 
 
+
+    chage -M -1 $SADM_USER
 
     # Make sure 'sadmin' account is not asking for password change.and if block crontab sudo.
     # So we make sadmin account non-expirable and password non-expire
@@ -392,14 +395,14 @@ set_files_recursive()
     # Make sure DAT Directory $SADM_DAT_DIR Directory files is own by sadmin
     if [ -d "$VAL_DIR" ]
         then sadm_write_log "  - find $VAL_DIR -type f -exec chown ${VAL_OWNER}:${VAL_GROUP} {} \;" "NOLF"
-             find $VAL_DIR -type f -exec chown ${VAL_OWNER}:${VAL_GROUP} {} \; >/dev/null 2>&1
+             find $VAL_DIR -type f -exec chown ${VAL_OWNER}:${VAL_GROUP} {} \; #>/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] On 'chown' operation of ${VALDIR}."
                      RETURN_CODE=1                                      # Error = Return Code to 1
                 else sadm_write_log "[ OK ]"
              fi
              sadm_write_log "  - find $VAL_DIR -type f -exec chmod $VAL_OCTAL{} \; " "NOLF" 
-             find $VAL_DIR -type f -exec chmod $VAL_OCTAL {} \; >/dev/null 2>&1
+             find $VAL_DIR -type f -exec chmod $VAL_OCTAL {} \; #>/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_write_err "[ ERROR ] On 'chmod' operation of ${VAL_DIR}."
                 else sadm_write_log "[ OK ]"
@@ -421,7 +424,7 @@ dir_housekeeping()
     sadm_write_log " "
     sadm_write_log "SADMIN CLIENT DIRECTORIES HOUSEKEEPING"
     ERROR_COUNT=0
-
+    
     # Setup basic SADMIN directories structure and permissions
     sadm_freshen_directories_structure
     sadm_write_log "  - Directories structure is [ OK ]" 
@@ -507,7 +510,7 @@ file_housekeeping()
     fi 
 
     set_files_recursive "$SADM_DAT_DIR"        "0664" "${SADM_USER}" "${SADM_GROUP}" 
-    set_files_recursive "$SADM_WWW_DAT_DIR"    "0664" "${SADM_WWW_USER}" "${SADM_GROUP}" 
+    set_files_recursive "$SADM_WWW_DIR"        "0664" "${SADM_WWW_USER}" "${SADM_GROUP}" 
     set_files_recursive "$SADM_LOG_DIR"        "0664" "${SADM_USER}" "${SADM_GROUP}" 
     set_files_recursive "$SADM_USR_DIR"        "0644" "${SADM_USER}" "${SADM_GROUP}" 
     set_files_recursive "$SADM_UBIN_DIR"       "0775" "${SADM_USER}" "${SADM_GROUP}" 
@@ -628,7 +631,8 @@ file_housekeeping()
              fi
              if [ $ERROR_COUNT -ne 0 ] ;then sadm_write_log "Total Error at ${ERROR_COUNT}" ;fi
     fi
-
+    
+    chown ${SADM_USER}:${SADM_GROUP} "$SADM_BIN_DIR"
     return $ERROR_COUNT
 }
 

@@ -165,43 +165,11 @@ export CUR_DAY_NUM=$(date +"%u")                                        # Curren
 export CUR_DATE_NUM=$(date +"%d")                                       # Current Date Nb. in Month
 export CUR_MTH_NUM=$(date +"%m")                                        # Current Month Number
 export CUR_DATE=$(date "+%C%y_%m_%d")                                   # Date Format 2018_05_27
-if [ "$SADM_OS_TYPE" = "DARWIN" ]                                       # If on MacOS
-    then export LOCAL_MOUNT="/tmp/nfs1"                                 # NFS Mount Point for MacOS
-    else export LOCAL_MOUNT="/mnt/backup"                               # NFS Mount Point for Linux
-fi    
+export LOCAL_MOUNT="/mnt/backup"                                        # NFS Mount Point for Linux
+if [ "$SADM_OS_TYPE" = "DARWIN" ] ;then LOCAL_MOUNT="/tmp/nfs1" ;fi     # MacOSNFS Mount Point 
 export TODAY_ROOT_DIR=""                                                # Will be filled by Script
 export BACKUP_DIR=""                                                    # Will be Final Backup Dir.
-
-# Active Backup File List and Initial File Backup List are defined in SADM Library (sadmlib_std.sh)
-# They can be overwritten here.
-# export SADM_BACKUP_LIST="${SADMIN}/cfg/backup_list.txt"               # Active Backup List
-# export SADM_BACKUP_LIST_INIT="${SADMIN}/cfg/.backup_list.txt"         # Initial Backup List
-#
-# Active Backup Exclude List and Initial Exclude List File defined in SADM Library (sadmlib_std.sh)
-# They can be overwritten here.
-#export SADM_BACKUP_EXCLUDE="${SADMIN}/cfg/backup_exclude.txt"          # Active Backup Exclude List
-#export SADM_BACKUP_EXCLUDE_INIT="${SADMIN}/cfg/.backup_exclude.txt"    # Initial Backup Excl. List
-
-# The Backup Information are taken from SADMIN Configuration file ($SADMIN/cfg/sadmin.cfg)
-# (Example below)
-# $SADM_BACKUP_NFS_SERVER          NFS Backup IP or Server Name        : .batnas.maison.ca.
-# $SADM_BACKUP_NFS_MOUNT_POINT     NFS Backup Mount Point              : ./volume1/backup_linux.
-# $SADM_DAILY_BACKUP_TO_KEEP       Nb. of Daily Backup to keep         : .4. ..
-# $SADM_WEEKLY_BACKUP_TO_KEEP      Nb. of Weekly Backup to keep        : .4.
-# $SADM_MONTHLY_BACKUP_TO_KEEP     Nb. of Monthly Backup to keep       : .4.
-# $SADM_YEARLY_BACKUP_TO_KEEP      Nb. of Yearly Backup to keep        : .2.
-# $SADM_WEEKLY_BACKUP_DAY          Weekly Backup Day (1=Mon,...,7=Sun) : .5.
-# $SADM_MONTHLY_BACKUP_DATE        Monthly Backup Date (1-28)          : .1.
-# $SADM_YEARLY_BACKUP_MONTH        Month to take Yearly Backup (1-12)  : .12.
-# $SADM_YEARLY_BACKUP_DATE         Date to do Yearly Backup(1-DayInMth): .31.
-
-# Backup Directories for current backup
-#export DAILY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/daily"                # Dir. For Daily Backup
-#export WEEKLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/weekly"              # Dir. For Weekly Backup
-#export MONTHLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/monthly"            # Dir. For Monthly Backup
-#export YEARLY_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/yearly"              # Dir. For Yearly Backup
-#export LATEST_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}/latest"              # Latest Backup Directory
-#export BACKUP_TYPE=""                                                   # [D]ay [W]eek [M]th [Y]ear
+export CUR_PWD=$(pwd)                                                   # At end script to this dir.
 
 # Days and month name used to display inform to user before beginning the backup
 WEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
@@ -322,7 +290,7 @@ backup_setup()
     # Make sure the Server Backup Directory With Today's Date exist on NFS Drive -------------------
     BACKUP_DIR="${TODAY_ROOT_DIR}/${CUR_DATE}"                          # Set Today Backup Directory
     if [ ! -d ${BACKUP_DIR} ]                                           # Check if Server Dir Exist
-        then sadm_write_log "Making today backup directory $BACKUP_DIR"
+        then sadm_write_log "Creating today backup directory $BACKUP_DIR"
              mkdir ${BACKUP_DIR}                                        # If Not Create it
              if [ $? -ne 0 ]                                            # If Error trying to mount
                 then sadm_write_err "[ ERROR ] Creating directory ${BACKUP_DIR}"
@@ -637,6 +605,7 @@ clean_backup_dir()
     sadm_write_log "Total backup size = $total_size"
 
     cd "$CUR_PWD"
+    umount_nfs                                                          # Unmount NFS Drive
     return 0
 } 
 
@@ -828,7 +797,5 @@ function cmd_options()
     create_backup                                                       # Create TGZ of Selected Dir
     SADM_EXIT_CODE=$?                                                   # Save Backup Result Code
     clean_backup_dir                                                    # Delete Old Backup
-    if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Cleaning up
-    umount_nfs                                                          # Unmounting NFS Drive
     sadm_stop $SADM_EXIT_CODE                                           # Close & Trim rch,log,pid
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)

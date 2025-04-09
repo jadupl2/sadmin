@@ -260,23 +260,23 @@ check_available_update()
 
 
 # --------------------------------------------------------------------------------------------------
-#                 Function to update the server with yum command
+# Update system with the yum command
 # --------------------------------------------------------------------------------------------------
 run_yum()
 {
-    sadm_write_log "${SADM_TEN_DASH}"
+    sadm_write_log " "
     sadm_write_log "Starting $SADM_OS_NAME update process ..."
     sadm_write_log "Running : yum -y update"
     yum -y update   >>$SADM_LOG 2>>$SADM_ELOG
     rc=$?
-    sadm_write_log "Return code after yum program update is ${rc}."
+    sadm_write_log "The exit code of the 'yum -y update' command is ${rc}."
     sadm_write_log "${SADM_TEN_DASH}"
     return $rc
 }
 
 
 # --------------------------------------------------------------------------------------------------
-#                 Function to update the server with dnf command
+# Update system with the dnf command
 # --------------------------------------------------------------------------------------------------
 run_dnf()
 {
@@ -285,7 +285,7 @@ run_dnf()
     sadm_write_log "Running : dnf -y update"
     dnf -y update  >>$SADM_LOG 2>&1
     rc=$?
-    sadm_write_log "Return code after 'dnf -y update' is ${rc}."
+    sadm_write_log "The exit code of the 'dnf -y update' command is ${rc}."
     sadm_write_log " "
     return $rc
 }
@@ -293,7 +293,7 @@ run_dnf()
 
 
 # --------------------------------------------------------------------------------------------------
-#                 Function to update the server with apt command
+# Update system with the apt command
 # --------------------------------------------------------------------------------------------------
 run_apt()
 {
@@ -413,9 +413,9 @@ perform_osupdate()
             pkg_mgm="dnf"                                               # Default value
             sadm_get_command_path "yum" >/dev/null                      # yum on system ? RHEL 7
             if [ $? -eq 0 ] && [ $SADM_OS_MAJORVER -lt 8 ]
-               then run_yum                                             # For RHEL 7 
+               then run_yum                                             # For RHEL 7 and prior ver.
                     SADM_EXIT_CODE=$?                                   # Save Return Code
-               else run_dnf                                             # V 8 and up use dnf
+               else run_dnf                                             # Version 8 and up use dnf
                     SADM_EXIT_CODE=$?                                   # Save Return Code
             fi 
             ;; 
