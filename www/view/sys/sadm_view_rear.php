@@ -38,6 +38,7 @@
 # 2023_04_22 web v2.4 ReaR backup status page - Alert are now shown in a tinted background for emphasis.
 # 2023_04_23 web v2.5 ReaR backup status page - Now include size of backup & new layout.
 # 2023_04_27 web v2.6 ReaR backup status page - Combine 'Last Backup Date' & 'Duration'.
+#@2025_04_10 web v2.7 Add a little more disposition on web page.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -66,7 +67,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "2.6" ;                                           # Current version number
+$WVER               = "2.7" ;                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -279,20 +280,20 @@ if (file_exists($rch_name)) {
 echo "</td>\n";
 
 
-
 # Schedule Update Button
     $ipath = '/images/UpdateButton.png';
     if ($row['srv_img_backup'] == TRUE) {                                  # Is Server Active
         $tooltip = 'Schedule is active, click to edit backup configuration.';
-        echo "\n<td style='color: green' class='dt-center'><b>Y ";
+        echo "\n<td align='center' style='color: green'><b>Y ";
     } else {                                                              # If not Activate
         $tooltip = 'Schedule is inactive, click to edit backup configuration.';
-        echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>N ";
+        echo "\n<td  align='center' style='color:red' bgcolor='#DAF7A6'><b>N ";
     }
     echo "<a href='" . $URL_BACKUP . "?sel=" . $row['srv_name'] . "&back=" . $URL_VIEW_BACKUP . "'>";
     echo "\n<span data-toggle='tooltip' title='" . $tooltip . "'>";
     echo "\n<button type='button'>Update</button>";             # Display Delete Button
     echo "</a></span></b></td>";
+
 
 # Show if System is sporadic or not
    if ($row['srv_sporadic'] == TRUE ) {
