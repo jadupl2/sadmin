@@ -26,6 +26,7 @@
 #@2024_10_31 web v1.2 Permit to view the status of Virtual Box machine export.
 #@2025_01_29 web v1.3 Was not showing the right VirtualBox Guest Addition version 
 #@2025_03_25 web v1.5 Change more look of the page adding some more info
+#@2025_04_10 web v1.6 Add a little more disposition on web page.
 # ==================================================================================================
 #
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -138,36 +139,36 @@ function setup_table() {
     #echo "<table row-border width='100%'>\n";   
 
     echo "\n<thead>\n";
-    echo "  <tr align=left bgcolor='grey'>\n";
+    echo "  <tr align=center bgcolor='grey'>\n";
     echo "      <th width=12>No</th>\n";
     echo "      <th width=60>VmName</th>\n";
     echo "      <th width=60>Guest Version</th>\n";
     echo "      <th width=60>HostName</th>\n";
-    echo "      <th width=100>Last Export</th>\n";
-    echo "      <th width=60>Duration</th>\n";
-    echo "      <th width=50>Status</th>\n";
+    echo "      <th align='center' width=100>Last Export</th>\n";
+    echo "      <th align='left' width=60>Duration</th>\n";
+    echo "      <th align='center' width=50>Status</th>\n";
     echo "      <th width=60>Log & Hist.</th>\n";
     echo "      <th width=70>Export<br>Schedule</th>\n";
     echo "      <th width=100>Next Export</th>\n";
-    echo "      <th width=200>Occurrence</th>\n";
+    echo "      <th align='left' width=200>Occurrence</th>\n";
     echo "      <th width=70>Export Size</th>\n";
     echo "      <th width=60>Prev. Size</th>\n";
     echo "  </tr>\n"; 
     echo "</thead>\n";
 
     echo "\n<tfoot>\n";
-    echo "  <tr align=left bgcolor='lightgrey'>\n";
+    echo "  <tr align=center bgcolor='grey'>\n";
     echo "      <th width=12>No</th>\n";
     echo "      <th width=60>VmName</th>\n";
     echo "      <th width=60>Guest Version</th>\n";
     echo "      <th width=60>HostName</th>\n";
-    echo "      <th width=100>Last Export</th>\n";
-    echo "      <th width=60>Duration</th>\n";
-    echo "      <th width=50>Status</th>\n";
+    echo "      <th align='center' width=100>Last Export</th>\n";
+    echo "      <th align='left' width=60>Duration</th>\n";
+    echo "      <th align='center' width=50>Status</th>\n";
     echo "      <th width=60>Log & Hist.</th>\n";
     echo "      <th width=70>Export<br>Schedule</th>\n";
     echo "      <th width=100>Next Export</th>\n";
-    echo "      <th width=200>Occurrence</th>\n";
+    echo "      <th align='left' width=200>Occurrence</th>\n";
     echo "      <th width=70>Export Size</th>\n";
     echo "      <th width=60>Prev. Size</th>\n";
     echo "  </tr>\n"; 
@@ -417,23 +418,23 @@ echo "</span></td>";
 
     # Show current export size.
     if (($num_export_size == 0 || $num_previous_size == 0) && (SADM_VM_EXPORT_DIF != 0)) {
-        echo "<td align=left style='color:red' bgcolor='#DAF7A6'>" .$export_size;
+        echo "<td align='center' style='color:red' bgcolor='#DAF7A6'>" .$export_size;
     }else{
         #echo "PCT = (($num_export_size - $num_previous_size) / $num_previous_size) * 100";
         $PCT = (($num_export_size - $num_previous_size) / $num_previous_size) * 100;
         if (number_format($PCT,1) == 0.0) {
-            echo "<td align=left>" . $export_size ; 
+            echo "<td align='center'>" . $export_size ; 
         }else{
             if (number_format($PCT,0) > SADM_VM_EXPORT_DIF) {
-                echo "<td align=left style='color:red' bgcolor='#DAF7A6'><b>" .$export_size. "&nbsp;(+" .number_format($PCT,1). "%)</b>"; 
+                echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" .$export_size. "&nbsp;(+" .number_format($PCT,1). "%)</b>"; 
             }else{
                 if (number_format($PCT,0) < (SADM_VM_EXPORT_DIF * -1)) {
-                    echo "<td align=left style='color:red' bgcolor='#DAF7A6'><b>" . $export_size . "&nbsp;("  .number_format($PCT,1). "%)</b>";
+                    echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" . $export_size . "&nbsp;("  .number_format($PCT,1). "%)</b>";
                 }else{
                     if ($PCT < 0) {
-                        echo "<td align=left>" . $export_size . "&nbsp;("  .number_format($PCT,1). "%)"; 
+                        echo "<td align='center'>" . $export_size . "&nbsp;("  .number_format($PCT,1). "%)"; 
                     }else{ 
-                        echo "<td align=left>" . $export_size . "&nbsp;(+" .number_format($PCT,1). "%)"; 
+                        echo "<td align='center'>" . $export_size . "&nbsp;(+" .number_format($PCT,1). "%)"; 
                     }
                 }
             }
@@ -443,9 +444,9 @@ echo "</span></td>";
 
 # Show Previous Backup Size
     if (($num_export_size == 0 || $num_previous_size == 0) && (SADM_VM_EXPORT_DIF != 0)) {
-        echo "<td align=left style='color:red' bgcolor='#DAF7A6'><b>" .$previous_size. "</b></td>\n";
+        echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>" .$previous_size. "</b></td>\n";
     }else{
-        echo "<td align=left>" . $previous_size . "</td>\n";
+        echo "<td align='center'>" . $previous_size . "</td>\n";
     }
 
 }
