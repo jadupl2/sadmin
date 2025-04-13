@@ -63,6 +63,7 @@
 # 2023_12_14 server v4.14 'SADM_HOST_TYPE' in 'sadmin.cfg', decide if system is a client or a server.
 # 2023_12_30 server v4.15 Now using new function "Bug fix on files synchronization.
 #@2025_01_29 server v4.16 Remove Escape character from logs 
+#@2025_04_13 server v4.17 Remove some uneeded lines from the error log.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -94,7 +95,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.16'                                     # Script version number
+export SADM_VER='4.17'                                     # Script version number
 export SADM_PDESC="Collect hardware,software,performance info data from all active systems."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -211,8 +212,8 @@ process_servers()
         if ! host $fqdn_server >/dev/null 2>&1
             then SMSG="[ ERROR ] Can't process '$fqdn_server', hostname can't be resolved."
                  sadm_write_err "${SMSG}"                               # Advise user
-                 ((ERROR_COUNT++))                        # Increase Error Counter
-                 sadm_write_err "Error Count is now at $ERROR_COUNT"
+                 ((ERROR_COUNT++))                                      # Increase Error Counter
+                 sadm_write_log "Error Count is now at $ERROR_COUNT"
                  continue                                               # Continue with next Server
         fi
 
@@ -248,7 +249,7 @@ process_servers()
                 if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_write_log "Return Code is $RC" ;fi 
                 sadm_write_err "[ ERROR ] Can't SSH to ${fqdn_server} on port $server_ssh_port."
                 ((ERROR_COUNT++))
-                sadm_write_err "Error Count is now at $ERROR_COUNT"
+                sadm_write_log "Error Count is now at $ERROR_COUNT"
                 continue
         fi                                                              # OK SSH Worked the 1st time
 
@@ -273,17 +274,17 @@ process_servers()
                     else sadm_write_err "[ WARNING } Couldn't get $ETCENV."
                          if [ "$server_sporadic" = "1" ]                # SSH don't work & Sporadic
                             then sadm_write_log "${server_name} is a sporadic system."
-                            else ((ERROR_COUNT++))        # Add 1 to Error Count
-                                 sadm_write_err "Error Count is now at $ERROR_COUNT"
+                            else ((ERROR_COUNT++))                      # Add 1 to Error Count
+                                 sadm_write_log "Error Count is now at $ERROR_COUNT"
                          fi
                          sadm_write_err "Continuing with next system."  # Advise we are skipping srv
-                         ((warning_count++))                             # Increase Warning Counter
+                         ((warning_count++))                            # Increase Warning Counter
                          continue                                       # Go process next system
                  fi 
             else sadm_write_err "[ ERROR ] Couldn't get $ETCENV on ${server_name}."
-                 ((ERROR_COUNT++))                        # Add 1 to Error Count
-                 sadm_write_err "Error count is now at $ERROR_COUNT "
-                 sadm_write_err "Continuing with next system."          # Advise we are skipping srv
+                 ((ERROR_COUNT++))                                      # Add 1 to Error Count
+                 sadm_write_log "Error count is now at $ERROR_COUNT "
+                 sadm_write_log "Continuing with next system."          # Advise we are skipping srv
                  continue                                               # Go process next system
         fi
     
@@ -311,7 +312,7 @@ process_servers()
         if [ $RC -ne 0 ]
             then sadm_write_err "[ ERROR ] ($RC) ${rcmd}"
                  ((ERROR_COUNT++))
-                 sadm_write_err "Error Count is now at $ERROR_COUNT"
+                 sadm_write_log "Error Count is now at $ERROR_COUNT"
             else sadm_writelog "[ OK ] ${rcmd}"
         fi
  
