@@ -105,6 +105,7 @@
 #@2025_01_24 server v3.51 Bug fixes & refine lock detection vs Monitor page.
 #@2025_01_29 server v3.52 Change 'sadm_vm' crontab update to use 'sadm_rmcmd_lock' to lock/unlock system.
 #@2025_03_25 server v3.53 Refine way to copy local rch,log  and rpt to farm www directory.
+#@2025_04_13 server v3.54 Add hostname in the email subject, if not already there.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -134,7 +135,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.53'                                     # Script version number
+export SADM_VER='3.54'                                     # Script version number
 export SADM_PDESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -2008,6 +2009,8 @@ sadm_send_alert()
     ascript=`echo "$4" | awk '{$1=$1;print}'`                           # Script Name 
     agroup=`echo "$5"  | awk '{$1=$1;print}'`                           # SADM AlertGroup to Advise
     asubject="$6"                                                       # Save Alert Subject
+    echo "$asubject" | grep -q "$aserver"                               # Is server name in subject?
+    if [ $? -ne 0 ] ; then asubject="$aserver $6" ; fi                  # Add server name in subject
     amessage="$7"                                                       # Save Alert Message
     aattach="$8"                                                        # Save Attachment FileName
     acounter="01"                                                       # Default alert Counter
@@ -2073,7 +2076,7 @@ sadm_send_alert()
     # Age of alert in Days (NbDaysOld), in Seconds (aage) & Nb. Alert Repeat per day (MaxRepeat)
     aepoch=$(sadm_date_to_epoch "$atime")                               # Convert AlertTime to Epoch
     cepoch=$(date +%s)                                                  # Get Current Epoch Time
-    aage=`expr $cepoch - $aepoch`                                       # Age of Alert in Seconds.
+    aage=$(expr $cepoch - $aepoch)                                      # Age of Alert in Seconds.
     if [ $SADM_ALERT_REPEAT -ne 0 ]                                     # If Config = Alert Repeat
         then MaxRepeat=`echo "(86400 / $SADM_ALERT_REPEAT)" | $SADM_BC` # Calc. Nb Alert Per Day
         else MaxRepeat=1                                                # MaxRepeat=1 NoAlarm Repeat
@@ -2197,9 +2200,9 @@ sadm_send_alert()
     fi
     
     # Final Message combine 
-    body=`printf "%s\n%s\n%s" "$mheader" "$amessage" "$mfooter"`        # Construct Final Mess. Body
+    body=$(printf "%s\n%s\n%s" "$mheader" "$amessage" "$mfooter")       # Construct Final Mess. Body
     if [ "$atype" = "S" ] && [ "$agroup_type" != "T" ]                  # If Script Alert, Not Texto
-       then SNAME=`echo ${ascript} |awk '{ print $1 }'`                 # Get Script Name
+       then SNAME=$(echo ${ascript} |awk '{ print $1 }')                # Get Script Name
             LOGFILE="${aserver}_${SNAME}.log"                           # Assemble log Script Name
             LOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}"     # Add Log Dir. Path 
             URL_VIEW_FILE='/view/log/sadm_view_file.php'                # View File Content URL
@@ -2219,8 +2222,8 @@ sadm_send_alert()
     case "$agroup_type" in
 
        # SEND EMAIL ALERT 
-       M) aemail=`grep -i "^$agroup " $SADM_ALERT_FILE |awk '{ print $3 }'` # Get Emails of Group
-          aemail=`echo $aemail | awk '{$1=$1;print}'`                   # Del Leading/Trailing Space
+       M) aemail=$(grep -i "^$agroup " $SADM_ALERT_FILE |awk '{ print $3 }') # Get Emails of Group
+          aemail=$(echo $aemail | awk '{$1=$1;print}')                  # Del Leading/Trailing Space
           if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Email alert sent to $aemail \n" ; fi 
           sadm_sendmail "$aemail" "$ws" "$body" "$aattach"
           RC=$?                                                         # Save Error Number
