@@ -66,6 +66,7 @@
 # 2024_04_02 osupdate v5.5 Small modifications.
 #@2024_09_12 osupdate v5.6 Adjustments & modifications done to log.
 #@2024_11_25 osupdate v5.7 Fix minor problem with system lock.
+#@2025_04_22 osupdate v5.8 Reduce sleep time from 8 minutes to 4 to restart system app.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -114,7 +115,7 @@ export SADM_PN="${SADM_INST}.${SADM_EXT}"                  # Script name(with ex
 
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='5.7'                                      # Script version number
+export SADM_VER='5.8'                                      # Script version number
 export SADM_PDESC="Run the O/S update script on the selected remote system."
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -159,7 +160,7 @@ export SADM_MAX_RCLINE=60                                  # Nb Lines to trim(0=
 export USCRIPT="sadm_osupdate.sh"                                       # Script to execute on nodes
 
 # Seconds given for system reboot and to start applications.
-export REBOOT_TIME=240                                                  # 480 seconds is 8 minutes
+export REBOOT_TIME=240                                                  # 240 seconds is 4 minutes
 
 
 
@@ -329,28 +330,24 @@ rcmd_osupdate()
              RC=$?
     fi      
     sadm_write_log " "
-    sadm_write_log "Backup on SADMIN system '$SADM_HOSTNAME' after doing O/S update on '${server_name}'."
+    sadm_write_log "Back on $SADM_HOSTNAME after doing the O/S update on '$server_name'."
     if [ $RC -eq 0 ]
         then sadm_write_log "[ OK ] O/S update was a success on $fqdn_server"
-             update_server_db "${server_name}" "S"                      # Update Status Success 
+             update_server_db "${server_name}" "S"                      # Update O/S Status in DB 
         else sadm_write_log "[ ERROR ] O/S update terminated with error on $fqdn_server"
-             update_server_db "${server_name}" "F"                      # Update Status False in DB
+             update_server_db "${server_name}" "F"                      # Update O/S Status in DB
     fi 
 
-    # After the O/S update is terminated, a reboot will be done on some occasion.
-    # If user requested a reboot after each update (see reboot option when scheduling O/S Update)
-    # We need to wait a moment to give time for the selected system to reboot and be available again.
-    # We will sleep 480 seconds (8 Min.) to give system time to restart and start it's apps.
-    if [ "$WREBOOT" != "" ]                                         # if Reboot requested
-        then sadm_write_log "System $fqdn_server is now rebooting."
-             sadm_write_log "We will sleep $REBOOT_TIME seconds, to give time for '${server_name}' to become available."
-             # Sleep for $REBOOT_TIME seconds and update progress bar every 30 seconds.
-             sadm_sleep $REBOOT_TIME 30 
+    # After the O/S update is finished, a reboot will be done on some occasion.
+    # If user requested a reboot after each update (see reboot option on O/S update page).
+    # We need to wait and give time for the system to reboot and be available again.
+    # We sleep ($REBOOT_TIME) 240 sec. (4 Min.) to give system time to restart & to start it's apps.
+    if [ "$WREBOOT" != "" ]                                             # if Reboot requested
+        then sadm_write_log "System $fqdn_server is now rebooting in $REBOOT_TIME seconds."
+             sadm_write_log "Give time for '$server_name' to be available, we will wait $REBOOT_TIME sec."
+             sadm_sleep $REBOOT_TIME 20 
     fi 
-
-    #sadm_write_log " "
-    #sadm_write_log "[ OK ] O/S Update is now completed on '${server_name}'."
-    sadm_unlock_system "${SYSTEM_NAME}"                                  # Go remove the lock file
+    sadm_unlock_system "$server_name"                                   # Go remove the lock file
     return 0
 }
 
