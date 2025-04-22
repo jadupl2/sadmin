@@ -64,6 +64,7 @@
 # 2023_12_30 server v4.15 Now using new function "Bug fix on files synchronization.
 #@2025_01_29 server v4.16 Remove Escape character from logs 
 #@2025_04_13 server v4.17 Remove some uneeded lines from the error log.
+#@2025_04_22 server v4.18 Remove some messages that was not suppose to be written to the rror log.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
@@ -95,7 +96,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='4.17'                                     # Script version number
+export SADM_VER='4.18'                                     # Script version number
 export SADM_PDESC="Collect hardware,software,performance info data from all active systems."
 export SADM_EXIT_CODE=0                                    # Script Default Exit Code
 export SADM_LOG_TYPE="B"                                   # Log [S]creen [L]og [B]oth
@@ -236,13 +237,13 @@ process_servers()
         if [ $RC -ne 0 ]                                                # If SSH failed
            then if [ "$server_sporadic" = "1" ]                         # If Error on Sporadic Host
                    then sadm_write_err "[ WARNING ]  Can't SSH to ${fqdn_server} (Sporadic System)."
-                        sadm_write_err "Continuing with next system"    # Not Error if Sporadic Srv. 
+                        sadm_write_log "Continuing with next system"    # Not Error if Sporadic Srv. 
                         ((warning_count++))                             # Increase Warning Counter
                         continue
                 fi 
                 if [ "$server_monitor" = "0" ]                          # If Error & Monitor is OFF
                    then sadm_write_err "[ WARNING ] Can't SSH to ${fqdn_server} (Monitoring is OFF)."
-                        sadm_write_err "Continuing with next system"    # Not Error Monitoring Off
+                        sadm_write_log "Continuing with next system"    # Not Error Monitoring Off
                         ((warning_count++))                             # Increase Warning Counter
                         continue
                 fi 
@@ -277,7 +278,7 @@ process_servers()
                             else ((ERROR_COUNT++))                      # Add 1 to Error Count
                                  sadm_write_log "Error Count is now at $ERROR_COUNT"
                          fi
-                         sadm_write_err "Continuing with next system."  # Advise we are skipping srv
+                         sadm_write_log "Continuing with next system."  # Advise we are skipping srv
                          ((warning_count++))                            # Increase Warning Counter
                          continue                                       # Go process next system
                  fi 
