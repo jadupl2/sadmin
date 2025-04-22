@@ -88,40 +88,43 @@ function table_heading_and_footer() {
 
 # Table creation
     #echo "<div id='SimpleTable'>"; 
-    echo '<table id="sadmTable" class="display compact stripe" width="100%">';   
+#    echo '<table id="sadmTable" class="display compact stripe" width="100%">';   
+    echo "\n<table class='content-table'>\n" ;                          # Start of table creation
 
 # Table Heading
-    echo "<thead>\n";
-    echo "<tr>\n";
-    echo "<th class='dt-left'>System Name</th>\n";
-    echo "<th class='text-center'>Last Update</th>\n";
-    echo "<th class='text-center'>Status</th>\n";
-    echo "<th>Cat.</th>\n";
-    echo "<th class='dt-head-center'>O/S</th>\n";                       # Center Header Only
-    echo "<th class='dt-head-center'>Version</th>\n";                   # Center Header Only
-    echo "<th class='text-center'>Next Update</th>\n";
-    echo "<th class='text-center'>Schedule Occurrence</th>\n";
-    echo "<th class='text-center'>Log / Hist.</th>\n";
-    echo "<th class='text-center'>Reboot</th>\n";
-    echo "</tr>\n"; 
-    echo "</thead>\n";
+    echo "\n\n<thead>";
+    echo "\n<tr>";
+    echo "\n<th width=25 align='center'>No</td>";    
+    echo "\n<th width=90 align='left'>System</td>";
+    echo "\n<th align='center'>Last Update</th>";
+    echo "\n<th align='center'>Status</th>";
+    echo "\n<th align='center'>Cat.</th>";
+    echo "\n<th align='center'>O/S</th>";  
+    echo "\n<th align='center'>Version</th>";
+    echo "\n<th align='center'>Next Update</th>";
+    echo "\n<th align='center'>Schedule Occurrence</th>";
+    echo "\n<th align='center'>Log / Hist.</th>";
+    echo "\n<th align='center'>Reboot</th>";
+    echo "\n</tr>"; 
+    echo "\n</thead>\n";
 
 # Table Footer
-    echo "<tfoot>\n";
-    echo "<tr>\n";
-    echo "<th class='dt-left'>System Name</th>\n";
-    echo "<th class='text-center'>Last Update</th>\n";
-    echo "<th class='text-center'>Status</th>\n";
-    echo "<th>Cat.</th>\n";
-    echo "<th class='dt-head-center'>O/S</th>\n";                       # Center Header Only
-    echo "<th class='dt-head-center'>Version</th>\n";                   # Center Header Only
-    echo "<th class='text-center'>Next Update</th>\n";
-    echo "<th class='text-center'>Schedule Occurrence</th>\n";
-    echo "<th class='text-center'>Log / Hist.</th>\n";
-    echo "<th class='text-center'>Reboot</th>\n";
-    echo "</tr>\n"; 
-    echo "</tfoot>\n";
-    echo "<tbody>\n";
+    echo "\n\n<tfoot>";
+    echo "\n<tr>";
+    echo "\n<th width=25 align='center'>No</td>";    
+    echo "\n<th width=90 align='left'>System</td>";
+    echo "\n<th align='center'>Last Update</th>";
+    echo "\n<th align='center'>Status</th>";
+    echo "\n<th align='center'>Cat.</th>";
+    echo "\n<th align='center'>O/S</th>";  
+    echo "\n<th align='center'>Version</th>";
+    echo "\n<th align='center'>Next Update</th>";
+    echo "\n<th align='center'>Schedule Occurrence</th>";
+    echo "\n<th align='center'>Log / Hist.</th>";
+    echo "\n<th align='center'>Reboot</th>";
+    echo "\n</tr>"; 
+    echo "\n</tfoot>\n";
+    echo "\n<tbody>";
 }
 
 
@@ -147,20 +150,28 @@ function display_data($count, $row) {
     $WVER           = $row['srv_osversion'];                            # O/S Version Number
     $OSUPDATE_DAYS  = 31; 
 
-
-# System Name
-    echo "<tr>\n";  
-    echo "<td class='dt-left'>";
+    # Line counter
+    echo "\n<tr>";  
+    echo "\n<td align='center'>" . $count . "</td>"; 
+        
+    # System Name
+    echo "\n<td align='left'>";
     echo "<a href='" . $URL_HOST_INFO . "?sel=" . $WSYSTEM . "&back=" . $URL_VIEW_SCHED ;
     echo "' title='$WOS $WVER system, click to view system info.'>";
-    echo $WSYSTEM  ."<br></a>" .$row['srv_desc']. "</td>\n";
+    echo $WSYSTEM  ."<br></a>" . $row['srv_desc'];
+    echo "</td>";
 
 
-# Last O/S Update Date 
+    # Last O/S Update Date 
     if (file_exists($rch_name)) {
         $file = file("$rch_name");                                   # Load RCH File
         $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
+        # Line Example: 
+        # $whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$walert,$gtype,$wcode
+        #    0      1       2       3       4       5       6        7       8      9
+        #$rch_array  = explode(" ",$rch_line); 
         list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapse,$cname,$calert,$ctype,$ccode) = explode(" ",$lastline);
+
         $WLAST_UPDATE = "$cdate1 $ctime1";
     }else{
         if (substr($row['srv_date_osupdate'],0,16) == "0000-00-00 00:00") {

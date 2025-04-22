@@ -259,7 +259,7 @@ function display_left_side ($wrow)
     echo "</div>";
 
     # Server Model
-    echo "\n\n<div class='server_left_label'>Server Model</div>";
+    echo "\n\n<div class='server_left_label'>System Model</div>";
     echo "\n<div class='server_left_data'>";
     if (empty($wrow['srv_model'])) { echo "&nbsp" ; }else{ echo $wrow['srv_model'] ; }
     echo "</div>";

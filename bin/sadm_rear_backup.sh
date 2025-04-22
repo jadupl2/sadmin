@@ -491,8 +491,8 @@ rear_housekeeping()
     sadm_write_log "[ OK ] Set permission on backup files."
 
     sadm_write_log " "
-    sadm_write_log "Based on the field 'SADM_REAR_BACKUP_TO_KEEP' in SADMIN configuration file ${SADM_CFG_FILE} :"
-    sadm_write_log "  - You decided to keep the last $SADM_REAR_BACKUP_TO_KEEP 'ReaR' backup on '${SADM_REAR_NFS_SERVER}'."
+    sadm_write_log "Based on the field 'SADM_REAR_BACKUP_TO_KEEP' in SADMIN configuration file :"
+    sadm_write_log "  - You opted to keep the last $SADM_REAR_BACKUP_TO_KEEP 'ReaR' backup."
     
     # Get previous backup directory name and size
     sadm_write_log " " 
