@@ -59,6 +59,7 @@
 #@2024_09_11 osupdate v3.40 Remove code for older version of RHEL 3-4-5-6-7.
 #@2024_11_15 osupdate v3.41 Show user if the system will reboot or not after a successful update.
 #@2025_02_22 osupdate v3.42 Remove the use of the 'tee' command that was affecting return code.
+#@2025_04_22 osupdate v3.43 The Log file was closed too early when a reboot was requested.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -87,7 +88,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.42'                                     # Your Current Script Version
+export SADM_VER='3.43'                                     # Your Current Script Version
 export SADM_PDESC="Script is used to perform an O/S update on the system"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -450,23 +451,18 @@ main_process()
             perform_osupdate                                            # Go Perform O/S Update
             SADM_EXIT_CODE=$?                                           # Save exit code of update
             ;;
-        1)  SADM_EXIT_CODE=0                                            # No Update Final Code to 0
+        1)  SADM_EXIT_CODE=0                                            # No Update Avail Code to 0
             ;;
         2)  SADM_EXIT_CODE=1                                            # Error Encountered set to 1
             ;;
         *)  SADM_EXIT_CODE=1                                            # Error Encountered set to 1
-            sadm_write_err "Function: 'check_available_update' return code is invalid (${RC})."
+            sadm_write_err "Function ${FUNCNAME[0]} have returned an invalid result code (${RC})."
             ;;
     esac 
 
-    # Update the Date & Status of update in Sysinfo File ($SADMIN/dat/dr/`hostname -s`_sysinfo.txt).
+    # Update Date & Status (S=Success F=Fail) of update in Sysinfo file : 
+    # ($SADMIN/dat/dr/`hostname -s`_sysinfo.txt).
     update_sysinfo_file $SADM_EXIT_CODE                                 # Upd. Sysinfo Date & Status
-
-    # If Reboot was requested, update were available and update was successful, then reboot.
-    if [ "$WREBOOT" = "Y" ] && [ "$UPDATE_AVAILABLE" = "Y" ] && [ "$SADM_EXIT_CODE" -eq 0 ]     
-        then sadm_write_log "Update successful, system will reboot in 1 Minute."
-             shutdown -r +1 "System will reboot in 1 minute."           # Issue Shutdown & Reboot
-    fi
 
     return $SADM_EXIT_CODE
 }
@@ -520,5 +516,17 @@ function cmd_options()
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Init went wrong
     main_process                                                        # Check/Perform O/S Update
     SADM_EXIT_CODE=$?                                                   # Save Status returned 
+
+    # If Reboot is requested and update were available and the update was successful, advise user.
+    if [ "$WREBOOT" = "Y" ] && [ "$UPDATE_AVAILABLE" = "Y" ] && [ "$SADM_EXIT_CODE" -eq 0 ]     
+        then sadm_write_log "Update successful, system will reboot in 1 Minute."
+    fi
+    
     sadm_stop "$SADM_EXIT_CODE"                                         # End Process with exit Code
+
+    # If Reboot is requested and update were available and the update was successful, reboot system.
+    if [ "$WREBOOT" = "Y" ] && [ "$UPDATE_AVAILABLE" = "Y" ] && [ "$SADM_EXIT_CODE" -eq 0 ]     
+        then shutdown -r +1 "System will reboot in 1 minute."           # Issue Shutdown & Reboot
+    fi
+
     exit  "$SADM_EXIT_CODE"                                             # Exit script
