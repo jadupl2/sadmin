@@ -240,6 +240,7 @@
 #@2025_03_05 lib v4.60 Change syntax of some command
 #@2025_03_25 lib v4.61 Add an alternative way the get current host IP.
 #@2025_04_09 lib v4.62 Minor enhancements et fixes. 
+#@2025_04_22 lib v4.63 Refine the sadm_server_model() function to return the right model name.
 #===================================================================================================
 trap 'exit 0' 2  
 #set -x
@@ -249,7 +250,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.62"                                              # This Library Version
+export SADM_LIB_VER="4.63"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -259,7 +260,7 @@ export DELETE_PID="Y"                                                   # Defaul
 export LIB_DEBUG=0                                                      # This Library Debug Level
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
-export SADM_BASE_DIR=${SADMIN:="/sadmin"}                               # Script Root Base Dir.
+export SADM_BASE_DIR=${SADMIN:="/opt/sadmin"}                           # Script Root Base Dir.
 export SADM_BIN_DIR="$SADM_BASE_DIR/bin"                                # Script Root binary Dir.
 export SADM_TMP_DIR="$SADM_BASE_DIR/tmp"                                # Script Temp  directory
 export SADM_LIB_DIR="$SADM_BASE_DIR/lib"                                # Script Lib directory
@@ -678,7 +679,7 @@ sadm_write_log()
                 fi
                 printf -- "%s\n" "$dated_msg" >> $SADM_LOG              # Write Msg to Log
                 ;;
-        *)      printf "Invalid '$SADM_LOG_TYPE' ($SADM_LOG_TYPE) in ${FUNCNAME[0]} line ${LINENO}.\n" 
+        *)      printf "Invalid '$SADM_LOG_TYPE' ($SADM_LOG_TYPE) on line ${LINENO}.\n" 
                 ;;
     esac
 }
@@ -698,6 +699,18 @@ sadm_write_err() {
              esac
         else sadm_write_log "[ ERROR ] Insufficient permission to write to error log '$SADM_ELOG'."
     fi 
+}
+
+
+# sadm_abort()
+#
+# Instead of issuing the command 'exit 1', we can call this function to exit gracefully.
+# In construction
+#
+sadm_abort()
+{
+    exit 1
+
 }
 
 
@@ -1187,7 +1200,7 @@ sadm_get_osname() {
                     if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "REDHATENTERPRISE" ]       ; then wosname="REDHAT"   ;fi
                     if [ "$wosname" = "RHEL" ]                   ; then wosname="REDHAT"   ;fi
-                    if [ -f /etc/rpi-issue ] ; then wosname="RASPBIAN" ;fi
+                    if [ -f /etc/rpi-issue ]                     ; then wosname="RASPBIAN" ;fi
                     ;;
         "AIX")      wosname="AIX"
                     ;;
@@ -1398,13 +1411,13 @@ sadm_server_type() {
                                 then sadm_server_type="P"               # none = not a VM
                                 else sadm_server_type="V"               # Not none then a VM
                             fi
-                       else if command -v hostnamectl >/dev/null
-                               then wout=$(hostnamectl status |awk -F: '/Chassis:/ {print $2}' |tr -d ' ')
-                                    if [ "$wout" == "vm" ]              # vm = virtual machine
-                                        then sadm_server_type="V"  
-                                        else sadm_server_type="P"  
-                                    fi
-                            fi
+#                       else if command -v hostnamectl >/dev/null
+#                               then wout=$(hostnamectl status |awk -F: '/Chassis:/ {print $2}' |tr -d ' ')
+#                                    if [ "$wout" == "vm" ]              # vm = virtual machine
+#                                        then sadm_server_type="V"  
+#                                        else sadm_server_type="P"  
+#                                    fi
+#                            fi
                     fi 
                     ;;
         "AIX")      sadm_server_type="P"                                # Default Assume Physical
@@ -1422,35 +1435,65 @@ sadm_server_type() {
 #                               RETURN THE MODEL OF THE SERVER
 # --------------------------------------------------------------------------------------------------
 sadm_server_model() {
-    case "$(sadm_get_ostype)" in
-        "LINUX") wmodel=""
-                 if [ "$(sadm_server_type)" = "P" ]
-                     then if [ $(sadm_get_osname) = "RASPBIAN" ] || [ -f /usr/bin/raspi-config ]
-                             then wmodel=$(awk -F\: '/^Model/ {print $2}' /proc/cpuinfo)
-                                  wmodel=$(echo "$wmodel" | awk '{$1=$1};1')
-                             else fmodel="/sys/devices/virtual/dmi/id/product_name"
-                                  if [ -r $fmodel ] 
-                                     then wmodel=$(cat $fmodel)
-                                     else sadm_sm=$(${SADM_DMIDECODE} |grep -i "Product Name:" |head -1 |awk -F: '{print $2}')
-                                          sadm_sm=$(echo ${sadm_sm}| sed 's/ProLiant//')
-                                          sadm_sm=$(echo ${sadm_sm}|sed -e 's/^[ \t]*//' |sed 's/^[ \t]*//;s/[ \t]*$//' )
-                                          wmodel="${sadm_sm}"
-                                  fi 
-                          fi 
-                     else wmodel="VM"                                # Default Virtual Model 
-                          A=$(dmidecode -s system-manufacturer | awk '{print $1}' |tr [A-Z] [a-z])
-                          if [ "$A" = "vmware," ]    ; then wmodel="VMWARE"     ; fi
-                          A=$(dmidecode -s bios-version | tr [A-Z] [a-z])
-                          if [ "$A" = "virtualbox" ] ; then wmodel="VIRTUALBOX" ; fi 
-                 fi
-                 ;;
-        "AIX")   wmodel=$(uname -M | sed 's/IBM,//')
-                 ;;
-       "DARWIN") syspro="system_profiler SPHardwareDataType"
-                 wmodel=$($syspro |grep 'Ident' |awk -F: '{ print $2 }' |tr -d ' ')
-                 ;;
-    esac
-    echo "$wmodel"
+    
+    # Linux on a Raspberry Pi 
+    if [ "$(sadm_get_ostype)" = "LINUX" ] 
+        then sarch=$(arch)
+             if [ "${sarch:0:3}" = "arm" ] || [ "$(arch)" = "aarch64" ]
+                then wmodel=$(awk -F\: '/^Model/ {print $2}' /proc/cpuinfo)
+                     wmodel=$(echo "$wmodel" | awk '{$1=$1};1')
+                     echo "$wmodel"
+                     return 0 
+             fi 
+    fi
+
+    # Linux on Virtual Machine
+    if [ "$(sadm_get_ostype)" = "LINUX" ] && [ "$(sadm_server_type)" != "P" ]
+        then wmodel="VM"
+             A=$(${SADM_DMIDECODE} -s system-manufacturer | awk '{print $1}' |tr [A-Z] [a-z])
+             if [ "$A" = "vmware," ]    ; then wmodel="VMWARE"     ; fi
+             A=$(${SADM_DMIDECODE} -s bios-version | tr [A-Z] [a-z])
+             if [ "$A" = "virtualbox" ] ; then wmodel="VIRTUALBOX" ; fi 
+             echo "$wmodel"
+             return 0 
+    fi 
+
+    # Linux on Physical Machine
+    if [ "$(sadm_get_ostype)" = "LINUX" ] && [ "$(sadm_server_type)" = "P" ]
+        then wmodel="" ; manufacturer=""
+             manufacturer=$(${SADM_DMIDECODE} -s system-manufacturer) 
+             if [ "${#manufacturer}" -ne 0 ] 
+                then ${SADM_DMIDECODE} -q -t 1 | grep -iq "lenovo" 
+                     if [ $? -eq 0 ] 
+                        then wmodel=$(${SADM_DMIDECODE} -q -t 1 |grep 'Version:' |awk -F: '{print $2}')
+                             echo "$wmodel"
+                             return 0 
+                     fi   
+                     ${SADM_DMIDECODE} -q -t 1 | grep -iq "Dell" 
+                     if [ $? -eq 0 ] 
+                        then wmodel=$(${SADM_DMIDECODE} -q -t 1 |grep 'Product Name:' |awk -F: '{print $2}')
+                             echo "$wmodel"
+                             return 0 
+                     fi   
+             fi 
+        else echo "$wmodel"
+             return 0 
+    fi 
+
+    # On Aix
+    if [ "$(sadm_get_ostype)" = "AIX" ] 
+        then wmodel=$(uname -M | sed 's/IBM,//') 
+             echo "$wmodel"
+             return 0 
+    fi
+
+    # On MacOS
+    if [ "$(sadm_get_ostype)" = "DARWIN" ] 
+        then syspro="system_profiler SPHardwareDataType"
+             wmodel=$($syspro |grep 'Ident' |awk -F: '{ print $2 }' |tr -d ' ')
+             echo "$wmodel"
+             return 0 
+    fi 
 }
 
 
@@ -1477,10 +1520,10 @@ sadm_server_serial() {
                           fi
                   fi
                   ;;
-        "AIX")    wserial=`uname -u | awk -F, '{ print $2 }'`
+        "AIX")    wserial=$(uname -u | awk -F, '{ print $2 }')
                   ;;
-        "DARWIN") syspro="system_profiler SPHardwareDataType"
-                  wserial=`$syspro |grep -i 'Serial' |awk -F: '{ print $2 }' |tr -d ' '`
+        "DARWIN") syspro=$(system_profiler SPHardwareDataType)
+                  wserial=$($syspro |grep -i 'Serial' |awk -F: '{ print $2 }' |tr -d ' ')
                   ;;
     esac
     echo "$wserial"
@@ -2128,30 +2171,23 @@ sadm_freshen_directories_structure() {
              chmod 0775 $SADM_UMON_DIR      ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UMON_DIR
              chmod 0775 $SADM_NET_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_NET_DIR
              chmod 0775 $SADM_DBB_DIR       ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DBB_DIR
-             chmod 0775 $SADM_WWW_DIR       ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR 
+    fi 
+
+    # If on the SADMIN server
+    if [ "$SADM_HOST_TYPE" = "S" ] &&  [ "$(id -u)" -eq 0 ]
+        then chmod 0775 $SADM_WWW_DIR       ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR 
              chmod 0775 $SADM_WWW_DAT_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR 
              chmod 0775 $SADM_WWW_ARC_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_ARC_DIR 
              chmod 0775 $SADM_WWW_DOC_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR 
              chmod 0775 $SADM_WWW_LIB_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR 
              chmod 0775 $SADM_WWW_IMG_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR 
              chmod 1777 $SADM_WWW_TMP_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR 
-             if [ "$SADM_HOST_TYPE" = "S" ] 
-                then chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_CRUD_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_CSS_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_VIEW_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_RRD_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_ARC_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_PERF_DIR
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_NET_DIR
-                     chmod 0775 $SADM_WWW_NET_DIR   
-                     chmod 1777 $SADM_WWW_PERF_DIR 
-             fi 
+             chmod 0775 $SADM_WWW_NET_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_NET_DIR
+             chmod 1777 $SADM_WWW_PERF_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_PERF_DIR
+             chmod 0775 $SADM_WWW_CRUD_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_CRUD_DIR
+             chmod 0775 $SADM_WWW_CSS_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_CSS_DIR
+             chmod 0775 $SADM_WWW_VIEW_DIR  ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_VIEW_DIR
+             chmod 0775 $SADM_WWW_RRD_DIR   ; chown ${SADM_USER}:${SADM_WWW_GROUP} $SADM_WWW_RRD_DIR
     fi
 }
 
