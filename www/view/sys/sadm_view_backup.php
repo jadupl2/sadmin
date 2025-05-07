@@ -35,7 +35,8 @@
 # 2022_11_20 web v2.2 Backup status page - Error log link now only appear when error occurred.
 # 2023_01_05 web v2.3 Backup status page - Yellow alert if backup size is contrasting with previous.
 # 2023_03_23 web v2.4 Backup status page - Lot of changes to this page, have a look.
-# 2023_04_22 web v2.5 Backup status page - Alert are now shown in a tinted background for emphasis.
+# 2025_04_22 web v2.5 Backup status page - Alert are now shown in a tinted background for emphasis.
+# 2025_04_28 web v2.6 Backup status page - Refresh disposition.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -46,6 +47,48 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/lib/sadmPageWrapper.php');    # Headi
 
 # DataTable Initialization Function
 ?>
+
+<style>
+.content-table {
+    border-collapse: collapse ;
+    margin: 25px 0; 
+    font-size: 0.9em;
+    min-width: 400px;
+    width: 100%;
+    border-radius: 5px 5px 0 0 ; 
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0.15);
+}
+
+.content-table thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+}
+
+.content-table th,
+.content-table td {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+.content-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.content-table tbody tr:nthof-type(even) {
+    background-color: #f3f3f3;
+}
+
+.content-table tbody tr.active-row {
+    font-weight : bold;
+    color: #009879;
+}
+</style>
+
 <script>
     $(document).ready(function() {
         $('#sadmTable').DataTable({
@@ -67,7 +110,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/lib/sadmPageWrapper.php');    # Headi
 # Local Variables
 #===================================================================================================
 $DEBUG              = False;                                           # Debug Activated True/False
-$WVER               = "2.5";                                           # Current version number
+$WVER               = "2.6";                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -108,10 +151,10 @@ function setup_table()
     
     echo "\n<thead>";
     echo "\n<tr>";
-    echo "\n<th align='center' width=25>No</th>";
+    echo "\n<th align='center' width=15>No</th>";
     echo "\n<th align='left'>System</th>";
-    echo "\n<th align='center'>Last Backup</th>";
-    echo "\n<th align='center'>Time</th>";
+    echo "\n<th align='center'>Start Backup</th>";
+    echo "\n<th align='center'>End Backup</th>";
     echo "\n<th align='center'>Duration</th>";
     echo "\n<th align='center'>Status</th>";
     echo "\n<th align='center'>Log/Hist</th>";
@@ -125,10 +168,10 @@ function setup_table()
 
     echo "\n<tfoot>";
     echo "\n<tr>";
-    echo "\n<th align='center' width=25>No</th>";
+    echo "\n<th align='center' width=15>No</th>";
     echo "\n<th align='left'>System</th>";
-    echo "\n<th align='center'>Last Backup</th>";
-    echo "\n<th align='center'>Time</th>";
+    echo "\n<th align='center'>Start Backup</th>";
+    echo "\n<th align='center'>End Backup</th>";
     echo "\n<th align='center'>Duration</th>";
     echo "\n<th align='center'>Status</th>";
     echo "\n<th align='center'>Log/Hist</th>";
@@ -177,23 +220,18 @@ function display_data($count, $row)
     echo "</td>";
 
 
-    # Last Backup Date and Time.
+    # Start Backup Date and Time.
     if (!file_exists($rch_name)) {                                      # If RCH File doesn't exist
         echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b></td>";
     } else {
         $file = file("$rch_name");                                      # Load RCH File in Memory
         $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
-        #$barray        = explode (" ", $bstring) ;
-        #$previous_size = $barray[count($barray)-1];
-        #list($cserver, $cdate1, $ctime1, $cdate2, $ctime2, $celapse, $cname, $calert, $ctype, $ccode) = explode(" ", $lastline);
         $rch_array  = explode(" ", $lastline);                          # Load Lines in rch_array
         $now        = time();                                           # Get current Epoch Time
-        #$your_date  = strtotime(str_replace(".", "-", $cdate1));
         $your_date  = strtotime(str_replace(".", "-", $rch_array[1]));  # Event Start Date in epoch
-        $datediff   = $now - $your_date;                                # Event Elapse Nb. seconds 
-
-        $backup_age = round($datediff / (60 * 60 * 24));                # Event Elapse Nb. Days
-        if ($backup_age > SADM_BACKUP_INTERVAL) {
+        $datediff   = $now - $your_date;                                # Event Elapse time in seconds 
+        $backup_age = round($datediff / (60 * 60 * 24));                # Event Elapse in Nb. Days
+        if ($backup_age > SADM_BACKUP_INTERVAL) {                       # Event  Date older than threshold  
             $tooltip = "Backup is " .$backup_age. " days old, exceeding the treshold of " .SADM_BACKUP_INTERVAL. " days.";
             echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'>";
             echo "<span data-toggle='tooltip' title='" .$tooltip. "'><b>" .$rch_array[1]. "</b></span>";
@@ -207,13 +245,12 @@ function display_data($count, $row)
             echo "<span data-toggle='tooltip' title='" . $tooltip . "'>" .$rch_array[1]. "</span>";
             #echo "<span data-toggle='tooltip' title='" . $tooltip . "'>" .$barray[1]. "</span>";
         }
-        echo "</td>";
+        #echo "</td>";
     }
-
-
+    echo "&nbsp;" ; 
     # Time of the last Backup
     if ($row['srv_backup'] == True) {                                   # If Backup Activated
-        echo "\n<td align='center'>";
+        #echo "\n<td align='center'>";
         list($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT(
             $row['srv_backup_dom'],
             $row['srv_backup_month'],
@@ -221,16 +258,30 @@ function display_data($count, $row)
             $row['srv_backup_hour'],
             $row['srv_backup_minute']
         );
-        echo sprintf("%02d", $row['srv_backup_hour']) . ":" . sprintf("%02d", $row['srv_backup_minute']);
+        echo sprintf(" %02d", $row['srv_backup_hour']) . ":" . sprintf("%02d", $row['srv_backup_minute']);
     }else{
         if (!file_exists($rch_name)) {                                      # If RCH File doesn't exist
-            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b>";
+#            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b>";
+            echo " style='color:red' bgcolor='#DAF7A6'><b>No data</b>";
         }else{
-            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>Deactivated</b>";
+            echo "<style='color:red' bgcolor='#DAF7A6'><b>Deactivated</b>";
         } 
     }
     echo "</td>";
 
+
+    # End Backup Date and Time.
+    # RCH Line Example: 
+    #   - $whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$walert,$gtype,$wcode    
+    if (!file_exists($rch_name)) {                                      # If RCH File doesn't exist
+        echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b></td>";
+    }else{ 
+        $file = file("$rch_name");                                      # Load RCH File in Memory
+        $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
+        $rch_array  = explode(" ", $lastline);                          # Load Lines in rch_array
+        echo "\n<td align='center'>" . $rch_array[3] . "&nbsp" . substr($rch_array[4],0,5)  ;  
+    }
+    echo "</td>";
 
     # Backup duration time
     if (!file_exists($rch_name)) {                                    # If RCH File Not Found
