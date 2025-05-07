@@ -39,6 +39,8 @@
 # 2021_08_29 web v2.11 Scripts status page - Show member(s) of alert group as tooltip. 
 # 2022_09_05 web v2.12 Scripts status page - Add [doc] & [elog] link to view error log (if exist).
 # 2023_02_14 web v2.13 Scripts status page - Remove 'sadm_nmon_watcher' from list if not in error.
+#@2025_05_07 web v2.14 Scripts status page - Enhance Web Page Layout.
+
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -51,7 +53,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 <script>
     $(document).ready(function() {
         $('#sadmTable').DataTable( {
-            "lengthMenu": [[ 50, 100, -1], [ 50, 100, "All"]],
+            "lengthMenu": [[ 100, 400, -1], [ 100, 400, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,
@@ -68,7 +70,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG              = False ;                                           # Debug Activated True/False
-$SVER               = "2.13" ;                                           # Current version number
+$SVER               = "2.14" ;                                           # Current version number
 $CREATE_BUTTON      = False ;                                           # Yes Display Create Button
 $URL_HOST_INFO      = '/view/srv/sadm_view_server_info.php';            # Display Host Info URL
 $URL_VIEW_RCH       = '/view/rch/sadm_view_rchfile.php';                # View RCH File Content URL
@@ -93,11 +95,11 @@ function setup_table() {
     # PAGE TABLE HEADING 
     echo "\n<thead>\n";
     echo "<tr>\n";
-    echo "<th class='dt-head-left'>System</th>\n";
-    echo "<th class='dt-left'>Script Name</th>\n";
-    echo "<th class='dt-center'>Start Date/Time</th>\n";
+    echo "<th width=120 align='center'>System</th>\n";
+    echo "<th width=120 align='left'>Script Name / log / rch</th>\n";
+    echo "<th class='dt-center'>Start Time</th>\n";
     echo "<th class='dt-center'>End Time</th>\n";
-    echo "<th class='dt-center'>Elapse</th>\n";
+    echo "<th align='center'>Duration</th>\n";
     echo "<th class='dt-head-center'>Alert Group</th>\n";
     echo "<th class='dt-head-center'>Alert Type</th>\n";
     echo "<th class='dt-head-left'>Status</th>\n"; 
@@ -108,11 +110,11 @@ function setup_table() {
     # PAGE TABLE FOOTER
     echo "<tfoot>\n";
     echo "<tr>\n";
-    echo "<th class='dt-head-left'>System</th>\n";
-    echo "<th class='dt-left'>Script Name</th>\n";
-    echo "<th class='dt-center'>Start Date/Time</th>\n";
+    echo "<th width=120 align='center'>System</th>\n";
+    echo "<th width=120 align='left'>Script Name / log / rch</th>\n";
+    echo "<th class='dt-center'>Start Time</th>\n";
     echo "<th class='dt-center'>End Time</th>\n";
-    echo "<th class='dt-center'>Elapse</th>\n";
+    echo "<th align='center'>Duration</th>\n";
     echo "<th class='dt-head-center'>Alert Group</th>\n";
     echo "<th class='dt-head-center'>Alert Type</th>\n";
     echo "<th class='dt-head-left'>Status</th>\n"; 
@@ -153,15 +155,16 @@ function display_script_array($con,$wpage_type,$script_array) {
             $row = mysqli_fetch_assoc($result);                         # Get Column Row Array 
             if ($row) { $wdesc   = $row['srv_desc']; } else { $wdesc   = "Unknown"; } #Get Srv Desc.
             
-            # DISPLAY SERVER NAME
             echo "\n<tr>";
-            echo "\n<td class='dt-left'>" ;
-            echo "<a href='" . $URL_HOST_INFO . "?sel=" . $cserver . 
-                 "' data-toggle='tooltip' title='" . $wdesc . "'>" . $cserver . "</a></td>";
-            
-            # DISPLAY SCRIPT NAME
-            echo "\n<td class='dt-left'>"   . $cname ;                  # Server Name Cell
 
+            # Display System Name
+            echo "\n<td align='left'>" ;
+            echo "<a href='" . $URL_HOST_INFO . "?sel=" . $cserver . 
+                 "' data-toggle='tooltip' title='" . $wdesc . "'>" .$cserver. "</a><br>" . $wdesc; 
+            echo "</td>" ;
+
+            # Display Script Name
+            echo "\n<td class='dt-left'>"   . $cname . "<br>" ;                  # Script Name Cell
             # Display links to access the log file (If exist)
             $LOGFILE = trim("${cserver}_${cname}.log");                 # Add .log to Script Name
             $log_name = SADM_WWW_DAT_DIR . "/" . $cserver . "/log/" . $LOGFILE ;
@@ -202,16 +205,17 @@ function display_script_array($con,$wpage_type,$script_array) {
             echo "</td>" ;
 
 
-            # DISPLAY START DATE, START TIME
-            echo "\n<td class='dt-center'>" . $cdate1  . "&nbsp;" . $ctime1 . "</td>"; 
+            # Display Start Date, Start Time
+            echo "\n<td align='center'>" . $cdate1  . "&nbsp;" . substr($ctime1,0,5) . "</td>"; 
 
-            # DISPLAY END DATE, END TIME AND ELAPSE SCRIPT TIME
+
+            # Display End Date, End Time And Elapse Script Time
             if ($ccode == 2) {
-                echo "\n<td class='dt-center'>............</td>";       # Running - No End date Yet
-                echo "\n<td class='dt-center'>............</td>";       # Running - No End time Yet
+                echo "\n<td align='center'>............</td>";       # Running - No End date Yet
+                echo "\n<td align='center'>............</td>";       # Running - No End time Yet
             }else{
-                echo "\n<td class='dt-center'>" . $cdate2 . "&nbsp;" . $ctime2 . "</td>";  
-                echo "\n<td class='dt-center'>" . $celapsed . "</td>";  # Script Elapse Time
+                echo "\n<td align='center'>" . $cdate2 . "&nbsp;" . substr($ctime2,0,5) . "</td>";  
+                echo "\n<td align='center'>" . $celapsed . "</td>";  # Script Elapse Time
             }
 
             list($calert, $alert_group_type, $stooltip) = get_alert_group_data ($calert) ;
