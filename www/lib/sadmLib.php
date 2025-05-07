@@ -55,15 +55,18 @@
 #@2024_10_31 lib v2.24 Add debug info and fix some problem in 'SCHEDULE_TO_TEXT()'.
 #@2024_12_28 lib v2.25 Fix problem date of next schedule at end of year in 'SCHEDULE_TO_TEXT()'.
 #@2025_03_05 lib v2.26 Update O/S Logo and documentation URL.
+#@2025_05_07 lib v2.27 Update O/S Logo and documentation URL.
+
 #===================================================================================================
-#
+
+
 
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.26" ;   
+$LIBVER = "2.27" ;   
     
 
 #===================================================================================================
@@ -642,11 +645,11 @@ function sadm_show_logo($WOS) {
 
     list($ipath, $iurl, $ititle) = sadm_return_logo ($WOS) ;
 
-    echo "<td class='dt-center'>";
+    echo "<td align='center'>";
     echo "<a href='". $iurl . "' ";
     echo "title='" . $ititle . "'>";
     echo "<img src='" . $ipath . "' ";
-    echo "style='width:24px;height:24px;'>"; 
+    echo "style='width:32px;height:32px;'>"; 
     echo "</a></td>\n";
 }
 
