@@ -41,6 +41,7 @@
 # 2023_05_01 web v2.16 O/S update status page - Enhance functionality and bug fix.
 # 2023_05_06 web v2.17 O/S update status page - Enhance functionality and bug 
 #@2024_11_24 web v2.18 O/S update status page - Fix bug when displaying schedule status
+#@2025_05_07 web v2.19 O/S update status page - Enhance Look of the page.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -59,6 +60,50 @@ $(document).ready(function() {
    } );
 } );
 </script>
+
+
+<style>
+.content-table {
+    border-collapse: collapse ;
+    margin: 25px 0; 
+    font-size: 0.9em;
+    min-width: 400px;
+    width: 100%;
+    border-radius: 5px 5px 0 0 ; 
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0.15);
+}
+
+.content-table thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+}
+
+.content-table th,
+.content-table td {
+    padding-top:    4px;
+    padding-bottom: 4px;
+    padding-left:   4px;
+    padding-right:  4px;
+}
+
+.content-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.content-table tbody tr:nthof-type(even) {
+    background-color: #f3f3f3;
+}
+
+.content-table tbody tr.active-row {
+    font-weight : bold;
+    color: #009879;
+}
+</style>
+
+
 <?php
 #<script>
 #$(document).ready(function() {
@@ -76,7 +121,7 @@ $(document).ready(function() {
 #                                       Local Variables
 #===================================================================================================
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.18" ;                                               # Current version number
+$WVER          = "2.19" ;                                               # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
@@ -86,42 +131,40 @@ $CREATE_BUTTON = False ;                                                # Yes Di
 #===================================================================================================
 function table_heading_and_footer() {
 
-# Table creation
-    #echo "<div id='SimpleTable'>"; 
-#    echo '<table id="sadmTable" class="display compact stripe" width="100%">';   
-    echo "\n<table class='content-table'>\n" ;                          # Start of table creation
+    # Table creation
+    echo "\n<table class='content-table' border=0>\n" ;   
 
-# Table Heading
+    # Table Heading
     echo "\n\n<thead>";
     echo "\n<tr>";
-    echo "\n<th width=25 align='center'>No</td>";    
-    echo "\n<th width=90 align='left'>System</td>";
-    echo "\n<th align='center'>Last Update</th>";
-    echo "\n<th align='center'>Status</th>";
-    echo "\n<th align='center'>Cat.</th>";
-    echo "\n<th align='center'>O/S</th>";  
-    echo "\n<th align='center'>Version</th>";
-    echo "\n<th align='center'>Next Update</th>";
-    echo "\n<th align='center'>Schedule Occurrence</th>";
-    echo "\n<th align='center'>Log / Hist.</th>";
-    echo "\n<th align='center'>Reboot</th>";
+    echo "\n<th width=10  align='center'>No</td>";    
+    echo "\n<th width=120 align='left'>System</td>";
+    echo "\n<th width=85  align='center'>Last Update</th>";
+    echo "\n<th width=85  align='center'>Status</th>";
+    echo "\n<th width=95  align='center'>Cat. / Group</th>";
+    echo "\n<th width=40  align='center'>O/S</th>";  
+    echo "\n<th width=40  align='center'>Version</th>";
+    echo "\n<th width=95  align='center'>Next Update</th>";
+    echo "\n<th width=120 align='center'>Occurrence</th>";
+    echo "\n<th width=40  align='center'>Log / Hist.</th>";
+    echo "\n<th width=30  align='center'>Reboot</th>";
     echo "\n</tr>"; 
     echo "\n</thead>\n";
 
-# Table Footer
+    # Table Footer
     echo "\n\n<tfoot>";
     echo "\n<tr>";
-    echo "\n<th width=25 align='center'>No</td>";    
-    echo "\n<th width=90 align='left'>System</td>";
-    echo "\n<th align='center'>Last Update</th>";
-    echo "\n<th align='center'>Status</th>";
-    echo "\n<th align='center'>Cat.</th>";
-    echo "\n<th align='center'>O/S</th>";  
-    echo "\n<th align='center'>Version</th>";
-    echo "\n<th align='center'>Next Update</th>";
-    echo "\n<th align='center'>Schedule Occurrence</th>";
-    echo "\n<th align='center'>Log / Hist.</th>";
-    echo "\n<th align='center'>Reboot</th>";
+    echo "\n<th width=10  align='center'>No</td>";    
+    echo "\n<th width=120 align='left'>System</td>";
+    echo "\n<th width=85  align='center'>Last Update</th>";
+    echo "\n<th width=85  align='center'>Status</th>";
+    echo "\n<th width=95  align='center'>Cat. / Group</th>";
+    echo "\n<th width=40  align='center'>O/S</th>";  
+    echo "\n<th width=40  align='center'>Version</th>";
+    echo "\n<th width=95  align='center'>Next Update</th>";
+    echo "\n<th width=120 align='center'>Occurrence</th>";
+    echo "\n<th width=40  align='center'>Log / Hist.</th>";
+    echo "\n<th width=30  align='center'>Reboot</th>";
     echo "\n</tr>"; 
     echo "\n</tfoot>\n";
     echo "\n<tbody>";
@@ -162,11 +205,10 @@ function display_data($count, $row) {
     echo "</td>";
 
 
-    # Last O/S Update Date 
+    # Last O/S Update Date & Time.
     if (file_exists($rch_name)) {
         $file = file("$rch_name");                                   # Load RCH File
         $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
-        # Line Example: 
         # $whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$walert,$gtype,$wcode
         #    0      1       2       3       4       5       6        7       8      9
         #$rch_array  = explode(" ",$rch_line); 
@@ -195,7 +237,7 @@ function display_data($count, $row) {
         $osupdate_age = round($datediff / (60 * 60 * 24));             # Days since last O/S Update
         if ($osupdate_age > $OSUPDATE_DAYS) {                               # If was more than threshold
             $tooltip = "Last O/S update was done " .$osupdate_age. " days ago, threshold at " .$OSUPDATE_DAYS. " days.";
-            echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>";
+            echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>";
             echo "<span data-toggle='tooltip' title='"  . $tooltip . "'>";
             echo "$cdate1" . '&nbsp;' . substr($ctime1,0,5) ;
             echo "</font></span></td>"; 
@@ -209,7 +251,7 @@ function display_data($count, $row) {
     }
 
     
-# Last Update Status
+    # Last Update Status
     if (file_exists($rch_name)) {
         $file = file("$rch_name");                                   # Load RCH File in Memory
         $lastline = $file[count($file) - 1];                            # Extract Last line of RCH
@@ -217,42 +259,45 @@ function display_data($count, $row) {
     } else {
         $ccode = 9;                                                     # No Log, Backup never ran
     }
-    
-    #    switch ( strtoupper($row['srv_update_status']) ) {
     switch ( $ccode ) {
-        case 0  : echo "<td class='dt-center'>Success"; 
+        case 0  : echo "<td align='center'>Success"; 
                   break ;
-        case 1  : echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><b>Failed</b>"; 
+        case 1  : echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><b>Failed</b>"; 
                   break ;
-        case 2  : echo "<td class='dt-center' style='bgcolor='#DAF7A6'><b>Running</b>"; 
+        case 2  : echo "<td align='center' style='bgcolor='#DAF7A6'><b>Running</b>"; 
                   break ;
-        default : echo "<td class='dt-center' style='bgcolor='#DAF7A6'>None yet"; 
+        default : echo "<td align='center' style='bgcolor='#DAF7A6'>None yet"; 
                   break ;
     }
     echo "</td>\n";  
 
-# Server Category
-    echo "<td class='dt-center'>" . nl2br( $row['srv_cat']) . "</td>\n";  
+    
+    # Server Category
+    echo "<td align='center'>" ;
+    echo nl2br( $row['srv_cat']) . " / " . nl2br( $row['srv_group']) . "</td>\n";  
 
-# Display Operating System Logo
+    # Display Operating System Logo
     $WOS   = sadm_clean_data($row['srv_osname']);
     sadm_show_logo($WOS);                                  
     
-# Display O/S Version
-    echo "\n<td class='dt-center'>" . $row['srv_osversion'] . "</td>";
+    
+    # Display O/S Version
+    echo "\n<td align='center'>" . $row['srv_osversion'] . "</td>";
 
-# Next Update Date
+
+    # Next Update Date
     if ($row['srv_update_auto']   == True ) { 
-        echo "<td class='dt-center'>";
+        echo "<td align='center'>";
         list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
             $row['srv_update_dow'], $row['srv_update_hour'], $row['srv_update_minute']);
         echo $UPD_DATE_TIME ;
     }else{
-        echo "<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><B><I>Manual update</I></B>";
+        echo "<td align='center' style='color:red' bgcolor='#DAF7A6'><B><I>Manual update</I></B>";
     }
     echo "</td>\n";  
 
-# O/S Update Occurrence
+    
+    # O/S Update Occurrence
     $ipath = '/images/UpdateButton.png';
     if ($row['srv_update_auto'] == True) {                              # Is Server Active
         $tooltip = 'Schedule is active, click to modify schedule.';
@@ -260,12 +305,12 @@ function display_data($count, $row) {
         $tooltip = 'Schedule is inactive, click to modify schedule.';
     }
     if ($row['srv_update_auto']   == True ) { 
-        echo "\n<td class='dt-center'>";
+        echo "\n<td align='center'>";
         list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
         $row['srv_update_dow'], $row['srv_update_hour'], $row['srv_update_minute']);
         echo $STR_SCHEDULE ;
     }else{
-        echo "\n<td class='dt-center' style='color:red' bgcolor='#DAF7A6'><B><I>No Schedule</I></B>";
+        echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><B><I>No Schedule</I></B>";
     }
     echo "<br>";
     if ($row['srv_update_auto'] == True) {                              # Is Server Active
@@ -282,8 +327,9 @@ function display_data($count, $row) {
     echo "</a></span>";
     echo "</td>\n";  
 
-# Display link to view o/s update log file (If exist)
-    echo "<td class='dt-center'>";
+    
+    # Display link to view o/s update log file (If exist)
+    echo "<td align='center'>";
     $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate.log";
     if (file_exists($log_name)) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
@@ -292,7 +338,7 @@ function display_data($count, $row) {
         echo "&nbsp;";
     }
 
-# Display link to view o/s update error log file (If exist)
+    # Display link to view o/s update error log file (If exist)
     $ELOGFILE = $row['srv_name']  . "_" . $UPDATE_SCRIPT . "_e.log";
     $elog_name = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . trim($ELOGFILE) ;
 #    $elog_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate_e.log";
@@ -316,9 +362,9 @@ function display_data($count, $row) {
 
     # Reboot after Update (Yes/No)
     if ($row['srv_update_reboot']   == True ) { 
-        echo "<td class='dt-center'>Yes</td>\n"; 
+        echo "<td align='center'>Yes</td>\n"; 
     }else{ 
-        echo "<td class='dt-center'>No</td>\n";
+        echo "<td align='center'>No</td>\n";
     }
 
     echo "</tr>\n"; 
