@@ -42,6 +42,7 @@
 # 2020_12_29 web v3.0 Main server page - Display the first 50 systems instead of 25.
 #@2025_01_31 web v3.1 Combine Category & Group & insert the last uptime for each systems.
 #@2025_03_04 web v3.2 Change page layour (Add uptime, disk space, cpu,... )
+#@2025_04_27 web v3.3 Display VM Hostname where applicable.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -111,7 +112,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG          = False ;                                               # Debug Activated True/False
-$WVER           = "3.2" ;                                              # Current version number
+$WVER           = "3.3" ;                                              # Current version number
 $URL_CREATE     = '/crud/srv/sadm_server_create.php';                   # Create Page URL
 $URL_UPDATE     = '/crud/srv/sadm_server_update.php';                   # Update Page URL
 $URL_DELETE     = '/crud/srv/sadm_server_delete.php';                   # Delete Page URL
@@ -132,14 +133,14 @@ function setup_table() {
     
     # Table Creation
     #echo "\n<div id='MyTable'>\n"; 
-    echo "\n<table class='content-table'>\n" ; 
+    echo "\n<table class='content-table' border=0>\n" ; 
 
     # Page Table Heading
     echo "\n<thead>";
     echo "\n<tr align=left bgcolor='grey'>";
     echo "\n<th width=10 align=center>No</th>";
-    echo "\n<th align=left>Name&nbsp;/&nbsp;Arch&nbsp;/&nbsp;Desc.</th>"; 
-    echo "\n<th align=left>Uptime</th>";     
+    echo "\n<th width=110 align=left>Name&nbsp;/&nbsp;Arch&nbsp;/&nbsp;Desc.</th>"; 
+    echo "\n<th width=110 align=center>Uptime</th>";     
     echo "\n<th align=center>O/S</th>";   
     echo "\n<th width=5 align=center>Ver.</th>";   
     echo "\n<th align=center>Group / Category</th>";
@@ -148,7 +149,7 @@ function setup_table() {
     echo "\n<th align=center>Disk Space</th>";           
     echo "\n<th align=center>Status</th>";        
     echo "\n<th align=center>Sporadic</th>";      
-    echo "\n<th align=center>VM</th>";            
+    echo "\n<th align=center>VM Host</th>";            
     echo "\n<th align=center>Perf</th>";          
     echo "\n</tr>";
     echo "\n</thead>\n";
@@ -157,8 +158,8 @@ function setup_table() {
     echo "\n<tfoot>";
     echo "\n<tr align=left bgcolor='grey'>";
     echo "\n<th width=10>No</th>";
-    echo "\n<th align=left>Name&nbsp;/&nbsp;Arch&nbsp;/&nbsp;Desc.</th>"; 
-    echo "\n<th align=left>Uptime</th>";     
+    echo "\n<th width=110 align=left>Name&nbsp;/&nbsp;Arch&nbsp;/&nbsp;Desc.</th>"; 
+    echo "\n<th width=110 align=center>Uptime</th>";     
     echo "\n<th align=center>O/S</th>";   
     echo "\n<th width=5 align=center>Ver.</th>";   
     echo "\n<th align=center>Group / Category</th>";
@@ -167,7 +168,7 @@ function setup_table() {
     echo "\n<th align=center>Disk Space</th>";           
     echo "\n<th align=center>Status</th>";        
     echo "\n<th align=center>Sporadic</th>";      
-    echo "\n<th align=center>VM</th>";            
+    echo "\n<th align=center>VM Host</th>";            
     echo "\n<th align=center>Perf</th>";          
     echo "\n</tr>";
     echo "\n</tfoot>\n";
@@ -189,7 +190,6 @@ function display_data($count,$con,$row) {
     # System Name / Architecture / Description
     echo "\n<td>" ;
     echo "<a href='" .$URL_HOST_INFO. "?sel=" .$row['srv_name']. "' data-toggle='tooltip' title='";
-#    if ($row['srv_note'] != "") { echo "Note: " . $row['srv_note']. "\n" ; } 
     echo "Note: " . $row['srv_note']. "\n" ; 
     echo "Model: ". ucfirst(strtolower($row['srv_model'])) ."\nIP: ". $row['srv_ip'] . "'>\n" ;
     echo $row['srv_name']. "</a>&nbsp;&nbsp;" .$row['srv_arch'] ;
@@ -197,7 +197,7 @@ function display_data($count,$con,$row) {
     echo "\n</td>";   
 
     # Display System Uptime
-    echo "\n<td align=left> " . $row['srv_uptime'] . "</td>";   
+    echo "\n<td align=center> " . $row['srv_uptime'] . "</td>";   
 
     # Display Operating System Logo
     echo "<td align=center>";
@@ -302,12 +302,12 @@ function display_data($count,$con,$row) {
         echo "<a href='" .$URL_SERVER. "?selection=all_non_sporadic'>No</a></td>";
     }
 
-    # Display if it is a physical or a virtual server
+    # Display if it is a physical or a virtual server - If a virtual machine display VM hostname.
     echo "\n<td align=center>";
     if ($row['srv_vm'] == TRUE ) {                                      # Is VM Server 
-        echo "<a href='" .$URL_SERVER. "?selection=all_vm'>Yes</a>";
+        echo "  <a href='" . $URL_SERVER . "?selection=vmhost&value=" .$row['srv_vm_host'].  "'>" .$row['srv_vm_host']. "</a>";
     }else{                                                              # If not Sporadic
-        echo "<a href='" .$URL_SERVER. "?selection=all_physical'>No</a>";
+        echo "<a href='" . $URL_SERVER . "?selection=all_physical'>N/A</a>";
     }
     echo "\n</td>";   
 
@@ -362,11 +362,15 @@ function display_data($count,$con,$row) {
             $sql = "SELECT * FROM server where srv_cat = '". $VALUE . "' order by srv_name;";
             $TITLE = "Server(s) using '" . ucwords($VALUE) . "' Category";
             break;
+        case 'vmhost'           : 
+            $sql = "SELECT * FROM server where srv_vm_host = '" . $VALUE . "' and srv_vm = '1' order by srv_name;";
+            $TITLE = "Virtual machines on '" . $VALUE .  "'";
+            break;
         case 'group'           : 
             $sql = "SELECT * FROM server where srv_group = '". $VALUE . "' order by srv_name;";
             $TITLE = "Server(s) using '" . ucwords($VALUE) . "' Group";
             break;
-        case 'os'           : 
+            case 'os'           : 
             if ($VALUE == NULL) {
                 $sql = "SELECT * FROM server where srv_osname is NULL order by srv_name;";
             }else{
@@ -391,7 +395,7 @@ function display_data($count,$con,$row) {
             $TITLE = "List of Inactive Systems";
             break;
         case 'all_vm'       : 
-            $sql = 'SELECT * FROM server where srv_vm = True order by srv_name;';
+            $sql = 'SELECT * FROM server where srv_vm = True  order by srv_name;';
             $TITLE = "List of Virtual Systems";
             break;
         case 'all_physical' : 
