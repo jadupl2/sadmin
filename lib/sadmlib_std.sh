@@ -241,7 +241,9 @@
 #@2025_03_25 lib v4.61 Add an alternative way the get current host IP.
 #@2025_04_09 lib v4.62 Minor enhancements et fixes. 
 #@2025_04_22 lib v4.63 Refine the sadm_server_model() function to return the right model name.
+#@2025_05_07 lib v4.64 Add SADM_QUIET (Y/N) variable to control the output of error message.
 #===================================================================================================
+
 trap 'exit 0' 2  
 #set -x
 
@@ -250,7 +252,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.63"                                              # This Library Version
+export SADM_LIB_VER="4.64"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -348,115 +350,115 @@ export SADM_RCH_FILE="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"  # Resu
 export SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt"             # Monitor Report file (rpt)
 
 # COMMAND PATH REQUIRE THAT SADMIN USE
-export SADM_DMIDECODE=""                                                # Command dmidecode Path
-export SADM_BC=""                                                       # Command bc (Do Some Math)
-export SADM_LSB_RELEASE=""                                              # Path to lsb_release
-export SADM_FDISK=""                                                    # fdisk (Read Disk Capacity)
-export SADM_WHICH=""                                                    # which Path - Required
-export SADM_PERL=""                                                     # perl Path (for epoch time)
-export SADM_MUTT=""                                                     # mutt Pgm Path
-export SADM_CURL=""                                                     # curl Pgm Path
-export SADM_LSCPU=""                                                    # Path to lscpu Command
-export SADM_NMON=""                                                     # Path to nmon Command
-export SADM_PARTED=""                                                   # Path to parted Command
-export SADM_ETHTOOL=""                                                  # Path to ethtool Command
-export SADM_SSH=""                                                      # Path to ssh Exec.
-export SADM_MYSQL=""                                                    # Default mysql 
-export SADM_SED=""                                                      # Path to sed Command
-export SADM_RRDTOOL=""                                                  # Path to rrdtool
-export SADM_INXI=""                                                     # Path to inxi
+export SADM_DMIDECODE=""                                    # Command dmidecode Path
+export SADM_BC=""                                           # Command bc (Do Some Math)
+export SADM_LSB_RELEASE=""                                  # Path to lsb_release
+export SADM_FDISK=""                                        # fdisk (Read Disk Capacity)
+export SADM_WHICH=""                                        # which Path - Required
+export SADM_PERL=""                                         # perl Path (for epoch time)
+export SADM_MUTT=""                                         # mutt Pgm Path
+export SADM_CURL=""                                         # curl Pgm Path
+export SADM_LSCPU=""                                        # Path to lscpu Command
+export SADM_NMON=""                                         # Path to nmon Command
+export SADM_PARTED=""                                       # Path to parted Command
+export SADM_ETHTOOL=""                                      # Path to ethtool Command
+export SADM_SSH=""                                          # Path to ssh Exec.
+export SADM_MYSQL=""                                        # Default mysql 
+export SADM_SED=""                                          # Path to sed Command
+export SADM_RRDTOOL=""                                      # Path to rrdtool
+export SADM_INXI=""                                         # Path to inxi
 
 # SADMIN CONFIG FILE VARIABLES (Default Values here will be overridden by SADM CONFIG FILE Content)
-export SADM_MAIL_ADDR="your_email@domain.com"                           # Default is in sadmin.cfg
-export SADM_ALERT_TYPE=1                                                # 0=No 1=Err 2=Success 3=All
-export SADM_ALERT_GROUP="default"                                       # Define in alert_group.cfg
-export SADM_ALERT_REPEAT=43200                                          # Repeat Alarm wait time Sec
-export SADM_TEXTBELT_KEY="textbelt"                                     # Textbelt.com API Key
-export SADM_TEXTBELT_URL="https://textbelt.com/text"                    # Textbelt.com API URL
-export SADM_DAYS_HISTORY=14                                             # Days to move alert to Arch
-export SADM_MAX_ARC_LINE=1000                                           # Max Lines in Alert Archive
-export SADM_EMAIL_STARTUP="N"                                           # No email on Startup
-export SADM_EMAIL_SHUTDOWN="N"                                          # No email on Shutdown
+export SADM_MAIL_ADDR="your_email@domain.com"               # Default is in sadmin.cfg
+export SADM_ALERT_TYPE=1                                    # 0=No 1=Err 2=Success 3=All
+export SADM_ALERT_GROUP="default"                           # Define in alert_group.cfg
+export SADM_ALERT_REPEAT=43200                              # Repeat Alarm wait time Sec
+export SADM_TEXTBELT_KEY="textbelt"                         # Textbelt.com API Key
+export SADM_TEXTBELT_URL="https://textbelt.com/text"        # Textbelt.com API URL
+export SADM_DAYS_HISTORY=14                                 # Days to move alert to Arch
+export SADM_MAX_ARC_LINE=1000                               # Max Lines in Alert Archive
+export SADM_EMAIL_STARTUP="N"                               # No email on Startup
+export SADM_EMAIL_SHUTDOWN="N"                              # No email on Shutdown
 #
-export SADM_CIE_NAME="Your Company Name"                                # Company Name
-export SADM_HOST_TYPE=""                                                # [S]erver/[C]lient/[D]ev.
-export SADM_USER="sadmin"                                               # sadmin user account
-export SADM_GROUP="sadmin"                                              # sadmin group account
-export SADM_PWD_RANDOM="N"                                              # ReGenerate sadmin pwd Y/N
-export SADM_WWW_USER="apache"                                           # /sadmin/www owner
-export SADM_WWW_GROUP="apache"                                          # /sadmin/www group
-export SADM_MAX_LOGLINE=500                                             # Max Nb. Lines in LOG
-export SADM_MAX_RCLINE=25                                               # Max Nb. Lines in RCH file
-export SADM_NMON_KEEPDAYS=10                                            # Days to keep old *.nmon
-export SADM_RCH_KEEPDAYS=35                                             # Days to keep old *.rch
-export SADM_LOG_KEEPDAYS=35                                             # Days to keep old *.log
-export SADM_DBNAME="sadmin"                                             # MySQL DataBase Name
-export SADM_DBHOST="sadmin.maison.ca"                                   # MySQL DataBase Host
-export SADM_DBPORT=3306                                                 # MySQL Listening Port
-export SADM_RW_DBUSER=""                                                # MySQL Read/Write User
-export SADM_RW_DBPWD=""                                                 # MySQL Read/Write Passwd
-export SADM_RO_DBUSER=""                                                # MySQL Read Only User
-export SADM_RO_DBPWD=""                                                 # MySQL Read Only Passwd
-export SADM_SERVER=""                                                   # Server FQDN Name
-export SADM_DOMAIN=""                                                   # Default Domain Name
-export SADM_NETWORK1=""                                                 # Network 1 to Scan
-export SADM_NETWORK2=""                                                 # Network 2 to Scan
-export SADM_NETWORK3=""                                                 # Network 3 to Scan
-export SADM_NETWORK4=""                                                 # Network 4 to Scan
-export SADM_NETWORK5=""                                                 # Network 5 to Scan
-export SADM_MONITOR_UPDATE_INTERVAL=60                                  # Monitor page upd interval
-export SADM_MONITOR_RECENT_COUNT=10                                     # Sysmon Nb. Recent Scripts 
-export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"                  # Exclude from SysMon Recent
-export DBPASSFILE="${SADM_CFG_DIR}/.dbpass"                             # MySQL Passwd File
-export GMPW_FILE_TXT="${SADM_CFG_DIR}/.gmpw"                            # SMTP Unencrypted PasswdFile
-export GMPW_FILE_B64="${SADM_CFG_DIR}/.gmpw64"                          # SMTP Encrypted PasswdFile
-export SADM_RELEASE=$(cat $SADM_REL_FILE)                               # SADM Release Ver. Number
-export SADM_SSH_PORT=""                                                 # Default SSH Port
+export SADM_CIE_NAME="Your Company Name"                    # Company Name
+export SADM_HOST_TYPE=""                                    # [S]erver/[C]lient/[D]ev.
+export SADM_USER="sadmin"                                   # sadmin user account
+export SADM_GROUP="sadmin"                                  # sadmin group account
+export SADM_PWD_RANDOM="N"                                  # ReGenerate sadmin pwd Y/N
+export SADM_WWW_USER="apache"                               # /sadmin/www owner
+export SADM_WWW_GROUP="apache"                              # /sadmin/www group
+export SADM_MAX_LOGLINE=500                                 # Max Nb. Lines in LOG
+export SADM_MAX_RCLINE=25                                   # Max Nb. Lines in RCH file
+export SADM_NMON_KEEPDAYS=10                                # Days to keep old *.nmon
+export SADM_RCH_KEEPDAYS=35                                 # Days to keep old *.rch
+export SADM_LOG_KEEPDAYS=35                                 # Days to keep old *.log
+export SADM_DBNAME="sadmin"                                 # MySQL DataBase Name
+export SADM_DBHOST="sadmin.maison.ca"                       # MySQL DataBase Host
+export SADM_DBPORT=3306                                     # MySQL Listening Port
+export SADM_RW_DBUSER=""                                    # MySQL Read/Write User
+export SADM_RW_DBPWD=""                                     # MySQL Read/Write Passwd
+export SADM_RO_DBUSER=""                                    # MySQL Read Only User
+export SADM_RO_DBPWD=""                                     # MySQL Read Only Passwd
+export SADM_SERVER=""                                       # Server FQDN Name
+export SADM_DOMAIN=""                                       # Default Domain Name
+export SADM_NETWORK1=""                                     # Network 1 to Scan
+export SADM_NETWORK2=""                                     # Network 2 to Scan
+export SADM_NETWORK3=""                                     # Network 3 to Scan
+export SADM_NETWORK4=""                                     # Network 4 to Scan
+export SADM_NETWORK5=""                                     # Network 5 to Scan
+export SADM_MONITOR_UPDATE_INTERVAL=60                      # Monitor page upd interval
+export SADM_MONITOR_RECENT_COUNT=10                         # Sysmon Nb. Recent Scripts 
+export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"      # Exclude from SysMon Recent
+export DBPASSFILE="${SADM_CFG_DIR}/.dbpass"                 # MySQL Passwd File
+export GMPW_FILE_TXT="${SADM_CFG_DIR}/.gmpw"                # SMTP Unencrypted PasswdFile
+export GMPW_FILE_B64="${SADM_CFG_DIR}/.gmpw64"              # SMTP Encrypted PasswdFile
+export SADM_RELEASE=$(cat $SADM_REL_FILE)                   # SADM Release Ver. Number
+export SADM_SSH_PORT=""                                     # Default SSH Port
 #
-export SADM_REAR_NFS_SERVER=""                                          # ReaR NFS Server
-export SADM_REAR_NFS_SERVER_VER=3                                       # NFS mount version (3-4)
-export SADM_REAR_NFS_MOUNT_POINT=""                                     # ReaR Mount Point
-export SADM_REAR_BACKUP_TO_KEEP=3                                       # Rear Nb.Copy
-export SADM_REAR_BACKUP_DIF=25                                          # % size diff cur. vs prev.
-export SADM_REAR_BACKUP_INTERVAL=7                                      # Alert when 7 days without 
+export SADM_REAR_NFS_SERVER=""                              # ReaR NFS Server
+export SADM_REAR_NFS_SERVER_VER=3                           # NFS mount version (3-4)
+export SADM_REAR_NFS_MOUNT_POINT=""                         # ReaR Mount Point
+export SADM_REAR_BACKUP_TO_KEEP=3                           # Rear Nb.Copy
+export SADM_REAR_BACKUP_DIF=25                              # % size diff cur. vs prev.
+export SADM_REAR_BACKUP_INTERVAL=7                          # Alert when 7 days without 
 #
-export SADM_BACKUP_NFS_SERVER=""                                        # Backup NFS Server
-export SADM_BACKUP_NFS_SERVER_VER=3                                     # NFS mount version (3-4)
-export SADM_BACKUP_NFS_MOUNT_POINT=""                                   # Backup Mnt Point
-export SADM_BACKUP_INTERVAL=10                                          # Days before yellow alert
-export SADM_DAILY_BACKUP_TO_KEEP=3                                      # Daily to Keep
-export SADM_WEEKLY_BACKUP_TO_KEEP=3                                     # Weekly to Keep
-export SADM_MONTHLY_BACKUP_TO_KEEP=2                                    # Monthly to Keep
-export SADM_YEARLY_BACKUP_TO_KEEP=1                                     # Yearly to Keep
-export SADM_WEEKLY_BACKUP_DAY=5                                         # 1=Mon, ... ,7=Sun
-export SADM_MONTHLY_BACKUP_DATE=1                                       # Monthly Back Date
-export SADM_YEARLY_BACKUP_MONTH=12                                      # Yearly Backup Mth
-export SADM_YEARLY_BACKUP_DATE=31                                       # Yearly Backup Day
-export SADM_BACKUP_DIF=40                                               # % size diff cur. vs prev.
+export SADM_BACKUP_NFS_SERVER=""                            # Backup NFS Server
+export SADM_BACKUP_NFS_SERVER_VER=3                         # NFS mount version (3-4)
+export SADM_BACKUP_NFS_MOUNT_POINT=""                       # Backup Mnt Point
+export SADM_BACKUP_INTERVAL=10                              # Days before yellow alert
+export SADM_DAILY_BACKUP_TO_KEEP=3                          # Daily to Keep
+export SADM_WEEKLY_BACKUP_TO_KEEP=3                         # Weekly to Keep
+export SADM_MONTHLY_BACKUP_TO_KEEP=2                        # Monthly to Keep
+export SADM_YEARLY_BACKUP_TO_KEEP=1                         # Yearly to Keep
+export SADM_WEEKLY_BACKUP_DAY=5                             # 1=Mon, ... ,7=Sun
+export SADM_MONTHLY_BACKUP_DATE=1                           # Monthly Back Date
+export SADM_YEARLY_BACKUP_MONTH=12                          # Yearly Backup Mth
+export SADM_YEARLY_BACKUP_DATE=31                           # Yearly Backup Day
+export SADM_BACKUP_DIF=40                                   # % size diff cur. vs prev.
 #
-export SADM_PID_TIMEOUT=7200                                            # PID File TTL default
-export SADM_LOCK_TIMEOUT=3600                                           # Host Lock File TTL           
-export SADM_MONITOR_RECENT_COUNT=10                                     # SysMon Nb Recent Script
-export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"                  # SysMon Recent list Exclude
-export SADM_SMTP_SERVER="smtp.gmail.com"                                # smtp mail relay host name
-export SADM_SMTP_PORT=587                                               # smtp port(25,465,587,2525)
-export SADM_SMTP_SENDER="sadmin.gmail.com"                              # Email address of sender 
-export SADM_GMPW=""                                                     # smtp sender gmail passwd
-#export SADM_SILENT_MODE=0                                  # Show (0) or not error mesg (1)=just RC
+export SADM_PID_TIMEOUT=7200                                # PID File TTL default
+export SADM_LOCK_TIMEOUT=3600                               # Host Lock File TTL           
+export SADM_MONITOR_RECENT_COUNT=10                         # SysMon Nb Recent Script 
+export SADM_MONITOR_RECENT_EXCLUDE="sadm_nmon_watcher"      # SysMon Recent list Exclude
+export SADM_SMTP_SERVER="smtp.gmail.com"                    # smtp mail relay host name
+export SADM_SMTP_PORT=587                                   # smtp port(25,465,587,2525)
+export SADM_SMTP_SENDER="sadmin.gmail.com"                  # Email address of sender 
+export SADM_GMPW=""                                         # smtp sender gmail passwd
+#export SADM_QUIET="N"                                    # N=Show Err.Msg Y=ReturnCodeOnly No Msg
 #
-export SADM_VM_EXPORT_NFS_SERVER=""                                     # NFS Server for VM Export
-export SADM_VM_EXPORT_NFS_SERVER_VER=3                                  # NFS server ver.(3-4) to use
-export SADM_VM_EXPORT_MOUNT_POINT=""                                    # NFS mount port for Export
-export SADM_VM_EXPORT_TO_KEEP=""                                        # Nb export to keep per VM
-export SADM_VM_EXPORT_INTERVAL=""                                       # Days without export=alert
-export SADM_VM_EXPORT_ALERT="N"                                         # Y/N alert if days exceeded
-export SADM_VM_USER="UserPartOfVBoxUserGroup"                           # User part of vboxusers grp
-export SADM_VM_STOP_TIMEOUT=120                                         # Seconds given to stop a VM
-export SADM_VM_START_INTERVAL=30                                        # Sec before start of next VM
-export SADM_VM_EXPORT_DIF=25                                            # When Size 25% greater 
+export SADM_VM_EXPORT_NFS_SERVER=""                         # NFS Server for VM Export
+export SADM_VM_EXPORT_NFS_SERVER_VER=3                      # NFS server ver.(3-4) to use
+export SADM_VM_EXPORT_MOUNT_POINT=""                        # NFS mount port for Export
+export SADM_VM_EXPORT_TO_KEEP=""                            # Nb export to keep per VM
+export SADM_VM_EXPORT_INTERVAL=""                           # Days without export=alert
+export SADM_VM_EXPORT_ALERT="N"                             # Y/N alert if days exceeded
+export SADM_VM_USER="UserPartOfVBoxUserGroup"               # User part of vboxusers grp
+export SADM_VM_STOP_TIMEOUT=120                             # Seconds given to stop a VM
+export SADM_VM_START_INTERVAL=30                            # Sec before start of next VM
+export SADM_VM_EXPORT_DIF=25                                # When Size 25% greater 
 
 # To be a valid SADMIN server 'SADM_HOST_TYPE' must be "S" and 'SADM_SERVER' IP must exist on host.
-export SADM_ON_SADMIN_SERVER="N"                                        # Valid SADMIN Server Y/N ?
+export SADM_ON_SADMIN_SERVER="N"                            # Valid SADMIN Server Y/N ?
 
 # Array of O/S Supported & Package Family
 #export SADM_OS_SUPPORTED=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMA' 'ROCKY'
@@ -471,85 +473,85 @@ export LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"                         # Local 
 
 # Misc. Screen Attribute
 if [ -z "$TERM" ] || [ "$TERM" = "dumb" ] || [ "$TERM" = "unknown" ]
-    then export CLREOL=""                                               # Clear to End of Line
-         export CLREOS=""                                               # Clear to End of Screen
-         export BOLD=""                                                 # Set Bold Attribute
-         export BELL=""                                                 # Ring the Bell
-         export REVERSE=""                                              # Reverse Video On
-         export UNDERLINE=""                                            # Set UnderLine On
-         export HOME_CURSOR=""                                          # Home Cursor
-         export UP=""                                                   # Cursor up
-         export DOWN=""                                                 # Cursor down
-         export RIGHT=""                                                # Cursor right
-         export LEFT=""                                                 # Cursor left
-         export CLRSCR=""                                               # Clear Screen
-         export BLINK=""                                                # Blinking on
-         export NORMAL=""                                               # Reset Screen Attribute
-         export BLACK=""                                                # Foreground Color Black
-         export MAGENTA=""                                              # Foreground Color Magenta
-         export RED=""                                                  # Foreground Color Red
-         export GREEN=""                                                # Foreground Color Green
-         export YELLOW=""                                               # Foreground Color Yellow
-         export BLUE=""                                                 # Foreground Color Blue
-         export CYAN=""                                                 # Foreground Color Cyan
-         export WHITE=""                                                # Foreground Color White
-         export BBLACK=""                                               # Background Color Black
-         export BRED=""                                                 # Background Color Red
-         export BGREEN=""                                               # Background Color Green
-         export BYELLOW=""                                              # Background Color Yellow
-         export BBLUE=""                                                # Background Color Blue
-         export BMAGENTA=""                                             # Background Color Magenta
-         export BCYAN=""                                                # Background Color Cyan
-         export BWHITE=""                                               # Background Color White
-    else export CLREOL=$(tput el)          2>/dev/null                  # Clear to End of Line
-         export CLREOS=$(tput ed)          2>/dev/null                  # Clear to End of Screen
-         export BOLD=$(tput bold)          2>/dev/null                  # Set Bold Attribute On
-         export BELL=$(tput bel)           2>/dev/null                  # Ring the Bell
-         export REVERSE=$(tput rev)        2>/dev/null                  # Reverse Video 
-         export UNDERLINE=$(tput sgr 0 1)  2>/dev/null                  # UnderLine
-         export HOME_CURSOR=$(tput home)   2>/dev/null                  # Home Cursor
-         export UP=$(tput cuu1)            2>/dev/null                  # Cursor up
-         export DOWN=$(tput cud1)          2>/dev/null                  # Cursor down
-         export RIGHT=$(tput cub1)         2>/dev/null                  # Cursor right
-         export LEFT=$(tput cuf1)          2>/dev/null                  # Cursor left
-         export CLRSCR=$(tput clear)       2>/dev/null                  # Clear Screen
-         export BLINK=$(tput blink)        2>/dev/null                  # Blinking on
-         export NORMAL=$(tput sgr0)        2>/dev/null                  # Reset Screen
-         export BLACK=$(tput setaf 0)      2>/dev/null                  # Foreground Color Black
-         export RED=$(tput setaf 1)        2>/dev/null                  # Foreground Color Red
-         export GREEN=$(tput setaf 2)      2>/dev/null                  # Foreground Color Green
-         export YELLOW=$(tput setaf 3)     2>/dev/null                  # Foreground Color Yellow
-         export BLUE=$(tput setaf 4)       2>/dev/null                  # Foreground Color Blue
-         export MAGENTA=$(tput setaf 5)    2>/dev/null                  # Foreground Color Magenta
-         export CYAN=$(tput setaf 6)       2>/dev/null                  # Foreground Color Cyan
-         export WHITE=$(tput setaf 7)      2>/dev/null                  # Foreground Color White
-         export BBLACK=$(tput setab 0)     2>/dev/null                  # Background Color Black
-         export BRED=$(tput setab 1)       2>/dev/null                  # Background Color Red
-         export BGREEN=$(tput setab 2)     2>/dev/null                  # Background Color Green
-         export BYELLOW=$(tput setab 3)    2>/dev/null                  # Background Color Yellow
-         export BBLUE=$(tput setab 4)      2>/dev/null                  # Background Color Blue
-         export BMAGENTA=$(tput setab 5)   2>/dev/null                  # Background Color Magenta
-         export BCYAN=$(tput setab 6)      2>/dev/null                  # Background Color Cyan
-         export BWHITE=$(tput setab 7)     2>/dev/null                  # Background Color White
+    then export CLREOL=""                                   # Clear to End of Line
+         export CLREOS=""                                   # Clear to End of Screen
+         export BOLD=""                                     # Set Bold Attribute
+         export BELL=""                                     # Ring the Bell
+         export REVERSE=""                                  # Reverse Video On
+         export UNDERLINE=""                                # Set UnderLine On
+         export HOME_CURSOR=""                              # Home Cursor
+         export UP=""                                       # Cursor up
+         export DOWN=""                                     # Cursor down
+         export RIGHT=""                                    # Cursor right
+         export LEFT=""                                     # Cursor left
+         export CLRSCR=""                                   # Clear Screen
+         export BLINK=""                                    # Blinking on
+         export NORMAL=""                                   # Reset Screen Attribute
+         export BLACK=""                                    # Foreground Color Black
+         export MAGENTA=""                                  # Foreground Color Magenta
+         export RED=""                                      # Foreground Color Red
+         export GREEN=""                                    # Foreground Color Green
+         export YELLOW=""                                   # Foreground Color Yellow
+         export BLUE=""                                     # Foreground Color Blue
+         export CYAN=""                                     # Foreground Color Cyan
+         export WHITE=""                                    # Foreground Color White
+         export BBLACK=""                                   # Background Color Black
+         export BRED=""                                     # Background Color Red
+         export BGREEN=""                                   # Background Color Green
+         export BYELLOW=""                                  # Background Color Yellow
+         export BBLUE=""                                    # Background Color Blue
+         export BMAGENTA=""                                 # Background Color Magenta
+         export BCYAN=""                                    # Background Color Cyan
+         export BWHITE=""                                   # Background Color White
+    else export CLREOL=$(tput el)          2>/dev/null      # Clear to End of Line
+         export CLREOS=$(tput ed)          2>/dev/null      # Clear to End of Screen
+         export BOLD=$(tput bold)          2>/dev/null      # Set Bold Attribute On
+         export BELL=$(tput bel)           2>/dev/null      # Ring the Bell
+         export REVERSE=$(tput rev)        2>/dev/null      # Reverse Video 
+         export UNDERLINE=$(tput sgr 0 1)  2>/dev/null      # UnderLine
+         export HOME_CURSOR=$(tput home)   2>/dev/null      # Home Cursor
+         export UP=$(tput cuu1)            2>/dev/null      # Cursor up
+         export DOWN=$(tput cud1)          2>/dev/null      # Cursor down
+         export RIGHT=$(tput cub1)         2>/dev/null      # Cursor right
+         export LEFT=$(tput cuf1)          2>/dev/null      # Cursor left
+         export CLRSCR=$(tput clear)       2>/dev/null      # Clear Screen
+         export BLINK=$(tput blink)        2>/dev/null      # Blinking on
+         export NORMAL=$(tput sgr0)        2>/dev/null      # Reset Screen
+         export BLACK=$(tput setaf 0)      2>/dev/null      # Foreground Color Black
+         export RED=$(tput setaf 1)        2>/dev/null      # Foreground Color Red
+         export GREEN=$(tput setaf 2)      2>/dev/null      # Foreground Color Green
+         export YELLOW=$(tput setaf 3)     2>/dev/null      # Foreground Color Yellow
+         export BLUE=$(tput setaf 4)       2>/dev/null      # Foreground Color Blue
+         export MAGENTA=$(tput setaf 5)    2>/dev/null      # Foreground Color Magenta
+         export CYAN=$(tput setaf 6)       2>/dev/null      # Foreground Color Cyan
+         export WHITE=$(tput setaf 7)      2>/dev/null      # Foreground Color White
+         export BBLACK=$(tput setab 0)     2>/dev/null      # Background Color Black
+         export BRED=$(tput setab 1)       2>/dev/null      # Background Color Red
+         export BGREEN=$(tput setab 2)     2>/dev/null      # Background Color Green
+         export BYELLOW=$(tput setab 3)    2>/dev/null      # Background Color Yellow
+         export BBLUE=$(tput setab 4)      2>/dev/null      # Background Color Blue
+         export BMAGENTA=$(tput setab 5)   2>/dev/null      # Background Color Magenta
+         export BCYAN=$(tput setab 6)      2>/dev/null      # Background Color Cyan
+         export BWHITE=$(tput setab 7)     2>/dev/null      # Background Color White
 fi 
 
 
 # Constant Variable use in sadm_write_log() and sadm_write_err() definition.
 # If message begin with these constant, it's showed with in color by sadm_write_...
-SADM_ERROR="[ ERROR ]"                                                  # [ ERROR ] in Red Trigger 
-SADM_FAILED="[ FAILED ]"                                                # [ FAILED ] in Red Trigger 
-SADM_WARNING="[ WARNING ]"                                              # [ WARNING ] in Yellow
-SADM_OK="[ OK ]"                                                        # [ OK ] in Green Trigger
-SADM_SUCCESS="[ SUCCESS ]"                                              # [ SUCCESS ] in Green
-SADM_INFO="[ INFO ]"                                                    # [ INFO] in Blue Trigger
+SADM_ERROR="[ ERROR ]"                                       # [ ERROR ] in Red Trigger 
+SADM_FAILED="[ FAILED ]"                                     # [ FAILED ] in Red Trigger 
+SADM_WARNING="[ WARNING ]"                                   # [ WARNING ] in Yellow
+SADM_OK="[ OK ]"                                             # [ OK ] in Green Trigger
+SADM_SUCCESS="[ SUCCESS ]"                                   # [ SUCCESS ] in Green
+SADM_INFO="[ INFO ]"                                         # [ INFO] in Blue Trigger
 
 # When mess. contain one of these constant, they are substituted by their equivalent in color below.
-SADM_SERROR="${BOLD}${MAGENTA}[ ${RED}ERROR${MAGENTA} ]${NORMAL}"       # [ ERROR ] Red
-SADM_SFAILED="${BOLD}${MAGENTA}[ ${RED}FAILED${MAGENTA} ]${NORMAL}"     # [ FAILED ] Red
-SADM_SWARNING="${BOLD}${MAGENTA}[ ${YELLOW}WARNING${MAGENTA} ]${NORMAL}" # WARNING Yellow
-SADM_SOK="${BOLD}${MAGENTA}[ ${GREEN}OK${MAGENTA} ]${NORMAL}"           # [ OK ] Green
-SADM_SSUCCESS="${BOLD}${MAGENTA}[ ${GREEN}SUCCESS${MAGENTA} ]${NORMAL}" # SUCCESS Green
-SADM_SINFO="${BOLD}${MAGENTA}[ ${BLUE}INFO${MAGENTA} ]${NORMAL}"        # INFO Blue
+SADM_SERROR="${BOLD}${MAGENTA}[ ${RED}ERROR${MAGENTA} ]${NORMAL}"          # [ ERROR ] Red
+SADM_SFAILED="${BOLD}${MAGENTA}[ ${RED}FAILED${MAGENTA} ]${NORMAL}"        # [ FAILED ] Red
+SADM_SWARNING="${BOLD}${MAGENTA}[ ${YELLOW}WARNING${MAGENTA} ]${NORMAL}"   # WARNING Yellow
+SADM_SOK="${BOLD}${MAGENTA}[ ${GREEN}OK${MAGENTA} ]${NORMAL}"              # [ OK ] Green
+SADM_SSUCCESS="${BOLD}${MAGENTA}[ ${GREEN}SUCCESS${MAGENTA} ]${NORMAL}"    # SUCCESS Green
+SADM_SINFO="${BOLD}${MAGENTA}[ ${BLUE}INFO${MAGENTA} ]${NORMAL}"           # INFO Blue
 
 
 
