@@ -39,6 +39,8 @@
 # 2023_04_23 web v2.5 ReaR backup status page - Now include size of backup & new layout.
 # 2023_04_27 web v2.6 ReaR backup status page - Combine 'Last Backup Date' & 'Duration'.
 #@2025_04_10 web v2.7 Add a little more disposition on web page.
+#@2025_05_07 web v2.8 Change CSS of page to enhance and change appearance of the page.
+
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -60,6 +62,49 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
         } );
     } );
 </script>
+
+
+<style>
+.content-table {
+    border-collapse: collapse ;
+    margin: 25px 0; 
+    font-size: 0.9em;
+    min-width: 400px;
+    width: 100%;
+    border-radius: 5px 5px 0 0 ; 
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0.15);
+}
+
+.content-table thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+}
+
+.content-table th,
+.content-table td {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+.content-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.content-table tbody tr:nthof-type(even) {
+    background-color: #f3f3f3;
+}
+
+.content-table tbody tr.active-row {
+    font-weight : bold;
+    color: #009879;
+}
+</style>
+
 <?php
 
 
@@ -67,7 +112,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG              = False ;                                           # Debug Activated True/False
-$WVER               = "2.7" ;                                           # Current version number
+$WVER               = "2.8" ;                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
