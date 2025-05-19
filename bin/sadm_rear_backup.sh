@@ -89,6 +89,7 @@
 #@2025_02_22 backup v2.42 Using the NFS mount version '$SADM_REAR_NFS_SERVER_VER' from sadmin.cfg.
 #@2025_03_25 backup v2.43 Minor change & now show 20 biggest files taken in backup.
 #@2025_03_26 backup v2.44 Refine validation of ReaR backup file (.tgz).
+#@2025_05_19 backup v2.45 Added more messages when backup verification failed & added NFS unmount.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT LE ^C
 #set -x
@@ -117,7 +118,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='2.44'                                     # Script version number
+export SADM_VER='2.45'                                     # Script version number
 export SADM_PDESC="Produce a ReaR bootable iso and a restorable backup on a NFS server"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -555,7 +556,7 @@ rear_housekeeping()
     sadm_write_log " " 
 
     # Verify the integrity of the gzip file.
-    sadm_write_log "Check the compressed ReaR backup file integrity."
+    sadm_write_log "Test the compressed ReaR backup file integrity."
     sadm_write_log "gzip -t '$REAR_CUR_TGZ'"
     gzip -t "$REAR_CUR_TGZ" >>$SADM_LOG 2>&1 
     if [ $? -ne 0 ] 
@@ -563,7 +564,8 @@ rear_housekeeping()
              sadm_write_err "The ReaR backup may not be restorable, you may want to run it again."
              sadm_write_err ""
              ((FNC_ERROR++))                                            # Incr. Error counter
-#             return 1 
+             unmount_batnas
+             return 1 
         else sadm_write_log "[ OK ] Integrity of the compressed file '$REAR_CUR_TGZ' succeeded."  
     fi 
 
@@ -576,7 +578,10 @@ rear_housekeeping()
     if [ $? -ne 0 ] 
         then sadm_write_err "[ ERROR ] The ReaR backup file '$REAR_CUR_TGZ' is not restorable."
              ((FNC_ERROR++))                                            # Incr. Error counter
-#             return 1 
+             sadm_write_err "The ReaR backup may not be restorable, you may want to run it again."
+             sadm_write_err "Backup aborted"
+             unmount_batnas
+             return 1                                                   # Return to caller with error   
         else sadm_write_log "[ OK ] Integrity check of '$REAR_CUR_TGZ' succeeded."  
     fi 
 
@@ -591,7 +596,10 @@ rear_housekeeping()
                 then cat "$REAR_CUR_ERR" | while read wline ; do sadm_write_err "${wline}"; done
              fi
              ((FNC_ERROR++))                                            # Incr. Error counter
-#             return 1
+             sadm_write_err "The ReaR backup may not be restorable, you may want to run it again."
+             sadm_write_err "Backup aborted"
+             unmount_batnas
+             return 1
         else sadm_write_log "[ OK ] List of files included in the backup in '$REAR_CUR_LST'."
     fi
 
