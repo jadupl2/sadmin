@@ -242,6 +242,7 @@
 #@2025_04_09 lib v4.62 Minor enhancements et fixes. 
 #@2025_04_22 lib v4.63 Refine the sadm_server_model() function to return the right model name.
 #@2025_05_07 lib v4.64 Add SADM_QUIET (Y/N) variable to control the output of error message.
+#@2025_05_19 lib v4.65 Add function 'sadm_nfs_mount' & 'sadm_nfs_unmount', solve PID_TIMEOUT problem.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -252,7 +253,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.64"                                              # This Library Version
+export SADM_LIB_VER="4.65"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -444,7 +445,6 @@ export SADM_SMTP_SERVER="smtp.gmail.com"                    # smtp mail relay ho
 export SADM_SMTP_PORT=587                                   # smtp port(25,465,587,2525)
 export SADM_SMTP_SENDER="sadmin.gmail.com"                  # Email address of sender 
 export SADM_GMPW=""                                         # smtp sender gmail passwd
-#export SADM_QUIET="N"                                    # N=Show Err.Msg Y=ReturnCodeOnly No Msg
 #
 export SADM_VM_EXPORT_NFS_SERVER=""                         # NFS Server for VM Export
 export SADM_VM_EXPORT_NFS_SERVER_VER=3                      # NFS server ver.(3-4) to use
@@ -459,6 +459,7 @@ export SADM_VM_EXPORT_DIF=25                                # When Size 25% grea
 
 # To be a valid SADMIN server 'SADM_HOST_TYPE' must be "S" and 'SADM_SERVER' IP must exist on host.
 export SADM_ON_SADMIN_SERVER="N"                            # Valid SADMIN Server Y/N ?
+export SADM_QUIET="N"                                       # N=Show Err.Msg Y=ReturnCodeOnly No Msg
 
 # Array of O/S Supported & Package Family
 #export SADM_OS_SUPPORTED=( 'REDHAT' 'CENTOS' 'FEDORA' 'ALMA' 'ROCKY'
@@ -702,6 +703,131 @@ sadm_write_err() {
         else sadm_write_log "[ ERROR ] Insufficient permission to write to error log '$SADM_ELOG'."
     fi 
 }
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Mount NFS Directory.
+# Example: sadm_nfs_mount "batnas.maison.ca" "/volume1/software" "$MountPoint" 
+#    NFS_SERVER="$1"                                                    # NFS Server name or IP
+#    NFS_DIR="$2"                                                       # NFS Directory to mount
+#    NFS_MOUNT_POINT="$3"                                               # Local dir. to mount nfs
+#    NFS_MOUNT_OPTIONS=$4                                               # NFS Mount option (-o) use
+# --------------------------------------------------------------------------------------------------
+sadm_nfs_mount()
+{
+    # Validate number of parameter.
+    if [ $# -lt 3 ] 
+        then sadm_write_err "$FUNCNAME - Number of parameter expected is '3' or '4', received '$#'."
+             sadm_write_err "Parameters received are '$@'."
+             sadm_write_err "Help :  sadm_nfs_mount 'nfs_server' 'nfs_dir' 'local dir. mount' '-o 4'"
+             return 1                                                   # Error back to caller 
+    fi 
+
+    # Set NFS Mount Variables.
+    NFS_SERVER="$1"                                                     # NFS Server name or IP
+    NFS_DIR="$2"                                                        # NFS Directory to mount
+    NFS_MOUNT_POINT="$3"                                                # Local dir. to mount nfs
+    NFS_MOUNT_OPTIONS=""                                                # No NFS option default
+    if [ "$#" -gt 3 ] ; then NFS_MOUNT_OPTIONS="$4" ; fi                # NFS Mount option Specified
+
+    # Validate that NFS server can be ping.
+    ping -c2 "$NFS_SERVER" > /dev/null 2>&1                             # Ping NFS server
+    if [ $? -ne 0 ]                                                     # Problem pinging NFS server
+        then if [ "$SADM_QUIET" == "N" ]                                # User want error message
+                then sadm_write_err "[ ERROR ] NFS server '$NFS_SERVER' seems to be down."
+             fi 
+             return 1 
+        else if [ "$SADM_QUIET" == "N" ] 
+                then sadm_write_log "[ OK ] NFS server '$NFS_SERVER' alive." 
+             fi
+    fi
+  
+    # Verify existence of directory mount point
+    umount  "$NFS_MOUNT_POINT" > /dev/null 2>&1                         # Make sure it's unmounted 
+    if [ -d "$NFS_MOUNT_POINT" ] ; then rm -fr "$NFS_MOUNT_POINT" ; fi  # If old mount point exist
+    mkdir -m 775 -p "$NFS_MOUNT_POINT" > /dev/null 2>&1                 # Create Dir mount point
+    if [ $? -ne 0 ]                                                     # Problem creating dir
+        then sadm_write_err "[ ERROR ] Can't create NFS mount point '$NFS_MOUNT_POINT'." 
+             return 1 
+    fi
+    sadm_write_log "[ OK ] NFS mount point '$NFS_MOUNT_POINT' created."
+
+    # Mount the NFS Directory (With and Without options)
+    if [ "$NFS_MOUNT_OPTIONS" = "" ] 
+        then CMD="mount ${NFS_SERVER}:${NFS_DIR} $NFS_MOUNT_POINT "
+        else CMD="mount -o ${NFS_MOUNT_OPTIONS} ${NFS_SERVER}:${NFS_DIR} $NFS_MOUNT_POINT "
+    fi 
+    eval "$CMD" >>$SADM_LOG 2>&1
+
+    # Error occured with mount command
+    if [ $? -ne 0 ]                                                     # Problem Mounting NFS Dir.
+        then if [ "$SADM_QUIET" = "N" ] ; then sadm_write_err "[ ERROR ] Doing $CMD" ; fi 
+             umount ${NFS_MOUNT_POINT} > /dev/null 2>&1                 # Ensure mount point unmount
+             return 1
+    fi 
+
+    # Mount Succeeded 
+    if [ "$SADM_QUIET" = "N" ]                                          # User want message
+       then sadm_write_log "[ OK ] $CMD"                                # Show command that failed.
+            df -h |grep "$NFS_MOUNT_POINT" |tee -a "$SADM_LOG"          # Show disk usage after mount
+            RC=0
+    fi
+    return $RC                                                          # Return Mount Status to Usr
+}
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Unmount NFS Directory 
+# --------------------------------------------------------------------------------------------------
+sadm_nfs_unmount()
+{
+    # Validate number of parameter (1)
+    if [ $# -ne 1 ] 
+        then sadm_write_err "[ ERROR ] In $FUNCNAME - Number of parameter expected is 1 and is $#."
+             sadm_write_err "  - Received : '$@'"
+             sadm_write_err "  - Example:   \"sadm_nfs_unmount 'local mount point'\""
+             return 1                                                   # Error back to caller 
+    fi 
+    NFS_MOUNT_POINT="$1"                                                # Local dir. to mount nfs
+
+    # Verify existence of directory mount point
+    if [ ! -d "$NFS_MOUNT_POINT" ]                                      # Mount point not there
+        then if [ "$SADM_QUIET" = "N" ] 
+                then sadm_write_err "[ ERROR ] NFS mount point '$NFS_MOUNT_POINT' doesn't exist." 
+             fi 
+             return 1                                                   # Return error to caller
+    fi 
+
+    # Unmount NFS mounted Directory
+    umount "$NFS_MOUNT_POINT" >> "$SADM_LOG" 2>&1                       # Unmount NFS Source
+    if [ $? -eq 0 ] 
+        then if [ "$SADM_QUIET" = "N" ] 
+                then sadm_write_log "[ OK ] Unmount of '$NFS_MOUNT_POINT' succeeded." 
+                fi 
+        else if [ "$SADM_QUIET" = "N" ] 
+                then sadm_write_err "[ ERROR ] Unmount of '$NFS_MOUNT_POINT' failed." 
+             fi 
+             return 1                                                   # Return error to caller
+    fi
+ 
+    # NFS mount point is not needed anymore, we delete it.
+    if [ -d "$NFS_MOUNT_POINT" ]                                        # Mount point exist
+        then rm -fr "$NFS_MOUNT_POINT"                                  # Delete dir content
+             if [ "$SADM_QUIET" = "N" ] 
+                then sadm_write_log "[ OK ] NFS mount point '$NFS_MOUNT_POINT' removed." 
+             fi 
+    fi 
+    return 0 
+} 
+
+
+
+
+
+
+
 
 
 # sadm_abort()
@@ -2306,30 +2432,32 @@ sadm_start() {
             cepoch=$(sadm_get_epoch_time)                               # Current Epoch Time
             pelapse=$(( $cepoch - $pepoch ))                            # Nb Sec PID File was create
             sadm_write_err "[ ERROR ] Script '$SADM_PN' is already running ..."
-            sadm_write_err " "
+            #sadm_write_err " "
             f_timeout=$(printf "%'d\n" $SADM_PID_TIMEOUT)
             f_elapse=$(printf "%'d\n" $pelapse)
-            sadm_write_err "Can't run simultaneous copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
-            sadm_write_err "PID file ('\${SADMIN}/tmp/${SADM_INST}.pid'), was created $pelapse seconds ago."
-            sadm_write_err "The PID timeout ('\$SADM_PID_TIMEOUT') is set to $f_timeout seconds."
+            sadm_write_err "  - Can't run simultaneous copy of this script (\$SADM_MULTIPLE_EXEC='N')." 
+            sadm_write_err "  - PID file ('\${SADMIN}/tmp/${SADM_INST}.pid'), was created $f_elapse seconds ago."
+            sadm_write_err "  - The PID timeout ('\$SADM_PID_TIMEOUT') is set to $f_timeout seconds."
             sadm_write_err " "
             #sadm_write_err " "
-            if [ -z "$SADM_PID_TIMEOUT" ]                               # Is SADM_PID_TIMEOUT define
+            if [ -z "$SADM_PID_TIMEOUT" ]                               # SADM_PID_TIMEOUT defined ?
                 then sadm_write_err "Script can't run unless one of the following action is done :"
-                     sadm_write_err "  - Remove the PID File (\${SADMIN}/tmp/${SADM_INST}.pid)."
+                     sadm_write_err "  - Remove the PID File '\${SADMIN}/tmp/${SADM_INST}.pid'."
                      sadm_write_err "  - Set 'SADM_MULTIPLE_EXEC' variable to 'Y' in your script."
-                     sadm_write_err "  - You wait till PID timeout '\$SADM_PID_TIMEOUT' is reach."
+                     sadm_write_err "  - Wait till PID timeout '\$SADM_PID_TIMEOUT' is reach."
                      DELETE_PID="N"                                     # No Del PID Since running
+                     sadm_stop 1                                        # Close,Clean up before exit
                      exit 1                                             # Exit To O/S with Error
                 else if [ $pelapse -ge $SADM_PID_TIMEOUT ]              # PID Timeout reached
                         then sadm_write_log "The PID file is now expired."
                              sadm_write_log "Let's see if '$SADM_PN' is currently running."
                              ps -ef | grep "$SADM_PN" | grep -v grep | nl >> $SADM_LOG 2>&1
                              proc_count=$(ps -ef | grep "$SADM_PN"| grep -v grep | wc -l)
-                             if [ $proc_count -gt 0 ] 
+                             if [ $proc_count -gt 1 ] 
                                 then sadm_write_err "More than 1 process are running with the name '$SADM_PN'."
                                      sadm_write_err "Refusing to run another copy of this script."
                                      DELETE_PID="N"                     # No Del PID Since running
+                                     sadm_stop 1                        # Close,Clean up before exit
                                      exit 1                             # Exit To O/S with Error
                                 else sadm_write_log "No process with the name '$SADM_PN' is currently running." 
                                      sadm_write_log "Assuming that the script was aborted abnormally."
@@ -2339,6 +2467,7 @@ sadm_start() {
                                      DELETE_PID="Y"                     # Del PID Since running
                              fi
                         else DELETE_PID="N"                             # No Del PID Since running
+                             sadm_stop 1                                # Close,Clean up before exit
                              exit 1                                     # Exit with Error
                      fi
             fi                                                          # Close and Trim Log
