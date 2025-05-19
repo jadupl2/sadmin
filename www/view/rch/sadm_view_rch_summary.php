@@ -99,7 +99,7 @@ function setup_table() {
     echo "<th width=120 align='left'>Script Name / log / rch</th>\n";
     echo "<th class='dt-center'>Start Time</th>\n";
     echo "<th class='dt-center'>End Time</th>\n";
-    echo "<th align='center'>Duration</th>\n";
+    echo "<th class='dt-center'>Duration</th>\n";
     echo "<th class='dt-head-center'>Alert Group</th>\n";
     echo "<th class='dt-head-center'>Alert Type</th>\n";
     echo "<th class='dt-head-left'>Status</th>\n"; 
@@ -114,7 +114,7 @@ function setup_table() {
     echo "<th width=120 align='left'>Script Name / log / rch</th>\n";
     echo "<th class='dt-center'>Start Time</th>\n";
     echo "<th class='dt-center'>End Time</th>\n";
-    echo "<th align='center'>Duration</th>\n";
+    echo "<th class='dt-center'>Duration</th>\n";
     echo "<th class='dt-head-center'>Alert Group</th>\n";
     echo "<th class='dt-head-center'>Alert Type</th>\n";
     echo "<th class='dt-head-left'>Status</th>\n"; 
