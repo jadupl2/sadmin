@@ -43,6 +43,7 @@
 #@2025_01_31 web v3.1 Combine Category & Group & insert the last uptime for each systems.
 #@2025_03_04 web v3.2 Change page layour (Add uptime, disk space, cpu,... )
 #@2025_04_27 web v3.3 Display VM Hostname where applicable.
+#@2025_05_19 web v3.4 Emnlarge uptime column to accmodate offline date/time. 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -112,7 +113,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG          = False ;                                               # Debug Activated True/False
-$WVER           = "3.3" ;                                              # Current version number
+$WVER           = "3.4" ;                                              # Current version number
 $URL_CREATE     = '/crud/srv/sadm_server_create.php';                   # Create Page URL
 $URL_UPDATE     = '/crud/srv/sadm_server_update.php';                   # Update Page URL
 $URL_DELETE     = '/crud/srv/sadm_server_delete.php';                   # Delete Page URL
@@ -140,7 +141,7 @@ function setup_table() {
     echo "\n<tr align=left bgcolor='grey'>";
     echo "\n<th width=10 align=center>No</th>";
     echo "\n<th width=110 align=left>Name&nbsp;/&nbsp;Arch&nbsp;/&nbsp;Desc.</th>"; 
-    echo "\n<th width=110 align=center>Uptime</th>";     
+    echo "\n<th width=120 align=center>Uptime</th>";     
     echo "\n<th align=center>O/S</th>";   
     echo "\n<th width=5 align=center>Ver.</th>";   
     echo "\n<th align=center>Group / Category</th>";
@@ -159,7 +160,7 @@ function setup_table() {
     echo "\n<tr align=left bgcolor='grey'>";
     echo "\n<th width=10>No</th>";
     echo "\n<th width=110 align=left>Name&nbsp;/&nbsp;Arch&nbsp;/&nbsp;Desc.</th>"; 
-    echo "\n<th width=110 align=center>Uptime</th>";     
+    echo "\n<th width=120 align=center>Uptime</th>";     
     echo "\n<th align=center>O/S</th>";   
     echo "\n<th width=5 align=center>Ver.</th>";   
     echo "\n<th align=center>Group / Category</th>";
@@ -197,7 +198,13 @@ function display_data($count,$con,$row) {
     echo "\n</td>";   
 
     # Display System Uptime
-    echo "\n<td align=center> " . $row['srv_uptime'] . "</td>";   
+    $wordList = explode (" ", $row['srv_uptime']) ;
+    if ( strtoupper($wordList[0]) == "OFF" ) { 
+        echo "\n<td align=center>Offline since\n" . $wordList[1] ."&nbsp;". $wordList[2] . "</td>";
+    }else{
+        echo "\n<td align=center> " . $row['srv_uptime'] . "</td>";   
+    }
+
 
     # Display Operating System Logo
     echo "<td align=center>";
