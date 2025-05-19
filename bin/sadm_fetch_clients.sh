@@ -106,6 +106,7 @@
 #@2025_01_29 server v3.52 Change 'sadm_vm' crontab update to use 'sadm_rmcmd_lock' to lock/unlock system.
 #@2025_03_25 server v3.53 Refine way to copy local rch,log  and rpt to farm www directory.
 #@2025_04_13 server v3.54 Add hostname in the email subject, if not already there.
+#@2025_05_19 server v3.55 When server not accessible, the uptime is set to date/time of offline.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -135,7 +136,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.54'                                     # Script version number
+export SADM_VER='3.55'                                     # Script version number
 export SADM_PDESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -257,7 +258,7 @@ update_osupdate_crontab ()
     SSH_PORT=$8
 
     # To Display Parameters received - Used for Debugging Purpose ----------------------------------
-    if [ $SADM_DEBUG -gt 5 ] 
+    if [ $SADM_DEBUG -gt 4 ] 
         then sadm_write_log "I'm in update crontab"
              sadm_write_log "cserver  = $cserver"                        # Server to run script
              sadm_write_log "cscript  = $cscript"                        # Script to execute
@@ -940,30 +941,30 @@ create_crontab_files_header()
 #   Validate SSH Server Connectivity 
 #
 #  Parameters:
-#   1) Host name (with domain) of the system to test connectivity.
+#   1) Host name (FQDN, with domain) of the system to test connectivity.
 #   2) SSH port number used to communicate to system.
 #
 #  Return Value:
 #   0) Server Accessible, ssh worked
-#   1) Error, go to next server because : 
+#   1) Error : 
 #       - Can't SSH to Server
 #       - Missing Parameter received
 #       - Hostname Unresolvable
-#   2) Warning, skip server (system lock, Sporadic System or Monitor if OFF)
-#   3) Hostname received is lock.
+#   2) Warning, skip server (Sporadic System or Monitor is OFF)
 #
 # --------------------------------------------------------------------------------------------------
 check_host_connectivity()
 {
-    #sadm_write_log "Check_Host_Connectivity of $1"
+    if [ "$SADM_DEBUG" -ne 0 ] ; then sadm_write_log "$FUNCNAME[0] of $1 on port $2" ;fi
 
     # If parameters received is not 2, return error to caller
     if [ $# -ne 2 ]
-        then sadm_write_log "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters."
-             sadm_write_log "Function received $* and this isn't valid."
-             sadm_write_log "Should receive the fqdn of the server and the ssh port number."
+        then sadm_write_log "Error: Function $FUNCNAME[0] did not receive 2 parameters."
+             sadm_write_log "Function received $* and this is not valid."
+             sadm_write_log "Should have received the fqdn of the server and the ssh port number."
              return 1
     fi
+
     FQDN_SNAME="$1"                                                     # Server Name Full Qualified
     SSH_PORT="$2"                                                       # Port No. to SSH to system
     SNAME=$(echo "$FQDN_SNAME" | awk -F\. '{print $1}')                 # System Name without Domain
@@ -974,47 +975,35 @@ check_host_connectivity()
                 sadm_write_err "[ ERROR ] ${SMSG}"                      # Advise user
                 return 1                                                # Return Error to Caller
     fi
-    if [ "$SADM_DEBUG" -gt 0 ] ; then sadm_write_log "[ DEBUG ] Hostname $SNAME' is resolvable." ;fi 
 
-
-    # Check if System is Locked.
-    sadm_lock_status "$SNAME"                                     # Check lock file status
-    if [ $? -ne 0 ]                                                     # The system is lock
-        then sadm_write_err "[ WARNING ] System '$SNAME' is lock."
-             sadm_write_err "$(sadm_show_lock $SNAME)"   
-             return 3  
-    fi 
-    if [ "$SADM_DEBUG" -gt 0 ] ; then sadm_write_log "[ DEBUG ] System '$SNAME' is not lock." ; fi 
-
-
-    # Get uptime from remote system and we rae testing at same time if ssh to remote system is working
-    if [ "$SADM_SERVER" = "$FQDN_SNAME" ]                               # If not on sadmin server
+    # Get uptime of remote system & we are testing at same time if ssh to remote system is working.
+    if [ "$SADM_SERVER" = "$FQDN_SNAME" ]                               # If on SADMIN server
         then wuptime=$(uptime 2>/dev/null)                              # Get local system uptime 
              uptime_rc=$?
         else wuptime=$($SADM_SSH -qnp $SSH_PORT -o ConnectTimeout=2 -o ConnectionAttempts=2 $FQDN_SNAME uptime 2>/dev/null)
              uptime_rc=$?
     fi
-    if [ "$SADM_DEBUG" -gt 0 ] ; then sadm_write_log "[ DEBUG ] Got 'uptime' of $SNAME RC=$RC" ; fi
-
 
     # Update system uptime in the Database, if was able to obtain the uptime of the system, 
-    if [ "$uptime_rc" -eq 0 ]                                           # Able to get uptime 0=yes
+    if [ "$uptime_rc" -eq 0 ]                                           # Was able to get uptime
         then GLOB_UPTIME=$(echo "$wuptime" |awk -F, '{print $1}' |awk '{gsub(/^[ ]+/,""); print $0}')
              update_server_uptime "$SNAME" "$GLOB_UPTIME"               # Update Server Uptime in DB
-             if [ "$SADM_DEBUG" -gt 0 ] ; then sadm_write_log "[ DEBUG ] Uptime of $SNAME updated in database RC=$RC" ; fi
              return 0
+        else echo "$server_uptime" | grep -iq "up"                       # Grep for "up" in uptime? 
+             if [ $? -eq 0 ]                                            # String "up" is in uptime
+                then GLOB_UPTIME="OFF $(date "+%C%y.%m.%d %H:%M")"      # Date/Time came offline
+                     update_server_uptime "$SNAME" "$GLOB_UPTIME"       # Update system uptime in DB
+             fi
     fi 
 
-
-    #sadm_write_log "Sporadic = $server_sporadic - server_monitor = $server_monitor - rc= $uptime_rc"
-    # SSH didn't work, but is it a sporadic system (Laptop or Tmp Server) don't report as an error)
-    if [ $uptime_rc -ne 0 ]  && [ "$server_sporadic" = "1" ]                   # If Error on Sporadic Host
+    # SSH didn't work, but is it a sporadic system (Laptop,Test... system) don't report as an error)
+    if [ $uptime_rc -ne 0 ]  && [ "$server_sporadic" = "1" ]            # If Error on Sporadic Host
         then sadm_write_log "[ WARNING ] Can't SSH to $SNAME (Sporadic System)."
              return 2                                                   # Return Skip Code to caller
     fi 
 
     # SSH didn't work, but monitoring for that system is off (don't report an error)
-    if [ $uptime_rc -ne 0 ]  &&  [ "$server_monitor" = "0" ]                   # If Error & Monitor is OFF
+    if [ $uptime_rc -ne 0 ]  &&  [ "$server_monitor" = "0" ]            # If system monitoring OFF
         then sadm_write_log "[ WARNING ] Can't SSH to $SNAME (Monitoring is OFF)."
              return 2                                                   # Return Skip Code to caller
     fi 
@@ -1046,14 +1035,40 @@ check_host_connectivity()
 build_server_list()
 { 
     # Build the SQL select statement for active systems with selected o/s 
-    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir," 
+    # System Info   1        2          3          4           5            6        
+    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_sadmin_dir, " 
+
+    # OS Update info to produce crontab (/etc/cron.d/sadm_osupdate)
+    # OS Update     7                 8               9              10               11    
     SQL="${SQL} srv_update_minute,srv_update_hour,srv_update_dom,srv_update_month,srv_update_dow,"
-    SQL="${SQL} srv_update_auto,srv_backup,srv_backup_month,srv_backup_dom,srv_backup_dow,"
-    SQL="${SQL} srv_backup_hour,srv_backup_minute,"
+    #               12              
+    SQL="${SQL} srv_update_auto, "
+    
+    # Backup Info to produce backup crontab (/etc/cron.d/sadm_backup)
+    #               13         14               15         16                 17
+    SQL="${SQL} srv_backup,srv_backup_month,srv_backup_dom,srv_backup_dow,srv_backup_hour,"
+    #               18  
+    SQL="${SQL} srv_backup_minute," 
+
+
+    # Rear backup Info to produce ReaR crontab (/etc/cron.d/sadm_rear)
+    #               19             20            21          22          23           24    
     SQL="${SQL} srv_img_backup,srv_img_month,srv_img_dom,srv_img_dow,srv_img_hour,srv_img_minute, "
-    SQL="${SQL} srv_ssh_port, srv_backup_compress, "
-    SQL="${SQL} srv_vm_type, srv_export_sched, srv_export_ova, srv_export_mth, srv_export_dom, "
-    SQL="${SQL} srv_export_dow, srv_export_hrs, srv_export_min, srv_vm_host, srv_vm, srv_vm_version"
+    #               25           26  
+    SQL="${SQL} srv_ssh_port,srv_backup_compress,"
+
+
+    # Virtual Machine export Info use to produce VM export schedule.
+    #               27           28               29             30             31    
+    SQL="${SQL} srv_vm_type, srv_export_sched,srv_export_ova,srv_export_mth,srv_export_dom,"
+    #               32             33             34             35          36     37   
+    SQL="${SQL} srv_export_dow,srv_export_hrs,srv_export_min,srv_vm_host,srv_vm,srv_vm_version," 
+
+    
+    # General info 
+    #               38
+    SQL="${SQL} srv_uptime"
+    #
     SQL="${SQL} from server"
     SQL="${SQL} where srv_active = True "
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
@@ -1201,48 +1216,56 @@ process_servers()
         server_domain=$(  echo $wline|awk -F\; '{ print $3 }')          # Extract Domain of Server
         server_monitor=$( echo $wline|awk -F\; '{ print $4 }')          # Monitor t=True f=False
         server_sporadic=$(echo $wline|awk -F\; '{ print $5 }')          # Sporadic t=True f=False
-        server_dir=$(     echo $wline|awk -F\; '{ print $7 }')          # SADMIN Dir on Client 
+        server_dir=$(     echo $wline|awk -F\; '{ print $6 }')          # SADMIN Dir on Client 
         fqdn_server="${server_name}.${server_domain}"                   # Create FQN Server Name
-        #
-        db_updmin=$(     echo $wline|awk -F\; '{ print $8 }')           # crontab Update Min field
-        db_updhrs=$(     echo $wline|awk -F\; '{ print $9 }')           # crontab Update Hrs field
-        db_upddom=$(     echo $wline|awk -F\; '{ print $10 }')          # crontab Update DOM field
-        db_updmth=$(     echo $wline|awk -F\; '{ print $11 }')          # crontab Update Mth field
-        db_upddow=$(     echo $wline|awk -F\; '{ print $12 }')          # crontab Update DOW field 
-        db_updauto=$(    echo $wline|awk -F\; '{ print $13 }')          # crontab Update DOW field 
-        #
-        backup_auto=$(  echo $wline|awk -F\; '{ print $14 }')           # crontab Backup 1=Yes 0=No 
-        backup_mth=$(   echo $wline|awk -F\; '{ print $15 }')           # crontab Backup Mth field
-        backup_dom=$(   echo $wline|awk -F\; '{ print $16 }')           # crontab Backup DOM field
-        backup_dow=$(   echo $wline|awk -F\; '{ print $17 }')           # crontab Backup DOW field 
-        backup_hrs=$(   echo $wline|awk -F\; '{ print $18 }')           # crontab Backup Hrs field
-        backup_min=$(   echo $wline|awk -F\; '{ print $19 }')           # crontab Backup Min field
-        #
-        rear_auto=$( echo $wline|awk -F\; '{ print $20 }')              # Rear Crontab 1=Yes 0=No 
-        rear_mth=$(  echo $wline|awk -F\; '{ print $21 }')              # Rear Crontab Mth field
-        rear_dom=$(  echo $wline|awk -F\; '{ print $22 }')              # Rear Crontab DOM field
-        rear_dow=$(  echo $wline|awk -F\; '{ print $23 }')              # Rear Crontab DOW field 
-        rear_hrs=$(  echo $wline|awk -F\; '{ print $24 }')              # Rear Crontab Hrs field
-        rear_min=$(  echo $wline|awk -F\; '{ print $25 }')              # Rear Crontab Min field
-        ssh_port=$(  echo $wline|awk -F\; '{ print $26 }')              # Port No. to SSH to System
-        compress=$(  echo $wline|awk -F\; '{ print $27 }')              # Compress (1=Yes,0=No)
-        #
-        vm_type=$(        echo $wline|awk -F\; '{ print $28 }')         # VM Type "vbox" for now
-        export_sched=$(   echo $wline|awk -F\; '{ print $29 }')         # 1=Sched Active 0=Inactive
-        export_ova=$(     echo $wline|awk -F\; '{ print $30 }')         # ova version 0.9, 1.0, 2.0
-        export_mth=$(     echo $wline|awk -F\; '{ print $31 }')         # month of export 
-        export_dom=$(     echo $wline|awk -F\; '{ print $32 }')         # Date in month to export 
-        export_dow=$(     echo $wline|awk -F\; '{ print $33 }')         # Day of the week to export 
-        export_hrs=$(     echo $wline|awk -F\; '{ print $34 }')         # Hour to start the export
-        export_min=$(     echo $wline|awk -F\; '{ print $35 }')         # Minute to start the export
-        export_host=$(    echo $wline|awk -F\; '{ print $36 }')         # VirtualBox Hosting VM
-        server_vm=$(      echo $wline|awk -F\; '{ print $37 }')         # 0=Physical 1=Virtual 
+
+        # O/S Update Info used to produce crontab (/etc/cron.d/sadm_update)
+        db_updmin=$(     echo $wline|awk -F\; '{ print $7 }')           # crontab Update Min field
+        db_updhrs=$(     echo $wline|awk -F\; '{ print $8 }')           # crontab Update Hrs field
+        db_upddom=$(     echo $wline|awk -F\; '{ print $9 }')           # crontab Update DOM field
+        db_updmth=$(     echo $wline|awk -F\; '{ print $10 }')          # crontab Update Mth field
+        db_upddow=$(     echo $wline|awk -F\; '{ print $11 }')          # crontab Update DOW field 
+        db_updauto=$(    echo $wline|awk -F\; '{ print $12 }')          # crontab Update DOW field 
+    
+        # Backup Info to produce backup crontab (/etc/cron.d/sadm_backup)
+        backup_auto=$(  echo $wline|awk -F\; '{ print $13 }')           # crontab Backup 1=Yes 0=No 
+        backup_mth=$(   echo $wline|awk -F\; '{ print $14 }')           # crontab Backup Mth field
+        backup_dom=$(   echo $wline|awk -F\; '{ print $15 }')           # crontab Backup DOM field
+        backup_dow=$(   echo $wline|awk -F\; '{ print $16 }')           # crontab Backup DOW field 
+        backup_hrs=$(   echo $wline|awk -F\; '{ print $17 }')           # crontab Backup Hrs field
+        backup_min=$(   echo $wline|awk -F\; '{ print $18 }')           # crontab Backup Min field
+
+        # Rear backup Info to produce ReaR crontab (/etc/cron.d/sadm_rear)
+        rear_auto=$( echo $wline|awk -F\; '{ print $19 }')              # Rear Crontab 1=Yes 0=No 
+        rear_mth=$(  echo $wline|awk -F\; '{ print $20 }')              # Rear Crontab Mth field
+        rear_dom=$(  echo $wline|awk -F\; '{ print $21 }')              # Rear Crontab DOM field
+        rear_dow=$(  echo $wline|awk -F\; '{ print $22 }')              # Rear Crontab DOW field 
+        rear_hrs=$(  echo $wline|awk -F\; '{ print $23 }')              # Rear Crontab Hrs field
+        rear_min=$(  echo $wline|awk -F\; '{ print $24 }')              # Rear Crontab Min field
+        ssh_port=$(  echo $wline|awk -F\; '{ print $25 }')              # Port No. to SSH to System
+        compress=$(  echo $wline|awk -F\; '{ print $26 }')              # Compress (1=Yes,0=No)
         
+        # Virtual Machine export Info use to produce VM export schedule.
+        vm_type=$(        echo $wline|awk -F\; '{ print $27 }')         # VM Type "vbox" for now
+        export_sched=$(   echo $wline|awk -F\; '{ print $28 }')         # 1=Sched Active 0=Inactive
+        export_ova=$(     echo $wline|awk -F\; '{ print $29 }')         # ova version 0.9, 1.0, 2.0
+        export_mth=$(     echo $wline|awk -F\; '{ print $30 }')         # month of export 
+        export_dom=$(     echo $wline|awk -F\; '{ print $31 }')         # Date in month to export 
+        export_dow=$(     echo $wline|awk -F\; '{ print $32 }')         # Day of the week to export 
+        export_hrs=$(     echo $wline|awk -F\; '{ print $33 }')         # Hour to start the export
+        export_min=$(     echo $wline|awk -F\; '{ print $34 }')         # Minute to start the export
+        export_host=$(    echo $wline|awk -F\; '{ print $35 }')         # VirtualBox Hosting VM
+        server_vm=$(      echo $wline|awk -F\; '{ print $36 }')         # 0=Physical 1=Virtual 
+        server_vm_ver=$(  echo $wline|awk -F\; '{ print $37 }')         # VM Addition version
+        
+        # General information
+        server_uptime=$(  echo $wline|awk -F\; '{ print $38 }')         # System uptime 
+
         sadm_write_log " "                                              # White Line
         sadm_write_log "---- [ $xcount ] ${fqdn_server} ----"           # Show count & ServerName
 
         # DISPLAY DATABASE COLUMN WE WILL USED, FOR DEBUGGING
-        if [ "$SADM_DEBUG" -gt 5 ] 
+        if [ "$SADM_DEBUG" -gt 4 ] 
             then sadm_write_log "Column Name and Value before processing them."
                  sadm_write_log "server_name     = $server_name"        # Server Name to run script
                  sadm_write_log "backup_auto     = $backup_auto"        # Run Backup ? 1=Yes 0=No 
@@ -1270,6 +1293,8 @@ process_servers()
                  sadm_write_log "export_min      = $export_min   "      # Minute to start the export
                  sadm_write_log "export_host     = $export_host  "      # VirtualBox Hosting VM
                  sadm_write_log "server_vm       = $server_vm  "        # 1=VirtualSystem 0=Physical
+                 sadm_write_log "server_vm_ver   = $server_vm_ver "     # VM Addition version
+                 sadm_write_log "server_uptime   = $server_uptime "     # System uptime 
         fi
         
          # Test SSH connectivity, get uptime and update the Database.
@@ -1277,7 +1302,7 @@ process_servers()
             then check_host_connectivity "$fqdn_server" "$ssh_port"     # Test SSH, Upd uptime in DB
                  connectivity_rc=$?                                     # Connectivity result code 
                  if [ "$SADM_DEBUG" -ne 0 ] 
-                    then sadm_write_log "[ DEBUG ] System host '$fqdn_server' connectivity result code is $connectivity_rc"
+                    then sadm_write_log "[ DEBUG ] '$fqdn_server' connectivity RC=$connectivity_rc"
                  fi
         fi 
         #sadm_write_log "Host '$server_name' connectivity result code is $connectivity_rc"
@@ -1294,12 +1319,6 @@ process_servers()
                 SYSTEM_ONLINE="N"                                       # Not able to connect 
                 sadm_write_log "Total warning is now $WARNING_COUNT"
                 ;;
-            3)  ((WARNING_COUNT++))                                     # Warn. sporadic,monitor off
-                SYSTEM_ONLINE="N"                                       # Not able to connect 
-                sadm_write_log "Total warning is now $WARNING_COUNT"
-                RPT_MSG="$(sadm_show_lock $server_name)"
-                update_rpt_file "I" "$server_name" "$(sadm_get_ostype)" "NETWORK" "$RPT_MSG" "$SADM_ALERT_GROUP" "$SADM_ALERT_GROUP"
-                ;;
             *)  ((ERROR_COUNT++))                                       # Error, Can't connect
                 SYSTEM_ONLINE="N"                                       # Not able to connect 
                 sadm_write_err "[ ERROR ] Host Connectivity RC unknown '$RC'."
@@ -1307,17 +1326,14 @@ process_servers()
         esac 
         if [ "$connectivity_rc" -eq 1 ] ; then continue ; fi            # System Down, return back
         if [ "$connectivity_rc" -eq 2 ] ; then continue ; fi            # Sporadic Sys,return back
-        if [ "$connectivity_rc" -eq 3 ] ; then continue ; fi            # System Lock, return back
         
 
         # On Linux & O/S AutoUpdate is ON, Generate Crontab entry in O/S Update crontab work file
-        if [ "$SADM_DEBUG" -gt 2 ] ;then sadm_write_log "[ DEBUG ] Crontab entries for O/S Update" ;fi 
         if [ "$db_updauto" -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]         # If O/S Update Requested
             then update_osupdate_crontab "$server_name" "\${SADMIN}/bin/$OS_SCRIPT" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow" "$ssh_port"
         fi
 
         # Generate Crontab Entry for this server in Backup crontab work file, if online
-        if [ "$SADM_DEBUG" -gt 2 ] ;then sadm_write_log "[ DEBUG ] Crontab entries for SADMIN server" ;fi 
         if [ "$backup_auto" -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]       # If Backup set to Yes 
             then update_backup_crontab "$server_name" "${server_dir}/bin/$BA_SCRIPT" "$backup_min" "$backup_hrs" "$backup_mth" "$backup_dom" "$backup_dow" "$ssh_port" "$compress"
         fi
@@ -1866,7 +1882,7 @@ main_process()
     # Check if crontabs need to be updated (sadm_backup, sadm_osupdate, sadm_rear_backup, sadm_vm)
     crontab_update                                                      # Update crontab if changed
 
-    # Create $SADM_VMLIST & $SADM_VMHOSTS
+    # Create $SADM_VMLIST & $SADM_VMHOSTS (If any VM to process)
     create_vm_list    
 
     
@@ -1940,14 +1956,14 @@ update_server_uptime()
     WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -e '$SQL'"           # Build Full Command Line
-    if [ $SADM_DEBUG -gt 5 ] ; then sadm_write "${CMDLINE}\n" ; fi      # Debug = Write command Line
+    if [ "$SADM_DEBUG" -gt 5 ] ; then sadm_write_log "$CMDLINE" ; fi    # Debug = Write command Line
 
     # Execute SQL to Update Server O/S Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e "$SQL" >>$SADM_LOG 2>&1
     if [ $? -ne 0 ]                                                     # If Error while updating
-        then sadm_write_log "${SADM_ERROR} Failed to update database 'uptime' ($WUPTIME) of $WSERVER"
+        then sadm_write_err "[ ERROR ] Database update failed to update 'uptime' ($WUPTIME) of $WSERVER"
              RCU=1                                                      # Set Error Code = 1
-        else sadm_write_log "${SADM_OK} Success updating database 'uptime' ($WUPTIME) of $WSERVER"
+        else sadm_write_log "[ OK ] Success updating database 'uptime' ($WUPTIME) of $WSERVER"
              RCU=0                                                      # Set Code = Success =0
     fi
     return $RCU
@@ -2148,25 +2164,25 @@ sadm_send_alert()
                      fi
                      return 2                                           # Return 2 = Alreay Sent
              fi 
-             WaitSec=`echo "$acounter * $SADM_ALERT_REPEAT" | $SADM_BC`  # Next Alert Elapse Seconds
-             if [ $aage -le $WaitSec ]                                   # Repeat Time not reached
-                then xcount=`expr $WaitSec - $aage`                     # Sec till nxt alarm is sent
-                     nxt_epoch=`expr $cepoch + $xcount`                 # Next Alarm Epoch
+             WaitSec=$(( acounter * SADM_ALERT_REPEAT ))                # Next Alert Elapse Seconds
+             if [ $aage -le $WaitSec ]                                  # Repeat Time not reached
+                then xcount=$(( WaitSec - aage))                        # Sec till nxt alarm is sent
+                     nxt_epoch=$(( cepoch * xcount ))                   # Next Alarm Epoch     
                      nxt_time=$(sadm_epoch_to_date "$nxt_epoch")        # Next Alarm Date/Time
                      msg="Waiting - Next alert will be send in $xcount seconds around ${nxt_time}."
                      if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "${msg}\n" ;fi 
-                     return 2                                            # Return 2 =Duplicate Alert
+                     return 2                                           # Return 2 =Duplicate Alert
              fi 
     fi  
 
     # Update Alarm Counter 
-    acounter=`expr $acounter + 1`                                       # Increase alert counter
+    ((acounter++))                                         # Increment Index by 1
     if [ $acounter -gt 1 ] ; then amessage="(Repeat) $amessage" ;fi     # Ins.Repeat in Msg if cnt>1
-    acounter=`printf "%02d" "$acounter"`                                # Make counter two digits
+    acounter=$(printf "%02d" "$acounter")                               # Make counter two digits
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_write "Repeat alert ($aepoch)-($acounter)-($alertid)\n" ;fi
 
-    NxtInterval=`echo "$acounter * $SADM_ALERT_REPEAT" | $SADM_BC`      # Next Alert Elapse Seconds 
-    NxtEpoch=`expr $NxtInterval + $aepoch`                              # Next repeat + ActualEpoch
+    NxtInterval=$(echo "$acounter * $SADM_ALERT_REPEAT" | $SADM_BC)     # Next Alert Elapse Seconds 
+    NxtEpoch=$(expr $NxtInterval + $aepoch)                             # Next repeat + ActualEpoch
     NxtAlarmTime=$(sadm_epoch_to_date "$NxtEpoch")                      # Next repeat Date/Time
 
     # Construct Subject Message base on alert type
