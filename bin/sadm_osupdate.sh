@@ -510,16 +510,14 @@ function cmd_options()
 # --------------------------------------------------------------------------------------------------
 # S T A R T   O F   M A I N    P R O G R A M
 # --------------------------------------------------------------------------------------------------
-#
     cmd_options "$@"                                                    # Check command-line Options
     sadm_start                                                          # SADMIN Initialization
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Init went wrong
     main_process                                                        # Check/Perform O/S Update
     SADM_EXIT_CODE=$?                                                   # Save Status returned 
 
-    # If Reboot is requested and update were available and the update was successful, advise user.
+    # If Reboot is requested (-r) and update available and the update was successful, advise user.
     if [ "$WREBOOT" = "Y" ] && [ "$UPDATE_AVAILABLE" = "Y" ] && [ "$SADM_EXIT_CODE" -eq 0 ]     
-        then sadm_write_log "Update successful, system will reboot in 1 Minute."
+        then sadm_write_log "[ SUCESS ] Update successful, system will reboot in 1 Minute."
     fi
     
     sadm_stop "$SADM_EXIT_CODE"                                         # End Process with exit Code
