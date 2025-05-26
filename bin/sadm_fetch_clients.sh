@@ -107,6 +107,7 @@
 #@2025_03_25 server v3.53 Refine way to copy local rch,log  and rpt to farm www directory.
 #@2025_04_13 server v3.54 Add hostname in the email subject, if not already there.
 #@2025_05_19 server v3.55 When server not accessible, the uptime is set to date/time of offline.
+#@2025_05_26 server v3.56 Don't process system that are lock (no crontab entries)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -136,7 +137,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.55'                                     # Script version number
+export SADM_VER='3.56'                                     # Script version number
 export SADM_PDESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -1020,85 +1021,6 @@ check_host_connectivity()
 
 
 
-# --------------------------------------------------------------------------------------------------
-# build_server_list()
-#
-# Build a system list of the O/S type (aix/linux,darwin) received in parameter.
-#
-# Input Parameters :
-#   1)  Operating System Type
-# 
-# Output resultant :
-#  File $SADM_TMP_FILE1 contains system list for wanted O/S type with fields neened for processing.
-#  Fields in this file are ';' delimited.
-# --------------------------------------------------------------------------------------------------
-build_server_list()
-{ 
-    # Build the SQL select statement for active systems with selected o/s 
-    # System Info   1        2          3          4           5            6        
-    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_sadmin_dir, " 
-
-    # OS Update info to produce crontab (/etc/cron.d/sadm_osupdate)
-    # OS Update     7                 8               9              10               11    
-    SQL="${SQL} srv_update_minute,srv_update_hour,srv_update_dom,srv_update_month,srv_update_dow,"
-    #               12              
-    SQL="${SQL} srv_update_auto, "
-    
-    # Backup Info to produce backup crontab (/etc/cron.d/sadm_backup)
-    #               13         14               15         16                 17
-    SQL="${SQL} srv_backup,srv_backup_month,srv_backup_dom,srv_backup_dow,srv_backup_hour,"
-    #               18  
-    SQL="${SQL} srv_backup_minute," 
-
-
-    # Rear backup Info to produce ReaR crontab (/etc/cron.d/sadm_rear)
-    #               19             20            21          22          23           24    
-    SQL="${SQL} srv_img_backup,srv_img_month,srv_img_dom,srv_img_dow,srv_img_hour,srv_img_minute, "
-    #               25           26  
-    SQL="${SQL} srv_ssh_port,srv_backup_compress,"
-
-
-    # Virtual Machine export Info use to produce VM export schedule.
-    #               27           28               29             30             31    
-    SQL="${SQL} srv_vm_type, srv_export_sched,srv_export_ova,srv_export_mth,srv_export_dom,"
-    #               32             33             34             35          36     37   
-    SQL="${SQL} srv_export_dow,srv_export_hrs,srv_export_min,srv_vm_host,srv_vm,srv_vm_version," 
-
-    
-    # General info 
-    #               38
-    SQL="${SQL} srv_uptime"
-    #
-    SQL="${SQL} from server"
-    SQL="${SQL} where srv_active = True "
-    SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
-
-    # Setup database connection parameters
-    WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
-    CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
-    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/;/'" # Build CmdLine
-    if [ "$SADM_DEBUG" -gt 5 ] ; then sadm_write_log "${CMDLINE}" ; fi  # Debug = Write command Line
-
-    # Try simple sql statement to test connection to database
-    $SADM_MYSQL $WAUTH -h $SADM_DBHOST -e "show databases;" > /dev/null 2>&1
-    if [ $? -ne 0 ]                                                     # Error Connecting to DB
-        then sadm_write_err "[ ERROR] Error connecting to Database."    # Access Denied
-             return 1                                                   # Return Error to Caller
-    fi 
-
-    # Execute sql to get a list of active servers of the received o/s type into $sadm_tmp_file1
-    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
-    
-    if [ $SADM_DEBUG -gt 1 ] ; then cat $SADM_TMP_FILE1 ; fi 
-
-    # If file wasn't created or has a zero lenght, then no active system is found, return to caller.
-    if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
-        then sadm_write_log "${SADM_TEN_DASH}"                          # Print 10 Dash line
-             sadm_write_log "No Active system found in database."       # Not ACtive Server MSG
-             return 0                                                   # Return Error to Caller
-    fi 
-}
-
 
 
 # --------------------------------------------------------------------------------------------------
@@ -1182,6 +1104,92 @@ update_rpt_file()
 
 
 
+
+# --------------------------------------------------------------------------------------------------
+# build_server_list()
+#
+# Build a system list of the O/S type (aix/linux,darwin) received in parameter.
+#
+# Input Parameters :
+#   None
+# 
+# Output resultant :
+#  File $SADM_TMP_FILE1 contains system list for wanted O/S type with fields neened for processing.
+#  Fields in this file are ';' delimited.
+# --------------------------------------------------------------------------------------------------
+build_server_list()
+{ 
+    if [ "$SADM_DEBUG" -gt 1 ] ; then sadm_write_log "In function ${FUNCNAME[0]}." ; fi
+
+        # Build the SQL select statement for active systems with selected o/s 
+    # System Info   1        2          3          4           5            6        
+    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_sadmin_dir, " 
+
+    # OS Update info to produce crontab (/etc/cron.d/sadm_osupdate)
+    # OS Update     7                 8               9              10               11    
+    SQL="${SQL} srv_update_minute,srv_update_hour,srv_update_dom,srv_update_month,srv_update_dow,"
+    #               12              
+    SQL="${SQL} srv_update_auto, "
+    
+    # Backup Info to produce backup crontab (/etc/cron.d/sadm_backup)
+    #               13         14               15         16                 17
+    SQL="${SQL} srv_backup,srv_backup_month,srv_backup_dom,srv_backup_dow,srv_backup_hour,"
+    #               18  
+    SQL="${SQL} srv_backup_minute," 
+
+
+    # Rear backup Info to produce ReaR crontab (/etc/cron.d/sadm_rear)
+    #               19             20            21          22          23           24    
+    SQL="${SQL} srv_img_backup,srv_img_month,srv_img_dom,srv_img_dow,srv_img_hour,srv_img_minute, "
+    #               25           26  
+    SQL="${SQL} srv_ssh_port,srv_backup_compress,"
+
+
+    # Virtual Machine export Info use to produce VM export schedule.
+    #               27           28               29             30             31    
+    SQL="${SQL} srv_vm_type, srv_export_sched,srv_export_ova,srv_export_mth,srv_export_dom,"
+    #               32             33             34             35          36     37   
+    SQL="${SQL} srv_export_dow,srv_export_hrs,srv_export_min,srv_vm_host,srv_vm,srv_vm_version," 
+
+    
+    # General info 
+    #               38          39
+    SQL="${SQL} srv_uptime, srv_lock "
+    #
+    SQL="${SQL} from server"
+    SQL="${SQL} where srv_active = True "
+    SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
+
+    # Setup database connection parameters
+    WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
+    CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
+    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/;/'" # Build CmdLine
+    if [ "$SADM_DEBUG" -gt 5 ] ; then sadm_write_log "${CMDLINE}" ; fi  # Debug = Write command Line
+
+    # Try simple sql statement to test connection to database
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST -e "show databases;" > /dev/null 2>&1
+    if [ $? -ne 0 ]                                                     # Error Connecting to DB
+        then sadm_write_err "[ ERROR ] Error connecting to Database."   # Access Denied
+             return 1                                                   # Return Error to Caller
+    fi 
+
+    # Execute sql to get a list of active servers of the received o/s type into $sadm_tmp_file1
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/;/' >$SADM_TMP_FILE1
+    
+    if [ $SADM_DEBUG -gt 1 ] ; then cat $SADM_TMP_FILE1 ; fi 
+
+    # If result file don't exist or have a size of zero.
+    if [ ! -s "$SADM_TMP_FILE1" ]                                       # File don't exist or size=0
+       then sadm_write_err "[ ERROR ] List of server '${SADM_TMP_FILE1}' is empty or don't exist ? "
+            sadm_write_log "  - No Active system in SADMIN database"    # Not one active system msg.
+            return 1 
+    fi   
+}
+
+
+
+
+
 # --------------------------------------------------------------------------------------------------
 # process_servers()
 #
@@ -1190,18 +1198,13 @@ update_rpt_file()
 #--------------------------------------------------------------------------------------------------
 process_servers()
 {
-    WOSTYPE=$1                                                          # Could be aix/linux/darwin
+    if [ "$SADM_DEBUG" -gt 1 ] ; then sadm_write_log "In function ${FUNCNAME[0]}." ; fi
 
-    # Build a system list of the O/S type received and output to $SADM_TMP_FILE1 file.
-    build_server_list "$WOSTYPE"
-    if [ $? -ne 0 ] ; then return 1 ; fi                                # If error while processing
-    if [ "$SADM_DEBUG" -gt 1 ] ;then sadm_write_log "[ DEBUG ] Returning from build_server_list" ;fi 
-
-    # Check results file readability and not empty.
-    if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File ! exist or ! Readable
-        then return 0 
-    fi 
-
+    # Build a list of active system of the O/S type received and output to $SADM_TMP_FILE1 file.
+    build_server_list                                                   # Create List in TMP_FILE1
+    if [ $? -ne 0 ] ; then return 1 ; fi                                # Return Error to caller 
+    
+ 
     # Create SADMIN crontab files headers (sadm_backup, sadm_osupdate, sadm_rear_backup, sadm_vm)
     create_crontab_files_header 
     if [ "$SADM_DEBUG" -gt 1 ] ; then sadm_write_log "Returning from create_crontab_file_header" ;fi 
@@ -1257,9 +1260,8 @@ process_servers()
         export_host=$(    echo $wline|awk -F\; '{ print $35 }')         # VirtualBox Hosting VM
         server_vm=$(      echo $wline|awk -F\; '{ print $36 }')         # 0=Physical 1=Virtual 
         server_vm_ver=$(  echo $wline|awk -F\; '{ print $37 }')         # VM Addition version
-        
-        # General information
         server_uptime=$(  echo $wline|awk -F\; '{ print $38 }')         # System uptime 
+        server_lock=$(    echo $wline|awk -F\; '{ print $39 }')         # System Lock 0=no 1=yes
 
         sadm_write_log " "                                              # White Line
         sadm_write_log "---- [ $xcount ] ${fqdn_server} ----"           # Show count & ServerName
@@ -1295,10 +1297,22 @@ process_servers()
                  sadm_write_log "server_vm       = $server_vm  "        # 1=VirtualSystem 0=Physical
                  sadm_write_log "server_vm_ver   = $server_vm_ver "     # VM Addition version
                  sadm_write_log "server_uptime   = $server_uptime "     # System uptime 
+                 sadm_write_log "server_lock     = $server_lock"        # System uptime 
         fi
         
-         # Test SSH connectivity, get uptime and update the Database.
-        if [ "$SADM_SERVER" != "fqdn_name" ]     
+
+        # If lock file already exist
+        sadm_lock_status "$server_name"                                 # Check if system is locked 
+        if [ $? -eq 1 ]                                
+            then sadm_write_log "[ WARNING ] System '$server_name' is locked, skipping it."
+                 LOCK_FILE="${SADMIN}/${server_name}.lock"
+                 sadm_write_log "  - Content of actual lock file : $(cat $LOCK_FILE)"
+                 continue                        
+        fi  
+
+
+        # Test SSH connectivity (if not on SADMIN server) and update the 'uptime' in SADMIN database.
+        if [ "$SADM_SERVER" != "$fqdn_server" ]     
             then check_host_connectivity "$fqdn_server" "$ssh_port"     # Test SSH, Upd uptime in DB
                  connectivity_rc=$?                                     # Connectivity result code 
                  if [ "$SADM_DEBUG" -ne 0 ] 
@@ -1328,8 +1342,8 @@ process_servers()
         if [ "$connectivity_rc" -eq 2 ] ; then continue ; fi            # Sporadic Sys,return back
         
 
-        # On Linux & O/S AutoUpdate is ON, Generate Crontab entry in O/S Update crontab work file
-        if [ "$db_updauto" -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]         # If O/S Update Requested
+        # Generate Crontab entry for O/S Update, if autoUpdate is ON, 
+        if [ "$db_updauto" -eq 1 ] && [ "$SYSTEM_ONLINE" = "Y" ]        # If O/S Update Requested
             then update_osupdate_crontab "$server_name" "\${SADMIN}/bin/$OS_SCRIPT" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow" "$ssh_port"
         fi
 
@@ -1845,85 +1859,6 @@ crontab_update()
 
 
 
-# --------------------------------------------------------------------------------------------------
-# main_process()
-#
-# Get from all actives sadmin clients the new hostname.rpt & all the new or updated *.rch files.
-#
-# --------------------------------------------------------------------------------------------------
-main_process()
-{   
-    PROCESS_ERROR=0                                                     # Init. Error count to 0
-    
-    # Create an empty global rpt file $SADMIN/www/dat/HOSTNAME/rpt/HOSTNAME_fetch.rpt
-    if [ -f "$FETCH_RPT_GLOBAL" ] ;then rm -f "$FETCH_RPT_GLOBAL" ;fi   # rm global RPT file if exist
-    touch "$FETCH_RPT_GLOBAL"                                           # Create global RPT file
-    chown "$SADM_WWW_USER:$SADM_GROUP"  "$FETCH_RPT_GLOBAL"  
-    chmod 664 "$FETCH_RPT_GLOBAL"
-
-    # Create starting empty local rpt file $SADMIN/dat/rpt/HOSTNAME_fetch.rpt
-    if [ -f "$FETCH_RPT_LOCAL" ] ; then rm -f "$FETCH_RPT_LOCAL" ; fi   # rm local RPT file if exist
-    touch "$FETCH_RPT_LOCAL"                                            # Create EMPTY local RPTfile
-    chown "$SADM_USER:$SADM_GROUP"  "$FETCH_RPT_LOCAL"  
-    chmod 664 "$FETCH_RPT_LOCAL"
-
-
-    # Process All Active Linux systems.
-    process_servers "linux"                                             # Process Active Linux
-    PROCESS_ERROR=$?                                                    # Save Nb. Errors in process
-
-    # Print Total Scripts Errors
-    sadm_write_log " "                                                  # Separation Blank Line
-    sadm_write_log "${SADM_TEN_DASH}"                                   # Print 10 Dash lineHistory
-    sadm_write_log "Systems Rsync Summary"                              # Rsync Summary 
-    sadm_write_log " - Total error(s)  : ${PROCESS_ERROR}"              # Display Total Linux Errors
-    sadm_write_log " "                                                  # Separation Blank Line
-
-    # Check if crontabs need to be updated (sadm_backup, sadm_osupdate, sadm_rear_backup, sadm_vm)
-    crontab_update                                                      # Update crontab if changed
-
-    # Create $SADM_VMLIST & $SADM_VMHOSTS (If any VM to process)
-    create_vm_list    
-
-    
-    # If Global RCH and RPT directories don't exist
-    WDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"                     # Web Global RCH repo Dir 
-    if [ ! -d "$WDIR" ] ; then mkdir -p "$WDIR" ; fi
-    chown "$SADM_WWW_USER:$SADM_GROUP"  "$WDIR" 
-    chmod 775 "$WDIR"
-
-    WDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"                     # Web Global RPT repo Dir 
-    if [ ! -d "$WDIR" ] ; then mkdir -p "$WDIR" ; fi
-    chown "$SADM_WWW_USER:$SADM_GROUP"  "$WDIR" 
-    chmod 775 "$WDIR"
-
-
-    # Copy local rpt and rch to Global www directories.
-    chmod 664 "$SADM_RPT_FILE"
-    cp "$SADM_RPT_FILE" "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" 
-    if [ $? -ne 0 ] 
-        then sadm_write_err "[ ERROR ] cp $SADM_RPT_FILE ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"
-             ((PROCESS_ERROR++))                                        # Increase Error Counter 
-    fi
-    chmod 664 "$SADM_RCH_FILE"
-    cp "$SADM_RCH_FILE" "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"      # cp rch for instant Status
-    if [ $? -ne 0 ] 
-        then sadm_write_err "[ ERROR ] cp $SADM_RCH_FILE ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"
-             ((PROCESS_ERROR++))                                        # Increase Error Counter 
-    fi
-
-    # Check for Error or Alert to submit
-    check_all_rpt                                                       # Check all *.rpt for Alert
-    check_all_rch                                                       # Check all *.rch for Alert
-
-    # Delete TMP work file before returning to caller 
-    if [ ! -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi
-    
-    SADM_EXIT_CODE=$PROCESS_ERROR                                       # Save error count
-    return $SADM_EXIT_CODE
-}
-
-
 
 
 
@@ -2376,6 +2311,88 @@ write_alert_history() {
     echo "$hline" >> "$SADM_ALERT_HIST"                                 # Write Alert History File
     if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_write "Line added to History : $hline \n" ; fi 
 }
+
+
+
+# --------------------------------------------------------------------------------------------------
+# main_process()
+#
+# Get information from all actives 'sadmin clients' to update/create "hostname.rpt" and 
+# all the new or updated *.rch files.
+#
+# --------------------------------------------------------------------------------------------------
+main_process()
+{   
+    PROCESS_ERROR=0                                                     # Init. Error count to 0
+    
+    # Create an empty global rpt file $SADMIN/www/dat/HOSTNAME/rpt/HOSTNAME_fetch.rpt
+    if [ -f "$FETCH_RPT_GLOBAL" ] ;then rm -f "$FETCH_RPT_GLOBAL" ;fi   # rm global RPT file if exist
+    touch "$FETCH_RPT_GLOBAL"                                           # Create global RPT file
+    chown "$SADM_WWW_USER:$SADM_GROUP"  "$FETCH_RPT_GLOBAL"  
+    chmod 664 "$FETCH_RPT_GLOBAL"
+
+    # Create starting empty local rpt file $SADMIN/dat/rpt/HOSTNAME_fetch.rpt
+    if [ -f "$FETCH_RPT_LOCAL" ] ; then rm -f "$FETCH_RPT_LOCAL" ; fi   # rm local RPT file if exist
+    touch "$FETCH_RPT_LOCAL"                                            # Create EMPTY local RPTfile
+    chown "$SADM_USER:$SADM_GROUP"  "$FETCH_RPT_LOCAL"  
+    chmod 664 "$FETCH_RPT_LOCAL"
+
+
+    # Process All Active Linux systems.
+    process_servers "linux"                                             # Process Active Linux
+    PROCESS_ERROR=$?                                                    # Save Nb. Errors in process
+
+    # Print Total Scripts Errors
+    sadm_write_log " "                                                  # Separation Blank Line
+    sadm_write_log "${SADM_TEN_DASH}"                                   # Print 10 Dash lineHistory
+    sadm_write_log "Systems Rsync Summary"                              # Rsync Summary 
+    sadm_write_log " - Total error(s)  : ${PROCESS_ERROR}"              # Display Total Linux Errors
+    sadm_write_log " "                                                  # Separation Blank Line
+
+    # Check if crontabs need to be updated (sadm_backup, sadm_osupdate, sadm_rear_backup, sadm_vm)
+    crontab_update                                                      # Update crontab if changed
+
+    # Create $SADM_VMLIST & $SADM_VMHOSTS (If any VM to process)
+    create_vm_list    
+
+    
+    # If Global RCH and RPT directories don't exist
+    WDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"                     # Web Global RCH repo Dir 
+    if [ ! -d "$WDIR" ] ; then mkdir -p "$WDIR" ; fi
+    chown "$SADM_WWW_USER:$SADM_GROUP"  "$WDIR" 
+    chmod 775 "$WDIR"
+
+    WDIR="${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"                     # Web Global RPT repo Dir 
+    if [ ! -d "$WDIR" ] ; then mkdir -p "$WDIR" ; fi
+    chown "$SADM_WWW_USER:$SADM_GROUP"  "$WDIR" 
+    chmod 775 "$WDIR"
+
+
+    # Copy local rpt and rch to Global www directories.
+    chmod 664 "$SADM_RPT_FILE"
+    cp "$SADM_RPT_FILE" "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" 
+    if [ $? -ne 0 ] 
+        then sadm_write_err "[ ERROR ] cp $SADM_RPT_FILE ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"
+             ((PROCESS_ERROR++))                                        # Increase Error Counter 
+    fi
+    chmod 664 "$SADM_RCH_FILE"
+    cp "$SADM_RCH_FILE" "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"      # cp rch for instant Status
+    if [ $? -ne 0 ] 
+        then sadm_write_err "[ ERROR ] cp $SADM_RCH_FILE ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"
+             ((PROCESS_ERROR++))                                        # Increase Error Counter 
+    fi
+
+    # Check for Error or Alert to submit
+    check_all_rpt                                                       # Check all *.rpt for Alert
+    check_all_rch                                                       # Check all *.rch for Alert
+
+    # Delete TMP work file before returning to caller 
+    if [ ! -f "$REAR_TMP" ] ; then rm -f $REAR_TMP >/dev/null 2>&1 ; fi
+    
+    SADM_EXIT_CODE=$PROCESS_ERROR                                       # Save error count
+    return $SADM_EXIT_CODE
+}
+
 
 
 
