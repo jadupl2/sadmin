@@ -650,10 +650,10 @@ sadm_ping()
     ping -c 2 -W 2 $WSERVER >/dev/null 2>/dev/null                      # Ping the Server
     RC=$?  
     if [ $RC -ne 0 ] 
-        then sadm_write_err "[ ERROR ] 'ping -c 2 ${WSERVER}' failed."
+        then sadm_write_err "[ ERROR ] Ping to system '$WSERVER' failed."
              sadm_write_err "Can't proceed, aborting script."
              RC=1                                                       # Make sure RC is 1 or 0 
-        else sadm_write_log "[ OK ] 'ping -c 2 ${WSERVER}' worked."
+        else sadm_write_log "[ OK ] Server '$WSERVER' is alive."
              RC=0
     fi
     return $RC
