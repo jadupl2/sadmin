@@ -243,6 +243,7 @@
 #@2025_04_22 lib v4.63 Refine the sadm_server_model() function to return the right model name.
 #@2025_05_07 lib v4.64 Add SADM_QUIET (Y/N) variable to control the output of error message.
 #@2025_05_19 lib v4.65 Add function 'sadm_nfs_mount' & 'sadm_nfs_unmount', solve PID_TIMEOUT problem.
+#@2025_05_26 lib v4.66 Portability minor code change to 'sadm_get_epoch_time()'.
 #===================================================================================================
 
 trap 'exit 0' 2  
@@ -253,7 +254,7 @@ trap 'exit 0' 2
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 export SADM_HOSTNAME=$(hostname -s)                                     # Current Host name
-export SADM_LIB_VER="4.65"                                              # This Library Version
+export SADM_LIB_VER="4.66"                                              # This Library Version
 export SADM_DASH=$(printf %80s |tr ' ' '=')                             # 80 equals sign line
 export SADM_FIFTY_DASH=$(printf %50s |tr ' ' '=')                       # 50 equals sign line
 export SADM_80_DASH=$(printf %80s |tr ' ' '=')                          # 80 equals sign line
@@ -1039,7 +1040,10 @@ sadm_sleep() {
 
 #  R E T U R N      C U R R E N T    E P O C H   T I M E
 sadm_get_epoch_time() {
-    w_epoch_time=$(${SADM_PERL} -e 'print time')                        # Use Perl to get Epoch Time
+    if [ "$(sadm_get_ostype)" = "LINUX" ] 
+        then w_epoch_time=$(date +%s)                                   # Use date to get Epoch Time
+        else w_epoch_time=$(${SADM_PERL} -e 'print time')               # Use Perl to get Epoch Time
+    fi
     echo "$w_epoch_time"                                                # Return Epoch to Caller
 }
 
@@ -1093,7 +1097,7 @@ sadm_epoch_to_date() {
 
 
 # --------------------------------------------------------------------------------------------------
-#    C O N V E R T   D A T E  (YYYY.MM.DD HH:MM:SS)  R E C E I V E    T O    E P O C H   T I M E
+#    C O N V E R T   D A T E  (YYYY.MM.DD HH:MM:SS)  R E C E I V E D   T O    E P O C H   T I M E
 # --------------------------------------------------------------------------------------------------
 sadm_date_to_epoch() {
     if [ $# -ne 1 ]                                                     # Should have rcv 1 Param
@@ -2820,8 +2824,8 @@ sadm_sendmail() {
 #
 # Input Parameters :
 #   1) Name of the system to lock (Required)
-#   2) Name of script locking the system (Optional) 
-#      If not specified the value of $SADM_INST assumed.
+#   2) Description of why, you want to lock the system (Optional) 
+#      If not specified, the script name ($SADM_INST) is used.
 #
 # Return Value : 
 #   0) System Lock file was created successfully
@@ -2835,31 +2839,25 @@ sadm_lock_system()
              return 1                                                   # Return Error to caller
     fi
 
-    SNAME=$1                                                            # Name of system to lock
+    # Save parameters received.
+    SNAME="$1"                                                          # Name of system to lock
     if [ $# -eq 2 ]                                                     # If Name of script specify
-        then SCRIPT_NAME="$2"                                           # Remote Script Name
+        then SCRIPT_NAME="$2"                                           # Remote Script Name or Desc
         else SCRPIT_NAME="$SADM_INST"                                   # Use current script name
     fi 
-    RC=0                                                                # Default Return Code
+    
+
+    # Write reason why we lock this system into the lock file..
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
-
-    # If lock file already exist
-    if [ -f "$LOCK_FILE" ]                                              # Lock file already exist ?
-        then sadm_write_err "[ ERROR ] System '${SNAME}' is already lock."
-             sadm_write_err "Content of lock file : $(cat $LOCK_FILE)"
-             return 1
-    fi 
-
-    # Create the lock file
-    xdate=$(date "+%H:%M %Y/%m/%d") 
-    if [ $# -eq 2 ]
-        then echo "'$SNAME' lock at $xdate by '$(basename $SCRIPT_NAME)'" > "$LOCK_FILE"
+    RC=0                                                                # Default Return Code
+    if [ $# -eq 2 ]                                                     # User passs
+        then echo "System '$SNAME' lock: '"${SCRIPT_NAME/$SADMIN\/bin\//}"'" > "$LOCK_FILE"
              RC=$?                                                      # Save Result Code
-        else echo "'$SNAME' lock at $xdate by '$SADM_INST'" > "$LOCK_FILE"
+        else echo "Lock system '${SNAME}' while '$SADM_INST' is running" > "$LOCK_FILE"
              RC=$?                                                      # Save Result Code
     fi 
     if [ $RC -eq 0 ]                                                     # Lock file created [ OK ]
-       then sadm_write_log "[ OK ] System '${SNAME}' now lock."  
+       then sadm_write_log "[ OK ] System '$SNAME' is now lock."  
        else sadm_write_err "[ ERROR ] Creating the lock file '$LOCK_FILE'."
             RC=1 
     fi 
@@ -2879,14 +2877,17 @@ sadm_lock_system()
 #
 # sadm_show_lock()
 #
+#   String=$(sadm_show_lock "hostname") 
+#
 # Show the content of the system lock file for the received system name.
 #
 # Input Parameter :
 #   1) Name of the system locked.
 #
 # Return Value : 
+#  The content of the log file is echo to standard output
 #   0) Show system Lock file content was successfully
-#   1) Show system Lock file content could not be shown.
+#   1) Lock file is not present or could not be shown.
 # --------------------------------------------------------------------------------------------------
 sadm_show_lock()
 {
@@ -2895,6 +2896,7 @@ sadm_show_lock()
              sadm_write_err "Should be 1 but we received $# : $* "      # Show what received
              return 1                                                   # Return Error to caller
     fi
+
     SNAME=$1                                                            # Save System Name to verify
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
  
@@ -2945,11 +2947,11 @@ sadm_unlock_system() {
     if [ -f "$LOCK_FILE" ]                                              # Lock file exist ?
         then rm -f ${LOCK_FILE} >/dev/null 2>&1                         # Delete Lock file 
              if [ $? -eq 0 ]                                            # no error while updating
-               then sadm_write_log "[ OK ] System '$SNAME' is now unlocked."
+               then sadm_write_log "[ OK ] System '$SNAME' is now unlock."
                else sadm_write_err "[ ERROR ] Unlocking '${SNAME}' - Can't remove '${LOCK_FILE}'" 
                     RC=1                                                # Set Return Value (Error)
              fi
-        else sadm_write_log "[ OK ] System '$SNAME' is not lock."
+        else sadm_write_log "System '$SNAME' is not lock."
     fi 
     return $RC                                                          # Return to caller 
 } 
@@ -2984,7 +2986,7 @@ sadm_lock_status() {
 
     if [ $# -ne 1 ] 
         then sadm_write_err "[ ERROR ] Function ${FUNCNAME} invalid number of argument."
-             sadm_write_err "Should be 1 but we received $# : $* "      # Show what received
+             sadm_write_err "  - Should be 1 but we received $# : $* "
              return 1                                                   # Return Error to caller
     fi
 
@@ -2993,8 +2995,8 @@ sadm_lock_status() {
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
 
     if [ -r "$LOCK_FILE" ]                                              # Lock file exist ?
-        then RC=1
-        else RC=0
+        then RC=1                                                       # When Lock Return Code to 1
+        else RC=0                                                       # Not Lock Return Code to 0
     fi 
     return $RC                                                            # Return no lockfile
 }  
