@@ -35,8 +35,9 @@
 # 2022_11_20 web v2.2 Backup status page - Error log link now only appear when error occurred.
 # 2023_01_05 web v2.3 Backup status page - Yellow alert if backup size is contrasting with previous.
 # 2023_03_23 web v2.4 Backup status page - Lot of changes to this page, have a look.
-# 2025_04_22 web v2.5 Backup status page - Alert are now shown in a tinted background for emphasis.
-# 2025_04_28 web v2.6 Backup status page - Refresh disposition.
+#@2025_04_22 web v2.5 Backup status page - Alert are now shown in a tinted background for emphasis.
+#@2025_04_28 web v2.6 Backup status page - Refresh disposition.
+#@2025_05_29 web v2.7 Backup start up time corrected, was the time of previous to the last backup.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -110,7 +111,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/lib/sadmPageWrapper.php');    # Headi
 # Local Variables
 #===================================================================================================
 $DEBUG              = False;                                           # Debug Activated True/False
-$WVER               = "2.6";                                           # Current version number
+$WVER               = "2.7";                                           # Current version number
 $URL_CREATE         = '/crud/srv/sadm_server_create.php';               # Create Page URL
 $URL_UPDATE         = '/crud/srv/sadm_server_update.php';               # Update Page URL
 $URL_DELETE         = '/crud/srv/sadm_server_delete.php';               # Delete Page URL
@@ -220,8 +221,8 @@ function display_data($count, $row)
     echo "</td>";
 
 
-    # Start Backup Date and Time.
-    if (!file_exists($rch_name)) {                                      # If RCH File doesn't exist
+    # Start Backup Date
+    if (! file_exists($rch_name) ) {                                    # If RCH File doesn't exist
         echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b></td>";
     } else {
         $file = file("$rch_name");                                      # Load RCH File in Memory
@@ -247,8 +248,9 @@ function display_data($count, $row)
         }
         #echo "</td>";
     }
+
+    # Start Backup Time
     echo "&nbsp;" ; 
-    # Time of the last Backup
     if ($row['srv_backup'] == True) {                                   # If Backup Activated
         #echo "\n<td align='center'>";
         list($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT(
@@ -258,7 +260,8 @@ function display_data($count, $row)
             $row['srv_backup_hour'],
             $row['srv_backup_minute']
         );
-        echo sprintf(" %02d", $row['srv_backup_hour']) . ":" . sprintf("%02d", $row['srv_backup_minute']);
+        $backup_time =explode(":",$rch_array[2]);
+        echo sprintf("%02d", $backup_time[0]) .":". sprintf("%02d", $backup_time[1]);
     }else{
         if (!file_exists($rch_name)) {                                      # If RCH File doesn't exist
 #            echo "\n<td align='center' style='color:red' bgcolor='#DAF7A6'><b>No data</b>";
