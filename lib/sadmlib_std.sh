@@ -373,7 +373,9 @@ export SADM_INXI=""                                         # Path to inxi
 # SADMIN CONFIG FILE VARIABLES (Default Values here will be overridden by SADM CONFIG FILE Content)
 export SADM_MAIL_ADDR="your_email@domain.com"               # Default is in sadmin.cfg
 export SADM_ALERT_TYPE=1                                    # 0=No 1=Err 2=Success 3=All
-export SADM_ALERT_GROUP="default"                           # Define in alert_group.cfg
+export SADM_ALERT_GROUP="default"                           # Error Group Define in alert_group.cfg
+export SADM_WARNING_GROUP="default"                         # Warning alert Group (alert_group.cfg)
+export SADM_INFO_GROUP="default"                            # Info alert Group (in alert_group.cfg)
 export SADM_ALERT_REPEAT=43200                              # Repeat Alarm wait time Sec
 export SADM_TEXTBELT_KEY="textbelt"                         # Textbelt.com API Key
 export SADM_TEXTBELT_URL="https://textbelt.com/text"        # Textbelt.com API URL
@@ -381,7 +383,6 @@ export SADM_DAYS_HISTORY=14                                 # Days to move alert
 export SADM_MAX_ARC_LINE=1000                               # Max Lines in Alert Archive
 export SADM_EMAIL_STARTUP="N"                               # No email on Startup
 export SADM_EMAIL_SHUTDOWN="N"                              # No email on Shutdown
-#
 export SADM_CIE_NAME="Your Company Name"                    # Company Name
 export SADM_HOST_TYPE=""                                    # [S]erver/[C]lient/[D]ev.
 export SADM_USER="sadmin"                                   # sadmin user account
@@ -703,6 +704,15 @@ sadm_write_err() {
              esac
         else sadm_write_log "[ ERROR ] Insufficient permission to write to error log '$SADM_ELOG'."
     fi 
+}
+
+
+# Write String received to script log ($SADM_LOG) & script error log ($SADM_ELOG)
+sadm_write_dbg() {
+    sadm_write_log "----- Debug Level: $SADM_DEBUG - $(date "+%C%y.%m.%d %H:%M:%S")"
+    DBG_SMSG="$1"                                                       # Screen Mess no Date/Time
+    sadm_write_log "$DBG_SMSG"                                          # Go write in normal Scr/log
+    #
 }
 
 
@@ -2075,7 +2085,11 @@ sadm_load_config_file() {
                                             ;;
             "SADM_ALERT_TYPE")              SADM_ALERT_TYPE=$VALUE
                                             ;;
-            "SADM_ALERT_GROUP")             SADM_ALERT_GROUP=$VALUE
+            "SADM_ALERT_GROUP")             SADM_ALERT_GROUP=$VALUE     # Err Grp in alert_group.cfg
+                                            ;;
+            "SADM_WARNING_GROUP")           SADM_WARNING_GROUP=$VALUE   # Warning (alert_group.cfg)
+                                            ;;
+            "SADM_INFO_GROUP")              SADM_INFO_GROUP=$VALUE      # Info Grp (alert_group.cfg)
                                             ;;
             "SADM_ALERT_REPEAT")            SADM_ALERT_REPEAT=$VALUE
                                             ;;
@@ -2813,6 +2827,7 @@ sadm_sendmail() {
 
 
 
+
 # --------------------------------------------------------------------------------------------------
 # Create a system lock file for the received system name.
 # This function is used to create a ($LOCK_FILE) for the system received as a parameter.
@@ -2840,35 +2855,56 @@ sadm_lock_system()
     fi
 
     # Save parameters received.
+    RC=0                                                                # Default Return Code
     SNAME="$1"                                                          # Name of system to lock
-    if [ $# -eq 2 ]                                                     # If Name of script specify
-        then SCRIPT_NAME="$2"                                           # Remote Script Name or Desc
+    if [ $# -eq 2 ]                                                     # Second parameter specified
+        then SCRIPT_NAME="$2"                                           # Desc. or Remote ScriptName
         else SCRPIT_NAME="$SADM_INST"                                   # Use current script name
     fi 
     
-
     # Write reason why we lock this system into the lock file..
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
-    RC=0                                                                # Default Return Code
+
+    # Refuse to lock if already lock.
+    if [ -f "$LOCK_FILE" ]
+        then sadm_write_log "[ ERROR ] System '$SNAME' is already lock by another script."
+             sadm_write_log "Lock file already exist '$LOCK_FILE'."
+             sadm_write_log "Lock file content : $(sadm_show_lock "$SNAME")."
+             return 1
+    fi
+     
     if [ $# -eq 2 ]                                                     # User passs
-        then echo "System '$SNAME' lock: '"${SCRIPT_NAME/$SADMIN\/bin\//}"'" > "$LOCK_FILE"
-             RC=$?                                                      # Save Result Code
-        else echo "Lock system '${SNAME}' while '$SADM_INST' is running" > "$LOCK_FILE"
-             RC=$?                                                      # Save Result Code
+        then LOCK_MESS="System '$SNAME' lock: '"${SCRIPT_NAME/$SADMIN\/bin\//}"'" 
+        else LOCK_MESS="Lock system '${SNAME}' while '$SADM_INST' is running"
     fi 
-    if [ $RC -eq 0 ]                                                     # Lock file created [ OK ]
+
+    # Create lock file and check for error.
+    echo "$LOCK_MESS" > "$LOCK_FILE"
+    if [ $? -eq 0 ]                                                     # Lock file created [ OK ]
        then sadm_write_log "[ OK ] System '$SNAME' is now lock."  
+            if [ $(id -u) -eq 0 ] 
+                then chown ${SADM_USER}:${SADM_GROUP} ${LOCK_FILE}          
+                     chmod 0664 "$LOCK_FILE" 
+            fi                 
        else sadm_write_err "[ ERROR ] Creating the lock file '$LOCK_FILE'."
-            RC=1 
+            return 1
     fi 
 
-    # Change lock file permission and owner.
-    if [ $(id -u) -eq 0 ] 
-        then chown ${SADM_USER}:${SADM_GROUP} ${LOCK_FILE}              # Change lock file  Owner
-             chmod 0664 "$LOCK_FILE" 
-    fi 
+    # Create RPT file to inform user that the system is lock
+    RPT_MSG="$LOCK_MESS"                                                # Lock file content  
+    RPT_OS="$(sadm_get_ostype)"                                         # Get the O/S type of remote
+    RPT_DATE=$(date "+%Y.%m.%d")                                        # Report Date in YYYY.MM.DD                              
+    RPT_TIME=$(date "+%H:%M")                                           # Report Time in HH:MM
+    RPTLINE="I;${SNAME};${RPT_DATE};${RPT_TIME};${RPT_OSNAME}"          # Part 1 Build Report Line
+    RPTLINE="${RPTLINE};"SCRIPT";${RPT_MSG};${RPT_WGRP};${RPT_EGRP};"   # Part 2 Build Line    
 
-    return $RC                                                          # Return to caller 
+    # Update the Local & Global (www) RPT files.
+    RPT_LOCAL="${SADM_RPT_DIR}/${SNAME}_${SADM_INST}.rpt"            # SADMIN Server Local RPT
+    echo "$RPTLINE" >> "$RPT_LOCAL"                                     # Local $SADMIN/dat/rpt rpt
+    RPT_GLOBAL="${SADM_WWW_DAT_DIR}/${SNAME}/rpt/${SNAME}_${SADM_INST}.rpt" 
+    echo "$RPTLINE" >> "$RPT_GLOBAL"                                    # $SADMIN/www/dat/hostname/rpt
+
+    return 0     
 } 
 
 
@@ -2936,12 +2972,11 @@ sadm_unlock_system() {
 
     if [ $# -ne 1 ] 
         then sadm_write_err "[ ERROR ] Function ${FUNCNAME} invalid number of argument."
-             sadm_write_err "Should be 1 but we received $# : $* "      # Show what received
+             sadm_write_err "  - Should be 1 but it received $# : '$*'" # Show what received
              return 1                                                   # Return Error to caller
     fi
 
     SNAME=$1                                                            # Save System Name to verify
-    RC=0                                                                # Default Return Code
     LOCK_FILE="${SADM_BASE_DIR}/${SNAME}.lock"                          # System Lock file name
 
     if [ -f "$LOCK_FILE" ]                                              # Lock file exist ?
@@ -2949,11 +2984,20 @@ sadm_unlock_system() {
              if [ $? -eq 0 ]                                            # no error while updating
                then sadm_write_log "[ OK ] System '$SNAME' is now unlock."
                else sadm_write_err "[ ERROR ] Unlocking '${SNAME}' - Can't remove '${LOCK_FILE}'" 
-                    RC=1                                                # Set Return Value (Error)
+                    return 1                                            # Set Return Value (Error)
              fi
-        else sadm_write_log "System '$SNAME' is not lock."
+        else sadm_write_log "[ OK ] System '$SNAME' unlock (wasn't lock)."
     fi 
-    return $RC                                                          # Return to caller 
+
+
+    # We can need to remove the (.rpt) files that will remove lock mnessage in web monitor page.
+    RPT_LOCAL="${SADM_RPT_DIR}/${SNAME}_${SADM_INST}.rpt"            # SADMIN Server Local RPT
+    if [ -f "$RPT_LOCAL" ] ;then rm -f "$RPT_LOCAL" >/dev/null 2>&1 ;fi # Remove Local RPT file
+
+    RPT_GLOBAL="${SADM_WWW_DAT_DIR}/${SNAME}/rpt/${SNAME}_${SADM_INST}.rpt" 
+    if [ -f "$RPT_GLOBAL" ] ;then rm -f "$RPT_GLOBAL" >/dev/null 2>&1 ;fi # Remove Global RPT file
+
+    return 0                                                            # Return to caller 
 } 
 
 

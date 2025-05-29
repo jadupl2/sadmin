@@ -1,14 +1,14 @@
 #----------------------------------------------------------------------------------------
-# SADMIN SYStem MONitor configuration file (3.0)
-#  - The file MUST reside in ${SADMIN}/cfg (filename `hostname`.smon).
-#  - It is read when the SADMIN System Monitor start (sadm_sysmon.pl).
+# SADMIN SYStem MONitor configuration file (3.1)
+#  - This file MUST reside in ${SADMIN}/cfg (filename = $(hostname -s).smon).
+#  - It is loaded in memory when the SADMIN System Monitor start (sadm_sysmon.pl).
 #  - Before exiting SysMon write the updated version of this file.
-#  - Updated value (or resulting status) is recorded in the second column of each line
+#  - Updated value (or resulting status) is recorded in the second column of each line.
 #  - New Filesystem are added automatically to this file when detected.
-#  - Sysmon is run every 5 minutes from the sadm_server crontab (/etc/cron.d/sadm_server)
+#  - Sysmon is run every 5 minutes from the sadm_server crontab (/etc/cron.d/sadm_server).
 #  - Comments lines must always begin with a "#" (Column 1)
 #  - Column are delimited by space(s) and/or tabulation.
-#  - At execution each line is evaluated based on the test requested in the first column
+#  - At execution each line is evaluated based on the test requested in the first column.
 #----------------------------------------------------------------------------------------
 # Col   Name            Description
 #----------------------------------------------------------------------------------------
@@ -72,7 +72,7 @@
 #
 #       check_multipath
 #               SysMon check each path of the multipath and if one one them is not active or ready,
-#               A value of 1 is returned if everything is ok or 0 when an error is detected. 
+#               A value of 1 is returned if everything is ok and a zero when an error is detected. 
 #               Line will only be evaluated if the command 'multipathd' is present on system.
 #                       
 #       http_ or https_  
@@ -80,7 +80,7 @@
 #               Example : http_google.com
 #                         https_redhat.com
 #
-#       ping_
+#       ping_$(hostname)
 #               Each time Sysmon is run is will ping the name or the IP your have specified after 
 #               the prefix 'ping_'.
 #               Example : ping_www.google.com
@@ -186,27 +186,38 @@
 #                       When new filesystem line are added the default group used for Warning/Error
 #                       is the one defined sadmin configuration file ($SADMIN/cfg/sadmin.cfg)
 #---------------------------------------------------------------------------------------------------
-#  L    Script Name     Never use by sysmon if it's blank or contain '-'.
+#  L    Script Name     This is the name of the script that will be executed, when an error occurs
+#                       after (result code 1) after execution of the script at specified at the 
+#                       beginning of the line (Col. 1). 
+#                       Never use by sysmon if it's blank or contain '-'.
 #                       When the line is evaluated and it turn out to be in error, if you put a
 #                       script name it will be executed (You may want to correct the error with it).
 #                       Script MUST reside in $SADMIN/usr/mon directory and be executable.
 #                       The script will produce a log in that same directory, with the same name as 
 #                       your script.
-#                       Fie filesystem increase, the name of the script MUST be 'sadm_fs_incr.sh'.
+#                       For automatic filesystem increase, the name of the script MUST be 
+#                       'sadm_fs_incr.sh'.
 #---------------------------------------------------------------------------------------------------
-# IDENTIFIER - COLUMN 1          2  3   4   5   6  7    8   9 A B C D E F G     H     I   J    K   L
+# IDENTIFIER - COLUMN 1    2  3  4   5  6    7    8   9 A B C D E F G     H     I   J    K   L
 #---------------------------------------------------------------------------------------------------
 #
-# ----- Run specific scripts, check return code and issue a warning or error based on threshold
+# Run specific custom script, check return code and issue a warning or error based on threshold
 # Example 
 #script:stemplate.sh       1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 default default -
 #
 #
-# ----- Aix/Linux/MacOS CPU Load, Server Load Average and Swap Space usage Monitoring
+# System Load Average (use uptime)
 load_average                     0  >  20  35 120 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+
+# CPU usage, it use vmstat to get % used.
 cpu_level                       29 >=  85  95 240 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+
+# Swap Space usage monitoring (in %).
 swap_space                      14  >  85  90 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 default default -
 #
+# cups.service 
+# systemd-journald.service 
+
 # ----- Linux Common Service Monitoring
 service_crond,cron               1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #service_chronyd                  0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
@@ -227,7 +238,7 @@ service_ssh,sshd                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 2018
 # DHCP Service
 #service_dhcpd                    0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default srestart.sh
 #
-# ----- Monitor Daemon or Process Running 
+# ----- Monitor a Daemon or a process that should be running
 #daemon_mydaemon                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 default default -
 #
 # ----- Check Linux Multipath Status (0=Error 1=All path(s) are Online/Ready)
@@ -238,6 +249,14 @@ check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 0000
 
 # Ping server (Return 0=Ok 1=Error) Line below raise an Error if site doesn't respond to ping.
 #ping_www.ibm.com                 0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 default default -
+#
+# Always ping the SADMIN server every day of the week.
+#   - Ping server (Return 0=Ok 1=Error).
+# Except on Sunday the ping does not report error between 22:00 and 23:15.
+#   - Because system is down, performing an export of the SADMIN server.
+#
+#ping_sadmin                      0  =  00  01 000 0000 0000 N Y Y Y Y Y Y Y 00000000 0000 default default -
+#ping_sadmin                      1 !=  00  01 000 2200 2315 Y N N N N N N Y 00000000 0000 default default -
 #
 #
 Test web site responsiveness (0=Up 1=NoResponse)

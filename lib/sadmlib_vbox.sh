@@ -651,9 +651,9 @@ sadm_ping()
     RC=$?  
     if [ $RC -ne 0 ] 
         then sadm_write_err "[ ERROR ] Ping to system '$WSERVER' failed."
-             sadm_write_err "Can't proceed, aborting script."
+             sadm_write_err "  - Can't proceed, aborting script."
              RC=1                                                       # Make sure RC is 1 or 0 
-        else sadm_write_log "[ OK ] Server '$WSERVER' is alive."
+        else sadm_write_log "[ OK ] System '$WSERVER' is alive."
              RC=0
     fi
     return $RC
@@ -727,7 +727,7 @@ sadm_export_vm()
      # Save current VM State (Running or Power Off), if it's running then shutdown the VM.
     sadm_vm_running "$VM"                                               # Check if it is running
     if [ $? -eq 0 ]                                                     # If it's still running
-        then #sadm_write_log " "
+        then sadm_write_log " "
              sadm_write_log "The Virtual machine '$VM' is currently running."
              INITIAL_STATE="RUNNING"                                    # Save VM Init State Running
              sadm_vm_stop "$VM"                                         # Then Stop it
@@ -737,7 +737,7 @@ sadm_export_vm()
     fi 
     
     # Get the name of the directory where the VM exist
-    #sadm_write_log " "
+    sadm_write_log " "
     VM_DIR=$($VBOXMANAGE showvminfo $VM |grep -i snapshot |awk -F: '{print $2}'|tr -d ' '|xargs dirname |head -1)
     sadm_write_log "The VM '$VM' is located in '${VM_DIR}' on '${SADM_HOSTNAME}'."
 
@@ -808,23 +808,22 @@ sadm_export_vm()
     # Export the selected VM
     #sadm_write_log " "
     sadm_write_log "VBoxManage export '$VM' -o '${EXPOVA}'."
-    VBoxManage export $VM -o ${EXPOVA} | tee -a $SADM_LOG 
+    VBoxManage export $VM -o ${EXPOVA} >>  $SADM_LOG 2>&1 
     if [ $? -ne 0 ]                                                     # If Error Occurred 
        then sadm_write_err "[ ERROR ] doing export of '${VM}' in '$EXPDIR'" 
             RC=1                                                        # Return Error 1 to caller
-       else sadm_write_log "[ SUCCESS ] Export of the virtual machine '${VM}'"
+       else sudo chmod 664 ${EXPOVA} >>$SADM_LOG 2>&1
+            if [ "$?" -ne 0 ]                                                   # If Error during mount 
+                then sadm_write_err "[ ERROR ] 'sudo chmod 664 ${EXPOVA}' didn't work."
+                else sadm_write_log "[ OK ] 'sudo chmod 664 ${EXPOVA}'." 
+            fi
+            sadm_write_log "[ SUCCESS ] Export of the virtual machine '${VM}'"
             RC=0                                                        # Return Success 0 to caller
     fi 
 
-    # Change permission on the .ova created.
-    sudo chmod 664 ${EXPOVA} >>$SADM_LOG 2>&1
-    if [ "$?" -ne 0 ]                                                   # If Error during mount 
-        then sadm_write_err "[ ERROR ] 'sudo chmod 664 ${EXPOVA}' didn't work."
-        else sadm_write_log "[ OK ] 'sudo chmod 664 ${EXPOVA}'." 
-    fi
-    #sadm_write_log " "
 
     # Delete old exports, according to the number of export to keep.
+    sadm_write_log " "
     sadm_vm_export_housekeeping "$VM" "${MOUNT_POINT}/${VM}"                # VMName & Dir. to Purge
     if [ "$?" -ne 0 ]                                                   # If Error during mount 
         then sadm_write_log " "
