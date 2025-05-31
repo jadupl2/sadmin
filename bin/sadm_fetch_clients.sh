@@ -108,6 +108,7 @@
 #@2025_04_13 server v3.54 Add hostname in the email subject, if not already there.
 #@2025_05_19 server v3.55 When server not accessible, the uptime is set to date/time of offline.
 #@2025_05_26 server v3.56 Don't process system that are lock (no crontab entries)
+#@2025_05_31 server v3.57 Avoid faulty error message when copying rpt.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT the ^C
 #set -x
@@ -137,7 +138,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.56'                                     # Script version number
+export SADM_VER='3.57'                                     # Script version number
 export SADM_PDESC="Collect scripts results & SysMon status from all systems and send alert if needed." 
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="Y"                                # Run only on SADMIN server? [Y] or [N]
@@ -2369,17 +2370,21 @@ main_process()
 
 
     # Copy local rpt and rch to Global www directories.
-    chmod 664 "$SADM_RPT_FILE"
-    cp "$SADM_RPT_FILE" "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" 
-    if [ $? -ne 0 ] 
-        then sadm_write_err "[ ERROR ] cp $SADM_RPT_FILE ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"
-             ((PROCESS_ERROR++))                                        # Increase Error Counter 
+    if [ -r "$SADM_RPT_FILE" ] 
+        then chmod 664 "$SADM_RPT_FILE"
+             cp "$SADM_RPT_FILE" "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt" 
+             if [ $? -ne 0 ] 
+                then sadm_write_err "[ ERROR ] cp $SADM_RPT_FILE ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rpt"
+                ((PROCESS_ERROR++))  
+             fi 
     fi
-    chmod 664 "$SADM_RCH_FILE"
-    cp "$SADM_RCH_FILE" "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"      # cp rch for instant Status
-    if [ $? -ne 0 ] 
-        then sadm_write_err "[ ERROR ] cp $SADM_RCH_FILE ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"
-             ((PROCESS_ERROR++))                                        # Increase Error Counter 
+    if [ -r "$SADM_RCH_FILE" ] 
+        then chmod 664 "$SADM_RCH_FILE"
+             cp "$SADM_RCH_FILE" "${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"
+             if [ $? -ne 0 ] 
+                then sadm_write_err "[ ERROR ] cp $SADM_RCH_FILE ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch"
+                     ((PROCESS_ERROR++))                                        # Increase Error Counter 
+             fi 
     fi
 
     # Check for Error or Alert to submit
