@@ -60,6 +60,7 @@
 #@2024_11_15 osupdate v3.41 Show user if the system will reboot or not after a successful update.
 #@2025_02_22 osupdate v3.42 Remove the use of the 'tee' command that was affecting return code.
 #@2025_04_22 osupdate v3.43 The Log file was closed too early when a reboot was requested.
+#@2025_05_31 osupdate v3.44 Re-enable the output when applying the update.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -88,7 +89,7 @@ export SADM_OS_TYPE=$(uname -s |tr '[:lower:]' '[:upper:]') # Return LINUX,AIX,D
 export SADM_USERNAME=$(id -un)                             # Current user name.
 
 # YOU CAB USE & CHANGE VARIABLES BELOW TO YOUR NEEDS (They influence execution of SADMIN Library).
-export SADM_VER='3.43'                                     # Your Current Script Version
+export SADM_VER='3.44'                                     # Your Current Script Version
 export SADM_PDESC="Script is used to perform an O/S update on the system"
 export SADM_ROOT_ONLY="Y"                                  # Run only by root ? [Y] or [N]
 export SADM_SERVER_ONLY="N"                                # Run only on SADMIN server? [Y] or [N]
@@ -268,8 +269,7 @@ run_yum()
     sadm_write_log " "
     sadm_write_log "Starting $SADM_OS_NAME update process ..."
     sadm_write_log "Running : yum -y update"
-    yum -y update   >>$SADM_LOG 2>>$SADM_ELOG
-    rc=$?
+    f=$(mktemp) ; { yum -y update ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; rc=$(cat $f)
     sadm_write_log "The exit code of the 'yum -y update' command is ${rc}."
     sadm_write_log "${SADM_TEN_DASH}"
     return $rc
@@ -284,12 +284,14 @@ run_dnf()
     sadm_write_log " "
     sadm_write_log "Starting $SADM_OS_NAME update process ..."
     sadm_write_log "Running : dnf -y update"
-    dnf -y update  >>$SADM_LOG 2>&1
-    rc=$?
+
+    # Running the update command 
+    f=$(mktemp) ; { dnf -y update ; echo $?>$f ; } | tee -a $SADM_LOG 2>&1 ; rc=$(cat $f)
     sadm_write_log "The exit code of the 'dnf -y update' command is ${rc}."
     sadm_write_log " "
     return $rc
 }
+
 
 
 
